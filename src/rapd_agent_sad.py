@@ -1,6 +1,6 @@
 '''
 __author__ = "Jon Schuermann, Frank Murphy"
-__copyright__ = "Copyright 2009,2010,2011 Cornell University"
+__copyright__ = "Copyright 2010,2011 Cornell University"
 __credits__ = ["Frank Murphy","Jon Schuermann","David Neau","Kay Perry","Surajit Banerjee"]
 __license__ = "BSD-3-Clause"
 __version__ = "0.9"
