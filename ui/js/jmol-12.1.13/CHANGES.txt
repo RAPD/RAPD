@@ -1,0 +1,300 @@
+# Developers: to add a description of changes you have made,
+# add it on a line starting with #	 below the "version=..." line
+
+version=12.1.13
+
+# new feature: hide/display bonds
+# new feature: hide/display [{bond set}]
+# new feature: set STRUCTURE HELIX|SHEET|TURN [a, b, c, d, a1, b1, c1, d1,...]
+#    allows customization of Jmol's phi/psi-based structure calculation
+#    phi >= a && phi <= b && psi >= c && psi <= d 
+#  || phi >= a1 && phi <= b1 && psi >= c1 && psi <= d1 
+#  etc.
+
+# bug fix: unbind unknownName unbinds LEFT mouse!
+# bug fix: Safari slideZoom issue upon leaving and returning to applet (mouse MOVE not issued by OS)
+# bug fix: naming a variable after a function name such as "color" should be allowed
+# bug fix: "smilesString" changed to "_smilesString" and properly set
+# bug fix: Application filename for $xxxx not properly set
+# bug fix: language changing doesn't set tool tips
+# bug fix: MEP menu item is using MOLECULAR with default range; should be using VDW with range ALL
+# bug fix: unescaped spaces in load "$ethyl ether" cause fault at NIH.
+# bug fix: error writing isosurface color density JVXL file
+# bug fix: catch without catch(e) causes exception
+# bug fix: isolated H atoms when calculating hydrogen bonds causes exception
+# bug fix: Spartan reader not reading INPUT file coord -- adding filter "INPUT"
+# bug fix: calculate structure requiring {xxx}
+
+# code: deprecated "commandOption" shape property removed
+
+# --------------------------------------------------------------
+
+#version=12.1.12
+
+# code: JmolViewer interface Component display --> Container display (JPanel, JFrame, JDialog)
+# code: consoles work
+# code: examples get proper termination upon window closing
+# bug fix: reading unmapped isosurface from JVXL files broken in 12.0.13
+
+# --------------------------------------------------------------
+
+#version=12.1.11
+
+# test: set testFlag3  -- reports mouse action and mode (for Eric Martz)
+
+# new feature: set multipleBondRadiusFactor 0.75
+# new feature: set isosurfacePropertySmoothingPower
+#   0 (no property smoothing)
+#  10 (very strong smoothing)
+#   7 (default, same as Jmol 11.8)
+# new feature: AppletConsole allows embedding in larger applications
+# new feature: smooth on-the-fly language changes in applet and application
+# new feature: integrated AppConsole for embedded Jmol -- see Integration.java
+# new feature: multipleBondSpacing
+#   set multipleBondSpacing = -1 (default, varies with viewing angle)
+#   set multipleBondSpacing = -0.5 (half that distance; varies with viewing angle)
+#   set multipleBondSpacing = 0.35 (positive ==> fixed multiple bond spacing)
+
+# bug fix: MO NOPLANE not working
+# bug fix: SmarterJmolAdapter should not read zip bytes it doesn't have to 
+# bug fix: spacefill JMOL does not work
+# bug fix: Jmol 12 does not read old 11.1 isosurface commands from states
+# bug fix: load {i j k} RANGE x.x not expanding load box by 1 in each direction
+# bug fix: applet console does not display startup message
+# bug fix: console buttons do not change with new language
+# bug fix: undo/redo problems in AppConsole
+# bug fix: crystal reader can't read selected model
+# bug fix: 3.5E+0.0 read as "3.5 0.0"
+# bug fix: navY/navy color issue
+# bug fix: write PDB for nonPDB files incorrect
+
+# code: streamlined AppConsole and AppletConsole
+# code: GuiMap/JmolConsole AbstractButton methods merged
+# code: AppConsole now implements JmolCallbackListener, called by JmolPanel.notifyCallback
+
+# --------------------------------------------------------------
+
+#version=12.1.10
+
+# bug fix: JavaScript jmolScriptWait() can fail
+# bug fix: mep color range error (12.1.9, 12.0.11)
+# new feature: Spartan reader filter "ESPCHARGES" for ESP charges, if available, instead of Mulliken charges
+# color structure for carbohydrate fails
+# new feature: reset SPIN
+# new feature: set slabRange 5.0 -- a zoom-independent slabbing plane
+# bug fix: reset should not reset spin (introduced in 11.7.47); new RESET SPIN includes reset spinning
+# bug fix: SMILES generator allowing sp3 center in aromatic
+# bug fix: storing atom properties from CrystalReader messes up model atom bitset 
+# bug fix: non PDB large molecule should not change default rendering 
+# bug fix: PDB large molecule default rendering flaws
+
+# --------------------------------------------------------------
+
+#version=12.1.9
+
+# TODO: Check setting of other color schemes.
+# bug fix: set usercolorscheme not working. 
+# bug fix: color label none when already none and after rendering for multi-line labels or with antialiasdisplay crashes Jmol
+# bug fix: lcaoCartoon p orbitals for CO2
+# bug fix: isosurface ISSQUARED
+# bug fix: PLOT command broken (Parser.parseStringInfestedFloatArray)
+# bug fix: color PROPERTY x   with set rangeSelected does not work
+# bug fix: isosurface contour colors
+# bug fix: #....... #.... two # in one line with first in first character fails
+# bug fix: isosurface plane problems
+# bug fix: set drawHover isosurface hover error kills hover watcher
+# code: AtomPropertyMapper isolated from IsoSolventReader
+# bug fix: isosurface "t.jvxl" map property temperature nonfunctional
+# bug fix: isosurface PROPERTY ("VDW 100%" implied) not working
+# code: rewrite of calculateHydrogen/hybridization code
+# bug fix: WRITE xxx should do SHOW not clipboard for application
+# bug fix: % at end of line acts as a line continuation
+# new feature: label %[shape]
+# new feature: lcaoCartoons dsp3 (a,b,c,d,e), d2sp3 (a,b,c,d,e,f)
+# bug fix: "sp3a" not "first bonded atom"
+# bug fix: failure to read old-style JVXL files. 
+# bug fix: reading nth model from a file within a ZIP collection not possible
+
+# --------------------------------------------------------------
+
+#version=12.1.8
+
+# bug fix: LcaoCartoon capping/slabbing not saved in state
+# bug fix: isosurface planar mapping, contours, atomic orbital speed and scaling problems
+# bug fix: oops; isosurface atomicOrbital REALLY not scaling well
+
+# --------------------------------------------------------------
+
+#version=12.1.7
+
+# bug fix: isosurface atomicOrbital not scaling well
+# bug fix: undo and smilesurlformat tokens missing
+# new feature: load SMILES to use http://cactus.nci.nih.gov/chemical/structure/..../file?format=sdf&get3d=True
+# bug fix: isosurface ... map SQUARED ... nonfunctional
+# new feature: zSlab, zDepth -- default 0,0 meaning "use slab and depth" settings
+# new feature: slab and depth are variables and can be read and set as for any other
+# bug fix: exit, quit are stopping spinning -- should just be stopping moveTo
+#          unless !exit or !quit.
+# bug fix: associative array problems with some auxiliaryInfo data saving to state
+# new feature: Vasp reader shows enthalpy and Gibbs energy in model name
+# bug fix: binary map files within zip directories cannot be read
+# bug fix: mouse-based slab does not refresh
+# bug fix: JME reader misreading "Br+"
+# bug fix: Writing PDB file with residue number > 9999 trashes file. Now writes "0000" "0001" etc. 
+
+# new feature: getProperty can drill down a list for a hashtable entry:
+#   print getProperty("shapeInfo.isosurface.id")
+#     s2
+#     isosurface1
+
+# --------------------------------------------------------------
+
+#version=12.1.6
+
+# bug fix: very first start of Jmol, with no history, fails.
+# bug fix: QChem reader not indicating symmetry A B properly
+# bug fix: QChem reader filter "BETA" fails
+# bug fix: obscure error when array variable is in place of required expression
+# code: ColorEncoder cleaner, no inappropriately static classes
+# bug fix: ColorEncoder not allowing for override of BW and WB palette
+# bug fix: GAMESS reader UHF caught on reading orbitals with LZ VALUE line
+
+# --------------------------------------------------------------
+
+#version=12.1.5
+
+# bug fix: set defaults RASMOL broken
+# bug fix: CRYSTAL reader FREQUENCY needs fragment numbers sorted
+# bug fix: rotation QUATERNION broken by 11.9.36, Mar 25, 2009 - Does not rotation about {0 0 0}
+# bug fix: CURSOR_WAIT hourglass not turning off automatically after set picking JmolScript operation
+# bug fix: associative array function .keys should report sorted key list
+# bug fix: associative arrays as ScriptVariables must be checked for type
+# new feature: color() function:
+#   color("") -- full details on current propertyColorScheme
+#   color("$someID") -- full details on isosurface ID "someID" color scheme
+#   color("xxx") -- full details for a named scheme where "xxx" is "rwb", for instance
+#   color("myscale = [xFF0000] [	x00FF00] [x0000FF]") creation of a scheme and return of details
+#   color("roygb", n) -- nth color of a standard color scheme
+#   color("", x.y) -- color for a property value x.y
+#   color("$someID", x.y) -- color for isosurface ID "someID" value x.y
+#   color("roygb", min, max) -- color/value pairs (two arrays)
+#   color("roygb", min, max, value) -- color for specific value
+#   print color("myscale = [xFF0000] [x00FF00] [x0000FF]")
+# colors	:
+# {255.0 0.0 0.0}
+# {0.0 255.0 0.0}
+# {0.0 0.0 255.0}
+# 
+# max	:	4.0
+# min	:	1.0
+# name	:	myscale
+# reversed	:	false
+# values	:
+# 1.0
+# 2.0
+# 3.0
+# 4.0
+#
+# print color("myscale = [xFF0000] [x00FF00] [x0000FF]", 0, 10, 0)
+# {255.0 0.0 0.0}
+#
+# The scheme is constructed, so it can be used later:
+#
+# print color("myscale", 0, 10, 5)
+# {0.0 255.0 0.0}
+# 
+# bug fix: associative array key sorting, new line for arrayed values
+# new feature: getProperty shapeInfo reports colorKey for isosurfaces:
+#   getproperty shapeInfo.isosurface[1].colorKey
+#
+# shapeinfo.isosurface[1].colorkey.colors	*List[31]	
+# shapeinfo.isosurface[1].colorkey.colors[1]	{255.0 0.0 0.0}
+# shapeinfo.isosurface[1].colorkey.colors[2]	{255.0 0.0 0.0}
+# ...
+# shapeinfo.isosurface[1].colorkey.colors[31]	{16.0 16.0 255.0}
+# shapeinfo.isosurface[1].colorkey.color	{255.0 165.0 0.0}
+# shapeinfo.isosurface[1].colorkey.values	*float[32]	[50.0,48.387096,46.774193,...,0.0]
+# shapeinfo.isosurface[1].colorkey.name     "roygb"
+# shapeinfo.isosurface[1].colorkey.max      31
+# shapeinfo.isosurface[1].colorkey.min      1
+#
+# bug fix: isosurface color range should not carry over to general "color property"  
+# bug fix: isosurface colorscheme TRANSLUCENT "xxx" fillTriangle error
+# bug fix: should not allow isosurface ... map colorscheme "xxx" TRANSLUCENT
+# bug fix: CRYSTAL reader FREQUENCY when input deck is missing VIBRATION record
+
+# --------------------------------------------------------------
+
+#version=12.1.4
+
+# new feature: isosurface display within 2.0 {atomset} -- renderable subset of isosurface
+# new feature: isosurface display all
+# bug fix: CRYSTAL reader not allowing {555 555 0} load
+# bug fix: CRYSTAL reader orientation error
+# bug fix: show info not showing molecule info
+# bug fix: isosurface LATTICE {x y z} should be relative to current UNITCELL
+# bug fix: broken selectExtended mode
+# bug fix: some isosurface display properties not generalized to wildcard
+# bug fix: Parallel processing not creating process-specific copies of shapes
+# bug fix: load unitcell for slab/polymer should allow 0, not just -1
+# bug fix: diastereomer check still checking stereochemistry 
+# bug fix: SMILES generator should not produce stereochemistry for RX2R'
+
+# --------------------------------------------------------------
+
+#version=12.1.3
+
+# bug fix: set picking invertStereo not working for non-ring stereocenters
+# new feature: load "myfile.xxx" {1 1 1} unitcell [ax ay az  bx by bz  cx cy cz]
+# new feature: x = compare({atomset1}, {atomset2}, "ISOMER")
+# new feature: x = compare(smilesString1, smilesString2, "ISOMER")
+# bug fix: "CCCC".find("SMILES","CCCC") should return 1 (other returns 0 and -1)
+# bug fix: "CCCC".find("SMARTS","CCC") should return [1,5,8,11] (other returns [] and "?"
+
+# bug fix: SmilesGeneration stereochemistry error 
+# bug fix: "smilesString".find("smarts","pattern") should return "?" upon parsing error
+# bug fix: proper "false AND"/"true OR" action where second operand is skipped
+
+# --------------------------------------------------------------
+
+#version=12.1.2
+
+# bug fix: SmilesGeneration fails for double bond stereochemistry
+# bug fix: documented within("SMILES",...) missing and required for SmilesGenerator
+# bug fix: select within(branch,{},{}) exception
+# bug fix: "sheet" token missing, so select within(sheet) fails
+# bug fix: struts not restored from state
+# bug fix: color STRUTS also colors hbonds
+# new feature: Application Display menu item "resize" (also added to 12.0)
+# bug fix: draw CYLINDER n ... where n is an integer does not give flat ends
+# bug fix: PNG file state for multiple file load cannot be read
+# bug fix: Jmol application not accepting -g
+# bug fix: "no atoms found returns wrong error message
+# bug fix: XYZ reader fails with load "filename" 3
+# bug fix: "[1,3,4,5]" can be translated to [1,3,4] 
+# code: Java 1.5 upgrade -- many generics still have warnings
+# bug fix: slab/depth mouse action does not automatically refresh
+
+# --------------------------------------------------------------
+
+#version=12.1.1
+
+# bug fix: draw arrows are being FIXED in state
+# bug fix: if ( )....; single-line syntax broken
+# bug fix: try/catch in functions not implemented correctly
+# bug fix: SMILES nested $(...) broken
+# bug fix: binary pmesh reader broken
+# bug fix: better coding for isosurface file typer
+# bug fix: print write("ramachandran")
+# bug fix: reading background images from PNG images within zip files
+# bug fix: write xxxx.jmol zip sets cannot be read
+# bug fix: binary surface readers map and ccp4 can misread file type
+# bug fix: isosurface "=xxx" missing check for isSyntaxCheck
+# bug fix: isosurface slab for polymer/slab symmetry
+
+# --------------------------------------------------------------
+
+# version=12.1.0
+
+# July 28, 2010
+

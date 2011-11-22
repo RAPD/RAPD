@@ -1,0 +1,72 @@
+body {
+	font-family: Verdana;
+	font-size: 11px;
+}
+
+a:hover {
+	color: #0000ff;
+	font-family: Tahoma;
+	text-decoration: underline overline;
+}
+
+a:visited, a:active {
+	color: #0000ff;
+	font-family: Tahoma;
+	text-decoration: none;
+}
+
+a:link {
+	color: #0000ff;
+	font-family: Tahoma;
+	text-decoration: overline underline;
+}
+
+td {
+	font-family: Verdana;
+	font-size: 8pt;
+}
+
+a {
+	font-family: Tahoma;
+}
+
+h1 {
+	font-family: Tahoma;
+}
+
+h2 {
+	font-family: Tahoma;
+}
+
+h3 {
+	font-family: Tahoma;
+}
+
+h4 {
+	font-family: Tahoma;
+}
+
+h5 {
+	font-family: Tahoma;
+}
+
+h6 {
+	font-family: Tahoma;
+}
+
+p {
+	font-family: Tahoma;
+}
+
+tr {
+	font-family: Tahoma;
+}
+
+<form> {
+	font-family: Verdana;
+}
+
+<input> {
+	color: #0080ff;
+	font-family: Verdana;
+}

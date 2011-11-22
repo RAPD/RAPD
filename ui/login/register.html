@@ -1,0 +1,80 @@
+<HTML>
+<HEAD>
+<TITLE>Registration</TITLE>
+<link rel="shortcut icon" href="../css/favicon.ico" type="image/x-icon">
+  <style type="text/css" media="screen">
+    @import url("../css/rapd.css");
+  </style>
+<script Language="JavaScript">
+<!--
+function Form1_Validator(theForm)
+{
+  	if (theForm.firstname.value == "")
+  {
+    alert("Please enter a value for the \"firstname\" field.");
+    theForm.firstname.focus();
+    return (false);
+  }
+  	if (theForm.lastname.value == "")
+  {
+    alert("Please enter a value for the \"lastname\" field.");
+    theForm.firstname.focus();
+    return (false);
+  }
+	if (theForm.username.value == "")
+  {
+    alert("Please enter a value for the \"username\" field.");
+    theForm.firstname.focus();
+    return (false);
+  }
+	if (theForm.email.value == "")
+  {
+    alert("Please enter a value for the \"email\" field.");
+    theForm.email.focus();
+    return (false);
+  }	
+  	if (theForm.password.value == "")
+  {
+    alert("Please enter a value for the \"password\" field.");
+    theForm.email.focus();
+    return (false);
+  }
+	if (theForm.password.value != theForm.confirm.value)
+	{
+		alert("The two passwords are not the same.");
+		theForm.confirm.focus();
+		return (false);
+	}
+}
+
+//--></script>
+</head>
+
+<BODY>
+
+<h1>RAPD  Register</h1>
+
+<FORM METHOD="POST" ACTION="register.php" onsubmit="return Form1_Validator(this)" language="JavaScript" name="Form1">
+<p>The person coordinating the group account</p>
+<p><strong style="font-weight: 400"><font size="2">First Name:</font></strong><BR>
+<INPUT NAME="firstname" SIZE=25 MAXLENGTH=50></font></p>
+
+<p><strong style="font-weight: 400"><font size="2">Last Name:</font></strong><BR>
+<INPUT NAME="lastname" SIZE=25 MAXLENGTH=50></p>
+
+<p><strong style="font-weight: 400"><font size="2">Group name:</strong></font><br>
+<INPUT NAME="username" SIZE=25 MAXLENGTH=50></p>
+
+<p><strong style="font-weight: 400"><font size="2">Password:</font></strong><BR>
+<INPUT TYPE="password" NAME="password" SIZE=25 MAXLENGTH=25></p>
+
+<p><strong style="font-weight: 400"><font size="2">Confirm Password:</strong></font><br>
+<INPUT TYPE="password" NAME="confirm" SIZE=25 MAXLENGTH=25></p>
+
+<p><strong style="font-weight: 400"><font size="2">E-Mail Address</font></strong><BR>
+<INPUT TYPE="text" NAME="email" SIZE=25 MAXLENGTH=100></font></font></p>
+
+<p><INPUT TYPE="image" img src="submit.png" value="Submit" alt="Submit"></p>
+</FORM>
+</BODY>
+</HTML>

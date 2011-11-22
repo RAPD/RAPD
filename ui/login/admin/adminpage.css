@@ -1,0 +1,10 @@
+a:active     { font-family: Verdana; font-size: 8pt; color: #800000; text-decoration: none}
+a:hover      { font-family: Verdana; font-size: 8pt; color: #800000; text-decoration: 
+               overline underline }
+a:link       { font-family: Verdana; font-size: 8pt; text-decoration: none; color: #800000 }
+a:visited    { font-family: Verdana; font-size: 8pt; text-decoration: none; color: #800000 }
+body         { font-family: Verdana; font-size: 8pt }
+html         { font-family: Verdana; font-size: 8pt }
+table        { font-family: Verdana; font-size: 8pt }
+option       { font-family: Verdana; font-size: 8pt }
+input        { font-family: Verdana; font-size: 8pt }

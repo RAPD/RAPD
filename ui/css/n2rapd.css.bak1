@@ -1,0 +1,654 @@
+body.banner
+{
+  background-image:url('./images/utopia_hzpbg2.jpg');
+  background-repeat:repeat-x;
+}
+body.thin {
+  background-image:url('./images/utopia_hzpbg3.jpg');
+  background-repeat:repeat-x;
+}
+body.plain {
+  background-image: none;
+}
+h1 {
+margin-top:0.1cm;
+text-align:center;
+font-family:Arial,Verdana,Sans-serif;
+color:white;
+}
+h1.green {
+  margin-top:0.1cm;
+  text-align:center;
+  font-family:Arial,Verdana,Sans-serif;
+  color:green;
+}
+h3 {
+margin-top:0.1cm;
+text-align:center;
+font-family:Arial,Verdana,Sans-serif;
+color:white;
+}
+h3.thin {
+margin-top:-0.10cm;
+margin-bottom:0.10cm;
+text-align:center;
+font-family:Arial,Verdana,Sans-serif;
+color:white;
+}
+h3.green {
+margin-top:0.1cm;
+text-align:center;
+font-family:Arial,Verdana,Sans-serif;
+color:green;
+}
+h3.splash {
+  margin-top:0.1cm;
+  margin-bottom: 0cm;
+  text-align:left;
+  font-family:Arial,Verdana,Sans-serif;
+  color:green;
+}
+h1.results {
+        margin-top: 1.2em;
+        font-size: 1.5em;
+        font-weight: bold;
+        line-height: 1.6em;
+        color: green;
+        border-bottom: 2px solid green;
+        clear: both;
+	text-align:left;
+}
+h2.results {font-size: 1.2em; 
+        font-weight: bold; 
+        line-height: 1.6em; 
+        color: #808080; 
+        clear: both;
+	text-align:left;
+}
+h3.results {font-size: 1.2em; 
+        font-weight: bold; 
+        line-height: 1.6em; 
+        color: #FF0000; 
+        clear: both;
+	text-align:left;
+}
+h4.results {font-size: 1.2em; 
+        font-weight: bold; 
+        line-height: 1.6em; 
+        color: #FF8040; 
+        clear: both;
+	text-align:left;
+}
+p {
+        font-family:Arial,Verdana,Sans-serif;
+        color:#909090;
+        margin-top:-0.3cm;
+}
+p.splash {
+        text-align:left;
+        font-family:Arial,Verdana,Sans-serif;
+        color:black;
+        margin-top:0.3cm;
+}
+
+.clear { /* generic container (i.e. div) for floating buttons */
+    overflow: hidden;
+    width: 100%;
+    margin-left:auto;
+    margin-right:auto;
+}
+a.clicked {
+    background:#8dc262;
+}
+a.current {
+    background:yellow;
+}
+a.button {
+    background: transparent url('images/bg_button_a.gif') no-repeat scroll top right;
+    color: #444;
+    display: block;
+    float: left;
+    font: normal 12px arial, sans-serif;
+    height: 24px;
+    margin-right: 6px;
+    padding-right: 18px; /* sliding doors padding */
+    text-decoration: none;
+}
+a.button span {
+    background: transparent url('images/bg_button_span.gif') no-repeat;
+    display: block;
+    line-height: 14px;
+    padding: 5px 0 5px 18px;
+} 
+a.button:active {
+    background-position: bottom right;
+    color: #000;
+    outline: none; /* hide dotted outline in Firefox */
+}
+a.button:active span {
+    background-position: bottom left;
+    padding: 6px 0 4px 18px; /* push text down 1px */
+} 
+td {
+    font-family: Arial; 
+    font-size: 10pt;
+}
+td.header {
+    text-align: center;
+    text-decoration:underline;
+}
+
+      a {
+        font-family:Arial,Verdana,Sans-serif;
+        color:#909090;
+        text-decoration: none;
+      }
+      
+div.snap_menu_wrapper {
+    position: relative; 	
+    height: 750px;
+    /*height: 50%;*/
+    /* Make bigger than a photo, because we need a place for a scrollbar. */
+    width: 240px;
+    margin-top: 0px;
+    text-align: center;
+    overflow: auto;
+}
+
+div.snap_menu {
+    padding: 5px 0;
+}
+
+.snap_menu a {
+    display: block;
+    margin-bottom: 0px;
+    width: 190px;
+}
+
+.snap_menu a:hover {
+    border-color: rgb(130, 130, 130);
+    border-style: dotted;
+    background-color: yellow;
+}
+
+.snap_menu img {
+    display: block;
+    border: none;
+}
+
+.snap_menu_wrapper .loading {
+    position: absolute;
+    top: 50px;
+    left: 10px;
+    
+    margin: 0 auto;
+    padding: 10px;
+    
+    width: 100px;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;	
+    
+    text-align: center;
+    color: #fff;
+    border: 1px solid rgb(79, 79, 79);
+    background: #1F1D1D;
+}
+
+.snap_menu .pair {
+   color: #CC8899;
+}
+
+.snap_menu .grayed {
+   color: #D8D8D8;
+}
+
+
+div.run_menu_wrapper {
+    position: relative; 	
+    height: 750px;
+    /*height: 50%;*/
+    /* Make bigger than a photo, because we need a place for a scrollbar. */
+    width: 240px;
+    margin-top: 0px;
+    text-align: center;
+    overflow: auto;
+}
+
+div.run_menu {
+    padding: 5px 0;
+}
+
+.run_menu a {
+    display: block;
+    margin-bottom: 0px;
+    width: 190px;
+    /*border: 2px rgb(79, 79, 79) solid;
+     * 	-webkit-border-radius: 4px;
+     * 		-moz-border-radius: 4px; */		
+    
+    /* When image support is turned off */
+    /*color: #fff;*/
+    /*background: rgb(79, 79, 79);*/	
+}
+
+.run_menu a:hover {
+    border-color: rgb(130, 130, 130);
+    border-style: dotted;
+    background-color: yellow;
+}
+
+.run_menu img {
+    display: block;
+    border: none;
+}
+
+.run_menu_wrapper .loading {
+    position: absolute;
+    top: 50px;
+    left: 10px;
+	
+    margin: 0 auto;
+    padding: 10px;
+
+    width: 150px;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;	
+    
+    text-align: center;
+    color: #fff;
+    border: 1px solid rgb(79, 79, 79);
+    background: #1F1D1D;
+}
+
+.run_menu .grayed {
+   color: #D8D8D8;
+}
+
+
+div.snap_menu_share_wrapper {
+        position: relative; 	
+	height: 427px;
+        /*height: 50%;*/
+	/* Make bigger than a photo, because we need a place for a scrollbar. */
+        width: 240px;
+	margin-top: 0px;
+	text-align: center;
+        overflow: auto;
+      }
+
+      div.snap_menu_share {
+        padding: 5px 0;
+      }
+
+      .snap_menu_share a {
+        display: block;
+	margin-bottom: 0px;
+        width: 190px;
+	/*border: 2px rgb(79, 79, 79) solid;
+ * 	-webkit-border-radius: 4px;
+ * 		-moz-border-radius: 4px; */		
+	
+	/* When image support is turned off */
+	/*color: #fff;*/
+	/*background: rgb(79, 79, 79);*/	
+      }
+
+.snap_menu_share a:hover {
+    border-color: rgb(130, 130, 130);
+    border-style: dotted;
+    background-color: yellow;
+}
+.snap_menu_share img {
+    display: block;
+    border: none;
+}
+
+.snap_menu_share .pair {
+   color: #CC8899;
+}
+
+.snap_menu_share .grayed {
+   color: #D8D8D8;
+}
+
+
+.snap_menu_share_wrapper .loading {
+    position: absolute;
+    top: 50px;
+    left: 10px;
+    
+    margin: 0 auto;
+    padding: 10px;
+
+    width: 100px;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;	
+	
+    text-align: center;
+    color: #fff;
+    border: 1px solid rgb(79, 79, 79);
+    background: #1F1D1D;
+}
+
+
+div.run_menu_share_wrapper {
+    position: relative; 	
+    height: 280px;
+    /*height: 50%;*/
+    /* Make bigger than a photo, because we need a place for a scrollbar. */
+    width: 240px;
+    margin-top: -5px;
+    text-align: center;
+    overflow: auto;
+}
+
+div.run_menu_share {
+    padding: 5px 0;
+}
+
+.run_menu_share a {
+    display: block;
+    margin-bottom: 0px;
+    width: 190px;
+    /*border: 2px rgb(79, 79, 79) solid;
+     * 	-webkit-border-radius: 4px;
+     * 	-moz-border-radius: 4px; */		
+    
+    /* When image support is turned off */
+    /*color: #fff;*/
+    /*background: rgb(79, 79, 79);*/	
+}
+
+.run_menu_share a:hover {
+    border-color: rgb(130, 130, 130);
+    border-style: dotted;
+    background-color: yellow;
+}
+
+.run_menu_share img {
+    display: block;
+    border: none;
+}
+
+.run_menu_share_wrapper .loading {
+    position: absolute;
+    top: 50px;
+    left: 10px;
+	
+    margin: 0 auto;
+    padding: 10px;
+
+    width: 100px;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;	
+    
+    text-align: center;
+    color: #fff;
+    border: 1px solid rgb(79, 79, 79);
+    background: #1F1D1D;
+}
+
+.run_menu_share .grayed {
+   color: #D8D8D8;
+}
+
+
+.parsed {
+    position: relative;
+    height: 750px;
+    /*height: 100%;*/
+    width: 100%;
+    margin-top: 0px;
+    text-align: center;
+    overflow: auto;
+}
+
+.full {
+    position: relative;
+    height: 750px;
+    width: 100%;
+    margin-top: 0px;
+    text-align: left;
+    overflow: auto;
+}
+
+.images {
+    position: relative;
+    height: 750px;
+    width: 100%;
+    margin-top: 0px;
+    text-align: center;
+    overflow: auto;
+}
+
+.plots {
+    position: relative;
+    height: 750px;
+    width: 100%;
+    margin-top: 0px;
+    text-align: center;
+    overflow: auto;
+}
+
+.ranked {
+    position: relative;
+    height: 750px;
+    /*height: 100%;*/
+    width: 100%;
+    margin-top: 0px;
+    text-align: center;
+    overflow: auto;
+}
+
+
+
+div.controls {
+    position: relative;
+    height: 750px;
+    /*height: 50%;*/
+    /* Make bigger than a photo, because we need a place for a scrollbar. */
+    width: 100px;
+    margin-top: 0px;
+    text-align: center;
+    overflow: auto;
+}
+
+#container {
+	width: 800px; 
+	margin: 30px auto;
+	padding: 0; 
+	margin-left:0px; 
+	margin-right:auto; 
+}
+
+
+div.control-filler {
+    height:400px;
+}
+
+/*For dataTable */
+
+#dt_std {
+        font: 80%/1.45em "Lucida Grande", Verdana, Arial, Helvetica, sans-serif;
+        margin: 0;
+        padding: 0;
+        color: #333;
+        background-color: #fff;
+        background-image: none;
+}
+
+
+#dt_std #container {
+        width: 800px;
+        margin: 30px auto;
+        padding: 0;
+}
+
+#dt_std #demo {
+        margin: 30px auto 0 auto;
+}
+
+#dt_standard #footer {
+        margin: 50px auto 0 auto;
+        padding: 0;
+}
+
+h3.dt {
+        margin-top:0.1cm;
+        text-align:left;
+        font-family:Arial,Verdana,Sans-serif;
+        color:black;
+}
+
+#dt_std #demo h1 {
+        margin-top: 1.2em; 
+        font-size: 1.5em; 
+        font-weight: bold; 
+        line-height: 1.6em; 
+        color: green;
+        border-bottom: 2px solid green; 
+        clear: both;
+}
+
+.dataTables_wrapper {
+        position: relative; 
+        max-width:50px;
+        min-height: 75px; 
+        _height: 302px; 
+        clear: both;    
+}
+#sort-table_wrapper {
+        width: 300;
+}
+
+
+table.display td {
+        padding: 1px 7px;
+}
+
+#dt_example #container {
+        width: 800px;
+        margin: 30px auto;
+        padding: 0;
+}
+
+
+#container {
+	width: 800px; 
+	margin: 30px auto;
+	padding: 0; 
+	margin-left:0px; 
+	margin-right:auto; 
+}
+
+#dt_example h1 {
+        margin-top: 1.2em; 
+        font-size: 1.5em; 
+        font-weight: bold; 
+        line-height: 1.6em; 
+        color: green;
+        border-bottom: 2px solid green; 
+        clear: both;
+}
+#dt_example h2 {
+        font-size: 1.2em; 
+        font-weight: bold; 
+        line-height: 1.6em; 
+        color: #808080; 
+        clear: both;
+}
+#dt_example h3 {
+        font-size: 1.4em; 
+        font-weight: bold; 
+        line-height: 1.6em; 
+        color: red; 
+        clear: both;
+}
+#dt_example h4 {
+        font-size: 1.4em; 
+        font-weight: bold; 
+        line-height: 1.6em; 
+        color: orange; 
+        clear: both;
+}
+table.display tr.odd.gradeA { 
+        background-color: #eeffee;
+}
+table.display tr.even.gradeA { 
+        background-color: #ffffff;
+}
+
+
+
+table.ranking tr.odd {
+        background-color: #eeffee;
+}
+table.ranking tr.even {
+        background-color: #ffffff;
+}
+
+
+
+.fg-button { outline: 0; margin:0 4px 0 0; padding: .4em 1em; text-decoration:none !important; cursor:pointer; position: relative; text-align: center; zoom: 1; }
+.fg-button .ui-icon { position: absolute; top: 50%; margin-top: -8px; left: 50%; margin-left: -8px; }
+	
+a.fg-button { float:left; }
+	
+/* remove extra button width in IE */
+button.fg-button { width:auto; overflow:visible; }
+
+.fg-button-icon-left { padding-left: 2.1em; }
+.fg-button-icon-right { padding-right: 2.1em; }
+.fg-button-icon-left .ui-icon { right: auto; left: .2em; margin-left: 0; }
+.fg-button-icon-right .ui-icon { left: auto; right: .2em; margin-left: 0; }
+	
+.fg-button-icon-solo { display:block; width:8px; text-indent: -9999px; }	 /* solo icon buttons must have block properties for the text-indent to work */	
+	
+.fg-buttonset { float:left; }
+.fg-buttonset .fg-button { float: left; }
+.fg-buttonset-single .fg-button, 
+.fg-buttonset-multi .fg-button { margin-right: -1px;}
+
+.fg-toolbar { padding: .5em; margin: 0;  }
+.fg-toolbar .fg-buttonset { margin-right:1.5em; padding-left: 1px; }
+.fg-toolbar .fg-button { font-size: 1em;  }
+
+.ui-dialog .ui-dialog-content {
+  color: green;
+}
+
+
+table.integrate {  border-style: solid;
+                   border-width: 2px;
+                   border-spacing: 0;
+                   border-color: gray;
+                   padding: 5px;
+                   text-align: center;
+                   height: 20px;
+                   font-size: 15px; }
+#integrate  tr.alt {background-color: #EAF2D3; }
+
+.settings_table tr { font-size: 2em;
+                     color:red;
+}
+
+//trying to make tooltips better
+a.info{
+    position:relative; /*this is the key*/
+    z-index:24; background-color:#ccc;
+    color:#000;
+    text-decoration:none}
+
+a.info:hover{z-index:25; background-color:#ff0}
+
+a.info span{display: none}
+
+a.info:hover span{ /*the span will display just on :hover state*/
+    display:block;
+    position:absolute;
+    top:2em; left:2em; width:15em;
+    border:1px solid #0cf;
+    background-color:#cff; color:#000;
+    text-align: center}
+
+

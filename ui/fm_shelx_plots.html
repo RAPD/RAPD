@@ -1,0 +1,833 @@
+<html>
+  <head>
+    <style type="text/css">
+      body {
+        background-image: none;
+      }
+       .y-label {width:7px; position:absolute; text-align:center; top:300px; left:15px; }
+       .x-label {position:relative; text-align:center; top:10px; }
+       .title {font-size:30px; text-align:center;} 
+    </style>
+    
+    <link href="layout.css" rel="stylesheet" type="text/css"></link>
+    <link type="text/css" href="css/south-street/njquery-ui-1.7.2.custom.css" rel="stylesheet" />
+    <link type="text/css" href="css/d_rapd.css"                               rel="stylesheet" />
+    <link type="text/css" href="css/ndemo_table.css"                          rel="stylesheet" />
+    <link type="text/css" href="css/ndemo_page.css"                           rel="stylesheet" />
+
+    
+    
+
+    <!--[if IE]><script language="javascript" type="text/javascript" src="../excanvas.min.js"></script><![endif]-->
+    <script src="http://www.google.com/jsapi?key=ABQIAAAArmeu5LmO0GnPE-nZ0Fe1qhQOqcOQgkuU1c5Ip7P-iLN3BAQyDBR1yNT4dNxyOxjnbWKQzT76MupHkw"></script>
+    <script>
+      // Load jQuery
+      google.load("jquery", "1.4.2"); // , {uncompressed : true});
+      google.load("jqueryui", "1.8.4");
+    </script>
+    <script language="javascript" type="text/javascript" src="js/flot/jquery.flot.js"></script>
+    <script type="text/javascript" language="javascript" src="js/dataTables-1.5/media/js/jquery.js"></script>
+    <script type="text/javascript" language="javascript" src="js/dataTables-1.5/media/js/jquery.dataTables.js"></script>
+
+  </head>
+  <body>
+    
+    <table>
+     <!--<script id="source" language="javascript" type="text/javascript"> -->
+      <tr> 
+        <td width="100%">
+        <div class="tabs">
+          <!-- This is where the tab labels are defined
+               221 = tab2(on page) tab2(full output tab) tab1 -->
+          <ul>
+            <li><a href="#tabs-221">SHELXC 1</a></li>
+            <li><a href="#tabs-222">SHELXC 2</a></li>
+            <li><a href="#tabs-223">SHELXC 3</a></li>
+            <li><a href="#tabs-224">SHELXD 1</a></li>
+            <li><a href="#tabs-225">SHELXD 2</a></li>
+            <li><a href="#tabs-226">SHELXD 3</a></li>
+            <li><a href="#tabs-227">SHELXD 4</a></li>
+            <li><a href="#tabs-228">SHELXD 5</a></li>
+            <li><a href="#tabs-229">SHELXE 1</a></li>
+            <li><a href="#tabs-230">SHELXE 2</a></li>
+            <li><a href="#tabs-231">SHELXE 3</a></li>
+          </ul>
+          <div id="tabs-221">
+            <div class='title'><b>Mean I/sig vs. Resolution</b></div>
+            <div id="chart1_div" style="width:800px;height:600px"></div>
+            <span class='y-label'>Mean I/sig</span>
+            <div class='x-label'>Resolution(A)</div>
+          </div>
+          <div id="tabs-222">
+            <div class='title'><b>Completeness vs. Resolution</b></div>
+            <div id="chart2_div" style="width:800px;height:600px"></div>
+            <span class='y-label'>C o m p l e t e n e s s</span>
+            <div class='x-label'>Resolution(A)</div>
+          </div>
+          <div id="tabs-223">
+            <div class='title'><b>Mean d"/sig vs. Resolution</b></div>
+            <div id="chart3_div" style="width:800px;height:600px"></div>
+            <span class='y-label'>Mean d"/sig</span>
+            <div class='x-label'>Resolution(A)</div>
+          </div>
+          <div id="tabs-224">
+            <div class='title'><b>CCall vs. CCweak</b></div>
+            <div id="chart4_div" style="width:800px;height:600px"></div>
+            <span class='y-label'>C C a l l</span>
+            <div class='x-label'>CCweak</div>
+          </div>
+          <div id="tabs-225">
+            <div class='title'><b>CCall vs. PATFOM</b></div>
+            <div id="chart5_div" style="width:800px;height:600px"></div>
+            <span class='y-label'>C C a l l</span>
+            <div class='x-label'>PATFOM</div>
+          </div>
+          <div id="tabs-226">
+            <div class='title'><b>CCall vs Try</b></div>
+            <div id="chart7_div" style="width:800px;height:600px"></div>
+            <span class='y-label'>C C a l l</span>
+            <div class='x-label'>Try</div>
+          </div>
+          <div id="tabs-227">
+            <div class='title'><b>Site Occupancy vs. Peak Number</b></div>
+            <div id="chart8_div" style="width:800px;height:600px"></div>
+            <span class='y-label'>S i t e &nbsp O c c u p a n c y</span>
+            <div class='x-label'>CCall</div>
+          </div>
+          <div id="tabs-228">
+            <div class='title'><b>Contrast vs. Cycle</b></div>
+            <div id="chart9_div" style="width:800px;height:600px"></div>
+            <span class='y-label'>C o n t r a s t</span>
+            <div class='x-label'>Cycle</div>
+          </div>
+          <div id="tabs-229">
+            <div class='title'><b>Connectivity vs. Cycle</b></div>
+            <div id="chart10_div" style="width:800px;height:600px"></div>
+            <span class='y-label'>C o n n e c t i v i t y</span>
+            <div class='x-label'>Cycle</div>
+          </div>
+          <div id="tabs-230">
+            <div class='title'><b>Estimated CCmap vs. Resolution</b></div>
+            <div id="chart11_div" style="width:800px;height:600px"></div>
+            <span class='y-label'>C C m a p</span>
+            <div class='x-label'>Resolution(A)</div>
+          </div>
+        </div>
+        <!-- End of Tabs -->
+      </td>
+     </tr>
+  <!-- </script>-->
+  </table>
+
+  <script language="javascript" type="text/javascript">
+$(function () {
+    $('.tabs').tabs();
+
+    var meanIsig = [];
+
+    meanIsig.push([8.0,60.7]);
+    meanIsig.push([6.0,56.7]);
+    meanIsig.push([5.0,54.1]);
+    meanIsig.push([4.0,59.8]);
+    meanIsig.push([3.5,56.9]);
+    meanIsig.push([3.1,50.6]);
+    meanIsig.push([2.9,42.8]);
+    meanIsig.push([2.7,38.4]);
+    meanIsig.push([2.5,33.4]);
+    meanIsig.push([2.3,28.6]);
+    meanIsig.push([2.05,21.3]);
+
+    var completeness = [];
+
+    completeness.push([8.0,95.8]);
+    completeness.push([6.0,98.5]);
+    completeness.push([5.0,99.4]);
+    completeness.push([4.0,99.5]);
+    completeness.push([3.5,99.5]);
+    completeness.push([3.1,99.7]);
+    completeness.push([2.9,99.6]);
+    completeness.push([2.7,99.8]);
+    completeness.push([2.5,99.8]);
+    completeness.push([2.3,99.8]);
+    completeness.push([2.05,99.6]);
+
+    var dsig = [];
+
+    dsig.push([8.0,12.85]);
+    dsig.push([6.0,11.45]);
+    dsig.push([5.0,10.01]);
+    dsig.push([4.0,7.83]);
+    dsig.push([3.5,7.35]);
+    dsig.push([3.1,6.98]);
+    dsig.push([2.9,6.60]);
+    dsig.push([2.7,6.26]);
+    dsig.push([2.5,5.61]);
+    dsig.push([2.3,5.03]);
+    dsig.push([2.05,3.79]);
+
+    var ccall = [];
+
+    ccall.push([11.21,26.31]);
+    ccall.push([10.97,23.47]);
+    ccall.push([13.78,25.05]);
+    ccall.push([9.55,18.91]);
+    ccall.push([7.25,13.97]);
+    ccall.push([15.75,29.50]);
+    ccall.push([22.19,37.45]);
+    ccall.push([12.59,24.38]);
+    ccall.push([10.06,22.17]);
+    ccall.push([11.53,25.16]);
+    ccall.push([29.61,49.27]);
+    ccall.push([9.00,18.12]);
+    ccall.push([30.56,50.75]);
+    ccall.push([10.65,25.02]);
+    ccall.push([10.12,22.16]);
+    ccall.push([29.61,49.27]);
+    ccall.push([13.50,23.05]);
+    ccall.push([31.31,51.28]);
+    ccall.push([13.69,24.35]);
+    ccall.push([30.58,50.76]);
+    ccall.push([11.11,21.33]);
+    ccall.push([23.68,39.03]);
+    ccall.push([13.23,25.99]);
+    ccall.push([29.77,49.25]);
+    ccall.push([10.64,21.23]);
+    ccall.push([5.23,16.93]);
+    ccall.push([11.00,24.36]);
+    ccall.push([29.62,49.28]);
+    ccall.push([31.24,51.23]);
+    ccall.push([13.90,24.67]);
+    ccall.push([23.36,37.76]);
+    ccall.push([10.99,23.71]);
+    ccall.push([29.62,49.28]);
+    ccall.push([29.62,49.27]);
+    ccall.push([12.08,23.21]);
+    ccall.push([30.54,50.74]);
+    ccall.push([29.78,49.25]);
+    ccall.push([24.17,39.21]);
+    ccall.push([8.37,19.60]);
+    ccall.push([29.61,49.28]);
+    ccall.push([29.77,49.25]);
+    ccall.push([11.97,23.73]);
+    ccall.push([11.52,22.11]);
+    ccall.push([29.62,49.28]);
+    ccall.push([17.10,27.98]);
+    ccall.push([31.24,51.23]);
+    ccall.push([12.35,22.78]);
+    ccall.push([30.56,50.75]);
+    ccall.push([29.62,49.28]);
+    ccall.push([29.61,49.27]);
+    ccall.push([16.01,31.10]);
+    ccall.push([9.81,23.52]);
+    ccall.push([23.12,38.76]);
+    ccall.push([12.22,23.91]);
+    ccall.push([10.68,21.60]);
+    ccall.push([31.24,51.23]);
+    ccall.push([11.14,22.08]);
+    ccall.push([13.00,23.88]);
+    ccall.push([17.57,31.83]);
+    ccall.push([29.61,49.27]);
+    ccall.push([13.97,25.26]);
+    ccall.push([29.62,49.28]);
+    ccall.push([17.24,31.67]);
+    ccall.push([11.48,23.47]);
+    ccall.push([16.13,30.10]);
+    ccall.push([29.61,49.27]);
+    ccall.push([9.73,21.25]);
+    ccall.push([29.61,49.28]);
+    ccall.push([8.66,21.01]);
+    ccall.push([12.56,23.87]);
+    ccall.push([7.02,17.74]);
+    ccall.push([29.61,49.27]);
+    ccall.push([16.70,28.27]);
+    ccall.push([17.93,29.03]);
+    ccall.push([30.56,50.75]);
+    ccall.push([11.07,22.11]);
+    ccall.push([29.62,49.28]);
+    ccall.push([10.75,19.74]);
+    ccall.push([22.14,42.28]);
+    ccall.push([12.92,24.01]);
+    ccall.push([12.52,24.64]);
+    ccall.push([29.62,49.28]);
+    ccall.push([17.03,27.89]);
+    ccall.push([7.93,22.37]);
+    ccall.push([24.27,39.31]);
+    ccall.push([18.79,35.90]);
+    ccall.push([15.11,30.21]);
+    ccall.push([15.16,24.13]);
+    ccall.push([6.81,16.52]);
+    ccall.push([13.19,24.94]);
+    ccall.push([12.95,25.07]);
+    ccall.push([29.62,49.28]);
+    ccall.push([30.50,50.71]);
+    ccall.push([12.79,25.79]);
+    ccall.push([8.27,15.98]);
+    ccall.push([5.93,15.44]);
+    ccall.push([13.17,24.73]);
+    ccall.push([12.67,24.96]);
+    ccall.push([15.57,30.50]);
+    ccall.push([10.42,20.72]);
+
+    var patFom = [];
+
+    patFom.push([1.41,26.31]);
+    patFom.push([4.66,23.47]);
+    patFom.push([7.05,25.05]);
+    patFom.push([2.95,18.91]);
+    patFom.push([0.00,13.97]);
+    patFom.push([6.39,29.50]);
+    patFom.push([1.79,37.45]);
+    patFom.push([7.47,24.38]);
+    patFom.push([0.00,22.17]);
+    patFom.push([1.28,25.16]);
+    patFom.push([67.61,49.27]);
+    patFom.push([3.41,18.12]);
+    patFom.push([74.73,50.75]);
+    patFom.push([9.87,25.02]);
+    patFom.push([2.63,22.16]);
+    patFom.push([67.61,49.27]);
+    patFom.push([1.27,23.05]);
+    patFom.push([76.51,51.28]);
+    patFom.push([3.30,24.35]);
+    patFom.push([74.73,50.76]);
+    patFom.push([1.00,21.33]);
+    patFom.push([4.58,39.03]);
+    patFom.push([1.12,25.99]);
+    patFom.push([67.61,49.25]);
+    patFom.push([3.49,21.23]);
+    patFom.push([0.66,16.93]);
+    patFom.push([2.70,24.36]);
+    patFom.push([67.61,49.28]);
+    patFom.push([76.16,51.23]);
+    patFom.push([2.02,24.67]);
+    patFom.push([1.07,37.76]);
+    patFom.push([3.39,23.71]);
+    patFom.push([67.61,49.28]);
+    patFom.push([67.61,49.27]);
+    patFom.push([3.58,23.21]);
+    patFom.push([74.73,50.74]);
+    patFom.push([67.61,49.25]);
+    patFom.push([5.44,39.21]);
+    patFom.push([0.88,19.60]);
+    patFom.push([67.61,49.28]);
+    patFom.push([67.61,49.25]);
+    patFom.push([1.50,23.73]);
+    patFom.push([0.00,22.11]);
+    patFom.push([67.61,49.28]);
+    patFom.push([12.39,27.98]);
+    patFom.push([76.16,51.23]);
+    patFom.push([3.06,22.78]);
+    patFom.push([74.73,50.75]);
+    patFom.push([67.61,49.28]);
+    patFom.push([67.61,49.27]);
+    patFom.push([5.28,31.10]);
+    patFom.push([0.18,23.52]);
+    patFom.push([0.00,38.76]);
+    patFom.push([7.17,23.91]);
+    patFom.push([0.59,21.60]);
+    patFom.push([76.16,51.23]);
+    patFom.push([2.42,22.08]);
+    patFom.push([6.69,23.88]);
+    patFom.push([9.25,31.83]);
+    patFom.push([67.61,49.27]);
+    patFom.push([3.27,25.26]);
+    patFom.push([67.61,49.28]);
+    patFom.push([14.07,31.67]);
+    patFom.push([2.27,23.47]);
+    patFom.push([6.39,30.10]);
+    patFom.push([67.61,49.27]);
+    patFom.push([2.27,21.25]);
+    patFom.push([67.61,49.28]);
+    patFom.push([5.49,21.01]);
+    patFom.push([0.00,23.87]);
+    patFom.push([5.67,17.74]);
+    patFom.push([67.61,49.27]);
+    patFom.push([0.61,28.27]);
+    patFom.push([2.04,29.03]);
+    patFom.push([74.73,50.75]);
+    patFom.push([8.16,22.11]);
+    patFom.push([67.61,49.28]);
+    patFom.push([2.03,19.74]);
+    patFom.push([77.53,42.28]);
+    patFom.push([0.00,24.01]);
+    patFom.push([3.00,24.64]);
+    patFom.push([67.61,49.28]);
+    patFom.push([10.69,27.89]);
+    patFom.push([6.18,22.37]);
+    patFom.push([3.03,39.31]);
+    patFom.push([0.00,35.90]);
+    patFom.push([10.76,30.21]);
+    patFom.push([4.81,24.13]);
+    patFom.push([6.14,16.52]);
+    patFom.push([4.32,24.94]);
+    patFom.push([2.72,25.07]);
+    patFom.push([67.61,49.28]);
+    patFom.push([74.73,50.71]);
+    patFom.push([0.00,25.79]);
+    patFom.push([2.93,15.98]);
+    patFom.push([0.00,15.44]);
+    patFom.push([0.65,24.73]);
+    patFom.push([6.16,24.96]);
+    patFom.push([4.52,30.50]);
+    patFom.push([3.79,20.72]);
+
+    var ccallTry = [];
+
+    ccallTry.push([1,26.31]);
+    ccallTry.push([2,23.47]);
+    ccallTry.push([3,25.05]);
+    ccallTry.push([4,18.91]);
+    ccallTry.push([5,13.97]);
+    ccallTry.push([6,29.50]);
+    ccallTry.push([7,37.45]);
+    ccallTry.push([8,24.38]);
+    ccallTry.push([9,22.17]);
+    ccallTry.push([10,25.16]);
+    ccallTry.push([11,49.27]);
+    ccallTry.push([12,18.12]);
+    ccallTry.push([13,50.75]);
+    ccallTry.push([14,25.02]);
+    ccallTry.push([15,22.16]);
+    ccallTry.push([16,49.27]);
+    ccallTry.push([17,23.05]);
+    ccallTry.push([18,51.28]);
+    ccallTry.push([19,24.35]);
+    ccallTry.push([20,50.76]);
+    ccallTry.push([21,21.33]);
+    ccallTry.push([22,39.03]);
+    ccallTry.push([23,25.99]);
+    ccallTry.push([24,49.25]);
+    ccallTry.push([25,21.23]);
+    ccallTry.push([26,16.93]);
+    ccallTry.push([27,24.36]);
+    ccallTry.push([28,49.28]);
+    ccallTry.push([29,51.23]);
+    ccallTry.push([30,24.67]);
+    ccallTry.push([31,37.76]);
+    ccallTry.push([32,23.71]);
+    ccallTry.push([33,49.28]);
+    ccallTry.push([34,49.27]);
+    ccallTry.push([35,23.21]);
+    ccallTry.push([36,50.74]);
+    ccallTry.push([37,49.25]);
+    ccallTry.push([38,39.21]);
+    ccallTry.push([39,19.60]);
+    ccallTry.push([40,49.28]);
+    ccallTry.push([41,49.25]);
+    ccallTry.push([42,23.73]);
+    ccallTry.push([43,22.11]);
+    ccallTry.push([44,49.28]);
+    ccallTry.push([45,27.98]);
+    ccallTry.push([46,51.23]);
+    ccallTry.push([47,22.78]);
+    ccallTry.push([48,50.75]);
+    ccallTry.push([49,49.28]);
+    ccallTry.push([50,49.27]);
+    ccallTry.push([51,31.10]);
+    ccallTry.push([52,23.52]);
+    ccallTry.push([53,38.76]);
+    ccallTry.push([54,23.91]);
+    ccallTry.push([55,21.60]);
+    ccallTry.push([56,51.23]);
+    ccallTry.push([57,22.08]);
+    ccallTry.push([58,23.88]);
+    ccallTry.push([59,31.83]);
+    ccallTry.push([60,49.27]);
+    ccallTry.push([61,25.26]);
+    ccallTry.push([62,49.28]);
+    ccallTry.push([63,31.67]);
+    ccallTry.push([64,23.47]);
+    ccallTry.push([65,30.10]);
+    ccallTry.push([66,49.27]);
+    ccallTry.push([67,21.25]);
+    ccallTry.push([68,49.28]);
+    ccallTry.push([69,21.01]);
+    ccallTry.push([70,23.87]);
+    ccallTry.push([71,17.74]);
+    ccallTry.push([72,49.27]);
+    ccallTry.push([73,28.27]);
+    ccallTry.push([74,29.03]);
+    ccallTry.push([75,50.75]);
+    ccallTry.push([76,22.11]);
+    ccallTry.push([77,49.28]);
+    ccallTry.push([78,19.74]);
+    ccallTry.push([79,42.28]);
+    ccallTry.push([80,24.01]);
+    ccallTry.push([81,24.64]);
+    ccallTry.push([82,49.28]);
+    ccallTry.push([83,27.89]);
+    ccallTry.push([84,22.37]);
+    ccallTry.push([85,39.31]);
+    ccallTry.push([86,35.90]);
+    ccallTry.push([87,30.21]);
+    ccallTry.push([88,24.13]);
+    ccallTry.push([89,16.52]);
+    ccallTry.push([90,24.94]);
+    ccallTry.push([91,25.07]);
+    ccallTry.push([92,49.28]);
+    ccallTry.push([93,50.71]);
+    ccallTry.push([94,25.79]);
+    ccallTry.push([95,15.98]);
+    ccallTry.push([96,15.44]);
+    ccallTry.push([97,24.73]);
+    ccallTry.push([98,24.96]);
+    ccallTry.push([99,30.50]);
+    ccallTry.push([100,20.72]);
+
+    var siteOcc = [];
+
+    siteOcc.push([1,1.0000]);
+    siteOcc.push([2,0.3428]);
+    siteOcc.push([3,0.1500]);
+    siteOcc.push([4,0.0667]);
+
+    var contrast = [], contrast2 = [];
+
+    contrast.push([1,0.116]);
+    contrast.push([2,0.127]);
+    contrast.push([3,0.142]);
+    contrast.push([4,0.166]);
+    contrast.push([5,0.179]);
+    contrast.push([6,0.199]);
+    contrast.push([7,0.216]);
+    contrast.push([8,0.233]);
+    contrast.push([9,0.243]);
+    contrast.push([10,0.255]);
+    contrast.push([11,0.268]);
+    contrast.push([12,0.274]);
+    contrast.push([13,0.289]);
+    contrast.push([14,0.295]);
+    contrast.push([15,0.306]);
+    contrast.push([16,0.313]);
+    contrast.push([17,0.321]);
+    contrast.push([18,0.327]);
+    contrast.push([19,0.333]);
+    contrast.push([20,0.338]);
+    contrast2.push([1,0.083]);
+    contrast2.push([2,0.074]);
+    contrast2.push([3,0.072]);
+    contrast2.push([4,0.070]);
+    contrast2.push([5,0.071]);
+    contrast2.push([6,0.072]);
+    contrast2.push([7,0.075]);
+    contrast2.push([8,0.077]);
+    contrast2.push([9,0.080]);
+    contrast2.push([10,0.082]);
+    contrast2.push([11,0.085]);
+    contrast2.push([12,0.087]);
+    contrast2.push([13,0.088]);
+    contrast2.push([14,0.090]);
+    contrast2.push([15,0.092]);
+    contrast2.push([16,0.093]);
+    contrast2.push([17,0.094]);
+    contrast2.push([18,0.095]);
+    contrast2.push([19,0.096]);
+    contrast2.push([20,0.096]);
+
+    var con = [], con2 = [];
+
+    con.push([1,0.693]);
+    con.push([2,0.727]);
+    con.push([3,0.759]);
+    con.push([4,0.782]);
+    con.push([5,0.796]);
+    con.push([6,0.808]);
+    con.push([7,0.816]);
+    con.push([8,0.822]);
+    con.push([9,0.827]);
+    con.push([10,0.831]);
+    con.push([11,0.834]);
+    con.push([12,0.836]);
+    con.push([13,0.838]);
+    con.push([14,0.839]);
+    con.push([15,0.840]);
+    con.push([16,0.842]);
+    con.push([17,0.843]);
+    con.push([18,0.844]);
+    con.push([19,0.845]);
+    con.push([20,0.846]);
+    con2.push([1,0.574]);
+    con2.push([2,0.604]);
+    con2.push([3,0.646]);
+    con2.push([4,0.677]);
+    con2.push([5,0.700]);
+    con2.push([6,0.718]);
+    con2.push([7,0.731]);
+    con2.push([8,0.742]);
+    con2.push([9,0.752]);
+    con2.push([10,0.759]);
+    con2.push([11,0.767]);
+    con2.push([12,0.773]);
+    con2.push([13,0.777]);
+    con2.push([14,0.781]);
+    con2.push([15,0.784]);
+    con2.push([16,0.787]);
+    con2.push([17,0.790]);
+    con2.push([18,0.792]);
+    con2.push([19,0.794]);
+    con2.push([20,0.795]);
+
+    var ccmap = [], ccmap2 = [];
+
+    ccmap.push([4.56,0.699]);
+    ccmap.push([3.58,0.644]);
+    ccmap.push([3.11,0.562]);
+    ccmap.push([2.82,0.675]);
+    ccmap.push([2.61,0.770]);
+    ccmap.push([2.45,0.811]);
+    ccmap.push([2.33,0.788]);
+    ccmap.push([2.22,0.750]);
+    ccmap.push([2.13,0.727]);
+    ccmap.push([2.06,0.624]);
+    ccmap2.push([4.56,0.155]);
+    ccmap2.push([3.58,0.108]);
+    ccmap2.push([3.11,0.030]);
+    ccmap2.push([2.82,0.129]);
+    ccmap2.push([2.61,0.243]);
+    ccmap2.push([2.45,0.260]);
+    ccmap2.push([2.33,0.263]);
+    ccmap2.push([2.22,0.263]);
+    ccmap2.push([2.13,0.206]);
+    ccmap2.push([2.06,0.191]);
+    var plot1 = $.plot($("#chart1_div"),
+        [ { data: meanIsig }],
+        { lines: { show: true},
+          points: { show: true },
+          selection: { mode: 'xy' },
+          grid: { hoverable: true, clickable: true }
+        });
+
+    var plot2 = $.plot($("#chart2_div"),
+        [ { data: completeness }],
+        { lines: { show: true},
+          points: { show: true },
+          selection: { mode: 'xy' },
+          grid: { hoverable: true, clickable: true }
+        }); 
+
+    var plot3 = $.plot($("#chart3_div"),
+        [ { data: dsig }],
+        { lines: { show: true},
+          points: { show: true },
+          selection: { mode: 'xy' },
+          grid: { hoverable: true, clickable: true },
+        }); 
+
+    var plot4 = $.plot($("#chart4_div"),
+        [ { data: ccall }],
+        { lines: { show: false},
+          points: { show: true },
+          selection: { mode: 'xy' },
+          grid: { hoverable: true, clickable: true },
+        }); 
+
+    var plot5 = $.plot($("#chart5_div"),
+        [ { data: patFom}],
+        { lines: { show: false},
+          points: { show: true },
+          selection: { mode: 'xy' },
+          grid: { hoverable: true, clickable: true },
+        }); 
+
+    var plot6 = $.plot($("#chart6_div"),
+        [ { data: ccallTry}],
+        { lines: { show: false},
+          points: { show: true },
+          selection: { mode: 'xy' },
+          grid: { hoverable: true, clickable: true },
+        }); 
+
+    var plot7 = $.plot($("#chart7_div"),
+        [ { data: siteOcc}],
+        { lines: { show: true},
+          points: { show: true },
+          selection: { mode: 'xy' },
+          grid: { hoverable: true, clickable: true },
+        }); 
+
+    var plot8 = $.plot($("#chart8_div"),
+        [ { data: contrast, label:"original"}, { data: contrast2, label:"inverted"}],
+        { lines: { show: true},
+          points: { show: true },
+          selection: { mode: 'xy' },
+          grid: { hoverable: true, clickable: true },
+        }); 
+
+    var plot9 = $.plot($("#chart9_div"),
+        [ { data: con, label:"original"}, { data: con2, label:"inverted"}],
+        { lines: { show: true},
+          points: { show: true },
+          selection: { mode: 'xy' },
+          grid: { hoverable: true, clickable: true },
+        }); 
+
+    var plot10 = $.plot($("#chart10_div"),
+        [ { data: ccmap, label:"original"}, { data: ccmap2, label:"inverted"}],
+        { lines: { show: true},
+          points: { show: true },
+          selection: { mode: 'xy' },
+          grid: { hoverable: true, clickable: true },
+        }); 
+
+    function showTooltip(x, y, contents) {
+        $('<div id=tooltip>' + contents + '</div>').css( {
+            position: 'absolute',
+            display: 'none',
+            top: y + 5,
+            left: x + 5,
+            border: '1px solid #fdd',
+            padding: '2px',
+            'background-color': '#fee',
+            opacity: 0.80
+        }).appendTo("body").fadeIn(200);
+    }
+
+    var previousPoint = null;
+    $("#chart1_div").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+
+        if (true) {
+            if (item) {
+                if (previousPoint != item.datapoint) {
+                    previousPoint = item.datapoint;
+
+                    $("#tooltip").remove();
+                    var x = item.datapoint[0].toFixed(2),
+                        y = item.datapoint[1].toFixed(2);
+
+                    showTooltip(item.pageX, item.pageY,
+                                item.series.label + " of " + x + " = " + y);
+                }
+            }
+            else {
+                $("#tooltip").remove();
+                previousPoint = null;
+            }
+        }
+    });
+
+    $("#chart2_div").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+
+        if (true) {
+            if (item) {
+                if (previousPoint != item.datapoint) {
+                    previousPoint = item.datapoint;
+
+                    $("#tooltip").remove();
+                    var x = item.datapoint[0].toFixed(2),
+                        y = item.datapoint[1].toFixed(2);
+
+                    showTooltip(item.pageX, item.pageY,
+                                "max delta phi of " + y + " at phi=" + x);
+                }
+            }
+            else {
+                $("#tooltip").remove();
+                previousPoint = null;
+            }
+        }
+    });
+
+    $("#chart3_div").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+
+        if (true) {
+            if (item) {
+                if (previousPoint != item.datapoint) {
+                    previousPoint = item.datapoint;
+
+                    $("#tooltip").remove();
+                    var x = item.datapoint[0].toFixed(2),
+                        y = item.datapoint[1].toFixed(2);
+
+                    showTooltip(item.pageX, item.pageY,
+                                "at res=" + item.series.label + " after " + x + " seconds intensity drops to " + y);
+                }
+            }
+            else {
+                $("#tooltip").remove();
+                previousPoint = null;
+            }
+        }
+    });
+
+    $("#chart4_div").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+
+        if (true) {
+            if (item) {
+                if (previousPoint != item.datapoint) {
+                    previousPoint = item.datapoint;
+
+                    $("#tooltip").remove();
+                    var x = item.datapoint[0].toFixed(2),
+                        y = item.datapoint[1].toFixed(2);
+
+                    showTooltip(item.pageX, item.pageY,
+                                "at res=" + item.series.label + " after " + x + " seconds Rdamage increases to " + y);
+                }
+            }
+            else {
+                $("#tooltip").remove();
+                previousPoint = null;
+            }
+        }
+    });
+
+    $("#chart5_div").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+
+        if (true) {
+            if (item) {
+                if (previousPoint != item.datapoint) {
+                    previousPoint = item.datapoint;
+
+                    $("#tooltip").remove();
+                    var x = item.datapoint[0].toFixed(2),
+                        y = item.datapoint[1].toFixed(2);
+
+                    showTooltip(item.pageX, item.pageY,
+                                "start at " + x + " for " + y + " degrees");
+                }
+            }
+            else {
+                $("#tooltip").remove();
+                previousPoint = null;
+            }
+        }
+    });
+
+    $("#chart6_div").bind("plothover", function (event, pos, item) {
+        $("#x").text(pos.x.toFixed(2));
+        $("#y").text(pos.y.toFixed(2));
+
+        if (true) {
+            if (item) {
+                if (previousPoint != item.datapoint) {
+                    previousPoint = item.datapoint;
+
+                    $("#tooltip").remove();
+                    var x = item.datapoint[0].toFixed(2),
+                        y = item.datapoint[1].toFixed(2);
+
+                    showTooltip(item.pageX, item.pageY,
+                                "start at " + x + " for " + y + " degrees");
+                }
+            }
+            else {
+                $("#tooltip").remove();
+                previousPoint = null;
+            }
+        }
+    });
+
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,148 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>Login - Redirect Installation</title>
+<link rel="stylesheet" type="text/css" href="../style.css">
+</head>
+
+<body topmargin="0" leftmargin="0" rightmargin="0" bottommargin="0">
+<table border="0" width="100%" id="table1" cellspacing="0" cellpadding="0">
+	<tr>
+		<td width="383">
+		<img border="0" src="../images/lr_13_header_01.gif" width="383" height="112"></td>
+		<td>
+		<img border="0" src="../images/lr_13_header_02.gif" width="100%" height="112"></td>
+		<td width="300">
+		<img border="0" src="../images/lr_13_header_03.gif" width="310" height="112"></td>
+	</tr>
+	<tr>
+		<td width="383">
+		<img border="0" src="../images/lr_13_header_04.gif" width="383" height="38"></td>
+		<td>
+		<img border="0" src="../images/lr_13_header_05.gif" width="100%" height="38"></td>
+		<td width="300">
+		<img border="0" src="../images/lr_13_header_06.gif" width="310" height="38"></td>
+	</tr>
+</table>
+<form method="POST" action="install_1.php">
+	<table border="0" width="100%" id="table1" cellspacing="10" cellpadding="4">
+		<tr>
+			<td valign="top">
+			<p style="margin-top: 0; margin-bottom: 0"><font size="2">Database Name:<br>
+	</font><input type="text" name="dbase_name" size="20" style="font-family: Verdana; color: #008080"></p>
+	<p style="margin-top: 0; margin-bottom: 0"><font size="2">Server:<br>
+	</font>
+	<input type="text" name="dbase_server" size="20" style="font-family: Verdana; color: #008080" value="localhost"></p>
+	<p style="margin-top: 0; margin-bottom: 0"><font size="2">Database Username:<br>
+	</font><input type="text" name="dbase_username" size="20" style="font-family: Verdana; color: #008080"></p>
+	<p style="margin-top: 0; margin-bottom: 0"><font size="2">Database Password:<br>
+	</font><input type="text" name="dbase_password" size="20" style="font-family: Verdana; color: #008080"></p>
+	<p style="margin-top: 0; margin-bottom: 0"><font size="2">Installation 
+	Directory:<br>
+	</font><input type="text" name="install_dir" size="50" style="font-family: Verdana; color: #008080" value="http://"></p>
+	<p style="margin-top: 0; margin-bottom: 0"><font size="2">Administrator's 
+	Email:<br>
+	</font><input type="text" name="admin_email" size="50" style="font-family: Verdana; color: #008080"><br>
+	<font size="2">Time Zone:<br>
+	</font><select size="1" name="time_zone" style="font-family: Verdana; color: #008080">
+	<option value="-12">-12</option>
+	<option value="-11">-11</option>
+	<option value="-10">-10</option>
+	<option value="-9.5">-9.5</option>
+	<option value="-9">-9</option>
+	<option value="-8.5">-8.5</option>
+	<option value="-8">-8 PST</option>
+	<option value="-7">-7 MST</option>
+	<option value="-6">-6 CMT</option>
+	<option value="-5" selected>-5 EST</option>
+	<option value="-4">-4 AST</option>
+	<option value="-3.5">-3.5</option>
+	<option value="-3">-3 ADT</option>
+	<option value="-2">-2</option>
+	<option value="-1">-1</option>
+	<option value="00">00 GMT</option>
+	<option value="+1">+1 CET</option>
+	<option value="+2">+2</option>
+	<option value="+3">+3</option>
+	<option value="+3.5">+3.5</option>
+	<option value="+4">+4</option>
+	<option value="+4.5">+4.5</option>
+	<option value="+5">+5</option>
+	<option value="+5.5">+5.5</option>
+	<option value="+6">+6</option>
+	<option value="+6.5">+6.5</option>
+	<option value="+7">+7</option>
+	<option value="+8">+8</option>
+	<option value="+9">+9</option>
+	<option value="+9.5">+9.5</option>
+	<option value="+10">+10</option>
+	<option value="+10.5">+10.5</option>
+	<option value="+11">+11</option>
+	<option value="+12">+12</option>
+	<option value="+13">+13</option>
+	<option value="+14">+14</option>
+	</select></p>
+			</td>
+			<td valign="top">
+			<p style="margin-top: 0; margin-bottom: 0"><font size="2">Domain Name:<br>
+			www.<input type="text" name="dom_name" size="20" style="font-family: Verdana; color: #008080">.
+			<select size="1" name="tld1" style="font-family: Verdana; color: #008080">
+			<option value=".com" selected>com</option>
+			<option value=".net">net</option>
+			<option value=".org">org</option>
+			<option value=".us">us</option>
+			<option value=".biz">biz</option>
+			<option value=".info">info</option>
+			<option>other</option>
+			<option></option>
+			</select> - if other than that listed:
+			<input type="text" name="tld2" size="5" style="font-family: Verdana; color: #008080"></font></p>
+	<p style="margin-top: 0; margin-bottom: 0"><font size="2">Verify New User's 
+	Through Email?<br>
+	</font><select size="1" name="verify_email" style="font-family: Verdana; color: #008080">
+	<option value="1" selected>No</option>
+	<option value="0">Yes</option>
+	</select></p>
+	<p style="margin-top: 0; margin-bottom: 0"><font size="2">Default URL:<br>
+	</font><input type="text" name="default_url" size="50" style="font-family: Verdana; color: #008080" value="http://"></p>
+	<p style="margin-top: 0; margin-bottom: 0"><font size="2">Minimum Password 
+	Length:<br>
+	</font><input type="text" name="min_pass_len" size="20" style="font-family: Verdana; color: #008080"></p>
+	<p style="margin-top: 0; margin-bottom: 0"><font size="2">Maximum Password 
+	Length:<br>
+	</font><input type="text" name="max_pass_len" size="20" style="font-family: Verdana; color: #008080"></p>
+	<p style="margin-top: 0; margin-bottom: 0"><font size="2">Log Logins?<br>
+	</font><select size="1" style="font-family: Verdana; color: #008080" name="log_login">
+	<option selected value="0">No</option>
+	<option value="1">Yes</option>
+	</select></p>
+	<p style="margin-top: 0; margin-bottom: 0"><font size="2">Number of Groups:<br>
+	</font><select size="1" style="font-family: Verdana; color: #008080" name="num_groups">
+	<option value="0" selected>0</option>
+	<option value="1">1</option>
+	<option value="2">2</option>
+	<option value="3">3</option>
+	<option value="4">4</option>
+	<option value="5">5</option>
+	<option value="6">6</option>
+	<option value="7">7</option>
+	<option value="8">8</option>
+	<option value="9">9</option>
+	<option value="10">10</option>
+	</select></p></td>
+		</tr>
+		<tr>
+			<td valign="top">
+	<input type="submit" value="Submit" name="B1"></td>
+			<td valign="top">
+			&nbsp;</td>
+		</tr>
+	</table>
+</form>
+<p style="margin-top: 0; margin-bottom: 0">&nbsp;</p>
+
+</body>
+
+</html>

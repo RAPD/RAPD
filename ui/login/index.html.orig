@@ -1,0 +1,312 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-us">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>Welcome to Login - Redirect</title>
+</head>
+
+<body>
+
+<table border="0" width="100%" id="table2" cellspacing="0" cellpadding="0">
+	<tr>
+		<td><i><b><font face="Tahoma" size="2" color="#0000FF">This is Version 1.3 of Login - Redirect.</font></b></i></td>
+		<td>
+		<p align="right"><i><b><font face="Tahoma" size="2">
+		<a href="install/install.html">Begin Installation</a></font></b></i></td>
+	</tr>
+</table>
+<p><font face="Tahoma" size="2">This script is not only a secure login script, 
+it also allows great control and can be integrated easily into most sites as 
+well as the following features:</font></p>
+<p><font face="Tahoma" size="2"><b>Redirection based on the users login information</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - The site administrator can dictate 
+the page that the user will be redirected to once the user has been 
+authenticated<br>
+<b>Control Panel Administration</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - The control panel administration 
+allows Administrators the following functions:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+- Add Users<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+- Modify user information<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+- Add users to groups<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+- Delete users<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+- Undelete Users<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+- Ban Users<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+- Lift user bans<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+- Ban IP Addresses<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+- Lift IP Address bans<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+- View and sort login information<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+- Require users to change their password at next login<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+- Require users to activate their account as to verify their e-mail address 
+before they are able to login<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+- View all user information<br>
+<b>Other functionality of this package:</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - Control access to pages through 
+username or groups<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - Allows users to request an e-mail 
+of their login information<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - Allows users to change their own 
+password and e-mail address<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - Allows users to self-register<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+All of the pages viewed by users have been written in html as to allow site 
+creators easy integration into their site.<br>
+All html pages can be altered, just do not change the functionality of the page.<br>
+For example, if the html page contains to fields named X and Y and the form is 
+posted to page.php, do not change the name of the field or the name of the page 
+that the information is posted to unless you know what you are doing.</font></p>
+<p><font face="Tahoma" size="2"><b>Requirements:</b><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - Website server with php 
+functionality.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - MySQL Database<br>
+<br>
+The installation process is very simple.&nbsp; You will need the following 
+information to complete the installation:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - a MySQL database<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - The username and password for that 
+database<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - Knowledge of the database server 
+(typically localhost, but it could be different as with 1&amp;1 hosted sites)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; - FTP ability<br>
+That's it, the installation walks you through all of the steps and creates all 
+of the table required as well as the configurations settings and the 
+administrator account setup.<br>
+<br>
+<b>Package Contents and Description:</b></font></p>
+<table border="1" id="table1" cellpadding="0">
+	<tr>
+		<td><b><font face="Tahoma" size="2">../</font></b></td>
+		<td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">*activate.html</font></td>
+		<td><font face="Tahoma" size="2">This page allows the user to activate 
+		their account.&nbsp; If you has set the configuration to verify e-mail 
+		address, the user will register and an e-mail will be sent requesting 
+		the user to visit this page and activate the account.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">*banned.html</font></td>
+		<td><font face="Tahoma" size="2">This page is displayed to user if 
+		either their IP Address or User account has been banned.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">check_login.php</font></td>
+		<td><font face="Tahoma" size="2">This page is a server-side page that 
+		checks to see if the user still has an open session or has elected 
+		cookies to be set as to limit the number of times the user must login.&nbsp; 
+		You do not have to use this page - If you require your users to login in 
+		every time, I would suggest you remove the &quot;Remember me from this 
+		computer&quot; section from login.html and errorlogin.html.&nbsp; If you 
+		chose to use it and have a &quot;Login&quot; link somewhere on your page, have it 
+		link to check_login.php.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">config.php</font></td>
+		<td><font face="Tahoma" size="2">This is the page with all of the 
+		configuration settings, the code for this page is generated during the 
+		installation process, you will simply need to copy and paste it into 
+		this page and upload.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">*email_change.html</font></td>
+		<td><font face="Tahoma" size="2">This page allows users to change their 
+		own e-mail address.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">email_change.php</font></td>
+		<td><font face="Tahoma" size="2">This is the server-side page that 
+		handles the changing of the user's e-mail address.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">*errorlogin.html</font></td>
+		<td><font face="Tahoma" size="2">This is the page that the user is 
+		directed to should their be an error with their credentials.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">functions.php</font></td>
+		<td><font face="Tahoma" size="2">This page contains various functions 
+		that are used throughout the package.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">*login.html</font></td>
+		<td><font face="Tahoma" size="2">This is the main login page for the 
+		users.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">loglogin.php</font></td>
+		<td><font face="Tahoma" size="2">This is a server-side page that records 
+		the login information to the log_login table.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">*no_access.html</font></td>
+		<td><font face="Tahoma" size="2">This is the page that is displayed 
+		should a user try to gain access to a page that they are no allowed 
+		access to visit.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">*not_activated.html</font></td>
+		<td><font face="Tahoma" size="2">This is the page that is displayed 
+		should a user try to login without activating their account, that is if 
+		you have required e-mail verification.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">*pass_change.html</font></td>
+		<td><font face="Tahoma" size="2">This page allows users to change their 
+		own password.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">pass_change.php</font></td>
+		<td><font face="Tahoma" size="2">This is the server-side page that 
+		handles the password change.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">redirect.php</font></td>
+		<td><font face="Tahoma" size="2">This is the server-side page that sets 
+		the session and redirects the user to the page specified by the 
+		administrator.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">*register.html</font></td>
+		<td><font face="Tahoma" size="2">This page allows user to register 
+		themselves for your site.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">register.php</font></td>
+		<td><font face="Tahoma" size="2">This is the server-side page that 
+		handles the registration.</font></td>
+	</tr>
+	<tr>
+		<td><b><font face="Tahoma" size="2">**../install</font></b></td>
+		<td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">**create_admin.php</font></td>
+		<td><font face="Tahoma" size="2">This is the administrator interface to 
+		create the administrator's account.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">**install.html</font></td>
+		<td><font face="Tahoma" size="2">The first installation page, requests 
+		configurations information.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">**install_1.php</font></td>
+		<td><font face="Tahoma" size="2">The second installation page, allows 
+		for the naming of groups.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">**install_2.php</font></td>
+		<td><font face="Tahoma" size="2">The third installation page, allows for 
+		the creation of the administrator's account.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">**install_3.php</font></td>
+		<td><font face="Tahoma" size="2">The fourth installation page, 
+		installation is complete and provide the config.php code.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">../admin</font></td>
+		<td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">adduser.php</font></td>
+		<td><font face="Tahoma" size="2">This is the server-side page that 
+		handles the addition of a user.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">adminpage.php</font></td>
+		<td><font face="Tahoma" size="2">This is the Administrator's Control 
+		Panel - very important.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">mod_user.php</font></td>
+		<td><font face="Tahoma" size="2">This is the server-side page that 
+		handles the user modifications, deletions and banning.</font></td>
+	</tr>
+	<tr>
+		<td><b><font face="Tahoma" size="2">../logs</font></b></td>
+		<td>&nbsp;</td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">index.html</font></td>
+		<td><font face="Tahoma" size="2">This is a frames page that includes the 
+		next two pages.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">log.php</font></td>
+		<td><font face="Tahoma" size="2">This is the page that appears on the 
+		right of index.html and contains the login information.</font></td>
+	</tr>
+	<tr>
+		<td><font face="Tahoma" size="2">log.html</font></td>
+		<td><font face="Tahoma" size="2">This is the page that appeats on the 
+		left of index.html and allows for sorting of the login information and 
+		also contain arin.net whois lookup for IP Addresses.</font></td>
+	</tr>
+</table>
+<p><font face="Tahoma" size="2">* - indicates that this page is customizable<br>
+** - indicates that this file or folder can be deleted after installation is 
+complete</font></p>
+
+<p><font face="Tahoma" size="2">How-to restrict access to your pages:<br>
+1.&nbsp;&nbsp;&nbsp; All secure pages must be php pages.&nbsp; You can easily 
+create any page in html and simply save it with a .php extention.<br>
+2.&nbsp;&nbsp;&nbsp; This code must be added prior to any code on the page:<br>
+<br>
+&lt;?php<br>
+<br>
+//prevents caching<br>
+header(&quot;Expires: Sat, 01 Jan 2000 00:00:00 GMT&quot;);<br>
+header(&quot;Last-Modified: &quot;.gmdate(&quot;D, d M Y H:i:s&quot;).&quot; GMT&quot;);<br>
+header(&quot;Cache-Control: post-check=0, pre-check=0&quot;,false);<br>
+session_cache_limiter();<br>
+session_start();<br>
+<br>
+<font color="#0000FF"><b>//this should the the 
+absolute path to the config.php file <br>
+//(ie /home/website/yourdomain/login/config.php <u>or</u> <br>
+//the location in relationship to the page being protected - ie ../login/config.php 
+)<br>
+</b></font>require('../config.php');<br>
+<font color="#0000FF"><b><br>
+//this should the the 
+absolute path to the functions.php file - see the instrcutions for config.php 
+above</b></font><br>
+require('../functions.php');
+<br>
+<br>
+<b> <font color="#0000FF">//this is 
+group name or username of the group or person that you wish to allow access to<br>
+</font></b>
+<font color="#0000FF"><b>// </b>- please be advise that the Administrators 
+Groups has access to all pages.</font><b><font color="#0000FF"><br>
+</font></b>if (allow_access(Administrators) != &quot;yes&quot;)<br>
+{&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</font><font color="#0000FF" face="Tahoma" size="2"><b><br>
+<br>
+//this should the the 
+absolute path to the no_access.html file - see above</b></font><font face="Tahoma" size="2">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+include ('no_access.html'); <br>
+exit;<br>
+}<br>
+?&gt;</font></p>
+<p><font face="Tahoma" size="2">For a more precise sample of the code you should 
+use, please <a href="smpl_sec_header.php">Click Here</a>.</font></p>
+<p><font face="Tahoma" size="2">That should do it...</font></p>
+
+</body>
+
+</html>

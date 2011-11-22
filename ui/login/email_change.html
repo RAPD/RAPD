@@ -1,0 +1,35 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>Chane E-Mail Address</title>
+<link rel="shortcut icon" href="../css/favicon.ico" type="image/x-icon">
+<script Language="JavaScript">
+<!--
+function Form1_Validator(theForm)
+{
+
+if (theForm.email.value == "")
+{
+	alert("The \"E-Mail Address\" field cannot be left blank.");
+	theForm.email.focus();
+	return (false);
+}
+}
+
+//--></script>
+</head>
+
+<body>
+
+
+<form method="POST" action="email_change.php" onsubmit="return Form1_Validator(this)" language="JavaScript" name="Form1">
+	<p><b><font face="Tahoma">E-Mail Address Change</font></b></p>
+	<p><font face="Tahoma"><font size="2">New E-Mail Address:<br>
+	</font><input name="email" size="20"><font size="2"><br>
+	<br>
+	</font><input type="submit" value="Submit" name="B1"></font></p>
+</form>
+&nbsp;</body>
+
+</html>
