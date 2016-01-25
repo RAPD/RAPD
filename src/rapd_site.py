@@ -30,7 +30,7 @@ import time
 secret_settings_general = { #database information
                             'db_host'                : 'rapd.nec.aps.anl.gov',         #location of mysql database
                             'db_user'                : 'rapd1',                        #internal username
-                            'db_password'            : 'bmVjYXRtKW5zdGVyIQ==',         #
+                            'db_password'            : '',         #
                             'db_data_name'           : 'rapd_data',                    #database names
                             'db_users_name'          : 'rapd_users',                   #
                             'db_cloud_name'          : 'rapd_cloud',                   #
@@ -40,7 +40,7 @@ secret_settings_general = { #database information
                             'ui_upload_dir'          : '/var/www/html/rapd/uploads/',  #location of uploaded files
                             'ui_port'                : 22,                             #
                             'ui_user'                : 'apache',                       #username on the ui host for ssh
-                            'ui_password'            : 'bWVyY3VyIWFM',                 #
+                            'ui_password'            : '',                 #
                             #controller settings
                             'controller_port'        : 50001,                          #the post for the core process to listen on for communications
                             #cluster server settings

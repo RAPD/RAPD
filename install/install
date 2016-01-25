@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
 __created__="2016-01-10"
 __maintainer__="Jon Schuermann"
 __email__="schuerjp@anl.gov"
@@ -254,7 +253,7 @@ if [ $INSTALL_PHENIX == 1 ]; then
 
   # Install phenix
   cd $PHENIX_DOWNLOAD
-  #./install --prefix=$PREFIX/share
+  ./install --prefix=$PREFIX/share
 
   # Create soft link
   ln -s $PREFIX/share/phenix-$PHENIX_VERSION $PREFIX/share/phenix
@@ -531,89 +530,3 @@ printf "=  You may want to add this line to your .cshrc file. \n"
 printf "=====================================================================\n"
 
 exit 0
-
-
-# #
-# # Install mongodb distribution
-# #
-# printf "\n\033[94mInstalling mongodb 3.0.3\033[0m\n"
-# MONGO_PREFIX_SRC=$SRC_DIR"/mongo"
-# MONGO_PREFIX_TGT=$PREFIX"/share/mongo"
-# cd $MONGO_PREFIX_SRC
-# if [[ $PLATFORM == "Darwin" ]]; then
-#   wget https://fastdl.mongodb.org/osx/mongodb-osx-x86_64-3.0.3.tgz
-#   tar xzf mongodb-osx-x86_64-3.0.3.tgz
-#   # tar xjf mongodb-osx-x86_64-3.0.3.tar.bz2
-#   mv mongodb-osx-x86_64-3.0.3 $MONGO_PREFIX_TGT
-#   rm mongodb-osx-x86_64-3.0.3.tgz
-#  cd $THIS_DIR
-# elif [[ $PLATFORM == "Linux" ]]; then
-#   # Which linux?
-#   if [ -f /etc/centos-release ]; then
-#      DIST='CentOS'
-#      REV=`cat /etc/centos-release | sed s/.*release\ // | sed s/\ .*//`
-#      if [ ${REV:0:1} == "7" ]; then
-#          printf "  CentOS 7\n"
-#          wget https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-rhel70-3.0.3.tgz
-#          tar xzf mongodb-linux-x86_64-rhel70-3.0.3.tgz
-#          mv mongodb-linux-x86_64-rhel70-3.0.3 $MONGO_PREFIX_TGT
-#          rm mongodb-linux-x86_64-rhel70-3.0.3.tgz
-#          cd $THIS_DIR
-#      elif [ ${REV:0:1} == "6" ]; then
-#          printf "  CentOS 6\n"
-#          wget https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-rhel62-3.0.3.tgz
-#          tar xzf mongodb-linux-x86_64-rhel62-3.0.3.tgz
-#          mv mongodb-linux-x86_64-rhel62-3.0.3 $MONGO_PREFIX_TGT
-#          rm mongodb-linux-x86_64-rhel62-3.0.3.tgz
-#          cd $THIS_DIR
-#      elif [ ${REV:0:1} == "5" ]; then
-#          printf "  CentOS 5\n"
-#          wget https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-rhel55-3.0.3.tgz
-#          tar xzf mongodb-linux-x86_64-rhel55-3.0.3.tgz
-#          mv mongodb-linux-x86_64-rhel55-3.0.3 $MONGO_PREFIX_TGT
-#          rm mongodb-linux-x86_64-rhel55-3.0.3.tgz
-#          cd $THIS_DIR
-#      fi
-#   elif [ -f /etc/debian_version ]; then
-#     DIST='Debian'
-#     DTYPE=`sed -n 3p /etc/os-release | sed s/ID\=//`
-#     if [ $DTYPE == "ubuntu" ]; then
-#       printf "Ubuntu\n"
-#       REV=`sed -n 6p /etc/os-release | sed s/VERSION_ID\=\"// | sed s/\.[0-9]*\"//`
-#       if [ $REV == "12" ]; then
-#         printf "  12\n"
-#         wget https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-ubuntu1204-3.0.3.tgz
-#         tar xzf mongodb-linux-x86_64-ubuntu1204-3.0.3.tgz
-#         mv mongodb-linux-x86_64-ubuntu1204-3.0.3 $MONGO_PREFIX_TGT
-#         rm mongodb-linux-x86_64-ubuntu1204-3.0.3.tgz
-#       fi
-#     fi
-#   fi
-# fi
-# printf "\033[92mMongoDB install complete.\033[0m\n"
-
-# #
-# # Install node.js distribution
-# #
-# printf "\n\033[94mInstalling node-v0.12.4\033[0m\n"
-# NODE_PREFIX_SRC=$SRC_DIR"/node"
-# NODE_PREFIX_TGT=$PREFIX"/share/node"
-# cd $NODE_PREFIX_SRC
-# if [[ $PLATFORM == "Darwin" ]]; then
-#   wget http://nodejs.org/dist/v0.12.4/node-v0.12.4-darwin-x64.tar.gz
-#   tar xjf node-v0.12.4-darwin-x64.tar.gz
-#   mv node-v0.12.4-darwin-x64 $NODE_PREFIX_TGT
-#   rm node-v0.12.4-darwin-x64.tar.gz
-#   cd $THIS_DIR
-# elif [[ $PLATFORM == "Linux" ]]; then
-#  # Which linux?
-#  if [ -f /etc/centos-release ]; then
-#      # No version dependence yet!
-#      wget http://nodejs.org/dist/v0.12.4/node-v0.12.4-linux-x64.tar.gz
-#      tar xzf node-v0.12.4-linux-x64.tar.gz
-#      mv node-v0.12.4-linux-x64 $NODE_PREFIX_TGT
-#      rm node-v0.12.4-linux-x64.tar.gz
-#      cd $THIS_DIR
-#  fi
-# fi
-# printf "\033[92mNodeJS install complete.\033[0m\n"
