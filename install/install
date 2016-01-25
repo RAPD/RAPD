@@ -422,10 +422,9 @@ printf "rapd.python\n"
  sed -e 's/LIBTBX_DISPATCHER_NAME="cctbx.python"/LIBTBX_DISPATCHER_NAME="rapd.python"/' \
      -e "s/LIBTBX_BUILD=.*/LIBTBX_BUILD=$SAFE_PREFIX\/share\/phenix\/build/" \
      -e 's/:$LIBTBX_BUILD\/..\/base\/lib//' \
-     -e "s%  PYTHONPATH\=\"\$LIBTBX_BUILD%  PYTHONPATH\=\"\$SAFE_PREFIX\/src\:\$LIBTBX_BUILD%" \  # Add the src directory to the PYTHONPATH
+     -e "s%  PYTHONPATH\=\"\$LIBTBX_BUILD%  PYTHONPATH\=\"\$SAFE_PREFIX\/src\:\$LIBTBX_BUILD%" \
      $PREFIX/share/phenix/build/bin/cctbx.python > ./rapd.python
 chmod +x ./rapd.python
-#sed -e "s%  PYTHONPATH\=\"\$LIBTBX_BUILD%  PYTHONPATH\=\"/\Users\/frankmurphy\/workspace\/rapdv1\/src\:\$LIBTBX_BUILD%" /Users/frankmurphy/workspace/rapdv1/bin/rapd.python > /Users/frankmurphy/workspace/rapdv1/bin/rapdtest.python
 
 # Create the rapd.shrc script
 printf "Writing rapd.shrc\n"
