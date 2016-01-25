@@ -253,7 +253,7 @@ if [ $INSTALL_PHENIX == 1 ]; then
 
   # Install phenix
   cd $PHENIX_DOWNLOAD
-  #./install --prefix=$PREFIX/share
+  ./install --prefix=$PREFIX/share
 
   # Create soft link
   ln -s $PREFIX/share/phenix-$PHENIX_VERSION $PREFIX/share/phenix
