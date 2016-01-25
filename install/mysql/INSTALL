@@ -1,0 +1,16 @@
+These are data-free MySQL schemas made using mysqldump. For example:
+> mysqldump -h .. -u .. -p --no-data -p rapd_data > rapd_data_schema.sql
+
+As created, RAPD uses three databases in MySQL: rapd_data, rapd_cloud, and rapd_users.
+To create the databases, they must be created and then populated:
+> mysqladmin create rapd_data
+> mysql rapd_data < rapd_data_schema.sql
+
+An administrator must then be created in the rapd_users.authorize table:
+mysql> INSERT INTO `authorize` VALUES ('Admin_First','Admin_Last','RAPD_Admin','11cefeb763516b3c','Users','Administrators','','0','admin_email@email.com','https://myserver.com/rapd/main.php','1','2016-01-01');
+
+Now you should be able to log in to the rapd server with username of RAPD_Admin with password of newrapdadminpassword  
+Obviously you will want to change this, as these directions are available on the internet.
+
+NB: RAPD at NE-CAT currently uses MariaDB and employs the OLD_PASSWORD function. Deployments to new sites
+will most likely want to migrate to using the stronger PASSWORD function.
