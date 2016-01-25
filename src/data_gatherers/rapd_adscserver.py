@@ -29,8 +29,10 @@ rapd_adscserver provides an xmlrpclib  server that watches xf_status and
 marcollect on an adsc data collection computer to provide information back
 to rapd_server via to rapd_adsc
 
+This server is used at 24ID-E with an ADSC Q315 detector
+
 If you are adapting rapd to your locality, you will need to check this 
-carefully
+carefully.
 """
 
 import socket
@@ -48,13 +50,13 @@ from SimpleXMLRPCServer import SimpleXMLRPCServer
 import MySQLdb, _mysql_exceptions
 
 
-secrets = { #database information
-            'db_host'         : 'rapd.nec.aps.anl.gov',
-            'db_user'         : 'rapd1',
-            'db_password'     : 'bmVjYXRtKW5zdGVSIQ==',
-            'db_data_name'    : 'rapd_data',
-            'db_users_name'   : 'rapd_users',
-            'db_cloud_name'   : 'rapd_cloud'}
+# secrets = { #database information
+#             'db_host'         : 'rapd.nec.aps.anl.gov',
+#             'db_user'         : 'rapd1',
+#             'db_password'     : 'bmVjYXRtKW5zdGVSIQ==',
+#             'db_data_name'    : 'rapd_data',
+#             'db_users_name'   : 'rapd_users',
+#             'db_cloud_name'   : 'rapd_cloud'}
 
 settings = {
                #ID24-C 
@@ -137,7 +139,7 @@ class RAPD_ADSC_Server(threading.Thread):
         while(self.Go):
             counter += 1
             if self.CheckMarcollect():
-                mlines  = self.GetMarcollect()
+                mlines = self.GetMarcollect()
                 mparsed = self.ParseMarcollect(mlines)
                 if mparsed:
                     self.marcollect_queue.appendleft(mparsed.copy())
@@ -180,35 +182,35 @@ class RAPD_ADSC_Server(threading.Thread):
             self.marcollect,self.xf_status,self.beamline = settings['default']
         
             
-    """
-    MySQL Methods
-    """
-    def Connect2SQL(self):
-        """
-        Connect to the database
-        """
-        self.logger.debug('RAPD_ADSC_Server::Connect2SQL')
-        try:
-            #self.connection  = MySQLdb.connect(host=self.db_host,db=self.db_name,user=self.db_user,passwd=self.db_password)
-            self.connection  = MySQLdb.connect(host=secrets['db_host'],db=secrets['db_data_name'],user=secrets['db_user'],passwd=self.Decode(secrets['db_password']))
-            self.cursor      = self.connection.cursor()
-        except:
-            pass
+    # """
+    # MySQL Methods
+    # """
+    # def Connect2SQL(self):
+    #     """
+    #     Connect to the database
+    #     """
+    #     self.logger.debug('RAPD_ADSC_Server::Connect2SQL')
+    #     try:
+    #         #self.connection  = MySQLdb.connect(host=self.db_host,db=self.db_name,user=self.db_user,passwd=self.db_password)
+    #         self.connection  = MySQLdb.connect(host=secrets['db_host'],db=secrets['db_data_name'],user=secrets['db_user'],passwd=self.Decode(secrets['db_password']))
+    #         self.cursor      = self.connection.cursor()
+    #     except:
+    #         pass
         
-    def UpdateStatusDataserver(self):
-        """
-        Update rapd_data.status_dataserver so everyone knows we are alive 
-        """
-        self.logger.debug('UpdateStatusDataserver')
-        try:
-            self.cursor.execute('INSERT INTO status_dataserver (ip_address,beamline) VALUES (%s,%s) ON DUPLICATE KEY UPDATE timestamp=CURRENT_TIMESTAMP',(self.ip_address,self.beamline))
-        except:
-            self.logger.exception('Error in UpdateStatusDataserver')
-            #try to reconnect
-            try:
-                self.Connect2SQL()
-            except:
-                self.logger.exception('Error in UpdateStatusDataserver - Cannot reconnect to MySQL Database')
+    # def UpdateStatusDataserver(self):
+    #     """
+    #     Update rapd_data.status_dataserver so everyone knows we are alive 
+    #     """
+    #     self.logger.debug('UpdateStatusDataserver')
+    #     try:
+    #         self.cursor.execute('INSERT INTO status_dataserver (ip_address,beamline) VALUES (%s,%s) ON DUPLICATE KEY UPDATE timestamp=CURRENT_TIMESTAMP',(self.ip_address,self.beamline))
+    #     except:
+    #         self.logger.exception('Error in UpdateStatusDataserver')
+    #         #try to reconnect
+    #         try:
+    #             self.Connect2SQL()
+    #         except:
+    #             self.logger.exception('Error in UpdateStatusDataserver - Cannot reconnect to MySQL Database')
 
     """
     MARCOLLECT METHODS
