@@ -32,6 +32,7 @@ FORCE=0
 PLATFORM=$(uname -s)
 INSTALL_PHENIX=1
 PHENIX_VERSION="1.10.1-2155"
+PHENIX_INSTALLER_DIR=""
 
 # First test for installed modules
 if [[ $PLATFORM == "Linux" ]]; then
@@ -224,8 +225,8 @@ if [ $INSTALL_PHENIX == 1 ]; then
     fi # end elif [ -f /etc/redhat-release ]; then
   fi # end elif [[ $PLATFORM == "Linux" ]]; then
 
-  if [ ! PHENIX_INSTALLER_DIR ]; then
-    PHENIX_INSTALLER_DIR=PHENIX_DOWNLOAD
+  if [[ $PHENIX_INSTALLER_DIR == "" ]]; then
+    PHENIX_INSTALLER_DIR=$PHENIX_DOWNLOAD
   fi
 
   # Downloaded and unpacked
@@ -251,7 +252,7 @@ if [ $INSTALL_PHENIX == 1 ]; then
     # Downloaded in the ~/Downloads directory
     elif [ -a ~/Downloads/$PHENIX_DOWNLOAD.tar.gz ]; then
       printf "  Phenix install present as compressed archive in ~/Downloads\n"
-      print "  Copying\n"
+      printf "  Copying\n"
       cp ~/Downloads/$PHENIX_DOWNLOAD.tar.gz .
       printf "  Uncompressing\n"
       gunzip $PHENIX_DOWNLOAD.tar.gz
@@ -269,7 +270,7 @@ if [ $INSTALL_PHENIX == 1 ]; then
     # Downloaded and uncompressed and unpacked in the ~/Downloads directory
     elif [ -a ~/Downloads/$PHENIX_DOWNLOAD ]; then
       printf "  Phenix install present in ~/Downloads\n"
-      print "  Copying\n"
+      printf "  Copying\n"
       cp -r ~/Downloads/$PHENIX_DOWNLOAD .
 
     else
