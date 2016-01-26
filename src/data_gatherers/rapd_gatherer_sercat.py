@@ -157,8 +157,8 @@ class SercatGatherer(threading.Thread):
         host = os.uname()[1]
 
         #now grab the file locations, beamline from settings
-        if SETTINGS.has_key(host):
-            self.run_data_file, self.image_data_file, self.site = secrets.GATHERERS[host]
+        if GATHERERS.has_key(host):
+            self.run_data_file, self.image_data_file, self.site = GATHERERS[host]
         else:
             print "ERROR - no settings for this host"
             sys.exit(9)

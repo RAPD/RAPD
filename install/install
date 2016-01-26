@@ -35,7 +35,7 @@ PHENIX_VERSION="1.10.1-2155"
 
 # First test for installed modules
 if [[ $PLATFORM == "Linux" ]]; then
-  
+
   printf "\033[94mChecking installed packages\033[0m\n"
 
   function isinstalled {
@@ -45,15 +45,15 @@ if [[ $PLATFORM == "Linux" ]]; then
       false
     fi
   }
-  
+
   error=0
   missing_packages=""
   for package in epel-release blas-devel lapack-devel atlas-sse3-devel atlas-devel openblas-devel libffi-devel ImageMagick-devel
   do
-    if isinstalled $package; then 
-      echo "  $package installed"; 
-    else 
-      echo "  $package not installed"; 
+    if isinstalled $package; then
+      echo "  $package installed";
+    else
+      echo "  $package not installed";
       missing_packages="$missing_packages $package"
       error=1
     fi
@@ -90,7 +90,7 @@ Installs RAPD v$RAPD_VERSION
             PREFIX="$OPTARG"
             ;;
         # Clean up the source directories
-        c)  
+        c)
             printf "Cleaning up!\n"
             cd sources
             rm -rf phenix/phenix*
@@ -150,7 +150,7 @@ PREFIX=$(cd $PREFIX; pwd)
 
 
 if [ $INSTALL_PHENIX == 1 ]; then
-  
+
   printf "\n\033[94mInstalling Phenix $PHENIX_VERSION\033[0m\n"
 
   PHENIX_PREFIX_SRC=$SRC_DIR"/phenix"
@@ -158,15 +158,16 @@ if [ $INSTALL_PHENIX == 1 ]; then
   cd $PHENIX_PREFIX_SRC
 
   if [[ $PLATFORM == "Darwin" ]]; then
-   
-    PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-mac-intel-osx-x86_64-10.9"
+
+    PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-mac-intel-osx-x86_64"
+    PHENIX_INSTALLER_DIR="phenix-installer-$PHENIX_VERSION-mac-intel-osx-x86_64-10.9"
     PHENIX_DOWNLOAD_REPR="OS X 10.6.7+ (64-bit Intel) [ \033[4;34mdownload command-line installer\033[0m ]"
 
   elif [[ $PLATFORM == "Linux" ]]; then
 
     # CentOS 6-7
     if [ -f /etc/centos-release ]; then
-      
+
       DIST='CentOS'
       REV=`cat /etc/centos-release | sed s/.*release\ // | sed s/\ .*//`
 
@@ -207,7 +208,7 @@ if [ $INSTALL_PHENIX == 1 ]; then
             PHENIX_DOWNLOAD_REPR="Kernel 2.6 (64-bit; CentOS 6) [ \033[4;34mdownload command-line installer\033[0m ]"
             printf "  \033[91mN.B. - Scientific Linux 7 is currently experimental.\033[0m\n"
         fi
-      
+
       # CentOS 5
       elif [[ $DIST == "CentOS" ]]; then
 
@@ -223,36 +224,67 @@ if [ $INSTALL_PHENIX == 1 ]; then
     fi # end elif [ -f /etc/redhat-release ]; then
   fi # end elif [[ $PLATFORM == "Linux" ]]; then
 
+  if [ ! PHENIX_INSTALLER_DIR ]; then
+    PHENIX_INSTALLER_DIR=PHENIX_DOWNLOAD
+  fi
+
   # Downloaded and unpacked
-  while [ ! -d $PHENIX_DOWNLOAD ]
+  echo `pwd`
+  printf "Looking for $PHENIX_INSTALLER_DIR"
+  while [ ! -d $PHENIX_INSTALLER_DIR ]
   do
+    printf "Looking for ~/Downloads/$PHENIX_DOWNLOAD\n"
     # Downloaded and uncompressed
     if [ -a $PHENIX_DOWNLOAD.tar ]; then
-      printf "  Phenix install script present as archive\n"
+      printf "  Phenix install present as archive\n"
       printf "  Unpacking\n"
       tar -xf $PHENIX_DOWNLOAD.tar
 
     # Downloaded only
     elif [ -a $PHENIX_DOWNLOAD.tar.gz ]; then
-      printf "  Phenix install script present as compressed archive\n"
+      printf "  Phenix install present as compressed archive\n"
       printf "  Uncompressing\n"
       gunzip $PHENIX_DOWNLOAD.tar.gz
       printf "  Unpacking\n"
       tar -xf $PHENIX_DOWNLOAD.tar
+
+    # Downloaded in the ~/Downloads directory
+    elif [ -a ~/Downloads/$PHENIX_DOWNLOAD.tar.gz ]; then
+      printf "  Phenix install present as compressed archive in ~/Downloads\n"
+      print "  Copying\n"
+      cp ~/Downloads/$PHENIX_DOWNLOAD.tar.gz .
+      printf "  Uncompressing\n"
+      gunzip $PHENIX_DOWNLOAD.tar.gz
+      printf "  Unpacking\n"
+      tar -xf $PHENIX_DOWNLOAD.tar
+
+    # Downloaded and uncompressed in the ~/Downloads directory
+    elif [ -a ~/Downloads/$PHENIX_DOWNLOAD.tar ]; then
+      printf "  Phenix install present as archive in ~/Downloads\n"
+      printf "  Copying\n"
+      cp ~/Downloads/$PHENIX_DOWNLOAD.tar .
+      printf "  Unpacking\n"
+      tar -xf $PHENIX_DOWNLOAD.tar
+
+    # Downloaded and uncompressed and unpacked in the ~/Downloads directory
+    elif [ -a ~/Downloads/$PHENIX_DOWNLOAD ]; then
+      printf "  Phenix install present in ~/Downloads\n"
+      print "  Copying\n"
+      cp -r ~/Downloads/$PHENIX_DOWNLOAD .
 
     else
       printf "  \033[91mInstaller needs the Phenix installer\033[0m\n"
       printf "  Please navigate to https://www.phenix-online.org/download/phenix/release/ \n"
       printf "  click on $PHENIX_DOWNLOAD_REPR \n"
       printf "  to download $PHENIX_DOWNLOAD.tar.gz\n"
-      printf "  and place it in the directory $PHENIX_PREFIX_SRC\n"
+      printf "  and place it in the directory ~/Downloads or $PHENIX_PREFIX_SRC\n"
       printf "  Hit return when you have done so..."
       read foo
     fi
   done
 
   # Install phenix
-  cd $PHENIX_DOWNLOAD
+  cd $PHENIX_INSTALLER_DIR
   ./install --prefix=$PREFIX/share
 
   # Create soft link
@@ -285,7 +317,7 @@ if [ $INSTALL_PHENIX == 1 ]; then
     rm ./tmp_sysconfigdata.py
     rm ./tmp.py
     rm ./new_sysconfigdata.py
-  
+
   elif [[ $PLATFORM == "Linux" ]]; then
 
     # CentOS
@@ -321,7 +353,7 @@ if [ $INSTALL_PHENIX == 1 ]; then
 
     # RedHat & Scientific
     elif [ -f /etc/redhat-release ]; then
-      
+
       printf "  RedHat Derivative\n"
 
       DIST=`cat /etc/redhat-release | sed s/\ .*//`
@@ -332,7 +364,7 @@ if [ $INSTALL_PHENIX == 1 ]; then
         if [ ${REV:0:1} == "7" ]; then
             printf "  Scientific Linux 7\n"
             PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos6"
-        
+
         elif [ ${REV:0:1} == "6" ]; then
           printf "  Scientific Linux 6\n"
           SYSCONFIG_DIR="$PREFIX/share/phenix/base/lib/python2.7"
@@ -369,11 +401,11 @@ if [ $INSTALL_PHENIX == 1 ]; then
           printf "  Scientific Linux 5\n"
           PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos5"
         fi
-      
+
       elif [[ $DIST == "CentOS" ]]; then
 
         if [ ${REV:0:1} == "5" ]; then
-          
+
           printf "  CentOS 5\n"
           SYSCONFIG_DIR="$PREFIX/share/phenix/base/lib/python2.7"
           echo $SYSCONFIG_DIR
@@ -421,7 +453,7 @@ printf "rapd.python\n"
  sed -e 's/LIBTBX_DISPATCHER_NAME="cctbx.python"/LIBTBX_DISPATCHER_NAME="rapd.python"/' \
      -e "s/LIBTBX_BUILD=.*/LIBTBX_BUILD=$SAFE_PREFIX\/share\/phenix\/build/" \
      -e 's/:$LIBTBX_BUILD\/..\/base\/lib//' \
-     -e "s%  PYTHONPATH\=\"\$LIBTBX_BUILD%  PYTHONPATH\=\"\$SAFE_PREFIX\/src\:\$LIBTBX_BUILD%" \
+     -e "s%  PYTHONPATH\=\"\$LIBTBX_BUILD%  PYTHONPATH\=\"$SAFE_PREFIX\/src\:\$LIBTBX_BUILD%" \
      $PREFIX/share/phenix/build/bin/cctbx.python > ./rapd.python
 chmod +x ./rapd.python
 
@@ -483,7 +515,7 @@ cd $SRC_DIR/python
 # Install pip
 rapd.python get-pip.py
 if [[ $PLATFORM == "Darwin" ]]; then
-   
+
   ln -s  $PREFIX/share/phenix/base/Python.framework/Versions/2.7/bin/pip $PREFIX/share/phenix/build/bin/phenix.pip
   ln -s  $PREFIX/share/phenix/base/Python.framework/Versions/2.7/bin/pip $PREFIX/bin/rapd.pip
 
