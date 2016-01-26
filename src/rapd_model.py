@@ -32,8 +32,7 @@ import collections
 import datetime
 
 #custom RAPD imports
-#from rapd_beamlinespecific import *
-from rapd_beamlinespecific import Remote, ImageMonitor
+from rapd_sitespecific import Remote, ImageMonitor
 from rapd_database import Database
 from rapd_cluster import PerformAction, ControllerServer
 from rapd_cloud import CloudMonitor
@@ -73,12 +72,14 @@ class Model():
         self.site = site
         self.logger = logger
 
-        # Initialize the settings from rapd_beamlinespecific
+        # Initialize the settings from rapd_sitespecific
         self.init_settings()
+
+        self.RemoteAdapter = False
 
     def init_settings(self):
         """
-        Initialize a number of variables and read in the settings from rapd_beamlinespecific.
+        Initialize a number of variables and read in the settings from rapd_sitespecific.
         """
 
         self.logger.debug("Model::init_settings  beamline: %s" % self.site)
@@ -157,7 +158,7 @@ class Model():
 
         except:
             self.logger.exception("""FATAL ERROR - this beamline is proably not in
-            the default settings table - edit rapd_beamlinespecific.py to rectify
+            the default settings table - edit rapd_sitespecific.py to rectify
             before restarting""")
             sys.exit()
 
@@ -213,12 +214,12 @@ class Model():
 
         # Remote access handler
         if self.Settings["remote"]:
-            self.logger.debug("Creating self.REMOTE")
-            self.REMOTE = Remote(beamline=self.site,
+            self.logger.debug("Creating self.RemoteAdapter")
+            self.RemoteAdapter = Remote(beamline=self.site,
                                  logger=self.logger)
         else:
-            self.REMOTE = False
-            self.logger.debug("Error creating self.REMOTE, set to False")
+            self.RemoteAdapter = False
+            self.logger.debug("Error creating self.RemoteAdapter, set to False")
 
         # Test the cluster is available
         PerformAction(command=("TEST", (self.ip_address, self.socket)),
@@ -539,8 +540,8 @@ class Model():
                 v_offset=adsc_header["vertical_offset"])
 
         #update remote client
-        if self.REMOTE and place == 1:
-            self.REMOTE.add_image(adsc_header)
+        if self.RemoteAdapter and place == 1:
+            self.RemoteAdapter.add_image(adsc_header)
 
         return adsc_header
 
@@ -575,8 +576,8 @@ class Model():
             float(header["distance"]))
 
         #update remote client
-        if self.REMOTE:
-            self.REMOTE.add_image(header)
+        if self.RemoteAdapter:
+            self.RemoteAdapter.add_image(header)
 
         return header
 
@@ -665,8 +666,8 @@ class Model():
                             self.logger.debug("run_numbers match")
 
                             # Update the remote system on the run
-                            if self.REMOTE:
-                                self.REMOTE.update_run_progress(
+                            if self.RemoteAdapter:
+                                self.RemoteAdapter.update_run_progress(
                                     run_position=image_number- \
                                         self.current_run.get("start", 1)+1,
                                     image_name=os.path.basename(fullname),
@@ -1457,10 +1458,10 @@ class Model():
             if result_db:
 
                 #Update the Remote project
-                if self.REMOTE:
+                if self.RemoteAdapter:
                     wedges = self.DATABASE.getStrategyWedges(id=result_db["single_result_id"])
                     result_db["image_id"] = info["image_id"]
-                    self.REMOTE.update_image_stats(result_db, wedges)
+                    self.RemoteAdapterAdapter.update_image_stats(result_db, wedges)
 
                 #now mark the cloud database if this is a reprocess request
                 if result_db["type"] in ("reprocess", "stac"):
@@ -1673,13 +1674,13 @@ class Model():
             #move the files to the server
             if result_db:
                 #Update the Remote project
-                if self.REMOTE:
+                if self.RemoteAdapter:
                     try:
                         wedges = self.DATABASE.getRunWedges(run_id=result_db["run_id"])
                     except:
                         self.logger.exception("Error in getting run wedges")
                     try:
-                        self.REMOTE.update_run_stats(result_db=result_db, wedges=wedges)
+                        self.RemoteAdapter.update_run_stats(result_db=result_db, wedges=wedges)
                     except:
                         self.logger.exception("Error in updating run stats")
 
