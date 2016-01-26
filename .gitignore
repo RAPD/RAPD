@@ -4,3 +4,6 @@
 .project
 .pydevproject
 .pyc
+
+# Files that should be hidden
+*secret*
