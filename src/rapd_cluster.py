@@ -812,11 +812,12 @@ class ControllerServer(threading.Thread):
     """
     Runs the socket server and spawns new threads when connections are received
     """
-    def __init__(self,receiver,port,logger):
+    def __init__(self,receiver,port):
         """
         The main server thread
         """
-        logger.info('Controller_Server::__init__')
+        self.logger = logging.getLogger("RAPDLogger")
+        self.logger.info('Controller_Server::__init__')
 
         #initialize the thred
         threading.Thread.__init__(self)
@@ -824,11 +825,11 @@ class ControllerServer(threading.Thread):
         #store passed-in variables
         self.receiver  = receiver
         self.port      = port
-        self.logger    = logger
 
         self.Go = True
 
         #start it up
+        self.daemon = True
         self.start()
 
     def run(self):
@@ -849,7 +850,8 @@ class ControllerServer(threading.Thread):
         #if we exit...
         s.close()
 
-    def Stop(self):
+    def stop(self):
+        self.logger.debug("Received signal to stop")
         self.Go = False
 
 

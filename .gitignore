@@ -3,7 +3,8 @@
 .svn
 .project
 .pydevproject
-.pyc
+*.pyc
 
 # Files that should be hidden
 *secret*
+*foo*

@@ -24,7 +24,25 @@ __status__ = "Development"
 
 import functools
 import os
+import socket
 import sys
+
+def get_ip_address():
+    """Returns the IP address for the host of the requesting process"""
+
+    # Create socket
+    s_tmp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    # Connect
+    s_tmp.connect(("google.com", 80))
+
+    # Grab the IP address for this computer
+    ip_address = s_tmp.getsockname()[0]
+
+    # Close the socket
+    s_tmp.close()
+    
+    return ip_address
 
 def get_site_files():
     """Returns a list of site files
@@ -77,7 +95,7 @@ def determine_site(site_arg=None):
     Keyword arguments:
     site_arg -- user-specified site arguments (default None)
     """
-    terminal_print("determine_site", level=1)
+
     # Get site files
     site_files = get_site_files()
 
@@ -101,9 +119,20 @@ def determine_site(site_arg=None):
         safe_site_args.append(str(site_arg).lower())
 
     # Now search safe_sites for safe_site_args
+    sites = []
     for safe_site_arg in safe_site_args:
         if safe_site_arg in safe_sites:
             print "Have one! %s %s" % (safe_site_arg, safe_sites[safe_site_arg])
+            sites.append(safe_site_arg)
+
+    # Need only one site
+    if len(sites) == 0:
+        raise Exception("No sites found")
+    elif len(sites) > 1:
+        raise Exception("More than one site found")
+    else:
+        site_file = "sites."+os.path.basename(safe_sites[sites[0]]).replace(".py", "")
+        return site_file
 
 def verbose_print(arg, level, verbosity=1):
     if level <= verbosity:

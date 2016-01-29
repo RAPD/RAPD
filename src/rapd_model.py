@@ -23,209 +23,204 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
 #standard imports
+import atexit
+import collections
+import datetime
+import importlib
+import logging
 import os
 import sys
 import threading
 import time
-import socket
-import collections
-import datetime
 
 #custom RAPD imports
-from rapd_sitespecific import Remote, ImageMonitor
-from rapd_database import Database
+from utils.site_tools import get_ip_address
+
+# from rapd_sitespecific import Remote, ImageMonitor
+# from rapd_database import Database
 from rapd_cluster import PerformAction, ControllerServer
 from rapd_cloud import CloudMonitor
-from rapd_console import ConsoleConnect as BeamlineConnect
-from rapd_console import ConsoleFeeder
-from rapd_pilatus import pilatus_read_header
-from rapd_site import beamline_settings, secret_settings
-from rapd_site import necat_determine_flux as determine_flux
-from rapd_site import GetDataRootDir, TransferToUI, TransferToBeamline, CopyToUser
-from rapd_adsc import Q315ReadHeader
+# from rapd_console import ConsoleConnect as BeamlineConnect
+# from rapd_console import ConsoleFeeder
+# from rapd_pilatus import pilatus_read_header
+# from rapd_site import beamline_settings, secret_settings
+# from rapd_site import necat_determine_flux as determine_flux
+# from rapd_site import GetDataRootDir, TransferToUI, TransferToBeamline, CopyToUser
+# from rapd_adsc import Q315ReadHeader
+
+database = None
+detector = None
 
 #####################################################################
 # The main Model Class                                              #
 #####################################################################
-class Model():
+class Model(object):
     """
-    Main controlling code for the CORE.
+    Main controlling code for the core rapd process.
 
     This is really more than just a model, probably model+controller.
     Coordinates the monitoring of data collection and the "cloud",
     as well as the running of processes and logging of all metadata
-
     """
 
-    def __init__(self, site, logger):
+    # Keeping track of image pairs
+    pair = collections.deque(["", ""], 2)
+    pair_id = collections.deque(["", ""], 2)
+
+    # Controlling simultaneous image processing
+    indexing_queue = collections.deque()
+    indexing_active = collections.deque()
+
+    # Managing runs and images without going to the db
+    current_run = {}
+    past_runs = collections.deque(maxlen=1000)
+    current_image = None
+
+    def __init__(self, SITE):
         """
         Save variables and call init_settings.
 
-        site - site designation that syncs with rapd_site sites
-        logger - a logger instance - required
-
+        SITE -- Site settings file
         """
-
-        logger.info("Model::__init__")
 
         #passed-in variables
-        self.site = site
-        self.logger = logger
+        self.site = SITE
 
-        # Initialize the settings from rapd_sitespecific
-        self.init_settings()
+        # Instance variables
+        self.data_root_dir = None
+        self.database = None
+        self.ip_address = None
+        self.logger = logging.getLogger("RAPDLogger")
+        self.server = None
+        self.image_monitor = None
+        self.image_monitor_reconnect_attempts = 0
+        self.cloud_monitor = False
 
-        self.RemoteAdapter = False
+        #
+        self.start()
 
-    def init_settings(self):
-        """
-        Initialize a number of variables and read in the settings from rapd_sitespecific.
-        """
+    def connect_to_database(self):
+        """Set up database connection"""
 
-        self.logger.debug("Model::init_settings  beamline: %s" % self.site)
+        # Import the database adapter as database module
+        global database
+        database = importlib.import_module('database.rapd_%s_adapter' % self.site.CORE_DATABASE)
 
-        #set up the queue for keeping track of image pairs
-        self.pair = collections.deque(["", ""], maxlen=2)
-        self.pair_id = collections.deque(["", ""], maxlen=2)
+        # Shorten it a little
+        site = self.site
+        secrets = site.SECRETS
 
-        #queues for managing processes - this control will be moved in the future
-        #the queue for controlling simultaneous image processing
-        self.indexing_queue = collections.deque()
-        self.indexing_active = collections.deque()
-        #the queue system for managing diffraction-based centering
-        self.diffcenter_queue = collections.deque()
-        self.diffcenter_active = collections.deque()
-        #the queue system for managing snapshot-based analysis
-        self.quickanalysis_queue = collections.deque()
-        self.quickanalysis_active = collections.deque()
-        #for managing runs without going to the db
-        self.current_run = {}
-        self.past_runs = collections.deque(maxlen=10)
-        self.current_image = None
+        # Instantiate the database connection
+        self.database = database.Database(host=secrets.CORE_DATABASE_HOST,
+                                          user=secrets.CORE_DATABASE_USER,
+                                          password=secrets.CORE_DATABASE_PASSWD,
+                                          data_name=site.DB_NAME_DATA,
+                                          users_name=site.DB_NAME_USERS,
+                                          cloud_name=site.DB_NAME_CLOUD)
 
-        self.last_quickimage = 0
+    def start_server(self):
+        """Start up the listening process for core"""
 
-        #set the defaults
-        try:
-            #grab the settings from the rapd_site.py file
-            if self.site in beamline_settings.keys():
-                self.Settings = beamline_settings[self.site].copy()
-                self.SecretSettings = secret_settings[self.site].copy()
-            else:
-                self.logger.debug("must be a test beamline")
-                self.Settings = beamline_settings["T"].copy()
-                self.Settings["beamline"] = self.site
-                self.SecretSettings = secret_settings["T"].copy()
-                self.SecretSettings["beamline"] = self.site
+        self.server = ControllerServer(receiver=self.receive,
+                                       port=self.site.CORE_PORT)
 
-            #determine the current ip address
-            s_tmp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s_tmp.connect(("google.com", 80))
-            self.ip_address = s_tmp.getsockname()[0]
-            s_tmp.close()
-            self.socket = self.SecretSettings["controller_port"]
 
-            #save starting directory position
-            self.start_dir = os.getcwd()
+    def start_image_monitor(self):
+        """Start up the image listening process for core"""
 
-            #the current data_root_dir (The base directory for user data collection for a trip
-            self.data_root_dir = None
-            self.Settings["data_root_dir"] = "DEFAULTS"
-            self.Settings["setting_type"] = "GLOBAL"
+        # Shorten variable names
+        site = self.site
 
-            # Interfaces to more complicated actors - mainly NULL until we start
-            #set up database interface
-            self.DATABASE = Database(settings=self.SecretSettings,
-                                     logger=self.logger)
-            #update the DEFAULTS settings based on the data in rapd_site.py
-            self.DATABASE.addSettings(settings=self.Settings)
+        if site.IMAGE_MONITOR == True:
+            # Import the specific detector as detector module
+            global detector
+            detector = importlib.import_module('detectors.%s' % site.DETECTOR.lower())
+            self.image_monitor = detector.Monitor(tag=site.ID.lower(),
+                                                  image_monitor_settings=site.IMAGE_MONITOR_SETTINGS,
+                                                  notify=self.receive)
 
-            #watches as runs are collected
-            #self.RUNWATCHERS = []
+    def start_cloud_monitor(self):
+        """Start up the cloud listening process for core"""
 
-            #Server for receiving information from the cluster
-            self.SERVER = False
+        # Shorten variable names
+        site = self.site
 
-            #watches for new collected images
-            self.IMAGEMONITOR = False
-            self.imagemonitor_reconnect_attempts = 0
+        if site.CLOUD_MONITOR == True:
+            self.cloud_monitor = CloudMonitor(database=self.database,
+                                              settings=site.CLOUD_MONITOR_SETTINGS,
+                                              reply_settings=self.return_address,
+                                              interval=site.CLOUD_INTERVAL)
 
-            #watches the cloud requests
-            self.CLOUDMONITOR = False
-
-            #let them know we have success
-            self.logger.debug("Model initialized")
-
-        except:
-            self.logger.exception("""FATAL ERROR - this beamline is proably not in
-            the default settings table - edit rapd_sitespecific.py to rectify
-            before restarting""")
-            sys.exit()
-
-    def Start(self):
+    def start(self):
         """
         Start monitoring the beamline.
         """
 
-        self.logger.debug("Model::Start")
+        self.logger.debug("Starting")
 
-        #start the server for cluster feedback
-        try:
-            self.SERVER = ControllerServer(receiver=self.Receive,
-                                           port=self.socket,
-                                           logger=self.logger)
-        except:
-            self.logger.exception("CATASTROPHIC ERROR - cannot start \
-            ControllerServer to receive cluster feedback")
-            exit()
+        # Start connection to the core database
+        self.connect_to_database()
 
-        #monitor for new images to be collected
-        self.IMAGEMONITOR = ImageMonitor(beamline=self.site,
-                                         notify=self.Receive,
-                                         logger=self.logger)
+        # Start the server for receiving communications
+        self.start_server()
 
-        # watch the cloud for requests
-        if self.SecretSettings["cloud_interval"] > 0.0:
-            self.CLOUDMONITOR = CloudMonitor(database=self.DATABASE,
-                                             settings=self.SecretSettings,
-                                             reply_settings=(self.ip_address, self.socket),
-                                             interval=self.SecretSettings["cloud_interval"],
-                                             logger=self.logger)
-        else:
-            self.logger.debug("CLOUDMONITOR turned off")
+        # Start the image monitor
+        self.start_image_monitor()
 
-        #start the status updating
-        self.STATUSHANDLER = StatusHandler(
-            db=self.DATABASE,
-            ip_address=self.ip_address,
-            data_root_dir=self.data_root_dir,
-            beamline=self.site,
-            dataserver_ip=self.SecretSettings["adsc_server"].split(":")[1][2:],
-            cluster_ip=self.SecretSettings["cluster_host"],
-            logger=self.logger
-            )
+        # Start the cloud monitor
+        self.start_cloud_monitor()
 
-        #connection to beamline
-        if self.Settings["connect_to_beamline"]:
-            self.BEAMLINE_CONNECTION = BeamlineConnect(beamline=self.site,
-                                                       logger=self.logger)
-        else:
-            self.BEAMLINE_CONNECTION = False
+        # def stop_server():
+        #     print "stop_server"
+        #     self.server.stop()
+        #
+        # atexit.register(stop_server)
 
-        # Remote access handler
-        if self.Settings["remote"]:
-            self.logger.debug("Creating self.RemoteAdapter")
-            self.RemoteAdapter = Remote(beamline=self.site,
-                                 logger=self.logger)
-        else:
-            self.RemoteAdapter = False
-            self.logger.debug("Error creating self.RemoteAdapter, set to False")
+        sys.exit(0)
 
-        # Test the cluster is available
-        PerformAction(command=("TEST", (self.ip_address, self.socket)),
-                      settings=self.Settings,
-                      secret_settings=self.SecretSettings,
-                      logger=self.logger)
+        #
+        # # watch the cloud for requests
+        # if self.SecretSettings["cloud_interval"] > 0.0:
+        #     self.CLOUDMONITOR = CloudMonitor(database=self.DATABASE,
+        #                                      settings=self.SecretSettings,
+        #                                      reply_settings=self.return_address,
+        #                                      interval=self.SecretSettings["cloud_interval"],
+        #                                      logger=self.logger)
+        # else:
+        #     self.logger.debug("CLOUDMONITOR turned off")
+        #
+        # #start the status updating
+        # self.STATUSHANDLER = StatusHandler(
+        #     db=self.DATABASE,
+        #     ip_address=self.ip_address,
+        #     data_root_dir=self.data_root_dir,
+        #     beamline=self.site,
+        #     dataserver_ip=self.SecretSettings["adsc_server"].split(":")[1][2:],
+        #     cluster_ip=self.SecretSettings["cluster_host"],
+        #     logger=self.logger
+        #     )
+        #
+        # #connection to beamline
+        # if self.Settings["connect_to_beamline"]:
+        #     self.BEAMLINE_CONNECTION = BeamlineConnect(beamline=self.site,
+        #                                                logger=self.logger)
+        # else:
+        #     self.BEAMLINE_CONNECTION = False
+        #
+        # # Remote access handler
+        # if self.Settings["remote"]:
+        #     self.logger.debug("Creating self.RemoteAdapter")
+        #     self.RemoteAdapter = Remote(beamline=self.site,
+        #                                 logger=self.logger)
+        # else:
+        #     self.RemoteAdapter = False
+        #     self.logger.debug("Error creating self.RemoteAdapter, set to False")
+        #
+        # # Test the cluster is available
+        # PerformAction(command=("TEST", self.return_address),
+        #               settings=self.Settings,
+        #               secret_settings=self.SecretSettings,
+        #               logger=self.logger)
 
     def Stop(self):
         """
@@ -763,11 +758,6 @@ class Model():
             self.pair_id.append(data["image_id"])
 
             # Get the correct directory to run in
-            # We should end up with top_level/2010-05-10/snap_99_001/
-            #the top level
-            #if my_settings["work_dir_override"] == "False":
-            #    my_toplevel_dir = self.start_dir
-            #else:
             my_toplevel_dir = my_settings["work_directory"]
             self.logger.debug("  my_toplevel_dir: %s" % my_toplevel_dir)
 
@@ -832,7 +822,7 @@ class Model():
                 if len(self.indexing_active) >= self.SecretSettings["active_strategy_limit"]:
                     self.logger.debug("Adding autoindex to the queue")
                     self.indexing_queue.appendleft((
-                        ("AUTOINDEX", my_dirs, data, my_settings, (self.ip_address, self.socket)),
+                        ("AUTOINDEX", my_dirs, data, my_settings, self.return_address),
                         my_settings,
                         self.SecretSettings,
                         self.logger))
@@ -847,7 +837,7 @@ class Model():
                                  my_dirs,
                                  data,
                                  my_settings,
-                                 (self.ip_address, self.socket)),
+                                 self.return_address),
                         settings=my_settings,
                         secret_settings=self.SecretSettings,
                         logger=self.logger
@@ -860,7 +850,7 @@ class Model():
                              my_dirs,
                              data,
                              my_settings,
-                             (self.ip_address, self.socket)),
+                             self.return_address),
                     settings=my_settings,
                     secret_settings=self.SecretSettings,
                     logger=self.logger
@@ -959,7 +949,7 @@ class Model():
                                  data1,
                                  data2,
                                  my_settings,
-                                 (self.ip_address, self.socket)),
+                                 self.return_address),
                                 my_settings,
                                 self.SecretSettings,
                                 self.logger))
@@ -976,7 +966,7 @@ class Model():
                                          data1,
                                          data2,
                                          my_settings,
-                                         (self.ip_address, self.socket)),
+                                         self.return_address),
                                 settings=my_settings,
                                 secret_settings=self.SecretSettings,
                                 logger=self.logger
@@ -988,7 +978,7 @@ class Model():
                                                data1,
                                                data2,
                                                my_settings,
-                                               (self.ip_address, self.socket)),
+                                               self.return_address),
                                       settings=my_settings,
                                       secret_settings=self.SecretSettings,
                                       logger=self.logger)
@@ -1010,9 +1000,6 @@ class Model():
             run_dict = data["run"].copy()
 
             #the top level of the work directory
-            #if self.Settings["work_dir_override"] == "False":
-            #    my_toplevel_dir = self.start_dir
-            #else:
             my_toplevel_dir = self.Settings["work_directory"]
 
             #the type level
@@ -1073,7 +1060,7 @@ class Model():
                                        my_dirs,
                                        out_data,
                                        my_settings,
-                                       (self.ip_address, self.socket)),
+                                       self.return_address),
                               settings=my_settings,
                               secret_settings=self.SecretSettings,
                               logger=self.logger)
@@ -1082,7 +1069,7 @@ class Model():
                 integration pipeline from Pilatus section")
 
 
-    def Receive(self, message):
+    def receive(self, message):
         """
         Receive information from ControllerServer (self.SERVER) and handle accordingly.
 
@@ -1123,7 +1110,7 @@ class Model():
             CRYSTAL_PARAMS_REQUEST - request from console for data
         """
 
-        self.logger.debug("Model::Receive")
+        self.logger.debug("Model::receive")
         self.logger.debug("length returned %d" % len(message))
         self.logger.debug(message)
 
@@ -1162,10 +1149,6 @@ class Model():
         elif command == "NEWIMAGE":
             self.logger.debug("NEWIMAGE %s" % info)
             self.add_pilatus_image(info)
-
-        elif command == "NEW HF4M IMAGE":
-            self.logger.debug("NEW HF4M IMAGE %s" % info)
-            self.addHf4mImage(info)
 
         # Pilatus run
         elif command == "PILATUS RUN":
@@ -1406,7 +1389,9 @@ class Model():
             else:
                 if settings["request"]["request_type"] == "reprocess":
                     #remove the process from cloud_current
-                    self.DATABASE.removeCloudCurrent(cloud_request_id=settings["request"]["cloud_request_id"])
+                    self.DATABASE.removeCloudCurrent(
+                        cloud_request_id=settings["request"]["cloud_request_id"]
+                        )
                     #note the result in cloud_complete
                     self.DATABASE.enterCloudComplete(
                         cloud_request_id=settings["request"]["cloud_request_id"],

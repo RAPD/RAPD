@@ -22,28 +22,43 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
-import threading
+
 import atexit
-import time
-import os
-import datetime
 from collections import deque
-from rapd_cluster import PerformAction
-from rapd_beamlinespecific import *
-from rapd_site import TransferPucksToBeamline, TransferMasterPuckListToBeamline
-import paramiko
-from rapd_console import ConsoleConnect as BeamlineConnect
+import datetime
+import logging
+import os
+import threading
+import time
+
+# from rapd_cluster import PerformAction
+# from rapd_beamlinespecific import *
+# from rapd_site import TransferPucksToBeamline, TransferMasterPuckListToBeamline
+# import paramiko
+# from rapd_console import ConsoleConnect as BeamlineConnect
 
 class CloudMonitor(threading.Thread):
     """
     Monitors a database, organizes requests and then calls PerformAction
     to run the process on the cluster.
     """
-    def __init__(self,database,settings,reply_settings,interval=30.,logger=None):
+
+    # Place to store requests
+    request_queue = deque()
+
+    #for stopping
+    Go = True
+
+    def __init__(self,
+                 database,
+                 settings,
+                 reply_settings,
+                 interval=30.):
         """
         Save passed variables, perform some startup and initiate thread
 
-        database - an instance of the rapd_database.Database module
+        Keyword arguments:
+        database -- Adapter to the core database
         settings - rapd_site.secret_settings for the beamline
         reply_settings - tuple of (ip_address,port_number) for the ControllerServer which
                          listens for replies
@@ -52,35 +67,29 @@ class CloudMonitor(threading.Thread):
 
         """
 
-        logger.info("CloudMonitor::__init__")
+        self.logger = logging.getLogger("RAPDLogger")
+        self.logger.info("CloudMonitor::__init__")
 
         #initialize the thread
         threading.Thread.__init__(self)
 
         #store passed-in variables
-        self.DATABASE        = database
-        self.Secret_Settings = settings
-        self.reply_settings  = reply_settings
-        self.interval        = interval
-        self.logger          = logger
-
-        #to keep queued requests
-        self.request_queue = deque()
-
-        #for stopping
-        self.Go = True
+        self.database = database
+        self.settings = settings
+        self.reply_settings = reply_settings
+        self.interval = interval
 
         #register for shutdown
-        atexit.register(self.Stop)
+        atexit.register(self.stop)
 
         self.start()
 
-    def Stop(self):
+    def stop(self):
         """
         Bring the cloud monitor loop to a halt.
         """
 
-        self.logger.debug('Cloud_Monitor::Stop')
+        self.logger.debug('Stopping')
         self.Go = False
 
     def run(self):
@@ -90,36 +99,35 @@ class CloudMonitor(threading.Thread):
 
         self.logger.debug('CloudMonitor::run')
 
+        # Save some space
+        settings = self.settings
+
         #run the monitor as a loop
-        while(self.Go == True):
-            """
-            The following section is for cloud-based beamline control events
-            """
-            #query for new minikappa requests
-            minikappa_request = self.DATABASE.getMinikappaRequest()
-            #print minikappa_request
-            if (minikappa_request):
-                #if (minikappa_request['ip_address'].startswith(self.Secret_Settings['local_ip_prefix'])):
-                self.logger.debug('Minikappa setting entered')
-                self.logger.debug(minikappa_request)
-                tmp = MinikappaHandler(request=minikappa_request,
-                                           database=self.DATABASE,
-                                           logger=self.logger)
+        while self.Go:
+            #
+            # The following section is for cloud-based beamline control events
+            #
+            # Minikappa requests
+            if settings["CLOUD_MINIKAPPA"]:
+                # Check the database
+                minikappa_request = self.database.getMinikappaRequest()
+                if (minikappa_request):
+                    self.logger.debug(minikappa_request)
+                    tmp = MinikappaHandler(request=minikappa_request,
+                                           database=self.database)
 
-            #query for new data collection run parameters
-            #print 'data collection run request'
-            datacollection_request = self.DATABASE.getDatacollectionRequest()
-            if (datacollection_request):
-                #if (datacollection_request['ip_address'].startswith(self.Secret_Settings['local_ip_prefix'])):
-                self.logger.debug('Datacollection request entered')
-                self.logger.debug(datacollection_request)
-                tmp = DatacollectionHandler(request=datacollection_request,
-                                                database=self.DATABASE,
-                                                logger=self.logger)
+            # Data collection run parameters request
+            if settings["CLOUD_DATA_COLLECTION_PARAMS"]:
+                datacollection_request = self.database.getDatacollectionRequest()
+                if (datacollection_request):
+                    self.logger.debug(datacollection_request)
+                    tmp = DatacollectionHandler(request=datacollection_request,
+                                                database=self.database)
 
-            """
-            The following section is for cloud-based events
-            """
+            #
+            # The following section is for cloud-based events
+            #
+
             #query for new cloud requests
             request = self.DATABASE.getCloudRequest()
             #now look through the request
@@ -257,18 +265,16 @@ class MinikappaHandler(threading.Thread):
     Handles the signaling of the beamline with a minikappa setting in a separate thread.
     """
 
-    def __init__(self,request,database,logger):
+    def __init__(self, request, database):
         """
         Instantiate by saving passed variables and starting the thread.
 
         request - a dict describing the request
         database - instance of the rapd_database.Database
-        logger - logger instance
-
         """
-
-        logger.info('MinikappaHandler::__init__')
-        logger.debug(request)
+        self.logger = logging.getLogger("RAPDLogger")
+        self.logger.info('MinikappaHandler::__init__')
+        self.logger.debug(request)
 
         #initialize the thread
         threading.Thread.__init__(self)
@@ -276,7 +282,6 @@ class MinikappaHandler(threading.Thread):
         #store passed-in variables
         self.request        = request
         self.DATABASE       = database
-        self.logger         = logger
 
         self.start()
 
@@ -764,7 +769,10 @@ class ReprocessHandler(threading.Thread):
                     my_sub_dir = '_'.join((data1['image_prefix'],str(data1['run_number']),'+'.join((str(data1['image_number']).lstrip('0'),str(data2['image_number']).lstrip('0')))))
                                                                                                                                                             #AUTOINDEX-PAIR
                     #now join the three levels                                                                                                              #AUTOINDEX-PAIR
-                    my_work_dir_candidate = os.path.join(my_toplevel_dir,my_typelevel_dir,my_datelevel_dir,my_sub_dir)                                      #AUTOINDEX-PAIR
+                    my_work_dir_candidate = os.path.join(my_toplevel_dir,
+                                                         my_typelevel_dir,
+                                                         my_datelevel_dir,
+                                                         my_sub_dir)
                                                                                                                                                             #AUTOINDEX-PAIR
                     #make sure this is an original directory                                                                                                #AUTOINDEX-PAIR
                     if os.path.exists(my_work_dir_candidate):                                                                                               #AUTOINDEX-PAIR
@@ -978,10 +986,10 @@ class StacHandler(threading.Thread):
                 my_repr = my_sub_dir+'.img'                                                                                                             #AUTOINDEX
                                                                                                                                                         #AUTOINDEX
                 #add the process to the database to display as in-process                                                                               #AUTOINDEX
-                process_id = self.DATABASE.addNewProcess( type = 'single',                                                                              #AUTOINDEX
-                                                          rtype = 'reprocess',                                                                          #AUTOINDEX
-                                                          data_root_dir = my_data_root_dir,                                                             #AUTOINDEX
-                                                          repr = my_repr )                                                                              #AUTOINDEX
+                process_id = self.DATABASE.addNewProcess(type='single',                                                                              #AUTOINDEX
+                                                         rtype='reprocess',                                                                          #AUTOINDEX
+                                                         data_root_dir=my_data_root_dir,                                                             #AUTOINDEX
+                                                         repr=my_repr )                                                                              #AUTOINDEX
                                                                                                                                                         #AUTOINDEX
                 #add the ID entry to the data dict                                                                                                      #AUTOINDEX
                 #Is this used at all?                                                                                                                   #AUTOINDEX
