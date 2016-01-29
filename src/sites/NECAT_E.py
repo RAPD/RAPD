@@ -34,12 +34,12 @@ SECRETS = importlib.import_module("sites.secrets_necat_e")
 LOGFILE_DIR = "/tmp/log"    # LINUX SHOULD BE /var/log/
 LOG_LEVEL = 50
 
-# RAPD core settings
+# RAPD core process settings
 CORE_PORT = 50001           # Port for core process to listen on
-IMAGE_MONITOR = True        # Monitor for images - True || False
 
-# RAPD cluster settings
+# RAPD cluster process settings
 CLUSTER_PORT = 50000        # Port for cluster to listen on
+CLUSTER_ADDRESS = (SECRETS.CLUSTER_HOST, CLUSTER_PORT)
 
 # RAPD database settings
 CORE_DATABASE = "mysql"     # Database to use for core operations. Options: "mysql"
@@ -53,6 +53,8 @@ REDIS_CLUSTER = True        # Running in a cluster configuration - True || False
 
 # Detector settings
 DETECTOR = "ADSC_Q315"
+DETECTOR_SUFFIX = ".img"
+IMAGE_MONITOR = False        # Monitor for images - True || False
 IMAGE_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
                           "SENTINEL_HOST" : SECRETS.SENTINEL_HOST,
                           "SENTINEL_PORT" : SECRETS.SENTINEL_PORT,
@@ -60,11 +62,26 @@ IMAGE_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
 
 # Cloud Settings
 CLOUD_MONITOR = True        # Run the cloud monitor?
-CLOUD_INTERVAL = 10         # Pause between checking the database for new cloud requests
+CLOUD_INTERVAL = 10         # Pause between checking the database for new cloud requests in seconds
+
+# Cloud handlers
 CLOUD_MINIKAPPA = False
+CLOUD_MINIKAPPA_HANDLER = None
 CLOUD_DATA_COLLECTION_PARAMS = False
+CLOUD_DATA_COLLECTION_PARAMS_HANDLER = "datacollectionparameters"
+CLOUD_DOWNLOAD_HANDLER = "download"
+CLOUD_REINDEX_HANDLER = "reindex"
+CLOUD_REINTEGRATE_HANDLER = "reintegrate"
+# Aggregator - should not need modified
 CLOUD_MONITOR_SETTINGS = {"CLOUD_MINIKAPPA":CLOUD_MINIKAPPA,
-                          "CLOUD_DATA_COLLECTION_PARAMS":CLOUD_DATA_COLLECTION_PARAMS}
+                          "CLOUD_MINIKAPPA_HANDLER":CLOUD_MINIKAPPA_HANDLER,
+                          "CLOUD_DATA_COLLECTION_PARAMS":CLOUD_DATA_COLLECTION_PARAMS,
+                          "CLOUD_DATA_COLLECTION_PARAMS_HANDLER":CLOUD_DATA_COLLECTION_PARAMS_HANDLER,
+                          "CLOUD_DOWNLOAD_HANDLER":CLOUD_DOWNLOAD_HANDLER,
+                          "CLOUD_REINDEX_HANDLER":CLOUD_REINDEX_HANDLER,
+                          "CLOUD_REINTEGRATE_HANDLER":CLOUD_REINTEGRATE_HANDLER,
+                          "CLUSTER_ADDRESS":CLUSTER_ADDRESS,
+                          "DETECTOR_SUFFIX":DETECTOR_SUFFIX}
 
 # secret_settings_general = { #database information
 #                             'db_host'                : 'rapd.nec.aps.anl.gov',         #location of mysql database

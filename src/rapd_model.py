@@ -39,7 +39,7 @@ from utils.site_tools import get_ip_address
 # from rapd_sitespecific import Remote, ImageMonitor
 # from rapd_database import Database
 from rapd_cluster import PerformAction, ControllerServer
-from rapd_cloud import CloudMonitor
+from cloud.rapd_cloud import CloudMonitor
 # from rapd_console import ConsoleConnect as BeamlineConnect
 # from rapd_console import ConsoleFeeder
 # from rapd_pilatus import pilatus_read_header
@@ -74,7 +74,19 @@ class Model(object):
     # Managing runs and images without going to the db
     current_run = {}
     past_runs = collections.deque(maxlen=1000)
+
+    data_root_dir = None
+    database = None
+
+    server = None
+    # ip_address = None
+    return_address = None
+
+    image_monitor = None
     current_image = None
+    image_monitor_reconnect_attempts = 0
+
+    cloud_monitor = False
 
     def __init__(self, SITE):
         """
@@ -83,73 +95,18 @@ class Model(object):
         SITE -- Site settings file
         """
 
+        # Get the logger Instance
+        self.logger = logging.getLogger("RAPDLogger")
+
         #passed-in variables
         self.site = SITE
 
         # Instance variables
-        self.data_root_dir = None
-        self.database = None
-        self.ip_address = None
-        self.logger = logging.getLogger("RAPDLogger")
-        self.server = None
-        self.image_monitor = None
-        self.image_monitor_reconnect_attempts = 0
-        self.cloud_monitor = False
+        self.return_address = (get_ip_address(), SITE.CORE_PORT)
+        self.logger.debug("self.return_address:%s", self.return_address)
 
-        #
+        # Start the process
         self.start()
-
-    def connect_to_database(self):
-        """Set up database connection"""
-
-        # Import the database adapter as database module
-        global database
-        database = importlib.import_module('database.rapd_%s_adapter' % self.site.CORE_DATABASE)
-
-        # Shorten it a little
-        site = self.site
-        secrets = site.SECRETS
-
-        # Instantiate the database connection
-        self.database = database.Database(host=secrets.CORE_DATABASE_HOST,
-                                          user=secrets.CORE_DATABASE_USER,
-                                          password=secrets.CORE_DATABASE_PASSWD,
-                                          data_name=site.DB_NAME_DATA,
-                                          users_name=site.DB_NAME_USERS,
-                                          cloud_name=site.DB_NAME_CLOUD)
-
-    def start_server(self):
-        """Start up the listening process for core"""
-
-        self.server = ControllerServer(receiver=self.receive,
-                                       port=self.site.CORE_PORT)
-
-
-    def start_image_monitor(self):
-        """Start up the image listening process for core"""
-
-        # Shorten variable names
-        site = self.site
-
-        if site.IMAGE_MONITOR == True:
-            # Import the specific detector as detector module
-            global detector
-            detector = importlib.import_module('detectors.%s' % site.DETECTOR.lower())
-            self.image_monitor = detector.Monitor(tag=site.ID.lower(),
-                                                  image_monitor_settings=site.IMAGE_MONITOR_SETTINGS,
-                                                  notify=self.receive)
-
-    def start_cloud_monitor(self):
-        """Start up the cloud listening process for core"""
-
-        # Shorten variable names
-        site = self.site
-
-        if site.CLOUD_MONITOR == True:
-            self.cloud_monitor = CloudMonitor(database=self.database,
-                                              settings=site.CLOUD_MONITOR_SETTINGS,
-                                              reply_settings=self.return_address,
-                                              interval=site.CLOUD_INTERVAL)
 
     def start(self):
         """
@@ -221,6 +178,60 @@ class Model(object):
         #               settings=self.Settings,
         #               secret_settings=self.SecretSettings,
         #               logger=self.logger)
+
+    def connect_to_database(self):
+        """Set up database connection"""
+
+        # Import the database adapter as database module
+        global database
+        database = importlib.import_module('database.rapd_%s_adapter' % self.site.CORE_DATABASE)
+
+        # Shorten it a little
+        site = self.site
+        secrets = site.SECRETS
+
+        # Instantiate the database connection
+        self.database = database.Database(host=secrets.CORE_DATABASE_HOST,
+                                          user=secrets.CORE_DATABASE_USER,
+                                          password=secrets.CORE_DATABASE_PASSWD,
+                                          data_name=site.DB_NAME_DATA,
+                                          users_name=site.DB_NAME_USERS,
+                                          cloud_name=site.DB_NAME_CLOUD)
+
+    def start_server(self):
+        """Start up the listening process for core"""
+
+        self.server = ControllerServer(receiver=self.receive,
+                                       port=self.site.CORE_PORT)
+
+
+    def start_image_monitor(self):
+        """Start up the image listening process for core"""
+
+        # Shorten variable names
+        site = self.site
+
+        if site.IMAGE_MONITOR == True:
+            # Import the specific detector as detector module
+            global detector
+            detector = importlib.import_module('detectors.%s' % site.DETECTOR.lower())
+            self.image_monitor = detector.Monitor(tag=site.ID.lower(),
+                                                  image_monitor_settings=site.IMAGE_MONITOR_SETTINGS,
+                                                  notify=self.receive)
+
+    def start_cloud_monitor(self):
+        """Start up the cloud listening process for core"""
+
+        # Shorten variable names
+        site = self.site
+
+        if site.CLOUD_MONITOR == True:
+            self.cloud_monitor = CloudMonitor(database=self.database,
+                                              settings=site.CLOUD_MONITOR_SETTINGS,
+                                              reply_settings=self.return_address,
+                                              interval=site.CLOUD_INTERVAL)
+
+
 
     def Stop(self):
         """
