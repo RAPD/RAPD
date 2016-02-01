@@ -36,6 +36,7 @@ LOG_LEVEL = 50
 
 # RAPD core process settings
 CORE_PORT = 50001           # Port for core process to listen on
+UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"    # Where files from UI are uploaded
 
 # RAPD cluster process settings
 CLUSTER_PORT = 50000        # Port for cluster to listen on
@@ -70,18 +71,29 @@ CLOUD_MINIKAPPA_HANDLER = None
 CLOUD_DATA_COLLECTION_PARAMS = False
 CLOUD_DATA_COLLECTION_PARAMS_HANDLER = "datacollectionparameters"
 CLOUD_DOWNLOAD_HANDLER = "download"
+CLOUD_BINARY_MERGE_HANDLER = "binary_merge"
+CLOUD_MR_HANDLER = "mr"
 CLOUD_REINDEX_HANDLER = "reindex"
 CLOUD_REINTEGRATE_HANDLER = "reintegrate"
 # Aggregator - should not need modified
-CLOUD_MONITOR_SETTINGS = {"CLOUD_MINIKAPPA":CLOUD_MINIKAPPA,
-                          "CLOUD_MINIKAPPA_HANDLER":CLOUD_MINIKAPPA_HANDLER,
-                          "CLOUD_DATA_COLLECTION_PARAMS":CLOUD_DATA_COLLECTION_PARAMS,
-                          "CLOUD_DATA_COLLECTION_PARAMS_HANDLER":CLOUD_DATA_COLLECTION_PARAMS_HANDLER,
-                          "CLOUD_DOWNLOAD_HANDLER":CLOUD_DOWNLOAD_HANDLER,
-                          "CLOUD_REINDEX_HANDLER":CLOUD_REINDEX_HANDLER,
-                          "CLOUD_REINTEGRATE_HANDLER":CLOUD_REINTEGRATE_HANDLER,
-                          "CLUSTER_ADDRESS":CLUSTER_ADDRESS,
-                          "DETECTOR_SUFFIX":DETECTOR_SUFFIX}
+CLOUD_MONITOR_SETTINGS = {
+        "CLOUD_BINARY_MERGE_HANDLER":CLOUD_BINARY_MERGE_HANDLER,
+        "CLOUD_DATA_COLLECTION_PARAMS":CLOUD_DATA_COLLECTION_PARAMS,
+        "CLOUD_DATA_COLLECTION_PARAMS_HANDLER":CLOUD_DATA_COLLECTION_PARAMS_HANDLER,
+        "CLOUD_DOWNLOAD_HANDLER":CLOUD_DOWNLOAD_HANDLER,
+        "CLOUD_MINIKAPPA":CLOUD_MINIKAPPA,
+        "CLOUD_MINIKAPPA_HANDLER":CLOUD_MINIKAPPA_HANDLER,
+        "CLOUD_MR_HANDLER":CLOUD_MR_HANDLER,
+        "CLOUD_REINDEX_HANDLER":CLOUD_REINDEX_HANDLER,
+        "CLOUD_REINTEGRATE_HANDLER":CLOUD_REINTEGRATE_HANDLER,
+        "CLUSTER_ADDRESS":CLUSTER_ADDRESS,
+        "DETECTOR_SUFFIX":DETECTOR_SUFFIX,
+        "UI_HOST":SECRETS.UI_HOST,
+        "UI_PORT":SECRETS.UI_PORT,
+        "UI_USER":SECRETS.UI_USER,
+        "UI_PASSWORD":SECRETS.UI_PASSWORD,
+        "UPLOAD_DIR":UPLOAD_DIR
+        }
 
 # secret_settings_general = { #database information
 #                             'db_host'                : 'rapd.nec.aps.anl.gov',         #location of mysql database
