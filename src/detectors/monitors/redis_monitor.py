@@ -68,6 +68,7 @@ class RedisMonitor(threading.Thread):
         atexit.register(self.stop)
 
         #start the thread
+        self.daemon = True
         self.start()
 
     def stop(self):

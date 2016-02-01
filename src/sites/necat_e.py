@@ -51,7 +51,6 @@ DB_NAME_CLOUD = "rapd_cloud"
 # Redis Settings
 REDIS_CLUSTER = True        # Running in a cluster configuration - True || False
 
-
 # Detector settings
 DETECTOR = "ADSC_Q315"
 DETECTOR_SUFFIX = ".img"
@@ -62,8 +61,8 @@ IMAGE_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
                           "REDIS_MASTER_NAME" : SECRETS.REDIS_MASTER_NAME}
 
 # Cloud Settings
-CLOUD_MONITOR = True        # Run the cloud monitor?
-CLOUD_INTERVAL = 10         # Pause between checking the database for new cloud requests in seconds
+CLOUD_MONITOR = "rapd_cloud"        # Run the cloud monitor?
+CLOUD_INTERVAL = 10                 # Pause between checking the database for new cloud requests in seconds
 
 # Cloud handlers
 CLOUD_MINIKAPPA = False
@@ -94,6 +93,23 @@ CLOUD_MONITOR_SETTINGS = {
         "UI_PASSWORD":SECRETS.UI_PASSWORD,
         "UPLOAD_DIR":UPLOAD_DIR
         }
+
+# For connecting to the site
+SITE_ADAPTER = "necat"              # file name prefix for adapter in src/sites/adapters
+SITE_ADAPTER_SETTINGS = {"ID":ID,
+                         "SITE_REDIS_IP":SECRETS.SITE_REDIS_IP,
+                         "SITE_REDIS_PORT":SECRETS.SITE_REDIS_PORT,
+                         "SITE_REDIS_DB":SECRETS.SITE_REDIS_DB}
+
+
+# For connecting to the remote access system fr the site
+REMOTE_ADAPTER = "necat_remote"     # file name prefix for adapter in src/sites/adapters
+REMOTE_ADAPTER_SETTINGS = {"ID":ID,
+                           "MONGO_CONNECTION_STRING":SECRETS.MONGO_CONNECTION_STRING,
+                           "REDIS_CLUSTER":REDIS_CLUSTER,
+                           "SENTINEL_HOST":SECRETS.SENTINEL_HOST,
+                           "SENTINEL_PORT":SECRETS.SENTINEL_PORT,
+                           "REDIS_MASTER_NAME":SECRETS.REDIS_MASTER_NAME}
 
 # secret_settings_general = { #database information
 #                             'db_host'                : 'rapd.nec.aps.anl.gov',         #location of mysql database

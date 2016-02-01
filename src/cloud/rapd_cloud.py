@@ -93,6 +93,8 @@ class CloudMonitor(threading.Thread):
         #register for shutdown
         atexit.register(self.stop)
 
+        # Run
+        self.daemon = True
         self.start()
 
     def stop(self):

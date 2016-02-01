@@ -50,6 +50,9 @@ from cloud.rapd_cloud import CloudMonitor
 
 database = None
 detector = None
+cloud_monitor = None
+site_adapter = None
+remote_adapter = None
 
 #####################################################################
 # The main Model Class                                              #
@@ -86,7 +89,8 @@ class Model(object):
     current_image = None
     image_monitor_reconnect_attempts = 0
 
-    cloud_monitor = False
+    cloud_monitor = None
+    site_adapter = None
 
     def __init__(self, SITE):
         """
@@ -127,43 +131,17 @@ class Model(object):
         # Start the cloud monitor
         self.start_cloud_monitor()
 
-        # def stop_server():
-        #     print "stop_server"
-        #     self.server.stop()
-        #
-        # atexit.register(stop_server)
+        # Initialize the site adapter
+        self.init_site_adapter()
+
+        # Initialize the remote adapter
+        self.init_remote_adapter()
 
         sys.exit(0)
 
-        #
-        # # watch the cloud for requests
-        # if self.SecretSettings["cloud_interval"] > 0.0:
-        #     self.CLOUDMONITOR = CloudMonitor(database=self.DATABASE,
-        #                                      settings=self.SecretSettings,
-        #                                      reply_settings=self.return_address,
-        #                                      interval=self.SecretSettings["cloud_interval"],
-        #                                      logger=self.logger)
-        # else:
-        #     self.logger.debug("CLOUDMONITOR turned off")
-        #
-        # #start the status updating
-        # self.STATUSHANDLER = StatusHandler(
-        #     db=self.DATABASE,
-        #     ip_address=self.ip_address,
-        #     data_root_dir=self.data_root_dir,
-        #     beamline=self.site,
-        #     dataserver_ip=self.SecretSettings["adsc_server"].split(":")[1][2:],
-        #     cluster_ip=self.SecretSettings["cluster_host"],
-        #     logger=self.logger
-        #     )
-        #
-        # #connection to beamline
-        # if self.Settings["connect_to_beamline"]:
-        #     self.BEAMLINE_CONNECTION = BeamlineConnect(beamline=self.site,
-        #                                                logger=self.logger)
-        # else:
-        #     self.BEAMLINE_CONNECTION = False
-        #
+
+
+
         # # Remote access handler
         # if self.Settings["remote"]:
         #     self.logger.debug("Creating self.RemoteAdapter")
@@ -204,6 +182,12 @@ class Model(object):
         self.server = ControllerServer(receiver=self.receive,
                                        port=self.site.CORE_PORT)
 
+        def stop_server():
+            self.logger.debug("Stop core server")
+            self.server.stop()
+
+        atexit.register(stop_server)
+
 
     def start_image_monitor(self):
         """Start up the image listening process for core"""
@@ -219,18 +203,43 @@ class Model(object):
                                                   image_monitor_settings=site.IMAGE_MONITOR_SETTINGS,
                                                   notify=self.receive)
 
+
     def start_cloud_monitor(self):
         """Start up the cloud listening process for core"""
 
         # Shorten variable names
         site = self.site
 
-        if site.CLOUD_MONITOR == True:
-            self.cloud_monitor = CloudMonitor(database=self.database,
-                                              settings=site.CLOUD_MONITOR_SETTINGS,
-                                              reply_settings=self.return_address,
-                                              interval=site.CLOUD_INTERVAL)
+        if site.CLOUD_MONITOR:
+            # Import the specific cloud monitor as cloud_monitor module
+            global cloud_monitor
+            cloud_monitor = importlib.import_module('cloud.%s' % site.CLOUD_MONITOR.lower())
+            self.cloud_monitor = cloud_monitor.CloudMonitor(database=self.database,
+                                                            settings=site.CLOUD_MONITOR_SETTINGS,
+                                                            reply_settings=self.return_address,
+                                                            interval=site.CLOUD_INTERVAL)
 
+    def init_site_adapter(self):
+        """Initialize the connection to the site"""
+
+        # Shorten variable names
+        site = self.site
+
+        if site.SITE_ADAPTER:
+            global site_adapter
+            site_adapter = importlib.import_module('sites.adapters.%s' % site.SITE_ADAPTER.lower())
+            self.site_adapter = site_adapter.Adapter(settings=site.SITE_ADAPTER_SETTINGS)
+
+    def init_remote_adapter(self):
+        """Initialize connection to remote access system"""
+
+        # Shorten variable names
+        site = self.site
+
+        if site.REMOTE_ADAPTER:
+            global remote_adapter
+            remote_adapter = importlib.import_module('sites.adapters.%s' % site.REMOTE_ADAPTER.lower())
+            self.remote_adapter = remote_adapter.Adapter(settings=site.REMOTE_ADAPTER_SETTINGS)
 
 
     def Stop(self):
@@ -2125,56 +2134,3 @@ class Model(object):
         else:
             self.logger.info("Take no action for message")
             self.logger.info(message)
-
-class StatusHandler(threading.Thread):
-    """
-    Handles logging of life for the RAPD Core process.
-    """
-
-    def __init__(self, db, ip_address, data_root_dir, beamline, dataserver_ip,
-                 cluster_ip, logger):
-        """
-        Initialize the instance by saving variables.
-
-        db - a connection to the rapd database instance
-        ip_address - ip address of this model
-        data_root_dir - the current data root directory
-        beamline - the beamline desgnation for this rapd_model
-        dataserver_ip - ip address of the computer hosting the process watching data collection
-        cluster_ip - the ip address of the cluster which this rapd_model is sending jobs to
-        logger - logger instance
-
-        """
-
-        logger.info("StatusHandler::__init__")
-
-        #initialize the thread
-        threading.Thread.__init__(self)
-
-        #store passed-in variables
-        self.DATABASE = db
-        self.ip_address = ip_address
-        self.data_root_dir = data_root_dir
-        self.site = beamline
-        self.dataserver_ip = dataserver_ip
-        self.cluster_ip = cluster_ip
-        self.logger = logger
-
-        #start the thread
-        self.start()
-
-    def run(self):
-        """
-        Starts the thread going.
-        """
-
-        self.logger.debug("StatusHandler::run")
-        while True:
-            #log the status of this Thread (the controller process)
-            self.DATABASE.update_controller_status(controller_ip=self.ip_address,
-                                                   data_root_dir=self.data_root_dir,
-                                                   beamline=self.site,
-                                                   dataserver_ip=self.dataserver_ip,
-                                                   cluster_ip=self.cluster_ip)
-            #now wait before next update
-            time.sleep(30)
