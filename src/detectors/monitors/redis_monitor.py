@@ -28,8 +28,6 @@ import threading
 import time
 import redis
 
-
-
 # RAPD imports
 import pysent
 
@@ -58,7 +56,6 @@ class RedisMonitor(threading.Thread):
         self.notify = notify
         self.reconnect = reconnect
 
-
         # Instance vars
         # For stopping/starting
         self.Go = True
@@ -67,8 +64,8 @@ class RedisMonitor(threading.Thread):
         #register for shutdown
         atexit.register(self.stop)
 
-        #start the thread
-        self.daemon = True
+        # Start the thread
+        # self.daemon = True
         self.start()
 
     def stop(self):
@@ -102,17 +99,12 @@ class RedisMonitor(threading.Thread):
 
         image_list = "images_collected_"+self.tag
         while self.Go:
-            #try:
             # Try to pop the oldest image off the list
             new_image = self.redis.rpop(image_list)
             if new_image:
                 # Notify core thread that an image has been collected
                 self.notify(("NEWIMAGE", new_image))
                 self.logger.debug('New image %s', new_image)
-
-            # except:
-            #     self.logger.exception('Exception in while loop')
-            #     time.sleep(5)
 
             #slow it down a little
             time.sleep(0.1)

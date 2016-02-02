@@ -827,8 +827,8 @@ class ControllerServer(threading.Thread):
 
         self.Go = True
 
-        #start it up
-        self.daemon = True
+        # Start it up
+        # self.daemon = True
         self.start()
 
     def run(self):

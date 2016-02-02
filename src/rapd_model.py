@@ -29,27 +29,23 @@ import datetime
 import importlib
 import logging
 import os
-import sys
+# import sys
 # import threading
 # import time
 
 #custom RAPD imports
 from utils.site_tools import get_ip_address
 
-# from rapd_sitespecific import Remote, ImageMonitor
-# from rapd_database import Database
 from rapd_cluster import PerformAction, ControllerServer
-# from cloud.rapd_cloud import CloudMonitor
-# from rapd_console import ConsoleConnect as BeamlineConnect
 # from rapd_console import ConsoleFeeder
 # from rapd_pilatus import pilatus_read_header
 # from rapd_site import beamline_settings, secret_settings
 # from rapd_site import necat_determine_flux as determine_flux
 # from rapd_site import GetDataRootDir, TransferToUI, TransferToBeamline, CopyToUser
-# from rapd_adsc import Q315ReadHeader
 
 database = None
 detector = None
+run_monitor = None
 cloud_monitor = None
 site_adapter = None
 remote_adapter = None
@@ -91,6 +87,7 @@ class Model(object):
 
     cloud_monitor = None
     site_adapter = None
+    remote_adapter = None
 
     def __init__(self, SITE):
         """
@@ -178,16 +175,37 @@ class Model(object):
     def start_image_monitor(self):
         """Start up the image listening process for core"""
 
+        self.logger.debug("Starting image monitor")
+
         # Shorten variable names
         site = self.site
 
-        if site.IMAGE_MONITOR == True:
+        if site.IMAGE_MONITOR:
             # Import the specific detector as detector module
             global detector
             detector = importlib.import_module('detectors.%s' % site.DETECTOR.lower())
+            self.logger.debug(detector)
             self.image_monitor = detector.Monitor(
                 tag=site.ID.lower(),
                 image_monitor_settings=site.IMAGE_MONITOR_SETTINGS,
+                notify=self.receive)
+
+    def start_run_monitor(self):
+        """Start up the run information listening process for core"""
+
+        self.logger.debug("Starting run monitor")
+
+        # Shorten variable names
+        site = self.site
+
+        if site.RUN_MONITOR:
+            # Import the specific run monitor module
+            global run_monitor
+            run_monitor = importlib.import_module("%s" % site.RUN_MONITOR.lower())
+            self.logger.debug(run_monitor)
+            self.run_monitor = run_monitor.Monitor(
+                tag=site.ID.lower(),
+                run_monitor_settings=site.IMAGE_MONITOR_SETTINGS,
                 notify=self.receive)
 
     def start_cloud_monitor(self):
@@ -199,7 +217,7 @@ class Model(object):
         if site.CLOUD_MONITOR:
             # Import the specific cloud monitor as cloud_monitor module
             global cloud_monitor
-            cloud_monitor = importlib.import_module('cloud.%s' % site.CLOUD_MONITOR.lower())
+            cloud_monitor = importlib.import_module("%s" % site.CLOUD_MONITOR.lower())
             self.cloud_monitor = cloud_monitor.CloudMonitor(database=self.database,
                                                             settings=site.CLOUD_MONITOR_SETTINGS,
                                                             reply_settings=self.return_address,
@@ -213,7 +231,7 @@ class Model(object):
 
         if site.SITE_ADAPTER:
             global site_adapter
-            site_adapter = importlib.import_module('sites.adapters.%s' % site.SITE_ADAPTER.lower())
+            site_adapter = importlib.import_module("%s" % site.SITE_ADAPTER.lower())
             self.site_adapter = site_adapter.Adapter(settings=site.SITE_ADAPTER_SETTINGS)
 
     def init_remote_adapter(self):
@@ -224,41 +242,43 @@ class Model(object):
 
         if site.REMOTE_ADAPTER:
             global remote_adapter
-            remote_adapter = importlib.import_module('sites.adapters.%s' % site.REMOTE_ADAPTER.lower())
+            remote_adapter = importlib.import_module("%s" % site.REMOTE_ADAPTER.lower())
             self.remote_adapter = remote_adapter.Adapter(settings=site.REMOTE_ADAPTER_SETTINGS)
             print self.remote_adapter
 
 
-    def Stop(self):
+    def stop(self):
         """
         Stop the ImageMonitor,CloudMonitor and StatusRegistrar.
         """
 
-        self.logger.info("Model::Stop")
+        self.logger.info("Stopping")
 
-        #the IMAGEMONITOR
-        try:
-            if self.IMAGEMONITOR:
-                self.IMAGEMONITOR.Stop()
-                self.IMAGEMONITOR = False
-        except:
-            self.IMAGEMONITOR = False
 
-        #the CLOUDMONITOR
-        try:
-            if self.CLOUDMONITOR:
-                self.CLOUDMONITOR.Stop()
-                self.CLOUDMONITOR = False
-        except:
-            self.CLOUDMONITOR = False
 
-        #the STATUSREGISTRAR
-        try:
-            if self.STATUSREGISTRAR:
-                self.STATUSREGISTRAR.Stop()
-                self.STATUSREGISTRAR = False
-        except:
-            self.STATUSREGISTRAR = False
+        # #the IMAGEMONITOR
+        # try:
+        #     if self.IMAGEMONITOR:
+        #         self.IMAGEMONITOR.Stop()
+        #         self.IMAGEMONITOR = False
+        # except:
+        #     self.IMAGEMONITOR = False
+        #
+        # #the CLOUDMONITOR
+        # try:
+        #     if self.CLOUDMONITOR:
+        #         self.CLOUDMONITOR.Stop()
+        #         self.CLOUDMONITOR = False
+        # except:
+        #     self.CLOUDMONITOR = False
+        #
+        # #the STATUSREGISTRAR
+        # try:
+        #     if self.STATUSREGISTRAR:
+        #         self.STATUSREGISTRAR.Stop()
+        #         self.STATUSREGISTRAR = False
+        # except:
+        #     self.STATUSREGISTRAR = False
 
     #################################################################
     # Handle a new image being recorded                             #
@@ -571,40 +591,40 @@ class Model(object):
                                 run["status"] = "INTEGRATING"
                                 self.new_data_image(data=header)
 
-    def get_adsc_header(self,
-                        fullname,
-                        run_id=0,
-                        drd=None,
-                        adsc_number=0,
-                        place=1):
-        """Get the ADSC image"s header data"""
-
-        self.logger.debug("get_adsc_header %s run_id:%d" % (fullname, run_id))
-
-        adsc_header = Q315ReadHeader(fullname, logger=self.logger)
-        adsc_header["run_id"] = run_id
-        adsc_header["data_root_dir"] = drd
-        adsc_header["adsc_number"] = adsc_number
-
-        #Grab extra data for the image
-        adsc_header.update(self.BEAMLINE_CONNECTION.GetImageData())
-
-        #Now perform beamline-specific calculations
-        adsc_header = determine_flux(header_in=adsc_header,
-                                     beamline=self.site,
-                                     logger=self.logger)
-
-        #Calculate beam center
-        adsc_header["x_beam"], adsc_header["y_beam"] = \
-            self.calculate_beam_center(
-                d=adsc_header["distance"],
-                v_offset=adsc_header["vertical_offset"])
-
-        #update remote client
-        if self.RemoteAdapter and place == 1:
-            self.RemoteAdapter.add_image(adsc_header)
-
-        return adsc_header
+    # def get_adsc_header(self,
+    #                     fullname,
+    #                     run_id=0,
+    #                     drd=None,
+    #                     adsc_number=0,
+    #                     place=1):
+    #     """Get the ADSC image"s header data"""
+    #
+    #     self.logger.debug("get_adsc_header %s run_id:%d" % (fullname, run_id))
+    #
+    #     adsc_header = Q315ReadHeader(fullname, logger=self.logger)
+    #     adsc_header["run_id"] = run_id
+    #     adsc_header["data_root_dir"] = drd
+    #     adsc_header["adsc_number"] = adsc_number
+    #
+    #     #Grab extra data for the image
+    #     adsc_header.update(self.BEAMLINE_CONNECTION.GetImageData())
+    #
+    #     #Now perform beamline-specific calculations
+    #     adsc_header = determine_flux(header_in=adsc_header,
+    #                                  beamline=self.site,
+    #                                  logger=self.logger)
+    #
+    #     #Calculate beam center
+    #     adsc_header["x_beam"], adsc_header["y_beam"] = \
+    #         self.calculate_beam_center(
+    #             d=adsc_header["distance"],
+    #             v_offset=adsc_header["vertical_offset"])
+    #
+    #     #update remote client
+    #     if self.RemoteAdapter and place == 1:
+    #         self.RemoteAdapter.add_image(adsc_header)
+    #
+    #     return adsc_header
 
     def get_pilatus_header(self,
                            fullname,

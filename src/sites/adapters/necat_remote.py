@@ -25,6 +25,7 @@ __status__ = "Development"
 import json
 import logging
 import os
+import pymongo
 import uuid
 
 import pysent
@@ -47,7 +48,7 @@ class Adapter(object):
         self.logger = logging.getLogger("RAPDLogger")
         self.logger.info("Initializing")
 
-        #Store variables
+        # Store passed-in variables
         self.settings = settings
 
         # Initialize the database connections
@@ -74,7 +75,7 @@ class Adapter(object):
             self.mongo_remote = self.mongo.remote
         except:
             self.logger.exception("Cannot connect to MongoDB at %s",
-                                  settings["MONGO_CONNECTION_STRING"])
+                                  self.settings["MONGO_CONNECTION_STRING"])
 
     def add_image(self, image_metadata):
         """Add an image to the remote system

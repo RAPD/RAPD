@@ -186,8 +186,8 @@ class ConsoleRedisMonitor(threading.Thread):
                     self.logger.info(run_data)
 
                     #Save data into db
-                    self.pub.hmset('current_run_'+self.beamline,run_data)
-                    self.pub.publish('current_run_'+self.beamline,json.dumps(run_data))
+                    self.pub.hmset('current_run_'+self.beamline, run_data)
+                    self.pub.publish('current_run_'+self.beamline, json.dumps(run_data))
 
                     #Signal the main thread
                     if (self.notify):
@@ -948,7 +948,7 @@ class ConsoleConnect:
         if (self.logger):
             self.logger.debug(str(beam_vals))
         """
-        
+
         self.logger.debug('GetImageData - Have redis connection')
 
         self.logger.debug("Getting Ring current")

@@ -42,195 +42,117 @@ import time
 import monitors.redis_monitor
 
 def print_dict(in_dict):
+    """Pring a dict in a pretty format"""
     keys = in_dict.keys()
     keys.sort()
     for key in keys:
         print key, '::', in_dict[key]
     print ''
 
-months = { 'Jan' : '01',
-           'Feb' : '02',
-           'Mar' : '03',
-           'Apr' : '04',
-           'May' : '05',
-           'Jun' : '06',
-           'Jul' : '07',
-           'Aug' : '08',
-           'Sep' : '09',
-           'Oct' : '10',
-           'Nov' : '11',
-           'Dec' : '12'}
+MONTHS = {'Jan' : '01',
+          'Feb' : '02',
+          'Mar' : '03',
+          'Apr' : '04',
+          'May' : '05',
+          'Jun' : '06',
+          'Jul' : '07',
+          'Aug' : '08',
+          'Sep' : '09',
+          'Oct' : '10',
+          'Nov' : '11',
+          'Dec' : '12'}
 
 def zerofillday(day_in):
+    """Return a zero-filled day string"""
+
     #print day_in
     intday = int(day_in)
     #print intday
     strday = str(intday)
     #print strday
     if len(strday) == 2:
-        return(strday)
+        return strday
     else:
-        return('0'+strday)
+        return '0'+strday
 
 def date_adsc_to_sql(datetime_in):
+    """Convert date from ADSC to SQL format"""
+
     #print datetime_in
     spldate = datetime_in.split()
     #print spldate
-    time_str  = spldate[3]
+    time_str = spldate[3]
     #print time_str
-    year  = spldate[4]
+    year = spldate[4]
     #print year
-    month = months[spldate[1]]
+    month = MONTHS[spldate[1]]
     #print month
-    day   = zerofillday(spldate[2])
+    day = zerofillday(spldate[2])
     #print day
 
-    date = '-'.join((year,month,day))
+    date = '-'.join((year, month, day))
     #print date
     #print ' '.join((date,time_str))
-    return('T'.join((date, time_str)))
+    return 'T'.join((date, time_str))
 
 class Monitor(monitors.redis_monitor.RedisMonitor):
     """Redis-based image collection signalling"""
 
-# class Monitor(threading.Thread):
-#     """
-#     Start a new thread which looks for changes via the server
-#     Run from within Model
-#     """
-#     def __init__(self,beamline='C',notify=None,reconnect=None,logger=None):
-#         logger.info('Q315_Monitor::__init__  beamline: %s' % beamline)
-#
-#         #initialize the thread
-#         threading.Thread.__init__(self)
-#
-#         #passed-in variables
-#         self.notify    = notify
-#         self.reconnect = reconnect
-#         self.beamline  = beamline
-#         self.logger    = logger
-#
-#         #for stopping/starting
-#         self.Go = True
-#
-#         #The modification times
-#         self.xf_time  = 0
-#         self.mar_time = 0
-#
-#         #set the adsc server
-#         if beamline in secrets.keys():
-#             self.logger.debug('Attmepting to conect to adsc monitor at %s' % secrets[beamline]['adsc_server'])
-#             self.server = xmlrpclib.Server(secrets[beamline]['adsc_server'])
-#             print self.server
-#         #if the assigned beamline is not in the settings, use the localhost
-#         else:
-#             self.server = xmlrpclib.Server('http://127.0.0.1:8001')
-#
-#         #register for shutdown
-#         atexit.register(self.Stop)
-#
-#         #start the thread
-#         self.start()
-#
-#     def Stop(self):
-#         self.logger.info('Q315_Monitor::Stop')
-#         self.Go = False
-#
-#     def run(self):
-#         self.logger.debug('Q315_Monitor::run')
-#         #check xf_status 5 times per second, marcollect once
-#         while (1):
-#             #break out if stop is requested
-#             if not self.Go:
-#                 self.logger.debug('Stopping ADSC Monitor')
-#                 break
-#             try:
-#                 marcollect_dict = self.server.GetMarcollectData()
-#                 if (marcollect_dict):
-#                     self.logger.debug("MARCOLLECT CHANGED")
-#                     if self.notify:
-#                         self.notify(("ADSC RUN STATUS CHANGED", marcollect_dict))
-#             except:
-#                 self.logger.exception('Q315_Monitor:: ERROR! - most likely there is not rapd_adscserver running where you are pointed')
-#                 self.Go = False
-#                 if self.reconnect:
-#                     self.reconnect()
-#                 break
-#
-#             for i in range(5):
-#                 try:
-#                     status_dict = self.server.GetXFStatusData()
-#                     if (status_dict):
-#                         self.logger.debug("XF_STATUS CHANGED")
-#                         if status_dict['status'] == 'SUCCESS':
-#                             if self.notify:
-#                                 self.notify(("IMAGE STATUS CHANGED", status_dict))
-#                 except:
-#                     self.logger.exception('Q315_Monitor:: ERROR! Error in GetXFStatusData')
-#
-#                 #wait before checking again
-#                 time.sleep(0.2)
-#
-#         self.logger.debug('Q315_Monitor while loop exited')
-
-
-###############################################################################
 
 def read_header(image, run_id=None, place_in_run=None):
     """
     Given a full file name for an ADSC image (as a string), read the header and
     return a dict with all the header info
+
+    NB - This code was developed for the NE-CAT ADSC Q315, so the header is bound
+         to be very specific.
     """
-    if logger:
-        logger.debug('Q315ReadHeader %s' % image)
 
     #item:(pattern,transform)
-    header_items = { 'header_bytes' : ("^HEADER_BYTES=\s*(\d+)\;", lambda x: int(x)),
-                     'dim'          : ("^DIM=\s*(\d+)\;", lambda x: int(x)),
-                     'byte_order'   : ("^BYTE_ORDER=\s*([\w_]+)\;", lambda x: str(x)),
-                     'type'         : ("^TYPE=\s*([\w_]+)\;", lambda x: str(x)),
-                     'size1'        : ("^SIZE1=\s*(\d+)\;", lambda x: int(x)),
-                     'size2'        : ("^SIZE2=\s*(\d+)\;", lambda x: int(x)),
-                     'pixel_size'   : ("^PIXEL_SIZE=\s*([\d\.]+)\;", lambda x: float(x)),
-                     'bin'          : ("^BIN=\s*(\w*)\;", lambda x: str(x)),
-                     'adc'          : ("^ADC=\s*(\w+)\;", lambda x: str(x)),
-                     'detector_sn'  : ("^DETECTOR_SN=\s*(\d+)\;", lambda x: int(x)),
-                     'collect_mode' : ("^COLLECT_MODE=\s*(\w*)\;", lambda x: str(x)),
-                     'beamline'     : ("^BEAMLINE=\s*(\w+)\;", lambda x: str(x)),
-                     'date'         : ("^DATE=\s*([\w\d\s\:]*)\;", date_adsc_to_sql),
-                     'time'         : ("^TIME=\s*([\d\.]+)\;", lambda x: float(x)),
-                     'distance'     : ("^DISTANCE=\s*([\d\.]+)\;", lambda x: float(x)),
-                     'osc_range'    : ("^OSC_RANGE=\s*([\d\.]+)\;", lambda x: float(x)),
-                     'phi'          : ("^PHI=\s*([\d\.]+)\;", lambda x: float(x)),
-                     'osc_start'    : ("^OSC_START=\s*([\d\.]+)\;", lambda x: float(x)),
-                     'twotheta'     : ("^TWOTHETA=\s*([\d\.]+)\;", lambda x: float(x)),
-                     'thetadistance': ("^THETADISTANCE=\s*([\d\.]+)\;", lambda x: float(x)),
-                      #'axis'         : ("^AXIS=\s*(\w+)\;", lambda x: str(x)),
-                     'wavelength'   : ("^WAVELENGTH=\s*([\d\.]+)\;", lambda x: float(x)),
-                     'beam_center_x': ("^BEAM_CENTER_X=\s*([\d\.]+)\;", lambda x: float(x)),
-                     'beam_center_y': ("^BEAM_CENTER_Y=\s*([\d\.]+)\;", lambda x: float(x)),
-                     'transmission' : ("^TRANSMISSION=\s*([\d\.]+)\;", lambda x: float(x)),
-                     'puck'         : ("^PUCK=\s*(\w+)\;", lambda x: str(x)),
-                     'sample'       : ("^SAMPLE=\s*([\d\w]+)\;" , lambda x: str(x)),
-                     'ring_cur'     : ("^RING_CUR=\s*([\d\.]+)\;", lambda x: float(x)),
-                     'ring_mode'    : ("^RING_MODE=\s*(.*)\;", lambda x: str(x)),
-                     'md2_aperture' : ("^MD2_APERTURE=\s*(\d+)\;", lambda x: int(x)),
-                     'period'       : ("^# Exposure_period\s*([\d\.]+) s", lambda x: float(x)),
-                     'count_cutoff' : ("^# Count_cutoff\s*(\d+) counts", lambda x: int(x))}
+    header_items = {"header_bytes" : (r"^HEADER_BYTES=\s*(\d+)\;", lambda x: int(x)),
+                    "dim"          : (r"^DIM=\s*(\d+)\;", lambda x: int(x)),
+                    "byte_order"   : (r"^BYTE_ORDER=\s*([\w_]+)\;", lambda x: str(x)),
+                    "type"         : (r"^TYPE=\s*([\w_]+)\;", lambda x: str(x)),
+                    "size1"        : (r"^SIZE1=\s*(\d+)\;", lambda x: int(x)),
+                    "size2"        : (r"^SIZE2=\s*(\d+)\;", lambda x: int(x)),
+                    "pixel_size"   : (r"^PIXEL_SIZE=\s*([\d\.]+)\;", lambda x: float(x)),
+                    "bin"          : (r"^BIN=\s*(\w*)\;", lambda x: str(x)),
+                    "adc"          : (r"^ADC=\s*(\w+)\;", lambda x: str(x)),
+                    "detector_sn"  : (r"^DETECTOR_SN=\s*(\d+)\;", lambda x: int(x)),
+                    "collect_mode" : (r"^COLLECT_MODE=\s*(\w*)\;", lambda x: str(x)),
+                    "beamline"     : (r"^BEAMLINE=\s*(\w+)\;", lambda x: str(x)),
+                    "date"         : (r"^DATE=\s*([\w\d\s\:]*)\;", date_adsc_to_sql),
+                    "time"         : (r"^TIME=\s*([\d\.]+)\;", lambda x: float(x)),
+                    "distance"     : (r"^DISTANCE=\s*([\d\.]+)\;", lambda x: float(x)),
+                    "osc_range"    : (r"^OSC_RANGE=\s*([\d\.]+)\;", lambda x: float(x)),
+                    "phi"          : (r"^PHI=\s*([\d\.]+)\;", lambda x: float(x)),
+                    "osc_start"    : (r"^OSC_START=\s*([\d\.]+)\;", lambda x: float(x)),
+                    "twotheta"     : (r"^TWOTHETA=\s*([\d\.]+)\;", lambda x: float(x)),
+                    "thetadistance": (r"^THETADISTANCE=\s*([\d\.]+)\;", lambda x: float(x)),
+                    #"axis"         : (r"^AXIS=\s*(\w+)\;", lambda x: str(x)),
+                    "wavelength"   : (r"^WAVELENGTH=\s*([\d\.]+)\;", lambda x: float(x)),
+                    "beam_center_x": (r"^BEAM_CENTER_X=\s*([\d\.]+)\;", lambda x: float(x)),
+                    "beam_center_y": (r"^BEAM_CENTER_Y=\s*([\d\.]+)\;", lambda x: float(x)),
+                    "transmission" : (r"^TRANSMISSION=\s*([\d\.]+)\;", lambda x: float(x)),
+                    "puck"         : (r"^PUCK=\s*(\w+)\;", lambda x: str(x)),
+                    "sample"       : (r"^SAMPLE=\s*([\d\w]+)\;", lambda x: str(x)),
+                    "ring_cur"     : (r"^RING_CUR=\s*([\d\.]+)\;", lambda x: float(x)),
+                    "ring_mode"    : (r"^RING_MODE=\s*(.*)\;", lambda x: str(x)),
+                    "md2_aperture" : (r"^MD2_APERTURE=\s*(\d+)\;", lambda x: int(x)),
+                    "period"       : (r"^# Exposure_period\s*([\d\.]+) s", lambda x: float(x)),
+                    "count_cutoff" : (r"^# Count_cutoff\s*(\d+) counts", lambda x: int(x))}
 
     count = 0
-    while (count < 10):
+    while count < 10:
         try:
-            rawdata = open(image,"rb").read()
+            rawdata = open(image, "rb").read()
             headeropen = rawdata.index("{")
-            headerclose= rawdata.index("}")
+            headerclose = rawdata.index("}")
             header = rawdata[headeropen+1:headerclose-headeropen]
             break
             #print header
         except:
-            count +=1
-            if logger:
-                logger.exception('Error opening %s' % image)
+            count += 1
             time.sleep(0.1)
 
 
@@ -238,17 +160,17 @@ def read_header(image, run_id=None, place_in_run=None):
         #tease out the info from the file name
         base = os.path.basename(image).rstrip(".img")
         #the parameters
-        parameters = {'fullname'     : image,
-                      'detector'     : 'ADSC-Q315',
-                      'directory'    : os.path.dirname(image),
-                      'image_prefix' : "_".join(base.split("_")[0:-2]),
-                      'run_number'   : int(base.split("_")[-2]),
-                      'image_number' : int(base.split("_")[-1]),
-                      'axis'         : 'omega',
-                      'run_id'       : run_id,
-                      'place_in_run' : place_in_run}
+        parameters = {"fullname"     : image,
+                      "detector"     : "ADSC-Q315",
+                      "directory"    : os.path.dirname(image),
+                      "image_prefix" : "_".join(base.split("_")[0:-2]),
+                      "run_number"   : int(base.split("_")[-2]),
+                      "image_number" : int(base.split("_")[-1]),
+                      "axis"         : "omega",
+                      "run_id"       : run_id,
+                      "place_in_run" : place_in_run}
 
-        for label,pat in header_items.iteritems():
+        for label, pat in header_items.iteritems():
             pattern = re.compile(pat[0], re.MULTILINE)
             matches = pattern.findall(header)
             if len(matches) > 0:
@@ -256,27 +178,25 @@ def read_header(image, run_id=None, place_in_run=None):
             else:
                 parameters[label] = None
 
-        #if twotheta is in use, distance = twothetadist
+        # If twotheta is in use, distance = twothetadist
         try:
-            if (parameters['twotheta'] > 0 and parameters['thetadistance'] > 100):
-                parameters['distance'] = parameters['thetadistance']
+            if parameters["twotheta"] > 0 and parameters["thetadistance"] > 100:
+                parameters["distance"] = parameters["thetadistance"]
 
         except:
-            if logger:
-                logger.exception('Error handling twotheta for image %s' % image)
+            pass
 
-        #look for bad text in certain entries NECAT-code
+        # Look for bad text in certain entries NECAT-code
         try:
-            json.dumps(parameters['ring_mode'])
+            json.dumps(parameters["ring_mode"])
         except:
-            parameters['ring_mode'] = 'Error'
+            parameters["ring_mode"] = "Error"
 
-        #return parameters to the caller
-        return(parameters)
+        # Return parameters to the caller
+        return parameters
 
     except:
-        if logger:
-            logger.exception('Error reading the header for image %s' % image)
+        pass
 
 if __name__ == "__main__":
 
@@ -290,9 +210,9 @@ if __name__ == "__main__":
     """
     #If started on the command line, run the AdscMonitor on the loclahost
     #set up logging
-    LOG_FILENAME = '/tmp/rapd_adsc.log'
+    LOG_FILENAME = "/tmp/rapd_adsc.log"
     # Set up a specific logger with our desired output level
-    logger = logging.getLogger('RAPDLogger')
+    logger = logging.getLogger("RAPDLogger")
     logger.setLevel(logging.DEBUG)
     # Add the log message handler to the logger
     handler = logging.handlers.RotatingFileHandler(LOG_FILENAME, maxBytes=100000, backupCount=5)
@@ -300,9 +220,9 @@ if __name__ == "__main__":
     formatter = logging.Formatter("%(asctime)s - %(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    logger.info('RAPD_ADSC.__main__')
+    logger.info("RAPD_ADSC.__main__")
 
-    M= Q315_Monitor(beamline='Z',notify=None,reconnect=None,logger=logger)
+    M= Q315_Monitor(beamline="Z",notify=None,reconnect=None,logger=logger)
     """
 
     """
@@ -316,7 +236,7 @@ if __name__ == "__main__":
 
     #Test the header reading
     test_image = "/gpfs9/users/harvard/Gaudet_E_1100/images/LBane/snaps/RG006_15_PAIR_0_0004.cbf"
-    header = Hf4mReadHeader(test_image)
+    # header = Hf4mReadHeader(test_image)
     import pprint
     pp = pprint.PrettyPrinter()
     pp.pprint(header)

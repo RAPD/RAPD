@@ -23,46 +23,90 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
 import importlib
-# import os
-# import shutil
-# import time
 
 # Site ID
 ID = "NECAT_E"
 
-# The secrets file - do not put in github repo
+# The secrets file - do not put in github repo!
 SECRETS = importlib.import_module("sites.secrets_necat_e")
 
 # Source information
+# Flux of the beam
 BEAM_FLUX = 8E11
-BEAM_GAUSS_X = 0.03     # Gaussian description of the beam for Best
+# Size of the beam in microns
+BEAM_SIZE_X = 50
+BEAM_SIZE_Y = 20
+# Shape of the beam - ellipse, rectangle
+BEAM_SHAPE = "ellipse"
+# Shape of the attenuated beam - circle or rectangle
+BEAM_APERTURE_SHAPE = "circle"
+# Gaussian description of the beam for raddose
+BEAM_GAUSS_X = 0.03
 BEAM_GAUSS_Y = 0.01
+# Beam center calibration
+BEAM_CENTER_DATE = "2015-12-07"
+# Beamcenter equation coefficients (b, m1, m2, m3, m4, m5, m6)
+BEAM_CENTER_X = (153.94944895756946,
+                 -0.016434436106566495,
+                 3.5990848937868658e-05,
+                 -8.2987834172005917e-08,
+                 1.0732920112697317e-10,
+                 -7.339858946384788e-14,
+                 2.066312749407257e-17)
+BEAM_CENTER_Y = (158.56546190593907,
+                 0.0057578279496966192,
+                 -3.9726067083100419e-05,
+                 1.1458201832002297e-07,
+                 -1.7875879553926729e-10,
+                 1.4579198435694557e-13,
+                 -4.7910792416525411e-17)
+# Aggregator - be extra careful when modifying
+BEAM_SETTINGS = {"BEAM_FLUX":BEAM_FLUX,
+                 "BEAM_SIZE_X":BEAM_SIZE_X,
+                 "BEAM_SIZE_Y":BEAM_SIZE_Y,
+                 "BEAM_SHAPE":BEAM_SHAPE,
+                 "BEAM_APERTURE_SHAPE":BEAM_APERTURE_SHAPE,
+                 "BEAM_GAUSS_X":BEAM_GAUSS_X,
+                 "BEAM_GAUSS_Y":BEAM_GAUSS_Y,
+                 "BEAM_CENTER_DATE":BEAM_CENTER_DATE,
+                 "BEAM_CENTER_X":BEAM_CENTER_X,
+                 "BEAM_CENTER_Y":BEAM_CENTER_Y}
 
-# logging
-LOGFILE_DIR = "/tmp/log"    # LINUX SHOULD BE /var/log/
+# Logging
+# Linux should be /var/log/
+LOGFILE_DIR = "/tmp/log"
 LOG_LEVEL = 50
 
 # RAPD core process settings
-CORE_PORT = 50001           # Port for core process to listen on
-UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"    # Where files from UI are uploaded
+# Port for core process to listen on
+CORE_PORT = 50001
+# Where files from UI are uploaded
+UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"
 
 # RAPD cluster process settings
-CLUSTER_PORT = 50000        # Port for cluster to listen on
+# Port for cluster to listen on
+CLUSTER_PORT = 50000
+# Aggregator - be careful when changing
 CLUSTER_ADDRESS = (SECRETS.CLUSTER_HOST, CLUSTER_PORT)
 
 # RAPD database settings
-CORE_DATABASE = "mysql"     # Database to use for core operations. Options: "mysql"
+# Database to use for core operations. Options: "mysql"
+CORE_DATABASE = "mysql"
 DB_NAME_DATA = "rapd_data"
 DB_NAME_USERS = "rapd_users"
 DB_NAME_CLOUD = "rapd_cloud"
 
 # Redis Settings
-REDIS_CLUSTER = True        # Running in a cluster configuration - True || False
+# Running in a cluster configuration - True || False
+REDIS_CLUSTER = True
 
 # Detector settings
-DETECTOR = "NECAT_ADSC_Q315"
+DETECTOR = "NECAT_ADSC_Q315"    # must have a file in detectors
 DETECTOR_SUFFIX = ".img"
-IMAGE_MONITOR = False        # Monitor for images - True || False
+
+# Monitor for collected images
+IMAGE_MONITOR = True        # Monitor for images - True || False
+# Aggregator - be careful when changing
 IMAGE_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
                           "SENTINEL_HOST" : SECRETS.SENTINEL_HOST,
                           "SENTINEL_PORT" : SECRETS.SENTINEL_PORT,
@@ -77,8 +121,15 @@ IMAGE_SHORT_CIRCUIT_DIRECTORIES = [
     '/gpfs5/users/necat/rapd/uranium/trunk/test_data'
 ]
 
+# Monitor for collected run information
+RUN_MONITOR = "sites.run_monitors.necat_e"
+RUN_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
+                        "SENTINEL_HOST" : SECRETS.SENTINEL_HOST,
+                        "SENTINEL_PORT" : SECRETS.SENTINEL_PORT,
+                        "REDIS_MASTER_NAME" : SECRETS.REDIS_MASTER_NAME}
+
 # Cloud Settings
-CLOUD_MONITOR = "rapd_cloud"        # Run the cloud monitor?
+CLOUD_MONITOR = "cloud.rapd_cloud"        # Run the cloud monitor?
 CLOUD_INTERVAL = 10                 # Pause between checking the database for new cloud requests in seconds
 
 # Cloud handlers
@@ -91,7 +142,7 @@ CLOUD_BINARY_MERGE_HANDLER = "binary_merge"
 CLOUD_MR_HANDLER = "mr"
 CLOUD_REINDEX_HANDLER = "reindex"
 CLOUD_REINTEGRATE_HANDLER = "reintegrate"
-# Aggregator - should not need modified
+# Aggregator - be careful when changing
 CLOUD_MONITOR_SETTINGS = {
         "CLOUD_BINARY_MERGE_HANDLER":CLOUD_BINARY_MERGE_HANDLER,
         "CLOUD_DATA_COLLECTION_PARAMS":CLOUD_DATA_COLLECTION_PARAMS,
@@ -112,7 +163,7 @@ CLOUD_MONITOR_SETTINGS = {
         }
 
 # For connecting to the site
-SITE_ADAPTER = "necat"              # file name prefix for adapter in src/sites/adapters
+SITE_ADAPTER = "sites.adapters.necat"              # file name prefix for adapter in src/sites/adapters
 SITE_ADAPTER_SETTINGS = {"ID":ID,
                          "SITE_REDIS_IP":SECRETS.SITE_REDIS_IP,
                          "SITE_REDIS_PORT":SECRETS.SITE_REDIS_PORT,
@@ -120,7 +171,8 @@ SITE_ADAPTER_SETTINGS = {"ID":ID,
 
 
 # For connecting to the remote access system fr the site
-REMOTE_ADAPTER = "necat_remote"     # file name prefix for adapter in src/sites/adapters
+REMOTE_ADAPTER = "sites.adapters.necat_remote"     # file name prefix for adapter in src/
+# Aggregator - be careful when changing
 REMOTE_ADAPTER_SETTINGS = {"ID":ID,
                            "MONGO_CONNECTION_STRING":SECRETS.MONGO_CONNECTION_STRING,
                            "REDIS_CLUSTER":REDIS_CLUSTER,
@@ -545,91 +597,7 @@ REMOTE_ADAPTER_SETTINGS = {"ID":ID,
 #                       }
 #
 #
-# def necat_determine_flux(header_in, beamline,logger):
-#     """
-#     Determine beam information from the header information and return in the header dict
-#     """
-#     logger.debug('necat_determine_flux %s %s' %(beamline,str(header_in)))
-#     header_out = header_in.copy()
-#
-#     #New numbers according to Raj's testing with APS flux counter
-#     e_flux = 8E11
-#     #C flux too high for Best to give good strategy
-#     c_flux = 3E12
-#
-#     #the Gaussian description of the beam for Best
-#     header_out['gauss_x'] = '0.03'
-#     header_out['gauss_y'] = '0.01'
-#
-#     #very old headers may be missing
-#     if not 'md2_aperture' in header_in.keys():
-#         if beamline == 'C':
-#             header_in['md2_aperture'] = '70'
-#         else:
-#             header_in['md2_aperture'] = '50'
-#     #header is occasionally missing the inormation
-#     elif header_in['md2_aperture'] == '0' or '-1':
-#         if beamline == 'C':
-#             header_in['md2_aperture'] = '70'
-#         else:
-#             header_in['md2_aperture'] = '50'
-#
-#     #Sets beam shape for Raddose assuming 30 x 70 micron beam (ID-C) and 20 x 50 micron beam (ID-E).
-#     #Number in flux calculation is % area of beam relative to largest aperture (70 micron). We found
-#     #that flux is roughly proportional to area of aperture.
-#     if beamline == 'C':
-#         if header_in['md2_aperture'] in ['5',5]:
-#             header_out['beam_size_x'] = '0.005'
-#             header_out['beam_size_y'] = '0.005'
-#             header_out['flux']      = str(((c_flux)*(0.0121)*(float(header_in['transmission'])))/(100.0))
-#         if header_in['md2_aperture'] in ['10',10]:
-#             header_out['beam_size_x'] = '0.01'
-#             header_out['beam_size_y'] = '0.01'
-#             header_out['flux']      = str(((c_flux)*(0.0479)*(float(header_in['transmission'])))/(100.0))
-#         if header_in['md2_aperture'] in ['20',20]:
-#             header_out['beam_size_x'] = '0.02'
-#             header_out['beam_size_y'] = '0.02'
-#             header_out['flux']      = str(((c_flux)*(0.190)*(float(header_in['transmission'])))/(100.0))
-#         if header_in['md2_aperture'] in ['30',30]:
-#             header_out['beam_size_x'] = '0.03'
-#             header_out['beam_size_y'] = '0.03'
-#             header_out['flux']      = str(((c_flux)*(0.429)*(float(header_in['transmission'])))/(100.0))
-#         if header_in['md2_aperture'] in ['50',50]:
-#             header_out['beam_size_x'] = '0.05'
-#             header_out['beam_size_y'] = '0.03'
-#             header_out['flux']      = str(((c_flux)*(0.714)*(float(header_in['transmission'])))/(100.0))
-#         if header_in['md2_aperture'] in ['70',70]:
-#             header_out['beam_size_x'] = '0.07'
-#             header_out['beam_size_y'] = '0.03'
-#             header_out['flux']      = str(((c_flux)*(1.000)*(float(header_in['transmission'])))/(100.0))
-#     else:
-#         if header_in['md2_aperture'] == '5':
-#             header_out['beam_size_x'] = '0.005'
-#             header_out['beam_size_y'] = '0.005'
-#             header_out['flux']      = str(((e_flux)*(0.0182)*(float(header_in['transmission'])))/(100.0))
-#         if header_in['md2_aperture'] == '10':
-#             header_out['beam_size_x'] = '0.01'
-#             header_out['beam_size_y'] = '0.01'
-#             header_out['flux']      = str(((e_flux)*(0.0719)*(float(header_in['transmission'])))/(100.0))
-#         if header_in['md2_aperture'] == '20':
-#             header_out['beam_size_x'] = '0.02'
-#             header_out['beam_size_y'] = '0.02'
-#             header_out['flux']      = str(((e_flux)*(0.286)*(float(header_in['transmission'])))/(100.0))
-#         if header_in['md2_aperture'] == '30':
-#             header_out['beam_size_x'] = '0.03'
-#             header_out['beam_size_y'] = '0.02'
-#             header_out['flux']      = str(((e_flux)*(0.429)*(float(header_in['transmission'])))/(100.0))
-#         if header_in['md2_aperture'] == '50':
-#             header_out['beam_size_x'] = '0.05'
-#             header_out['beam_size_y'] = '0.02'
-#             header_out['flux']      = str(((e_flux)*(0.714)*(float(header_in['transmission'])))/(100.0))
-#         if header_in['md2_aperture'] == '70':
-#             header_out['beam_size_x'] = '0.07'
-#             header_out['beam_size_y'] = '0.02'
-#             header_out['flux']      = str(((e_flux)*(1.000)*(float(header_in['transmission'])))/(100.0))
-#
-#     return(header_out)
-#
+
 # def NecatDetermineImageType(data,logger):
 #     """
 #     Determine the type of image that has been noticed by RAPD.
