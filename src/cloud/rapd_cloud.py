@@ -22,7 +22,6 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
-
 import atexit
 from collections import deque
 import datetime
@@ -51,11 +50,13 @@ class CloudMonitor(threading.Thread):
     Go = True
 
     # Handlers for cloud events
-    possible_handlers = ("minikappa_handler",
-                         "data_collection_params_handler",
-                         "download_handler",
-                         "reindex_handler",
-                         "reintegrate_handler")
+    possible_handlers = ("binary_merge",
+                         "minikappa",
+                         "data_collection_params",
+                         "download",
+                         "mr",
+                         "reindex",
+                         "reintegrate")
     handlers = {}
 
     def __init__(self,
@@ -92,6 +93,8 @@ class CloudMonitor(threading.Thread):
         #register for shutdown
         atexit.register(self.stop)
 
+        # Run
+        self.daemon = True
         self.start()
 
     def stop(self):
@@ -125,25 +128,25 @@ class CloudMonitor(threading.Thread):
                 # Check the database
                 minikappa_request = self.database.getMinikappaRequest()
                 if minikappa_request:
-                    tmp = self.handlers["minikappa_handler"](request=minikappa_request,
-                                                             database=self.database)
+                    __ = self.handlers["minikappa_handler"](request=minikappa_request,
+                                                            database=self.database)
 
             # Data collection run parameters request
             if settings["CLOUD_DATA_COLLECTION_PARAMS"]:
                 datacollection_request = self.database.getDatacollectionRequest()
                 if datacollection_request:
-                    tmp = self.handlers["data_collection_params_handler"](
+                    __ = self.handlers["data_collection_params_handler"](
                         request=datacollection_request,
-                        database=self.database
-                        )
+                        database=self.database)
 
             #
             # The following section is for cloud-based events
             #
 
-            #query for new cloud requests
+            # Query for new cloud requests
             request = self.database.getCloudRequest()
-            #now look through the request
+
+            # Now look through the request
             if request:
 
                 # # Puck Request does not pass IP, so check it first.
@@ -168,73 +171,61 @@ class CloudMonitor(threading.Thread):
 
                 #Reprocess request
                 elif request["request_type"] == "reprocess":
-                    __ = self.handlers["reindex_handler"](request,
-                                                          self.database,
-                                                          settings,
-                                                          self.reply_settings)
-                    #tmp = ReprocessHandler(request,self.database,self.Secret_Settings,self.reply_settings,self.logger)
+                    __ = self.handlers["reindex_handler"](request=request,
+                                                          database=self.database,
+                                                          settings=settings,
+                                                          reply_settings=self.reply_settings)
 
-                #STAC Request
+                # STAC Request
                 elif request["request_type"] == "stac":
-                    self.logger.debug("STAC Request")
-                    self.logger.debug(request)
-                    tmp = StacHandler(request,self.database,self.Secret_Settings,self.reply_settings,self.logger)
+                    pass
+                    # self.logger.debug("STAC Request")
+                    # self.logger.debug(request)
+                    # tmp = StacHandler(request,self.database,self.Secret_Settings,self.reply_settings,self.logger)
 
-                #SAD request
-                elif (request["request_type"] == "start-sad"):
-                    self.logger.debug("SAD Request")
-                    self.logger.debug(request)
-                    tmp = SadHandler(request=request,
-                                     database=self.database,
-                                     settings=self.Secret_Settings,
-                                     reply_settings=self.reply_settings,
-                                     logger=self.logger)
+                # SAD request
+                elif request["request_type"] == "start-sad":
+                    __ = self.handlers["sad_handler"](request=request,
+                                                      database=self.database,
+                                                      settings=self.settings,
+                                                      reply_settings=self.reply_settings)
 
-                #MAD request
-                elif (request["request_type"] == "start-mad"):
-                    self.logger.debug("MAD Request")
-                    self.logger.debug(request)
-                    tmp = MadHandler(request=request,
-                                     database=self.database,
-                                     settings=self.Secret_Settings,
-                                     reply_settings=self.reply_settings,
-                                     logger=self.logger)
+                # MAD request
+                elif request["request_type"] == "start-mad":
+                    pass
+                    # tmp = MadHandler(request=request,
+                    #                  database=self.database,
+                    #                  settings=self.Secret_Settings,
+                    #                  reply_settings=self.reply_settings,
+                    #                  logger=self.logger)
 
-                #MR request
-                elif (request["request_type"] == "start-mr"):
-                    self.logger.debug("MR Request")
-                    self.logger.debug(request)
-                    tmp = MrHandler(request=request,
-                                    database=self.database,
-                                    settings=self.Secret_Settings,
-                                    reply_settings=self.reply_settings,
-                                    logger=self.logger)
+                # MR request
+                elif request["request_type"] == "start-mr":
+                    __ = self.handlers["mr_handler"](request=request,
+                                                     database=self.database,
+                                                     settings=self.settings,
+                                                     reply_settings=self.reply_settings)
 
-                #FastIntegration request
-                elif (request["request_type"] == "start-fastin"):
-                    self.logger.debug("FastIntegration Request")
-                    self.logger.debug(request)
-                    tmp = IntegrationHandler(request=request,
-                                             database=self.database,
-                                             settings=self.Secret_Settings,
-                                             reply_settings=self.reply_settings,
-                                             logger=self.logger)
+                # FastIntegration request
+                elif request["request_type"] == "start-fastin":
+                    __ = self.handlers["reintegrate_handler"](request=request,
+                                                              database=self.database,
+                                                              settings=self.settings,
+                                                              reply_settings=self.reply_settings)
 
-                #Xia2 request
-                elif (request["request_type"] == "start-xiaint"):
-                    self.logger.debug("Xia2 Request")
-                    self.logger.debug(request)
-                    tmp = IntegrationHandler(request=request,
-                                             database=self.database,
-                                             settings=self.Secret_Settings,
-                                             reply_settings=self.reply_settings,
-                                             logger=self.logger)
+                # Xia2 request
+                elif request["request_type"] == "start-xiaint":
+                    __ = self.handlers["reintegrate_handler"](request=request,
+                                                              database=self.database,
+                                                              settings=self.settings,
+                                                              reply_settings=self.reply_settings)
 
-                #SimpleMerge Request
+                # Binary Merge Request
                 elif request["request_type"] == "smerge":
-                    self.logger.debug("SimpleMerge Request")
-                    self.logger.debug(request)
-                    tmp = SimpleMergeHandler(request,self.database,self.Secret_Settings,self.reply_settings,self.logger)
+                    __ = self.handlers["binary_merge"](request=request,
+                                                       database=self.database,
+                                                       settings=self.settings,
+                                                       reply_settings=self.reply_settings)
             """
                 else:
                     #put the request in the queue
@@ -280,11 +271,11 @@ class CloudMonitor(threading.Thread):
         # Run through possible handlers and import them
         for handler in self.possible_handlers:
             self.logger.debug(settings)
-            if settings["CLOUD_"+handler.upper()]:
+            if settings["CLOUD_"+handler.upper()+"_HANDLER"]:
                 self.logger.debug("Importing %s", handler)
-                self.handlers[handler] = importlib.import_module("cloud.handlers.%s" % settings["CLOUD_"+handler.upper()]).Handler
+                self.handlers[handler] = importlib.import_module("cloud.handlers.%s" % settings["CLOUD_"+handler.upper()+"_HANDLER"]).Handler
 
-                self.logger.debug(dir(self.handlers[handler]))
+                # self.logger.debug(dir(self.handlers[handler]))
             else:
                 self.logger.debug("Skipping %s", handler)
 
@@ -639,185 +630,6 @@ class StacHandler(threading.Thread):
                 #connect to the server and autoindex the single image                                                                                   #AUTOINDEX-PAIR
                 PerformAction(("STAC-PAIR",my_dirs,data1,data2,my_settings,self.reply_settings),my_settings,self.SecretSettings,self.logger)       #AUTOINDEX-PAIR
 
-"""
-  cloud_request_id: 34148
-      request_type: start-mad
-original_result_id: 994869
-     original_type: integrate
-       original_id: 70091
-     data_root_dir: /gpfs2/users/necat/necat_E_1480
-    new_setting_id: NULL
-  additional_image: NULL
-           mk3_phi: NULL
-         mk3_kappa: NULL
-         result_id: NULL
-         input_sca: NULL
-         input_mtz: NULL
-         input_map: NULL
-           ha_type: Se
-         ha_number: 1
-        shelxd_try: 1024
-           sad_res: 0
-          sequence:
-           pdbs_id: NULL
-              nmol: NULL
-       frame_start: NULL
-      frame_finish: NULL
-            status: complete
-        ip_address: 164.54.212.15
-        puckset_id: NULL
-           option1: NULL
-           peak_id: 70090
-     inflection_id: 70090
-       hiremote_id: 70090
-       loremote_id: 70090
-         native_id: 70090
-         timestamp: 2015-08-04 17:03:45
-"""
-class SadHandler(threading.Thread):
-    """
-    Handles the initialization of sad runs in a separate thread.
-    """
-
-    def __init__(self,request,database,settings,reply_settings,logger=None):
-        """
-        Initialize SadHandler.
-
-        request - a dict contining a variety of information that comes from the request
-        database - an instance of rapd_database.Database
-        settings -
-        reply_settings - a tuple of the ip address and port for the controller server
-        logger - an instance of the logger
-        """
-
-        logger.info("SadHandler::__init__  %s" % str(request))
-
-        #initialize the thread
-        threading.Thread.__init__(self)
-
-        #store passed-in variables
-        self.request         = request
-        self.DATABASE        = database
-        self.SecretSettings  = settings
-        self.reply_settings  = reply_settings
-        self.logger          = logger
-        self.start()
-
-    def run(self):
-        self.logger.debug("SadHandler::run")
-
-        #mark that the request has been addressed
-        self.DATABASE.markCloudRequest(self.request["cloud_request_id"],"working")
-
-        #Structure the request to the cluster
-        if self.request["request_type"] == "start-sad":
-            #the original result dict
-            original_result_dict = self.DATABASE.getResultById(self.request["original_id"],
-                                                               self.request["original_type"])
-            #get the settings
-            my_settings = self.DATABASE.getSettings(setting_id=original_result_dict["settings_id"])
-            #data root dir
-            my_data_root_dir = original_result_dict["data_root_dir"]
-            #get the wavelength
-            self.request["wavelength"] = original_result_dict["wavelength"]
-            #construct a repr for the merged data
-            my_repr = original_result_dict["repr"]
-
-            # Get the correct directory to run in
-            # We should end up with top_level/sad/2010-05-10/XXX_1_1-180/
-            #the top level
-            if my_settings["work_dir_override"] == "False":
-                if ("merge" in original_result_dict["work_dir"]):
-                    my_toplevel_dir = original_result_dict["work_dir"][:original_result_dict["work_dir"].index("merge")]
-                else:
-                    my_toplevel_dir = original_result_dict["work_dir"][:original_result_dict["work_dir"].index("integrate")]
-            else:
-                my_toplevel_dir = my_settings["work_directory"]
-            #the type level
-            my_typelevel_dir = "sad"
-            #the date level
-            my_datelevel_dir = datetime.date.today().isoformat()
-            #the lowest level
-            my_sub_dir = my_repr
-            #now join the four levels
-            my_work_dir_candidate = os.path.join(my_toplevel_dir,my_typelevel_dir,my_datelevel_dir,my_sub_dir)
-            #make sure this is an original directory
-            if os.path.exists(my_work_dir_candidate):
-                #we have already
-                self.logger.debug("%s has already been used, will add qualifier" % my_work_dir_candidate)
-                for i in range(1,10000):
-                    if not os.path.exists("_".join((my_work_dir_candidate,str(i)))):
-                        my_work_dir_candidate = "_".join((my_work_dir_candidate,str(i)))
-                        self.logger.debug("%s will be used for this image" % my_work_dir_candidate)
-                        break
-                    else:
-                        i += 1
-            #now make the candidate the used dir
-            my_work_dir = my_work_dir_candidate
-
-            #add the process to the database to display as in-process
-            process_id = self.DATABASE.addNewProcess(type="sad",
-                                                     rtype="original",
-                                                     data_root_dir=my_data_root_dir,
-                                                     repr=my_repr)
-            #add the process id entry to the data dicts
-            my_settings["process_id"] = process_id
-
-            #now package directories into a dict for easy access by worker class
-            my_dirs = {"work":my_work_dir,
-                       "data_root_dir":my_data_root_dir}
-
-            #accumulate the information into the data directory
-            data = {"original":original_result_dict,
-                    "repr":my_repr}
-
-            #add the request to my_settings so it can be passed on
-            my_settings["request"] = self.request
-
-            #mark that the request has been addressed
-            self.DATABASE.markCloudRequest(self.request["cloud_request_id"],"working")
-            #mark in the cloud_current table
-            self.DATABASE.addCloudCurrent(self.request)
-            #connect to the server and autoindex the single image
-            #a = pprint.PrettyPrinter(indent=2)
-            #a.pprint((("SAD",my_dirs,data,my_settings,self.reply_settings),my_settings,self.SecretSettings,self.logger))
-            PerformAction(("SAD",my_dirs,data,my_settings,self.reply_settings),my_settings,self.SecretSettings,self.logger)
-
-"""
-{u"additional_image": None,
- u"cloud_request_id": 34148,
- u"data_root_dir": "/gpfs2/users/necat/necat_E_1480",
- u"frame_finish": None,
- u"frame_start": None,
- u"ha_number": 1,
- u"ha_type": "Se",
- u"hiremote_id": 70090,
- u"inflection_id": 70090,
- u"input_map": None,
- u"input_mtz": None,
- u"input_sca": None,
- u"ip_address": "164.54.212.15",
- u"loremote_id": 70090,
- u"mk3_kappa": None,
- u"mk3_phi": None,
- u"native_id": 70090,
- u"new_setting_id": None,
- u"nmol": None,
- u"option1": None,
- u"original_id": 70091,
- u"original_result_id": 994869,
- u"original_type": "integrate",
- u"pdbs_id": None,
- u"peak_id": 70090,
- u"puckset_id": None,
- u"request_type": "start-mad",
- u"result_id": None,
- u"sad_res": 0.0,
- u"sequence": "",
- u"shelxd_try": 1024,
- u"status": "request",
- u"timestamp": "2015-08-04T17:03:45"}
- """
 
 class MadHandler(threading.Thread):
     """
@@ -973,394 +785,3 @@ class MadHandler(threading.Thread):
             #connect to the server and autoindex the single image
             #a = pprint.PrettyPrinter(indent=2)
             PerformAction(("MAD",my_dirs,data,my_settings,self.reply_settings),my_settings,self.SecretSettings,self.logger)
-
-class MrHandler(threading.Thread):
-    """
-    Handles the initialization of sad runs in a separate thread
-    """
-    def __init__(self,request,database,settings,reply_settings,logger=None):
-        logger.info("MrHandler::__init__  %s" % str(request))
-
-        #initialize the thread
-        threading.Thread.__init__(self)
-
-        #store passed-in variables
-        self.request         = request
-        self.DATABASE        = database
-        self.SecretSettings  = settings
-        self.reply_settings  = reply_settings
-        self.logger          = logger
-
-        self.start()
-
-    def run(self):
-        self.logger.debug("MrHandler::run")
-
-        #mark that the request has been addressed
-        self.DATABASE.markCloudRequest(self.request["cloud_request_id"],"working")
-
-        #Structure the request to the cluster
-        if self.request["request_type"] == "start-mr":
-
-            my_pdb = self.transferFromUi()
-            if my_pdb:
-                #load the location of the pdb into the query
-                if (my_pdb == "None"):
-                    self.request["pdb"] = None
-                    self.request["pdb_code"] = self.request["option1"]
-                else:
-                    self.request["pdb"] = my_pdb
-                #the original result dict
-                original_result_dict = self.DATABASE.getResultById(id=self.request["original_id"],
-                                                                   type=self.request["original_type"])
-                #get the settings
-                my_settings = self.DATABASE.getSettings(setting_id=original_result_dict["settings_id"])
-                #data root dir
-                my_data_root_dir = original_result_dict["data_root_dir"]
-                #get the wavelength
-                self.request["wavelength"] = original_result_dict["wavelength"]
-                #construct a repr for the merged data
-                my_repr = original_result_dict["repr"]
-
-                # Get the correct directory to run in
-                # We should end up with top_level/sad/2010-05-10/XXX_1_1-180/
-                #the top level
-                if my_settings["work_dir_override"] == "False":
-                    if ("merge" in original_result_dict["work_dir"]):
-                        my_toplevel_dir = original_result_dict["work_dir"][:original_result_dict["work_dir"].index("merge")]
-                    else:
-                        my_toplevel_dir = original_result_dict["work_dir"][:original_result_dict["work_dir"].index("integrate")]
-                else:
-                    my_toplevel_dir = my_settings["work_directory"]
-                #the type level
-                my_typelevel_dir = "mr"
-                #the date level
-                my_datelevel_dir = datetime.date.today().isoformat()
-                #the lowest level
-                my_sub_dir = my_repr
-                #now join the four levels
-                my_work_dir_candidate = os.path.join(my_toplevel_dir,my_typelevel_dir,my_datelevel_dir,my_sub_dir)
-                #make sure this is an original directory
-                if os.path.exists(my_work_dir_candidate):
-                    #we have already
-                    self.logger.debug("%s has already been used, will add qualifier" % my_work_dir_candidate)
-                    for i in range(1,10000):
-                        if not os.path.exists("_".join((my_work_dir_candidate,str(i)))):
-                            my_work_dir_candidate = "_".join((my_work_dir_candidate,str(i)))
-                            self.logger.debug("%s will be used for this image" % my_work_dir_candidate)
-                            break
-                        else:
-                            i += 1
-                #now make the candidate the used dir
-                my_work_dir = my_work_dir_candidate
-                #add the process to the database to display as in-process
-                process_id = self.DATABASE.addNewProcess(type="mr",
-                                                         rtype="original",
-                                                         data_root_dir=my_data_root_dir,
-                                                         repr=my_repr)
-                self.logger.debug("New process_id %d"%process_id)
-                #add the process id entry to the data dicts
-                my_settings["process_id"] = process_id
-                #now package directories into a dict for easy access by worker class
-                my_dirs = {"work":my_work_dir,
-                           "data_root_dir":my_data_root_dir}
-
-                #accumulate the information into the data directory
-                data = {"original":original_result_dict,
-                        "repr":my_repr}
-
-                #add the request to my_settings so it can be passed on
-                my_settings["request"] = self.request
-                #mark that the request has been addressed
-                self.DATABASE.markCloudRequest(self.request["cloud_request_id"],"working")
-                #mark in the cloud_current table
-                self.DATABASE.addCloudCurrent(self.request)
-                """
-                print "MR"
-                print my_dirs
-                print data
-                print my_settings
-                print self.reply_settings
-                """
-                #connect to the server and autoindex the single image
-                #a = pprint.PrettyPrinter(indent=2)
-                #a.pprint(("MR",my_dirs,data,my_settings,self.reply_settings))
-                PerformAction(("MR",my_dirs,data,my_settings,self.reply_settings),my_settings,self.SecretSettings,self.logger)
-
-    def transferFromUi(self):
-        """
-        Transfer the pdb from the User Interface Server to the local host
-        """
-        self.logger.debug("MrHander.TransferFromUi")
-
-        #import for decoding
-        import base64
-
-        #set up simpler versions of the host parameters
-        host     = self.SecretSettings["ui_host"]
-        port     = self.SecretSettings["ui_port"]
-        username = self.SecretSettings["ui_user"]
-        password = base64.b64decode(self.SecretSettings["ui_password"])
-
-        try:
-
-            #get the information on the pdb file to be uploaded
-            if (self.request["pdbs_id"] == 0):
-                return("None")
-            else:
-                pdb_dict = self.DATABASE.getPdbById(pdbs_id=self.request["pdbs_id"])
-
-            if (pdb_dict):
-                #create the log file
-                paramiko.util.log_to_file("/tmp/paramiko.log")
-                #create the Transport instance
-                transport = paramiko.Transport((host, port))
-                #connect with username and password
-                transport.connect(username = username, password = password)
-                #establish sftp client
-                sftp = paramiko.SFTPClient.from_transport(transport)
-
-                source = os.path.join(self.SecretSettings["ui_upload_dir"],pdb_dict["pdb_file"])
-                target = os.path.join(self.SecretSettings["upload_dir"],str(pdb_dict["pdbs_id"])+".pdb")
-                self.logger.debug("source: %s"%source)
-                self.logger.debug("target: %s" % target)
-                sftp.get(source,target)
-
-                sftp.close()
-                transport.close()
-
-                self.DATABASE.updatePdbLocation(pdbs_id=pdb_dict["pdbs_id"],
-                                                location=target)
-
-                return(target)
-            else:
-                return(False)
-        except:
-            self.logger.exception("MrHandler.transferFromUi Falied to transfer pdb file from UI to Local")
-
-
-class IntegrationHandler(threading.Thread):
-    """
-    Handles the initialization of re-integrations in a separate thread.
-    """
-
-    def __init__(self,request,database,settings,reply_settings,logger=None):
-        """
-        Initialize the handler.
-
-        request - a dict containing information on the request
-        database - an instance of rapd_database.Database
-        settings - dict from rapd_site describing settings for this rapd setup
-        reply_settings - a tuple of ip address and port for the controller server to reply to
-        logger - a logger instance
-        """
-
-        logger.info("IntegrationHandler::__init__  %s" % str(request))
-
-        #initialize the thread
-        threading.Thread.__init__(self)
-
-        #store passed-in variables
-        self.request         = request
-        self.DATABASE        = database
-        self.SecretSettings  = settings
-        self.reply_settings  = reply_settings
-        self.logger          = logger
-        #start the new thread
-        self.start()
-
-    def run(self):
-        """
-        The new thread is now running
-        """
-
-        self.logger.debug("IntegrationHandler::run")
-        try:
-            #mark that the request has been addressed
-            self.DATABASE.markCloudRequest(self.request["cloud_request_id"],"working")
-
-            #Structure the request to the cluster
-            if self.request["request_type"] in ("start-xiaint","start-fastin"):
-                #decide on request type
-                if self.request["request_type"] == "start-xiaint":
-                    my_request_type = "XIA2"
-                elif self.request["request_type"] == "start-fastin":
-                    my_request_type = "XDS"
-
-                # Relabel the spacegroup request
-                self.request["spacegroup"] = int(self.request.get("option1",0))
-
-                #the original result dict
-                original_result_dict = self.DATABASE.getResultById(id=self.request["original_id"],
-                                                                   type="integrate")
-                #get the settings
-                my_settings = self.DATABASE.getSettings(setting_id=original_result_dict["settings_id"])
-                #data root dir
-                my_data_root_dir = original_result_dict["data_root_dir"]
-                #get the wavelength
-                #if original_result_dict.has_key("wavelength"):
-                #    self.request["wavelength"] = original_result_dict["wavelength"]
-                #else:
-                self.request["wavelength"] = self.DATABASE.getWavelengthFromRunId(run_id=original_result_dict["run_id"])
-                #construct a repr for the reprocessed data
-                my_repr = "_".join(original_result_dict["repr"].split("_")[:-1])+"_"+str(self.request["frame_start"])+"-"+str(self.request["frame_finish"])
-                # Get the correct directory to run in
-                # We should end up with original["work_dir"]/reprocess_#
-                #the first candidate
-                my_work_dir_candidate = os.path.join(original_result_dict["work_dir"],"reprocess")
-                my_work_dir = "_".join((my_work_dir_candidate,str(1)))
-                #make sure this is an original directory
-                if (os.path.exists("_".join((my_work_dir_candidate,str(1))))):
-                    #we have already
-                    self.logger.debug("%s has already been used, will increment qualifier" % "_".join((my_work_dir_candidate,str(1))))
-                    for i in range(2,1000):
-                        if not os.path.exists("_".join((my_work_dir_candidate,str(i)))):
-                            my_work_dir_candidate = "_".join((my_work_dir_candidate,str(i)))
-                            self.logger.debug("%s will be used for this image" % my_work_dir_candidate)
-                            break
-                        else:
-                            i += 1
-                    #now make the candidate the used dir
-                    my_work_dir = my_work_dir_candidate
-
-                self.request["work_dir"] = my_work_dir
-
-                #add the process to the database to display as in-process
-                process_id = self.DATABASE.addNewProcess(type=my_request_type,
-                                                         rtype="reprocess",
-                                                         data_root_dir=my_data_root_dir,
-                                                         repr=my_repr)
-
-                #create a result for this process as well
-                integrate_result_id,result_id = self.DATABASE.makeNewResult(rtype="integrate",
-                                                                            process_id=process_id,
-                                                                            data_root_dir=my_data_root_dir)
-
-                #add the process id entry to the data dicts
-                my_settings["process_id"] = process_id
-                #now package directories into a dict for easy access by worker class
-                my_dirs = {"work":my_work_dir,
-                           "data_root_dir":my_data_root_dir}
-
-                #accumulate the information into the data directory
-                data = {"original":original_result_dict,
-                        "repr":my_repr}
-
-                #add the request to my_settings so it can be passed on
-                my_settings["request"] = self.request
-                #mark that the request has been addressed
-                self.DATABASE.markCloudRequest(self.request["cloud_request_id"],"working")
-                #mark in the cloud_current table
-                self.DATABASE.addCloudCurrent(self.request)
-
-                #connect to the server and send request
-                #a = pprint.PrettyPrinter(indent=2)
-                #a.pprint((my_request_type,my_dirs,data,my_settings,self.reply_settings))
-                PerformAction((my_request_type,my_dirs,data,my_settings,self.reply_settings),my_settings,self.SecretSettings,self.logger)
-        except:
-            self.logger.exception("Error in IntegrationHandler")
-
-
-class SimpleMergeHandler(threading.Thread):
-    """
-    Handles the initialization of simple merging runs in a separate thread
-    """
-    def __init__(self,request,database,settings,reply_settings,logger=None):
-        logger.info("SimpleMergeHandler::__init__  %s" % str(request))
-
-        #initialize the thread
-        threading.Thread.__init__(self)
-
-        #store passed-in variables
-        self.request         = request
-        self.DATABASE        = database
-        self.SecretSettings  = settings
-        self.reply_settings  = reply_settings
-        self.logger          = logger
-
-        self.start()
-
-    def run(self):
-        self.logger.debug("SimpleMergeHandler::run")
-
-        #mark that the request has been addressed
-        self.DATABASE.markCloudRequest(self.request["cloud_request_id"],"working")
-
-        #Structure the request to the cluster
-        if self.request["request_type"] == "smerge":
-            #the original result dict
-            original_result_dict = self.DATABASE.getResultById(self.request["original_id"],self.request["original_type"])
-            #the secondary result dict
-            #secondary_result_type = self.DATABASE.getTypeByResultId(self.request["additional_image"])
-            secondary_result_dict = self.DATABASE.getResultById(self.request["additional_image"],"integrate")
-            #get the settings
-            my_settings = self.DATABASE.getSettings(setting_id=original_result_dict["settings_id"])
-
-            my_data_root_dir = original_result_dict["data_root_dir"]
-
-            #construct a repr for the merged data
-            my_repr = original_result_dict["repr"]+"+"+secondary_result_dict["repr"]
-
-            # Get the correct directory to run in
-            # We should end up with top_level/sad/2010-05-10/XXX_1_1-180/
-            #the top level
-            if my_settings["work_dir_override"] == "False":
-                if ("merge" in original_result_dict["work_dir"]):
-                    my_toplevel_dir = original_result_dict["work_dir"][:original_result_dict["work_dir"].index("merge")]
-                else:
-                    my_toplevel_dir = original_result_dict["work_dir"][:original_result_dict["work_dir"].index("integrate")]
-            else:
-                my_toplevel_dir = my_settings["work_directory"]
-            #the type level
-            my_typelevel_dir = "merge"
-            #the date level
-            my_datelevel_dir = datetime.date.today().isoformat()
-            #the lowest level
-            my_sub_dir = my_repr
-            #now join the four levels
-            my_work_dir_candidate = os.path.join(my_toplevel_dir,my_typelevel_dir,my_datelevel_dir,my_sub_dir)
-            #make sure this is an original directory
-            if os.path.exists(my_work_dir_candidate):
-                #we have already
-                self.logger.debug("%s has already been used, will add qualifier" % my_work_dir_candidate)
-                for i in range(1,10000):
-                    if not os.path.exists("_".join((my_work_dir_candidate,str(i)))):
-                        my_work_dir_candidate = "_".join((my_work_dir_candidate,str(i)))
-                        self.logger.debug("%s will be used for this image" % my_work_dir_candidate)
-                        break
-                    else:
-                        i += 1
-            #now make the candidate the used dir
-            my_work_dir = my_work_dir_candidate
-
-            #add the process to the database to display as in-process
-            process_id = self.DATABASE.addNewProcess(type="merge",
-                                                     rtype="reprocess",
-                                                     data_root_dir=my_data_root_dir,
-                                                     repr=my_repr)
-
-            #make a new result for this process
-            merge_result_id,result_id = self.DATABASE.makeNewResult(rtype="merge",
-                                                                    process_id=process_id,
-                                                                    data_root_dir=my_data_root_dir)
-
-            #now package directories into a dict for easy access by worker class
-            my_dirs = {"work":my_work_dir,
-                       "data_root_dir":my_data_root_dir}
-
-            #accumulate the information into the data directory
-            data = {"original":original_result_dict,
-                    "secondary":secondary_result_dict,
-                    "repr":my_repr,
-                    "process_id":process_id}
-
-            #add the request to my_settings so it can be passed on
-            my_settings["request"] = self.request
-
-            #mark that the request has been addressed
-            self.DATABASE.markCloudRequest(self.request["cloud_request_id"],"working")
-            #mark in the cloud_current table
-            self.DATABASE.addCloudCurrent(self.request)
-
-            #connect to the server and autoindex the single image
-            PerformAction(("SMERGE",my_dirs,data,my_settings,self.reply_settings),my_settings,self.SecretSettings,self.logger)

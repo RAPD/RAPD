@@ -27,8 +27,16 @@ import importlib
 # import shutil
 # import time
 
+# Site ID
 ID = "NECAT_E"
+
+# The secrets file - do not put in github repo
 SECRETS = importlib.import_module("sites.secrets_necat_e")
+
+# Source information
+BEAM_FLUX = 8E11
+BEAM_GAUSS_X = 0.03     # Gaussian description of the beam for Best
+BEAM_GAUSS_Y = 0.01
 
 # logging
 LOGFILE_DIR = "/tmp/log"    # LINUX SHOULD BE /var/log/
@@ -36,6 +44,7 @@ LOG_LEVEL = 50
 
 # RAPD core process settings
 CORE_PORT = 50001           # Port for core process to listen on
+UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"    # Where files from UI are uploaded
 
 # RAPD cluster process settings
 CLUSTER_PORT = 50000        # Port for cluster to listen on
@@ -50,19 +59,27 @@ DB_NAME_CLOUD = "rapd_cloud"
 # Redis Settings
 REDIS_CLUSTER = True        # Running in a cluster configuration - True || False
 
-
 # Detector settings
-DETECTOR = "ADSC_Q315"
+DETECTOR = "NECAT_ADSC_Q315"
 DETECTOR_SUFFIX = ".img"
 IMAGE_MONITOR = False        # Monitor for images - True || False
 IMAGE_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
                           "SENTINEL_HOST" : SECRETS.SENTINEL_HOST,
                           "SENTINEL_PORT" : SECRETS.SENTINEL_PORT,
                           "REDIS_MASTER_NAME" : SECRETS.REDIS_MASTER_NAME}
+IMAGE_SHORT_CIRCUIT_DIRECTORIES = [
+    '/gpfs5/users/necat/phii_dfa_1/in',
+    '/gpfs5/users/necat/phii_dfa_2/in',
+    '/gpfs5/users/necat/phii_raster_snap/in',
+    '/gpfs5/users/necat/phii_rastersnap_scan_data',
+    '/gpfs5/users/necat/phii_dfa_scan_data',
+    '/gpfs5/users/necat/phii_ova_scan_data',
+    '/gpfs5/users/necat/rapd/uranium/trunk/test_data'
+]
 
 # Cloud Settings
-CLOUD_MONITOR = True        # Run the cloud monitor?
-CLOUD_INTERVAL = 10         # Pause between checking the database for new cloud requests in seconds
+CLOUD_MONITOR = "rapd_cloud"        # Run the cloud monitor?
+CLOUD_INTERVAL = 10                 # Pause between checking the database for new cloud requests in seconds
 
 # Cloud handlers
 CLOUD_MINIKAPPA = False
@@ -70,18 +87,46 @@ CLOUD_MINIKAPPA_HANDLER = None
 CLOUD_DATA_COLLECTION_PARAMS = False
 CLOUD_DATA_COLLECTION_PARAMS_HANDLER = "datacollectionparameters"
 CLOUD_DOWNLOAD_HANDLER = "download"
+CLOUD_BINARY_MERGE_HANDLER = "binary_merge"
+CLOUD_MR_HANDLER = "mr"
 CLOUD_REINDEX_HANDLER = "reindex"
 CLOUD_REINTEGRATE_HANDLER = "reintegrate"
 # Aggregator - should not need modified
-CLOUD_MONITOR_SETTINGS = {"CLOUD_MINIKAPPA":CLOUD_MINIKAPPA,
-                          "CLOUD_MINIKAPPA_HANDLER":CLOUD_MINIKAPPA_HANDLER,
-                          "CLOUD_DATA_COLLECTION_PARAMS":CLOUD_DATA_COLLECTION_PARAMS,
-                          "CLOUD_DATA_COLLECTION_PARAMS_HANDLER":CLOUD_DATA_COLLECTION_PARAMS_HANDLER,
-                          "CLOUD_DOWNLOAD_HANDLER":CLOUD_DOWNLOAD_HANDLER,
-                          "CLOUD_REINDEX_HANDLER":CLOUD_REINDEX_HANDLER,
-                          "CLOUD_REINTEGRATE_HANDLER":CLOUD_REINTEGRATE_HANDLER,
-                          "CLUSTER_ADDRESS":CLUSTER_ADDRESS,
-                          "DETECTOR_SUFFIX":DETECTOR_SUFFIX}
+CLOUD_MONITOR_SETTINGS = {
+        "CLOUD_BINARY_MERGE_HANDLER":CLOUD_BINARY_MERGE_HANDLER,
+        "CLOUD_DATA_COLLECTION_PARAMS":CLOUD_DATA_COLLECTION_PARAMS,
+        "CLOUD_DATA_COLLECTION_PARAMS_HANDLER":CLOUD_DATA_COLLECTION_PARAMS_HANDLER,
+        "CLOUD_DOWNLOAD_HANDLER":CLOUD_DOWNLOAD_HANDLER,
+        "CLOUD_MINIKAPPA":CLOUD_MINIKAPPA,
+        "CLOUD_MINIKAPPA_HANDLER":CLOUD_MINIKAPPA_HANDLER,
+        "CLOUD_MR_HANDLER":CLOUD_MR_HANDLER,
+        "CLOUD_REINDEX_HANDLER":CLOUD_REINDEX_HANDLER,
+        "CLOUD_REINTEGRATE_HANDLER":CLOUD_REINTEGRATE_HANDLER,
+        "CLUSTER_ADDRESS":CLUSTER_ADDRESS,
+        "DETECTOR_SUFFIX":DETECTOR_SUFFIX,
+        "UI_HOST":SECRETS.UI_HOST,
+        "UI_PORT":SECRETS.UI_PORT,
+        "UI_USER":SECRETS.UI_USER,
+        "UI_PASSWORD":SECRETS.UI_PASSWORD,
+        "UPLOAD_DIR":UPLOAD_DIR
+        }
+
+# For connecting to the site
+SITE_ADAPTER = "necat"              # file name prefix for adapter in src/sites/adapters
+SITE_ADAPTER_SETTINGS = {"ID":ID,
+                         "SITE_REDIS_IP":SECRETS.SITE_REDIS_IP,
+                         "SITE_REDIS_PORT":SECRETS.SITE_REDIS_PORT,
+                         "SITE_REDIS_DB":SECRETS.SITE_REDIS_DB}
+
+
+# For connecting to the remote access system fr the site
+REMOTE_ADAPTER = "necat_remote"     # file name prefix for adapter in src/sites/adapters
+REMOTE_ADAPTER_SETTINGS = {"ID":ID,
+                           "MONGO_CONNECTION_STRING":SECRETS.MONGO_CONNECTION_STRING,
+                           "REDIS_CLUSTER":REDIS_CLUSTER,
+                           "SENTINEL_HOST":SECRETS.SENTINEL_HOST,
+                           "SENTINEL_PORT":SECRETS.SENTINEL_PORT,
+                           "REDIS_MASTER_NAME":SECRETS.REDIS_MASTER_NAME}
 
 # secret_settings_general = { #database information
 #                             'db_host'                : 'rapd.nec.aps.anl.gov',         #location of mysql database

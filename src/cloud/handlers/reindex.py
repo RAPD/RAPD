@@ -27,6 +27,8 @@ import logging
 import os
 import threading
 
+from rapd_cluster import PerformAction
+
 class Handler(threading.Thread):
     """
     Handles the initialization of reprocessing runs in a separate thread
