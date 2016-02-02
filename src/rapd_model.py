@@ -29,9 +29,7 @@ import datetime
 import importlib
 import logging
 import os
-# import sys
-# import threading
-# import time
+import sys
 
 #custom RAPD imports
 from utils.site_tools import get_ip_address
@@ -45,6 +43,7 @@ from rapd_cluster import PerformAction, ControllerServer
 
 database = None
 detector = None
+image_monitor = None
 run_monitor = None
 cloud_monitor = None
 site_adapter = None
@@ -122,6 +121,9 @@ class Model(object):
         # Start the server for receiving communications
         self.start_server()
 
+        # Import the detector
+        self.init_detector()
+
         # Start the image monitor
         self.start_image_monitor()
 
@@ -133,12 +135,6 @@ class Model(object):
 
         # Initialize the remote adapter
         self.init_remote_adapter()
-
-        # # Test the cluster is available
-        # PerformAction(command=("TEST", self.return_address),
-        #               settings=self.Settings,
-        #               secret_settings=self.SecretSettings,
-        #               logger=self.logger)
 
     def connect_to_database(self):
         """Set up database connection"""
@@ -172,6 +168,19 @@ class Model(object):
 
         atexit.register(stop_server)
 
+    def init_detector(self):
+        """Set up the detector"""
+
+        self.logger.debug("Setting up the detector")
+
+        # Shorten variable names
+        site = self.site
+
+        if site.DETECTOR:
+            # Import the specific detector as detector module
+            global detector
+            detector = importlib.import_module('detectors.%s' % site.DETECTOR.lower())
+
     def start_image_monitor(self):
         """Start up the image listening process for core"""
 
@@ -181,11 +190,9 @@ class Model(object):
         site = self.site
 
         if site.IMAGE_MONITOR:
-            # Import the specific detector as detector module
-            global detector
-            detector = importlib.import_module('detectors.%s' % site.DETECTOR.lower())
-            self.logger.debug(detector)
-            self.image_monitor = detector.Monitor(
+            global image_monitor
+            image_monitor = importlib.import_module('%s' % site.IMAGE_MONITOR.lower())
+            self.image_monitor = image_monitor.ImageMonitor(
                 tag=site.ID.lower(),
                 image_monitor_settings=site.IMAGE_MONITOR_SETTINGS,
                 notify=self.receive)
@@ -246,7 +253,6 @@ class Model(object):
             self.remote_adapter = remote_adapter.Adapter(settings=site.REMOTE_ADAPTER_SETTINGS)
             print self.remote_adapter
 
-
     def stop(self):
         """
         Stop the ImageMonitor,CloudMonitor and StatusRegistrar.
@@ -280,9 +286,6 @@ class Model(object):
         # except:
         #     self.STATUSREGISTRAR = False
 
-    #################################################################
-    # Handle a new image being recorded                             #
-    #################################################################
     def add_image(self, fullname):
         """Handle a new image being recorded by the site"""
 
@@ -303,44 +306,95 @@ class Model(object):
         data_root_dir = detector.get_data_root_dir(fullname)
 
         # Figure out if image in the current run...
-        place = self.in_current_run(fullname)
+        place, run_info = self.in_run(fullname)
 
         # Image is in the current run
-        if isinstance(place, int):
-            pass
+        if isinstance(place, int) and run_info == "current_run":
 
-        # Not an image in the current run
-        else:
+            self.logger.debug("%s is in the current run at position %d", (fullname, place))
 
-            # Image is a snap
-            if place == "SNAP":
+            # If not integrating trigger integration
+            if self.current_run["status"] != "INTEGRATING":
 
-                self.logger.debug("%s is a snap", fullname)
+                # Handle getting to the party late
+                if place != 1:
+                    self.logger.info("Creating first image in run")
+                    first_image_fullname = detector.create_image_fullname(
+                        directory=self.current_run["directory"],
+                        image_prefix=self.current_run["image_prefix"],
+                        run_number=self.current_run["run_number"],
+                        image_number=self.current_run["start"])
 
-                # Get all the image information
-                header = detector.read_header(fullname=fullname)
+                # Right on time
+                else:
+                    first_image_fullname = fullname
 
-                # Grab extra data for the image
-                header.update(self.beamline_adapter.get_image_data())
+                header = detector.read_header(fullname=first_image_fullname,
+                                              run_id=self.current_run["run_id"],
+                                              place_in_run=1)
 
                 # Add some data to the header
-                header["run_id"] = 0
+                header["run_id"] = self.current_run["run_id"]
                 header["data_root_dir"] = data_root_dir
 
                 # Add to database
                 db_result, __ = self.database.add_image(header)
                 header.update(db_result)
 
-                # Update remote client
-                if self.remote_adapter:
-                    self.remote_adapter.add_image(header)
+                # Mark the run as INTEGRATING
+                self.current_run["status"] = "INTEGRATING"
 
-                # Run the image as a new data image
+                # Put data about run in the header object
+                header["run"] = self.current_run.copy()
+
+                # KBO
                 self.new_data_image(data=header)
 
-            # Image is in a past run
-            elif place == "PAST_RUN":
-                pass
+        # Image is a snap
+        elif place == "SNAP":
+
+            self.logger.debug("%s is a snap", fullname)
+
+            # Get all the image information
+            header = detector.read_header(fullname=fullname)
+
+            # Grab extra data for the image
+            header.update(self.beamline_adapter.get_image_data())
+
+            # Add some data to the header
+            header["run_id"] = 0
+            header["data_root_dir"] = data_root_dir
+
+            # Add to database
+            db_result, __ = self.database.add_image(header)
+            header.update(db_result)
+
+            # Update remote client
+            if self.remote_adapter:
+                self.remote_adapter.add_image(header)
+
+            # KBO
+            self.new_data_image(data=header)
+
+        # Image is in a past run
+        elif isinstance(place, int) and isinstance(run_info, dict):
+
+            self.logger.debug("%s is in a past run", fullname)
+
+            # Figure out if image in the current run...
+            past_place, past_run_info = self.in_past_run(fullname)
+
+            if isinstance(past_place, int):
+
+                self.logger.debug("Have past run data for %s", fullname)
+
+            elif past_place == False:
+
+                self.logger.debug("Unable to find past run data for %s", fullname)
+
+        # No information is findable
+        else:
+            self.logger.debug("Unable to figure out %s", fullname)
 
     def add_adsc_image(self, data):
         """
@@ -591,41 +645,6 @@ class Model(object):
                                 run["status"] = "INTEGRATING"
                                 self.new_data_image(data=header)
 
-    # def get_adsc_header(self,
-    #                     fullname,
-    #                     run_id=0,
-    #                     drd=None,
-    #                     adsc_number=0,
-    #                     place=1):
-    #     """Get the ADSC image"s header data"""
-    #
-    #     self.logger.debug("get_adsc_header %s run_id:%d" % (fullname, run_id))
-    #
-    #     adsc_header = Q315ReadHeader(fullname, logger=self.logger)
-    #     adsc_header["run_id"] = run_id
-    #     adsc_header["data_root_dir"] = drd
-    #     adsc_header["adsc_number"] = adsc_number
-    #
-    #     #Grab extra data for the image
-    #     adsc_header.update(self.BEAMLINE_CONNECTION.GetImageData())
-    #
-    #     #Now perform beamline-specific calculations
-    #     adsc_header = determine_flux(header_in=adsc_header,
-    #                                  beamline=self.site,
-    #                                  logger=self.logger)
-    #
-    #     #Calculate beam center
-    #     adsc_header["x_beam"], adsc_header["y_beam"] = \
-    #         self.calculate_beam_center(
-    #             d=adsc_header["distance"],
-    #             v_offset=adsc_header["vertical_offset"])
-    #
-    #     #update remote client
-    #     if self.RemoteAdapter and place == 1:
-    #         self.RemoteAdapter.add_image(adsc_header)
-    #
-    #     return adsc_header
-
     def get_pilatus_header(self,
                            fullname,
                            mode,
@@ -657,121 +676,114 @@ class Model(object):
             float(header["distance"]))
 
         #update remote client
-        if self.RemoteAdapter:
-            self.RemoteAdapter.add_image(header)
+        if self.remote_adapter:
+            self.remote_adapter.add_image(header)
 
         return header
-
-    # def calculate_beam_center(self, distance, v_offset=0):
-    #     """ Return a beam center, given a distance """
-    #
-    #     x_beam = distance**6 * self.Settings["beam_center_x_m6"] + \
-    #              distance**5 * self.Settings["beam_center_x_m5"] + \
-    #              distance**4 * self.Settings["beam_center_x_m4"] + \
-    #              distance**3 * self.Settings["beam_center_x_m3"] + \
-    #              distance**2 * self.Settings["beam_center_x_m2"] + \
-    #              distance * self.Settings["beam_center_x_m1"] + \
-    #              self.Settings["beam_center_x_b"] + \
-    #              v_offset
-    #
-    #     y_beam = distance**6 * self.Settings["beam_center_y_m6"] + \
-    #              distance**5 * self.Settings["beam_center_y_m5"] + \
-    #              distance**4 * self.Settings["beam_center_y_m4"] + \
-    #              distance**3 * self.Settings["beam_center_y_m3"] + \
-    #              distance**2 * self.Settings["beam_center_y_m2"] + \
-    #              distance * self.Settings["beam_center_y_m1"] + \
-    #              self.Settings["beam_center_y_b"]
-    #
-    #     return x_beam, y_beam
 
     def in_past_run(self, fullname):
         """Determine the place in a past run the image is
         """
         self.logger.info("in_past_run %s" % fullname)
 
-        #tease out the info from the file name
-        directory = os.path.dirname(fullname)
-        base = os.path.basename(fullname).rstrip(".cbf").rstrip(".img")
-        prefix = "_".join(base.split("_")[0:-2])
-        run_number = int(base.split("_")[-2])
-        image_number = int(base.split("_")[-1])
+        # Check older runs
+        for run_info in reversed(self.past_runs):
+            place, __ = self.in_run(fullname, run_info)
+            # Next
+            if place == "PAST_RUN":
+                continue
+            # Found the run
+            elif isinstance(place, int):
+                return in_run_result, run_info
+            # SNAP - unlikely
+            elif place == "SNAP":
+                return "SNAP", None
 
-        #Check older runs
-        for run in self.past_runs:
-            if (run["directory"] == directory and
-                    run["prefix"] == prefix and
-                    run["run_number"] == run_number):
-                if (run["start"] <= image_number and
-                        image_number <= (run["start"] + run["total"] - 1)):
-                    return image_number-run["start"]+1, run
+        # Go through all runs and fail to find a run or snap
+        else:
+            return False, None
 
-        return False, False
-
-    def in_current_run(self, fullname):
+    def in_run(self, fullname, run_info=None):
         """
         Determine if an image is in the currently active run - return
         place in run or False based on prefix,directory,run_id and image number
         """
-        self.logger.info("in_current_run %s" % fullname)
+        self.logger.info(fullname)
 
-        #tease out the info from the file name
-        directory = os.path.dirname(fullname)
-        base = os.path.basename(fullname).rstrip(".cbf").rstrip(".img")
-        sbase = base.split("_")
-        prefix = "_".join(sbase[0:-2])
-        image_number = int(sbase[-1])
-        run_number = int(sbase[-2])
+        if run_info == None:
+            run_info = self.current_run
 
-        # A snap
+        # Save typing
+        site = self.site
+
+        # Tease out the info from the file name
+        directory, basename, prefix, run_number, image_number = detector.parse_file_name(fullname)
+
+        # SNAP
         if run_number == 0:
-            return "SNAP"
+            return "SNAP", None
 
         # NOT a snap
         else:
-            self.logger.debug("current_run %s" % str(self.current_run))
-            self.logger.debug("%s %s %s %d %d" %(directory, base, prefix,
-                                                 run_number, image_number))
+            self.logger.debug("run_info %s", run_info)
+            self.logger.debug("%s %s %s %d %d", (directory,
+                                                 basename,
+                                                 prefix,
+                                                 run_number,
+                                                 image_number))
 
-            #there is a current run
-            if self.current_run:
-                self.logger.debug("There is a current_run")
-                # The "/" addition if for HF4M
-                if (self.current_run["directory"] == directory) or \
-                   (self.current_run["directory"][:-1] == directory):
+            # There is information in the run
+            if run_info:
+                self.logger.debug("There is run_info")
+
+                # Directory
+                if run_info["directory"] == directory:
                     self.logger.debug("directories pass")
 
-                    if self.current_run["prefix"] == prefix:
+                    # Prefix
+                    if run_info["prefix"] == prefix:
                         self.logger.debug("prefixes match")
 
-                        if self.current_run["run_number"] == run_number:
+                        # Run number
+                        if run_info["run_number"] == run_number:
                             self.logger.debug("run_numbers match")
 
-                            # Update the remote system on the run
-                            if self.RemoteAdapter:
-                                self.RemoteAdapter.update_run_progress(
-                                    run_position=image_number- \
-                                        self.current_run.get("start", 1)+1,
-                                    image_name=os.path.basename(fullname),
-                                    run_data=self.current_run)
+                            # Image number
+                            if (image_number >= run_info["image_number_start"]) and (image_number <= run_info["image_number_end"]):
+                                self.logger.debug("image numbers in line")
 
-                            # Correct indention?
-                            return image_number-self.current_run["start"]+1
+                                # Calculate the position of the image in the current run
+                                run_position = image_number - run_info.get("start", 1) + 1
+
+                                # Update the remote system on the run
+                                if self.remote_adapter:
+                                    self.remote_adapter.update_run_progress(
+                                        run_position=run_position,
+                                        image_name=basename,
+                                        run_data=run_info)
+
+                                # Return the run position for this image
+                                return run_position, "current_run"
+
+                            # Image numbers not in line
+                            else:
+                                return "PAST", None
 
                         # Run numbers do not match
                         else:
-                            return "PAST_RUN"
+                            return "PAST", None
 
                     # Prefixes do not match
                     else:
-                        return "PAST_RUN"
+                        return "PAST", None
 
                 # Directories do not match
                 else:
-                    return "PAST_RUN"
+                    return "PAST", None
 
-            #there is no current run
+            # There is no current run
             else:
-                return "PAST_RUN"
+                return "PAST", None
 
     def new_data_image(self, data):
         """
@@ -785,184 +797,115 @@ class Model(object):
             5. The image is last in a wedge of data collection
         """
 
-        self.logger.debug("Model::new_data_image %s" % data["fullname"])
+        self.logger.debug("Model::new_data_image %s", data["fullname"])
         self.logger.debug(data)
 
+        # Save some typing
+        site = self.site
+        data_root_dir = data["data_root_dir"]
+
         # Acquire the settings for this image in case they have changed via UI
-        my_settings = self.database.getCurrentSettings(beamline=self.site)
+        process_settings = self.database.get_current_settings(id=self.site.BEAMLINE)
 
         try:
             run_id = data["run_id"]
-            run_total = self.current_run["total"]
+            run_total = data["run"]["total"]
         except:
             run_id = 0
             run_total = 0
 
-        # derive the data_root_dir used by the web interface for so many things
-        my_data_root_dir = data["data_root_dir"]
-        # my_data_root_dir = GetDataRootDir(fullname=data["fullname"],
-        #                                   logger=self.logger)
-
-        #check the data_root_dir to see if it is a new one
-        if my_data_root_dir != self.data_root_dir:
+        # data_root_dir has changed
+        if data_root_dir != self.data_root_dir:
 
             #reset the pucks since we are presumably a new user
             #this works in a NO-CONSOLE version of pucks
-            self.database.resetPucks(beamline=self.site)
+            #self.database.resetPucks(beamline=self.site)
 
-            #we have a new drd - check for a previous setting
-            self.logger.debug("DRD has changed to %s" % my_data_root_dir)
-            check = self.database.checkNewDataRootDirSetting(data_root_dir=my_data_root_dir,
-                                                             beamline=self.site)
+            # We have a new drd - check for a previous setting
+            self.logger.debug("DRD has changed to %s", data_root_dir)
+            check = self.database.check_new_data_root_dir_setting(data_root_dir=data_root_dir,
+                                                                  beamline=site.BEAMLINE)
             if check:
                 self.logger.debug("Found and will employ settings this new data root dir")
 
-            self.data_root_dir = my_data_root_dir
+            # Set the instance data_root_dir to the new one
+            self.data_root_dir = data_root_dir
 
-            #new settings have been returned - use them
+            # New settings have been returned - use them
             if check:
-                my_settings = check
-                self.logger.debug("copying check")
-                self.logger.debug(my_settings)
+                process_settings = check
+                self.logger.debug(process_settings)
 
+        # No change in data_root_dir
         else:
-            self.logger.debug("Data root directory is unchanged %s" % my_data_root_dir)
-            #Update the current table in the database
-            self.database.updateCurrent(my_settings)
+            self.logger.debug("Data root directory is unchanged %s", data_root_dir)
+            # Update the current table in the database
+            self.database.update_current(process_settings)
 
-        #sample identification
-        #this is a hack for getting sample_id into the images
-        if my_settings.has_key("puckset_id"):
-            data = self.database.setImageSampleId(image_dict=data,
-                                                  puckset_id=my_settings["puckset_id"])
+        # Sample identification
+        # This is a hack for getting sample_id into the images
+        # if process_settings.has_key("puckset_id"):
+        #     data = self.database.setImageSampleId(image_dict=data,
+        #                                           puckset_id=process_settings["puckset_id"])
 
-        if (not run_id) and (data["collect_mode"] == "SNAP"):
-            self.logger.debug("Image is standalone - autoindex")
+        if not run_id == 0 and (data["collect_mode"] == "SNAP"):
 
-            #add the image to self.pair
+            # Add the image to self.pair
             self.pair.append(data["fullname"].lower())
             self.pair_id.append(data["image_id"])
 
-            # Get the correct directory to run in
-            my_toplevel_dir = my_settings["work_directory"]
-            self.logger.debug("  my_toplevel_dir: %s" % my_toplevel_dir)
+            work_dir, new_repr = self.get_work_dir("single",
+                                                   process_settings["work_directory"],
+                                                   data["fullname"])
 
-            #the type level
-            my_typelevel_dir = "single"
-
-            #the date level
-            my_datelevel_dir = datetime.date.today().isoformat()
-
-            #the lowest level
-            my_sub_dir = os.path.basename(data["fullname"]).replace(".img", "").replace(".cbf", "")
-
-            #now join the three levels
-            my_work_dir_candidate = os.path.join(my_toplevel_dir,
-                                                 my_typelevel_dir,
-                                                 my_datelevel_dir,
-                                                 my_sub_dir)
-
-            #make sure this is an original directory
-            if os.path.exists(my_work_dir_candidate):
-                #we have already
-                self.logger.debug("%s has already been used, will add qualifier" %
-                                  my_work_dir_candidate)
-                for i in range(1, 1000):
-                    if not os.path.exists("_".join((my_work_dir_candidate, str(i)))):
-                        my_work_dir_candidate = "_".join((my_work_dir_candidate, str(i)))
-                        self.logger.debug("%s will be used for this image" % my_work_dir_candidate)
-                        break
-                    else:
-                        i += 1
-
-            #now make the candidate the used dir
-            my_work_dir = my_work_dir_candidate
-            self.logger.debug("  my_work_dir: %s" % my_work_dir)
-
-            #now package directories into a dict for easy access by worker class
-            my_dirs = {"work":my_work_dir,
-                       "data_root_dir":my_data_root_dir}
-
-            #create a representation of the process for display
-            my_repr = ""
-            if data.get("detector") == "PILATUS":
-                my_repr = my_sub_dir+".cbf"
-            else:
-                my_repr = my_sub_dir+".img"
+            # Now package directories into a dict for easy access by worker class
+            new_dirs = {"work":work_dir,
+                        "data_root_dir":data_root_dir}
 
             #add the process to the database to display as in-process
             process_id = self.database.addNewProcess(type="single",
                                                      rtype="original",
-                                                     data_root_dir=my_data_root_dir,
-                                                     repr=my_repr)
+                                                     data_root_dir=data_root_dir,
+                                                     repr=new_repr)
 
-            #add the ID entry to the data dict
-            #Is this used at all?
+            # Add the ID entry to the data dict
             data.update({"ID":os.path.basename(my_work_dir),
                          "process_id":process_id,
-                         "repr":my_repr})
+                         "repr":new_repr})
 
-            #If we are throttling autoindexing jobs
-            if self.SecretSettings["throttle_strategy"] == True:
-                #too many jobs already running - put this in the queue
-                if len(self.indexing_active) >= self.SecretSettings["active_strategy_limit"]:
-                    self.logger.debug("Adding autoindex to the queue")
-                    self.indexing_queue.appendleft((
-                        ("AUTOINDEX", my_dirs, data, my_settings, self.return_address),
-                        my_settings,
-                        self.SecretSettings,
-                        self.logger))
-                #go ahead and run, place marker in the queue
-                else:
-                    #connect to the server and autoindex the single image
-                    self.logger.debug("less than %s processes active - run autoindexing" %
-                                      self.SecretSettings["active_strategy_limit"])
-                    self.indexing_active.append("autoindex")
-                    PerformAction(
-                        command=("AUTOINDEX",
-                                 my_dirs,
-                                 data,
-                                 my_settings,
-                                 self.return_address),
-                        settings=my_settings,
-                        secret_settings=self.SecretSettings,
-                        logger=self.logger
-                        )
+            # Run autoindex and strategy agent
+            PerformAction(command=("AUTOINDEX",
+                                   new_dirs,
+                                   data,
+                                   process_settings,
+                                   self.return_address),
+                          settings=process_settings)
 
-            #No throttling - go ahead and run
-            else:
-                PerformAction(
-                    command=("AUTOINDEX",
-                             my_dirs,
-                             data,
-                             my_settings,
-                             self.return_address),
-                    settings=my_settings,
-                    secret_settings=self.SecretSettings,
-                    logger=self.logger
-                    )
-            #
-            # AUTOINDEX-PAIR
-            #
-            #if the last two images have "pair" in their name - look closer
-            self.logger.warning(self.pair)
-            if "pair" in self.pair[0] and self.pair[1]:
+            # If the last two images have "pair" in their name - look more closely
+            if ("pair" in self.pair[0]) and ("pair" in self.pair[1]):
+
                 self.logger.debug("Potentially a pair of images")
-                #everything matches up to the image number
-                if (self.pair[0] != self.pair[1]) & (self.pair[0][:-8] == self.pair[1][:-8]):
+
+                # Break down the image name
+                directory1, basename1, prefix1, run_number1, image_number1 = detector.parse_file_name(self.pair[0])
+                directory2, basename2, prefix2, run_number2, image_number2 = detector.parse_file_name(self.pair[1])
+
+                # Everything matches up to the image number, which is incremented by 1
+                if (directory1, basename1, prefix1) == (directory2, basename2, prefix2) and (image_number1 == image_number2-1):
                     self.logger.info("This looks like a pair to me: %s, %s" %
                                      (self.pair[1], self.pair[0]))
 
-                    #get the data for the first image
-                    data1 = self.database.getImageByImageID(image_id=self.pair_id[0])
-                    #make a copy of the second pair to be LESS confusing
+                    # Get the data for the first image
+                    data1 = self.database.get_image_by_image_id(image_id=self.pair_id[0])
+
+                    # Make a copy of the second pair to be LESS confusing
                     data2 = data.copy()
 
-                    #make sure we are looking at an increment of one
-                    if not data1["image_number"]+1 == data2["image_number"]:
-                        return()
-
                     # Derive some directory names
+                    work_dir, new_repr = self.get_work_dir("pair",
+                                                           process_settings["work_directory"],
+                                                           data1["fullname"],
+                                                           data2["fullname"])
                     # my_toplevel_dir & my_datelevel_dir should already be current
                     #the type level
                     my_typelevel_dir = "pair"
@@ -999,7 +942,7 @@ class Model(object):
 
                     #now package directories into a dict for easy access by worker class
                     my_dirs = {"work"          : my_work_dir,
-                               "data_root_dir" : my_data_root_dir}
+                               "data_root_dir" : data_root_dir}
 
                     #generate a representation of the process for display
                     my_repr = my_sub_dir+".img"
@@ -1008,7 +951,7 @@ class Model(object):
                     process_id = self.database.addNewProcess(
                         type="pair",
                         rtype="original",
-                        data_root_dir=my_data_root_dir,
+                        data_root_dir=data_root_dir,
                         repr=my_repr
                         )
 
@@ -1034,9 +977,9 @@ class Model(object):
                                  my_dirs,
                                  data1,
                                  data2,
-                                 my_settings,
+                                 process_settings,
                                  self.return_address),
-                                my_settings,
+                                process_settings,
                                 self.SecretSettings,
                                 self.logger))
                         #go ahead and run, place marker in the queue
@@ -1051,9 +994,9 @@ class Model(object):
                                          my_dirs,
                                          data1,
                                          data2,
-                                         my_settings,
+                                         process_settings,
                                          self.return_address),
-                                settings=my_settings,
+                                settings=process_settings,
                                 secret_settings=self.SecretSettings,
                                 logger=self.logger
                                 )
@@ -1063,9 +1006,9 @@ class Model(object):
                                                my_dirs,
                                                data1,
                                                data2,
-                                               my_settings,
+                                               process_settings,
                                                self.return_address),
-                                      settings=my_settings,
+                                      settings=process_settings,
                                       secret_settings=self.SecretSettings,
                                       logger=self.logger)
 
@@ -1115,7 +1058,7 @@ class Model(object):
 
             #now package directories into a dict for easy access by worker class
             my_dirs = {"work":my_work_dir,
-                       "data_root_dir":my_data_root_dir}
+                       "data_root_dir":data_root_dir}
 
             #create a represention of the process for display
             my_repr = my_sub_dir
@@ -1125,7 +1068,7 @@ class Model(object):
                 #add the process to the database to display as in-process
                 process_id = self.database.addNewProcess(type="integrate",
                                                          rtype="original",
-                                                         data_root_dir=my_data_root_dir,
+                                                         data_root_dir=data_root_dir,
                                                          repr=my_repr)
 
                 #Make a new result for the integration - should show up in the user interface?
@@ -1145,15 +1088,66 @@ class Model(object):
                 PerformAction(command=("INTEGRATE",
                                        my_dirs,
                                        out_data,
-                                       my_settings,
+                                       process_settings,
                                        self.return_address),
-                              settings=my_settings,
+                              settings=process_settings,
                               secret_settings=self.SecretSettings,
                               logger=self.logger)
             except:
                 self.logger.exception("Exception when attempting to run RAPD \
                 integration pipeline from Pilatus section")
 
+
+    def get_work_dir(self, top_level, type_level, fullname, fullname2):
+        """Return a valid working directory for rapd_agent to work in"""
+
+        # Save some typing
+        site = self.site
+
+        # Top level
+        toplevel_dir = top_level
+
+        # Type level
+        typelevel_dir = type_level
+
+        # Date level
+        datelevel_dir = datetime.date.today().isoformat()
+
+        # Lowest level
+        if type_level == "single":
+            sub_dir = detector.parse_file_name(fullname)["basename"]
+            new_repr = sub_dir + site.DETECTOR_SUFFIX
+        elif type_level == "pair":
+            sub_dir = "_".join((detector.parse_file_name(fullname)["basename"],
+                                "+".join((detector.parse_file_name(fullname)[4]))))
+#the lowest level
+my_sub_dir = "_".join(
+    (data1["image_prefix"], str(data1["run_number"]), "+".join(
+        (str(data1["image_number"]).lstrip("0"),
+         str(data2["image_number"]).lstrip("0")))
+    ))
+
+
+
+        # Now join the  levels
+        work_dir_candidate = os.path.join(toplevel_dir,
+                                          typelevel_dir,
+                                          datelevel_dir,
+                                          sub_dir)
+
+        # Make sure this is an original directory
+        if os.path.exists(work_dir_candidate):
+            #we have already
+            self.logger.debug("%s has already been used, will add qualifier",
+                              work_dir_candidate)
+            for i in range(1, 1000):
+                if not os.path.exists("_".join((work_dir_candidate, str(i)))):
+                    work_dir_candidate = "_".join((work_dir_candidate, str(i)))
+                    break
+                else:
+                    i += 1
+
+        return work_dir_candidate, new_repr
 
     def receive(self, message):
         """
@@ -1544,10 +1538,10 @@ class Model(object):
             if result_db:
 
                 #Update the Remote project
-                if self.RemoteAdapter:
+                if self.remote_adapter:
                     wedges = self.database.getStrategyWedges(id=result_db["single_result_id"])
                     result_db["image_id"] = info["image_id"]
-                    self.RemoteAdapterAdapter.update_image_stats(result_db, wedges)
+                    self.remote_adapterAdapter.update_image_stats(result_db, wedges)
 
                 #now mark the cloud database if this is a reprocess request
                 if result_db["type"] in ("reprocess", "stac"):
@@ -1760,13 +1754,13 @@ class Model(object):
             #move the files to the server
             if result_db:
                 #Update the Remote project
-                if self.RemoteAdapter:
+                if self.remote_adapter:
                     try:
                         wedges = self.database.getRunWedges(run_id=result_db["run_id"])
                     except:
                         self.logger.exception("Error in getting run wedges")
                     try:
-                        self.RemoteAdapter.update_run_stats(result_db=result_db, wedges=wedges)
+                        self.remote_adapter.update_run_stats(result_db=result_db, wedges=wedges)
                     except:
                         self.logger.exception("Error in updating run stats")
 

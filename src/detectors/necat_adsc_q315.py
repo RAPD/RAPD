@@ -22,14 +22,42 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
+# Standar imports
 import math
 import os
 
+# RAPD imports
 import adsc_q315
 
-# Standard monitor
-class Monitor(adsc_q315.Monitor):
-    """The standard monitor from redis"""
+DETECTOR_SUFFIX = ".img"
+
+def parse_file_name(fullname):
+    """Parse the fullname of an image and return
+    (directory, basename, prefix, run_number, image_number)
+    """
+
+    directory = os.path.dirname(fullname)
+    basename = os.path.basename(fullname).rstrip(DETECTOR_SUFFIX)
+    sbase = basename.split("_")
+    prefix = "_".join(sbase[0:-2])
+    image_number = int(sbase[-1])
+    run_number = int(sbase[-2])
+
+    return directory, basename, prefix, run_number, image_number
+
+def create_image_fullname(directory,
+                          image_prefix,
+                          run_number,
+                          image_number):
+    """Create an image name from parts - the reverse of parse"""
+
+    fullname = os.path.join(directory, "%s_%d_%03d%s") % (
+        image_prefix,
+        run_number,
+        image_number,
+        DETECTOR_SUFFIX)
+
+    return fullname
 
 # Calculate the flux of the beam
 def calculate_flux(header, beam_settings):

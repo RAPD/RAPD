@@ -26,6 +26,7 @@ import importlib
 
 # Site ID
 ID = "NECAT_E"
+BEAMLINE="E"
 
 # The secrets file - do not put in github repo!
 SECRETS = importlib.import_module("sites.secrets_necat_e")
@@ -101,11 +102,12 @@ DB_NAME_CLOUD = "rapd_cloud"
 REDIS_CLUSTER = True
 
 # Detector settings
-DETECTOR = "NECAT_ADSC_Q315"    # must have a file in detectors
+# Must have a file in detectors that is all lowercase of this string
+DETECTOR = "NECAT_ADSC_Q315"
 DETECTOR_SUFFIX = ".img"
 
 # Monitor for collected images
-IMAGE_MONITOR = True        # Monitor for images - True || False
+IMAGE_MONITOR = "sites.image_monitors.necat_e"
 # Aggregator - be careful when changing
 IMAGE_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
                           "SENTINEL_HOST" : SECRETS.SENTINEL_HOST,
@@ -129,8 +131,10 @@ RUN_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
                         "REDIS_MASTER_NAME" : SECRETS.REDIS_MASTER_NAME}
 
 # Cloud Settings
-CLOUD_MONITOR = "cloud.rapd_cloud"        # Run the cloud monitor?
-CLOUD_INTERVAL = 10                 # Pause between checking the database for new cloud requests in seconds
+# The cloud monitor module
+CLOUD_MONITOR = "cloud.rapd_cloud"
+# Pause between checking the database for new cloud requests in seconds
+CLOUD_INTERVAL = 10
 
 # Cloud handlers
 CLOUD_MINIKAPPA = False

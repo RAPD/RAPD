@@ -255,7 +255,7 @@ class Database(object):
         self.closeConnection(connection, cursor)
 
         #now grab the dict from the MySQL table
-        image_dict = self.getImageByImageID(image_id=image_id)
+        image_dict = self.get_image_by_image_id(image_id=image_id)
 
 
         return(image_dict, True)
@@ -355,7 +355,7 @@ class Database(object):
             self.closeConnection(connection, cursor)
 
             #now grab the dict from the MySQL table
-            image_dict = self.getImageByImageID(image_id=image_id)
+            image_dict = self.get_image_by_image_id(image_id=image_id)
 
             return(image_dict, True)
 
@@ -397,26 +397,25 @@ class Database(object):
             self.logger.exception('Exception in updating calculated beam center values in database')
             self.closeConnection(connection,cursor)
 
-    def getImageByImageID(self,image_id):
+    def get_image_by_image_id(self, image_id):
         """
         Returns a dict from the database when queried with image_id.
 
         image_id - an int that indexes the rapd_data.images table
-
         """
 
-        self.logger.debug('Database::getImageByImageID %d' % image_id)
+        self.logger.debug("Database::get_image_by_image_id %d", image_id)
 
-        query1 = 'SELECT * FROM images WHERE image_id=%s'
+        query1 = "SELECT * FROM images WHERE image_id=%s"
         image_dict = self.makeDicts(query=query1, params=(image_id,) )[0]
 
         #format the dates to be JSON-compatible
-        image_dict['timestamp'] = image_dict['timestamp'].isoformat()
-        image_dict['date'] = image_dict['date'].isoformat()
+        image_dict["timestamp"] = image_dict["timestamp"].isoformat()
+        image_dict["date"] = image_dict["date"].isoformat()
 
         return(image_dict)
 
-    def getImageIDByFullname(self,fullname):
+    def getImageIDByFullname(self, fullname):
         """
         Returns an image_id given a fullname.
 
@@ -754,7 +753,7 @@ class Database(object):
             #retrieve the dict
             settings_dict = self.getSettings(cursor.lastrowid)
             #now update the current table in the database
-            self.updateCurrent(settings_dict)
+            self.update_current(settings_dict)
             #nowupdate the preset table, if necessary
             if preset:
                 self.addPreset(settings_dict)
@@ -767,12 +766,12 @@ class Database(object):
             return(False)
 
 
-    def updateCurrent(self,in_dict):
+    def update_current(self,in_dict):
         """
         update the current table in the database (the current table keeps track of the most recent
         happenings in the RAPD universe)
         """
-        self.logger.debug('Database::updateCurrent')
+        self.logger.debug('Database::update_current')
         self.logger.debug(in_dict)
 
         #connect
@@ -982,18 +981,18 @@ class Database(object):
             out_array.append([mat_file,phi_start,phi_end,repr,spacegroup])
         return(out_array)
 
-    def getCurrentSettings(self, beamline):
+    def get_current_settings(self, id):
         """
         Returns a dict with the current settings for a given beamline
         """
-        self.logger.debug('Database::getCurrentSettings')
-        self.logger.debug('Beamline: %s' % beamline)
+        self.logger.debug('Database::get_current_settings for id %s', id)
 
         try:
-            #1st get the imagesettings_id from current
+
+            # 1st get the imagesettings_id from current
             query1 = 'SELECT * FROM current WHERE beamline=%s'
             current_dict = self.makeDicts(query=query1,
-                                          params=(beamline,),
+                                          params=(id,),
                                           db='DATA')[0]
 
             my_id = current_dict['setting_id']
@@ -1005,25 +1004,25 @@ class Database(object):
             return(settings_dict)
 
         except:
-            self.logger.exception('Error in getCurrentSettings')
+            self.logger.exception('Error in get_current_settings')
             return(False)
 
-    def checkNewDataRootDirSetting(self,data_root_dir,beamline):
+    def check_new_data_root_dir_setting(self, data_root_dir, beamline):
         """
         Check to see if there is an entry for this data_root_dir.
 
         An attempt is made to get the most recent global settings for the drd.
         If this fails, the most recent default entry in the database is acquired.
         """
-        self.logger.debug('Database::checkNewDataRootDir %s %s' % (data_root_dir,beamline))
+        self.logger.debug('Database::check_new_data_root_dir_setting %s %s', (data_root_dir, beamline))
 
         #check to see if there is an entry in presets for this drd
         settings_dict = self.getSettingsByBDT(beamline=beamline,
                                               data_root_dir=data_root_dir,
                                               setting_type='GLOBAL')
         if (settings_dict):
-            #make sure the beamline is correct
-            self.updateCurrent(settings_dict)
+            # Make sure the beamline is correct
+            self.update_current(settings_dict)
         else:
             #Get the defaults for this beamline
             query = "SELECT * FROM settings WHERE beamline=%s AND data_root_dir=%s ORDER BY setting_id DESC LIMIT 1"

@@ -127,13 +127,13 @@ class Handler(threading.Thread):
         # Connect to the server and autoindex the single image
         # Pair
         if "pair" in self.index_type:
-            PerformAction(("AUTOINDEX-PAIR",
-                           new_dirs,
-                           self.image1,
-                           self.image2,
-                           self.process_settings,
-                           self.reply_settings),
-                          self.settings)
+            PerformAction(command=("AUTOINDEX-PAIR",
+                                   new_dirs,
+                                   self.image1,
+                                   self.image2,
+                                   self.process_settings,
+                                   self.reply_settings),
+                          settings=self.settings)
         # Single
         else:
             PerformAction(("AUTOINDEX",
