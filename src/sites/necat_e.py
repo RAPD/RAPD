@@ -27,8 +27,16 @@ import importlib
 # import shutil
 # import time
 
+# Site ID
 ID = "NECAT_E"
+
+# The secrets file - do not put in github repo
 SECRETS = importlib.import_module("sites.secrets_necat_e")
+
+# Source information
+BEAM_FLUX = 8E11
+BEAM_GAUSS_X = 0.03     # Gaussian description of the beam for Best
+BEAM_GAUSS_Y = 0.01
 
 # logging
 LOGFILE_DIR = "/tmp/log"    # LINUX SHOULD BE /var/log/
@@ -52,13 +60,22 @@ DB_NAME_CLOUD = "rapd_cloud"
 REDIS_CLUSTER = True        # Running in a cluster configuration - True || False
 
 # Detector settings
-DETECTOR = "ADSC_Q315"
+DETECTOR = "NECAT_ADSC_Q315"
 DETECTOR_SUFFIX = ".img"
 IMAGE_MONITOR = False        # Monitor for images - True || False
 IMAGE_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
                           "SENTINEL_HOST" : SECRETS.SENTINEL_HOST,
                           "SENTINEL_PORT" : SECRETS.SENTINEL_PORT,
                           "REDIS_MASTER_NAME" : SECRETS.REDIS_MASTER_NAME}
+IMAGE_SHORT_CIRCUIT_DIRECTORIES = [
+    '/gpfs5/users/necat/phii_dfa_1/in',
+    '/gpfs5/users/necat/phii_dfa_2/in',
+    '/gpfs5/users/necat/phii_raster_snap/in',
+    '/gpfs5/users/necat/phii_rastersnap_scan_data',
+    '/gpfs5/users/necat/phii_dfa_scan_data',
+    '/gpfs5/users/necat/phii_ova_scan_data',
+    '/gpfs5/users/necat/rapd/uranium/trunk/test_data'
+]
 
 # Cloud Settings
 CLOUD_MONITOR = "rapd_cloud"        # Run the cloud monitor?

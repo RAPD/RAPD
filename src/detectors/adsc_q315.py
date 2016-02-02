@@ -31,19 +31,14 @@ If you are adapting rapd to your locality, you will need to check this
 carefully
 """
 
-import threading
-import time
+import json
+# import logging
 import os
 import re
-import pysent
-import json
-import xmlrpclib
-import atexit
-import redis
+import time
 
 # RAPD imports
-from rapd_site import secret_settings as secrets
-from rapd_utils import date_adsc_to_sql
+# from rapd_utils import date_adsc_to_sql
 import monitors.redis_monitor
 
 def print_dict(in_dict):
@@ -81,8 +76,8 @@ def date_adsc_to_sql(datetime_in):
     #print datetime_in
     spldate = datetime_in.split()
     #print spldate
-    time  = spldate[3]
-    #print time
+    time_str  = spldate[3]
+    #print time_str
     year  = spldate[4]
     #print year
     month = months[spldate[1]]
@@ -92,12 +87,11 @@ def date_adsc_to_sql(datetime_in):
 
     date = '-'.join((year,month,day))
     #print date
-    #print ' '.join((date,time))
-    return('T'.join((date,time)))
+    #print ' '.join((date,time_str))
+    return('T'.join((date, time_str)))
 
 class Monitor(monitors.redis_monitor.RedisMonitor):
     """Redis-based image collection signalling"""
-    pass
 
 # class Monitor(threading.Thread):
 #     """
@@ -179,103 +173,10 @@ class Monitor(monitors.redis_monitor.RedisMonitor):
 #
 #         self.logger.debug('Q315_Monitor while loop exited')
 
-# class Hf4m_Monitor(threading.Thread):
-#     """
-#     A new thread which watches a list in redis - mod of Hf4m_Monitor
-#     Run from within Model
-#     """
-#     def __init__(self,beamline='E',notify=None,reconnect=None,logger=None):
-#         if (logger):
-#             logger.info('Hf4m_Monitor::__init__  beamline: %s' % beamline)
-#         else:
-#             print 'Hf4m_Monitor::__init__  beamline: %s' % beamline
-#         #initialize the thread
-#         threading.Thread.__init__(self)
-#
-#         #passed-in variables
-#         self.notify    = notify
-#         self.reconnect = reconnect
-#         self.beamline  = beamline
-#         self.logger    = logger
-#
-#         self.red = None
-#
-#         #for stopping/starting
-#         self.Go = True
-#
-#         #register for shutdown
-#         atexit.register(self.Stop)
-#
-#         #start the thread
-#         self.start()
-#
-#     def Stop(self):
-#         if (self.logger):
-#             self.logger.info('Hf4m_Monitor::Stop')
-#         else:
-#             print 'Hf4m_Monitor::Stop'
-#         self.Go = False
-#
-#     def run(self):
-#         if (self.logger):
-#             self.logger.debug('Hf4m_Monitor::run')
-#         else:
-#             print 'Hf4m_Monitor::run'
-#         #try:
-#         #set the adsc server
-#         if self.beamline in secrets.keys():
-#             if self.logger:
-#                 self.logger.debug('Attempting to connect to Redis database at at %s' % secrets[self.beamline]['remote_redis_ip'])
-#             else:
-#                 print 'Attempting to connect to Redis database at at %s' % secrets[self.beamline]['remote_redis_ip']
-#             self.red = pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
-# 									       sentinel_port=26379,
-# 									       master_name="remote_master")
-#         #if the assigned beamline is not in the settings, use the localhost
-#         else:
-#             self.red = pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
-# 									       sentinel_port=26379,
-# 									       master_name="remote_master")
-#
-#         #except:
-#         #    if (self.logger):
-#         #        self.logger.debug('Exception in starting Hf4m_Monitor::run')
-#         #    else:
-#         #        print 'Exception in starting Hf4m_Monitor::run'
-#             time.sleep(5)
-#             self.run()
-#
-#         # Watch the imagelist
-#         image_list = "images_collected_"+self.beamline
-#         if self.logger:
-#             self.logger.debug('Hf4m_Monitor::Start listening')
-#         else:
-#             print 'Hf4m_Monitor::Start listening'
-#         while (self.Go):
-#             try:
-#                 #try to pop the oldest image off the list
-#                 new_image = self.red.rpop(image_list)
-#                 if (new_image):
-#                     if self.logger:
-#                         self.logger.debug('Hf4m_Monitor::new image %s' % new_image)
-#                     else:
-#                         print 'Hf4m_Monitor::new image %s' % new_image
-#                     if (new_image.endswith('.cbf')):
-#                         self.notify(("NEW HF4M IMAGE", new_image))
-#             except:
-#                 if self.logger:
-#                     self.logger.exception('Exception in while loop')
-#                 else:
-#                     print 'Exception in while loop'
-#                 time.sleep(5)
-#
-#             #slow it down a little
-#             time.sleep(0.1)
-
 
 ###############################################################################
 
-def Q315ReadHeader(image,run_id=None,place_in_run=None,logger=False):
+def read_header(image, run_id=None, place_in_run=None):
     """
     Given a full file name for an ADSC image (as a string), read the header and
     return a dict with all the header info
@@ -376,157 +277,6 @@ def Q315ReadHeader(image,run_id=None,place_in_run=None,logger=False):
     except:
         if logger:
             logger.exception('Error reading the header for image %s' % image)
-
-"""
-This is the current header for HF4M AFAIK 2015.02.13
-
-###CBF: VERSION 1.5, CBFlib v0.7.8 - Pixel Array detectors
-
-data_1423862639_
-
-_array_data.header_convention "ADSC_1.2"
-_array_data.header_contents
-;
-# Detector: ADSC HF-4M, S/N H401,
-# Pixel_size 0.00015 m x 0.00015 m
-# Silicon sensor, thickness 0.000500 m
-# Exposure_time 0.500000 s
-# Exposure_period 0.500000 s
-# Fri_Feb_13_13:23:52_2015
-# Count_cutoff 200000000 counts
-# N_excluded_pixels = 3900
-# Wavelength 0.979100 A
-# Detector_distance 0.250000 m
-# Beam_xy (1231.50, 1263.50) pixels
-# Start_angle 4.0000 deg.
-# Angle_increment 0.5000 deg.
-# Phi 4.0000 deg.
-# Filter_Transmission 0.9988
-# Source APS
-# Administration NE-CAT
-# Beam_Line ID_24_E
-# Sample_Position J1
-# Filter_Transmission 0.9988
-# Source APS
-# Administration NE-CAT
-# Beam_Line ID_24_E
-# Sample_Position J1
-;
-
-_array_data.data
-;
---CIF-BINARY-FORMAT-SECTION--
-"""
-
-months = { 'Jan':'01',
-           'Feb':'02',
-           'Mar':'03',
-           'Apr':'04',
-           'May':'05',
-           'Jun':'06',
-           'Jul':'07',
-           'Aug':'08',
-           'Sep':'09',
-           'Oct':'10',
-           'Nov':'11',
-           'Dec':'12' }
-
-def Hf4mReadHeader(image,mode=None,run_id=None,place_in_run=None,logger=False):
-    """
-    Given a full file name for a Piltus image (as a string), read the header and
-    return a dict with all the header info
-    """
-    # print "Hf4mReadHeader %s" % image
-    if logger:
-        logger.debug('Hf4mReadHeader %s' % image)
-    else:
-        print 'Hf4mReadHeader %s' % image
-
-    def mmorm(x):
-        d = float(x)
-        if (d < 2):
-            return(d*1000)
-        else:
-            return(d)
-
-    #item:(pattern,transform)
-    header_items = { 'detector_sn'  : ("S\/N ([\w\d\-]*)\s*", lambda x: str(x)),
-                     'date'         : ("^# (\w{3}_\w{3}_\d+_\d+\:\d+\:\d+_\d+)\s*", lambda x: str(x).replace("__","_")),
-                     'pixel_size'   : ("^# Pixel_size\s*([\d\.]+) m.*", lambda x: float(x)*1000),  # Convert to mm
-                     'time'         : ("^# Exposure_time\s*([\d\.]+) s", lambda x: float(x)),
-                     'period'       : ("^# Exposure_period\s*([\d\.]+) s", lambda x: float(x)),
-                     'count_cutoff' : ("^# Count_cutoff\s*(\d+) counts", lambda x: int(x)),
-                     'wavelength'   : ("^# Wavelength\s*([\d\.]+) A", lambda x: float(x)),
-                     'distance'     : ("^# Detector_distance\s*([\d\.]+) m",mmorm),
-	                 'transmission' : ("^# Filter_Transmission\s*([\d\.]+)", lambda x: float(x)),
-                     'osc_start'    : ("^# Start_angle\s*([\d\.]+)\s*deg", lambda x: float(x)),
-                     'osc_range'    : ("^# Angle_increment\s*([\d\.]*)\s*deg", lambda x: float(x)),
-                     'twotheta'     : ("^# Detector_2theta\s*([\d\.]*)\s*deg", lambda x: float(x))}
-
-    count = 0
-    while (count < 10):
-    	try:
-            rawdata = open(image,"rb").read(1024)
-            headeropen = 0
-            headerclose= rawdata.index("--CIF-BINARY-FORMAT-SECTION--")
-            header = rawdata[headeropen:headerclose]
-            break
-        except:
-            count +=1
-            if logger:
-                logger.exception('Error opening %s' % image)
-            else:
-                print 'Error opening %s' % image
-            time.sleep(0.1)
-
-    try:
-        #tease out the info from the file name
-        base = os.path.basename(image).rstrip(".cbf")
-
-        parameters = {'date'         : "Fri_Feb_13_13:23:52_2015",
-                      'fullname'     : image,
-                      'detector'     : 'HF4M',
-                      'directory'    : os.path.dirname(image),
-                      'image_prefix' : "_".join(base.split("_")[0:-2]),
-                      'run_number'   : int(base.split("_")[-2]),
-                      'image_number' : int(base.split("_")[-1]),
-                      'axis'         : 'omega',
-                      'collect_mode' : mode,
-                      'run_id'       : run_id,
-                      'place_in_run' : place_in_run,
-                      'size1'        : 2100,
-                      'size2'        : 2290,
-                      'twotheta'     : 0.0}
-
-        for label,pat in header_items.iteritems():
-            # print label
-            pattern = re.compile(pat[0], re.MULTILINE)
-            matches = pattern.findall(header)
-            if len(matches) > 0:
-                parameters[label] = pat[1](matches[-1])
-            else:
-                parameters[label] = None
-
-        # Convert date to something usable
-        # Fri_Feb_13_13:23:52_2015 >> 2015_02_13T13:23:52
-        try:
-          split_date = parameters['date'].split('_')
-          mo = months[split_date[1]]
-          date = '%s_%s_%sT%s' % (split_date[4],mo,split_date[2],split_date[3])
-          parameters['date'] = date
-        except:
-          parameters['date'] = "2015_02_13T13:23:52"
-
-        return(parameters)
-
-    except:
-        if logger:
-            logger.exception('Error reading the header for image %s' % image)
-        else:
-            print 'Error reading the header for image %s' % image
-
-
-
 
 if __name__ == "__main__":
 

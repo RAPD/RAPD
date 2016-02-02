@@ -82,10 +82,10 @@ class Adapter(object):
         Keyword argument:
         image_metadata -- dict containing image metadata
         """
-        if self.logger:
-            self.logger.debug("Remote.add_image image:%s" %
-                              image_metadata.get("fullname"))
-            self.logger.debug(image_metadata)
+
+        self.logger.debug("Remote.add_image image:%s",
+                          image_metadata.get("fullname"))
+        self.logger.debug(image_metadata)
 
         # Add useful info to the metadata for
         image_metadata["name"] = os.path.basename(image_metadata["fullname"])
@@ -95,7 +95,7 @@ class Adapter(object):
         if not "image_id" in image_metadata:
             image_metadata["image_id"] = 0
 
-        #Publish image_metadata for subscribers
+        # Publish image_metadata for subscribers
         try:
             self.logger.debug("Publishing %s %s", (image_metadata["fullname"],
                                                    json.dumps(image_metadata)))
