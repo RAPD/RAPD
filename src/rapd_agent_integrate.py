@@ -1023,7 +1023,7 @@ class FastIntegration(Process, Communicate):
                         self.write_file('XDS.INP', input)
                         os.system('mv XDS.LOG initialXDS.LOG')
                         self.xds_run(dir)
-                        return('check_again')
+                        return(input)
                 elif 'SOLUTION IS INACCURATE' in line or 'INSUFFICIENT PERCENTAGE' in line:
                     self.logger.debug('    Found inaccurate indexing solution error')
                     self.logger.debug('    Will try to continue anyway')
@@ -1040,7 +1040,7 @@ class FastIntegration(Process, Communicate):
                         self.write_file('XDS.INP', input)
                         os.system('mv XDS.LOG initialXDS.LOG')
                         self.xds_run(dir)
-                        return('check_again')
+                        return(input)
                 elif 'SPOT SIZE PARAMETERS HAS FAILED' in line:
                     self.logger.debug('	Found failure in determining spot size parameters.')
                     self.logger.debug('	Will use default values for REFLECTING_RANGE and BEAM_DIVERGENCE.')
@@ -1049,7 +1049,7 @@ class FastIntegration(Process, Communicate):
                     self.write_file('XDS.INP', input)
                     os.system('mv XDS.LOG initialXDS.LOG')
                     self.xds_run(dir)
-                    return('check_again')
+                    return(input)
                 else:
                     # Unanticipated Error, fail the error check by returning False.
                     self.logger.debug('Error = %s' %line)
