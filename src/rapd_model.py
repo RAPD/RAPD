@@ -29,7 +29,6 @@ import datetime
 import importlib
 import logging
 import os
-import sys
 
 #custom RAPD imports
 from utils.site_tools import get_ip_address
@@ -311,7 +310,7 @@ class Model(object):
         # Image is in the current run
         if isinstance(place, int) and run_info == "current_run":
 
-            self.logger.debug("%s is in the current run at position %d", (fullname, place))
+            self.logger.debug("%s is in the current run at position %d", fullname, place)
 
             # If not integrating trigger integration
             if self.current_run["status"] != "INTEGRATING":
@@ -856,20 +855,20 @@ class Model(object):
 
             work_dir, new_repr = self.get_work_dir("single",
                                                    process_settings["work_directory"],
-                                                   data["fullname"])
+                                                   data)
 
             # Now package directories into a dict for easy access by worker class
             new_dirs = {"work":work_dir,
                         "data_root_dir":data_root_dir}
 
-            #add the process to the database to display as in-process
+            # Add the process to the database to display as in-process
             process_id = self.database.addNewProcess(type="single",
                                                      rtype="original",
                                                      data_root_dir=data_root_dir,
                                                      repr=new_repr)
 
             # Add the ID entry to the data dict
-            data.update({"ID":os.path.basename(my_work_dir),
+            data.update({"ID":os.path.basename(work_dir),
                          "process_id":process_id,
                          "repr":new_repr})
 
@@ -901,120 +900,48 @@ class Model(object):
                     # Make a copy of the second pair to be LESS confusing
                     data2 = data.copy()
 
-                    # Derive some directory names
+                    # Derive  directory and repr
                     work_dir, new_repr = self.get_work_dir("pair",
                                                            process_settings["work_directory"],
-                                                           data1["fullname"],
-                                                           data2["fullname"])
-                    # my_toplevel_dir & my_datelevel_dir should already be current
-                    #the type level
-                    my_typelevel_dir = "pair"
+                                                           data1,
+                                                           data2)
 
-                    #the lowest level
-                    my_sub_dir = "_".join(
-                        (data1["image_prefix"], str(data1["run_number"]), "+".join(
-                            (str(data1["image_number"]).lstrip("0"),
-                             str(data2["image_number"]).lstrip("0")))
-                        ))
+                    # Now package directories into a dict for easy access by worker class
+                    new_dirs = {"work"          : work_dir,
+                                "data_root_dir" : data_root_dir}
 
-                    #now join the three levels
-                    my_work_dir_candidate = os.path.join(
-                        my_toplevel_dir,
-                        my_typelevel_dir,
-                        my_datelevel_dir,
-                        my_sub_dir
-                        )
-
-                    #make sure this is an original directory
-                    if os.path.exists(my_work_dir_candidate):
-                        #we have already
-                        self.logger.debug("%s has already been used, will add qualifier" %
-                                          my_work_dir_candidate)
-                        for i in range(1, 10000):
-                            if not os.path.exists("_".join((my_work_dir_candidate, str(i)))):
-                                my_work_dir_candidate = "_".join((my_work_dir_candidate, str(i)))
-                                self.logger.debug("%s will be used for this image" %
-                                                  my_work_dir_candidate)
-                                break
-                            else:
-                                i += 1
-                    my_work_dir = my_work_dir_candidate
-
-                    #now package directories into a dict for easy access by worker class
-                    my_dirs = {"work"          : my_work_dir,
-                               "data_root_dir" : data_root_dir}
-
-                    #generate a representation of the process for display
-                    my_repr = my_sub_dir+".img"
-
-                    #add the process to the database to display as in-process
+                    # Add the process to the database to display as in-process
                     process_id = self.database.addNewProcess(
                         type="pair",
                         rtype="original",
                         data_root_dir=data_root_dir,
-                        repr=my_repr
-                        )
+                        repr=new_repr)
 
-                    #add the ID entry to the data dict
+                    # Add the ID entry to the data dict
                     data1.update({
-                        "ID" : os.path.basename(my_work_dir),
-                        "repr" : my_repr,
+                        "ID" : os.path.basename(work_dir),
+                        "repr" : new_repr,
                         "process_id" : process_id
                         })
                     data2.update({
-                        "ID" : os.path.basename(my_work_dir),
-                        "repr" : my_repr,
+                        "ID" : os.path.basename(work_dir),
+                        "repr" : new_repr,
                         "process_id" : process_id
                         })
 
-                    if self.SecretSettings["throttle_strategy"] == True:
-                        #too many jobs already running - put this in the queue
-                        if len(self.indexing_active) >= \
-                        self.SecretSettings["active_strategy_limit"]:
-                            self.logger.debug("Adding pair indexing to the indexing queue")
-                            self.indexing_queue.appendleft((
-                                ("AUTOINDEX-PAIR",
-                                 my_dirs,
-                                 data1,
-                                 data2,
-                                 process_settings,
-                                 self.return_address),
-                                process_settings,
-                                self.SecretSettings,
-                                self.logger))
-                        #go ahead and run, place marker in the queue
-                        else:
-                            #connect to the server and autoindex the single image
-                            self.logger.debug("Less than two processes active \
-                            - running autoindexing")
-                            self.indexing_active.appendleft("autoindex-pair")
-                            #connect to the server and get things done
-                            PerformAction(
-                                command=("AUTOINDEX-PAIR",
-                                         my_dirs,
-                                         data1,
-                                         data2,
-                                         process_settings,
-                                         self.return_address),
-                                settings=process_settings,
-                                secret_settings=self.SecretSettings,
-                                logger=self.logger
-                                )
-                    else:
-                        #No throttling - go ahead and run
-                        PerformAction(command=("AUTOINDEX-PAIR",
-                                               my_dirs,
-                                               data1,
-                                               data2,
-                                               process_settings,
-                                               self.return_address),
-                                      settings=process_settings,
-                                      secret_settings=self.SecretSettings,
-                                      logger=self.logger)
+                    # Run
+                    PerformAction(command=("AUTOINDEX-PAIR",
+                                           new_dirs,
+                                           data1,
+                                           data2,
+                                           process_settings,
+                                           self.return_address),
+                                  settings=process_settings)
 
 
-        #this is the runs portion of the data image handling
+        # This is the runs portion of the data image handling
         else:
+
             self.logger.debug("This is a run")
             self.logger.debug(data)
 
@@ -1025,84 +952,53 @@ class Model(object):
             self.logger.info("run_position:"+str(run_position))
             self.logger.info("run_total:"+str(run_total))
 
-            #Make it easier to use run info
+            # Make it easier to use run info
             run_dict = data["run"].copy()
 
-            #the top level of the work directory
-            my_toplevel_dir = self.Settings["work_directory"]
+            # Derive  directory and repr
+            work_dir, new_repr = self.get_work_dir("integrate",
+                                                   process_settings["work_directory"],
+                                                   data)
 
-            #the type level
-            my_typelevel_dir = "integrate"
-            #the date level
-            my_datelevel_dir = datetime.date.today().isoformat()
-            #the lowest level
-            my_sub_dir = "_".join((str(data["image_prefix"]), str(data["run_number"])))
-            #now construct the directory name
-            my_work_dir_candidate = os.path.join(my_toplevel_dir,
-                                                 my_typelevel_dir,
-                                                 my_datelevel_dir,
-                                                 my_sub_dir)
-            #make sure this is an original directory
-            if os.path.exists(my_work_dir_candidate):
-                #we have already
-                self.logger.debug("%s has already been used, will add qualifier" %
-                                  my_work_dir_candidate)
-                for i in range(1, 10000):
-                    if not os.path.exists("_".join((my_work_dir_candidate, str(i)))):
-                        my_work_dir_candidate = "_".join((my_work_dir_candidate, str(i)))
-                        self.logger.debug("%s will be used for this image" % my_work_dir_candidate)
-                        break
-                    else:
-                        i += 1
-            my_work_dir = my_work_dir_candidate
+            # Now package directories into a dict for easy access by worker class
+            new_dirs = {"work"          : work_dir,
+                        "data_root_dir" : data_root_dir}
 
-            #now package directories into a dict for easy access by worker class
-            my_dirs = {"work":my_work_dir,
-                       "data_root_dir":data_root_dir}
-
-            #create a represention of the process for display
-            my_repr = my_sub_dir
-
-            #if we are to integrate, do it
+            # If we are to integrate, do it
             try:
-                #add the process to the database to display as in-process
+                # Add the process to the database to display as in-process
                 process_id = self.database.addNewProcess(type="integrate",
                                                          rtype="original",
                                                          data_root_dir=data_root_dir,
-                                                         repr=my_repr)
+                                                         repr=new_repr)
 
-                #Make a new result for the integration - should show up in the user interface?
+                # Make a new result for the integration - should show up in the user interface?
                 integrate_result_id, result_id = self.database.makeNewResult(rtype="integrate",
                                                                              process_id=process_id)
 
-                #add the ID entry to the data dict
-                data.update({"ID":os.path.basename(my_work_dir),
-                             "repr":my_repr,
+                # Add the ID entry to the data dict
+                data.update({"ID":os.path.basename(work_dir),
+                             "repr":new_repr,
                              "process_id":process_id})
 
-                #construct data for the processing
+                # Construct data for the processing
                 out_data = {"run_data":run_dict,
                             "image_data":data}
 
-                #connect to the server and autoindex the single image
+                # Connect to the server and autoindex the single image
                 PerformAction(command=("INTEGRATE",
-                                       my_dirs,
+                                       new_dirs,
                                        out_data,
                                        process_settings,
                                        self.return_address),
-                              settings=process_settings,
-                              secret_settings=self.SecretSettings,
-                              logger=self.logger)
+                              settings=process_settings)
             except:
                 self.logger.exception("Exception when attempting to run RAPD \
-                integration pipeline from Pilatus section")
+                integration pipeline")
 
 
-    def get_work_dir(self, top_level, type_level, fullname, fullname2):
+    def get_work_dir(self, top_level, type_level, image_data1, image_data2=None):
         """Return a valid working directory for rapd_agent to work in"""
-
-        # Save some typing
-        site = self.site
 
         # Top level
         toplevel_dir = top_level
@@ -1115,21 +1011,14 @@ class Model(object):
 
         # Lowest level
         if type_level == "single":
-            sub_dir = detector.parse_file_name(fullname)["basename"]
-            new_repr = sub_dir + site.DETECTOR_SUFFIX
+            sub_dir = image_data1["basename"]
         elif type_level == "pair":
-            sub_dir = "_".join((detector.parse_file_name(fullname)["basename"],
-                                "+".join((detector.parse_file_name(fullname)[4]))))
-#the lowest level
-my_sub_dir = "_".join(
-    (data1["image_prefix"], str(data1["run_number"]), "+".join(
-        (str(data1["image_number"]).lstrip("0"),
-         str(data2["image_number"]).lstrip("0")))
-    ))
+            sub_dir = image_data1["basename"] + "+" + str(image_data2["image_number"])
+        elif type_level == "integrate":
+            sub_dir = "_".join((image_data1["image_prefix"], str(image_data1["run_number"])))
+        new_repr = sub_dir
 
-
-
-        # Now join the  levels
+        # Join the  levels
         work_dir_candidate = os.path.join(toplevel_dir,
                                           typelevel_dir,
                                           datelevel_dir,
@@ -1137,12 +1026,11 @@ my_sub_dir = "_".join(
 
         # Make sure this is an original directory
         if os.path.exists(work_dir_candidate):
-            #we have already
-            self.logger.debug("%s has already been used, will add qualifier",
-                              work_dir_candidate)
+            # Already exists
             for i in range(1, 1000):
                 if not os.path.exists("_".join((work_dir_candidate, str(i)))):
                     work_dir_candidate = "_".join((work_dir_candidate, str(i)))
+                    new_repr = "_".join((new_repr, str(i)))
                     break
                 else:
                     i += 1

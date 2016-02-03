@@ -192,3 +192,6 @@ def get_data_root_dir(fullname):
 
     # Return the determined directory
     return data_root_dir
+
+if __name__ == "__main__":
+    print parse_file_name("/gpfs1/users/cornell_murphy_1001/images/frank/runs/test/0_0/test_1_001.img")

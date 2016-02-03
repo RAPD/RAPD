@@ -155,19 +155,22 @@ def read_header(image, run_id=None, place_in_run=None):
             count += 1
             time.sleep(0.1)
 
-
     try:
         #tease out the info from the file name
         base = os.path.basename(image).rstrip(".img")
         #the parameters
-        parameters = {"fullname"     : image,
-                      "detector"     : "ADSC-Q315",
-                      "directory"    : os.path.dirname(image),
+        parameters = {"fullname" : image,
+                      "detector" : "ADSC-Q315",
+                      # directory of the image file
+                      "directory" : os.path.dirname(image),
+                      # image name without directory or image suffix
+                      "basename" : base,
+                      # image name without directory, run_number, image_number or image suffix
                       "image_prefix" : "_".join(base.split("_")[0:-2]),
-                      "run_number"   : int(base.split("_")[-2]),
+                      "run_number" : int(base.split("_")[-2]),
                       "image_number" : int(base.split("_")[-1]),
-                      "axis"         : "omega",
-                      "run_id"       : run_id,
+                      "axis" : "omega",
+                      "run_id" : run_id,
                       "place_in_run" : place_in_run}
 
         for label, pat in header_items.iteritems():
