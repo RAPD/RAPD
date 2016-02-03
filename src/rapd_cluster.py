@@ -811,21 +811,22 @@ class ControllerServer(threading.Thread):
     """
     Runs the socket server and spawns new threads when connections are received
     """
-    def __init__(self,receiver,port):
+
+    Go = True
+
+    def __init__(self, receiver, port):
         """
         The main server thread
         """
         self.logger = logging.getLogger("RAPDLogger")
         self.logger.info('Controller_Server::__init__')
 
-        #initialize the thred
+        # Initialize the thred
         threading.Thread.__init__(self)
 
-        #store passed-in variables
+        # Store passed-in variables
         self.receiver  = receiver
         self.port      = port
-
-        self.Go = True
 
         # Start it up
         # self.daemon = True

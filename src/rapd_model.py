@@ -91,7 +91,8 @@ class Model(object):
         """
         Save variables and call init_settings.
 
-        SITE -- Site settings file
+        Keyword arguments
+        SITE -- Site settings object
         """
 
         # Get the logger Instance
@@ -2064,7 +2065,6 @@ class Model(object):
                                                logger=self.logger)
 
         elif command == "TEST":
-
             self.logger.debug("Cluster connection test successful")
 
         elif command == "SPEEDTEST":

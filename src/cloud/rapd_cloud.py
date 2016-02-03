@@ -22,7 +22,6 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
-import atexit
 from collections import deque
 import datetime
 import importlib
@@ -30,12 +29,6 @@ import logging
 import os
 import threading
 import time
-
-# from rapd_cluster import PerformAction
-# from rapd_beamlinespecific import *
-# from rapd_site import TransferPucksToBeamline, TransferMasterPuckListToBeamline
-# import paramiko
-# from rapd_console import ConsoleConnect as BeamlineConnect
 
 class CloudMonitor(threading.Thread):
     """
@@ -46,7 +39,7 @@ class CloudMonitor(threading.Thread):
     # Place to store requests
     request_queue = deque()
 
-    #for stopping
+    # For stopping/starting
     Go = True
 
     # Handlers for cloud events
@@ -81,17 +74,14 @@ class CloudMonitor(threading.Thread):
         self.logger = logging.getLogger("RAPDLogger")
         self.logger.info("CloudMonitor::__init__")
 
-        #initialize the thread
+        # Initialize the thread
         threading.Thread.__init__(self)
 
-        #store passed-in variables
+        # Store passed-in variables
         self.database = database
         self.settings = settings
         self.reply_settings = reply_settings
         self.interval = interval
-
-        #register for shutdown
-        atexit.register(self.stop)
 
         # Run
         self.daemon = True

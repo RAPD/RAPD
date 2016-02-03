@@ -22,7 +22,6 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
-import atexit
 import logging
 import threading
 import time
@@ -34,7 +33,13 @@ import pysent
 class RedisMonitor(threading.Thread):
     """Monitor for new data collection images to be submitted to a redis instance"""
 
-    def __init__(self, tag="necat_e", image_monitor_settings=None, notify=None, reconnect=None):
+    # For stopping/starting
+    Go = True
+
+    # Connection to the Redis database
+    redis = None
+
+    def __init__(self, tag="necat_e", run_monitor_settings=None, notify=None, reconnect=None):
         """Initialize the object
 
         Keyword arguments:
@@ -47,25 +52,17 @@ class RedisMonitor(threading.Thread):
         self.logger = logging.getLogger("RAPDLogger")
         self.logger.debug("Starting")
 
-        #initialize the thread
+        # Initialize the thread
         threading.Thread.__init__(self)
 
-        #passed-in variables
+        # Passed-in variables
         self.tag = tag
-        self.redis_settings = image_monitor_settings
+        self.redis_settings = run_monitor_settings
         self.notify = notify
         self.reconnect = reconnect
 
-        # Instance vars
-        # For stopping/starting
-        self.Go = True
-        self.redis = None
-
-        #register for shutdown
-        atexit.register(self.stop)
-
         # Start the thread
-        # self.daemon = True
+        self.daemon = True
         self.start()
 
     def stop(self):
