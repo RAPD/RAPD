@@ -411,25 +411,25 @@ class FastIntegration(Process, Communicate):
         # and rerunning xds.
         #
         # If low resolution, don't try to polish the data, as this tends to blow up.
-        #
-        if new_rescut <= 4.5:
-            os.rename('%s/GXPARM.XDS' %xdsdir, '%s/XPARM.XDS' %xdsdir)
-            os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.old' %xdsdir)
-            os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.old' %xdsdir)
-            #newinp[-2] = 'JOB=INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
-            self.write_file(xdsfile, newinp)
-            self.xds_run(xdsdir) 
-            final_results = self.run_results(xdsdir)
-        else:
-            # Check to see if a new resolution cutoff should be applied
-            new_rescut = self.find_correct_res(xdsdir, 1.0)
-            if new_rescut != False:
-                os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.oldcutoff' %xdsdir)
-                os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.oldcutoff' %xdsdir)
-                #newinp[-2] = 'JOB=INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
-                newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
-                self.write_file(xdsfile, newinp)
-                self.xds_run(xdsdir)
+        # The following section was causing problems - DN 2/08/2016
+        #if new_rescut <= 4.5:
+        #    os.rename('%s/GXPARM.XDS' %xdsdir, '%s/XPARM.XDS' %xdsdir)
+        #    os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.old' %xdsdir)
+        #    os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.old' %xdsdir)
+        #    #newinp[-2] = 'JOB=INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
+        #    self.write_file(xdsfile, newinp)
+        #    self.xds_run(xdsdir) 
+        #    final_results = self.run_results(xdsdir)
+        #else:
+        #    # Check to see if a new resolution cutoff should be applied
+        #    new_rescut = self.find_correct_res(xdsdir, 1.0)
+        #    if new_rescut != False:
+        #        os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.oldcutoff' %xdsdir)
+        #        os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.oldcutoff' %xdsdir)
+        #        #newinp[-2] = 'JOB=INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
+        #        newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
+        #        self.write_file(xdsfile, newinp)
+        #        self.xds_run(xdsdir)
         #        old_rescut = new_rescut
         #        new_rescut = self.find_correct_res(xdsdir, 1.0)
         #        if new_rescut != False:
@@ -438,7 +438,7 @@ class FastIntegration(Process, Communicate):
         #            newinp[-5] = 'INCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % new_rescut
         #            self.write_file(xdsfile, newinp)
         #            self.xds_run(xdsdir)
-            final_results = self.run_results(xdsdir)
+        #    final_results = self.run_results(xdsdir)
 
         final_results['status'] = 'ANALYSIS'
         return(final_results)
@@ -1653,7 +1653,7 @@ class FastIntegration(Process, Communicate):
         # The program expect there to be 10 tables in the aimless log file.
         ntables = log.ntables()
         if ntables != 10:
-            raise RuntimeError, '%s tables found in aimless output, program expected 10.' %len(ntables)
+            raise RuntimeError, '%s tables found in aimless output, program expected 10.' %ntables
 
         tables = []
         for i in range(0,ntables):
@@ -1666,6 +1666,10 @@ class FastIntegration(Process, Communicate):
         # Pull out information for the summary table.
         flag = True
         summary = log.summary(0).retrieve().split('\n')
+        # For some reason, 'Anomalous flag switched ON' was not always found,
+        # so this line below creates a black entry for anomalous_report so that
+        # it is not referenced before assignment.
+        anomalous_report=''
 
         for line in summary:
             if 'Space group' in line:
