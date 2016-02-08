@@ -411,25 +411,25 @@ class FastIntegration(Process, Communicate):
         # and rerunning xds.
         #
         # If low resolution, don't try to polish the data, as this tends to blow up.
-        # The following section was causing problems - DN 2/08/2016
-        #if new_rescut <= 4.5:
-        #    os.rename('%s/GXPARM.XDS' %xdsdir, '%s/XPARM.XDS' %xdsdir)
-        #    os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.old' %xdsdir)
-        #    os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.old' %xdsdir)
-        #    #newinp[-2] = 'JOB=INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
-        #    self.write_file(xdsfile, newinp)
-        #    self.xds_run(xdsdir) 
-        #    final_results = self.run_results(xdsdir)
-        #else:
-        #    # Check to see if a new resolution cutoff should be applied
-        #    new_rescut = self.find_correct_res(xdsdir, 1.0)
-        #    if new_rescut != False:
-        #        os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.oldcutoff' %xdsdir)
-        #        os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.oldcutoff' %xdsdir)
-        #        #newinp[-2] = 'JOB=INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
-        #        newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
-        #        self.write_file(xdsfile, newinp)
-        #        self.xds_run(xdsdir)
+        
+        if new_rescut <= 4.5:
+            os.rename('%s/GXPARM.XDS' %xdsdir, '%s/XPARM.XDS' %xdsdir)
+            os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.old' %xdsdir)
+            os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.old' %xdsdir)
+            #newinp[-2] = 'JOB=INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
+            self.write_file(xdsfile, newinp)
+            self.xds_run(xdsdir) 
+            final_results = self.run_results(xdsdir)
+        else:
+            # Check to see if a new resolution cutoff should be applied
+            new_rescut = self.find_correct_res(xdsdir, 1.0)
+            if new_rescut != False:
+                os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.oldcutoff' %xdsdir)
+                os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.oldcutoff' %xdsdir)
+                #newinp[-2] = 'JOB=INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
+                newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
+                self.write_file(xdsfile, newinp)
+                self.xds_run(xdsdir)
         #        old_rescut = new_rescut
         #        new_rescut = self.find_correct_res(xdsdir, 1.0)
         #        if new_rescut != False:
@@ -438,7 +438,7 @@ class FastIntegration(Process, Communicate):
         #            newinp[-5] = 'INCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % new_rescut
         #            self.write_file(xdsfile, newinp)
         #            self.xds_run(xdsdir)
-        #    final_results = self.run_results(xdsdir)
+            final_results = self.run_results(xdsdir)
 
         final_results['status'] = 'ANALYSIS'
         return(final_results)
@@ -1665,7 +1665,7 @@ class FastIntegration(Process, Communicate):
 
         # Pull out information for the summary table.
         flag = True
-        summary = log.summary(0).retrieve().split('\n')
+        summary = log.keytext(0).message().split('\n')
         # For some reason, 'Anomalous flag switched ON' was not always found,
         # so this line below creates a black entry for anomalous_report so that
         # it is not referenced before assignment.
@@ -1683,25 +1683,25 @@ class FastIntegration(Process, Communicate):
                 res_cut = line
 
         int_results={
-                     'bins_low'     : summary[4].split()[-3:],
-                     'bins_high'    : summary[5].split()[-3:],
-                     'rmerge_anom'  : summary[7].split()[-3:],
-                     'rmerge_norm'  : summary[8].split()[-3:],
-                     'rmeas_anom'   : summary[9].split()[-3:],
-                     'rmeas_norm'   : summary[10].split()[-3:],
-                     'rpim_anom'    : summary[11].split()[-3:],
-                     'rpim_norm'    : summary[12].split()[-3:],
-                     'rmerge_top'   : summary[13].split()[-3],
-                     'total_obs'    : summary[14].split()[-3:],
-                     'unique_obs'   : summary[15].split()[-3:],
-                     'isigi'        : summary[16].split()[-3:],
-                     'cc-half'      : summary[17].split()[-3:],
-                     'completeness' : summary[18].split()[-3:],
-                     'multiplicity' : summary[19].split()[-3:],
-                     'anom_completeness' : summary[21].split()[-3:],
-                     'anom_multiplicity' : summary[22].split()[-3:],
-                     'anom_correlation'  : summary[23].split()[-3:],
-                     'anom_slope'   : [summary[24].split()[-3]],
+                     'bins_low'     : summary[3].split()[-3:],
+                     'bins_high'    : summary[4].split()[-3:],
+                     'rmerge_anom'  : summary[6].split()[-3:],
+                     'rmerge_norm'  : summary[7].split()[-3:],
+                     'rmeas_anom'   : summary[8].split()[-3:],
+                     'rmeas_norm'   : summary[9].split()[-3:],
+                     'rpim_anom'    : summary[10].split()[-3:],
+                     'rpim_norm'    : summary[11].split()[-3:],
+                     'rmerge_top'   : summary[12].split()[-3],
+                     'total_obs'    : summary[13].split()[-3:],
+                     'unique_obs'   : summary[14].split()[-3:],
+                     'isigi'        : summary[15].split()[-3:],
+                     'cc-half'      : summary[16].split()[-3:],
+                     'completeness' : summary[17].split()[-3:],
+                     'multiplicity' : summary[18].split()[-3:],
+                     'anom_completeness' : summary[20].split()[-3:],
+                     'anom_multiplicity' : summary[21].split()[-3:],
+                     'anom_correlation'  : summary[22].split()[-3:],
+                     'anom_slope'   : [summary[23].split()[-3]],
                      'scaling_spacegroup' : space_group,
                      'scaling_unit_cell' : unit_cell,
                      'text'         : res_cut,
