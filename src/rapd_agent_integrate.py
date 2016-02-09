@@ -1136,8 +1136,13 @@ class FastIntegration(Process, Communicate):
                 current_resolution = line.split()[-1]
             elif 'from half-dataset correlation' in line:
                 resline = line
+            elif 'from Mn(I/sd) >  1.50' in line:
+            	resline2 = line
                 break
-        res_cut = resline.split('=')[1].strip()[0:-1]
+        res_cut = resline.split('=')[1].split('A')[0].strip()
+        res_cut2 = resline2.split('=')[1].split('A')[0].strip()
+        if float(res_cut2) < float(res_cut):
+        	res_cut = res_cut2
 
         # Run aimless with a higher resolution cutoff if the suggested resolution
         # is greater than the initial resolution + 0.05.
@@ -1653,11 +1658,14 @@ class FastIntegration(Process, Communicate):
         # The program expect there to be 10 tables in the aimless log file.
         ntables = log.ntables()
         if ntables != 10:
-            raise RuntimeError, '%s tables found in aimless output, program expected 10.' %ntables
+            #raise RuntimeError, '%s tables found in aimless output, program expected 10.' %ntables
+            self.logger.debug('%s tables found in aimless output, program exepected 10.' %ntables)
 
         tables = []
         for i in range(0,ntables):
             data = []
+            if 'Anisotropy analysis' in log.tables()[i].title():
+                pass
             for line in log.tables()[i].data().split('\n'):
                 if line != '':
                     data.append(line.split())
@@ -1704,7 +1712,7 @@ class FastIntegration(Process, Communicate):
                      'anom_slope'   : [summary[23].split()[-3]],
                      'scaling_spacegroup' : space_group,
                      'scaling_unit_cell' : unit_cell,
-                     'text'         : res_cut,
+                     #'text'         : res_cut,
                      'text2'        : anomalous_report
                      }
         # Now create a list for each graph to be plotted.
@@ -1728,18 +1736,18 @@ class FastIntegration(Process, Communicate):
                   #['Imean CCs v resolution', 'Dmin (A)', ['CC_d12', 'CC_d3'], 1, [3,4], 3],
                   #['Mn(I/sd) v resolution', 'Dmin (A)', ['(I/sd)d12', '(I/sd)d3'], 1, [5,6], 3],
                   #['Projected Imean CCs v resolution', 'Dmin (A)', ['CCp1', 'CCp3'], 1, [7,8], 3],
-                  ['I/sigma, Mean Mn(I)/sd(Mn(I))', 'Dmin (A)', ['I/RMS','Mn(I/sd)'], 1, [12,13], 4],
-                  ['Rmerge, Rfull, Rmeas, Rpim v Resolution', 'Dmin (A)', ['Rmerge', 'Rfull', 'Rmeas', 'Rpim'], 1, [3,4,6,7], 4],
-                  ['Average I, RMSdeviation and Sd', 'Dmin (A)', ['AvI', 'RMSdev', 'sd'], 1, [9,10,11], 4],
-                  ['Fractional bias', 'Dmin (A)', ['FrcBias'], 1, [14], 4],
+                  ['I/sigma, Mean Mn(I)/sd(Mn(I))', 'Dmin (A)', ['I/RMS','Mn(I/sd)'], 1, [12,13], 3],
+                  ['Rmerge, Rfull, Rmeas, Rpim v Resolution', 'Dmin (A)', ['Rmerge', 'Rfull', 'Rmeas', 'Rpim'], 1, [3,4,6,7], 3],
+                  ['Average I, RMSdeviation and Sd', 'Dmin (A)', ['AvI', 'RMSdev', 'sd'], 1, [9,10,11], 3],
+                  ['Fractional bias', 'Dmin (A)', ['FrcBias'], 1, [14], 3],
                   ['Rmerge, Rmeas, Rpim v Resolution', 'Dmin (A)',
-                      ['Rmerge', 'RmergeOv', 'Rmeas', 'RmeasOv', 'Rpim', 'RpimOv'], 1, [3,4,7,8,9,10], 5],
-                  ['Rmerge v Intensity', 'Imax', ['Rmerge', 'Rmeas', 'Rpim'], 0, [1,3,4], 6],
-                  ['Completeness v Resolution', 'Dmin (A)', ['%poss', 'C%poss', 'AnoCmp', 'AnoFrc'], 1, [6,7,9,10], 7],
-                  ['Multiplicity v Resolution', 'Dmin (A)', ['Mlpclct', 'AnoMlt'], 1, [8,11], 7],
-                  ['Sigma(scatter/SD), within 5 sd', '<I>', ['SdFc'], 1, [7], 8],
-                  ['Sigma(scatter/SD, within 5 SD, all and within', '<I>', ['SdF', 'SdFc'], 1, [4,7], 8],
-                  ['Rcp v. batch', 'relative frame difference', ['Rcp'], 1, [-1], 9]
+                      ['Rmerge', 'RmergeOv', 'Rmeas', 'RmeasOv', 'Rpim', 'RpimOv'], 1, [3,4,7,8,9,10], 4],
+                  ['Rmerge v Intensity', 'Imax', ['Rmerge', 'Rmeas', 'Rpim'], 0, [1,3,4], 5],
+                  ['Completeness v Resolution', 'Dmin (A)', ['%poss', 'C%poss', 'AnoCmp', 'AnoFrc'], 1, [6,7,9,10], 6],
+                  ['Multiplicity v Resolution', 'Dmin (A)', ['Mlpclct', 'AnoMlt'], 1, [8,11], 6],
+                  ['Sigma(scatter/SD), within 5 sd', '<I>', ['SdFc'], 1, [7], 7],
+                  ['Sigma(scatter/SD, within 5 SD, all and within', '<I>', ['SdF', 'SdFc'], 1, [4,7], 7],
+                  ['Rcp v. batch', 'relative frame difference', ['Rcp'], 1, [-1], 8]
                   ]
         return(graphs, tables, int_results)
 
