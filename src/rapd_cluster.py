@@ -38,7 +38,7 @@ from rapd_site import secret_settings_general as secrets
 from rapd_database import Database
 from rapd_communicate import Communicate
 
-buffer_size = 8192
+BUFFER_SIZE = 8192
 
 #
 # CLUSTER-SIDE CLASSES
@@ -54,7 +54,7 @@ class TestCase(multiprocessing.Process):
     run is used to orchestrate events
     """
 
-    def __init__(self,command,pipe,logger):
+    def __init__(self, command, pipe, logger):
         """
         Initialize the TestCase process
 
@@ -64,13 +64,13 @@ class TestCase(multiprocessing.Process):
         logger.debug('TestCase::__init__')
 
         self.command = command
-        self.pipe    = pipe
-        self.logger  = logger
+        self.pipe = pipe
+        self.logger = logger
 
         #this is where I have chosen to place my results
         self.results = False
 
-        multiprocessing.Process.__init__(self,name='TestCase')
+        multiprocessing.Process.__init__(self, name='TestCase')
 
         #starts the new process
         self.start()
@@ -92,7 +92,7 @@ class TestCase(multiprocessing.Process):
 
         #change directory to the one specified in the incoming dict
         os.chdir(self.command[1])
-        self.PrintInfo()
+        self.print_info()
 
     def process(self):
         """
@@ -117,13 +117,13 @@ class TestCase(multiprocessing.Process):
             self.logger.exception('Labelit exception')
 
         #now parse the output
-        output,solution,data = self.ParseOutput(output)
+        output, solution, data = self.ParseOutput(output)
 
         #put the gathered data into a dict for return
-        self.results = { 'fullname' : self.command[3]['FULLNAME'],       #for potential error checking
-                         'output'   : output,
-                         'solution' : solution,
-                         'data'     : data }
+        self.results = {'fullname' : self.command[3]['FULLNAME'],       #for potential error checking
+                        'output' : output,
+                        'solution' : solution,
+                        'data' : data}
 
     def postprocess(self):
         """
@@ -136,7 +136,7 @@ class TestCase(multiprocessing.Process):
         self.pipe.send(self.results)
 
 
-    def PrintInfo(self):
+    def print_info(self):
         """
         Print information regarding programs utilized by RAPD
         """
@@ -160,13 +160,13 @@ class TestCase(multiprocessing.Process):
         #Root out extra carrige returns
         for line in input:
             line.rstrip()
-            if len(line) >1:
+            if len(line) > 1:
                 tmp.append(line[:-1])
                 #grab out the unit cell dimension maximum (for DENZO use)
                 if line.startswith(':)'):
                     split_line = line.split()
                     if len(split_line) == 15:
-                        for i in [8,9,10]:
+                        for i in [8, 9, 10]:
                             if float(split_line[i]) > self.max_cell:
                                 self.max_cell = float(split_line[i])
 
@@ -203,23 +203,23 @@ class TestCase(multiprocessing.Process):
         try:
             pieces = tmp[solution][2:].split()
             self.space_group = str(pieces[1])
-            self.x_beam       = float(pieces[2])
-            self.y_beam       = float(pieces[3])
-            self.distance    = float(pieces[4])
-            self.resolution  = float(pieces[5])
-            self.mosaicity   = float(pieces[6])
-            self.output      = tmp[:]
-            data = { 'space_group' : self.space_group,
-                     'x_beam'       : self.x_beam,
-                     'y_beam'       : self.y_beam,
-                     'distance'    : self.distance,
-                     'resolution'  : self.resolution,
-                     'mosaicity'   : self.mosaicity,
-                     'max_cell'    : self.max_cell }
-            return((tmp,solution,data))
+            self.x_beam = float(pieces[2])
+            self.y_beam = float(pieces[3])
+            self.distance = float(pieces[4])
+            self.resolution = float(pieces[5])
+            self.mosaicity = float(pieces[6])
+            self.output = tmp[:]
+            data = {'space_group' : self.space_group,
+                    'x_beam' : self.x_beam,
+                    'y_beam' : self.y_beam,
+                    'distance' : self.distance,
+                    'resolution' : self.resolution,
+                    'mosaicity' : self.mosaicity,
+                    'max_cell' : self.max_cell}
+            return (tmp, solution, data)
         except:
             self.logger.exception('Labelit finds no reasonable solution')
-            return((tmp, None, None))
+            return (tmp, None, None)
 
 
 class EchoCase(multiprocessing.Process):
@@ -227,7 +227,7 @@ class EchoCase(multiprocessing.Process):
     An action class which only echos the input data back
     """
 
-    def __init__(self,command,pipe,logger):
+    def __init__(self, command, pipe, logger):
         """
         Initialize the TestCase process
 
@@ -237,13 +237,13 @@ class EchoCase(multiprocessing.Process):
         logger.info('EchoCase::__init__')
 
         self.command = command
-        self.pipe    = pipe
-        self.logger  = logger
+        self.pipe = pipe
+        self.logger = logger
 
         #this is where I have chosen to place my results
         self.results = False
 
-        multiprocessing.Process.__init__(self,name='TestCase')
+        multiprocessing.Process.__init__(self, name='TestCase')
 
         #starts the new process
         self.start()
@@ -293,13 +293,13 @@ class ClusterServer:
     """
     Runs the socket server and spawns new threads when connections are received
     """
-    def __init__(self,mode='server'):
+    def __init__(self, mode='server'):
         """
         The main server thread
         """
         #set up logging
         if os.path.exists(secrets['cluster_logfile_dir']):
-            LOG_FILENAME = os.path.join(secrets['cluster_logfile_dir'],'rapd_cluster.log')
+            LOG_FILENAME = os.path.join(secrets['cluster_logfile_dir'], 'rapd_cluster.log')
         else:
             LOG_FILENAME = '/tmp/rapd_cluster.log'
 
@@ -315,7 +315,7 @@ class ClusterServer:
         logger.info('RAPD_CLUSTER.__init__')
 
         #store logging and verbosity
-        self.logger  = logger
+        self.logger = logger
 
         #save the mode
         self.mode = mode
@@ -331,21 +331,21 @@ class ClusterServer:
         HOST = ''                 # Symbolic name meaning all available interfaces
         PORT = secrets['cluster_port']         # Arbitrary non-privileged port
 
-        self.logger.debug('ClusterServer running in mode %s on port %d' % (self.mode,PORT))
+        self.logger.debug('ClusterServer running in mode %s on port %d' % (self.mode, PORT))
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind((HOST,PORT))
+        s.bind((HOST, PORT))
 
         #This is the "server"
-        while(1):
+        while True:
             s.listen(5)
             try:
-                print 'MODE',self.mode
+                print 'MODE', self.mode
                 conn, addr = s.accept()
                 tmp = Handler(conn=conn,
                               addr=addr,
                               db=self.DATABASE,
-                              mode = self.mode,
+                              mode=self.mode,
                               logger=self.logger)
             except:
                 self.logger.exception('Error in cluster server')
@@ -357,14 +357,14 @@ class StatusHandler(threading.Thread):
     """
     Handles logging of life for the cluster
     """
-    def __init__(self,db=None,logger=None):
+    def __init__(self, db=None, logger=None):
         logger.info('StatusHandler::__init__')
 
         #initialize the thread
         threading.Thread.__init__(self)
 
-        self.DATABASE   = db
-        self.logger     = logger
+        self.DATABASE = db
+        self.logger = logger
 
         #obtain self ip address
         self.ip_address = socket.gethostbyaddr(socket.gethostname())[-1][0]
@@ -374,11 +374,11 @@ class StatusHandler(threading.Thread):
 
     def run(self):
         self.logger.debug('StatusHandler::run')
-        while (1):
+        while True:
             self.DATABASE.updateClusterStatus(self.ip_address)
             time.sleep(30)
 
-class Handler(threading.Thread,Communicate):
+class Handler(threading.Thread, Communicate):
     """
     Handles the data that is received from the incoming clientsocket on the cluster
 
@@ -387,19 +387,18 @@ class Handler(threading.Thread,Communicate):
     instantiation. That class will then send back results on the pipe
     which it is passed and Handler will send that up the clientsocket.
     """
-    def __init__(self,conn,addr,db=None,mode='server',command=None,queue=None,logger=None):
+    def __init__(self, conn, addr, db=None, mode='server', command=None, queue=None, logger=None):
         logger.info('Handler::__init__')
         #initialize the thread
         threading.Thread.__init__(self)
 
         #store the connection variable
-        self.conn     = conn
-        self.addr     = addr
+        self.conn = conn
+        self.addr = addr
         self.DATABASE = db
-        self.mode     = mode        #server,qsub or file
-        self.command  = command
-        self.queue    = queue       #the SGE queue to be submitted to
-        self.logger   = logger
+        self.mode = mode        #server,qsub or file
+        self.queue = queue       #the SGE queue to be submitted to
+        self.logger = logger
 
         #start the thread
         self.start()
@@ -410,24 +409,24 @@ class Handler(threading.Thread,Communicate):
         print 'run'
 
         #if we are looking at a socket connection for the incoming message
-        if not (self.mode=='file'):
+        if not self.mode == 'file':
             self.logger.debug('not running file')
             #read the message from the socket
             message = ''
-            while not (message.endswith('<rapd_end>')):
-                data = self.conn.recv(buffer_size)
+            while not message.endswith('<rapd_end>'):
+                data = self.conn.recv(BUFFER_SIZE)
                 #self.logger.debug('message',str(message))
                 message += data
                 time.sleep(0.001)
             #close the connection
             self.conn.close()
             #strip the message of its delivery tags
-            message = message.rstrip().replace('<rapd_start>','').replace('<rapd_end>','')
-            self.logger.debug('message',str(message))
+            message = message.rstrip().replace('<rapd_start>', '').replace('<rapd_end>', '')
+            self.logger.debug('message', str(message))
 
 
         #The ClusterServer is spawning processes on a central node
-        if (self.mode == 'server'):
+        if self.mode == 'server':
             self.logger.debug('running server')
             #strip out extra spaces and decode json
             command = json.loads(message)
@@ -438,13 +437,13 @@ class Handler(threading.Thread,Communicate):
             self.Assign(command)
 
         #qsub is being used to spawn commands
-        elif (self.mode == 'qsub'):
+        elif self.mode == 'qsub':
             self.logger.debug('running qsub')
             self.logger.debug('Creating files for qsub submission')
             #The type of command
             b = message[:]
             command = json.loads(b)[0]
-            if (len(command)>3):
+            if len(command) > 3:
                 tag = command[:4]
             else:
                 tag = command
@@ -468,8 +467,8 @@ class Handler(threading.Thread,Communicate):
                 cl_queue = ' -q phase1.q'
 
             #For labeling the qsub job
-            qsub_name = os.path.basename(tmp.name).replace('rapd_','').replace('.json','')
-            self.logger.debug("qsub_name",qsub_name)
+            qsub_name = os.path.basename(tmp.name).replace('rapd_', '').replace('.json', '')
+            self.logger.debug("qsub_name", qsub_name)
             """
             #NOT GOING TO USE PROJECTS TO SPLIT RESOURCES... Not sure if priority is inherited to sub-jobs anyway??
             if (self.queue):
@@ -516,7 +515,7 @@ class Handler(threading.Thread,Communicate):
                 self.logger.debug('command = AUTOINDEX')
                 from rapd_agent_strategy import AutoindexingStrategy as Autoindex
                 tries = 0
-                while(tries<5):
+                while tries < 5:
                     try:
                         tmp = Autoindex(input=command[:],
                                         logger=self.logger)
@@ -532,7 +531,7 @@ class Handler(threading.Thread,Communicate):
                 self.logger.debug('command = AUTOINDEX-PAIR')
                 from rapd_agent_strategy import AutoindexingStrategy as Autoindex
                 tries = 0
-                while(tries<5):
+                while tries < 5:
                     try:
                         tmp = Autoindex(input=command[:],
                                         logger=self.logger)
@@ -548,7 +547,7 @@ class Handler(threading.Thread,Communicate):
                 self.logger.debug('command = STAC')
                 from rapd_agent_strategy import AutoindexingStrategy as Autoindex
                 tries = 0
-                while(tries<5):
+                while tries < 5:
                     try:
                         tmp = Autoindex(input=command[:],
                                         logger=self.logger)
@@ -564,14 +563,14 @@ class Handler(threading.Thread,Communicate):
                 self.logger.debug('command = STAC-PAIR')
                 from rapd_agent_strategy import AutoindexingStrategy as Autoindex
                 tries = 0
-                while(tries<5):
+                while tries < 5:
                     try:
                         tmp = Autoindex(input=command[:],
                                         logger=self.logger)
                         break
                     except:
                         tries += 1
-                        if (tries == 5):
+                        if tries == 5:
                             self.logger.exception('Failure to create a new process')
                             self.sendBack2(reply='ERROR')
                             return()
@@ -579,7 +578,7 @@ class Handler(threading.Thread,Communicate):
             elif command[0] in ('XDS','XIA2'):
                 from rapd_agent_reintegrate import ReIntegration
                 tries = 0
-                while(tries<5):
+                while tries < 5:
                     try:
                         tmp = ReIntegration(input=command[:],
                                             logger=self.logger)
@@ -596,7 +595,7 @@ class Handler(threading.Thread,Communicate):
                 #from fast_integration import FastIntegration as Integrate
                 from rapd_agent_integrate import FastIntegration as Integrate
                 tries = 0
-                while(tries<5):
+                while tries < 5:
                     try:
                         tmp = Integrate(input=command[:],
                                         logger=self.logger)
@@ -614,7 +613,7 @@ class Handler(threading.Thread,Communicate):
                 #from rapd_agent_sad import AutoSolve as Sad
                 from rapd_agent_anom import AutoSolve as Sad
                 tries = 0
-                while(tries<5):
+                while tries < 5:
                     try:
                         tmp = Sad(input=command[:],
                                   logger=self.logger)
@@ -631,14 +630,14 @@ class Handler(threading.Thread,Communicate):
                 self.logger.debug('command = MAD')
                 from rapd_agent_anom import AutoSolve as Mad
                 tries = 0
-                while(tries<5):
+                while tries < 5:
                     try:
                         tmp = Mad(input=command[:],
                                   logger=self.logger)
                         break
                     except:
                         tries += 1
-                        if (tries == 5):
+                        if tries == 5:
                             self.logger.exception('Failure to create a new process')
                             self.sendBack2(reply='ERROR')
                             return()
@@ -648,7 +647,7 @@ class Handler(threading.Thread,Communicate):
                 self.logger.debug('command = MR')
                 from rapd_agent_phaser import AutoMolRep as MR
                 tries = 0
-                while(tries<5):
+                while tries < 5:
                     try:
                         tmp = MR(input=command[:],
                                  logger=self.logger)
@@ -665,7 +664,7 @@ class Handler(threading.Thread,Communicate):
                 self.logger.debug('command = SMERGE')
                 from rapd_agent_simplemerge import SimpleMerge
                 tries = 0
-                while(tries<5):
+                while tries < 5:
                     try:
                         tmp = SimpleMerge(input=command[:],
                                           logger=self.logger)
@@ -682,7 +681,7 @@ class Handler(threading.Thread,Communicate):
                 self.logger.debug('command = DIFF_CENTER')
                 from rapd_agent_diffcenter import DiffractionCenter
                 tries = 0
-                while(tries<5):
+                while tries < 5:
                     try:
                         tmp = DiffractionCenter(input=command[:],
                                                 logger=self.logger)
@@ -699,7 +698,7 @@ class Handler(threading.Thread,Communicate):
                 self.logger.debug('command = BEAMCENTER')
                 from rapd_agent_beamcenter import FindBeamCenter
                 tries = 0
-                while(tries<5):
+                while tries < 5:
                     try:
                         tmp = FindBeamCenter(input=command[:],
                                              logger=self.logger)
@@ -720,7 +719,7 @@ class Handler(threading.Thread,Communicate):
                 self.logger.debug('DOWNLOAD')
                 from rapd_agent_download import Download
                 tries = 0
-                while(tries<5):
+                while tries < 5:
                     try:
                         tmp = Download(input=command[:],
                                        logger=self.logger)
@@ -792,7 +791,7 @@ class ControllerHandler(threading.Thread):
         #Receive the output back from the cluster
         message = ''
         while not (message.endswith('<rapd_end>')):
-            data = self.conn.recv(buffer_size)
+            data = self.conn.recv(CLUSTER_ADDRESS)
             message += data
             time.sleep(0.001)
         self.conn.close()
@@ -812,23 +811,25 @@ class ControllerServer(threading.Thread):
     """
     Runs the socket server and spawns new threads when connections are received
     """
-    def __init__(self,receiver,port,logger):
+
+    Go = True
+
+    def __init__(self, receiver, port):
         """
         The main server thread
         """
-        logger.info('Controller_Server::__init__')
+        self.logger = logging.getLogger("RAPDLogger")
+        self.logger.info('Controller_Server::__init__')
 
-        #initialize the thred
+        # Initialize the thred
         threading.Thread.__init__(self)
 
-        #store passed-in variables
+        # Store passed-in variables
         self.receiver  = receiver
         self.port      = port
-        self.logger    = logger
 
-        self.Go = True
-
-        #start it up
+        # Start it up
+        # self.daemon = True
         self.start()
 
     def run(self):
@@ -849,7 +850,8 @@ class ControllerServer(threading.Thread):
         #if we exit...
         s.close()
 
-    def Stop(self):
+    def stop(self):
+        self.logger.debug("Received signal to stop")
         self.Go = False
 
 
@@ -858,62 +860,67 @@ class PerformAction(threading.Thread):
     Manages the dispatch of jobs to the cluster process
     NB that the cluster can be on the localhost or a remote host
     """
-    def __init__(self,command,settings,secret_settings,logger):
-        logger.debug('PerformAction::__init__  command:%s' % str(command))
+    def __init__(self, command, settings):
+        """Initialize the class
+
+        Keyword arguments:
+        command --
+        settings -- Right now only needs to be a dict with the entry CLUSTER_ADDRESS
+        """
+        self.logger = logging.getLogger("RAPDLogger")
+        self.logger.debug("PerformAction::__init__  command:%s", command)
 
         #initialize the thread
         threading.Thread.__init__(self)
 
         #store passed-in variable
         self.command = command
+        self.settings = settings
 
-        #Decide on what cluster to use
-        if (secret_settings['cluster_strategy'] and (command[0] in ('AUTOINDEX','AUTOINDEX-PAIR'))):
-            self.HOST = secret_settings['cluster_strategy']
-        elif ((secret_settings['cluster_stac']) and (command[0] in ('STAC','STAC-PAIR'))):
-             self.HOST = secret_settings['cluster_stac']
-        elif ((secret_settings['cluster_integrate']) and (command[0] in ('INTEGRATE','XIA2'))):
-            self.HOST = secret_settings['cluster_integrate']
-        else:
-            self.HOST    = secret_settings['cluster_host']
-
-        self.PORT    = secret_settings['cluster_port']
-        self.logger  = logger
-        self.logger.debug('Connecting to: %s:%d' %(self.HOST,self.PORT))
+        # Start the thread
         self.start()
 
     def run(self):
-        self.logger.debug('PerformAction::run')
+        """Start the thread"""
+
+        self.logger.debug("PerformAction::run")
 
         attempts = 0
 
-        while(attempts < 100):
+        while(attempts < 10):
             attempts += 1
-            self.logger.debug('Cluster connection attempt %d' % attempts)
-            #connect
+            self.logger.debug("Cluster connection attempt %d", attempts)
+
+            # Connect to the cluster process
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
-                s.connect((self.HOST, self.PORT))
+                s.connect(self.settings["CLUSTER_ADDRESS"])
                 break
-            except:
-                self.logger.exception('Failed to initialize socket to cluster')
-                time.sleep(15)
+            except socket.error:
+                self.logger.exception("Failed to initialize socket to cluster")
+                time.sleep(1)
         else:
-            sys.exit()
+            raise RuntimeError("Failed to initialize socket to cluster after %d attempts", attempts)
 
-        #encode the command
+        # Put the command in rapd server-speak
         message = json.dumps(self.command)
-        message = '<rapd_start>' + message + '<rapd_end>'
-        #print message
-        #now send
+        message = "<rapd_start>" + message + "<rapd_end>"
+        MSGLEN = len(message)
+
+        # Send the message
         total_sent = 0
-        while (total_sent < len(message)):
-            sent = s.send(message)
+        while total_sent < MSGLEN:
+            sent = s.send(message[total_sent:])
+            if sent == 0:
+                raise RuntimeError("socket connection broken")
             total_sent += sent
 
-        self.logger.debug('total_sent: %d' % total_sent)
+        self.logger.debug("Message sent to cluster total_sent:%d", total_sent)
 
+        # Close connection to cluster
         s.close()
+
+        self.logger.debug("Connection to cluster closed")
 
 def get_command_line():
     """
@@ -929,9 +936,9 @@ def get_command_line():
         sys.exit(2)
 
     for o,a in opts:
-        if (o == '-q'):
+        if o == '-q':
             queue = a
-    if (len(args) == 0):
+    if len(args) == 0:
         return('server',queue)
     else:
         return(args[0],queue)
@@ -966,12 +973,12 @@ def main():
         handler.setFormatter(formatter)
         logger.addHandler(handler)
         logger.info('RAPD_CLUSTER.main')
-        logger.debug('Starting in directory %s' % os.getcwd())
+        logger.debug('Starting in directory %s', os.getcwd())
 
         command_file = open(command,'r')
         my_command = json.load(command_file)
 
-        my_handler = Handler(conn=None,addr=None,db=None,mode='file',command=my_command,queue=queue,logger=logger)
+        my_handler = Handler(conn=None, addr=None, db=None, mode='file', command=my_command, queue=queue, logger=logger)
 
 
 if __name__ == '__main__':

@@ -69,26 +69,19 @@ class FindBeamCenter(Process):
     
     #Sets settings to check output on my machine and does not send results to database.
     #******BEAMLINE SPECIFIC*****
-    #self.cluster_use = Utils.checkCluster()
     self.cluster_use = BLspec.checkCluster()
-    
     if self.cluster_use:
       self.test                           = False
     else:
       self.test                           = True
     #******BEAMLINE SPECIFIC*****
-    self.multiproc                          = True
-    #Set times for processes. 'False' to disable.
-    
-    if self.header.get('fullname')[-3:] == 'cbf':
-      self.pilatus = True
-    else:
-      self.pilatus = False
+
     #this is where I have chosen to place my results
     self.labelit_results                    = {}
     self.labelit_summary                    = False
     #Labelit settings
     self.twotheta                           = False
+    self.multiproc                          = True
     self.labelit_jobs                       = {}
     self.results                            = {}
     self.runs                               = {}
@@ -99,6 +92,7 @@ class FindBeamCenter(Process):
     self.working_dir    = self.setup.get('work')
     #self.sg             = self.header.get('spacegroup','None')
     self.distance       = os.path.basename(self.working_dir)
+    self.vendortype     = Utils.getVendortype(self,self.header)
     
     Process.__init__(self,name='FindBeamCenter')
     self.start()
@@ -165,7 +159,7 @@ class FindBeamCenter(Process):
             self.header2['fullname'] = '/dev/shm/%s'%os.path.basename(orig)
           command = 'cp %s %s'%(orig,os.path.join('/dev/shm',os.path.basename(orig)))
           #job = Process(target=Utils.rocksCommand,args=(self,command))
-          job = Process(target=Blspec.rocksCommand,args=(self,command))
+          job = Process(target=BLspec.rocksCommand,args=(self,command))
           job.start()
           pids.append(job)
         while len(pids) != 0:
@@ -282,7 +276,7 @@ class FindBeamCenter(Process):
         for name in self.labelit_results.keys()[s:f]:
             runs[name] = inp[name]
         self.pool[str(x)] = Queue()
-        inp1 = {'inp':(runs,self.clean,self.test,self.verbose,self.pilatus,self.red),'output':self.pool[str(x)],'logger':self.logger}
+        inp1 = {'inp':(runs,self.clean,self.test,self.verbose,self.vendortype,self.red),'output':self.pool[str(x)],'logger':self.logger}
         Process(target=LabelitAction,kwargs=inp1).start()
     
     except:
@@ -438,7 +432,7 @@ class LabelitAction(Process):
   def __init__(self,inp,output,logger=None):
     logger.info('LabelitAction.__init__')
     self.st = time.time()
-    self.input,self.clean,self.test,self.verbose,self.pilatus,self.red = inp
+    self.input,self.clean,self.test,self.verbose,self.vendortype,self.red = inp
     self.output2                              = output
     self.logger                               = logger
     
@@ -476,13 +470,13 @@ class LabelitAction(Process):
       params['test'] = self.test
       params['cluster'] = self.cluster_use
       params['redis'] = self.red
-      params['iterations'] = 1
-      """
-      if self.pilatus:
+      params['vendortype'] = self.vendortype
+      #params['iterations'] = 1
+      if self.vendortype in ['Pilatus-6M','ADSC-HF4M']:
         params['iterations'] = 1
       else:
         params['iterations'] = 4
-      """
+      
       #Otherwise too much goes to the log.
       params['verbose'] = False
       for name in self.input.keys():
@@ -959,7 +953,8 @@ class RunCluster(Thread):
     If not running on computer cluster, connect to node and launch.
     """
     try:
-      command = '-pe smp 8 -o %s rapd3.python /gpfs5/users/necat/rapd/gadolinium/trunk/rapd_agent_beamcenter.py %s'%(self.log,self.image_dir)
+      #command = '-pe smp 8 -o %s rapd.python /gpfs5/users/necat/rapd/gadolinium/trunk/rapd_agent_beamcenter.py %s'%(self.log,self.image_dir)
+      command = '-pe smp 8 -o %s rapd.python /gpfs6/users/necat/Jon/Programs/CCTBX_x64/modules/rapd/src/rapd_agent_beamcenter.py %s'%(self.log,self.image_dir)
       #os.chdir(self.work_dir)
       os.chdir(WORK_DIR)
       #self.pid = Utils.connectCluster(command)

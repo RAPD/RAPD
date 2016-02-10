@@ -28,7 +28,6 @@ one can see roughly how to structure and activity class as a new process
 using the multiprocessing module and how to send the resulting data back
 """
 
-import threading
 import multiprocessing
 import os
 import sys
@@ -45,7 +44,7 @@ class Download(multiprocessing.Process,Communicate):
     run is used to orchestrate events
     """
 
-    def __init__(self,input,logger):
+    def __init__(self, input, logger):
         """
         Initialize.
 

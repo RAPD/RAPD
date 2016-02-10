@@ -1,0 +1,113 @@
+"""
+This file is part of RAPD
+
+Copyright (C) 2016 Cornell University
+All rights reserved.
+
+RAPD is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, version 3.
+
+RAPD is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+__created__ = "2016-01-28"
+__maintainer__ = "Frank Murphy"
+__email__ = "fmurphy@anl.gov"
+__status__ = "Development"
+
+import functools
+import logging, logging.handlers
+import os
+
+def verbose_print(arg, level=1, verbosity=1):
+    """Print to terminal window screened by verbosity setting
+
+    Keyword arguments:
+    arg -- object to be printed (default None)
+    level -- the importance of the printing job (default 5)
+    verbosity -- the value level must be less than or equal to to print (default 1)
+
+    levels:
+    0 - silent
+    1 - alert
+    2 - warning
+    3 - info
+    4 - verbose
+    5 - debug
+    """
+    if level <= verbosity:
+        print arg
+
+def get_terminal_printer(verbosity=1):
+    """Returns a terminal printer
+
+    Keyword arguments:
+    verbosity -- threshold to print (default 1)
+    """
+
+    terminal_print = functools.partial(verbose_print, verbosity=verbosity)
+    return terminal_print
+
+
+def get_logger(logfile_dir="/var/log",
+               logfile_id="rapd",
+               level=logging.DEBUG):
+    """Returns a logger instance
+
+    Keyword arguments:
+    logfile_dir -- Directory in which log will be written (default "/var/log")
+    logfile_id -- Tag for the logfile to be written (default "rapd" >> rapd.log)
+    level -- Logging level CRITICAL=50, DEBUG=10 (default 10)
+    """
+
+    print "get_logger logfile_dir:%s logfile_id:%s level:%d" % (logfile_dir, logfile_id, level)
+
+    # Make sure the logfile_dir exists
+    if not os.path.exists(logfile_dir):
+        os.makedirs(logfile_dir)
+
+    # Set up file name
+    log_filename = os.path.join(logfile_dir, logfile_id.lower()+".log")
+    print "Log file: %s" % log_filename
+
+    # Add the log message handler to the logger
+    file_handler = logging.handlers.RotatingFileHandler(log_filename,
+                                                        maxBytes=5000000,
+                                                        backupCount=5)
+
+    # create console handler and set level to debug
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.DEBUG)
+
+    #add a formatter
+    formatter = logging.Formatter("%(asctime)s %(filename)s.%(funcName)s %(lineno)s - %(levelname)s %(message)s")
+    file_handler.setFormatter(formatter)
+    console_handler.setFormatter(formatter)
+
+    # Set up a specific logger with our desired output level
+    logger = logging.getLogger("RAPDLogger")
+    logger.setLevel(level)
+
+    # Add the handlers to the logger
+    logger.addHandler(file_handler)
+    logger.addHandler(console_handler)
+
+    logger.debug("Logging started to %s" % log_filename)
+
+    return logger
+
+if __name__ == "__main__":
+
+    print "log.py"
+    print "======"
+
+    PRINTER = get_terminal_printer(verbosity=3)
+    PRINTER("Testing, should print", level=1)
+    PRINTER("Testing, should not print", level=5)
