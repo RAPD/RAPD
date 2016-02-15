@@ -25,7 +25,7 @@ __status__ = "Development"
 import logging
 import threading
 
-from rapd_cluster import PerformAction
+from rapd_launch import PerformAction
 
 class Handler(threading.Thread):
     """

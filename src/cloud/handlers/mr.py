@@ -29,7 +29,7 @@ import paramiko
 import threading
 
 # RAPD imports
-from rapd_cluster import PerformAction
+from rapd_launch import PerformAction
 
 class Handler(threading.Thread):
     """

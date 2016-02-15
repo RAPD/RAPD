@@ -1,13 +1,16 @@
-version: '1'
+version: '2'
 services:
-  control:
-    image: rapd_full
-    volumes:
-     - .:/code
-     - logvolume01:/var/log
+  docker_control:
+    build:
+      context: .
+      dockerfile: Dockerfile-control
     links:
-     - redis
+      - redis
+      - mysql
+    entrypoint: /bin/bash
   redis:
     image: redis
-volumes:
-  logvolume01: {}
+  mysql:
+    image: mariadb:5.5
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpassword
