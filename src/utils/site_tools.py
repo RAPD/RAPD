@@ -41,7 +41,7 @@ def get_ip_address():
 
     # Close the socket
     s_tmp.close()
-    
+
     return ip_address
 
 def get_site_files():

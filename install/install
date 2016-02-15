@@ -75,6 +75,7 @@ while getopts "bfhcvp:" x; do
 Installs RAPD v$RAPD_VERSION
 
     -f           no error if install prefix already exists
+    -b           batch mode
     -h           print this help message and exit
     -p PREFIX    install prefix, defaults to $PREFIX
     -c           cleanup

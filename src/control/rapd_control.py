@@ -32,10 +32,9 @@ import importlib
 import utils.commandline
 import utils.log
 import utils.site_tools
-from rapd_model import Model
+from control.rapd_model import Model
 
 file_handle = None
-
 
 """
 	# Assure we are running as a singleton
@@ -62,47 +61,6 @@ def file_is_locked(file_path):
     except IOError:
         return True
 
-# def get_command_line():
-#     """
-#     Handle the command line and pass back variables to main
-#
-#     RAPD v2.0.0
-#     ===========
-#
-#     Synopsis: Rapid Automated Processing of Data
-#     ++++++++
-#
-#     Proper use: >rapd.python rapd.py site_identifier
-#     ++++++++++
-#                 site_identifier are keys to various settings,
-#                 which are imported through rapd_beamlinespecific.py
-#                 For the case of NE-CAT, site_identifiers are C and E
-#
-#                 log file is created in /tmp/rapd.log[.1-5]
-#     +++++
-#     """
-#
-#     file_path = "/tmp/lock/rapd_core.lock"
-#
-#     if not os.path.exists(os.path.dirname(file_path)):
-#         os.makedirs((os.path.dirname(file_path)))
-#
-#     if file_is_locked(file_path):
-#         print 'Another instance of rapd.py is running on this machine. Exiting now.'
-#         sys.exit(9)
-#
-#     verbose = False
-#     try:
-#         opts, args = getopt.getopt(sys.argv[1:], "v")
-#     except getopt.GetoptError, err:
-#         # print help information and exit:
-#         print str(err) # will print something like "option -a not recognized"
-#         sys.exit(2)
-#     if len(args) != 1:
-#         print "Please indicate the site"
-#         exit(3)
-#     return(args[0], verbose)
-
 def get_commandline():
     """Get the commandline variables and handle them"""
 
@@ -111,17 +69,6 @@ def get_commandline():
     site install"""
     parser = argparse.ArgumentParser(parents=[utils.commandline.base_parser],
                                      description=commandline_description)
-
-    # # Set the global termainl printer to verbose level (4)
-    # if parser.parse_args().verbose == True:
-    #     global tprint
-    #     tprint = utils.log.get_terminal_printer(verbosity=5)
-    #
-    # tprint("Commandline arguments:", level=2)
-    # tprint ("%10s  %-10s" % ("arg", "val"), level=2)
-    # tprint ("%10s  %-10s" % ("=======", "======="), level=2)
-    # for pair in parser.parse_args()._get_kwargs():
-    #     tprint("%10s  %-10s" % pair, level=2)
 
     return parser.parse_args()
 
@@ -138,6 +85,11 @@ def main(site_in=None):
     # Import the site settings
     SITE = importlib.import_module(site_file)
 
+	# Single process lock?
+    if SITE.LOCK_FILE:
+        if file_is_locked(SITE.LOCK_FILE):
+            raise Exception("%s is already locked, unable to run" % SITE.LOCK_FILE)
+
     # Set up logging
     if commandline_args.verbose:
         log_level = 10
@@ -151,11 +103,9 @@ def main(site_in=None):
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s" % pair)
 
-    #instantiate the model
+    # Instantiate the model
     MODEL = Model(SITE=SITE)
     #MODEL.Start()
-    # except:
-    #     logger.critical("SOME ERROR in starting the model")
 
 
 if __name__ == "__main__":

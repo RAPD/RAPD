@@ -119,8 +119,8 @@ class TestCase(multiprocessing.Process):
         #now parse the output
         output, solution, data = self.ParseOutput(output)
 
-        #put the gathered data into a dict for return
-        self.results = {'fullname' : self.command[3]['FULLNAME'],       #for potential error checking
+        # Put the gathered data into a dict for return
+        self.results = {'fullname' : self.command[3]['FULLNAME'],
                         'output' : output,
                         'solution' : solution,
                         'data' : data}
@@ -173,7 +173,8 @@ class TestCase(multiprocessing.Process):
         tmp = []
         #find special points
         for i in range(len(input)):
-            if input[i].startswith('Correcting'): correct_pos = i
+            if input[i].startswith('Correcting'):
+                correct_pos = i
             if input[i].find('Indexing results') != -1:
                 results_pos = i
                 break
@@ -457,7 +458,8 @@ class Handler(threading.Thread, Communicate):
             tmp.write(message)
             tmp.close()
 
-            #Determine which cluster queue to submit the job (Can add other tags to run on new nodes)
+            # Determine which cluster queue to submit the job
+            # (Can add other tags to run on new nodes)
             if tag == 'AUTO':
                 cl_queue = ' -q index.q -pe smp 4'
                 #cl_queue = ' -q index.q'
@@ -470,7 +472,8 @@ class Handler(threading.Thread, Communicate):
             qsub_name = os.path.basename(tmp.name).replace('rapd_', '').replace('.json', '')
             self.logger.debug("qsub_name", qsub_name)
             """
-            #NOT GOING TO USE PROJECTS TO SPLIT RESOURCES... Not sure if priority is inherited to sub-jobs anyway??
+            NOT GOING TO USE PROJECTS TO SPLIT RESOURCES...
+            Not sure if priority is inherited to sub-jobs anyway??
             if (self.queue):
                 self.logger.debug('Submit %s to qsub %s'%(tmp.name,self.queue))
                 #Send to the new nodes in the cluster
@@ -484,12 +487,12 @@ class Handler(threading.Thread, Communicate):
             #p = subprocess.Popen("qsub -cwd -V -b y -l h_rt=3:00:00 -N "+qsub_name+cl_queue+" python2.6 rapd_cluster.py "+tmp.name,shell=True)
             #qsub = "qsub -cwd -V -b y -N "+qsub_name+cl_queue+" python2.6 rapd_cluster.py "+tmp.name
             qsub = "qsub -cwd -V -b y -N "+qsub_name+cl_queue+" rapd.python rapd_cluster.py "+tmp.name
-            p = subprocess.Popen(qsub,shell=True)
+            p = subprocess.Popen(qsub, shell=True)
             self.logger.debug(qsub)
             sts = os.waitpid(p.pid, 0)[1]
 
         #A command is being received from a file
-        elif (self.mode == 'file'):
+        elif self.mode == 'file':
             self.logger.debug('File has been submitted to run')
             #feedback
             self.logger.debug(self.command)
@@ -500,7 +503,7 @@ class Handler(threading.Thread, Communicate):
         self.logger.debug('HERE!')
 
 
-    def Assign(self,command,mode='server'):
+    def Assign(self, command, mode='server'):
         """
         Decides what should be done based on the data and then:
         1. creates pipes
@@ -522,7 +525,7 @@ class Handler(threading.Thread, Communicate):
                         break
                     except:
                         tries += 1
-                        if (tries == 5):
+                        if tries == 5:
                             self.logger.exception('Failure to create a new process')
                             self.sendBack2(reply='ERROR')
                             return()
@@ -538,7 +541,7 @@ class Handler(threading.Thread, Communicate):
                         break
                     except:
                         tries += 1
-                        if (tries == 5):
+                        if tries == 5:
                             self.logger.exception('Failure to create a new process')
                             self.sendBack2(reply='ERROR')
                             return()
@@ -554,7 +557,7 @@ class Handler(threading.Thread, Communicate):
                         break
                     except:
                         tries += 1
-                        if (tries == 5):
+                        if tries == 5:
                             self.logger.exception('Failure to create a new process')
                             self.sendBack2(reply='ERROR')
                             return()
@@ -575,7 +578,7 @@ class Handler(threading.Thread, Communicate):
                             self.sendBack2(reply='ERROR')
                             return()
 
-            elif command[0] in ('XDS','XIA2'):
+            elif command[0] in ('XDS', 'XIA2'):
                 from rapd_agent_reintegrate import ReIntegration
                 tries = 0
                 while tries < 5:
@@ -585,7 +588,7 @@ class Handler(threading.Thread, Communicate):
                         break
                     except:
                         tries += 1
-                        if (tries == 5):
+                        if tries == 5:
                             self.logger.exception('Failure to create a new process')
                             self.sendBack2(reply='ERROR')
                             return()
@@ -602,7 +605,7 @@ class Handler(threading.Thread, Communicate):
                         break
                     except:
                         tries += 1
-                        if (tries == 5):
+                        if tries == 5:
                             self.logger.exception('Failure to create a new process')
                             self.sendBack2(reply='ERROR')
                             return()
@@ -620,7 +623,7 @@ class Handler(threading.Thread, Communicate):
                         break
                     except:
                         tries += 1
-                        if (tries == 5):
+                        if tries == 5:
                             self.logger.exception('Failure to create a new process')
                             self.sendBack2(reply='ERROR')
                             return()
@@ -654,7 +657,7 @@ class Handler(threading.Thread, Communicate):
                         break
                     except:
                         tries += 1
-                        if (tries == 5):
+                        if tries == 5:
                             self.logger.exception('Failure to create a new process')
                             self.sendBack2(reply='ERROR')
                             return()
@@ -671,7 +674,7 @@ class Handler(threading.Thread, Communicate):
                         break
                     except:
                         tries += 1
-                        if (tries == 5):
+                        if tries == 5:
                             self.logger.exception('Failure to create a new process')
                             self.sendBack2(reply='ERROR')
                             return()
@@ -688,7 +691,7 @@ class Handler(threading.Thread, Communicate):
                         break
                     except:
                         tries += 1
-                        if (tries == 5):
+                        if tries == 5:
                             self.logger.exception('Failure to create a new DiffractionCenter process')
                             self.sendBack2(reply='ERROR')
                             return()
@@ -778,10 +781,10 @@ class ControllerHandler(threading.Thread):
         #initialize the thread
         threading.Thread.__init__(self)
         #store the connection variable
-        self.conn     = conn
-        self.addr     = addr
+        self.conn = conn
+        self.addr = addr
         self.receiver = receiver
-        self.logger   = logger
+        self.logger = logger
         #start the thread
         self.start()
 
@@ -825,8 +828,8 @@ class ControllerServer(threading.Thread):
         threading.Thread.__init__(self)
 
         # Store passed-in variables
-        self.receiver  = receiver
-        self.port      = port
+        self.receiver = receiver
+        self.port = port
 
         # Start it up
         # self.daemon = True
@@ -845,7 +848,10 @@ class ControllerServer(threading.Thread):
             #print 'listening'
             s.listen(5)
             conn, addr = s.accept()
-            tmp = ControllerHandler(conn=conn,addr=addr,receiver=self.receiver,logger=self.logger)
+            tmp = ControllerHandler(conn=conn,
+                                    addr=addr,
+                                    receiver=self.receiver,
+                                    logger=self.logger)
 
         #if we exit...
         s.close()
@@ -929,7 +935,7 @@ def get_command_line():
     queue = False
 
     try:
-        opts,args = getopt.getopt(sys.argv[1:],"vq:",)
+        opts, args = getopt.getopt(sys.argv[1:], "vq:",)
     except getopt.GetoptError, err:
         # print help information and exit:
         print str(err) # will print something like "option -a not recognized"
@@ -939,28 +945,28 @@ def get_command_line():
         if o == '-q':
             queue = a
     if len(args) == 0:
-        return('server',queue)
+        return('server', queue)
     else:
-        return(args[0],queue)
+        return(args[0], queue)
 
 
 def main():
 
-    command,queue = get_command_line()
+    command, queue = get_command_line()
 
     #spawn processes on this node
-    if (command == 'server'):
+    if command == 'server':
         Server = ClusterServer(mode='server')
     #spawn qsub commands
-    elif (command == 'qsub'):
+    elif command == 'qsub':
         Server = ClusterServer(mode='qsub')
     #run command file
     else:
         #tag for log file
-        tag = os.path.basename(command).replace('rapd_','').replace('.json','')
+        tag = os.path.basename(command).replace('rapd_', '').replace('.json', '')
         #start logging
         if os.path.exists(secrets['cluster_logfile_dir']):
-            LOG_FILENAME = os.path.join(secrets['cluster_logfile_dir'],'rapd_cluster_'+tag+'.log')
+            LOG_FILENAME = os.path.join(secrets['cluster_logfile_dir'], 'rapd_cluster_'+tag+'.log')
         else:
             LOG_FILENAME = '/tmp/rapd_cluster_'+tag+'.log'
         # Set up a specific logger with our desired output level
@@ -975,7 +981,7 @@ def main():
         logger.info('RAPD_CLUSTER.main')
         logger.debug('Starting in directory %s', os.getcwd())
 
-        command_file = open(command,'r')
+        command_file = open(command, 'r')
         my_command = json.load(command_file)
 
         my_handler = Handler(conn=None, addr=None, db=None, mode='file', command=my_command, queue=queue, logger=logger)

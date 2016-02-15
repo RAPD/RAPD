@@ -79,6 +79,8 @@ LOGFILE_DIR = "/tmp/log"
 LOG_LEVEL = 50
 
 # RAPD core process settings
+# Process is a singleton? The file to lock to. False if no locking.
+LOCK_FILE = False # "/tmp/lock/rapd_core.lock"
 # Port for core process to listen on
 CORE_PORT = 50001
 # Where files from UI are uploaded

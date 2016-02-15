@@ -33,11 +33,8 @@ import os
 #custom RAPD imports
 from utils.site_tools import get_ip_address
 
-from rapd_cluster import PerformAction, ControllerServer
+from rapd_launch import PerformAction, ControllerServer
 # from rapd_console import ConsoleFeeder
-# from rapd_pilatus import pilatus_read_header
-# from rapd_site import beamline_settings, secret_settings
-# from rapd_site import necat_determine_flux as determine_flux
 # from rapd_site import GetDataRootDir, TransferToUI, TransferToBeamline, CopyToUser
 
 database = None
@@ -251,40 +248,12 @@ class Model(object):
             global remote_adapter
             remote_adapter = importlib.import_module("%s" % site.REMOTE_ADAPTER.lower())
             self.remote_adapter = remote_adapter.Adapter(settings=site.REMOTE_ADAPTER_SETTINGS)
-            print self.remote_adapter
 
     def stop(self):
         """
         Stop the ImageMonitor,CloudMonitor and StatusRegistrar.
         """
-
         self.logger.info("Stopping")
-
-
-
-        # #the IMAGEMONITOR
-        # try:
-        #     if self.IMAGEMONITOR:
-        #         self.IMAGEMONITOR.Stop()
-        #         self.IMAGEMONITOR = False
-        # except:
-        #     self.IMAGEMONITOR = False
-        #
-        # #the CLOUDMONITOR
-        # try:
-        #     if self.CLOUDMONITOR:
-        #         self.CLOUDMONITOR.Stop()
-        #         self.CLOUDMONITOR = False
-        # except:
-        #     self.CLOUDMONITOR = False
-        #
-        # #the STATUSREGISTRAR
-        # try:
-        #     if self.STATUSREGISTRAR:
-        #         self.STATUSREGISTRAR.Stop()
-        #         self.STATUSREGISTRAR = False
-        # except:
-        #     self.STATUSREGISTRAR = False
 
     def add_image(self, fullname):
         """Handle a new image being recorded by the site"""
