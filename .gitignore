@@ -5,6 +5,9 @@
 .pydevproject
 *.pyc
 
+# Archives
+*.tar
+
 # Files that should be hidden
 *secret*
 *foo*
