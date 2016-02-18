@@ -142,12 +142,11 @@ class Model(object):
 
         # Shorten it a little
         site = self.site
-        secrets = site.SECRETS
 
         # Instantiate the database connection
-        self.database = database.Database(host=secrets.CORE_DATABASE_HOST,
-                                          user=secrets.CORE_DATABASE_USER,
-                                          password=secrets.CORE_DATABASE_PASSWORD,
+        self.database = database.Database(host=site.CORE_DATABASE_HOST,
+                                          user=site.CORE_DATABASE_USER,
+                                          password=site.CORE_DATABASE_PASSWORD,
                                           data_name=site.DB_NAME_DATA,
                                           users_name=site.DB_NAME_USERS,
                                           cloud_name=site.DB_NAME_CLOUD)

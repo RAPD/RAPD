@@ -1,16 +1,8 @@
 version: '2'
 services:
-  docker_control:
-    build:
-      context: .
-      dockerfile: Dockerfile-control
-    links:
-      - redis
-      - mysql
-    entrypoint: /bin/bash
   redis:
     image: redis
   mysql:
     image: mariadb:5.5
     environment:
-      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_ROOT_PASSWORD=root_password

@@ -79,16 +79,16 @@ class Database(object):
         attempts = 0
         while (attempts < MYSQL_ATTEMPTS):
             try:
-                #connect
-                connection = pymysql.connect( host = self.db_host,
-                                              db = self.db_data_name,
-                                              user = self.db_user,
-                                              passwd = self.db_password )
+                # Connect
+                connection = pymysql.connect(host=self.db_host,
+                                             db=self.db_data_name,
+                                             user=self.db_user,
+                                             passwd=self.db_password)
                 cursor = connection.cursor()
                 cursor.execute("SET AUTOCOMMIT=1")
-                return(connection,cursor)
+                return(connection, cursor)
             except:
-                self.logger.exception('Error connecting to MySQL server')
+                self.logger.exception("Error connecting to MySQL server")
                 attempts += 1
                 time.sleep(10)
 
@@ -100,15 +100,15 @@ class Database(object):
         while (attempts < MYSQL_ATTEMPTS):
             try:
                 #connect
-                connection = pymysql.connect( host = self.db_host,
-                                              db = self.db_users_name,
-                                              user = self.db_user,
-                                              passwd = self.db_password )
+                connection = pymysql.connect(host=self.db_host,
+                                             db=self.db_users_name,
+                                             user=self.db_user,
+                                             passwd=self.db_password)
                 cursor = connection.cursor()
                 cursor.execute("SET AUTOCOMMIT=1")
                 return(connection,cursor)
             except:
-                self.logger.exception('Error connecting to MySQL server')
+                self.logger.exception("Error connecting to MySQL server")
                 attempts += 1
                 time.sleep(10)
 
@@ -120,15 +120,15 @@ class Database(object):
         while (attempts < MYSQL_ATTEMPTS):
             try:
                 #connect
-                connection = pymysql.connect( host = self.db_host,
-                                              db = self.db_cloud_name,
-                                              user = self.db_user,
-                                              passwd = self.db_password )
+                connection = pymysql.connect(host=self.db_host,
+                                             db=self.db_cloud_name,
+                                             user=self.db_user,
+                                             passwd=self.db_password)
                 cursor = connection.cursor()
                 cursor.execute("SET AUTOCOMMIT=1")
                 return(connection,cursor)
             except:
-                self.logger.exception('Error connecting to MySQL server')
+                self.logger.exception("Error connecting to MySQL server")
                 attempts += 1
                 time.sleep(10)
 

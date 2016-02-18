@@ -29,7 +29,7 @@ import time
 import redis
 
 # RAPD imports
-import pysent
+from utils import pysent
 
 class RedisMonitor(threading.Thread):
     """Monitor for new data collection images to be submitted to a redis instance"""

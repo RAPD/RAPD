@@ -83,6 +83,8 @@ CORE_PORT = 50001
 UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"
 
 # RAPD launch instances settings
+LAUNCH_ADDRESSES = [("192.168.99.100", 50000)]
+
 # Port for cluster to listen on
 # CLUSTER_PORT = 50000
 # Aggregator - be careful when changing
@@ -178,7 +180,7 @@ CLOUD_MONITOR_SETTINGS = {
     "CLOUD_MR_HANDLER" : CLOUD_MR_HANDLER,
     "CLOUD_REINDEX_HANDLER" : CLOUD_REINDEX_HANDLER,
     "CLOUD_REINTEGRATE_HANDLER" : CLOUD_REINTEGRATE_HANDLER,
-    "CLUSTER_ADDRESS" : CLUSTER_ADDRESS,
+    "LAUNCH_ADDRESSES" : LAUNCH_ADDRESSES,
     "DETECTOR_SUFFIX" : DETECTOR_SUFFIX,
     "UI_HOST" : UI_HOST,
     "UI_PORT" : UI_PORT,

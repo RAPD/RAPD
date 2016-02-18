@@ -22,14 +22,13 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
-import atexit
 import logging
 import threading
 import time
 import redis
 
 # RAPD imports
-import pysent
+from utils import pysent
 
 class RedisMonitor(threading.Thread):
     """Monitor for new data collection images to be submitted to a redis instance"""
