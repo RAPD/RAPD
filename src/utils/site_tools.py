@@ -23,9 +23,26 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 import functools
+import importlib
 import os
 import socket
 import sys
+
+def copy_attrs(source, target):
+    """Copy all the public attrs from one object to local scope"""
+
+    # Get the attributes
+    keys = source.__dict__.keys()
+    # Run through the attributes
+    for key in keys:
+        # Ignore private
+        if not key.startswith("_"):
+            setattr(target, key, getattr(source, key))
+
+def read_secrets(secrets_file, target):
+    """Read in secrets file and put attrs in target context"""
+    secrets = importlib.import_module(secrets_file)
+    copy_attrs(secrets, target)
 
 def get_ip_address():
     """Returns the IP address for the host of the requesting process"""
