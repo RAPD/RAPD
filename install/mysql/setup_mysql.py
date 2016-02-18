@@ -30,6 +30,8 @@ HOST_ADDRESS = ("192.168.99.100", 3306)
 USERNAME = "root"
 PASSWORD = "root_password"
 
+
+
 if __name__ == "__main__":
 
     print "setup_mysql.py"
@@ -53,3 +55,10 @@ if __name__ == "__main__":
 
         # Now create the tables
         subprocess.check_output("mysql -h %s -P %d -u %s -p%s rapd_%s < rapd_%s_schema.sql" % (HOST_ADDRESS[0], HOST_ADDRESS[1], USERNAME, PASSWORD, table_type, table_type), shell=True)
+
+    # Add the admin
+    connection.select_db("rapd_users")
+    cursor = connection.cursor()
+    cursor.execute("INSERT INTO authorize VALUES ('Admin_First','Admin_Last','RAPD_Admin','11cefeb763516b3c','Users','Administrators','','0','admin_email@email.com','https://myserver.com/rapd/main.php','1','2016-01-01')")
+
+    connection.close()
