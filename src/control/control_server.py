@@ -26,7 +26,8 @@ import socket
 import threading
 import json
 import time
-import logging, logging.handlers
+import logging
+import logging.handlers
 
 
 class ControllerServer(threading.Thread):
@@ -52,7 +53,7 @@ class ControllerServer(threading.Thread):
         self.port = port
 
         # Start it up
-        self.daemon = True
+        # self.daemon = True
         self.start()
 
     def run(self):
@@ -60,21 +61,25 @@ class ControllerServer(threading.Thread):
         HOST = ''
 
         # Create the socket listener
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind((HOST,self.port))
+        _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        _socket.settimeout(5)
+        _socket.bind((HOST, self.port))
 
         # This is the "server"
-        while(self.Go):
-            #print 'listening'
-            s.listen(5)
-            conn, addr = s.accept()
-            tmp = ControllerHandler(conn=conn,
-                                    addr=addr,
-                                    receiver=self.receiver,
-                                    logger=self.logger)
+        while self.Go:
+
+            try:
+                _socket.listen(1)
+                conn, addr = _socket.accept()
+                tmp = ControllerHandler(conn=conn,
+                                        addr=addr,
+                                        receiver=self.receiver,
+                                        logger=self.logger)
+            except socket.timeout:
+                pass
 
         # If we exit...
-        s.close()
+        _socket.close()
 
     def stop(self):
         self.logger.debug("Received signal to stop")
@@ -113,7 +118,7 @@ class PerformAction(threading.Thread):
 
         attempts = 0
 
-        while(attempts < 10):
+        while attempts < 10:
             attempts += 1
             self.logger.debug("Cluster connection attempt %d", attempts)
 

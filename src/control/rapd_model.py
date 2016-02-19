@@ -22,13 +22,14 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
-#standard imports
-import atexit
+# Standard imports
 import collections
 import datetime
 import importlib
 import logging
 import os
+import socket
+import time
 
 #custom RAPD imports
 from utils.site_tools import get_ip_address
@@ -99,7 +100,11 @@ class Model(object):
         self.site = SITE
 
         # Instance variables
-        self.return_address = (get_ip_address(), SITE.CONTROL_PORT)
+        try:
+            self.return_address = (get_ip_address(), SITE.CONTROL_PORT)
+        except socket.gaierror:
+            self.return_address = ("127.0.0.1", SITE.CONTROL_PORT)
+
         self.logger.debug("self.return_address:%s", self.return_address)
 
         # Start the process
@@ -118,20 +123,20 @@ class Model(object):
         # Start the server for receiving communications
         self.start_server()
 
-        # # Import the detector
-        # self.init_detector()
+        # Import the detector
+        self.init_detector()
 
-        # # Start the image monitor
-        # self.start_image_monitor()
-        #
-        # # Start the cloud monitor
-        # self.start_cloud_monitor()
-        #
-        # # Initialize the site adapter
-        # self.init_site_adapter()
+        # Start the image monitor
+        self.start_image_monitor()
 
-        # # Initialize the remote adapter
-        # self.init_remote_adapter()
+        # Start the cloud monitor
+        self.start_cloud_monitor()
+
+        # Initialize the site adapter
+        self.init_site_adapter()
+
+        # Initialize the remote adapter
+        self.init_remote_adapter()
 
     def connect_to_database(self):
         """Set up database connection"""
@@ -157,12 +162,12 @@ class Model(object):
         self.server = ControllerServer(receiver=self.receive,
                                        port=self.site.CONTROL_PORT)
 
-        def stop_server():
-            """Stop the listening server on exit"""
-            self.logger.debug("Stop core server")
-            self.server.stop()
+    def stop_server(self):
+        """Stop the listening server on exit"""
 
-        atexit.register(stop_server)
+        self.logger.debug("Stop core server")
+
+        self.server.stop()
 
     def init_detector(self):
         """Set up the detector"""
@@ -324,7 +329,8 @@ class Model(object):
             self.logger.debug("%s is a snap", fullname)
 
             # Get all the image information
-            header = detector.read_header(fullname=fullname)
+            header = detector.read_header(fullname=fullname,
+                                          beam_settings=self.site.BEAM_SETTINGS)
 
             # Grab extra data for the image
             header.update(self.beamline_adapter.get_image_data())

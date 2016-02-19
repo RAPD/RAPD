@@ -105,11 +105,11 @@ def main(site_in=None):
 
     # Instantiate the model
     MODEL = Model(SITE=SITE)
-    #MODEL.Start()
 
 
 if __name__ == "__main__":
 
-    # Set up terminal printer
-    tprint = utils.log.get_terminal_printer(verbosity=1)
-    main()
+	# Set up terminal printer
+	tprint = utils.log.get_terminal_printer(verbosity=1)
+
+	main()
