@@ -147,7 +147,7 @@ def read_header(fullname, beam_settings, run_id=None, place_in_run=None):
     calc_beam_center_x, calc_beam_center_y = calculate_beam_center(
         distance=header["distance"],
         beam_settings=beam_settings,
-        v_offset=header["vertical_offset"])
+        v_offset=0)
     header["x_beam"] = calc_beam_center_x
     header["y_beam"] = calc_beam_center_y
 

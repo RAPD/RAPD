@@ -26,6 +26,7 @@ import json
 import logging
 import os
 import pymongo
+import redis
 import uuid
 
 import pysent
@@ -65,8 +66,9 @@ class Adapter(object):
                                              sentinel_port=self.settings["SENTINEL_PORT"],
                                              master_name=self.settings["REDIS_MASTER_NAME"])
         else:
-            self.redis = False
-            raise Exception("No connection to redis cluster")
+            print "self.settings", self.settings
+            self.redis = redis.Redis(self.settings["REDIS_HOST"], self.settings["REDIS_PORT"])
+            # raise Exception("No connection to redis cluster")
 
         # Establish connection to Mongo database
         try:

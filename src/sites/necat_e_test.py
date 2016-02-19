@@ -81,11 +81,6 @@ CONTROL_PORT = 50001
 # Where files from UI are uploaded
 UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"
 
-# Port for cluster to listen on
-# CLUSTER_PORT = 50000
-# Aggregator - be careful when changing
-# CLUSTER_ADDRESS = (CLUSTER_HOST, CLUSTER_PORT)
-
 # RAPD database settings
 # Database to use for core operations. Options: "mysql"
 CORE_DATABASE = "mysql"
@@ -195,7 +190,9 @@ REMOTE_ADAPTER_SETTINGS = {"ID" : ID,
                            "REDIS_CLUSTER" : REDIS_CLUSTER,
                            "SENTINEL_HOST" : SENTINEL_HOST,
                            "SENTINEL_PORT" : SENTINEL_PORT,
-                           "REDIS_MASTER_NAME" : REDIS_MASTER_NAME}
+                           "REDIS_MASTER_NAME" : REDIS_MASTER_NAME,
+                           "REDIS_HOST" : REDIS_HOST,
+                           "REDIS_PORT" : REDIS_PORT}
 
 # secret_settings_general = { #database information
 #                             'db_host'                : 'rapd.nec.aps.anl.gov',         #location of mysql database

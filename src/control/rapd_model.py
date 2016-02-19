@@ -333,7 +333,7 @@ class Model(object):
                                           beam_settings=self.site.BEAM_SETTINGS)
 
             # Grab extra data for the image
-            header.update(self.beamline_adapter.get_image_data())
+            header.update(self.site_adapter.get_image_data())
 
             # Add some data to the header
             header["run_id"] = 0
