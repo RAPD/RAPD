@@ -70,16 +70,10 @@ def get_site_files():
     """
     # print "get_site_files"
 
-    # Looking for the rapd src directory
-    sites_dir = False
-    for path in sys.path:
-        if "rapd" in path and path.endswith("src"):
-            sites_dir = os.path.join(path, "sites")
-
-    if sites_dir:
-        # print "Looking for site definition files in %s" % sites_dir
-        site_files = []
-        for (path, directory, files) in os.walk(sites_dir):
+    def look_for_sites_files(directory):
+        """Walk a dir and look for a site file"""
+        potential_files = []
+        for (path, directory, files) in os.walk(directory):
             for filename in files:
                 # No secret-containing files
                 if "secret" in filename:
@@ -89,14 +83,28 @@ def get_site_files():
                     continue
                 # Filename must end with .py
                 if filename.endswith(".py"):
-                    site_files.append(os.path.join(path, filename))
-    else:
-        raise Exception("Cannot find sites directory on PYTHONPATH")
+                    potential_files.append(os.path.join(path, filename))
 
-    if len(site_files) == 0:
-        raise Exception("No site files found")
+        return potential_files
+
+    # Look for site file in local directory first
+    possible_files = look_for_sites_files(os.getcwd())
+
+    # Looking for the rapd src directory
+    sites_dir = False
+    for path in sys.path:
+        if "rapd" in path and path.endswith("src"):
+            sites_dir = os.path.join(path, "sites")
+
+    if sites_dir:
+        # print "Looking for site definition files in %s" % sites_dir
+        possible_files += look_for_sites_files(sites_dir)
+
+    if len(possible_files) == 0:
+        raise Exception("No potential site files found")
     else:
-        return site_files
+        print possible_files
+        return possible_files
 
 def check_site_against_known(site_str):
     """Check a site string against known sites in the sites directory
@@ -113,7 +121,7 @@ def determine_site(site_arg=None):
     site_arg -- user-specified site arguments (default None)
     """
 
-    # Get site files
+    # Get possible site files
     site_files = get_site_files()
 
     # Transform site files to a more palatable form

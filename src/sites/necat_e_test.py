@@ -36,9 +36,8 @@ SECRETS_FILE = "sites.secrets_necat_e_test"
 # Copy the secrets attribute to the local scope
 # Do not remove unless you know what you are doing!
 read_secrets(SECRETS_FILE, sys.modules[__name__])
-#
 
-# Source information
+# SOURCE
 # Flux of the beam
 BEAM_FLUX = 8E11
 # Size of the beam in microns
@@ -74,16 +73,13 @@ BEAM_CENTER_Y = (158.56546190593907,
 LOGFILE_DIR = "/tmp/log"
 LOG_LEVEL = 50
 
-# RAPD core process settings
+# RAPD control process settings
 # Process is a singleton? The file to lock to. False if no locking.
 LOCK_FILE = False # "/tmp/lock/rapd_core.lock"
 # Port for core process to listen on
-CORE_PORT = 50001
+CONTROL_PORT = 50001
 # Where files from UI are uploaded
 UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"
-
-# RAPD launch instances settings
-LAUNCH_ADDRESSES = [("192.168.99.100", 50000)]
 
 # Port for cluster to listen on
 # CLUSTER_PORT = 50000
