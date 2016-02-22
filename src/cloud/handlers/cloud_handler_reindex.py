@@ -29,6 +29,15 @@ import threading
 
 from rapd_launch import PerformAction
 
+# This is a rapd cloud handler
+CLOUD_HANDLER = True
+
+# This handler's request type
+REQUEST_TYPE = "reindex"
+
+# A unique UUID for this handler (uuid.uuid1().hex)
+ID = "fc774d3ad98e11e5b08ac82a1400d5bc"
+
 class Handler(threading.Thread):
     """
     Handles the initialization of reprocessing runs in a separate thread

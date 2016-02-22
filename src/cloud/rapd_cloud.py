@@ -188,10 +188,10 @@ class CloudMonitor(threading.Thread):
 
                 # SAD request
                 elif request["request_type"] == "start-sad":
-                    __ = self.handlers["sad_handler"](request=request,
-                                                      database=self.database,
-                                                      settings=self.settings,
-                                                      reply_settings=self.reply_settings)
+                    __ = self.handlers["sad"](request=request,
+                                              database=self.database,
+                                              settings=self.settings,
+                                              reply_settings=self.reply_settings)
 
                 # MAD request
                 elif request["request_type"] == "start-mad":
@@ -203,25 +203,25 @@ class CloudMonitor(threading.Thread):
                     #                  logger=self.logger)
 
                 # MR request
-                elif request["request_type"] == "start-mr":
-                    __ = self.handlers["mr_handler"](request=request,
-                                                     database=self.database,
-                                                     settings=self.settings,
-                                                     reply_settings=self.reply_settings)
+                elif request["request_type"] == "molecular_replacement":
+                    __ = self.handlers["molecular_replacement"](request=request,
+                                                                database=self.database,
+                                                                settings=self.settings,
+                                                                reply_settings=self.reply_settings)
 
                 # FastIntegration request
                 elif request["request_type"] == "start-fastin":
-                    __ = self.handlers["reintegrate_handler"](request=request,
-                                                              database=self.database,
-                                                              settings=self.settings,
-                                                              reply_settings=self.reply_settings)
+                    __ = self.handlers["rreintegration"](request=request,
+                                                         database=self.database,
+                                                         settings=self.settings,
+                                                         reply_settings=self.reply_settings)
 
                 # Xia2 request
                 elif request["request_type"] == "start-xiaint":
-                    __ = self.handlers["reintegrate_handler"](request=request,
-                                                              database=self.database,
-                                                              settings=self.settings,
-                                                              reply_settings=self.reply_settings)
+                    __ = self.handlers["reintegration"](request=request,
+                                                        database=self.database,
+                                                        settings=self.settings,
+                                                        reply_settings=self.reply_settings)
 
                 # Binary Merge Request
                 elif request["request_type"] == "smerge":
@@ -271,6 +271,7 @@ class CloudMonitor(threading.Thread):
         # Save some space
         settings = self.settings
 
+
         # Look for cloud handlers in the specified directories
         # Add a directory in site file CLOUD_HANDLER_DIRECTORIES
         for directory in settings["CLOUD_HANDLER_DIRECTORIES"]:
@@ -281,12 +282,54 @@ class CloudMonitor(threading.Thread):
 
             files = os.listdir(handler_path)
             # Discover plugin files
-            cloud_handler_files = []
             for f in files:
                 name, ext = os.path.splitext(f)
                 if (name.startswith('cloud_handler_')) and (ext == (os.extsep + 'py')):
-                    cloud_handler_files.append(name)
-            self.logger.debug("  Found some cloud handlers %s", cloud_handler_files)
+                    module = importlib.import_module(directory+"."+name)
+                    # Make doubly-sure this is a cloud handler
+                    try:
+                        if module.CLOUD_HANDLER == True:
+                            self.logger.debug("  Found a cloud handler %s", module)
+                            # Already have this request_type?
+                            if module.REQUEST_TYPE in self.handlers:
+                                pass
+                            else:
+                                self.handlers[module.REQUEST_TYPE] = module
+                    except AttributeError:
+                        self.logger.error("%s is not a cloud handler", module)
+
+        self.logger.debug(self.handlers)
+
+        #     # Discover modules
+        #     modules = []
+        #     self.logger.debug('sys.path: {}'.format(str(sys.path)))
+        #     self.logger.debug('cwd: {}'.format(str(os.getcwd())))
+        #     for f in cloud_handler_files:
+        #         module = 'rac_plugins.{}'.format(f)
+        #         self.logger.debug('Importing {}'.format(module))
+        #         module = importlib.import_module(module)
+        #         modules.append(module)
+        #
+        # # Define function to detect plugin
+        # is_plugin = lambda obj: (inspect.isclass(obj) and
+        #                          obj.__name__.startswith('RacPlugin_') and
+        #                          ('BaseRacPlugin' in (c.__name__ for c in inspect.getmro(obj))) and
+        #                          hasattr(obj, 'main'))
+        #     # Note: inspect.getmro is required over <class>.__bases__
+        #
+        # # Discover and load plugins
+        # self._plugins = {}
+        # for m in modules:
+        #     objects = dir(m)
+        #     objects = [getattr(m, o) for o in objects]
+        #     plugins = [obj for obj in objects if is_plugin(obj)]
+        #     for plugin in plugins:
+        #         name = plugin.__name__.split('RacPlugin_', 1)[1]
+        #         self._plugins[name] = plugin
+        #         self.logger.debug('{} Loaded RAC plugin {}.'.format(tools.cm_name(), name))
+        # self.logger.info('{} Loaded {} RAC plugins: {}'.format(tools.cm_name(), len(self._plugins), ', '.join(sorted(self._plugins))))
+
+
 
         sys.exit(0)
 

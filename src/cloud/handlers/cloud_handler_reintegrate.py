@@ -22,10 +22,18 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
-import datetime
 import logging
 import os
 import threading
+
+# This is a rapd cloud handler
+CLOUD_HANDLER = True
+
+# This handler's request type
+REQUEST_TYPE = "reintegration"
+
+# A unique UUID for this handler (uuid.uuid1().hex)
+ID = "d3a84d9ed98e11e5b92fc82a1400d5bc"
 
 class Handler(threading.Thread):
     """

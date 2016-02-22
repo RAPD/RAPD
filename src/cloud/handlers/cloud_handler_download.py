@@ -27,6 +27,15 @@ import threading
 
 from rapd_launch import PerformAction
 
+# This is a rapd cloud handler
+CLOUD_HANDLER = True
+
+# This handler's request type
+REQUEST_TYPE = "download"
+
+# A unique UUID for this handler (uuid.uuid1().hex)
+ID = "63a5af05d98f11e58f48c82a1400d5bc"
+
 class Handler(threading.Thread):
     """
     Handles the packing and transfer of downloads in a separate thread

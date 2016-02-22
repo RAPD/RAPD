@@ -29,6 +29,18 @@ import threading
 
 from rapd_launch import PerformAction
 
+# RAPD imports
+from rapd_launch import PerformAction
+
+# This is a rapd cloud handler
+CLOUD_HANDLER = True
+
+# This handler's request type
+REQUEST_TYPE = "sad"
+
+# A unique UUID for this handler (uuid.uuid1().hex)
+ID = "909e9d9cd98f11e5aa93c82a1400d5bc"
+
 class Handler(threading.Thread):
     """
     Handles the initialization of SAD runs in a separate thread.

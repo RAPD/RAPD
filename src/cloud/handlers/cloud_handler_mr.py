@@ -31,6 +31,15 @@ import threading
 # RAPD imports
 from rapd_launch import PerformAction
 
+# This is a rapd cloud handler
+CLOUD_HANDLER = True
+
+# This handler's request type
+REQUEST_TYPE = "molecular_replacement"
+
+# A unique UUID for this handler (uuid.uuid1().hex)
+ID = "58f2f0a6d98e11e5b9dcc82a1400d5bc"
+
 class Handler(threading.Thread):
     """
     Handles the initialization of MR runs in a separate thread
