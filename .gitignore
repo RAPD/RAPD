@@ -1,12 +1,17 @@
 # Lines starting with '#' are considered comments.
 # Ignore subversion information
 .svn
+
+# Build
 .project
 .pydevproject
 *.pyc
 
 # Archives
 *.tar
+
+# Test data
+test_data
 
 # Files that should be hidden
 *secret*

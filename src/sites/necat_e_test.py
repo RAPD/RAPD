@@ -37,7 +37,7 @@ SECRETS_FILE = "sites.secrets_necat_e_test"
 # Do not remove unless you know what you are doing!
 read_secrets(SECRETS_FILE, sys.modules[__name__])
 
-# SOURCE
+# X-ray source characteristics
 # Flux of the beam
 BEAM_FLUX = 8E11
 # Size of the beam in microns
@@ -73,24 +73,21 @@ BEAM_CENTER_Y = (158.56546190593907,
 LOGFILE_DIR = "/tmp/log"
 LOG_LEVEL = 50
 
-# RAPD control process settings
+# Control process settings
 # Process is a singleton? The file to lock to. False if no locking.
-LOCK_FILE = False # "/tmp/lock/rapd_core.lock"
-# Port for core process to listen on
-CONTROL_PORT = 50001
-# Where files from UI are uploaded
+LOCK_FILE = "/tmp/lock/rapd_core.lock"
+# Where files from UI are uploaded - should be visible by launch instance
 UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"
 
-# RAPD database settings
-# Database to use for core operations. Options: "mysql"
-CORE_DATABASE = "mysql"
-DB_NAME_DATA = "rapd_data"
-DB_NAME_USERS = "rapd_users"
-DB_NAME_CLOUD = "rapd_cloud"
-
-# Redis Settings
+# Control settings
+# Database to use for control operations. Options: "mysql"
+CONTROL_DATABASE = "mysql"
+CONTROL_DATABASE_NAME_DATA = "rapd_data"
+CONTROL_DATABASE_NAME_USERS = "rapd_users"
+CONTROL_DATABASE_NAME_CLOUD = "rapd_cloud"
+# Redis databse
 # Running in a cluster configuration - True || False
-REDIS_CLUSTER = False
+CONTROL_REDIS_CLUSTER = False
 
 # Detector settings
 # Must have a file in detectors that is all lowercase of this string
@@ -99,40 +96,28 @@ DETECTOR_SUFFIX = ".img"
 
 # Monitor for collected images
 IMAGE_MONITOR = "sites.image_monitors.necat_e"
-# Aggregator - be careful when changing
-IMAGE_MONITOR_SETTINGS = {"REDIS_HOST" : REDIS_HOST,
-                          "REDIS_CLUSTER" : REDIS_CLUSTER,
-                          "SENTINEL_HOST" : SENTINEL_HOST,
-                          "SENTINEL_PORT" : SENTINEL_PORT,
-                          "REDIS_MASTER_NAME" : REDIS_MASTER_NAME}
-IMAGE_SHORT_CIRCUIT_DIRECTORIES = [
-    '/gpfs5/users/necat/phii_dfa_1/in',
-    '/gpfs5/users/necat/phii_dfa_2/in',
-    '/gpfs5/users/necat/phii_raster_snap/in',
-    '/gpfs5/users/necat/phii_rastersnap_scan_data',
-    '/gpfs5/users/necat/phii_dfa_scan_data',
-    '/gpfs5/users/necat/phii_ova_scan_data',
-    '/gpfs5/users/necat/rapd/uranium/trunk/test_data'
-]
+# Redis databse
+# Running in a cluster configuration - True || False
+IMAGE_MONITOR_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER
+# Images collected into following directories will be ignored
+IMAGE_IGNORE_DIRECTORIES = ()
+# Images collected containing the following string will be ignored
+IMAGE_IGNORE_STRINGS = ("ignore", )
 
 # Monitor for collected run information
 RUN_MONITOR = "sites.run_monitors.necat_e"
-RUN_MONITOR_SETTINGS = {"REDIS_HOST" : REDIS_HOST,
-                        "REDIS_CLUSTER" : REDIS_CLUSTER,
-                        "SENTINEL_HOST" : SENTINEL_HOST,
-                        "SENTINEL_PORT" : SENTINEL_PORT,
-                        "REDIS_MASTER_NAME" : REDIS_MASTER_NAME}
+# Running in a cluster configuration - True || False
+RUN_MONITOR_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER
 
 # Cloud Settings
 # The cloud monitor module
 CLOUD_MONITOR = "cloud.rapd_cloud"
 # Pause between checking the database for new cloud requests in seconds
 CLOUD_INTERVAL = 10
-
+# Directories to look for cloud handlers
+CLOUD_HANDLER_DIRECTORIES = ("cloud.handlers", )
 # Cloud handlers
-CLOUD_MINIKAPPA = False
 CLOUD_MINIKAPPA_HANDLER = None
-CLOUD_DATA_COLLECTION_PARAMS = False
 CLOUD_DATA_COLLECTION_PARAMS_HANDLER = "datacollectionparameters"
 CLOUD_DOWNLOAD_HANDLER = "download"
 CLOUD_BINARY_MERGE_HANDLER = "binary_merge"
@@ -141,10 +126,12 @@ CLOUD_REINDEX_HANDLER = "reindex"
 CLOUD_REINTEGRATE_HANDLER = "reintegrate"
 
 # For connecting to the site
-SITE_ADAPTER = "sites.adapters.necat"              # file name prefix for adapter in src/sites/adapters
+SITE_ADAPTER = "sites.site_adapters.necat"
 
 # For connecting to the remote access system fr the site
-REMOTE_ADAPTER = "sites.adapters.necat_remote"     # file name prefix for adapter in src/
+REMOTE_ADAPTER = "sites.site_adapters.necat_remote"     # file name prefix for adapter in src/
+REMOTE_ADAPTER_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER
+
 
 ##
 ## Aggregators
@@ -161,12 +148,26 @@ BEAM_SETTINGS = {"BEAM_FLUX":BEAM_FLUX,
                  "BEAM_CENTER_X":BEAM_CENTER_X,
                  "BEAM_CENTER_Y":BEAM_CENTER_Y}
 
+
+IMAGE_MONITOR_SETTINGS = {"REDIS_HOST" : IMAGE_MONITOR_REDIS_HOST,
+                          "REDIS_PORT" : IMAGE_MONITOR_REDIS_PORT,
+                          "REDIS_CLUSTER" : IMAGE_MONITOR_REDIS_CLUSTER,
+                          "SENTINEL_HOST" : IMAGE_MONITOR_SENTINEL_HOST,
+                          "SENTINEL_PORT" : IMAGE_MONITOR_SENTINEL_PORT,
+                          "REDIS_MASTER_NAME" : IMAGE_MONITOR_REDIS_MASTER_NAME}
+
+RUN_MONITOR_SETTINGS = {"REDIS_HOST" : RUN_MONITOR_REDIS_HOST,
+                        "REDIS_PORT" : RUN_MONITOR_REDIS_PORT,
+                        "REDIS_CLUSTER" : RUN_MONITOR_REDIS_CLUSTER,
+                        "SENTINEL_HOST" : RUN_MONITOR_SENTINEL_HOST,
+                        "SENTINEL_PORT" : RUN_MONITOR_SENTINEL_PORT,
+                        "REDIS_MASTER_NAME" : RUN_MONITOR_REDIS_MASTER_NAME}
+
 CLOUD_MONITOR_SETTINGS = {
+    "CLOUD_HANDLER_DIRECTORIES" : CLOUD_HANDLER_DIRECTORIES,
     "CLOUD_BINARY_MERGE_HANDLER" : CLOUD_BINARY_MERGE_HANDLER,
-    "CLOUD_DATA_COLLECTION_PARAMS" : CLOUD_DATA_COLLECTION_PARAMS,
     "CLOUD_DATA_COLLECTION_PARAMS_HANDLER" : CLOUD_DATA_COLLECTION_PARAMS_HANDLER,
     "CLOUD_DOWNLOAD_HANDLER" : CLOUD_DOWNLOAD_HANDLER,
-    "CLOUD_MINIKAPPA" : CLOUD_MINIKAPPA,
     "CLOUD_MINIKAPPA_HANDLER" : CLOUD_MINIKAPPA_HANDLER,
     "CLOUD_MR_HANDLER" : CLOUD_MR_HANDLER,
     "CLOUD_REINDEX_HANDLER" : CLOUD_REINDEX_HANDLER,
@@ -187,12 +188,12 @@ SITE_ADAPTER_SETTINGS = {"ID" : ID,
 
 REMOTE_ADAPTER_SETTINGS = {"ID" : ID,
                            "MONGO_CONNECTION_STRING" : MONGO_CONNECTION_STRING,
-                           "REDIS_CLUSTER" : REDIS_CLUSTER,
-                           "SENTINEL_HOST" : SENTINEL_HOST,
-                           "SENTINEL_PORT" : SENTINEL_PORT,
-                           "REDIS_MASTER_NAME" : REDIS_MASTER_NAME,
-                           "REDIS_HOST" : REDIS_HOST,
-                           "REDIS_PORT" : REDIS_PORT}
+                           "REDIS_CLUSTER" : REMOTE_ADAPTER_REDIS_CLUSTER,
+                           "SENTINEL_HOST" : REMOTE_ADAPTER_SENTINEL_HOST,
+                           "SENTINEL_PORT" : REMOTE_ADAPTER_SENTINEL_PORT,
+                           "REDIS_MASTER_NAME" : REMOTE_ADAPTER_REDIS_MASTER_NAME,
+                           "REDIS_HOST" : REMOTE_ADAPTER_REDIS_HOST,
+                           "REDIS_PORT" : REMOTE_ADAPTER_REDIS_PORT}
 
 # secret_settings_general = { #database information
 #                             'db_host'                : 'rapd.nec.aps.anl.gov',         #location of mysql database

@@ -29,10 +29,19 @@ import threading
 
 from rapd_launch import PerformAction
 
+# This is a rapd cloud handler
+CLOUD_HANDLER = True
+
 class Handler(threading.Thread):
     """
     Handles the initialization of simple merging runs in a separate thread
     """
+
+    # Request type that this handler handles
+    REQUEST_TYPE = "merge_binary"
+
+    # A unique UUID for this handler (uuid.uuid1().hex)
+    ID = "04567085d98911e5ba64c82a1400d5bc"
 
     # Previous result(s) information
     primary_result = None

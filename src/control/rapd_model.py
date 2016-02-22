@@ -143,18 +143,18 @@ class Model(object):
 
         # Import the database adapter as database module
         global database
-        database = importlib.import_module('database.rapd_%s_adapter' % self.site.CORE_DATABASE)
+        database = importlib.import_module('database.rapd_%s_adapter' % self.site.CONTROL_DATABASE)
 
         # Shorten it a little
         site = self.site
 
         # Instantiate the database connection
-        self.database = database.Database(host=site.CORE_DATABASE_HOST,
-                                          user=site.CORE_DATABASE_USER,
-                                          password=site.CORE_DATABASE_PASSWORD,
-                                          data_name=site.DB_NAME_DATA,
-                                          users_name=site.DB_NAME_USERS,
-                                          cloud_name=site.DB_NAME_CLOUD)
+        self.database = database.Database(host=site.CONTROL_DATABASE_HOST,
+                                          user=site.CONTROL_DATABASE_USER,
+                                          password=site.CONTROL_DATABASE_PASSWORD,
+                                          data_name=site.CONTROL_DATABASE_NAME_DATA,
+                                          users_name=site.CONTROL_DATABASE_NAME_USERS,
+                                          cloud_name=site.CONTROL_DATABASE_NAME_CLOUD)
 
     def start_server(self):
         """Start up the listening process for core"""
@@ -333,7 +333,8 @@ class Model(object):
                                           beam_settings=self.site.BEAM_SETTINGS)
 
             # Grab extra data for the image
-            header.update(self.site_adapter.get_image_data())
+            if self.site_adapter:
+                header.update(self.site_adapter.get_image_data())
 
             # Add some data to the header
             header["run_id"] = 0

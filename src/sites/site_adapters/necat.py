@@ -42,7 +42,7 @@ class Adapter(object):
         """
         Returns a connection to the Redis database
         """
-        return redis.Redis(self.settings.SITE_REDIS_IP)
+        return redis.Redis(self.settings.SITE_REDIS_IP, self.settings.SITE_REDIS_PORT)
 
     #
     # Put methods
