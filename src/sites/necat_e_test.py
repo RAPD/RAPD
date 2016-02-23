@@ -116,17 +116,11 @@ CLOUD_MONITOR = "cloud.rapd_cloud"
 CLOUD_INTERVAL = 10
 # Directories to look for cloud handlers
 CLOUD_HANDLER_DIRECTORIES = ("cloud.handlers", )
-# Cloud handlers
-CLOUD_MINIKAPPA_HANDLER = None
-CLOUD_DATA_COLLECTION_PARAMS_HANDLER = "datacollectionparameters"
-CLOUD_DOWNLOAD_HANDLER = "download"
-CLOUD_BINARY_MERGE_HANDLER = "binary_merge"
-CLOUD_MR_HANDLER = "mr"
-CLOUD_REINDEX_HANDLER = "reindex"
-CLOUD_REINTEGRATE_HANDLER = "reintegrate"
 
 # For connecting to the site
 SITE_ADAPTER = "sites.site_adapters.necat"
+# Running in a cluster configuration - True || False
+SITE_ADAPTER_REDIS_CLUSTER = False
 
 # For connecting to the remote access system fr the site
 REMOTE_ADAPTER = "sites.site_adapters.necat_remote"     # file name prefix for adapter in src/
@@ -165,13 +159,6 @@ RUN_MONITOR_SETTINGS = {"REDIS_HOST" : RUN_MONITOR_REDIS_HOST,
 
 CLOUD_MONITOR_SETTINGS = {
     "CLOUD_HANDLER_DIRECTORIES" : CLOUD_HANDLER_DIRECTORIES,
-    "CLOUD_BINARY_MERGE_HANDLER" : CLOUD_BINARY_MERGE_HANDLER,
-    "CLOUD_DATA_COLLECTION_PARAMS_HANDLER" : CLOUD_DATA_COLLECTION_PARAMS_HANDLER,
-    "CLOUD_DOWNLOAD_HANDLER" : CLOUD_DOWNLOAD_HANDLER,
-    "CLOUD_MINIKAPPA_HANDLER" : CLOUD_MINIKAPPA_HANDLER,
-    "CLOUD_MR_HANDLER" : CLOUD_MR_HANDLER,
-    "CLOUD_REINDEX_HANDLER" : CLOUD_REINDEX_HANDLER,
-    "CLOUD_REINTEGRATE_HANDLER" : CLOUD_REINTEGRATE_HANDLER,
     "LAUNCH_ADDRESSES" : LAUNCH_ADDRESSES,
     "DETECTOR_SUFFIX" : DETECTOR_SUFFIX,
     "UI_HOST" : UI_HOST,
@@ -182,12 +169,12 @@ CLOUD_MONITOR_SETTINGS = {
     }
 
 SITE_ADAPTER_SETTINGS = {"ID" : ID,
-                         "SITE_REDIS_IP" : SITE_REDIS_IP,
-                         "SITE_REDIS_PORT" : SITE_REDIS_PORT,
-                         "SITE_REDIS_DB" : SITE_REDIS_DB}
+                         "REDIS_HOST" : SITE_ADAPTER_REDIS_HOST,
+                         "REDIS_PORT" : SITE_ADAPTER_REDIS_PORT,
+                         "REDIS_DB" : SITE_ADAPTER_REDIS_DB}
 
 REMOTE_ADAPTER_SETTINGS = {"ID" : ID,
-                           "MONGO_CONNECTION_STRING" : MONGO_CONNECTION_STRING,
+                           "MONGO_CONNECTION_STRING" : REMOTE_ADAPTER_MONGO_CONNECTION_STRING,
                            "REDIS_CLUSTER" : REMOTE_ADAPTER_REDIS_CLUSTER,
                            "SENTINEL_HOST" : REMOTE_ADAPTER_SENTINEL_HOST,
                            "SENTINEL_PORT" : REMOTE_ADAPTER_SENTINEL_PORT,

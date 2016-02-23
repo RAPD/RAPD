@@ -42,7 +42,9 @@ class Adapter(object):
         """
         Returns a connection to the Redis database
         """
-        return redis.Redis(self.settings.SITE_REDIS_IP, self.settings.SITE_REDIS_PORT)
+        return redis.Redis(self.settings["REDIS_HOST"],
+                           self.settings["REDIS_PORT"],
+                           self.settings["REDIS_DB"])
 
     #
     # Put methods
@@ -347,7 +349,7 @@ class Adapter(object):
 
         self.logger.debug("get_image_data - making dict")
 
-        return_dict = {"id"              : self.settings.ID,
+        return_dict = {"id"              : self.settings["ID"],
                        "ring_current"    : ring_current,
                        "ring_mode"       : ring_mode,
                        "energy"          : energy,

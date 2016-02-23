@@ -43,13 +43,6 @@ class CloudMonitor(threading.Thread):
     Go = True
 
     # Handlers for cloud events
-    possible_handlers = ("binary_merge",
-                         "minikappa",
-                         "data_collection_params",
-                         "download",
-                         "mr",
-                         "reindex",
-                         "reintegrate")
     handlers = {}
 
     def __init__(self,
@@ -114,21 +107,21 @@ class CloudMonitor(threading.Thread):
             # The following section is for cloud-based beamline control events
             #
 
-            # Minikappa requests
-            if self.handlers.get("minikappa_handler", False):
-                # Check the database
-                minikappa_request = self.database.getMinikappaRequest()
-                if minikappa_request:
-                    __ = self.handlers["minikappa_handler"](request=minikappa_request,
-                                                            database=self.database)
-
-            # Data collection run parameters request
-            if self.handlers.get("data_collection_params_handler", False):
-                datacollection_request = self.database.getDatacollectionRequest()
-                if datacollection_request:
-                    __ = self.handlers["data_collection_params_handler"](
-                        request=datacollection_request,
-                        database=self.database)
+            # # Minikappa requests
+            # if self.handlers.get("minikappa_handler", False):
+            #     # Check the database
+            #     minikappa_request = self.database.getMinikappaRequest()
+            #     if minikappa_request:
+            #         __ = self.handlers["minikappa_handler"](request=minikappa_request,
+            #                                                 database=self.database)
+            #
+            # # Data collection run parameters request
+            # if self.handlers.get("data_collection_params_handler", False):
+            #     datacollection_request = self.database.getDatacollectionRequest()
+            #     if datacollection_request:
+            #         __ = self.handlers["data_collection_params_handler"](
+            #             request=datacollection_request,
+            #             database=self.database)
 
             #
             # The following section is for cloud-based events
@@ -161,74 +154,84 @@ class CloudMonitor(threading.Thread):
                 #                       self.reply_settings,
                 #                       self.logger)
 
-                # Download request
-                if request["request_type"].startswith("down"):
-                    __ = self.handlers["data_collection_params_handler"](request,
-                                                                         self.database,
-                                                                         settings,
-                                                                         self.reply_settings)
+                # Start a process
+                # Currently this is the only request type
+                # More will be added: stop, info, etc.
+                if request["request_type"].startswith("start"):
 
-                #Reprocess request
-                elif request["request_type"] == "reprocess":
-                    __ = self.handlers["reindex_handler"](request=request,
-                                                          database=self.database,
-                                                          settings=settings,
-                                                          reply_settings=self.reply_settings)
+                    # Determine the handler type
+                    handler_type = request["request_type"].split("-")[1]
 
-                # STAC Request
-                elif request["request_type"] == "stac":
-                    pass
-                    # self.logger.debug("STAC Request")
-                    # self.logger.debug(request)
-                    # tmp = StacHandler(request,
-                    #                   self.database,
-                    #                   self.Secret_Settings,
-                    #                   self.reply_settings,
-                    #                   self.logger)
+                    # Instantiate the saved handler
+                    try:
+                        __ = self.handlers[handler_type](request,
+                                                         self.database,
+                                                         settings,
+                                                         self.reply_settings)
+                    except AttributeError:
+                        self.logger.error("There is no cloud handler for %s", request["request_type"])
 
-                # SAD request
-                elif request["request_type"] == "start-sad":
-                    __ = self.handlers["sad"](request=request,
-                                              database=self.database,
-                                              settings=self.settings,
-                                              reply_settings=self.reply_settings)
-
-                # MAD request
-                elif request["request_type"] == "start-mad":
-                    pass
-                    # tmp = MadHandler(request=request,
-                    #                  database=self.database,
-                    #                  settings=self.Secret_Settings,
-                    #                  reply_settings=self.reply_settings,
-                    #                  logger=self.logger)
-
-                # MR request
-                elif request["request_type"] == "molecular_replacement":
-                    __ = self.handlers["molecular_replacement"](request=request,
-                                                                database=self.database,
-                                                                settings=self.settings,
-                                                                reply_settings=self.reply_settings)
-
-                # FastIntegration request
-                elif request["request_type"] == "start-fastin":
-                    __ = self.handlers["rreintegration"](request=request,
-                                                         database=self.database,
-                                                         settings=self.settings,
-                                                         reply_settings=self.reply_settings)
-
-                # Xia2 request
-                elif request["request_type"] == "start-xiaint":
-                    __ = self.handlers["reintegration"](request=request,
-                                                        database=self.database,
-                                                        settings=self.settings,
-                                                        reply_settings=self.reply_settings)
-
-                # Binary Merge Request
-                elif request["request_type"] == "smerge":
-                    __ = self.handlers["binary_merge"](request=request,
-                                                       database=self.database,
-                                                       settings=self.settings,
-                                                       reply_settings=self.reply_settings)
+                # #Reprocess request
+                # elif request["request_type"] == "reprocess":
+                #     __ = self.handlers["reindex_handler"](request=request,
+                #                                           database=self.database,
+                #                                           settings=settings,
+                #                                           reply_settings=self.reply_settings)
+                #
+                # # STAC Request
+                # elif request["request_type"] == "stac":
+                #     pass
+                #     # self.logger.debug("STAC Request")
+                #     # self.logger.debug(request)
+                #     # tmp = StacHandler(request,
+                #     #                   self.database,
+                #     #                   self.Secret_Settings,
+                #     #                   self.reply_settings,
+                #     #                   self.logger)
+                #
+                # # SAD request
+                # elif request["request_type"] == "start-sad":
+                #     __ = self.handlers["sad"](request=request,
+                #                               database=self.database,
+                #                               settings=self.settings,
+                #                               reply_settings=self.reply_settings)
+                #
+                # # MAD request
+                # elif request["request_type"] == "start-mad":
+                #     pass
+                #     # tmp = MadHandler(request=request,
+                #     #                  database=self.database,
+                #     #                  settings=self.Secret_Settings,
+                #     #                  reply_settings=self.reply_settings,
+                #     #                  logger=self.logger)
+                #
+                # # MR request
+                # elif request["request_type"] == "molecular_replacement":
+                #     __ = self.handlers["molecular_replacement"](request=request,
+                #                                                 database=self.database,
+                #                                                 settings=self.settings,
+                #                                                 reply_settings=self.reply_settings)
+                #
+                # # FastIntegration request
+                # elif request["request_type"] == "start-fastin":
+                #     __ = self.handlers["rreintegration"](request=request,
+                #                                          database=self.database,
+                #                                          settings=self.settings,
+                #                                          reply_settings=self.reply_settings)
+                #
+                # # Xia2 request
+                # elif request["request_type"] == "start-xiaint":
+                #     __ = self.handlers["reintegration"](request=request,
+                #                                         database=self.database,
+                #                                         settings=self.settings,
+                #                                         reply_settings=self.reply_settings)
+                #
+                # # Binary Merge Request
+                # elif request["request_type"] == "smerge":
+                #     __ = self.handlers["binary_merge"](request=request,
+                #                                        database=self.database,
+                #                                        settings=self.settings,
+                #                                        reply_settings=self.reply_settings)
             """
                 else:
                     #put the request in the queue
@@ -271,7 +274,6 @@ class CloudMonitor(threading.Thread):
         # Save some space
         settings = self.settings
 
-
         # Look for cloud handlers in the specified directories
         # Add a directory in site file CLOUD_HANDLER_DIRECTORIES
         for directory in settings["CLOUD_HANDLER_DIRECTORIES"]:
@@ -298,52 +300,20 @@ class CloudMonitor(threading.Thread):
                     except AttributeError:
                         self.logger.error("%s is not a cloud handler", module)
 
-        self.logger.debug(self.handlers)
 
-        #     # Discover modules
-        #     modules = []
-        #     self.logger.debug('sys.path: {}'.format(str(sys.path)))
-        #     self.logger.debug('cwd: {}'.format(str(os.getcwd())))
-        #     for f in cloud_handler_files:
-        #         module = 'rac_plugins.{}'.format(f)
-        #         self.logger.debug('Importing {}'.format(module))
-        #         module = importlib.import_module(module)
-        #         modules.append(module)
+        # sys.exit(0)
         #
-        # # Define function to detect plugin
-        # is_plugin = lambda obj: (inspect.isclass(obj) and
-        #                          obj.__name__.startswith('RacPlugin_') and
-        #                          ('BaseRacPlugin' in (c.__name__ for c in inspect.getmro(obj))) and
-        #                          hasattr(obj, 'main'))
-        #     # Note: inspect.getmro is required over <class>.__bases__
+        # # Run through possible handlers and import them
+        # for handler in self.possible_handlers:
+        #     self.logger.debug(settings)
+        #     if settings["CLOUD_"+handler.upper()+"_HANDLER"]:
+        #         self.logger.debug("Importing %s", handler)
+        #         self.handlers[handler] = importlib.import_module(
+        #             "cloud.handlers.%s" % settings["CLOUD_"+handler.upper()+"_HANDLER"]).Handler
         #
-        # # Discover and load plugins
-        # self._plugins = {}
-        # for m in modules:
-        #     objects = dir(m)
-        #     objects = [getattr(m, o) for o in objects]
-        #     plugins = [obj for obj in objects if is_plugin(obj)]
-        #     for plugin in plugins:
-        #         name = plugin.__name__.split('RacPlugin_', 1)[1]
-        #         self._plugins[name] = plugin
-        #         self.logger.debug('{} Loaded RAC plugin {}.'.format(tools.cm_name(), name))
-        # self.logger.info('{} Loaded {} RAC plugins: {}'.format(tools.cm_name(), len(self._plugins), ', '.join(sorted(self._plugins))))
-
-
-
-        sys.exit(0)
-
-        # Run through possible handlers and import them
-        for handler in self.possible_handlers:
-            self.logger.debug(settings)
-            if settings["CLOUD_"+handler.upper()+"_HANDLER"]:
-                self.logger.debug("Importing %s", handler)
-                self.handlers[handler] = importlib.import_module(
-                    "cloud.handlers.%s" % settings["CLOUD_"+handler.upper()+"_HANDLER"]).Handler
-
-                # self.logger.debug(dir(self.handlers[handler]))
-            else:
-                self.logger.debug("Skipping %s", handler)
+        #         # self.logger.debug(dir(self.handlers[handler]))
+        #     else:
+        #         self.logger.debug("Skipping %s", handler)
 
 # class PuckHandler(threading.Thread):
 #     """

@@ -32,7 +32,6 @@ carefully
 """
 
 import json
-# import logging
 import os
 import re
 import time
@@ -40,6 +39,58 @@ import time
 # RAPD imports
 # from rapd_utils import date_adsc_to_sql
 import monitors.redis_monitor
+
+"""
+A relatively recent header from APS 24ID-E
+{
+HEADER_BYTES= 1024;
+DIM=2;
+BYTE_ORDER=little_endian;
+TYPE=unsigned_short;
+SIZE1=2048;
+SIZE2=2048;
+PIXEL_SIZE=0.05130;
+BIN=none;
+ADC=slow;
+DETECTOR_SN=916;
+COLLECT_MODE=SNAP;
+BEAMLINE=24_ID_E;
+DATE=Thu Feb  4 15:54:57 2016;
+TIME=1.00;
+DISTANCE=200.000;
+OSC_RANGE=1.000;
+SWEEPS=1;
+PHI=0.000;
+OSC_START=0.000;
+TWOTHETA=0.000;
+TWOTHETADIST=200.00;
+AXIS=phi;
+WAVELENGTH=0.97919;
+BEAM_CENTER_X=151.2600;
+BEAM_CENTER_Y=158.9940;
+TRANSMISSION=1.8676;
+PUCK=N;
+SAMPLE=10;
+RING_CUR=102.0;
+RING_MODE=0+24x1-RHB;
+MD2_APERTURE=50;
+MD2_PRG_EXP=1.000000;
+MD2_NET_EXP=000;
+CREV=0;
+CCD=TH7899;
+ACC_TIME=1783;
+UNIF_PED=1500;
+SIZE1=2048;
+SIZE2=2048;
+IMAGE_PEDESTAL=40;
+CCD_IMAGE_SATURATION=65535;
+SIZE1=6144;
+SIZE2=6144;
+CCD_IMAGE_SATURATION=65535;
+}
+"""
+
+
 
 def print_dict(in_dict):
     """Pring a dict in a pretty format"""
@@ -125,11 +176,12 @@ def read_header(image, run_id=None, place_in_run=None):
                     "time"         : (r"^TIME=\s*([\d\.]+)\;", lambda x: float(x)),
                     "distance"     : (r"^DISTANCE=\s*([\d\.]+)\;", lambda x: float(x)),
                     "osc_range"    : (r"^OSC_RANGE=\s*([\d\.]+)\;", lambda x: float(x)),
+                    "sweeps"       : (r"^SWEEPS=\s*([\d]+)\;", lambda x: int(x)),
                     "phi"          : (r"^PHI=\s*([\d\.]+)\;", lambda x: float(x)),
                     "osc_start"    : (r"^OSC_START=\s*([\d\.]+)\;", lambda x: float(x)),
                     "twotheta"     : (r"^TWOTHETA=\s*([\d\.]+)\;", lambda x: float(x)),
                     "thetadistance": (r"^THETADISTANCE=\s*([\d\.]+)\;", lambda x: float(x)),
-                    #"axis"         : (r"^AXIS=\s*(\w+)\;", lambda x: str(x)),
+                    "axis"         : (r"^AXIS=\s*(\w+)\;", lambda x: str(x)),
                     "wavelength"   : (r"^WAVELENGTH=\s*([\d\.]+)\;", lambda x: float(x)),
                     "beam_center_x": (r"^BEAM_CENTER_X=\s*([\d\.]+)\;", lambda x: float(x)),
                     "beam_center_y": (r"^BEAM_CENTER_Y=\s*([\d\.]+)\;", lambda x: float(x)),
@@ -138,9 +190,9 @@ def read_header(image, run_id=None, place_in_run=None):
                     "sample"       : (r"^SAMPLE=\s*([\d\w]+)\;", lambda x: str(x)),
                     "ring_cur"     : (r"^RING_CUR=\s*([\d\.]+)\;", lambda x: float(x)),
                     "ring_mode"    : (r"^RING_MODE=\s*(.*)\;", lambda x: str(x)),
-                    "md2_aperture" : (r"^MD2_APERTURE=\s*(\d+)\;", lambda x: int(x)),
-                    "period"       : (r"^# Exposure_period\s*([\d\.]+) s", lambda x: float(x)),
-                    "count_cutoff" : (r"^# Count_cutoff\s*(\d+) counts", lambda x: int(x))}
+                    "md2_aperture" : (r"^MD2_APERTURE=\s*(\d+)\;", lambda x: int(x))}
+                    # "period"       : (r"^# Exposure_period\s*([\d\.]+) s", lambda x: float(x)),
+                    # "count_cutoff" : (r"^# Count_cutoff\s*(\d+) counts", lambda x: int(x))}
 
     count = 0
     while count < 10:
@@ -150,15 +202,14 @@ def read_header(image, run_id=None, place_in_run=None):
             headerclose = rawdata.index("}")
             header = rawdata[headeropen+1:headerclose-headeropen]
             break
-            #print header
         except:
             count += 1
             time.sleep(0.1)
 
     try:
-        #tease out the info from the file name
+        # Tease out the info from the file name
         base = os.path.basename(image).rstrip(".img")
-        #the parameters
+        # The parameters
         parameters = {"fullname" : image,
                       "detector" : "ADSC-Q315",
                       # directory of the image file
@@ -181,11 +232,13 @@ def read_header(image, run_id=None, place_in_run=None):
             else:
                 parameters[label] = None
 
+        # Translate the wavelength to energy E = hc/lambda
+        parameters["energy"] = 1239.84193 / parameters["wavelength"]
+
         # If twotheta is in use, distance = twothetadist
         try:
             if parameters["twotheta"] > 0 and parameters["thetadistance"] > 100:
                 parameters["distance"] = parameters["thetadistance"]
-
         except:
             pass
 

@@ -51,6 +51,7 @@ class Adapter(object):
 
         # Store passed-in variables
         self.settings = settings
+        self.logger.debug("Settings: %s", self.settings)
 
         # Initialize the database connections
         self.init_db()

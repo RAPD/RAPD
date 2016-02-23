@@ -159,7 +159,7 @@ class Database(object):
            return self.add_pilatus_image(data)
 
         cursor.execute("""INSERT INTO images (fullname,
-                                              adsc_number,
+                                            #   adsc_number,
                                               adc,
                                               axis,
                                               beam_center_x,
@@ -204,7 +204,7 @@ class Database(object):
                                               gauss_y,
                                               run_id) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                                                                (data['fullname'],
-                                                                data['adsc_number'],
+                                                                # data['adsc_number'],
                                                                 data['adc'],
                                                                 data['axis'],
                                                                 data['x_beam'],
@@ -1145,7 +1145,7 @@ class Database(object):
         self.logger.debug(dirs['data_root_dir'])
         self.logger.debug(os.path.basename(info['fullname']))
         self.logger.debug(info['fullname'])
-        self.logger.debug(info['adsc_number'])
+        # self.logger.debug(info['adsc_number'])
 
         #Get a nuanced version of the type of single result this is
         if (settings['reference_data_id'] > 0):
@@ -1170,7 +1170,7 @@ class Database(object):
                                                        repr,
                                                        fullname,
                                                        image_id,
-                                                       adsc_number,
+                                                    #    adsc_number,
                                                        date,
                                                        sample_id,
                                                        work_dir,
@@ -1182,7 +1182,7 @@ class Database(object):
                                                                 %s,
                                                                 %s,
                                                                 %s,
-                                                                %s,
+                                                                # %s,
                                                                 %s,
                                                                 %s,
                                                                 %s,
@@ -1194,7 +1194,7 @@ class Database(object):
                               info['repr'],
                               info['fullname'],
                               info['image_id'],
-                              info['adsc_number'],
+                            #   info['adsc_number'],
                               info['date'],
                               info['sample_id'],
                               dirs['work'],
@@ -1941,9 +1941,9 @@ class Database(object):
         self.logger.debug('Database::addPairResult')
         self.logger.debug(dirs['data_root_dir'])
         self.logger.debug(info1['fullname'])
-        self.logger.debug(info1['adsc_number'])
+        # self.logger.debug(info1['adsc_number'])
         self.logger.debug(info2['fullname'])
-        self.logger.debug(info2['adsc_number'])
+        # self.logger.debug(info2['adsc_number'])
 
         #set the request type
         if (settings['reference_data_id'] > 0):
@@ -1967,11 +1967,11 @@ class Database(object):
                                                        repr,
                                                        fullname_1,
                                                        image1_id,
-                                                       adsc_number_1,
+                                                    #    adsc_number_1,
                                                        date_1,
                                                        fullname_2,
                                                        image2_id,
-                                                       adsc_number_2,
+                                                    #    adsc_number_2,
                                                        date_2,
                                                        sample_id,
                                                        work_dir,
@@ -1985,8 +1985,8 @@ class Database(object):
                                                                             %s,
                                                                             %s,
                                                                             %s,
-                                                                            %s,
-                                                                            %s,
+                                                                            # %s,
+                                                                            # %s,
                                                                             %s,
                                                                             %s,
                                                                             %s,
@@ -1999,11 +1999,11 @@ class Database(object):
                              info1['repr'],
                              info1['fullname'],
                              info1['image_id'],
-                             info1['adsc_number'],
+                            #  info1['adsc_number'],
                              info1['date'],
                              info2['fullname'],
                              info2['image_id'],
-                             info2['adsc_number'],
+                            #  info2['adsc_number'],
                              info2['date'],
                              info1['sample_id'],
                              dirs['work'],

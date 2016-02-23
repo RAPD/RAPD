@@ -29,7 +29,6 @@ import importlib
 import logging
 import os
 import socket
-import time
 
 #custom RAPD imports
 from utils.site_tools import get_ip_address
@@ -267,9 +266,14 @@ class Model(object):
         # Save some typing
         dirname = os.path.dirname(fullname)
 
-        # Short-circuit?
-        if dirname in self.site.IMAGE_SHORT_CIRCUIT_DIRECTORIES:
-            self.logger.debug("Short-circuit directory - skipping")
+        # Directory is to be ignored
+        if dirname in self.site.IMAGE_IGNORE_DIRECTORIES:
+            self.logger.debug("Directory is marked to be ignored - skipping")
+            return True
+
+        # File contains an ingnore flag
+        if any(ignore_string in fullname for ignore_string in self.site.IMAGE_IGNORE_STRINGS):
+            self.logger.debug("Images contains an ignore flag - skipping")
             return True
 
         # Save current image to class-level variable
@@ -332,13 +336,17 @@ class Model(object):
             header = detector.read_header(fullname=fullname,
                                           beam_settings=self.site.BEAM_SETTINGS)
 
-            # Grab extra data for the image
+            # Grab extra data for the image and add to the header
             if self.site_adapter:
-                header.update(self.site_adapter.get_image_data())
+                site_data = self.site_adapter.get_image_data()
 
             # Add some data to the header
             header["run_id"] = 0
             header["data_root_dir"] = data_root_dir
+
+            # # Calculate beam center (in case we needed extra data from site to correctly calculate)
+            # x_beam, y_beam = detector.calculate_beam_center(header["distance"],
+            #                                                 self.site.BEAM_SETTINGS)
 
             # Add to database
             db_result, __ = self.database.add_image(header)

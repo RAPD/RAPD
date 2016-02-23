@@ -143,13 +143,13 @@ def read_header(fullname, beam_settings, run_id=None, place_in_run=None):
     header["beam_size_x"] = beam_size_x
     header["beam_size_y"] = beam_size_y
 
-    # Calculate beam center
-    calc_beam_center_x, calc_beam_center_y = calculate_beam_center(
-        distance=header["distance"],
-        beam_settings=beam_settings,
-        v_offset=0)
-    header["x_beam"] = calc_beam_center_x
-    header["y_beam"] = calc_beam_center_y
+    # # Calculate beam center - cannot be done with just header information!
+    # calc_beam_center_x, calc_beam_center_y = calculate_beam_center(
+    #     distance=header["distance"],
+    #     beam_settings=beam_settings,
+    #     v_offset=0)
+    # header["x_beam"] = calc_beam_center_x
+    # header["y_beam"] = calc_beam_center_y
 
     # Return the header
     return header
