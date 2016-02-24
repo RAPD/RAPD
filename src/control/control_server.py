@@ -86,7 +86,7 @@ class ControllerServer(threading.Thread):
         self.Go = False
 
 
-class PerformAction(threading.Thread):
+class LaunchAction(threading.Thread):
     """
     Manages the dispatch of jobs to the cluster process
     NB that the cluster can be on the localhost or a remote host
@@ -99,7 +99,7 @@ class PerformAction(threading.Thread):
         settings -- Right now only needs to be a dict with the entry CLUSTER_ADDRESS
         """
         self.logger = logging.getLogger("RAPDLogger")
-        self.logger.debug("PerformAction::__init__  command:%s", command)
+        self.logger.debug("LaunchAction::__init__  command:%s", command)
 
         #initialize the thread
         threading.Thread.__init__(self)
@@ -114,10 +114,12 @@ class PerformAction(threading.Thread):
     def run(self):
         """Start the thread"""
 
-        self.logger.debug("PerformAction::run")
+        self.logger.debug("LaunchAction::run")
+
+        # Unpack command
+        ctype, dirs, data, launch_settings, return_address = self.command
 
         attempts = 0
-
         while attempts < 10:
             attempts += 1
             self.logger.debug("Cluster connection attempt %d", attempts)
@@ -125,7 +127,7 @@ class PerformAction(threading.Thread):
             # Connect to the cluster process
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
-                s.connect(self.settings["CLUSTER_ADDRESS"])
+                s.connect(launch_settings["LAUNCH_ADDRESSES"][0][0:2])
                 break
             except socket.error:
                 self.logger.exception("Failed to initialize socket to cluster")

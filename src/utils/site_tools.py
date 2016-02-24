@@ -97,13 +97,11 @@ def get_site_files():
             sites_dir = os.path.join(path, "sites")
 
     if sites_dir:
-        # print "Looking for site definition files in %s" % sites_dir
         possible_files += look_for_sites_files(sites_dir)
 
     if len(possible_files) == 0:
         raise Exception("No potential site files found")
     else:
-        print possible_files
         return possible_files
 
 def check_site_against_known(site_str):

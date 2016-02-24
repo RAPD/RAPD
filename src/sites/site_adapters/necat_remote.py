@@ -29,7 +29,7 @@ import pymongo
 import redis
 import uuid
 
-import pysent
+from utils import pysent
 
 class Adapter(object):
     """Serves as a connection to the remote beamline control system"""
@@ -67,7 +67,6 @@ class Adapter(object):
                                              sentinel_port=self.settings["SENTINEL_PORT"],
                                              master_name=self.settings["REDIS_MASTER_NAME"])
         else:
-            print "self.settings", self.settings
             self.redis = redis.Redis(self.settings["REDIS_HOST"], self.settings["REDIS_PORT"])
             # raise Exception("No connection to redis cluster")
 

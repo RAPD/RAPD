@@ -61,4 +61,9 @@ if __name__ == "__main__":
     cursor = connection.cursor()
     cursor.execute("INSERT INTO authorize VALUES ('Admin_First','Admin_Last','RAPD_Admin','11cefeb763516b3c','Users','Administrators','','0','admin_email@email.com','https://myserver.com/rapd/main.php','1','2016-01-01')")
 
+    # Add a setting
+    connection.select_db("rapd_data")
+    cursor = connection.cursor()
+    cursor.execute("INSERT INTO settings VALUES (1, 'NECAT_E', 'DEFAULTS', 'True', 'None', 'Protein', 0.55, 1, 100, 100, 100, 0, 0, 0, 0, 0, 0, 'False', '/tmp', 'False', 0, 0, 0, 'best', 'none', 1, 0, 0, 360, 1, 0, 'AUTO', 'AUTO', 'rapd', 0, 'GLOBAL', NOW())")
+    cursor.execute("INSERT INTO current VALUES('NECAT_E', 1, '/tmp', 0, NOW())")
     connection.close()

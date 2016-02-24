@@ -95,7 +95,7 @@ class RedisMonitor(threading.Thread):
 
         image_list = "images_collected_"+self.tag
         while self.Go:
-            print "images_collected_"+self.tag
+
             # Try to pop the oldest image off the list
             new_image = self.redis.rpop(image_list)
             if new_image:
@@ -103,5 +103,5 @@ class RedisMonitor(threading.Thread):
                 self.notify(("NEWIMAGE", new_image))
                 self.logger.debug('New image %s', new_image)
 
-            #slow it down a little
+            # Slow it down a little
             time.sleep(0.1)

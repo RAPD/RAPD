@@ -103,5 +103,5 @@ class RedisMonitor(threading.Thread):
                 self.notify(("NEWIMAGE", new_image))
                 self.logger.debug('New image %s', new_image)
 
-            #slow it down a little
+            # Slow it down a little
             time.sleep(0.1)

@@ -27,7 +27,7 @@ import sys
 # RAPD imports
 from utils.site_tools import read_secrets
 
-# Site ID
+# Site ID - limited to 12 characters by MySQL
 ID = "NECAT_E"
 
 # The secrets file - do not put in github repo!
@@ -91,7 +91,7 @@ CONTROL_REDIS_CLUSTER = False
 
 # Detector settings
 # Must have a file in detectors that is all lowercase of this string
-DETECTOR = "NECAT_ADSC_Q315"
+DETECTOR = "NECAT_ADSC_Q315_TEST"
 DETECTOR_SUFFIX = ".img"
 
 # Monitor for collected images
@@ -130,6 +130,10 @@ REMOTE_ADAPTER_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER
 ##
 ## Aggregators
 ## Be extra careful when modifying
+
+LAUNCH_SETTINGS = {
+    "LAUNCH_ADDRESSES":LAUNCH_ADDRESSES
+}
 
 BEAM_SETTINGS = {"BEAM_FLUX":BEAM_FLUX,
                  "BEAM_SIZE_X":BEAM_SIZE_X,

@@ -167,35 +167,35 @@ def get_data_root_dir(fullname):
     """
 
     # Isolate distinct properties of the images path
-    path_split = fullname.split(os.path.sep)
-    data_root_dir = False
+    # path_split = fullname.split(os.path.sep)
+    # data_root_dir = False
 
-    gpfs = False
-    users = False
-    inst = False
-    group = False
-    images = False
-
-    # Break down NE-CAT standard directories
-    # ex. /gpfs1/users/cornell/Ealick_E_1200/images/bob/snaps/0_0/foo_0_0001.cbf
-    if path_split[1].startswith("gpfs"):
-        gpfs = path_split[1]
-        if path_split[2] == "users":
-            users = path_split[2]
-            if path_split[3]:
-                inst = path_split[3]
-                if path_split[4]:
-                    group = path_split[4]
-
-    if group:
-        data_root_dir = os.path.join("/", *path_split[1:5])
-    elif inst:
-        data_root_dir = os.path.join("/", *path_split[1:4])
-    else:
-        data_root_dir = False
+    # gpfs = False
+    # users = False
+    # inst = False
+    # group = False
+    # images = False
+    #
+    # # Break down NE-CAT standard directories
+    # # ex. /gpfs1/users/cornell/Ealick_E_1200/images/bob/snaps/0_0/foo_0_0001.cbf
+    # if path_split[1].startswith("gpfs"):
+    #     gpfs = path_split[1]
+    #     if path_split[2] == "users":
+    #         users = path_split[2]
+    #         if path_split[3]:
+    #             inst = path_split[3]
+    #             if path_split[4]:
+    #                 group = path_split[4]
+    #
+    # if group:
+    #     data_root_dir = os.path.join("/", *path_split[1:5])
+    # elif inst:
+    #     data_root_dir = os.path.join("/", *path_split[1:4])
+    # else:
+    #     data_root_dir = False
 
     # Return the determined directory
-    return data_root_dir
+    return os.path.dirname(fullname)
 
 if __name__ == "__main__":
 
@@ -245,6 +245,8 @@ if __name__ == "__main__":
     import pprint
     pp = pprint.PrettyPrinter()
     pp.pprint(header)
+
+    print get_data_root_dir(test_image)
 
 
     # result = parse_file_name("/gpfs1/users/cornell_murphy_1001/images/frank/runs/test/0_0/test_1_001.img")

@@ -154,9 +154,8 @@ class Database(object):
         self.logger.debug(data)
         connection, cursor = self.connect_to_data()
 
-
-        if data["fullname"].endswith(".cbf"):
-           return self.add_pilatus_image(data)
+        # if data["fullname"].endswith(".cbf"):
+        #     return self.add_pilatus_image(data)
 
         cursor.execute("""INSERT INTO images (fullname,
                                             #   adsc_number,
@@ -170,7 +169,7 @@ class Database(object):
                                               detector,
                                               detector_sn,
                                               collect_mode,
-                                              beamline,
+                                              site,
                                               dim,
                                               distance,
                                               header_bytes,
@@ -202,7 +201,7 @@ class Database(object):
                                               beam_size_y,
                                               gauss_x,
                                               gauss_y,
-                                              run_id) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                                              run_id) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                                                                (data['fullname'],
                                                                 # data['adsc_number'],
                                                                 data['adc'],
@@ -215,7 +214,7 @@ class Database(object):
                                                                 data['detector'],
                                                                 data['detector_sn'],
                                                                 data['collect_mode'],
-                                                                data['beamline'],
+                                                                data['site'],
                                                                 data['dim'],
                                                                 data['distance'],
                                                                 data['header_bytes'],
@@ -279,7 +278,7 @@ class Database(object):
                                                   detector,
                                                   detector_sn,
                                                   collect_mode,
-                                                  beamline,
+                                                  site,
                                                   distance,
                                                   osc_range,
                                                   osc_start,
@@ -318,7 +317,7 @@ class Database(object):
                                                                     data['detector'],
                                                                     data['detector_sn'],
                                                                     data['collect_mode'],
-                                                                    data['beamline'],
+                                                                    data['site'],
                                                                     data['distance'],
                                                                     data['osc_range'],
                                                                     data['osc_start'],
@@ -543,19 +542,19 @@ class Database(object):
          #see if we have a request
         return(request_dict)
 
-    def getCurrentPucks(self,beamline="C"):
+    def getCurrentPucks(self, site_id="C"):
         """
-        Return a list of all currently selected pucks for a beamline.
+        Return a list of all currently selected pucks for a site.
 
         """
-        self.logger.debug('Database::getCurrentPucks for %s' % (beamline))
+        self.logger.debug('Database::getCurrentPucks for %s' % (site_id))
 
         #query for list of pucks
         try:
             #connect to the mysql server
             connection,cursor = self.connect_to_data()
-            query  = "SELECT puckset_id FROM current WHERE beamline=%s" % (beamline)
-            cursor.execute(query,beamline)
+            query  = "SELECT puckset_id FROM current WHERE site=%s" % (site_id)
+            cursor.execute(query, site_id)
             puckset_id = cursor.fetchone()[0]
             if puckset_id == 0:
                 request_dict = False
@@ -569,9 +568,9 @@ class Database(object):
         #see if we have a request
         return(request_dict)
 
-    def resetPucks(self,beamline="C"):
+    def resetPucks(self, site_id="C"):
         """
-        Reset the puckset to none for a given beamline.
+        Reset the puckset to none for a given site_id.
         """
 
         self.logger.debug("resetPucks")
@@ -579,9 +578,9 @@ class Database(object):
         try:
             #connect to the mysql server
             connection,cursor = self.connect_to_data()
-            query = "UPDATE current SET puckset_id=0 WHERE beamline=%s"
-            cursor.execute(query,(beamline,))
-            self.closeConnection(connection,cursor)
+            query = "UPDATE current SET puckset_id=0 WHERE site=%s"
+            cursor.execute(query, (site_id, ))
+            self.closeConnection(connection, cursor)
         except:
             self.logger.exception("Error in resetPucks")
 
@@ -591,13 +590,13 @@ class Database(object):
     ##################################################################################################################
     # Functions for settings                                                                                         #
     ##################################################################################################################
-    def addSettings(self,settings,preset=False):
+    def addSettings(self, settings, preset=False):
         """
         Updates the mysql database with settings in the passed-in dict and returns the setting_id
         """
         self.logger.debug('Database::addSettings')
 
-        blank = {'beamline'                 : '0',
+        blank = {'site'                     : '0',
                  'data_root_dir'            : 'DEFAULTS',
                  'multiprocessing'          : 'True',
                  'spacegroup'               : 'None',
@@ -640,7 +639,7 @@ class Database(object):
         connection,cursor = self.connect_to_data()
 
         try:
-            cursor.execute("""INSERT INTO settings  ( beamline,
+            cursor.execute("""INSERT INTO settings  ( site,
                                                       data_root_dir,
                                                       multiprocessing,
                                                       spacegroup,
@@ -708,7 +707,7 @@ class Database(object):
                                                                                %s,
                                                                                %s,
                                                                                %s,
-                                                                               %s)""",  ( blank['beamline'],
+                                                                               %s)""",  ( blank['site'],
                                                                                           blank['data_root_dir'],
                                                                                           blank['multiprocessing'],
                                                                                           blank['spacegroup'],
@@ -777,12 +776,12 @@ class Database(object):
         #connect
         connection,cursor = self.connect_to_data()
 
-        #make sure there is a row for this beamline
-        cursor.execute("SELECT * FROM current WHERE beamline=%s",(in_dict['beamline']))
-        #must add a row for this beamline
+        #make sure there is a row for this site
+        cursor.execute("SELECT * FROM current WHERE site=%s",(in_dict['site']))
+        #must add a row for this site
         if cursor.rowcount == 0:
-            self.logger.debug('Inserting row for this beamline into current')
-            cursor.execute("INSERT INTO current ( beamline ) VALUES (%s)",(in_dict['beamline']))
+            self.logger.debug('Inserting row for this site into current')
+            cursor.execute("INSERT INTO current ( site ) VALUES (%s)",(in_dict['site']))
         #in the clear
         else:
             pass
@@ -797,13 +796,13 @@ class Database(object):
                 self.logger.debug('Updating current table using setting_id %d' % in_dict['setting_id'])
                 command += 'setting_id=%s'
                 value_array.append(in_dict['setting_id'])
-                #cursor.execute("UPDATE current SET setting_id=%s WHERE beamline=%s",(in_dict['setting_id'],in_dict['beamline']))
+                #cursor.execute("UPDATE current SET setting_id=%s WHERE site=%s",(in_dict['setting_id'],in_dict['site']))
                 do_and = True
 
             #update data_root_dir
             if in_dict.has_key('data_root_dir'):
                 self.logger.debug('Updating current table using data_root_dir %s' % in_dict['data_root_dir'])
-                #cursor.execute("UPDATE current SET data_root_dir=%s WHERE beamline=%s",(in_dict['data_root_dir'],in_dict['beamline']))
+                #cursor.execute("UPDATE current SET data_root_dir=%s WHERE site=%s",(in_dict['data_root_dir'],in_dict['site']))
                 if (do_and):
                     command += ','
                 command += 'data_root_dir=%s'
@@ -820,8 +819,8 @@ class Database(object):
                 do_and = True
 
             #finish up the command and execute
-            command += ' WHERE beamline=%s'
-            value_array.append(in_dict['beamline'])
+            command += ' WHERE site=%s'
+            value_array.append(in_dict['site'])
             if (do_and):
                 cursor.execute(command,value_array)
 
@@ -830,9 +829,9 @@ class Database(object):
             self.logger.exception('ERROR in updating current settings')
             self.closeConnection(connection,cursor)
 
-    def addPreset(self,settings):
+    def addPreset(self, settings):
         """
-        Change the entry for the given beamline in the presets table
+        Change the entry for the given site in the presets table
         This allows for easy change of the presets table to reflect the python settings
         """
         self.logger.debug('Database::addPreset')
@@ -840,18 +839,18 @@ class Database(object):
         #connect
         connection,cursor = self.connect_to_data()
 
-        #make sure there is a row for this beamline
-        cursor.execute("SELECT * FROM presets WHERE beamline=%s and data_root_dir='DEFAULTS'",(settings['beamline']))
+        #make sure there is a row for this site
+        cursor.execute("SELECT * FROM presets WHERE site=%s and data_root_dir='DEFAULTS'",(settings['site']))
 
-        #must add a row for this beamline
+        #must add a row for this site
         if cursor.rowcount == 0:
             self.logger.debug('rowcount 0')
-            self.logger.debug('%s %s' % (str(settings['setting_id']), str(settings['beamline'])))
-            self.logger.debug('Inserting row for this beamline into current')
-            cursor.execute("INSERT INTO presets ( setting_id,beamline,data_root_dir ) VALUES (%s,%s,%s)",(settings['setting_id'],settings['beamline'],'DEFAULTS'))
+            self.logger.debug('%s %s' % (str(settings['setting_id']), str(settings['site'])))
+            self.logger.debug('Inserting row for this site into current')
+            cursor.execute("INSERT INTO presets ( setting_id, site, data_root_dir ) VALUES (%s,%s,%s)",(settings['setting_id'],settings['site'],'DEFAULTS'))
         #in the clear
         else:
-            cursor.execute("UPDATE presets SET setting_id=%s  WHERE beamline=%s and data_root_dir=%s",(settings['setting_id'],settings['beamline'],'DEFAULTS'))
+            cursor.execute("UPDATE presets SET setting_id=%s  WHERE site=%s and data_root_dir=%s", (settings['setting_id'], settings['site'], 'DEFAULTS'))
 
         self.closeConnection(connection,cursor)
 
@@ -868,20 +867,20 @@ class Database(object):
         connection,cursor = self.connect_to_data()
 
         #add to the table
-        cursor.execute('''INSERT INTO beamline (beamline,x_b,x_m1,x_m2,x_m3,x_m4,x_m5,x_m6,x_r,y_b,y_m1,y_m2,y_m3,y_m4,y_m5,y_m6,y_r)
-                          VALUES (d.beamline,d.x_b,d.x_m1,d.x_m2,d.x_m3,d.x_m4,d.x_m5,d.x_m6,d.x_r,d.y_b,d.y_m1,d.y_m2,d.y_m3,d.y_m4,d.y_m5,d.y_m6,d.y_r,json.dumps(d.image_ids))''')
+        cursor.execute('''INSERT INTO site (site,x_b,x_m1,x_m2,x_m3,x_m4,x_m5,x_m6,x_r,y_b,y_m1,y_m2,y_m3,y_m4,y_m5,y_m6,y_r)
+                          VALUES (d.site,d.x_b,d.x_m1,d.x_m2,d.x_m3,d.x_m4,d.x_m5,d.x_m6,d.x_r,d.y_b,d.y_m1,d.y_m2,d.y_m3,d.y_m4,d.y_m5,d.y_m6,d.y_r,json.dumps(d.image_ids))''')
 
         #clean up connection
         self.closeConnection(connection,cursor)
 
         #return the latest values
-        return(self.getBeamcenter(d.beamline))
+        return(self.getBeamcenter(d.site))
 
-    def getBeamcenter(self,beamline,date=False):
+    def getBeamcenter(self, site, date=False):
         """
         Return the latest
         """
-        self.logger.debug('Database.getBeamcenter beamline: %s'%beamline)
+        self.logger.debug('Database.getBeamcenter site: %s' % site)
 
         my_dict = {}
 
@@ -889,23 +888,23 @@ class Database(object):
             #not working for specific date yet
             pass
         else:
-            my_dict = self.makeDicts('SELECT * FROM beamcenter WHERE beamline=%s ORDER BY timestamp DESC LIMIT 1', (beamline,))
+            my_dict = self.makeDicts('SELECT * FROM beamcenter WHERE site=%s ORDER BY timestamp DESC LIMIT 1', (site, ))
 
         return(my_dict)
 
-    def getSettingsByBDT(self,beamline,data_root_dir='DEFAULTS',setting_type='GLOBAL'):
+    def getSettingsByBDT(self, site_id, data_root_dir="DEFAULTS",setting_type="GLOBAL"):
         """
         Returns a dict with the most recent settings for the given conditions.
 
-        This attempts to find settings for a beamline+data root dir of a particular
+        This attempts to find settings for a site_id+data root dir of a particular
         type, ususally global.
         """
 
-        self.logger.warning('Database::getSettingsByBDT beamline:%s drd:%s type:%s' % (beamline,data_root_dir,setting_type))
+        self.logger.warning('Database::getSettingsByBDT site_id:%s drd:%s type:%s' % (site_id, data_root_dir, setting_type))
 
         try:
-            query1 = 'SELECT * FROM settings WHERE beamline=%s AND data_root_dir=%s AND setting_type=%s ORDER BY setting_id DESC LIMIT 1'
-            settings_dict = self.makeDicts(query1,(beamline,data_root_dir,setting_type))[0]
+            query1 = 'SELECT * FROM settings WHERE site=%s AND data_root_dir=%s AND setting_type=%s ORDER BY setting_id DESC LIMIT 1'
+            settings_dict = self.makeDicts(query1, (site_id, data_root_dir, setting_type))[0]
 
             #handle the addition of reference_data_id
             if settings_dict['reference_data_id']:
@@ -983,14 +982,14 @@ class Database(object):
 
     def get_current_settings(self, id):
         """
-        Returns a dict with the current settings for a given beamline
+        Returns a dict with the current settings for a given site
         """
         self.logger.debug('Database::get_current_settings for id %s', id)
 
         try:
 
             # 1st get the imagesettings_id from current
-            query1 = 'SELECT * FROM current WHERE beamline=%s'
+            query1 = 'SELECT * FROM current WHERE site=%s'
             current_dict = self.makeDicts(query=query1,
                                           params=(id,),
                                           db='DATA')[0]
@@ -1007,36 +1006,43 @@ class Database(object):
             self.logger.exception('Error in get_current_settings')
             return(False)
 
-    def check_new_data_root_dir_setting(self, data_root_dir, beamline):
+    def check_new_data_root_dir_setting(self, data_root_dir, site_id):
         """
         Check to see if there is an entry for this data_root_dir.
 
         An attempt is made to get the most recent global settings for the drd.
         If this fails, the most recent default entry in the database is acquired.
         """
-        self.logger.debug('Database::check_new_data_root_dir_setting %s %s', (data_root_dir, beamline))
+        self.logger.debug('Database::check_new_data_root_dir_setting %s %s',
+                          (data_root_dir, site_id))
 
         #check to see if there is an entry in presets for this drd
-        settings_dict = self.getSettingsByBDT(beamline=beamline,
+        settings_dict = self.getSettingsByBDT(site_id=site_id,
                                               data_root_dir=data_root_dir,
                                               setting_type='GLOBAL')
         if (settings_dict):
-            # Make sure the beamline is correct
+            # Make sure the site_id is correct
             self.update_current(settings_dict)
         else:
-            #Get the defaults for this beamline
-            query = "SELECT * FROM settings WHERE beamline=%s AND data_root_dir=%s ORDER BY setting_id DESC LIMIT 1"
-            settings_dict = self.makeDicts(query, (beamline,'DEFAULTS'))[0]
-            #update the dict with current data
-            my_dict = {'beamline':beamline,'data_root_dir':data_root_dir}
+
+            # Get the defaults for this site_id
+            query = "SELECT * FROM settings WHERE site=%s AND data_root_dir=%s ORDER BY setting_id DESC LIMIT 1"
+
+            print query
+            print site_id
+            settings_dict = self.makeDicts(query, (site_id, "DEFAULTS"))[0]
+
+            # Update the dict with current data
+            my_dict = {"site":site_id, "data_root_dir":data_root_dir}
             settings_dict.update(my_dict)
-            #make a new entry for this drd
+
+            # Make a new entry for this drd
             settings_dict = self.addSettings(settings_dict)
             self.logger.debug(settings_dict)
 
-        #change the datetimes to JSON encodable
+        # Change the datetimes to JSON encodable
         try:
-            settings_dict['timestamp'] = settings_dict['timestamp'].isoformat()
+            settings_dict["timestamp"] = settings_dict["timestamp"].isoformat()
         except:
             pass
 
@@ -4407,7 +4413,7 @@ class Database(object):
                used for work and data_root_dir
         info - dict containing information used by the agent
                used for sample_id and run_id
-        settings - dict containing settings from the beamline
+        settings - dict containing settings from the site
                    importantly this contains the original request
                    multiple uses
         results - dict containing result information from the agent
@@ -4607,7 +4613,7 @@ class Database(object):
                used for work and data_root_dir
         info - dict containing information used by the agent
                used for sample_id and run_id
-        settings - dict containing settings from the beamline
+        settings - dict containing settings from the site
                    importantly this contains the original request
                    multiple uses
         results - dict containing result information from the agent
@@ -5144,7 +5150,7 @@ class Database(object):
                used for work and data_root_dir
         info - dict containing information used by the agent
                used for sample_id and run_id
-        settings - dict containing settings from the beamline
+        settings - dict containing settings from the site
                    importantly this contains the original request
                    multiple uses
         results - dict containing result information from the agent
@@ -5905,7 +5911,7 @@ class Database(object):
     ##################################################################################################################
     # Functions for runs                                                                                             #
     ##################################################################################################################
-    def addRun(self,run,beamline):
+    def addRun(self, run, site_id):
         """
         Add a new run to the MySQL database
         """
@@ -5937,7 +5943,7 @@ class Database(object):
                                                              time,
                                                              de_zngr,
                                                              anomalous,
-                                                             beamline) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                                                             site) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
                                                              (run['directory'],
                                                               prefix,
                                                               run_number,
@@ -5953,7 +5959,7 @@ class Database(object):
                                                               run['time'],
                                                               run['de_zinger'],
                                                               'No',                 #not pertinent to console context
-                                                              beamline))
+                                                              site_id))
                         run_id = cursor.lastrowid
                         self.closeConnection(connection,cursor)
                         return(run_id)
@@ -5978,7 +5984,7 @@ class Database(object):
                                                              time,
                                                              de_zngr,
                                                              anomalous,
-                                                             beamline) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                                                             site) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
                                                              (run['Directory'],
                                                               run['Image_Prefix'],
                                                               run['Run'],
@@ -5994,7 +6000,7 @@ class Database(object):
                                                               run['Time'],
                                                               run['De-Zngr'],
                                                               run['Anomalous'],
-                                                              beamline))
+                                                              site_id))
                 elif (run['file_source'] == 'PILATUS'):
                     self.logger.debug("Adding run from PILATUS into database directory:%s image_prefix:%s run_number:%s" %(run['directory'],run['prefix'],run['run_number']))
                     cursor.execute("""INSERT INTO runs ( directory,
@@ -6010,7 +6016,7 @@ class Database(object):
                                                          axis,
                                                          width,
                                                          time,
-                                                         beamline) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                                                         site) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
                                                          (run['directory'],
                                                           run['prefix'],
                                                           run['run_number'],
@@ -6024,7 +6030,7 @@ class Database(object):
                                                           run['axis'],
                                                           run['width'],
                                                           run['time'],
-                                                          beamline))
+                                                          site_id))
 
                     run_id = cursor.lastrowid
                     self.closeConnection(connection,cursor)
@@ -6300,10 +6306,10 @@ class Database(object):
             #the most recent request will be used
             request_return = request_dict[0]
             request_return['timestamp'] = request_return['timestamp'].isoformat()
-            #mark all entries for the given beamline as 'read'
-            beamline = request_return['beamline']
+            #mark all entries for the given site as 'read'
+            site = request_return['site']
             for request in request_dict:
-                if (request['beamline'] == beamline):
+                if (request['site'] == site_id):
                     self.markMinikappaRequest(request['minikappa_id'],'read')
             #return the most recent request
             return(request_return)
@@ -6337,10 +6343,10 @@ class Database(object):
             #the most recent request will be used
             request_return = request_dict[0]
             request_return['timestamp'] = request_return['timestamp'].isoformat()
-            #mark all entries for the given beamline as 'read'
-            beamline = request_return['beamline']
+            #mark all entries for the given site as 'read'
+            site = request_return['site']
             for request in request_dict:
-                if (request['beamline'] == beamline):
+                if (request['site'] == site):
                     self.markDatacollectionRequest(request['datacollection_id'],'read')
             #return the most recent request
             return(request_return)
@@ -6692,7 +6698,7 @@ class Database(object):
     def update_controller_status(self,
                                  controller_ip=None,
                                  data_root_dir=None,
-                                 beamline=None,
+                                 site_id=None,
                                  dataserver_ip=None,
                                  cluster_ip=None):
         """
@@ -6705,7 +6711,7 @@ class Database(object):
 
         #construct and run query
         try:
-            cursor.execute('INSERT INTO status_controller (controller_ip,data_root_dir,beamline,dataserver_ip,cluster_ip) VALUES (%s,%s,%s,%s,%s) ON DUPLICATE KEY UPDATE data_root_dir=%s,beamline=%s,dataserver_ip=%s,cluster_ip=%s,timestamp=CURRENT_TIMESTAMP ', (controller_ip, data_root_dir, beamline, dataserver_ip, cluster_ip, data_root_dir, beamline, dataserver_ip, cluster_ip))
+            cursor.execute('INSERT INTO status_controller (controller_ip,data_root_dir,site,dataserver_ip,cluster_ip) VALUES (%s,%s,%s,%s,%s) ON DUPLICATE KEY UPDATE data_root_dir=%s,site=%s,dataserver_ip=%s,cluster_ip=%s,timestamp=CURRENT_TIMESTAMP ', (controller_ip, data_root_dir, site_id, dataserver_ip, cluster_ip, data_root_dir, site_id, dataserver_ip, cluster_ip))
         except:
             self.logger.exception('Trouble writing the status of the controller into the database')
         self.closeConnection(connection, cursor)
@@ -6736,7 +6742,7 @@ class Database(object):
                             images.distance
                             from single_results
                             join images on (single_results.image_id = images.image_id)
-                            where images.beamline="24_ID_C" and single_results.labelit_res is not null
+                            where images.site="24_ID_C" and single_results.labelit_res is not null
                             order by single_results.timestamp''')
         for row in cursor.fetchall():
             if (0.5 < (1-0.7*math.e**(-4/row[0])-1.5*row[2]-0.2*row[1])):
@@ -6816,59 +6822,4 @@ class Database(object):
 
 if __name__ == '__main__':
 
-    print 'raps_database.py::__main__'
-
-    from rapd_beamlinespecific import secret_settings
-    import logging, logging.handlers
-
-    #set up logging
-    LOG_FILENAME = '/tmp/rapd_database.log'
-    # Set up a specific logger with our desired output level
-    logger = logging.getLogger('RAPDLogger')
-    logger.setLevel(logging.DEBUG)
-    # Add the log message handler to the logger
-    handler = logging.handlers.RotatingFileHandler(
-              LOG_FILENAME, maxBytes=1000000, backupCount=5)
-    #add a formatter
-    formatter = logging.Formatter("%(asctime)s - %(message)s")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-
-    db = Database(secret_settings['C'],logger)
-
-    #Testing newer getResultById with modification for runs
-    tmp = db.getResultById(id=1820,
-                          type='integrate')
-    logger.debug(tmp)
-
-
-
-    #Testing getRunWedges
-    a = db.getRunWedges(run_id=21792)
-    print a
-
-
-    #test puck methods
-#    from rapd_beamlinespecific import *
-
-#    puck_cutoff = '2011-01-01 00:00:00'
-#    allpucks = db.getAllPucks(puck_cutoff)
-#    print allpucks
-#    TransferMasterPuckListToBeamline(allpucks)
-    """
-    #tesing the beamcenter methods
-    db.bc_test()
-    """
-
-    """
-    #testing the fastintegrate pipeline database entry method
-    ret = [u'INTEGRATE', {u'data_root_dir': u'/gpfs3/users/harvard/Jeruzalmi_Aug10', u'work': u'/gpfs1/users/necat/rapd/uranium/trunk/integrate/2010-09-29/SMP7_1_1-120'}, {u'image_data': {u'gauss_y': 0.01, u'gauss_x': 0.029999999999999999, u'run_id': None, u'puck': u'B', u'md2_aperture': 70, u'sample': 1, u'ring_mode': u'0+24 singlets/RHB/1.3% coupling', u'calc_beam_center_x': None, u'calc_beam_center_y': None, u'sample_id': None, u'md2_net_exp': 2220, u'osc_start': 124.5, u'axis': u'phi', u'image_prefix': u'SMP7', u'size1': 3072, u'size2': 3072, u'acc_time': 2638, u'ID': u'SMP7_1_1-120', u'osc_range': 0.5, u'adc': u'slow', u'beamline': u'24_ID_C', u'beam_size_y': 0.029999999999999999, u'beam_size_x': 0.070000000000000007, u'type': u'unsigned_short', u'byte_order': u'little_endian', u'phi': 124.5, u'distance': 500.0, u'wavelength': 0.97919, u'timestamp': u'2010-09-29T14:42:55', u'time': 1.0, u'md2_prg_exp': 1.0, u'repr': u'SMP7_1_1-120', u'binning': u'2x2', u'image_id': 676007, u'process_id': 27720, u'twotheta': 0.0, u'date': u'2010-08-25T16:09:40', u'adsc_number': 473, u'detector_sn': 911, u'pixel_size': 0.10259, u'dim': 2, u'run_number': 1, u'transmission': 10.091900000000001, u'ring_current': 102.09999999999999, u'flux': 302757000000.0, u'unif_ped': 1500, u'beam_center_y': 156.31999999999999, u'beam_center_x': 156.715, u'directory': u'/gpfs3/users/harvard/Jeruzalmi_Aug10/images/SMP7', u'fullname': u'/gpfs3/users/harvard/Jeruzalmi_Aug10/images/SMP7/SMP7_1_120.img', u'header_bytes': 1024, u'collect_mode': u'RUN', u'image_number': 120, u'ccd_image_saturation': 65535}, u'run_data': {u'distance': 500.0, u'image_prefix': u'SMP7', u'run_number': 1, u'kappa': 0.0, u'run_id': 7686, u'timestamp': u'2010-08-25T15:58:40', u'beamline': u'C', u'anomalous': u'No', u'phi': 65.0, u'twotheta': 0.0, u'start': 1, u'de_zngr': u'N', u'time': 1.0, u'directory': u'/gpfs3/users/harvard/Jeruzalmi_Aug10/images/SMP7', u'total': 120, u'omega': 0.0, u'width': 0.5, u'axis': u'phi'}}, {u'min_exposure_per': 1.0, u'crystal_size_y': 100, u'crystal_size_x': 100, u'crystal_size_z': 100, u'work_directory': u'None', u'work_dir_override': u'False', u'mosflm_seg': 1, u'setting_type': u'GLOBAL', u'sample_type': u'Protein', u'beamline': u'C', u'beam_size_y': u'AUTO', u'beam_size_x': u'AUTO', u'beam_flip': u'False', u'best_complexity': u'none', u'reference_data_id': 0, u'solvent_content': 0.55000000000000004, u'timestamp': u'2010-09-10T15:36:09', u'data_root_dir': u'/gpfs3/users/harvard/Jeruzalmi_Aug10', u'setting_id': 2522, u'integrate': u'True', u'beta': 0.0, u'mosflm_rot': 0.0, u'alpha': 0.0, u'y_beam': 155.87, u'a': 0.0, u'susceptibility': 1.0, u'c': 0.0, u'b': 0.0, u'strategy_type': u'best', u'index_hi_res': 0.0, u'aimed_res': 0.0, u'x_beam': 157.041, u'spacegroup': u'None', u'multiprocessing': u'True', u'gamma': 0.0}, [u'164.54.212.165', 50001], {u'status': u'SUCCESS', u'files': {u'scala_log': u'/gpfs1/users/necat/rapd/uranium/trunk/integrate/2010-09-29/SMP7_1_1-120/RAPD_SMP7_scala.log', u'mtzfile': u'/gpfs1/users/necat/rapd/uranium/trunk/integrate/2010-09-29/SMP7_1_1-120/RAPD_SMP7_free.mtz', u'mergable': u'/gpfs1/users/necat/rapd/uranium/trunk/integrate/2010-09-29/SMP7_1_1-120/SMP7_mergable.mtz', u'xinfo': u'/gpfs1/users/necat/rapd/uranium/trunk/integrate/2010-09-29/SMP7_1_1-120/SMP7.xinfo', u'xia_log': u'/gpfs1/users/necat/rapd/uranium/trunk/integrate/2010-09-29/SMP7_1_1-120/xia2.txt', u'unmerged': u'/gpfs1/users/necat/rapd/uranium/trunk/integrate/2010-09-29/SMP7_1_1-120/RAPD_SMP7_unmerged.sca', u'scafile': u'/gpfs1/users/necat/rapd/uranium/trunk/integrate/2010-09-29/SMP7_1_1-120/RAPD_SMP7_scaled.sca', u'xscale_log': u'/gpfs1/users/necat/rapd/uranium/trunk/integrate/2010-09-29/SMP7_1_1-120/RAPD_SMP7_XSCALE.log'}, u'summary': {u'twinScore': u'2.10', u'procTime': u'00h 15m 50s', u'outerShell': {u'I/sigma': u'3.3', u'Rmerge': u'0.348', u'high_res': u'4.55', u'multiplicity': u'3.7', u'low_res': u'4.67', u'anomComp': u'97.7', u'Rmeas(I)': u'0.475', u'anomMult': u'1.9', u'anomSlope': u'0.0', u'Rmeas(I+/-)': u'0.456', u'Rpim(I+/-)': u'0.289', u'totalObs': u'6997.0', u'Rpim(I)': u'0.241', u'completeness': u'99.8', u'totalUnique': u'1890.0', u'partialBias': u'0.0', u'anomCorr': u'0.022'}, u'overall': {u'I/sigma': u'10.3', u'Rmerge': u'0.088', u'high_res': u'4.55', u'multiplicity': u'3.6', u'low_res': u'93.46', u'anomComp': u'96.4', u'Rmeas(I)': u'0.123', u'wilsonB': u'123.543', u'anomMult': u'1.9', u'anomSlope': u'1.036', u'Rmeas(I+/-)': u'0.115', u'Rpim(I+/-)': u'0.073', u'totalObs': u'93161.0', u'Rpim(I)': u'0.064', u'completeness': u'99.7', u'totalUnique': u'25967.0', u'partialBias': u'0.0', u'anomCorr': u'0.05'}, u'cell': u'181.790 181.790 232.270 90.000  90.000 120.000', u'spacegroup': u'P 31 2 1', u'innerShell': {u'I/sigma': u'27.8', u'Rmerge': u'0.022', u'high_res': u'20.34', u'multiplicity': u'2.8', u'low_res': u'93.46', u'anomComp': u'79.7', u'Rmeas(I)': u'0.099', u'anomMult': u'1.6', u'anomSlope': u'0.0', u'Rmeas(I+/-)': u'0.029', u'Rpim(I+/-)': u'0.018', u'totalObs': u'863.0', u'Rpim(I)': u'0.066', u'completeness': u'92.6', u'totalUnique': u'312.0', u'partialBias': u'0.0', u'anomCorr': u'-0.014'}}, u'parsed': u'xia_results.html', u'plots': u'scala_plot.html'}]
-
-
-    print ret[1]
-    print ret[2]
-    print ret[3]
-    print ret[5]
-
-    db.addIntegrateResult(dirs=ret[1],info=ret[2],settings=ret[3],results=ret[5])
-    """
+    print 'rapd_mysql_adapter.py.__main__'

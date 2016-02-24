@@ -33,7 +33,7 @@ import socket
 #custom RAPD imports
 from utils.site_tools import get_ip_address
 
-from control_server import PerformAction, ControllerServer
+from control_server import LaunchAction, ControllerServer
 # from rapd_console import ConsoleFeeder
 # from rapd_site import GetDataRootDir, TransferToUI, TransferToBeamline, CopyToUser
 
@@ -336,17 +336,14 @@ class Model(object):
             header = detector.read_header(fullname=fullname,
                                           beam_settings=self.site.BEAM_SETTINGS)
 
-            # Grab extra data for the image and add to the header
-            if self.site_adapter:
-                site_data = self.site_adapter.get_image_data()
-
             # Add some data to the header
             header["run_id"] = 0
             header["data_root_dir"] = data_root_dir
 
-            # # Calculate beam center (in case we needed extra data from site to correctly calculate)
-            # x_beam, y_beam = detector.calculate_beam_center(header["distance"],
-            #                                                 self.site.BEAM_SETTINGS)
+            # Grab extra data for the image and add to the header
+            if self.site_adapter:
+                site_data = self.site_adapter.get_image_data()
+                header.update(site_data)
 
             # Add to database
             db_result, __ = self.database.add_image(header)
@@ -379,130 +376,130 @@ class Model(object):
         else:
             self.logger.debug("Unable to figure out %s", fullname)
 
-    def add_adsc_image(self, data):
-        """
-        Handle an image to be added to the database from ADSC.
-
-        The image is NOT presumed to be new, so it is checked against the database.
-        There are several classes of images that are sorted out here:
-            data - snaps and runs
-            ignore - image ignored
-                     tag defined in rapd_site ignore_tag
-
-        """
-        self.logger.debug("Model::add_adsc_image %s" % data["image_name"])
-
-        #reset the reconnect attempts to 0 since we have connected
-        self.imagemonitor_reconnect_attempts = 0
-
-        #Save current image in class-level variable
-        fullname = data["image_name"]
-        dirname = os.path.dirname(fullname)
-        self.current_image = fullname
-
-        # Skip any handling?
-        if dirname in self.Settings["analysis_shortcircuits"]:
-            self.logger.info("Short-circuit")
-
-        # Go ahead and handle the image
-        else:
-
-            # Derive the data_root_dir
-            my_data_root_dir = GetDataRootDir(fullname=fullname,
-                                              logger=self.logger)
-
-            # Figure out if image in the current run...
-            place = self.in_current_run(fullname)
-
-            # Image is in the current run
-            if isinstance(place, int):
-
-                self.logger.info("%s in current run at position %d" % (fullname,
-                                                                       place))
-
-                # If not integrating trigger integration
-                if self.current_run["status"] != "INTEGRATING":
-
-                    # Handle getting to the party late
-                    if place != 1:
-                        self.logger.info("Creating first image in run")
-                        fullname = "%s/%s_%03d.%s" % (
-                            self.current_run["directory"],
-                            self.current_run["image_prefix"],
-                            int(self.current_run["start"]),
-                            self.current_run["image_suffix"])
-
-                    # Right on time
-                    else:
-                        pass
-                        # fullname = data["image_name"]
-
-                    #Get all the image information
-                    header = self.get_adsc_header(
-                        fullname=fullname,
-                        run_id=self.current_run["run_id"],
-                        drd=my_data_root_dir,
-                        adsc_number=data["adsc_number"],
-                        place=1)
-
-                    #Add to database
-                    db_result, __ = self.database.add_image(header)
-                    header.update(db_result)
-
-                    self.current_run["status"] = "INTEGRATING"
-                    header["run"] = self.current_run.copy()
-                    self.new_data_image(data=header)
-
-            # Image is not in the current run
-            else:
-
-                # Image is a snap
-                if place == "SNAP":
-
-                    self.logger.debug("%s is a snap" % fullname)
-
-                    #Get all the image information
-                    header = self.get_adsc_header(
-                        fullname=data["image_name"],
-                        run_id=0,
-                        drd=my_data_root_dir,
-                        adsc_number=data["adsc_number"])
-
-                    # Add to database
-                    db_result, __ = self.database.add_image(header)
-                    header.update(db_result)
-
-                    # Run the image as a new data image
-                    self.new_data_image(data=header)
-
-                # Image is in a past run
-                elif place == "PAST_RUN":
-                    self.logger.info("In past run")
-                    my_place, run = self.in_past_run(fullname)
-
-                    if run:
-                        if my_place == run["total"]:
-                            self.logger.info("Final image in past run")
-
-                            #Get all the image information
-                            header = self.get_adsc_header(
-                                fullname=data["image_name"],
-                                run_id=run["run_id"],
-                                drd=my_data_root_dir,
-                                adsc_number=data["adsc_number"],
-                                place=my_place)
-
-                            #Add to database
-                            db_result, __ = self.database.add_image(header)
-                            header.update(db_result)
-
-                            #tag the header with run data
-                            header["run"] = run.copy()
-
-                            #Now trigger integration - if not integrating
-                            if run["status"] != "INTEGRATING":
-                                run["status"] = "INTEGRATING"
-                                self.new_data_image(data=header)
+    # def add_adsc_image(self, data):
+    #     """
+    #     Handle an image to be added to the database from ADSC.
+    #
+    #     The image is NOT presumed to be new, so it is checked against the database.
+    #     There are several classes of images that are sorted out here:
+    #         data - snaps and runs
+    #         ignore - image ignored
+    #                  tag defined in rapd_site ignore_tag
+    #
+    #     """
+    #     self.logger.debug("Model::add_adsc_image %s" % data["image_name"])
+    #
+    #     #reset the reconnect attempts to 0 since we have connected
+    #     self.imagemonitor_reconnect_attempts = 0
+    #
+    #     #Save current image in class-level variable
+    #     fullname = data["image_name"]
+    #     dirname = os.path.dirname(fullname)
+    #     self.current_image = fullname
+    #
+    #     # Skip any handling?
+    #     if dirname in self.Settings["analysis_shortcircuits"]:
+    #         self.logger.info("Short-circuit")
+    #
+    #     # Go ahead and handle the image
+    #     else:
+    #
+    #         # Derive the data_root_dir
+    #         my_data_root_dir = GetDataRootDir(fullname=fullname,
+    #                                           logger=self.logger)
+    #
+    #         # Figure out if image in the current run...
+    #         place = self.in_current_run(fullname)
+    #
+    #         # Image is in the current run
+    #         if isinstance(place, int):
+    #
+    #             self.logger.info("%s in current run at position %d" % (fullname,
+    #                                                                    place))
+    #
+    #             # If not integrating trigger integration
+    #             if self.current_run["status"] != "INTEGRATING":
+    #
+    #                 # Handle getting to the party late
+    #                 if place != 1:
+    #                     self.logger.info("Creating first image in run")
+    #                     fullname = "%s/%s_%03d.%s" % (
+    #                         self.current_run["directory"],
+    #                         self.current_run["image_prefix"],
+    #                         int(self.current_run["start"]),
+    #                         self.current_run["image_suffix"])
+    #
+    #                 # Right on time
+    #                 else:
+    #                     pass
+    #                     # fullname = data["image_name"]
+    #
+    #                 #Get all the image information
+    #                 header = self.get_adsc_header(
+    #                     fullname=fullname,
+    #                     run_id=self.current_run["run_id"],
+    #                     drd=my_data_root_dir,
+    #                     adsc_number=data["adsc_number"],
+    #                     place=1)
+    #
+    #                 #Add to database
+    #                 db_result, __ = self.database.add_image(header)
+    #                 header.update(db_result)
+    #
+    #                 self.current_run["status"] = "INTEGRATING"
+    #                 header["run"] = self.current_run.copy()
+    #                 self.new_data_image(data=header)
+    #
+    #         # Image is not in the current run
+    #         else:
+    #
+    #             # Image is a snap
+    #             if place == "SNAP":
+    #
+    #                 self.logger.debug("%s is a snap" % fullname)
+    #
+    #                 #Get all the image information
+    #                 header = self.get_adsc_header(
+    #                     fullname=data["image_name"],
+    #                     run_id=0,
+    #                     drd=my_data_root_dir,
+    #                     adsc_number=data["adsc_number"])
+    #
+    #                 # Add to database
+    #                 db_result, __ = self.database.add_image(header)
+    #                 header.update(db_result)
+    #
+    #                 # Run the image as a new data image
+    #                 self.new_data_image(data=header)
+    #
+    #             # Image is in a past run
+    #             elif place == "PAST_RUN":
+    #                 self.logger.info("In past run")
+    #                 my_place, run = self.in_past_run(fullname)
+    #
+    #                 if run:
+    #                     if my_place == run["total"]:
+    #                         self.logger.info("Final image in past run")
+    #
+    #                         #Get all the image information
+    #                         header = self.get_adsc_header(
+    #                             fullname=data["image_name"],
+    #                             run_id=run["run_id"],
+    #                             drd=my_data_root_dir,
+    #                             adsc_number=data["adsc_number"],
+    #                             place=my_place)
+    #
+    #                         #Add to database
+    #                         db_result, __ = self.database.add_image(header)
+    #                         header.update(db_result)
+    #
+    #                         #tag the header with run data
+    #                         header["run"] = run.copy()
+    #
+    #                         #Now trigger integration - if not integrating
+    #                         if run["status"] != "INTEGRATING":
+    #                             run["status"] = "INTEGRATING"
+    #                             self.new_data_image(data=header)
 
     def add_pilatus_image(self, fullname):
         """A new Pilatus6MF image has arrived"""
@@ -788,7 +785,7 @@ class Model(object):
         data_root_dir = data["data_root_dir"]
 
         # Acquire the settings for this image in case they have changed via UI
-        process_settings = self.database.get_current_settings(id=self.site.BEAMLINE)
+        process_settings = self.database.get_current_settings(id=self.site.ID)
 
         try:
             run_id = data["run_id"]
@@ -807,7 +804,7 @@ class Model(object):
             # We have a new drd - check for a previous setting
             self.logger.debug("DRD has changed to %s", data_root_dir)
             check = self.database.check_new_data_root_dir_setting(data_root_dir=data_root_dir,
-                                                                  beamline=site.BEAMLINE)
+                                                                  site_id=site.ID)
             if check:
                 self.logger.debug("Found and will employ settings this new data root dir")
 
@@ -830,16 +827,17 @@ class Model(object):
         # if process_settings.has_key("puckset_id"):
         #     data = self.database.setImageSampleId(image_dict=data,
         #                                           puckset_id=process_settings["puckset_id"])
-
-        if not run_id == 0 and (data["collect_mode"] == "SNAP"):
+        print run_id
+        print data
+        if data["collect_mode"] == "SNAP":
 
             # Add the image to self.pair
             self.pair.append(data["fullname"].lower())
             self.pair_id.append(data["image_id"])
 
-            work_dir, new_repr = self.get_work_dir("single",
-                                                   process_settings["work_directory"],
-                                                   data)
+            work_dir, new_repr = self.get_work_dir(top_level = process_settings["work_directory"],
+                                                   type_level = "single",
+                                                   image_data1 = data)
 
             # Now package directories into a dict for easy access by worker class
             new_dirs = {"work":work_dir,
@@ -857,11 +855,11 @@ class Model(object):
                          "repr":new_repr})
 
             # Run autoindex and strategy agent
-            PerformAction(command=("AUTOINDEX",
-                                   new_dirs,
-                                   data,
-                                   process_settings,
-                                   self.return_address),
+            LaunchAction(command=("AUTOINDEX",
+                                  new_dirs,
+                                  data,
+                                  site.LAUNCH_SETTINGS,
+                                  self.return_address),
                           settings=process_settings)
 
             # If the last two images have "pair" in their name - look more closely
@@ -885,8 +883,8 @@ class Model(object):
                     data2 = data.copy()
 
                     # Derive  directory and repr
-                    work_dir, new_repr = self.get_work_dir("pair",
-                                                           process_settings["work_directory"],
+                    work_dir, new_repr = self.get_work_dir(process_settings["work_directory"],
+                                                           "pair",
                                                            data1,
                                                            data2)
 
@@ -914,7 +912,7 @@ class Model(object):
                         })
 
                     # Run
-                    PerformAction(command=("AUTOINDEX-PAIR",
+                    LaunchAction(command=("AUTOINDEX-PAIR",
                                            new_dirs,
                                            data1,
                                            data2,
@@ -940,8 +938,8 @@ class Model(object):
             run_dict = data["run"].copy()
 
             # Derive  directory and repr
-            work_dir, new_repr = self.get_work_dir("integrate",
-                                                   process_settings["work_directory"],
+            work_dir, new_repr = self.get_work_dir(process_settings["work_directory"],
+                                                   "integrate",
                                                    data)
 
             # Now package directories into a dict for easy access by worker class
@@ -970,7 +968,7 @@ class Model(object):
                             "image_data":data}
 
                 # Connect to the server and autoindex the single image
-                PerformAction(command=("INTEGRATE",
+                LaunchAction(command=("INTEGRATE",
                                        new_dirs,
                                        out_data,
                                        process_settings,
@@ -983,6 +981,8 @@ class Model(object):
 
     def get_work_dir(self, top_level, type_level, image_data1, image_data2=None):
         """Return a valid working directory for rapd_agent to work in"""
+
+        print "get_work_dir", top_level, type_level, image_data1, image_data2
 
         # Top level
         toplevel_dir = top_level
@@ -1389,7 +1389,7 @@ class Model(object):
                     job = self.indexing_queue.pop()
                     self.indexing_active.appendleft("unknown")
                     #send the job to be done
-                    PerformAction(command=job[0],
+                    LaunchAction(command=job[0],
                                   settings=job[1],
                                   secret_settings=job[2],
                                   logger=job[3])
@@ -1514,7 +1514,7 @@ class Model(object):
                     self.logger.debug("Running a command from the indexing_queue")
                     job = self.indexing_queue.pop()
                     self.indexing_active.appendleft("unknown")
-                    PerformAction(command=job[0],
+                    LaunchAction(command=job[0],
                                   settings=job[1],
                                   secret_settings=job[2],
                                   logger=job[3])
