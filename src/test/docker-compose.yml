@@ -1,5 +1,7 @@
 version: '2'
 services:
+  rapd_launch:
+    
   redis:
     image: redis
   mysql:

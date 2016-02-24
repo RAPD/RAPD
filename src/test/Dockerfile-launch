@@ -1,0 +1,30 @@
+# RAPD
+#
+# VERSION 2.0.0
+
+FROM centos:6.7
+MAINTAINER Frank Murphy <fmurphy@anl.gov>
+
+# Needed to build Phenix
+RUN rpm -Uvh http://download.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm
+RUN rpm -Uvh http://rpms.famillecollet.com/enterprise/remi-release-6.rpm
+RUN yum -y --enablerepo=remi,remi-test install redis
+RUN yum -y install blas-devel lapack-devel atlas-sse3-devel atlas-devel openblas-devel libffi-devel ImageMagick-devel git
+
+# Install CCP4
+ADD ccp4-7.0-shelx-linux-x86_64.tar.bz2 /opt/
+WORKDIR /opt/ccp4-7.0
+RUN touch $HOME/.agree2ccp4v6
+RUN ./BINARY.setup
+RUN /bin/bash -c "echo 'source /opt/ccp4-7.0/bin/ccp4.setup-sh' >>/etc/bashrc"
+
+
+
+# RAPD
+# RUN cd /opt; git clone -b sercat https://github.com/RAPD/RAPD.git rapd
+# WORKDIR /opt/rapd/install
+# ADD phenix-installer-1.10.1-2155-intel-linux-2.6-x86_64-centos6.tar sources/phenix/
+# RUN ./install -b
+# RUN echo "source /opt/rapd/rapd.shrc" >>/etc/bashrc
+
+# WORKDIR /opt/rapd/src
