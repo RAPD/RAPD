@@ -25,7 +25,7 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
 """
-rapd_gatherer_sercat.py watches files for information on images and runs
+gatherer_sercat_id.py watches files for information on images and runs
 on a MAR data collection computer to provide information back
 to rapd_server via to redis
 
@@ -37,7 +37,9 @@ carefully.
 This server needs Python version 2.5 or greater (due to use of uuid module)
 """
 
+import argparse
 import atexit
+import importlib
 import json
 import logging, logging.handlers
 import os
@@ -46,62 +48,60 @@ import redis
 import shutil
 import socket
 import sys
-import threading
+# import threading
 import time
 import uuid
 
-# Import secret data
-import sercat_secrets as secrets
-GATHERERS = secrets.GATHERERS
-REDISHOST = secrets.REDISHOST
+# RAPD imports
+import utils.commandline
+import utils.lock
+import utils.log
+import utils.site_tools
 
-class SercatGatherer(threading.Thread):
+GATHERERS = {
+    "idc24.ser.aps.anl.gov" : (None, "/var/sergui/adxvframe")
+}
+
+# For testing
+# HACK
+GATHERERS = {
+    "kona.nec.aps.anl.gov" : (None, "/tmp/adxvframe")
+}
+
+class SercatGatherer():
     """
     Watches the beamline and signals images and runs over redis
     """
-    def __init__(self, one_run=False):
+
+    # For keeping track of file change times
+    run_time = 0
+    image_time = 0
+
+    def __init__(self, site):
         """Setup and start the SercatGatherer"""
 
-        #set up logging
-        log_filename = "/tmp/rapd_gatherer_sercat.log"
-        # Set up a specific logger with our desired output level
-        logger = logging.getLogger("RAPDLogger")
-        logger.setLevel(logging.DEBUG)
-        # Add the log message handler to the logger
-        handler = logging.handlers.RotatingFileHandler(log_filename, maxBytes=100000, backupCount=5)
-        #add a formatter
-        formatter = logging.Formatter("%(asctime)s - %(message)s")
-        handler.setFormatter(formatter)
-        logger.addHandler(handler)
+        # Get the logger Instance
+        self.logger = logging.getLogger("RAPDLogger")
 
-        logger.info("SercatGatherer.__init__")
+        # Passed-in variable
+        self.site = site
 
-        #init the thread
-        threading.Thread.__init__(self)
+        self.logger.info("SercatGatherer.__init__")
 
         # Assign some to instance
-        self.logger = logger
         self.ip_address = socket.gethostbyaddr(socket.gethostname())[-1][0]
 
-        #passed in
-        self.one_run = one_run
-
-        #for keeping track of file change times
-        self.run_time = 0
-        self.image_time = 0
-
         #Connect to redis
-        self.redis_pool = redis.ConnectionPool(host=REDISHOST)
+        self.redis_pool = redis.ConnectionPool(host=self.site.IMAGE_MONITOR_REDIS_HOST)
 
-        #get our bearings
+        # Get our bearings
         self.set_host()
 
-        #running conditions
+        # Running conditions
         self.go = True
-        atexit.register(self.stop)
 
-        #now run
-        self.start()
+        # Now run
+        self.run()
 
     def run(self):
         """
@@ -113,7 +113,7 @@ class SercatGatherer(threading.Thread):
         red = redis.Redis(connection_pool=self.redis_pool)
 
         while self.go:
-            # # Check if the run info has changed on the disk
+            # Check if the run info has changed on the disk
             if self.check_for_run_info():
                 run_data = self.get_run_data()
                 if run_data:
@@ -123,21 +123,22 @@ class SercatGatherer(threading.Thread):
                     # Push onto redis list in case no one is currently listening
                     red.rpush("run_data:%s" % self.site, run_data_json)
 
-            # 1 run check for every 5 image checks
-            for __ in range(5):
+            # 1 run check for every 20 image checks
+            for __ in range(20):
                 # Check if the image file has changed
                 if self.check_for_image_collected():
-                    image_data = self.get_image_data()
-                    if image_data:
+                    image_name = self.get_image_data()
+                    if image_name:
+                        self.logger.debug("filecreate:%s %s",
+                                          self.site,
+                                          image_name)
                         # Publish to Redis
-                        red.publish("filecreate:%s" % self.site, image_data.get("image_name", ""))
+                        red.publish("filecreate:%s" % self.site, image_name)
                         # Push onto redis list in case no one is currently listening
-                        red.rpush("filecreate:%s" % self.site, image_data.get("image_name", ""))
+                        red.rpush("filecreate:%s" % self.site, image_name)
                     break
                 else:
-                    time.sleep(0.1)
-            if self.one_run:
-                break
+                    time.sleep(0.05)
 
     def stop(self):
         """
@@ -153,12 +154,12 @@ class SercatGatherer(threading.Thread):
         """
         self.logger.debug("SercatGatherer.set_host")
 
-        #figure out which host we are on
+        # Figure out which host we are on
         host = os.uname()[1]
 
-        #now grab the file locations, beamline from settings
+        # Now grab the file locations, beamline from settings
         if GATHERERS.has_key(host):
-            self.run_data_file, self.image_data_file, self.site = GATHERERS[host]
+            self.run_data_file, self.image_data_file = GATHERERS[host]
         else:
             print "ERROR - no settings for this host"
             sys.exit(9)
@@ -172,13 +173,13 @@ class SercatGatherer(threading.Thread):
         Called if image information file modification time is newer than the time in memory
         """
 
-        #get the image data line(s)
-        image_lines = self.get_image_lines()
+        # Get the image data line(s)
+        image_lines = self.get_image_line()
 
-        #parse the lines
-        image_data = self.parse_image_lines(image_lines)
+        # Parse the lines
+        image_data = self.parse_image_line(image_lines)
 
-        # return the parsed data
+        # Return the parsed data
         return image_data
 
     def check_for_image_collected(self):
@@ -196,44 +197,38 @@ class SercatGatherer(threading.Thread):
                 time.sleep(0.01)
                 tries += 1
 
-        #the modification time has not changed
+        # The modification time has not changed
         if self.image_time == statinfo.st_mtime:
             return False
-        #the file has changed
+        # The file has changed
         else:
             self.image_time = statinfo.st_mtime
             return True
 
-    def get_image_lines(self):
+    def get_image_line(self):
         """
         return contents of xf_status
         """
-        #copy the file to prevent conflicts with other programs
-        tmp_file = "/dev/shm/"+uuid.uuid4().hex
+        # Copy the file to prevent conflicts with other programs
+        # HACK
+        tmp_file = "/tmp/"+uuid.uuid4().hex
         shutil.copyfile(self.image_data_file, tmp_file)
 
-        #read in the lines of the file
+        # Read in the lines of the file
         in_lines = open(tmp_file, "r").readlines()
 
-        #remove the temporary file
+        # Remove the temporary file
         os.unlink(tmp_file)
 
         return in_lines
 
-    def parse_image_lines(self, lines):
+    def parse_image_line(self, lines):
         """
         Parse the lines from the image information file and return a dict that
         is somewhat intelligible. Expect the file to look something like:
         8288 /data/BM_Emory_jrhorto.raw/xdc5/x13/x13_015/XDC-5_Pn13_r1_1.0400
         """
 
-        out_dict = {"adsc_number"  : "",
-                    "image_name"   : "",
-                    "directory"    : "",
-                    "image_prefix" : "",
-                    "run_number"   : "",
-                    "image_number" : "",
-                    "status"       : "None"}
         try:
             for i in range(len(lines)):
                 sline = lines[i].split()
@@ -243,25 +238,11 @@ class SercatGatherer(threading.Thread):
                         out_dict = False
                         break
                     else:
-                        try:
-                            # Commented-out entries remain for future possible use
-                            # out_dict["adsc_number"] = int(sline[0])
-                            out_dict["image_name"] = sline[1]
-                            # out_dict["directory"] = os.path.dirname(sline[1])
-                            # out_dict["image_prefix"] = "_".join(
-                                # os.path.basename(sline[1]).split("_")[:-1])
-                            # out_dict["run_number"] = int(os.path.basename(
-                                # sline[1]).split("_")[-1].split(".")[0])
-                            # out_dict["image_number"] = int(sline[1].split(".")[-1])
-                            out_dict["status"] = "SUCCESS"
-                            break
-                        except:
-                            self.logger.exception(
-                                "Exception in SercatGatherer.parse_image_lines %s", lines[i])
-                            out_dict = False
-                            break
-            self.logger.debug("SercatGatherer.parse_image_lines - %s", out_dict["image_name"])
-            return out_dict
+                        image_name = os.path.realpath(sline[1])
+                        break
+
+            self.logger.debug("SercatGatherer.parse_image_line - %s", image_name)
+            return image_name
         except:
             self.logger.exception("Failure to parse image data file - error in format?")
             return False
@@ -273,25 +254,30 @@ class SercatGatherer(threading.Thread):
         """
         Returns True if run_data_file has been changed, False if not
         """
-        tries = 0
-        while tries < 5:
-            try:
-                statinfo = os.stat(self.run_data_file)
-                break
-            except:
-                if tries == 4:
-                    return False
-                time.sleep(0.01)
-                tries += 1
 
-        #the modification time has not changed
-        if self.run_time == statinfo.st_mtime:
-            return False
+        # Make sure we have a file to check
+        if self.run_data_file:
+            tries = 0
+            while tries < 5:
+                try:
+                    statinfo = os.stat(self.run_data_file)
+                    break
+                except:
+                    if tries == 4:
+                        return False
+                    time.sleep(0.01)
+                    tries += 1
 
-        #the file has changed
+            #the modification time has not changed
+            if self.run_time == statinfo.st_mtime:
+                return False
+
+            #the file has changed
+            else:
+                self.run_time = statinfo.st_mtime
+                return True
         else:
-            self.run_time = statinfo.st_mtime
-            return True
+            return False
 
     def get_run_data(self):
         """
@@ -409,8 +395,66 @@ class SercatGatherer(threading.Thread):
     #         self.logger.exception('Failure to parse marcollect - error in format?')
     #         return(False)
 
+# def file_is_locked(file_path):
+#     """Method to make sure only one instance is running on this machine"""
+#     global file_handle
+#
+# 	# Create the directory for file_path if it does not exist
+#     if not os.path.exists(os.path.dirname(file_path)):
+#         os.makedirs(os.path.dirname(file_path))
+#
+#     file_handle = open(file_path, "w")
+#     try:
+#         fcntl.lockf(file_handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
+#         return False
+#     except IOError:
+#         return True
+
+def get_commandline():
+    """Get the commandline variables and handle them"""
+
+    # Parse the commandline arguments
+    commandline_description = """The core rapd process for coordination of a
+    site install"""
+    parser = argparse.ArgumentParser(parents=[utils.commandline.base_parser],
+                                     description=commandline_description)
+
+    return parser.parse_args()
+
+def main(site_in=None):
+    """ The main process
+    Setup logging and instantiate the gatherer"""
+
+    # Get the commandline args
+    commandline_args = get_commandline()
+
+    # Determine the site
+    site_file = utils.site_tools.determine_site(site_arg=commandline_args.site)
+
+    # Import the site settings
+    SITE = importlib.import_module(site_file)
+
+	# Single process lock?
+    if SITE.GATHERER_LOCK_FILE:
+        if utils.lock.file_is_locked(SITE.GATHERER_LOCK_FILE):
+            raise Exception("%s is already locked, unable to run" % SITE.GATHERER_LOCK_FILE)
+
+    # Set up logging
+    if commandline_args.verbose:
+        log_level = 10
+    else:
+        log_level = SITE.LOG_LEVEL
+    logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
+                                  logfile_id="gatherer_"+SITE.ID,
+                                  level=log_level)
+
+    logger.debug("Commandline arguments:")
+    for pair in commandline_args._get_kwargs():
+        logger.debug("  arg:%s  val:%s" % pair)
+
+    # Instantiate the Gatherer
+    GATHERER = SercatGatherer(site=SITE)
 
 if __name__ == '__main__':
 
-    #create the watcher instance
-    WATCHER = SercatGatherer()
+    main()
