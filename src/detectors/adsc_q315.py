@@ -123,10 +123,6 @@ def date_adsc_to_sql(datetime_in):
     #print ' '.join((date,time_str))
     return 'T'.join((date, time_str))
 
-class Monitor(monitors.redis_monitor.RedisMonitor):
-    """Redis-based image collection signalling"""
-
-
 def read_header(image, run_id=None, place_in_run=None):
     """
     Given a full file name for an ADSC image (as a string), read the header and
@@ -167,7 +163,7 @@ def read_header(image, run_id=None, place_in_run=None):
                     "sample"       : (r"^SAMPLE=\s*([\d\w]+)\;", lambda x: str(x)),
                     "ring_cur"     : (r"^RING_CUR=\s*([\d\.]+)\;", lambda x: float(x)),
                     "ring_mode"    : (r"^RING_MODE=\s*(.*)\;", lambda x: str(x)),
-                    "md2_aperture" : (r"^MD2_APERTURE=\s*(\d+)\;", lambda x: int(x))}
+                    "aperture"     : (r"^MD2_APERTURE=\s*(\d+)\;", lambda x: int(x))}
                     # "period"       : (r"^# Exposure_period\s*([\d\.]+) s", lambda x: float(x)),
                     # "count_cutoff" : (r"^# Count_cutoff\s*(\d+) counts", lambda x: int(x))}
 

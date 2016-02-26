@@ -16,7 +16,7 @@ RUN yum -y install blas-devel lapack-devel atlas-sse3-devel atlas-devel openblas
 
 # Install XDS
 WORKDIR /opt
-ADD XDS-INTEL64_Linux_x86_64.tar .
+ADD XDS-INTEL64_Linux_x86_64.tar .ker
 RUN /bin/bash -c "echo  'export PATH=/opt/XDS-INTEL64_Linux_x86_64:$PATH' >>/etc/bashrc"
 
 # Install BEST
@@ -41,4 +41,5 @@ RUN /bin/bash -c "./install -b" # &> /dev/null"
 RUN /bin/bash -c "echo 'Finished with rapd install'"
 RUN /bin/bash -c "echo 'source /opt/rapd/rapd.shrc' >>/etc/bashrc"
 
-# WORKDIR /opt/rapd/src
+WORKDIR /opt/rapd/src
+ENTRYPOINT [""]
