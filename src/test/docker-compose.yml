@@ -1,10 +1,39 @@
 version: '2'
 services:
-  rapd_launch:
-    
+  control:
+    image: rapd_control
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile-control
+    ports:
+      - "50000:50000"
+    links:
+      - redis
+      - mariadb
+    volumes:
+      - test_data:/Users/fmurphy/workspace/rapd_github/src/test/necat_e_test/test_data
+  launch:
+    image: rapd_launch
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile-launch
+    ports:
+      - "50001:50001"
+    links:
+      - redis
+    volumes:
+      - test_data:/Users/fmurphy/workspace/rapd_github/src/test/necat_e_test/test_data
   redis:
     image: redis
-  mysql:
+    ports:
+      - "6379:6379"
+  mariadb:
     image: mariadb:5.5
     environment:
       - MYSQL_ROOT_PASSWORD=root_password
+    ports:
+      - "3306:3306"
+
+volumes:
+  test_data:
+    external: true
