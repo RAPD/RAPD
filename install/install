@@ -215,9 +215,9 @@ if [ $INSTALL_PHENIX == 1 ]; then
       elif [[ $DIST == "CentOS" ]]; then
 
         if [ ${REV:0:1} == "5" ]; then
-            printf "  \033[91mCentOS 5 is currently not supported. Please enter an issue or work on a patch!\033[0m\n"
-            exit 1
-            # printf "  CentOS 5\n"
+            # printf "  \033[91mCentOS 5 is currently not supported. Please enter an issue or work on a patch!\033[0m\n"
+            # exit 1
+            printf "  CentOS 5\n"
             PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos5"
             PHENIX_DOWNLOAD_REPR="Kernel 2.6 (64-bit; CentOS 5) [ \033[4;34mdownload command-line installer\033[0m ]"
         fi
