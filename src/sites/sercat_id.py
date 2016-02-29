@@ -95,6 +95,8 @@ DETECTOR = "NECAT_ADSC_Q315_TEST"
 DETECTOR_SUFFIX = ".img"
 
 # Data gatherer settings
+# The data gatherer for this site, in the src/sites/gatherers directory
+GATHERER = "sercat_id.py"
 GATHERER_LOCK_FILE = "/tmp/lock/gatherer.lock"
 
 # Monitor for collected images

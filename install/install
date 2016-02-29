@@ -487,6 +487,9 @@ echo "" >> rapd.shrc
 echo "# Add rapd bin to the path" >> rapd.shrc
 echo "PATH=$BINDIR:\$PATH" >> rapd.shrc
 echo "export PATH" >> rapd.shrc
+echo "# Set environmental variable"
+echo "RAPD_HOME=$PREFIX" >> rapd.shrc
+echo "export RAPD_HOME" >> rapd.shrc
 echo "" >> rapd.shrc
 echo "echo '==================================================='" >> rapd.shrc
 echo "echo '                    RAPD v$RAPD_VERSION            '" >> rapd.shrc
@@ -511,6 +514,8 @@ echo "source $PREFIX/share/phenix/build/setpaths.csh" >> rapd.cshrc
 echo "" >> rapd.cshrc
 echo "# Add rapd bin to the path" >> rapd.cshrc
 echo "setenv PATH $BINDIR:\$PATH" >> rapd.cshrc
+echo "# Set environmental variable"
+echo "setenv RAPD_HOME $PREFIX" >> rapd.cshrc
 echo "" >> rapd.cshrc
 echo "echo '==================================================='" >> rapd.cshrc
 echo "echo '                    RAPD v$RAPD_VERSION            '" >> rapd.cshrc

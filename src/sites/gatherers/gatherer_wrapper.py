@@ -19,22 +19,13 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__created__ = "2009-07-08"
+__created__ = "2016-02-29"
 __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
 """
-gatherer_sercat_id.py watches files for information on images and runs
-on a MAR data collection computer to provide information back
-to rapd_server via to redis
-
-This server is used at SERCAT with MAR detectors
-
-If you are adapting rapd to your locality, you will need to check this
-carefully.
-
-This server needs Python version 2.5 or greater (due to use of uuid module)
+gatherer_wrapper.py wraps the gatherers and allows calling by site specification
 """
 
 import argparse
@@ -47,6 +38,7 @@ import pickle
 import redis
 import shutil
 import socket
+import subprocess
 import sys
 import time
 import uuid
@@ -56,12 +48,6 @@ import utils.commandline
 import utils.lock
 import utils.log
 import utils.site_tools
-
-GATHERERS = {
-    "164.54.208.24" : (None, "/var/sergui/adxvframe"),
-    # For testing
-    "164.54.212.15" : (None, "/tmp/adxvframe")
-}
 
 class SercatGatherer():
     """
@@ -76,7 +62,9 @@ class SercatGatherer():
     ip_address = None
 
     def __init__(self, site):
-        """Setup and start the SercatGatherer"""
+        """
+        Setup and start the SercatGatherer
+        """
 
         # Get the logger Instance
         self.logger = logging.getLogger("RAPDLogger")
@@ -117,9 +105,9 @@ class SercatGatherer():
                 if run_data:
                     run_data_json = json.dumps(run_data)
                     # Publish to Redis
-                    red.publish("run_data:%s" % self.site.ID, run_data_json)
+                    red.publish("run_data:%s" % self.tag, run_data_json)
                     # Push onto redis list in case no one is currently listening
-                    red.rpush("run_data:%s" % self.site.ID, run_data_json)
+                    red.rpush("run_data:%s" % self.tag, run_data_json)
 
             # 1 run check for every 20 image checks
             for __ in range(20):
@@ -128,12 +116,12 @@ class SercatGatherer():
                     image_name = self.get_image_data()
                     if image_name:
                         self.logger.debug("filecreate:%s %s",
-                                          self.site.ID,
+                                          self.tag,
                                           image_name)
                         # Publish to Redis
-                        red.publish("filecreate:%s" % self.site.ID, image_name)
+                        red.publish("filecreate:%s" % self.tag, image_name)
                         # Push onto redis list in case no one is currently listening
-                        red.rpush("filecreate:%s" % self.site.ID, image_name)
+                        red.rpush("filecreate:%s" % self.tag, image_name)
                     break
                 else:
                     time.sleep(0.05)
@@ -156,8 +144,8 @@ class SercatGatherer():
         self.ip_address = socket.gethostbyaddr(socket.gethostname())[-1][0]
 
         # Now grab the file locations, beamline from settings
-        if GATHERERS.has_key(self.ip_address):
-            self.run_data_file, self.image_data_file = GATHERERS[self.ip_address]
+        if self.site.GATHERERS.has_key(self.ip_address):
+            self.run_data_file, self.image_data_file, self.tag = self.site.GATHERERS[self.ip_address]
         else:
             print "ERROR - no settings for this host"
             sys.exit(9)
@@ -305,11 +293,14 @@ def get_commandline():
     return parser.parse_args()
 
 def main(site_in=None):
-    """ The main process
-    Setup logging and instantiate the gatherer"""
+    """
+    The main process
+    Search for and instantiate the gatherer
+    """
 
     # Get the commandline args
     commandline_args = get_commandline()
+    print commandline_args
 
     # Determine the site
     site_file = utils.site_tools.determine_site(site_arg=commandline_args.site)
@@ -317,7 +308,15 @@ def main(site_in=None):
     # Import the site settings
     SITE = importlib.import_module(site_file)
 
-	# Single process lock?
+    # Have a GATHERER file
+    if hasattr(SITE, "GATHERER"):
+
+        # Run it
+        print "rapd.python $RAPD_HOME/src/sites/gatherers/"+SITE.GATHERER+" -vs %s" % site_in
+        subprocess.call("rapd.python $RAPD_HOME/src/sites/gatherers/"+SITE.GATHERER+" -vs %s" % commandline_args.site, shell=True)
+
+	"""
+    # Single process lock?
     if SITE.GATHERER_LOCK_FILE:
         if utils.lock.file_is_locked(SITE.GATHERER_LOCK_FILE):
             raise Exception("%s is already locked, unable to run" % SITE.GATHERER_LOCK_FILE)
@@ -337,7 +336,7 @@ def main(site_in=None):
 
     # Instantiate the Gatherer
     GATHERER = SercatGatherer(site=SITE)
-
+    """
 if __name__ == '__main__':
 
     main()
