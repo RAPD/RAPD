@@ -280,15 +280,19 @@ class SercatGatherer(object):
         Return contents of run data file
         """
 
-        # Copy the file to prevent conflicts with other programs
-        tmp_file = "/dev/shm/"+uuid.uuid4().hex
-        shutil.copyfile(self.run_data_file, tmp_file)
+        if self.run_data_file:
+            # Copy the file to prevent conflicts with other programs
+            tmp_file = "/dev/shm/"+uuid.uuid4().hex
+            shutil.copyfile(self.run_data_file, tmp_file)
 
-        # Read in the pickled file
-        run_data = pickle.load(tmp_file)
+            # Read in the pickled file
+            run_data = pickle.load(tmp_file)
 
-        # Remove the temporary file
-        os.unlink(tmp_file)
+            # Remove the temporary file
+            os.unlink(tmp_file)
+
+        else:
+            run_data = False
 
         return run_data
 

@@ -15,6 +15,8 @@ phenix-installer-1.10.1-2155-mac-intel-osx-x86_64-10.9
 # Archives
 *.tar
 *.bz2
+*.tgz
+Python-*
 
 # Test data
 test_data
