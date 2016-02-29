@@ -237,10 +237,10 @@ if [ $INSTALL_PHENIX == 1 ]; then
 
   # Downloaded and unpacked
   echo `pwd`
-  printf "Looking for $PHENIX_INSTALLER_DIR"
+  printf "Looking for $PHENIX_INSTALLER_DIR \n"
   while [ ! -d $PHENIX_INSTALLER_DIR ]
   do
-    printf "Looking for ~/Downloads/$PHENIX_DOWNLOAD\n"
+    printf "Looking for ~/Downloads/$PHENIX_DOWNLOAD \n"
     # Downloaded and uncompressed
     if [ -a $PHENIX_DOWNLOAD.tar ]; then
       printf "  Phenix install present as archive\n"

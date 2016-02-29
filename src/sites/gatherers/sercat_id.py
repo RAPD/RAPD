@@ -37,6 +37,7 @@ carefully.
 This server needs Python version 2.5 or greater (due to use of uuid module)
 """
 
+# Standard imports
 import argparse
 import importlib
 import json
@@ -44,12 +45,13 @@ import logging
 import logging.handlers
 import os
 import pickle
-import redis
 import shutil
 import socket
 import sys
 import time
 import uuid
+
+import redis
 
 # RAPD imports
 import utils.commandline
@@ -57,7 +59,7 @@ import utils.lock
 import utils.log
 import utils.site_tools
 
-class SercatGatherer():
+class SercatGatherer(object):
     """
     Watches the beamline and signals images and runs over redis
     """
@@ -229,7 +231,7 @@ class SercatGatherer():
                 if len(sline) == 2:
                     if sline[1].strip() == "<none>":
                         self.logger.debug("image_data_file empty")
-                        out_dict = False
+                        image_name = False
                         break
                     else:
                         image_name = os.path.realpath(sline[1])
