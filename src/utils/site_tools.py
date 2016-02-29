@@ -86,7 +86,8 @@ def get_site_files():
         return potential_files
 
     # Look for site file in local directory first
-    possible_files = look_for_sites_files(os.getcwd())
+    # possible_files = look_for_sites_files(os.getcwd())
+    possible_files = []
 
     # Looking for the rapd src directory
     sites_dir = False
@@ -95,6 +96,7 @@ def get_site_files():
             sites_dir = os.path.join(path, "sites")
             break
 
+    print sites_dir
     if sites_dir:
         possible_files += look_for_sites_files(sites_dir)
 

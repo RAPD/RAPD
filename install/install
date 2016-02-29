@@ -215,9 +215,9 @@ if [ $INSTALL_PHENIX == 1 ]; then
       elif [[ $DIST == "CentOS" ]]; then
 
         if [ ${REV:0:1} == "5" ]; then
-            printf "  \033[91mCentOS 5 is currently not supported. Please enter an issue or work on a patch!\033[0m\n"
-            exit 1
-            # printf "  CentOS 5\n"
+            # printf "  \033[91mCentOS 5 is currently not supported. Please enter an issue or work on a patch!\033[0m\n"
+            # exit 1
+            printf "  CentOS 5\n"
             PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos5"
             PHENIX_DOWNLOAD_REPR="Kernel 2.6 (64-bit; CentOS 5) [ \033[4;34mdownload command-line installer\033[0m ]"
         fi
@@ -447,8 +447,9 @@ then
   mkdir $BINDIR
 fi
 
-# Create a script for calling rapd.python
 printf "\n\033[94mInstalling rapd executables\033[0m\n"
+
+# Create a script for calling rapd.python
 SAFE_PREFIX=$(echo "$PREFIX" | sed -e 's/\//\\\//g')
 cd $BINDIR
 printf "rapd.python\n"
@@ -458,6 +459,12 @@ printf "rapd.python\n"
      -e "s%  PYTHONPATH\=\"\$LIBTBX_BUILD%  PYTHONPATH\=\"$SAFE_PREFIX\/src\:\$LIBTBX_BUILD%" \
      $PREFIX/share/phenix/build/bin/cctbx.python > ./rapd.python
 chmod +x ./rapd.python
+
+# Create a script for calling rapd.control
+echo "#! /bin/bash" > ./rapd.control
+echo "./rapd.python $SAFE_PREFIX\/src\/control\/rapd_control.py" >>./rapd.control
+chmod +x ./rapd.control
+
 
 # Create the rapd.shrc script
 printf "Writing rapd.shrc\n"
@@ -510,7 +517,8 @@ echo "echo''" >> rapd.cshrc
 
 
 printf "\n\033[94mInstalling Python modules\033[0m\n"
-
+echo $PYTHONPATH
+export PYTHONPATH=""
 source $PREFIX/rapd.shrc
 cd $SRC_DIR/python
 
@@ -529,6 +537,7 @@ elif [[ $PLATFORM == "Linux" ]]; then
 fi
 
 # Modules
+echo $PYTHONPATH
 rapd.pip install crypto
 if [[ $PLATFORM == "Darwin" ]]; then
   rapd.pip install pyopenssl
@@ -543,7 +552,6 @@ rapd.pip install drmaa
 rapd.pip install paramiko
 rapd.pip install fabio
 rapd.pip install hcluster
-rapd.pip install pymysql
 
 printf "\033[92mPython modules install complete.\033[0m\n\n"
 
