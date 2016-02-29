@@ -40,6 +40,11 @@ import logging.handlers
 import stat
 import rapd_beamlinespecific as BLspec
 
+# Import smartie.py from the installed CCP4 package
+# smartie.py is a python script for parsing log files from CCP4
+sys.path.append(os.path.join(os.environ["CCP4"],'share','smartie'))
+import smartie
+
 class FastIntegration(Process, Communicate):
     '''
     classdocs
@@ -406,7 +411,7 @@ class FastIntegration(Process, Communicate):
         # and rerunning xds.
         #
         # If low resolution, don't try to polish the data, as this tends to blow up.
-        #
+        
         if new_rescut <= 4.5:
             os.rename('%s/GXPARM.XDS' %xdsdir, '%s/XPARM.XDS' %xdsdir)
             os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.old' %xdsdir)
@@ -1023,7 +1028,7 @@ class FastIntegration(Process, Communicate):
                         self.write_file('XDS.INP', input)
                         os.system('mv XDS.LOG initialXDS.LOG')
                         self.xds_run(dir)
-                        return('check_again')
+                        return(input)
                 elif 'SOLUTION IS INACCURATE' in line or 'INSUFFICIENT PERCENTAGE' in line:
                     self.logger.debug('    Found inaccurate indexing solution error')
                     self.logger.debug('    Will try to continue anyway')
@@ -1040,7 +1045,7 @@ class FastIntegration(Process, Communicate):
                         self.write_file('XDS.INP', input)
                         os.system('mv XDS.LOG initialXDS.LOG')
                         self.xds_run(dir)
-                        return('check_again')
+                        return(input)
                 elif 'SPOT SIZE PARAMETERS HAS FAILED' in line:
                     self.logger.debug('	Found failure in determining spot size parameters.')
                     self.logger.debug('	Will use default values for REFLECTING_RANGE and BEAM_DIVERGENCE.')
@@ -1049,7 +1054,7 @@ class FastIntegration(Process, Communicate):
                     self.write_file('XDS.INP', input)
                     os.system('mv XDS.LOG initialXDS.LOG')
                     self.xds_run(dir)
-                    return('check_again')
+                    return(input)
                 else:
                     # Unanticipated Error, fail the error check by returning False.
                     self.logger.debug('Error = %s' %line)
@@ -1124,28 +1129,26 @@ class FastIntegration(Process, Communicate):
             self.logger.debug('    Please check logs and files in %s' %self.dirs['work'])
             return('Failed')
         
-        # Parse the scala logfile.
-        graphs, tables, summary = self.parse_aimless(aimless_log)
-        # Parse suggested resolution cutoff for aimless log (based on Mn(I/sd)
-        # The following is a bit complicated:
-        #     summary['text'][2] is of the form:
-        #         "   from Mn(I/sd) >  2.00:                         limit =  1.86A'
-        #     if that line is split at '=', then the second item in the list would be:
-        #         "  1.86A\n" (or '  1.86A  ' in the case of being at max resolution)
-        #     So that summary['text'][2].split('=')[1].strip() results in:
-        #         "1.86A"
-        #     Then you need only take the slice [0:-1] to get the number part
-        for line in summary['text']:
-            if 'from half-dataset correlation' in line:
-                res_cut = line.split('=')[1].strip()[0:-1]
+        # Parse the aimless logfile to look for resolution cutoff.
+        aimlog = open(aimless_log, 'r').readlines()
+        for line in aimlog:
+            if 'High resolution limit' in line:
+                current_resolution = line.split()[-1]
+            elif 'from half-dataset correlation' in line:
+                resline = line
+            elif 'from Mn(I/sd) >  1.50' in line:
+            	resline2 = line
                 break
-        #res_cut = summary['text'][3].split('=')[1].strip()[0:-1]
+        res_cut = resline.split('=')[1].split('A')[0].strip()
+        res_cut2 = resline2.split('=')[1].split('A')[0].strip()
+        if float(res_cut2) < float(res_cut):
+        	res_cut = res_cut2
 
         # Run aimless with a higher resolution cutoff if the suggested resolution
         # is greater than the initial resolution + 0.05.
-        if (float(res_cut) > float(summary['bins_high'][-1]) + 0.05):
+        if (float(res_cut) > float(current_resolution) + 0.05):
             # Save information on original resolution suggestions
-            orig_rescut = summary['text']
+            orig_rescut = resline
             # rerun aimless
             aimless_log = self.aimless(mtzfile, res_cut)
             graphs, tables, summary = self.parse_aimless(aimless_log)
@@ -1651,96 +1654,66 @@ class FastIntegration(Process, Communicate):
         found in the results summary table of the aimless log file.
         '''
 
-        #log = logfile.split('\r\n')
-        log = logfile
-        num_images=self.data['total']
-        tableLine = []
-        listnum=0
-        for linenum,line in enumerate(log):
-            if '$TABLE' in line:
-                if 'Anisotropy' in line:
-                    # Ignore the Anisotropy analysis of CC 1/2
-                    # This table is not present for certain spacegroups
-                    pass
-                else:
-                    tableLine.append(linenum)
-            elif 'Summary data for' in line:
-                sum_starts = linenum + 3
-                # Read last line of Rcp table (6 lines before 'Summary data for').
-		# To ensure reading the proper end of that table.
-                # Need the first value from that line.
-                Rcp_table_end = int(log[linenum-6].split()[0])
-                self.logger.debug('Rcp_table_end = %s' %Rcp_table_end)
-            elif '<!--SUMMARY_END-->' in line:
-                sum_ends = linenum - 2 
-            elif 'Space group:' in line:
-                sgline = linenum
-            elif 'Average unit cell:' in line:
-                cell_line = linenum
-        
-        # Should now have a list in tableLine of where all keys $TABLE are found in the logfile.
-        # Length of tableLine should be 9
-        if len(tableLine) < 9:
-            raise RuntimeError, '%s tables found in aimless output, program expected 9.' %len(tableLine)
-    
-        # Adjust values in tableLine to equal the linenumber where the data starts.
-        tableLine[0] += 5
-        tableLine[1] += 10
-        tableLine[2] += 6
-        #tableLine[3] += 6
-        tableLine[3] += 7
-        tableLine[4] += 4
-        tableLine[5] += 4
-        tableLine[6] += 5
-        tableLine[7] += 7
-        tableLine[8] += 5
-        
-        # Create a list of the start and end line numbers for the table data.
-        dataline=[]
-        dataline.append([tableLine[0], tableLine[0] + num_images])
-        dataline.append([tableLine[1], tableLine[1] + num_images])
-        dataline.append([tableLine[2], tableLine[2] + 30])
-        #dataline.append([tableLine[3], tableLine[3] + 30])
-        dataline.append([tableLine[3], tableLine[3] + 30])
-        dataline.append([tableLine[4], tableLine[4] + 30])
-        dataline.append([tableLine[5], tableLine[5] + 10])
-        dataline.append([tableLine[6], tableLine[6] + 30])
-        dataline.append([tableLine[7], tableLine[7] + 10])
-        dataline.append([tableLine[8], tableLine[8] + Rcp_table_end])
-        
+        log = smartie.parselog(logfile)
+        # The program expect there to be 10 tables in the aimless log file.
+        ntables = log.ntables()
+        if ntables != 10:
+            #raise RuntimeError, '%s tables found in aimless output, program expected 10.' %ntables
+            self.logger.debug('%s tables found in aimless output, program exepected 10.' %ntables)
+
         tables = []
-        data=[]
-        for table in dataline:
-            for line in range(table[0], table[1]):
-                data.append(log[line].split())
+        for i in range(0,ntables):
+            data = []
+            if 'Anisotropy analysis' in log.tables()[i].title():
+                pass
+            for line in log.tables()[i].data().split('\n'):
+                if line != '':
+                    data.append(line.split())
             tables.append(data)
-            data=[] 
-        
+
         # Pull out information for the summary table.
+        flag = True
+        summary = log.keytext(0).message().split('\n')
+        # For some reason, 'Anomalous flag switched ON' was not always found,
+        # so this line below creates a black entry for anomalous_report so that
+        # it is not referenced before assignment.
+        anomalous_report=''
+
+        for line in summary:
+            if 'Space group' in line:
+                space_group = line.strip().split(': ')[-1]
+            elif 'Average unit cell' in line:
+                unit_cell = line.split()[3:]
+            elif 'Anomalous flag switched ON' in line:
+                anomalous_report = line
+            elif flag == True and 'from half-dataset correlation' in line:
+                flag = False
+                res_cut = line
+
         int_results={
-                     'bins_low'     : log[sum_starts].split()[-3:],
-                     'bins_high'    : log[(sum_starts + 1)].split()[-3:],
-                     'rmerge_anom'  : log[(sum_starts + 3)].split()[-3:],
-                     'rmerge_norm'  : log[(sum_starts + 4)].split()[-3:],
-                     'rmeas_anom'   : log[(sum_starts + 5)].split()[-3:],
-                     'rmeas_norm'   : log[(sum_starts + 6)].split()[-3:],
-                     'rpim_anom'    : log[(sum_starts + 7)].split()[-3:],
-                     'rpim_norm'    : log[(sum_starts + 8)].split()[-3:],
-                     'rmerge_top'   : log[(sum_starts + 9)].split()[-3],
-                     'total_obs'    : log[(sum_starts + 10)].split()[-3:],
-                     'unique_obs'   : log[(sum_starts + 11)].split()[-3:],
-                     'isigi'        : log[(sum_starts + 12)].split()[-3:],
-                     'cc-half'      : log[(sum_starts + 13)].split()[-3:],
-                     'completeness' : log[(sum_starts + 14)].split()[-3:],
-                     'multiplicity' : log[(sum_starts + 15)].split()[-3:],
-                     'anom_completeness' : log[(sum_starts + 17)].split()[-3:],
-                     'anom_multiplicity' : log[(sum_starts + 18)].split()[-3:],
-                     'anom_correlation'  : log[(sum_starts + 19)].split()[-3:],
-                     'anom_slope'   : [log[(sum_starts + 20)].split()[-3]],
-                     'scaling_spacegroup' : log[(sgline)].strip().split(': ')[-1],
-                     'scaling_unit_cell' : log[(cell_line)].split()[3:],
-                     'text'         : log[(sum_starts + 22) : cell_line],
-                     'text2'        : log[sum_ends]
+                     'bins_low'     : summary[3].split()[-3:],
+                     'bins_high'    : summary[4].split()[-3:],
+                     'rmerge_anom'  : summary[6].split()[-3:],
+                     'rmerge_norm'  : summary[7].split()[-3:],
+                     'rmeas_anom'   : summary[8].split()[-3:],
+                     'rmeas_norm'   : summary[9].split()[-3:],
+                     'rpim_anom'    : summary[10].split()[-3:],
+                     'rpim_norm'    : summary[11].split()[-3:],
+                     'rmerge_top'   : summary[12].split()[-3],
+                     'total_obs'    : summary[13].split()[-3:],
+                     'unique_obs'   : summary[14].split()[-3:],
+                     'isigi'        : summary[15].split()[-3:],
+                     'cc-half'      : summary[16].split()[-3:],
+                     'completeness' : summary[17].split()[-3:],
+                     'multiplicity' : summary[18].split()[-3:],
+                     'anom_completeness' : summary[20].split()[-3:],
+                     'anom_multiplicity' : summary[21].split()[-3:],
+                     'anom_correlation'  : summary[22].split()[-3:],
+                     'anom_slope'   : [summary[23].split()[-3]],
+                     'scaling_spacegroup' : space_group,
+                     'scaling_unit_cell' : unit_cell,
+                     #'text'         : res_cut,
+                     'text2'        : anomalous_report
                      }
         # Now create a list for each graph to be plotted.
         # This list should have [title, xlabel, ylabels, xcol, ycols, tableNum]
@@ -1767,16 +1740,17 @@ class FastIntegration(Process, Communicate):
                   ['Rmerge, Rfull, Rmeas, Rpim v Resolution', 'Dmin (A)', ['Rmerge', 'Rfull', 'Rmeas', 'Rpim'], 1, [3,4,6,7], 3],
                   ['Average I, RMSdeviation and Sd', 'Dmin (A)', ['AvI', 'RMSdev', 'sd'], 1, [9,10,11], 3],
                   ['Fractional bias', 'Dmin (A)', ['FrcBias'], 1, [14], 3],
-                  ['Rmerge, Rmeas, Rpim v Resolution', 'Dmin (A)', 
+                  ['Rmerge, Rmeas, Rpim v Resolution', 'Dmin (A)',
                       ['Rmerge', 'RmergeOv', 'Rmeas', 'RmeasOv', 'Rpim', 'RpimOv'], 1, [3,4,7,8,9,10], 4],
                   ['Rmerge v Intensity', 'Imax', ['Rmerge', 'Rmeas', 'Rpim'], 0, [1,3,4], 5],
                   ['Completeness v Resolution', 'Dmin (A)', ['%poss', 'C%poss', 'AnoCmp', 'AnoFrc'], 1, [6,7,9,10], 6],
                   ['Multiplicity v Resolution', 'Dmin (A)', ['Mlpclct', 'AnoMlt'], 1, [8,11], 6],
                   ['Sigma(scatter/SD), within 5 sd', '<I>', ['SdFc'], 1, [7], 7],
                   ['Sigma(scatter/SD, within 5 SD, all and within', '<I>', ['SdF', 'SdFc'], 1, [4,7], 7],
-                  ['Rcp v. batch', 'relative frame difference', ['Rcp'], 1, [11], 8]
+                  ['Rcp v. batch', 'relative frame difference', ['Rcp'], 1, [-1], 8]
                   ]
         return(graphs, tables, int_results)
+
     def parse_scala (self, logfile):
         '''
         Parese the scala logfile in order to pull out data for graph and the
@@ -1967,8 +1941,7 @@ class FastIntegration(Process, Communicate):
         os.chmod(comfile, stat.S_IRWXU)
         cmd = './%s' % comfile
         os.system(cmd)
-        aimless_log = open(logfile,'r').readlines()
-        return(aimless_log)
+        return(logfile)
 
     def scala (self,mtzin):
         '''
