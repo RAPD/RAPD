@@ -30,41 +30,6 @@ PREFIX=`echo $THIS_DIR | sed -e "s%/install%%"`
 BATCH=0
 FORCE=0
 PLATFORM=$(uname -s)
-INSTALL_PHENIX=1
-PHENIX_VERSION="1.10.1-2155"
-PHENIX_INSTALLER_DIR=""
-
-# First test for installed modules
-# if [[ $PLATFORM == "Linux" ]]; then
-#
-#   printf "\033[94mChecking installed packages\033[0m\n"
-#
-#   function isinstalled {
-#     if yum list installed "$@" >/dev/null 2>&1; then
-#       true
-#     else
-#       false
-#     fi
-#   }
-#
-#   error=0
-#   missing_packages=""
-#   for package in epel-release blas-devel lapack-devel atlas-sse3-devel atlas-devel openblas-devel libffi-devel ImageMagick-devel
-#   do
-#     if isinstalled $package; then
-#       echo "  $package installed";
-#     else
-#       echo "  $package not installed";
-#       missing_packages="$missing_packages $package"
-#       error=1
-#     fi
-#   done
-#   if [ $error == 1 ]; then
-#     printf "\033[91mERROR: missing package!\033[0m\n"
-#     printf "The following packages need to be installed: $missing_packages \n"
-#     exit 1
-#   fi
-# fi
 
 # Handle command line
 while getopts "bfhcvp:" x; do
@@ -111,7 +76,7 @@ then
   printf "
 Welcome to RAPD2
 
-A minimal python to support RAPD2 will be installed into this location:
+A minimal python to support RAPD2 gatherers will be installed into this location:
 $PREFIX
   - Press ENTER to confirm the location
   - Press CTRL-C to abort the installation
@@ -199,11 +164,7 @@ echo "fi" >> rapd.python
 
 chmod +x ./rapd.python
 
-# Create scripts
-echo "#! /bin/bash" > ./rapd.control
-echo "$PREFIX/bin/rapd.python $PREFIX/src/control/rapd_control.py \"\$@\"" >>./rapd.control
-chmod +x ./rapd.control
-
+# Create script for gatherer
 echo "#! /bin/bash" > ./rapd.gather
 echo "$PREFIX/bin/rapd.python $PREFIX/src/sites/gatherers/gatherer_wrapper.py \"\$@\"" >>./rapd.gather
 chmod +x ./rapd.gather
@@ -218,9 +179,6 @@ echo "" >> rapd.shrc
 echo "# THIS IS AN AUTOMATICALLY GENERATED FILE." > rapd.shrc
 echo "# DO NOT EDIT UNLESS YOU REALLY KNOW WHAT YOU ARE DOING." >> rapd.shrc
 echo "" >> rapd.shrc
-# echo "# Setup paths for phenix" >> rapd.shrc
-# echo "source $PREFIX/share/phenix/build/setpaths.sh" >> rapd.shrc
-# echo "" >> rapd.shrc
 echo "# Add rapd bin to the path" >> rapd.shrc
 echo "PATH=$BINDIR:\$PATH" >> rapd.shrc
 echo "export PATH" >> rapd.shrc
@@ -246,9 +204,6 @@ echo "" >> rapd.cshrc
 echo "# THIS IS AN AUTOMATICALLY GENERATED FILE." > rapd.cshrc
 echo "# DO NOT EDIT UNLESS YOU REALLY KNOW WHAT YOU ARE DOING." >> rapd.cshrc
 echo "" >> rapd.cshrc
-# echo "# Setup paths for phenix" >> rapd.cshrc
-# echo "source $PREFIX/share/phenix/build/setpaths.csh" >> rapd.cshrc
-# echo "" >> rapd.cshrc
 echo "# Add rapd bin to the path" >> rapd.cshrc
 echo "setenv PATH $BINDIR:\$PATH" >> rapd.cshrc
 echo "# Set environmental variable"
@@ -273,21 +228,7 @@ rapd.python get-pip.py
 ln -s $PREFIX/share/python/bin/pip $BINDIR/rapd.pip
 
 # Modules
-# echo $PYTHONPATH
-# rapd.pip install crypto
-# if [[ $PLATFORM == "Darwin" ]]; then
-#   rapd.pip install pyopenssl
-# fi
-# rapd.pip install pycrypto
-# rapd.pip install ndg-httpsclient #includes pyopenssl, cffi, and cryptography
-# rapd.pip install pyasn1
 rapd.pip install redis
-# rapd.pip install pymysql
-# rapd.pip install pymongo
-# rapd.pip install drmaa
-# rapd.pip install paramiko
-# rapd.pip install fabio
-# rapd.pip install hcluster
 
 printf "\033[92mPython modules install complete.\033[0m\n\n"
 
