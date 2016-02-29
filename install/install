@@ -406,7 +406,29 @@ if [ $INSTALL_PHENIX == 1 ]; then
 
         elif [ ${REV:0:1} == "5" ]; then
           printf "  Scientific Linux 5\n"
-          PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos5"
+
+          SYSCONFIG_DIR="$PREFIX/share/phenix/base/lib/python2.7"
+          echo $SYSCONFIG_DIR
+
+          # Copy _sysconfigdata.py to local dir
+          cp $SYSCONFIG_DIR/_sysconfigdata.py ./_sysconfigdata.py.orig
+          mv $SYSCONFIG_DIR/_sysconfigdata.py $SYSCONFIG_DIR/_sysconfigdata.py.orig
+          echo "# This file modified by rapd install" > ./tmp.py
+          echo "# find the original file in this directory with the name" >> ./tmp.py
+          echo "# _sysconfigdata.py.orig" >> ./tmp.py
+          echo "this_python_root='$PREFIX/share/phenix/base'" >> ./tmp.py
+          cat tmp.py  _sysconfigdata.py.orig > tmp_sysconfigdata.py
+
+          # replacing '/home/builder/slave/phenix-nightly-intel-linux-2_6-x86_64-centos5/base'
+          sed -e "s/\'\/home\/builder\/slave\/phenix-nightly-intel-linux-2_6-x86_64-centos5\/base/this_python_root\+\'/g" \
+              -e   "s/\/home\/builder\/slave\/phenix-nightly-intel-linux-2_6-x86_64-centos5\/base/\'\+this_python_root\+\'/g" \
+          tmp_sysconfigdata.py > new_sysconfigdata.py
+
+          cp ./new_sysconfigdata.py $SYSCONFIG_DIR/_sysconfigdata.py
+          rm ./_sysconfigdata.py.orig
+          rm ./tmp_sysconfigdata.py
+          rm ./tmp.py
+          rm ./new_sysconfigdata.py
         fi
 
       elif [[ $DIST == "CentOS" ]]; then
