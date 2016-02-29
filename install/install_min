@@ -185,27 +185,27 @@ cd $BINDIR
 printf "rapd.python\n"
 echo "#! /bin/bash" > rapd.python
 echo "if [ -n "\$PYTHONPATH" ]; then" >> rapd.python
-echo "  PYTHONPATH=\"$SAFE_PREFIX/src:\$PYTHONPATH\"" >> rapd.python
+echo "  PYTHONPATH=\"$PREFIX/src:\$PYTHONPATH\"" >> rapd.python
 echo "  export PYTHONPATH" >> rapd.python
 echo "else" >> rapd.python
-echo "  PYTHONPATH=\"$SAFE_PREFIX/src:\"" >> rapd.python
+echo "  PYTHONPATH=\"$PREFIX/src:\"" >> rapd.python
 echo "  export PYTHONPATH" >> rapd.python
 echo "fi" >> rapd.python
 echo "if [ \$# -eq 0 ]; then" >> rapd.python
-echo "  $SAFE_PREFIX/share/python/bin/python2.7 -Qnew" >> rapd.python
+echo "  $PREFIX/share/python/bin/python2.7 -Qnew" >> rapd.python
 echo "else" >> rapd.python
-echo "  $SAFE_PREFIX/share/python/bin/python2.7 -Qnew \"\$@\"" >> rapd.python
+echo "  $PREFIX/share/python/bin/python2.7 -Qnew \"\$@\"" >> rapd.python
 echo "fi" >> rapd.python
 
 chmod +x ./rapd.python
 
 # Create scripts
 echo "#! /bin/bash" > ./rapd.control
-echo "$SAFE_PREFIX/bin/rapd.python $SAFE_PREFIX/src/control/rapd_control.py \"\$@\"" >>./rapd.control
+echo "$PREFIX/bin/rapd.python $PREFIX/src/control/rapd_control.py \"\$@\"" >>./rapd.control
 chmod +x ./rapd.control
 
 echo "#! /bin/bash" > ./rapd.gather
-echo "$SAFE_PREFIX/bin/rapd.python $SAFE_PREFIX/src/sites/gatherers/gatherer_wrapper.py \"\$@\"" >>./rapd.gather
+echo "$PREFIX/bin/rapd.python $PREFIX/src/sites/gatherers/gatherer_wrapper.py \"\$@\"" >>./rapd.gather
 chmod +x ./rapd.gather
 
 # Create the rapd.shrc script
