@@ -190,20 +190,20 @@ echo "  PYTHONPATH=\"$SAFE_PREFIX/src:\"" >> rapd.python
 echo "  export PYTHONPATH" >> rapd.python
 echo "fi" >> rapd.python
 echo "if [ \$# -eq 0 ]; then" >> rapd.python
-echo "  $SAFE_PREFIX\/share\/python\/bin\/python2.7 -Qnew" >> rapd.python
+echo "  $SAFE_PREFIX/share/python/bin/python2.7 -Qnew" >> rapd.python
 echo "else" >> rapd.python
-echo "  $SAFE_PREFIX\/share\/python\/bin\/python2.7 -Qnew \"\$@\"" >> rapd.python
+echo "  $SAFE_PREFIX/share/python/bin/python2.7 -Qnew \"\$@\"" >> rapd.python
 echo "fi" >> rapd.python
 
 chmod +x ./rapd.python
 
 # Create scripts
 echo "#! /bin/bash" > ./rapd.control
-echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/control\/rapd_control.py \"\$@\"" >>./rapd.control
+echo "$SAFE_PREFIX/bin/rapd.python $SAFE_PREFIX/src/control/rapd_control.py \"\$@\"" >>./rapd.control
 chmod +x ./rapd.control
 
 echo "#! /bin/bash" > ./rapd.gather
-echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/sites\/gatherers\/gatherer_wrapper.py \"\$@\"" >>./rapd.gather
+echo "$SAFE_PREFIX/bin/rapd.python $SAFE_PREFIX/src/sites/gatherers/gatherer_wrapper.py \"\$@\"" >>./rapd.gather
 chmod +x ./rapd.gather
 
 # Create the rapd.shrc script
@@ -216,9 +216,9 @@ echo "" >> rapd.shrc
 echo "# THIS IS AN AUTOMATICALLY GENERATED FILE." > rapd.shrc
 echo "# DO NOT EDIT UNLESS YOU REALLY KNOW WHAT YOU ARE DOING." >> rapd.shrc
 echo "" >> rapd.shrc
-echo "# Setup paths for phenix" >> rapd.shrc
-echo "source $PREFIX/share/phenix/build/setpaths.sh" >> rapd.shrc
-echo "" >> rapd.shrc
+# echo "# Setup paths for phenix" >> rapd.shrc
+# echo "source $PREFIX/share/phenix/build/setpaths.sh" >> rapd.shrc
+# echo "" >> rapd.shrc
 echo "# Add rapd bin to the path" >> rapd.shrc
 echo "PATH=$BINDIR:\$PATH" >> rapd.shrc
 echo "export PATH" >> rapd.shrc
@@ -244,9 +244,9 @@ echo "" >> rapd.cshrc
 echo "# THIS IS AN AUTOMATICALLY GENERATED FILE." > rapd.cshrc
 echo "# DO NOT EDIT UNLESS YOU REALLY KNOW WHAT YOU ARE DOING." >> rapd.cshrc
 echo "" >> rapd.cshrc
-echo "# Setup paths for phenix" >> rapd.cshrc
-echo "source $PREFIX/share/phenix/build/setpaths.csh" >> rapd.cshrc
-echo "" >> rapd.cshrc
+# echo "# Setup paths for phenix" >> rapd.cshrc
+# echo "source $PREFIX/share/phenix/build/setpaths.csh" >> rapd.cshrc
+# echo "" >> rapd.cshrc
 echo "# Add rapd bin to the path" >> rapd.cshrc
 echo "setenv PATH $BINDIR:\$PATH" >> rapd.cshrc
 echo "# Set environmental variable"
