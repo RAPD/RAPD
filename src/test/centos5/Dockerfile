@@ -23,8 +23,8 @@ WORKDIR /opt
 RUN git clone -b sercat https://github.com/RAPD/RAPD.git rapd
 WORKDIR /opt/rapd/install
 ADD phenix-installer-1.10.1-2155-intel-linux-2.6-x86_64-centos5.tar sources/phenix/
-# RUN /bin/bash -c "./install -b"
-# RUN /bin/bash -c "echo 'Finished with rapd install'"
-# RUN /bin/bash -c "echo 'source /opt/rapd/rapd.shrc' >>/etc/bashrc"
+RUN /bin/bash -c "./install -b"
+RUN /bin/bash -c "echo 'Finished with rapd install'"
+RUN /bin/bash -c "echo 'source /opt/rapd/rapd.shrc' >>/etc/bashrc"
 
-# WORKDIR /opt/rapd/src
+WORKDIR /opt/rapd/src

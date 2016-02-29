@@ -23,6 +23,7 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 import functools
+import glob
 import importlib
 import os
 import socket
@@ -68,22 +69,19 @@ def get_site_files():
     walks it to find all files that have names that match "*.py" and do not start with
     "_" or have the word "secret"
     """
-    # print "get_site_files"
+    print "get_site_files"
 
     def look_for_sites_files(directory):
-        """Walk a dir and look for a site file"""
         potential_files = []
-        for (path, directory, files) in os.walk(directory):
-            for filename in files:
-                # No secret-containing files
-                if "secret" in filename:
-                    continue
-                # No files that start with _
-                if filename.startswith("_"):
-                    continue
-                # Filename must end with .py
-                if filename.endswith(".py"):
-                    potential_files.append(os.path.join(path, filename))
+        for filename in glob.glob(directory+"/*.py"):
+            # No secret-containing files
+            if "secret" in filename:
+                continue
+            # No files that start with _
+            if filename.startswith("_"):
+                continue
+            # Filename OK
+            potential_files.append(os.path.join(path, filename))
 
         return potential_files
 
@@ -95,6 +93,7 @@ def get_site_files():
     for path in sys.path:
         if "rapd" in path and path.endswith("src"):
             sites_dir = os.path.join(path, "sites")
+            break
 
     if sites_dir:
         possible_files += look_for_sites_files(sites_dir)
@@ -118,9 +117,12 @@ def determine_site(site_arg=None):
     Keyword arguments:
     site_arg -- user-specified site arguments (default None)
     """
+    print "determine_site"
+
 
     # Get possible site files
     site_files = get_site_files()
+    print site_files
 
     # Transform site files to a more palatable form
     safe_sites = {}

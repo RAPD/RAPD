@@ -38,17 +38,16 @@ This server needs Python version 2.5 or greater (due to use of uuid module)
 """
 
 import argparse
-import atexit
 import importlib
 import json
-import logging, logging.handlers
+import logging
+import logging.handlers
 import os
 import pickle
 import redis
 import shutil
 import socket
 import sys
-# import threading
 import time
 import uuid
 
@@ -59,13 +58,9 @@ import utils.log
 import utils.site_tools
 
 GATHERERS = {
-    "idc24.ser.aps.anl.gov" : (None, "/var/sergui/adxvframe")
-}
-
-# For testing
-# HACK
-GATHERERS = {
-    "kona.nec.aps.anl.gov" : (None, "/tmp/adxvframe")
+    "164.54.208.24" : (None, "/var/sergui/adxvframe"),
+    # For testing
+    "164.54.212.15" : (None, "/tmp/adxvframe")
 }
 
 class SercatGatherer():
@@ -77,6 +72,9 @@ class SercatGatherer():
     run_time = 0
     image_time = 0
 
+    # Host computer detail
+    ip_address = None
+
     def __init__(self, site):
         """Setup and start the SercatGatherer"""
 
@@ -87,9 +85,6 @@ class SercatGatherer():
         self.site = site
 
         self.logger.info("SercatGatherer.__init__")
-
-        # Assign some to instance
-        self.ip_address = socket.gethostbyaddr(socket.gethostname())[-1][0]
 
         #Connect to redis
         self.redis_pool = redis.ConnectionPool(host=self.site.IMAGE_MONITOR_REDIS_HOST)
@@ -113,15 +108,18 @@ class SercatGatherer():
         red = redis.Redis(connection_pool=self.redis_pool)
 
         while self.go:
+            # Update redis entry to confirm this gatherer is up
+
+
             # Check if the run info has changed on the disk
             if self.check_for_run_info():
                 run_data = self.get_run_data()
                 if run_data:
                     run_data_json = json.dumps(run_data)
                     # Publish to Redis
-                    red.publish("run_data:%s" % self.site, run_data_json)
+                    red.publish("run_data:%s" % self.site.ID, run_data_json)
                     # Push onto redis list in case no one is currently listening
-                    red.rpush("run_data:%s" % self.site, run_data_json)
+                    red.rpush("run_data:%s" % self.site.ID, run_data_json)
 
             # 1 run check for every 20 image checks
             for __ in range(20):
@@ -130,12 +128,12 @@ class SercatGatherer():
                     image_name = self.get_image_data()
                     if image_name:
                         self.logger.debug("filecreate:%s %s",
-                                          self.site,
+                                          self.site.ID,
                                           image_name)
                         # Publish to Redis
-                        red.publish("filecreate:%s" % self.site, image_name)
+                        red.publish("filecreate:%s" % self.site.ID, image_name)
                         # Push onto redis list in case no one is currently listening
-                        red.rpush("filecreate:%s" % self.site, image_name)
+                        red.rpush("filecreate:%s" % self.site.ID, image_name)
                     break
                 else:
                     time.sleep(0.05)
@@ -155,11 +153,11 @@ class SercatGatherer():
         self.logger.debug("SercatGatherer.set_host")
 
         # Figure out which host we are on
-        host = os.uname()[1]
+        self.ip_address = socket.gethostbyaddr(socket.gethostname())[-1][0]
 
         # Now grab the file locations, beamline from settings
-        if GATHERERS.has_key(host):
-            self.run_data_file, self.image_data_file = GATHERERS[host]
+        if GATHERERS.has_key(self.ip_address):
+            self.run_data_file, self.image_data_file = GATHERERS[self.ip_address]
         else:
             print "ERROR - no settings for this host"
             sys.exit(9)
