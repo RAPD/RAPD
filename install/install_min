@@ -267,7 +267,7 @@ cd $SRC_DIR/python
 
 # Install pip
 rapd.python get-pip.py
-ln -s $SAFE_PREFIX/share/python/bin/pip $BINDIR/rapd.pip
+ln -s $PREFIX/share/python/bin/pip $BINDIR/rapd.pip
 
 # Modules
 # echo $PYTHONPATH
