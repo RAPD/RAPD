@@ -466,10 +466,9 @@ printf "rapd.python\n"
 chmod +x ./rapd.python
 
 # Create a script for calling rapd.control
-echo "#! /bin/bash" > ./rapd.control
-echo "./rapd.python $SAFE_PREFIX\/src\/control\/rapd_control.py" >>./rapd.control
-chmod +x ./rapd.control
-
+# echo "#! /bin/bash" > ./rapd.control
+# echo "./rapd.python $SAFE_PREFIX\/src\/control\/rapd_control.py" >>./rapd.control
+# chmod +x ./rapd.control
 
 # Create the rapd.shrc script
 printf "Writing rapd.shrc\n"
