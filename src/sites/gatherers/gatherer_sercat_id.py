@@ -282,138 +282,23 @@ class SercatGatherer():
         Return contents of run data file
         """
 
-        #copy the file to prevent conflicts with other programs
+        # Copy the file to prevent conflicts with other programs
         tmp_file = "/dev/shm/"+uuid.uuid4().hex
         shutil.copyfile(self.run_data_file, tmp_file)
 
-        #read in the pickled file
+        # Read in the pickled file
         run_data = pickle.load(tmp_file)
 
-        #remove the temporary file
+        # Remove the temporary file
         os.unlink(tmp_file)
 
         return run_data
-
-    # def ParseMarcollect(self, lines):
-    #     """
-    #     Parse the lines from the file marcollect and return a dict that
-    #     is somewhat intelligible
-    #     NB - only used with one line run-containing marcollect so far
-    #     """
-    #     self.logger.debug("RAPD_ADSC_Server::ParseMarcollect")
-    #     #self.logger.debug(lines)
-    #
-    #     try:
-    #         out_dict = {"Runs" : {}}
-    #         for i in range(len(lines)):
-    #             sline = lines[i].split(":")
-    #             if sline[0] == "Directory":
-    #                 if sline[1].strip().endswith('/'):
-    #                     out_dict['Directory'] = sline[1].strip()[:-1]
-    #                 else:
-    #                     out_dict['Directory'] = sline[1].strip()
-    #             elif sline[0] == 'Image_Prefix':
-    #                 if sline[1].strip().endswith('_'):
-    #                     out_dict['Image_Prefix'] = sline[1].strip()[:-1]
-    #                 else:
-    #                     out_dict['Image_Prefix'] = sline[1].strip()
-    #             elif sline[0] == 'Mode':
-    #                 out_dict['Mode'] = sline[1].strip()
-    #             elif sline[0] == 'ADC':
-    #                 out_dict['ADC'] = sline[1].strip()
-    #             elif sline[0] == 'Anomalous':
-    #                 out_dict['Anomalous'] = sline[1].strip()
-    #             elif sline[0] == 'Anom_Wedge':
-    #                 out_dict['Anom_Wedge'] = sline[1].strip()
-    #             elif sline[0] == 'Compression':
-    #                 out_dict['Compression'] = sline[1].strip()
-    #             elif sline[0] == 'Binning':
-    #                 out_dict['Binning'] = sline[1].strip()
-    #             elif sline[0] == 'Comment':
-    #                 out_dict['Comment'] = sline[1].strip()
-    #             elif sline[0] == 'Beam_Center':
-    #                 out_dict['Beam_Center'] = sline[1].strip()
-    #             elif sline[0] == 'MAD':
-    #                 out_dict['MAD'] = sline[1].strip()
-    #             elif sline[0] == 'Energy to Use':
-    #                 pass
-    #
-    #             #handle the run lines
-    #             elif sline[0] == 'Run(s)':
-    #                 run_num = 0
-    #                 for j in range(i+1,len(lines)):
-    #                     my_sline = lines[j].split()
-    #                     if len(my_sline) > 0:
-    #                         out_dict['Runs'][str(run_num)] = {
-    #                             'file_source' : 'adsc',
-    #                             'Run' : my_sline[0],
-    #                             'Start' : my_sline[1],
-    #                             'Total' : my_sline[2],
-    #                             'Distance'     : my_sline[3],
-    #                             '2-Theta'      : my_sline[4],
-    #                             'Phi'          : my_sline[5],
-    #                             'Kappa'        : my_sline[6],
-    #                             'Omega'        : my_sline[7],
-    #                             'Axis'         : my_sline[8],
-    #                             'Width'        : my_sline[9],
-    #                             'Time'         : my_sline[10],
-    #                             'De-Zngr'      : my_sline[11],
-    #                             'Directory'    : out_dict['Directory'],
-    #                             'Image_Prefix' : out_dict['Image_Prefix'],
-    #                             'Anomalous'    : 'No'}
-    #                         run_num += 1
-    #                         if 'Yes' in out_dict['Anomalous']:
-    #                             out_dict['Runs'][str(run_num-1)]['Anomalous'] = 'Yes'
-    #                             out_dict['Runs'][str(run_num)] = {'file_source' : 'adsc',
-    #                                                          'Run'          : str(100+int(my_sline[0])),
-    #                                                          'Start'        : my_sline[1],
-    #                                                          'Total'        : my_sline[2],
-    #                                                          'Distance'     : my_sline[3],
-    #                                                          '2-Theta'      : my_sline[4],
-    #                                                          'Phi'          : my_sline[5],
-    #                                                          'Kappa'        : my_sline[6],
-    #                                                          'Omega'        : my_sline[7],
-    #                                                          'Axis'         : my_sline[8],
-    #                                                          'Width'        : my_sline[9],
-    #                                                          'Time'         : my_sline[10],
-    #                                                          'De-Zngr'      : my_sline[11],
-    #                                                          'Directory'    : out_dict['Directory'],
-    #                                                          'Image_Prefix' : out_dict['Image_Prefix'],
-    #                                                          'Anomalous'    : 'Yes'}
-    #                             run_num += 1
-    #         if not out_dict['MAD']:
-    #             out_dict['MAD'] = 'No'
-    #
-    #         self.logger.debug("Resulting dict")
-    #         self.logger.debug(out_dict)
-    #
-    #         return(out_dict)
-    #
-    #     except:
-    #         self.logger.exception('Failure to parse marcollect - error in format?')
-    #         return(False)
-
-# def file_is_locked(file_path):
-#     """Method to make sure only one instance is running on this machine"""
-#     global file_handle
-#
-# 	# Create the directory for file_path if it does not exist
-#     if not os.path.exists(os.path.dirname(file_path)):
-#         os.makedirs(os.path.dirname(file_path))
-#
-#     file_handle = open(file_path, "w")
-#     try:
-#         fcntl.lockf(file_handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-#         return False
-#     except IOError:
-#         return True
 
 def get_commandline():
     """Get the commandline variables and handle them"""
 
     # Parse the commandline arguments
-    commandline_description = """The core rapd process for coordination of a
-    site install"""
+    commandline_description = """Data gatherer for SERCAT ID beamline"""
     parser = argparse.ArgumentParser(parents=[utils.commandline.base_parser],
                                      description=commandline_description)
 

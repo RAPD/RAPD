@@ -150,6 +150,11 @@ if (( $? )); then
 fi
 PREFIX=$(cd $PREFIX; pwd)
 
+# If installing in non-source directory, copy over src directory
+if [ $THIS_DIR != $PREFIX/install ]; then
+  printf "\n\033[94mCopying src files\033[0m\n"
+  rsync -a --exclude "*.tar*" ../src $PREFIX/.
+fi
 
 if [ $INSTALL_PHENIX == 1 ]; then
 
