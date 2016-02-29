@@ -268,6 +268,7 @@ source $PREFIX/rapd.shrc
 cd $SRC_DIR/python
 
 # Install pip
+export PYTHONPATH=""
 rapd.python get-pip.py
 ln -s $PREFIX/share/python/bin/pip $BINDIR/rapd.pip
 
