@@ -36,36 +36,43 @@ MYSQL_ATTEMPTS = 30
 class Database(object):
     """
     Provides connection to MySQL database for Model.
-
-    settings - a dict containing connection information
-               found in rapd_site
-    logger - instance of a logger, absolutely required
-
     """
     def __init__(self,
                  host,
+                 port,
                  user,
                  password,
                  data_name="rapd_data",
                  users_name="rapd_users",
-                 cloud_name="rapd_cloud"):
-        """
-        Save variables passed in
-        """
+                 cloud_name="rapd_cloud",
+                 settings=None):
+
+        """Initialize the adapter"""
 
         # Get the logger
         self.logger = logging.getLogger("RAPDLogger")
-        self.logger.info('Starting')
 
-        #store passed in variables
-        self.db_host = host
-        self.db_user = user
-        self.db_password = password
-        self.db_data_name = data_name
-        self.db_users_name = users_name
-        self.db_cloud_name = cloud_name
+        # Store passed in variables
+        # Using the settings "shorthand"
+        if settings:
+            self.db_host = settings["DATABASE_HOST"]
+            self.db_port = settings["DATABASE_PORT"]
+            self.db_user = settings["DATABASE_USER"]
+            self.db_password = settings["DATABASE_PASSWORD"]
+            self.db_data_name = settings["DATABASE_NAME_DATA"]
+            self.db_users_name = settings["DATABASE_NAME_USERS"]
+            self.db_cloud_name = settings["DATABASE_NAME_CLOUD"]
+        # Olde Style
+        else:
+            self.db_host = host
+            self.db_port = port
+            self.db_user = user
+            self.db_password = password
+            self.db_data_name = data_name
+            self.db_users_name = users_name
+            self.db_cloud_name = cloud_name
 
-        #A lock for troublesome fast-acting data entry
+        # A lock for troublesome fast-acting data entry
         self.LOCK = threading.Lock()
 
     ############################################################################
@@ -81,6 +88,7 @@ class Database(object):
             try:
                 # Connect
                 connection = pymysql.connect(host=self.db_host,
+                                             port=self.db_port,
                                              db=self.db_data_name,
                                              user=self.db_user,
                                              passwd=self.db_password)
@@ -99,8 +107,9 @@ class Database(object):
         attempts = 0
         while (attempts < MYSQL_ATTEMPTS):
             try:
-                #connect
+                # Connect
                 connection = pymysql.connect(host=self.db_host,
+                                             port=self.db_port,
                                              db=self.db_users_name,
                                              user=self.db_user,
                                              passwd=self.db_password)
@@ -119,8 +128,9 @@ class Database(object):
         attempts = 0
         while (attempts < MYSQL_ATTEMPTS):
             try:
-                #connect
+                # Connect
                 connection = pymysql.connect(host=self.db_host,
+                                             port=self.db_port,
                                              db=self.db_cloud_name,
                                              user=self.db_user,
                                              passwd=self.db_password)
