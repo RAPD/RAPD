@@ -900,94 +900,94 @@ def processClusterSercat(self,inp,output=False):
     #self.logger.debug('Utilities::processCluster')
   
   import drmaa,time
+  #try:
+  s = False
+  jt = False
+  running = True
+  log = False
+  queue = False
+  smp = 1
+  name = False
+  #Check if self.running is setup... used for Best and Mosflm strategies
+  #because you can't kill child processes launched on cluster easily.
   try:
-    s = False
-    jt = False
-    running = True
-    log = False
-    queue = False
-    smp = 1
-    name = False
-    #Check if self.running is setup... used for Best and Mosflm strategies
-    #because you can't kill child processes launched on cluster easily.
-    try:
-      temp = self.running
-    except AttributeError:
-      running = False
-    
-    if len(inp) == 1:
-      command = inp
-    elif len(inp) == 2:
-      command,log = inp
-    elif len(inp) == 3:
-      command,log,queue = inp
-    elif len(inp) == 4:
-      command,log,smp,queue = inp
-    else:
-      command,log,smp,queue,name = inp
-    if queue == False:
-      queue = 'all.q'
-    #queues aren't used right now.
-    
-    #Since PDB needs a batch script to run...
-    bs = open('pbs.sh','w')
-    bs.writelines(command)
-    bs.close()
-    
-    #smp,queue,name = inp2
-    #'-clear' can be added to the options to eliminate the general.q
-    #options = '-clear -shell y -p -100 -q %s -pe smp %s'%(queue,smp)
-    #options = '-V -l nodes=1:ppn=%s pbs.sh'%smp
-    options = '-V -l nodes=1:ppn=%s'%smp
-    s = drmaa.Session()
-    s.initialize()
-    jt = s.createJobTemplate()
-    jt.workingDirectory=os.getcwd()
-    jt.joinFiles=True
-    jt.nativeSpecification=options
-    jt.remoteCommand=command.split()[0]
-    if len(command.split()) > 1:
-      jt.args=command.split()[1:]
-    if log:
-      #the ':' is required!
-      jt.outputPath=':%s'%log
-    #submit the job to the cluster and get the job_id returned
-    job = s.runJob(jt)
-    #return job_id.
-    if output:
-      output.put(job)
+    temp = self.running
+  except AttributeError:
+    running = False
+  
+  if len(inp) == 1:
+    command = inp
+  elif len(inp) == 2:
+    command,log = inp
+  elif len(inp) == 3:
+    command,log,queue = inp
+  elif len(inp) == 4:
+    command,log,smp,queue = inp
+  else:
+    command,log,smp,queue,name = inp
+  if queue == False:
+    queue = 'all.q'
+  #queues aren't used right now.
+  
+  #Since PDB needs a batch script to run...
+  bs = open('pbs.sh','w')
+  bs.writelines(command)
+  bs.close()
+  
+  #smp,queue,name = inp2
+  #'-clear' can be added to the options to eliminate the general.q
+  #options = '-clear -shell y -p -100 -q %s -pe smp %s'%(queue,smp)
+  #options = '-V -l nodes=1:ppn=%s pbs.sh'%smp
+  options = '-V -l nodes=1:ppn=%s'%smp
+  s = drmaa.Session()
+  s.initialize()
+  jt = s.createJobTemplate()
+  jt.workingDirectory=os.getcwd()
+  jt.joinFiles=True
+  jt.nativeSpecification=options
+  jt.remoteCommand=command.split()[0]
+  if len(command.split()) > 1:
+    jt.args=command.split()[1:]
+  if log:
+    #the ':' is required!
+    jt.outputPath=':%s'%log
+  #submit the job to the cluster and get the job_id returned
+  job = s.runJob(jt)
+  #return job_id.
+  if output:
+    output.put(job)
 
-    #cleanup the input script from the RAM.
-    s.deleteJobTemplate(jt)
+  #cleanup the input script from the RAM.
+  s.deleteJobTemplate(jt)
 
-    #If multiprocessing.event is set, then run loop to watch until job or script has finished. 
-    if running:
-      #Returns True if job is still running or False if it is dead. Uses CPU to run loop!!!
-      decodestatus = {drmaa.JobState.UNDETERMINED: True,
-                      drmaa.JobState.QUEUED_ACTIVE: True,
-                      drmaa.JobState.SYSTEM_ON_HOLD: True,
-                      drmaa.JobState.USER_ON_HOLD: True,
-                      drmaa.JobState.USER_SYSTEM_ON_HOLD: True,
-                      drmaa.JobState.RUNNING: True,
-                      drmaa.JobState.SYSTEM_SUSPENDED: False,
-                      drmaa.JobState.USER_SUSPENDED: False,
-                      drmaa.JobState.DONE: False,
-                      drmaa.JobState.FAILED: False,
-                      }
-      #Loop to keep hold process while job is running or ends when self.running event ends.
-      while decodestatus[s.jobStatus(job)]:
-        if self.running.is_set() == False:
-          s.control(job,drmaa.JobControlAction.TERMINATE)
-          self.logger.debug('job:%s terminated since script is done'%job)
-          break
-        #time.sleep(0.2)
-        time.sleep(1)
-    #Otherwise just wait for it to complete.
-    else:
-      s.wait(job, drmaa.Session.TIMEOUT_WAIT_FOREVER)
-    #Exit cleanly, otherwise master node gets event client timeout errors after 600s.
-    s.exit()
-      
+  #If multiprocessing.event is set, then run loop to watch until job or script has finished. 
+  if running:
+    #Returns True if job is still running or False if it is dead. Uses CPU to run loop!!!
+    decodestatus = {drmaa.JobState.UNDETERMINED: True,
+                    drmaa.JobState.QUEUED_ACTIVE: True,
+                    drmaa.JobState.SYSTEM_ON_HOLD: True,
+                    drmaa.JobState.USER_ON_HOLD: True,
+                    drmaa.JobState.USER_SYSTEM_ON_HOLD: True,
+                    drmaa.JobState.RUNNING: True,
+                    drmaa.JobState.SYSTEM_SUSPENDED: False,
+                    drmaa.JobState.USER_SUSPENDED: False,
+                    drmaa.JobState.DONE: False,
+                    drmaa.JobState.FAILED: False,
+                    }
+    #Loop to keep hold process while job is running or ends when self.running event ends.
+    while decodestatus[s.jobStatus(job)]:
+      if self.running.is_set() == False:
+        s.control(job,drmaa.JobControlAction.TERMINATE)
+        self.logger.debug('job:%s terminated since script is done'%job)
+        break
+      #time.sleep(0.2)
+      time.sleep(1)
+  #Otherwise just wait for it to complete.
+  else:
+    s.wait(job, drmaa.Session.TIMEOUT_WAIT_FOREVER)
+  #Exit cleanly, otherwise master node gets event client timeout errors after 600s.
+  s.exit()
+  """
   except:
     self.logger.exception('**ERROR in Utils.processCluster**')
     #Cleanup if error.
@@ -998,7 +998,7 @@ def processClusterSercat(self,inp,output=False):
   finally:
     if name!= False:
       self.red.lpush(name,1)
-
+  """
 def killChildrenCluster(self,inp):
   """
   Kill jobs on cluster. The JobID is sent in and job is killed. Must be launched from
