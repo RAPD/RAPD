@@ -793,10 +793,10 @@ def processCluster(self,inp,output=False):
   To eliminate this issue, setup self.running = multiprocessing.Event(), self.running.set() in main script,
   then set it to False (self.running.clear()) during postprocess to kill running jobs smoothly.
   """
-  """
-  if self.verbose:
-    self.logger.debug('Utilities::processCluster')
-  """
+  
+  #if self.verbose:
+    #self.logger.debug('Utilities::processCluster')
+  
   import drmaa,time
   try:
     s = False
@@ -807,32 +807,138 @@ def processCluster(self,inp,output=False):
     smp = 1
     name = False
     #Check if self.running is setup... used for Best and Mosflm strategies
+    #because you can't kill child processes launched on cluster easily.
     try:
       temp = self.running
     except AttributeError:
       running = False
     
-    #Parse the input
     if len(inp) == 1:
       command = inp
     elif len(inp) == 2:
       command,log = inp
-    #queue is name of cluster queue.
     elif len(inp) == 3:
       command,log,queue = inp
-    #smp is parallel environment set to reserve a specific number of cores on a node.
     elif len(inp) == 4:
       command,log,smp,queue = inp
-    #name is a redis database name
     else:
       command,log,smp,queue,name = inp
-    
-    #set default cluster queue. Some batch queues use general.q.
     if queue == False:
       queue = 'all.q'
-
+    #smp,queue,name = inp2
     #'-clear' can be added to the options to eliminate the general.q
     options = '-clear -shell y -p -100 -q %s -pe smp %s'%(queue,smp)
+    s = drmaa.Session()
+    s.initialize()
+    jt = s.createJobTemplate()
+    jt.workingDirectory=os.getcwd()
+    jt.joinFiles=True
+    jt.nativeSpecification=options
+    jt.remoteCommand=command.split()[0]
+    if len(command.split()) > 1:
+      jt.args=command.split()[1:]
+    if log:
+      #the ':' is required!
+      jt.outputPath=':%s'%log
+    #submit the job to the cluster and get the job_id returned
+    job = s.runJob(jt)
+    #return job_id.
+    if output:
+      output.put(job)
+
+    #cleanup the input script from the RAM.
+    s.deleteJobTemplate(jt)
+
+    #If multiprocessing.event is set, then run loop to watch until job or script has finished. 
+    if running:
+      #Returns True if job is still running or False if it is dead. Uses CPU to run loop!!!
+      decodestatus = {drmaa.JobState.UNDETERMINED: True,
+                      drmaa.JobState.QUEUED_ACTIVE: True,
+                      drmaa.JobState.SYSTEM_ON_HOLD: True,
+                      drmaa.JobState.USER_ON_HOLD: True,
+                      drmaa.JobState.USER_SYSTEM_ON_HOLD: True,
+                      drmaa.JobState.RUNNING: True,
+                      drmaa.JobState.SYSTEM_SUSPENDED: False,
+                      drmaa.JobState.USER_SUSPENDED: False,
+                      drmaa.JobState.DONE: False,
+                      drmaa.JobState.FAILED: False,
+                      }
+      #Loop to keep hold process while job is running or ends when self.running event ends.
+      while decodestatus[s.jobStatus(job)]:
+        if self.running.is_set() == False:
+          s.control(job,drmaa.JobControlAction.TERMINATE)
+          self.logger.debug('job:%s terminated since script is done'%job)
+          break
+        #time.sleep(0.2)
+        time.sleep(1)
+    #Otherwise just wait for it to complete.
+    else:
+      s.wait(job, drmaa.Session.TIMEOUT_WAIT_FOREVER)
+    #Exit cleanly, otherwise master node gets event client timeout errors after 600s.
+    s.exit()
+      
+  except:
+    self.logger.exception('**ERROR in Utils.processCluster**')
+    #Cleanup if error.
+    if s:
+      if jt:
+        s.deleteJobTemplate(jt)
+      s.exit()
+  finally:
+    if name!= False:
+      self.red.lpush(name,1)
+
+def processClusterSercat(self,inp,output=False):
+  """
+  Submit job to cluster using DRMAA (when you are already on the cluster).
+  Main script should not end with os._exit() otherwise running jobs could be orphanned.
+  To eliminate this issue, setup self.running = multiprocessing.Event(), self.running.set() in main script,
+  then set it to False (self.running.clear()) during postprocess to kill running jobs smoothly.
+  """
+  
+  #if self.verbose:
+    #self.logger.debug('Utilities::processCluster')
+  
+  import drmaa,time
+  try:
+    s = False
+    jt = False
+    running = True
+    log = False
+    queue = False
+    smp = 1
+    name = False
+    #Check if self.running is setup... used for Best and Mosflm strategies
+    #because you can't kill child processes launched on cluster easily.
+    try:
+      temp = self.running
+    except AttributeError:
+      running = False
+    
+    if len(inp) == 1:
+      command = inp
+    elif len(inp) == 2:
+      command,log = inp
+    elif len(inp) == 3:
+      command,log,queue = inp
+    elif len(inp) == 4:
+      command,log,smp,queue = inp
+    else:
+      command,log,smp,queue,name = inp
+    if queue == False:
+      queue = 'all.q'
+    #queues aren't used right now.
+    
+    #Since PDB needs a batch script to run...
+    bs = open('pbs.sh','w')
+    bs.writelines(command)
+    bs.close()
+    
+    #smp,queue,name = inp2
+    #'-clear' can be added to the options to eliminate the general.q
+    #options = '-clear -shell y -p -100 -q %s -pe smp %s'%(queue,smp)
+    #options = '-V -l nodes=1:ppn=%s pbs.sh'%smp
+    options = '-V -l nodes=1:ppn=%s'%smp
     s = drmaa.Session()
     s.initialize()
     jt = s.createJobTemplate()
@@ -899,6 +1005,7 @@ def killChildrenCluster(self,inp):
   a compute node on the cluster. Used in pipelines to kill jobs when timed out or if 
   a solution in Phaser is found in the first round and the second round jobs are not needed.
   """
+  import os
   if self.verbose:
     self.logger.debug('Utilities::killChildrenCluster')
   try:
@@ -913,12 +1020,14 @@ def stillRunningCluster(self,jobid):
   Check to see if process and/or its children and/or children's children are still running. Must
   be launched from compute node.
   """
+  import subprocess
   try:
     running = False
     if self.cluster_use:
       command = 'qstat'
     else:
-      command = 'rapd2.python /gpfs5/users/necat/rapd/gadolinium/trunk/qstat.py'
+      #command = 'rapd.python /gpfs5/users/necat/rapd/gadolinium/trunk/qstat.py'
+      command = 'rapd.python /gpfs6/users/necat/Jon/Programs/CCTBX_x64/modules/rapd/src/qstat.py'
     output = subprocess.Popen(command,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
     for line in output.stdout:
       if len(line.split()) > 0:
@@ -927,20 +1036,6 @@ def stillRunningCluster(self,jobid):
     return(running)
   except:
     self.logger.exception('**ERROR in Utils.stillRunningCluster**')
-
-def rocksCommand(self,inp):
-  """
-  Run Rocks command on all cluster nodes. Mainly used by rapd_agent_beamcenter.py to copy
-  specific images to /dev/shm on each node for processing in RAM.
-  """
-  if self.verbose:
-    self.logger.debug('Utilities::rocksCommand')
-  try:
-    command = '/opt/rocks/bin/rocks run host compute "%s"'%inp
-    processLocal("ssh necat@gadolinium '%s'"%command,self.logger)
-
-  except:
-      self.logger.exception('**ERROR in Utils.rocksCommand**')
 
 if __name__ == '__main__':
     TEST_REMOTE = Remote('E')

@@ -1656,8 +1656,11 @@ def getSGInfo(self,inp):
     if inp[-3:].lower() == 'cif':
       fail = False
       sg = False
-      #f = open(inp,'r').readlines()
-      f = open(inp,'r').read(20480)
+      try:
+        f = open(inp,'r').read(20480)
+      except IOError:
+        #File does not exist
+        return(False)
       for line in f.split('\n'):
         if line.count('_symmetry.space_group_name_H-M'):
           sg = line[32:].strip()[1:-1].upper().replace(' ','')
@@ -1874,14 +1877,11 @@ def getWavelength(self,inp=False):
 def getVendortype(self,inp):
   """
   Returns which detector vendortype the image is from by passing in the header.
-  For determining detector type. Same notation as CCTBX.
-  Grab the beamline info from rapd_site.py that give the specifics of this beamline.
-  You will have to modify how a beamline/detector is selected. If multiple detectors
-  of same type, you could look at S/N. At NE-CAT it is more complicated because we
-  can interchange detectors on the same beamline, so I used the y_beamcenter. 
+  If it is not in the header, use ImageFactory to get it.
   """
   if self.verbose:
     self.logger.debug('Utilities::getVendortype')
+  """
   if inp.get('fullname')[-3:] == 'cbf':
     if float(inp.get('beam_center_y')) > 200.0:
       vendortype = 'Pilatus-6M'
@@ -1889,6 +1889,12 @@ def getVendortype(self,inp):
       vendortype = 'ADSC-HF4M'
   else:
     vendortype = 'ADSC'
+  """
+  vendortype = inp.get('detector',False)
+  #If not in header, use ImageFactory
+  if vendortype == False:
+    from iotbx.detectors import ImageFactory
+    vendortype = ImageFactory(l[0]).vendortype
   return (vendortype)
 
 def killChildren(self,pid):
@@ -2116,6 +2122,22 @@ def processLocal(inp,logger=False,output=False):
     else:
       print '**Error in Utilities.processLocal**'
 
+def rocksCommand(inp,logger=False):
+  """
+  Run Rocks command on all cluster nodes. Mainly used by rapd_agent_beamcenter.py to copy
+  specific images to /dev/shm on each node for processing in RAM.
+  """
+  if logger:
+    logger.debug('Utilities::rocksCommand')
+  try:
+    command = '/opt/rocks/bin/rocks run host compute "%s"'%inp
+    if logger:
+      processLocal("ssh necat@gadolinium '%s'"%command,logger)
+    else:
+      processLocal("ssh necat@gadolinium '%s'"%command)
+  except:
+      self.logger.exception('**ERROR in Utils.rocksCommand**')
+
 def readHeader_TESTING(self,image):
   """
   Read image header as RAPD.
@@ -2149,6 +2171,64 @@ def readHeader_TESTING(self,image):
     from rapd_adsc import AdscReadHeader
     d['header'] = AdscReadHeader(os.path.join(os.getcwd(),image),logger=self.logger)
   return(d)
+
+def junk():
+  return('got here')
+
+def readMarHeader(inp):
+  import re,struct
+  print 'got here'
+  format = '<'
+  f = open(inp,'rb')
+  parameters = {}
+  offset = 1024
+  #f.seek(offset+80)
+  f.seek(2464)
+  print f.read(512)
+  
+  f.seek(offset+640)
+  rawdata = f.read(4)
+  print struct.unpack(format+'i',rawdata)[0]/1000.
+  
+  f.seek(offset+696)
+  rawdata = f.read(4)
+  start_xtal_to_detector = struct.unpack(format+'i',rawdata)[0]/1000.
+  print start_xtal_to_detector
+  
+  f.seek(1676)
+  rawdata = f.read(8)
+  integration, exposure = struct.unpack(format+'ii',rawdata)
+  print integration* 0.001
+  print exposure* 0.001
+  
+  
+  
+  
+  """
+  f.seek(offset+772)
+  rawdata = f.read(8)
+  pixelsize_x,pixelsize_y = struct.unpack(format+'ii',rawdata)
+  parameters['PIXEL_SIZE'] = pixelsize_x*1.0e-6
+  print parameters['PIXEL_SIZE']
+  
+  f.seek(offset+664)
+  rawdata = f.read(8)
+  beam_center_x,beam_center_y = struct.unpack(format+'ii',rawdata)
+  parameters['BEAM_CENTER_X'] = beam_center_x/1000.*parameters['PIXEL_SIZE']
+  parameters['BEAM_CENTER_Y'] = beam_center_y/1000.*parameters['PIXEL_SIZE']
+  print parameters['BEAM_CENTER_X'], parameters['BEAM_CENTER_Y']
+  
+  f.seek(offset+908)
+  rawdata = f.read(4)
+  parameters['WAVELENGTH'] = struct.unpack(format+'i',rawdata)[0]*1.0e-5 # convert from femto to angstrom
+  print parameters['WAVELENGTH']
+  """
+  
+
+  
+  
+  f.close()
+  
 
 def runPhaserModule(self,inp=False):
   """
@@ -2686,6 +2766,6 @@ def XDS2Shelx(self,inp,output=False):
     self.logger.exception('**ERROR in Utils.XDS2Shelx**')
 
 if __name__ == "__main__":
-    
-    print_dict(intl2std)
-    print_dict(std2intl)
+    readMarHeader('/gpfs6/users/necat/Jon/Programs/CCTBX_x64/modules/dials_regression/image_examples/APS_22ID/junk_r1_1.0001')
+    #print_dict(intl2std)
+    #print_dict(std2intl)
