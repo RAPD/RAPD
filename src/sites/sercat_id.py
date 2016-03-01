@@ -94,6 +94,9 @@ CONTROL_REDIS_CLUSTER = False
 DETECTOR = "NECAT_ADSC_Q315_TEST"
 DETECTOR_SUFFIX = ".img"
 
+# Launcher settings
+LAUNCHER_LOCK_FILE = "/tmp/lock/launcher.lock"
+
 # Data gatherer settings
 # The data gatherer for this site, in the src/sites/gatherers directory
 GATHERER = "sercat_id.py"

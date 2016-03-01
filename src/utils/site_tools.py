@@ -121,10 +121,9 @@ def determine_site(site_arg=None):
     """
     print "determine_site"
 
-
     # Get possible site files
     site_files = get_site_files()
-    print site_files
+    # print site_files
 
     # Transform site files to a more palatable form
     safe_sites = {}
@@ -132,7 +131,11 @@ def determine_site(site_arg=None):
         safe_site = os.path.basename(site_file).split(".")[0].lower()
         safe_sites[safe_site] = site_file
 
-    # No site_arg, look to the path for the site
+    # No site_arg, look to environmental variable
+    if site_arg == None:
+        site_arg = os.getenv('RAPD_SITE', None)
+
+    # Still no site_arg, look to the path for the site
     safe_site_args = []
     if site_arg == None:
         cwd = os.getcwd()
@@ -141,6 +144,8 @@ def determine_site(site_arg=None):
             safe_path_elem = path_elem.lower()
             if len(safe_path_elem) > 0:
                 safe_site_args.append(safe_path_elem)
+
+    # Have a site_arg or environmental variable
     else:
         # Transform the input site_arg to lowercase string
         safe_site_args.append(str(site_arg).lower())
