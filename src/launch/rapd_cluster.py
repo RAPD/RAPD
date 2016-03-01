@@ -897,14 +897,14 @@ def main():
         #Server = LaunchServer(site=SITE)
 
     # Run command file[s]
-    else:
+    elif commandline_args.command_files:
 
         # Set up logging
         if commandline_args.verbose:
             log_level = 10
         else:
             log_level = SITE.LOG_LEVEL
-            
+
     # else:
     #     #tag for log file
     #     tag = os.path.basename(command).replace('rapd_','').replace('.json','')
@@ -930,6 +930,8 @@ def main():
     #
     #     my_handler = Handler(conn=None,addr=None,db=None,mode='file',command=my_command,queue=queue,logger=logger)
 
+    else:
+        raise Exception("Not sure what to do!")
 
 if __name__ == '__main__':
 
