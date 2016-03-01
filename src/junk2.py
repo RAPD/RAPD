@@ -12,7 +12,7 @@ class Junk(Process):
   def run(self):
     os.chdir('/home/schuerjp/temp')
     queue = Queue()
-    job = Process(target=BLspec.processCluster,args=(self,'aimless',queue))
+    job = Process(target=BLspec.processClusterSercat,args=(self,'aimless',queue))
     job.start()
     print queue.get()
     
