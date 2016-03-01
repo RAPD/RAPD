@@ -38,10 +38,10 @@ class Database(object):
     Provides connection to MySQL database for Model.
     """
     def __init__(self,
-                 host,
-                 port,
-                 user,
-                 password,
+                 host=None,
+                 port=None,
+                 user=None,
+                 password=None,
                  data_name="rapd_data",
                  users_name="rapd_users",
                  cloud_name="rapd_cloud",

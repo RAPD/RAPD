@@ -47,7 +47,8 @@ import utils.site_tools
 # from rapd_database import Database
 # from rapd_communicate import Communicate
 
-buffer_size = 8192
+# buffer_size = 8192
+database = None
 
 #
 # CLUSTER-SIDE CLASSES
@@ -302,7 +303,12 @@ class Launcher(object):
     """
     Runs a socket server and spawns new threads when connections are received
     """
-    def __init__(self, site):
+
+    database = None
+
+    ip_address = None
+
+    def __init__(self, site, tag=""):
         """
         The main server thread
         """
@@ -311,16 +317,29 @@ class Launcher(object):
         self.logger = logging.getLogger("RAPDLogger")
         self.logger.debug("__init__")
 
-        #create databse connection
-        self.DATABASE = Database(settings=secrets,
-                                 logger=self.logger)
+        # Save passed-in variables
+        self.site = site
+        self.tag = tag
 
-        #tell the database we are alive
-        self.StatusHandler = StatusHandler(db=self.DATABASE,
-                                           logger=self.logger)
+        # Retrieve settings for this Launcher
+        self.get_settings()
 
-        HOST = ''                 # Symbolic name meaning all available interfaces
-        PORT = secrets['cluster_port']         # Arbitrary non-privileged port
+        # Set up connection to the control database
+        self.connect_to_database()
+
+        self.run()
+
+    def run(self):
+        """
+        The core process of the Launcher instance
+        """
+
+        # Socket settings
+        # Symbolic name meaning all available interfaces
+        HOST = ""
+        IP_ADDRESS = socket.gethostbyaddr(socket.gethostname())[-1][0]
+        # Arbitrary non-privileged port
+        PORT = secrets['cluster_port']
 
         self.logger.debug('ClusterServer running in mode %s on port %d' % (self.mode,PORT))
 
@@ -344,6 +363,23 @@ class Launcher(object):
         #if we exit...
         s.close()
 
+    def get_settings(self):
+        """
+        Get the settings for this Launcher based on ip address and tag
+        """
+
+        # Save typing
+        addresses = self.site.LAUNCHER_SETTINGS["LAUNCHER_ADDRESSES"]
+
+        # Get IP Address
+        self.ip_address = socket.gethostbyaddr(socket.gethostname())[-1][0]
+
+        for address in addresses:
+            self.logger.debug("%s %s \"%s\"", address, self.ip_address, self.tag)
+            if address[0] == self.ip_address and address[1] == self.tag:
+                self.logger.debug('Have an address %s', address)
+
+
     def connect_to_database(self):
         """Set up database connection"""
 
@@ -354,10 +390,8 @@ class Launcher(object):
         global database
         database = importlib.import_module('database.rapd_%s_adapter' % site.CONTROL_DATABASE)
 
-
-
         # Instantiate the database connection
-        self.database = database.Database(settings=site["CONTROL_DATABASE_SETTINGS"])
+        self.database = database.Database(settings=site.CONTROL_DATABASE_SETTINGS)
         # self.database = database.Database(host=site.CONTROL_DATABASE_HOST,
         #                                   user=site.CONTROL_DATABASE_USER,
         #                                   password=site.CONTROL_DATABASE_PASSWORD,
@@ -840,6 +874,15 @@ def get_commandline():
     parser = argparse.ArgumentParser(parents=[utils.commandline.base_parser],
                                      description=commandline_description)
 
+    # Add the possibility to tag the Launcher
+    # This will make it possible to run multiple Launcher configurations
+    # on one machine
+    parser.add_argument("--tag",
+                        action="store",
+                        dest="tag",
+                        default="",
+                        help="Specify a tag for the Launcher")
+
     # Add the possibility to add a queue for cluster operations
     # parser.add_argument("-q",
     #                     action="store",
@@ -889,7 +932,8 @@ def main():
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s" % pair)
 
-    LAUNCHER = Launcher(SITE)
+    LAUNCHER = Launcher(site=SITE,
+                        tag=commandline_args.tag)
 
 if __name__ == "__main__":
 

@@ -839,22 +839,22 @@ def get_commandline():
                                      description=commandline_description)
 
     # Add the possibility to add a queue for cluster operations
-    parser.add_argument("-q",
-                        action="store",
-                        dest="queue",
-                        help="Specify named queue for cluster run")
-
-    # Add the possibility to add a queue for cluster operations
-    parser.add_argument("--server",
-                        action="store_true",
-                        dest="server",
-                        help="Run as a server to accept jobs from rapd control")
-
-    # Passing command files is one way to use
-    parser.add_argument("command_files",
-                        nargs="*",
-                        default=False,
-                        help="Command files to execute")
+    # parser.add_argument("-q",
+    #                     action="store",
+    #                     dest="queue",
+    #                     help="Specify named queue for cluster run")
+    #
+    # # Add the possibility to add a queue for cluster operations
+    # parser.add_argument("--server",
+    #                     action="store_true",
+    #                     dest="server",
+    #                     help="Run as a server to accept jobs from rapd control")
+    #
+    # # Passing command files is one way to use
+    # parser.add_argument("command_files",
+    #                     nargs="*",
+    #                     default=False,
+    #                     help="Command files to execute")
 
     return parser.parse_args()
 
@@ -871,39 +871,25 @@ def main():
     # Import the site settings
     SITE = importlib.import_module(site_file)
 
-    # Run in server mode
-    if commandline_args.server:
-        print "Server = LaunchServer(site=SITE)"
+    # Single process lock?
+    if SITE.LAUNCHER_LOCK_FILE:
+        if file_is_locked(SITE.LAUNCHER_LOCK_FILE):
+            raise Exception("%s is already locked, unable to run" % SITE.LAUNCHER_LOCK_FILE)
 
-        # Single process lock?
-        if SITE.LAUNCHER_LOCK_FILE:
-            if file_is_locked(SITE.LAUNCHER_LOCK_FILE):
-                raise Exception("%s is already locked, unable to run" % SITE.LAUNCHER_LOCK_FILE)
+    # Set up logging
+    if commandline_args.verbose:
+        log_level = 10
+    else:
+        log_level = SITE.LOG_LEVEL
+    logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
+                                  logfile_id="rapd_launch_"+SITE.ID,
+                                  level=log_level)
 
-        # Set up logging
-        if commandline_args.verbose:
-            log_level = 10
-        else:
-            log_level = SITE.LOG_LEVEL
-        logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
-                                      logfile_id="rapd_launch_"+SITE.ID,
-                                      level=log_level)
+    logger.debug("Commandline arguments:")
+    for pair in commandline_args._get_kwargs():
+        logger.debug("  arg:%s  val:%s" % pair)
 
-        logger.debug("Commandline arguments:")
-        for pair in commandline_args._get_kwargs():
-            logger.debug("  arg:%s  val:%s" % pair)
 
-        # Instantiate the LaunchServer
-        #Server = LaunchServer(site=SITE)
-
-    # Run command file[s]
-    elif commandline_args.command_files:
-
-        # Set up logging
-        if commandline_args.verbose:
-            log_level = 10
-        else:
-            log_level = SITE.LOG_LEVEL
 
     # else:
     #     #tag for log file
@@ -930,8 +916,6 @@ def main():
     #
     #     my_handler = Handler(conn=None,addr=None,db=None,mode='file',command=my_command,queue=queue,logger=logger)
 
-    else:
-        raise Exception("Not sure what to do!")
 
 if __name__ == '__main__':
 
