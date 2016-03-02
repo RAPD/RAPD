@@ -22,6 +22,15 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
+"""
+This is an adaptor for RAPD to connect to the control database when it is a MySQL
+type database.
+
+To run a mariadb instance in docker:
+sudo docker run --name mariadb -v /home/schuerjp/data:/var/lib/mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=root_password -d mariadb
+"""
+
+
 import json
 import logging
 import numpy

@@ -25,18 +25,18 @@ __status__ = "Production"
 import argparse
 import importlib
 import socket
-import threading
-import multiprocessing
-import subprocess
-import json
-import os
+# import threading
+# import multiprocessing
+# import subprocess
+# import json
+# import os
 import time
-import sys
+# import sys
 import logging
 import logging.handlers
-import getopt
-import tempfile
-from inspect import getsourcefile
+# import getopt
+# import tempfile
+# from inspect import getsourcefile
 
 import utils.commandline
 from utils.lock import file_lock
@@ -47,8 +47,9 @@ import utils.site_tools
 # from rapd_database import Database
 # from rapd_communicate import Communicate
 
-# buffer_size = 8192
+BUFFER_SIZE = 8192
 database = None
+launcher_adapter = None
 
 #
 # CLUSTER-SIDE CLASSES
@@ -305,8 +306,13 @@ class Launcher(object):
     """
 
     database = None
-
+    adapter = None
+    address = None
     ip_address = None
+    tag = None
+    port = None
+    job_types = None
+    adapter_file = None
 
     def __init__(self, site, tag=""):
         """
@@ -324,9 +330,13 @@ class Launcher(object):
         # Retrieve settings for this Launcher
         self.get_settings()
 
+        # Load the adapter
+        self.load_adapter()
+
         # Set up connection to the control database
         self.connect_to_database()
 
+        # Start listening for commands
         self.run()
 
     def run(self):
@@ -334,34 +344,55 @@ class Launcher(object):
         The core process of the Launcher instance
         """
 
-        # Socket settings
-        # Symbolic name meaning all available interfaces
-        HOST = ""
-        IP_ADDRESS = socket.gethostbyaddr(socket.gethostname())[-1][0]
-        # Arbitrary non-privileged port
-        PORT = secrets['cluster_port']
-
-        self.logger.debug('ClusterServer running in mode %s on port %d' % (self.mode,PORT))
-
+        # Create socket to listen for commands
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.bind((HOST,PORT))
+        s.settimeout(5)
+        s.bind(("", self.specifications["port"]))
 
-        #This is the "server"
+        # This is the server portion of the code
         while(1):
-            s.listen(5)
             try:
-                print 'MODE',self.mode
+                s.listen(5)
+                # print 'MODE', self.mode
                 conn, addr = s.accept()
-                tmp = Handler(conn=conn,
-                              addr=addr,
-                              db=self.DATABASE,
-                              mode = self.mode,
-                              logger=self.logger)
-            except:
-                self.logger.exception('Error in cluster server')
+                # tmp = Handler(conn=conn,
+                #               addr=addr,
+                #               db=self.DATABASE,
+                #               mode = self.mode,
+                #               logger=self.logger)
 
-        #if we exit...
+                # Read the message from the socket
+                message = ""
+                while not (message.endswith('<rapd_end>')):
+                    data = conn.recv(BUFFER_SIZE)
+                    message += data
+                    time.sleep(0.001)
+
+                # Close the connection
+                conn.close()
+
+                # Handle the message
+                self.handle_message(message)
+
+            except socket.timeout:
+                print "5 seconds up"
+
+        # If we exit...
         s.close()
+
+    def handle_message(self, message):
+        """
+        Handle an incoming message
+        """
+
+        # Save the raw_message in case we need it
+        raw_message = message
+
+        # Strip the message of its delivery tags
+        message = message.rstrip().replace("<rapd_start>","").replace("<rapd_end>","")
+
+        # Use the adapter to launch
+        self.adapter(message, self.specifications)
 
     def get_settings(self):
         """
@@ -375,10 +406,33 @@ class Launcher(object):
         self.ip_address = socket.gethostbyaddr(socket.gethostname())[-1][0]
 
         for address in addresses:
-            self.logger.debug("%s %s \"%s\"", address, self.ip_address, self.tag)
             if address[0] == self.ip_address and address[1] == self.tag:
-                self.logger.debug('Have an address %s', address)
+                self.address = address
+                break
 
+        # No address
+        if self.address == None:
+            raise Exception("No definition for launcher in site file")
+        else:
+            # Unpack address
+            self.ip_address, self.tag, self.launcher_id = self.address
+            self.specifications = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.launcher_id]
+
+
+    def load_adapter(self):
+        """Find and load the adapter"""
+
+        # Shorten it a little
+        site = self.site
+
+        # Import the database adapter as database module
+        global launcher_adapter
+        launcher_adapter = importlib.import_module(
+            'sites.launcher_adapters.%s' % self.specifications["adapter"])
+
+        # Instantiate the database connection
+        self.adapter = launcher_adapter.LauncherAdapter
+        self.logger.debug(self.adapter)
 
     def connect_to_database(self):
         """Set up database connection"""
@@ -392,12 +446,7 @@ class Launcher(object):
 
         # Instantiate the database connection
         self.database = database.Database(settings=site.CONTROL_DATABASE_SETTINGS)
-        # self.database = database.Database(host=site.CONTROL_DATABASE_HOST,
-        #                                   user=site.CONTROL_DATABASE_USER,
-        #                                   password=site.CONTROL_DATABASE_PASSWORD,
-        #                                   data_name=site.CONTROL_DATABASE_NAME_DATA,
-        #                                   users_name=site.CONTROL_DATABASE_NAME_USERS,
-        #                                   cloud_name=site.CONTROL_DATABASE_NAME_CLOUD)
+
 # class StatusHandler(threading.Thread):
 #     """
 #     Handles logging of life for the cluster

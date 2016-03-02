@@ -131,16 +131,17 @@ class Handler(threading.Thread):
         # Add the request to self.process_settings so it can be passed on
         self.process_settings["request"] = self.request
 
-        #mark that the request has been addressed
+        # Mark that the request has been addressed
         self.database.markCloudRequest(self.request["cloud_request_id"], "working")
 
-        #mark in the cloud_current table
+        # Mark in the cloud_current table
         self.database.addCloudCurrent(self.request)
 
-        #connect to the server and send request
+        # Connect to the server and send request
         PerformAction((my_request_type, my_dirs, data, self.process_settings, self.reply_settings),
                       self.process_settings,
-                      self.settings,self.logger)
+                      self.settings,
+                      self.logger)
 
     def get_work_dir(self):
         """Calculate and check a new work directory and repr"""

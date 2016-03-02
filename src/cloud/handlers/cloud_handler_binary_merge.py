@@ -114,9 +114,8 @@ class Handler(threading.Thread):
         self.database.addCloudCurrent(self.request)
 
         # Connect to the server and autoindex the single image
-        PerformAction(("SMERGE", new_dirs, data, self.process_settings, self.reply_settings),
-                      self.process_settings,
-                      self.settings)
+        PerformAction(("BINARY_MERGE", new_dirs, data, self.process_settings, self.reply_settings),
+                      self.process_settings)
 
     def get_process_data(self):
         """Retrieve information on the previous process from the database"""
