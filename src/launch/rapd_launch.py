@@ -24,22 +24,21 @@ __status__ = "Production"
 
 import argparse
 import importlib
-import socket
-import threading
-import multiprocessing
-import subprocess
+# import socket
+# import threading
+# import multiprocessing
+# import subprocess
 import json
-import os
-import time
-import sys
+# import os
+# import time
+# import sys
 import logging
 import logging.handlers
-import getopt
-import tempfile
-from inspect import getsourcefile
+# import getopt
+# import tempfile
+# from inspect import getsourcefile
 
 import utils.commandline
-from utils.lock import file_is_locked
 import utils.log
 import utils.site_tools
 
@@ -48,6 +47,7 @@ import utils.site_tools
 # from rapd_communicate import Communicate
 
 buffer_size = 8192
+agent = None
 
 #
 # CLUSTER-SIDE CLASSES
@@ -231,73 +231,78 @@ buffer_size = 8192
 #             return((tmp, None, None))
 #
 #
-# class EchoCase(multiprocessing.Process):
-#     """
-#     An action class which only echos the input data back
-#     """
-#
-#     def __init__(self,command,pipe,logger):
-#         """
-#         Initialize the TestCase process
-#
-#         input   is whatever is passed in
-#         pipe    is the communication back to the calling process
-#         """
-#         logger.info('EchoCase::__init__')
-#
-#         self.command = command
-#         self.pipe    = pipe
-#         self.logger  = logger
-#
-#         #this is where I have chosen to place my results
-#         self.results = False
-#
-#         multiprocessing.Process.__init__(self,name='TestCase')
-#
-#         #starts the new process
-#         self.start()
-#
-#     def run(self):
-#         self.logger.debug('EchoCase::run')
-#
-#         self.preprocess()
-#         self.process()
-#         self.postprocess()
-#
-#     def preprocess(self):
-#         """
-#         Things to do before the main process runs
-#         1. Change to the correct directory
-#         2. Print out the reference for labelit
-#         """
-#         self.logger.debug('EchoCase::preprocess')
-#
-#
-#     def process(self):
-#         """
-#         The main process
-#         1. Construct the labelit command
-#         2. Run labelit, grabbing the outout
-#         3. Parse the labelit output
-#         """
-#         self.logger.debug('EchoCase::process')
-#
-#         #put the gathered data into a dict for return
-#         self.results = self.command
-#         self.results.append('EchoCase')
-#
-#     def postprocess(self):
-#         """
-#         Things to do after the main process runs
-#         1. Return the data throught the pipe
-#         """
-#         self.logger.debug('EchoCase::postprocess')
-#         self.logger.debug(self.results)
-#
-#         #send the results back to the TestHandler via the passed-in pipe
-#         self.pipe.send(self.results)
-#
-#
+
+
+class Launch(object):
+    """
+    Launches json-formatted radp command files using the command-appropriate
+    rapd agent
+    """
+
+    agent = None
+
+    def __init__(self, settings, command_file):
+        """Initialize the Launch"""
+
+        # Get the logger Instance
+        self.logger = logging.getLogger("RAPDLogger")
+        self.logger.debug("__init__")
+
+        # Save passed-in variables
+        self.settings = settings
+        self.command_file = command_file
+
+        self.run()
+
+    def run(self):
+        """Orchsetrate the Launch process"""
+
+        # Load and decode json command file
+        command, request, reply_settings = self.load_command()
+        self.logger.debug("command: %s", command)
+        self.logger.debug("request: %s", request)
+        self.logger.debug("reply_settings: %s", reply_settings)
+
+        # Load the agent for this command
+        self.load_agent(command)
+
+        # Run the agent
+        self.agent.RapdAgent(command, request, reply_settings)
+
+    def load_command(self):
+        """Load and parse the command file"""
+
+        # Load the file
+        message = open(self.command_file, "r").read()
+
+        # Decode json command file
+        return json.loads(message)
+
+    def load_agent(self, command):
+        """Load the agent file for this command"""
+
+        # Save some space
+        settings = self.settings
+
+        # Agent we are looking for
+        seek_module = "rapd_agent_%s" % command.lower()
+
+        # Look for rapd agents in the specified directories
+        for directory in settings["RAPD_AGENT_DIRECTORIES"]:
+
+            self.logger.debug("  Looking for %s in %s", seek_module, directory)
+
+            try:
+                self.agent = importlib.import_module(directory+"."+seek_module)
+                break
+            except ImportError:
+                self.logger.error("No such agent as %s", directory+"."+seek_module)
+                continue
+
+        if self.agent == None:
+            raise Exception("No agent found for %s", command)
+
+
 # class ClusterServer:
 #     """
 #     Runs the socket server and spawns new threads when connections are received
@@ -838,18 +843,6 @@ def get_commandline():
     parser = argparse.ArgumentParser(parents=[utils.commandline.base_parser],
                                      description=commandline_description)
 
-    # Add the possibility to add a queue for cluster operations
-    parser.add_argument("-q",
-                        action="store",
-                        dest="queue",
-                        help="Specify named queue for cluster run")
-
-    # Add the possibility to add a queue for cluster operations
-    parser.add_argument("--server",
-                        action="store_true",
-                        dest="server",
-                        help="Run as a server to accept jobs from rapd control")
-
     # Passing command files is one way to use
     parser.add_argument("command_files",
                         nargs="*",
@@ -871,71 +864,27 @@ def main():
     # Import the site settings
     SITE = importlib.import_module(site_file)
 
-    # Run in server mode
-    if commandline_args.server:
-        print "Server = LaunchServer(site=SITE)"
+    # Set up logging
+    if commandline_args.verbose:
+        log_level = 10
+    else:
+        log_level = SITE.LOG_LEVEL
 
-        # Single process lock?
-        if SITE.LAUNCHER_LOCK_FILE:
-            if file_is_locked(SITE.LAUNCHER_LOCK_FILE):
-                raise Exception("%s is already locked, unable to run" % SITE.LAUNCHER_LOCK_FILE)
+    logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
+                                  logfile_id="rapd_launch_"+SITE.ID,
+                                  level=log_level)
 
-        # Set up logging
-        if commandline_args.verbose:
-            log_level = 10
-        else:
-            log_level = SITE.LOG_LEVEL
-        logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
-                                      logfile_id="rapd_launch_"+SITE.ID,
-                                      level=log_level)
-
-        logger.debug("Commandline arguments:")
-        for pair in commandline_args._get_kwargs():
-            logger.debug("  arg:%s  val:%s" % pair)
-
-        # Instantiate the LaunchServer
-        #Server = LaunchServer(site=SITE)
+    logger.debug("Commandline arguments:")
+    for pair in commandline_args._get_kwargs():
+        logger.debug("  arg:%s  val:%s" % pair)
 
     # Run command file[s]
-    elif commandline_args.command_files:
-
-        # Set up logging
-        if commandline_args.verbose:
-            log_level = 10
-        else:
-            log_level = SITE.LOG_LEVEL
-
-    # else:
-    #     #tag for log file
-    #     tag = os.path.basename(command).replace('rapd_','').replace('.json','')
-    #     #start logging
-    #     if os.path.exists(secrets['cluster_logfile_dir']):
-    #         LOG_FILENAME = os.path.join(secrets['cluster_logfile_dir'],'rapd_cluster_'+tag+'.log')
-    #     else:
-    #         LOG_FILENAME = '/tmp/rapd_cluster_'+tag+'.log'
-    #     # Set up a specific logger with our desired output level
-    #     logger = logging.getLogger('RAPDLogger')
-    #     logger.setLevel(logging.DEBUG)
-    #     # Add the log message handler to the logger
-    #     handler = logging.handlers.RotatingFileHandler(LOG_FILENAME, maxBytes=10000000, backupCount=5)
-    #     #add a formatter
-    #     formatter = logging.Formatter("%(asctime)s - %(message)s")
-    #     handler.setFormatter(formatter)
-    #     logger.addHandler(handler)
-    #     logger.info('RAPD_CLUSTER.main')
-    #     logger.debug('Starting in directory %s' % os.getcwd())
-    #
-    #     command_file = open(command,'r')
-    #     my_command = json.load(command_file)
-    #
-    #     my_handler = Handler(conn=None,addr=None,db=None,mode='file',command=my_command,queue=queue,logger=logger)
-
+    if commandline_args.command_files:
+        for command_file in commandline_args.command_files:
+            Launch(SITE.LAUNCH_SETTINGS, command_file)
     else:
         raise Exception("Not sure what to do!")
 
 if __name__ == '__main__':
-
-    # Set up terminal printer
-    # tprint = utils.log.get_terminal_printer(verbosity=1)
 
     main()

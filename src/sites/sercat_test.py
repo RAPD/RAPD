@@ -88,9 +88,9 @@ UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"
 
 # RAPD cluster process settings
 # Port for cluster to listen on
-CLUSTER_PORT = 50000
+LAUNCHER_PORT = 50000
 # Aggregator - be careful when changing
-CLUSTER_ADDRESS = (SECRETS.CLUSTER_HOST, CLUSTER_PORT)
+LAUNCHER_ADDRESS = (SECRETS.LAUNCHER_HOST, LAUNCHER_PORT)
 
 # RAPD database settings
 # Database to use for core operations. Options: "mysql"
@@ -159,7 +159,7 @@ CLOUD_MONITOR_SETTINGS = {
         "CLOUD_MR_HANDLER":CLOUD_MR_HANDLER,
         "CLOUD_REINDEX_HANDLER":CLOUD_REINDEX_HANDLER,
         "CLOUD_REINTEGRATE_HANDLER":CLOUD_REINTEGRATE_HANDLER,
-        "CLUSTER_ADDRESS":CLUSTER_ADDRESS,
+        "LAUNCHER_ADDRESS":LAUNCHER_ADDRESS,
         "DETECTOR_SUFFIX":DETECTOR_SUFFIX,
         "UI_HOST":SECRETS.UI_HOST,
         "UI_PORT":SECRETS.UI_PORT,

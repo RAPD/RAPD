@@ -97,6 +97,11 @@ DETECTOR_SUFFIX = ".img"
 # Launcher settings
 LAUNCHER_LOCK_FILE = "/tmp/lock/launcher.lock"
 
+# Directories to look for rapd agents
+RAPD_AGENT_DIRECTORIES = ("sites.agents", "agents")
+# Queried in order, so a rapd_agent_echo.py in src/sites/agents will override
+# the same file in src/agents
+
 # Data gatherer settings
 # The data gatherer for this site, in the src/sites/gatherers directory
 GATHERER = "sercat_id.py"
@@ -153,7 +158,12 @@ CONTROL_DATABASE_SETTINGS = {
 LAUNCHER_SETTINGS = {
     "LAUNCHER_ADDRESSES":LAUNCHER_ADDRESSES,
     "LAUNCHER_SPECIFICATIONS":LAUNCHER_SPECIFICATIONS,
-    "LOCK_FILE":LAUNCHER_LOCK_FILE
+    "LOCK_FILE":LAUNCHER_LOCK_FILE,
+    "RAPD_AGENT_DIRECTORIES":RAPD_AGENT_DIRECTORIES
+}
+
+LAUNCH_SETTINGS = {
+    "RAPD_AGENT_DIRECTORIES":RAPD_AGENT_DIRECTORIES
 }
 
 BEAM_SETTINGS = {"BEAM_FLUX":BEAM_FLUX,
