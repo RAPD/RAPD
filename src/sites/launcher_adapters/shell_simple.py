@@ -59,12 +59,18 @@ class LauncherAdapter(object):
         Orchestrate the adapter's actions
         """
 
+        # Decode message
+        message_decoded = json.loads(self.message)
+
         # Unpack message
-        command, request, reply_settings = json.loads(self.message)
+        try:
+            command, request, reply_settings = message_decoded
+        except ValueError:
+            self.logger.error("Unable to unpack message")
+            return False
 
         # Put the command into a file
         command_file = launch_tools.write_command_file(self.settings["launch_dir"], command, self.message)
-        print command_file
 
         # Call the launch process on the command file
         Popen(["rapd.launch", command_file], shell=True)

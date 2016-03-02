@@ -286,7 +286,7 @@ class CloudMonitor(threading.Thread):
             # Discover plugin files
             for f in files:
                 name, ext = os.path.splitext(f)
-                if (name.startswith('cloud_handler_')) and (ext == (os.extsep + 'py')):
+                if (name.startswith("cloud_handler_")) and (ext == (os.extsep + "py")):
                     module = importlib.import_module(directory+"."+name)
                     # Make doubly-sure this is a cloud handler
                     try:

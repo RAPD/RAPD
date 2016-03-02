@@ -366,7 +366,7 @@ class Launcher(object):
                 while not (message.endswith('<rapd_end>')):
                     data = conn.recv(BUFFER_SIZE)
                     message += data
-                    time.sleep(0.001)
+                    time.sleep(0.01)
 
                 # Close the connection
                 conn.close()
@@ -384,6 +384,8 @@ class Launcher(object):
         """
         Handle an incoming message
         """
+
+        self.logger.debug("Message received: %s", message)
 
         # Save the raw_message in case we need it
         raw_message = message
@@ -957,7 +959,6 @@ def main():
 
     # Get the commandline args
     commandline_args = get_commandline()
-    print commandline_args
 
     # Determine the site
     site_file = utils.site_tools.determine_site(site_arg=commandline_args.site)

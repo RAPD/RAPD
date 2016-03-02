@@ -26,12 +26,17 @@ __status__ = "Development"
 Provides tools for launch and launcher
 """
 
+import os
 import tempfile
 
 def write_command_file(target_directory, command, message):
     """
     Write the message to a command file in the target directory
     """
+
+    # Make sure the target directory exists
+    if not os.path.exists(target_directory):
+        os.makedirs(target_directory)
 
     out_file = tempfile.NamedTemporaryFile(mode="w",
                                            dir=target_directory,
