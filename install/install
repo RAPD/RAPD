@@ -487,6 +487,7 @@ printf "rapd.python\n"
      $PREFIX/share/phenix/build/bin/cctbx.python > ./rapd.python
 chmod +x ./rapd.python
 
+
 # Create scripts
 echo "#! /bin/bash" > ./rapd.control
 echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/control\/rapd_control.py \"\$@\"" >>./rapd.control
@@ -495,6 +496,15 @@ chmod +x ./rapd.control
 echo "#! /bin/bash" > ./rapd.gather
 echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/sites\/gatherers\/gatherer_wrapper.py \"\$@\"" >>./rapd.gather
 chmod +x ./rapd.gather
+
+echo "#! /bin/bash" > ./rapd.launcher
+echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launcher.py \"\$@\"" >>./rapd.launcher
+chmod +x ./rapd.launcher
+
+echo "#! /bin/bash" > ./rapd.launch
+echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launch.py \"\$@\"" >>./rapd.launch
+chmod +x ./rapd.launch
+
 
 # Create the rapd.shrc script
 printf "Writing rapd.shrc\n"
