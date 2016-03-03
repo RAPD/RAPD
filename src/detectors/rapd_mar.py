@@ -1,6 +1,8 @@
 from __future__ import division
 import re,struct
 from iotbx.detectors.detectorbase import DetectorImageBase
+import os,re,time
+import logging, logging.handlers
 
 class MARImage(DetectorImageBase):
   def __init__(self,filename):
@@ -215,9 +217,6 @@ class MARImage(DetectorImageBase):
   def integerdepth(self):
     return self.depth
 
-import os,re,time
-import logging, logging.handlers
-
 def MarReadHeader(image,
                   mode=None,
                   run_id=None,
@@ -252,17 +251,26 @@ def MarReadHeader(image,
                    'size2'        : int(header['SIZE2']),
                    'omega_end'    : float(header['OMEGA_END']),
                    'omega_start'  : float(header['OMEGA_START']),
-                   'beam_center_x': float(header['BEAM_CENTER_X']),
-                   'beam_center_y': float(header['BEAM_CENTER_Y']),
-                   'vendortype'   : m.vendortype,
+                   #Flipped!!
+                   'beam_center_x': float(header['BEAM_CENTER_Y']),
+                   'beam_center_y': float(header['BEAM_CENTER_X']),
+                   #'vendortype'   : m.vendortype,
                    }
+  
+  #Figure out which MAR detector was used
+  #if m.vendortype == 'MARCCD':
+  if header_items['size1'] == 3840:
+    det = 'ray300'
+  else:
+    det = 'mar300'
+  
   #try:
   #tease out the info from the file name
   #base = os.path.basename(image).rstrip(".cbf")
   base = os.path.basename(image)
 
   parameters = {'fullname'     : image,
-                'detector'     : 'MARCCD',
+                'detector'     : det,
                 'directory'    : os.path.dirname(image),
                 'image_prefix' : "_".join(base.split("_")[0:-2]),
                 'run_number'   : str(base.split("_")[-2]),
@@ -299,7 +307,7 @@ if __name__ == "__main__":
     P = PilatusMonitor(beamline='C',notify=notify,reconnect=None,logger=None)
     """
     #Test the header reading
-    test_image = "/gpfs6/users/necat/Jon/Programs/CCTBX_x64/modules/dials_regression/image_examples/APS_22ID/junk_r1_1.0001"
+    test_image = "/gpfs6/users/necat/Jon/RAPD_test/Images/SERCAT/BM/SERX12_Pn12_2014_2_21_r1_1.0003"
     header = MarReadHeader(test_image)
     import pprint
     P = pprint.PrettyPrinter()

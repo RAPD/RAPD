@@ -1,29 +1,17 @@
-"""
-This file is part of RAPD
+'''
+__author__ = "Jon Schuermann"
+__copyright__ = "Copyright 2009, NE-CAT"
+__credits__ = ["Jon Schuermann","Frank Murphy","David Neau","Kay Perry","Surajit Banerjee"]
+__license__ = "GPLv3"
+__version__ = "0.9"
+__maintainer__ = "Frank Murphy"
+__email__ = "fmurphy@anl.gov"
+__status__ = "Development"
+__date__ = "2009/07/14"
+'''
 
-Copyright (C) 2009-2016, Cornell University
-All rights reserved.
-
-RAPD is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published by
-the Free Software Foundation, version 3.
-
-RAPD is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Affero General Public License for more details.
-
-You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""
-
-__created__ = "2009-07-14"
-__maintainer__ = "Jon Schuermann"
-__email__ = "schuerjp@anl.gov"
-__status__ = "Production"
-
-from multiprocessing import Process, Queue, Event
-import os,subprocess, time, shutil
+from multiprocessing import Process,Queue,Event
+import os,subprocess,time,shutil
 from rapd_communicate import Communicate
 from rapd_agent_xoalign import RunXOalign
 import rapd_utils as Utils
@@ -31,7 +19,7 @@ import rapd_beamlinespecific as BLspec
 import rapd_parse as Parse
 import rapd_summary as Summary
 
-class AutoindexingStrategy(Process, Communicate):
+class AutoindexingStrategy(Process,Communicate):
   def __init__(self,input,logger=None):
     logger.info('AutoindexingStrategy.__init__')
     self.st = time.time()
@@ -49,17 +37,17 @@ class AutoindexingStrategy(Process, Communicate):
         self.preferences                        = self.input[3]
     self.controller_address                 = self.input[-1]
     
-    #For testing individual modules (Will not run in Test mode on cluster!! Can be set at end of __init__.)
+    #For debugging individual modules (Will not run in Test mode on cluster!! Can be set at end of __init__.)
     self.test                               = False
     #Removes junk files and directories at end. (Will still clean on cluster!! Can be set at end of __init__.)
     self.clean                              = False
-    #Runs in RAM (slightly faster), but difficult to debug.
+    #Runs in RAM (slightly faster?). Not really worth it right now. Difficult to debug when there is an error.
     self.ram                                = False
     #Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Slower (>10%). Mainly 
-    #used for rapd_agent_beamcenter.py to launch a lot of jobs at once.
+    #used for rapd_agent_beamcenter.py to launch a lot of LABELIT jobs at once.
     self.cluster_use                        = False
     #If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
-    self.cluster_queue                      = 'index.q'
+    self.cluster_queue                      = 'index.q,phase2.q'
     #self.cluster_queue                      = False
     #Switch for verbose
     self.verbose                            = True
@@ -171,7 +159,7 @@ class AutoindexingStrategy(Process, Communicate):
         self.gui                   = True
         self.test                  = False
         self.clean                 = True
-        #self.verbose               = False
+        self.verbose               = False
     else:
         self.gui                   = False
     #******BEAMLINE SPECIFIC*****
@@ -186,11 +174,13 @@ class AutoindexingStrategy(Process, Communicate):
     if self.verbose:
       self.logger.debug('AutoindexingStrategy::run')
     self.preprocess()
+    
     if self.minikappa:
       self.processXOalign()
     else:
       #Make the labelit.png image
       self.makeImages(0)
+      
       #Run Labelit
       self.processLabelit()
       
@@ -216,7 +206,7 @@ class AutoindexingStrategy(Process, Communicate):
             self.postprocessDistl()
       #Make PHP files for GUI, passback results, and cleanup.
       self.postprocess()
-      
+    
   def preprocess(self):
     """
     Setup the working dir in the RAM and save the dir where the results will go at the end.
@@ -225,19 +215,6 @@ class AutoindexingStrategy(Process, Communicate):
       self.logger.debug('AutoindexingStrategy::preprocess')
     #Determine detector vendortype
     self.vendortype = Utils.getVendortype(self,self.header)
-    """
-    #For determining detector type. Same notation as CCTBX.
-    #Grab the beamline info from rapd_site.py that give the specifics of this beamline.
-    #You will have to modify how a beamline/detector is selected. If multiple detectors
-    #of same type, you could look at S/N.
-    if self.header.get('fullname')[-3:] == 'cbf':
-      if float(self.header.get('beam_center_y')) > 200.0:
-        self.vendortype = 'Pilatus-6M'
-      else:
-        self.vendortype = 'ADSC-HF4M'
-    else:
-      self.vendortype = 'ADSC'
-    """
     self.dest_dir = self.setup.get('work')
     if self.test or self.cluster_use:
       self.working_dir = self.dest_dir
@@ -268,8 +245,8 @@ class AutoindexingStrategy(Process, Communicate):
       cell = Utils.getLabelitCell(self)
       nres = Utils.calcTotResNumber(self,self.volume)
       #Adding these typically does not change the Best strategy much, if it at all.
-      patm                 = False
-      satm                 = False
+      patm = False
+      satm = False
       if self.sample_type == 'Ribosome':
         crystal_size_x = '1'
         crystal_size_y = '0.5'
@@ -481,9 +458,24 @@ class AutoindexingStrategy(Process, Communicate):
     """
     if self.verbose:
       self.logger.debug('AutoindexingStrategy::processBest')
+    
+    #figuring out correct detector name for BEST (detector-inf.dat)
+    def det_input():
+      detectors = {'ADSC'       : 'q315',
+                   'ADSC-Q315'  : 'q315',
+                   'ADSC-HF4M'  : 'hf4m',
+                   'Pilatus-6M' : 'pilatus6m',
+                   'PILATUS'    : 'pilatus6m',
+                   'mar300'     : 'mar300',
+                   'ray300'     : 'ray300',
+                   }
+      return(detectors[self.vendortype])
+    
     try:
+      #Simplify detector names.
+      det = det_input()
       #Get the beamline settings from rapd_site.py.
-      if self.vendortype in ['Pilatus-6M','ADSC-HF4M']:
+      if det in ['pilatus6m','hf4m']:
         from rapd_site import settings_C as settings
       else:
         from rapd_site import settings_E as settings
@@ -493,9 +485,16 @@ class AutoindexingStrategy(Process, Communicate):
       min_e_t = settings.get('min_exp_time')
       
       image_number = []
-      image_number.append(self.header.get('fullname')[self.header.get('fullname').rfind('_')+1:self.header.get('fullname').rfind('.')])
-      if self.header2:
-        image_number.append(self.header2.get('fullname')[self.header2.get('fullname').rfind('_')+1:self.header2.get('fullname').rfind('.')])
+      #MAR images don't have a file suffix.
+      if self.vendortype.startswith('MAR'):
+        image_number.append(self.header.get('fullname')[self.header.get('fullname').rfind('.')+1:])
+        if self.header2:
+          image_number.append(self.header2.get('fullname')[self.header.get('fullname').rfind('.')+1:])
+      else:
+        image_number.append(self.header.get('fullname')[self.header.get('fullname').rfind('_')+1:self.header.get('fullname').rfind('.')])
+        if self.header2:
+          image_number.append(self.header2.get('fullname')[self.header2.get('fullname').rfind('_')+1:self.header2.get('fullname').rfind('.')])
+
       #Tell Best if two-theta is being used.
       if int(float(self.header.get('twotheta'))) != 0:
         Utils.fixBestfile(self)
@@ -528,14 +527,9 @@ class AutoindexingStrategy(Process, Communicate):
           dose         = False
           exp_dose_lim = False
       #put together the command for labelit.index
-      if self.vendortype == 'Pilatus-6M':
-        command = 'best -f pilatus6m'
-      elif self.vendortype == 'ADSC-HF4M':
-        command = 'best -f hf4m'
-      else:
-        command = 'best -f q315'
-        if str(self.header.get('binning')) == '2x2':
-            command += '-2x'
+      command = 'best -f %s'%det
+      if str(self.header.get('binning')) == '2x2':
+        command += '-2x'
       if self.high_dose:
         command += ' -t 1.0'
       else:
@@ -590,7 +584,8 @@ class AutoindexingStrategy(Process, Communicate):
         d.update({'log'+l[i][1]:log})
         if self.test == False:
           if self.cluster_use:
-            jobs[str(i)] = Process(target=BLspec.processCluster,args=(self,(l[i][0],log,self.cluster_queue)))
+            #jobs[str(i)] = Process(target=BLspec.processCluster,args=(self,(l[i][0],log,self.cluster_queue)))
+            jobs[str(i)] = Process(target=Utils.processCluster,args=(self,(l[i][0],log,self.cluster_queue)))
           else:
             jobs[str(i)] = Process(target=BestAction,args=((l[i][0],log),self.logger))
           jobs[str(i)].start()
@@ -685,7 +680,8 @@ class AutoindexingStrategy(Process, Communicate):
           log = os.path.join(os.getcwd(),l[i][0]+'.out')
           inp = 'tcsh %s'%l[i][0]
           if self.cluster_use:
-            Process(target=BLspec.processCluster,args=(self,(inp,log,self.cluster_queue))).start()
+            #Process(target=BLspec.processCluster,args=(self,(inp,log,self.cluster_queue))).start()
+            Process(target=Utils.processCluster,args=(self,(inp,log,self.cluster_queue))).start()
           else:
             Process(target=Utils.processLocal,args=(inp,self.logger)).start()
 
@@ -1153,10 +1149,15 @@ class AutoindexingStrategy(Process, Communicate):
       if self.header2:
         src_images.append(self.header2.get('fullname'))
       for image in src_images:
-        if predictions == 0:
-          png = '%s.png'%os.path.basename(image)[:-4]
+        #MAR images don't have type.
+        if self.vendortype.startswith('MAR'):
+          base = os.path.basename(image).replace('.','_')
         else:
-          png = '%s_overlay.png'%os.path.basename(image)[:-4]
+          base = os.path.basename(image)[:os.path.basename(image).rfind('.')]
+        if predictions == 0:
+          png = '%s.png'%base
+        else:
+          png = '%s_overlay.png'%base
         tif = png.replace('.png','.tif')
         if self.test:
           command = 'ls'
@@ -1247,6 +1248,7 @@ class AutoindexingStrategy(Process, Communicate):
                 number = round(timer%1,1)
                 if number in (0.0,1.0):
                   print 'Waiting for %s %s seconds'%(f1,timer)
+            #Only copy overlay since it is not in self.working_dir
             if x != 0:
               if os.path.exists(f1):
                 shutil.copy(f1,os.path.join(self.working_dir,os.path.basename(f1)))
@@ -1258,8 +1260,6 @@ class AutoindexingStrategy(Process, Communicate):
     try:
       if self.labelit_failed == False:
         os.chdir(self.labelit_dir)
-        #files = ['DNA_mosflm.inp','bestfile.par']
-        #files = ['mosflm.inp','%s.mat'%self.index_number]
         files = ['%s.mat'%self.index_number,'bestfile.par']
         for x,f in enumerate(files):
           shutil.copy(f,self.working_dir)
@@ -1997,7 +1997,7 @@ class RunLabelit(Process):
     #Number of Labelit iteration to run.
     self.iterations                         = params.get('iterations',6)
     #If limiting number of LABELIT run on cluster.
-    self.red                                = params.get('redis',False)
+    #self.red                                = params.get('redis',False)
     self.short                              = False
     if self.iterations != 6:
       self.short                          = True
@@ -2071,7 +2071,7 @@ class RunLabelit(Process):
       if self.multiproc:
         for i in range(1,self.iterations):
           self.labelit_jobs[Utils.errorLabelit(self,i).keys()[0]] = i
-    self.Queue()
+    self.queue()
     if self.short == False:
       #Put the logs together
       self.labelitLog()
@@ -2111,6 +2111,9 @@ class RunLabelit(Process):
       if self.vendortype == 'ADSC':
         if self.header.get('binning') == 'none':
           binning = False
+      #Not sure if it is worse
+      #elif self.vendortype == 'MARCCD':
+      #  binning = False
       """
       #For determining detector type. Should move to rapd_site probably.
       if self.header.get('fullname')[-3:] == 'cbf':
@@ -2123,6 +2126,7 @@ class RunLabelit(Process):
         if self.header.get('binning') == 'none':
           binning = False
       """
+      
       if self.test == False:
         preferences    = open('dataset_preferences.py','w')
         preferences.write('#####Base Labelit settings#####\n')
@@ -2215,14 +2219,20 @@ class RunLabelit(Process):
           if os.path.exists(log):
             os.system('rm -rf %s'%log)
           if self.short:
+            run = Process(target=BLspec.processCluster,args=(self,(command,log,self.cluster_queue),pid_queue))
+            """
             if self.red:
               run = Process(target=BLspec.processCluster,args=(self,(command,log,1,self.cluster_queue,'bc_throttler'),pid_queue))
+              #run = Process(target=Utils.processCluster,args=(self,(command,log,1,self.cluster_queue,'bc_throttler'),pid_queue))
             else:
               #run = Process(target=Utils.processCluster,args=(self,(command,log,'all.q'),queue))
               run = Process(target=BLspec.processCluster,args=(self,(command,log,self.cluster_queue),pid_queue))
+              #run = Process(target=Utils.processCluster,args=(self,(command,log,self.cluster_queue),pid_queue))
+            """
           else:
             #run = Process(target=Utils.processCluster,args=(self,(command,log,'index.q'),queue))
             run = Process(target=BLspec.processCluster,args=(self,(command,log,self.cluster_queue),pid_queue))
+            #run = Process(target=Utils.processCluster,args=(self,(command,log,self.cluster_queue),pid_queue))
         else:
           run = Process(target=Utils.processLocal,args=((command,log),self.logger,pid_queue))
         run.start()
@@ -2316,10 +2326,11 @@ class RunLabelit(Process):
       self.logger.debug('RunLabelit::postprocess')
 
     try:
+      """
       #Free up spot on cluster.
       if self.short and self.red:
         self.red.lpush('bc_throttler',1)
-      
+      """
       #Pass back output
       self.output.put(self.labelit_results)
       if self.short == False:
@@ -2328,12 +2339,12 @@ class RunLabelit(Process):
     except:
       self.logger.exception('**ERROR in RunLabelit.postprocess**')
 
-  def Queue(self):
+  def queue(self):
     """
     Queue for Labelit.
     """
     if self.verbose:
-      self.logger.debug('RunLabelit::Queue')
+      self.logger.debug('RunLabelit::queue')
     try:
       timed_out = False
       timer = 0
@@ -2402,8 +2413,8 @@ class RunLabelit(Process):
               i -=10
             self.labelit_results[str(i)] = {'Labelit results': 'FAILED'}
             if self.cluster_use:
-              #Utils.killChildrenCluster(self,self.pids[str(i)])
-              BLspec.killChildrenCluster(self,self.pids[str(i)])
+              Utils.killChildrenCluster(self,self.pids[str(i)])
+              #BLspec.killChildrenCluster(self,self.pids[str(i)])
             else:
               Utils.killChildren(self,self.pids[str(i)])
                       
@@ -2411,7 +2422,7 @@ class RunLabelit(Process):
         self.logger.debug('Labelit finished.')
 
     except:
-      self.logger.exception('**Error in RunLabelit.Queue**')
+      self.logger.exception('**Error in RunLabelit.queue**')
 
   def labelitLog(self):
     """
@@ -2462,12 +2473,134 @@ if __name__ == '__main__':
   ###To see all the input options look at extras/rapd_input.py (autoindexInput)###
   
   inp = ["AUTOINDEX", 
+  {#"work": "/gpfs6/users/necat/Jon/RAPD_test/Output",
+   "work": "/home/schuerjp/temp",
+   },
+  #Info from first image 
+  {#"wavelength": "0.9792", #RADDOSE
+   "wavelength": 1.8866, #RADDOSE
+   "detector":'ray300',
+   "binning": "2x2", #LABELIT
+   #"binning": "none", #
+   "time": "1.00",  #BEST
+   "twotheta": "0.00", #LABELIT
+   "transmission": "20",  #BEST
+   'osc_range': 1.0,
+   'distance' : 105.0,
+   'count_cutoff': 65535,
+   'omega_start': 0.0,
+   #"beam_center_x": "216.71", #PILATUS
+   #"beam_center_y": "222.45", #PILATUS
+   #"beam_center_x": "150.72", #Q315
+   #"beam_center_y": "158.68", #Q315
+   #"beam_center_x": "172.80", #HF4M
+   #"beam_center_y": "157.18", #HF4M
+   "beam_center_x": "149.87", #22ID
+   "beam_center_y": "145.16", #22ID
+   "flux":'1.6e11', #RADDOSE
+   "beam_size_x":"0.07", #RADDOSE
+   "beam_size_y":"0.03", #RADDOSE
+   "gauss_x":'0.03', #RADDOSE
+   "gauss_y":'0.01', #RADDOSE
+   "fullname": "/panfs/panfs0.localdomain/raw/ID_16_03_02_staff_JL/masp1p1/MAS2_Pn1.0001",
+   
+   #minikappa
+   #Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
+   #"mk3_phi":"0.0", #
+   #"mk3_kappa":"0.0", #
+   "phi": "0.000",
+   "STAC file1": '/gpfs6/users/necat/Jon/RAPD_test/mosflm.mat', #XOAlign
+   "STAC file2": '/gpfs6/users/necat/Jon/RAPD_test/bestfile.par', #XOAlign
+   "axis_align": 'long',    #long,all,a,b,c,ab,ac,bc #XOAlign
+  },
+
+   #Info from second image. Remove this dict if NOT present in run.
+  {#"wavelength": "0.9792", #RADDOSE
+   "wavelength": "1.8866", #RADDOSE
+   "detector":'ray300',
+   "binning": "2x2", #LABELIT
+   #"binning": "none", #
+   "time": "1.00",  #BEST
+   "twotheta": "0.00", #LABELIT
+   "transmission": "20",  #BEST
+   'osc_range': 1.0,
+   'distance' : 105.0,
+   'count_cutoff': 65535,
+   'omega_start': 0.0,
+   #"beam_center_x": "216.71", #PILATUS
+   #"beam_center_y": "222.45", #PILATUS
+   #"beam_center_x": "150.72", #Q315
+   #"beam_center_y": "158.68", #Q315
+   #"beam_center_x": "172.80", #HF4M
+   #"beam_center_y": "157.18", #HF4M
+   "beam_center_x": "149.87", #22ID
+   "beam_center_y": "145.16", #22ID
+   "flux":'1.6e11', #RADDOSE
+   "beam_size_x":"0.07", #RADDOSE
+   "beam_size_y":"0.03", #RADDOSE
+   "gauss_x":'0.03', #RADDOSE
+   "gauss_y":'0.01', #RADDOSE
+   "fullname": "/panfs/panfs0.localdomain/raw/ID_16_03_02_staff_JL/masp1p1/MAS2_Pn1.0090",
+   
+   #minikappa
+   #Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
+   #"mk3_phi":"0.0", #
+   #"mk3_kappa":"0.0", #
+   "phi": "0.000",
+   "STAC file1": '/gpfs6/users/necat/Jon/RAPD_test/mosflm.mat', #XOAlign
+   "STAC file2": '/gpfs6/users/necat/Jon/RAPD_test/bestfile.par', #XOAlign
+   "axis_align": 'long',    #long,all,a,b,c,ab,ac,bc #XOAlign
+  },
+  
+  #Beamline params
+  {"strategy_type": 'best', #Preferred program for strategy
+   #"strategy_type": 'mosflm', #
+   "crystal_size_x": "100", #RADDOSE
+   "crystal_size_y": "100", #RADDOSE
+   "crystal_size_z": "100", #RADDOSE
+   "shape": "2.0", #BEST
+   "sample_type": "Protein", #LABELIT, BEST
+   "best_complexity": "none", #BEST
+   "susceptibility": "1.0", #BEST
+   "index_hi_res": 0.0, #LABELIT
+   "spacegroup": "None", #LABELIT, BEST, beam_center
+   #"spacegroup": "R3", #
+   "solvent_content": 0.55, #RADDOSE
+   "beam_flip": "False", #NECAT, when x and y are sent reversed.
+   "multiprocessing":"True", #Specifies to use 4 cores to make Autoindex much faster.
+   "x_beam": "0",#Used if position not in header info
+   "y_beam": "0",#Used if position not in header info
+   "aimed_res": 0.0, #BEST to override high res limit
+   "a":0.0, ##LABELIT
+   "b":0.0, ##LABELIT
+   "c":0.0, ##LABELIT
+   "alpha":0.0, #LABELIT
+   "beta":0.0, #LABELIT
+   "gamma":0.0, #LABELIT
+  
+   #Change these if user wants to continue dataset with other crystal(s).
+   "reference_data_id": None, #MOSFLM
+   #"reference_data_id": 1,#MOSFLM
+   #"reference_data": [['/gpfs6/users/necat/Jon/RAPD_test/index09.mat', 0.0, 30.0, 'junk_1_1-30','P41212']],#MOSFLM
+   'reference_data': [['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',0.0,20.0,'junk','P3'],
+                      ['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',40.0,50.0,'junk2','P3']],#MOSFLM
+   #MOSFLM settings for multisegment strategy (like give me best 30 degrees to collect). Ignored if "mosflm_rot" !=0.0
+   "mosflm_rot": 0.0, #MOSFLM
+   "mosflm_seg":1, #MOSFLM
+   "mosflm_start":0.0,#MOSFLM
+   "mosflm_end":360.0,#MOSFLM
+    },
+   
+  ('127.0.0.1',50001)#self.sendBack2 for sending results back to rapd_cluster.
+  ]
+  
+  inp1 = ["AUTOINDEX", 
   {"work": "/gpfs6/users/necat/Jon/RAPD_test/Output",
    },
-    
+  
   #Info from first image 
   {"wavelength": "0.9792", #RADDOSE
-   "binning": "2x2", #LABELIT
+   "binning": "none", #LABELIT
    #"binning": "none", #
    "time": "1.00",  #BEST
    "twotheta": "0.00", #LABELIT
@@ -2495,35 +2628,6 @@ if __name__ == '__main__':
    "axis_align": 'long',    #long,all,a,b,c,ab,ac,bc #XOAlign
   },
 
-   #Info from second image. Remove this dict if NOT present in run.
-  {"wavelength": "0.9792", #RADDOSE
-   "binning": "2x2", #LABELIT
-   #"binning": "none", #
-   "time": "1.00",  #BEST
-   "twotheta": "0.00", #LABELIT
-   "transmission": "20",  #BEST
-   #"beam_center_x": "216.71", #PILATUS
-   #"beam_center_y": "222.45", #PILATUS
-   "beam_center_x": "150.72", #Q315
-   "beam_center_y": "158.68", #Q315
-   #"beam_center_x": "172.80", #HF4M
-   #"beam_center_y": "157.18", #HF4M
-   "flux":'1.6e11', #RADDOSE
-   "beam_size_x":"0.07", #RADDOSE
-   "beam_size_y":"0.03", #RADDOSE
-   "gauss_x":'0.03', #RADDOSE
-   "gauss_y":'0.01', #RADDOSE
-   "fullname": "/gpfs2/users/chicago/Lewis_E_Dec15/images/snaps/NE51_H4_PAIR_0_002.img",
-   
-   #minikappa
-   #Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
-   #"mk3_phi":"0.0", #
-   #"mk3_kappa":"0.0", #
-   "phi": "0.000",
-   "STAC file1": '/gpfs6/users/necat/Jon/RAPD_test/mosflm.mat', #XOAlign
-   "STAC file2": '/gpfs6/users/necat/Jon/RAPD_test/bestfile.par', #XOAlign
-   "axis_align": 'long',    #long,all,a,b,c,ab,ac,bc #XOAlign
-  },
 
   #Beamline params
   {"strategy_type": 'best', #Preferred program for strategy
@@ -2555,7 +2659,8 @@ if __name__ == '__main__':
    "reference_data_id": None, #MOSFLM
    #"reference_data_id": 1,#MOSFLM
    #"reference_data": [['/gpfs6/users/necat/Jon/RAPD_test/index09.mat', 0.0, 30.0, 'junk_1_1-30','P41212']],#MOSFLM
-   'reference_data': [['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',0.0,20.0,'junk','P3'],['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',40.0,50.0,'junk2','P3']],#MOSFLM
+   'reference_data': [['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',0.0,20.0,'junk','P3'],
+                      ['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',40.0,50.0,'junk2','P3']],#MOSFLM
    #MOSFLM settings for multisegment strategy (like give me best 30 degrees to collect). Ignored if "mosflm_rot" !=0.0
    "mosflm_rot": 0.0, #MOSFLM
    "mosflm_seg":1, #MOSFLM
@@ -2578,4 +2683,4 @@ if __name__ == '__main__':
   formatter = logging.Formatter("%(asctime)s - %(message)s")
   handler.setFormatter(formatter)
   logger.addHandler(handler)
-  AutoindexingStrategy(inp,logger=logger)
+  AutoindexingStrategy(inp1,logger=logger)
