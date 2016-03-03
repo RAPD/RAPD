@@ -486,7 +486,7 @@ class AutoindexingStrategy(Process,Communicate):
       
       image_number = []
       #MAR images don't have a file suffix.
-      if self.vendortype.startswith('MAR'):
+      if self.vendortype in ['mar300','ray300']:
         image_number.append(self.header.get('fullname')[self.header.get('fullname').rfind('.')+1:])
         if self.header2:
           image_number.append(self.header2.get('fullname')[self.header.get('fullname').rfind('.')+1:])
@@ -2480,8 +2480,8 @@ if __name__ == '__main__':
   {#"wavelength": "0.9792", #RADDOSE
    "wavelength": 1.8866, #RADDOSE
    "detector":'ray300',
-   "binning": "2x2", #LABELIT
-   #"binning": "none", #
+   #"binning": "2x2", #LABELIT
+   "binning": "none", #
    "time": "1.00",  #BEST
    "twotheta": "0.00", #LABELIT
    "transmission": "20",  #BEST
@@ -2518,8 +2518,8 @@ if __name__ == '__main__':
   {#"wavelength": "0.9792", #RADDOSE
    "wavelength": "1.8866", #RADDOSE
    "detector":'ray300',
-   "binning": "2x2", #LABELIT
-   #"binning": "none", #
+   #"binning": "2x2", #LABELIT
+   "binning": "none", #
    "time": "1.00",  #BEST
    "twotheta": "0.00", #LABELIT
    "transmission": "20",  #BEST
@@ -2683,4 +2683,4 @@ if __name__ == '__main__':
   formatter = logging.Formatter("%(asctime)s - %(message)s")
   handler.setFormatter(formatter)
   logger.addHandler(handler)
-  AutoindexingStrategy(inp1,logger=logger)
+  AutoindexingStrategy(inp,logger=logger)
