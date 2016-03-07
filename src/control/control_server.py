@@ -101,10 +101,10 @@ class LaunchAction(threading.Thread):
         self.logger = logging.getLogger("RAPDLogger")
         self.logger.debug("LaunchAction::__init__  command:%s", command)
 
-        #initialize the thread
+        # Initialize the thread
         threading.Thread.__init__(self)
 
-        #store passed-in variable
+        # Store passed-in variable
         self.command = command
         self.settings = settings
 
@@ -117,7 +117,8 @@ class LaunchAction(threading.Thread):
         self.logger.debug("LaunchAction::run")
 
         # Unpack command
-        ctype, dirs, data, launch_settings, return_address = self.command
+        ctype, dirs, data, launcher_settings, return_address = self.command
+        self.logger.debug("launcher_settings: %s", launcher_settings)
 
         attempts = 0
         while attempts < 10:
@@ -127,7 +128,7 @@ class LaunchAction(threading.Thread):
             # Connect to the cluster process
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
-                s.connect(launch_settings["LAUNCH_ADDRESSES"][0][0:2])
+                s.connect(launcher_settings)
                 break
             except socket.error:
                 self.logger.exception("Failed to initialize socket to cluster")

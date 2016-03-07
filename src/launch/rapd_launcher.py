@@ -364,8 +364,11 @@ class Launcher(object):
                 # Read the message from the socket
                 message = ""
                 while not (message.endswith('<rapd_end>')):
-                    data = conn.recv(BUFFER_SIZE)
-                    message += data
+                    try:
+                        data = conn.recv(BUFFER_SIZE)
+                        message += data
+                    except:
+                        pass
                     time.sleep(0.01)
 
                 # Close the connection
@@ -387,14 +390,11 @@ class Launcher(object):
 
         self.logger.debug("Message received: %s", message)
 
-        # Save the raw_message in case we need it
-        raw_message = message
-
         # Strip the message of its delivery tags
         message = message.rstrip().replace("<rapd_start>","").replace("<rapd_end>","")
 
         # Use the adapter to launch
-        self.adapter(message, self.specifications)
+        self.adapter(self.site.ID, message, self.specifications)
 
     def get_settings(self):
         """
@@ -402,22 +402,22 @@ class Launcher(object):
         """
 
         # Save typing
-        addresses = self.site.LAUNCHER_SETTINGS["LAUNCHER_ADDRESSES"]
+        launchers = self.site.LAUNCHER_SETTINGS["LAUNCHER_REGISTER"]
 
         # Get IP Address
-        self.ip_address = socket.gethostbyaddr(socket.gethostname())[-1][0]
+        self.ip_address = utils.site_tools.get_ip_address()
 
-        for address in addresses:
-            if address[0] == self.ip_address and address[1] == self.tag:
-                self.address = address
+        for launcher in launchers:
+            if launcher[0] == self.ip_address and launcher[1] == self.tag:
+                self.launcher = launcher
                 break
 
         # No address
-        if self.address == None:
+        if self.launcher == None:
             raise Exception("No definition for launcher in site file")
         else:
             # Unpack address
-            self.ip_address, self.tag, self.launcher_id = self.address
+            self.ip_address, self.tag, self.launcher_id = self.launcher
             self.specifications = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.launcher_id]
 
 

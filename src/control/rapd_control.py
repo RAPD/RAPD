@@ -32,40 +32,9 @@ import os
 
 import utils.commandline
 import utils.log
+import utils.lock
 import utils.site_tools
-from control.rapd_model import Model
-
-file_handle = None
-
-"""
-	# Assure we are running as a singleton
-	file_path = '/tmp/lock/rapd_freeagent_distl.lock'
-
-	if not os.path.exists(os.path.dirname(file_path)):
-			os.makedirs((os.path.dirname(file_path)))
-
-	if file_is_locked(file_path):
-			print 'another instance is running exiting now'
-			sys.exit(0)
-	else:
-			print 'no other instance is running'
-"""
-
-
-def file_is_locked(file_path):
-    """Method to make sure only one instance is running on this machine"""
-    global file_handle
-
-	# Create the directory for file_path if it does not exist
-    if not os.path.exists(os.path.dirname(file_path)):
-        os.makedirs(os.path.dirname(file_path))
-
-    file_handle = open(file_path, "w")
-    try:
-        fcntl.lockf(file_handle, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        return False
-    except IOError:
-        return True
+from control.model import Model
 
 def get_commandline():
     """Get the commandline variables and handle them"""
@@ -92,9 +61,7 @@ def main(site_in=None):
     SITE = importlib.import_module(site_file)
 
 	# Single process lock?
-    if SITE.LOCK_FILE:
-        if file_is_locked(SITE.LOCK_FILE):
-            raise Exception("%s is already locked, unable to run" % SITE.LOCK_FILE)
+    utils.lock.file_lock(SITE.LOCK_FILE)
 
     # Set up logging
     if commandline_args.verbose:

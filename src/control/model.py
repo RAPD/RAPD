@@ -29,6 +29,7 @@ import importlib
 import logging
 import os
 import socket
+import time
 
 #custom RAPD imports
 from utils.site_tools import get_ip_address
@@ -73,7 +74,6 @@ class Model(object):
     database = None
 
     server = None
-    # ip_address = None
     return_address = None
 
     image_monitor = None
@@ -136,6 +136,17 @@ class Model(object):
 
         # Initialize the remote adapter
         self.init_remote_adapter()
+
+        # TESTING
+        while True:
+            time.sleep(5)
+            LaunchAction(command=("ECHO",
+                                  (),
+                                  "Hello, world!",
+                                  ("130.202.225.74", 50000),
+                                  self.return_address),
+                          settings={})
+                          #settings=self.database.get_current_settings(id=self.site.ID))
 
     def connect_to_database(self):
         """Set up database connection"""
