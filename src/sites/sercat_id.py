@@ -37,6 +37,7 @@ SECRETS_FILE = "sites.secrets_sercat_id"
 # Do not remove unless you know what you are doing!
 read_secrets(SECRETS_FILE, sys.modules[__name__])
 
+
 # X-ray source characteristics
 # Flux of the beam
 BEAM_FLUX = 8E11
@@ -92,7 +93,7 @@ CONTROL_REDIS_CLUSTER = False
 # Detector settings
 # Must have a file in detectors that is all lowercase of this string
 DETECTOR = "SERCAT_RAYONIX_MX300HS"
-DETECTOR_SUFFIX = ".img"
+DETECTOR_SUFFIX = ""
 
 # Launcher settings
 LAUNCHER_LOCK_FILE = "/tmp/lock/launcher.lock"
@@ -101,6 +102,16 @@ LAUNCHER_LOCK_FILE = "/tmp/lock/launcher.lock"
 RAPD_AGENT_DIRECTORIES = ("sites.agents", "agents")
 # Queried in order, so a rapd_agent_echo.py in src/sites/agents will override
 # the same file in src/agents
+
+
+# Directories to look for launcher adaptors
+RAPD_LAUNCHER_ADAPTOR_DIRECTORIES = ("sites.launcher_adaptors",
+                                     "launch.launcher_adaptors")
+# Queried in order, so a shell_simple.py in src/sites/launcher_adaptors will override
+# the same file in launch/launcher_adaptors
+
+# Cluster settings
+
 
 # Data gatherer settings
 # The data gatherer for this site, in the src/sites/gatherers directory

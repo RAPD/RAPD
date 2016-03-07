@@ -24,7 +24,7 @@ __status__ = "Production"
 
 import os
 
-def setShelxResults(self,inp=False):
+def setShelxResults(self, inp=False):
   """
   Output dict for SHelx results.
   """
@@ -34,7 +34,7 @@ def setShelxResults(self,inp=False):
     tag = inp
   else:
     tag = 'no anom signal'
-  
+
   data  = { 'shelxc_res'      : tag,
             'shelxc_data'     : tag,
             'shelxc_isig'     : tag,
@@ -167,7 +167,7 @@ def setRaddoseFailed(inp=False):
               'exp dose limit'       : tag,
               'henderson limit'      : tag }
   return(raddose)
-  
+
 def setBestFailed(inp=False):
   data = {         'strategy'+inp+'run number'                       : 'skip',
                    'strategy'+inp+'phi start'                        : 'skip',
@@ -190,7 +190,7 @@ def setBestFailed(inp=False):
                    'strategy'+inp+'attenuation'                      : 'skip',
                    'strategy'+inp+'new transmission'                 : 'skip'    }
   return(data)
-  
+
 def setMosflmFailed(inp):
   data = {    'strategy'+inp+'run number'            : 'skip',
               'strategy'+inp+'phi start'             : 'skip',
@@ -329,7 +329,7 @@ def ParseOutputLabelit(self,inp,iteration=0):
           return ('failed')
         else:
           return ('no index')
-    
+
     #Parse Labelit results
     for line in tmp[junk[0]:]:
       if len(line.split()) == 15:
@@ -369,7 +369,7 @@ def ParseOutputLabelit(self,inp,iteration=0):
         mosflm_solution.append(line.split()[0+x])
         mosflm_sg.append(line.split()[1+x])
         mosflm_beam_x.append(line.split()[2+x])
-        mosflm_beam_y.append(line.split()[3+x]) 
+        mosflm_beam_y.append(line.split()[3+x])
         mosflm_distance.append(line.split()[4+x])
         mosflm_res.append(line.split()[5+x])
         mosflm_mos.append(line.split()[6+x])
@@ -378,7 +378,7 @@ def ParseOutputLabelit(self,inp,iteration=0):
     if few_spots:
       if os.path.exists(mosflm_index) == False:
         return ('min good spots')
-    
+
     data = { 'labelit_face'     : labelit_face,
              'labelit_solution' : labelit_solution,
              'labelit_metric'   : labelit_metric,
@@ -402,13 +402,13 @@ def ParseOutputLabelit(self,inp,iteration=0):
              'mosflm_rms'       : mosflm_rms,
              'mosflm_index'     : mosflm_index,
              'output'           : tmp}
-    #Utils.pp(self,data)                                                                                                                                              
+    #Utils.pp(self,data)
     return(data)
 
   except:
     self.logger.exception('**Error in Parse.ParseOutputLabelit**')
     return(None)
-      
+
 def ParseOutputLabelitNoMosflm(self,inp,iteration=0):
   """
   Parses Labelit results and filters for specific errors. Cleans up the output AND looks for best solution
@@ -520,7 +520,7 @@ def ParseOutputLabelitNoMosflm(self,inp,iteration=0):
           junk.append(x)
         if line.startswith('Transforming the lattice'):
           pseudotrans = True
-    
+
     if len(junk) == 0:
       if spot_problem:
         if min_spots:
@@ -535,7 +535,7 @@ def ParseOutputLabelitNoMosflm(self,inp,iteration=0):
           return ('failed')
         else:
           return ('no index')
-    
+
     #Parse Labelit results
     for line in tmp[junk[0]:]:
       if len(line.split()) == 15:
@@ -579,7 +579,7 @@ def ParseOutputLabelitNoMosflm(self,inp,iteration=0):
           mosflm_solution.append(line.split()[0+x])
           mosflm_sg.append(line.split()[1+x])
           mosflm_beam_x.append(line.split()[2+x])
-          mosflm_beam_y.append(line.split()[3+x]) 
+          mosflm_beam_y.append(line.split()[3+x])
           mosflm_distance.append(line.split()[4+x])
           mosflm_res.append(line.split()[5+x])
           mosflm_mos.append(line.split()[6+x])
@@ -588,7 +588,7 @@ def ParseOutputLabelitNoMosflm(self,inp,iteration=0):
       if few_spots:
         if os.path.exists(mosflm_index) == False:
           return ('min good spots')
-    
+
     data = { 'labelit_face'     : labelit_face,
              'labelit_solution' : labelit_solution,
              'labelit_metric'   : labelit_metric,
@@ -612,13 +612,13 @@ def ParseOutputLabelitNoMosflm(self,inp,iteration=0):
              'mosflm_rms'       : mosflm_rms,
              'mosflm_index'     : mosflm_index,
              'output'           : tmp}
-    #Utils.pp(self,data)                                                                                                                                              
+    #Utils.pp(self,data)
     return(data)
-  
+
   except:
     self.logger.exception('**Error in Parse.ParseOutputLabelitNoMosflm**')
     return(None)
-    
+
 def ParseOutputLabelitPP(self,inp):
   """
   Parse Labelit.precession_photo.
@@ -642,13 +642,13 @@ def ParseOutputLabelitPP(self,inp):
     self.logger.exception('**Error in Parse.ParseOutputLabelitPP**')
     #return((None))
 
-def ParseOutputDistl(self, inp):     
+def ParseOutputDistl(self, inp):
   """
   parse distl.signal_strength
-  """ 
-  if self.verbose:           
+  """
+  if self.verbose:
     self.logger.debug('Parse::ParseOutputDistl')
-  try:    
+  try:
     spot_total   = []
     spot_inres   = []
     good_spots   = []
@@ -786,7 +786,7 @@ def ParseOutputBest(self,inp,anom=False):
     else:
       #Parse the xml
       for i,line in enumerate(xml):
-        temp.append(line)  
+        temp.append(line)
         if line.count('"resolution"'):
           res = line[line.find('>')+1:line.rfind('<')]
         if line.count('"distance"'):
@@ -855,12 +855,12 @@ def ParseOutputBest(self,inp,anom=False):
               else:
                 new_trans.append(str(round(nt)))
                 time.append('1.0')
-          
+
     #If best did not give strat...
     #if nbr:
     if dis == False:
       return ('neg B')
-    
+
     #Remove the last line in starting phi
     phi_start = phi_start[:-1]
     rot_range = str(float(phi_end)-float(phi_start[0]))
@@ -989,7 +989,7 @@ def ParseOutputBestPlots(self,inp):
     temp = []
     d = {}
     k = inp[com[i]][inp[com[i]].find('=')+2:].strip()
-    if i == 0:                    
+    if i == 0:
       t = inp[com[i]+4:com[i+1]-4]
     else:
       t = inp[com[i]+1:com[i+1]-4]
@@ -998,7 +998,7 @@ def ParseOutputBestPlots(self,inp):
         temp.append(line.split())
     d[k] = temp
     comp.append(d)
-  
+
   output = {'wilson' : wilson,
             'width'  : width,
             'damage' : damage,
@@ -1031,7 +1031,7 @@ def ParseOutputMosflm_strat(self,inp,anom=False):
         osc_range  = str(self.header.get('osc_range'))
     distance   = str(self.header.get('distance'))
     mosflm_seg = str(self.preferences.get('mosflm_seg'))
-    
+
     for x,line in enumerate(inp):
       temp.append(line)
       if mosflm_seg != '1':
@@ -1114,7 +1114,7 @@ def ParseOutputStacAlign(self, inp):
   rank  = []
   no_sol = []
   goni = []
-  
+
   try:
     orientations = inp[0]
     log = inp[1:]
@@ -1137,7 +1137,7 @@ def ParseOutputStacAlign(self, inp):
         no_sol.append(temp)
       if line.startswith(' - Goniometer does not allow the solution'):
         goni.append(line)
-    
+
     stac = { 'v1'            :  v1,
              'v2'            :  v2,
              'omega'         : omega,
@@ -1166,7 +1166,7 @@ def ParseOutputStacStrat(self, inp):
   phi         = []
   comp        = []
   rank        = []
-  
+
   try:
     split = (inp.split('<generated_sweep>')[1:])
     for line in split:
@@ -1324,7 +1324,7 @@ def ParseOutputShelx(self,inp,inp2=False):
         if line.startswith(' Estimated mean FOM ='):
           fom.append(line.split()[4])
           se_cc.append(line.split()[8])
-        #Determine when invert was used to find which failed 
+        #Determine when invert was used to find which failed
         if line.startswith(' -i '):
           junk.append(line.split()[1])
         #Decide if there is an error in ShelxE and which hand it occurred.
@@ -1354,7 +1354,7 @@ def ParseOutputShelx(self,inp,inp2=False):
             con.append(line.split()[8])
             cycles = line.split()[12]
         if line.count('<mapCC>'):
-          shelxe_mapcc.extend(line.split()[1:]) 
+          shelxe_mapcc.extend(line.split()[1:])
         #Fix if low res is greater than 10A.
         if line.count('d    inf'):
           if len(line.split()[2]) == 1:
@@ -1423,7 +1423,7 @@ def ParseOutputShelx(self,inp,inp2=False):
           shelxe_contrast.extend(contrast[int(cycles)*2:int(cycles)*3])
           shelxe_con.extend(con[int(cycles)*2:int(cycles)*3])
           s1 = 'junkt'
-        else:                
+        else:
           avg_contrast2 = sum(junk3[int(cycles):int(cycles)*2])/int(cycles)
           shelxe_contrast.extend(contrast[int(cycles):int(cycles)*2])
           shelxe_con.extend(con[int(cycles):int(cycles)*2])
@@ -1500,7 +1500,7 @@ def ParseOutputShelx(self,inp,inp2=False):
             index = l1[x].index(line)
             l1[x].remove(line)
             l1[x].insert(index,'0.00')
-      #If SHELXD fails, set results to 0.0    
+      #If SHELXD fails, set results to 0.0
       if len(shelxc_dsig) == 0:
         shelxc_dsig = [['0.0','0.0','0.0','0.0','0.0','0.0','0.0','0.0','0.0','0.0','0.0']]
       if len(shelxc_cc) == 0:
@@ -1548,7 +1548,7 @@ def ParseOutputShelx(self,inp,inp2=False):
                 'shelxe_nosol'       : str(nosol),
                 'MAD_CC'             : mad       }
       return(shelx)
-  
+
   except:
     self.logger.exception('**Error in Parse.ParseOutputShelx**')
     return(None)
@@ -1563,13 +1563,13 @@ def ParseOutputShelxC(self, inp):
     temp   = []
     shelxc_res = []
     shelxc_dsig = False
-    
+
     for line in inp:
       line.rstrip()
       temp.append(line)
       """
       if line.startswith('** NO REFLECTIONS WITH  E >'):
-        return (None)            
+        return (None)
       """
       if line.startswith(' Resl.'):
         shelxc_res.extend(line.split()[3::2])
@@ -1591,10 +1591,10 @@ def ParseOutputShelxC(self, inp):
         shelxc_dsig = line.split()[1:]
         while len(shelxc_dsig)  < 11:
           shelxc_dsig.append('0.00')
-    #If SHELXD fails, set results to 0.0    
+    #If SHELXD fails, set results to 0.0
     if shelxc_dsig == False:
       shelxc_dsig = ['0.0','0.0','0.0','0.0','0.0','0.0','0.0','0.0','0.0','0.0','0.0']
-           
+
     shelx = { 'shelxc_res'      : shelxc_res,
               'shelxc_data'     : shelxc_data,
               'shelxc_isig'     : shelxc_isig,
@@ -1658,7 +1658,7 @@ def ParseOutputAutoSol(self,inp):
       """
     scat_fac = tmp[index+2].split()[2:4]
     wave = tmp[index+2].split()[1]
-    
+
     phenix = { 'directory'       : dir1,
                'sg'              : sg,
                'wavelength'      : wave,
@@ -1843,7 +1843,7 @@ def ParseOutputPhaserNCS(self,inp):
 def ParseOutputXtriage_NEW(self,inp):
   """
   Parse phenix.xtriage output.
-  """ 
+  """
   if self.verbose:
     self.logger.debug('Parse::ParseOutputXtriage')
   import math
@@ -1907,7 +1907,7 @@ def ParseOutputXtriage_NEW(self,inp):
       sum_s = x
     if line.count('---Statistics independent of twin laws---'):
       sum_e = x
-    
+
     """
     if line.startswith('Systematic absences'):
       pat_fn = x
@@ -1960,10 +1960,10 @@ def ParseOutputXtriage_NEW(self,inp):
              'p-val' : pat_p,
              'dist'  : pat_dist  }
     pat['1'] = data2
-  
+
   else:
     skip = False
-  
+
   if pat_st:
     i = 2
     for line in temp[pat_st+2:pat_fn]:
@@ -1983,7 +1983,7 @@ def ParseOutputXtriage_NEW(self,inp):
           pat[str(i)] = data
           i +=1
         skip = False
-          
+
       #NOT SURE IF IN NEW VERSION???
       if line.startswith(' space group'):
         pts = True
@@ -2040,7 +2040,7 @@ def ParseOutputXtriage_NEW(self,inp):
     else:
         for key in twin_info.keys():
             twin_info[key].update({'sg':'NA'})
-      
+
   for line in junk[10:20]:
     if len(line.split()) == 7:
       anom[line.split()[4]] = line.split()[6]
@@ -2091,7 +2091,7 @@ def ParseOutputXtriage_NEW(self,inp):
 def ParseOutputXtriage(self,inp):
   """
   Parse phenix.xtriage output.
-  """ 
+  """
   if self.verbose:
       self.logger.debug('Parse::ParseOutputXtriage')
   import math
@@ -2168,7 +2168,7 @@ def ParseOutputXtriage(self,inp):
     pat['1'] = data2
   else:
     skip = False
-  
+
   if pat_st:
     i = 2
     for line in temp[pat_st+2:pat_fn]:
@@ -2263,7 +2263,7 @@ def ParseOutputXtriage(self,inp):
       else:
         break
     plots[l[i][1]].update({'data':temp3})
-      
+
   for line in temp[index1+5:-3]:
     summary.append(line)
   xtriage = {'Xtriage anom'         : anom,
@@ -2307,7 +2307,7 @@ def ParseOutputMolrep(self,inp):
         pts = True
       if line.startswith('INFO:  use keyword: "PST"'):
         ind2 = temp.index(line)
-    if pts:        
+    if pts:
       for line in temp[ind1:ind2]:
         split = line.split()
         if split[0] == 'Origin':
@@ -2323,7 +2323,7 @@ def ParseOutputMolrep(self,inp):
           pat[split[1][:-1]].update({'frac x' : temp[ind3+1].split()[-3]})
           pat[split[1][:-1]].update({'frac y' : temp[ind3+1].split()[-2]})
           pat[split[1][:-1]].update({'frac z' : temp[ind3+1].split()[-1]})
-    
+
     molrep  =  {#'Molrep log'    : log_path,
                 #'Molrep jpg'    : srf_path,
                 'Molrep PTS'    : pts,
@@ -2473,12 +2473,12 @@ def ParseOutputScala(self,inp):
           i = 1
           x -= 1
         if line.startswith(' $$'):
-          ref_plot[axis+'_data'] = temp1 
+          ref_plot[axis+'_data'] = temp1
           i = 0
         if i:
           if len(line.split()) == 4:
             temp1.append(line.split())
-    
+
     results = {'i_plot'  : i_plot,
                'r_plot'  : r_plot,
                'c_plot'  : c_plot,
@@ -2582,7 +2582,7 @@ def ParseOutputAimless(self,inp):
         c_plot['Overall'] = split[1:]
         c_plot['header'] = temp[temp.index(line)+1].split()
     c_plot['data'] = temp1
-    
+
     results = {'i_plot'  : i_plot,
                'r_plot'  : r_plot,
                'c_plot'  : c_plot,
@@ -2676,13 +2676,13 @@ def ParseOutputDialsSpot(self,inp):
       tot_spots += int(line.split()[1])
     if line.count('reflections to strong.pickle'):
       fil_spots += int(line.split()[1])
-  
+
   d = {'total spots': tot_spots,
        'filtered spots' : fil_spots,
        'log' : inp,
        }
   return(d)
-    
+
 def ParseOutputDialsIndex(self,inp):
   """
   Parse dials.index results.
@@ -2700,7 +2700,7 @@ def ParseOutputDialsIndex(self,inp):
   rmsdx = '0'
   rmsdy = '0'
   rmsdz = '0'
-  
+
   for line in inp:
     if line.count('Sorry:'):
       failed = True
@@ -2721,7 +2721,7 @@ def ParseOutputDialsIndex(self,inp):
       rmsdx = line.split()[5]
       rmsdy = line.split()[7]
       rmsdz = line.split()[9]
-  
+
   d = {'log'       : inp,
        'max_cell'  : max_cell,
        'res_limit' : res_lim,
@@ -2734,7 +2734,7 @@ def ParseOutputDialsIndex(self,inp):
        'rmsd_z'     : rmsdz,
        'failed'     : failed,
        }
-  
+
   return(d)
 
 def ParseOutputDialsRefine(self,log,bravais=False):
@@ -2760,7 +2760,7 @@ def ParseOutputDialsRefine(self,log,bravais=False):
   l = []
   l1 = []
   e = False
-  
+
   for x,line in enumerate(log):
     if line.count('Sorry:'):
       failed = True
@@ -2798,9 +2798,9 @@ def ParseOutputDialsRefine(self,log,bravais=False):
             #l1.append(str(decimal.Decimal.from_float(i)))
             #l1.append(str(decimal.Decimal(i,3)))
           print l1
-                  
+
   """
-  
+
   d = {'log'          : log,
        'failed'       : failed,
        'sol'          : sol,
@@ -2827,7 +2827,7 @@ def ParseOutputDialsRefine_OLD(self,log,bravais=False):
   tt = '0'
   wt = '0'
   failed = False
-  
+
   for line in log:
     if line.count('Sorry:'):
       failed = True
@@ -2879,6 +2879,3 @@ def ParseOutputXOalign(self,log):
         break
     sol[float(x)] = {'solution': l, 'V1': alignment[x][0],'V2': alignment[x][1]}
   return(sol)
-
-  
-    
