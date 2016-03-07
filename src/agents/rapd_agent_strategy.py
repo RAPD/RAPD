@@ -199,6 +199,13 @@ class RapdAgent(Process):
     Process.__init__(self,name='AutoindexingStrategy')
     self.start()
 
+  def setup_cluster(self):
+      """Import cluster functions"""
+
+      self.logger.debug("setup_cluster")
+
+      
+
   def run(self):
     """
     Convoluted path of modules to run.
@@ -2179,7 +2186,7 @@ class RunLabelit(Process):
     except:
       self.logger.exception('**ERROR in RunLabelit.preprocessLabelit**')
 
-  def processLabelit(self,iteration=0,inp=False):
+  def processLabelit(self, iteration=0, inp=False):
     """
     Construct the labelit command and run. Passes back dict with PID:iteration.
     """
@@ -2202,10 +2209,10 @@ class RunLabelit(Process):
       #If first labelit run errors because not happy with user specified cell or SG then ignore user input in the rerun.
       if self.ignore_user_cell == False:
         if d:
-          command += 'known_cell=%s,%s,%s,%s,%s,%s '%(d['a'],d['b'],d['c'],d['alpha'],d['beta'],d['gamma'])
+          command += 'known_cell=%s,%s,%s,%s,%s,%s ' % (d['a'], d['b'], d['c'], d['alpha'], d['beta'], d['gamma'])
       if self.ignore_user_SG == False:
         if self.spacegroup != 'None':
-          command += 'known_symmetry=%s '%self.spacegroup
+          command += 'known_symmetry=%s ' % self.spacegroup
       #For peptide crystals. Doesn't work that much.
       if self.sample_type == 'Peptide':
         command += 'codecamp.maxcell=80 codecamp.minimum_spot_count=10 '
@@ -2228,24 +2235,24 @@ class RunLabelit(Process):
       if self.test:
         labelit_jobs['junk%s'%iteration] = iteration
       else:
-        log = os.path.join(os.getcwd(),'labelit.log')
+        log = os.path.join(os.getcwd(), 'labelit.log')
         #queue to retrieve the PID or JobIB once submitted.
         pid_queue = Queue()
         if self.cluster_use:
           #Delete the previous log still in the folder, otherwise the cluster jobs will append to it.
           if os.path.exists(log):
-            os.system('rm -rf %s'%log)
+            os.system("rm -rf %s" % log)
           if self.short:
             if self.red:
-              run = Process(target=BLspec.processCluster,args=(self,(command,log,1,self.cluster_queue,'bc_throttler'),pid_queue))
+              run = Process(target=BLspec.processCluster, args=(self, (command, log, 1, self.cluster_queue, "bc_throttler"), pid_queue))
             else:
-              #run = Process(target=Utils.processCluster,args=(self,(command,log,'all.q'),queue))
-              run = Process(target=BLspec.processCluster,args=(self,(command,log,self.cluster_queue),pid_queue))
+              #run = Process(target=Utils.processCluster, args=(self,(command,log,'all.q'),queue))
+              run = Process(target=BLspec.processCluster, args=(self, (command, log, self.cluster_queue), pid_queue))
           else:
             #run = Process(target=Utils.processCluster,args=(self,(command,log,'index.q'),queue))
-            run = Process(target=BLspec.processCluster,args=(self,(command,log,self.cluster_queue),pid_queue))
+            run = Process(target=BLspec.processCluster, args=(self, (command, log, self.cluster_queue), pid_queue))
         else:
-          run = Process(target=Utils.processLocal,args=((command,log),self.logger,pid_queue))
+          run = Process(target=Utils.processLocal, args=((command, log), self.logger, pid_queue))
         run.start()
         #Save the PID for killing the job later if needed.
         self.pids[str(iteration)] = pid_queue.get()
