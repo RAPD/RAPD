@@ -22,16 +22,36 @@ __maintainer__ = "Jon Schuermann"
 __email__ = "schuerjp@anl.gov"
 __status__ = "Production"
 
+"""
+An autoindex & strategy rapd_agent
+"""
+
+# Standard imports
 from multiprocessing import Process, Queue, Event
-import os,subprocess, time, shutil
-from rapd_communicate import Communicate
-from rapd_agent_xoalign import RunXOalign
+import os
+import shutil
+import subprocess
+import time
+
+# RAPD imports
+from subcontractors.xoalign import RunXOalign
 import rapd_utils as Utils
 import rapd_beamlinespecific as BLspec
 import rapd_parse as Parse
 import rapd_summary as Summary
+from utils.communicate import rapd_send
 
-class AutoindexingStrategy(Process, Communicate):
+# This is an active rapd agent
+RAPD_AGENT = True
+
+# This handler's request type
+AGENT_TYPE = "autoindex+strategy"
+
+# A unique UUID for this handler (uuid.uuid1().hex)
+ID = "3b3448aee4a811e59c0aac87a3333966"
+
+
+class RapdAgent(Process):
   def __init__(self,input,logger=None):
     logger.info('AutoindexingStrategy.__init__')
     self.st = time.time()
@@ -48,14 +68,14 @@ class AutoindexingStrategy(Process, Communicate):
     else:
         self.preferences                        = self.input[3]
     self.controller_address                 = self.input[-1]
-    
+
     #For testing individual modules (Will not run in Test mode on cluster!! Can be set at end of __init__.)
     self.test                               = False
     #Removes junk files and directories at end. (Will still clean on cluster!! Can be set at end of __init__.)
     self.clean                              = False
     #Runs in RAM (slightly faster), but difficult to debug.
     self.ram                                = False
-    #Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Slower (>10%). Mainly 
+    #Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Slower (>10%). Mainly
     #used for rapd_agent_beamcenter.py to launch a lot of jobs at once.
     self.cluster_use                        = False
     #If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
@@ -65,7 +85,7 @@ class AutoindexingStrategy(Process, Communicate):
     self.verbose                            = True
     #Number of Labelit iterations to run.
     self.iterations                         = 6
-    
+
     #Set timer for distl. 'False' will disable.
     if self.header2:
         self.distl_timer                    = 60
@@ -75,7 +95,7 @@ class AutoindexingStrategy(Process, Communicate):
     self.strategy_timer                     = 90
     #Set timer for XOAlign. 'False' will disable.
     self.xoalign_timer                      = 30
-    
+
     #Turns on multiprocessing for everything
     #Turns on all iterations of Labelit running at once, sorts out highest symmetry solution, then continues...(much better!!)
     self.multiproc                          = True
@@ -100,7 +120,7 @@ class AutoindexingStrategy(Process, Communicate):
     else:
         self.multicrystalstrat = True
         self.strategy          = 'mosflm'
-    
+
     #This is where I place my overall folder settings.
     self.working_dir                        = False
     #this is where I have chosen to place my results
@@ -153,7 +173,7 @@ class AutoindexingStrategy(Process, Communicate):
     #dicts for running the Queues
     self.jobs                               = {}
     self.vips_images                        = {}
-    
+
     #Settings for all programs
     self.beamline             = self.header.get('beamline')
     self.time                 = str(self.header.get('time','1.0'))
@@ -163,8 +183,8 @@ class AutoindexingStrategy(Process, Communicate):
     self.spacegroup           = self.preferences.get('spacegroup')
     self.flux                 = str(self.header.get('flux'))
     self.solvent_content      = str(self.preferences.get('solvent_content',0.55))
-    
-    #Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database. 
+
+    #Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
     #This is used to determine if job submitted by rapd_cluster or script was launched for testing.
     #******BEAMLINE SPECIFIC*****
     if self.header.has_key('acc_time'):
@@ -175,7 +195,7 @@ class AutoindexingStrategy(Process, Communicate):
     else:
         self.gui                   = False
     #******BEAMLINE SPECIFIC*****
-    
+
     Process.__init__(self,name='AutoindexingStrategy')
     self.start()
 
@@ -193,12 +213,12 @@ class AutoindexingStrategy(Process, Communicate):
       self.makeImages(0)
       #Run Labelit
       self.processLabelit()
-      
+
       #Gleb recommended, but in some cases takes several seconds to minutes longer to run Best??
       #if self.pilatus:
       #    if self.preferences.get('strategy_type') == 'best':
       #        self.processXDSbg()
-      
+
       #Sorts labelit results by highest symmetry.
       self.labelitSort()
       #If there is a solution, then calculate a strategy.
@@ -216,7 +236,7 @@ class AutoindexingStrategy(Process, Communicate):
             self.postprocessDistl()
       #Make PHP files for GUI, passback results, and cleanup.
       self.postprocess()
-      
+
   def preprocess(self):
     """
     Setup the working dir in the RAM and save the dir where the results will go at the end.
@@ -255,7 +275,7 @@ class AutoindexingStrategy(Process, Communicate):
     if self.cluster_use:
       self.running = Event()
       self.running.set()
-      
+
   def preprocessRaddose(self):
     """
     Create the raddose.com file which will run in processRaddose. Several beamline specific entries for flux and
@@ -274,7 +294,7 @@ class AutoindexingStrategy(Process, Communicate):
         crystal_size_x = '1'
         crystal_size_y = '0.5'
         crystal_size_z = '0.5'
-      else:   
+      else:
         #crystal dimensions (default 0.1 x 0.1 x 0.1 from rapd_site.py)
         crystal_size_x = str(float(self.preferences.get('crystal_size_x'))/1000.0)
         crystal_size_y = str(float(self.preferences.get('crystal_size_y'))/1000.0)
@@ -288,7 +308,7 @@ class AutoindexingStrategy(Process, Communicate):
       #**Beamline specific failsafe if aperture size is not sent correctly from MD2.
       if self.aperture == '0' or '-1':
         if self.beamline == '24_ID_C':
-          self.aperture = '70' 
+          self.aperture = '70'
         else:
           self.aperture = '50'
       #Get max crystal size to calculate the shape.(Currently disabled in Best, because no one changes it)
@@ -373,8 +393,8 @@ class AutoindexingStrategy(Process, Communicate):
 
   def processXDSbg(self):
     """
-    Calculate the BKGINIT.cbf for the background calc on the Pilatis. This is 
-    used in BEST. 
+    Calculate the BKGINIT.cbf for the background calc on the Pilatis. This is
+    used in BEST.
     Gleb recommended this but it does not appear to make much difference except take longer.
     """
     if self.verbose:
@@ -453,7 +473,7 @@ class AutoindexingStrategy(Process, Communicate):
       self.logger.exception('**Error in ProcessDistl.**')
 
   def processRaddose(self):
-    """ 
+    """
     Run Raddose.
     """
     if self.verbose:
@@ -491,7 +511,7 @@ class AutoindexingStrategy(Process, Communicate):
       min_dis = settings.get('min_distance')
       min_d_o = settings.get('min_del_omega')
       min_e_t = settings.get('min_exp_time')
-      
+
       image_number = []
       image_number.append(self.header.get('fullname')[self.header.get('fullname').rfind('_')+1:self.header.get('fullname').rfind('.')])
       if self.header2:
@@ -510,7 +530,7 @@ class AutoindexingStrategy(Process, Communicate):
       self.crystal_life = str(int(float(exp_dose_lim) / float(self.time)))
       if self.crystal_life == '0':
         self.crystal_life = '1'
-      #Adjust dose for ribosome crystals. 
+      #Adjust dose for ribosome crystals.
       if self.sample_type == 'Ribosome':
         dose = 500001
       #If dose is too high, warns user and sets to reasonable amount and reruns Best but give warning.
@@ -607,10 +627,10 @@ class AutoindexingStrategy(Process, Communicate):
                     self.processBest(iteration,(start,ran,int(job),int(job)+1))
                 counter -= 1
             time.sleep(0.1)
-        
+
     except:
       self.logger.exception('**Error in processBest**')
-      
+
   def processMosflm(self):
     """
     Creates Mosflm executable for running strategy and run. Passes back dict with PID:logfile.
@@ -737,7 +757,7 @@ class AutoindexingStrategy(Process, Communicate):
       params['dir'] = self.dest_dir
       params['clean'] = self.clean
       params['verbose'] = self.verbose
-      Process(target=RunXOalign,args=(self.input,params,self.logger)).start()
+      Process(target=RunXOalign, args=(self.input, params, self.logger)).start()
 
     except:
       self.logger.exception('**ERROR in processXOalign**')
@@ -782,7 +802,7 @@ class AutoindexingStrategy(Process, Communicate):
         else:
           self.distl_results[str(x)] = {'Distl results': distl}
       Utils.distlComb(self)
-        
+
     except:
       self.logger.exception('**Error in postprocessDistl.**')
 
@@ -812,7 +832,7 @@ class AutoindexingStrategy(Process, Communicate):
     data = Parse.ParseOutputBest(self,(log,xml),anom)
     #print data.get('strategy res limit')
     if self.labelit_results['Labelit results'] != 'FAILED':
-      #Best error checking. Most errors caused by B-factor calculation problem. 
+      #Best error checking. Most errors caused by B-factor calculation problem.
       #If no errors...
       if type(data) == dict:
         data.update({'directory':os.path.dirname(inp)})
@@ -934,7 +954,7 @@ class AutoindexingStrategy(Process, Communicate):
 
     except:
       self.logger.exception('**Error in Queue**')
-      
+
   def labelitSort(self):
     """
     Sort out which iteration of Labelit has the highest symmetry and choose that solution. If
@@ -943,7 +963,7 @@ class AutoindexingStrategy(Process, Communicate):
     if self.verbose:
       self.logger.debug('AutoindexingStrategy::labelitSort')
     import numpy
-    
+
     rms_list1 = []
     sg_list1 = []
     metric_list1 = []
@@ -955,7 +975,7 @@ class AutoindexingStrategy(Process, Communicate):
       #Get the results and logs
       self.labelit_results = self.labelitQueue.get()
       self.labelit_log = self.labelitQueue.get()
-      
+
       for run in self.labelit_results.keys():
         if type(self.labelit_results[run].get('Labelit results')) == dict:
           #Check for pseudotranslation in any Labelit run
@@ -1060,7 +1080,7 @@ class AutoindexingStrategy(Process, Communicate):
           return(int(round(float(p_e)-float(p_s[0]))))
       except:
         self.logger.exception('**Error in getBestRotRange**')
-        return('FAILED')  
+        return('FAILED')
     try:
       phi_st = []
       phi_rn = []
@@ -1175,7 +1195,7 @@ class AutoindexingStrategy(Process, Communicate):
 
   def postprocess(self):
     """
-    Make all the HTML files, pass results back, and cleanup. 
+    Make all the HTML files, pass results back, and cleanup.
     """
     if self.verbose:
       self.logger.debug('AutoindexingStrategy::postprocess')
@@ -1254,7 +1274,7 @@ class AutoindexingStrategy(Process, Communicate):
           except:
             output['%s_%s'%(l[x][1],i+1)] = False
 
-    #Save path for files required for future STAC runs.                                
+    #Save path for files required for future STAC runs.
     try:
       if self.labelit_failed == False:
         os.chdir(self.labelit_dir)
@@ -1296,10 +1316,10 @@ class AutoindexingStrategy(Process, Communicate):
         output[l[i][1]] = 'FAILED'
     #Put all output files into a singe dict to pass back.
     output_files = {'Output files' : output}
-    #Put all the result dicts from all the programs run into one resultant dict and pass back.
+    # Put all the result dicts from all the programs run into one resultant dict and pass back.
     try:
       results = {}
-      if self.labelit_results: 
+      if self.labelit_results:
         results.update(self.labelit_results)
       if self.distl_results:
         results.update(self.distl_results)
@@ -1316,7 +1336,8 @@ class AutoindexingStrategy(Process, Communicate):
       results.update(output_files)
       self.input.append(results)
       if self.gui:
-        self.sendBack2(self.input)
+        # self.sendBack2(self.input)
+        rapd_send(self.controller_address, self.input)
     except:
       self.logger.exception('**Could not send results to pipe.**')
 
@@ -1357,14 +1378,14 @@ class AutoindexingStrategy(Process, Communicate):
     print '\n-------------------------------------'
     print 'RAPD autoindexing/strategy complete.'
     print 'Total elapsed time: %s seconds'%t
-    print '-------------------------------------'       
+    print '-------------------------------------'
     #sys.exit(0) #did not appear to end script with some programs continuing on for some reason.
     #os._exit(0)
 
   def htmlBestPlots(self):
     """
     generate plots html/php file
-    """      
+    """
     if self.verbose:
       self.logger.debug('AutoindexingStrategy::htmlBestPlots')
     try:
@@ -1552,10 +1573,10 @@ class AutoindexingStrategy(Process, Communicate):
         jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false    });\n'%(4*('',)))
         jon_summary.write("%8s$('#labelit').dataTable({\n"%'')
         jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false    });\n'%(4*('',)))
-      if self.distl_summary:        
+      if self.distl_summary:
         jon_summary.write("%8s$('#distl').dataTable({\n"%'')
         jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false    });\n'%(4*('',)))
-      jon_summary.write('%6s});\n%4s</script>\n%2s</head>\n%2s<body id="dt_example">\n'%(4*('',)))    
+      jon_summary.write('%6s});\n%4s</script>\n%2s</head>\n%2s<body id="dt_example">\n'%(4*('',)))
       if self.best_summary:
         jon_summary.writelines(self.best_summary)
       if self.best_summary_long:
@@ -1572,10 +1593,10 @@ class AutoindexingStrategy(Process, Communicate):
       if self.mosflm_strat_results:
         if self.mosflm_strat_results.get('Mosflm strategy results') == 'FAILED':
           jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
-          jon_summary.write('%7s<h3 class="results">Mosflm Strategy Failed. Could not calculate a strategy.</h3>\n'%'')             
+          jon_summary.write('%7s<h3 class="results">Mosflm Strategy Failed. Could not calculate a strategy.</h3>\n'%'')
           jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',)))
       if self.best_anom_summary:
-        jon_summary.writelines(self.best_anom_summary) 
+        jon_summary.writelines(self.best_anom_summary)
       if self.best_anom_summary_long:
         jon_summary.writelines(self.best_anom_summary_long)
       if self.best_anom_results:
@@ -1593,14 +1614,14 @@ class AutoindexingStrategy(Process, Communicate):
           jon_summary.write('%7s<br><h3 class="results">Mosflm Strategy Failed. Could not calculate an ANOMALOUS strategy.</h3>\n'%'')
           jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',)))
       if self.raddose_summary:
-        jon_summary.writelines(self.raddose_summary) 
+        jon_summary.writelines(self.raddose_summary)
       if self.raddose_results:
         if self.raddose_results.get('Raddose results') == 'FAILED':
           jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
-          jon_summary.write('%7s<h4 class="results">Raddose failed. Using default dosage. Best results are still good.</h4>\n'%'')  
+          jon_summary.write('%7s<h4 class="results">Raddose failed. Using default dosage. Best results are still good.</h4>\n'%'')
           jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',)))
       if self.labelit_summary:
-        jon_summary.writelines(self.labelit_summary)   
+        jon_summary.writelines(self.labelit_summary)
       if self.labelit_results:
         if self.labelit_results.get('Labelit results') == 'FAILED':
           jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
@@ -1638,7 +1659,7 @@ class AutoindexingStrategy(Process, Communicate):
         jon_summary.write('\n---------------Raddose RESULTS---------------\n\n')
         if self.raddose_log:
           for line in self.raddose_log:
-            jon_summary.write(line) 
+            jon_summary.write(line)
         else:
           jon_summary.write('---------------RADDOSE FAILED---------------\n')
         jon_summary.write('\n\n---------------Data Collection Strategy RESULTS---------------\n\n')
@@ -1653,22 +1674,22 @@ class AutoindexingStrategy(Process, Communicate):
             for line in self.mosflm_strat_log:
               jon_summary.write(line)
           else:
-            jon_summary.write('---------------MOSFLM STRATEGY FAILED---------------\n') 
+            jon_summary.write('---------------MOSFLM STRATEGY FAILED---------------\n')
         jon_summary.write('\n---------------ANOMALOUS Data Collection Strategy RESULTS---------------\n\n')
-        if self.best_anom_log:                    
+        if self.best_anom_log:
           for line in self.best_anom_log:
-            jon_summary.write(line) 
+            jon_summary.write(line)
         else:
           jon_summary.write('---------------BEST ANOM STRATEGY FAILED. TRYING MOSFLM STRATEGY---------------\n')
         if self.best_anom_failed or self.strategy == 'mosflm' or self.multicrystalstrat:
           if self.mosflm_strat_anom_log:
             jon_summary.write('\n---------------ANOMALOUS Data Collection Strategy RESULTS from Mosflm---------------\n\n')
             for line in self.mosflm_strat_anom_log:
-              jon_summary.write(line)     
+              jon_summary.write(line)
           else:
             jon_summary.write('---------------MOSFLM ANOM STRATEGY FAILED---------------\n')
       jon_summary.write('%7s</pre>\n%6s</div>\n%5s</div>\n%4s</div>\n%2s</body>\n</html>\n'%(5*('',)))
-      jon_summary.close()        
+      jon_summary.close()
       if os.path.exists(f):
         shutil.copy(f,self.working_dir)
 
@@ -1728,17 +1749,17 @@ class AutoindexingStrategy(Process, Communicate):
              }); \n''')
         if self.best_anom_summary:
             jon_summary.write('''
-             //Single click handlers  
-             $("#best1 tbody tr").click(function(event) {   
-                     $(normSimpleBestTable.fnSettings().aoData).each(function (){ 
-                     $(this.nTr).removeClass('row_selected'); 
-                 }); 
-                 $(anomSimpleBestTable.fnSettings().aoData).each(function (){ 
-                     $(this.nTr).removeClass('row_selected'); 
-                 }); 
-                 $(event.target.parentNode).toggleClass('row_selected'); 
-             }); 
-        
+             //Single click handlers
+             $("#best1 tbody tr").click(function(event) {
+                     $(normSimpleBestTable.fnSettings().aoData).each(function (){
+                     $(this.nTr).removeClass('row_selected');
+                 });
+                 $(anomSimpleBestTable.fnSettings().aoData).each(function (){
+                     $(this.nTr).removeClass('row_selected');
+                 });
+                 $(event.target.parentNode).toggleClass('row_selected');
+             });
+
              $("#bestanom1 tbody tr").click(function(event) {
                  $(normSimpleBestTable.fnSettings().aoData).each(function (){
                      $(this.nTr).removeClass('row_selected');
@@ -1858,7 +1879,7 @@ class AutoindexingStrategy(Process, Communicate):
       if self.mosflm_strat_anom_results:
         jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
         if self.mosflm_strat_anom_results.get('Mosflm ANOM strategy results') == 'FAILED':
-          jon_summary.write('%7s<h3 class="results">Mosflm strategy failed. Could not calculate an ANOMALOUS strategy.</h3>\n'%'') 
+          jon_summary.write('%7s<h3 class="results">Mosflm strategy failed. Could not calculate an ANOMALOUS strategy.</h3>\n'%'')
         elif self.mosflm_strat_anom_results.get('Mosflm ANOM strategy results') == 'SYM':
           jon_summary.write('%7s<h3 class="results">Mosflm strategy failed because the SG or unit '\
                             'cell is not compatible with the reference dataset.</h3>\n'%'')
@@ -1941,7 +1962,7 @@ class AutoindexingStrategy(Process, Communicate):
                             <input type="text" name="transmission" id="transmission" value="" class="text ui-widget-content ui-corner-all" "size=6"/>
                           </td>
                         </tr>
-          
+
                      </table>
               </fieldset>
               </form>
@@ -1951,7 +1972,7 @@ class AutoindexingStrategy(Process, Communicate):
       jon_summary.close()
       if os.path.exists(f):
         shutil.copy(f,self.working_dir)
-    
+
     except:
       self.logger.exception('**ERROR in htmlSummaryShort**')
 
@@ -2022,7 +2043,7 @@ class RunLabelit(Process):
         self.multiproc                  = False
     self.sample_type = self.preferences.get('sample_type','Protein')
     self.spacegroup  = self.preferences.get('spacegroup','None')
-    
+
     #This is where I place my overall folder settings.
     self.working_dir                        = self.setup.get('work')
     #this is where I have chosen to place my results
@@ -2041,10 +2062,10 @@ class RunLabelit(Process):
     #dicts for running the Queues
     self.labelit_jobs                       = {}
     self.pids                               = {}
-    
+
     Process.__init__(self,name='RunLabelit')
     self.start()
-      
+
   def run(self):
     """
     Convoluted path of modules to run.
@@ -2080,7 +2101,7 @@ class RunLabelit(Process):
   def preprocess(self):
     """
     Setup the working dir in the RAM and save the dir where the results will go at the end.
-    """       
+    """
     if self.verbose:
       self.logger.debug('RunLabelit::preprocess')
     if os.path.exists(self.working_dir) == False:
@@ -2093,7 +2114,7 @@ class RunLabelit(Process):
 
   def preprocessLabelit(self):
     """
-    Setup extra parameters for Labelit if turned on. Will always set beam center from image header. 
+    Setup extra parameters for Labelit if turned on. Will always set beam center from image header.
     Creates dataset_preferences.py file for editing later in the Labelit error iterations if needed.
     """
     if self.verbose:
@@ -2129,12 +2150,12 @@ class RunLabelit(Process):
         preferences.write('best_support=True\n')
         #Set Mosflm RMSD tolerance larger
         preferences.write('mosflm_rmsd_tolerance=4.0\n')
-        
+
         #If binning is off. Force Labelit to use all pixels(MAKES THINGS WORSE). Increase number of spots to use for indexing.
         if binning == False:
           preferences.write('distl_permit_binning=False\n')
           preferences.write('distl_maximum_number_spots_for_indexing=600\n')
-        
+
         #If user wants to change the res limit for autoindexing.
         if str(self.preferences.get('index_hi_res','0.0')) != '0.0':
           #preferences.write('distl.res.outer='+index_hi_res+'\n')
@@ -2154,7 +2175,7 @@ class RunLabelit(Process):
           preferences.write('autoindex_override_twotheta=%s\n'%twotheta)
           #preferences.write('autoindex_override_distance='+distance+'\n')
         preferences.close()
-     
+
     except:
       self.logger.exception('**ERROR in RunLabelit.preprocessLabelit**')
 
@@ -2238,7 +2259,7 @@ class RunLabelit(Process):
   def postprocessLabelit(self,iteration=0,run_before=False,blank=False):
     """
     Sends Labelit log for parsing and error checking for rerunning Labelit. Save output dicts.
-    """        
+    """
     if self.verbose:
       self.logger.debug('RunLabelit::postprocessLabelit')
     try:
@@ -2319,7 +2340,7 @@ class RunLabelit(Process):
       #Free up spot on cluster.
       if self.short and self.red:
         self.red.lpush('bc_throttler',1)
-      
+
       #Pass back output
       self.output.put(self.labelit_results)
       if self.short == False:
@@ -2406,7 +2427,7 @@ class RunLabelit(Process):
               BLspec.killChildrenCluster(self,self.pids[str(i)])
             else:
               Utils.killChildren(self,self.pids[str(i)])
-                      
+
       if self.short == False:
         self.logger.debug('Labelit finished.')
 
@@ -2454,18 +2475,18 @@ def BestAction(inp,logger,output=False):
     f.close()
   except:
     logger.exception('**Error in BestAction**')
-  
+
 if __name__ == '__main__':
-  #construct test input for Autoindexing/strategy   
+  #construct test input for Autoindexing/strategy
   #This is an example input dict used for testing this script.
-  #Input dict file. If autoindexing from two images, just include a third dict section for the second image header. 
+  #Input dict file. If autoindexing from two images, just include a third dict section for the second image header.
   ###To see all the input options look at extras/rapd_input.py (autoindexInput)###
-  
-  inp = ["AUTOINDEX", 
+
+  inp = ["AUTOINDEX",
   {"work": "/gpfs6/users/necat/Jon/RAPD_test/Output",
    },
-    
-  #Info from first image 
+
+  #Info from first image
   {"wavelength": "0.9792", #RADDOSE
    "binning": "2x2", #LABELIT
    #"binning": "none", #
@@ -2484,7 +2505,7 @@ if __name__ == '__main__':
    "gauss_x":'0.03', #RADDOSE
    "gauss_y":'0.01', #RADDOSE
    "fullname": "/gpfs2/users/chicago/Lewis_E_Dec15/images/snaps/NE51_H4_PAIR_0_001.img",
-   
+
    #minikappa
    #Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
    #"mk3_phi":"0.0", #
@@ -2514,7 +2535,7 @@ if __name__ == '__main__':
    "gauss_x":'0.03', #RADDOSE
    "gauss_y":'0.01', #RADDOSE
    "fullname": "/gpfs2/users/chicago/Lewis_E_Dec15/images/snaps/NE51_H4_PAIR_0_002.img",
-   
+
    #minikappa
    #Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
    #"mk3_phi":"0.0", #
@@ -2550,7 +2571,7 @@ if __name__ == '__main__':
    "alpha":0.0, #LABELIT
    "beta":0.0, #LABELIT
    "gamma":0.0, #LABELIT
-  
+
    #Change these if user wants to continue dataset with other crystal(s).
    "reference_data_id": None, #MOSFLM
    #"reference_data_id": 1,#MOSFLM
@@ -2562,11 +2583,11 @@ if __name__ == '__main__':
    "mosflm_start":0.0,#MOSFLM
    "mosflm_end":360.0,#MOSFLM
     },
-   
-  ('127.0.0.1',50001)#self.sendBack2 for sending results back to rapd_cluster.
+
+  ('127.0.0.1', 50001)#self.sendBack2 for sending results back to rapd_cluster.
   ]
   #start logging
-  import logging,logging.handlers
+  import logging, logging.handlers
   LOG_FILENAME = os.path.join(inp[1].get('work'),'rapd.log')
   #LOG_FILENAME = '/gpfs6/users/necat/Jon/RAPD_test/Output/rapd_jon.log'
   # Set up a specific logger with our desired output level
@@ -2578,4 +2599,4 @@ if __name__ == '__main__':
   formatter = logging.Formatter("%(asctime)s - %(message)s")
   handler.setFormatter(formatter)
   logger.addHandler(handler)
-  AutoindexingStrategy(inp,logger=logger)
+  RapdAgent(inp, logger=logger)

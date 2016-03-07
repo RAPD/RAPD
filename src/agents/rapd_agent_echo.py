@@ -29,6 +29,9 @@ An echo rapd_agent
 import logging
 import multiprocessing
 
+# RAPD imports
+from utils.communicate import rapd_send
+
 # This is an active rapd agent
 RAPD_AGENT = True
 
@@ -109,3 +112,6 @@ class RapdAgent(multiprocessing.Process):
         self.logger.debug("postprocess")
 
         self.logger.debug(self.results)
+
+        # Send back the data as an echo
+        rapd_send(self.reply_settings, self.results)

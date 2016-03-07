@@ -143,7 +143,7 @@ class Model(object):
             LaunchAction(command=("ECHO",
                                   (),
                                   "Hello, world!",
-                                  ("130.202.225.74", 50000),
+                                  ("164.54.212.15", 50000),
                                   self.return_address),
                           settings={})
                           #settings=self.database.get_current_settings(id=self.site.ID))

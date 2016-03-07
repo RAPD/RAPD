@@ -91,7 +91,7 @@ CONTROL_REDIS_CLUSTER = False
 
 # Detector settings
 # Must have a file in detectors that is all lowercase of this string
-DETECTOR = "NECAT_ADSC_Q315_TEST"
+DETECTOR = "SERCAT_RAYONIX_MX300HS"
 DETECTOR_SUFFIX = ".img"
 
 # Launcher settings
