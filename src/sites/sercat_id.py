@@ -111,7 +111,7 @@ RAPD_LAUNCHER_ADAPTOR_DIRECTORIES = ("sites.launcher_adaptors",
 # the same file in launch/launcher_adaptors
 
 # Cluster settings
-
+CLUSTER_ADAPTOR = "sites.cluster.sercat"
 
 # Data gatherer settings
 # The data gatherer for this site, in the src/sites/gatherers directory
