@@ -50,23 +50,27 @@ class RapdAgent(multiprocessing.Process):
     # This is where I have chosen to place my results
     results = False
 
-    def __init__(self, command, request, reply_settings):
+    def __init__(self, site, command, request, reply_settings):
         """
         Initialize the TestCase process
 
-        input   is whatever is passed in
-        pipe    is the communication back to the calling process
+        Keyword arguments
+        site -- full site settings
+        command -- type of job to be run
+        request -- full information to execute the agent
+        reply_settings -- information for how to contact control process
         """
 
         # Get the logger Instance
         self.logger = logging.getLogger("RAPDLogger")
         self.logger.debug("__init__")
 
+        self.site = site
         self.command = command
         self.request = request
         self.reply_settings = reply_settings
 
-        self.logger.debug(command)
+        self.logger.debug("%s", self.site)
 
         # Initialize the process
         multiprocessing.Process.__init__(self, name=AGENT_TYPE)

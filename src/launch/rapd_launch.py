@@ -43,16 +43,18 @@ class Launch(object):
 
     agent = None
 
-    def __init__(self, settings, command_file):
+    def __init__(self, site, command_file, logger):
         """Initialize the Launch"""
 
         # Get the logger Instance
-        self.logger = logging.getLogger("RAPDLogger")
+        self.logger = logger #logging.getLogger("RAPDLogger")
         self.logger.debug("__init__")
 
         # Save passed-in variables
-        self.settings = settings
+        self.site = site
         self.command_file = command_file
+
+        self.logger.debug("%s", self.site)
 
         self.run()
 
@@ -72,7 +74,7 @@ class Launch(object):
         self.load_agent(command)
 
         # Run the agent
-        self.agent.RapdAgent(command, data, reply_address)
+        self.agent.RapdAgent(self.site, command, data, reply_address)
 
     def load_command(self):
         """Load and parse the command file"""
@@ -89,8 +91,8 @@ class Launch(object):
         # Agent we are looking for
         seek_module = "rapd_agent_%s" % command.lower()
 
-        self.agent = load_module(directories=self.settings["RAPD_AGENT_DIRECTORIES"],
-                                 seek_module=seek_module)
+        self.agent = load_module(seek_module=seek_module,
+                                 directories=self.site.RAPD_AGENT_DIRECTORIES)
 
 
 
@@ -142,7 +144,7 @@ def main():
     # Run command file[s]
     if commandline_args.command_files:
         for command_file in commandline_args.command_files:
-            Launch(SITE.LAUNCH_SETTINGS, command_file)
+            Launch(SITE, command_file, logger)
     else:
         raise Exception("Not sure what to do!")
 
