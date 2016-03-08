@@ -56,7 +56,7 @@ DROP TABLE IF EXISTS `beamcenter`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `beamcenter` (
   `beamcenter_id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
-  `beamline` varchar(16) DEFAULT NULL,
+  `site` varchar(12) DEFAULT NULL,
   `x_b` float DEFAULT NULL,
   `x_m1` float DEFAULT NULL,
   `x_m2` float DEFAULT NULL,
@@ -113,12 +113,12 @@ DROP TABLE IF EXISTS `current`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `current` (
-  `beamline` varchar(12) NOT NULL DEFAULT '',
+  `site` varchar(12) NOT NULL DEFAULT '',
   `setting_id` mediumint(8) unsigned DEFAULT NULL,
   `data_root_dir` varchar(256) DEFAULT NULL,
   `puckset_id` mediumint(8) unsigned DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`beamline`)
+  PRIMARY KEY (`site`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -170,11 +170,9 @@ CREATE TABLE `image_status` (
   `image_prefix` varchar(64) DEFAULT NULL,
   `run_number` smallint(5) unsigned DEFAULT NULL,
   `image_number` smallint(5) unsigned DEFAULT NULL,
-  `adsc_number` mediumint(8) unsigned DEFAULT NULL,
-  `beamline` varchar(8) DEFAULT NULL,
+  `site` varchar(12) DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`image_status_id`),
-  UNIQUE KEY `blocker` (`fullname`,`adsc_number`)
 ) ENGINE=MyISAM AUTO_INCREMENT=790342 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -188,7 +186,6 @@ DROP TABLE IF EXISTS `images`;
 CREATE TABLE `images` (
   `image_id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
   `fullname` varchar(128) DEFAULT NULL,
-  `adsc_number` mediumint(8) unsigned DEFAULT NULL,
   `adc` varchar(5) DEFAULT NULL,
   `axis` varchar(6) DEFAULT NULL,
   `beam_center_x` float DEFAULT NULL,
@@ -234,7 +231,7 @@ CREATE TABLE `images` (
   `md2_y` float DEFAULT NULL,
   `md2_z` float DEFAULT NULL,
   `acc_time` mediumint(8) unsigned DEFAULT NULL,
-  `beamline` varchar(8) DEFAULT NULL,
+  `site` varchar(12) DEFAULT NULL,
   `calc_beam_center_x` float DEFAULT NULL,
   `calc_beam_center_y` float DEFAULT NULL,
   `flux` float DEFAULT NULL,
@@ -245,7 +242,7 @@ CREATE TABLE `images` (
   `run_id` mediumint(8) unsigned DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`image_id`),
-  UNIQUE KEY `blocker` (`fullname`,`adsc_number`,`date`),
+  UNIQUE KEY `blocker` (`fullname`,`date`),
   KEY `run_id` (`run_id`),
   KEY `timestamp` (`timestamp`)
 ) ENGINE=InnoDB AUTO_INCREMENT=9488341 DEFAULT CHARSET=latin1;
@@ -545,11 +542,9 @@ CREATE TABLE `pair_results` (
   `repr` varchar(128) DEFAULT NULL,
   `fullname_1` varchar(256) DEFAULT NULL,
   `image1_id` int(10) unsigned DEFAULT NULL,
-  `adsc_number_1` mediumint(8) unsigned DEFAULT NULL,
   `date_1` datetime DEFAULT NULL,
   `fullname_2` varchar(256) DEFAULT NULL,
   `image2_id` int(10) unsigned DEFAULT NULL,
-  `adsc_number_2` mediumint(8) unsigned DEFAULT NULL,
   `date_2` datetime DEFAULT NULL,
   `sample_id` mediumint(8) unsigned DEFAULT NULL,
   `work_dir` varchar(256) DEFAULT NULL,
@@ -691,7 +686,7 @@ DROP TABLE IF EXISTS `presets`;
 CREATE TABLE `presets` (
   `presets_id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
   `setting_id` mediumint(8) unsigned DEFAULT NULL,
-  `beamline` varchar(12) DEFAULT NULL,
+  `site` varchar(12) DEFAULT NULL,
   `data_root_dir` varchar(256) DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`presets_id`)
@@ -756,7 +751,7 @@ DROP TABLE IF EXISTS `puck_settings`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `puck_settings` (
   `puckset_id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
-  `beamline` varchar(16) DEFAULT NULL,
+  `site` varchar(16) DEFAULT NULL,
   `data_root_dir` varchar(256) DEFAULT NULL,
   `A` varchar(48) DEFAULT NULL,
   `B` varchar(48) DEFAULT NULL,
@@ -917,7 +912,7 @@ CREATE TABLE `run_status` (
   `image_prefix` varchar(64) DEFAULT NULL,
   `mad` varchar(4) DEFAULT NULL,
   `mode` varchar(5) DEFAULT NULL,
-  `beamline` varchar(8) DEFAULT NULL,
+  `site` varchar(12) DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`run_status_id`),
   UNIQUE KEY `blocker` (`adc`,`anom_wedge`,`anomalous`,`beam_center`,`binning`,`comment`,`compression`,`directory`,`image_prefix`,`mad`,`mode`)
@@ -948,7 +943,7 @@ CREATE TABLE `runs` (
   `time` float DEFAULT NULL,
   `de_zngr` varchar(5) DEFAULT NULL,
   `anomalous` varchar(3) DEFAULT NULL,
-  `beamline` varchar(8) DEFAULT NULL,
+  `site` varchar(12) DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`run_id`),
   UNIQUE KEY `blocker` (`directory`,`image_prefix`,`run_number`,`start`)
@@ -1028,7 +1023,7 @@ DROP TABLE IF EXISTS `settings`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `settings` (
   `setting_id` mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
-  `beamline` varchar(12) DEFAULT NULL,
+  `site` varchar(12) DEFAULT NULL,
   `data_root_dir` varchar(256) DEFAULT NULL,
   `multiprocessing` varchar(5) DEFAULT NULL,
   `spacegroup` varchar(12) DEFAULT NULL,
@@ -1185,7 +1180,6 @@ CREATE TABLE `single_results` (
   `repr` varchar(128) DEFAULT NULL,
   `fullname` varchar(256) DEFAULT NULL,
   `image_id` int(10) unsigned DEFAULT NULL,
-  `adsc_number` mediumint(8) unsigned DEFAULT NULL,
   `date` datetime DEFAULT NULL,
   `sample_id` mediumint(8) unsigned DEFAULT NULL,
   `work_dir` varchar(256) DEFAULT NULL,
@@ -1334,7 +1328,7 @@ DROP TABLE IF EXISTS `status_controller`;
 CREATE TABLE `status_controller` (
   `controller_ip` varchar(15) DEFAULT NULL,
   `data_root_dir` varchar(256) DEFAULT NULL,
-  `beamline` varchar(15) DEFAULT NULL,
+  `site` varchar(12) DEFAULT NULL,
   `dataserver_ip` varchar(15) DEFAULT NULL,
   `cluster_ip` varchar(15) DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -1351,7 +1345,7 @@ DROP TABLE IF EXISTS `status_dataserver`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `status_dataserver` (
   `ip_address` varchar(15) DEFAULT NULL,
-  `beamline` varchar(15) DEFAULT NULL,
+  `site` varchar(12) DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   UNIQUE KEY `ip_address` (`ip_address`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;

@@ -41,7 +41,6 @@ import xmlrpclib
 import atexit
 from rapd_site import secret_settings as secrets
 from rapd_utils import date_adsc_to_sql
-import redis
 
 def print_dict(in_dict):
     keys = in_dict.keys()
@@ -306,7 +305,7 @@ def Q315ReadHeader(image,run_id=None,place_in_run=None,logger=False):
                      'sample'       : ("^SAMPLE=\s*([\d\w]+)\;" , lambda x: str(x)),
                      'ring_cur'     : ("^RING_CUR=\s*([\d\.]+)\;", lambda x: float(x)),
                      'ring_mode'    : ("^RING_MODE=\s*(.*)\;", lambda x: str(x)),
-                     'md2_aperture' : ("^MD2_APERTURE=\s*(\d+)\;", lambda x: int(x)),
+                     'aperture'     : ("^MD2_APERTURE=\s*(\d+)\;", lambda x: int(x)),
                      'period'       : ("^# Exposure_period\s*([\d\.]+) s", lambda x: float(x)),
                      'count_cutoff' : ("^# Count_cutoff\s*(\d+) counts", lambda x: int(x))}
 
