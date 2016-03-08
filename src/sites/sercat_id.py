@@ -106,13 +106,14 @@ RAPD_AGENT_DIRECTORIES = ("sites.agents",
 
 
 # Directories to look for launcher adapters
-RAPD_LAUNCHER_ADAPTOR_DIRECTORIES = ("sites.launcher_adapters",
+RAPD_LAUNCHER_ADAPTER_DIRECTORIES = ("sites.launcher_adapters",
                                      "launch.launcher_adapters")
 # Queried in order, so a shell_simple.py in src/sites/launcher_adapters will override
 # the same file in launch/launcher_adapters
 
 # Cluster settings
-CLUSTER_ADAPTOR = "sites.cluster.sercat"
+CLUSTER_ADAPTER = "sites.cluster.sercat"
+# Set to False if there is no cluster adapter
 
 # Data gatherer settings
 # The data gatherer for this site, in the src/sites/gatherers directory
@@ -171,7 +172,7 @@ LAUNCHER_SETTINGS = {
     "LAUNCHER_REGISTER":LAUNCHER_REGISTER,
     "LAUNCHER_SPECIFICATIONS":LAUNCHER_SPECIFICATIONS,
     "LOCK_FILE":LAUNCHER_LOCK_FILE,
-    "RAPD_LAUNCHER_ADAPTOR_DIRECTORIES":RAPD_LAUNCHER_ADAPTOR_DIRECTORIES
+    "RAPD_LAUNCHER_ADAPTER_DIRECTORIES":RAPD_LAUNCHER_ADAPTER_DIRECTORIES
 }
 
 LAUNCH_SETTINGS = {
