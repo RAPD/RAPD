@@ -34,7 +34,7 @@ import subprocess
 
 # RAPD imports
 import utils.commandline
-import utils.site_tools
+import utils.sites
 
 def get_commandline():
     """Get the commandline variables and handle them"""
@@ -57,7 +57,7 @@ def main(site_in=None):
     print commandline_args
 
     # Determine the site
-    site_file = utils.site_tools.determine_site(site_arg=commandline_args.site)
+    site_file = utils.sites.determine_site(site_arg=commandline_args.site)
 
     # Import the site settings
     SITE = importlib.import_module(site_file)

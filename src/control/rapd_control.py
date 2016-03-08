@@ -33,7 +33,7 @@ import os
 import utils.commandline
 import utils.log
 import utils.lock
-import utils.site_tools
+import utils.sites
 from control.model import Model
 
 def get_commandline():
@@ -55,7 +55,7 @@ def main(site_in=None):
     commandline_args = get_commandline()
 
     # Determine the site
-    site_file = utils.site_tools.determine_site(site_arg=commandline_args.site)
+    site_file = utils.sites.determine_site(site_arg=commandline_args.site)
 
     # Import the site settings
     SITE = importlib.import_module(site_file)

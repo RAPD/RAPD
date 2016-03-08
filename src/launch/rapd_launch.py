@@ -32,10 +32,8 @@ import logging.handlers
 # RAPD imports
 import utils.commandline
 import utils.log
-import utils.site_tools
-
-buffer_size = 8192
-agent = None
+from utils.modules import load_module
+import utils.sites
 
 class Launch(object):
     """
@@ -94,29 +92,6 @@ class Launch(object):
         self.agent = load_module(directories=self.settings["RAPD_AGENT_DIRECTORIES"],
                                  seek_module=seek_module)
 
-    # def load_agent(self, command):
-    #     """Load the agent file for this command"""
-    #
-    #     # Save some space
-    #     settings = self.settings
-    #
-    #     # Agent we are looking for
-    #     seek_module = "rapd_agent_%s" % command.lower()
-    #
-    #     # Look for rapd agents in the specified directories
-    #     for directory in settings["RAPD_AGENT_DIRECTORIES"]:
-    #
-    #         self.logger.debug("  Looking for %s in %s", seek_module, directory)
-    #
-    #         try:
-    #             self.agent = importlib.import_module(directory+"."+seek_module)
-    #             break
-    #         except ImportError:
-    #             self.logger.error("No such agent as %s", directory+"."+seek_module)
-    #             continue
-    #
-    #     if self.agent == None:
-    #         raise Exception("No agent found for %s", command)
 
 
 
@@ -145,7 +120,7 @@ def main():
     print commandline_args
 
     # Determine the site
-    site_file = utils.site_tools.determine_site(site_arg=commandline_args.site)
+    site_file = utils.sites.determine_site(site_arg=commandline_args.site)
 
     # Import the site settings
     SITE = importlib.import_module(site_file)

@@ -35,7 +35,7 @@ import utils.commandline
 from utils.lock import file_lock
 import utils.log
 from utils.modules import load_module
-import utils.site_tools
+import utils.sites
 
 # from rapd_database import Database
 
@@ -147,7 +147,7 @@ class Launcher(object):
         launchers = self.site.LAUNCHER_SETTINGS["LAUNCHER_REGISTER"]
 
         # Get IP Address
-        self.ip_address = utils.site_tools.get_ip_address()
+        self.ip_address = utils.sites.get_ip_address()
 
         for launcher in launchers:
             if launcher[0] == self.ip_address and launcher[1] == self.tag:
@@ -167,7 +167,7 @@ class Launcher(object):
 
         # Import the database adapter as database module
         self.adapter = load_module(
-            directories=self.site.LAUNCHER_SETTINGS["RAPD_LAUNCHER_ADAPTOR_DIRECTORIES"],
+            directories=self.site.LAUNCHER_SETTINGS["RAPD_LAUNCHER_ADAPTER_DIRECTORIES"],
             seek_module=self.specifications["adapter"]).LauncherAdapter
 
         self.logger.debug(self.adapter)
@@ -216,7 +216,7 @@ def main():
     commandline_args = get_commandline()
 
     # Determine the site
-    site_file = utils.site_tools.determine_site(site_arg=commandline_args.site)
+    site_file = utils.sites.determine_site(site_arg=commandline_args.site)
 
     # Import the site settings
     SITE = importlib.import_module(site_file)

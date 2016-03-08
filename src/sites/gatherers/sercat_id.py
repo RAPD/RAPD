@@ -57,7 +57,7 @@ import redis
 import utils.commandline
 import utils.lock
 import utils.log
-import utils.site_tools
+import utils.sites
 
 class SercatGatherer(object):
     """
@@ -314,7 +314,7 @@ def main(site_in=None):
     commandline_args = get_commandline()
 
     # Determine the site
-    site_file = utils.site_tools.determine_site(site_arg=commandline_args.site)
+    site_file = utils.sites.determine_site(site_arg=commandline_args.site)
 
     # Import the site settings
     SITE = importlib.import_module(site_file)

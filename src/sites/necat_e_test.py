@@ -25,7 +25,7 @@ __status__ = "Development"
 import sys
 
 # RAPD imports
-from utils.site_tools import read_secrets
+from utils.sites import read_secrets
 
 # Site ID - limited to 12 characters by MySQL
 ID = "NECAT_E"

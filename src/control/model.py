@@ -32,7 +32,7 @@ import socket
 import time
 
 #custom RAPD imports
-from utils.site_tools import get_ip_address
+from utils.sites import get_ip_address
 
 from control_server import LaunchAction, ControllerServer
 # from rapd_console import ConsoleFeeder

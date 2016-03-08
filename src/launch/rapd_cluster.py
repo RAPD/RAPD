@@ -41,7 +41,7 @@ from inspect import getsourcefile
 import utils.commandline
 from utils.lock import file_is_locked
 import utils.log
-import utils.site_tools
+import utils.sites
 
 # from rapd_site import secret_settings_general as secrets
 # from rapd_database import Database
@@ -866,7 +866,7 @@ def main():
     print commandline_args
 
     # Determine the site
-    site_file = utils.site_tools.determine_site(site_arg=commandline_args.site)
+    site_file = utils.sites.determine_site(site_arg=commandline_args.site)
 
     # Import the site settings
     SITE = importlib.import_module(site_file)

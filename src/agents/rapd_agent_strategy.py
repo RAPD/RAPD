@@ -50,7 +50,6 @@ AGENT_TYPE = "autoindex+strategy"
 # A unique UUID for this handler (uuid.uuid1().hex)
 ID = "3b3448aee4a811e59c0aac87a3333966"
 
-
 class RapdAgent(Process):
   def __init__(self, input, logger=None):
     logger.info('AutoindexingStrategy.__init__')

@@ -172,7 +172,7 @@ def verbose_print(arg, level, verbosity=1):
 
 if __name__ == "__main__":
 
-    print "site_tools.py"
+    print "sites.py"
     print "============="
 
     terminal_print = functools.partial(verbose_print, verbosity=2)
