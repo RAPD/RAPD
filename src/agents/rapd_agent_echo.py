@@ -26,12 +26,6 @@ __status__ = "Development"
 An echo rapd_agent
 """
 
-import logging
-import multiprocessing
-
-# RAPD imports
-from utils.communicate import rapd_send
-
 # This is an active rapd agent
 RAPD_AGENT = True
 
@@ -40,6 +34,13 @@ AGENT_TYPE = "echo"
 
 # A unique UUID for this handler (uuid.uuid1().hex)
 ID = "4eb96075e0a911e590d2c82a1400d5bc"
+
+# Standard imports
+import logging
+import multiprocessing
+
+# RAPD imports
+from utils.communicate import rapd_send
 
 class RapdAgent(multiprocessing.Process):
     """

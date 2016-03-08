@@ -23,28 +23,39 @@ __email__ = "sbanerjee@anl.gov"
 __status__ = "Production"
 
 """
-rapd_agent_simplemerge.py is a pipeline to be used by the rapd_cluster.py
-                          process for combining two wedges created by
-                          the integration pipeline of rapd
-
+Simple combining of two wedges created by the integration pipeline of rapd
 """
 
+# This is an active rapd agent
+RAPD_AGENT = True
+
+# This handler's request type
+AGENT_TYPE = "echo"
+
+# A unique UUID for this handler (uuid.uuid1().hex)
+ID = "d64d3ebde56211e58da3c82a1400d5bc"
+
+# Standard imports
+import logging
+import logging.handlers
 import multiprocessing
-import subprocess
 import os
-import stat
 import shutil
-from numpy import interp
-import logging, logging.handlers
-from xml.dom.minidom import parse
-from rapd_agent_stats import AutoStats
-from xia2 import Xia
-from MySQLdb import TIME
+import subprocess
 import time
 import unittest
-from rapd_communicate import Communicate
+from xml.dom.minidom import parse
 
-class SimpleMerge(Xia,Communicate):
+# Additional imports
+from numpy import interp
+# from MySQLdb import TIME
+
+# RAPD imports
+from rapd_agent_stats import AutoStats
+from rapd_communicate import Communicate
+from xia2 import Xia
+
+class RapdAgent(multiprocessing.Process):
     """
     To merge 'SIMPLY' two data sets from RAPD's integration pipeline
     """
@@ -54,19 +65,19 @@ class SimpleMerge(Xia,Communicate):
         """
 
         logger.info('SimpleMerge::__init__')
-        self.command = input   
+        self.command = input
         self.logger  = logger
         self.results = False
         self.summary = {}
         multiprocessing.Process.__init__(self,name='SimpleMerge')
         self.start()
-        
+
     def run(self):
         self.logger.debug('SimpleMerge::run')
         self.preprocess()
         self.process()
         self.postprocess()
-         
+
     def preprocess(self):
         """
         Before running the main process
@@ -94,29 +105,29 @@ class SimpleMerge(Xia,Communicate):
         shutil.copy(self.command[2]['original']['merge_file'],"a.mtz")
         shutil.copy(self.command[2]['secondary']['merge_file'],"b.mtz")
         self.in_files = ("a.mtz","b.mtz")
-        
+
     def process(self):
         """
         analyze, copy file as reference, check basis, rebatch, combine, etc.
         """
 
         self.logger.debug('SimpleMerge::process')
-        
+
         # Analyze the reflections for batches and reflections
         batches,reflections = self.getFileInfo(self.in_files)
         self.logger.debug(batches)
         self.logger.debug(reflections)
-         
+
         #check the number of reflections to make a reference file
         ref_max = (None,0)
-        print reflections   
+        print reflections
         for ref_file,ref_refls in reflections.iteritems():
             if (ref_refls > ref_max[1]):
                 ref_max = (ref_file,ref_refls)
         self.logger.debug('%s with %d reflections will be used as the reference file' % ref_max)
         shutil.copyfile(ref_max[0],'./reference.mtz')
 
-        
+
         referenced_files = []
         referenced_batches = {}
         for in_file in self.in_files:
@@ -128,12 +139,12 @@ class SimpleMerge(Xia,Communicate):
             referenced_batches[ref_file] = batches[in_file]
         self.logger.debug(referenced_files)
         self.logger.debug(referenced_batches)
-        
+
         # Rebatch all the files
         ready_files = []
         scale_batches = []
         batch_inc = 0
-         
+
         #rebatch each file
         for counter,ref_file in enumerate(referenced_files):
             for batch in referenced_batches[ref_file]:
@@ -143,17 +154,17 @@ class SimpleMerge(Xia,Communicate):
             ready_files.append(self.prepareFile(in_file=ref_file,
                                                 batch=batch_inc))
             batch_inc += referenced_batches[ref_file][-1][1]
-        
+
         # Combine the files into one
         combined_file = self.combineFiles(files=ready_files)
-        
+
         # Scale the files, adjusting for I/sigI of 2.0 in the outer shell
         scale = self.Scale(in_file=combined_file,
                            batches=scale_batches)
-        
+
         # Check the spacegroup
         check,correct,operators = self.performCheck(in_file=scale)
-        
+
         # Rescale if in a new spacegroup
         if (correct == False):
             combined_file = self.correctSpacegroup(combined_file,operators)
@@ -163,13 +174,13 @@ class SimpleMerge(Xia,Communicate):
 
         # Finish the data
         finish = self.finishData(in_file=check)
-         
+
         # Parse the results
         graphs,tables = self.parseScala('scala1.log')
-        
+
         #work_dir = self.dirs['work']
         #self.run_analysis(os.path.join(os.getcwd(),finish), work_dir)
-        
+
         #print tables
         scalaHTML = self.scalaPlots(graphs,tables)
         parseHTML = self.parseResults('scala1.log')
@@ -197,23 +208,23 @@ class SimpleMerge(Xia,Communicate):
                         'merge_file' : merge_files['mergable'],
                         'download_file' : merge_files['downloadable'],
                         'mtz_file' : merge_files['mtzfile']}
-      
+
     def getFileInfo(self,in_files):
         """
         Information about batches
         """
 
         self.logger.debug('SimpleMerge::getFileInfo %s' %str(in_files))
-        
+
         batches = {}
         reflections = {}
-        
+
         for file in in_files:
             p = subprocess.Popen('pointless hklin %s > info.log' % file, shell=True)
             sts = os.waitpid(p.pid, 0)[1]
-            
+
             batches[file] = []
-            
+
             for line in open('info.log'):
                 if ('consists of batches' in line):
                     batch_start = int(line.split()[6])
@@ -222,9 +233,9 @@ class SimpleMerge(Xia,Communicate):
                     self.logger.debug('%s has batches %d to %d' % (file,batch_start,batch_end))
                 if ('Number of reflections  =' in line):
                     reflections[file] = int(line.split('=')[1].strip())
-        
+
         return(batches,reflections)
-     
+
     def referenceFile(self,hklref,hklin):
         """
         Sync the space group as the reference file using POINTLESS
@@ -246,9 +257,9 @@ class SimpleMerge(Xia,Communicate):
             pass #os.remove('ref.sh')
             #os.remove('ref.log')
         except:
-            self.logger.exception("Couldn't remove ref files") 
+            self.logger.exception("Couldn't remove ref files")
         return(out_file)
-        
+
     def prepareFile(self,in_file,batch):
         """
         Rebatching the file using REBATCH
@@ -256,7 +267,7 @@ class SimpleMerge(Xia,Communicate):
 
         self.logger.debug('prepareFile file: %s batch: %d' % (in_file,batch))
         out_file = in_file.replace('.mtz','_prep.mtz')
-        
+
         comfile = open('prep.sh','w')
         comfile.write('#!/bin/csh \n')
         comfile.write('rebatch hklin '+in_file+' hklout '+out_file+'> prep.log <<eof \n')
@@ -269,9 +280,9 @@ class SimpleMerge(Xia,Communicate):
         sts = os.waitpid(p.pid, 0)[1]
         os.remove('prep.sh')
         os.remove('prep.log')
-        
+
         return(out_file)
-    
+
     def combineFiles(self,files,VERBOSE=False):
         """
         Combining all reflection using MTZUTILS
@@ -279,11 +290,11 @@ class SimpleMerge(Xia,Communicate):
         """
 
         self.logger.debug('combineFiles files: %s' % str(files))
-        
+
         if (len(files) > 2):
             self.logger.debug('combineFiles only work for pairs - exiting.')
             sys.exit()
-            
+
         elif (len(files) == 2):
             comfile = open('combine.sh','w')
             comfile.write('#!/bin/csh \n')
@@ -300,7 +311,7 @@ class SimpleMerge(Xia,Communicate):
             sts = os.waitpid(p.pid, 0)[1]
             os.remove('combine.sh')
             #os.remove('combine.log')
-            
+
             comfile = open('sort.sh','w')
             comfile.write('#!/bin/csh \n')
             comfile.write('sortmtz hklin combined.mtz hklout sorted.mtz > sort.log <<eof \n')
@@ -312,19 +323,19 @@ class SimpleMerge(Xia,Communicate):
             sts = os.waitpid(p.pid, 0)[1]
             os.remove('sort.sh')
             os.remove('sort.log')
-             
+
             return('sorted.mtz')
-         
+
     def Scale(self,in_file,batches,VERBOSE=False):
         """
-        Scaling files using SCALA, check for highest resolution, 
+        Scaling files using SCALA, check for highest resolution,
         Scale back again with the new highest resolution
         """
 
         self.logger.debug('Scale in_file: %s batches: %s' % (in_file, str(batches)))
-         
+
         batch_inc = 0
-        
+
         comfile = open('scala.sh','w')
         comfile.write('#!/bin/csh \n')
         comfile.write('scala hklin '+in_file+' hklout scaled.mtz > scala.log <<eof \n')
@@ -343,9 +354,9 @@ class SimpleMerge(Xia,Communicate):
         p = subprocess.Popen('./scala.sh',shell=True)
         sts = os.waitpid(p.pid, 0)[1]
         os.remove('scala.sh')
-        
+
         scalog = open('scala.log', 'r').readlines()
-        
+
         new_hi_res = False
         count = 0
         IsigI = 0
@@ -364,7 +375,7 @@ class SimpleMerge(Xia,Communicate):
                         new_hi_res = interp([2.0],[IsigI,prev_IsigI],
                                             [hires,prev_hires])
                         break
-                                        
+
             if count > 0 and 'Overall' in line:
                 break
 
@@ -388,35 +399,35 @@ class SimpleMerge(Xia,Communicate):
         p = subprocess.Popen('./scala1.sh',shell=True)
         sts = os.waitpid(p.pid, 0)[1]
         #os.remove('scala1.sh')
-        
+
         scalogf = open('scala1.log', 'r').readlines()
-        
+
         return('scaled.mtz')
         return('scala1.log')
-    
 
-     
+
+
     def performCheck(self,in_file):
         """
         Check the Space Group of the scaled and merged data
-        """   
+        """
 
         self.logger.debug('performCheck in_file: %s' % in_file)
-        
+
         comfile = open('pcheck.sh','w')
         comfile.write('#!/bin/csh \n')
         comfile.write('pointless hklin '+in_file+' xmlout performcheck.xml > performcheck.log << eof \n')
         comfile.write('SETTING C2 \n')
         comfile.write('END \n')
-        comfile.write('eof \n')            
+        comfile.write('eof \n')
         comfile.close()
         os.chmod('pcheck.sh',0755)
         p = subprocess.Popen('./pcheck.sh',shell=True)
         sts = os.waitpid(p.pid, 0)[1]
         os.remove('pcheck.sh')
-        
+
         dom1 = parse('performcheck.xml')
-        
+
         sg_start = False
         for node in dom1.getElementsByTagName('SpacegroupName'):
             if not (sg_start):
@@ -426,18 +437,18 @@ class SimpleMerge(Xia,Communicate):
                 soln_group = cnode.firstChild.data.strip()
             for cnode in node.getElementsByTagName('ReindexOperator'):
                 soln_operator = cnode.firstChild.data.strip()
-       
+
         self.logger.debug('Starting spacegroup: %s' % sg_start)
         self.logger.debug('Best solution: %s' % soln_group)
         self.logger.debug('Reindex operator: %s' % soln_operator)
-        
+
         if (sg_start == soln_group):
             self.logger.debug('Data is in the correct spacegroup')
             return(in_file,True,None)
         else:
             self.logger.debug('Data is NOT in the correct spacegroup')
             return(in_file,False,(soln_operator,soln_group))
-        
+
     def correctSpacegroup(self,in_file,operators):
         """
         Correct the Space Group
@@ -445,7 +456,7 @@ class SimpleMerge(Xia,Communicate):
 
         self.logger.debug('correctSpacegroup in_file: %s %s %s' % (in_file,operators[0],operators[1]))
         soln_operator,soln_group = operators
-        
+
         comfile = open('correct.sh','w')
         comfile.write('#!/bin/csh \n')
         comfile.write('pointless hklin '+in_file+' hklout corrected.mtz xmlout correct.xml > correct.log << eof \n')
@@ -455,21 +466,21 @@ class SimpleMerge(Xia,Communicate):
         comfile.write('END \n')
         comfile.write('eof \n')
         comfile.close()
-        
+
         os.chmod('correct.sh',0755)
         p = subprocess.Popen('./correct.sh',shell=True)
         sts = os.waitpid(p.pid, 0)[1]
         os.remove('correct.sh')
-        
+
         return('corrected.mtz')
-    
+
     def finishData(self,in_file, VERBOSE=False):
         """
         Finish the data by truncating and adding free R flag in it
-        """ 
+        """
 
         self.logger.debug('finishData in_file: %s' % in_file)
-        
+
         comfile = open('truncate.sh','w')
         comfile.write('#!/bin/csh \n')
         comfile.write('truncate hklin '+in_file+' hklout truncated.mtz > truncate.log <<eof \n')
@@ -479,7 +490,7 @@ class SimpleMerge(Xia,Communicate):
         p = subprocess.Popen('./truncate.sh',shell=True)
         sts = os.waitpid(p.pid, 0)[1]
         os.remove('truncate.sh')
-        
+
         comfile = open('freer.sh','w')
         comfile.write('#!/bin/csh \n')
         comfile.write('freerflag hklin truncated.mtz hklout freer.mtz > freer.log <<eof \n')
@@ -490,7 +501,7 @@ class SimpleMerge(Xia,Communicate):
         p = subprocess.Popen('./freer.sh',shell=True)
         sts = os.waitpid(p.pid, 0)[1]
         os.remove('freer.sh')
-        
+
         comfile = open('mtz2native.sh','w')
         comfile.write('#!/bin/csh \n')
         comfile.write('mtz2various hklin truncated.mtz hklout native.sca > mtz2native.log <<eof \n')
@@ -501,11 +512,11 @@ class SimpleMerge(Xia,Communicate):
         comfile.close()
         os.chmod('mtz2native.sh',0755)
         p = subprocess.Popen('./mtz2native.sh',shell=True)
-        sts = os.waitpid(p.pid, 0)[1]  
+        sts = os.waitpid(p.pid, 0)[1]
         os.remove('mtz2native.sh')
-        
-        self.fixMtz2Sca('native.sca')       
-             
+
+        self.fixMtz2Sca('native.sca')
+
         comfile = open('mtz2anom.sh','w')
         comfile.write('#!/bin/csh \n')
         comfile.write('mtz2various hklin truncated.mtz hklout anomalous.sca > mtz2anom.log <<eof \n')
@@ -516,25 +527,25 @@ class SimpleMerge(Xia,Communicate):
         comfile.close()
         os.chmod('mtz2anom.sh',0755)
         p = subprocess.Popen('./mtz2anom.sh',shell=True)
-        sts = os.waitpid(p.pid, 0)[1]         
+        sts = os.waitpid(p.pid, 0)[1]
         os.remove('mtz2anom.sh')
-            
+
         self.fixMtz2Sca('anomalous.sca')
-        
+
         return('freer.mtz')
-     
+
     def fixMtz2Sca(self,scafile):
         """
         Fix the space problem in the spacegroup symbol
         """
 
         self.logger.debug('fixMtz2Sca file:%s' % scafile)
-         
+
         inlines = open(scafile,'r').readlines()
         symline = inlines[2]
         newline = symline[:symline.index(symline.split()[6])]+''.join(symline.split()[6:])+'\n'
         inlines[2] = newline
-        
+
         outfile = open(scafile,'w')
         for line in inlines:
             outfile.write(line)
@@ -546,7 +557,7 @@ class SimpleMerge(Xia,Communicate):
         """
 
         self.logger.debug('scala_plots')
-        # plotThese contains a list of graph titles that you want plotted 
+        # plotThese contains a list of graph titles that you want plotted
         # additional plots may be requested by adding the title (stripped
         # of leading and trailing whitespace) to plotThese.
         plotThese = {
@@ -565,7 +576,7 @@ class SimpleMerge(Xia,Communicate):
                      'RMS correlation ratio'            : 'RCR'
                      }
 
-        scala_plot = """<html>               
+        scala_plot = """<html>
 <head>
   <style type="text/css">
     body     { background-image: none; }
@@ -592,7 +603,7 @@ $(function() {
         for i,graph in enumerate(graphs):
             if graph[0] in plotThese:
                 title = plotThese[graph[0]]
-                scala_plot += ('        <li><a href="#tabs-22' + str(i) + 
+                scala_plot += ('        <li><a href="#tabs-22' + str(i) +
                                '">' + title + '</a></li>\n')
         scala_plot += '      </ul>\n'
 
@@ -619,7 +630,7 @@ $(function () {
 """
          # varNames is a counter, such that the variables used for plotting
         # will simply be y+varName (i.e. y0, y1, y2, etc)
-        # actual labels are stored transiently in varLabel, and added 
+        # actual labels are stored transiently in varLabel, and added
         # as comments next to the variable when it is initialized
         varNum=0
         for i,graph in enumerate(graphs):
@@ -730,82 +741,82 @@ $(function () {
     def parseResults(self, scalogf):
         """
         Parse the scala1.log and final pointless log for display to UI
-        """         
+        """
 
         self.logger.debug('parseResults %s' % scalogf)
         results = {}
-        
+
         #scala_lines = open('scala1.log','r').readlines()
         scala_lines = open(scalogf,'r').readlines()
         table_start = 0
-        
+
         for i,v in enumerate(scala_lines):
             if v.startswith('Summary data for'):
                 table_start = i + 1
         for i,v in enumerate(scala_lines[table_start:]):
             vsplit = v.split()
             vstrip = v.strip()
-            
+
             #bin resolution limits
             if vstrip.startswith('Low resolution limit'):
                 results['bins_low'] = vsplit[3:6]
             elif vstrip.startswith('High resolution limit'):
                 results['bins_high'] = vsplit[3:6]
-                
+
             #Rmerge
             elif (vstrip.startswith('Rmerge      ')):
                 results['rmerge'] = vsplit[1:4]
             elif (vstrip.startswith('Rmerge in top intensity bin')):
                 results['rmerge_top'] = [vsplit[5]]
-            
+
             #Rmeas
             elif (vstrip.startswith('Rmeas (within I+/I-)')):
                 results['rmeas_anom'] = vsplit[3:6]
             elif (vstrip.startswith('Rmeas (all I+ & I-)')):
                 results['rmeas_norm'] = vsplit[5:8]
-                
+
             #Rpim
             elif (vstrip.startswith('Rpim (within I+/I-)')):
                 results['rpim_anom'] = vsplit[3:6]
             elif (vstrip.startswith('Rpim (all I+ & I-)')):
                 results['rpim_norm'] = vsplit[5:8]
-             
+
             #Bias
             elif (vstrip.startswith('Fractional partial bias')):
                 results['bias'] = vsplit[3:6]
-                
+
             #Number of refections
             elif (vstrip.startswith('Total number of observations')):
-                results['total_obs'] = vsplit[4:7]    
+                results['total_obs'] = vsplit[4:7]
             elif (vstrip.startswith('Total number unique')):
-                results['unique_obs'] = vsplit[3:6]  
-            
+                results['unique_obs'] = vsplit[3:6]
+
             #I/sigI
             elif (vstrip.startswith('Mean((I)/sd(I))')):
-                results['isigi'] = vsplit[1:4]                  
-            
+                results['isigi'] = vsplit[1:4]
+
             #Completeness
             elif (vstrip.startswith('Completeness')):
-                results['completeness'] = vsplit[1:4] 
+                results['completeness'] = vsplit[1:4]
             elif (vstrip.startswith('Anomalous completeness')):
                 results['anom_completeness'] = vsplit[2:5]
-            
+
             #Multiplicity
             elif (vstrip.startswith('Multiplicity')):
                 results['multiplicity'] = vsplit[1:4]
             elif (vstrip.startswith('Anomalous multiplicity')):
-                results['anom_multiplicity'] = vsplit[2:5]    
-            
+                results['anom_multiplicity'] = vsplit[2:5]
+
             #Anomalous indicators
             elif (vstrip.startswith('DelAnom correlation between half-sets')):
                 results['anom_correlation'] = vsplit[4:7]
             elif (vstrip.startswith('Mid-Slope of Anom Normal Probability')):
-                results['anom_slope'] = [vsplit[5]]    
-                
+                results['anom_slope'] = [vsplit[5]]
+
             #unit cell
             elif (vstrip.startswith('Average unit cell:')):
                 results['scaling_unit_cell'] = vsplit[3:]
-                
+
             #spacegroup
             elif (vstrip.startswith('Space group:')):
                 results['scale_spacegroup'] = "".join(vsplit[2:])
@@ -813,7 +824,7 @@ $(function () {
 
         #for k,v in results.iteritems():
             #print k,v
-         
+
         #Start constructing the parsed results html file
         parseHTML = 'merge_results.php'
 
@@ -824,13 +835,13 @@ $(function () {
             header("Expires: Sat, 01 Jan 2000 00:00:00 GMT");
             header("Last-Modified: ".gmdate("D, d M Y H:i:s")." GMT");
             header("Cache-Control: post-check=0, pre-check=0",false);
-            
+
             session_cache_limiter();
             session_start();
-            
+
             require('/var/www/html/rapd/login/config.php');
             require('/var/www/html/rapd/login/functions.php');
-            
+
             if(allow_user() != "yes")
             {
                 if(allow_local_data($_SESSION[data]) != "yes")
@@ -867,21 +878,21 @@ $(function () {
             header("Expires: Sat, 01 Jan 2000 00:00:00 GMT");
             header("Last-Modified: ".gmdate("D, d M Y H:i:s")." GMT");
             header("Cache-Control: post-check=0, pre-check=0",false);
-            
+
             session_cache_limiter();
             session_start();
-            
+
             require('/var/www/html/rapd/login/config.php');
             require('/var/www/html/rapd/login/functions.php');
-            
+
             if(allow_user() != "yes")
             {
                 if(allow_local_data($_SESSION[data]) != "yes")
                 {
                     include ('/login/no_access.html');
                     exit();
-                } 
-            } 
+                }
+            }
             ?>
             <head>
             <!-- Inline Stylesheet -->
@@ -900,8 +911,8 @@ $(function () {
             </head>
             <body>
             <div id="container">\n<br>\n''')
-            
-    
+
+
             file.write('<div align="center">')
             file.write('<h3 class="green">Merging Results</h3>\n')
             spacegroupLine = ('<h2>Spacegroup: ' + ''
@@ -909,7 +920,7 @@ $(function () {
             spacegroupLine += ('<h2>Unit Cell: ' + ' '
                                .join(results['scaling_unit_cell']) + '</h2>\n\n')
             file.write(spacegroupLine)
-            
+
             file.write('<table class="integrate">\n')
             file.write('<tr><th></th><td>Overall</td><td>Inner Shell</td><td>Outer Shell</td></tr>\n')
 
@@ -931,7 +942,7 @@ $(function () {
                       ('Anomalous slope','anom_slope'),
                       ('Total observations','total_obs'),
                       ('Total unique','unique_obs')]
-    
+
             count = 0
             for l,k in pairs1:
                 if (count%2 == 0):
@@ -944,16 +955,16 @@ $(function () {
                     file.write('<td>--</td><td>--</td>')
                 file.write('</tr>\n')
                 count += 1
-            
+
             file.write('</table>\n</div><br>\n')
-            
+
             # Now write an analysis of anomalous signal
             slope = float(results['anom_slope'][0])
             flag = False
-            
+
             file.write('<div align="left">')
             file.write('<h3 class="green">Analysis for anomalous signal.</h3>\n')
-            file.write('<pre>An anomalous slope > 1 may indicate the presence ' 
+            file.write('<pre>An anomalous slope > 1 may indicate the presence '
                        + 'of anomalous signal.\n')
             file.write('This data set has a anomalous slope of %s.\n'
                        % results['anom_slope'][0])
@@ -968,9 +979,9 @@ $(function () {
             else:
                 file.write('Analysis of this data set indicates no detectable '
                            + 'anomalous signal.\n')
-            
+
             file.write('</table>\n</div>\n')
-            
+
             #now write the credits
             file.write('<div align="left"><pre>\n')
             file.write('RAPD used the following programs for merging datasets:\n')
@@ -984,7 +995,7 @@ $(function () {
             file.write('  mtz2various  -  "The CCP4 Suite: Programs for Protein Crystallography". Acta Cryst. D50, 760-763 \n')
             file.write('\n')
             file.write('</pre></div></body>')
-            
+
             return(parseHTML, results)
 
     def makeLongResults(self,logs):
@@ -994,7 +1005,7 @@ $(function () {
         self.logger.debug('makeLongResults %s' % str(logs))
 
         results = {}
-        
+
         #Start constructing the parsed results html file
         longHTML = 'merge_long_results.php'
 
@@ -1041,18 +1052,18 @@ if(allow_user() != "yes")
 </head>
 <body>
 <align="left"><pre>\n''')
-            
+
             for log in logs:
-                
+
                 file.write(log)
-                
+
                 for in_line in open(log):
                     file.write(in_line)
-                    
+
                 file.write('<br>\n')
-                
+
             file.write('</pre></div></body>')
-            
+
             return(longHTML)
 
     def postprocess(self):
@@ -1066,9 +1077,9 @@ if(allow_user() != "yes")
         os.remove('info.log')
         self.results['status'] = 'SUCCESS'
         self.command.append(self.results)
-        #send the results back to the Core 
+        #send the results back to the Core
         self.sendBack2(self.command)
-        
+
 
     def clean_fs(self, dir):
         '''
@@ -1121,7 +1132,7 @@ if(allow_user() != "yes")
             pdb_dict['control'] = self.controller_address
             pdb_dict['process_id'] = self.process_id
             pdb_input.append(pdb_dict)
-            
+
             self.logger.debug('SimpleMerge::run_analysis::pdb_input')
             self.logger.debug(pdb_input)
             try:
@@ -1135,9 +1146,9 @@ if(allow_user() != "yes")
             self.logger.exception('ERROR in run_analysis')
             #pass
         #return('SUCCESS')
-         
+
 class TestApplications(unittest.TestCase):
-            
+
     #The following check for functioning of the given programs
     def test_pointless(self):
         output0 = subprocess.Popen('pointless', shell = True, stdout = subprocess.PIPE,stderr = subprocess.STDOUT)
@@ -1147,7 +1158,7 @@ class TestApplications(unittest.TestCase):
                 result = True
                 break
         self.assertTrue(result)
-        
+
     def test_rebatch(self):
         output0 = subprocess.Popen('rebatch', shell = True, stdout = subprocess.PIPE,stderr = subprocess.STDOUT)
         result = False
@@ -1156,7 +1167,7 @@ class TestApplications(unittest.TestCase):
                 result = True
                 break
         self.assertTrue(result)
-        
+
     def test_mtzutils(self):
         output0 = subprocess.Popen('mtzutils', shell = True, stdout = subprocess.PIPE,stderr = subprocess.STDOUT)
         time.sleep(1)
@@ -1166,8 +1177,8 @@ class TestApplications(unittest.TestCase):
             if 'MTZUTILS' in line:
                 result = True
                 break
-        self.assertTrue(result)      
-        
+        self.assertTrue(result)
+
     def test_sortmtz(self):
         output0 = subprocess.Popen('sortmtz', shell = True, stdout = subprocess.PIPE,stderr = subprocess.STDOUT)
         time.sleep(1)
@@ -1177,8 +1188,8 @@ class TestApplications(unittest.TestCase):
             if 'SORTMTZ' in line:
                 result = True
                 break
-        self.assertTrue(result) 
-        
+        self.assertTrue(result)
+
     def test_scala(self):
         output0 = subprocess.Popen('scala', shell = True, stdout = subprocess.PIPE,stderr = subprocess.STDOUT)
         result = False
@@ -1186,8 +1197,8 @@ class TestApplications(unittest.TestCase):
             if 'Scala:  *** Failed to open HKLIN file ***' in line:
                 result = True
                 break
-        self.assertTrue(result) 
-        
+        self.assertTrue(result)
+
     def test_truncate(self):
         output0 = subprocess.Popen('truncate', shell = True, stdout = subprocess.PIPE,stderr = subprocess.STDOUT)
         time.sleep(1)
@@ -1197,8 +1208,8 @@ class TestApplications(unittest.TestCase):
             if 'TRUNCATE' in line:
                 result = True
                 break
-        self.assertTrue(result) 
-     
+        self.assertTrue(result)
+
     def test_freerflag(self):
         output0 = subprocess.Popen('freerflag', shell = True, stdout = subprocess.PIPE,stderr = subprocess.STDOUT)
         time.sleep(2)
@@ -1208,8 +1219,8 @@ class TestApplications(unittest.TestCase):
             if 'FREERFLAG' in line:
                 result = True
                 break
-        self.assertTrue(result)    
-    
+        self.assertTrue(result)
+
     def test_mtz2various(self):
         output0 = subprocess.Popen('mtz2various', shell = True, stdout = subprocess.PIPE,stderr = subprocess.STDOUT)
         time.sleep(1)
@@ -1219,11 +1230,11 @@ class TestApplications(unittest.TestCase):
             if 'MTZ2VARIOUS' in line:
                 result = True
                 break
-        self.assertTrue(result)    
-        
+        self.assertTrue(result)
+
 
 class TestPipeline(unittest.TestCase):
-    
+
     def setUp(self):
         #set up logging
         self.LOG_FILENAME = '/tmp/rapd_test_simplemerge.log'
@@ -1260,14 +1271,14 @@ class TestPipeline(unittest.TestCase):
                 result = True
                 break
         self.assertTrue(result)
-        
+
     def tearDown(self):
         os.chdir("../")
         shutil.rmtree("./test_simplemerge/")
-         
-         
+
+
 if __name__ == '__main__':
-    
+
     """
     # Unit Tests
     #unittest.main()
@@ -1279,7 +1290,7 @@ if __name__ == '__main__':
     suite = unittest.TestLoader().loadTestsFromTestCase(TestPipeline)
     unittest.TextTestRunner(verbosity=2).run(suite)
     """
-    
+
     # Run on "real" data
     #set up logging
     LOG_FILENAME = '/tmp/rapd_merge.log'
