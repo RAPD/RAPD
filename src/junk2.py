@@ -12,7 +12,10 @@ class Junk(Process):
   def run(self):
     os.chdir('/home/schuerjp/temp')
     queue = Queue()
-    job = Process(target=BLspec.processClusterSercat,args=(self,'aimless',queue))
+    #command = 'labelit.index /panfs/panfs0.localdomain/raw/ID_16_03_04_staff/pball_r1_s.0001'
+    #command = 'run.sh'
+    command = 'rapd.python /home/schuerjp/Programs/RAPD/src/rapd_agent_strategy.py'
+    job = Process(target=BLspec.processClusterSercat,args=(self,(command,'labelit.log'),queue))
     job.start()
     print queue.get()
     

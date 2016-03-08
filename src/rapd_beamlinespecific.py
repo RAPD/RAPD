@@ -55,8 +55,8 @@ IMAGE_WAIT = 20
 # You will have to create your own ImageMonitor and import it here
 # if you do not use ADSC detectors
 #
-from rapd_pilatus import PilatusMonitor
-from rapd_adsc import Q315_Monitor, Hf4m_Monitor
+from detectors.rapd_pilatus import PilatusMonitor
+from detectors.rapd_adsc import Q315_Monitor, Hf4m_Monitor
 from rapd_console import ConsoleRunMonitor
 #
 # Methods for connecting to the beamline control system
@@ -915,6 +915,7 @@ def processClusterSercat(self,inp,output=False):
   except AttributeError:
     running = False
   
+  print inp
   if len(inp) == 1:
     command = inp
   elif len(inp) == 2:
@@ -930,15 +931,24 @@ def processClusterSercat(self,inp,output=False):
   #queues aren't used right now.
   
   #Since PDB needs a batch script to run...
-  bs = open('pbs.sh','w')
-  bs.writelines(command)
-  bs.close()
+  #bs = open('pbs.sh','w')
+  #bs.writelines(command)
+  #bs.close()
   
+  #Setup path
+  v = '-v PATH=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
+/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/bin:\
+/home/schuerjp/Programs/best:\
+/home/schuerjp/Programs/RAPD/bin:\
+/home/schuerjp/Programs/RAPD/share/phenix-1.10.1-2155/build/bin:\
+/home/schuerjp/Programs/raddose-20-05-09-distribute-noexec/bin:\
+/usr/local/bin:/bin:/usr/bin'
   #smp,queue,name = inp2
   #'-clear' can be added to the options to eliminate the general.q
   #options = '-clear -shell y -p -100 -q %s -pe smp %s'%(queue,smp)
   #options = '-V -l nodes=1:ppn=%s pbs.sh'%smp
-  options = '-V -l nodes=1:ppn=%s'%smp
+  #options = '%s -l nodes=1:ppn=%s -S /bin/tcsh'%(v,smp)
+  options = '%s -l nodes=1:ppn=%s'%(v,smp)
   s = drmaa.Session()
   s.initialize()
   jt = s.createJobTemplate()
@@ -950,7 +960,7 @@ def processClusterSercat(self,inp,output=False):
     jt.args=command.split()[1:]
   if log:
     #the ':' is required!
-    jt.outputPath=':%s'%log
+    jt.outputPath=':%s'%os.path.join(os.getcwd(),log)
   #submit the job to the cluster and get the job_id returned
   job = s.runJob(jt)
   #return job_id.
@@ -987,6 +997,7 @@ def processClusterSercat(self,inp,output=False):
     s.wait(job, drmaa.Session.TIMEOUT_WAIT_FOREVER)
   #Exit cleanly, otherwise master node gets event client timeout errors after 600s.
   s.exit()
+  print 'job finished'
   """
   except:
     self.logger.exception('**ERROR in Utils.processCluster**')

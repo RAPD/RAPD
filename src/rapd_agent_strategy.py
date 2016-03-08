@@ -2478,15 +2478,15 @@ if __name__ == '__main__':
    },
   #Info from first image 
   {#"wavelength": "0.9792", #RADDOSE
-   "wavelength": 1.8866, #RADDOSE
-   "detector":'ray300',
+   "wavelength": 1.000, #RADDOSE
+   "detector":'mar300',
    #"binning": "2x2", #LABELIT
    "binning": "none", #
    "time": "1.00",  #BEST
    "twotheta": "0.00", #LABELIT
    "transmission": "20",  #BEST
    'osc_range': 1.0,
-   'distance' : 105.0,
+   'distance' : 200.0,
    'count_cutoff': 65535,
    'omega_start': 0.0,
    #"beam_center_x": "216.71", #PILATUS
@@ -2495,14 +2495,17 @@ if __name__ == '__main__':
    #"beam_center_y": "158.68", #Q315
    #"beam_center_x": "172.80", #HF4M
    #"beam_center_y": "157.18", #HF4M
-   "beam_center_x": "149.87", #22ID
-   "beam_center_y": "145.16", #22ID
+   #"beam_center_x": "149.87", #22ID
+   #"beam_center_y": "145.16", #22ID
+   "beam_center_x": "140.06", #22BM
+   "beam_center_y": "142.22", #22BM
    "flux":'1.6e11', #RADDOSE
    "beam_size_x":"0.07", #RADDOSE
    "beam_size_y":"0.03", #RADDOSE
    "gauss_x":'0.03', #RADDOSE
    "gauss_y":'0.01', #RADDOSE
-   "fullname": "/panfs/panfs0.localdomain/raw/ID_16_03_02_staff_JL/masp1p1/MAS2_Pn1.0001",
+   "fullname": "/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0001",
+   #"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0001",
    
    #minikappa
    #Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
@@ -2516,15 +2519,15 @@ if __name__ == '__main__':
 
    #Info from second image. Remove this dict if NOT present in run.
   {#"wavelength": "0.9792", #RADDOSE
-   "wavelength": "1.8866", #RADDOSE
-   "detector":'ray300',
+   "wavelength": 1.000, #RADDOSE
+   "detector":'mar300',
    #"binning": "2x2", #LABELIT
    "binning": "none", #
    "time": "1.00",  #BEST
    "twotheta": "0.00", #LABELIT
    "transmission": "20",  #BEST
    'osc_range': 1.0,
-   'distance' : 105.0,
+   'distance' : 200.0,
    'count_cutoff': 65535,
    'omega_start': 0.0,
    #"beam_center_x": "216.71", #PILATUS
@@ -2533,14 +2536,17 @@ if __name__ == '__main__':
    #"beam_center_y": "158.68", #Q315
    #"beam_center_x": "172.80", #HF4M
    #"beam_center_y": "157.18", #HF4M
-   "beam_center_x": "149.87", #22ID
-   "beam_center_y": "145.16", #22ID
+   #"beam_center_x": "149.87", #22ID
+   #"beam_center_y": "145.16", #22ID
+   "beam_center_x": "140.06", #22BM
+   "beam_center_y": "142.22", #22BM
    "flux":'1.6e11', #RADDOSE
    "beam_size_x":"0.07", #RADDOSE
    "beam_size_y":"0.03", #RADDOSE
    "gauss_x":'0.03', #RADDOSE
    "gauss_y":'0.01', #RADDOSE
-   "fullname": "/panfs/panfs0.localdomain/raw/ID_16_03_02_staff_JL/masp1p1/MAS2_Pn1.0090",
+   "fullname": "/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0020",
+   #"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0001",
    
    #minikappa
    #Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.

@@ -153,7 +153,8 @@ class MARImage(DetectorImageBase):
         f.seek(offset+732)
         rawdata = f.read(4)
         rotation_axis = struct.unpack(format+'i',rawdata)[0]
-        #assert rotation_axis == 4 # if it isn't phi; go back and recode to cover all cases
+        print rotation_axis
+	#assert rotation_axis == 4 # if it isn't phi; go back and recode to cover all cases
 
         # ----- omega analysis
         f.seek(offset+672)
@@ -268,14 +269,25 @@ def MarReadHeader(image,
   #tease out the info from the file name
   #base = os.path.basename(image).rstrip(".cbf")
   base = os.path.basename(image)
+  ubc = base.count('_')
+  if ubc == 0:
+    ip =  base.split(".")[0]
+    rn = None
+  elif ubc == 1:
+    ip = base.split("_")[0]
+    rn = base[base.rfind("_")+1:base.rfind('.')]
+  else:
+    ip = "_".join(base.split("_")[0:-1])
+    rn = base[base.rfind("_")+1:base.rfind('.')]
 
   parameters = {'fullname'     : image,
                 'detector'     : det,
                 'directory'    : os.path.dirname(image),
-                'image_prefix' : "_".join(base.split("_")[0:-2]),
-                'run_number'   : str(base.split("_")[-2]),
-                #'image_number' : int(base.split("_")[-1]),
-                'image_number' : int(base.split(".")[-1]),
+                #'image_prefix' : "_".join(base.split("_")[0:-2]),
+                'image_prefix' : str(ip),
+		#'run_number'   : str(base.split("_")[-1]),
+                'run_number'   : str(rn),
+		'image_number' : int(base.split(".")[-1]),
                 'axis'         : 'omega',
                 'collect_mode' : mode,
                 'run_id'       : run_id,
@@ -307,8 +319,16 @@ if __name__ == "__main__":
     P = PilatusMonitor(beamline='C',notify=notify,reconnect=None,logger=None)
     """
     #Test the header reading
-    test_image = "/gpfs6/users/necat/Jon/RAPD_test/Images/SERCAT/BM/SERX12_Pn12_2014_2_21_r1_1.0003"
+    #test_image = "/gpfs6/users/necat/Jon/RAPD_test/Images/SERCAT/BM/SERX12_Pn12_2014_2_21_r1_1.0003"
+    #test_image = '/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0001'
+    #test_image = '/home/schuerjp/temp/test_1_pp_sj.0001'
+    test_image = '/panfs/panfs0.localdomain/raw/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0001'
     header = MarReadHeader(test_image)
     import pprint
     P = pprint.PrettyPrinter()
     P.pprint(header)
+    #test_image = '/panfs/panfs0.localdomain/raw/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0090'
+    #header = MarReadHeader(test_image)
+    #import pprint
+    #P = pprint.PrettyPrinter()
+    #P.pprint(header)
