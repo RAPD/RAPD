@@ -52,7 +52,7 @@ class RapdAgent(multiprocessing.Process):
 
     def __init__(self, site, command, request, reply_settings):
         """
-        Initialize the TestCase process
+        Initialize the echo process
 
         Keyword arguments
         site -- full site settings

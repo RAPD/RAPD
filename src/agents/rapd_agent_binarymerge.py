@@ -18,8 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 __created__ = "2011-03-24"
-__maintainer__ = "Surajit Banerjee"
-__email__ = "sbanerjee@anl.gov"
+__maintainer__ = "Frank Murphy"
+__email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
 """
@@ -30,7 +30,7 @@ Simple combining of two wedges created by the integration pipeline of rapd
 RAPD_AGENT = True
 
 # This handler's request type
-AGENT_TYPE = "echo"
+AGENT_TYPE = "merge"
 
 # A unique UUID for this handler (uuid.uuid1().hex)
 ID = "d64d3ebde56211e58da3c82a1400d5bc"
@@ -52,28 +52,45 @@ from numpy import interp
 
 # RAPD imports
 from rapd_agent_stats import AutoStats
-from rapd_communicate import Communicate
-from xia2 import Xia
+#from rapd_communicate import Communicate
+from utils.communicate import rapd_send
+# from xia2 import Xia
 
 class RapdAgent(multiprocessing.Process):
     """
     To merge 'SIMPLY' two data sets from RAPD's integration pipeline
     """
-    def __init__(self,input,logger):
+
+    results = False
+    summary = {}
+
+    def __init__(self, site, command, request, reply_settings):
         """
-        Initialize the SimpleMerge process
+        Initialize the binarymerge process
+
+        Keyword arguments
+        site -- full site settings
+        command -- type of job to be run
+        request -- full information to execute the agent
+        reply_settings -- information for how to contact control process
         """
 
-        logger.info('SimpleMerge::__init__')
-        self.command = input
-        self.logger  = logger
-        self.results = False
-        self.summary = {}
-        multiprocessing.Process.__init__(self,name='SimpleMerge')
+        # Get the logger Instance
+        self.logger = logging.getLogger("RAPDLogger")
+        self.logger.debug("__init__")
+
+        multiprocessing.Process.__init__(self, name='binarymerge')
+
+        self.site = site
+        self.command = command
+        self.request = request
+        self.reply_settings = reply_settings
+
         self.start()
 
     def run(self):
-        self.logger.debug('SimpleMerge::run')
+        """Core of the process"""
+
         self.preprocess()
         self.process()
         self.postprocess()
@@ -85,54 +102,53 @@ class RapdAgent(multiprocessing.Process):
         - copy files to the working directory
         """
 
-        self.logger.debug('SimpleMerge::preprocess')
+        self.logger.debug("SimpleMerge::preprocess")
 
-        self.dirs = self.command[1]
-        self.original_data = self.command[2]['original']
-        self.secondary_data = self.command[2]['secondary']
-        self.repr = self.command[2]['repr']
-        self.settings = self.command[3]
-        self.controller_address = self.command[-1]
-        #self.process_id = self.command[2]['image_data']['process_id']
-        self.process_id = self.command[2]['process_id']
-        #self.in_files = (self.command[2]['original']['merge_file'],
-        #                 self.command[2]['secondary']['merge_file'])
+        self.dirs = self.request[1]
+        self.original_data = self.request[2]["original"]
+        self.secondary_data = self.request[2]["secondary"]
+        self.repr = self.request[2]["repr"]
+        self.settings = self.request[3]
+        self.controller_address = self.request[-1]
+        #self.process_id = self.request[2]["image_data"]["process_id"]
+        self.process_id = self.request[2]["process_id"]
+        #self.in_files = (self.request[2]["original"]["merge_file"],
+        #                 self.request[2]["secondary"]["merge_file"])
         #Make and move to the work directory
-        if os.path.isdir(self.dirs['work']) == False:
-            os.makedirs(self.dirs['work'])
-        os.chdir(self.dirs['work'])
+        if os.path.isdir(self.dirs["work"]) == False:
+            os.makedirs(self.dirs["work"])
+        os.chdir(self.dirs["work"])
         #copy the files to be merged to the work directory
-        shutil.copy(self.command[2]['original']['merge_file'],"a.mtz")
-        shutil.copy(self.command[2]['secondary']['merge_file'],"b.mtz")
-        self.in_files = ("a.mtz","b.mtz")
+        shutil.copy(self.request[2]["original"]["merge_file"], "a.mtz")
+        shutil.copy(self.request[2]["secondary"]["merge_file"], "b.mtz")
+        self.in_files = ("a.mtz", "b.mtz")
 
     def process(self):
         """
         analyze, copy file as reference, check basis, rebatch, combine, etc.
         """
 
-        self.logger.debug('SimpleMerge::process')
+        self.logger.debug("process")
 
         # Analyze the reflections for batches and reflections
-        batches,reflections = self.getFileInfo(self.in_files)
+        batches, reflections = self.getFileInfo(self.in_files)
         self.logger.debug(batches)
         self.logger.debug(reflections)
 
-        #check the number of reflections to make a reference file
-        ref_max = (None,0)
-        print reflections
+        # Check the number of reflections to make a reference file
+        ref_max = (None, 0)
         for ref_file,ref_refls in reflections.iteritems():
-            if (ref_refls > ref_max[1]):
-                ref_max = (ref_file,ref_refls)
-        self.logger.debug('%s with %d reflections will be used as the reference file' % ref_max)
-        shutil.copyfile(ref_max[0],'./reference.mtz')
+            if ref_refls > ref_max[1]:
+                ref_max = (ref_file, ref_refls)
+        self.logger.debug("%s with %d reflections will be used as the reference file", ref_max)
+        shutil.copyfile(ref_max[0], "./reference.mtz")
 
 
         referenced_files = []
         referenced_batches = {}
         for in_file in self.in_files:
-            ref_file = self.referenceFile(hklref = 'reference.mtz',
-                                          hklin = in_file)
+            ref_file = self.referenceFile(hklref="reference.mtz",
+                                          hklin=in_file)
             #save the reference files
             referenced_files.append(ref_file)
             #Make sure we keep track of batch information
@@ -150,7 +166,7 @@ class RapdAgent(multiprocessing.Process):
             for batch in referenced_batches[ref_file]:
                 batch0 = batch[0] + batch_inc
                 batch1 = batch[1] + batch_inc
-                scale_batches.append((batch0,batch1))
+                scale_batches.append((batch0, batch1))
             ready_files.append(self.prepareFile(in_file=ref_file,
                                                 batch=batch_inc))
             batch_inc += referenced_batches[ref_file][-1][1]
@@ -163,206 +179,206 @@ class RapdAgent(multiprocessing.Process):
                            batches=scale_batches)
 
         # Check the spacegroup
-        check,correct,operators = self.performCheck(in_file=scale)
+        check, correct, operators = self.performCheck(in_file=scale)
 
         # Rescale if in a new spacegroup
-        if (correct == False):
-            combined_file = self.correctSpacegroup(combined_file,operators)
+        if correct == False:
+            combined_file = self.correctSpacegroup(combined_file, operators)
             scale = self.Scale(in_file=combined_file,
                                batches=scale_batches)
-            check,correct,operators = self.performCheck(in_file=scale)
+            check, correct, operators = self.performCheck(in_file=scale)
 
         # Finish the data
         finish = self.finishData(in_file=check)
 
         # Parse the results
-        graphs,tables = self.parseScala('scala1.log')
+        graphs, tables = self.parseScala("scala1.log")
 
-        #work_dir = self.dirs['work']
+        #work_dir = self.dirs["work"]
         #self.run_analysis(os.path.join(os.getcwd(),finish), work_dir)
 
         #print tables
-        scalaHTML = self.scalaPlots(graphs,tables)
-        parseHTML = self.parseResults('scala1.log')
-        summary = self.parseResults('scala1.log')
-        longHTML = self.makeLongResults(['performcheck.log','scala1.log',
-                                         'truncate.log','performcheck.log'])
-        work_dir = self.dirs['work']
+        scalaHTML = self.scalaPlots(graphs, tables)
+        parseHTML = self.parseResults("scala1.log")
+        summary = self.parseResults("scala1.log")
+        longHTML = self.makeLongResults(["performcheck.log", "scala1.log",
+                                         "truncate.log", "performcheck.log"])
+        work_dir = self.dirs["work"]
         merge_files = self.clean_fs(work_dir)
         self.logger.info("Done with clean_fs")
-        self.run_analysis(merge_files.get('mtzfile'), work_dir)
+        self.run_analysis(merge_files.get("mtzfile"), work_dir)
         """
-        {'reference' : file_base + '_prep.mtz',
-                     'mergable' : file_base + '_sortedMergable.mtz',
-                     'mtzfile' : file_base + '_free.mtz',
-                     'anomalous_sca' : file_base + '_anomalous.sca',
-                     'native_sca' : file_base + '_native.sca',
-                     'scala_log' : file_base + '_scala.log',
-                     'downloadable' : file_base + '.tar.bz2'}
+        {"reference" : file_base + "_prep.mtz",
+                     "mergable" : file_base + "_sortedMergable.mtz",
+                     "mtzfile" : file_base + "_free.mtz",
+                     "anomalous_sca" : file_base + "_anomalous.sca",
+                     "native_sca" : file_base + "_native.sca",
+                     "scala_log" : file_base + "_scala.log",
+                     "downloadable" : file_base + ".tar.bz2"}
         """
         # Assign to a result
-        self.results = {'plots' : scalaHTML,
-                        'short' : parseHTML[0],
-                        'long'  : longHTML,
-                        'summary' : parseHTML[1],
-                        'merge_file' : merge_files['mergable'],
-                        'download_file' : merge_files['downloadable'],
-                        'mtz_file' : merge_files['mtzfile']}
+        self.results = {"plots" : scalaHTML,
+                        "short" : parseHTML[0],
+                        "long"  : longHTML,
+                        "summary" : parseHTML[1],
+                        "merge_file" : merge_files["mergable"],
+                        "download_file" : merge_files["downloadable"],
+                        "mtz_file" : merge_files["mtzfile"]}
 
-    def getFileInfo(self,in_files):
+    def getFileInfo(self, in_files):
         """
         Information about batches
         """
 
-        self.logger.debug('SimpleMerge::getFileInfo %s' %str(in_files))
+        self.logger.debug("SimpleMerge::getFileInfo %s", in_files)
 
         batches = {}
         reflections = {}
 
         for file in in_files:
-            p = subprocess.Popen('pointless hklin %s > info.log' % file, shell=True)
+            p = subprocess.Popen("pointless hklin %s > info.log" % file, shell=True)
             sts = os.waitpid(p.pid, 0)[1]
 
             batches[file] = []
 
-            for line in open('info.log'):
-                if ('consists of batches' in line):
+            for line in open("info.log"):
+                if "consists of batches" in line:
                     batch_start = int(line.split()[6])
                     batch_end = int(line.split()[8])
-                    batches[file].append((batch_start,batch_end))
-                    self.logger.debug('%s has batches %d to %d' % (file,batch_start,batch_end))
-                if ('Number of reflections  =' in line):
-                    reflections[file] = int(line.split('=')[1].strip())
+                    batches[file].append((batch_start, batch_end))
+                    self.logger.debug("%s has batches %d to %d", (file, batch_start, batch_end))
+                if ("Number of reflections  =" in line):
+                    reflections[file] = int(line.split("=")[1].strip())
 
-        return(batches,reflections)
+        return(batches, reflections)
 
-    def referenceFile(self,hklref,hklin):
+    def referenceFile(self, hklref, hklin):
         """
         Sync the space group as the reference file using POINTLESS
         """
 
-        self.logger.debug('referenceFile hklref: %s hklin: %s' % (hklref,hklin))
-        out_file = hklin.replace('.mtz','_ref.mtz')
-        comfile = open('ref.sh','w')
-        comfile.write('#!/bin/csh \n')
-        comfile.write('pointless hklref '+hklref+' hklin '+hklin+' hklout '+out_file+'> ref.log <<eof \n')
-        comfile.write('SETTING C2 \n')
-        comfile.write('eof \n')
+        self.logger.debug("referenceFile hklref: %s hklin: %s" % (hklref,hklin))
+        out_file = hklin.replace(".mtz","_ref.mtz")
+        comfile = open("ref.sh","w")
+        comfile.write("#!/bin/csh \n")
+        comfile.write("pointless hklref "+hklref+" hklin "+hklin+" hklout "+out_file+"> ref.log <<eof \n")
+        comfile.write("SETTING C2 \n")
+        comfile.write("eof \n")
         comfile.close()
-        os.chmod('./ref.sh',0755)
+        os.chmod("./ref.sh",0755)
         time.sleep(0.5)
-        p = subprocess.Popen('./ref.sh',shell=True)
+        p = subprocess.Popen("./ref.sh",shell=True)
         sts = os.waitpid(p.pid, 0)[1]
         try:
-            pass #os.remove('ref.sh')
-            #os.remove('ref.log')
+            pass #os.remove("ref.sh")
+            #os.remove("ref.log")
         except:
             self.logger.exception("Couldn't remove ref files")
-        return(out_file)
+        return out_file
 
-    def prepareFile(self,in_file,batch):
+    def prepareFile(self, in_file, batch):
         """
         Rebatching the file using REBATCH
         """
 
-        self.logger.debug('prepareFile file: %s batch: %d' % (in_file,batch))
-        out_file = in_file.replace('.mtz','_prep.mtz')
+        self.logger.debug("prepareFile file: %s batch: %d" % (in_file, batch))
+        out_file = in_file.replace(".mtz", "_prep.mtz")
 
-        comfile = open('prep.sh','w')
-        comfile.write('#!/bin/csh \n')
-        comfile.write('rebatch hklin '+in_file+' hklout '+out_file+'> prep.log <<eof \n')
-        comfile.write('batch add '+str(batch)+' \n')
-        comfile.write('END \n')
-        comfile.write('eof \n')
+        comfile = open("prep.sh", "w")
+        comfile.write("#!/bin/csh \n")
+        comfile.write("rebatch hklin "+in_file+" hklout "+out_file+"> prep.log <<eof \n")
+        comfile.write("batch add "+str(batch)+" \n")
+        comfile.write("END \n")
+        comfile.write("eof \n")
         comfile.close()
-        os.chmod('prep.sh',0755)
-        p = subprocess.Popen('./prep.sh',shell=True)
+        os.chmod("prep.sh", 0755)
+        p = subprocess.Popen("./prep.sh", shell=True)
         sts = os.waitpid(p.pid, 0)[1]
-        os.remove('prep.sh')
-        os.remove('prep.log')
+        os.remove("prep.sh")
+        os.remove("prep.log")
 
-        return(out_file)
+        return out_file
 
-    def combineFiles(self,files,VERBOSE=False):
+    def combineFiles(self, files, VERBOSE=False):
         """
         Combining all reflection using MTZUTILS
         and sorting them using SORTMTZ
         """
 
-        self.logger.debug('combineFiles files: %s' % str(files))
+        self.logger.debug("combineFiles files: %s", files)
 
-        if (len(files) > 2):
-            self.logger.debug('combineFiles only work for pairs - exiting.')
+        if len(files) > 2:
+            self.logger.debug("combineFiles only work for pairs - exiting.")
             sys.exit()
 
-        elif (len(files) == 2):
-            comfile = open('combine.sh','w')
-            comfile.write('#!/bin/csh \n')
-            comfile.write('mtzutils ')
+        elif len(files) == 2:
+            comfile = open("combine.sh", "w")
+            comfile.write("#!/bin/csh \n")
+            comfile.write("mtzutils ")
             top = len(files)
             for i in range(top):
-                comfile.write('hklin'+str(top-i)+' '+files[top-i-1]+' ')
-            comfile.write('hklout combined.mtz > combine.log <<eof \n')
-            comfile.write('merge \n')
-            comfile.write('eof \n')
+                comfile.write("hklin"+str(top-i)+" "+files[top-i-1]+" ")
+            comfile.write("hklout combined.mtz > combine.log <<eof \n")
+            comfile.write("merge \n")
+            comfile.write("eof \n")
             comfile.close()
-            os.chmod('combine.sh',0755)
-            p = subprocess.Popen('./combine.sh',shell=True)
+            os.chmod("combine.sh", 0755)
+            p = subprocess.Popen("./combine.sh", shell=True)
             sts = os.waitpid(p.pid, 0)[1]
-            os.remove('combine.sh')
-            #os.remove('combine.log')
+            os.remove("combine.sh")
+            #os.remove("combine.log")
 
-            comfile = open('sort.sh','w')
-            comfile.write('#!/bin/csh \n')
-            comfile.write('sortmtz hklin combined.mtz hklout sorted.mtz > sort.log <<eof \n')
-            comfile.write('H K L M/ISYM BATCH \n')
-            comfile.write('eof \n')
+            comfile = open("sort.sh", "w")
+            comfile.write("#!/bin/csh \n")
+            comfile.write("sortmtz hklin combined.mtz hklout sorted.mtz > sort.log <<eof \n")
+            comfile.write("H K L M/ISYM BATCH \n")
+            comfile.write("eof \n")
             comfile.close()
-            os.chmod('sort.sh',0755)
-            p = subprocess.Popen('./sort.sh',shell=True)
+            os.chmod("sort.sh", 0755)
+            p = subprocess.Popen("./sort.sh", shell=True)
             sts = os.waitpid(p.pid, 0)[1]
-            os.remove('sort.sh')
-            os.remove('sort.log')
+            os.remove("sort.sh")
+            os.remove("sort.log")
 
-            return('sorted.mtz')
+            return "sorted.mtz"
 
-    def Scale(self,in_file,batches,VERBOSE=False):
+    def Scale(self, in_file, batches, VERBOSE=False):
         """
         Scaling files using SCALA, check for highest resolution,
         Scale back again with the new highest resolution
         """
 
-        self.logger.debug('Scale in_file: %s batches: %s' % (in_file, str(batches)))
+        self.logger.debug("Scale in_file: %s batches: %s", in_file, batches)
 
         batch_inc = 0
 
-        comfile = open('scala.sh','w')
-        comfile.write('#!/bin/csh \n')
-        comfile.write('scala hklin '+in_file+' hklout scaled.mtz > scala.log <<eof \n')
-        comfile.write('bins 10 \n')
+        comfile = open("scala.sh", "w")
+        comfile.write("#!/bin/csh \n")
+        comfile.write("scala hklin "+in_file+" hklout scaled.mtz > scala.log <<eof \n")
+        comfile.write("bins 10 \n")
         for i in range(len(batches)):
-            comfile.write('run '+str(i+1)+' batch '+str(batches[i][0])+' to '+str(batches[i][1])+'  \n')
-            comfile.write('name run '+str(i+1)+' project RAPD crystal RAPD dataset DATA \n')
-        comfile.write('scales constant \n')
-        comfile.write('exclude sdmin 2.0 \n')
-        comfile.write('sdcorrection fixsdb noadjust norefine both 1.0 0.0 \n')
-        comfile.write('anomalous on \n')
-        comfile.write('END \n')
-        comfile.write('eof \n')
+            comfile.write("run "+str(i+1)+" batch "+str(batches[i][0])+" to "+str(batches[i][1])+"  \n")
+            comfile.write("name run "+str(i+1)+" project RAPD crystal RAPD dataset DATA \n")
+        comfile.write("scales constant \n")
+        comfile.write("exclude sdmin 2.0 \n")
+        comfile.write("sdcorrection fixsdb noadjust norefine both 1.0 0.0 \n")
+        comfile.write("anomalous on \n")
+        comfile.write("END \n")
+        comfile.write("eof \n")
         comfile.close()
-        os.chmod('scala.sh',0755)
-        p = subprocess.Popen('./scala.sh',shell=True)
+        os.chmod("scala.sh", 0755)
+        p = subprocess.Popen("./scala.sh", shell=True)
         sts = os.waitpid(p.pid, 0)[1]
-        os.remove('scala.sh')
+        os.remove("scala.sh")
 
-        scalog = open('scala.log', 'r').readlines()
+        scalog = open("scala.log", "r").readlines()
 
         new_hi_res = False
         count = 0
         IsigI = 0
         hires = 0
         for line in scalog:
-            if 'Average I,sd and Sigma' in line:
+            if "Average I,sd and Sigma" in line:
                 count = 1
             if count > 0:
                 sline = line.split()
@@ -372,38 +388,38 @@ class RapdAgent(multiprocessing.Process):
                     IsigI = float(sline[12])
                     hires = float(sline[2])
                     if IsigI < 2.0:
-                        new_hi_res = interp([2.0],[IsigI,prev_IsigI],
-                                            [hires,prev_hires])
+                        new_hi_res = interp([2.0], [IsigI,prev_IsigI],
+                                            [hires, prev_hires])
                         break
 
-            if count > 0 and 'Overall' in line:
+            if count > 0 and "Overall" in line:
                 break
 
-        comfile = open('scala1.sh','w')
-        comfile.write('#!/bin/csh \n')
-        comfile.write('scala hklin '+in_file+' hklout scaled.mtz > scala1.log <<eof \n')
-        comfile.write('bins 10 \n')
+        comfile = open("scala1.sh", "w")
+        comfile.write("#!/bin/csh \n")
+        comfile.write("scala hklin "+in_file+" hklout scaled.mtz > scala1.log <<eof \n")
+        comfile.write("bins 10 \n")
         for i in range(len(batches)):
-            comfile.write('run '+str(i+1)+' batch '+str(batches[i][0])+' to '+str(batches[i][1])+'  \n')
-            comfile.write('name run '+str(i+1)+' project RAPD crystal RAPD dataset DATA \n')
-        comfile.write('scales constant \n')
-        comfile.write('exclude sdmin 2.0 \n')
-        comfile.write('sdcorrection fixsdb noadjust norefine both 1.0 0.0 \n')
-        comfile.write('anomalous on \n')
+            comfile.write("run "+str(i+1)+" batch "+str(batches[i][0])+" to "+str(batches[i][1])+"  \n")
+            comfile.write("name run "+str(i+1)+" project RAPD crystal RAPD dataset DATA \n")
+        comfile.write("scales constant \n")
+        comfile.write("exclude sdmin 2.0 \n")
+        comfile.write("sdcorrection fixsdb noadjust norefine both 1.0 0.0 \n")
+        comfile.write("anomalous on \n")
         if new_hi_res:
-            comfile.write('resolution high '+str(new_hi_res[0])+' \n')
-        comfile.write('END \n')
-        comfile.write('eof \n')
+            comfile.write("resolution high "+str(new_hi_res[0])+" \n")
+        comfile.write("END \n")
+        comfile.write("eof \n")
         comfile.close()
-        os.chmod('scala1.sh',0755)
-        p = subprocess.Popen('./scala1.sh',shell=True)
+        os.chmod("scala1.sh", 0755)
+        p = subprocess.Popen("./scala1.sh", shell=True)
         sts = os.waitpid(p.pid, 0)[1]
-        #os.remove('scala1.sh')
+        #os.remove("scala1.sh")
 
-        scalogf = open('scala1.log', 'r').readlines()
+        scalogf = open("scala1.log", "r").readlines()
 
-        return('scaled.mtz')
-        return('scala1.log')
+        return("scaled.mtz")
+        return("scala1.log")
 
 
 
@@ -412,21 +428,21 @@ class RapdAgent(multiprocessing.Process):
         Check the Space Group of the scaled and merged data
         """
 
-        self.logger.debug('performCheck in_file: %s' % in_file)
+        self.logger.debug("performCheck in_file: %s", in_file)
 
-        comfile = open('pcheck.sh','w')
-        comfile.write('#!/bin/csh \n')
-        comfile.write('pointless hklin '+in_file+' xmlout performcheck.xml > performcheck.log << eof \n')
-        comfile.write('SETTING C2 \n')
-        comfile.write('END \n')
-        comfile.write('eof \n')
+        comfile = open("pcheck.sh", "w")
+        comfile.write("#!/bin/csh \n")
+        comfile.write("pointless hklin "+in_file+" xmlout performcheck.xml > performcheck.log << eof \n")
+        comfile.write("SETTING C2 \n")
+        comfile.write("END \n")
+        comfile.write("eof \n")
         comfile.close()
-        os.chmod('pcheck.sh',0755)
-        p = subprocess.Popen('./pcheck.sh',shell=True)
+        os.chmod("pcheck.sh", 0755)
+        p = subprocess.Popen("./pcheck.sh", shell=True)
         sts = os.waitpid(p.pid, 0)[1]
-        os.remove('pcheck.sh')
+        os.remove("pcheck.sh")
 
-        dom1 = parse('performcheck.xml')
+        dom1 = parse("performcheck.xml")
 
         sg_start = False
         for node in dom1.getElementsByTagName('SpacegroupName'):
@@ -1076,9 +1092,10 @@ if(allow_user() != "yes")
 
         os.remove('info.log')
         self.results['status'] = 'SUCCESS'
-        self.command.append(self.results)
-        #send the results back to the Core
-        self.sendBack2(self.command)
+        self.request.append(self.results)
+        # Send the results back to the Core
+        # self.sendBack2(self.request)
+        rapd_send(self.reply_settings, self.request)
 
 
     def clean_fs(self, dir):
