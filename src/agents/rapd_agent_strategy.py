@@ -52,7 +52,7 @@ ID = "3b3448aee4a811e59c0aac87a3333966"
 
 
 class RapdAgent(Process):
-  def __init__(self,input,logger=None):
+  def __init__(self, input, logger=None):
     logger.info('AutoindexingStrategy.__init__')
     self.st = time.time()
     self.input                              = input
@@ -204,7 +204,7 @@ class RapdAgent(Process):
 
       self.logger.debug("setup_cluster")
 
-      
+
 
   def run(self):
     """

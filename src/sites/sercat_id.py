@@ -99,16 +99,17 @@ DETECTOR_SUFFIX = ""
 LAUNCHER_LOCK_FILE = "/tmp/lock/launcher.lock"
 
 # Directories to look for rapd agents
-RAPD_AGENT_DIRECTORIES = ("sites.agents", "agents")
+RAPD_AGENT_DIRECTORIES = ("sites.agents",
+                          "agents")
 # Queried in order, so a rapd_agent_echo.py in src/sites/agents will override
 # the same file in src/agents
 
 
-# Directories to look for launcher adaptors
-RAPD_LAUNCHER_ADAPTOR_DIRECTORIES = ("sites.launcher_adaptors",
-                                     "launch.launcher_adaptors")
-# Queried in order, so a shell_simple.py in src/sites/launcher_adaptors will override
-# the same file in launch/launcher_adaptors
+# Directories to look for launcher adapters
+RAPD_LAUNCHER_ADAPTOR_DIRECTORIES = ("sites.launcher_adapters",
+                                     "launch.launcher_adapters")
+# Queried in order, so a shell_simple.py in src/sites/launcher_adapters will override
+# the same file in launch/launcher_adapters
 
 # Cluster settings
 CLUSTER_ADAPTOR = "sites.cluster.sercat"
@@ -170,7 +171,7 @@ LAUNCHER_SETTINGS = {
     "LAUNCHER_REGISTER":LAUNCHER_REGISTER,
     "LAUNCHER_SPECIFICATIONS":LAUNCHER_SPECIFICATIONS,
     "LOCK_FILE":LAUNCHER_LOCK_FILE,
-    "RAPD_AGENT_DIRECTORIES":RAPD_AGENT_DIRECTORIES
+    "RAPD_LAUNCHER_ADAPTOR_DIRECTORIES":RAPD_LAUNCHER_ADAPTOR_DIRECTORIES
 }
 
 LAUNCH_SETTINGS = {

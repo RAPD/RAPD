@@ -23,7 +23,7 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
 """
-This is an adaptor for RAPD to connect to the control database when it is a MySQL
+This is an adapter for RAPD to connect to the control database when it is a MySQL
 type database.
 
 To run a mariadb instance in docker:
