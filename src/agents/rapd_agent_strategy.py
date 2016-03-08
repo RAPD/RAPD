@@ -26,21 +26,6 @@ __status__ = "Production"
 An autoindex & strategy rapd_agent
 """
 
-# Standard imports
-from multiprocessing import Process, Queue, Event
-import os
-import shutil
-import subprocess
-import time
-
-# RAPD imports
-import rapd_beamlinespecific as BLspec
-import src.agents.subcontractors.parse as Parse
-import src.agents.subcontractors.summary as Summary
-from src.agents.subcontractors.xoalign import RunXOalign
-from utils.communicate import rapd_send
-import utils.xutils as Utils
-
 # This is an active rapd agent
 RAPD_AGENT = True
 
@@ -50,13 +35,62 @@ AGENT_TYPE = "autoindex+strategy"
 # A unique UUID for this handler (uuid.uuid1().hex)
 ID = "3b3448aee4a811e59c0aac87a3333966"
 
+# Standard imports
+from multiprocessing import Process, Queue, Event
+import os
+import shutil
+import subprocess
+import time
+
+# RAPD imports
+# import rapd_beamlinespecific as BLspec
+import src.agents.subcontractors.parse as Parse
+import src.agents.subcontractors.summary as Summary
+from src.agents.subcontractors.xoalign import RunXOalign
+from utils.communicate import rapd_send
+from utils.modules import load_module
+import utils.xutils as Utils
+
 class RapdAgent(Process):
-  def __init__(self, input, logger=None):
-    logger.info('AutoindexingStrategy.__init__')
+
+  #For testing individual modules (Will not run in Test mode on cluster!! Can be set at end of __init__.)
+  test = False
+  #Removes junk files and directories at end. (Will still clean on cluster!! Can be set at end of __init__.)
+  clean = False
+  #Runs in RAM (slightly faster), but difficult to debug.
+  ram = False
+  #Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Slower (>10%). Mainly
+  #used for rapd_agent_beamcenter.py to launch a lot of jobs at once.
+  cluster_use = False
+  #If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
+  cluster_queue = 'index.q'
+  #self.cluster_queue                      = False
+  #Switch for verbose
+  verbose = True
+  #Number of Labelit iterations to run.
+  iterations = 6
+
+  def __init__(self, site, input, logger=None):
+    """
+    Initialize the agent
+
+    Keyword arguments
+    site -- full site settings
+    command -- type of job to be run
+    request -- full information to execute the agent
+    reply_settings -- information for how to contact control process
+    """
+
+    # Get the logger Instance
+    self.logger = logging.getLogger("RAPDLogger")
+    self.logger.debug("__init__")
+
+    self.logger.info('AutoindexingStrategy.__init__')
     self.st = time.time()
-    self.input                              = input
-    self.logger                             = logger
-    #Setting up data input
+    self.site = site
+    self.input = input
+
+    # Setting up data input
     self.setup                              = self.input[1]
     self.header                             = self.input[2]
     self.header2                            = False
@@ -68,22 +102,22 @@ class RapdAgent(Process):
         self.preferences                        = self.input[3]
     self.controller_address                 = self.input[-1]
 
-    #For testing individual modules (Will not run in Test mode on cluster!! Can be set at end of __init__.)
-    self.test                               = False
-    #Removes junk files and directories at end. (Will still clean on cluster!! Can be set at end of __init__.)
-    self.clean                              = False
-    #Runs in RAM (slightly faster), but difficult to debug.
-    self.ram                                = False
-    #Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Slower (>10%). Mainly
-    #used for rapd_agent_beamcenter.py to launch a lot of jobs at once.
-    self.cluster_use                        = False
-    #If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
-    self.cluster_queue                      = 'index.q'
-    #self.cluster_queue                      = False
-    #Switch for verbose
-    self.verbose                            = True
-    #Number of Labelit iterations to run.
-    self.iterations                         = 6
+    # #For testing individual modules (Will not run in Test mode on cluster!! Can be set at end of __init__.)
+    # self.test                               = False
+    # #Removes junk files and directories at end. (Will still clean on cluster!! Can be set at end of __init__.)
+    # self.clean                              = False
+    # #Runs in RAM (slightly faster), but difficult to debug.
+    # self.ram                                = False
+    # #Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Slower (>10%). Mainly
+    # #used for rapd_agent_beamcenter.py to launch a lot of jobs at once.
+    # self.cluster_use                        = False
+    # #If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
+    # self.cluster_queue                      = 'index.q'
+    # #self.cluster_queue                      = False
+    # #Switch for verbose
+    # self.verbose                            = True
+    # #Number of Labelit iterations to run.
+    # self.iterations                         = 6
 
     #Set timer for distl. 'False' will disable.
     if self.header2:
@@ -203,6 +237,13 @@ class RapdAgent(Process):
 
       self.logger.debug("setup_cluster")
 
+  def load_cluster_adapter(self):
+      """Load the appropriate cluster adapter"""
+
+      if self.site.CLUSTER_ADAPTER:
+          self.cluster_adapter = load_module(self.site.CLUSTER_ADAPTER)
+      else:
+          self.cluster_adapter = False
 
 
   def run(self):
@@ -616,7 +657,7 @@ class RapdAgent(Process):
         d.update({'log'+l[i][1]:log})
         if self.test == False:
           if self.cluster_use:
-            jobs[str(i)] = Process(target=BLspec.processCluster, args=(self, (l[i][0], log, self.cluster_queue)))
+            jobs[str(i)] = Process(target=self.cluster_adapter.processCluster, args=(self, (l[i][0], log, self.cluster_queue)))
           else:
             jobs[str(i)] = Process(target=BestAction, args=((l[i][0], log), self.logger))
           jobs[str(i)].start()
@@ -710,8 +751,8 @@ class RapdAgent(Process):
           new.close()
           log = os.path.join(os.getcwd(),l[i][0]+'.out')
           inp = 'tcsh %s'%l[i][0]
-          if self.cluster_use:
-            Process(target=BLspec.processCluster,args=(self,(inp,log,self.cluster_queue))).start()
+          if self.cluster_adapter:
+            Process(target=self.cluster_adapter.processCluster,args=(self,(inp,log,self.cluster_queue))).start()
           else:
             Process(target=Utils.processLocal,args=(inp,self.logger)).start()
 
@@ -946,7 +987,7 @@ class RapdAgent(Process):
             pass
       if self.test == False:
         if self.multiproc:
-          if self.cluster_use:
+          if self.cluster_adapter:
             #kill child process on DRMAA job causes error on cluster.
             #turn off multiprocessing.event so any jobs still running on cluster are terminated.
             self.running.clear()
@@ -2014,7 +2055,7 @@ class RunLabelit(Process):
     #params
     self.test                               = params.get('test',False)
     #Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Adds 1-3s to total run time.
-    self.cluster_use                        = params.get('cluster',True)
+    # self.cluster_use                        = params.get('cluster',True)
     #If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
     self.cluster_queue                      = params.get('cluster_queue',False)
     #Get detector vendortype for settings. Defaults to ADSC.
@@ -2186,81 +2227,82 @@ class RunLabelit(Process):
       self.logger.exception('**ERROR in RunLabelit.preprocessLabelit**')
 
   def processLabelit(self, iteration=0, inp=False):
-    """
-    Construct the labelit command and run. Passes back dict with PID:iteration.
-    """
-    if self.verbose:
-      self.logger.debug('RunLabelit::processLabelit')
-    try:
-      labelit_input = []
-      #Check if user specific unit cell
-      d = {'a': False, 'c': False, 'b': False, 'beta': False, 'alpha': False, 'gamma': False}
-      counter = 0
-      for l in d.keys():
-        temp = str(self.preferences.get(l,0.0))
-        if temp != '0.0':
-          d[l] = temp
-          counter += 1
-      if counter != 6:
-        d = False
-      #put together the command for labelit.index
-      command = 'labelit.index '
-      #If first labelit run errors because not happy with user specified cell or SG then ignore user input in the rerun.
-      if self.ignore_user_cell == False:
-        if d:
-          command += 'known_cell=%s,%s,%s,%s,%s,%s ' % (d['a'], d['b'], d['c'], d['alpha'], d['beta'], d['gamma'])
-      if self.ignore_user_SG == False:
-        if self.spacegroup != 'None':
-          command += 'known_symmetry=%s ' % self.spacegroup
-      #For peptide crystals. Doesn't work that much.
-      if self.sample_type == 'Peptide':
-        command += 'codecamp.maxcell=80 codecamp.minimum_spot_count=10 '
-      if inp:
-        command += '%s '%inp
-      command += '%s '%self.header.get('fullname')
-      #If pair of images
-      if self.header2:
-        command += '%s '%self.header2.get('fullname')
-      #Save the command to the top of log file, before running job.
+      """
+      Construct the labelit command and run. Passes back dict with PID:iteration.
+      """
       if self.verbose:
-        self.logger.debug(command)
-      labelit_input.append(command)
-      if iteration == 0:
-        self.labelit_log[str(iteration)] = labelit_input
-      else:
-        self.labelit_log[str(iteration)].extend(labelit_input)
-      labelit_jobs = {}
-      #Don't launch job if self.test = True
-      if self.test:
-        labelit_jobs['junk%s'%iteration] = iteration
-      else:
-        log = os.path.join(os.getcwd(), 'labelit.log')
-        #queue to retrieve the PID or JobIB once submitted.
-        pid_queue = Queue()
-        if self.cluster_use:
-          #Delete the previous log still in the folder, otherwise the cluster jobs will append to it.
-          if os.path.exists(log):
-            os.system("rm -rf %s" % log)
-          if self.short:
-            if self.red:
-              run = Process(target=BLspec.processCluster, args=(self, (command, log, 1, self.cluster_queue, "bc_throttler"), pid_queue))
-            else:
-              #run = Process(target=Utils.processCluster, args=(self,(command,log,'all.q'),queue))
-              run = Process(target=BLspec.processCluster, args=(self, (command, log, self.cluster_queue), pid_queue))
-          else:
-            #run = Process(target=Utils.processCluster,args=(self,(command,log,'index.q'),queue))
-            run = Process(target=BLspec.processCluster, args=(self, (command, log, self.cluster_queue), pid_queue))
-        else:
-          run = Process(target=Utils.processLocal, args=((command, log), self.logger, pid_queue))
-        run.start()
-        #Save the PID for killing the job later if needed.
-        self.pids[str(iteration)] = pid_queue.get()
-        labelit_jobs[run] = iteration
-      #return a dict with the job and iteration
-      return(labelit_jobs)
+          self.logger.debug("RunLabelit::processLabelit")
 
-    except:
-      self.logger.exception('**Error in RunLabelit.processLabelit**')
+      try:
+          labelit_input = []
+          #Check if user specific unit cell
+          d = {'a': False, 'c': False, 'b': False, 'beta': False, 'alpha': False, 'gamma': False}
+          counter = 0
+          for l in d.keys():
+              temp = str(self.preferences.get(l,0.0))
+              if temp != '0.0':
+                  d[l] = temp
+                  counter += 1
+          if counter != 6:
+              d = False
+          # Put together the command for labelit.index
+          command = 'labelit.index '
+          # If first labelit run errors because not happy with user specified cell or SG then ignore user input in the rerun.
+          if self.ignore_user_cell == False:
+              if d:
+                  command += 'known_cell=%s,%s,%s,%s,%s,%s ' % (d['a'], d['b'], d['c'], d['alpha'], d['beta'], d['gamma'])
+          if self.ignore_user_SG == False:
+              if self.spacegroup != 'None':
+                  command += 'known_symmetry=%s ' % self.spacegroup
+          # For peptide crystals. Doesn't work that much.
+          if self.sample_type == 'Peptide':
+              command += 'codecamp.maxcell=80 codecamp.minimum_spot_count=10 '
+          if inp:
+              command += '%s ' % inp
+          command += '%s ' % self.header.get('fullname')
+          # If pair of images
+          if self.header2:
+              command += "%s " % self.header2.get("fullname")
+          # Save the command to the top of log file, before running job.
+          if self.verbose:
+              self.logger.debug(command)
+          labelit_input.append(command)
+          if iteration == 0:
+              self.labelit_log[str(iteration)] = labelit_input
+          else:
+              self.labelit_log[str(iteration)].extend(labelit_input)
+          labelit_jobs = {}
+          # Don't launch job if self.test = True
+          if self.test:
+              labelit_jobs["junk%s" % iteration] = iteration
+          else:
+              log = os.path.join(os.getcwd(), 'labelit.log')
+              #queue to retrieve the PID or JobIB once submitted.
+              pid_queue = Queue()
+              if self.cluster_adapter:
+                  #Delete the previous log still in the folder, otherwise the cluster jobs will append to it.
+                  if os.path.exists(log):
+                      os.system("rm -rf %s" % log)
+                  if self.short:
+                      if self.red:
+                          run = Process(target=self.cluster_adapter.processCluster, args=(self, (command, log, 1, self.cluster_queue, "bc_throttler"), pid_queue))
+                      else:
+                          #run = Process(target=Utils.processCluster, args=(self,(command,log,'all.q'),queue))
+                          run = Process(target=self.cluster_adapter.processCluster, args=(self, (command, log, self.cluster_queue), pid_queue))
+                  else:
+                      #run = Process(target=Utils.processCluster,args=(self,(command,log,'index.q'),queue))
+                      run = Process(target=self.cluster_adapter.processCluster, args=(self, (command, log, self.cluster_queue), pid_queue))
+              else:
+                  run = Process(target=Utils.processLocal, args=((command, log), self.logger, pid_queue))
+              run.start()
+              #Save the PID for killing the job later if needed.
+              self.pids[str(iteration)] = pid_queue.get()
+              labelit_jobs[run] = iteration
+          #return a dict with the job and iteration
+          return(labelit_jobs)
+
+      except:
+          self.logger.exception('**Error in RunLabelit.processLabelit**')
 
   def postprocessLabelit(self,iteration=0,run_before=False,blank=False):
     """
@@ -2336,24 +2378,24 @@ class RunLabelit(Process):
             return (Utils.errorLabelit(self,iteration))
 
   def postprocess(self):
-    """
-    Send back the results and logs.
-    """
-    if self.verbose:
-      self.logger.debug('RunLabelit::postprocess')
+      """
+      Send back the results and logs.
+      """
+      if self.verbose:
+          self.logger.debug("RunLabelit::postprocess")
 
-    try:
-      #Free up spot on cluster.
-      if self.short and self.red:
-        self.red.lpush('bc_throttler',1)
+      try:
+        #Free up spot on cluster.
+        if self.short and self.red:
+            self.red.lpush("bc_throttler", 1)
 
-      #Pass back output
-      self.output.put(self.labelit_results)
-      if self.short == False:
-        self.output.put(self.labelit_log)
+        #Pass back output
+        self.output.put(self.labelit_results)
+        if self.short == False:
+            self.output.put(self.labelit_log)
 
-    except:
-      self.logger.exception('**ERROR in RunLabelit.postprocess**')
+      except:
+          self.logger.exception("**ERROR in RunLabelit.postprocess**")
 
   def Queue(self):
     """
@@ -2430,7 +2472,7 @@ class RunLabelit(Process):
             self.labelit_results[str(i)] = {'Labelit results': 'FAILED'}
             if self.cluster_use:
               #Utils.killChildrenCluster(self,self.pids[str(i)])
-              BLspec.killChildrenCluster(self,self.pids[str(i)])
+              self.cluster_adapter.killChildrenCluster(self,self.pids[str(i)])
             else:
               Utils.killChildren(self,self.pids[str(i)])
 

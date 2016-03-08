@@ -167,8 +167,8 @@ class Launcher(object):
 
         # Import the database adapter as database module
         self.adapter = load_module(
-            directories=self.site.LAUNCHER_SETTINGS["RAPD_LAUNCHER_ADAPTER_DIRECTORIES"],
-            seek_module=self.specifications["adapter"]).LauncherAdapter
+            seek_module=self.specifications["adapter"],
+            directories=self.site.LAUNCHER_SETTINGS["RAPD_LAUNCHER_ADAPTER_DIRECTORIES"]).LauncherAdapter
 
         self.logger.debug(self.adapter)
 

@@ -28,13 +28,13 @@ Provides tools for loading modules
 
 import importlib
 
-def load_module(directories, seek_module):
+def load_module(seek_module, directories=False):
     """
     Load the module file for the input specifications
 
     Keyword arguments
-    directories -- iterable of directories to query
     seek_module -- the module to find and import
+    directories -- iterable of directories to query
     """
 
     # # Agent we are looking for
@@ -42,7 +42,14 @@ def load_module(directories, seek_module):
     module = None
 
     # Look for rapd agents in the specified directories
-    for directory in directories:
+    if directories:
+        for directory in directories:
+            try:
+                module = importlib.import_module(directory+"."+seek_module)
+                break
+            except ImportError:
+                continue
+    else:
         try:
             module = importlib.import_module(directory+"."+seek_module)
             break
