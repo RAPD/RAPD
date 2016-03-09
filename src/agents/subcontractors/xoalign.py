@@ -28,8 +28,8 @@ import os
 import time
 
 # RAPD imports
-import src.agents.subcontractors.parse as Parse
-import src.agents.subcontractors.summary as Summary
+import parse as Parse
+import summary as Summary
 from utils.communicate import rapd_send
 import utils.xutils as Utils
 

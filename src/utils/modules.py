@@ -36,6 +36,8 @@ def load_module(seek_module, directories=False):
     seek_module -- the module to find and import
     directories -- iterable of directories to query
     """
+    print "seek_module %s" % str(seek_module)
+    print "directories %s" % str(directories)
 
     # # Agent we are looking for
     # seek_module = "rapd_agent_%s" % command.lower()
@@ -44,6 +46,7 @@ def load_module(seek_module, directories=False):
     # Look for rapd agents in the specified directories
     if directories:
         for directory in directories:
+            print directory+"."+seek_module
             try:
                 module = importlib.import_module(directory+"."+seek_module)
                 break

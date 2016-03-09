@@ -44,9 +44,9 @@ import time
 
 # RAPD imports
 # import rapd_beamlinespecific as BLspec
-import src.agents.subcontractors.parse as Parse
-import src.agents.subcontractors.summary as Summary
-from src.agents.subcontractors.xoalign import RunXOalign
+import subcontractors.parse as Parse
+import subcontractors.summary as Summary
+from subcontractors.xoalign import RunXOalign
 from utils.communicate import rapd_send
 from utils.modules import load_module
 import utils.xutils as Utils
@@ -70,7 +70,7 @@ class RapdAgent(Process):
   #Number of Labelit iterations to run.
   iterations = 6
 
-  def __init__(self, site, input, logger=None):
+  def __init__(self, site, command, input, reply_address, logger=None):
     """
     Initialize the agent
 
@@ -100,7 +100,7 @@ class RapdAgent(Process):
         self.preferences                        = self.input[4]
     else:
         self.preferences                        = self.input[3]
-    self.controller_address                 = self.input[-1]
+    self.controller_address                 = reply_address
 
     # #For testing individual modules (Will not run in Test mode on cluster!! Can be set at end of __init__.)
     # self.test                               = False
