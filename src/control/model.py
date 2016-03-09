@@ -140,13 +140,77 @@ class Model(object):
         # TESTING
         while True:
             time.sleep(5)
-            LaunchAction(command=("ECHO",
-                                  (),
-                                  "Hello, world!",
-                                  ("164.54.212.15", 50000),
-                                  self.return_address),
+            LaunchAction(command=("ECHO",                       # command_type
+                                  {message:"Hello, world!"},    # data
+                                  ("164.54.212.15", 50000),     # launcher_address
+                                  self.return_address),         # return_address
                           settings={})
                           #settings=self.database.get_current_settings(id=self.site.ID))
+
+            settings =  {"strategy_type": 'best', #Preferred program for strategy
+                         "crystal_size_x": "100", #RADDOSE
+                         "crystal_size_y": "100", #RADDOSE
+                         "crystal_size_z": "100", #RADDOSE
+                         "shape": "2.0", #BEST
+                         "sample_type": "Protein", #LABELIT, BEST
+                         "best_complexity": "none", #BEST
+                         "susceptibility": "1.0", #BEST
+                         "index_hi_res": 0.0, #LABELIT
+                         "spacegroup": "None", #LABELIT, BEST, beam_center
+                         "solvent_content": 0.55, #RADDOSE
+                         "beam_flip": "False", #NECAT, when x and y are sent reversed.
+                         "multiprocessing":"True", #Specifies to use 4 cores to make Autoindex much faster.
+                         "x_beam": "0",#Used if position not in header info
+                         "y_beam": "0",#Used if position not in header info
+                         "aimed_res": 0.0, #BEST to override high res limit
+                         "a":0.0, ##LABELIT
+                         "b":0.0, ##LABELIT
+                         "c":0.0, ##LABELIT
+                         "alpha":0.0, #LABELIT
+                         "beta":0.0, #LABELIT
+                         "gamma":0.0, #LABELIT
+
+                         #Change these if user wants to continue dataset with other crystal(s).
+                         "reference_data_id": None, #MOSFLM
+                         'reference_data': [['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',0.0,20.0,'junk','P3'],['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',40.0,50.0,'junk2','P3']],#MOSFLM
+                         #MOSFLM settings for multisegment strategy (like give me best 30 degrees to collect). Ignored if "mosflm_rot" !=0.0
+                         "mosflm_rot": 0.0, #MOSFLM
+                         "mosflm_seg":1, #MOSFLM
+                         "mosflm_start":0.0,#MOSFLM
+                         "mosflm_end":360.0,#MOSFLM
+                        }
+            header1 = {"wavelength": 1.000, #RADDOSE
+                    "detector":'ray300',
+                    "binning": "none", #
+                    "time": "1.00",  #BEST
+                    "twotheta": "0.00", #LABELIT
+                    "transmission": "20",  #BEST
+                    'osc_range': 1.0,
+                    'distance' : 200.0,
+                    'count_cutoff': 65535,
+                    'omega_start': 0.0,
+                    "beam_center_x": "149.87", #22ID
+                    "beam_center_y": "145.16", #22ID
+                    "flux":'1.6e11', #RADDOSE
+                    "beam_size_x":"0.07", #RADDOSE
+                    "beam_size_y":"0.03", #RADDOSE
+                    "gauss_x":'0.03', #RADDOSE
+                    "gauss_y":'0.01', #RADDOSE
+                    "fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_04_chrzas_feb_4_2016/SER4-TRYP_Pn3/SER4-TRYP_Pn3.0001",
+                    "phi": "0.000",
+                    "STAC file1": '/gpfs6/users/necat/Jon/RAPD_test/mosflm.mat', #XOAlign
+                    "STAC file2": '/gpfs6/users/necat/Jon/RAPD_test/bestfile.par', #XOAlign
+                    "axis_align": 'long',    #long,all,a,b,c,ab,ac,bc #XOAlign
+                   }
+            LaunchAction(command=("STRATEGY",
+                                  {"directories":{"work":"/home/schuerjp/temp"},
+                                   "header1":header1,
+                                   "header2":False,
+                                   "preferences":preferences},
+                                  self.return_address),
+                         launcher_address=("164.54.208.135", 50000),
+                         settings=None)
+            time.sleep(300)
 
     def connect_to_database(self):
         """Set up database connection"""

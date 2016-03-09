@@ -75,8 +75,8 @@ class Launcher(object):
         # Load the adapter
         self.load_adapter()
 
-        # Set up connection to the control database
-        self.connect_to_database()
+        # Set up connection to the control database - not used yet!
+        # self.connect_to_database()
 
         # Start listening for commands
         self.run()
@@ -87,25 +87,19 @@ class Launcher(object):
         """
 
         # Create socket to listen for commands
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.settimeout(5)
-        s.bind(("", self.specifications["port"]))
+        _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        _socket.settimeout(5)
+        _socket.bind(("", self.specifications["port"]))
 
         # This is the server portion of the code
-        while(1):
+        while 1:
             try:
-                s.listen(5)
-                # print 'MODE', self.mode
-                conn, addr = s.accept()
-                # tmp = Handler(conn=conn,
-                #               addr=addr,
-                #               db=self.DATABASE,
-                #               mode = self.mode,
-                #               logger=self.logger)
+                _socket.listen(5)
+                conn, addr = _socket.accept()
 
                 # Read the message from the socket
                 message = ""
-                while not (message.endswith('<rapd_end>')):
+                while not message.endswith("<rapd_end>"):
                     try:
                         data = conn.recv(BUFFER_SIZE)
                         message += data
@@ -123,7 +117,7 @@ class Launcher(object):
                 print "5 seconds up"
 
         # If we exit...
-        s.close()
+        _socket.close()
 
     def handle_message(self, message):
         """
@@ -133,7 +127,7 @@ class Launcher(object):
         self.logger.debug("Message received: %s", message)
 
         # Strip the message of its delivery tags
-        message = message.rstrip().replace("<rapd_start>","").replace("<rapd_end>","")
+        message = message.rstrip().replace("<rapd_start>", "").replace("<rapd_end>", "")
 
         # Use the adapter to launch
         self.adapter(self.site, message, self.specifications)
@@ -156,7 +150,7 @@ class Launcher(object):
                 break
 
         # No address
-        if self.launcher == None:
+        if self.launcher is None:
             raise Exception("No definition for launcher in site file")
         else:
             # Unpack address
@@ -191,7 +185,6 @@ class Launcher(object):
 
 
 
-
 def get_commandline():
     """Get the commandline variables and handle them"""
 
@@ -218,8 +211,19 @@ def main():
     # Get the commandline args
     commandline_args = get_commandline()
 
+    # Get the environmental variables
+    environmental_vars = utils.sites.get_environmental_variables()
+
     # Determine the site
     site_file = utils.sites.determine_site(site_arg=commandline_args.site)
+
+    # Determine the tag - commandline wins
+    if commandline_args.tag:
+        tag = commandline_args.tag
+    elif environmental_vars.has_key("RAPD_LAUNCHER_TAG"):
+        tag = environmental_vars["RAPD_LAUNCHER_TAG"]
+    else:
+        tag = ""
 
     # Import the site settings
     SITE = importlib.import_module(site_file)
@@ -241,7 +245,7 @@ def main():
         logger.debug("  arg:%s  val:%s" % pair)
 
     LAUNCHER = Launcher(site=SITE,
-                        tag=commandline_args.tag)
+                        tag=tag)
 
 if __name__ == "__main__":
 

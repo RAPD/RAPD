@@ -138,7 +138,7 @@ class LaunchAction(threading.Thread):
     Manages the dispatch of jobs to the cluster process
     NB that the cluster can be on the localhost or a remote host
     """
-    def __init__(self, command, settings):
+    def __init__(self, command, launcher_address, settings):
         """Initialize the class
 
         Keyword arguments:
@@ -153,7 +153,8 @@ class LaunchAction(threading.Thread):
 
         # Store passed-in variable
         self.command = command
-        self.settings = settings
+        self.launcher_address = launcher_address
+        self.settings = settings    # Not used yet
 
         # Start the thread
         self.start()
@@ -163,42 +164,39 @@ class LaunchAction(threading.Thread):
 
         self.logger.debug("LaunchAction::run")
 
-        # Unpack command
-        ctype, dirs, data, launcher_settings, return_address = self.command
-        self.logger.debug("launcher_settings: %s", launcher_settings)
-
-        attempts = 0
-        while attempts < 10:
-            attempts += 1
-            self.logger.debug("Cluster connection attempt %d", attempts)
-
-            # Connect to the cluster process
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            try:
-                s.connect(launcher_settings)
-                break
-            except socket.error:
-                self.logger.exception("Failed to initialize socket to cluster")
-                time.sleep(1)
-        else:
-            raise RuntimeError("Failed to initialize socket to cluster after %d attempts", attempts)
-
         # Put the command in rapd server-speak
         message = json.dumps(self.command)
         message = "<rapd_start>" + message + "<rapd_end>"
         MSGLEN = len(message)
 
+        # Connect to launcher instance
+        attempts = 0
+        while attempts < 10:
+            attempts += 1
+            self.logger.debug("Launcher connection attempt %d", attempts)
+
+            # Connect to the cluster process
+            _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                _socket.connect(launcher_settings)
+                break
+            except socket.error:
+                self.logger.exception("Failed to initialize socket to launcher")
+                time.sleep(1)
+        else:
+            raise RuntimeError("Failed to initialize socket to launcher after %d attempts", attempts)
+
         # Send the message
         total_sent = 0
         while total_sent < MSGLEN:
-            sent = s.send(message[total_sent:])
+            sent = _socket.send(message[total_sent:])
             if sent == 0:
                 raise RuntimeError("socket connection broken")
             total_sent += sent
 
-        self.logger.debug("Message sent to cluster total_sent:%d", total_sent)
+        self.logger.debug("Message sent to launcher total_sent:%d", total_sent)
 
         # Close connection to cluster
-        s.close()
+        _socket.close()
 
         self.logger.debug("Connection to cluster closed")

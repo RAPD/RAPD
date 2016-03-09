@@ -70,15 +70,15 @@ class LauncherAdapter(object):
 
         # Unpack message
         try:
-            command, dirs, data, send_address, reply_address = message_decoded
+            command, data, reply_address = message_decoded
         except ValueError:
             self.logger.error("Unable to unpack message")
             return False
 
-        # Get the launcher directory
+        # Get the launcher directory - in launcher specification
         qsub_dir = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"]
 
-        # Put the command into a file
+        # Put the message into a rapd-readable file
         command_file = launch_tools.write_command_file(qsub_dir, command, self.message)
 
         # The command has to come in the form of a script on the SERCAT install
@@ -94,7 +94,7 @@ class LauncherAdapter(object):
 /home/schuerjp/Programs/raddose-20-05-09-distribute-noexec/bin:\
 /usr/local/bin:/bin:/usr/bin"
 
-        # Generate a label for qsub job
+        # Parse a label for qsub job from the command_file name
         qsub_label = os.path.basename(command_file).replace(".rapd", "")
 
         # Determine the processor specs
@@ -117,4 +117,3 @@ class LauncherAdapter(object):
         self.logger.debug(qsub_command)
         p = Popen(qsub_command, shell=True)
         sts = os.waitpid(p.pid, 0)[1]
-        # qsub -d (working_dir) -v (path string) -N (job name) (for indexing add '-l nodes=1:ppn=4') command_script

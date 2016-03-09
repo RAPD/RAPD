@@ -170,6 +170,23 @@ def verbose_print(arg, level, verbosity=1):
     if level <= verbosity:
         print arg
 
+
+def get_environmental_variables(pre="RAPD"):
+    """
+    Return a dict of environmental variables
+
+    Keyword arguments:
+    pre -- prefix to select for
+    """
+
+    environmental_variables = {}
+
+    for key, value in os.environ.iteritems():
+        if key.startswith(pre):
+            environmental_variables[key] = value
+
+    return environmental_variables
+
 if __name__ == "__main__":
 
     print "sites.py"

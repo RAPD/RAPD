@@ -72,7 +72,7 @@ class Launch(object):
         self.load_agent(command)
 
         # Run the agent
-        self.agent.RapdAgent(self.site, command, (dirs, data), reply_address)
+        self.agent.RapdAgent(self.site, command, dirs, data, reply_address)
 
     def load_command(self):
         """Load and parse the command file"""
