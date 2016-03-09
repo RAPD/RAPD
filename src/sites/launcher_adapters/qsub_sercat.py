@@ -43,7 +43,7 @@ class LauncherAdapter(object):
     Will launch requested job via qsub on current machine
     """
 
-    def __init__(self, site_id, message, settings):
+    def __init__(self, site, message, settings):
         """
         Initialize the adapter
         """
@@ -52,9 +52,11 @@ class LauncherAdapter(object):
         self.logger = logging.getLogger("RAPDLogger")
         self.logger.debug("__init__")
 
-        self.site_id = site_id
+        self.site = site
         self.message = message
         self.settings = settings
+
+        self.logger.debug("site: %s", self.site)
 
         self.run()
 
@@ -73,16 +75,18 @@ class LauncherAdapter(object):
             self.logger.error("Unable to unpack message")
             return False
 
+        # Get the launcher directory
+        qsub_dir = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"]
+
         # Put the command into a file
-        command_file = launch_tools.write_command_file(self.settings["launch_dir"], command, self.message)
-        command_file_path = os.path.abspath(command_file)
+        command_file = launch_tools.write_command_file(qsub_dir, command, self.message)
 
         # The command has to come in the form of a script on the SERCAT install
-        command_line = "rapd.launch %s" % command_file
+        command_line = "rapd.launch -vs %s %s" % (self.site.ID, command_file)
         command_script = launch_tools.write_command_script(command_file.replace(".rapd", ".sh"), command_line)
 
         # Set the path for qsub
-        qsub_path = "-v PATH=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
+        qsub_path = "PATH=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
 /home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/bin:\
 /home/schuerjp/Programs/best:\
 /home/schuerjp/Programs/RAPD/bin:\
@@ -107,10 +111,10 @@ class LauncherAdapter(object):
         # qsub_command = "qsub -cwd -V -b y -N %s %s rapd.python %s %s" %
         #       (qsub_label, qsub_queue, command_file_path, command_file)
         qsub_command = "qsub -d %s -v %s -N %s -l %s %s" % (
-            qsub_dir, qsub_env, qsub_label, qsub_proc, command_script)
+            qsub_dir, qsub_path, qsub_label, qsub_proc, command_script)
 
         # Launch it
         self.logger.debug(qsub_command)
         p = Popen(qsub_command, shell=True)
         sts = os.waitpid(p.pid, 0)[1]
-        qsub -d (working_dir) -v (path string) -N (job name) (for indexing add '-l nodes=1:ppn=4') command_script
+        # qsub -d (working_dir) -v (path string) -N (job name) (for indexing add '-l nodes=1:ppn=4') command_script

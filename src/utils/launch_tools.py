@@ -65,6 +65,7 @@ def write_command_script(target_file, command_line, shell="/bin/tcsh"):
     out_file.write(shell+"\n")
     out_file.write(command_line)
     out_file.close()
-    os.chmod(target_file, stat.S_IXGRP)
+    st = os.stat(target_file)
+    os.chmod(target_file, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
-    return out_file
+    return target_file

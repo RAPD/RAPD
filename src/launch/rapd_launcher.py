@@ -136,7 +136,7 @@ class Launcher(object):
         message = message.rstrip().replace("<rapd_start>","").replace("<rapd_end>","")
 
         # Use the adapter to launch
-        self.adapter(self.site.ID, message, self.specifications)
+        self.adapter(self.site, message, self.specifications)
 
     def get_settings(self):
         """
@@ -148,6 +148,7 @@ class Launcher(object):
 
         # Get IP Address
         self.ip_address = utils.sites.get_ip_address()
+        self.logger.debug("Found ip address to be %s", self.ip_address)
 
         for launcher in launchers:
             if launcher[0] == self.ip_address and launcher[1] == self.tag:
@@ -161,6 +162,8 @@ class Launcher(object):
             # Unpack address
             self.ip_address, self.tag, self.launcher_id = self.launcher
             self.specifications = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.launcher_id]
+            # Tag launcher in self.site
+            self.site.LAUNCHER_ID = self.launcher_id
 
     def load_adapter(self):
         """Find and load the adapter"""

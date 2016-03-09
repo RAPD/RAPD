@@ -2535,25 +2535,38 @@ if __name__ == '__main__':
    },
 
   #Info from first image
-  {"wavelength": "0.9792", #RADDOSE
-   "binning": "2x2", #LABELIT
-   #"binning": "none", #
+  {#"wavelength": "0.9792", #RADDOSE
+   "wavelength": 1.000, #RADDOSE
+   "detector":'ray300',
+   #"binning": "2x2", #LABELIT
+   "binning": "none", #
    "time": "1.00",  #BEST
    "twotheta": "0.00", #LABELIT
    "transmission": "20",  #BEST
+   'osc_range': 1.0,
+   'distance' : 200.0,
+   'count_cutoff': 65535,
+   'omega_start': 0.0,
    #"beam_center_x": "216.71", #PILATUS
    #"beam_center_y": "222.45", #PILATUS
-   "beam_center_x": "150.72", #Q315
-   "beam_center_y": "158.68", #Q315
+   #"beam_center_x": "150.72", #Q315
+   #"beam_center_y": "158.68", #Q315
    #"beam_center_x": "172.80", #HF4M
    #"beam_center_y": "157.18", #HF4M
+   "beam_center_x": "149.87", #22ID
+   "beam_center_y": "145.16", #22ID
+   #"beam_center_x": "140.06", #22BM
+   #"beam_center_y": "142.22", #22BM
    "flux":'1.6e11', #RADDOSE
    "beam_size_x":"0.07", #RADDOSE
    "beam_size_y":"0.03", #RADDOSE
    "gauss_x":'0.03', #RADDOSE
    "gauss_y":'0.01', #RADDOSE
-   "fullname": "/gpfs2/users/chicago/Lewis_E_Dec15/images/snaps/NE51_H4_PAIR_0_001.img",
-
+   #"fullname": "/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0001",
+   #"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0001",
+   "fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_04_chrzas_feb_4_2016/SER4-TRYP_Pn3/SER4-TRYP_Pn3.0001",
+   #"fullname": "/gpfs6/users/necat/Jon/RAPD_test/Temp/mar/SER4-TRYP_Pn3.0001",
+   
    #minikappa
    #Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
    #"mk3_phi":"0.0", #
@@ -2565,25 +2578,38 @@ if __name__ == '__main__':
   },
 
    #Info from second image. Remove this dict if NOT present in run.
-  {"wavelength": "0.9792", #RADDOSE
-   "binning": "2x2", #LABELIT
-   #"binning": "none", #
+  {#"wavelength": "0.9792", #RADDOSE
+   "wavelength": 1.000, #RADDOSE
+   "detector":'ray300',
+   #"binning": "2x2", #LABELIT
+   "binning": "none", #
    "time": "1.00",  #BEST
    "twotheta": "0.00", #LABELIT
    "transmission": "20",  #BEST
+   'osc_range': 1.0,
+   'distance' : 200.0,
+   'count_cutoff': 65535,
+   'omega_start': 0.0,
    #"beam_center_x": "216.71", #PILATUS
    #"beam_center_y": "222.45", #PILATUS
-   "beam_center_x": "150.72", #Q315
-   "beam_center_y": "158.68", #Q315
+   #"beam_center_x": "150.72", #Q315
+   #"beam_center_y": "158.68", #Q315
    #"beam_center_x": "172.80", #HF4M
    #"beam_center_y": "157.18", #HF4M
+   "beam_center_x": "149.87", #22ID
+   "beam_center_y": "145.16", #22ID
+   #"beam_center_x": "140.06", #22BM
+   #"beam_center_y": "142.22", #22BM
    "flux":'1.6e11', #RADDOSE
    "beam_size_x":"0.07", #RADDOSE
    "beam_size_y":"0.03", #RADDOSE
    "gauss_x":'0.03', #RADDOSE
    "gauss_y":'0.01', #RADDOSE
-   "fullname": "/gpfs2/users/chicago/Lewis_E_Dec15/images/snaps/NE51_H4_PAIR_0_002.img",
-
+   #"fullname": "/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0020",
+   #"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0020",
+   "fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_04_chrzas_feb_4_2016/SER4-TRYP_Pn3/SER4-TRYP_Pn3.0050",
+   #"fullname": "/gpfs6/users/necat/Jon/RAPD_test/Temp/mar/SER4-TRYP_Pn3.0050",
+   
    #minikappa
    #Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
    #"mk3_phi":"0.0", #
