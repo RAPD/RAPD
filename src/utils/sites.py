@@ -92,7 +92,7 @@ def get_site_files():
     # Looking for the rapd src directory
     sites_dir = False
     for path in sys.path:
-        if "rapd" in path and path.endswith("src"):
+        if path.endswith("src") and os.path.exists(os.path.join(path, "sites")):
             sites_dir = os.path.join(path, "sites")
             break
 
