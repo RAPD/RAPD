@@ -288,8 +288,8 @@ class RapdAgent(Process):
               #Get the distl results
               if self.multiproc:
                   self.postprocessDistl()
-        #Make PHP files for GUI, passback results, and cleanup.
-        self.postprocess()
+          #Make PHP files for GUI, passback results, and cleanup.
+          self.postprocess()
 
   def preprocess(self):
     """
