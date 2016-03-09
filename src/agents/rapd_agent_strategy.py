@@ -70,167 +70,172 @@ class RapdAgent(Process):
   #Number of Labelit iterations to run.
   iterations = 6
 
-  def __init__(self, site, command, input, reply_address, logger=None):
-    """
-    Initialize the agent
+  def __init__(self, site, command, input, reply_address):
+      """
+      Initialize the agent
 
-    Keyword arguments
-    site -- full site settings
-    command -- type of job to be run
-    request -- full information to execute the agent
-    reply_settings -- information for how to contact control process
-    """
+      Keyword arguments
+      site -- full site settings
+      command -- type of job to be run
+      input -- full information to execute the agent
+      reply_address -- information for how to contact control process
+      """
 
-    # Get the logger Instance
-    self.logger = logging.getLogger("RAPDLogger")
-    self.logger.debug("__init__")
+      # Get the logger Instance
+      self.logger = logging.getLogger("RAPDLogger")
+      self.logger.debug("__init__")
 
-    self.logger.info('AutoindexingStrategy.__init__')
-    self.st = time.time()
-    self.site = site
-    self.input = input
+      self.logger.info(input)
+      self.st = time.time()
 
-    # Setting up data input
-    self.setup                              = self.input[1]
-    self.header                             = self.input[2]
-    self.header2                            = False
-    #if self.input[3].has_key('distance'):
-    if self.input[3].has_key('fullname'):
-        self.header2                            = self.input[3]
-        self.preferences                        = self.input[4]
-    else:
-        self.preferences                        = self.input[3]
-    self.controller_address                 = reply_address
+      # Store passed-in variables
+      self.site = site
+      self.command = command
+      self.input = input
+      self.reply_address = reply_address
 
-    # #For testing individual modules (Will not run in Test mode on cluster!! Can be set at end of __init__.)
-    # self.test                               = False
-    # #Removes junk files and directories at end. (Will still clean on cluster!! Can be set at end of __init__.)
-    # self.clean                              = False
-    # #Runs in RAM (slightly faster), but difficult to debug.
-    # self.ram                                = False
-    # #Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Slower (>10%). Mainly
-    # #used for rapd_agent_beamcenter.py to launch a lot of jobs at once.
-    # self.cluster_use                        = False
-    # #If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
-    # self.cluster_queue                      = 'index.q'
-    # #self.cluster_queue                      = False
-    # #Switch for verbose
-    # self.verbose                            = True
-    # #Number of Labelit iterations to run.
-    # self.iterations                         = 6
+      # Setting up data input
+      self.setup                              = self.input[1]
+      self.header                             = self.input[2]
+      self.header2                            = False
+      #if self.input[3].has_key('distance'):
+      if self.input[3].has_key('fullname'):
+          self.header2                            = self.input[3]
+          self.preferences                        = self.input[4]
+      else:
+          self.preferences                        = self.input[3]
+      self.controller_address                 = reply_address
 
-    #Set timer for distl. 'False' will disable.
-    if self.header2:
-        self.distl_timer                    = 60
-    else:
-        self.distl_timer                    = 30
-    #Set strategy timer. 'False' disables.
-    self.strategy_timer                     = 90
-    #Set timer for XOAlign. 'False' will disable.
-    self.xoalign_timer                      = 30
+      # #For testing individual modules (Will not run in Test mode on cluster!! Can be set at end of __init__.)
+      # self.test                               = False
+      # #Removes junk files and directories at end. (Will still clean on cluster!! Can be set at end of __init__.)
+      # self.clean                              = False
+      # #Runs in RAM (slightly faster), but difficult to debug.
+      # self.ram                                = False
+      # #Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Slower (>10%). Mainly
+      # #used for rapd_agent_beamcenter.py to launch a lot of jobs at once.
+      # self.cluster_use                        = False
+      # #If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
+      # self.cluster_queue                      = 'index.q'
+      # #self.cluster_queue                      = False
+      # #Switch for verbose
+      # self.verbose                            = True
+      # #Number of Labelit iterations to run.
+      # self.iterations                         = 6
 
-    #Turns on multiprocessing for everything
-    #Turns on all iterations of Labelit running at once, sorts out highest symmetry solution, then continues...(much better!!)
-    self.multiproc                          = True
-    if self.preferences.has_key('multiprocessing'):
-        if self.preferences.get('multiprocessing') == 'False':
-            self.multiproc                          = False
-    #Set for Eisenberg peptide work.
-    self.sample_type = self.preferences.get('sample_type','Protein')
-    if self.sample_type == 'Peptide':
-        self.peptide     = True
-    else:
-        self.peptide     = False
-    self.strategy = self.preferences.get('strategy_type','best')
-    #Check to see if XOALign should run.
-    if self.header.has_key('mk3_phi') and self.header.has_key('mk3_kappa'):
-        self.minikappa        = True
-    else:
-        self.minikappa        = False
-    #Check to see if multi-crystal strategy is requested.
-    if self.preferences.get('reference_data_id') in (None, 0):
-        self.multicrystalstrat = False
-    else:
-        self.multicrystalstrat = True
-        self.strategy          = 'mosflm'
+      #Set timer for distl. 'False' will disable.
+      if self.header2:
+          self.distl_timer                    = 60
+      else:
+          self.distl_timer                    = 30
+      #Set strategy timer. 'False' disables.
+      self.strategy_timer                     = 90
+      #Set timer for XOAlign. 'False' will disable.
+      self.xoalign_timer                      = 30
 
-    #This is where I place my overall folder settings.
-    self.working_dir                        = False
-    #this is where I have chosen to place my results
-    self.auto_summary                       = False
-    self.labelit_log                        = {}
-    self.labelit_results                    = {}
-    self.labelit_summary                    = False
-    self.labelit_failed                     = False
-    self.distl_log                          = []
-    self.distl_results                      = {}
-    self.distl_summary                      = False
-    self.raddose_results                    = False
-    self.raddose_summary                    = False
-    self.best_log                           = []
-    self.best_results                       = False
-    self.best_summary                       = False
-    self.best1_summary                      = False
-    self.best_summary_long                  = False
-    self.best_anom_log                      = []
-    self.best_anom_results                  = False
-    self.best_anom_summary                  = False
-    self.best1_anom_summary                 = False
-    self.best_anom_summary_long             = False
-    self.best_failed                        = False
-    self.best_anom_failed                   = False
-    self.rerun_best                         = False
-    self.mosflm_strat_log                   = []
-    self.mosflm_strat_anom_log              = []
-    self.mosflm_strat_results               = {}
-    self.mosflm_strat_anom_results          = {}
-    self.mosflm_strat_summary               = False
-    self.mosflm_strat1_summary              = False
-    self.mosflm_strat_summary_long          = False
-    self.mosflm_strat_anom_summary          = False
-    self.mosflm_strat1_anom_summary         = False
-    self.mosflm_strat_anom_summary_long     = False
-    #Labelit settings
-    self.index_number                       = False
-    self.ignore_user_SG                     = False
-    self.pseudotrans                        = False
-    #Raddose settings
-    self.volume                             = False
-    self.calc_num_residues                  = False
-    #Mosflm settings
-    self.prev_sg                            = False
-    #extra features for BEST
-    self.high_dose                          = False
-    self.crystal_life                       = None
-    self.iso_B                              = False
-    #dicts for running the Queues
-    self.jobs                               = {}
-    self.vips_images                        = {}
+      #Turns on multiprocessing for everything
+      #Turns on all iterations of Labelit running at once, sorts out highest symmetry solution, then continues...(much better!!)
+      self.multiproc                          = True
+      if self.preferences.has_key('multiprocessing'):
+          if self.preferences.get('multiprocessing') == 'False':
+              self.multiproc                          = False
+      #Set for Eisenberg peptide work.
+      self.sample_type = self.preferences.get('sample_type','Protein')
+      if self.sample_type == 'Peptide':
+          self.peptide     = True
+      else:
+          self.peptide     = False
+      self.strategy = self.preferences.get('strategy_type','best')
+      #Check to see if XOALign should run.
+      if self.header.has_key('mk3_phi') and self.header.has_key('mk3_kappa'):
+          self.minikappa        = True
+      else:
+          self.minikappa        = False
+      #Check to see if multi-crystal strategy is requested.
+      if self.preferences.get('reference_data_id') in (None, 0):
+          self.multicrystalstrat = False
+      else:
+          self.multicrystalstrat = True
+          self.strategy          = 'mosflm'
 
-    #Settings for all programs
-    self.beamline             = self.header.get('beamline')
-    self.time                 = str(self.header.get('time','1.0'))
-    self.wavelength           = str(self.header.get('wavelength'))
-    self.transmission         = float(self.header.get('transmission'))
-    #self.aperture             = str(self.header.get('md2_aperture'))
-    self.spacegroup           = self.preferences.get('spacegroup')
-    self.flux                 = str(self.header.get('flux'))
-    self.solvent_content      = str(self.preferences.get('solvent_content',0.55))
+      #This is where I place my overall folder settings.
+      self.working_dir                        = False
+      #this is where I have chosen to place my results
+      self.auto_summary                       = False
+      self.labelit_log                        = {}
+      self.labelit_results                    = {}
+      self.labelit_summary                    = False
+      self.labelit_failed                     = False
+      self.distl_log                          = []
+      self.distl_results                      = {}
+      self.distl_summary                      = False
+      self.raddose_results                    = False
+      self.raddose_summary                    = False
+      self.best_log                           = []
+      self.best_results                       = False
+      self.best_summary                       = False
+      self.best1_summary                      = False
+      self.best_summary_long                  = False
+      self.best_anom_log                      = []
+      self.best_anom_results                  = False
+      self.best_anom_summary                  = False
+      self.best1_anom_summary                 = False
+      self.best_anom_summary_long             = False
+      self.best_failed                        = False
+      self.best_anom_failed                   = False
+      self.rerun_best                         = False
+      self.mosflm_strat_log                   = []
+      self.mosflm_strat_anom_log              = []
+      self.mosflm_strat_results               = {}
+      self.mosflm_strat_anom_results          = {}
+      self.mosflm_strat_summary               = False
+      self.mosflm_strat1_summary              = False
+      self.mosflm_strat_summary_long          = False
+      self.mosflm_strat_anom_summary          = False
+      self.mosflm_strat1_anom_summary         = False
+      self.mosflm_strat_anom_summary_long     = False
+      #Labelit settings
+      self.index_number                       = False
+      self.ignore_user_SG                     = False
+      self.pseudotrans                        = False
+      #Raddose settings
+      self.volume                             = False
+      self.calc_num_residues                  = False
+      #Mosflm settings
+      self.prev_sg                            = False
+      #extra features for BEST
+      self.high_dose                          = False
+      self.crystal_life                       = None
+      self.iso_B                              = False
+      #dicts for running the Queues
+      self.jobs                               = {}
+      self.vips_images                        = {}
 
-    #Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
-    #This is used to determine if job submitted by rapd_cluster or script was launched for testing.
-    #******BEAMLINE SPECIFIC*****
-    if self.header.has_key('acc_time'):
-        self.gui                   = True
-        self.test                  = False
-        self.clean                 = True
-        #self.verbose               = False
-    else:
-        self.gui                   = False
-    #******BEAMLINE SPECIFIC*****
+      #Settings for all programs
+      self.beamline             = self.header.get('beamline')
+      self.time                 = str(self.header.get('time','1.0'))
+      self.wavelength           = str(self.header.get('wavelength'))
+      self.transmission         = float(self.header.get('transmission'))
+      #self.aperture             = str(self.header.get('md2_aperture'))
+      self.spacegroup           = self.preferences.get('spacegroup')
+      self.flux                 = str(self.header.get('flux'))
+      self.solvent_content      = str(self.preferences.get('solvent_content',0.55))
 
-    Process.__init__(self,name='AutoindexingStrategy')
-    self.start()
+      #Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
+      #This is used to determine if job submitted by rapd_cluster or script was launched for testing.
+      #******BEAMLINE SPECIFIC*****
+      if self.header.has_key('acc_time'):
+          self.gui                   = True
+          self.test                  = False
+          self.clean                 = True
+          #self.verbose               = False
+      else:
+          self.gui                   = False
+      #******BEAMLINE SPECIFIC*****
+
+      Process.__init__(self, name='AutoindexingStrategy')
+
+      self.start()
 
   def setup_cluster(self):
       """Import cluster functions"""
@@ -247,51 +252,55 @@ class RapdAgent(Process):
 
 
   def run(self):
-    """
-    Convoluted path of modules to run.
-    """
-    if self.verbose:
-      self.logger.debug('AutoindexingStrategy::run')
-    self.preprocess()
-    if self.minikappa:
-      self.processXOalign()
-    else:
-      #Make the labelit.png image
-      self.makeImages(0)
-      #Run Labelit
-      self.processLabelit()
+      """
+      Convoluted path of modules to run.
+      """
+      if self.verbose:
+          self.logger.debug('AutoindexingStrategy::run')
 
-      #Gleb recommended, but in some cases takes several seconds to minutes longer to run Best??
-      #if self.pilatus:
-      #    if self.preferences.get('strategy_type') == 'best':
-      #        self.processXDSbg()
+      self.preprocess()
 
-      #Sorts labelit results by highest symmetry.
-      self.labelitSort()
-      #If there is a solution, then calculate a strategy.
-      if self.labelit_failed == False:
-        #Start distl.signal_strength for the correct labelit iteration
-        self.processDistl()
-        if self.multiproc == False:
-            self.postprocessDistl()
-        self.preprocessRaddose()
-        self.processRaddose()
-        self.processStrategy()
-        self.Queue()
-        #Get the distl results
-        if self.multiproc:
-            self.postprocessDistl()
-      #Make PHP files for GUI, passback results, and cleanup.
-      self.postprocess()
+      if self.minikappa:
+          self.processXOalign()
+      else:
+          #Make the labelit.png image
+          self.makeImages(0)
+          #Run Labelit
+          self.processLabelit()
+
+          #Gleb recommended, but in some cases takes several seconds to minutes longer to run Best??
+          #if self.pilatus:
+          #    if self.preferences.get('strategy_type') == 'best':
+          #        self.processXDSbg()
+
+          #Sorts labelit results by highest symmetry.
+          self.labelitSort()
+          #If there is a solution, then calculate a strategy.
+          if self.labelit_failed == False:
+              #Start distl.signal_strength for the correct labelit iteration
+              self.processDistl()
+              if self.multiproc == False:
+                  self.postprocessDistl()
+              self.preprocessRaddose()
+              self.processRaddose()
+              self.processStrategy()
+              self.Queue()
+              #Get the distl results
+              if self.multiproc:
+                  self.postprocessDistl()
+        #Make PHP files for GUI, passback results, and cleanup.
+        self.postprocess()
 
   def preprocess(self):
     """
     Setup the working dir in the RAM and save the dir where the results will go at the end.
     """
     if self.verbose:
-      self.logger.debug('AutoindexingStrategy::preprocess')
-    #Determine detector vendortype
-    self.vendortype = Utils.getVendortype(self,self.header)
+        self.logger.debug('AutoindexingStrategy::preprocess')
+
+    # Determine detector vendortype
+    self.vendortype = Utils.getVendortype(self, self.header)
+
     """
     #For determining detector type. Same notation as CCTBX.
     #Grab the beamline info from rapd_site.py that give the specifics of this beamline.
@@ -305,7 +314,8 @@ class RapdAgent(Process):
     else:
       self.vendortype = 'ADSC'
     """
-    self.dest_dir = self.setup.get('work')
+
+    self.dest_dir = self.setup.get("work")
     if self.test or self.cluster_use:
       self.working_dir = self.dest_dir
     elif self.ram:
@@ -2566,7 +2576,7 @@ if __name__ == '__main__':
    #"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0001",
    "fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_04_chrzas_feb_4_2016/SER4-TRYP_Pn3/SER4-TRYP_Pn3.0001",
    #"fullname": "/gpfs6/users/necat/Jon/RAPD_test/Temp/mar/SER4-TRYP_Pn3.0001",
-   
+
    #minikappa
    #Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
    #"mk3_phi":"0.0", #
@@ -2609,7 +2619,7 @@ if __name__ == '__main__':
    #"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0020",
    "fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_04_chrzas_feb_4_2016/SER4-TRYP_Pn3/SER4-TRYP_Pn3.0050",
    #"fullname": "/gpfs6/users/necat/Jon/RAPD_test/Temp/mar/SER4-TRYP_Pn3.0050",
-   
+
    #minikappa
    #Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
    #"mk3_phi":"0.0", #

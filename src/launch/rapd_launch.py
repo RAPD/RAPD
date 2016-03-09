@@ -26,8 +26,6 @@ __status__ = "Production"
 import argparse
 import importlib
 import json
-import logging
-import logging.handlers
 
 # RAPD imports
 import utils.commandline
@@ -47,7 +45,7 @@ class Launch(object):
         """Initialize the Launch"""
 
         # Get the logger Instance
-        self.logger = logger #logging.getLogger("RAPDLogger")
+        self.logger = logger
         self.logger.debug("__init__")
 
         # Save passed-in variables
@@ -74,7 +72,7 @@ class Launch(object):
         self.load_agent(command)
 
         # Run the agent
-        self.agent.RapdAgent(self.site, command, data, reply_address)
+        self.agent.RapdAgent(self.site, command, (dirs, data), reply_address)
 
     def load_command(self):
         """Load and parse the command file"""
