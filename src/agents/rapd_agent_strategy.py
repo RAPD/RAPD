@@ -97,7 +97,7 @@ class RapdAgent(Process):
       # Store passed-in variables
       self.site = site
       self.command = command
-      self.input = input
+      self.input = list(input)
       self.reply_address = reply_address
 
       # Setting up data input
@@ -237,7 +237,7 @@ class RapdAgent(Process):
           self.clean                 = True
           #self.verbose               = False
       else:
-          self.gui                   = False
+          self.gui                   = True 
       #******BEAMLINE SPECIFIC*****
 
       Process.__init__(self, name='AutoindexingStrategy')
@@ -2095,7 +2095,7 @@ class RunLabelit(Process):
       self.gui                   = True
       self.test                  = False
     else:
-      self.gui                   = False
+      self.gui                   = True 
     #******BEAMLINE SPECIFIC*****
     #Set times for processes. 'False' to disable.
     if self.header2:
