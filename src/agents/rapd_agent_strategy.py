@@ -37,6 +37,7 @@ ID = "3b3448aee4a811e59c0aac87a3333966"
 
 # Standard imports
 from multiprocessing import Process, Queue, Event
+import logging
 import os
 import shutil
 import subprocess
@@ -81,11 +82,16 @@ class RapdAgent(Process):
       reply_address -- information for how to contact control process
       """
 
+      self.cluster_adapter = False
+
       # Get the logger Instance
       self.logger = logging.getLogger("RAPDLogger")
       self.logger.debug("__init__")
 
+      self.logger.info(site)
+      self.logger.info(command)
       self.logger.info(input)
+      self.logger.info(reply_address)
       self.st = time.time()
 
       # Store passed-in variables
@@ -95,15 +101,16 @@ class RapdAgent(Process):
       self.reply_address = reply_address
 
       # Setting up data input
-      self.setup                              = self.input[1]
-      self.header                             = self.input[2]
+      self.setup, self.data = self.input
+      self.header                             = self.data    
       self.header2                            = False
       #if self.input[3].has_key('distance'):
-      if self.input[3].has_key('fullname'):
-          self.header2                            = self.input[3]
-          self.preferences                        = self.input[4]
-      else:
-          self.preferences                        = self.input[3]
+      #if self.input[3].has_key('fullname'):
+      #    self.header2                            = self.input[3]
+      #    self.preferences                        = self.input[4]
+      #else:
+      #    self.preferences                        = self.input[3]
+      self.preferences = self.data["preferences"]
       self.controller_address                 = reply_address
 
       # #For testing individual modules (Will not run in Test mode on cluster!! Can be set at end of __init__.)
@@ -437,13 +444,15 @@ class RapdAgent(Process):
       params['cluster_queue'] = self.cluster_queue
       params['vendortype'] = self.vendortype
       if self.working_dir == self.dest_dir:
-        inp = self.input
+        #inp = self.input
+        inp = ['AUTOINDEX', {'work': self.working_dir}, self.header, self.preferences]
       else:
-        inp = []
-        inp.append('AUTOINDEX')
-        inp.append({'work': self.working_dir})
-        inp.extend(self.input[2:])
-      Process(target=RunLabelit,args=(inp,self.labelitQueue,params,self.logger)).start()
+        inp = ['AUTOINDEX', {'work': self.working_dir}, self.header, self.preferences]
+        #inp.append('AUTOINDEX')
+        #inp.append({'work': self.working_dir})
+        #inp.extend(self.input[1:])
+        #inp.append(self.preferences)
+      Process(target=RunLabelit, args=(inp, self.labelitQueue, params, self.logger)).start()
 
     except:
       self.logger.exception('**Error in processLabelit**')
@@ -2034,7 +2043,7 @@ class RapdAgent(Process):
       self.logger.exception('**ERROR in htmlSummaryShort**')
 
 class RunLabelit(Process):
-  def __init__(self,input,output,params,logger=None):
+  def __init__(self, input, output, params, logger=None):
     """
     #The minimum input
     [   'AUTOINDEX',
@@ -2046,7 +2055,8 @@ class RunLabelit(Process):
     {   'x_beam': '153.66', 'y_beam': '158.39'},
     ('127.0.0.1', 50001)]
     """
-    logger.info('RunLabelit.__init__')
+    self.cluster_adapter = False
+    logger.info(input)
     self.st = time.time()
     self.input                              = input
     self.output                             = output
@@ -2120,7 +2130,7 @@ class RunLabelit(Process):
     self.labelit_jobs                       = {}
     self.pids                               = {}
 
-    Process.__init__(self,name='RunLabelit')
+    Process.__init__(self, name="RunLabelit")
     self.start()
 
   def run(self):
