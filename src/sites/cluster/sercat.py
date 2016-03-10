@@ -139,4 +139,5 @@ def process_cluster(self, inp, output=False):
 
     # Exit cleanly, otherwise master node gets event client timeout errors after 600s.
     s.exit()
+
     print "Job finished"
