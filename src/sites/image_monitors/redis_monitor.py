@@ -22,14 +22,13 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
-import atexit
 import logging
 import threading
 import time
 import redis
 
 # RAPD imports
-import pysent
+from utils import pysent
 
 class RedisMonitor(threading.Thread):
     """Monitor for new data collection images to be submitted to a redis instance"""
@@ -96,6 +95,7 @@ class RedisMonitor(threading.Thread):
 
         image_list = "images_collected_"+self.tag
         while self.Go:
+
             # Try to pop the oldest image off the list
             new_image = self.redis.rpop(image_list)
             if new_image:
@@ -103,5 +103,5 @@ class RedisMonitor(threading.Thread):
                 self.notify(("NEWIMAGE", new_image))
                 self.logger.debug('New image %s', new_image)
 
-            #slow it down a little
+            # Slow it down a little
             time.sleep(0.1)

@@ -1,9 +1,25 @@
 # Lines starting with '#' are considered comments.
 # Ignore subversion information
 .svn
+
+# Build
 .project
 .pydevproject
 *.pyc
+bin
+share
+rapd.cshrc
+rapd.shrc
+phenix-installer-*
+
+# Archives
+*.tar
+*.bz2
+*.tgz
+Python-*
+
+# Test data
+test_data
 
 # Files that should be hidden
 *secret*

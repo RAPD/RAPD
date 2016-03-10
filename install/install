@@ -75,6 +75,7 @@ while getopts "bfhcvp:" x; do
 Installs RAPD v$RAPD_VERSION
 
     -f           no error if install prefix already exists
+    -b           batch mode
     -h           print this help message and exit
     -p PREFIX    install prefix, defaults to $PREFIX
     -c           cleanup
@@ -149,6 +150,11 @@ if (( $? )); then
 fi
 PREFIX=$(cd $PREFIX; pwd)
 
+# If installing in non-source directory, copy over src directory
+if [ $THIS_DIR != $PREFIX/install ]; then
+  printf "\n\033[94mCopying src files\033[0m\n"
+  rsync -a --exclude "*.tar*" ../src $PREFIX/.
+fi
 
 if [ $INSTALL_PHENIX == 1 ]; then
 
@@ -214,11 +220,11 @@ if [ $INSTALL_PHENIX == 1 ]; then
       elif [[ $DIST == "CentOS" ]]; then
 
         if [ ${REV:0:1} == "5" ]; then
-            printf "  \033[91mCentOS 5 is currently not supported. Please enter an issue or work on a patch!\033[0m\n"
-            exit 1
-            # printf "  CentOS 5\n"
-            # PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos5"
-            # PHENIX_DOWNLOAD_REPR="Kernel 2.6 (64-bit; CentOS 5) [ \033[4;34mdownload command-line installer\033[0m ]"
+            # printf "  \033[91mCentOS 5 is currently not supported. Please enter an issue or work on a patch!\033[0m\n"
+            # exit 1
+            printf "  CentOS 5\n"
+            PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos5"
+            PHENIX_DOWNLOAD_REPR="Kernel 2.6 (64-bit; CentOS 5) [ \033[4;34mdownload command-line installer\033[0m ]"
         fi
 
       fi
@@ -231,10 +237,10 @@ if [ $INSTALL_PHENIX == 1 ]; then
 
   # Downloaded and unpacked
   echo `pwd`
-  printf "Looking for $PHENIX_INSTALLER_DIR"
+  printf "Looking for $PHENIX_INSTALLER_DIR \n"
   while [ ! -d $PHENIX_INSTALLER_DIR ]
   do
-    printf "Looking for ~/Downloads/$PHENIX_DOWNLOAD\n"
+    printf "Looking for ~/Downloads/$PHENIX_DOWNLOAD \n"
     # Downloaded and uncompressed
     if [ -a $PHENIX_DOWNLOAD.tar ]; then
       printf "  Phenix install present as archive\n"
@@ -400,7 +406,29 @@ if [ $INSTALL_PHENIX == 1 ]; then
 
         elif [ ${REV:0:1} == "5" ]; then
           printf "  Scientific Linux 5\n"
-          PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos5"
+
+          SYSCONFIG_DIR="$PREFIX/share/phenix/base/lib/python2.7"
+          echo $SYSCONFIG_DIR
+
+          # Copy _sysconfigdata.py to local dir
+          cp $SYSCONFIG_DIR/_sysconfigdata.py ./_sysconfigdata.py.orig
+          mv $SYSCONFIG_DIR/_sysconfigdata.py $SYSCONFIG_DIR/_sysconfigdata.py.orig
+          echo "# This file modified by rapd install" > ./tmp.py
+          echo "# find the original file in this directory with the name" >> ./tmp.py
+          echo "# _sysconfigdata.py.orig" >> ./tmp.py
+          echo "this_python_root='$PREFIX/share/phenix/base'" >> ./tmp.py
+          cat tmp.py  _sysconfigdata.py.orig > tmp_sysconfigdata.py
+
+          # replacing '/home/builder/slave/phenix-nightly-intel-linux-2_6-x86_64-centos5/base'
+          sed -e "s/\'\/home\/builder\/slave\/phenix-nightly-intel-linux-2_6-x86_64-centos5\/base/this_python_root\+\'/g" \
+              -e   "s/\/home\/builder\/slave\/phenix-nightly-intel-linux-2_6-x86_64-centos5\/base/\'\+this_python_root\+\'/g" \
+          tmp_sysconfigdata.py > new_sysconfigdata.py
+
+          cp ./new_sysconfigdata.py $SYSCONFIG_DIR/_sysconfigdata.py
+          rm ./_sysconfigdata.py.orig
+          rm ./tmp_sysconfigdata.py
+          rm ./tmp.py
+          rm ./new_sysconfigdata.py
         fi
 
       elif [[ $DIST == "CentOS" ]]; then
@@ -446,8 +474,9 @@ then
   mkdir $BINDIR
 fi
 
-# Create a script for calling rapd.python
 printf "\n\033[94mInstalling rapd executables\033[0m\n"
+
+# Create a script for calling rapd.python
 SAFE_PREFIX=$(echo "$PREFIX" | sed -e 's/\//\\\//g')
 cd $BINDIR
 printf "rapd.python\n"
@@ -457,6 +486,25 @@ printf "rapd.python\n"
      -e "s%  PYTHONPATH\=\"\$LIBTBX_BUILD%  PYTHONPATH\=\"$SAFE_PREFIX\/src\:\$LIBTBX_BUILD%" \
      $PREFIX/share/phenix/build/bin/cctbx.python > ./rapd.python
 chmod +x ./rapd.python
+
+
+# Create scripts
+echo "#! /bin/bash" > ./rapd.control
+echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/control\/rapd_control.py \"\$@\"" >>./rapd.control
+chmod +x ./rapd.control
+
+echo "#! /bin/bash" > ./rapd.gather
+echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/sites\/gatherers\/gatherer_wrapper.py \"\$@\"" >>./rapd.gather
+chmod +x ./rapd.gather
+
+echo "#! /bin/bash" > ./rapd.launcher
+echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launcher.py \"\$@\"" >>./rapd.launcher
+chmod +x ./rapd.launcher
+
+echo "#! /bin/bash" > ./rapd.launch
+echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launch.py \"\$@\"" >>./rapd.launch
+chmod +x ./rapd.launch
+
 
 # Create the rapd.shrc script
 printf "Writing rapd.shrc\n"
@@ -474,6 +522,9 @@ echo "" >> rapd.shrc
 echo "# Add rapd bin to the path" >> rapd.shrc
 echo "PATH=$BINDIR:\$PATH" >> rapd.shrc
 echo "export PATH" >> rapd.shrc
+echo "# Set environmental variable"
+echo "RAPD_HOME=$PREFIX" >> rapd.shrc
+echo "export RAPD_HOME" >> rapd.shrc
 echo "" >> rapd.shrc
 echo "echo '==================================================='" >> rapd.shrc
 echo "echo '                    RAPD v$RAPD_VERSION            '" >> rapd.shrc
@@ -498,6 +549,8 @@ echo "source $PREFIX/share/phenix/build/setpaths.csh" >> rapd.cshrc
 echo "" >> rapd.cshrc
 echo "# Add rapd bin to the path" >> rapd.cshrc
 echo "setenv PATH $BINDIR:\$PATH" >> rapd.cshrc
+echo "# Set environmental variable"
+echo "setenv RAPD_HOME $PREFIX" >> rapd.cshrc
 echo "" >> rapd.cshrc
 echo "echo '==================================================='" >> rapd.cshrc
 echo "echo '                    RAPD v$RAPD_VERSION            '" >> rapd.cshrc
@@ -509,7 +562,8 @@ echo "echo''" >> rapd.cshrc
 
 
 printf "\n\033[94mInstalling Python modules\033[0m\n"
-
+echo $PYTHONPATH
+export PYTHONPATH=""
 source $PREFIX/rapd.shrc
 cd $SRC_DIR/python
 
@@ -528,6 +582,7 @@ elif [[ $PLATFORM == "Linux" ]]; then
 fi
 
 # Modules
+echo $PYTHONPATH
 rapd.pip install crypto
 if [[ $PLATFORM == "Darwin" ]]; then
   rapd.pip install pyopenssl
@@ -542,7 +597,6 @@ rapd.pip install drmaa
 rapd.pip install paramiko
 rapd.pip install fabio
 rapd.pip install hcluster
-rapd.pip install pymysql
 
 printf "\033[92mPython modules install complete.\033[0m\n\n"
 

@@ -30,7 +30,6 @@ import os
 import adsc_q315
 
 DETECTOR_SUFFIX = ".img"
-HEADER_VERSION = 1
 
 def parse_file_name(fullname):
     """Parse the fullname of an image and return
@@ -67,7 +66,7 @@ def calculate_flux(header, beam_settings):
     # Save some typing
     beam_size_raw_x = beam_settings["BEAM_SIZE_X"]
     beam_size_raw_y = beam_settings["BEAM_SIZE_Y"]
-    aperture_size = header["aperture_x"]
+    aperture_size = header["md2_aperture"]
     raw_flux = beam_settings["BEAM_FLUX"] * header["transmission"] / 100.0
 
     # Calculate the size of the beam incident on the sample in mm
@@ -138,11 +137,6 @@ def read_header(fullname, beam_settings, run_id=None, place_in_run=None):
     # Perform the header read form the file
     header = adsc_q315.read_header(fullname, run_id, place_in_run)
 
-    # Massage header values
-    header["aperture_x"] = header["aperture"]
-    header["aperture_y"] = header["aperture_x"]
-    del header["aperture"]
-
     # Perform flux calculation
     flux, beam_size_x, beam_size_y = calculate_flux(header, beam_settings)
     header["flux"] = flux
@@ -161,9 +155,6 @@ def read_header(fullname, beam_settings, run_id=None, place_in_run=None):
     header["x_beam"] = calc_beam_center_x
     header["y_beam"] = calc_beam_center_y
 
-    # Set the header version value - future flexibility
-    header["header_version"] = HEADER_VERSION
-
     # Return the header
     return header
 
@@ -176,35 +167,35 @@ def get_data_root_dir(fullname):
     """
 
     # Isolate distinct properties of the images path
-    path_split = fullname.split(os.path.sep)
-    data_root_dir = False
+    # path_split = fullname.split(os.path.sep)
+    # data_root_dir = False
 
-    gpfs = False
-    users = False
-    inst = False
-    group = False
-    images = False
-
-    # Break down NE-CAT standard directories
-    # ex. /gpfs1/users/cornell/Ealick_E_1200/images/bob/snaps/0_0/foo_0_0001.cbf
-    if path_split[1].startswith("gpfs"):
-        gpfs = path_split[1]
-        if path_split[2] == "users":
-            users = path_split[2]
-            if path_split[3]:
-                inst = path_split[3]
-                if path_split[4]:
-                    group = path_split[4]
-
-    if group:
-        data_root_dir = os.path.join("/", *path_split[1:5])
-    elif inst:
-        data_root_dir = os.path.join("/", *path_split[1:4])
-    else:
-        data_root_dir = False
+    # gpfs = False
+    # users = False
+    # inst = False
+    # group = False
+    # images = False
+    #
+    # # Break down NE-CAT standard directories
+    # # ex. /gpfs1/users/cornell/Ealick_E_1200/images/bob/snaps/0_0/foo_0_0001.cbf
+    # if path_split[1].startswith("gpfs"):
+    #     gpfs = path_split[1]
+    #     if path_split[2] == "users":
+    #         users = path_split[2]
+    #         if path_split[3]:
+    #             inst = path_split[3]
+    #             if path_split[4]:
+    #                 group = path_split[4]
+    #
+    # if group:
+    #     data_root_dir = os.path.join("/", *path_split[1:5])
+    # elif inst:
+    #     data_root_dir = os.path.join("/", *path_split[1:4])
+    # else:
+    #     data_root_dir = False
 
     # Return the determined directory
-    return data_root_dir
+    return os.path.dirname(fullname)
 
 if __name__ == "__main__":
 
@@ -254,6 +245,8 @@ if __name__ == "__main__":
     import pprint
     pp = pprint.PrettyPrinter()
     pp.pprint(header)
+
+    print get_data_root_dir(test_image)
 
 
     # result = parse_file_name("/gpfs1/users/cornell_murphy_1001/images/frank/runs/test/0_0/test_1_001.img")

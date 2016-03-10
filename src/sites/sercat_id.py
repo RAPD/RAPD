@@ -20,18 +20,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 __created__ = "2016-01-28"
 __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
-__status__ = "Production"
+__status__ = "Development"
 
-import importlib
+import sys
 
-# Site ID
-ID = "NECAT_E"
-BEAMLINE="E"
+# RAPD imports
+from utils.sites import read_secrets
+
+# Site ID - limited to 12 characters by MySQL
+ID = "SERCAT_ID"
 
 # The secrets file - do not put in github repo!
-SECRETS = importlib.import_module("sites.secrets_necat_e")
+SECRETS_FILE = "sites.secrets_sercat_id"
 
-# Source information
+# Copy the secrets attribute to the local scope
+# Do not remove unless you know what you are doing!
+read_secrets(SECRETS_FILE, sys.modules[__name__])
+
+
+# X-ray source characteristics
 # Flux of the beam
 BEAM_FLUX = 8E11
 # Size of the beam in microns
@@ -61,7 +68,118 @@ BEAM_CENTER_Y = (158.56546190593907,
                  -1.7875879553926729e-10,
                  1.4579198435694557e-13,
                  -4.7910792416525411e-17)
-# Aggregator - be extra careful when modifying
+
+# Logging
+# Linux should be /var/log/
+LOGFILE_DIR = "/tmp/log"
+LOG_LEVEL = 50
+
+# Control process settings
+# Process is a singleton? The file to lock to. False if no locking.
+LOCK_FILE = "/tmp/lock/rapd_core.lock"
+# Where files from UI are uploaded - should be visible by launch instance
+UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"
+
+# Control settings
+# Database to use for control operations. Options: "mysql"
+CONTROL_DATABASE = "mysql"
+CONTROL_DATABASE_NAME_DATA = "rapd_data"
+CONTROL_DATABASE_NAME_USERS = "rapd_users"
+CONTROL_DATABASE_NAME_CLOUD = "rapd_cloud"
+# Redis databse
+# Running in a cluster configuration - True || False
+CONTROL_REDIS_CLUSTER = False
+
+# Detector settings
+# Must have a file in detectors that is all lowercase of this string
+DETECTOR = "SERCAT_RAYONIX_MX300HS"
+DETECTOR_SUFFIX = ""
+
+# Launcher settings
+LAUNCHER_LOCK_FILE = "/tmp/lock/launcher.lock"
+
+# Directories to look for rapd agents
+RAPD_AGENT_DIRECTORIES = ("sites.agents",
+                          "agents")
+# Queried in order, so a rapd_agent_echo.py in src/sites/agents will override
+# the same file in src/agents
+
+
+# Directories to look for launcher adapters
+RAPD_LAUNCHER_ADAPTER_DIRECTORIES = ("sites.launcher_adapters",
+                                     "launch.launcher_adapters")
+# Queried in order, so a shell_simple.py in src/sites/launcher_adapters will override
+# the same file in launch/launcher_adapters
+
+# Cluster settings
+CLUSTER_ADAPTER = "sites.cluster.sercat"
+# Set to False if there is no cluster adapter
+
+# Data gatherer settings
+# The data gatherer for this site, in the src/sites/gatherers directory
+GATHERER = "sercat_id.py"
+GATHERER_LOCK_FILE = "/tmp/lock/gatherer.lock"
+
+# Monitor for collected images
+IMAGE_MONITOR = "sites.image_monitors.necat_e"
+# Redis databse
+# Running in a cluster configuration - True || False
+IMAGE_MONITOR_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER
+# Images collected into following directories will be ignored
+IMAGE_IGNORE_DIRECTORIES = ()
+# Images collected containing the following string will be ignored
+IMAGE_IGNORE_STRINGS = ("ignore", )
+
+# Monitor for collected run information
+RUN_MONITOR = "sites.run_monitors.necat_e"
+# Running in a cluster configuration - True || False
+RUN_MONITOR_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER
+
+# Cloud Settings
+# The cloud monitor module
+CLOUD_MONITOR = "cloud.rapd_cloud"
+# Pause between checking the database for new cloud requests in seconds
+CLOUD_INTERVAL = 10
+# Directories to look for cloud handlers
+CLOUD_HANDLER_DIRECTORIES = ("cloud.handlers", )
+
+# For connecting to the site
+SITE_ADAPTER = "sites.site_adapters.necat"
+# Running in a cluster configuration - True || False
+SITE_ADAPTER_REDIS_CLUSTER = False
+
+# For connecting to the remote access system fr the site
+REMOTE_ADAPTER = "sites.site_adapters.necat_remote"     # file name prefix for adapter in src/
+REMOTE_ADAPTER_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER
+
+
+##
+## Aggregators
+## Be extra careful when modifying
+CONTROL_DATABASE_SETTINGS = {
+    "CONTROL_DATABASE":CONTROL_DATABASE,
+    "DATABASE_NAME_DATA":CONTROL_DATABASE_NAME_DATA,
+    "DATABASE_NAME_USERS":CONTROL_DATABASE_NAME_USERS,
+    "DATABASE_NAME_CLOUD":CONTROL_DATABASE_NAME_CLOUD,
+    "DATABASE_HOST":CONTROL_DATABASE_HOST,
+    "DATABASE_PORT":CONTROL_DATABASE_PORT,
+    "DATABASE_USER":CONTROL_DATABASE_USER,
+    "DATABASE_PASSWORD":CONTROL_DATABASE_PASSWORD
+}
+
+
+LAUNCHER_SETTINGS = {
+    "LAUNCHER_REGISTER":LAUNCHER_REGISTER,
+    "LAUNCHER_SPECIFICATIONS":LAUNCHER_SPECIFICATIONS,
+    "LOCK_FILE":LAUNCHER_LOCK_FILE,
+    "RAPD_LAUNCHER_ADAPTER_DIRECTORIES":RAPD_LAUNCHER_ADAPTER_DIRECTORIES
+}
+
+LAUNCH_SETTINGS = {
+    "RAPD_AGENT_DIRECTORIES":RAPD_AGENT_DIRECTORIES,
+    "LAUNCHER":(LAUNCHER_REGISTER[0][0], LAUNCHER_SPECIFICATIONS[LAUNCHER_REGISTER[0][2]]["port"])
+}
+
 BEAM_SETTINGS = {"BEAM_FLUX":BEAM_FLUX,
                  "BEAM_SIZE_X":BEAM_SIZE_X,
                  "BEAM_SIZE_Y":BEAM_SIZE_Y,
@@ -73,118 +191,45 @@ BEAM_SETTINGS = {"BEAM_FLUX":BEAM_FLUX,
                  "BEAM_CENTER_X":BEAM_CENTER_X,
                  "BEAM_CENTER_Y":BEAM_CENTER_Y}
 
-# Logging
-# Linux should be /var/log/
-LOGFILE_DIR = "/tmp/log"
-LOG_LEVEL = 50
 
-# RAPD core process settings
-# Process is a singleton? The file to lock to. False if no locking.
-LOCK_FILE = False # "/tmp/lock/rapd_core.lock"
-# Port for core process to listen on
-CORE_PORT = 50001
-# Where files from UI are uploaded
-UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"
+IMAGE_MONITOR_SETTINGS = {"REDIS_HOST" : IMAGE_MONITOR_REDIS_HOST,
+                          "REDIS_PORT" : IMAGE_MONITOR_REDIS_PORT,
+                          "REDIS_CLUSTER" : IMAGE_MONITOR_REDIS_CLUSTER,
+                          "SENTINEL_HOST" : IMAGE_MONITOR_SENTINEL_HOST,
+                          "SENTINEL_PORT" : IMAGE_MONITOR_SENTINEL_PORT,
+                          "REDIS_MASTER_NAME" : IMAGE_MONITOR_REDIS_MASTER_NAME}
 
-# RAPD cluster process settings
-# Port for cluster to listen on
-LAUNCHER_PORT = 50000
-# Aggregator - be careful when changing
-LAUNCHER_ADDRESS = (SECRETS.LAUNCHER_HOST, LAUNCHER_PORT)
+RUN_MONITOR_SETTINGS = {"REDIS_HOST" : RUN_MONITOR_REDIS_HOST,
+                        "REDIS_PORT" : RUN_MONITOR_REDIS_PORT,
+                        "REDIS_CLUSTER" : RUN_MONITOR_REDIS_CLUSTER,
+                        "SENTINEL_HOST" : RUN_MONITOR_SENTINEL_HOST,
+                        "SENTINEL_PORT" : RUN_MONITOR_SENTINEL_PORT,
+                        "REDIS_MASTER_NAME" : RUN_MONITOR_REDIS_MASTER_NAME}
 
-# RAPD database settings
-# Database to use for core operations. Options: "mysql"
-CORE_DATABASE = "mysql"
-DB_NAME_DATA = "rapd_data"
-DB_NAME_USERS = "rapd_users"
-DB_NAME_CLOUD = "rapd_cloud"
-
-# Redis Settings
-# Running in a cluster configuration - True || False
-REDIS_CLUSTER = True
-
-# Detector settings
-# Must have a file in detectors that is all lowercase of this string
-DETECTOR = "NECAT_ADSC_Q315"
-DETECTOR_SUFFIX = ".img"
-
-# Monitor for collected images
-IMAGE_MONITOR = "sites.image_monitors.necat_e"
-# Aggregator - be careful when changing
-IMAGE_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
-                          "SENTINEL_HOST" : SECRETS.SENTINEL_HOST,
-                          "SENTINEL_PORT" : SECRETS.SENTINEL_PORT,
-                          "REDIS_MASTER_NAME" : SECRETS.REDIS_MASTER_NAME}
-IMAGE_SHORT_CIRCUIT_DIRECTORIES = [
-    '/gpfs5/users/necat/phii_dfa_1/in',
-    '/gpfs5/users/necat/phii_dfa_2/in',
-    '/gpfs5/users/necat/phii_raster_snap/in',
-    '/gpfs5/users/necat/phii_rastersnap_scan_data',
-    '/gpfs5/users/necat/phii_dfa_scan_data',
-    '/gpfs5/users/necat/phii_ova_scan_data',
-    '/gpfs5/users/necat/rapd/uranium/trunk/test_data'
-]
-
-# Monitor for collected run information
-RUN_MONITOR = "sites.run_monitors.necat_e"
-RUN_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
-                        "SENTINEL_HOST" : SECRETS.SENTINEL_HOST,
-                        "SENTINEL_PORT" : SECRETS.SENTINEL_PORT,
-                        "REDIS_MASTER_NAME" : SECRETS.REDIS_MASTER_NAME}
-
-# Cloud Settings
-# The cloud monitor module
-CLOUD_MONITOR = "cloud.rapd_cloud"
-# Pause between checking the database for new cloud requests in seconds
-CLOUD_INTERVAL = 10
-
-# Cloud handlers
-CLOUD_MINIKAPPA = False
-CLOUD_MINIKAPPA_HANDLER = None
-CLOUD_DATA_COLLECTION_PARAMS = False
-CLOUD_DATA_COLLECTION_PARAMS_HANDLER = "datacollectionparameters"
-CLOUD_DOWNLOAD_HANDLER = "download"
-CLOUD_BINARY_MERGE_HANDLER = "binary_merge"
-CLOUD_MR_HANDLER = "mr"
-CLOUD_REINDEX_HANDLER = "reindex"
-CLOUD_REINTEGRATE_HANDLER = "reintegrate"
-# Aggregator - be careful when changing
 CLOUD_MONITOR_SETTINGS = {
-        "CLOUD_BINARY_MERGE_HANDLER":CLOUD_BINARY_MERGE_HANDLER,
-        "CLOUD_DATA_COLLECTION_PARAMS":CLOUD_DATA_COLLECTION_PARAMS,
-        "CLOUD_DATA_COLLECTION_PARAMS_HANDLER":CLOUD_DATA_COLLECTION_PARAMS_HANDLER,
-        "CLOUD_DOWNLOAD_HANDLER":CLOUD_DOWNLOAD_HANDLER,
-        "CLOUD_MINIKAPPA":CLOUD_MINIKAPPA,
-        "CLOUD_MINIKAPPA_HANDLER":CLOUD_MINIKAPPA_HANDLER,
-        "CLOUD_MR_HANDLER":CLOUD_MR_HANDLER,
-        "CLOUD_REINDEX_HANDLER":CLOUD_REINDEX_HANDLER,
-        "CLOUD_REINTEGRATE_HANDLER":CLOUD_REINTEGRATE_HANDLER,
-        "LAUNCHER_ADDRESS":LAUNCHER_ADDRESS,
-        "DETECTOR_SUFFIX":DETECTOR_SUFFIX,
-        "UI_HOST":SECRETS.UI_HOST,
-        "UI_PORT":SECRETS.UI_PORT,
-        "UI_USER":SECRETS.UI_USER,
-        "UI_PASSWORD":SECRETS.UI_PASSWORD,
-        "UPLOAD_DIR":UPLOAD_DIR
-        }
+    "CLOUD_HANDLER_DIRECTORIES" : CLOUD_HANDLER_DIRECTORIES,
+#    "LAUNCHER_IDS" : LAUNCHER_IDS,
+    "DETECTOR_SUFFIX" : DETECTOR_SUFFIX,
+    "UI_HOST" : UI_HOST,
+    "UI_PORT" : UI_PORT,
+    "UI_USER" : UI_USER,
+    "UI_PASSWORD" : UI_PASSWORD,
+    "UPLOAD_DIR" : UPLOAD_DIR
+    }
 
-# For connecting to the site
-SITE_ADAPTER = "sites.adapters.necat"              # file name prefix for adapter in src/sites/adapters
-SITE_ADAPTER_SETTINGS = {"ID":ID,
-                         "SITE_REDIS_IP":SECRETS.SITE_REDIS_IP,
-                         "SITE_REDIS_PORT":SECRETS.SITE_REDIS_PORT,
-                         "SITE_REDIS_DB":SECRETS.SITE_REDIS_DB}
+SITE_ADAPTER_SETTINGS = {"ID" : ID,
+                         "REDIS_HOST" : SITE_ADAPTER_REDIS_HOST,
+                         "REDIS_PORT" : SITE_ADAPTER_REDIS_PORT,
+                         "REDIS_DB" : SITE_ADAPTER_REDIS_DB}
 
-
-# For connecting to the remote access system fr the site
-REMOTE_ADAPTER = "sites.adapters.necat_remote"     # file name prefix for adapter in src/
-# Aggregator - be careful when changing
-REMOTE_ADAPTER_SETTINGS = {"ID":ID,
-                           "MONGO_CONNECTION_STRING":SECRETS.MONGO_CONNECTION_STRING,
-                           "REDIS_CLUSTER":REDIS_CLUSTER,
-                           "SENTINEL_HOST":SECRETS.SENTINEL_HOST,
-                           "SENTINEL_PORT":SECRETS.SENTINEL_PORT,
-                           "REDIS_MASTER_NAME":SECRETS.REDIS_MASTER_NAME}
+REMOTE_ADAPTER_SETTINGS = {"ID" : ID,
+                           "MONGO_CONNECTION_STRING" : REMOTE_ADAPTER_MONGO_CONNECTION_STRING,
+                           "REDIS_CLUSTER" : REMOTE_ADAPTER_REDIS_CLUSTER,
+                           "SENTINEL_HOST" : REMOTE_ADAPTER_SENTINEL_HOST,
+                           "SENTINEL_PORT" : REMOTE_ADAPTER_SENTINEL_PORT,
+                           "REDIS_MASTER_NAME" : REMOTE_ADAPTER_REDIS_MASTER_NAME,
+                           "REDIS_HOST" : REMOTE_ADAPTER_REDIS_HOST,
+                           "REDIS_PORT" : REMOTE_ADAPTER_REDIS_PORT}
 
 # secret_settings_general = { #database information
 #                             'db_host'                : 'rapd.nec.aps.anl.gov',         #location of mysql database
