@@ -88,6 +88,7 @@ secret_settings_general = { #database information
 #For detector vendortypes look in ../share/phenix/modules/cctbx_project/iotbx/detectors
 #for your detector file and do a search for 'self.vendortype'
 #Common detector vendortypes are 'MARCCD', 'ADSC', 'Pilatus-6M', "EIGER"
+#In the future, this will be set automatically.
 settings_C = {'beamline'          : 'C',
               'multiprocessing'   : 'True',
               'spacegroup'        : 'None',
