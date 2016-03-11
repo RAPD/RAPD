@@ -31,10 +31,9 @@ import os
 import socket
 import time
 
-#custom RAPD imports
-from utils.sites import get_ip_address
-
+# RAPD imports
 from control_server import LaunchAction, ControllerServer
+from utils.sites import get_ip_address
 # from rapd_console import ConsoleFeeder
 # from rapd_site import GetDataRootDir, TransferToUI, TransferToBeamline, CopyToUser
 

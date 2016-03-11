@@ -35,7 +35,7 @@ import utils.sites
 
 class Launch(object):
     """
-    Launches json-formatted radp command files using the command-appropriate
+    Launches json-formatted RAPD command files using the command-appropriate
     rapd agent
     """
 

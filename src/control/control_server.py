@@ -22,12 +22,12 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
+# Standard imports
 import socket
 import threading
 import json
 import time
 import logging
-import logging.handlers
 
 BUFFER_SIZE = 8192
 
@@ -44,7 +44,6 @@ class ControllerServer(threading.Thread):
         """
         # Get the logger
         self.logger = logging.getLogger("RAPDLogger")
-        self.logger.info('ControllerServer::__init__')
 
         # Initialize the thred
         threading.Thread.__init__(self)
@@ -59,7 +58,7 @@ class ControllerServer(threading.Thread):
 
     def run(self):
 
-        HOST = ''
+        HOST = ""
 
         # Create the socket listener
         _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
