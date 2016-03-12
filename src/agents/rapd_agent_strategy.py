@@ -30,7 +30,7 @@ An autoindex & strategy rapd_agent
 RAPD_AGENT = True
 
 # This handler's request type
-AGENT_TYPE = "autoindex+strategy"
+AGENT_TYPE = "AUTOINDEX+STRATEGY"
 
 # A unique UUID for this handler (uuid.uuid1().hex)
 ID = "3b3448aee4a811e59c0aac87a3333966"

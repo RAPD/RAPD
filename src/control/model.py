@@ -201,12 +201,13 @@ class Model(object):
                     "STAC file2": '/gpfs6/users/necat/Jon/RAPD_test/bestfile.par', #XOAlign
                     "axis_align": 'long',    #long,all,a,b,c,ab,ac,bc #XOAlign
                    }
-            LaunchAction(command=("STRATEGY",
-                                  {"directories":{"work":"/home/schuerjp/temp"},
-                                   "header1":header1,
-                                   "header2":False,
-                                   "preferences":preferences},
-                                  self.return_address),
+            LaunchAction(command={"command":"AUTOINDEX+STRATEGY",
+                                  "directories":{"work":"/home/schuerjp/temp"},
+                                  "header1":header1,
+                                  "header2":False,
+                                  "preferences":preferences,
+                                  "return_address":self.return_address
+                                 },
                          launcher_address=("164.54.208.135", 50000),
                          settings=None)
             time.sleep(300)
