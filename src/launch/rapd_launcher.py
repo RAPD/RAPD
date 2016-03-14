@@ -55,6 +55,7 @@ class Launcher(object):
     port = None
     job_types = None
     adapter_file = None
+    launcher = None
 
     def __init__(self, site, tag=""):
         """
@@ -153,7 +154,7 @@ class Launcher(object):
             elif launcher[0] == self.ip_address:
                 possible_tags.append(launcher[1])
 
-        # No address
+        # No launcher adapter
         if self.launcher is None:
 
             # No launchers for this IP address
