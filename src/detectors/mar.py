@@ -153,7 +153,8 @@ class MARImage(DetectorImageBase):
         f.seek(offset+732)
         rawdata = f.read(4)
         rotation_axis = struct.unpack(format+'i',rawdata)[0]
-        #assert rotation_axis == 4 # if it isn't phi; go back and recode to cover all cases
+        print rotation_axis
+	#assert rotation_axis == 4 # if it isn't phi; go back and recode to cover all cases
 
         # ----- omega analysis
         f.seek(offset+672)
@@ -166,7 +167,8 @@ class MARImage(DetectorImageBase):
 
         if rotation_axis == 4: # rotation axis is phi
           pass
-        elif rotation_axis == 1: # rotation about omega
+        #elif rotation_axis == 1: # rotation about omega
+	elif rotation_axis in [1,2]:
           parameters['OSC_START'] = parameters['OMEGA_START']
 
         f.seek(offset+668)
@@ -251,30 +253,41 @@ def MarReadHeader(image,
                    'size2'        : int(header['SIZE2']),
                    'omega_end'    : float(header['OMEGA_END']),
                    'omega_start'  : float(header['OMEGA_START']),
-                   'beam_center_x': float(header['BEAM_CENTER_X']),
-                   'beam_center_y': float(header['BEAM_CENTER_Y']),
-                   'vendortype'   : m.vendortype,
+                   #Flipped!!
+                   'beam_center_x': float(header['BEAM_CENTER_Y']),
+                   'beam_center_y': float(header['BEAM_CENTER_X']),
+                   #'vendortype'   : m.vendortype,
                    }
-
+  
   #Figure out which MAR detector was used
-  if m.vendortype == 'MARCCD':
-    if header_items['size1'] == 3840:
-      header_items['vendortype'] = 'MAR300HS'
-    else:
-      header_items['vendortype'] = 'MAR300'
-
+  #if m.vendortype == 'MARCCD':
+  if header_items['size1'] == 3840:
+    det = 'ray300'
+  else:
+    det = 'mar300'
+  
   #try:
   #tease out the info from the file name
-  #base = os.path.basename(image).rstrip(".cbf")
   base = os.path.basename(image)
+  ubc = base.count('_')
+  if ubc == 0:
+    ip =  base.split(".")[0]
+    rn = None
+  elif ubc == 1:
+    ip = base.split("_")[0]
+    rn = base[base.rfind("_")+1:base.rfind('.')]
+  else:
+    ip = "_".join(base.split("_")[0:-1])
+    rn = base[base.rfind("_")+1:base.rfind('.')]
 
   parameters = {'fullname'     : image,
-                'detector'     : 'MARCCD',
+                'detector'     : det,
                 'directory'    : os.path.dirname(image),
-                'image_prefix' : "_".join(base.split("_")[0:-2]),
-                'run_number'   : str(base.split("_")[-2]),
-                #'image_number' : int(base.split("_")[-1]),
-                'image_number' : int(base.split(".")[-1]),
+                #'image_prefix' : "_".join(base.split("_")[0:-2]),
+                'image_prefix' : str(ip),
+		#'run_number'   : str(base.split("_")[-1]),
+                'run_number'   : str(rn),
+		'image_number' : int(base.split(".")[-1]),
                 'axis'         : 'omega',
                 'collect_mode' : mode,
                 'run_id'       : run_id,
@@ -306,7 +319,7 @@ if __name__ == "__main__":
     P = PilatusMonitor(beamline='C',notify=notify,reconnect=None,logger=None)
     """
     #Test the header reading
-    test_image = "/Users/frankmurphy/workspace/rapd_github/src/test/sercat_id/test_data/THAU10_r1_1.0001"
+    test_image = '/panfs/panfs0.localdomain/raw/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0001'
     header = MarReadHeader(test_image)
     import pprint
     P = pprint.PrettyPrinter()
