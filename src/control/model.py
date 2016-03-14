@@ -143,7 +143,8 @@ class Model(object):
                                   "message":"Hello, world!",
                                   "preferences":{},
                                   "return_address":self.return_address},
-                         launcher_address=("164.54.212.15", 50000),
+                        #  launcher_address=("164.54.212.15", 50000),
+                         launcher_address=("164.54.208.135", 50000),
                          settings=None)
                          #settings=self.database.get_current_settings(id=self.site.ID))
 
@@ -207,9 +208,10 @@ class Model(object):
             #                       "preferences":preferences,
             #                       "return_address":self.return_address
             #                      },
+            #              # launcher_address=("164.54.212.15", 50000),
             #              launcher_address=("164.54.208.135", 50000),
             #              settings=None)
-            time.sleep(30)
+            time.sleep(60)
 
     def connect_to_database(self):
         """Set up database connection"""

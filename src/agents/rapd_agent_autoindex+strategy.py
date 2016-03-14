@@ -31,6 +31,7 @@ RAPD_AGENT = True
 
 # This handler's request type
 AGENT_TYPE = "AUTOINDEX+STRATEGY"
+AGENT_SUBTYPE = "CORE"
 
 # A unique UUID for this handler (uuid.uuid1().hex)
 ID = "3b3448aee4a811e59c0aac87a3333966"
@@ -78,7 +79,7 @@ class RapdAgent(Process):
     #used for rapd_agent_beamcenter.py to launch a lot of jobs at once.
     cluster_use = False
     #If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
-    cluster_queue = 'index.q'
+    cluster_queue = "index.q"
     #self.cluster_queue                      = False
     #Switch for verbose
     verbose = True
@@ -102,41 +103,37 @@ class RapdAgent(Process):
 
         self.logger.info(site)
         self.logger.info(command)
-        self.logger.info(input)
-        self.logger.info(reply_address)
         self.st = time.time()
 
         # Store passed-in variables
         self.site = site
         self.command = command
-        self.input = list(input)
         self.reply_address = self.command["return_address"]
 
         # Setting up data input
-        self.setup = dirs
-        self.data = data
+        self.setup = self.command["directories"]
         self.header = self.command["header1"]
         self.header2 = self.command.get("header2", False)
         self.preferences = self.command["preferences"]
         self.controller_address = self.reply_address
 
-        #Set timer for distl. 'False' will disable.
+        # Set timer for distl. "False" will disable.
         if self.header2:
             self.distl_timer = 60
         else:
             self.distl_timer = 30
-        #Set strategy timer. 'False' disables.
+        # Set strategy timer. "False" disables.
         self.strategy_timer = 90
-        #Set timer for XOAlign. 'False' will disable.
+        # Set timer for XOAlign. "False" will disable.
         self.xoalign_timer = 30
 
-        #Turns on multiprocessing for everything
-        #Turns on all iterations of Labelit running at once, sorts out highest symmetry solution, then continues...(much better!!)
+        # Turns on multiprocessing for everything
+        # Turns on all iterations of Labelit running at once, sorts out highest symmetry solution, then continues...(much better!!)
         self.multiproc = True
         if self.preferences.has_key("multiprocessing"):
             if self.preferences.get("multiprocessing") == "False":
                 self.multiproc = False
-        #Set for Eisenberg peptide work.
+        # Set for Eisenberg peptide work.
         self.sample_type = self.preferences.get("sample_type", "Protein")
         if self.sample_type == "Peptide":
             self.peptide     = True
@@ -157,9 +154,9 @@ class RapdAgent(Process):
             self.multicrystalstrat = True
             self.strategy = "mosflm"
 
-        #This is where I place my overall folder settings.
+        # This is where I place my overall folder settings.
         self.working_dir                        = False
-        #this is where I have chosen to place my results
+        # This is where I have chosen to place my results
         self.auto_summary                       = False
         self.labelit_log                        = {}
         self.labelit_results                    = {}
@@ -193,37 +190,37 @@ class RapdAgent(Process):
         self.mosflm_strat_anom_summary          = False
         self.mosflm_strat1_anom_summary         = False
         self.mosflm_strat_anom_summary_long     = False
-        #Labelit settings
+        # Labelit settings
         self.index_number                       = False
         self.ignore_user_SG                     = False
         self.pseudotrans                        = False
-        #Raddose settings
+        # Raddose settings
         self.volume                             = False
         self.calc_num_residues                  = False
-        #Mosflm settings
+        # Mosflm settings
         self.prev_sg                            = False
-        #extra features for BEST
+        # Extra features for BEST
         self.high_dose                          = False
         self.crystal_life                       = None
         self.iso_B                              = False
-        #dicts for running the Queues
+        # Dicts for running the Queues
         self.jobs                               = {}
         self.vips_images                        = {}
 
-        #Settings for all programs
-        self.beamline             = self.header.get('beamline')
-        self.time                 = str(self.header.get('time','1.0'))
-        self.wavelength           = str(self.header.get('wavelength'))
-        self.transmission         = float(self.header.get('transmission'))
-        #self.aperture             = str(self.header.get('md2_aperture'))
-        self.spacegroup           = self.preferences.get('spacegroup')
-        self.flux                 = str(self.header.get('flux'))
-        self.solvent_content      = str(self.preferences.get('solvent_content',0.55))
+        # Settings for all programs
+        self.beamline             = self.header.get("beamline")
+        self.time                 = str(self.header.get("time", "1.0"))
+        self.wavelength           = str(self.header.get("wavelength"))
+        self.transmission         = float(self.header.get("transmission"))
+        #self.aperture             = str(self.header.get("md2_aperture"))
+        self.spacegroup           = self.preferences.get("spacegroup")
+        self.flux                 = str(self.header.get("flux"))
+        self.solvent_content      = str(self.preferences.get("solvent_content", 0.55))
 
         #Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
         #This is used to determine if job submitted by rapd_cluster or script was launched for testing.
         #******BEAMLINE SPECIFIC*****
-        if self.header.has_key('acc_time'):
+        if self.header.has_key("acc_time"):
             self.gui                   = True
             self.test                  = False
             self.clean                 = True
@@ -232,7 +229,7 @@ class RapdAgent(Process):
             self.gui                   = True
         #******BEAMLINE SPECIFIC*****
 
-        Process.__init__(self, name='AutoindexingStrategy')
+        Process.__init__(self, name="AutoindexingStrategy")
 
         self.start()
 
@@ -248,7 +245,6 @@ class RapdAgent(Process):
             self.cluster_adapter = load_module(self.site.CLUSTER_ADAPTER)
         else:
             self.cluster_adapter = False
-
 
     def run(self):
         """
@@ -292,7 +288,7 @@ class RapdAgent(Process):
         Setup the working dir in the RAM and save the dir where the results will go at the end.
         """
         if self.verbose:
-            self.logger.debug('AutoindexingStrategy::preprocess')
+            self.logger.debug("AutoindexingStrategy::preprocess")
 
         # Determine detector vendortype
         self.vendortype = Utils.getVendortype(self, self.header)
@@ -302,13 +298,13 @@ class RapdAgent(Process):
         #Grab the beamline info from rapd_site.py that give the specifics of this beamline.
         #You will have to modify how a beamline/detector is selected. If multiple detectors
         #of same type, you could look at S/N.
-        if self.header.get('fullname')[-3:] == 'cbf':
-          if float(self.header.get('beam_center_y')) > 200.0:
-            self.vendortype = 'Pilatus-6M'
+        if self.header.get("fullname")[-3:] == "cbf":
+          if float(self.header.get("beam_center_y")) > 200.0:
+            self.vendortype = "Pilatus-6M"
           else:
-            self.vendortype = 'ADSC-HF4M'
+            self.vendortype = "ADSC-HF4M"
         else:
-          self.vendortype = 'ADSC'
+          self.vendortype = "ADSC"
         """
 
         self.dest_dir = self.setup.get("work")
@@ -435,8 +431,6 @@ class RapdAgent(Process):
             params["vendortype"] = self.vendortype
             if self.working_dir == self.dest_dir:
                 command = self.command
-                # inp = self.input
-                # inp = ["AUTOINDEX", {"work": self.working_dir}, self.header, self.preferences]
             else:
                 command = self.command.copy()
                 command["directories"]["work"] = self.working_dir
