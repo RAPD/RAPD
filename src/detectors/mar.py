@@ -7,7 +7,7 @@ import logging, logging.handlers
 class MARImage(DetectorImageBase):
   def __init__(self,filename):
     DetectorImageBase.__init__(self,filename)
-    self.vendortype = "MARCCD"
+    #self.vendortype = "MARCCD"
 
     byte_order = str(open(self.filename,"rb").read(2))
     if byte_order == 'II':
@@ -255,11 +255,9 @@ def MarReadHeader(image,
                    #Flipped!!
                    'beam_center_x': float(header['BEAM_CENTER_Y']),
                    'beam_center_y': float(header['BEAM_CENTER_X']),
-                   #'vendortype'   : m.vendortype,
                    }
   
   #Figure out which MAR detector was used
-  #if m.vendortype == 'MARCCD':
   if header_items['size1'] == 3840:
     det = 'ray300'
   else:
