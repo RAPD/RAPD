@@ -144,13 +144,28 @@ class Launcher(object):
         self.ip_address = utils.sites.get_ip_address()
         self.logger.debug("Found ip address to be %s", self.ip_address)
 
+        # Look for the launcher matching this ip_address and the input tag
+        possible_tags = []
         for launcher in launchers:
             if launcher[0] == self.ip_address and launcher[1] == self.tag:
                 self.launcher = launcher
                 break
+            elif launcher[0] == self.ip_address:
+                possible_tags.append(launcher[1])
 
         # No address
         if self.launcher is None:
+
+            # No launchers for this IP address
+            if len(possible_tags) == 0:
+                print "  There are no launcher adapters registered for this ip address"
+            # IP Address in launchers, but not the input tag
+            else:
+                print "  There is a launcher adapter registered for this IP address, but not for the input tag"
+                print "  Available tags for this IP address:"
+                for t in possible_tags:
+                    print "    %s" % t
+
             raise Exception("No definition for launcher in site file")
         else:
             # Unpack address
@@ -194,7 +209,7 @@ def get_commandline():
     # Add the possibility to tag the Launcher
     # This will make it possible to run multiple Launcher configurations
     # on one machine
-    parser.add_argument("--tag",
+    parser.add_argument("--tag", "-t",
                         action="store",
                         dest="tag",
                         default="",
@@ -228,11 +243,13 @@ def main():
     # Single process lock?
     file_lock(SITE.LAUNCHER_LOCK_FILE)
 
-    # Set up logging
+    # Set up logging level
     if commandline_args.verbose:
         log_level = 10
     else:
         log_level = SITE.LOG_LEVEL
+
+    # Instantiate the logger
     logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
                                   logfile_id="rapd_launcher_"+SITE.ID,
                                   level=log_level)

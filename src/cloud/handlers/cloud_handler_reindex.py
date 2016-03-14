@@ -27,7 +27,8 @@ import logging
 import os
 import threading
 
-from rapd_launch import PerformAction
+# RAPD imports
+from control_server import LaunchAction
 
 # This is a rapd cloud handler
 CLOUD_HANDLER = True
@@ -136,7 +137,7 @@ class Handler(threading.Thread):
         # Connect to the server and autoindex the single image
         # Pair
         if "pair" in self.index_type:
-            PerformAction(command=("AUTOINDEX-PAIR",
+            LaunchAction(command=("AUTOINDEX-PAIR",
                                    new_dirs,
                                    self.image1,
                                    self.image2,
@@ -145,7 +146,7 @@ class Handler(threading.Thread):
                           settings=self.settings)
         # Single
         else:
-            PerformAction(("AUTOINDEX",
+            LaunchAction(("AUTOINDEX",
                            new_dirs,
                            self.image1,
                            self.process_settings,

@@ -30,11 +30,11 @@ commandline.py holds utilities for parsing the commandline for rapd processes
 
 # The base parser - used by rapd.py
 base_parser = argparse.ArgumentParser(add_help=False)
-base_parser.add_argument("-s",
+base_parser.add_argument("-s", "--site",
                          action="store",
                          dest="site",
                          help="Define the site (ex. NECAT_C)")
-base_parser.add_argument("-v",
+base_parser.add_argument("-v", "--verbose",
                          action="store_true",
                          dest="verbose",
                          help="Enable verbose feedback")
