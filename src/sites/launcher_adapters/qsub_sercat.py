@@ -56,8 +56,6 @@ class LauncherAdapter(object):
         self.message = message
         self.settings = settings
 
-        self.logger.debug("site: %s", self.site)
-
         self.run()
 
     def run(self):
@@ -66,14 +64,7 @@ class LauncherAdapter(object):
         """
 
         # Decode message
-        message_decoded = json.loads(self.message)
-
-        # Unpack message
-        try:
-            command, data, reply_address = message_decoded
-        except ValueError:
-            self.logger.error("Unable to unpack message")
-            return False
+        command = json.loads(self.message)["command"]
 
         # Get the launcher directory - in launcher specification
         qsub_dir = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"]
