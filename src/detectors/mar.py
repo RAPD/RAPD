@@ -260,7 +260,6 @@ def MarReadHeader(image,
                    }
   
   #Figure out which MAR detector was used
-  #if m.vendortype == 'MARCCD':
   if header_items['size1'] == 3840:
     det = 'ray300'
   else:
@@ -283,9 +282,7 @@ def MarReadHeader(image,
   parameters = {'fullname'     : image,
                 'detector'     : det,
                 'directory'    : os.path.dirname(image),
-                #'image_prefix' : "_".join(base.split("_")[0:-2]),
                 'image_prefix' : str(ip),
-		#'run_number'   : str(base.split("_")[-1]),
                 'run_number'   : str(rn),
 		'image_number' : int(base.split(".")[-1]),
                 'axis'         : 'omega',
