@@ -29,13 +29,13 @@ import paramiko
 import threading
 
 # RAPD imports
-from rapd_launch import PerformAction
+from control_server import LaunchAction
 
 # This is a rapd cloud handler
 CLOUD_HANDLER = True
 
 # This handler's request type
-REQUEST_TYPE = "molecular_replacement"
+REQUEST_TYPE = "mr"
 
 # A unique UUID for this handler (uuid.uuid1().hex)
 ID = "58f2f0a6d98e11e5b9dcc82a1400d5bc"
@@ -123,7 +123,7 @@ class Handler(threading.Thread):
             self.database.addCloudCurrent(self.request)
 
             # Connect to the server and autoindex the single image
-            PerformAction(("MR", my_dirs, data, self.process_settings, self.reply_settings),
+            LaunchAction(("MR", my_dirs, data, self.process_settings, self.reply_settings),
                           self.process_settings,
                           self.settings)
 
