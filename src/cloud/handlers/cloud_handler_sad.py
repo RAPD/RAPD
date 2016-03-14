@@ -27,10 +27,8 @@ import logging
 import os
 import threading
 
-from rapd_launch import PerformAction
-
 # RAPD imports
-from rapd_launch import PerformAction
+from control_server import LaunchAction
 
 # This is a rapd cloud handler
 CLOUD_HANDLER = True
@@ -118,7 +116,7 @@ class Handler(threading.Thread):
         self.database.addCloudCurrent(self.request)
 
         # Connect to the server and autoindex the single image
-        PerformAction(("SAD", new_dirs, data, self.process_settings, self.reply_settings),
+        LaunchAction(("SAD", new_dirs, data, self.process_settings, self.reply_settings),
                       self.process_settings,
                       self.settings)
 
