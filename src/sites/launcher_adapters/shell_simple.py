@@ -61,14 +61,7 @@ class LauncherAdapter(object):
         """
 
         # Decode message
-        message_decoded = json.loads(self.message)
-
-        # Unpack message
-        try:
-            command, dirs, data, send_address, reply_address = message_decoded
-        except ValueError:
-            self.logger.error("Unable to unpack message")
-            return False
+        command = json.loads(self.message)["command"]
 
         # Put the command into a file
         command_file = launch_tools.write_command_file(self.settings["launch_dir"], command, self.message)

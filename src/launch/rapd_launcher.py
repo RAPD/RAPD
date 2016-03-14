@@ -172,15 +172,12 @@ class Launcher(object):
     def connect_to_database(self):
         """Set up database connection"""
 
-        # Shorten it a little
-        site = self.site
-
         # Import the database adapter as database module
         global database
-        database = importlib.import_module('database.rapd_%s_adapter' % site.CONTROL_DATABASE)
+        database = importlib.import_module('database.rapd_%s_adapter' % self.site.CONTROL_DATABASE)
 
         # Instantiate the database connection
-        self.database = database.Database(settings=site.CONTROL_DATABASE_SETTINGS)
+        self.database = database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
 
 
 

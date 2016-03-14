@@ -141,8 +141,9 @@ class LaunchAction(threading.Thread):
         """Initialize the class
 
         Keyword arguments:
-        command --
-        settings -- Right now only needs to be a dict with the entry CLUSTER_ADDRESS
+        command -- Dict containing everything needed by launcher and downstream
+        launcher_address -- tuple of IP, PORT for a launcher instance
+        settings -- Not currently used
         """
         self.logger = logging.getLogger("RAPDLogger")
         self.logger.debug("LaunchAction::__init__  command:%s", command)
@@ -177,7 +178,7 @@ class LaunchAction(threading.Thread):
             # Connect to the cluster process
             _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
-                _socket.connect(launcher_settings)
+                _socket.connect(self.launcher_address)
                 break
             except socket.error:
                 self.logger.exception("Failed to initialize socket to launcher")

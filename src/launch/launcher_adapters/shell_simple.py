@@ -40,7 +40,7 @@ class LauncherAdapter(object):
     Will launch requested job in shell on the current machine
     """
 
-    def __init__(self, site_id, message, settings):
+    def __init__(self, site, message, settings):
         """
         Initialize the adapter
         """
@@ -49,7 +49,7 @@ class LauncherAdapter(object):
         self.logger = logging.getLogger("RAPDLogger")
         self.logger.debug("__init__")
 
-        self.site_id = site_id
+        self.site = site
         self.message = message
         self.settings = settings
 
@@ -61,21 +61,14 @@ class LauncherAdapter(object):
         """
 
         # Decode message
-        message_decoded = json.loads(self.message)
-
-        # Unpack message
-        try:
-            command, dirs, data, send_address, reply_address = message_decoded
-        except ValueError:
-            self.logger.error("Unable to unpack message")
-            return False
+        command = json.loads(self.message)["command"]
 
         # Put the command into a file
         command_file = launch_tools.write_command_file(self.settings["launch_dir"], command, self.message)
 
         # Call the launch process on the command file
-        self.logger.debug("%s", ["rapd.launch", "-v", "-s", self.site_id.lower(), command_file])
-        Popen(["rapd.launch", "-s", self.site_id.lower(), command_file])
+        self.logger.debug("%s", "rapd.launch", "-v", "-s", self.site.ID.lower(), command_file)
+        Popen(["rapd.launch", "-s", self.site.ID.lower(), command_file])
 
 if __name__ == "__main__":
 

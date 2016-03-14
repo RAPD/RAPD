@@ -47,18 +47,19 @@ class RapdAgent(multiprocessing.Process):
     An action class which only echos the input data back
     """
 
+    # Address for communications to go to
+    reply_settings = None
+
     # This is where I have chosen to place my results
     results = False
 
-    def __init__(self, site, command, request, reply_settings):
+    def __init__(self, site, command):
         """
         Initialize the echo process
 
         Keyword arguments
         site -- full site settings
-        command -- type of job to be run
-        request -- full information to execute the agent
-        reply_settings -- information for how to contact control process
+        command -- dict of data necessary for this agent
         """
 
         # Get the logger Instance
@@ -67,8 +68,6 @@ class RapdAgent(multiprocessing.Process):
 
         self.site = site
         self.command = command
-        self.request = request
-        self.reply_settings = reply_settings
 
         self.logger.debug("%s", self.site)
 
@@ -95,6 +94,9 @@ class RapdAgent(multiprocessing.Process):
         """
         self.logger.debug("preprocess")
 
+        # Get the reply_settings
+        self.reply_settings = self.command["return_address"]
+
 
     def process(self):
         """
@@ -106,8 +108,7 @@ class RapdAgent(multiprocessing.Process):
         self.logger.debug("process")
 
         # Put the gathered data into a dict for return
-        self.results = [self.command, self.request, self.reply_settings]
-        self.results.append("rapd_agent_echo")
+        self.results = self.command        
 
     def postprocess(self):
         """

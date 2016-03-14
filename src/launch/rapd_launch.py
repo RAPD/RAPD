@@ -60,19 +60,16 @@ class Launch(object):
         """Orchsetrate the Launch process"""
 
         # Load and decode json command file
-        command, dirs, data, send_address, reply_address = self.load_command()
+        command = self.load_command()
 
-        self.logger.debug("command: %s", command)
-        self.logger.debug("dirs: %s", dirs)
-        self.logger.debug("data: %s", data)
-        self.logger.debug("send_address: %s", send_address)
-        self.logger.debug("reply_address: %s", reply_address)
+        self.logger.debug("command: %s", command.get("command", None))
+        self.logger.debug("reply_address: %s", command.get("reply_address", None))
 
         # Load the agent for this command
-        self.load_agent(command)
+        self.load_agent(command.get("command"))
 
         # Run the agent
-        self.agent.RapdAgent(self.site, command, dirs, data, reply_address)
+        self.agent.RapdAgent(self.site, command)
 
     def load_command(self):
         """Load and parse the command file"""

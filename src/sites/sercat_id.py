@@ -106,8 +106,8 @@ RAPD_AGENT_DIRECTORIES = ("sites.agents",
 
 
 # Directories to look for launcher adapters
-RAPD_LAUNCHER_ADAPTER_DIRECTORIES = ("sites.launcher_adapters",
-                                     "launch.launcher_adapters")
+RAPD_LAUNCHER_ADAPTER_DIRECTORIES = ("launch.launcher_adapters",
+                                     "sites.launcher_adapters")
 # Queried in order, so a shell_simple.py in src/sites/launcher_adapters will override
 # the same file in launch/launcher_adapters
 
