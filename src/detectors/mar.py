@@ -167,7 +167,8 @@ class MARImage(DetectorImageBase):
 
         if rotation_axis == 4: # rotation axis is phi
           pass
-        elif rotation_axis == 1: # rotation about omega
+        #elif rotation_axis == 1: # rotation about omega
+	elif rotation_axis in [1,2]:
           parameters['OSC_START'] = parameters['OMEGA_START']
 
         f.seek(offset+668)
@@ -267,7 +268,6 @@ def MarReadHeader(image,
   
   #try:
   #tease out the info from the file name
-  #base = os.path.basename(image).rstrip(".cbf")
   base = os.path.basename(image)
   ubc = base.count('_')
   if ubc == 0:
@@ -324,8 +324,3 @@ if __name__ == "__main__":
     import pprint
     P = pprint.PrettyPrinter()
     P.pprint(header)
-    #test_image = '/panfs/panfs0.localdomain/raw/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0090'
-    #header = MarReadHeader(test_image)
-    #import pprint
-    #P = pprint.PrettyPrinter()
-    #P.pprint(header)
