@@ -255,40 +255,40 @@ class RapdAgent(Process):
         Convoluted path of modules to run.
         """
         if self.verbose:
-            self.logger.debug('AutoindexingStrategy::run')
+    	      self.logger.debug('AutoindexingStrategy::run')
 
         self.preprocess()
 
         if self.minikappa:
-            self.processXOalign()
+    	    self.processXOalign()
         else:
-            #Make the labelit.png image
-            self.makeImages(0)
-            #Run Labelit
-            self.processLabelit()
+    	    #Make the labelit.png image
+    	    self.makeImages(0)
+    	    #Run Labelit
+    	    self.processLabelit()
 
-            #Gleb recommended, but in some cases takes several seconds to minutes longer to run Best??
-            #if self.pilatus:
+      	    #  Gleb recommended, but in some cases takes several seconds to minutes longer to run Best??
+            #  if self.pilatus:
             #    if self.preferences.get('strategy_type') == 'best':
-            #        self.processXDSbg()
+            #	   self.processXDSbg()
 
-            #Sorts labelit results by highest symmetry.
-            self.labelitSort()
-            #If there is a solution, then calculate a strategy.
-            if self.labelit_failed == False:
-                #Start distl.signal_strength for the correct labelit iteration
-                self.processDistl()
-                if self.multiproc == False:
-                    self.postprocessDistl()
-                self.preprocessRaddose()
-                self.processRaddose()
-                self.processStrategy()
-                self.Queue()
-                #Get the distl results
-                if self.multiproc:
-                    self.postprocessDistl()
-            #Make PHP files for GUI, passback results, and cleanup.
-            self.postprocess()
+      	    #Sorts labelit results by highest symmetry.
+        	self.labelitSort()
+        	#If there is a solution, then calculate a strategy.
+        	if self.labelit_failed == False:
+        	    #Start distl.signal_strength for the correct labelit iteration
+        	    self.processDistl()
+        	    if self.multiproc == False:
+        		self.postprocessDistl()
+        	    self.preprocessRaddose()
+        	    self.processRaddose()
+        	    self.processStrategy()
+        	    self.Queue()
+        	    #Get the distl results
+        	    if self.multiproc:
+        		    self.postprocessDistl()
+    	  #Make PHP files for GUI, passback results, and cleanup.
+    	  self.postprocess()
 
     def preprocess(self):
         """
@@ -2549,7 +2549,8 @@ if __name__ == '__main__':
   ###To see all the input options look at extras/rapd_input.py (autoindexInput)###
 
   inp = ["AUTOINDEX",
-  {"work": "/gpfs6/users/necat/Jon/RAPD_test/Output",
+  {#"work": "/gpfs6/users/necat/Jon/RAPD_test/Output",
+   "work": "/home/schuerjp/temp/Junk",
    },
 
   #Info from first image
@@ -2571,18 +2572,18 @@ if __name__ == '__main__':
    #"beam_center_y": "158.68", #Q315
    #"beam_center_x": "172.80", #HF4M
    #"beam_center_y": "157.18", #HF4M
-   "beam_center_x": "149.87", #22ID
-   "beam_center_y": "145.16", #22ID
-   #"beam_center_x": "140.06", #22BM
-   #"beam_center_y": "142.22", #22BM
+   #"beam_center_x": "149.87", #22ID
+   #"beam_center_y": "145.16", #22ID
+   "beam_center_x": "140.06", #22BM
+   "beam_center_y": "142.22", #22BM
    "flux":'1.6e11', #RADDOSE
    "beam_size_x":"0.07", #RADDOSE
    "beam_size_y":"0.03", #RADDOSE
    "gauss_x":'0.03', #RADDOSE
    "gauss_y":'0.01', #RADDOSE
-   #"fullname": "/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0001",
+   "fullname": "/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0001",
    #"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0001",
-   "fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_04_chrzas_feb_4_2016/SER4-TRYP_Pn3/SER4-TRYP_Pn3.0001",
+   #"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_04_chrzas_feb_4_2016/SER4-TRYP_Pn3/SER4-TRYP_Pn3.0001",
    #"fullname": "/gpfs6/users/necat/Jon/RAPD_test/Temp/mar/SER4-TRYP_Pn3.0001",
 
    #minikappa
@@ -2614,18 +2615,18 @@ if __name__ == '__main__':
    #"beam_center_y": "158.68", #Q315
    #"beam_center_x": "172.80", #HF4M
    #"beam_center_y": "157.18", #HF4M
-   "beam_center_x": "149.87", #22ID
-   "beam_center_y": "145.16", #22ID
-   #"beam_center_x": "140.06", #22BM
-   #"beam_center_y": "142.22", #22BM
+   #"beam_center_x": "149.87", #22ID
+   #"beam_center_y": "145.16", #22ID
+   "beam_center_x": "140.06", #22BM
+   "beam_center_y": "142.22", #22BM
    "flux":'1.6e11', #RADDOSE
    "beam_size_x":"0.07", #RADDOSE
    "beam_size_y":"0.03", #RADDOSE
    "gauss_x":'0.03', #RADDOSE
    "gauss_y":'0.01', #RADDOSE
-   #"fullname": "/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0020",
+   "fullname": "/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0090",
    #"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0020",
-   "fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_04_chrzas_feb_4_2016/SER4-TRYP_Pn3/SER4-TRYP_Pn3.0050",
+   #"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_04_chrzas_feb_4_2016/SER4-TRYP_Pn3/SER4-TRYP_Pn3.0050",
    #"fullname": "/gpfs6/users/necat/Jon/RAPD_test/Temp/mar/SER4-TRYP_Pn3.0050",
 
    #minikappa

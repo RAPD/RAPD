@@ -7,7 +7,7 @@ import logging, logging.handlers
 class MARImage(DetectorImageBase):
   def __init__(self,filename):
     DetectorImageBase.__init__(self,filename)
-    self.vendortype = "MARCCD"
+    #self.vendortype = "MARCCD"
 
     byte_order = str(open(self.filename,"rb").read(2))
     if byte_order == 'II':
@@ -153,7 +153,6 @@ class MARImage(DetectorImageBase):
         f.seek(offset+732)
         rawdata = f.read(4)
         rotation_axis = struct.unpack(format+'i',rawdata)[0]
-        print rotation_axis
 	#assert rotation_axis == 4 # if it isn't phi; go back and recode to cover all cases
 
         # ----- omega analysis
@@ -256,11 +255,9 @@ def MarReadHeader(image,
                    #Flipped!!
                    'beam_center_x': float(header['BEAM_CENTER_Y']),
                    'beam_center_y': float(header['BEAM_CENTER_X']),
-                   #'vendortype'   : m.vendortype,
                    }
   
   #Figure out which MAR detector was used
-  #if m.vendortype == 'MARCCD':
   if header_items['size1'] == 3840:
     det = 'ray300'
   else:
@@ -283,9 +280,7 @@ def MarReadHeader(image,
   parameters = {'fullname'     : image,
                 'detector'     : det,
                 'directory'    : os.path.dirname(image),
-                #'image_prefix' : "_".join(base.split("_")[0:-2]),
                 'image_prefix' : str(ip),
-		#'run_number'   : str(base.split("_")[-1]),
                 'run_number'   : str(rn),
 		'image_number' : int(base.split(".")[-1]),
                 'axis'         : 'omega',

@@ -146,14 +146,14 @@ def calculate_beam_center(distance, beam_settings, v_offset=0):
 
 # Standard header reading
 def read_header(fullname, beam_settings):
-    """Read the NE-CAT ADSC Q315 header and add some site-specific data"""
+    """Read the header and add some site-specific data"""
 
     # Perform the header read form the file
     header = rayonix_mx300hs.read_header(fullname)
 
     # Clean up the header
-    header["detector"] = header["vendortype"]
-    del header["vendortype"]
+    #header["detector"] = header["vendortype"]
+    #del header["vendortype"]
 
     # Add some values HACK
     header["aperture_x"] = 50
