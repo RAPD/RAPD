@@ -53,6 +53,20 @@ from utils.modules import load_module
 import utils.xutils as Utils
 
 class RapdAgent(Process):
+    """
+    command format
+    {
+        "command":"AUTOINDEX+STRATEGY",
+        "directories":
+            {
+                "work":""                           # Where to perform the work
+            },
+        "header1":{},                               # Image information
+        ["header2":{},]                             # 2nd image information
+        "preferences":{}                            # Settings for calculations
+        "return_address":("127.0.0.1", 50000)       # Location of control process
+    }
+    """
 
     #For testing individual modules (Will not run in Test mode on cluster!! Can be set at end of __init__.)
     test = False
@@ -71,15 +85,13 @@ class RapdAgent(Process):
     #Number of Labelit iterations to run.
     iterations = 6
 
-    def __init__(self, site, command, dirs, data, reply_address):
+    def __init__(self, site, command):
         """
         Initialize the agent
 
         Keyword arguments
         site -- full site settings
-        command -- type of job to be run
-        input -- full information to execute the agent
-        reply_address -- information for how to contact control process
+        command -- dict of all information for this agent to run
         """
 
         self.cluster_adapter = False
@@ -98,38 +110,15 @@ class RapdAgent(Process):
         self.site = site
         self.command = command
         self.input = list(input)
-        self.reply_address = reply_address
+        self.reply_address = self.command["return_address"]
 
         # Setting up data input
         self.setup = dirs
         self.data = data
-        self.header                             = self.data
-        self.header2                            = False
-        #if self.input[3].has_key('distance'):
-        #if self.input[3].has_key('fullname'):
-        #    self.header2                            = self.input[3]
-        #    self.preferences                        = self.input[4]
-        #else:
-        #    self.preferences                        = self.input[3]
-        self.preferences = self.data["preferences"]
-        self.controller_address                 = reply_address
-
-        # #For testing individual modules (Will not run in Test mode on cluster!! Can be set at end of __init__.)
-        # self.test                               = False
-        # #Removes junk files and directories at end. (Will still clean on cluster!! Can be set at end of __init__.)
-        # self.clean                              = False
-        # #Runs in RAM (slightly faster), but difficult to debug.
-        # self.ram                                = False
-        # #Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Slower (>10%). Mainly
-        # #used for rapd_agent_beamcenter.py to launch a lot of jobs at once.
-        # self.cluster_use                        = False
-        # #If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
-        # self.cluster_queue                      = 'index.q'
-        # #self.cluster_queue                      = False
-        # #Switch for verbose
-        # self.verbose                            = True
-        # #Number of Labelit iterations to run.
-        # self.iterations                         = 6
+        self.header = self.command["header1"]
+        self.header2 = self.command.get("header2", False)
+        self.preferences = self.command["preferences"]
+        self.controller_address = self.reply_address
 
         #Set timer for distl. 'False' will disable.
         if self.header2:
@@ -261,7 +250,7 @@ class RapdAgent(Process):
             self.cluster_adapter = False
 
 
-      def run(self):
+    def run(self):
         """
         Convoluted path of modules to run.
         """
@@ -302,46 +291,46 @@ class RapdAgent(Process):
             self.postprocess()
 
     def preprocess(self):
-      """
-      Setup the working dir in the RAM and save the dir where the results will go at the end.
-      """
-      if self.verbose:
-          self.logger.debug('AutoindexingStrategy::preprocess')
+        """
+        Setup the working dir in the RAM and save the dir where the results will go at the end.
+        """
+        if self.verbose:
+            self.logger.debug('AutoindexingStrategy::preprocess')
 
-      # Determine detector vendortype
-      self.vendortype = Utils.getVendortype(self, self.header)
+        # Determine detector vendortype
+        self.vendortype = Utils.getVendortype(self, self.header)
 
-      """
-      #For determining detector type. Same notation as CCTBX.
-      #Grab the beamline info from rapd_site.py that give the specifics of this beamline.
-      #You will have to modify how a beamline/detector is selected. If multiple detectors
-      #of same type, you could look at S/N.
-      if self.header.get('fullname')[-3:] == 'cbf':
-        if float(self.header.get('beam_center_y')) > 200.0:
-          self.vendortype = 'Pilatus-6M'
+        """
+        #For determining detector type. Same notation as CCTBX.
+        #Grab the beamline info from rapd_site.py that give the specifics of this beamline.
+        #You will have to modify how a beamline/detector is selected. If multiple detectors
+        #of same type, you could look at S/N.
+        if self.header.get('fullname')[-3:] == 'cbf':
+          if float(self.header.get('beam_center_y')) > 200.0:
+            self.vendortype = 'Pilatus-6M'
+          else:
+            self.vendortype = 'ADSC-HF4M'
         else:
-          self.vendortype = 'ADSC-HF4M'
-      else:
-        self.vendortype = 'ADSC'
-      """
+          self.vendortype = 'ADSC'
+        """
 
-      self.dest_dir = self.setup.get("work")
-      if self.test or self.cluster_use:
-        self.working_dir = self.dest_dir
-      elif self.ram:
-          self.working_dir = '/dev/shm/%s'%self.dest_dir[1:]
-      else:
-        self.working_dir = self.dest_dir
-      if os.path.exists(self.working_dir) == False:
-        os.makedirs(self.working_dir)
-      os.chdir(self.working_dir)
-      if self.verbose:
-        #print out recognition of the program being used
-        self.PrintInfo()
-      #Setup event for job control on cluster
-      if self.cluster_use:
-        self.running = Event()
-        self.running.set()
+        self.dest_dir = self.setup.get("work")
+        if self.test or self.cluster_use:
+            self.working_dir = self.dest_dir
+        elif self.ram:
+            self.working_dir = "/dev/shm/%s" % self.dest_dir[1:]
+        else:
+            self.working_dir = self.dest_dir
+        if os.path.exists(self.working_dir) == False:
+            os.makedirs(self.working_dir)
+        os.chdir(self.working_dir)
+        if self.verbose:
+            # Print out recognition of the program being used
+            self.PrintInfo()
+        # Setup event for job control on cluster
+        if self.cluster_use:
+            self.running = Event()
+            self.running.set()
 
     def preprocessRaddose(self):
       """
@@ -429,357 +418,362 @@ class RapdAgent(Process):
         raddose.close()
 
       except:
-        self.logger.exception('**ERROR in preprocessRaddose**')
+        self.logger.exception("**ERROR in preprocessRaddose**")
 
     def processLabelit(self):
-      """
-      Initiate Labelit runs.
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::runLabelit')
-      try:
-        #Setup queue for getting labelit log and results in labelitSort.
-        self.labelitQueue = Queue()
-        params = {}
-        params['test'] = self.test
-        params['cluster'] = self.cluster_use
-        params['verbose'] = self.verbose
-        params['cluster_queue'] = self.cluster_queue
-        params['vendortype'] = self.vendortype
-        if self.working_dir == self.dest_dir:
-          #inp = self.input
-          inp = ['AUTOINDEX', {'work': self.working_dir}, self.header, self.preferences]
-        else:
-          inp = ['AUTOINDEX', {'work': self.working_dir}, self.header, self.preferences]
-          #inp.append('AUTOINDEX')
-          #inp.append({'work': self.working_dir})
-          #inp.extend(self.input[1:])
-          #inp.append(self.preferences)
-        Process(target=RunLabelit, args=(inp, self.labelitQueue, params, self.logger)).start()
+        """
+        Initiate Labelit runs.
+        """
+        if self.verbose:
+            self.logger.debug("AutoindexingStrategy::runLabelit")
 
-      except:
-        self.logger.exception('**Error in processLabelit**')
+        try:
+            # Setup queue for getting labelit log and results in labelitSort.
+            self.labelitQueue = Queue()
+            params = {}
+            params["test"] = self.test
+            params["cluster"] = self.cluster_use
+            params["verbose"] = self.verbose
+            params["cluster_queue"] = self.cluster_queue
+            params["vendortype"] = self.vendortype
+            if self.working_dir == self.dest_dir:
+                command = self.command
+                # inp = self.input
+                # inp = ["AUTOINDEX", {"work": self.working_dir}, self.header, self.preferences]
+            else:
+                command = self.command.copy()
+                command["directories"]["work"] = self.working_dir
+
+            # Launch labelit
+            Process(target=RunLabelit, args=(command, self.labelitQueue, params, self.logger)).start()
+
+        except:
+            self.logger.exception("**Error in processLabelit**")
 
     def processXDSbg(self):
-      """
-      Calculate the BKGINIT.cbf for the background calc on the Pilatis. This is
-      used in BEST.
-      Gleb recommended this but it does not appear to make much difference except take longer.
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::processXDSbg')
-      try:
-        name = str(self.header.get('fullname'))
-        temp = name[name.rfind('_')+1:name.rfind('.')]
-        new_name = name.replace(name[name.rfind('_')+1:name.rfind('.')],len(temp)*'?')
-        #range = str(int(temp))+' '+str(int(temp))
-        command  = 'JOB=XYCORR INIT\n'
-        command += Utils.calcXDSbc(self)
-        command += 'DETECTOR_DISTANCE=%s\n'%self.header.get('distance')
-        command += 'OSCILLATION_RANGE=%s\n'%self.header.get('osc_range')
-        command += 'X-RAY_WAVELENGTH=%s\n'%self.wavelength
-        command += 'NAME_TEMPLATE_OF_DATA_FRAMES=%s\n'%new_name
-        #command += 'BACKGROUND_RANGE='+range+'\n'
-        #command += 'DATA_RANGE='+range+'\n'
-        command += 'BACKGROUND_RANGE=%s %s\n'%(int(temp),int(temp))
-        command += 'DATA_RANGE=%s %s\n'%(int(temp),int(temp))
-        command += 'DIRECTION_OF_DETECTOR_Y-AXIS=0.0 1.0 0.0\n'
-        command += 'DETECTOR=PILATUS         MINIMUM_VALID_PIXEL_VALUE=0  OVERLOAD=1048500\n'
-        command += 'SENSOR_THICKNESS=0.32        !SILICON=-1.0\n'
-        command += 'NX=2463 NY=2527 QX=0.172  QY=0.172  !PILATUS 6M\n'
-        command += 'DIRECTION_OF_DETECTOR_X-AXIS= 1.0 0.0 0.0\n'
-        command += 'TRUSTED_REGION=0.0 1.05 !Relative radii limiting trusted detector region\n'
-        command += 'UNTRUSTED_RECTANGLE= 487  493     0 2528\n'
-        command += 'UNTRUSTED_RECTANGLE= 981  987     0 2528\n'
-        command += 'UNTRUSTED_RECTANGLE=1475 1481     0 2528\n'
-        command += 'UNTRUSTED_RECTANGLE=1969 1975     0 2528\n'
-        command += 'UNTRUSTED_RECTANGLE=   0 2464   195  211\n'
-        command += 'UNTRUSTED_RECTANGLE=   0 2464   407  423\n'
-        command += 'UNTRUSTED_RECTANGLE=   0 2464   619  635\n'
-        command += 'UNTRUSTED_RECTANGLE=   0 2464   831  847\n'
-        command += 'UNTRUSTED_RECTANGLE=   0 2464  1043 1059\n'
-        command += 'UNTRUSTED_RECTANGLE=   0 2464  1255 1271\n'
-        command += 'UNTRUSTED_RECTANGLE=   0 2464  1467 1483\n'
-        command += 'UNTRUSTED_RECTANGLE=   0 2464  1679 1695\n'
-        command += 'UNTRUSTED_RECTANGLE=   0 2464  1891 1907\n'
-        command += 'UNTRUSTED_RECTANGLE=   0 2464  2103 2119\n'
-        command += 'UNTRUSTED_RECTANGLE=   0 2464  2315 2331\n'
-        command += 'ROTATION_AXIS= 1.0 0.0 0.0\n'
-        command += 'INCIDENT_BEAM_DIRECTION=0.0 0.0 1.0\n'
-        command += 'FRACTION_OF_POLARIZATION=0.99 !default=0.5 for unpolarized beam\n'
-        command += 'POLARIZATION_PLANE_NORMAL= 0.0 1.0 0.0\n'
-        f = open('XDS.INP','w')
-        f.writelines(command)
-        f.close()
-        Process(target=Utils.processLocal,args=('xds_par',self.logger)).start()
+        """
+        Calculate the BKGINIT.cbf for the background calc on the Pilatis. This is
+        used in BEST.
+        Gleb recommended this but it does not appear to make much difference except take longer.
+        """
+        if self.verbose:
+            self.logger.debug('AutoindexingStrategy::processXDSbg')
 
-      except:
-        self.logger.exception('**Error in ProcessXDSbg.**')
+        try:
+            name = str(self.header.get('fullname'))
+            temp = name[name.rfind('_')+1:name.rfind('.')]
+            new_name = name.replace(name[name.rfind('_')+1:name.rfind('.')],len(temp)*'?')
+            #range = str(int(temp))+' '+str(int(temp))
+            command  = 'JOB=XYCORR INIT\n'
+            command += Utils.calcXDSbc(self)
+            command += 'DETECTOR_DISTANCE=%s\n' % self.header.get('distance')
+            command += 'OSCILLATION_RANGE=%s\n' % self.header.get('osc_range')
+            command += 'X-RAY_WAVELENGTH=%s\n' % self.wavelength
+            command += 'NAME_TEMPLATE_OF_DATA_FRAMES=%s\n' % new_name
+            #command += 'BACKGROUND_RANGE='+range+'\n'
+            #command += 'DATA_RANGE='+range+'\n'
+            command += 'BACKGROUND_RANGE=%s %s\n' % (int(temp), int(temp))
+            command += 'DATA_RANGE=%s %s\n' % (int(temp), int(temp))
+            command += 'DIRECTION_OF_DETECTOR_Y-AXIS=0.0 1.0 0.0\n'
+            command += 'DETECTOR=PILATUS         MINIMUM_VALID_PIXEL_VALUE=0  OVERLOAD=1048500\n'
+            command += 'SENSOR_THICKNESS=0.32        !SILICON=-1.0\n'
+            command += 'NX=2463 NY=2527 QX=0.172  QY=0.172  !PILATUS 6M\n'
+            command += 'DIRECTION_OF_DETECTOR_X-AXIS= 1.0 0.0 0.0\n'
+            command += 'TRUSTED_REGION=0.0 1.05 !Relative radii limiting trusted detector region\n'
+            command += 'UNTRUSTED_RECTANGLE= 487  493     0 2528\n'
+            command += 'UNTRUSTED_RECTANGLE= 981  987     0 2528\n'
+            command += 'UNTRUSTED_RECTANGLE=1475 1481     0 2528\n'
+            command += 'UNTRUSTED_RECTANGLE=1969 1975     0 2528\n'
+            command += 'UNTRUSTED_RECTANGLE=   0 2464   195  211\n'
+            command += 'UNTRUSTED_RECTANGLE=   0 2464   407  423\n'
+            command += 'UNTRUSTED_RECTANGLE=   0 2464   619  635\n'
+            command += 'UNTRUSTED_RECTANGLE=   0 2464   831  847\n'
+            command += 'UNTRUSTED_RECTANGLE=   0 2464  1043 1059\n'
+            command += 'UNTRUSTED_RECTANGLE=   0 2464  1255 1271\n'
+            command += 'UNTRUSTED_RECTANGLE=   0 2464  1467 1483\n'
+            command += 'UNTRUSTED_RECTANGLE=   0 2464  1679 1695\n'
+            command += 'UNTRUSTED_RECTANGLE=   0 2464  1891 1907\n'
+            command += 'UNTRUSTED_RECTANGLE=   0 2464  2103 2119\n'
+            command += 'UNTRUSTED_RECTANGLE=   0 2464  2315 2331\n'
+            command += 'ROTATION_AXIS= 1.0 0.0 0.0\n'
+            command += 'INCIDENT_BEAM_DIRECTION=0.0 0.0 1.0\n'
+            command += 'FRACTION_OF_POLARIZATION=0.99 !default=0.5 for unpolarized beam\n'
+            command += 'POLARIZATION_PLANE_NORMAL= 0.0 1.0 0.0\n'
+            f = open('XDS.INP', 'w')
+            f.writelines(command)
+            f.close()
+            Process(target=Utils.processLocal, args=('xds_par', self.logger)).start()
+
+        except:
+            self.logger.exception('**Error in ProcessXDSbg.**')
 
     def processDistl(self):
-      """
-      Setup Distl for multiprocessing if enabled.
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::processDistl')
-      try:
-        self.distl_output = []
-        l = ['','2']
-        f = 1
-        if self.header2:
-          f = 2
-        for i in range(0,f):
-          if self.test:
-            inp = 'ls'
-            job = Process(target=Utils.processLocal,args=(inp,self.logger))
-          else:
-            inp = 'distl.signal_strength %s'%eval('self.header%s'%l[i]).get('fullname')
-            job = Process(target=Utils.processLocal,args=((inp,'distl%s.log'%i),self.logger))
-          job.start()
-          self.distl_output.append(job)
+        """
+        Setup Distl for multiprocessing if enabled.
+        """
+        if self.verbose:
+            self.logger.debug('AutoindexingStrategy::processDistl')
+        try:
+            self.distl_output = []
+            l = ["", "2"]
+            f = 1
+            if self.header2:
+                f = 2
+            for i in range(0, f):
+                if self.test:
+                    inp = "ls"
+                    job = Process(target=Utils.processLocal, args=(inp, self.logger))
+                else:
+                    inp = "distl.signal_strength %s" % eval("self.header%s" % l[i]).get("fullname")
+                    job = Process(target=Utils.processLocal,args=((inp,'distl%s.log'%i),self.logger))
+                job.start()
+                self.distl_output.append(job)
 
-      except:
-        self.logger.exception('**Error in ProcessDistl.**')
+        except:
+            self.logger.exception('**Error in ProcessDistl.**')
 
     def processRaddose(self):
-      """
-      Run Raddose.
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::processRaddose')
-      self.raddose_log = []
-      try:
-        self.raddose_log.append('tcsh raddose.com\n')
-        output = subprocess.Popen('tcsh raddose.com',shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-        output.wait()
-        for line in output.stdout:
-            self.raddose_log.append(line)
-
-      except:
-        self.logger.exception('**ERROR in processRaddose**')
-      raddose = Parse.ParseOutputRaddose(self,self.raddose_log)
-      self.raddose_results = { 'Raddose results' : raddose }
-      if self.raddose_results['Raddose results'] == None:
-        self.raddose_results = { 'Raddose results' : 'FAILED'}
+        """
+        Run Raddose.
+        """
         if self.verbose:
-          self.logger.debug('Raddose failed')
+            self.logger.debug("AutoindexingStrategy::processRaddose")
+        self.raddose_log = []
+        try:
+            self.raddose_log.append("tcsh raddose.com\n")
+            output = subprocess.Popen("tcsh raddose.com", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            output.wait()
+            for line in output.stdout:
+                self.raddose_log.append(line)
+
+        except:
+            self.logger.exception("**ERROR in processRaddose**")
+
+        raddose = Parse.ParseOutputRaddose(self,self.raddose_log)
+        self.raddose_results = {"Raddose results" : raddose}
+        if self.raddose_results["Raddose results"] == None:
+            self.raddose_results = {"Raddose results" : "FAILED"}
+            if self.verbose:
+                self.logger.debug("Raddose failed")
 
     def processBest(self,iteration=0,runbefore=False):
-      """
-      Construct the Best command and run. Passes back dict with PID:anom.
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::processBest')
-      try:
-        #Get the beamline settings from rapd_site.py.
-        if self.vendortype in ['Pilatus-6M','ADSC-HF4M']:
-          from rapd_site import settings_C as settings
-        else:
-          from rapd_site import settings_E as settings
-        max_dis = settings.get('max_distance')
-        min_dis = settings.get('min_distance')
-        min_d_o = settings.get('min_del_omega')
-        min_e_t = settings.get('min_exp_time')
+        """
+        Construct the Best command and run. Passes back dict with PID:anom.
+        """
+        if self.verbose:
+            self.logger.debug("AutoindexingStrategy::processBest")
 
-        image_number = []
-        image_number.append(self.header.get('fullname')[self.header.get('fullname').rfind('_')+1:self.header.get('fullname').rfind('.')])
-        if self.header2:
-          image_number.append(self.header2.get('fullname')[self.header2.get('fullname').rfind('_')+1:self.header2.get('fullname').rfind('.')])
-        #Tell Best if two-theta is being used.
-        if int(float(self.header.get('twotheta'))) != 0:
-          Utils.fixBestfile(self)
-        #if Raddose failed, here are the defaults.
-        dose         = 100000.0
-        exp_dose_lim = 300
-        if self.raddose_results:
-          if self.raddose_results.get('Raddose results') != 'FAILED':
-            dose         = self.raddose_results.get('Raddose results').get('dose per image')
-            exp_dose_lim = self.raddose_results.get('Raddose results').get('exp dose limit')
-        #Set how many frames a crystal will last at current exposure time.
-        self.crystal_life = str(int(float(exp_dose_lim) / float(self.time)))
-        if self.crystal_life == '0':
-          self.crystal_life = '1'
-        #Adjust dose for ribosome crystals.
-        if self.sample_type == 'Ribosome':
-          dose = 500001
-        #If dose is too high, warns user and sets to reasonable amount and reruns Best but give warning.
-        if dose > 500000:
-          dose           = 500000
-          exp_dose_lim   = 100
-          self.high_dose = True
-          if iteration == 1:
-            dose         = 100000.0
-            exp_dose_lim = 300
-          if iteration == 2:
-            dose         = 100000.0
-            exp_dose_lim = False
-          if iteration == 3:
-            dose         = False
-            exp_dose_lim = False
-        #put together the command for labelit.index
-        if self.vendortype == 'Pilatus-6M':
-          command = 'best -f pilatus6m'
-        elif self.vendortype == 'ADSC-HF4M':
-          command = 'best -f hf4m'
-        else:
-          command = 'best -f q315'
-          if str(self.header.get('binning')) == '2x2':
-              command += '-2x'
-        if self.high_dose:
-          command += ' -t 1.0'
-        else:
-          command += ' -t %s'%self.time
-        command += ' -e %s -sh %s -su %s'%(self.preferences.get('best_complexity','none'),\
-                                           self.preferences.get('shape','2.0'),self.preferences.get('susceptibility','1.0'))
-        if self.preferences.get('aimed_res') != 0.0:
-          command += ' -r %s'%self.preferences.get('aimed_res')
-        command += ' -Trans %s'%self.transmission
-        #Set minimum rotation width per frame. Different for PAR and CCD detectors.
-        command += ' -w %s'%min_d_o
-        #Set minimum exposure time per frame.
-        command += ' -M %s'%min_e_t
-        #Set min and max detector distance
-        command += ' -DIS_MAX %s -DIS_MIN %s'%(max_dis,min_dis)
-        #Fix bug in BEST for PAR detectors. Use the cumulative completeness of 99% instead of all bin.
-        if self.vendortype in ('Pilatus-6M','ADSC-HF4M'):
-          command += ' -low never'
-        #set dose  and limit, else set time
-        if dose:
-          command += ' -GpS %s -DMAX 30000000'%dose
-        else:
-          command += ' -T 185'
-        if runbefore:
-          command += ' -p %s %s'%(runbefore[0],runbefore[1])
-        command1 = command
-        command1 += ' -a -o best_anom.plt -dna best_anom.xml'
-        command += ' -o best.plt -dna best.xml'
-        end = ' -mos bestfile.dat bestfile.par %s_%s.hkl '%(self.index_number,image_number[0])
-        """
-        if self.pilatus:
-          if os.path.exists(os.path.join(self.working_dir,'BKGINIT.cbf')):
-            end = ' -MXDS bestfile.par BKGINIT.cbf %s_%s.hkl '%(self.index_number,image_number[0])
-        """
-        if self.header2:
-          end += '%s_%s.hkl'%(self.index_number,image_number[1])
-        command  += end
-        command1 += end
-        d = {}
-        jobs = {}
-        l = [(command,''),(command1,'_anom')]
-        st  = 0
-        end1 = 2
-        if runbefore:
-          st  = runbefore[2]
-          end1 = runbefore[3]
-        for i in range(st,end1):
-          log = os.path.join(os.getcwd(),'best%s.log'%l[i][1])
-          if self.verbose:
-            self.logger.debug(l[i][0])
-          #Save the path of the log
-          d.update({'log'+l[i][1]:log})
-          if self.test == False:
-            if self.cluster_use:
-              jobs[str(i)] = Process(target=self.cluster_adapter.processCluster, args=(self, (l[i][0], log, self.cluster_queue)))
+        try:
+            # Get the beamline settings from rapd_site.py.
+            if self.vendortype in ['Pilatus-6M', 'ADSC-HF4M']:
+                from rapd_site import settings_C as settings
             else:
-              jobs[str(i)] = Process(target=BestAction, args=((l[i][0], log), self.logger))
-            jobs[str(i)].start()
-        #Check if Best should rerun since original Best strategy is too long for Pilatis using correct start and end from plots. (Way around bug in BEST.)
-        if self.test == False:
-          if runbefore == False:
-            counter = 2
-            while counter > 0:
-              for job in jobs.keys():
-                if jobs[job].is_alive() == False:
-                  del jobs[job]
-                  start,ran = self.findBestStrat(d['log'+l[int(job)][1]].replace('log','plt'))
-                  if start != False:
-                      self.processBest(iteration,(start,ran,int(job),int(job)+1))
-                  counter -= 1
-              time.sleep(0.1)
+                from rapd_site import settings_E as settings
+            max_dis = settings.get('max_distance')
+            min_dis = settings.get('min_distance')
+            min_d_o = settings.get('min_del_omega')
+            min_e_t = settings.get('min_exp_time')
 
-      except:
-        self.logger.exception('**Error in processBest**')
+            image_number = []
+            image_number.append(self.header.get('fullname')[self.header.get('fullname').rfind('_')+1:self.header.get('fullname').rfind('.')])
+            if self.header2:
+                image_number.append(self.header2.get('fullname')[self.header2.get('fullname').rfind('_')+1:self.header2.get('fullname').rfind('.')])
+            # Tell Best if two-theta is being used.
+            if int(float(self.header.get('twotheta'))) != 0:
+                Utils.fixBestfile(self)
+            # If Raddose failed, here are the defaults.
+            dose = 100000.0
+            exp_dose_lim = 300
+            if self.raddose_results:
+                if self.raddose_results.get('Raddose results') != 'FAILED':
+                    dose         = self.raddose_results.get('Raddose results').get('dose per image')
+                    exp_dose_lim = self.raddose_results.get('Raddose results').get('exp dose limit')
+            #Set how many frames a crystal will last at current exposure time.
+            self.crystal_life = str(int(float(exp_dose_lim) / float(self.time)))
+            if self.crystal_life == '0':
+                self.crystal_life = '1'
+            #Adjust dose for ribosome crystals.
+            if self.sample_type == 'Ribosome':
+                dose = 500001
+            #If dose is too high, warns user and sets to reasonable amount and reruns Best but give warning.
+            if dose > 500000:
+                dose = 500000
+                exp_dose_lim = 100
+                self.high_dose = True
+                if iteration == 1:
+                    dose = 100000.0
+                    exp_dose_lim = 300
+                if iteration == 2:
+                    dose = 100000.0
+                    exp_dose_lim = False
+                if iteration == 3:
+                    dose = False
+                    exp_dose_lim = False
+            # Put together the command for labelit.index
+            if self.vendortype == 'Pilatus-6M':
+                command = 'best -f pilatus6m'
+            elif self.vendortype == 'ADSC-HF4M':
+                command = 'best -f hf4m'
+            else:
+                command = 'best -f q315'
+                if str(self.header.get('binning')) == '2x2':
+                    command += '-2x'
+            if self.high_dose:
+                command += ' -t 1.0'
+            else:
+                command += ' -t %s'%self.time
+            command += ' -e %s -sh %s -su %s'%(self.preferences.get('best_complexity','none'),\
+                                               self.preferences.get('shape','2.0'),self.preferences.get('susceptibility','1.0'))
+            if self.preferences.get('aimed_res') != 0.0:
+                command += ' -r %s' % self.preferences.get('aimed_res')
+            command += ' -Trans %s' % self.transmission
+            #Set minimum rotation width per frame. Different for PAR and CCD detectors.
+            command += ' -w %s' % min_d_o
+            #Set minimum exposure time per frame.
+            command += ' -M %s' % min_e_t
+            #Set min and max detector distance
+            command += ' -DIS_MAX %s -DIS_MIN %s' % (max_dis, min_dis)
+            #Fix bug in BEST for PAR detectors. Use the cumulative completeness of 99% instead of all bin.
+            if self.vendortype in ('Pilatus-6M', 'ADSC-HF4M'):
+                command += ' -low never'
+            #set dose  and limit, else set time
+            if dose:
+                command += ' -GpS %s -DMAX 30000000'%dose
+            else:
+                command += ' -T 185'
+            if runbefore:
+                command += ' -p %s %s'%(runbefore[0], runbefore[1])
+            command1 = command
+            command1 += ' -a -o best_anom.plt -dna best_anom.xml'
+            command += ' -o best.plt -dna best.xml'
+            end = ' -mos bestfile.dat bestfile.par %s_%s.hkl ' % (self.index_number, image_number[0])
+            """
+            if self.pilatus:
+              if os.path.exists(os.path.join(self.working_dir,'BKGINIT.cbf')):
+                end = ' -MXDS bestfile.par BKGINIT.cbf %s_%s.hkl '%(self.index_number,image_number[0])
+            """
+            if self.header2:
+                end += '%s_%s.hkl' % (self.index_number, image_number[1])
+            command  += end
+            command1 += end
+            d = {}
+            jobs = {}
+            l = [(command, ''), (command1, '_anom')]
+            st  = 0
+            end1 = 2
+            if runbefore:
+                st  = runbefore[2]
+                end1 = runbefore[3]
+            for i in range(st,end1):
+                log = os.path.join(os.getcwd(), 'best%s.log' % l[i][1])
+                if self.verbose:
+                    self.logger.debug(l[i][0])
+                #Save the path of the log
+                d.update({'log'+l[i][1]:log})
+                if self.test == False:
+                    if self.cluster_use:
+                        jobs[str(i)] = Process(target=self.cluster_adapter.processCluster, args=(self, (l[i][0], log, self.cluster_queue)))
+                    else:
+                        jobs[str(i)] = Process(target=BestAction, args=((l[i][0], log), self.logger))
+                    jobs[str(i)].start()
+            #Check if Best should rerun since original Best strategy is too long for Pilatis using correct start and end from plots. (Way around bug in BEST.)
+            if self.test == False:
+                if runbefore == False:
+                    counter = 2
+                    while counter > 0:
+                        for job in jobs.keys():
+                            if jobs[job].is_alive() == False:
+                                del jobs[job]
+                                start,ran = self.findBestStrat(d['log'+l[int(job)][1]].replace('log', 'plt'))
+                                if start != False:
+                                    self.processBest(iteration, (start, ran, int(job), int(job)+1))
+                                counter -= 1
+                        time.sleep(0.1)
+
+        except:
+            self.logger.exception('**Error in processBest**')
 
     def processMosflm(self):
-      """
-      Creates Mosflm executable for running strategy and run. Passes back dict with PID:logfile.
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::processMosflm')
-      try:
-        l = [('mosflm_strat','',''),('mosflm_strat_anom','_anom','ANOMALOUS')]
-        #Opens file from Labelit/Mosflm autoindexing and edit it to run a strategy.
-        mosflm_rot = str(self.preferences.get('mosflm_rot'))
-        mosflm_seg = str(self.preferences.get('mosflm_seg'))
-        mosflm_st  = str(self.preferences.get('mosflm_start'))
-        mosflm_end = str(self.preferences.get('mosflm_end'))
-        #Does the user request a start or end range?
-        range1 = False
-        if mosflm_st != '0.0':
-          range1 = True
-        if mosflm_end != '360.0':
-          range1 = True
-        if range1:
-          if mosflm_rot == '0.0':
-            #mosflm_rot = str(360/float(Utils.symopsSG(self,Utils.getMosflmSG(self))))
-            mosflm_rot = str(360/float(Utils.symopsSG(self,Utils.getLabelitCell(self,'sym'))))
-        #Save info from previous data collections.
-        if self.multicrystalstrat:
-          ref_data = self.preferences.get('reference_data')
-          if self.spacegroup == 'None':
-            self.spacegroup = ref_data[0][-1]
-            Utils.fixMosflmSG(self)
-            #For posting in summary
-            self.prev_sg = True
-        else:
-          ref_data = False
-        #Run twice for regular and anomalous strategies.
-        for i in range(0,2):
-          shutil.copy(self.index_number,l[i][0])
-          temp = []
-          #Read the Mosflm input file from Labelit and use only the top part.
-          for x,line in enumerate(open(l[i][0],'r').readlines()):
-            temp.append(line)
-            if line.count('ipmosflm'):
-                newline = line.replace(self.index_number,l[i][0])
-                temp.remove(line)
-                temp.insert(x,newline)
-            if line.count('FINDSPOTS'):
-                im = line.split()[-1]
-            if line.startswith('MATRIX'):
-                fi = x
-          #Load the image as per Andrew Leslie for Mosflm bug.
-          new_line = 'IMAGE %s\nLOAD\nGO\n'%im
-          #New lines for strategy calculation
-          if ref_data:
-            for x in range(len(ref_data)):
-              new_line += 'MATRIX %s\nSTRATEGY start %s end %s PARTS %s\nGO\n'%(ref_data[x][0],ref_data[x][1],ref_data[x][2],len(ref_data)+1)
-            new_line += 'MATRIX %s.mat\n'%self.index_number
-          if range1:
-            new_line += 'STRATEGY START %s END %s\nGO\n'%(mosflm_st,mosflm_end)
-            new_line += 'ROTATE %s SEGMENTS %s %s\n'%(mosflm_rot,mosflm_seg,l[i][2])
-          else:
-            if mosflm_rot == '0.0':
-              new_line += 'STRATEGY AUTO %s\n'%l[i][2]
-            elif mosflm_seg != '1':
-              new_line += 'STRATEGY AUTO ROTATE %s SEGMENTS %s %s\n'%(mosflm_rot,mosflm_seg,l[i][2])
-            else:
-              new_line += 'STRATEGY AUTO ROTATE %s %s\n'%(mosflm_rot,l[i][2])
-          new_line += 'GO\nSTATS\nEXIT\neof\n'
-          if self.test == False:
-            new = open(l[i][0],'w')
-            new.writelines(temp[:fi+1])
-            new.writelines(new_line)
-            new.close()
-            log = os.path.join(os.getcwd(),l[i][0]+'.out')
-            inp = 'tcsh %s'%l[i][0]
-            if self.cluster_adapter:
-              Process(target=self.cluster_adapter.processCluster,args=(self,(inp,log,self.cluster_queue))).start()
-            else:
-              Process(target=Utils.processLocal,args=(inp,self.logger)).start()
+        """
+        Creates Mosflm executable for running strategy and run. Passes back dict with PID:logfile.
+        """
+        if self.verbose:
+            self.logger.debug('AutoindexingStrategy::processMosflm')
 
-      except:
-        self.logger.exception('**Error in processMosflm**')
+        try:
+            l = [('mosflm_strat','',''),('mosflm_strat_anom','_anom','ANOMALOUS')]
+            #Opens file from Labelit/Mosflm autoindexing and edit it to run a strategy.
+            mosflm_rot = str(self.preferences.get('mosflm_rot'))
+            mosflm_seg = str(self.preferences.get('mosflm_seg'))
+            mosflm_st  = str(self.preferences.get('mosflm_start'))
+            mosflm_end = str(self.preferences.get('mosflm_end'))
+            #Does the user request a start or end range?
+            range1 = False
+            if mosflm_st != '0.0':
+                range1 = True
+            if mosflm_end != '360.0':
+                range1 = True
+            if range1:
+                if mosflm_rot == '0.0':
+                  #mosflm_rot = str(360/float(Utils.symopsSG(self,Utils.getMosflmSG(self))))
+                  mosflm_rot = str(360/float(Utils.symopsSG(self,Utils.getLabelitCell(self, 'sym'))))
+            #Save info from previous data collections.
+            if self.multicrystalstrat:
+                ref_data = self.preferences.get('reference_data')
+                if self.spacegroup == 'None':
+                    self.spacegroup = ref_data[0][-1]
+                    Utils.fixMosflmSG(self)
+                    #For posting in summary
+                    self.prev_sg = True
+            else:
+                ref_data = False
+            #Run twice for regular and anomalous strategies.
+            for i in range(0, 2):
+                shutil.copy(self.index_number, l[i][0])
+                temp = []
+                #Read the Mosflm input file from Labelit and use only the top part.
+                for x, line in enumerate(open(l[i][0], 'r').readlines()):
+                    temp.append(line)
+                    if line.count('ipmosflm'):
+                        newline = line.replace(self.index_number,l[i][0])
+                        temp.remove(line)
+                        temp.insert(x,newline)
+                    if line.count('FINDSPOTS'):
+                        im = line.split()[-1]
+                    if line.startswith('MATRIX'):
+                        fi = x
+                #Load the image as per Andrew Leslie for Mosflm bug.
+                new_line = 'IMAGE %s\nLOAD\nGO\n' % im
+                #New lines for strategy calculation
+                if ref_data:
+                    for x in range(len(ref_data)):
+                        new_line += 'MATRIX %s\nSTRATEGY start %s end %s PARTS %s\nGO\n' %  d(ref_data[x][0], ref_data[x][1], ref_data[x][2], len(ref_data)+1)
+                    new_line += 'MATRIX %s.mat\n'%self.index_number
+                if range1:
+                    new_line += 'STRATEGY START %s END %s\nGO\n' % (mosflm_st, mosflm_end)
+                    new_line += 'ROTATE %s SEGMENTS %s %s\n' % (mosflm_rot, mosflm_seg, l[i][2])
+                else:
+                    if mosflm_rot == '0.0':
+                        new_line += 'STRATEGY AUTO %s\n'%l[i][2]
+                    elif mosflm_seg != '1':
+                        new_line += 'STRATEGY AUTO ROTATE %s SEGMENTS %s %s\n'%(mosflm_rot, mosflm_seg, l[i][2])
+                    else:
+                        new_line += 'STRATEGY AUTO ROTATE %s %s\n'%(mosflm_rot, l[i][2])
+                new_line += 'GO\nSTATS\nEXIT\neof\n'
+                if self.test == False:
+                    new = open(l[i][0], 'w')
+                    new.writelines(temp[:fi+1])
+                    new.writelines(new_line)
+                    new.close()
+                    log = os.path.join(os.getcwd(), l[i][0]+'.out')
+                    inp = "tcsh %s" % l[i][0]
+                    if self.cluster_adapter:
+                        Process(target=self.cluster_adapter.processCluster, args=(self, (inp, log, self.cluster_queue))).start()
+                    else:
+                        Process(target=Utils.processLocal, args=(inp, self.logger)).start()
+
+        except:
+            self.logger.exception("**Error in processMosflm**")
 
     def processStrategy(self,iteration=False):
       """
@@ -2046,486 +2040,487 @@ class RapdAgent(Process):
         self.logger.exception('**ERROR in htmlSummaryShort**')
 
 class RunLabelit(Process):
-  def __init__(self, input, output, params, logger=None):
-    """
-    #The minimum input
-    [   'AUTOINDEX',
-    {   'work': '/gpfs6/users/necat/Jon/RAPD_test/Output'},
-    {   'binning': '2x2',
-        'distance': '550.0',
-        'fullname': '/gpfs5/users/GU/WUSTL_Li_Feb12/images/M-native4/Feru2_6_091.img',
-        'twotheta': '0.0'},
-    {   'x_beam': '153.66', 'y_beam': '158.39'},
-    ('127.0.0.1', 50001)]
-    """
-    self.cluster_adapter = False
-    logger.info(input)
-    self.st = time.time()
-    self.input                              = input
-    self.output                             = output
-    self.logger                             = logger
-    #Setting up data input
-    self.setup                              = self.input[1]
-    self.header                             = self.input[2]
-    self.header2                            = False
-    #if self.input[3].has_key('distance'):
-    if self.input[3].has_key('fullname'):
-      self.header2                        = self.input[3]
-      self.preferences                    = self.input[4]
-    else:
-      self.preferences                    = self.input[3]
-    #self.controller_address                 = self.input[-1]
-    #params
-    self.test                               = params.get('test',False)
-    #Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Adds 1-3s to total run time.
-    # self.cluster_use                        = params.get('cluster',True)
-    #If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
-    self.cluster_queue                      = params.get('cluster_queue',False)
-    #Get detector vendortype for settings. Defaults to ADSC.
-    self.vendortype                         = params.get('vendortype','ADSC')
-    #Turn on verbose output
-    self.verbose                            = params.get('verbose',False)
-    #Number of Labelit iteration to run.
-    self.iterations                         = params.get('iterations',6)
-    #If limiting number of LABELIT run on cluster.
-    self.red                                = params.get('redis',False)
-    self.short                              = False
-    if self.iterations != 6:
-      self.short                          = True
-    #Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
-    #******BEAMLINE SPECIFIC*****
-    if self.header.has_key('acc_time'):
-      self.gui                   = True
-      self.test                  = False
-    else:
-      self.gui                   = True
-    #******BEAMLINE SPECIFIC*****
-    #Set times for processes. 'False' to disable.
-    if self.header2:
-      self.labelit_timer                  = 180
-    else:
-      self.labelit_timer                  = 120
-    #Turns on multiprocessing for everything
-    #Turns on all iterations of Labelit running at once, sorts out highest symmetry solution, then continues...(much better!!)
-    self.multiproc                          = True
-    if self.preferences.has_key('multiprocessing'):
-      if self.preferences.get('multiprocessing') == 'False':
-        self.multiproc                  = False
-    self.sample_type = self.preferences.get('sample_type','Protein')
-    self.spacegroup  = self.preferences.get('spacegroup','None')
 
-    #This is where I place my overall folder settings.
-    self.working_dir                        = self.setup.get('work')
-    #this is where I have chosen to place my results
-    self.auto_summary                       = False
-    self.labelit_input                      = False
-    self.labelit_log                        = {}
-    self.labelit_results                    = {}
-    self.labelit_summary                    = False
-    self.labelit_failed                     = False
-    #Labelit settings
-    self.index_number                       = False
-    self.ignore_user_cell                   = False
-    self.ignore_user_SG                     = False
-    self.min_good_spots                     = False
-    self.twotheta                           = False
-    #dicts for running the Queues
-    self.labelit_jobs                       = {}
-    self.pids                               = {}
+    def __init__(self, command, output, params, logger=None):
+        """
+        input >> command
+        #The minimum input
+        [   'AUTOINDEX',
+        {   'work': '/gpfs6/users/necat/Jon/RAPD_test/Output'},
+        {   'binning': '2x2',
+            'distance': '550.0',
+            'fullname': '/gpfs5/users/GU/WUSTL_Li_Feb12/images/M-native4/Feru2_6_091.img',
+            'twotheta': '0.0'},
+        {   'x_beam': '153.66', 'y_beam': '158.39'},
+        ('127.0.0.1', 50001)]
+        """
+        self.cluster_adapter = False
+        self.st = time.time()
 
-    Process.__init__(self, name="RunLabelit")
-    self.start()
+        # Passed-in vars
+        self.command = command
+        self.input = command
+        self.output = output
+        self.logger = logger
 
-  def run(self):
-    """
-    Convoluted path of modules to run.
-    """
-    if self.verbose:
-      self.logger.debug('RunLabelit::run')
-    self.preprocess()
-    #Make the initial dataset_prefernces.py file
-    self.preprocessLabelit()
-    if self.short:
-      self.labelit_timer = 300
-      Utils.foldersLabelit(self,self.iterations)
-      #if a specific iteration is sent in then it only runs that one
-      if self.iterations == 0:
-        self.labelit_jobs[self.processLabelit().keys()[0]] = 0
-      else:
-        self.labelit_jobs[Utils.errorLabelit(self,self.iterations).keys()[0]] = self.iterations
-    else:
-      #Create the separate folders for the labelit runs, modify the dataset_preferences.py file, and launch for each iteration.
-      Utils.foldersLabelit(self)
-      #Launch first job
-      self.labelit_jobs[self.processLabelit().keys()[0]] = 0
-      #If self.multiproc==True runs all labelits at the same time.
-      if self.multiproc:
-        for i in range(1,self.iterations):
-          self.labelit_jobs[Utils.errorLabelit(self,i).keys()[0]] = i
-    self.Queue()
-    if self.short == False:
-      #Put the logs together
-      self.labelitLog()
-    self.postprocess()
+        # Setting up data input
+        self.setup = command["directories"]
+        self.header = command["header1"]
+        self.header2 = command.get("header2", False)
+        self.preferences = command["preferences"]
+        self.controller_address = command["return_address"]
 
-  def preprocess(self):
-    """
-    Setup the working dir in the RAM and save the dir where the results will go at the end.
-    """
-    if self.verbose:
-      self.logger.debug('RunLabelit::preprocess')
-    if os.path.exists(self.working_dir) == False:
-      os.makedirs(self.working_dir)
-    os.chdir(self.working_dir)
-    if self.test:
-      if self.short == False:
-        self.logger.debug('TEST IS ON')
-        print 'TEST IS ON'
-
-  def preprocessLabelit(self):
-    """
-    Setup extra parameters for Labelit if turned on. Will always set beam center from image header.
-    Creates dataset_preferences.py file for editing later in the Labelit error iterations if needed.
-    """
-    if self.verbose:
-      self.logger.debug('RunLabelit::preprocessLabelit')
-    try:
-      twotheta       = str(self.header.get('twotheta','0'))
-      #distance       = str(self.header.get('distance'))
-      x_beam         = str(self.preferences.get('x_beam',self.header.get('beam_center_x')))
-      if x_beam == '0':
-        x_beam     = str(self.header.get('beam_center_x'))
-      y_beam         = str(self.preferences.get('y_beam',self.header.get('beam_center_y')))
-      if y_beam == '0':
-        y_beam     = str(self.header.get('beam_center_y'))
-      binning = True
-      if self.vendortype == 'ADSC':
-        if self.header.get('binning') == 'none':
-          binning = False
-      """
-      #For determining detector type. Should move to rapd_site probably.
-      if self.header.get('fullname')[-3:] == 'cbf':
-        if float(x_beam) > 200.0:
-          self.vendortype = 'Pilatus-6M'
+        #params
+        self.test = params.get("test", False)
+        #Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Adds 1-3s to total run time.
+        # self.cluster_use                        = params.get('cluster',True)
+        #If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
+        self.cluster_queue                      = params.get('cluster_queue',False)
+        #Get detector vendortype for settings. Defaults to ADSC.
+        self.vendortype                         = params.get('vendortype','ADSC')
+        #Turn on verbose output
+        self.verbose                            = params.get('verbose',False)
+        #Number of Labelit iteration to run.
+        self.iterations                         = params.get('iterations',6)
+        #If limiting number of LABELIT run on cluster.
+        self.red                                = params.get('redis',False)
+        self.short                              = False
+        if self.iterations != 6:
+          self.short                          = True
+        #Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
+        #******BEAMLINE SPECIFIC*****
+        if self.header.has_key('acc_time'):
+          self.gui                   = True
+          self.test                  = False
         else:
-          self.vendortype = 'ADSC-HF4M'
-      else:
-        self.vendortype = 'ADSC'
-        if self.header.get('binning') == 'none':
-          binning = False
-      """
-      if self.test == False:
-        preferences    = open('dataset_preferences.py','w')
-        preferences.write('#####Base Labelit settings#####\n')
-        preferences.write('best_support=True\n')
-        #Set Mosflm RMSD tolerance larger
-        preferences.write('mosflm_rmsd_tolerance=4.0\n')
-
-        #If binning is off. Force Labelit to use all pixels(MAKES THINGS WORSE). Increase number of spots to use for indexing.
-        if binning == False:
-          preferences.write('distl_permit_binning=False\n')
-          preferences.write('distl_maximum_number_spots_for_indexing=600\n')
-
-        #If user wants to change the res limit for autoindexing.
-        if str(self.preferences.get('index_hi_res','0.0')) != '0.0':
-          #preferences.write('distl.res.outer='+index_hi_res+'\n')
-          preferences.write('distl_highres_limit=%s\n'%self.preferences.get('index_hi_res'))
-        #Always specify the beam center.
-        #If Malcolm flips the beam center in the image header...
-        if self.preferences.get('beam_flip','False') == 'True':
-          preferences.write('autoindex_override_beam=(%s,%s)\n'%(y_beam,x_beam))
+          self.gui                   = True
+        #******BEAMLINE SPECIFIC*****
+        #Set times for processes. 'False' to disable.
+        if self.header2:
+          self.labelit_timer                  = 180
         else:
-          preferences.write('autoindex_override_beam=(%s,%s)\n'%(x_beam,y_beam))
-        #If two-theta is being used, specify the angle and distance correctly.
-        if twotheta.startswith('0'):
-          preferences.write('beam_search_scope=0.2\n')
-        else:
-          self.twotheta = True
-          preferences.write('beam_search_scope=0.5\n')
-          preferences.write('autoindex_override_twotheta=%s\n'%twotheta)
-          #preferences.write('autoindex_override_distance='+distance+'\n')
-        preferences.close()
+          self.labelit_timer                  = 120
+        #Turns on multiprocessing for everything
+        #Turns on all iterations of Labelit running at once, sorts out highest symmetry solution, then continues...(much better!!)
+        self.multiproc                          = True
+        if self.preferences.has_key('multiprocessing'):
+          if self.preferences.get('multiprocessing') == 'False':
+            self.multiproc                  = False
+        self.sample_type = self.preferences.get('sample_type','Protein')
+        self.spacegroup  = self.preferences.get('spacegroup','None')
 
-    except:
-      self.logger.exception('**ERROR in RunLabelit.preprocessLabelit**')
+        #This is where I place my overall folder settings.
+        self.working_dir                        = self.setup.get('work')
+        #this is where I have chosen to place my results
+        self.auto_summary                       = False
+        self.labelit_input                      = False
+        self.labelit_log                        = {}
+        self.labelit_results                    = {}
+        self.labelit_summary                    = False
+        self.labelit_failed                     = False
+        #Labelit settings
+        self.index_number                       = False
+        self.ignore_user_cell                   = False
+        self.ignore_user_SG                     = False
+        self.min_good_spots                     = False
+        self.twotheta                           = False
+        #dicts for running the Queues
+        self.labelit_jobs                       = {}
+        self.pids                               = {}
 
-  def processLabelit(self, iteration=0, inp=False):
-      """
-      Construct the labelit command and run. Passes back dict with PID:iteration.
-      """
-      if self.verbose:
-          self.logger.debug("RunLabelit::processLabelit")
+        Process.__init__(self, name="RunLabelit")
+        self.start()
 
-      try:
-          labelit_input = []
-          #Check if user specific unit cell
-          d = {'a': False, 'c': False, 'b': False, 'beta': False, 'alpha': False, 'gamma': False}
-          counter = 0
-          for l in d.keys():
-              temp = str(self.preferences.get(l,0.0))
-              if temp != '0.0':
-                  d[l] = temp
-                  counter += 1
-          if counter != 6:
-              d = False
-          # Put together the command for labelit.index
-          command = 'labelit.index '
-          # If first labelit run errors because not happy with user specified cell or SG then ignore user input in the rerun.
-          if self.ignore_user_cell == False:
-              if d:
-                  command += 'known_cell=%s,%s,%s,%s,%s,%s ' % (d['a'], d['b'], d['c'], d['alpha'], d['beta'], d['gamma'])
-          if self.ignore_user_SG == False:
-              if self.spacegroup != 'None':
-                  command += 'known_symmetry=%s ' % self.spacegroup
-          # For peptide crystals. Doesn't work that much.
-          if self.sample_type == 'Peptide':
-              command += 'codecamp.maxcell=80 codecamp.minimum_spot_count=10 '
-          if inp:
-              command += '%s ' % inp
-          command += '%s ' % self.header.get('fullname')
-          # If pair of images
-          if self.header2:
-              command += "%s " % self.header2.get("fullname")
-          # Save the command to the top of log file, before running job.
-          if self.verbose:
-              self.logger.debug(command)
-          labelit_input.append(command)
-          if iteration == 0:
-              self.labelit_log[str(iteration)] = labelit_input
-          else:
-              self.labelit_log[str(iteration)].extend(labelit_input)
-          labelit_jobs = {}
-          # Don't launch job if self.test = True
-          if self.test:
-              labelit_jobs["junk%s" % iteration] = iteration
-          else:
-              log = os.path.join(os.getcwd(), 'labelit.log')
-              #queue to retrieve the PID or JobIB once submitted.
-              pid_queue = Queue()
-              if self.cluster_adapter:
-                  #Delete the previous log still in the folder, otherwise the cluster jobs will append to it.
-                  if os.path.exists(log):
-                      os.system("rm -rf %s" % log)
-                  if self.short:
-                      if self.red:
-                          run = Process(target=self.cluster_adapter.processCluster, args=(self, (command, log, 1, self.cluster_queue, "bc_throttler"), pid_queue))
-                      else:
-                          #run = Process(target=Utils.processCluster, args=(self,(command,log,'all.q'),queue))
-                          run = Process(target=self.cluster_adapter.processCluster, args=(self, (command, log, self.cluster_queue), pid_queue))
-                  else:
-                      #run = Process(target=Utils.processCluster,args=(self,(command,log,'index.q'),queue))
-                      run = Process(target=self.cluster_adapter.processCluster, args=(self, (command, log, self.cluster_queue), pid_queue))
-              else:
-                  run = Process(target=Utils.processLocal, args=((command, log), self.logger, pid_queue))
-              run.start()
-              #Save the PID for killing the job later if needed.
-              self.pids[str(iteration)] = pid_queue.get()
-              labelit_jobs[run] = iteration
-          #return a dict with the job and iteration
-          return(labelit_jobs)
-
-      except:
-          self.logger.exception('**Error in RunLabelit.processLabelit**')
-
-  def postprocessLabelit(self,iteration=0,run_before=False,blank=False):
-    """
-    Sends Labelit log for parsing and error checking for rerunning Labelit. Save output dicts.
-    """
-    if self.verbose:
-      self.logger.debug('RunLabelit::postprocessLabelit')
-    try:
-      Utils.foldersLabelit(self,iteration)
-      #labelit_failed = False
-      if blank:
-        error = 'Not enough spots for autoindexing.'
+    def run(self):
+        """
+        Convoluted path of modules to run.
+        """
         if self.verbose:
-          self.logger.debug(error)
-        self.labelit_log[str(iteration)].extend(error+'\n')
-        return(None)
-      else:
-        log = open('labelit.log','r').readlines()
-        self.labelit_log[str(iteration)].extend('\n\n')
-        self.labelit_log[str(iteration)].extend(log)
-        data = Parse.ParseOutputLabelit(self,log,iteration)
+          self.logger.debug('RunLabelit::run')
+        self.preprocess()
+        #Make the initial dataset_prefernces.py file
+        self.preprocessLabelit()
         if self.short:
-          #data = Parse.ParseOutputLabelitNoMosflm(self,log,iteration)
-          self.labelit_results = { 'Labelit results' : data }
-        else:
-          #data = Parse.ParseOutputLabelit(self,log,iteration)
-          self.labelit_results[str(iteration)] = { 'Labelit results' : data }
-    except:
-      self.logger.exception('**ERROR in RunLabelit.postprocessLabelit**')
-
-    #Do error checking and send to correct place according to iteration.
-    out = {'bad input': {'error':'Labelit did not like your input unit cell dimensions or SG.','run':'Utils.errorLabelitCellSG(self,iteration)'},
-           'bumpiness': {'error':'Labelit settings need to be adjusted.','run':'Utils.errorLabelitBump(self,iteration)'},
-           'mosflm error': {'error':'Mosflm could not integrate your image.','run':'Utils.errorLabelitMosflm(self,iteration)'},
-           'min good spots': {'error':'Labelit did not have enough spots to find a solution','run':'Utils.errorLabelitGoodSpots(self,iteration)'},
-           'no index': {'error':'No solutions found in Labelit.','run':'Utils.errorLabelit(self,iteration)'},
-           'fix labelit': {'error':'Distance is not getting read correctly from the image header.','kill':True},
-           'no pair': {'error':'Images are not a pair.','kill':True},
-           'failed': {'error':'Autoindexing Failed to find a solution','kill':True},
-           'min spots': {'error':'Labelit did not have enough spots to find a solution.','run1':'Utils.errorLabelitMin(self,iteration,data[1])',
-                         'run2':'Utils.errorLabelit(self,iteration)'},
-           'fix_cell': {'error':'Labelit had multiple choices for user SG and failed.','run1':'Utils.errorLabelitFixCell(self,iteration,data[1],data[2])',
-                        'run2':'Utils.errorLabelitCellSG(self,iteration)'},
-           }
-    #If Labelit results are OK, then...
-    if type(data) == dict:
-      d = False
-    #Otherwise deal with fixing and rerunning Labelit
-    elif type(data) == tuple:
-      d = data[0]
-    else:
-      d = data
-    if d:
-      if out.has_key(d):
-        if out[d].has_key('kill'):
-          if self.multiproc:
-            Utils.errorLabelitPost(self,iteration,out[d].get('error'),True)
+          self.labelit_timer = 300
+          Utils.foldersLabelit(self,self.iterations)
+          #if a specific iteration is sent in then it only runs that one
+          if self.iterations == 0:
+            self.labelit_jobs[self.processLabelit().keys()[0]] = 0
           else:
-            Utils.errorLabelitPost(self,self.iterations,out[d].get('error'))
+            self.labelit_jobs[Utils.errorLabelit(self,self.iterations).keys()[0]] = self.iterations
         else:
-          Utils.errorLabelitPost(self,iteration,out[d].get('error'),run_before)
+          #Create the separate folders for the labelit runs, modify the dataset_preferences.py file, and launch for each iteration.
+          Utils.foldersLabelit(self)
+          #Launch first job
+          self.labelit_jobs[self.processLabelit().keys()[0]] = 0
+          #If self.multiproc==True runs all labelits at the same time.
           if self.multiproc:
-            if run_before == False:
-              return(eval(out[d].get('run',out[d].get('run1'))))
-          else:
-            if iteration <= self.iterations:
-              return(eval(out[d].get('run',out[d].get('run2'))))
-      else:
-        error = 'Labelit failed to find solution.'
-        Utils.errorLabelitPost(self,iteration,error,run_before)
-        if self.multiproc == False:
-          if iteration <= self.iterations:
-            return (Utils.errorLabelit(self,iteration))
+            for i in range(1,self.iterations):
+              self.labelit_jobs[Utils.errorLabelit(self,i).keys()[0]] = i
+        self.Queue()
+        if self.short == False:
+          #Put the logs together
+          self.labelitLog()
+        self.postprocess()
 
-  def postprocess(self):
+    def preprocess(self):
       """
-      Send back the results and logs.
+      Setup the working dir in the RAM and save the dir where the results will go at the end.
       """
       if self.verbose:
-          self.logger.debug("RunLabelit::postprocess")
-
-      try:
-        #Free up spot on cluster.
-        if self.short and self.red:
-            self.red.lpush("bc_throttler", 1)
-
-        #Pass back output
-        self.output.put(self.labelit_results)
+        self.logger.debug('RunLabelit::preprocess')
+      if os.path.exists(self.working_dir) == False:
+        os.makedirs(self.working_dir)
+      os.chdir(self.working_dir)
+      if self.test:
         if self.short == False:
-            self.output.put(self.labelit_log)
+          self.logger.debug('TEST IS ON')
+          print 'TEST IS ON'
+
+    def preprocessLabelit(self):
+      """
+      Setup extra parameters for Labelit if turned on. Will always set beam center from image header.
+      Creates dataset_preferences.py file for editing later in the Labelit error iterations if needed.
+      """
+      if self.verbose:
+        self.logger.debug('RunLabelit::preprocessLabelit')
+      try:
+        twotheta       = str(self.header.get('twotheta','0'))
+        #distance       = str(self.header.get('distance'))
+        x_beam         = str(self.preferences.get('x_beam',self.header.get('beam_center_x')))
+        if x_beam == '0':
+          x_beam     = str(self.header.get('beam_center_x'))
+        y_beam         = str(self.preferences.get('y_beam',self.header.get('beam_center_y')))
+        if y_beam == '0':
+          y_beam     = str(self.header.get('beam_center_y'))
+        binning = True
+        if self.vendortype == 'ADSC':
+          if self.header.get('binning') == 'none':
+            binning = False
+        """
+        #For determining detector type. Should move to rapd_site probably.
+        if self.header.get('fullname')[-3:] == 'cbf':
+          if float(x_beam) > 200.0:
+            self.vendortype = 'Pilatus-6M'
+          else:
+            self.vendortype = 'ADSC-HF4M'
+        else:
+          self.vendortype = 'ADSC'
+          if self.header.get('binning') == 'none':
+            binning = False
+        """
+        if self.test == False:
+          preferences    = open('dataset_preferences.py','w')
+          preferences.write('#####Base Labelit settings#####\n')
+          preferences.write('best_support=True\n')
+          #Set Mosflm RMSD tolerance larger
+          preferences.write('mosflm_rmsd_tolerance=4.0\n')
+
+          #If binning is off. Force Labelit to use all pixels(MAKES THINGS WORSE). Increase number of spots to use for indexing.
+          if binning == False:
+            preferences.write('distl_permit_binning=False\n')
+            preferences.write('distl_maximum_number_spots_for_indexing=600\n')
+
+          #If user wants to change the res limit for autoindexing.
+          if str(self.preferences.get('index_hi_res','0.0')) != '0.0':
+            #preferences.write('distl.res.outer='+index_hi_res+'\n')
+            preferences.write('distl_highres_limit=%s\n'%self.preferences.get('index_hi_res'))
+          #Always specify the beam center.
+          #If Malcolm flips the beam center in the image header...
+          if self.preferences.get('beam_flip','False') == 'True':
+            preferences.write('autoindex_override_beam=(%s,%s)\n'%(y_beam,x_beam))
+          else:
+            preferences.write('autoindex_override_beam=(%s,%s)\n'%(x_beam,y_beam))
+          #If two-theta is being used, specify the angle and distance correctly.
+          if twotheta.startswith('0'):
+            preferences.write('beam_search_scope=0.2\n')
+          else:
+            self.twotheta = True
+            preferences.write('beam_search_scope=0.5\n')
+            preferences.write('autoindex_override_twotheta=%s\n'%twotheta)
+            #preferences.write('autoindex_override_distance='+distance+'\n')
+          preferences.close()
 
       except:
-          self.logger.exception("**ERROR in RunLabelit.postprocess**")
+        self.logger.exception('**ERROR in RunLabelit.preprocessLabelit**')
 
-  def Queue(self):
-    """
-    Queue for Labelit.
-    """
-    if self.verbose:
-      self.logger.debug('RunLabelit::Queue')
-    try:
-      timed_out = False
-      timer = 0
-      #labelit = False
-      jobs = self.labelit_jobs.keys()
-      #Set wait time longer to lower the load on the node running the job.
-      if self.short:
-        wait = 1
-      else:
-        wait = 0.1
-      if jobs != ['None']:
-        counter = len(jobs)
-        while counter != 0:
-          for job in jobs:
-            if self.test:
-              running = False
+    def processLabelit(self, iteration=0, inp=False):
+        """
+        Construct the labelit command and run. Passes back dict with PID:iteration.
+        """
+        if self.verbose:
+            self.logger.debug("RunLabelit::processLabelit")
+
+        try:
+            labelit_input = []
+            #Check if user specific unit cell
+            d = {'a': False, 'c': False, 'b': False, 'beta': False, 'alpha': False, 'gamma': False}
+            counter = 0
+            for l in d.keys():
+                temp = str(self.preferences.get(l,0.0))
+                if temp != '0.0':
+                    d[l] = temp
+                    counter += 1
+            if counter != 6:
+                d = False
+            # Put together the command for labelit.index
+            command = 'labelit.index '
+            # If first labelit run errors because not happy with user specified cell or SG then ignore user input in the rerun.
+            if self.ignore_user_cell == False:
+                if d:
+                    command += 'known_cell=%s,%s,%s,%s,%s,%s ' % (d['a'], d['b'], d['c'], d['alpha'], d['beta'], d['gamma'])
+            if self.ignore_user_SG == False:
+                if self.spacegroup != 'None':
+                    command += 'known_symmetry=%s ' % self.spacegroup
+            # For peptide crystals. Doesn't work that much.
+            if self.sample_type == 'Peptide':
+                command += 'codecamp.maxcell=80 codecamp.minimum_spot_count=10 '
+            if inp:
+                command += '%s ' % inp
+            command += '%s ' % self.header.get('fullname')
+            # If pair of images
+            if self.header2:
+                command += "%s " % self.header2.get("fullname")
+            # Save the command to the top of log file, before running job.
+            if self.verbose:
+                self.logger.debug(command)
+            labelit_input.append(command)
+            if iteration == 0:
+                self.labelit_log[str(iteration)] = labelit_input
             else:
-              running = job.is_alive()
-            if running == False:
-              jobs.remove(job)
-              iteration = self.labelit_jobs[job]
-              if self.verbose:
-                self.logger.debug('Finished Labelit%s'%iteration)
-                print 'Finished Labelit%s'%iteration
-              #Check if job had been rerun, fix the iteration.
-              if iteration >= 10:
-                iteration -=10
-                job = self.postprocessLabelit(iteration,True)
-              else:
-                job = self.postprocessLabelit(iteration,False)
-              #If job is rerun, then save the iteration and pid.
-              if job != None:
-                if self.multiproc:
-                    iteration +=10
+                self.labelit_log[str(iteration)].extend(labelit_input)
+            labelit_jobs = {}
+            # Don't launch job if self.test = True
+            if self.test:
+                labelit_jobs["junk%s" % iteration] = iteration
+            else:
+                log = os.path.join(os.getcwd(), 'labelit.log')
+                #queue to retrieve the PID or JobIB once submitted.
+                pid_queue = Queue()
+                if self.cluster_adapter:
+                    #Delete the previous log still in the folder, otherwise the cluster jobs will append to it.
+                    if os.path.exists(log):
+                        os.system("rm -rf %s" % log)
+                    if self.short:
+                        if self.red:
+                            run = Process(target=self.cluster_adapter.processCluster, args=(self, (command, log, 1, self.cluster_queue, "bc_throttler"), pid_queue))
+                        else:
+                            #run = Process(target=Utils.processCluster, args=(self,(command,log,'all.q'),queue))
+                            run = Process(target=self.cluster_adapter.processCluster, args=(self, (command, log, self.cluster_queue), pid_queue))
+                    else:
+                        #run = Process(target=Utils.processCluster,args=(self,(command,log,'index.q'),queue))
+                        run = Process(target=self.cluster_adapter.processCluster, args=(self, (command, log, self.cluster_queue), pid_queue))
                 else:
-                    iteration +=1
-                self.labelit_jobs[job.keys()[0]] = iteration
-                jobs.extend(job.keys())
-              else:
-                counter -= 1
-          time.sleep(wait)
-          timer += wait
-          """
+                    run = Process(target=Utils.processLocal, args=((command, log), self.logger, pid_queue))
+                run.start()
+                #Save the PID for killing the job later if needed.
+                self.pids[str(iteration)] = pid_queue.get()
+                labelit_jobs[run] = iteration
+            #return a dict with the job and iteration
+            return(labelit_jobs)
+
+        except:
+            self.logger.exception('**Error in RunLabelit.processLabelit**')
+
+    def postprocessLabelit(self,iteration=0,run_before=False,blank=False):
+      """
+      Sends Labelit log for parsing and error checking for rerunning Labelit. Save output dicts.
+      """
+      if self.verbose:
+        self.logger.debug('RunLabelit::postprocessLabelit')
+      try:
+        Utils.foldersLabelit(self,iteration)
+        #labelit_failed = False
+        if blank:
+          error = 'Not enough spots for autoindexing.'
           if self.verbose:
-              number = round(timer%1,1)
-              if number in (0.0,1.0):
-                  print 'Waiting for Labelit to finish '+str(timer)+' seconds'
-          """
-          if self.labelit_timer:
-            if timer >= self.labelit_timer:
-              if self.multiproc:
-                timed_out = True
-                break
+            self.logger.debug(error)
+          self.labelit_log[str(iteration)].extend(error+'\n')
+          return(None)
+        else:
+          log = open('labelit.log','r').readlines()
+          self.labelit_log[str(iteration)].extend('\n\n')
+          self.labelit_log[str(iteration)].extend(log)
+          data = Parse.ParseOutputLabelit(self,log,iteration)
+          if self.short:
+            #data = Parse.ParseOutputLabelitNoMosflm(self,log,iteration)
+            self.labelit_results = { 'Labelit results' : data }
+          else:
+            #data = Parse.ParseOutputLabelit(self,log,iteration)
+            self.labelit_results[str(iteration)] = { 'Labelit results' : data }
+      except:
+        self.logger.exception('**ERROR in RunLabelit.postprocessLabelit**')
+
+      #Do error checking and send to correct place according to iteration.
+      out = {'bad input': {'error':'Labelit did not like your input unit cell dimensions or SG.','run':'Utils.errorLabelitCellSG(self,iteration)'},
+             'bumpiness': {'error':'Labelit settings need to be adjusted.','run':'Utils.errorLabelitBump(self,iteration)'},
+             'mosflm error': {'error':'Mosflm could not integrate your image.','run':'Utils.errorLabelitMosflm(self,iteration)'},
+             'min good spots': {'error':'Labelit did not have enough spots to find a solution','run':'Utils.errorLabelitGoodSpots(self,iteration)'},
+             'no index': {'error':'No solutions found in Labelit.','run':'Utils.errorLabelit(self,iteration)'},
+             'fix labelit': {'error':'Distance is not getting read correctly from the image header.','kill':True},
+             'no pair': {'error':'Images are not a pair.','kill':True},
+             'failed': {'error':'Autoindexing Failed to find a solution','kill':True},
+             'min spots': {'error':'Labelit did not have enough spots to find a solution.','run1':'Utils.errorLabelitMin(self,iteration,data[1])',
+                           'run2':'Utils.errorLabelit(self,iteration)'},
+             'fix_cell': {'error':'Labelit had multiple choices for user SG and failed.','run1':'Utils.errorLabelitFixCell(self,iteration,data[1],data[2])',
+                          'run2':'Utils.errorLabelitCellSG(self,iteration)'},
+             }
+      #If Labelit results are OK, then...
+      if type(data) == dict:
+        d = False
+      #Otherwise deal with fixing and rerunning Labelit
+      elif type(data) == tuple:
+        d = data[0]
+      else:
+        d = data
+      if d:
+        if out.has_key(d):
+          if out[d].has_key('kill'):
+            if self.multiproc:
+              Utils.errorLabelitPost(self,iteration,out[d].get('error'),True)
+            else:
+              Utils.errorLabelitPost(self,self.iterations,out[d].get('error'))
+          else:
+            Utils.errorLabelitPost(self,iteration,out[d].get('error'),run_before)
+            if self.multiproc:
+              if run_before == False:
+                return(eval(out[d].get('run',out[d].get('run1'))))
+            else:
+              if iteration <= self.iterations:
+                return(eval(out[d].get('run',out[d].get('run2'))))
+        else:
+          error = 'Labelit failed to find solution.'
+          Utils.errorLabelitPost(self,iteration,error,run_before)
+          if self.multiproc == False:
+            if iteration <= self.iterations:
+              return (Utils.errorLabelit(self,iteration))
+
+    def postprocess(self):
+        """
+        Send back the results and logs.
+        """
+        if self.verbose:
+            self.logger.debug("RunLabelit::postprocess")
+
+        try:
+            #Free up spot on cluster.
+            if self.short and self.red:
+                self.red.lpush("bc_throttler", 1)
+
+            #Pass back output
+            self.output.put(self.labelit_results)
+            if self.short == False:
+                self.output.put(self.labelit_log)
+
+        except:
+            self.logger.exception("**ERROR in RunLabelit.postprocess**")
+
+    def Queue(self):
+      """
+      Queue for Labelit.
+      """
+      if self.verbose:
+          self.logger.debug('RunLabelit::Queue')
+      try:
+        timed_out = False
+        timer = 0
+        #labelit = False
+        jobs = self.labelit_jobs.keys()
+        #Set wait time longer to lower the load on the node running the job.
+        if self.short:
+          wait = 1
+        else:
+          wait = 0.1
+        if jobs != ['None']:
+          counter = len(jobs)
+          while counter != 0:
+            for job in jobs:
+              if self.test:
+                running = False
               else:
-                iteration += 1
-                if iteration <= self.iterations:
-                  Utils.errorLabelit(self,iteration)
+                running = job.is_alive()
+              if running == False:
+                jobs.remove(job)
+                iteration = self.labelit_jobs[job]
+                if self.verbose:
+                  self.logger.debug('Finished Labelit%s'%iteration)
+                  print 'Finished Labelit%s'%iteration
+                #Check if job had been rerun, fix the iteration.
+                if iteration >= 10:
+                  iteration -=10
+                  job = self.postprocessLabelit(iteration,True)
                 else:
+                  job = self.postprocessLabelit(iteration,False)
+                #If job is rerun, then save the iteration and pid.
+                if job != None:
+                  if self.multiproc:
+                      iteration +=10
+                  else:
+                      iteration +=1
+                  self.labelit_jobs[job.keys()[0]] = iteration
+                  jobs.extend(job.keys())
+                else:
+                  counter -= 1
+            time.sleep(wait)
+            timer += wait
+            """
+            if self.verbose:
+                number = round(timer%1,1)
+                if number in (0.0,1.0):
+                    print 'Waiting for Labelit to finish '+str(timer)+' seconds'
+            """
+            if self.labelit_timer:
+              if timer >= self.labelit_timer:
+                if self.multiproc:
                   timed_out = True
                   break
-        if timed_out:
-          self.logger.debug('Labelit timed out.')
-          for job in jobs:
-            i = self.labelit_jobs[job]
-            if i >= 10:
-              i -=10
-            self.labelit_results[str(i)] = {'Labelit results': 'FAILED'}
-            if self.cluster_use:
-              #Utils.killChildrenCluster(self,self.pids[str(i)])
-              self.cluster_adapter.killChildrenCluster(self,self.pids[str(i)])
-            else:
-              Utils.killChildren(self,self.pids[str(i)])
+                else:
+                  iteration += 1
+                  if iteration <= self.iterations:
+                    Utils.errorLabelit(self,iteration)
+                  else:
+                    timed_out = True
+                    break
+          if timed_out:
+            self.logger.debug('Labelit timed out.')
+            for job in jobs:
+              i = self.labelit_jobs[job]
+              if i >= 10:
+                i -=10
+              self.labelit_results[str(i)] = {'Labelit results': 'FAILED'}
+              if self.cluster_use:
+                #Utils.killChildrenCluster(self,self.pids[str(i)])
+                self.cluster_adapter.killChildrenCluster(self,self.pids[str(i)])
+              else:
+                Utils.killChildren(self,self.pids[str(i)])
 
-      if self.short == False:
-        self.logger.debug('Labelit finished.')
+        if self.short == False:
+          self.logger.debug('Labelit finished.')
 
-    except:
-      self.logger.exception('**Error in RunLabelit.Queue**')
+      except:
+        self.logger.exception('**Error in RunLabelit.Queue**')
 
-  def labelitLog(self):
-    """
-    Put the Labelit logs together.
-    """
-    if self.verbose:
-      self.logger.debug('RunLabelit::LabelitLog')
-    try:
-      for i in range(0,self.iterations):
-        if self.labelit_log.has_key(str(i)):
-          junk = []
-          junk.append('-------------------------\nLABELIT ITERATION %s\n-------------------------\n'%i)
-          if i == 0:
-            self.labelit_log['run1'] = ['\nRun 1\n']
-          self.labelit_log['run1'].extend(junk)
-          self.labelit_log['run1'].extend(self.labelit_log[str(i)])
-          self.labelit_log['run1'].extend('\n')
-        else:
-          self.labelit_log['run1'].extend('\nLabelit iteration %s FAILED\n'%i)
+    def labelitLog(self):
+      """
+      Put the Labelit logs together.
+      """
+      if self.verbose:
+        self.logger.debug('RunLabelit::LabelitLog')
+      try:
+        for i in range(0,self.iterations):
+          if self.labelit_log.has_key(str(i)):
+            junk = []
+            junk.append('-------------------------\nLABELIT ITERATION %s\n-------------------------\n'%i)
+            if i == 0:
+              self.labelit_log['run1'] = ['\nRun 1\n']
+            self.labelit_log['run1'].extend(junk)
+            self.labelit_log['run1'].extend(self.labelit_log[str(i)])
+            self.labelit_log['run1'].extend('\n')
+          else:
+            self.labelit_log['run1'].extend('\nLabelit iteration %s FAILED\n'%i)
 
-    except:
-      self.logger.exception('**ERROR in RunLabelit.LabelitLog**')
+      except:
+          self.logger.exception('**ERROR in RunLabelit.LabelitLog**')
 
 def BestAction(inp,logger,output=False):
   """
