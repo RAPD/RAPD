@@ -1,29 +1,3 @@
-<<<<<<< HEAD:src/rapd_agent_strategy.py
-'''
-__author__ = "Jon Schuermann"
-__copyright__ = "Copyright 2009, NE-CAT"
-__credits__ = ["Jon Schuermann","Frank Murphy","David Neau","Kay Perry","Surajit Banerjee"]
-__license__ = "GPLv3"
-__version__ = "0.9"
-__maintainer__ = "Frank Murphy"
-__email__ = "fmurphy@anl.gov"
-__status__ = "Development"
-__date__ = "2009/07/14"
-'''
-
-from multiprocessing import Process,Queue,Event
-import os,subprocess,time,shutil
-from rapd_communicate import Communicate
-from rapd_agent_xoalign import RunXOalign
-import rapd_utils as Utils
-import rapd_beamlinespecific as BLspec
-import rapd_parse as Parse
-import rapd_summary as Summary
-
-class AutoindexingStrategy(Process,Communicate):
-  def __init__(self,input,logger=None):
-    logger.info('AutoindexingStrategy.__init__')
-=======
 """
 This file is part of RAPD
 
@@ -111,8 +85,6 @@ class RapdAgent(Process):
     self.logger = logging.getLogger("RAPDLogger")
     self.logger.debug("__init__")
 
-    self.logger.info('AutoindexingStrategy.__init__')
->>>>>>> c336fd52f86e56709882069014af0bbf48356d80:src/agents/rapd_agent_strategy.py
     self.st = time.time()
     self.site = site
     self.input = input
@@ -128,26 +100,6 @@ class RapdAgent(Process):
     else:
         self.preferences                        = self.input[3]
     self.controller_address                 = self.input[-1]
-<<<<<<< HEAD:src/rapd_agent_strategy.py
-    
-    #For debugging individual modules (Will not run in Test mode on cluster!! Can be set at end of __init__.)
-    self.test                               = False
-    #Removes junk files and directories at end. (Will still clean on cluster!! Can be set at end of __init__.)
-    self.clean                              = False
-    #Runs in RAM (slightly faster?). Not really worth it right now. Difficult to debug when there is an error.
-    self.ram                                = False
-    #Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Slower (>10%). Mainly 
-    #used for rapd_agent_beamcenter.py to launch a lot of LABELIT jobs at once.
-    self.cluster_use                        = False
-    #If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
-    self.cluster_queue                      = 'index.q,phase2.q'
-    #self.cluster_queue                      = False
-    #Switch for verbose
-    self.verbose                            = True
-    #Number of Labelit iterations to run.
-    self.iterations                         = 6
-    
-=======
 
     # #For testing individual modules (Will not run in Test mode on cluster!! Can be set at end of __init__.)
     # self.test                               = False
@@ -166,7 +118,6 @@ class RapdAgent(Process):
     # #Number of Labelit iterations to run.
     # self.iterations                         = 6
 
->>>>>>> c336fd52f86e56709882069014af0bbf48356d80:src/agents/rapd_agent_strategy.py
     #Set timer for distl. 'False' will disable.
     if self.header2:
         self.distl_timer                    = 60
@@ -333,11 +284,7 @@ class RapdAgent(Process):
             self.postprocessDistl()
       #Make PHP files for GUI, passback results, and cleanup.
       self.postprocess()
-<<<<<<< HEAD:src/rapd_agent_strategy.py
-    
-=======
 
->>>>>>> c336fd52f86e56709882069014af0bbf48356d80:src/agents/rapd_agent_strategy.py
   def preprocess(self):
     """
     Setup the working dir in the RAM and save the dir where the results will go at the end.
@@ -715,12 +662,7 @@ class RapdAgent(Process):
         d.update({'log'+l[i][1]:log})
         if self.test == False:
           if self.cluster_use:
-<<<<<<< HEAD:src/rapd_agent_strategy.py
-            #jobs[str(i)] = Process(target=BLspec.processCluster,args=(self,(l[i][0],log,self.cluster_queue)))
-            jobs[str(i)] = Process(target=Utils.processCluster,args=(self,(l[i][0],log,self.cluster_queue)))
-=======
             jobs[str(i)] = Process(target=self.cluster_adapter.processCluster, args=(self, (l[i][0], log, self.cluster_queue)))
->>>>>>> c336fd52f86e56709882069014af0bbf48356d80:src/agents/rapd_agent_strategy.py
           else:
             jobs[str(i)] = Process(target=BestAction, args=((l[i][0], log), self.logger))
           jobs[str(i)].start()
@@ -814,14 +756,8 @@ class RapdAgent(Process):
           new.close()
           log = os.path.join(os.getcwd(),l[i][0]+'.out')
           inp = 'tcsh %s'%l[i][0]
-<<<<<<< HEAD:src/rapd_agent_strategy.py
-          if self.cluster_use:
-            #Process(target=BLspec.processCluster,args=(self,(inp,log,self.cluster_queue))).start()
-            Process(target=Utils.processCluster,args=(self,(inp,log,self.cluster_queue))).start()
-=======
           if self.cluster_adapter:
             Process(target=self.cluster_adapter.processCluster,args=(self,(inp,log,self.cluster_queue))).start()
->>>>>>> c336fd52f86e56709882069014af0bbf48356d80:src/agents/rapd_agent_strategy.py
           else:
             Process(target=Utils.processLocal,args=(inp,self.logger)).start()
 
@@ -2308,49 +2244,6 @@ class RunLabelit(Process):
       Construct the labelit command and run. Passes back dict with PID:iteration.
       """
       if self.verbose:
-<<<<<<< HEAD:src/rapd_agent_strategy.py
-        self.logger.debug(command)
-      labelit_input.append(command)
-      if iteration == 0:
-        self.labelit_log[str(iteration)] = labelit_input
-      else:
-        self.labelit_log[str(iteration)].extend(labelit_input)
-      labelit_jobs = {}
-      #Don't launch job if self.test = True
-      if self.test:
-        labelit_jobs['junk%s'%iteration] = iteration
-      else:
-        log = os.path.join(os.getcwd(),'labelit.log')
-        #queue to retrieve the PID or JobIB once submitted.
-        pid_queue = Queue()
-        if self.cluster_use:
-          #Delete the previous log still in the folder, otherwise the cluster jobs will append to it.
-          if os.path.exists(log):
-            os.system('rm -rf %s'%log)
-          if self.short:
-            run = Process(target=BLspec.processCluster,args=(self,(command,log,self.cluster_queue),pid_queue))
-            """
-            if self.red:
-              run = Process(target=BLspec.processCluster,args=(self,(command,log,1,self.cluster_queue,'bc_throttler'),pid_queue))
-              #run = Process(target=Utils.processCluster,args=(self,(command,log,1,self.cluster_queue,'bc_throttler'),pid_queue))
-            else:
-              #run = Process(target=Utils.processCluster,args=(self,(command,log,'all.q'),queue))
-              run = Process(target=BLspec.processCluster,args=(self,(command,log,self.cluster_queue),pid_queue))
-              #run = Process(target=Utils.processCluster,args=(self,(command,log,self.cluster_queue),pid_queue))
-            """
-          else:
-            #run = Process(target=Utils.processCluster,args=(self,(command,log,'index.q'),queue))
-            run = Process(target=BLspec.processCluster,args=(self,(command,log,self.cluster_queue),pid_queue))
-            #run = Process(target=Utils.processCluster,args=(self,(command,log,self.cluster_queue),pid_queue))
-        else:
-          run = Process(target=Utils.processLocal,args=((command,log),self.logger,pid_queue))
-        run.start()
-        #Save the PID for killing the job later if needed.
-        self.pids[str(iteration)] = pid_queue.get()
-        labelit_jobs[run] = iteration
-      #return a dict with the job and iteration
-      return(labelit_jobs)
-=======
           self.logger.debug("RunLabelit::processLabelit")
 
       try:
@@ -2420,7 +2313,6 @@ class RunLabelit(Process):
               labelit_jobs[run] = iteration
           #return a dict with the job and iteration
           return(labelit_jobs)
->>>>>>> c336fd52f86e56709882069014af0bbf48356d80:src/agents/rapd_agent_strategy.py
 
       except:
           self.logger.exception('**Error in RunLabelit.processLabelit**')
@@ -2504,24 +2396,12 @@ class RunLabelit(Process):
       """
       if self.verbose:
           self.logger.debug("RunLabelit::postprocess")
-
-<<<<<<< HEAD:src/rapd_agent_strategy.py
-    try:
-      """
-      #Free up spot on cluster.
-      if self.short and self.red:
-        self.red.lpush('bc_throttler',1)
-      """
-      #Pass back output
-      self.output.put(self.labelit_results)
-      if self.short == False:
-        self.output.put(self.labelit_log)
-=======
       try:
+        """
         #Free up spot on cluster.
         if self.short and self.red:
             self.red.lpush("bc_throttler", 1)
->>>>>>> c336fd52f86e56709882069014af0bbf48356d80:src/agents/rapd_agent_strategy.py
+        """
 
         #Pass back output
         self.output.put(self.labelit_results)
@@ -2605,13 +2485,8 @@ class RunLabelit(Process):
               i -=10
             self.labelit_results[str(i)] = {'Labelit results': 'FAILED'}
             if self.cluster_use:
-<<<<<<< HEAD:src/rapd_agent_strategy.py
-              Utils.killChildrenCluster(self,self.pids[str(i)])
-              #BLspec.killChildrenCluster(self,self.pids[str(i)])
-=======
               #Utils.killChildrenCluster(self,self.pids[str(i)])
               self.cluster_adapter.killChildrenCluster(self,self.pids[str(i)])
->>>>>>> c336fd52f86e56709882069014af0bbf48356d80:src/agents/rapd_agent_strategy.py
             else:
               Utils.killChildren(self,self.pids[str(i)])
 
@@ -2668,7 +2543,6 @@ if __name__ == '__main__':
   #This is an example input dict used for testing this script.
   #Input dict file. If autoindexing from two images, just include a third dict section for the second image header.
   ###To see all the input options look at extras/rapd_input.py (autoindexInput)###
-<<<<<<< HEAD:src/rapd_agent_strategy.py
   
   inp = ["AUTOINDEX", 
   {#"work": "/gpfs6/users/necat/Jon/RAPD_test/Output",
@@ -2680,17 +2554,6 @@ if __name__ == '__main__':
    "detector":'ray300',
    #"binning": "2x2", #LABELIT
    "binning": "none", #
-=======
-
-  inp = ["AUTOINDEX",
-  {"work": "/gpfs6/users/necat/Jon/RAPD_test/Output",
-   },
-
-  #Info from first image
-  {"wavelength": "0.9792", #RADDOSE
-   "binning": "2x2", #LABELIT
-   #"binning": "none", #
->>>>>>> c336fd52f86e56709882069014af0bbf48356d80:src/agents/rapd_agent_strategy.py
    "time": "1.00",  #BEST
    "twotheta": "0.00", #LABELIT
    "transmission": "20",  #BEST
@@ -2713,15 +2576,10 @@ if __name__ == '__main__':
    "beam_size_y":"0.03", #RADDOSE
    "gauss_x":'0.03', #RADDOSE
    "gauss_y":'0.01', #RADDOSE
-<<<<<<< HEAD:src/rapd_agent_strategy.py
    #"fullname": "/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0001",
    #"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0001",
    "fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_04_chrzas_feb_4_2016/SER4-TRYP_Pn3/SER4-TRYP_Pn3.0001",
    
-=======
-   "fullname": "/gpfs2/users/chicago/Lewis_E_Dec15/images/snaps/NE51_H4_PAIR_0_001.img",
-
->>>>>>> c336fd52f86e56709882069014af0bbf48356d80:src/agents/rapd_agent_strategy.py
    #minikappa
    #Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
    #"mk3_phi":"0.0", #
@@ -2839,13 +2697,8 @@ if __name__ == '__main__':
    "beam_size_y":"0.03", #RADDOSE
    "gauss_x":'0.03', #RADDOSE
    "gauss_y":'0.01', #RADDOSE
-<<<<<<< HEAD:src/rapd_agent_strategy.py
    "fullname": "/gpfs2/users/chicago/Lewis_E_Dec15/images/snaps/NE51_H4_PAIR_0_001.img",
    
-=======
-   "fullname": "/gpfs2/users/chicago/Lewis_E_Dec15/images/snaps/NE51_H4_PAIR_0_002.img",
-
->>>>>>> c336fd52f86e56709882069014af0bbf48356d80:src/agents/rapd_agent_strategy.py
    #minikappa
    #Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
    #"mk3_phi":"0.0", #
