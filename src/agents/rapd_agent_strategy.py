@@ -255,40 +255,37 @@ class RapdAgent(Process):
         Convoluted path of modules to run.
         """
         if self.verbose:
-    	      self.logger.debug('AutoindexingStrategy::run')
+            self.logger.debug("AutoindexingStrategy::run")
 
         self.preprocess()
 
         if self.minikappa:
-    	    self.processXOalign()
+            self.processXOalign()
         else:
-    	    #Make the labelit.png image
-    	    self.makeImages(0)
-    	    #Run Labelit
-    	    self.processLabelit()
+    	    # Make the labelit.png image
+            self.makeImages(0)
 
-      	    #  Gleb recommended, but in some cases takes several seconds to minutes longer to run Best??
-            #  if self.pilatus:
-            #    if self.preferences.get('strategy_type') == 'best':
-            #	   self.processXDSbg()
+            # Run Labelit
+            self.processLabelit()
 
-      	    #Sorts labelit results by highest symmetry.
-        	self.labelitSort()
-        	#If there is a solution, then calculate a strategy.
-        	if self.labelit_failed == False:
-        	    #Start distl.signal_strength for the correct labelit iteration
-        	    self.processDistl()
-        	    if self.multiproc == False:
-        		self.postprocessDistl()
-        	    self.preprocessRaddose()
-        	    self.processRaddose()
-        	    self.processStrategy()
-        	    self.Queue()
-        	    #Get the distl results
-        	    if self.multiproc:
-        		    self.postprocessDistl()
-    	  #Make PHP files for GUI, passback results, and cleanup.
-    	  self.postprocess()
+      	    # Sorts labelit results by highest symmetry.
+            self.labelitSort()
+
+            # If there is a solution, then calculate a strategy.
+            if self.labelit_failed == False:
+                # Start distl.signal_strength for the correct labelit iteration
+                self.processDistl()
+                if self.multiproc == False:
+                    self.postprocessDistl()
+                self.preprocessRaddose()
+                self.processRaddose()
+                self.processStrategy()
+                self.Queue()
+                #Get the distl results
+                if self.multiproc:
+                    self.postprocessDistl()
+    	    # Make PHP files for GUI, passback results, and cleanup.
+            self.postprocess()
 
     def preprocess(self):
         """
