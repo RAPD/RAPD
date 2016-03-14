@@ -28,6 +28,7 @@ import importlib
 import logging
 import logging.handlers
 import socket
+import sys
 import time
 
 # RAPD imports
@@ -167,7 +168,8 @@ class Launcher(object):
                 for t in possible_tags:
                     print "    %s" % t
 
-            raise Exception("No definition for launcher in site file")
+            # Exit in error state
+            sys.exit(9)
         else:
             # Unpack address
             self.ip_address, self.tag, self.launcher_id = self.launcher
