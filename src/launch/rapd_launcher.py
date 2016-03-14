@@ -164,7 +164,7 @@ class Launcher(object):
             # IP Address in launchers, but not the input tag
             else:
                 print "There is a launcher adapter registered for this IP \
-address (%s), but not for the input tag ({})" % (self.ip_address, self.tag)
+address (%s), but not for the input tag (%s)" % (self.ip_address, self.tag)
                 print "  Available tags for this IP address:"
                 for t in possible_tags:
                     print "    %s" % t
