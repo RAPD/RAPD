@@ -153,7 +153,6 @@ class MARImage(DetectorImageBase):
         f.seek(offset+732)
         rawdata = f.read(4)
         rotation_axis = struct.unpack(format+'i',rawdata)[0]
-        print rotation_axis
 	#assert rotation_axis == 4 # if it isn't phi; go back and recode to cover all cases
 
         # ----- omega analysis
@@ -283,9 +282,7 @@ def MarReadHeader(image,
   parameters = {'fullname'     : image,
                 'detector'     : det,
                 'directory'    : os.path.dirname(image),
-                #'image_prefix' : "_".join(base.split("_")[0:-2]),
                 'image_prefix' : str(ip),
-		#'run_number'   : str(base.split("_")[-1]),
                 'run_number'   : str(rn),
 		'image_number' : int(base.split(".")[-1]),
                 'axis'         : 'omega',
