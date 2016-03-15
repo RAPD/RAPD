@@ -201,9 +201,12 @@ def get_data_root_dir(fullname):
 
 if __name__ == "__main__":
 
-    # Test header reading
-    test_image = "/Users/frankmurphy/workspace/rapd_github/src/test/sercat_id/t\
+    if sys.argv[1]:
+        test_image = sys.argv[1]
+    else:
+        test_image = "/Users/frankmurphy/workspace/rapd_github/src/test/sercat_id/t\
 est_data/THAU10_r1_1.0001"
+
     # Flux of the beam
     BEAM_FLUX = 8E11
     # Size of the beam in microns
@@ -249,9 +252,11 @@ est_data/THAU10_r1_1.0001"
     pp = pprint.PrettyPrinter()
     pp.pprint(header)
 
+"""
     print "data root directory:", get_data_root_dir("/raw/ID_16_02_26_NIH_pkwon\
 g/Young/xtal2/t3.0179")
 
     directory, basename, prefix, run_number, image_number = parse_file_name("/data/ID_NIH_pkwong.raw/Young/xtal2/t3.0179")
     print directory, basename, prefix, run_number, image_number
     print create_image_fullname(directory, prefix, run_number, image_number)
+"""
