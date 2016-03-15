@@ -22,6 +22,7 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
+# Standar imports
 import sys
 
 # RAPD imports
@@ -121,7 +122,7 @@ GATHERER = "sercat_id.py"
 GATHERER_LOCK_FILE = "/tmp/lock/gatherer.lock"
 
 # Monitor for collected images
-IMAGE_MONITOR = "sites.image_monitors.necat_e"
+IMAGE_MONITOR = "sites.image_monitors.redis_monitor"
 # Redis databse
 # Running in a cluster configuration - True || False
 IMAGE_MONITOR_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER

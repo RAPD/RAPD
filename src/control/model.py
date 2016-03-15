@@ -267,7 +267,9 @@ class Model(object):
 
         if site.IMAGE_MONITOR:
             global image_monitor
-            image_monitor = importlib.import_module('%s' % site.IMAGE_MONITOR.lower())
+            image_monitor = importlib.import_module("%s" % site.IMAGE_MONITOR.lower())
+
+            # Instntiate the monitor
             self.image_monitor = image_monitor.ImageMonitor(
                 tag=site.ID.lower(),
                 image_monitor_settings=site.IMAGE_MONITOR_SETTINGS,

@@ -88,10 +88,14 @@ class RedisMonitor(threading.Thread):
             self.redis = redis.Redis(settings["REDIS_HOST"])
 
     def run(self):
-        self.logger.debug('Running')
+        """Orchestrate the monitoring for new images in redis db"""
+
+        self.logger.debug("Running")
 
         # Connect to Redis
         self.connect_to_redis()
+
+        self.logger.debug("  Monitoring list images_collected_"+self.tag)
 
         image_list = "images_collected_"+self.tag
         while self.Go:
