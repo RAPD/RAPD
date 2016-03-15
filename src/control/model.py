@@ -777,6 +777,8 @@ class Model(object):
         # Tease out the info from the file name
         directory, basename, prefix, run_number, image_number = detector.parse_file_name(fullname)
 
+        self.logger.debug("%s %s %s %s %s", directory, basename, prefix, run_number, image_number)
+
         # SNAP
         if run_number == 0:
             return "SNAP", None
