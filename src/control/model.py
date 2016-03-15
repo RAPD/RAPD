@@ -780,7 +780,7 @@ class Model(object):
         self.logger.debug("%s %s %s %s %s", directory, basename, prefix, run_number, image_number)
 
         # SNAP
-        if run_number == 0:
+        if run_number in (0, "unknown"):
             return "SNAP", None
 
         # NOT a snap
