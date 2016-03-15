@@ -37,6 +37,7 @@ from utils.lock import file_lock
 import utils.log
 from utils.modules import load_module
 import utils.sites
+from utils.text import text
 
 # from rapd_database import Database
 
@@ -163,11 +164,12 @@ class Launcher(object):
                 print "  There are no launcher adapters registered for this ip address"
             # IP Address in launchers, but not the input tag
             else:
-                print "There is a launcher adapter registered for this IP \
-address (%s), but not for the input tag (%s)" % (self.ip_address, self.tag)
+                print text.error + "There is a launcher adapter registered for thi\
+s IP address (%s), but not for the input tag (%s)" % (self.ip_address, self.tag)
                 print "  Available tags for this IP address:"
                 for t in possible_tags:
                     print "    %s" % t
+                    print text.stop
 
             # Exit in error state
             sys.exit(9)
