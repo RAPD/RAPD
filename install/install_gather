@@ -233,7 +233,6 @@ rapd.pip install redis
 printf "\033[92mPython modules install complete.\033[0m\n\n"
 
 
-
 printf "\033[92mRAPD installation is complete\033[0m\n\n"
 
 printf "=====================================================================\n"
