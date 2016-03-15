@@ -31,10 +31,12 @@ gatherer_wrapper.py wraps the gatherers and allows calling by site specification
 import argparse
 import importlib
 import subprocess
+import sys
 
 # RAPD imports
 import utils.commandline
 import utils.sites
+import utils.text as text
 
 def get_commandline():
     """Get the commandline variables and handle them"""
@@ -46,7 +48,7 @@ def get_commandline():
 
     return parser.parse_args()
 
-def main(site_in=None):
+def main():
     """
     The main process
     Search for and instantiate the gatherer
@@ -54,10 +56,15 @@ def main(site_in=None):
 
     # Get the commandline args
     commandline_args = get_commandline()
-    print commandline_args
+
+    # Get the environmental variables
+    environmental_vars = utils.sites.get_environmental_variables()
 
     # Determine the site
     site_file = utils.sites.determine_site(site_arg=commandline_args.site)
+    if site_file == False:
+        print text.error+"Could not determine a site file. Exiting."+text.stop
+        sys.exit(9)
 
     # Import the site settings
     SITE = importlib.import_module(site_file)
@@ -66,8 +73,7 @@ def main(site_in=None):
     if hasattr(SITE, "GATHERER"):
 
         # Run it
-        print "rapd.python $RAPD_HOME/src/sites/gatherers/"+SITE.GATHERER+" -vs %s" % site_in
-        subprocess.call("rapd.python $RAPD_HOME/src/sites/gatherers/"+SITE.GATHERER+" -vs %s" % commandline_args.site, shell=True)
+        subprocess.call("$RAPD_HOME/bin/rapd.python $RAPD_HOME/src/sites/gatherers/"+SITE.GATHERER+" -vs %s" % SITE.ID, shell=True)
 
 if __name__ == '__main__':
 

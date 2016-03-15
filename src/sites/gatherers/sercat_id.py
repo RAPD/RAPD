@@ -306,7 +306,7 @@ def get_commandline():
 
     return parser.parse_args()
 
-def main(site_in=None):
+def main():
     """ The main process
     Setup logging and instantiate the gatherer"""
 
@@ -320,9 +320,7 @@ def main(site_in=None):
     SITE = importlib.import_module(site_file)
 
 	# Single process lock?
-    if SITE.GATHERER_LOCK_FILE:
-        if utils.lock.file_is_locked(SITE.GATHERER_LOCK_FILE):
-            raise Exception("%s is already locked, unable to run" % SITE.GATHERER_LOCK_FILE)
+    utils.lock.file_lock(SITE.GATHERER_LOCK_FILE)
 
     # Set up logging
     if commandline_args.verbose:

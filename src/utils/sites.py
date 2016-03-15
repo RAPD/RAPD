@@ -159,7 +159,7 @@ def determine_site(site_arg=None):
 
     # Need only one site
     if len(sites) == 0:
-        raise Exception("No sites found")
+        return False
     elif len(sites) > 1:
         raise Exception("More than one site found")
     else:
