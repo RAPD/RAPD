@@ -47,7 +47,7 @@ def get_commandline():
 
     return parser.parse_args()
 
-def main(site_in=None):
+def main():
     """ The main process
     Setup logging and instantiate the model"""
 
@@ -57,8 +57,15 @@ def main(site_in=None):
     # Determine the site
     site_file = utils.sites.determine_site(site_arg=commandline_args.site)
 
+    # Determine the site
+    site_file = utils.sites.determine_site(site_arg=commandline_args.site)
+    if site_file == False:
+        print text.error+"Could not determine a site file. Exiting."+text.stop
+        sys.exit(9)
+
     # Import the site settings
     SITE = importlib.import_module(site_file)
+
 
 	# Single process lock?
     utils.lock.file_lock(SITE.LOCK_FILE)
