@@ -172,7 +172,7 @@ class MARImage(DetectorImageBase):
           if rotation_axis == 4: # rotation axis is phi
             pass
           #elif rotation_axis == 1: # rotation about omega
-  	      elif rotation_axis in [1, 2]:
+          elif rotation_axis in [1, 2]:
             parameters['OSC_START'] = parameters['OMEGA_START']
 
           f.seek(offset+668)
