@@ -158,7 +158,7 @@ class MARImage(DetectorImageBase):
           f.seek(offset+732)
           rawdata = f.read(4)
           rotation_axis = struct.unpack(format+'i',rawdata)[0]
-  	#assert rotation_axis == 4 # if it isn't phi; go back and recode to cover all cases
+  	      #assert rotation_axis == 4 # if it isn't phi; go back and recode to cover all cases
 
           # ----- omega analysis
           f.seek(offset+672)
@@ -172,7 +172,7 @@ class MARImage(DetectorImageBase):
           if rotation_axis == 4: # rotation axis is phi
             pass
           #elif rotation_axis == 1: # rotation about omega
-  	elif rotation_axis in [1,2]:
+  	      elif rotation_axis in [1, 2]:
             parameters['OSC_START'] = parameters['OMEGA_START']
 
           f.seek(offset+668)
