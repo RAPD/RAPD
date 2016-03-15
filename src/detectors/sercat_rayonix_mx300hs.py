@@ -25,6 +25,7 @@ __status__ = "Development"
 # Standar imports
 import math
 import os
+import sys
 
 # RAPD imports
 import rayonix_mx300hs
