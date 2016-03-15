@@ -34,6 +34,7 @@ import utils.commandline
 import utils.log
 import utils.lock
 import utils.sites
+import utils.text as text
 from control.model import Model
 
 def get_commandline():
