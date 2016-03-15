@@ -26,11 +26,6 @@ __status__ = "Production"
 rayonix_mx300hs is a wrapper for manipulating the detector images
 """
 
-import json
-import os
-import re
-import time
-
 # RAPD imports
 import mar
 
