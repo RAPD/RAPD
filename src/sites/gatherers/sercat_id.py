@@ -159,6 +159,9 @@ class SercatGatherer(object):
         # Now grab the file locations, beamline from settings
         if self.site.GATHERERS.has_key(self.ip_address):
             self.image_data_file, self.run_data_file, self.tag = self.site.GATHERERS[self.ip_address]
+
+            # Make sure we enforce lowercase for tag
+            self.tag = self.tag.lower()
         else:
             print "ERROR - no settings for this host"
             sys.exit(9)
