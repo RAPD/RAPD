@@ -296,6 +296,8 @@ class PDBQuery(Process,Communicate):
                   'path': '/gpfs5/users/necat/rapd/pdbq/pdb/p9/2p9h.cif'},
       '1PHO': {   'Name': 'PHOSPHOPORIN',
                   'path': '/gpfs5/users/necat/rapd/pdbq/pdb/ph/1pho.cif'},
+      '1BTL': {   'Name': 'BETA-LACTAMASE',
+                  'path': '/gpfs5/users/necat/rapd/pdbq/pdb/bt/1btl.cif'},
       }
       #Save these codes in a separate list so they can be separated in the Summary.
       self.common = d.keys()
@@ -335,10 +337,10 @@ class PDBQuery(Process,Communicate):
         #Check if symlink exists and create if not.
         if os.path.exists(f) == False:
           os.symlink(self.cell_output[code].get('path'),f)
-        #If mmCIF, checks if it is super structure with multiple PDB codes,
-        #and returns False, otherwise sends back SG.
+        #If mmCIF, checks if file exists or if it is super structure with 
+        #multiple PDB codes, and returns False, otherwise sends back SG.
         sg_pdb = Utils.fixSG(self,Utils.getSGInfo(self,f))
-        #Remove codes that won't run 
+        #Remove codes that won't run or PDB/mmCIF's that don't exist.
         if sg_pdb == False:
           del self.cell_output[code]
           continue
@@ -709,7 +711,8 @@ if __name__ == '__main__':
   import logging, logging.handlers
   inp = [{'dir' :  '/gpfs6/users/necat/Jon/RAPD_test/Output',
             #'data': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/SAD/PK_lu_peak.sca',
-            'data': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/SAD/PK_lu_peak_new_free.mtz',
+            #'data': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/SAD/PK_lu_peak_new_free.mtz',
+            'data': '/gpfs6/users/necat/Jon/RAPD_test/Temp/Alex/freer.mtz',
             'cluster': True,
             'test': False,
             'verbose': True,
