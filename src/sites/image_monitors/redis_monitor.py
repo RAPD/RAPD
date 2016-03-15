@@ -55,7 +55,7 @@ class RedisMonitor(threading.Thread):
         threading.Thread.__init__(self)
 
         # Passed-in variables
-        self.tag = tag
+        self.tag = tag.lower()
         self.redis_settings = image_monitor_settings
         self.notify = notify
         self.reconnect = reconnect
