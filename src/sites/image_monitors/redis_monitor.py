@@ -95,9 +95,9 @@ class RedisMonitor(threading.Thread):
         # Connect to Redis
         self.connect_to_redis()
 
-        self.logger.debug("  Monitoring list images_collected_"+self.tag)
+        self.logger.debug("  Monitoring list images_collected:"+self.tag)
 
-        image_list = "images_collected_"+self.tag
+        image_list = "images_collected:"+self.tag
         while self.Go:
 
             # Try to pop the oldest image off the list

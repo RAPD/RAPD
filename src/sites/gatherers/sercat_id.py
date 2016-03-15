@@ -106,7 +106,7 @@ class SercatGatherer(object):
         red = redis.Redis(connection_pool=self.redis_pool)
 
         self.logger.debug("  Will publish new images on filecreate:%s" % self.tag)
-        self.logger.debug("  Will push new images onto images_collected_%s" % self.tag)
+        self.logger.debug("  Will push new images onto images_collected:%s" % self.tag)
 
         while self.go:
             # Update redis entry to confirm this gatherer is up
@@ -134,7 +134,7 @@ class SercatGatherer(object):
                         # Publish to Redis
                         red.publish("filecreate:%s" % self.tag, image_name)
                         # Push onto redis list in case no one is currently listening
-                        red.rpush("images_collected_%s" % self.tag, image_name)
+                        red.rpush("images_collected:%s" % self.tag, image_name)
                     break
                 else:
                     time.sleep(0.05)
