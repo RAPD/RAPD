@@ -37,7 +37,7 @@ from utils.lock import file_lock
 import utils.log
 from utils.modules import load_module
 import utils.sites
-from utils.text import text
+import utils.text as text
 
 # from rapd_database import Database
 
