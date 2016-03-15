@@ -224,9 +224,9 @@ class MARImage(DetectorImageBase):
         return self.depth
 
 def MarReadHeader(image,
-                  mode=None,
-                  run_id=None,
-                  place_in_run=None,
+                #   mode=None,
+                #   run_id=None,
+                #   place_in_run=None,
                   logger=False):
 
   """
@@ -235,7 +235,7 @@ def MarReadHeader(image,
   """
   # print "determine_flux %s" % image
   if logger:
-    logger.debug('MarReadHeader ' % image)
+    logger.debug("MarReadHeader %s", image)
 
   m = MARImage(image)
   m.read()
