@@ -32,6 +32,8 @@ import time
 
 # Non-standard imports
 import drmaa
+import random
+import subprocess
 
 def process_cluster(self, inp, output=False):
     """
@@ -58,15 +60,18 @@ def process_cluster(self, inp, output=False):
         running = False
 
     # print inp
-    if len(inp) == 1:
+    if type(inp) != tuple:
         command = inp
-    elif len(inp) == 2:
-        command, log = inp
-    elif len(inp) == 3:
-        command, log, queue = inp
-    elif len(inp) == 4:
-        command, log, smp, queue = inp
     else:
+      if len(inp) == 1:
+        command = inp
+      elif len(inp) == 2:
+        command, log = inp
+      elif len(inp) == 3:
+        command, log, queue = inp
+      elif len(inp) == 4:
+        command, log, smp, queue = inp
+      else:
         command, log, smp, queue, name = inp
     if queue == False:
         queue = "all.q"
@@ -95,6 +100,7 @@ def process_cluster(self, inp, output=False):
     jt.joinFiles = True
     jt.nativeSpecification = options
     jt.remoteCommand = command.split()[0]
+    #jt.jobName = '%s'%random.randint(0,5000)
     if len(command.split()) > 1:
         jt.args = command.split()[1:]
     if log:
@@ -105,7 +111,8 @@ def process_cluster(self, inp, output=False):
     job = s.runJob(jt)
 
     # Return job_id.
-    if isinstance(output, dict):
+    #if isinstance(output, dict):
+    if output != False:
         output.put(job)
 
     # Cleanup the input script from the RAM.
@@ -140,4 +147,65 @@ def process_cluster(self, inp, output=False):
     # Exit cleanly, otherwise master node gets event client timeout errors after 600s.
     s.exit()
 
+    print "Job finished"
+    
+def process_cluster2(self, inp, output=False):
+    s = False
+    jt = False
+    running = True
+    log = False
+    queue = False
+    smp = 1
+    name = False
+    l = []
+
+    # Check if self.running is setup... used for Best and Mosflm strategies
+    # because you can't kill child processes launched on cluster easily.
+    try:
+        __ = self.running
+    except AttributeError:
+        running = False
+
+    # print inp
+    if type(inp) != tuple:
+        command = inp
+    else:
+      if len(inp) == 2:
+        command, log = inp
+      elif len(inp) == 3:
+        command, log, queue = inp
+      elif len(inp) == 4:
+        command, log, smp, queue = inp
+      else:
+        command, log, smp, queue, name = inp
+    if queue == False:
+        queue = "all.q"
+    # Queues aren't used right now.
+    # Make an input script
+    fname = 'qsub%s.sh'%random.randint(0,5000)
+    f = open(fname,'w')
+    print >>f, command
+    f.close()
+
+    # Setup path
+    v = "-v PATH=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
+/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/bin:\
+/home/schuerjp/Programs/best:\
+/home/schuerjp/Programs/RAPD/bin:\
+/home/schuerjp/Programs/RAPD/share/phenix-1.10.1-2155/build/bin:\
+/home/schuerjp/Programs/raddose-20-05-09-distribute-noexec/bin:\
+/usr/local/bin:/bin:/usr/bin"
+    
+    qs = 'qsub -d %s -j oe '%os.getcwd()
+    if log:
+      qs += '-o %s '%os.path.join(os.getcwd(),log)
+    qs += "%s -l nodes=1:ppn=%s %s" % (v, smp, fname)
+    job = subprocess.Popen(qs,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+    # Return job_id.
+    #if isinstance(output, dict):
+    if output != False:
+      for line in job.stdout:
+        l.append(line)
+      output.put(l[0])
+   
     print "Job finished"
