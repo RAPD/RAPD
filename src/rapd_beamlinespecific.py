@@ -930,11 +930,6 @@ def processClusterSercat(self,inp,output=False):
     queue = 'all.q'
   #queues aren't used right now.
   
-  #Since PDB needs a batch script to run...
-  #bs = open('pbs.sh','w')
-  #bs.writelines(command)
-  #bs.close()
-  
   #Setup path
   v = '-v PATH=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
 /home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/bin:\
@@ -944,9 +939,6 @@ def processClusterSercat(self,inp,output=False):
 /home/schuerjp/Programs/raddose-20-05-09-distribute-noexec/bin:\
 /usr/local/bin:/bin:/usr/bin'
   #smp,queue,name = inp2
-  #'-clear' can be added to the options to eliminate the general.q
-  #options = '-clear -shell y -p -100 -q %s -pe smp %s'%(queue,smp)
-  #options = '-V -l nodes=1:ppn=%s pbs.sh'%smp
   #options = '%s -l nodes=1:ppn=%s -S /bin/tcsh'%(v,smp)
   options = '%s -l nodes=1:ppn=%s'%(v,smp)
   s = drmaa.Session()
@@ -995,9 +987,9 @@ def processClusterSercat(self,inp,output=False):
   #Otherwise just wait for it to complete.
   else:
     s.wait(job, drmaa.Session.TIMEOUT_WAIT_FOREVER)
+  
   #Exit cleanly, otherwise master node gets event client timeout errors after 600s.
   s.exit()
-  print 'job finished'
   """
   except:
     self.logger.exception('**ERROR in Utils.processCluster**')
