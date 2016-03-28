@@ -28,6 +28,8 @@ Provides tools for registration, autodiscovery, monitoring and launching
 
 # Standard imports
 import importlib
+import os
+import subprocess
 import sys
 import time
 import uuid
@@ -57,30 +59,48 @@ class Registrar(object):
         red = redis.Redis(connection_pool=self.redis_pool)
 
         # Put entry in the redis db
-        red.hmset("OW:"+self.id, {"type":self.ow_type,
+        red.hmset("OW:"+self.id, {"ow_type":self.ow_type,
                                   "id":self.id,
                                   "ow_id":self.ow_id,
                                   "ts":time.time()})
 
         # Expire the current entry in 30 seconds
         red.expire("OW:"+self.id, 30)
+
+        # If this process has an overwatcher
+        if not self.ow_id == None:
+            # Put entry in the redis db
+            red.hmset("OW:"+self.id+":"+self.ow_id, {"ow_type":self.ow_type,
+                                                     "id":self.id,
+                                                     "ow_id":self.ow_id,
+                                                     "ts":time.time()})
+
+            # Expire the current entry in 30 seconds
+            red.expire("OW:"+self.id+":"+self.ow_id, 30)
 
     def update(self):
         """
         Update the status with the central db
         """
 
+        print "update"
+
         # Get connection
         red = redis.Redis(connection_pool=self.redis_pool)
 
         # Put entry in the redis db
-        red.hmset("OW:"+self.id, {"type":self.ow_type,
-                                  "id":self.id,
-                                  "ow_id":self.ow_id,
-                                  "ts":time.time()})
+        red.hset("OW:"+self.id, "ts", time.time())
 
         # Expire the current entry in 30 seconds
         red.expire("OW:"+self.id, 30)
+
+        # If this process has an overwatcher
+        if not self.ow_id == None:
+            # Put entry in the redis db
+            red.hset("OW:"+self.id+":"+self.ow_id, "ts", time.time())
+
+            # Expire the current entry in 30 seconds
+            red.expire("OW:"+self.id+":"+self.ow_id, 30)
 
     def connect(self):
         """
@@ -99,17 +119,23 @@ class Overwatcher(Registrar):
 
     ow_type = "overwatcher"
     ow_id = None
+    ow_managed_id = None
 
-    def __init__(self, site):
+    def __init__(self, site, managed_file, managed_file_flags):
         """
         Set up the Overwatcher
         """
 
         # Passed-in variables
         self.site = site
+        self.managed_file = managed_file
+        self.managed_file_flags = managed_file_flags
 
         # Create a unique id
-        self.id = uuid.uuid4()
+        self.id = uuid.uuid4().hex
+
+        # Run
+        self.run()
 
     def run(self):
         """
@@ -123,8 +149,79 @@ class Overwatcher(Registrar):
         self.register()
 
         # Start microservice with self.id as overwatch id
+        self.start_managed_process()
 
-        # Start listening for information from
+        # Start listening for information on managed service and updating
+        self.listen_and_update()
+
+    def start_managed_process(self):
+        """
+        Start the managed process with the passed in flags and the current
+        environment
+        """
+
+        # The environmental_vars
+        path = os.environ.copy()
+
+        # Put together the command
+        command = self.managed_file_flags[:]
+        command.insert(0, self.managed_file)
+        command.append("--overwatch")
+        command.append(self.id)
+
+        print command
+
+        subprocess.Popen(command, env=path)
+
+
+    def listen_and_update(self):
+        """
+        Listen for information on the managed process and maintain updates on
+        self
+        """
+
+        connection_errors = 0
+
+        while True:
+            time.sleep(5)
+
+            # Get the managed process ow_id if unknown
+            if self.ow_managed_id == None:
+                self.ow_managed_id = self.get_managed_id()
+
+            # Check the managed process status if a managed process is found
+            if not self.ow_managed_id == None:
+                pass
+
+            # Update the overwatcher status
+            try:
+                self.update()
+                connection_errors = 0
+            except redis.exceptions.ConnectionError:
+                connection_errors += 1
+                if connection_errors > 12:
+                    print "Too many connection errors. Exiting."
+                    break
+
+
+    def get_managed_id(self):
+        """
+        Retrieve the managed process's ow_id
+        """
+
+        # Get connection
+        red = redis.Redis(connection_pool=self.redis_pool)
+
+        # Look for keys
+        keys = red.keys("OW:*:%s" % self.ow_id)
+
+        if len(keys) == 0:
+            return None
+        elif len(keys) > 1:
+            return None
+        else:
+            return keys[0].split(":")[1]
+
 
     def start_microservice(self):
         """
@@ -204,15 +301,11 @@ def main():
 
     # Import the site settings
     SITE = importlib.import_module(site_file)
-    print SITE
 
-    #
-    # # Have a GATHERER file
-    # if hasattr(SITE, "GATHERER"):
-    #
-    #     # Run it
-    #     subprocess.call("$RAPD_HOME/bin/rapd.python $RAPD_HOME/src/sites/gatherers/"+SITE.GATHERER+" -vs %s" % SITE.ID, shell=True)
-
+    # Instantiate the Overwatcher
+    OW = Overwatcher(site=SITE,
+                     managed_file=managed_file,
+                     managed_file_flags=managed_file_flags)
 
 
 if __name__ == "__main__":
