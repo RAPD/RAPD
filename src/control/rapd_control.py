@@ -33,7 +33,7 @@ import os
 import utils.commandline
 import utils.log
 import utils.lock
-import utils.sites
+import utils.site
 import utils.text as text
 from control.model import Model
 
@@ -56,10 +56,10 @@ def main():
     commandline_args = get_commandline()
 
     # Determine the site
-    site_file = utils.sites.determine_site(site_arg=commandline_args.site)
+    site_file = utils.site.determine_site(site_arg=commandline_args.site)
 
     # Determine the site
-    site_file = utils.sites.determine_site(site_arg=commandline_args.site)
+    site_file = utils.site.determine_site(site_arg=commandline_args.site)
     if site_file == False:
         print text.error+"Could not determine a site file. Exiting."+text.stop
         sys.exit(9)

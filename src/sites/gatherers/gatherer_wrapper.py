@@ -35,7 +35,7 @@ import sys
 
 # RAPD imports
 import utils.commandline
-import utils.sites
+import utils.site
 import utils.text as text
 
 def get_commandline():
@@ -58,10 +58,10 @@ def main():
     commandline_args = get_commandline()
 
     # Get the environmental variables
-    environmental_vars = utils.sites.get_environmental_variables()
+    environmental_vars = utils.site.get_environmental_variables()
 
     # Determine the site
-    site_file = utils.sites.determine_site(site_arg=commandline_args.site)
+    site_file = utils.site.determine_site(site_arg=commandline_args.site)
     if site_file == False:
         print text.error+"Could not determine a site file. Exiting."+text.stop
         sys.exit(9)

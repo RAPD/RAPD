@@ -36,7 +36,7 @@ import utils.commandline
 from utils.lock import file_lock
 import utils.log
 from utils.modules import load_module
-import utils.sites
+import utils.site
 import utils.text as text
 
 # from rapd_database import Database
@@ -144,7 +144,7 @@ class Launcher(object):
         launchers = self.site.LAUNCHER_SETTINGS["LAUNCHER_REGISTER"]
 
         # Get IP Address
-        self.ip_address = utils.sites.get_ip_address()
+        self.ip_address = utils.site.get_ip_address()
         self.logger.debug("Found ip address to be %s", self.ip_address)
 
         # Look for the launcher matching this ip_address and the input tag
@@ -230,10 +230,10 @@ def main():
     commandline_args = get_commandline()
 
     # Get the environmental variables
-    environmental_vars = utils.sites.get_environmental_variables()
+    environmental_vars = utils.site.get_environmental_variables()
 
     # Determine the site
-    site_file = utils.sites.determine_site(site_arg=commandline_args.site)
+    site_file = utils.site.determine_site(site_arg=commandline_args.site)
 
     # Determine the tag - commandline wins
     if commandline_args.tag:
