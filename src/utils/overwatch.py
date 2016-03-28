@@ -27,7 +27,7 @@ Provides tools for registration, autodiscovery, monitoring and launching
 """
 
 # Standard imports
-
+import multiprocessing
 
 import redis
 
@@ -59,4 +59,13 @@ class Overwatch(object):
         """
         pass
 
-    
+
+
+class Startover(multiprocessing.Process):
+    """Provides methods for restarting failed microservices"""
+
+    def __init__(self):
+        """
+        Setup the Startover
+        """
+        pass
