@@ -44,11 +44,36 @@ import utils.text as text
 class Registrar(object):
     """Provides microservice monitoring tools"""
 
-    def __init__(self):
+    def __init__(self, site=None, ow_type="unknown", ow_id=None):
         """
         Setup the Startover
         """
-        pass
+
+        # Passed-in vars
+        self.site = site
+        self.ow_type = ow_type
+        self.ow_id = ow_id
+
+        # Create a unique id
+        self.id = uuid.uuid4().hex
+
+        self.run()
+
+    def run(self):
+        """
+        Orchestrate the registering and updating of the instantiating process
+        """
+
+        # Connect to redis
+        self.connect()
+
+        # Register
+        self.register()
+
+        #
+        while True:
+            time.sleep(5)
+            self.update()
 
     def register(self):
         """
@@ -82,9 +107,7 @@ class Registrar(object):
         """
         Update the status with the central db
         """
-
-        print "update"
-
+        
         # Get connection
         red = redis.Redis(connection_pool=self.redis_pool)
 
@@ -166,6 +189,7 @@ class Overwatcher(Registrar):
         # Put together the command
         command = self.managed_file_flags[:]
         command.insert(0, self.managed_file)
+        command.insert(0, "rapd.python")
         command.append("--overwatch")
         command.append(self.id)
 
