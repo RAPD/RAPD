@@ -169,6 +169,11 @@ echo "#! /bin/bash" > ./rapd.gather
 echo "$PREFIX/bin/rapd.python $PREFIX/src/sites/gatherers/gatherer_wrapper.py \"\$@\"" >>./rapd.gather
 chmod +x ./rapd.gather
 
+# Create a script for overwatch
+echo "#! /bin/bash" > ./rapd.overwatch
+echo "$PREFIX/bin/rapd.python $PREFIX/src/utils/overwatch.py \"\$@\"" >>./rapd.overwatch
+chmod +x ./rapd.overwatch
+
 # Create the rapd.shrc script
 printf "Writing rapd.shrc\n"
 cd $PREFIX
