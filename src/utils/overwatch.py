@@ -28,6 +28,7 @@ Provides tools for registration, autodiscovery, monitoring and launching
 
 # Standard imports
 import importlib
+import json
 import os
 import subprocess
 import sys
@@ -57,8 +58,6 @@ class Registrar(object):
         # Create a unique id
         self.id = uuid.uuid4().hex
 
-        self.run()
-
     def run(self):
         """
         Orchestrate the registering and updating of the instantiating process
@@ -75,52 +74,83 @@ class Registrar(object):
             time.sleep(5)
             self.update()
 
-    def register(self):
+    def register(self, custom_vars={}):
         """
         Register the process with the central db
+
+        custom_vars - dict containing custom elements to put in redis database
         """
 
         # Get connection
         red = redis.Redis(connection_pool=self.redis_pool)
 
+        # Create an entry
+        entry = {"ow_type":self.ow_type,
+                 "id":self.id,
+                 "ow_id":self.ow_id,
+                 "timestamp":time.time()}
+
+        # If custom_vars have been passed, add them
+        entry.update(custom_vars)
+
         # Put entry in the redis db
-        red.hmset("OW:"+self.id, {"ow_type":self.ow_type,
-                                  "id":self.id,
-                                  "ow_id":self.ow_id,
-                                  "ts":time.time()})
+        red.hmset("OW:"+self.id, entry)
 
         # Expire the current entry in 30 seconds
         red.expire("OW:"+self.id, 30)
 
+        # Announce by publishing
+        red.publish("OW:registering", json.dumps(entry))
+
         # If this process has an overwatcher
         if not self.ow_id == None:
             # Put entry in the redis db
-            red.hmset("OW:"+self.id+":"+self.ow_id, {"ow_type":self.ow_type,
-                                                     "id":self.id,
-                                                     "ow_id":self.ow_id,
-                                                     "ts":time.time()})
+            red.hmset("OW:"+self.id+":"+self.ow_id, entry)
 
             # Expire the current entry in 30 seconds
             red.expire("OW:"+self.id+":"+self.ow_id, 30)
 
-    def update(self):
+    def update(self, custom_vars={}):
         """
         Update the status with the central db
+
+        custom_vars - dict containing custom elements to put in redis database
         """
-        
+
         # Get connection
         red = redis.Redis(connection_pool=self.redis_pool)
 
-        # Put entry in the redis db
-        red.hset("OW:"+self.id, "ts", time.time())
+        # Update timestamp
+        red.hset("OW:"+self.id, "timestamp", time.time())
+
+        # Create entry
+        entry = {"ow_type":self.ow_type,
+                 "id":self.id,
+                 "ow_id":self.ow_id,
+                 "timestamp":time.time()}
+
+        # If custom_vars have been passed, add them
+        entry.update(custom_vars)
+
+        # Update any custom_vars
+        for k, v in custom_vars.iteritems():
+            red.hset("OW:"+self.id, k, v)
 
         # Expire the current entry in 30 seconds
         red.expire("OW:"+self.id, 30)
 
+        # Announce by publishing
+        custom_vars.update({})
+        red.publish("OW:updating", json.dumps(entry))
+
         # If this process has an overwatcher
         if not self.ow_id == None:
             # Put entry in the redis db
-            red.hset("OW:"+self.id+":"+self.ow_id, "ts", time.time())
+            red.hset("OW:"+self.id+":"+self.ow_id, "timestamp", time.time())
+
+            # Update any custom_vars
+            for k, v in custom_vars.iteritems():
+                red.hset("OW:"+self.id+":"+self.ow_id, k, v)
 
             # Expire the current entry in 30 seconds
             red.expire("OW:"+self.id+":"+self.ow_id, 30)
@@ -177,11 +207,30 @@ class Overwatcher(Registrar):
         # Start listening for information on managed service and updating
         self.listen_and_update()
 
+    def restart_managed_process(self):
+        """
+        Kill and then start the managed process
+        """
+
+        # Forget the previous id
+        self.ow_managed_id = None
+
+        # Kill
+        self.managed_process.kill()
+
+        # Wait
+        time.sleep(2)
+
+        # Start
+        self.start_managed_process()
+
     def start_managed_process(self):
         """
         Start the managed process with the passed in flags and the current
         environment
         """
+
+        print "Starting managed process"
 
         # The environmental_vars
         path = os.environ.copy()
@@ -193,10 +242,8 @@ class Overwatcher(Registrar):
         command.append("--overwatch")
         command.append(self.id)
 
-        print command
-
-        subprocess.Popen(command, env=path)
-
+        # Run the input command
+        self.managed_process = subprocess.Popen(command, env=path)
 
     def listen_and_update(self):
         """
@@ -215,7 +262,11 @@ class Overwatcher(Registrar):
 
             # Check the managed process status if a managed process is found
             if not self.ow_managed_id == None:
-                pass
+                status = self.check_managed_process()
+
+                # Watched process has failed
+                if status == False:
+                    self.restart_managed_process()
 
             # Update the overwatcher status
             try:
@@ -228,6 +279,34 @@ class Overwatcher(Registrar):
                     break
 
 
+    def check_managed_process(self):
+        """
+        Check the managed process's status
+        """
+
+        # Get connection
+        red = redis.Redis(connection_pool=self.redis_pool)
+
+        # What's the time?
+        now = time.time()
+
+        try:
+            managed_process_timestamp = float(red.hget("OW:%s" % self.ow_managed_id, "timestamp"))
+        # There is no entry for the managed process - it has TTLed
+        except TypeError:
+            return False
+
+        print now, managed_process_timestamp, now - managed_process_timestamp
+
+        # Calculate time ellapsed since last update of status
+        ellapsed = now - managed_process_timestamp
+
+        # If too long, return False
+        if ellapsed > 30:
+            return False
+        else:
+            return True
+
     def get_managed_id(self):
         """
         Retrieve the managed process's ow_id
@@ -237,7 +316,8 @@ class Overwatcher(Registrar):
         red = redis.Redis(connection_pool=self.redis_pool)
 
         # Look for keys
-        keys = red.keys("OW:*:%s" % self.ow_id)
+        print "Looking for OW:*:%s" % self.id
+        keys = red.keys("OW:*:%s" % self.id)
 
         if len(keys) == 0:
             return None
@@ -247,11 +327,7 @@ class Overwatcher(Registrar):
             return keys[0].split(":")[1]
 
 
-    def start_microservice(self):
-        """
-        Start the microservice to be managed
-        """
-        pass
+
 
 def get_commandline():
     """
