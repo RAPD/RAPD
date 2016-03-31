@@ -59,7 +59,7 @@ class Launcher(object):
     adapter_file = None
     launcher = None
 
-    def __init__(self, site, tag=""):
+    def __init__(self, site, tag="", overwatcher_id=False):
         """
         The main server thread
         """
@@ -71,6 +71,7 @@ class Launcher(object):
         # Save passed-in variables
         self.site = site
         self.tag = tag
+        self.overwatcher_id = overwatcher_id
 
         # Retrieve settings for this Launcher
         self.get_settings()
@@ -89,6 +90,13 @@ class Launcher(object):
         The core process of the Launcher instance
         """
 
+        # Set up overwatcher
+        if self.overwatcher_id:
+            self.ow_registrar = Registrar(site=self.site,
+                                          ow_type="launcher",
+                                          ow_id=self.overwatcher_id)
+            self.ow_registrar.register({"site_id":self.site.ID})
+
         # Create socket to listen for commands
         _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         _socket.settimeout(5)
@@ -97,6 +105,10 @@ class Launcher(object):
         # This is the server portion of the code
         while 1:
             try:
+                # Have Registrar update status
+                self.ow_registrar.update({"site_id":self.site.ID})
+
+                # Listen for connections
                 _socket.listen(5)
                 conn, addr = _socket.accept()
 
@@ -232,8 +244,14 @@ def main():
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
 
+    # Get site - commandline wins
+    if commandline_args.site:
+        site = commandline_args.site
+    elif environmental_vars["RAPD_SITE"]:
+        site = environmental_vars["RAPD_SITE"]
+
     # Determine the site
-    site_file = utils.site.determine_site(site_arg=commandline_args.site)
+    site_file = utils.site.determine_site(site_arg=site)
 
     # Determine the tag - commandline wins
     if commandline_args.tag:
@@ -265,7 +283,8 @@ def main():
         logger.debug("  arg:%s  val:%s" % pair)
 
     LAUNCHER = Launcher(site=SITE,
-                        tag=tag)
+                        tag=tag,
+                        overwatcher_id=commandline_args.overwatcher_id)
 
 if __name__ == "__main__":
 
