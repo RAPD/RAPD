@@ -106,10 +106,10 @@ class SercatGatherer(object):
 
         # Set up overwatcher
         if self.overwatcher_id:
-            self.RG = Registrar(site=self.site,
-                                   ow_type="gatherer",
-                                   ow_id=self.overwatcher_id)
-            self.RG.register({"site_id":self.site.ID})
+            self.ow_registrar = Registrar(site=self.site,
+                                          ow_type="gatherer",
+                                          ow_id=self.overwatcher_id)
+            self.ow_registrar.register({"site_id":self.site.ID})
 
         # Get redis connection
         red = redis.Redis(connection_pool=self.redis_pool)
@@ -150,7 +150,8 @@ class SercatGatherer(object):
                         time.sleep(0.05)
 
             # Have Registrar update status
-            self.RG.update({"site_id":self.site.ID})
+            if self.overwatcher_id:
+                self.ow_registrar.update({"site_id":self.site.ID})
 
     def stop(self):
         """
