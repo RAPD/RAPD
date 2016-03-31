@@ -58,13 +58,13 @@ class Registrar(object):
         # Create a unique id
         self.id = uuid.uuid4().hex
 
+        # Connect to redis
+        self.connect()
+
     def run(self):
         """
         Orchestrate the registering and updating of the instantiating process
         """
-
-        # Connect to redis
-        self.connect()
 
         # Register
         self.register()
@@ -93,22 +93,29 @@ class Registrar(object):
         # If custom_vars have been passed, add them
         entry.update(custom_vars)
 
-        # Put entry in the redis db
-        red.hmset("OW:"+self.id, entry)
-
-        # Expire the current entry in 30 seconds
-        red.expire("OW:"+self.id, 30)
-
-        # Announce by publishing
-        red.publish("OW:registering", json.dumps(entry))
-
-        # If this process has an overwatcher
-        if not self.ow_id == None:
+        # Wrap potential redis down
+        try:
             # Put entry in the redis db
-            red.hmset("OW:"+self.id+":"+self.ow_id, entry)
+            red.hmset("OW:"+self.id, entry)
 
             # Expire the current entry in 30 seconds
-            red.expire("OW:"+self.id+":"+self.ow_id, 30)
+            red.expire("OW:"+self.id, 30)
+
+            # Announce by publishing
+            red.publish("OW:registering", json.dumps(entry))
+
+            # If this process has an overwatcher
+            if not self.ow_id == None:
+                # Put entry in the redis db
+                red.hmset("OW:"+self.id+":"+self.ow_id, entry)
+
+                # Expire the current entry in 30 seconds
+                red.expire("OW:"+self.id+":"+self.ow_id, 30)
+
+        # Redis is down
+        except redis.exceptions.ConnectionError:
+
+            print "Redis appears to be down"
 
     def update(self, custom_vars={}):
         """
@@ -120,9 +127,6 @@ class Registrar(object):
         # Get connection
         red = redis.Redis(connection_pool=self.redis_pool)
 
-        # Update timestamp
-        red.hset("OW:"+self.id, "timestamp", time.time())
-
         # Create entry
         entry = {"ow_type":self.ow_type,
                  "id":self.id,
@@ -132,28 +136,37 @@ class Registrar(object):
         # If custom_vars have been passed, add them
         entry.update(custom_vars)
 
-        # Update any custom_vars
-        for k, v in custom_vars.iteritems():
-            red.hset("OW:"+self.id, k, v)
-
-        # Expire the current entry in 30 seconds
-        red.expire("OW:"+self.id, 30)
-
-        # Announce by publishing
-        custom_vars.update({})
-        red.publish("OW:updating", json.dumps(entry))
-
-        # If this process has an overwatcher
-        if not self.ow_id == None:
-            # Put entry in the redis db
-            red.hset("OW:"+self.id+":"+self.ow_id, "timestamp", time.time())
+        # Wrap potential redis down
+        try:
+            # Update timestamp
+            red.hset("OW:"+self.id, "timestamp", time.time())
 
             # Update any custom_vars
             for k, v in custom_vars.iteritems():
-                red.hset("OW:"+self.id+":"+self.ow_id, k, v)
+                red.hset("OW:"+self.id, k, v)
 
             # Expire the current entry in 30 seconds
-            red.expire("OW:"+self.id+":"+self.ow_id, 30)
+            red.expire("OW:"+self.id, 30)
+
+            # Announce by publishing
+            red.publish("OW:updating", json.dumps(entry))
+
+            # If this process has an overwatcher
+            if not self.ow_id == None:
+                # Put entry in the redis db
+                red.hset("OW:"+self.id+":"+self.ow_id, "timestamp", time.time())
+
+                # Update any custom_vars
+                for k, v in custom_vars.iteritems():
+                    red.hset("OW:"+self.id+":"+self.ow_id, k, v)
+
+                # Expire the current entry in 30 seconds
+                red.expire("OW:"+self.id+":"+self.ow_id, 30)
+
+        # Redis is down
+        except redis.exceptions.ConnectionError:
+
+            print "Redis appears to be down"
 
     def connect(self):
         """
@@ -272,6 +285,7 @@ class Overwatcher(Registrar):
             try:
                 self.update()
                 connection_errors = 0
+            # Redis is down
             except redis.exceptions.ConnectionError:
                 connection_errors += 1
                 if connection_errors > 12:
@@ -295,8 +309,6 @@ class Overwatcher(Registrar):
         # There is no entry for the managed process - it has TTLed
         except TypeError:
             return False
-
-        print now, managed_process_timestamp, now - managed_process_timestamp
 
         # Calculate time ellapsed since last update of status
         ellapsed = now - managed_process_timestamp
@@ -353,11 +365,16 @@ def get_commandline():
 
                 # The overwatch script
                 if entry.endswith("overwatch.py"):
-                    pass
+                    continue
                     #print "  Overwatcher script", entry
 
                 if entry == "-s":
                     site = "SITENEXT"
+                    continue
+
+                # No site specification, straight to managed file
+                if entry.endswith(".py"):
+                    managed_file = entry
 
             # site is the current entry
             elif site == "SITENEXT":
@@ -392,6 +409,10 @@ def main():
 
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
+
+    if site == False:
+        if environmental_vars["RAPD_SITE"]:
+            site = environmental_vars["RAPD_SITE"]
 
     # Determine the site
     site_file = utils.site.determine_site(site_arg=site)
