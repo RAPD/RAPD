@@ -1,4 +1,4 @@
-"""
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2009-2016, Cornell University
@@ -16,7 +16,6 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
 __created__ = "2009-07-10"
 __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
@@ -32,10 +31,11 @@ import sys
 import time
 
 # RAPD imports
-import utils.commandline
+from utils.commandline import base_parser
 from utils.lock import file_lock
 import utils.log
 from utils.modules import load_module
+from utils.overwatch import Registrar
 import utils.site
 import utils.text as text
 
@@ -46,12 +46,13 @@ database = None
 
 class Launcher(object):
     """
-    Runs a socket server and spawns new threads when connections are received
+    Runs a socket server and spawns new threads using defined launcher_adapter
+    when connections are received
     """
 
     database = None
     adapter = None
-    address = None
+    # address = None
     ip_address = None
     tag = None
     port = None
@@ -61,7 +62,12 @@ class Launcher(object):
 
     def __init__(self, site, tag="", overwatcher_id=False):
         """
-        The main server thread
+        Initialize the Launcher instance
+
+        Keyword arguments:
+        site -- object with relevant information to run
+        tag -- optional string describing launcher. Defined in site.LAUNCHER_REGISTER
+        overwatcher_id -- id for optional overwatcher instance
         """
 
         # Get the logger Instance
@@ -86,9 +92,7 @@ class Launcher(object):
         self.run()
 
     def run(self):
-        """
-        The core process of the Launcher instance
-        """
+        """The core process of the Launcher instance"""
 
         # Set up overwatcher
         if self.overwatcher_id:
@@ -111,7 +115,7 @@ class Launcher(object):
 
                 # Listen for connections
                 _socket.listen(5)
-                conn, addr = _socket.accept()
+                conn, address = _socket.accept()
 
                 # Read the message from the socket
                 message = ""
@@ -138,6 +142,9 @@ class Launcher(object):
     def handle_message(self, message):
         """
         Handle an incoming message
+
+        Keyword arguments:
+        message -- raw message from socket
         """
 
         self.logger.debug("Message received: %s", message)
@@ -222,7 +229,7 @@ def get_commandline():
     # Parse the commandline arguments
     commandline_description = """The Launch process for handling calls for
     computation"""
-    parser = argparse.ArgumentParser(parents=[utils.commandline.base_parser],
+    parser = argparse.ArgumentParser(parents=[base_parser],
                                      description=commandline_description)
 
     # Add the possibility to tag the Launcher
@@ -251,8 +258,11 @@ def main():
     elif environmental_vars["RAPD_SITE"]:
         site = environmental_vars["RAPD_SITE"]
 
-    # Determine the site
+    # Determine the site_file
     site_file = utils.site.determine_site(site_arg=site)
+
+    # Import the site settings
+    SITE = importlib.import_module(site_file)
 
     # Determine the tag - commandline wins
     if commandline_args.tag:
@@ -261,9 +271,6 @@ def main():
         tag = environmental_vars["RAPD_LAUNCHER_TAG"]
     else:
         tag = ""
-
-    # Import the site settings
-    SITE = importlib.import_module(site_file)
 
     # Single process lock?
     file_lock(SITE.LAUNCHER_LOCK_FILE)
