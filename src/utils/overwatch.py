@@ -1,4 +1,8 @@
 """
+Provides tools for registration, autodiscovery, monitoring and launching
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2016 Cornell University
@@ -395,10 +399,7 @@ def get_commandline():
     return site, managed_file, managed_file_flags
 
 def main():
-    """
-    The main process
-    Instantiate the Overwatcher
-    """
+    """Called when overwatch is run from the commandline"""
 
     # Get the commandline args
     site, managed_file, managed_file_flags = get_commandline()
