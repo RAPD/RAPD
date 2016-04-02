@@ -1,5 +1,9 @@
 """
-RAPD - Automated data analysis for macromolecular crystallography
+File for launching the controller process for a RAPD site install
+"""
+
+__license__ = """
+This file is part of RAPD
 
 Copyright (C) 2009-2016, Cornell University
 All rights reserved.
@@ -26,9 +30,8 @@ rapd.py is the core process for RAPD.
 """
 
 import argparse
-import fcntl
 import importlib
-import os
+import sys
 
 import utils.commandline
 import utils.log
@@ -55,18 +58,31 @@ def main():
     # Get the commandline args
     commandline_args = get_commandline()
 
-    # Determine the site
-    site_file = utils.site.determine_site(site_arg=commandline_args.site)
+    # Get the environmental variables
+    environmental_vars = utils.site.get_environmental_variables()
 
-    # Determine the site
-    site_file = utils.site.determine_site(site_arg=commandline_args.site)
+    # Get site - commandline wins
+    site = False
+    if commandline_args.site:
+        site = commandline_args.site
+    elif environmental_vars.has_key("RAPD_SITE"):
+        site = environmental_vars["RAPD_SITE"]
+
+    # If no site, error
+    if site == False:
+        print text.error+"Could not determine a site. Exiting."+text.stop
+        sys.exit(9)
+
+    # Determine the site_file
+    site_file = utils.site.determine_site(site_arg=site)
+
+    # Error out if no site_file to import
     if site_file == False:
-        print text.error+"Could not determine a site file. Exiting."+text.stop
+        print text.error+"Could not find a site file. Exiting."+text.stop
         sys.exit(9)
 
     # Import the site settings
     SITE = importlib.import_module(site_file)
-
 
 	# Single process lock?
     utils.lock.file_lock(SITE.LOCK_FILE)
@@ -85,7 +101,8 @@ def main():
         logger.debug("  arg:%s  val:%s" % pair)
 
     # Instantiate the model
-    MODEL = Model(SITE=SITE)
+    MODEL = Model(SITE=SITE,
+                  overwatcher_id=commandline_args.overwatcher_id)
 
 
 if __name__ == "__main__":

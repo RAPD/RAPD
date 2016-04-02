@@ -1,6 +1,9 @@
-#!/usr/bin/env python
-
 """
+Watches files for information on images and runs on a MAR data collection
+computer to provide information back to RAPD system via redis
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2009-2016, Cornell University
@@ -47,7 +50,6 @@ import os
 import pickle
 import shutil
 import socket
-import sys
 import time
 import uuid
 
@@ -82,7 +84,7 @@ class SercatGatherer(object):
 
         # Passed-in variables
         self.site = site
-        self.overwatcher_id =overwatcher_id
+        self.overwatcher_id = overwatcher_id
 
         self.logger.info("SercatGatherer.__init__")
 
@@ -150,8 +152,7 @@ class SercatGatherer(object):
                         time.sleep(0.05)
 
             # Have Registrar update status
-            if self.overwatcher_id:
-                self.ow_registrar.update({"site_id":self.site.ID})
+            self.ow_registrar.update({"site_id":self.site.ID})
 
     def stop(self):
         """

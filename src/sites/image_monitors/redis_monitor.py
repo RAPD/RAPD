@@ -1,4 +1,8 @@
 """
+
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2016, Cornell University
@@ -22,43 +26,60 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
+# Standard imports
 import logging
 import threading
 import time
+
 import redis
 
 # RAPD imports
+from utils.overwatch import Registrar
 from utils import pysent
+
+# Constants
+POLLING_REST = 0.1      # Time to rest between checks for new image
 
 class RedisMonitor(threading.Thread):
     """Monitor for new data collection images to be submitted to a redis instance"""
 
     # Used for stopping/starting the loop
     Go = True
+
     # The connection to the Redis database
     redis = None
 
-    def __init__(self, tag="necat_e", image_monitor_settings=None, notify=None, reconnect=None):
-        """Initialize the object
+    def __init__(self,
+                 site,
+                #  tag=None,
+                #  image_monitor_settings=None,
+                 notify=None,
+                 overwatcher_id=None):
+        """
+        Initialize the monitor
 
         Keyword arguments:
         tag -- Expected tag for images to be captured (default "necat_e")
         redis_settings -- Dict with appropriate redis settings
         notify - Function called when image is captured
-        reconnect --
+        overwatcher_id -- id for optional overwather wrapper
         """
 
+        # Get the logger
         self.logger = logging.getLogger("RAPDLogger")
-        self.logger.debug("Starting")
 
         # Initialize the thread
         threading.Thread.__init__(self)
 
         # Passed-in variables
-        self.tag = tag.lower()
-        self.redis_settings = image_monitor_settings
+        # self.tag = tag.lower()
+        # self.redis_settings = image_monitor_settings
+        self.site=site
         self.notify = notify
-        self.reconnect = reconnect
+        self.overwatcher_id=overwatcher_id
+
+        # Tag comes from site id
+        self.tag = self.site.ID.lower()
 
         # Start the thread
         self.daemon = True
@@ -74,8 +95,8 @@ class RedisMonitor(threading.Thread):
     def connect_to_redis(self):
         """Connect to the redis instance"""
 
-        # Make it easier to call var
-        settings = self.redis_settings
+        # Make it easier to call
+        settings = self.site.IMAGE_MONITOR_SETTINGS
 
         # Using a redis cluster setup
         if settings["REDIS_CLUSTER"]:
@@ -92,6 +113,13 @@ class RedisMonitor(threading.Thread):
 
         self.logger.debug("Running")
 
+        # Create Registrar instance
+        self.ow_registrar = Registrar(site=self.site,
+                                      ow_type="control",
+                                      ow_id=self.overwatcher_id)
+        # Register
+        self.ow_registrar.register({"site_id":self.site.ID})
+
         # Connect to Redis
         self.connect_to_redis()
 
@@ -100,12 +128,18 @@ class RedisMonitor(threading.Thread):
         image_list = "images_collected:"+self.tag
         while self.Go:
 
-            # Try to pop the oldest image off the list
-            new_image = self.redis.rpop(image_list)
-            if new_image:
-                # Notify core thread that an image has been collected
-                self.notify(("NEWIMAGE", new_image))
-                self.logger.debug('New image %s', new_image)
+            # 50 rounds between updating overwatch system
+            for __ in range(50):
 
-            # Slow it down a little
-            time.sleep(0.1)
+                # Try to pop the oldest image off the list
+                new_image = self.redis.rpop(image_list)
+                if new_image:
+                    # Notify core thread that an image has been collected
+                    self.notify(("NEWIMAGE", new_image))
+                    self.logger.debug('New image %s', new_image)
+
+                # Slow it down a little
+                time.sleep(POLLING_REST)
+
+            # Have Registrar update status
+            self.ow_registrar.update({"site_id":self.site.ID})

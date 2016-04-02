@@ -1,4 +1,10 @@
 """
+Code for the coordination of site activities for a RAPD install - the monitoring
+of data collection and the "cloud", as well as the running of processes and
+logging of all metadata
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2009-2016 Cornell University
@@ -32,7 +38,7 @@ import socket
 import time
 
 # RAPD imports
-from control_server import LaunchAction, ControllerServer
+from control.control_server import LaunchAction, ControllerServer
 from utils.site import get_ip_address
 # from rapd_console import ConsoleFeeder
 # from rapd_site import GetDataRootDir, TransferToUI, TransferToBeamline, CopyToUser
@@ -50,11 +56,7 @@ remote_adapter = None
 #####################################################################
 class Model(object):
     """
-    Main controlling code for the core rapd process.
-
-    This is really more than just a model, probably model+controller.
-    Coordinates the monitoring of data collection and the "cloud",
-    as well as the running of processes and logging of all metadata
+    Main controller code for a RAPD site install
     """
 
     # Keeping track of image pairs
@@ -83,12 +85,13 @@ class Model(object):
     site_adapter = None
     remote_adapter = None
 
-    def __init__(self, SITE):
+    def __init__(self, SITE, overwatcher_id=None):
         """
-        Save variables and call init_settings.
+        Save variables and start the process activity
 
         Keyword arguments
         SITE -- Site settings object
+        overwatcher_id -- id for optional overwatcher (default False)
         """
 
         # Get the logger Instance
@@ -96,6 +99,7 @@ class Model(object):
 
         # Passed-in variables
         self.site = SITE
+        self.overwatcher_id = overwatcher_id
 
         # Instance variables
         try:
@@ -106,11 +110,11 @@ class Model(object):
         self.logger.debug("self.return_address:%s", self.return_address)
 
         # Start the process
-        self.start()
+        self.run()
 
-    def start(self):
+    def run(self):
         """
-        Start monitoring the beamline.
+        Initialize monitoring the beamline.
         """
 
         self.logger.debug("Starting")
@@ -271,9 +275,11 @@ class Model(object):
 
             # Instntiate the monitor
             self.image_monitor = image_monitor.ImageMonitor(
-                tag=site.ID.lower(),
-                image_monitor_settings=site.IMAGE_MONITOR_SETTINGS,
-                notify=self.receive)
+                site=site,
+                # tag=site.ID.lower(),
+                # image_monitor_settings=site.IMAGE_MONITOR_SETTINGS,
+                notify=self.receive,
+                overwatcher_id=self.overwatcher_id)
 
     def start_run_monitor(self):
         """Start up the run information listening process for core"""

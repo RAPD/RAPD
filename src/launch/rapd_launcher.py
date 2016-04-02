@@ -110,8 +110,7 @@ class Launcher(object):
         while 1:
             try:
                 # Have Registrar update status
-                if self.overwatcher_id:
-                    self.ow_registrar.update({"site_id":self.site.ID})
+                self.ow_registrar.update({"site_id":self.site.ID})
 
                 # Listen for connections
                 _socket.listen(5)
