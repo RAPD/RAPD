@@ -31,7 +31,7 @@ import json
 import utils.commandline
 import utils.log
 from utils.modules import load_module
-import utils.sites
+import utils.site
 
 class Launch(object):
     """
@@ -117,7 +117,7 @@ def main():
     print commandline_args
 
     # Determine the site
-    site_file = utils.sites.determine_site(site_arg=commandline_args.site)
+    site_file = utils.site.determine_site(site_arg=commandline_args.site)
 
     # Import the site settings
     SITE = importlib.import_module(site_file)

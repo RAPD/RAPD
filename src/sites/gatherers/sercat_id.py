@@ -1,6 +1,9 @@
-#!/usr/bin/env python
-
 """
+Watches files for information on images and runs on a MAR data collection
+computer to provide information back to RAPD system via redis
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2009-2016, Cornell University
@@ -47,7 +50,6 @@ import os
 import pickle
 import shutil
 import socket
-import sys
 import time
 import uuid
 
@@ -57,7 +59,8 @@ import redis
 import utils.commandline
 import utils.lock
 import utils.log
-import utils.sites
+from utils.overwatch import Registrar
+import utils.site
 
 class SercatGatherer(object):
     """
@@ -71,7 +74,7 @@ class SercatGatherer(object):
     # Host computer detail
     ip_address = None
 
-    def __init__(self, site):
+    def __init__(self, site, overwatcher_id=None):
         """
         Setup and start the SercatGatherer
         """
@@ -79,8 +82,9 @@ class SercatGatherer(object):
         # Get the logger Instance
         self.logger = logging.getLogger("RAPDLogger")
 
-        # Passed-in variable
+        # Passed-in variables
         self.site = site
+        self.overwatcher_id = overwatcher_id
 
         self.logger.info("SercatGatherer.__init__")
 
@@ -102,6 +106,13 @@ class SercatGatherer(object):
         """
         self.logger.info("SercatGatherer.run")
 
+        # Set up overwatcher
+        if self.overwatcher_id:
+            self.ow_registrar = Registrar(site=self.site,
+                                          ow_type="gatherer",
+                                          ow_id=self.overwatcher_id)
+            self.ow_registrar.register({"site_id":self.site.ID})
+
         # Get redis connection
         red = redis.Redis(connection_pool=self.redis_pool)
 
@@ -109,35 +120,39 @@ class SercatGatherer(object):
         self.logger.debug("  Will push new images onto images_collected:%s" % self.tag)
 
         while self.go:
-            # Update redis entry to confirm this gatherer is up
 
+            # 5 rounds of checking
+            for ___ in range(5):
 
-            # Check if the run info has changed on the disk
-            if self.check_for_run_info():
-                run_data = self.get_run_data()
-                if run_data:
-                    run_data_json = json.dumps(run_data)
-                    # Publish to Redis
-                    red.publish("run_data:%s" % self.tag, run_data_json)
-                    # Push onto redis list in case no one is currently listening
-                    red.rpush("run_data:%s" % self.tag, run_data_json)
-
-            # 1 run check for every 20 image checks
-            for __ in range(20):
-                # Check if the image file has changed
-                if self.check_for_image_collected():
-                    image_name = self.get_image_data()
-                    if image_name:
-                        self.logger.debug("filecreate:%s %s",
-                                          self.tag,
-                                          image_name)
+                # Check if the run info has changed on the disk
+                if self.check_for_run_info():
+                    run_data = self.get_run_data()
+                    if run_data:
+                        run_data_json = json.dumps(run_data)
                         # Publish to Redis
-                        red.publish("filecreate:%s" % self.tag, image_name)
+                        red.publish("run_data:%s" % self.tag, run_data_json)
                         # Push onto redis list in case no one is currently listening
-                        red.rpush("images_collected:%s" % self.tag, image_name)
-                    break
-                else:
-                    time.sleep(0.05)
+                        red.rpush("run_data:%s" % self.tag, run_data_json)
+
+                # 20 image checks
+                for __ in range(20):
+                    # Check if the image file has changed
+                    if self.check_for_image_collected():
+                        image_name = self.get_image_data()
+                        if image_name:
+                            self.logger.debug("filecreate:%s %s",
+                                              self.tag,
+                                              image_name)
+                            # Publish to Redis
+                            red.publish("filecreate:%s" % self.tag, image_name)
+                            # Push onto redis list in case no one is currently listening
+                            red.rpush("images_collected:%s" % self.tag, image_name)
+                        break
+                    else:
+                        time.sleep(0.05)
+
+            # Have Registrar update status
+            self.ow_registrar.update({"site_id":self.site.ID})
 
     def stop(self):
         """
@@ -164,7 +179,8 @@ class SercatGatherer(object):
             self.tag = self.tag.lower()
         else:
             print "ERROR - no settings for this host"
-            sys.exit(9)
+            self.tag = "test"
+            # sys.exit(9)
 
     """
     Collected Image Information
@@ -320,7 +336,7 @@ def main():
     commandline_args = get_commandline()
 
     # Determine the site
-    site_file = utils.sites.determine_site(site_arg=commandline_args.site)
+    site_file = utils.site.determine_site(site_arg=commandline_args.site)
 
     # Import the site settings
     SITE = importlib.import_module(site_file)
@@ -342,7 +358,8 @@ def main():
         logger.debug("  arg:%s  val:%s" % pair)
 
     # Instantiate the Gatherer
-    GATHERER = SercatGatherer(site=SITE)
+    GATHERER = SercatGatherer(site=SITE,
+                              overwatcher_id=commandline_args.overwatcher_id)
 
 if __name__ == '__main__':
 

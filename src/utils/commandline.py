@@ -38,6 +38,10 @@ base_parser.add_argument("-v", "--verbose",
                          action="store_true",
                          dest="verbose",
                          help="Enable verbose feedback")
+base_parser.add_argument("--overwatch",
+                         action="store",
+                         dest="overwatcher_id",
+                         help="Set overwatcher_id")
 
 if __name__ == "__main__":
 

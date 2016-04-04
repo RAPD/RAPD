@@ -505,6 +505,10 @@ echo "#! /bin/bash" > ./rapd.launch
 echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launch.py \"\$@\"" >>./rapd.launch
 chmod +x ./rapd.launch
 
+echo "#! /bin/bash" > ./rapd.overwatch
+echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py \"\$@\"" >>./rapd.overwatch
+chmod +x ./rapd.overwatch
+
 
 # Create the rapd.shrc script
 printf "Writing rapd.shrc\n"
