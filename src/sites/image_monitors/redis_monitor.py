@@ -54,7 +54,7 @@ class RedisMonitor(threading.Thread):
                 #  tag=None,
                 #  image_monitor_settings=None,
                  notify=None,
-                 overwatcher_id=None):
+                 overwatch_id=None):
         """
         Initialize the monitor
 
@@ -62,7 +62,7 @@ class RedisMonitor(threading.Thread):
         tag -- Expected tag for images to be captured (default "necat_e")
         redis_settings -- Dict with appropriate redis settings
         notify - Function called when image is captured
-        overwatcher_id -- id for optional overwather wrapper
+        overwatch_id -- id for optional overwather wrapper
         """
 
         # Get the logger
@@ -76,7 +76,7 @@ class RedisMonitor(threading.Thread):
         # self.redis_settings = image_monitor_settings
         self.site=site
         self.notify = notify
-        self.overwatcher_id=overwatcher_id
+        self.overwatch_id=overwatch_id
 
         # Tag comes from site id
         self.tag = self.site.ID.lower()
@@ -116,7 +116,7 @@ class RedisMonitor(threading.Thread):
         # Create Registrar instance
         self.ow_registrar = Registrar(site=self.site,
                                       ow_type="control",
-                                      ow_id=self.overwatcher_id)
+                                      ow_id=self.overwatch_id)
         # Register
         self.ow_registrar.register({"site_id":self.site.ID})
 

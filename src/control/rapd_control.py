@@ -102,7 +102,7 @@ def main():
 
     # Instantiate the model
     MODEL = Model(SITE=SITE,
-                  overwatcher_id=commandline_args.overwatcher_id)
+                  overwatch_id=commandline_args.overwatch_id)
 
 
 if __name__ == "__main__":

@@ -190,7 +190,7 @@ class Overwatcher(Registrar):
     Provides methods for starting and restarting microservices
 
     Passes an additional commandline flag that is the id of this Overwatcher
-    via the --overwatch flag
+    via the --overwatch_id flag
     """
 
     ow_type = "overwatcher"
@@ -265,7 +265,7 @@ class Overwatcher(Registrar):
         command = self.managed_file_flags[:]
         command.insert(0, self.managed_file)
         command.insert(0, "rapd.python")
-        command.append("--overwatch")
+        command.append("--overwatch_id")
         command.append(self.id)
 
         # Run the input command

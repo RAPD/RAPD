@@ -74,7 +74,7 @@ class SercatGatherer(object):
     # Host computer detail
     ip_address = None
 
-    def __init__(self, site, overwatcher_id=None):
+    def __init__(self, site, overwatch_id=None):
         """
         Setup and start the SercatGatherer
         """
@@ -84,7 +84,7 @@ class SercatGatherer(object):
 
         # Passed-in variables
         self.site = site
-        self.overwatcher_id = overwatcher_id
+        self.overwatch_id = overwatch_id
 
         self.logger.info("SercatGatherer.__init__")
 
@@ -107,10 +107,10 @@ class SercatGatherer(object):
         self.logger.info("SercatGatherer.run")
 
         # Set up overwatcher
-        if self.overwatcher_id:
+        if self.overwatch_id:
             self.ow_registrar = Registrar(site=self.site,
                                           ow_type="gatherer",
-                                          ow_id=self.overwatcher_id)
+                                          ow_id=self.overwatch_id)
             self.ow_registrar.register({"site_id":self.site.ID})
 
         # Get redis connection
@@ -396,7 +396,7 @@ def main():
 
     # Instantiate the Gatherer
     GATHERER = SercatGatherer(site=SITE,
-                              overwatcher_id=commandline_args.overwatcher_id)
+                              overwatch_id=commandline_args.overwatch_id)
 
 if __name__ == '__main__':
 

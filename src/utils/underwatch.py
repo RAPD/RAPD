@@ -46,5 +46,5 @@ if __name__ == "__main__":
     # Import the site settings
     SITE = importlib.import_module(site_file)
 
-    RG = Registrar(site=SITE, ow_type="test", ow_id=commandline_args.overwatcher_id)
+    RG = Registrar(site=SITE, ow_type="test", ow_id=commandline_args.overwatch_id)
     RG.run()

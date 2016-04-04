@@ -1,4 +1,19 @@
 """
+Utilities for parsing the commandline for rapd processes
+
+
+Currently base_parser is the only parser available for use.
+
+An example:
+----------
+> import utils.commandline
+> commandline_description = "The core rapd process for coordination of a site install"
+> parser = argparse.ArgumentParser(parents=[utils.commandline.base_parser],
+>                                  description=commandline_description)
+> return parser.parse_args()
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2016 Cornell University
@@ -22,13 +37,10 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
+# Standard imports
 import argparse
 
-"""
-commandline.py holds utilities for parsing the commandline for rapd processes
-"""
-
-# The base parser - used by rapd.py
+# The base parser - used by a lot of RAPD processes
 base_parser = argparse.ArgumentParser(add_help=False)
 base_parser.add_argument("-s", "--site",
                          action="store",
@@ -38,10 +50,10 @@ base_parser.add_argument("-v", "--verbose",
                          action="store_true",
                          dest="verbose",
                          help="Enable verbose feedback")
-base_parser.add_argument("--overwatch",
+base_parser.add_argument("--overwatch_id",
                          action="store",
-                         dest="overwatcher_id",
-                         help="Set overwatcher_id")
+                         dest="overwatch_id",
+                         help="Set overwatch_id")
 
 if __name__ == "__main__":
 

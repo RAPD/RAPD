@@ -1,4 +1,4 @@
-"""
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2016, Cornell University

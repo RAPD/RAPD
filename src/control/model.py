@@ -85,13 +85,13 @@ class Model(object):
     site_adapter = None
     remote_adapter = None
 
-    def __init__(self, SITE, overwatcher_id=None):
+    def __init__(self, SITE, overwatch_id=None):
         """
         Save variables and start the process activity
 
         Keyword arguments
         SITE -- Site settings object
-        overwatcher_id -- id for optional overwatcher (default False)
+        overwatch_id -- id for optional overwatcher (default False)
         """
 
         # Get the logger Instance
@@ -99,7 +99,7 @@ class Model(object):
 
         # Passed-in variables
         self.site = SITE
-        self.overwatcher_id = overwatcher_id
+        self.overwatch_id = overwatch_id
 
         # Instance variables
         try:
@@ -279,7 +279,7 @@ class Model(object):
                 # tag=site.ID.lower(),
                 # image_monitor_settings=site.IMAGE_MONITOR_SETTINGS,
                 notify=self.receive,
-                overwatcher_id=self.overwatcher_id)
+                overwatch_id=self.overwatch_id)
 
     def start_run_monitor(self):
         """Start up the run information listening process for core"""

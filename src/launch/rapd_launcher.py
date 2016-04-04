@@ -64,14 +64,14 @@ class Launcher(object):
     adapter_file = None
     launcher = None
 
-    def __init__(self, site, tag="", overwatcher_id=False):
+    def __init__(self, site, tag="", overwatch_id=False):
         """
         Initialize the Launcher instance
 
         Keyword arguments:
         site -- site object with relevant information to run
         tag -- optional string describing launcher. Defined in site.LAUNCHER_REGISTER
-        overwatcher_id -- id for optional overwatcher instance
+        overwatch_id -- id for optional overwatcher instance
         """
 
         # Get the logger Instance
@@ -81,7 +81,7 @@ class Launcher(object):
         # Save passed-in variables
         self.site = site
         self.tag = tag
-        self.overwatcher_id = overwatcher_id
+        self.overwatch_id = overwatch_id
 
         # Retrieve settings for this Launcher
         self.get_settings()
@@ -99,10 +99,10 @@ class Launcher(object):
         """The core process of the Launcher instance"""
 
         # Set up overwatcher
-        if self.overwatcher_id:
+        if self.overwatch_id:
             self.ow_registrar = Registrar(site=self.site,
                                           ow_type="launcher",
-                                          ow_id=self.overwatcher_id)
+                                          ow_id=self.overwatch_id)
             self.ow_registrar.register({"site_id":self.site.ID})
 
         # Create socket to listen for commands
@@ -295,7 +295,7 @@ def main():
 
     LAUNCHER = Launcher(site=SITE,
                         tag=tag,
-                        overwatcher_id=commandline_args.overwatcher_id)
+                        overwatch_id=commandline_args.overwatch_id)
 
 if __name__ == "__main__":
 

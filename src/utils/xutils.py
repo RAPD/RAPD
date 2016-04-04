@@ -1,4 +1,4 @@
-"""
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2009-2016, Cornell University
@@ -2193,50 +2193,50 @@ def readMarHeader(inp):
   #f.seek(offset+80)
   f.seek(2464)
   print f.read(512)
-  
+
   f.seek(offset+640)
   rawdata = f.read(4)
   print struct.unpack(format+'i',rawdata)[0]/1000.
-  
+
   f.seek(offset+696)
   rawdata = f.read(4)
   start_xtal_to_detector = struct.unpack(format+'i',rawdata)[0]/1000.
   print start_xtal_to_detector
-  
+
   f.seek(1676)
   rawdata = f.read(8)
   integration, exposure = struct.unpack(format+'ii',rawdata)
   print integration* 0.001
   print exposure* 0.001
-  
-  
-  
-  
+
+
+
+
   """
   f.seek(offset+772)
   rawdata = f.read(8)
   pixelsize_x,pixelsize_y = struct.unpack(format+'ii',rawdata)
   parameters['PIXEL_SIZE'] = pixelsize_x*1.0e-6
   print parameters['PIXEL_SIZE']
-  
+
   f.seek(offset+664)
   rawdata = f.read(8)
   beam_center_x,beam_center_y = struct.unpack(format+'ii',rawdata)
   parameters['BEAM_CENTER_X'] = beam_center_x/1000.*parameters['PIXEL_SIZE']
   parameters['BEAM_CENTER_Y'] = beam_center_y/1000.*parameters['PIXEL_SIZE']
   print parameters['BEAM_CENTER_X'], parameters['BEAM_CENTER_Y']
-  
+
   f.seek(offset+908)
   rawdata = f.read(4)
   parameters['WAVELENGTH'] = struct.unpack(format+'i',rawdata)[0]*1.0e-5 # convert from femto to angstrom
   print parameters['WAVELENGTH']
   """
-  
 
-  
-  
+
+
+
   f.close()
-  
+
 
 def runPhaserModule(self,inp=False):
   """
@@ -2772,4 +2772,3 @@ def XDS2Shelx(self,inp,output=False):
 
   except:
     self.logger.exception('**ERROR in Utils.XDS2Shelx**')
-
