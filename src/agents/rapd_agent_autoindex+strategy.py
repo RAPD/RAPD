@@ -2538,8 +2538,137 @@ if __name__ == '__main__':
   #This is an example input dict used for testing this script.
   #Input dict file. If autoindexing from two images, just include a third dict section for the second image header.
   ###To see all the input options look at extras/rapd_input.py (autoindexInput)###
+  
+  command = {
+        "command":"AUTOINDEX+STRATEGY",
+        "directories":
+            {
+	        #"work": "/gpfs6/users/necat/Jon/RAPD_test/Output",
+                "work":"/home/schuerjp/temp/Junk",
+            },
+        "header1":{#"wavelength": "0.9792", #RADDOSE
+	   	"wavelength": 1.000, #RADDOSE
+	   	"detector":'ray300',
+	   	#"binning": "2x2", #LABELIT
+	   	"binning": "none", #
+	   	"time": "1.00",  #BEST
+	   	"twotheta": "0.00", #LABELIT
+	   	"transmission": "20",  #BEST
+	   	'osc_range': 1.0,
+	   	'distance' : 200.0,
+	   	'count_cutoff': 65535,
+	   	'omega_start': 0.0,
+	   	#"beam_center_x": "216.71", #PILATUS
+	   	#"beam_center_y": "222.45", #PILATUS
+	   	#"beam_center_x": "150.72", #Q315
+	   	#"beam_center_y": "158.68", #Q315
+	   	#"beam_center_x": "172.80", #HF4M
+	   	#"beam_center_y": "157.18", #HF4M
+	   	#"beam_center_x": "149.87", #22ID
+	   	#"beam_center_y": "145.16", #22ID
+	   	"beam_center_x": "150.25", #22BM
+	   	"beam_center_y": "151.35", #22BM
+	   	"flux":'1.6e11', #RADDOSE
+	   	"beam_size_x":"0.07", #RADDOSE
+	   	"beam_size_y":"0.03", #RADDOSE
+	   	"gauss_x":'0.03', #RADDOSE
+	   	"gauss_y":'0.01', #RADDOSE
+	   	"fullname": "/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0001",
+	   	#"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0001",
+	   	#"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_04_chrzas_feb_4_2016/SER4-TRYP_Pn3/SER4-TRYP_Pn3.0001",
+	   	#"fullname": "/gpfs6/users/necat/Jon/RAPD_test/Temp/mar/SER4-TRYP_Pn3.0001",
 
-  inp = ["AUTOINDEX",
+	   	#minikappa
+	   	#Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
+	   	#"mk3_phi":"0.0", #
+	   	#"mk3_kappa":"0.0", #
+	   	"phi": "0.000",
+	   	"STAC file1": '/gpfs6/users/necat/Jon/RAPD_test/mosflm.mat', #XOAlign
+	   	"STAC file2": '/gpfs6/users/necat/Jon/RAPD_test/bestfile.par', #XOAlign
+	   	"axis_align": 'long',	 #long,all,a,b,c,ab,ac,bc #XOAlign
+		},				  
+        "header2":{#"wavelength": "0.9792", #RADDOSE
+	    "wavelength": 1.000, #RADDOSE
+	    "detector":'ray300',
+	    #"binning": "2x2", #LABELIT
+	    "binning": "none", #
+	    "time": "1.00",  #BEST
+	    "twotheta": "0.00", #LABELIT
+	    "transmission": "20",  #BEST
+	    'osc_range': 1.0,
+	    'distance' : 200.0,
+	    'count_cutoff': 65535,
+	    'omega_start': 0.0,
+	    #"beam_center_x": "216.71", #PILATUS
+	    #"beam_center_y": "222.45", #PILATUS
+	    #"beam_center_x": "150.72", #Q315
+	    #"beam_center_y": "158.68", #Q315
+	    #"beam_center_x": "172.80", #HF4M
+	    #"beam_center_y": "157.18", #HF4M
+	    #"beam_center_x": "149.87", #22ID
+	    #"beam_center_y": "145.16", #22ID
+	    "beam_center_x": "150.25", #22BM
+	    "beam_center_y": "151.35", #22BM
+	    "flux":'1.6e11', #RADDOSE
+	    "beam_size_x":"0.07", #RADDOSE
+	    "beam_size_y":"0.03", #RADDOSE
+	    "gauss_x":'0.03', #RADDOSE
+	    "gauss_y":'0.01', #RADDOSE
+	    "fullname": "/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0090",
+	    #"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0020",
+	    #"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_04_chrzas_feb_4_2016/SER4-TRYP_Pn3/SER4-TRYP_Pn3.0050",
+	    #"fullname": "/gpfs6/users/necat/Jon/RAPD_test/Temp/mar/SER4-TRYP_Pn3.0050",
+
+	    #minikappa
+	    #Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
+	    #"mk3_phi":"0.0", #
+	    #"mk3_kappa":"0.0", #
+	    "phi": "0.000",
+	    "STAC file1": '/gpfs6/users/necat/Jon/RAPD_test/mosflm.mat', #XOAlign
+	    "STAC file2": '/gpfs6/users/necat/Jon/RAPD_test/bestfile.par', #XOAlign
+	    "axis_align": 'long',    #long,all,a,b,c,ab,ac,bc #XOAlign
+	    },			      
+	  "preferences":{"strategy_type": 'best', #Preferred program for strategy
+	  		#"strategy_type": 'mosflm', #
+	  	  	"crystal_size_x": "100", #RADDOSE
+		 	 "crystal_size_y": "100", #RADDOSE
+		  	"crystal_size_z": "100", #RADDOSE
+			  "shape": "2.0", #BEST
+			  "sample_type": "Protein", #LABELIT, BEST
+			  "best_complexity": "none", #BEST
+			  "susceptibility": "1.0", #BEST
+			  "index_hi_res": 0.0, #LABELIT
+			  "spacegroup": "None", #LABELIT, BEST, beam_center
+			  #"spacegroup": "R3", #
+			  "solvent_content": 0.55, #RADDOSE
+			  "beam_flip": "False", #NECAT, when x and y are sent reversed.
+			  "multiprocessing":"True", #Specifies to use 4 cores to make Autoindex much faster.
+			  "x_beam": "0",#Used if position not in header info
+			  "y_beam": "0",#Used if position not in header info
+			  "aimed_res": 0.0, #BEST to override high res limit
+			  "a":0.0, ##LABELIT
+			  "b":0.0, ##LABELIT
+			  "c":0.0, ##LABELIT
+			  "alpha":0.0, #LABELIT
+			  "beta":0.0, #LABELIT
+			  "gamma":0.0, #LABELIT
+
+			  #Change these if user wants to continue dataset with other crystal(s).
+			  "reference_data_id": None, #MOSFLM
+			  #"reference_data_id": 1,#MOSFLM
+			  #"reference_data": [['/gpfs6/users/necat/Jon/RAPD_test/index09.mat', 0.0, 30.0, 'junk_1_1-30','P41212']],#MOSFLM
+			  'reference_data': [['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',0.0,20.0,'junk','P3'],['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',40.0,50.0,'junk2','P3']],#MOSFLM
+			  #MOSFLM settings for multisegment strategy (like give me best 30 degrees to collect). Ignored if "mosflm_rot" !=0.0
+			  "mosflm_rot": 0.0, #MOSFLM
+			  "mosflm_seg":1, #MOSFLM
+			  "mosflm_start":0.0,#MOSFLM
+			  "mosflm_end":360.0,#MOSFLM
+			  },			     # Settings for calculations
+	  "return_address":("127.0.0.1", 50001),      # Location of control process
+    }
+  
+  #OLD INPUT
+  inp_OLD = ["AUTOINDEX",
   {#"work": "/gpfs6/users/necat/Jon/RAPD_test/Output",
    "work": "/home/schuerjp/temp/Junk",
    },
@@ -2671,16 +2800,18 @@ if __name__ == '__main__':
   ('127.0.0.1', 50001)#self.sendBack2 for sending results back to rapd_cluster.
   ]
   #start logging
-  import logging, logging.handlers
-  LOG_FILENAME = os.path.join(inp[1].get('work'),'rapd.log')
+  #import logging, logging.handlers
+  #LOG_FILENAME = os.path.join(inp[1].get('work'),'rapd.log')
   #LOG_FILENAME = '/gpfs6/users/necat/Jon/RAPD_test/Output/rapd_jon.log'
   # Set up a specific logger with our desired output level
-  logger = logging.getLogger('RAPDLogger')
-  logger.setLevel(logging.DEBUG)
+  #logger = logging.getLogger('RAPDLogger')
+  #logger.setLevel(logging.DEBUG)
   # Add the log message handler to the logger
-  handler = logging.handlers.RotatingFileHandler(LOG_FILENAME,maxBytes=100000,backupCount=5)
+  #handler = logging.handlers.RotatingFileHandler(LOG_FILENAME,maxBytes=100000,backupCount=5)
   #add a formatter
-  formatter = logging.Formatter("%(asctime)s - %(message)s")
-  handler.setFormatter(formatter)
-  logger.addHandler(handler)
-  RapdAgent(inp, logger=logger)
+  #formatter = logging.Formatter("%(asctime)s - %(message)s")
+  #handler.setFormatter(formatter)
+  #logger.addHandler(handler)
+  #RapdAgent(inp, logger=logger)
+  import sites.sercat_id as site
+  RapdAgent(site,command)
