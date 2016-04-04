@@ -1,5 +1,6 @@
 """
-Provides tools for registration, autodiscovery, monitoring and launching
+Provides tools for registration, autodiscovery, monitoring and launching of RAPD
+processes
 """
 
 __license__ = """
@@ -26,10 +27,6 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
-"""
-Provides tools for registration, autodiscovery, monitoring and launching
-"""
-
 # Standard imports
 import importlib
 import json
@@ -46,12 +43,20 @@ import utils.commandline
 import utils.site
 import utils.text as text
 
+# Time in seconds for a process to be considered dead
+OVERWATCH_TIMEOUT = 30
+
 class Registrar(object):
     """Provides microservice monitoring tools"""
 
     def __init__(self, site=None, ow_type="unknown", ow_id=None):
         """
-        Setup the Startover
+        Initialize the Registrar
+
+        Keyword arguments:
+        site -- site definition object
+        ow_type -- type of process to be registered
+        ow_id -- id for overwatcher that started the process to be registered
         """
 
         # Passed-in vars
@@ -67,13 +72,14 @@ class Registrar(object):
 
     def run(self):
         """
-        Orchestrate the registering and updating of the instantiating process
+        Provides a generic registration and ongoing update of the instantiating
+        process. Mainly for a test or example
         """
 
         # Register
         self.register()
 
-        #
+        # Update every 5 seconds
         while True:
             time.sleep(5)
             self.update()
@@ -82,6 +88,7 @@ class Registrar(object):
         """
         Register the process with the central db
 
+        Keyword arguments:
         custom_vars - dict containing custom elements to put in redis database
         """
 
@@ -102,8 +109,8 @@ class Registrar(object):
             # Put entry in the redis db
             red.hmset("OW:"+self.id, entry)
 
-            # Expire the current entry in 30 seconds
-            red.expire("OW:"+self.id, 30)
+            # Expire the current entry in N seconds
+            red.expire("OW:"+self.id, OVERWATCH_TIMEOUT)
 
             # Announce by publishing
             red.publish("OW:registering", json.dumps(entry))
@@ -113,8 +120,8 @@ class Registrar(object):
                 # Put entry in the redis db
                 red.hmset("OW:"+self.id+":"+self.ow_id, entry)
 
-                # Expire the current entry in 30 seconds
-                red.expire("OW:"+self.id+":"+self.ow_id, 30)
+                # Expire the current entry in N seconds
+                red.expire("OW:"+self.id+":"+self.ow_id, OVERWATCH_TIMEOUT)
 
         # Redis is down
         except redis.exceptions.ConnectionError:
@@ -125,7 +132,8 @@ class Registrar(object):
         """
         Update the status with the central db
 
-        custom_vars - dict containing custom elements to put in redis database
+        Keyword arguments:
+        custom_vars -- dict containing custom elements to put in redis database
         """
 
         # Get connection
@@ -149,8 +157,8 @@ class Registrar(object):
             for k, v in custom_vars.iteritems():
                 red.hset("OW:"+self.id, k, v)
 
-            # Expire the current entry in 30 seconds
-            red.expire("OW:"+self.id, 30)
+            # Expire the current entry in N seconds
+            red.expire("OW:"+self.id, OVERWATCH_TIMEOUT)
 
             # Announce by publishing
             red.publish("OW:updating", json.dumps(entry))
@@ -164,8 +172,8 @@ class Registrar(object):
                 for k, v in custom_vars.iteritems():
                     red.hset("OW:"+self.id+":"+self.ow_id, k, v)
 
-                # Expire the current entry in 30 seconds
-                red.expire("OW:"+self.id+":"+self.ow_id, 30)
+                # Expire the current entry in N seconds
+                red.expire("OW:"+self.id+":"+self.ow_id, OVERWATCH_TIMEOUT)
 
         # Redis is down
         except redis.exceptions.ConnectionError:
@@ -173,9 +181,7 @@ class Registrar(object):
             print "Redis appears to be down"
 
     def connect(self):
-        """
-        Connect to the central redis Instance
-        """
+        """Connect to the central redis Instance"""
 
         self.redis_pool = redis.ConnectionPool(host=self.site.CONTROL_REDIS_HOST)
 
@@ -193,7 +199,12 @@ class Overwatcher(Registrar):
 
     def __init__(self, site, managed_file, managed_file_flags):
         """
-        Set up the Overwatcher
+        Initialize and run the Overwatcher
+
+        Keyword arguments:
+        site -- site definition object
+        managed_file -- RAPD file to be wrapped and started
+        managed_file_flags -- flags to be passed to the managed file
         """
 
         # Passed-in variables
@@ -246,8 +257,6 @@ class Overwatcher(Registrar):
         Start the managed process with the passed in flags and the current
         environment
         """
-
-        print "Starting managed process"
 
         # The environmental_vars
         path = os.environ.copy()
@@ -313,12 +322,15 @@ class Overwatcher(Registrar):
         # There is no entry for the managed process - it has TTLed
         except TypeError:
             return False
+        # Redis is down - default to not doing anything
+        except redis.exceptions.ConnectionError:
+            return True
 
         # Calculate time ellapsed since last update of status
         ellapsed = now - managed_process_timestamp
 
         # If too long, return False
-        if ellapsed > 30:
+        if ellapsed > OVERWATCH_TIMEOUT:
             return False
         else:
             return True
@@ -333,7 +345,11 @@ class Overwatcher(Registrar):
 
         # Look for keys
         print "Looking for OW:*:%s" % self.id
-        keys = red.keys("OW:*:%s" % self.id)
+        try:
+            keys = red.keys("OW:*:%s" % self.id)
+        # Redis is down - no keys to be found
+        except redis.exceptions.ConnectionError:
+            return None
 
         if len(keys) == 0:
             return None
