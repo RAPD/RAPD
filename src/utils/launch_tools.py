@@ -1,4 +1,8 @@
 """
+Tools for launch and launcher
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2016, Cornell University
@@ -22,10 +26,7 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
-"""
-Provides tools for launch and launcher
-"""
-
+# Standard imports
 import os
 import stat
 import tempfile
@@ -33,6 +34,14 @@ import tempfile
 def write_command_file(target_directory, command, message):
     """
     Write the message to a command file in the target directory
+
+    Keyword arguments
+    target_directory -- directory to write the command file in
+    command -- command type
+    message -- contents of the commad file
+
+    message will be the content of the file:
+    target_directory/command_{random chars}.rapd
     """
 
     # Make sure the target directory exists
@@ -52,7 +61,13 @@ def write_command_file(target_directory, command, message):
 
 def write_command_script(target_file, command_line, shell="/bin/tcsh"):
     """
-    Write a command script
+    Write a command script. This method was written to generate executable
+    files as demanded by the cluster setup at SERCAT
+
+    Keyword arguments
+    target_file -- full path location of the command script file
+    command_line -- line to be executed
+    shell -- shell of choice (Default = "/bin/tcsh")
     """
 
     target_directory = os.path.dirname(target_file)

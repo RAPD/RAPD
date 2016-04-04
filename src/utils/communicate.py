@@ -1,3 +1,7 @@
+"""
+Interprocess communication methods for RAPD
+"""
+
 __license__ = """
 This file is part of RAPD
 
@@ -22,10 +26,7 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
-"""
-Methods for communication
-"""
-
+# Standard imports
 import json
 import socket
 
