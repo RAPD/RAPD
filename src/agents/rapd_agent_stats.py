@@ -512,8 +512,8 @@ class AutoStats(Process,Communicate):
     if self.verbose:
       self.logger.debug('AutoStats::plotXtriage')
     try:
-      cid0 = False
-      cid1 = False
+      #cid0 = False
+      #cid1 = False
       anom       = self.xtriage_results.get('Xtriage results').get('Xtriage anom plot')
       intensity  = self.xtriage_results.get('Xtriage results').get('Xtriage int plot')
       #xtriage_i          = self.xtriage_results.get('Xtriage results').get('Xtriage i plot')
@@ -521,8 +521,8 @@ class AutoStats(Process,Communicate):
       l_test     = self.xtriage_results.get('Xtriage results').get('Xtriage l-test plot')
       #xtriage_z          = self.xtriage_results.get('Xtriage results').get('Xtriage z plot')
       if self.NCS_results:
-        cid0 = self.NCS_results.get('PhaserNCS results').get('CID').get('before')
-        cid1 = self.NCS_results.get('PhaserNCS results').get('CID').get('after')
+        cid0 = self.NCS_results.get('PhaserNCS results').get('CID').get('before',False)
+        cid1 = self.NCS_results.get('PhaserNCS results').get('CID').get('after',False)
       #List of params for parsing later.
       l = [['Intensity','Mean I vs. Resolution','Resolution(A)','M e a n &nbsp I',intensity,
             ("&lt I &gt smooth","&lt I &gt binning","&lt I &gt expected")],
@@ -539,10 +539,19 @@ class AutoStats(Process,Communicate):
            ['CID1','CID after Anisotropic and tNCS correction','Z','',cid1,
             ('Acen_theo','Acen_twin','Acen_obs','Cen_theo','Cen_obs')]
           ]
+      e = len(l) - 2
+      if self.NCS_results:
+        #If job is killed early, it will only have the before CID.
+        if cid0: 
+          e += 1
+        if cid1:
+          e += 1
+      """
       if self.NCS_results:
         e = len(l)
       else:
         e = len(l) - 2
+      """
       if nz != 'None':
         xtriage_plot = ''
         xtriage_plot += Utils.getHTMLHeader(self,'plots')
