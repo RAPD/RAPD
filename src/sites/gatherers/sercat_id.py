@@ -88,8 +88,8 @@ class SercatGatherer(object):
 
         self.logger.info("SercatGatherer.__init__")
 
-        #Connect to redis
-        self.redis_pool = redis.ConnectionPool(host=self.site.IMAGE_MONITOR_REDIS_HOST)
+        # Connect to redis
+        self.connect()
 
         # Get our bearings
         self.set_host()
@@ -161,6 +161,12 @@ class SercatGatherer(object):
         self.logger.debug("SercatGatherer.stop")
 
         self.go = False
+
+    def connect(self):
+        """Connect to redis host"""
+
+        # Connect to redis
+        self.redis_pool = redis.ConnectionPool(host=self.site.IMAGE_MONITOR_REDIS_HOST)
 
     def set_host(self):
         """
@@ -308,10 +314,41 @@ class SercatGatherer(object):
             shutil.copyfile(self.run_data_file, tmp_file)
 
             # Read in the pickled file
-            run_data = pickle.load(tmp_file)
+            f = open(tmp_file, "rb")
+            raw_run_data = pickle.load(f)
+            f.close()
 
             # Remove the temporary file
             os.unlink(tmp_file)
+
+            # Standardize the run information
+            run_data = {
+                "distance":float(raw_run_data.get("dist", 0.0)),
+                "energy":float(raw_run_data.get("energy", 0.0)),
+                "image_prefix":raw_run_data.get("image_prefix", ""),
+                "number_images":int(raw_run_data.get("Nframes", 0)),
+                "osc_range":float(raw_run_data.get("width", 0.0)),
+                "osc_start":float(raw_run_data.get("start", 0.0)),
+                "start_image_number":0,
+                "time":float(raw_run_data.get("time", 0.0)),
+                "transmission":float(raw_run_data.get("trans", 0.0)),
+                "wavelength": 12400 / float(raw_run_data.get("energy", 0.0))
+            }
+            """
+            X {'Nframes': '720.00',
+            I 'beamline': '22ID',
+            'beamsize': '50',
+            I 'date': '2016_4_4',
+            X 'dist': '400.00',
+            X 'energy': '12398.42',
+            I 'helical': 'No',
+            X 'image_prefix': 'aC82to906_PIP2cocrys_D03292016_D3a',
+            X 'start': '360.00',
+            X 'time': '1.00',
+            X 'trans': u'9.070',
+            X 'width': '1.00'}
+            """
+
 
         else:
             run_data = False
