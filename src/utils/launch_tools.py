@@ -51,7 +51,7 @@ def write_command_file(target_directory, command, message):
     out_file = tempfile.NamedTemporaryFile(mode="w",
                                            dir=target_directory,
                                            prefix=command+"_",
-                                           suffix='.rapd',
+                                           suffix=".rapd",
                                            delete=False)
     out_file.write(message)
     out_file.close()
