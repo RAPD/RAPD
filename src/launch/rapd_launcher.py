@@ -1,3 +1,9 @@
+"""
+Creates a launcher instance which runs a socket server that can take incoming
+commands and launches them to a rapd launch instance that is determined by the
+IP address of the host and the optional passed-in tag
+"""
+
 __license__ = """
 This file is part of RAPD
 
@@ -39,8 +45,6 @@ from utils.overwatch import Registrar
 import utils.site
 import utils.text as text
 
-# from rapd_database import Database
-
 BUFFER_SIZE = 8192
 database = None
 
@@ -65,7 +69,7 @@ class Launcher(object):
         Initialize the Launcher instance
 
         Keyword arguments:
-        site -- object with relevant information to run
+        site -- site object with relevant information to run
         tag -- optional string describing launcher. Defined in site.LAUNCHER_REGISTER
         overwatcher_id -- id for optional overwatcher instance
         """
