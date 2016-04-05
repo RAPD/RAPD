@@ -107,11 +107,10 @@ class Gatherer(object):
         self.logger.info("SercatGatherer.run")
 
         # Set up overwatcher
-        if self.overwatch_id:
-            self.ow_registrar = Registrar(site=self.site,
-                                          ow_type="gatherer",
-                                          ow_id=self.overwatch_id)
-            self.ow_registrar.register({"site_id":self.site.ID})
+        self.ow_registrar = Registrar(site=self.site,
+                                      ow_type="gatherer",
+                                      ow_id=self.overwatch_id)
+        self.ow_registrar.register({"site_id":self.site.ID})
 
         # Get redis connection
         red = redis.Redis(connection_pool=self.redis_pool)
