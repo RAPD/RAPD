@@ -5994,7 +5994,7 @@ class Database(object):
                                               run_data.get("time", 0.0),
                                               run_data.get("transmission", 0.0),
                                               run_data.get("energy", 0.0),
-                                              run_data.get("anomalous", "No"),
+                                              run_data.get("anomalous", "False"),
                                               site_id))
             run_id = cursor.lastrowid
             self.closeConnection(connection,cursor)

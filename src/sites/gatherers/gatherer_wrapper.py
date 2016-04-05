@@ -1,6 +1,8 @@
-#!/usr/bin/env python
-
 """
+Wraps the gatherers and allows calling by site specification
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2009-2016, Cornell University
@@ -24,10 +26,7 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
-"""
-gatherer_wrapper.py wraps the gatherers and allows calling by site specification
-"""
-
+# Standard imports
 import argparse
 import importlib
 import subprocess
@@ -42,7 +41,7 @@ def get_commandline():
     """Get the commandline variables and handle them"""
 
     # Parse the commandline arguments
-    commandline_description = """Data gatherer for SERCAT ID beamline"""
+    commandline_description = """Data gatherer"""
     parser = argparse.ArgumentParser(parents=[utils.commandline.base_parser],
                                      description=commandline_description)
 

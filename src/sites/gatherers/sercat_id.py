@@ -62,7 +62,7 @@ import utils.log
 from utils.overwatch import Registrar
 import utils.site
 
-class SercatGatherer(object):
+class Gatherer(object):
     """
     Watches the beamline and signals images and runs over redis
     """
@@ -140,11 +140,11 @@ class SercatGatherer(object):
                     if self.check_for_image_collected():
                         image_name = self.get_image_data()
                         if image_name:
-                            self.logger.debug("filecreate:%s %s",
+                            self.logger.debug("image_collected:%s %s",
                                               self.tag,
                                               image_name)
                             # Publish to Redis
-                            red.publish("filecreate:%s" % self.tag, image_name)
+                            red.publish("image_collected:%s" % self.tag, image_name)
                             # Push onto redis list in case no one is currently listening
                             red.rpush("images_collected:%s" % self.tag, image_name)
                         break
@@ -176,6 +176,7 @@ class SercatGatherer(object):
 
         # Figure out which host we are on
         self.ip_address = socket.gethostbyaddr(socket.gethostname())[-1][0]
+        self.logger.debug(self.ip_address)
 
         # Now grab the file locations, beamline from settings
         if self.site.GATHERERS.has_key(self.ip_address):
@@ -310,33 +311,56 @@ class SercatGatherer(object):
 
         if self.run_data_file:
             # Copy the file to prevent conflicts with other programs
-            tmp_file = "/dev/shm/"+uuid.uuid4().hex
+            # HACK
+            tmp_file = "/tmp/"+uuid.uuid4().hex
             shutil.copyfile(self.run_data_file, tmp_file)
 
             # Read in the pickled file
             f = open(tmp_file, "rb")
             raw_run_data = pickle.load(f)
             f.close()
-
+            self.logger.debug(raw_run_data)
             # Remove the temporary file
             os.unlink(tmp_file)
 
             # Standardize the run information
+            """
+            The current fields saved into the sql datbase adapter are:
+                directory,
+                image_prefix,
+                run_number,
+                start_image_number,
+                number_images,
+                distance,
+                phi,
+                kappa,
+                omega,
+                osc_axis,
+                osc_start,
+                osc_width,
+                time,
+                transmission,
+                energy,
+                anomalous
+            """
             run_data = {
-                # "directory"
+                "beamline":raw_run_data.get("beamline", None),              # Non-standard
+                "beam_size_x":float(raw_run_data.get("beamsize", 0.0)),     # Non-standard
+                "beam_size_y":float(raw_run_data.get("beamsize", 0.0)),     # Non-standard
+                "directory":raw_run_data.get("directory", None),
                 "distance":float(raw_run_data.get("dist", 0.0)),
                 "energy":float(raw_run_data.get("energy", 0.0)),
-                "image_prefix":raw_run_data.get("image_prefix", ""),
-                "number_images":int(raw_run_data.get("Nframes", 0)),
+                "image_prefix":raw_run_data.get("image_prefix", None),
+                "number_images":int(float(raw_run_data.get("Nframes", 0))),
                 "osc_axis":"phi",
                 "osc_start":float(raw_run_data.get("start", 0.0)),
                 "osc_width":float(raw_run_data.get("width", 0.0)),
                 "phi_start":float(raw_run_data.get("start", 0.0)),
                 "run_number":None,
-                "start_image_number":0,
+                "start_image_number":int(float(raw_run_data.get("first_image", 0))),
                 "time":float(raw_run_data.get("time", 0.0)),
                 "transmission":float(raw_run_data.get("trans", 0.0)),
-                "wavelength": 12400 / float(raw_run_data.get("energy", 0.0))
+                "wavelength": 12400.0 / float(raw_run_data.get("energy", 1.0))
             }
             """
             X {'Nframes': '720.00',
@@ -352,7 +376,6 @@ class SercatGatherer(object):
             X 'trans': u'9.070',
             X 'width': '1.00'}
             """
-
 
         else:
             run_data = False
@@ -399,8 +422,8 @@ def main():
         logger.debug("  arg:%s  val:%s" % pair)
 
     # Instantiate the Gatherer
-    GATHERER = SercatGatherer(site=SITE,
-                              overwatch_id=commandline_args.overwatch_id)
+    GATHERER = Gatherer(site=SITE,
+                        overwatch_id=commandline_args.overwatch_id)
 
 if __name__ == '__main__':
 
