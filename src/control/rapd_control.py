@@ -85,7 +85,7 @@ def main():
     SITE = importlib.import_module(site_file)
 
 	# Single process lock?
-    utils.lock.file_lock(SITE.LOCK_FILE)
+    utils.lock.file_lock(SITE.CONTROL_LOCK_FILE)
 
     # Set up logging
     if commandline_args.verbose:

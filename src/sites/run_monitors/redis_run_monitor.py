@@ -1,4 +1,4 @@
-"""
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2016, Cornell University
@@ -22,16 +22,18 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
+# Standard imports
 import logging
 import threading
 import time
+
 import redis
 
 # RAPD imports
 import pysent
 
-class RedisMonitor(threading.Thread):
-    """Monitor for new data collection images to be submitted to a redis instance"""
+class Monitor(threading.Thread):
+    """Monitor for new data collection run to be submitted to a redis instance"""
 
     # For stopping/starting
     Go = True
@@ -40,7 +42,8 @@ class RedisMonitor(threading.Thread):
     redis = None
 
     def __init__(self, tag="necat_e", run_monitor_settings=None, notify=None, reconnect=None):
-        """Initialize the object
+        """
+        Initialize the RedisMonitor
 
         Keyword arguments:
         tag -- Expected tag for images to be captured (default "necat_e")
@@ -94,7 +97,7 @@ class RedisMonitor(threading.Thread):
         # Connect to Redis
         self.connect_to_redis()
 
-        image_list = "images_collected_"+self.tag
+        image_list = "run_data:%s" % self.tag
         while self.Go:
             # Try to pop the oldest image off the list
             new_image = self.redis.rpop(image_list)

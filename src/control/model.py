@@ -131,6 +131,9 @@ class Model(object):
         # Start the image monitor
         self.start_image_monitor()
 
+        # Start the run monitor
+        self.start_run_monitor()
+
         # Start the cloud monitor
         self.start_cloud_monitor()
 
@@ -231,9 +234,9 @@ class Model(object):
         self.database = database.Database(host=site.CONTROL_DATABASE_HOST,
                                           user=site.CONTROL_DATABASE_USER,
                                           password=site.CONTROL_DATABASE_PASSWORD,
-                                          data_name=site.CONTROL_DATABASE_NAME_DATA,
-                                          users_name=site.CONTROL_DATABASE_NAME_USERS,
-                                          cloud_name=site.CONTROL_DATABASE_NAME_CLOUD)
+                                          data_name=site.CONTROL_DATABASE_DATA,
+                                          users_name=site.CONTROL_DATABASE_USERS,
+                                          cloud_name=site.CONTROL_DATABASE_CLOUD)
 
     def start_server(self):
         """Start up the listening process for core"""
@@ -1114,8 +1117,8 @@ class Model(object):
         Several return lengths are currently supported:
             2 - command, info
             3 - command, info, server
-            5 - command,dirs,info,settings,results
-            6 - command,dirs,info,settings,server,results
+            5 - command, dirs, info, settings, results
+            6 - command, dirs, info, settings, server,results
             7 - command, dirs, info1, info2, settings, server, results
         Otherwise the message will be taken as a naked command
 

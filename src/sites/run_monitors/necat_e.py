@@ -25,5 +25,5 @@ __status__ = "Development"
 # RAPD imports
 import redis_monitor
 
-class Monitor(redis_monitor.RedisMonitor):
+class Monitor(redis_monitor.Monitor):
     """The standard run monitor based on redis"""
