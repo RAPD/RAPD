@@ -44,7 +44,7 @@ CREATE TABLE `autosol_results` (
   `rfree` float DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`autosol_result_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2299 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -77,7 +77,7 @@ CREATE TABLE `beamcenter` (
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`beamcenter_id`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -102,7 +102,7 @@ CREATE TABLE `cell_analysis_results` (
   `automr_peaks` varchar(256) DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`cell_analysis_result_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=1275956 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -153,7 +153,7 @@ CREATE TABLE `diffcenter_results` (
   `saturation_50` float DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`diffcenter_result_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=21314 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -173,7 +173,7 @@ CREATE TABLE `image_status` (
   `site` varchar(12) DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`image_status_id`),
-) ENGINE=MyISAM AUTO_INCREMENT=790342 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -245,7 +245,7 @@ CREATE TABLE `images` (
   UNIQUE KEY `blocker` (`fullname`,`date`),
   KEY `run_id` (`run_id`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=InnoDB AUTO_INCREMENT=9488341 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -314,7 +314,7 @@ CREATE TABLE `integrate_results` (
   PRIMARY KEY (`integrate_result_id`),
   KEY `result_id` (`result_id`),
   CONSTRAINT `integrate_results_ibfk_1` FOREIGN KEY (`result_id`) REFERENCES `results` (`result_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=79462 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -349,7 +349,7 @@ CREATE TABLE `integrate_shell_results` (
   `unique_obs` int(10) unsigned DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`isr_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=230759 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -386,7 +386,7 @@ CREATE TABLE `mad_results` (
   `shelx_tar` varchar(256) DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`mad_result_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -428,7 +428,7 @@ CREATE TABLE `merge_results` (
   `shell_outer` mediumint(8) unsigned DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`merge_result_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=3675 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -461,7 +461,7 @@ CREATE TABLE `merge_shell_results` (
   `unique_obs` int(10) unsigned DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`msr_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=9361 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -486,7 +486,7 @@ CREATE TABLE `mr_results` (
   `summary_html` varchar(256) DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`mr_result_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=3882 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -505,7 +505,7 @@ CREATE TABLE `mr_trial_results` (
   `spacegroup` varchar(12) DEFAULT NULL,
   `archive` varchar(256) DEFAULT NULL,
   PRIMARY KEY (`mr_trial_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=10186 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -523,7 +523,7 @@ CREATE TABLE `orphan_results` (
   `date` datetime DEFAULT NULL,
   PRIMARY KEY (`orphan_result_id`),
   UNIQUE KEY `blocker` (`type`,`data_root_dir`,`result_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=19631 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -654,7 +654,7 @@ CREATE TABLE `pair_results` (
   PRIMARY KEY (`pair_result_id`),
   KEY `result_id` (`result_id`),
   CONSTRAINT `pair_results_ibfk_1` FOREIGN KEY (`result_id`) REFERENCES `results` (`result_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=338740 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -673,7 +673,7 @@ CREATE TABLE `pdbs` (
   `username` varchar(48) DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY `pdbs_id` (`pdbs_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=1500 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -690,7 +690,7 @@ CREATE TABLE `presets` (
   `data_root_dir` varchar(256) DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`presets_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=117 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -713,7 +713,7 @@ CREATE TABLE `processes` (
   PRIMARY KEY (`process_id`),
   KEY `data_root_dir` (`data_root_dir`),
   KEY `timestamp1` (`timestamp1`)
-) ENGINE=MyISAM AUTO_INCREMENT=1093613 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -739,7 +739,7 @@ CREATE TABLE `projects` (
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`project_id`),
   UNIQUE KEY `project` (`project`)
-) ENGINE=MyISAM AUTO_INCREMENT=14 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -759,7 +759,7 @@ CREATE TABLE `puck_settings` (
   `D` varchar(48) DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   UNIQUE KEY `puckset_id` (`puckset_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=73 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -808,7 +808,7 @@ CREATE TABLE `quickanalysis_results` (
   `saturation_50` float DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`quickanalysis_result_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=1018453 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -865,7 +865,7 @@ CREATE TABLE `reference_data` (
   `snap_id` mediumint(8) unsigned DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`reference_data_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=294 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -889,7 +889,7 @@ CREATE TABLE `results` (
   KEY `data_root_dir` (`data_root_dir`),
   KEY `timestamp` (`timestamp`),
   KEY `result_id` (`result_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=1098483 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -916,7 +916,7 @@ CREATE TABLE `run_status` (
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`run_status_id`),
   UNIQUE KEY `blocker` (`adc`,`anom_wedge`,`anomalous`,`beam_center`,`binning`,`comment`,`compression`,`directory`,`image_prefix`,`mad`,`mode`)
-) ENGINE=MyISAM AUTO_INCREMENT=4758 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -931,23 +931,24 @@ CREATE TABLE `runs` (
   `directory` varchar(128) DEFAULT NULL,
   `image_prefix` varchar(64) DEFAULT NULL,
   `run_number` smallint(5) unsigned DEFAULT NULL,
-  `start` smallint(5) unsigned DEFAULT NULL,
-  `total` smallint(5) unsigned DEFAULT NULL,
+  `start_image_number` smallint(5) unsigned DEFAULT NULL,
+  `number_images` smallint(5) unsigned DEFAULT NULL,
   `distance` float DEFAULT NULL,
-  `twotheta` float DEFAULT NULL,
   `phi` float DEFAULT NULL,
   `kappa` float DEFAULT NULL,
   `omega` float DEFAULT NULL,
-  `axis` varchar(6) DEFAULT NULL,
-  `width` float DEFAULT NULL,
+  `osc_axis` varchar(6) DEFAULT NULL,
+  `osc_start` float DEFAULT NULL,
+  `osc_width` float DEFAULT NULL,
   `time` float DEFAULT NULL,
-  `de_zngr` varchar(5) DEFAULT NULL,
-  `anomalous` varchar(3) DEFAULT NULL,
+  `transmission` float DEFAULT NULL,
+  `energy` float DEFAULT NULL,
+  `anomalous` varchar(6) DEFAULT NULL,
   `site` varchar(12) DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`run_id`),
-  UNIQUE KEY `blocker` (`directory`,`image_prefix`,`run_number`,`start`)
-) ENGINE=InnoDB AUTO_INCREMENT=92553 DEFAULT CHARSET=latin1;
+  UNIQUE KEY `blocker` (`directory`,`image_prefix`,`run_number`,`start_image_number`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -984,7 +985,7 @@ CREATE TABLE `sad_results` (
   `shelx_tar` varchar(256) DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`sad_result_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4256 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1011,7 +1012,7 @@ CREATE TABLE `samples` (
   `username` varchar(48) DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`sample_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=2949 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1060,7 +1061,7 @@ CREATE TABLE `settings` (
   `setting_type` varchar(8) DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`setting_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=11764 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1080,7 +1081,7 @@ CREATE TABLE `shelxc_results` (
   `data` varchar(256) DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`shelxc_result_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4334 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1112,7 +1113,7 @@ CREATE TABLE `shelxd_results` (
   `fom_stddev` float DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`shelxd_result_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=5104 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1139,7 +1140,7 @@ CREATE TABLE `shelxe_results` (
   `mapcc_inv` float DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`shelxe_result_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=5188 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1161,7 +1162,7 @@ CREATE TABLE `shelxe_sites` (
   `density` float DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`shelxe_site_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=110710 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1276,7 +1277,7 @@ CREATE TABLE `single_results` (
   KEY `image_id` (`image_id`),
   KEY `result_id` (`result_id`),
   KEY `timestamp` (`timestamp`)
-) ENGINE=InnoDB AUTO_INCREMENT=668836 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1301,7 +1302,7 @@ CREATE TABLE `stats_results` (
   `precession_img2` varchar(256) DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`stats_result_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=65817 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1372,7 +1373,7 @@ CREATE TABLE `strategy_wedges` (
   `exposure_time` float DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`strategy_wedge_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=1031504 DEFAULT CHARSET=latin1;
+) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --

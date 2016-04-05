@@ -1,5 +1,5 @@
 """
-
+Monitor for new data collection images to be submitted to a redis instance
 """
 
 __license__ = """
@@ -40,7 +40,7 @@ from utils import pysent
 # Constants
 POLLING_REST = 0.1      # Time to rest between checks for new image
 
-class RedisMonitor(threading.Thread):
+class Monitor(threading.Thread):
     """Monitor for new data collection images to be submitted to a redis instance"""
 
     # Used for stopping/starting the loop

@@ -23,6 +23,7 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 # Standard imports
+import json
 import logging
 import threading
 import time
@@ -97,14 +98,20 @@ class Monitor(threading.Thread):
         # Connect to Redis
         self.connect_to_redis()
 
-        image_list = "run_data:%s" % self.tag
+        # The redis entry that has list of run data
+        run_list = "run_data:%s" % self.tag
+
         while self.Go:
             # Try to pop the oldest image off the list
-            new_image = self.redis.rpop(image_list)
-            if new_image:
+            raw_run_data = self.redis.rpop(run_list)
+            if raw_run_data:
+                # Parse into python object
+                run_data = json.loads(raw_run_data)
+
                 # Notify core thread that an image has been collected
-                self.notify(("NEWIMAGE", new_image))
-                self.logger.debug('New image %s', new_image)
+                self.notify(("NEWRUN", run_data))
+
+                self.logger.debug("New run data %s", raw_run_data)
 
             # Slow it down a little
             time.sleep(0.1)

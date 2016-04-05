@@ -5930,149 +5930,90 @@ class Database(object):
     ##################################################################################################################
     # Functions for runs                                                                                             #
     ##################################################################################################################
-    def addRun(self, run, site_id):
+    def add_run(self, run_data, site_id):
         """
         Add a new run to the MySQL database
+
+        Keyword arguments
+        run_data -- dict containing run information
+        site_id -- unique identifier for the run origin site
         """
-        self.logger.debug('Database::addRun')
+        self.logger.debug("Database.add_run")
 
         try:
-            #connect
-            connection,cursor = self.connect_to_data()
+            # Connect
+            connection, cursor = self.connect_to_data()
 
-            if run.has_key('file_source'):
-                if (run['file_source'] == 'CONSOLE'):
-                    if (int(run['n_images'])>1):
-                        run_number = run['image_prefix'].split('_')[-1]
-                        prefix = '_'.join(run['image_prefix'].split('_')[:-1])
-
-                        self.logger.debug("Adding run from CONSOLE into database directory:%s image_prefix:%s run_number:%s" %(run['directory'],prefix,run_number))
-                        cursor.execute("""INSERT INTO runs (directory,
-                                                             image_prefix,
-                                                             run_number,
-                                                             start,
-                                                             total,
-                                                             distance,
-                                                             twotheta,
-                                                             phi,
-                                                             kappa,
-                                                             omega,
-                                                             axis,
-                                                             width,
-                                                             time,
-                                                             de_zngr,
-                                                             anomalous,
-                                                             site) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-                                                             (run['directory'],
-                                                              prefix,
-                                                              run_number,
-                                                              run['image_number'],
-                                                              run['n_images'],
-                                                              run['distance'],
-                                                              0,                    #not currently in console file
-                                                              run['phi_start'],
-                                                              run['kappa_start'],
-                                                              run['omega_start'],
-                                                              run['axis'],
-                                                              run['osc_width'],
-                                                              run['time'],
-                                                              run['de_zinger'],
-                                                              'No',                 #not pertinent to console context
-                                                              site_id))
-                        run_id = cursor.lastrowid
-                        self.closeConnection(connection,cursor)
-                        return(run_id)
-                    else:
-                        self.closeConnection(connection,cursor)
-                        return(False)
-
-                elif (run['file_source'] == 'adsc'):
-                    self.logger.debug("Adding run from ADSC into database directory:%s image_prefix:%s run_number:%s" %(run['Directory'],run['Image_Prefix'],run['Run']))
-                    cursor.execute("""INSERT INTO runs (directory,
-                                                             image_prefix,
-                                                             run_number,
-                                                             start,
-                                                             total,
-                                                             distance,
-                                                             twotheta,
-                                                             phi,
-                                                             kappa,
-                                                             omega,
-                                                             axis,
-                                                             width,
-                                                             time,
-                                                             de_zngr,
-                                                             anomalous,
-                                                             site) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-                                                             (run['Directory'],
-                                                              run['Image_Prefix'],
-                                                              run['Run'],
-                                                              run['Start'],
-                                                              run['Total'],
-                                                              run['Distance'],
-                                                              run['2-Theta'],
-                                                              run['Phi'],
-                                                              run['Kappa'],
-                                                              run['Omega'],
-                                                              run['Axis'],
-                                                              run['Width'],
-                                                              run['Time'],
-                                                              run['De-Zngr'],
-                                                              run['Anomalous'],
-                                                              site_id))
-                elif (run['file_source'] == 'PILATUS'):
-                    self.logger.debug("Adding run from PILATUS into database directory:%s image_prefix:%s run_number:%s" %(run['directory'],run['prefix'],run['run_number']))
-                    cursor.execute("""INSERT INTO runs ( directory,
-                                                         image_prefix,
-                                                         run_number,
-                                                         start,
-                                                         total,
-                                                         distance,
-                                                         twotheta,
-                                                         phi,
-                                                         kappa,
-                                                         omega,
-                                                         axis,
-                                                         width,
-                                                         time,
-                                                         site) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-                                                         (run['directory'],
-                                                          run['prefix'],
-                                                          run['run_number'],
-                                                          run['start'],
-                                                          run['total'],
-                                                          run['distance'],
-                                                          run['twotheta'],
-                                                          run['phi'],
-                                                          run['kappa'],
-                                                          run['omega'],
-                                                          run['axis'],
-                                                          run['width'],
-                                                          run['time'],
-                                                          site_id))
-
-                    run_id = cursor.lastrowid
-                    self.closeConnection(connection,cursor)
-                    return(run_id)
-
-                else:
-                    self.closeConnection(connection,cursor)
-                    return(False)
-
+            # Save into database
+            self.logger.debug("Adding run from into database directory:%s image_prefix:%s" % (run["directory"], run["prefix"]))
+            cursor.execute("""INSERT INTO runs (directory,
+                                                image_prefix,
+                                                run_number,
+                                                start_image_number,
+                                                number_images,
+                                                distance,
+                                                phi,
+                                                kappa,
+                                                omega,
+                                                osc_axis,
+                                                osc_start,
+                                                osc_width,
+                                                time,
+                                                transmission,
+                                                energy,
+                                                anomalous,
+                                                site) VALUES (%s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s)""",
+                                             (run_data.get("directory", ""),
+                                              run_data.get("image_prefix", ""),
+                                              run_data.get("run_number", None),
+                                              run_data.get("start_image_number", 0),
+                                              run_data.get("number_images", 0),
+                                              run_data.get("distance", 0.0),
+                                              run_data.get("phi_start", None),
+                                              run_data.get("kappa_start", None),
+                                              run_data.get("omega_start", None),
+                                              run_data.get("osc_axis", "phi"),
+                                              run_data.get("osc_start", 0.0),
+                                              run_data.get("osc_width", 0.0),
+                                              run_data.get("time", 0.0),
+                                              run_data.get("transmission", 0.0),
+                                              run_data.get("energy", 0.0),
+                                              run_data.get("anomalous", "No"),
+                                              site_id))
+            run_id = cursor.lastrowid
+            self.closeConnection(connection,cursor)
+            return(run_id)
 
         except pymysql.IntegrityError , (errno, strerror):
             if errno == 1062:
-                self.logger.debug('Run is already in the database')
+                self.logger.debug("Run is already in the database")
                 self.closeConnection(connection,cursor)
-                #Get the run_id and return it
+
+                # Get the run_id and return it
                 return(self.getRunIdByInfo(run_data=run))
             else:
-                self.logger.exception('ERROR : unknown IntegrityError exception in Database::addRun')
+                self.logger.exception("ERROR : unknown IntegrityError exception in rapd_mysql_adapter.add_run")
                 return(False)
 
         except:
-            self.logger.exception('ERROR : unknown exception in Database::addRun')
-            self.closeConnection(connection,cursor)
+            self.logger.exception("ERROR : unknown exception in rapd_mysql_adapter.add_run")
+            self.closeConnection(connection, cursor)
             return(False)
 
     def getRunIdByInfo(self,run_data):

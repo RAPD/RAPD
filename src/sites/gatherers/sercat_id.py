@@ -323,12 +323,16 @@ class SercatGatherer(object):
 
             # Standardize the run information
             run_data = {
+                # "directory"
                 "distance":float(raw_run_data.get("dist", 0.0)),
                 "energy":float(raw_run_data.get("energy", 0.0)),
                 "image_prefix":raw_run_data.get("image_prefix", ""),
                 "number_images":int(raw_run_data.get("Nframes", 0)),
-                "osc_range":float(raw_run_data.get("width", 0.0)),
+                "osc_axis":"phi",
                 "osc_start":float(raw_run_data.get("start", 0.0)),
+                "osc_width":float(raw_run_data.get("width", 0.0)),
+                "phi_start":float(raw_run_data.get("start", 0.0)),
+                "run_number":None,
                 "start_image_number":0,
                 "time":float(raw_run_data.get("time", 0.0)),
                 "transmission":float(raw_run_data.get("trans", 0.0)),
