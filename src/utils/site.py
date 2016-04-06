@@ -113,7 +113,7 @@ def check_site_against_known(site_str):
     """
     pass
 
-def determine_site(site_arg=None):
+def determine_site(site_arg=False):
     """Determine the site for a run instance
 
     Keyword arguments:
@@ -123,7 +123,7 @@ def determine_site(site_arg=None):
 
     # Get possible site files
     site_files = get_site_files()
-    # print site_files
+    print site_files
 
     # Transform site files to a more palatable form
     safe_sites = {}
@@ -132,12 +132,12 @@ def determine_site(site_arg=None):
         safe_sites[safe_site] = site_file
 
     # No site_arg, look to environmental variable
-    if site_arg == None:
-        site_arg = os.getenv('RAPD_SITE', None)
+    # if site_arg == None:
+    #     site_arg = os.getenv('RAPD_SITE', None)
 
     # Still no site_arg, look to the path for the site
     safe_site_args = []
-    if site_arg == None:
+    if site_arg == False:
         cwd = os.getcwd()
         path_elems = cwd.split(os.path.sep)
         for path_elem in reversed(path_elems):

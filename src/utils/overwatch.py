@@ -255,7 +255,7 @@ class Overwatcher(Registrar):
     def start_managed_process(self):
         """
         Start the managed process with the passed in flags and the current
-        environment
+        environment. If the process exits immediately, the overwatcher will exit
         """
 
         # The environmental_vars
@@ -270,6 +270,14 @@ class Overwatcher(Registrar):
 
         # Run the input command
         self.managed_process = subprocess.Popen(command, env=path)
+
+        # Make sure the managed process actually ran
+        time.sleep(0.5)
+        exit_code = self.managed_process.poll()
+        if exit_code != None:
+            print text.error+"Managed process exited on start. Exiting."+text.stop
+            sys.exit(9)
+
 
     def listen_and_update(self):
         """
@@ -433,6 +441,7 @@ def main():
 
     # Determine the site
     site_file = utils.site.determine_site(site_arg=site)
+    print ">>>", site_file
     if site_file == False:
         print text.error+"Could not determine a site file. Exiting."+text.stop
         sys.exit(9)

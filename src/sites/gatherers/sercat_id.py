@@ -1,6 +1,13 @@
 """
 Watches files for information on images and runs on a MAR data collection
 computer to provide information back to RAPD system via redis
+
+This server is used at SERCAT with MAR detectors
+
+If you are adapting rapd to your locality, you will need to check this
+carefully.
+
+This server needs Python version 2.5 or greater (due to use of uuid module)
 """
 
 __license__ = """
@@ -27,19 +34,6 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
-"""
-gatherer_sercat_id.py watches files for information on images and runs
-on a MAR data collection computer to provide information back
-to rapd_server via to redis
-
-This server is used at SERCAT with MAR detectors
-
-If you are adapting rapd to your locality, you will need to check this
-carefully.
-
-This server needs Python version 2.5 or greater (due to use of uuid module)
-"""
-
 # Standard imports
 import argparse
 import importlib
@@ -50,6 +44,7 @@ import os
 import pickle
 import shutil
 import socket
+import sys
 import time
 import uuid
 
@@ -61,6 +56,7 @@ import utils.lock
 import utils.log
 from utils.overwatch import Registrar
 import utils.site
+import utils.text as text
 
 class Gatherer(object):
     """
@@ -361,20 +357,6 @@ class Gatherer(object):
                 "transmission":float(raw_run_data.get("trans", 0.0)),
                 "wavelength": 12400.0 / float(raw_run_data.get("energy", 1.0))
             }
-            """
-            X {'Nframes': '720.00',
-            I 'beamline': '22ID',
-            'beamsize': '50',
-            I 'date': '2016_4_4',
-            X 'dist': '400.00',
-            X 'energy': '12398.42',
-            I 'helical': 'No',
-            X 'image_prefix': 'aC82to906_PIP2cocrys_D03292016_D3a',
-            X 'start': '360.00',
-            X 'time': '1.00',
-            X 'trans': u'9.070',
-            X 'width': '1.00'}
-            """
 
         else:
             run_data = False
@@ -398,8 +380,22 @@ def main():
     # Get the commandline args
     commandline_args = get_commandline()
 
+    # Get the environmental variables
+    environmental_vars = utils.site.get_environmental_variables()
+
+    site = commandline_args.site
+    if site == False:
+        if environmental_vars["RAPD_SITE"]:
+            site = environmental_vars["RAPD_SITE"]
+
     # Determine the site
-    site_file = utils.site.determine_site(site_arg=commandline_args.site)
+    site_file = utils.site.determine_site(site_arg=site)
+
+    print ">>>", site_file
+    # Handle no site file
+    if site_file == False:
+        print text.error+"Could not determine a site file. Exiting."+text.stop
+        sys.exit(9)
 
     # Import the site settings
     SITE = importlib.import_module(site_file)
