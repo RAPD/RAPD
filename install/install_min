@@ -1,19 +1,23 @@
 #!/bin/bash
 
-# This file is part of RAPD
+# Performs minimal install of rapd. Will download a python installer and go from
+# there. Good for rapd on computers that will not do processing such as for
+# gathering data.
 
+# This file is part of RAPD
+#
 # Copyright (C) 2016, Cornell University
 # All rights reserved.
-
+#
 # RAPD is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
 # the Free Software Foundation, version 3.
-
+#
 # RAPD is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU Affero General Public License for more details.
-
+#
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -37,7 +41,7 @@ while getopts "bfhcvp:" x; do
         h)
             echo "usage: $0 [options]
 
-Installs RAPD v$RAPD_VERSION
+Installs minimal RAPD v$RAPD_VERSION
 
     -f           no error if install prefix already exists
     -b           batch mode

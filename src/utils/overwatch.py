@@ -274,7 +274,6 @@ class Overwatcher(Registrar):
         command.append(self.id)
 
         # Run the input command
-        print command
         self.managed_process = subprocess.Popen(command, env=path)
 
         # Make sure the managed process actually ran
@@ -378,49 +377,7 @@ class Overwatcher(Registrar):
 def get_commandline():
     """
     Get the commandline variables and handle them
-
-    This is a manual handling of the commandline, no tthe typical RAPD style
-    The commandline MUST BE
-    >... [../]overwatch.py -s site managed_file managed_file_flags
     """
-
-    managed_file = False
-    site = False
-    managed_file_flags = []
-
-    # # Go through the command line
-    # for entry in sys.argv:
-    #
-    #     # No managed file yet
-    #     if not managed_file:
-    #
-    #         # site == False
-    #         if not site:
-    #
-    #             # The overwatch script
-    #             if entry.endswith("overwatch.py"):
-    #                 continue
-    #                 #print "  Overwatcher script", entry
-    #
-    #             # if entry == "-s":
-    #             #     site = "SITENEXT"
-    #             #     continue
-    #
-    #             # No site specification, straight to managed file
-    #             if entry.endswith(".py"):
-    #                 managed_file = entry
-    #
-    #         # site is the current entry
-    #         elif site == "SITENEXT":
-    #             site = entry
-    #
-    #         # managed_file is entry
-    #         else:
-    #             managed_file = entry
-    #
-    #     # Have the managed file, rest is for it
-    #     else:
-    #         managed_file_flags.append(entry)
 
     commandline_description = "Overwatch wrapper"
 
@@ -467,7 +424,7 @@ def main():
     # Create a list from the parsed_args
     parsed_args_list = []
     for arg, val in parsed_args._get_kwargs():
-        print "  arg:%s  val:%s" % (arg, val)
+        # print "  arg:%s  val:%s" % (arg, val)
         if arg != "managed_file":
             if val == True:
                 parsed_args_list.append("--%s" % arg)
