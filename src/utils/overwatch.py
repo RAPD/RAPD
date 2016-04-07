@@ -28,6 +28,7 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 # Standard imports
+import argparse
 import importlib
 import json
 import os
@@ -212,6 +213,10 @@ class Overwatcher(Registrar):
         self.managed_file = managed_file
         self.managed_file_flags = managed_file_flags
 
+        print site
+        print managed_file
+        print managed_file_flags
+
         # Create a unique id
         self.id = uuid.uuid4().hex
 
@@ -269,6 +274,7 @@ class Overwatcher(Registrar):
         command.append(self.id)
 
         # Run the input command
+        print command
         self.managed_process = subprocess.Popen(command, env=path)
 
         # Make sure the managed process actually ran
@@ -382,66 +388,75 @@ def get_commandline():
     site = False
     managed_file_flags = []
 
-    # Go through the command line
-    for entry in sys.argv:
+    # # Go through the command line
+    # for entry in sys.argv:
+    #
+    #     # No managed file yet
+    #     if not managed_file:
+    #
+    #         # site == False
+    #         if not site:
+    #
+    #             # The overwatch script
+    #             if entry.endswith("overwatch.py"):
+    #                 continue
+    #                 #print "  Overwatcher script", entry
+    #
+    #             # if entry == "-s":
+    #             #     site = "SITENEXT"
+    #             #     continue
+    #
+    #             # No site specification, straight to managed file
+    #             if entry.endswith(".py"):
+    #                 managed_file = entry
+    #
+    #         # site is the current entry
+    #         elif site == "SITENEXT":
+    #             site = entry
+    #
+    #         # managed_file is entry
+    #         else:
+    #             managed_file = entry
+    #
+    #     # Have the managed file, rest is for it
+    #     else:
+    #         managed_file_flags.append(entry)
 
-        # No managed file yet
-        if not managed_file:
+    commandline_description = "Overwatch wrapper"
 
-            # site == False
-            if not site:
+    parser = argparse.ArgumentParser(parents=[utils.commandline.base_parser],
+                                     description=commandline_description)
 
-                # The overwatch script
-                if entry.endswith("overwatch.py"):
-                    continue
-                    #print "  Overwatcher script", entry
+    parser.add_argument("--managed_file", "-f",
+                        action="store",
+                        dest="managed_file",
+                        help="File to be overwatched")
+    parsed_args = parser.parse_args()
 
-                if entry == "-s":
-                    site = "SITENEXT"
-                    continue
-
-                # No site specification, straight to managed file
-                if entry.endswith(".py"):
-                    managed_file = entry
-
-            # site is the current entry
-            elif site == "SITENEXT":
-                site = entry
-
-            # managed_file is entry
-            else:
-                managed_file = entry
-
-        # Have the managed file, rest is for it
-        else:
-            managed_file_flags.append(entry)
-
-    print "  site:", site
-    print "  managed_file:", managed_file
-    print "  managed_file_flags:", managed_file_flags
-
-    return site, managed_file, managed_file_flags
+    return parsed_args
 
 def main():
     """Called when overwatch is run from the commandline"""
 
     # Get the commandline args
-    site, managed_file, managed_file_flags = get_commandline()
+    parsed_args = get_commandline()
 
-    print site
-    print managed_file
-    print managed_file_flags
+    # Make sure there is a managed_process in parsed_args
+    if parsed_args.managed_file == None:
+        print text.error+"Need a file to manage. Exiting.\n"+text.stop
+        sys.exit(9)
 
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
 
+    # Environmental var for site if no commandline
+    site = parsed_args.site
     if site == False:
-        if environmental_vars["RAPD_SITE"]:
+        if environmental_vars.has_key("RAPD_SITE"):
             site = environmental_vars["RAPD_SITE"]
 
     # Determine the site
     site_file = utils.site.determine_site(site_arg=site)
-    print ">>>", site_file
     if site_file == False:
         print text.error+"Could not determine a site file. Exiting."+text.stop
         sys.exit(9)
@@ -449,10 +464,24 @@ def main():
     # Import the site settings
     SITE = importlib.import_module(site_file)
 
+    # Create a list from the parsed_args
+    parsed_args_list = []
+    for arg, val in parsed_args._get_kwargs():
+        print "  arg:%s  val:%s" % (arg, val)
+        if arg != "managed_file":
+            if val == True:
+                parsed_args_list.append("--%s" % arg)
+                continue
+            if val == False:
+                continue
+            if val != None:
+                parsed_args_list.append("--%s" % arg)
+                parsed_args_list.append(str(val))
+
     # Instantiate the Overwatcher
     OW = Overwatcher(site=SITE,
-                     managed_file=managed_file,
-                     managed_file_flags=managed_file_flags)
+                     managed_file=parsed_args.managed_file,
+                     managed_file_flags=parsed_args_list)
 
 
 if __name__ == "__main__":

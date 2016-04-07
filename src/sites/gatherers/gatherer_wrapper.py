@@ -56,8 +56,20 @@ def main():
     # Get the commandline args
     commandline_args = get_commandline()
 
+    print dir(commandline_args)
+
+    sys.exit(0)
+
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
+
+    # Assign site from commandline
+    site = commandline_args.site
+
+    # If no commandline site, look to environmental args
+    if site == False:
+        if environmental_vars["RAPD_SITE"]:
+            site = environmental_vars["RAPD_SITE"]
 
     # Determine the site
     site_file = utils.site.determine_site(site_arg=commandline_args.site)
