@@ -153,7 +153,6 @@ class Model(object):
                         #  launcher_address=("164.54.212.15", 50000),
                          launcher_address=("164.54.208.135", 50000),
                          settings=None)
-                         #settings=self.database.get_current_settings(id=self.site.ID))
 
             preferences = {"strategy_type":"best", #Preferred program for strategy
                            "crystal_size_x":"100", #RADDOSE
@@ -276,11 +275,9 @@ class Model(object):
             global image_monitor
             image_monitor = importlib.import_module("%s" % site.IMAGE_MONITOR.lower())
 
-            # Instntiate the monitor
+            # Instantiate the monitor
             self.image_monitor = image_monitor.ImageMonitor(
                 site=site,
-                # tag=site.ID.lower(),
-                # image_monitor_settings=site.IMAGE_MONITOR_SETTINGS,
                 notify=self.receive,
                 overwatch_id=self.overwatch_id)
 
@@ -345,10 +342,14 @@ class Model(object):
         """
         self.logger.info("Stopping")
 
-    def add_image(self, fullname):
+    def add_image(self, image_data):
         """Handle a new image being recorded by the site"""
 
         self.logger.debug("Received new image %s", fullname)
+
+        # Unpack image_data
+        fullname = image_data.get("fullname", False)
+        tag = image_data.get("tag", False)
 
         # Save some typing
         dirname = os.path.dirname(fullname)

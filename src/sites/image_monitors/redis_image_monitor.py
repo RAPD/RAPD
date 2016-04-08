@@ -49,6 +49,10 @@ class Monitor(threading.Thread):
     # The connection to the Redis database
     redis = None
 
+    #
+    tags = []
+    image_lists = []
+
     def __init__(self,
                  site,
                 #  tag=None,
@@ -72,23 +76,37 @@ class Monitor(threading.Thread):
         threading.Thread.__init__(self)
 
         # Passed-in variables
-        # self.tag = tag.lower()
-        # self.redis_settings = image_monitor_settings
-        self.site=site
+        self.site = site
         self.notify = notify
         self.overwatch_id=overwatch_id
 
-        # Tag comes from site id
-        self.tag = self.site.ID.lower()
+        # Figure out tag(s)
+        self.get_tags()
 
         # Start the thread
         self.daemon = True
         self.start()
 
+    def get_tags(self):
+        """Transform site.ID into tag[s] for image monitor"""
+
+        # A string is input - one tag
+        if type(self.site.ID) is str:
+            self.tags = [self.site.ID.lower()]
+
+        # Tuple or list
+        elif type(self.site.ID) in (tuple, list):
+            for id in self.site.ID:
+                self.tags.append(id.lower())
+
+        # Figure out where we are going to look
+        for tag in self.tags:
+            self.image_lists.append(("images_collected:"+tag, tag))
+
     def stop(self):
         """Stop the process of polling the redis instance"""
 
-        self.logger.debug('Stopping')
+        self.logger.debug("Stopping")
 
         self.Go = False
 
@@ -123,23 +141,29 @@ class Monitor(threading.Thread):
         # Connect to Redis
         self.connect_to_redis()
 
-        self.logger.debug("  Monitoring list images_collected:"+self.tag)
+        # Determine interval for overwatch update
+        ow_round_interval = (5 * len(self.image_lists)) / POLLING_REST
 
-        image_list = "images_collected:"+self.tag
+        self.logger.debug("  Monitoring list images_collected:"+self.tag)
         while self.Go:
 
-            # 50 rounds between updating overwatch system
-            for __ in range(50):
+            # ~5 seconds between overwatch updates
+            for __ in range(ow_round_interval):
 
-                # Try to pop the oldest image off the list
-                new_image = self.redis.rpop(image_list)
-                if new_image:
-                    # Notify core thread that an image has been collected
-                    self.notify(("NEWIMAGE", new_image))
-                    self.logger.debug('New image %s', new_image)
+                for tag in self.tags:
 
-                # Slow it down a little
-                time.sleep(POLLING_REST)
+                    # Try to pop the oldest image off the list
+                    new_image = self.redis.rpop("images_collected:%s" % tag)
+
+                    # Have a new_image
+                    if new_image:
+                        # Notify core thread that an image has been collected
+                        self.notify(("NEWIMAGE", {"fullname":new_image,
+                                                  "tag":tag}))
+                        self.logger.debug("New image %s", new_image)
+
+                    # Slow it down a little
+                    time.sleep(POLLING_REST)
 
             # Have Registrar update status
-            self.ow_registrar.update({"site_id":self.site.ID})
+            self.ow_registrar.update()
