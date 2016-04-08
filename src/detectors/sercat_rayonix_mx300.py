@@ -63,7 +63,7 @@ def create_image_fullname(directory,
                           image_number=None):
     """Create an image name from parts - the reverse of parse"""
 
-    if run_number != "unknown":
+    if not run_number in (None, "unknown"):
         filename = "%s.%s.%04d" % (image_prefix,
                                    run_number,
                                    image_number)
@@ -152,7 +152,13 @@ def calculate_beam_center(distance, beam_settings, v_offset=0):
 
 # Standard header reading
 def read_header(fullname, beam_settings):
-    """Read the header and add some site-specific data"""
+    """
+    Read the header and add some site-specific data
+
+    Keyword variables
+    fullname -- full path name of the image file to be read
+    beam_settings -- source information from site file
+    """
 
     # Perform the header read form the file
     header = rayonix_mx300.read_header(fullname)
