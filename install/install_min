@@ -126,19 +126,31 @@ if [ $THIS_DIR != $PREFIX/install ]; then
   rsync -a --exclude "*.tar*" ../src $PREFIX/.
 fi
 
-printf "\n\033[94mInstalling Python 2.7.10\033[0m\n"
+printf "\n\033[94mInstalling Python 2.7.11\033[0m\n"
 
 cd sources/python
-if [ ! -d Python-2.7.10 ]; then
-  wget https://www.python.org/ftp/python/2.7.10/Python-2.7.10.tgz
-  tar xzf Python-2.7.10.tgz
+# No unzipped source
+if [ ! -d Python-2.7.11 ]; then
+
+  # No zipped source
+  if [ ! -d Python-2.7.11.tgz ]; then
+    printf "\n\033[94Downloading Python 2.7.11\033[0m\n"
+    wget https://www.python.org/ftp/python/2.7.11/Python-2.7.11.tgz
+    tar xzf Python-2.7.11.tgz
+  fi
+
+  # Unzip source
+  printf "\n\033[94Unpacking Python 2.7.11\033[0m\n"
+  tar xzf Python-2.7.11.tgz
 fi
-cd Python-2.7.10
+
+cd Python-2.7.11
+printf "\n\033[94Building Python 2.7.11\033[0m\n"
 ./configure --prefix=$PREFIX/share/python
 make
 make install
 
-# Set up rapd
+# Set up RAPD
 # Create the bin directory
 BINDIR=$PREFIX"/bin"
 if [ ! -d $BINDIR ]
@@ -146,7 +158,7 @@ then
   mkdir $BINDIR
 fi
 
-printf "\n\033[94mInstalling rapd executables\033[0m\n"
+printf "\n\033[94mInstalling RAPD executables\033[0m\n"
 #
 # Create a script for calling rapd.python
 SAFE_PREFIX=$(echo "$PREFIX" | sed -e 's/\//\\\//g')
@@ -165,18 +177,32 @@ echo "  $PREFIX/share/python/bin/python2.7 -Qnew" >> rapd.python
 echo "else" >> rapd.python
 echo "  $PREFIX/share/python/bin/python2.7 -Qnew \"\$@\"" >> rapd.python
 echo "fi" >> rapd.python
-
 chmod +x ./rapd.python
-
-# Create script for gatherer
-echo "#! /bin/bash" > ./rapd.gather
-echo "$PREFIX/bin/rapd.python $PREFIX/src/sites/gatherers/gatherer_wrapper.py \"\$@\"" >>./rapd.gather
-chmod +x ./rapd.gather
 
 # Create a script for overwatch
 echo "#! /bin/bash" > ./rapd.overwatch
 echo "$PREFIX/bin/rapd.python $PREFIX/src/utils/overwatch.py \"\$@\"" >>./rapd.overwatch
 chmod +x ./rapd.overwatch
+
+# Create script for gatherer - with overwatch
+echo "#! /bin/bash" > ./rapd.gather
+echo "$PREFIX/bin/rapd.python $PREFIX/src/utils/overwatch.py $PREFIX/src/sites/gatherers/gatherer_wrapper.py \"\$@\"" >>./rapd.gather
+chmod +x ./rapd.gather
+
+# Create script for control - with overwatch
+echo "#! /bin/bash" > ./rapd.control
+echo "$SAFE_PREFIX\/bin\/rapd.python $PREFIX/src/utils/overwatch.py $SAFE_PREFIX\/src\/control\/rapd_control.py \"\$@\"" >>./rapd.control
+chmod +x ./rapd.control
+
+# Create script for launcher - with overwatch
+echo "#! /bin/bash" > ./rapd.launcher
+echo "$SAFE_PREFIX\/bin\/rapd.python $PREFIX/src/utils/overwatch.py $SAFE_PREFIX\/src\/launch\/rapd_launcher.py \"\$@\"" >>./rapd.launcher
+chmod +x ./rapd.launcher
+
+# Create script for launch
+echo "#! /bin/bash" > ./rapd.launch
+echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launch.py \"\$@\"" >>./rapd.launch
+chmod +x ./rapd.launch
 
 # Create the rapd.shrc script
 printf "Writing rapd.shrc\n"
@@ -226,20 +252,16 @@ echo "echo ' at https://github.com/RAPD/rapd  Enjoy.'           " >> rapd.cshrc
 echo "echo '==================================================='" >> rapd.cshrc
 echo "echo''" >> rapd.cshrc
 
-
-printf "\n\033[94mInstalling Python modules\033[0m\n"
+# Install redis
+printf "\n\033[94mInstalling redis module\033[0m\n"
 source $PREFIX/rapd.shrc
 cd $SRC_DIR/python
-
-# Install pip
-export PYTHONPATH=""
-rapd.python get-pip.py
-ln -s $PREFIX/share/python/bin/pip $BINDIR/rapd.pip
-
-# Modules
-rapd.pip install redis
-
-printf "\033[92mPython modules install complete.\033[0m\n\n"
+tar xvzf redis-2.10.5.tar.gz
+cd redis-2.10.5
+rapd.python setup.py install
+cd ../
+rm -rf redis-2.10.5
+printf "\033[92mPython redis module install complete.\033[0m\n\n"
 
 
 printf "\033[92mRAPD installation is complete\033[0m\n\n"
