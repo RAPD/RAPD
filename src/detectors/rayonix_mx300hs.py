@@ -1,4 +1,8 @@
 """
+Wrapper for manipulating the detector images
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2009-2016, Cornell University
@@ -22,21 +26,27 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
-"""
-rayonix_mx300hs is a wrapper for manipulating the detector images
-"""
+# Standard imports
+import sys
 
 # RAPD imports
 import mar
 
 def read_header(image):
-
+    """Read header from rayonix mx300hs"""
     return mar.MarReadHeader(image)
 
 if __name__ == "__main__":
 
-    #Test the header reading
+    # Test the header reading
     test_image = "/Users/frankmurphy/workspace/rapd_github/src/test/sercat_id/test_data/THAU10_r1_1.0001"
+
+    # Commandline for image
+    if len(sys.argv) > 1:
+        test_image = sys.argv[1]
+        print "Image read from command line %s" % test_image
+
+
     header = read_header(test_image)
     import pprint
     pp = pprint.PrettyPrinter()

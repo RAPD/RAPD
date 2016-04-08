@@ -1,21 +1,32 @@
+
+# Standard imports
 from __future__ import division
-import re,struct
+import logging
+import os
+import re
+import struct
+import sys
+# import time
+
 from iotbx.detectors.detectorbase import DetectorImageBase
-import os,re,time
-import logging, logging.handlers
+
+
+
 
 class MARImage(DetectorImageBase):
-    def __init__(self,filename):
-      DetectorImageBase.__init__(self,filename)
-      #self.vendortype = "MARCCD"
+    def __init__(self, filename):
+        """Initialize the instance"""
 
-      byte_order = str(open(self.filename,"rb").read(2))
-      if byte_order == 'II':
-        self.endian = 0
-      else:
-        self.endian = 1
+        DetectorImageBase.__init__(self, filename)
+        #self.vendortype = "MARCCD"
 
-      assert not self.isCompressed()
+        byte_order = str(open(self.filename, "rb").read(2))
+        if byte_order == "II":
+            self.endian = 0
+        else:
+            self.endian = 1
+
+        assert not self.isCompressed()
 
     def isCompressed(self):
 
@@ -262,7 +273,7 @@ def MarReadHeader(image,
                    'beam_center_y': float(header['BEAM_CENTER_X']),
                    #'vendortype'   : m.vendortype,
                    }
-  
+
   #Figure out which MAR detector was used
   if header_items['size1'] == 3840:
     det = 'ray300'
@@ -312,15 +323,14 @@ def MarReadHeader(image,
       logger.exception('Error reading the header for image %s' % image)
   """
 if __name__ == "__main__":
-    """
-    #testing
-    #Test PilatusMonitor
-    def notify(input):
-        print input
-    P = PilatusMonitor(beamline='C',notify=notify,reconnect=None,logger=None)
-    """
-    #Test the header reading
-    test_image = '/panfs/panfs0.localdomain/raw/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0001'
+
+    # Test the header reading
+    test_image = "/panfs/panfs0.localdomain/raw/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0001"
+
+    if len(sys.argv) > 1:
+        test_image = sys.argv[1]
+        print "Have image input from command line %s" % test_image
+
     header = MarReadHeader(test_image)
     import pprint
     P = pprint.PrettyPrinter()
