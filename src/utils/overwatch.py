@@ -405,6 +405,7 @@ def main():
 
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
+    print environmental_vars
 
     # Environmental var for site if no commandline
     site = parsed_args.site
