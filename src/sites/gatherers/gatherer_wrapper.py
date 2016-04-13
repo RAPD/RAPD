@@ -89,8 +89,8 @@ def main():
 
         # Compose the command
         command = raw_args[:]
-        command.insert(0, "$RAPD_HOME/src/sites/gatherers/"+SITE.GATHERER)
-        command.insert(0, "$RAPD_HOME/bin/rapd.python")
+        command.insert(0, "%s/src/sites/gatherers/" % environmental_vars["RAPD_HOME"] + SITE.GATHERER)
+        command.insert(0, "%s/bin/rapd.python" % environmental_vars["RAPD_HOME"])
 
         # Run it
         gatherer_process = subprocess.Popen(command, env=path, shell=True)
