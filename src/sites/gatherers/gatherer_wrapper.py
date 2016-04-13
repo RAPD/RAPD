@@ -92,6 +92,7 @@ def main():
         command.insert(0, "$RAPD_HOME/bin/rapd.python")
 
         # Run it
+        print command
         gatherer_process = subprocess.Popen(command, env=path)
         #subprocess.call("$RAPD_HOME/bin/rapd.python $RAPD_HOME/src/sites/gatherers/"+SITE.GATHERER+" -vs %s" % SITE.ID, shell=True)
 
