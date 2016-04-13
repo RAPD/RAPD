@@ -68,11 +68,11 @@ def main():
 
     # If no commandline site, look to environmental args
     if site == None:
-        if environmental_vars["RAPD_SITE"]:
+        if environmental_vars.has_key("RAPD_SITE"):
             site = environmental_vars["RAPD_SITE"]
 
     # Determine the site
-    site_file = utils.site.determine_site(site_arg=commandline_args.site)
+    site_file = utils.site.determine_site(site_arg=site)
     if site_file == False:
         print text.error+"Could not determine a site file. Exiting."+text.stop
         sys.exit(9)
