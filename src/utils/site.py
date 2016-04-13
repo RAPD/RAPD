@@ -119,7 +119,7 @@ def determine_site(site_arg=False):
     Keyword arguments:
     site_arg -- user-specified site arguments (default None)
     """
-    print "determine_site"
+    print "determine_site %s" % site_arg
 
     # Get possible site files
     site_files = get_site_files()
