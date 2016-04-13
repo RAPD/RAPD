@@ -409,7 +409,7 @@ def main():
 
     # Environmental var for site if no commandline
     site = parsed_args.site
-    if site == False:
+    if site == None:
         if environmental_vars.has_key("RAPD_SITE"):
             site = environmental_vars["RAPD_SITE"]
 
