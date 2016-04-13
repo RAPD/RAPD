@@ -93,7 +93,8 @@ def main():
         command.insert(0, "%s/bin/rapd.python" % environmental_vars["RAPD_HOME"])
 
         # Run it
-        gatherer_process = subprocess.Popen(command, env=path, shell=True)
+        print command
+        gatherer_process = subprocess.Popen(command, env=path)
 
         # Make sure the managed process actually ran
         time.sleep(0.5)
