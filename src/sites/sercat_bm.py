@@ -31,15 +31,14 @@ import sys
 from utils.site import read_secrets
 
 # Site ID - limited to 12 characters by MySQL
-ID = "SERCAT_ID"
+ID = "SERCAT_BM"
 
 # The secrets file - do not put in github repo!
-SECRETS_FILE = "sites.secrets_sercat_id"
+SECRETS_FILE = "sites.secrets_sercat_bm"
 
 # Copy the secrets attribute to the local scope
 # Do not remove unless you know what you are doing!
 read_secrets(SECRETS_FILE, sys.modules[__name__])
-
 
 # X-ray source characteristics
 # Flux of the beam
