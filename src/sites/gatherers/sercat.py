@@ -386,7 +386,7 @@ def main():
     site = commandline_args.site
 
     # If no commandline site, look to environmental args
-    if site == False:
+    if site == None:
         if environmental_vars["RAPD_SITE"]:
             site = environmental_vars["RAPD_SITE"]
 
