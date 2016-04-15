@@ -33,7 +33,7 @@ import os
 import sys
 
 # RAPD imports
-import rayonix_mx300
+import detectors.rayonix_mx300 as detector
 
 DETECTOR_SUFFIX = ""
 HEADER_VERSION = 1
@@ -161,7 +161,7 @@ def read_header(fullname, beam_settings):
     """
 
     # Perform the header read form the file
-    header = rayonix_mx300.read_header(fullname)
+    header = detector.read_header(fullname)
 
     # Clean up the header
     #header["detector"] = header["vendortype"]
