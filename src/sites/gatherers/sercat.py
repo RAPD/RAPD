@@ -275,6 +275,8 @@ class Gatherer(object):
         Returns True if run_data_file has been changed, False if not
         """
 
+        print "check_for_run_info %s" % self.run_data_file
+
         # Make sure we have a file to check
         if self.run_data_file:
             tries = 0
