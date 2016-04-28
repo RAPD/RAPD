@@ -121,10 +121,10 @@ class Gatherer(object):
 
                 # Check if the run info has changed on the disk
                 if self.check_for_run_info():
-                    print "True for run_info change"
                     run_data = self.get_run_data()
-                    print run_data
                     if run_data:
+                        self.logger.debug("run_data:%s %s", self.tag, run_data)
+                        # Put into exchangable format
                         run_data_json = json.dumps(run_data)
                         # Publish to Redis
                         red.publish("run_data:%s" % self.tag, run_data_json)

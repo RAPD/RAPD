@@ -490,11 +490,11 @@ chmod +x ./rapd.python
 
 # Create scripts
 echo "#! /bin/bash" > ./rapd.control
-echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/control\/rapd_control.py \"\$@\"" >>./rapd.control
+echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/src\/control\/rapd_control.py \"\$@\"" >>./rapd.control
 chmod +x ./rapd.control
 
 echo "#! /bin/bash" > ./rapd.gather
-echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/sites\/gatherers\/gatherer_wrapper.py \"\$@\"" >>./rapd.gather
+echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/src\/sites\/gather\/rapd_gather.py \"\$@\"" >>./rapd.gather
 chmod +x ./rapd.gather
 
 echo "#! /bin/bash" > ./rapd.launcher
