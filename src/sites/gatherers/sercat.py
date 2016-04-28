@@ -283,6 +283,7 @@ class Gatherer(object):
             while tries < 5:
                 try:
                     statinfo = os.stat(self.run_data_file)
+                    print statinfo
                     break
                 except:
                     if tries == 4:
