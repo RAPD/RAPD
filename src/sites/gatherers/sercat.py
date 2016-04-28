@@ -305,6 +305,8 @@ class Gatherer(object):
         Return contents of run data file
         """
 
+        print "get_run_data"
+
         if self.run_data_file:
             # Copy the file to prevent conflicts with other programs
             # HACK
