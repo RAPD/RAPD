@@ -121,6 +121,7 @@ class Gatherer(object):
 
                 # Check if the run info has changed on the disk
                 if self.check_for_run_info():
+                    print "True for run_info change"
                     run_data = self.get_run_data()
                     if run_data:
                         run_data_json = json.dumps(run_data)
@@ -275,15 +276,12 @@ class Gatherer(object):
         Returns True if run_data_file has been changed, False if not
         """
 
-        print "check_for_run_info %s" % self.run_data_file
-
         # Make sure we have a file to check
         if self.run_data_file:
             tries = 0
             while tries < 5:
                 try:
                     statinfo = os.stat(self.run_data_file)
-                    print statinfo
                     break
                 except:
                     if tries == 4:
