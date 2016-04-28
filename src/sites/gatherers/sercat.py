@@ -123,6 +123,7 @@ class Gatherer(object):
                 if self.check_for_run_info():
                     print "True for run_info change"
                     run_data = self.get_run_data()
+                    print run_data
                     if run_data:
                         run_data_json = json.dumps(run_data)
                         # Publish to Redis
@@ -304,8 +305,6 @@ class Gatherer(object):
         """
         Return contents of run data file
         """
-
-        print "get_run_data"
 
         if self.run_data_file:
             # Copy the file to prevent conflicts with other programs
