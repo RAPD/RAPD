@@ -421,6 +421,8 @@ def main():
 
     # Import the site settings
     print "Importing %s" % site_file
+    for i in sys.path:
+        print i
     SITE = importlib.import_module(site_file)
 
     # Create a list from the parsed_args
