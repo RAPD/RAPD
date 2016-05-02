@@ -35,7 +35,7 @@ import redis
 
 # RAPD imports
 from utils.overwatch import Registrar
-from utils import pysent
+# from utils import pysent
 
 # Constants
 POLLING_REST = 0.1      # Time to rest between checks for new image
@@ -44,27 +44,27 @@ class Monitor(threading.Thread):
     """Monitor for new data collection images to be submitted to a redis instance"""
 
     # Used for stopping/starting the loop
-    Go = True
+    running = True
 
     # The connection to the Redis database
     redis = None
 
-    #
+    # Storage for where to look for information
     tags = []
     image_lists = []
 
+    # Overwatch
+    ow_registrar = None
+
     def __init__(self,
                  site,
-                #  tag=None,
-                #  image_monitor_settings=None,
                  notify=None,
                  overwatch_id=None):
         """
         Initialize the monitor
 
         Keyword arguments:
-        tag -- Expected tag for images to be captured (default "necat_e")
-        redis_settings -- Dict with appropriate redis settings
+        site -- site description
         notify - Function called when image is captured
         overwatch_id -- id for optional overwather wrapper
         """
@@ -78,7 +78,7 @@ class Monitor(threading.Thread):
         # Passed-in variables
         self.site = site
         self.notify = notify
-        self.overwatch_id=overwatch_id
+        self.overwatch_id = overwatch_id
 
         # Figure out tag(s)
         self.get_tags()
@@ -91,13 +91,13 @@ class Monitor(threading.Thread):
         """Transform site.ID into tag[s] for image monitor"""
 
         # A string is input - one tag
-        if type(self.site.ID) is str:
+        if isinstance(self.site.ID, str):
             self.tags = [self.site.ID.lower()]
 
         # Tuple or list
-        elif type(self.site.ID) in (tuple, list):
-            for id in self.site.ID:
-                self.tags.append(id.lower())
+        elif isinstance(self.site.ID, tuple) or isinstance(self.site.ID, list):
+            for site_id in self.site.ID:
+                self.tags.append(site_id.lower())
 
         # Figure out where we are going to look
         for tag in self.tags:
@@ -108,44 +108,48 @@ class Monitor(threading.Thread):
 
         self.logger.debug("Stopping")
 
-        self.Go = False
+        self.running = False
 
     def connect_to_redis(self):
         """Connect to the redis instance"""
 
-        # Make it easier to call
-        settings = self.site.IMAGE_MONITOR_SETTINGS
-
         # Using a redis cluster setup
-        if settings["REDIS_CLUSTER"]:
-            self.logger.debug(settings)
-            self.redis = pysent.RedisManager(sentinel_host=settings["SENTINEL_HOST"],
-                                             sentinel_port=settings["SENTINEL_PORT"],
-                                             master_name=settings["REDIS_MASTER_NAME"])
-        # Using a standard redis server setup
-        else:
-            self.redis = redis.Redis(settings["REDIS_HOST"])
+        # if settings["REDIS_CLUSTER"]:
+        #     self.logger.debug(settings)
+        #     self.redis = pysent.RedisManager(sentinel_host=settings["SENTINEL_HOST"],
+        #                                      sentinel_port=settings["SENTINEL_PORT"],
+        #                                      master_name=settings["REDIS_MASTER_NAME"])
+        # # Using a standard redis server setup
+        # else:
+
+        # Create a pool connection
+        pool = redis.ConnectionPool(host=self.site.IMAGE_MONITOR_REDIS_HOST,
+                                    port=self.site.IMAGE_MONITOR_REDIS_PORT,
+                                    db=self.site.IMAGE_MONITOR_REDIS_DB)
+
+        # The connection
+        self.redis = redis.Redis(connection_pool=pool)
 
     def run(self):
         """Orchestrate the monitoring for new images in redis db"""
 
         self.logger.debug("Running")
 
-        # Create Registrar instance
-        self.ow_registrar = Registrar(site=self.site,
-                                      ow_type="control",
-                                      ow_id=self.overwatch_id)
-        # Register
-        self.ow_registrar.register({"site_id":self.site.ID})
-
         # Connect to Redis
         self.connect_to_redis()
+
+        # Create Overwatch Registrar instance
+        if self.overwatch_id:
+            self.ow_registrar = Registrar(site=self.site,
+                                          ow_type="control",
+                                          ow_id=self.overwatch_id)
+            # Register
+            self.ow_registrar.register()
 
         # Determine interval for overwatch update
         ow_round_interval = (5 * len(self.image_lists)) / POLLING_REST
 
-        self.logger.debug("  Monitoring list images_collected:"+self.tag)
-        while self.Go:
+        while self.running:
 
             # ~5 seconds between overwatch updates
             for __ in range(ow_round_interval):
@@ -166,4 +170,5 @@ class Monitor(threading.Thread):
                     time.sleep(POLLING_REST)
 
             # Have Registrar update status
-            self.ow_registrar.update()
+            if self.overwatch_id:
+                self.ow_registrar.update()

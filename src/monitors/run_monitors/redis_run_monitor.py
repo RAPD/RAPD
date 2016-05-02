@@ -1,3 +1,7 @@
+"""
+Monitor for new run descriptions submitted to a redis instance
+"""
+
 __license__ = """
 This file is part of RAPD
 
@@ -31,66 +35,96 @@ import time
 import redis
 
 # RAPD imports
-import pysent
+from utils.overwatch import Registrar
+# import pysent
+
+# Constants
+POLLING_REST = 0.1      # Time to rest between checks for new image
 
 class Monitor(threading.Thread):
     """Monitor for new data collection run to be submitted to a redis instance"""
 
     # For stopping/starting
-    Go = True
+    running = True
 
     # Connection to the Redis database
     redis = None
 
-    def __init__(self, tag="necat_e", run_monitor_settings=None, notify=None, reconnect=None):
+    # Storage for where to look for information
+    tags = []
+    run_lists = []
+
+    # Overwatch
+    ow_registrar = None
+
+    def __init__(self,
+                 site,
+                 # tag="necat_e",
+                 # run_monitor_settings=None,
+                 notify=None,
+                 overwatch_id=None):
         """
         Initialize the RedisMonitor
 
         Keyword arguments:
-        tag -- Expected tag for images to be captured (default "necat_e")
-        redis_settings -- Dict with appropriate redis settings
+        site -- site description
         notify - Function called when image is captured
-        reconnect --
+        overwatch_id -- id for optional overwather wrapper
         """
 
         self.logger = logging.getLogger("RAPDLogger")
-        self.logger.debug("Starting")
 
         # Initialize the thread
         threading.Thread.__init__(self)
 
         # Passed-in variables
-        self.tag = tag
-        self.redis_settings = run_monitor_settings
+        self.site = site
         self.notify = notify
-        self.reconnect = reconnect
+        self.overwatch_id = overwatch_id
 
         # Start the thread
         self.daemon = True
         self.start()
+
+    def get_tags(self):
+        """Transform site.ID into tag[s] for image monitor"""
+
+        # A string is input - one tag
+        if isinstance(self.site.ID, str):
+            self.tags = [self.site.ID.lower()]
+
+        # Tuple or list
+        elif isinstance(self.site.ID, tuple) or isinstance(self.site.ID, list):
+            for site_id in self.site.ID:
+                self.tags.append(site_id.lower())
+
+        # Figure out where we are going to look
+        for tag in self.tags:
+            self.run_lists.append(("run_data:"+tag, tag))
+
 
     def stop(self):
         """Stop the process of polling the redis instance"""
 
         self.logger.debug('Stopping')
 
-        self.Go = False
+        self.running = False
 
     def connect_to_redis(self):
         """Connect to the redis instance"""
 
-        # Make it easier to call var
-        settings = self.redis_settings
-
         # Using a redis cluster setup
-        if settings["REDIS_CLUSTER"]:
-            self.logger.debug(settings)
-            self.redis = pysent.RedisManager(sentinel_host=settings["SENTINEL_HOST"],
-                                             sentinel_port=settings["SENTINEL_PORT"],
-                                             master_name=settings["REDIS_MASTER_NAME"])
+        # if settings["REDIS_CLUSTER"]:
+        #     self.logger.debug(settings)
+        #     self.redis = pysent.RedisManager(sentinel_host=settings["SENTINEL_HOST"],
+        #                                      sentinel_port=settings["SENTINEL_PORT"],
+        #                                      master_name=settings["REDIS_MASTER_NAME"])
         # Using a standard redis server setup
-        else:
-            self.redis = redis.Redis(settings["REDIS_HOST"])
+        # else:
+        pool = redis.ConnectionPool(host=self.site.IMAGE_MONITOR_REDIS_HOST,
+                                    port=self.site.IMAGE_MONITOR_REDIS_PORT,
+                                    db=self.site.IMAGE_MONITOR_REDIS_DB)
+        self.redis = redis.Redis(connection_pool=pool)
 
     def run(self):
         self.logger.debug('Running')
@@ -98,20 +132,40 @@ class Monitor(threading.Thread):
         # Connect to Redis
         self.connect_to_redis()
 
-        # The redis entry that has list of run data
-        run_list = "run_data:%s" % self.tag
+        # Create Overwatch Registrar instance
+        if self.overwatch_id:
+            self.ow_registrar = Registrar(site=self.site,
+                                          ow_type="control",
+                                          ow_id=self.overwatch_id)
+            # Register
+            self.ow_registrar.register()
 
-        while self.Go:
-            # Try to pop the oldest image off the list
-            raw_run_data = self.redis.rpop(run_list)
-            if raw_run_data:
-                # Parse into python object
-                run_data = json.loads(raw_run_data)
+        # Determine interval for overwatch update
+        ow_round_interval = (5 * len(self.run_lists)) / POLLING_REST
 
-                # Notify core thread that an image has been collected
-                self.notify(("NEWRUN", run_data))
+        while self.running:
 
-                self.logger.debug("New run data %s", raw_run_data)
+            # ~5 seconds between overwatch updates
+            for __ in range(ow_round_interval):
 
-            # Slow it down a little
-            time.sleep(0.1)
+                for run_list in self.run_lists:
+
+                    # Try to pop the oldest image off the list
+                    raw_run_data = self.redis.rpop(run_list)
+
+                    # Have new run data
+                    if raw_run_data:
+                        # Parse into python object
+                        run_data = json.loads(raw_run_data)
+
+                        # Notify core thread that an image has been collected
+                        self.notify(("NEWRUN", run_data))
+
+                        self.logger.debug("New run data %s", raw_run_data)
+
+                    # Slow it down a little
+                    time.sleep(POLLING_REST)
+
+            # Have Registrar update status
+            if self.overwatch_id:
+                self.ow_registrar.update()

@@ -31,6 +31,7 @@ import sys
 from utils.site import read_secrets
 
 # Site ID - limited to 12 characters by MySQL
+# May be a string or list or tuple of strings
 ID = ("SERCAT_ID", "SERCAT_BM")
 
 # The secrets file - do not put in github repo!
@@ -39,7 +40,6 @@ SECRETS_FILE = "sites.secrets_sercat"
 # Copy the secrets attribute to the local scope
 # Do not remove unless you know what you are doing!
 read_secrets(SECRETS_FILE, sys.modules[__name__])
-
 
 # X-ray source characteristics
 BEAM_INFO = {
@@ -160,7 +160,7 @@ GATHERER = "sercat_id.py"
 GATHERER_LOCK_FILE = "/tmp/lock/gatherer.lock"
 
 # Monitor for collected images
-IMAGE_MONITOR = "sites.image_monitors.necat_e"
+IMAGE_MONITOR = "monitors.image_monitors.redis_image_monitor"
 # Redis databse
 # Running in a cluster configuration - True || False
 IMAGE_MONITOR_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER
@@ -170,7 +170,7 @@ IMAGE_IGNORE_DIRECTORIES = ()
 IMAGE_IGNORE_STRINGS = ("ignore", )
 
 # Monitor for collected run information
-RUN_MONITOR = "sites.run_monitors.redis_run_monitor"
+RUN_MONITOR = "monitors.run_monitors.redis_run_monitor"
 # Running in a cluster configuration - True || False
 RUN_MONITOR_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER
 
