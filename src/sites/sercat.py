@@ -219,16 +219,16 @@ LAUNCH_SETTINGS = {
     "LAUNCHER":(LAUNCHER_REGISTER[0][0], LAUNCHER_SPECIFICATIONS[LAUNCHER_REGISTER[0][2]]["port"])
 }
 
-BEAM_SETTINGS = {"BEAM_FLUX":BEAM_FLUX,
-                 "BEAM_SIZE_X":BEAM_SIZE_X,
-                 "BEAM_SIZE_Y":BEAM_SIZE_Y,
-                 "BEAM_SHAPE":BEAM_SHAPE,
-                 "BEAM_APERTURE_SHAPE":BEAM_APERTURE_SHAPE,
-                 "BEAM_GAUSS_X":BEAM_GAUSS_X,
-                 "BEAM_GAUSS_Y":BEAM_GAUSS_Y,
-                 "BEAM_CENTER_DATE":BEAM_CENTER_DATE,
-                 "BEAM_CENTER_X":BEAM_CENTER_X,
-                 "BEAM_CENTER_Y":BEAM_CENTER_Y}
+# BEAM_SETTINGS = {"BEAM_FLUX":BEAM_FLUX,
+#                  "BEAM_SIZE_X":BEAM_SIZE_X,
+#                  "BEAM_SIZE_Y":BEAM_SIZE_Y,
+#                  "BEAM_SHAPE":BEAM_SHAPE,
+#                  "BEAM_APERTURE_SHAPE":BEAM_APERTURE_SHAPE,
+#                  "BEAM_GAUSS_X":BEAM_GAUSS_X,
+#                  "BEAM_GAUSS_Y":BEAM_GAUSS_Y,
+#                  "BEAM_CENTER_DATE":BEAM_CENTER_DATE,
+#                  "BEAM_CENTER_X":BEAM_CENTER_X,
+#                  "BEAM_CENTER_Y":BEAM_CENTER_Y}
 
 
 IMAGE_MONITOR_SETTINGS = {"REDIS_HOST" : IMAGE_MONITOR_REDIS_HOST,
