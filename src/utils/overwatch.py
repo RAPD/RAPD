@@ -420,6 +420,7 @@ def main():
         sys.exit(9)
 
     # Import the site settings
+    print "Importing %s" % site_file
     SITE = importlib.import_module(site_file)
 
     # Create a list from the parsed_args
