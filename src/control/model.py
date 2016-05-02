@@ -349,7 +349,7 @@ class Model(object):
 
         # Unpack image_data
         fullname = image_data.get("fullname", False)
-        tag = image_data.get("tag", False)
+        site_tag = image_data.get("site_tag", False)
 
         # Save some typing
         dirname = os.path.dirname(fullname)
@@ -464,7 +464,7 @@ class Model(object):
         else:
             self.logger.debug("Unable to figure out %s", fullname)
 
-    def add_run(self, run_data):
+    def add_run(self, run_dict):
         """
         Add potentially new run to RAPD system
 
@@ -475,6 +475,10 @@ class Model(object):
         # Save the current_run to somewhere handy
         if self.current_run:
             self.past_runs.append(self.current_run.copy())
+
+        # Unpack the run_dict
+        run_data = run_dict["run_data"]
+        site_tag = run_dict["site_tag"]
 
         # Set current_run to the new run
         self.current_run = run_data

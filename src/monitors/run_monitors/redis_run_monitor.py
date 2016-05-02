@@ -159,7 +159,8 @@ class Monitor(threading.Thread):
                         run_data = json.loads(raw_run_data)
 
                         # Notify core thread that an image has been collected
-                        self.notify(("NEWRUN", run_data))
+                        self.notify(("NEWRUN", {"run_data":run_data,
+                                                "site_tag":tag}))
 
                         self.logger.debug("New run data %s", raw_run_data)
 
