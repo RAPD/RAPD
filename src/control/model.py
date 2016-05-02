@@ -345,18 +345,18 @@ class Model(object):
     def add_image(self, image_data):
         """Handle a new image being recorded by the site"""
 
-        self.logger.debug("Received new image %s", fullname)
-
         # Unpack image_data
         fullname = image_data.get("fullname", False)
         site_tag = image_data.get("site_tag", False)
+
+        self.logger.debug("Received new image %s", fullname)
 
         # Save some typing
         dirname = os.path.dirname(fullname)
 
         # Directory is to be ignored
         if dirname in self.site.IMAGE_IGNORE_DIRECTORIES:
-            self.logger.debug("Directory is marked to be ignored - skipping")
+            self.logger.debug("Directory %s is marked to be ignored - skipping", dirname)
             return True
 
         # File contains an ingnore flag
@@ -472,20 +472,20 @@ class Model(object):
         run_data -- dict containing data describing the run
         """
 
-        # Save the current_run to somewhere handy
-        if self.current_run:
-            self.past_runs.append(self.current_run.copy())
-
         # Unpack the run_dict
         run_data = run_dict["run_data"]
         site_tag = run_dict["site_tag"]
+
+        # Save the current_run to somewhere handy
+        if self.current_run:
+            self.past_runs.append(self.current_run.copy())
 
         # Set current_run to the new run
         self.current_run = run_data
 
         # Save to the database
         run_id = self.database.addRun(run_data=run_data,
-                                      site_id=self.site.ID)
+                                      site_id=site_tag)
 
         # Set the run_id that comes from the database for the current run
         if run_id:

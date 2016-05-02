@@ -25,14 +25,12 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
-"""
-rapd.py is the core process for RAPD.
-"""
-
+# Standard imports
 import argparse
 import importlib
 import sys
 
+# RAPD imports
 import utils.commandline
 import utils.log
 import utils.lock
@@ -82,6 +80,7 @@ def main():
         sys.exit(9)
 
     # Import the site settings
+    print "Iporting %s" % site_file
     SITE = importlib.import_module(site_file)
 
 	# Single process lock?
