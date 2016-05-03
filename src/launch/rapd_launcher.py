@@ -286,7 +286,7 @@ def main():
 
     # Instantiate the logger
     logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
-                                  logfile_id="rapd_launcher_"+SITE.ID,
+                                  logfile_id="rapd_launcher",
                                   level=log_level)
 
     logger.debug("Commandline arguments:")
