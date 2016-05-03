@@ -39,7 +39,7 @@ from utils.overwatch import Registrar
 # import pysent
 
 # Constants
-POLLING_REST = 0.1      # Time to rest between checks for new image
+POLLING_REST = 0.2      # Time to rest between checks for new run data
 
 class Monitor(threading.Thread):
     """Monitor for new data collection run to be submitted to a redis instance"""
@@ -139,7 +139,7 @@ class Monitor(threading.Thread):
             self.ow_registrar.register()
 
         # Determine interval for overwatch update
-        ow_round_interval = (5 * len(self.run_lists)) / POLLING_REST
+        ow_round_interval = int ((5 * len(self.run_lists)) / POLLING_REST)
 
         while self.running:
 
