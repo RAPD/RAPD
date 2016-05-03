@@ -115,7 +115,7 @@ LOG_LEVEL = 50
 
 # Control process settings
 # Process is a singleton? The file to lock to. False if no locking.
-LOCK_FILE = "/tmp/lock/rapd_core.lock"
+CONTROL_LOCK_FILE = "/tmp/lock/rapd_control.lock"
 # Where files from UI are uploaded - should be visible by launch instance
 UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"
 
