@@ -43,10 +43,10 @@ from utils.site import get_ip_address
 # from rapd_console import ConsoleFeeder
 # from rapd_site import GetDataRootDir, TransferToUI, TransferToBeamline, CopyToUser
 
-database = None
+# database = None
 detector = None
 # image_monitor = None
-run_monitor = None
+# run_monitor = None
 cloud_monitor = None
 site_adapter = None
 remote_adapter = None
@@ -150,7 +150,7 @@ class Model(object):
                                   "message":"Hello, world!",
                                   "preferences":{},
                                   "return_address":self.return_address},
-                        #  launcher_address=("164.54.212.15", 50000),
+                         #  launcher_address=("164.54.212.15", 50000),
                          launcher_address=("164.54.208.135", 50000),
                          settings=None)
 
@@ -166,7 +166,7 @@ class Model(object):
                            "spacegroup":"None", #LABELIT, BEST, beam_center
                            "solvent_content":0.55, #RADDOSE
                            "beam_flip":"False", #NECAT, when x and y are sent reversed.
-                           "multiprocessing":"True", #Specifies to use 4 cores to make Autoindex much faster.
+                           "multiprocessing":"True", # Faster
                            "x_beam":"0",#Used if position not in header info
                            "y_beam":"0",#Used if position not in header info
                            "aimed_res":0.0, #BEST to override high res limit
@@ -178,7 +178,17 @@ class Model(object):
                            "gamma":0.0, #LABELIT
                            #Change these if user wants to continue dataset with other crystal(s).
                            "reference_data_id": None, #MOSFLM
-                           "reference_data": [["/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat", 0.0, 20.0, "junk", "P3"], ["/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat", 40.0, 50.0, "junk2", "P3"]],
+                           "reference_data": [
+                               ["/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat",
+                                0.0,
+                                20.0,
+                                "junk",
+                                "P3"],
+                               ["/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat",
+                                40.0,
+                                50.0,
+                                "junk2",
+                                "P3"]],
                            "mosflm_rot": 0.0, #MOSFLM
                            "mosflm_seg":1, #MOSFLM
                            "mosflm_start":0.0,#MOSFLM
@@ -223,7 +233,7 @@ class Model(object):
         """Set up database connection"""
 
         # Import the database adapter as database module
-        global database
+        # global database
         database = importlib.import_module('database.rapd_%s_adapter' % self.site.CONTROL_DATABASE)
 
         # Shorten it a little
@@ -291,13 +301,13 @@ class Model(object):
 
         if site.RUN_MONITOR:
             # Import the specific run monitor module
-            global run_monitor
             run_monitor = importlib.import_module("%s" % site.RUN_MONITOR.lower())
             self.logger.debug(run_monitor)
             self.run_monitor = run_monitor.Monitor(
-                tag=site.ID.lower(),
-                run_monitor_settings=site.IMAGE_MONITOR_SETTINGS,
-                notify=self.receive)
+                site=self.site,
+                notify=self.receive,
+                # Not using overwatch in run monitor - could if we wanted to
+                overwatch_id=None)
 
     def start_cloud_monitor(self):
         """Start up the cloud listening process for core"""

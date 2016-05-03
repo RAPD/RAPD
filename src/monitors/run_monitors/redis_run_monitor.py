@@ -59,8 +59,6 @@ class Monitor(threading.Thread):
 
     def __init__(self,
                  site,
-                 # tag="necat_e",
-                 # run_monitor_settings=None,
                  notify=None,
                  overwatch_id=None):
         """
