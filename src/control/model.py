@@ -44,7 +44,7 @@ from utils.site import get_ip_address
 # from rapd_site import GetDataRootDir, TransferToUI, TransferToBeamline, CopyToUser
 
 # database = None
-detector = None
+# detector = None
 # image_monitor = None
 # run_monitor = None
 cloud_monitor = None
@@ -58,6 +58,10 @@ class Model(object):
     """
     Main controller code for a RAPD site install
     """
+
+    # Site instance data
+    site_ids = []
+    detectors = {}
 
     # Keeping track of image pairs
     pair = collections.deque(["", ""], 2)
@@ -119,6 +123,9 @@ class Model(object):
 
         self.logger.debug("Starting")
 
+        # Process the site
+        self.init_site()
+
         # Start connection to the core database
         self.connect_to_database()
 
@@ -126,7 +133,7 @@ class Model(object):
         self.start_server()
 
         # Import the detector
-        self.init_detector()
+        self.init_detectors()
 
         # Start the image monitor
         self.start_image_monitor()
@@ -229,6 +236,20 @@ class Model(object):
             #              settings=None)
             time.sleep(60)
 
+    def init_site(self):
+        """Process the site definitions to set up instance variables"""
+
+        # Single or multiple IDs
+        # A string is input - one tag
+        if isinstance(self.site.ID, str):
+            self.site_ids = [self.site.ID]
+        # Tuple or list
+        elif isinstance(self.site.ID, tuple) or isinstance(self.site.ID, list):
+            for site_id in self.site.ID:
+                self.site_ids.append(site_id)
+
+
+
     def connect_to_database(self):
         """Set up database connection"""
 
@@ -260,18 +281,25 @@ class Model(object):
 
         self.server.stop()
 
-    def init_detector(self):
-        """Set up the detector"""
+    def init_detectors(self):
+        """Set up the detectors"""
 
-        self.logger.debug("Setting up the detector")
+        self.logger.debug("Setting up the detectors")
 
         # Shorten variable names
         site = self.site
 
+        # A single detector
         if site.DETECTOR:
-            # Import the specific detector as detector module
-            global detector
-            detector = importlib.import_module('detectors.%s' % site.DETECTOR.lower())
+            detector, suffix = site.DETECTOR
+            detector = detector.lower()
+            self.detectors[self.site_ids[0]] = importlib.import_module("detectors.%s" % detector)
+        # Multiple detectors
+        elif site.DETECTORS:
+            for site_id in self.site_ids:
+                detector, suffix = site.DETECTORS[site_id]
+                detector = detector.lower()
+                self.detectors[site_id] = importlib.import_module("detectors.%s" % detector)
 
     def start_image_monitor(self):
         """Start up the image listening process for core"""
@@ -360,6 +388,9 @@ class Model(object):
         site_tag = image_data.get("site_tag", False)
 
         self.logger.debug("Received new image %s", fullname)
+
+        # Shortcut to detector
+        detector = self.detectors[site_tag]
 
         # Save some typing
         dirname = os.path.dirname(fullname)
