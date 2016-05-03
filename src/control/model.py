@@ -45,7 +45,7 @@ from utils.site import get_ip_address
 
 database = None
 detector = None
-image_monitor = None
+# image_monitor = None
 run_monitor = None
 cloud_monitor = None
 site_adapter = None
@@ -272,11 +272,11 @@ class Model(object):
         site = self.site
 
         if site.IMAGE_MONITOR:
-            global image_monitor
+            # global image_monitor
             image_monitor = importlib.import_module("%s" % site.IMAGE_MONITOR.lower())
 
             # Instantiate the monitor
-            self.image_monitor = image_monitor.ImageMonitor(
+            self.image_monitor = image_monitor.Monitor(
                 site=site,
                 notify=self.receive,
                 overwatch_id=self.overwatch_id)
