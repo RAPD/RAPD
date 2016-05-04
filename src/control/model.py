@@ -47,7 +47,7 @@ from utils.site import get_ip_address
 # detector = None
 # image_monitor = None
 # run_monitor = None
-cloud_monitor = None
+# cloud_monitor = None
 site_adapter = None
 remote_adapter = None
 
@@ -248,8 +248,6 @@ class Model(object):
             for site_id in self.site.ID:
                 self.site_ids.append(site_id)
 
-
-
     def connect_to_database(self):
         """Set up database connection"""
 
@@ -345,7 +343,7 @@ class Model(object):
 
         if site.CLOUD_MONITOR:
             # Import the specific cloud monitor as cloud_monitor module
-            global cloud_monitor
+            # global cloud_monitor
             cloud_monitor = importlib.import_module("%s" % site.CLOUD_MONITOR.lower())
             self.cloud_monitor = cloud_monitor.CloudMonitor(database=self.database,
                                                             settings=site.CLOUD_MONITOR_SETTINGS,

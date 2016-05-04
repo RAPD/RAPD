@@ -42,6 +42,7 @@ SECRETS_FILE = "sites.secrets_sercat"
 read_secrets(SECRETS_FILE, sys.modules[__name__])
 
 # X-ray source characteristics
+# Keyed to ID
 BEAM_INFO = {
     "SERCAT_BM" : {
         # Flux of the beam
@@ -132,9 +133,10 @@ CONTROL_REDIS_CLUSTER = False
 # Detector settings
 # Must have a file in detectors that is all lowercase of this string
 DETECTOR = False
+DETECTOR_SUFFIX = ""
+# Keyed to ID
 DETECTORS = {"SERCAT_ID":("SERCAT_RAYONIX_MX300HS", ""),
              "SERCAT_BM":("RAYONIX_MX300", "")}
-DETECTOR_SUFFIX = ""
 
 # Launcher settings
 LAUNCHER_LOCK_FILE = "/tmp/lock/launcher.lock"
