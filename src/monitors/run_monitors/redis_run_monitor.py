@@ -39,7 +39,7 @@ from utils.overwatch import Registrar
 # import pysent
 
 # Constants
-POLLING_REST = 0.2      # Time to rest between checks for new run data
+POLLING_REST = 5      # Time to rest between checks for new run data
 
 class Monitor(threading.Thread):
     """Monitor for new data collection run to be submitted to a redis instance"""
