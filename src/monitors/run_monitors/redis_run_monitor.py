@@ -39,7 +39,7 @@ from utils.overwatch import Registrar
 # import pysent
 
 # Constants
-POLLING_REST = 5      # Time to rest between checks for new run data
+POLLING_REST = 1      # Time to rest between checks for new run data
 
 class Monitor(threading.Thread):
     """Monitor for new data collection run to be submitted to a redis instance"""
@@ -139,7 +139,8 @@ class Monitor(threading.Thread):
             self.ow_registrar.register()
 
         # Determine interval for overwatch update
-        ow_round_interval = max(int((5 * len(self.run_lists)) / POLLING_REST), int(5/POLLING_REST))
+        # ow_round_interval = max(int((5 * len(self.run_lists)) / POLLING_REST), int(5/POLLING_REST))
+        ow_round_interval = 10
 
         self.logger.debug("Finished registering %d", ow_round_interval)
 
@@ -170,6 +171,7 @@ class Monitor(threading.Thread):
 
                     # Slow it down a little
                     time.sleep(POLLING_REST)
+                time.sleep(POLLING_REST)
 
             # Have Registrar update status
             if self.overwatch_id:
