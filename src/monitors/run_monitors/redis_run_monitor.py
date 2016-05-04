@@ -125,7 +125,7 @@ class Monitor(threading.Thread):
         self.redis = redis.Redis(connection_pool=pool)
 
     def run(self):
-        self.logger.debug('Running')
+        self.logger.debug("Running")
 
         # Connect to Redis
         self.connect_to_redis()
@@ -147,6 +147,8 @@ class Monitor(threading.Thread):
             for __ in range(ow_round_interval):
 
                 for run_list in self.run_lists:
+
+                    self.logger.debug("Querying %s", run_list)
 
                     # Try to pop the oldest image off the list
                     raw_run_data = self.redis.rpop(run_list)
