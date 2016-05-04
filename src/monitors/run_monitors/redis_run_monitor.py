@@ -80,6 +80,9 @@ class Monitor(threading.Thread):
         self.notify = notify
         self.overwatch_id = overwatch_id
 
+        # Figure out the site
+        self.get_tags()
+
         # Start the thread
         self.daemon = True
         self.start()
