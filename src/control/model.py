@@ -39,6 +39,7 @@ import time
 
 # RAPD imports
 from control.control_server import LaunchAction, ControllerServer
+from utils.modules import load_module
 from utils.site import get_ip_address
 # from rapd_console import ConsoleFeeder
 # from rapd_site import GetDataRootDir, TransferToUI, TransferToBeamline, CopyToUser
@@ -291,13 +292,16 @@ class Model(object):
         if site.DETECTOR:
             detector, suffix = site.DETECTOR
             detector = detector.lower()
-            self.detectors[self.site_ids[0].lower()] = importlib.import_module("detectors.%s" % detector)
+            # self.detectors[self.site_ids[0].lower()] = importlib.import_module("detectors.%s" % detector)
+            self.detectors[self.site_ids[0].lower()] = load_module(detector, ("sites.detectors", "detectors"))
+
         # Multiple detectors
         elif site.DETECTORS:
             for site_id in self.site_ids:
                 detector, suffix = site.DETECTORS[site_id]
                 detector = detector.lower()
-                self.detectors[site_id.lower()] = importlib.import_module("detectors.%s" % detector)
+                # self.detectors[site_id.lower()] = importlib.import_module("detectors.%s" % detector)
+                self.detectors[site_id.lower()] = load_module(detector, ("sites.detectors", "detectors"))
 
     def start_image_monitor(self):
         """Start up the image listening process for core"""
