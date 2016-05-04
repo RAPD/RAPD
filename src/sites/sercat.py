@@ -136,7 +136,7 @@ DETECTOR = False
 DETECTOR_SUFFIX = ""
 # Keyed to ID
 DETECTORS = {"SERCAT_ID":("SERCAT_RAYONIX_MX300HS", ""),
-             "SERCAT_BM":("RAYONIX_MX300", "")}
+             "SERCAT_BM":("SERCAT_RAYONIX_MX300", "")}
 
 # Launcher settings
 LAUNCHER_LOCK_FILE = "/tmp/lock/launcher.lock"
