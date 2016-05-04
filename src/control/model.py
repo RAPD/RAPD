@@ -74,7 +74,7 @@ class Model(object):
 
     # Managing runs and images without going to the db
     current_run = {}
-    past_runs = collections.deque(maxlen=1000)
+    recent_runs = collections.deque(maxlen=1000)
 
     data_root_dir = None
     database = None
@@ -136,11 +136,11 @@ class Model(object):
         # Import the detector
         self.init_detectors()
 
-        # Start the image monitor
-        self.start_image_monitor()
-
         # Start the run monitor
         self.start_run_monitor()
+
+        # Start the image monitor
+        self.start_image_monitor()
 
         # Start the cloud monitor
         self.start_cloud_monitor()
@@ -414,7 +414,7 @@ class Model(object):
         data_root_dir = detector.get_data_root_dir(fullname)
 
         # Figure out if image in the current run...
-        place, run_info = self.in_run(fullname)
+        place, run_info = self.in_run(site_tag, fullname)
 
         # Image is in the current run
         if isinstance(place, int) and run_info == "current_run":
@@ -521,7 +521,7 @@ class Model(object):
 
         # Save the current_run to somewhere handy
         if self.current_run:
-            self.past_runs.append(self.current_run.copy())
+            self.recent_runs.append(self.current_run.copy())
 
         # Set current_run to the new run
         self.current_run = run_data
@@ -827,7 +827,7 @@ class Model(object):
         self.logger.info("in_past_run %s" % fullname)
 
         # Check older runs
-        for run_info in reversed(self.past_runs):
+        for run_info in reversed(self.recent_runs):
             place, __ = self.in_run(fullname, run_info)
             # Next
             if place == "PAST_RUN":
@@ -843,18 +843,29 @@ class Model(object):
         else:
             return False, None
 
-    def in_run(self, fullname, run_info=None):
+    def in_run(self, site_tag, fullname, run_info=None):
         """
         Determine if an image is in the currently active run - return
         place in run or False based on prefix,directory,run_id and image number
+
+        Keyword arguments
+        site_tag -- corresponds to ID in site file
+        fullname -- full path name of the image in question
+        run_info -- dict describing run
         """
         self.logger.info(fullname)
 
         if run_info == None:
-            run_info = self.current_run
+            if self.current_run == None:
+                pass
+            else:
+                run_info = self.current_run
 
         # Save typing
         site = self.site
+
+        # The detector
+        detector = self.detectors[site_tag.lower()]
 
         # Tease out the info from the file name
         directory, basename, prefix, run_number, image_number = detector.parse_file_name(fullname)
@@ -1281,7 +1292,7 @@ class Model(object):
         #     self.logger.debug(info)
         #     #Save the current_run
         #     if self.current_run:
-        #         self.past_runs.append(self.current_run.copy())
+        #         self.recent_runs.append(self.current_run.copy())
         #     #Set current_run to the new run
         #     self.current_run = info
         #     #Save to the database
@@ -1308,7 +1319,7 @@ class Model(object):
                 else:
                     self.logger.debug("New run %s" % str(info))
                     #save the current run
-                    self.past_runs.append(self.current_run.copy())
+                    self.recent_runs.append(self.current_run.copy())
                     #set current run to the new run
                     self.current_run = info
                     self.current_run["run_id"] = run_id
