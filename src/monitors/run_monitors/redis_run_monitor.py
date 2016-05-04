@@ -141,10 +141,14 @@ class Monitor(threading.Thread):
         # Determine interval for overwatch update
         ow_round_interval = int ((5 * len(self.run_lists)) / POLLING_REST)
 
+        self.logger.debug("Finished registering")
+
         while self.running:
 
             # ~5 seconds between overwatch updates
             for __ in range(ow_round_interval):
+
+                self.logger.debug(__)
 
                 for run_list in self.run_lists:
 
