@@ -291,13 +291,13 @@ class Model(object):
         if site.DETECTOR:
             detector, suffix = site.DETECTOR
             detector = detector.lower()
-            self.detectors[self.site_ids[0]] = importlib.import_module("detectors.%s" % detector)
+            self.detectors[self.site_ids[0].lower()] = importlib.import_module("detectors.%s" % detector)
         # Multiple detectors
         elif site.DETECTORS:
             for site_id in self.site_ids:
                 detector, suffix = site.DETECTORS[site_id]
                 detector = detector.lower()
-                self.detectors[site_id] = importlib.import_module("detectors.%s" % detector)
+                self.detectors[site_id.lower()] = importlib.import_module("detectors.%s" % detector)
 
     def start_image_monitor(self):
         """Start up the image listening process for core"""
