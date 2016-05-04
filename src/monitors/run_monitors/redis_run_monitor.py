@@ -139,9 +139,9 @@ class Monitor(threading.Thread):
             self.ow_registrar.register()
 
         # Determine interval for overwatch update
-        ow_round_interval = int ((5 * len(self.run_lists)) / POLLING_REST)
+        ow_round_interval = int((5 * len(self.run_lists)) / POLLING_REST)
 
-        self.logger.debug("Finished registering")
+        self.logger.debug("Finished registering %d", ow_round_interval)
 
         while self.running:
 
