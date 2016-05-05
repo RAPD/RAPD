@@ -109,10 +109,10 @@ class Registrar(object):
         # Wrap potential redis down
         try:
             # Put entry in the redis db
-            red.hmset("OW:"+self.id, entry, ex=OVERWATCH_TIMEOUT)
+            red.hmset("OW:"+self.id, entry)
 
             # Expire the current entry in N seconds
-            # red.expire("OW:"+self.id, OVERWATCH_TIMEOUT)
+            red.expire("OW:"+self.id, OVERWATCH_TIMEOUT)
 
             # Announce by publishing
             red.publish("OW:registering", json.dumps(entry))
@@ -120,10 +120,10 @@ class Registrar(object):
             # If this process has an overwatcher
             if not self.ow_id == None:
                 # Put entry in the redis db
-                red.hmset("OW:"+self.id+":"+self.ow_id, entry, ex=OVERWATCH_TIMEOUT)
+                red.hmset("OW:"+self.id+":"+self.ow_id, entry)
 
                 # Expire the current entry in N seconds
-                # red.expire("OW:"+self.id+":"+self.ow_id, OVERWATCH_TIMEOUT)
+                red.expire("OW:"+self.id+":"+self.ow_id, OVERWATCH_TIMEOUT)
 
         # Redis is down
         except redis.exceptions.ConnectionError:
@@ -153,14 +153,14 @@ class Registrar(object):
         # Wrap potential redis down
         try:
             # Update timestamp
-            red.hset("OW:"+self.id, "timestamp", time.time(), ex=OVERWATCH_TIMEOUT)
+            red.hset("OW:"+self.id, "timestamp", time.time())
 
             # Update any custom_vars
             for k, v in custom_vars.iteritems():
                 red.hset("OW:"+self.id, k, v)
 
             # Expire the current entry in N seconds
-            # red.expire("OW:"+self.id, OVERWATCH_TIMEOUT)
+            red.expire("OW:"+self.id, OVERWATCH_TIMEOUT)
 
             # Announce by publishing
             red.publish("OW:updating", json.dumps(entry))
@@ -168,14 +168,14 @@ class Registrar(object):
             # If this process has an overwatcher
             if not self.ow_id == None:
                 # Put entry in the redis db
-                red.hset("OW:"+self.id+":"+self.ow_id, "timestamp", time.time(), ex=OVERWATCH_TIMEOUT)
+                red.hset("OW:"+self.id+":"+self.ow_id, "timestamp", time.time())
 
                 # Update any custom_vars
                 for k, v in custom_vars.iteritems():
                     red.hset("OW:"+self.id+":"+self.ow_id, k, v)
 
                 # Expire the current entry in N seconds
-                # red.expire("OW:"+self.id+":"+self.ow_id, OVERWATCH_TIMEOUT)
+                red.expire("OW:"+self.id+":"+self.ow_id, OVERWATCH_TIMEOUT)
 
         # Redis is down
         except redis.exceptions.ConnectionError:
