@@ -425,7 +425,7 @@ class Database(object):
         self.logger.debug("Database::get_image_by_image_id %d", image_id)
 
         query1 = "SELECT * FROM images WHERE image_id=%s"
-        image_dict = self.makeDicts(query=query1, params=(image_id,) )[0]
+        image_dict = self.make_dicts(query=query1, params=(image_id,) )[0]
 
         #format the dates to be JSON-compatible
         image_dict["timestamp"] = image_dict["timestamp"].isoformat()
@@ -448,7 +448,7 @@ class Database(object):
 
         try:
             query1 = 'SELECT image_id FROM images WHERE fullname=%s LIMIT 1'
-            image_dict = self.makeDicts(query=query1, params=(fullname,))[0]
+            image_dict = self.make_dicts(query=query1, params=(fullname,))[0]
             return(image_dict['image_id'])
 
         except:
@@ -510,7 +510,7 @@ class Database(object):
         #query for puck_settings
         try:
             query1  = 'SELECT A,B,C,D FROM puck_settings WHERE puckset_id="%s"' % (str(puckset_id))
-            request_dict = self.makeDicts(query1,(),'DATA')[0]
+            request_dict = self.make_dicts(query1,(),'DATA')[0]
         except:
             request_dict = False
 
@@ -527,7 +527,7 @@ class Database(object):
         self.logger.debug('Database::getPuckInfo puckid:%s' %str(puckid))
         try:
             query1  = 'SELECT sample, CrystalID, PuckID FROM samples WHERE PuckID="%s" ORDER BY sample' % (str(puckid))
-            request_dict = self.makeDicts(query1,(),'DATA')
+            request_dict = self.make_dicts(query1,(),'DATA')
             #force the dictionary to be sorted
             if len(request_dict) < 16:
                 temp_dict = []
@@ -555,7 +555,7 @@ class Database(object):
         #query for list of pucks
         try:
             query1  = 'SELECT PuckID FROM samples WHERE timestamp>"%s" GROUP BY PuckID' % (puck_cutoff)
-            request_dict = self.makeDicts(query1,(),'DATA')
+            request_dict = self.make_dicts(query1,(),'DATA')
         except:
             request_dict = False
          #see if we have a request
@@ -907,7 +907,7 @@ class Database(object):
             #not working for specific date yet
             pass
         else:
-            my_dict = self.makeDicts('SELECT * FROM beamcenter WHERE site=%s ORDER BY timestamp DESC LIMIT 1', (site, ))
+            my_dict = self.make_dicts('SELECT * FROM beamcenter WHERE site=%s ORDER BY timestamp DESC LIMIT 1', (site, ))
 
         return(my_dict)
 
@@ -923,7 +923,7 @@ class Database(object):
 
         try:
             query1 = 'SELECT * FROM settings WHERE site=%s AND data_root_dir=%s AND setting_type=%s ORDER BY setting_id DESC LIMIT 1'
-            settings_dict = self.makeDicts(query1, (site_id, data_root_dir, setting_type))[0]
+            settings_dict = self.make_dicts(query1, (site_id, data_root_dir, setting_type))[0]
 
             #handle the addition of reference_data_id
             if settings_dict['reference_data_id']:
@@ -947,7 +947,7 @@ class Database(object):
 
         try:
             query1 = 'SELECT * FROM settings WHERE setting_id=%s'
-            settings_dict = self.makeDicts(query1,(setting_id,))[0]
+            settings_dict = self.make_dicts(query1,(setting_id,))[0]
 
             #handle the addition of reference_data_id
             if settings_dict['reference_data_id']:
@@ -970,7 +970,7 @@ class Database(object):
 
         #get the information in the reference_data table
         query1 = ('SELECT * from reference_data WHERE reference_data_id=%s')
-        reference_data_dict = self.makeDicts(query=query1,
+        reference_data_dict = self.make_dicts(query=query1,
                                              params=(reference_data_id,),
                                              db='DATA')[0]
 
@@ -982,7 +982,7 @@ class Database(object):
                            FROM integrate_results LEFT JOIN runs ON integrate_results.run_id=runs.run_id WHERE integrate_results.result_id=%s;'''
                 #query = '''SELECT runs.directory as directory,runs.image_prefix as prefix,runs.run_number as run_number,runs.start as start_image_number,runs.phi as phi_start,runs.phi+runs.width*runs.total as phi_end
                 #           FROM integrate_results LEFT JOIN runs ON integrate_results.run_id=runs.run_id WHERE integrate_results.result_id=%s;'''
-                temp_dict = self.makeDicts(query=query,
+                temp_dict = self.make_dicts(query=query,
                                              params=(value,),
                                              db='DATA')[0]
                 runs_dict[key] = temp_dict
@@ -1009,7 +1009,7 @@ class Database(object):
 
             # 1st get the imagesettings_id from current
             query1 = 'SELECT * FROM current WHERE site=%s'
-            current_dict = self.makeDicts(query=query1,
+            current_dict = self.make_dicts(query=query1,
                                           params=(id,),
                                           db='DATA')[0]
 
@@ -1049,7 +1049,7 @@ class Database(object):
 
             print query
             print site_id
-            settings_dict = self.makeDicts(query, (site_id, "DEFAULTS"))[0]
+            settings_dict = self.make_dicts(query, (site_id, "DEFAULTS"))[0]
 
             # Update the dict with current data
             my_dict = {"site":site_id, "data_root_dir":data_root_dir}
@@ -1789,7 +1789,7 @@ class Database(object):
 
         try:
             #get the result's pair_result_dict
-            single_result_dict = self.makeDicts('SELECT * FROM single_results WHERE single_result_id=%s',(cursor.lastrowid,))[0]
+            single_result_dict = self.make_dicts('SELECT * FROM single_results WHERE single_result_id=%s',(cursor.lastrowid,))[0]
 
             #register the result in results table
             cursor.execute('INSERT INTO results (type,id,setting_id,process_id,sample_id,data_root_dir) VALUES (%s, %s, %s, %s, %s, %s)',
@@ -1954,7 +1954,7 @@ class Database(object):
 
         #find all solutions for this result
         query = "SELECT * FROM strategy_wedges WHERE id=%s"
-        request_dict = self.makeDicts(query=query,
+        request_dict = self.make_dicts(query=query,
                                       params=(id,))
 
         return(request_dict)
@@ -2641,7 +2641,7 @@ class Database(object):
         try:
 
             #get the result's pair_result_dict
-            pair_result_dict = self.makeDicts('SELECT * FROM pair_results WHERE pair_result_id=%s',(cursor.lastrowid,))[0]
+            pair_result_dict = self.make_dicts('SELECT * FROM pair_results WHERE pair_result_id=%s',(cursor.lastrowid,))[0]
 
             #register the result in results table
             cursor.execute('INSERT INTO results (type,id,setting_id,process_id,sample_id,data_root_dir) VALUES (%s, %s, %s, %s, %s, %s)',('pair',pair_result_dict['pair_result_id'],pair_result_dict['settings_id'],pair_result_dict['process_id'],pair_result_dict['sample_id'],pair_result_dict['data_root_dir']))
@@ -2780,7 +2780,7 @@ class Database(object):
             self.logger.debug(command)
             self.logger.debug(insert_values)
             cursor.execute(command,insert_values)
-            diffcenter_result_dict = self.makeDicts('SELECT * FROM diffcenter_results WHERE diffcenter_result_id=%s',(cursor.lastrowid,))[0]
+            diffcenter_result_dict = self.make_dicts('SELECT * FROM diffcenter_results WHERE diffcenter_result_id=%s',(cursor.lastrowid,))[0]
             self.closeConnection(connection,cursor)
             return(diffcenter_result_dict)
 
@@ -2892,7 +2892,7 @@ class Database(object):
               self.logger.debug(command)
               self.logger.debug(insert_values)
             cursor.execute(command,insert_values)
-            quickanalysis_result_dict = self.makeDicts('SELECT * FROM quickanalysis_results WHERE quickanalysis_result_id=%s',(cursor.lastrowid,))[0]
+            quickanalysis_result_dict = self.make_dicts('SELECT * FROM quickanalysis_results WHERE quickanalysis_result_id=%s',(cursor.lastrowid,))[0]
             self.closeConnection(connection,cursor)
             return(quickanalysis_result_dict)
 
@@ -2913,10 +2913,10 @@ class Database(object):
             #join sad_results and results tables to get type
             query = '''SELECT results.* FROM results,sad_results WHERE sad_results.sad_result_id=%s
                         AND sad_results.source_data_id=results.result_id'''
-            request_dict = self.makeDicts(query=query, params=(sad_result_id,))
+            request_dict = self.make_dicts(query=query, params=(sad_result_id,))
         elif result_id:
             query = "SELECT * FROM results WHERE result_id=%s"
-            request_dict = self.makeDicts(query=query, params=(result_id,))
+            request_dict = self.make_dicts(query=query, params=(result_id,))
         result_table = request_dict[0]['type']
         if result_table == 'merge' or result_table == 'integrate':
             command = "UPDATE %s_results " % (result_table)
@@ -3132,7 +3132,7 @@ class Database(object):
 
         try:
             #get the result's pair_result_dict
-            new_integrate_result_dict = self.makeDicts('SELECT * FROM integrate_results WHERE integrate_result_id=%s',(integrate_result_id,))[0]
+            new_integrate_result_dict = self.make_dicts('SELECT * FROM integrate_results WHERE integrate_result_id=%s',(integrate_result_id,))[0]
 
             #update the result in results table
             cursor.execute('UPDATE results SET setting_id=%s,process_id=%s,sample_id=%s,data_root_dir=%s,timestamp=%s WHERE result_id=%s',
@@ -3453,7 +3453,7 @@ class Database(object):
 
         try:
             #get the result's pair_result_dict
-            new_integrate_result_dict = self.makeDicts('SELECT * FROM integrate_results WHERE integrate_result_id=%s',(integrate_result_id,))[0]
+            new_integrate_result_dict = self.make_dicts('SELECT * FROM integrate_results WHERE integrate_result_id=%s',(integrate_result_id,))[0]
 
             #update the result in results table
             cursor.execute('UPDATE results SET setting_id=%s,process_id=%s,sample_id=%s,data_root_dir=%s,timestamp=%s WHERE result_id=%s',
@@ -3712,7 +3712,7 @@ class Database(object):
 
         try:
             #get the result's pair_result_dict
-            new_integrate_result_dict = self.makeDicts('SELECT * FROM integrate_results WHERE integrate_result_id=%s',(integrate_result_id,))[0]
+            new_integrate_result_dict = self.make_dicts('SELECT * FROM integrate_results WHERE integrate_result_id=%s',(integrate_result_id,))[0]
 
             #update the result in results table
             cursor.execute('UPDATE results SET setting_id=%s,process_id=%s,sample_id=%s,data_root_dir=%s,timestamp=%s WHERE result_id=%s',
@@ -3979,7 +3979,7 @@ class Database(object):
 
         try:
             #get the result's pair_result_dict
-            new_merge_result_dict = self.makeDicts('SELECT * FROM merge_results WHERE merge_result_id=%s',(merge_result_id,))[0]
+            new_merge_result_dict = self.make_dicts('SELECT * FROM merge_results WHERE merge_result_id=%s',(merge_result_id,))[0]
 
             #update the result in results table
             cursor.execute('UPDATE results SET setting_id=%s,process_id=%s,data_root_dir=%s,timestamp=%s WHERE result_id=%s',
@@ -4089,7 +4089,7 @@ class Database(object):
         #now get the runs for the integrates
         run_ids = []
         for integrate_id in integrate_ids:
-            run_ids.append(self.makeDicts("SELECT run_id FROM integrate_results WHERE result_id=%s", (integrate_id,),'DATA')[0]['run_id'])
+            run_ids.append(self.make_dicts("SELECT run_id FROM integrate_results WHERE result_id=%s", (integrate_id,),'DATA')[0]['run_id'])
         self.logger.debug(run_ids)
         #
         return(run_ids)
@@ -4315,7 +4315,7 @@ class Database(object):
 
         try:
             #get the result's pair_result_dict
-            integrate_result_dict = self.makeDicts('SELECT * FROM integrate_results WHERE integrate_result_id=%s',(cursor.lastrowid,))[0]
+            integrate_result_dict = self.make_dicts('SELECT * FROM integrate_results WHERE integrate_result_id=%s',(cursor.lastrowid,))[0]
 
             #register the result in results table
             cursor.execute('INSERT INTO results (type,id,setting_id,process_id,data_root_dir) VALUES (%s, %s, %s, %s, %s, %s)',('integrate',integrate_result_dict['integrate_result_id'],integrate_result_dict['settings_id'],integrate_result_dict['process_id'],integrate_result_dict['sample_id'],integrate_result_dict['data_root_dir']))
@@ -4529,7 +4529,7 @@ class Database(object):
             cursor.execute(command,insert_values)
 
             #now get the full dict that has just been added
-            new_mr_result_dict = self.makeDicts('SELECT * FROM mr_results WHERE mr_result_id=%s',(mr_result_id,))[0]
+            new_mr_result_dict = self.make_dicts('SELECT * FROM mr_results WHERE mr_result_id=%s',(mr_result_id,))[0]
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::addMrResult')
@@ -4564,7 +4564,7 @@ class Database(object):
 
         #find if there is a previous entry for this result
         query1 = "SELECT * FROM mr_trial_results WHERE mr_result_id=%s AND spacegroup=%s"
-        tmp_dict = self.makeDicts(query=query1,
+        tmp_dict = self.make_dicts(query=query1,
                                   params=(mr_result_id,spacegroup))
         #connect to the database
         connection,cursor = self.connect_to_data()
@@ -4616,7 +4616,7 @@ class Database(object):
 
         #find all solutions for this result
         query = "SELECT * FROM mr_trial_results WHERE mr_result_id=%s"
-        request_dict = self.makeDicts(query=query,
+        request_dict = self.make_dicts(query=query,
                                   params=(mr_result_id,))
 
         return(request_dict)
@@ -4828,7 +4828,7 @@ class Database(object):
         try:
             self.logger.debug("Entering the results updating section sad_result_id:%d"%sad_result_id)
             #get the result's sad_result dict
-            new_sad_result_dict = self.makeDicts('SELECT * FROM sad_results WHERE sad_result_id=%s',(sad_result_id,))[0]
+            new_sad_result_dict = self.make_dicts('SELECT * FROM sad_results WHERE sad_result_id=%s',(sad_result_id,))[0]
             self.logger.debug(new_sad_result_dict)
             #update the result in results table
             cursor.execute('UPDATE results SET setting_id=%s,process_id=%s,data_root_dir=%s,timestamp=%s WHERE result_id=%s',
@@ -5367,7 +5367,7 @@ class Database(object):
         try:
             self.logger.debug("Entering the results updating section sad_result_id:%d" % mad_result_id)
             #get the result's sad_result dict
-            new_mad_result_dict = self.makeDicts('SELECT * FROM mad_results WHERE mad_result_id=%s',(mad_result_id,))[0]
+            new_mad_result_dict = self.make_dicts('SELECT * FROM mad_results WHERE mad_result_id=%s',(mad_result_id,))[0]
             self.logger.debug(new_mad_result_dict)
             #update the result in results table
             cursor.execute('UPDATE results SET setting_id=%s,process_id=%s,data_root_dir=%s,timestamp=%s WHERE result_id=%s',
@@ -5523,7 +5523,7 @@ class Database(object):
                 """
 
                 #get the result's stats_result dict
-                new_stats_result_dict = self.makeDicts('SELECT * FROM stats_results WHERE stats_result_id=%s',(stats_result_id,))[0]
+                new_stats_result_dict = self.make_dicts('SELECT * FROM stats_results WHERE stats_result_id=%s',(stats_result_id,))[0]
                 self.closeConnection(connection,cursor)
                 return(new_stats_result_dict)
 
@@ -5596,7 +5596,7 @@ class Database(object):
         self.logger.debug('Database::getTypeResultId  process_id:%d' % process_id)
 
         query = "SELECT result_id,id FROM results WHERE process_id=%s"
-        my_dict = self.makeDicts(query, (process_id,))
+        my_dict = self.make_dicts(query, (process_id,))
 
         if (len(my_dict)>0):
             return(my_dict[0]['id'],my_dict[0]['result_id'])
@@ -5613,7 +5613,7 @@ class Database(object):
         self.logger.debug('Database::getTypeByResultId  result_id:%d' % result_id)
 
         query = "SELECT * FROM results WHERE result_id=%s"
-        my_dict = self.makeDicts(query, (result_id,), "DATA")
+        my_dict = self.make_dicts(query, (result_id,), "DATA")
 
         if (len(my_dict)>0):
             if full:
@@ -5637,7 +5637,7 @@ class Database(object):
         else:
             query = "SELECT * FROM "+type+"_results WHERE "+type+"_result_id=%s"
         #now query the database
-        my_dict = self.makeDicts(query,(id,))[0]
+        my_dict = self.make_dicts(query,(id,))[0]
 
         if (type == "integrate"):
             specials_dict = self.getBeamcenterFromRunId(my_dict['run_id'])
@@ -5680,7 +5680,7 @@ class Database(object):
         self.logger.debug('Database::getResultByWorkDir %s' % work_dir)
 
         query    = 'SELECT * FROM '+type+'_results WHERE work_dir=%s'
-        my_dicts = self.makeDicts(query, (work_dir,))
+        my_dicts = self.make_dicts(query, (work_dir,))
 
         if (len(my_dicts) > 0):
             return(my_dicts[0])
@@ -5694,7 +5694,7 @@ class Database(object):
         self.logger.debug('Database::getResultByRepr %s %s' %(repr,type))
 
         query =  'SELECT * FROM '+type+'_results WHERE repr=%s'
-        my_dicts =  self.makeDicts(query, (repr,))
+        my_dicts =  self.make_dicts(query, (repr,))
 
         if (len(my_dicts) > 0):
             return(my_dicts)
@@ -5708,7 +5708,7 @@ class Database(object):
         self.logger.debug('Database::getResultsByDataRootDir %s %s' % (data_root_dir,type))
 
         query    = 'SELECT * FROM '+type+'_results WHERE data_root_dir=%s'
-        my_dicts = self.makeDicts(query, (data_root_dir,))
+        my_dicts = self.make_dicts(query, (data_root_dir,))
 
         if (len(my_dicts) > 0):
             return(my_dicts)
@@ -5722,7 +5722,7 @@ class Database(object):
         self.logger.debug('Database::getResultsByDates %s %s %s' % (start_date,end_date,type))
 
         query    = 'SELECT * FROM '+type+'_results WHERE timestamp>%s AND timestamp<%s'
-        my_dicts = self.makeDicts(query, (start_date,end_date))
+        my_dicts = self.make_dicts(query, (start_date,end_date))
 
         if (len(my_dicts) > 0):
             return(my_dicts)
@@ -5740,7 +5740,7 @@ class Database(object):
         if (type == "strategy"):
             query = "SELECT s.*,r.best_norm_atten FROM single_results AS r JOIN images AS i ON (r.image_id = i.image_id) JOIN strategy_wedges AS s ON (r.single_result_id = s.id) WHERE i.fullname=%s AND s.strategy_type='normal'"
 
-        my_dicts = self.makeDicts(query, (fullname,))
+        my_dicts = self.make_dicts(query, (fullname,))
 
         if (len(my_dicts) > 0):
             dict = my_dicts[-1]
@@ -5784,7 +5784,7 @@ class Database(object):
 
         try:
             query = "SELECT beam_center_x,beam_center_y,calc_beam_center_x,calc_beam_center_y FROM images WHERE run_id=%s LIMIT 1"
-            my_dict = self.makeDicts(query,(run_id,))[0]
+            my_dict = self.make_dicts(query,(run_id,))[0]
         except:
             self.logger.exception('Error in getBeamcenterFromRunId')
             my_dict = False
@@ -5901,7 +5901,7 @@ class Database(object):
                 data = result_id
             #query the database
             self.logger.debug(query%data)
-            trip_dict = self.makeDicts(query,(data,),'USERS')
+            trip_dict = self.make_dicts(query,(data,),'USERS')
         except:
             self.logger.exception('Error in getTrips')
             trip_dict = False
@@ -5918,7 +5918,7 @@ class Database(object):
         #query the database
         try:
             query1 = 'SELECT * FROM trips WHERE username=%s'
-            trip_dict = self.makeDicts(query1,(username,),'USERS')
+            trip_dict = self.make_dicts(query1,(username,),'USERS')
         except:
             self.logger.exception('Error in getTripsByUser')
             trip_dict = False
@@ -5927,9 +5927,9 @@ class Database(object):
 
 
 
-    ##################################################################################################################
-    # Functions for runs                                                                                             #
-    ##################################################################################################################
+    ############################################################################
+    # Functions for runs                                                       #
+    ############################################################################
     def add_run(self, site_id, run_data):
         """
         Add a new run to the MySQL database
@@ -5940,81 +5940,140 @@ class Database(object):
         """
         self.logger.debug("Database.add_run %s %s", site_id, run_data)
 
-        # try:
-        #     # Connect
-        #     connection, cursor = self.connect_to_data()
-        #
-        #     # Save into database
-        #     self.logger.debug("Adding run from into database directory:%s image_prefix:%s" % (run["directory"], run["prefix"]))
-        #     cursor.execute("""INSERT INTO runs (directory,
-        #                                         image_prefix,
-        #                                         run_number,
-        #                                         start_image_number,
-        #                                         number_images,
-        #                                         distance,
-        #                                         phi,
-        #                                         kappa,
-        #                                         omega,
-        #                                         osc_axis,
-        #                                         osc_start,
-        #                                         osc_width,
-        #                                         time,
-        #                                         transmission,
-        #                                         energy,
-        #                                         anomalous,
-        #                                         site) VALUES (%s,
-        #                                                       %s,
-        #                                                       %s,
-        #                                                       %s,
-        #                                                       %s,
-        #                                                       %s,
-        #                                                       %s,
-        #                                                       %s,
-        #                                                       %s,
-        #                                                       %s,
-        #                                                       %s,
-        #                                                       %s,
-        #                                                       %s,
-        #                                                       %s,
-        #                                                       %s,
-        #                                                       %s,
-        #                                                       %s)""",
-        #                                      (run_data.get("directory", ""),
-        #                                       run_data.get("image_prefix", ""),
-        #                                       run_data.get("run_number", None),
-        #                                       run_data.get("start_image_number", 0),
-        #                                       run_data.get("number_images", 0),
-        #                                       run_data.get("distance", 0.0),
-        #                                       run_data.get("phi_start", None),
-        #                                       run_data.get("kappa_start", None),
-        #                                       run_data.get("omega_start", None),
-        #                                       run_data.get("osc_axis", "phi"),
-        #                                       run_data.get("osc_start", 0.0),
-        #                                       run_data.get("osc_width", 0.0),
-        #                                       run_data.get("time", 0.0),
-        #                                       run_data.get("transmission", 0.0),
-        #                                       run_data.get("energy", 0.0),
-        #                                       run_data.get("anomalous", "False"),
-        #                                       site_id))
-        #     run_id = cursor.lastrowid
-        #     self.closeConnection(connection,cursor)
-        #     return(run_id)
-        #
-        # except pymysql.IntegrityError , (errno, strerror):
-        #     if errno == 1062:
-        #         self.logger.debug("Run is already in the database")
-        #         self.closeConnection(connection,cursor)
-        #
-        #         # Get the run_id and return it
-        #         return(self.getRunIdByInfo(run_data=run))
-        #     else:
-        #         self.logger.exception("ERROR : unknown IntegrityError exception in rapd_mysql_adapter.add_run")
-        #         return(False)
-        #
-        # except:
-        #     self.logger.exception("ERROR : unknown exception in rapd_mysql_adapter.add_run")
-        #     self.closeConnection(connection, cursor)
-        #     return(False)
+        try:
+            # Connect
+            connection, cursor = self.connect_to_data()
+
+            # Save into database
+            self.logger.debug("Adding run from into database directory:%s image_prefix:%s" % (run["directory"], run["prefix"]))
+            cursor.execute("""INSERT INTO runs (directory,
+                                                image_prefix,
+                                                run_number,
+                                                start_image_number,
+                                                number_images,
+                                                distance,
+                                                phi,
+                                                kappa,
+                                                omega,
+                                                osc_axis,
+                                                osc_start,
+                                                osc_width,
+                                                time,
+                                                transmission,
+                                                energy,
+                                                anomalous,
+                                                site) VALUES (%s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s,
+                                                              %s)""",
+                                             (run_data.get("directory", ""),
+                                              run_data.get("image_prefix", ""),
+                                              run_data.get("run_number", None),
+                                              run_data.get("start_image_number", 0),
+                                              run_data.get("number_images", 0),
+                                              run_data.get("distance", 0.0),
+                                              run_data.get("phi_start", None),
+                                              run_data.get("kappa_start", None),
+                                              run_data.get("omega_start", None),
+                                              run_data.get("osc_axis", "phi"),
+                                              run_data.get("osc_start", 0.0),
+                                              run_data.get("osc_width", 0.0),
+                                              run_data.get("time", 0.0),
+                                              run_data.get("transmission", 0.0),
+                                              run_data.get("energy", 0.0),
+                                              run_data.get("anomalous", "False"),
+                                              site_id))
+            run_id = cursor.lastrowid
+            self.closeConnection(connection,cursor)
+            return(run_id)
+
+        except pymysql.IntegrityError , (errno, strerror):
+            if errno == 1062:
+                self.logger.debug("Run is already in the database")
+                self.closeConnection(connection,cursor)
+
+                # Get the run_id and return it
+                return(self.getRunIdByInfo(run_data=run))
+            else:
+                self.logger.exception("ERROR : unknown IntegrityError exception in rapd_mysql_adapter.add_run")
+                return(False)
+
+        except:
+            self.logger.exception("ERROR : unknown exception in rapd_mysql_adapter.add_run")
+            self.closeConnection(connection, cursor)
+            return(False)
+
+    def get_run_data(self,
+                     site_tag=None,
+                     run_data=None,
+                     minutes=0,
+                     order="descending"):
+        """
+        Return information for runs that fit the data within the last minutes
+        window. If minutes=0, no time limit.
+
+        Match is performed on the directory, prefix, starting image number and
+        total number of images.
+
+        Keyword arguments
+        site_tag -- string describing site (default None)
+        run_data -- dict of run information (default None)
+        minutes -- time window to look back into the data (default 0)
+        order -- the order in which to sort the results, must be None, descending
+                 or ascending (default descending)
+        """
+
+        self.logger.debug("site_tag:%s run_data:%s minutes:%d", site_tag, run_data, minutes)
+
+        # Order
+        if order == "descending":
+            order_param = "DESC"
+        elif order == "ascending":
+            order_param = "ASC"
+        else:
+            raise Exception("get_run_data order argument must be None, ascending, or descending")
+
+        # No limit on the results
+        if minutes == 0:
+            query = "SELECT * FROM runs WHERE site=%s AND directory=%s AND prefix=%s AND start=%s AND total=%s ORDER BY timestamp %s"
+            params = (site_tag,
+                      run_data.get("directory", None),
+                      run_data.get("prefix", None),
+                      run_data.get("start_image_number", None),
+                      run_data.get("number_images", None))
+        # Limit to a time window
+        else:
+            query = "SELECT * FROM runs WHERE site=%s AND directory=%s AND prefix=%s AND start=%s AND total=%s AND timestamp > NOW()-INTERVAL %s MINUTE ORDER BY timestamp %s"
+            params = (site_tag,
+                      run_data.get("directory", None),
+                      run_data.get("prefix", None),
+                      run_data.get("start_image_number", None),
+                      run_data.get("number_images", None),
+                      minutes)
+
+        # Query the database
+        result_dicts = self.make_dicts(query=query,
+                                       params=params,
+                                       db="DATA")
+
+        # If no return, return a False
+        if len(result_dicts) == 0:
+            return False
+        else:
+            return result_dicts
 
     def getRunIdByInfo(self,run_data):
         """
@@ -6027,7 +6086,7 @@ class Database(object):
 
         query = "SELECT * FROM runs WHERE directory=%s AND run_number=%s AND image_prefix=%s AND start=%s AND total=%s"
         self.logger.debug("SELECT * FROM runs WHERE directory=%s AND run_number=%s AND image_prefix=%s AND start=%s AND total=%s" % (run_data['directory'],run_data['run_number'],run_data['prefix'],run_data['start'],run_data['total']))
-        my_dicts = self.makeDicts(query,(run_data['directory'],run_data['run_number'],run_data['prefix'],run_data['start'],run_data['total']))
+        my_dicts = self.make_dicts(query,(run_data['directory'],run_data['run_number'],run_data['prefix'],run_data['start'],run_data['total']))
         if (len(my_dicts) > 0):
             return(my_dicts[0]['run_id'])
         else:
@@ -6042,7 +6101,7 @@ class Database(object):
 
         #get a dict from images table for this image
         query1 = 'select fullname,directory,image_prefix,run_number,image_number,run_id from images where image_id=%s'
-        image_dict = self.makeDicts(query1,(image_id,))
+        image_dict = self.make_dicts(query1,(image_id,))
 
         if image_dict:
             image_dict = image_dict[0]
@@ -6166,7 +6225,7 @@ class Database(object):
 
         try:
             query1   = 'SELECT * FROM runs WHERE run_id=%s'
-            run_dict = self.makeDicts(query1, (run_id,))[0]
+            run_dict = self.make_dicts(query1, (run_id,))[0]
             #change the datetimes to JSON encodable
             run_dict['timestamp'] = run_dict['timestamp'].isoformat()
             return(run_dict)
@@ -6182,7 +6241,7 @@ class Database(object):
 
         #find all solutions for this result
         query = "SELECT isr.* FROM integrate_shell_results AS isr JOIN integrate_results AS ir ON (isr.isr_id = ir.shell_overall OR isr.isr_id = ir.shell_inner OR isr.isr_id = ir.shell_outer) WHERE ir.run_id=%s"
-        request_list = self.makeDicts(query,(run_id,))
+        request_list = self.make_dicts(query,(run_id,))
 
         if (len(request_list) > 0):
             return(request_list)
@@ -6231,7 +6290,7 @@ class Database(object):
         db_query = "SELECT * FROM runs WHERE directory='%s' AND run_number='%s' AND image_prefix='%s' AND start=%d;" % (run_data['directory'],run_data['run_number'],run_data['prefix'],run_data['start'])
 
       self.logger.debug(db_query)
-      my_dicts = self.makeDicts(db_query)
+      my_dicts = self.make_dicts(db_query)
       if len(my_dicts) > 1:
         self.logger.debug('Error - cannot determine the proper run to modify')
         return False
@@ -6257,7 +6316,7 @@ class Database(object):
         #Get ALL requests, sort by most recent
         try:
             query1  = 'SELECT * FROM minikappa WHERE status="request" ORDER BY timestamp DESC'
-            request_dict = self.makeDicts(query1,(),'CLOUD')
+            request_dict = self.make_dicts(query1,(),'CLOUD')
             #request_dict['timestamp'] = request_dict['timestamp'].isoformat()
         except:
             request_dict = False
@@ -6295,7 +6354,7 @@ class Database(object):
         #Get ALL requests, sort by most recent
         try:
             query1  = 'SELECT * FROM datacollection WHERE status="request" ORDER BY timestamp DESC'
-            request_dict = self.makeDicts(query1,(),'CLOUD')
+            request_dict = self.make_dicts(query1,(),'CLOUD')
         except:
             request_dict = False
 
@@ -6331,7 +6390,7 @@ class Database(object):
         # self.logger.debug('Database.getCloudRequest')
         try:
             query1  = 'SELECT * FROM cloud_requests WHERE status="request" ORDER BY cloud_request_id LIMIT 1'
-            request_dict = self.makeDicts(query1,(),'CLOUD')[0]
+            request_dict = self.make_dicts(query1,(),'CLOUD')[0]
             request_dict['timestamp'] = request_dict['timestamp'].isoformat()
         except:
             request_dict = False
@@ -6411,17 +6470,17 @@ class Database(object):
 
         if request['original_type'] == 'single':
             query1    = 'SELECT fullname,work_dir,repr FROM single_results WHERE single_result_id=%s'
-            my_dict   = self.makeDicts(query1,(request['original_id'],),'DATA')[0]
+            my_dict   = self.make_dicts(query1,(request['original_id'],),'DATA')[0]
             my_return = (os.path.dirname(my_dict['fullname']), (os.path.basename(my_dict['fullname']),), my_dict['work_dir'])
 
         elif request['original_type'] == 'pair':
             query1    = 'SELECT fullname_1,fullname_2,work_dir,repr FROM pair_results WHERE pair_result_id=%s'
-            my_dict   = self.makeDicts(query1,(request['original_id'],),'DATA')[0]
+            my_dict   = self.make_dicts(query1,(request['original_id'],),'DATA')[0]
             my_return = (os.path.dirname(my_dict['fullname_1']), (os.path.basename(my_dict['fullname_1']),os.path.basename(my_dict['fullname_2'])), my_dict['work_dir'])
 
         elif request['original_type'] == 'integrate':
             query1    = 'SELECT images_dir,template,work_dir,images_dir,image_start,image_end,repr FROM integrate_results WHERE integrate_result_id=%s'
-            my_dict   = self.makeDicts(query1,(request['original_id'],),'DATA')[0]
+            my_dict   = self.make_dicts(query1,(request['original_id'],),'DATA')[0]
             image_files = []
             for i in range(my_dict['image_start'],my_dict['image_end']+1):
                 image_files.append(os.path.basename(my_dict['template']).replace('###',(str(i).zfill(3))))
@@ -6445,7 +6504,7 @@ class Database(object):
             query1 = 'SELECT sad_status,shelx_tar as download_file,repr FROM sad_results WHERE sad_result_id=%s'
 
         try:
-            my_dict = self.makeDicts(query1,(request['original_id'],),'DATA')[0]
+            my_dict = self.make_dicts(query1,(request['original_id'],),'DATA')[0]
             self.logger.debug(my_dict)
             return((my_dict['download_file'],my_dict['repr']))
         except:
@@ -6464,7 +6523,7 @@ class Database(object):
             query1 = 'SELECT mad_status,shelx_tar as download_file,repr FROM mad_results WHERE mad_result_id=%s'
 
         try:
-            my_dict = self.makeDicts(query1,(request['original_id'],),'DATA')[0]
+            my_dict = self.make_dicts(query1,(request['original_id'],),'DATA')[0]
             self.logger.debug(my_dict)
             return((my_dict['download_file'],my_dict['repr']))
         except:
@@ -6480,7 +6539,7 @@ class Database(object):
 
         try:
             query1 = "SELECT mr_trial_results.archive as archive, mr_results.repr as repr FROM mr_trial_results JOIN mr_results ON (mr_results.mr_result_id = mr_trial_results.mr_result_id) WHERE mr_results.result_id=%s AND mr_trial_results.spacegroup=%s"
-            my_dict = self.makeDicts(query1,(request['original_result_id'],request['option1']))[0]
+            my_dict = self.make_dicts(query1,(request['original_result_id'],request['option1']))[0]
             self.logger.debug(my_dict)
             return((my_dict['archive'],my_dict['repr']))
         except:
@@ -6496,10 +6555,10 @@ class Database(object):
 
         try:
             query0 = "SELECT type FROM results WHERE result_id=%s"
-            src_type = self.makeDicts(query0,(request['original_result_id'],))[0]['type']
+            src_type = self.make_dicts(query0,(request['original_result_id'],))[0]['type']
 
             query1 = "SELECT cell_analysis_results.automr_tar as archive, "+src_type+"_results.repr as repr FROM cell_analysis_results JOIN "+src_type+"_results ON ("+src_type+"_results.result_id = cell_analysis_results.result_id) WHERE cell_analysis_results.result_id = %s AND cell_analysis_results.pdb_id=%s"
-            my_dict = self.makeDicts(query1,(request['original_result_id'],request['option1']))[0]
+            my_dict = self.make_dicts(query1,(request['original_result_id'],request['option1']))[0]
             self.logger.debug(my_dict)
             return((my_dict['archive'],my_dict['repr']))
         except:
@@ -6515,7 +6574,7 @@ class Database(object):
 
         try:
             query1 = "SELECT cell_analysis_results.automr_tar as archive, sad_results.repr as repr FROM cell_analysis_results JOIN sad_results ON (sad_results.sad_result_id = cell_analysis_results.sad_result_id) WHERE sad_results.result_id=%s AND cell_analysis_results.pdb_id=%s"
-            my_dict = self.makeDicts(query1,(request['original_result_id'],request['option1']))[0]
+            my_dict = self.make_dicts(query1,(request['original_result_id'],request['option1']))[0]
             self.logger.debug(my_dict)
             return((my_dict['archive'],my_dict['repr']))
         except:
@@ -6534,7 +6593,7 @@ class Database(object):
                 query1 = 'SELECT  integrate_status,work_dir,xia_log,xscale_log,scala_log,unmerged_sca_file,sca_file,mtz_file,download_file,pipeline,repr FROM integrate_results WHERE integrate_result_id=%s'
             elif (request['original_type'] == "merge"):
                 query1 = 'SELECT merge_status,work_dir,download_file,repr FROM merge_results WHERE merge_result_id=%s'
-            my_dict = self.makeDicts(query1,(request['original_id'],),'DATA')[0]
+            my_dict = self.make_dicts(query1,(request['original_id'],),'DATA')[0]
             self.logger.debug(my_dict)
 
             #now construct a series of directory and file pairs
@@ -6721,7 +6780,7 @@ class Database(object):
         query = "SELECT * FROM pdbs WHERE pdbs_id = %s"
 
         try:
-            my_dict = self.makeDicts(query=query,
+            my_dict = self.make_dicts(query=query,
                                      params=(pdbs_id,),
                                      db='DATA')[0]
             return(my_dict)
@@ -6753,7 +6812,7 @@ class Database(object):
         import base64
         return(base64.b64decode(item))
 
-    def makeDicts(self,query,params=(),db='DATA'):
+    def make_dicts(self, query, params=(), db="DATA"):
         """
         Got the idea for this from Programming Python p 1241
         """
@@ -6765,18 +6824,19 @@ class Database(object):
         elif (db == 'CLOUD'):
             connection,cursor = self.connect_to_cloud()
 
-        #execute the query
+        # Execute the query
         if (len(params)==0):
             cursor.execute(query)
         else:
             cursor.execute(query,params)
 
-        #assemble the dict
+        # Assemble the dict(s) into an array
         colnames = [desc[0] for desc in cursor.description]
         rowdicts = [dict(zip(colnames,row)) for row in cursor.fetchall()]
         self.closeConnection(connection,cursor)
-        #return the dict
-        return(rowdicts)
+
+        # Return the array of dicts
+        return rowdicts
 
 
 

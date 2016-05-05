@@ -519,25 +519,36 @@ class Model(object):
         run_data = run_dict["run_data"]
         site_tag = run_dict["site_tag"]
 
-        # Save the current_run to somewhere handy
-        if self.current_run:
-            self.recent_runs.append(self.current_run.copy())
+        # Check if this run has already been collected - could be an array of dicts
+        # that are runs that match or a False
+        recent_run_data = self.database.get_run_data(site_tag=site_tag,
+                                                     run_data=run_data,
+                                                     minutes=60)
 
-        # Set current_run to the new run
-        self.current_run = run_data
+        if recent_run_data != False:
 
-        # Save to the database
-        run_id = self.database.add_run(site_id=site_tag,
-                                       run_data=run_data)
+            pass
 
-        # Set the run_id that comes from the database for the current run
-        if run_id:
-            self.current_run["run_id"] = run_id
+        else:
 
-        """
+            # Save to the database
+            run_id = self.database.add_run(site_id=site_tag,
+                                           run_data=run_data)
+
+            # Save the current_run to somewhere handy
+            if self.current_run:
+                self.recent_runs.append(self.current_run.copy())
+
+            # Set current_run to the new run
+            self.current_run = run_data
+
+            # Set the run_id that comes from the database for the current run
+            if run_id:
+                self.current_run["run_id"] = run_id
+
 
     # def add_adsc_image(self, data):
-    #     """
+    #
     #     Handle an image to be added to the database from ADSC.
     #
     #     The image is NOT presumed to be new, so it is checked against the database.

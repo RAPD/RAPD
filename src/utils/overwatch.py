@@ -67,7 +67,7 @@ class Registrar(object):
         self.ow_id = ow_id
 
         # Create a unique id
-        self.id = uuid.uuid4().hex
+        self.uuid = uuid.uuid4().hex
 
         # Connect to redis
         self.connect()
