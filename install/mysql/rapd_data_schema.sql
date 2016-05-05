@@ -944,7 +944,7 @@ CREATE TABLE `runs` (
   `transmission` float DEFAULT NULL,
   `energy` float DEFAULT NULL,
   `anomalous` varchar(6) DEFAULT NULL,
-  `site` varchar(12) DEFAULT NULL,
+  `site_tag` varchar(12) DEFAULT NULL,
   `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`run_id`),
   UNIQUE KEY `blocker` (`directory`,`image_prefix`,`run_number`,`start_image_number`)
