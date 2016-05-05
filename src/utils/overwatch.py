@@ -258,7 +258,7 @@ class Overwatcher(Registrar):
         # Start
         self.start_managed_process()
 
-    @atexit.regsiter
+    @atexit.register
     def kill_managed_process(self):
         """
         Kill the managed process
