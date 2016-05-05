@@ -239,7 +239,7 @@ class Overwatcher(Registrar):
         self.start_managed_process()
 
         # Register to kill the managed process on overwatch exit
-        atexit.register(self.kill_managed_process, self)
+        atexit.register(self.kill_managed_process)
 
         # Start listening for information on managed service and updating
         self.listen_and_update()
