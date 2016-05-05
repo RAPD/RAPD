@@ -100,14 +100,15 @@ class Monitor(threading.Thread):
                 self.tags.append(site_id.lower())
 
         # Figure out where we are going to look
-        for tag in self.tags:
-            self.run_lists.append(("run_data:"+tag, tag))
+        for site_tag in self.tags:
+            self.run_lists.append(("run_data:"+site_tag, site_tag))
 
+        self.logger.debug("run_lists: %s", str(self.run_lists))
 
     def stop(self):
         """Stop the process of polling the redis instance"""
 
-        self.logger.debug('Stopping')
+        self.logger.debug("Stopping")
 
         self.running = False
 
@@ -154,9 +155,9 @@ class Monitor(threading.Thread):
 
                 self.logger.debug(__)
 
-                for run_list in self.run_lists:
+                for run_list, site_tag in self.run_lists:
 
-                    self.logger.debug("Querying %s", run_list)
+                    self.logger.debug("Querying %s %s", run_list, site_tag)
 
                     # Try to pop the oldest image off the list
                     raw_run_data = self.redis.rpop(run_list)
@@ -168,7 +169,7 @@ class Monitor(threading.Thread):
 
                         # Notify core thread that an image has been collected
                         self.notify(("NEWRUN", {"run_data":run_data,
-                                                "site_tag":tag}))
+                                                "site_tag":site_tag}))
 
                         self.logger.debug("New run data %s", raw_run_data)
 
