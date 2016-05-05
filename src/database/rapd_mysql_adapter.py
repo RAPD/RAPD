@@ -6048,7 +6048,7 @@ class Database(object):
 
         # No limit on the results
         if minutes == 0:
-            query = "SELECT * FROM runs WHERE site=%s AND directory=%s AND prefix=%s AND start=%s AND total=%s ORDER BY timestamp %s"
+            query = "SELECT * FROM runs WHERE site_tag=%s AND directory=%s AND prefix=%s AND start=%s AND total=%s ORDER BY timestamp %s"
             params = (site_tag,
                       run_data.get("directory", None),
                       run_data.get("prefix", None),
@@ -6056,7 +6056,7 @@ class Database(object):
                       run_data.get("number_images", None))
         # Limit to a time window
         else:
-            query = "SELECT * FROM runs WHERE site=%s AND directory=%s AND prefix=%s AND start=%s AND total=%s AND timestamp > NOW()-INTERVAL %s MINUTE ORDER BY timestamp %s"
+            query = "SELECT * FROM runs WHERE site_tag=%s AND directory=%s AND prefix=%s AND start=%s AND total=%s AND timestamp > NOW()-INTERVAL %s MINUTE ORDER BY timestamp %s"
             params = (site_tag,
                       run_data.get("directory", None),
                       run_data.get("prefix", None),
