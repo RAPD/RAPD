@@ -100,7 +100,7 @@ class Database(object):
                                              port=self.db_port,
                                              db=self.db_data_name,
                                              user=self.db_user,
-                                             passwd=self.db_password)
+                                             password=self.db_password)
                 cursor = connection.cursor()
                 cursor.execute("SET AUTOCOMMIT=1")
                 return(connection, cursor)
@@ -121,7 +121,7 @@ class Database(object):
                                              port=self.db_port,
                                              db=self.db_users_name,
                                              user=self.db_user,
-                                             passwd=self.db_password)
+                                             password=self.db_password)
                 cursor = connection.cursor()
                 cursor.execute("SET AUTOCOMMIT=1")
                 return(connection,cursor)
@@ -142,7 +142,7 @@ class Database(object):
                                              port=self.db_port,
                                              db=self.db_cloud_name,
                                              user=self.db_user,
-                                             passwd=self.db_password)
+                                             password=self.db_password)
                 cursor = connection.cursor()
                 cursor.execute("SET AUTOCOMMIT=1")
                 return(connection,cursor)
