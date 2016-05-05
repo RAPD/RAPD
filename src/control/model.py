@@ -527,8 +527,8 @@ class Model(object):
         self.current_run = run_data
 
         # Save to the database
-        run_id = self.database.addRun(run_data=run_data,
-                                      site_id=site_tag)
+        run_id = self.database.add_run(site_id=site_tag,
+                                       run_data=run_data)
 
         # Set the run_id that comes from the database for the current run
         if run_id:
@@ -1296,7 +1296,7 @@ class Model(object):
         #     #Set current_run to the new run
         #     self.current_run = info
         #     #Save to the database
-        #     run_id = self.database.addRun(run=info,
+        #     run_id = self.database.add_run(run=info,
         #                                   site=self.site)
         #     #Set the run_id that comes from the database for the current run
         #     if run_id:
@@ -1310,8 +1310,8 @@ class Model(object):
         elif command == "CONSOLE RUN STATUS CHANGED":
             #save to / check the db for this run
             self.logger.debug("get runid")
-            run_id = self.database.addRun(run=info,
-                                          site=self.site)
+            run_id = self.database.add_run(site_id=self.site,
+                                           run_data=info)
             self.logger.debug("run_id %s" % str(run_id))
             if self.current_run:
                 if self.current_run["run_id"] == run_id:

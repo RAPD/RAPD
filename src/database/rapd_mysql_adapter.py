@@ -5930,7 +5930,7 @@ class Database(object):
     ##################################################################################################################
     # Functions for runs                                                                                             #
     ##################################################################################################################
-    def add_run(self, run_data, site_id):
+    def add_run(self, site_id, run_data):
         """
         Add a new run to the MySQL database
 
@@ -5938,83 +5938,83 @@ class Database(object):
         run_data -- dict containing run information
         site_id -- unique identifier for the run origin site
         """
-        self.logger.debug("Database.add_run")
+        self.logger.debug("Database.add_run %s %s", site_id, run_data)
 
-        try:
-            # Connect
-            connection, cursor = self.connect_to_data()
-
-            # Save into database
-            self.logger.debug("Adding run from into database directory:%s image_prefix:%s" % (run["directory"], run["prefix"]))
-            cursor.execute("""INSERT INTO runs (directory,
-                                                image_prefix,
-                                                run_number,
-                                                start_image_number,
-                                                number_images,
-                                                distance,
-                                                phi,
-                                                kappa,
-                                                omega,
-                                                osc_axis,
-                                                osc_start,
-                                                osc_width,
-                                                time,
-                                                transmission,
-                                                energy,
-                                                anomalous,
-                                                site) VALUES (%s,
-                                                              %s,
-                                                              %s,
-                                                              %s,
-                                                              %s,
-                                                              %s,
-                                                              %s,
-                                                              %s,
-                                                              %s,
-                                                              %s,
-                                                              %s,
-                                                              %s,
-                                                              %s,
-                                                              %s,
-                                                              %s,
-                                                              %s,
-                                                              %s)""",
-                                             (run_data.get("directory", ""),
-                                              run_data.get("image_prefix", ""),
-                                              run_data.get("run_number", None),
-                                              run_data.get("start_image_number", 0),
-                                              run_data.get("number_images", 0),
-                                              run_data.get("distance", 0.0),
-                                              run_data.get("phi_start", None),
-                                              run_data.get("kappa_start", None),
-                                              run_data.get("omega_start", None),
-                                              run_data.get("osc_axis", "phi"),
-                                              run_data.get("osc_start", 0.0),
-                                              run_data.get("osc_width", 0.0),
-                                              run_data.get("time", 0.0),
-                                              run_data.get("transmission", 0.0),
-                                              run_data.get("energy", 0.0),
-                                              run_data.get("anomalous", "False"),
-                                              site_id))
-            run_id = cursor.lastrowid
-            self.closeConnection(connection,cursor)
-            return(run_id)
-
-        except pymysql.IntegrityError , (errno, strerror):
-            if errno == 1062:
-                self.logger.debug("Run is already in the database")
-                self.closeConnection(connection,cursor)
-
-                # Get the run_id and return it
-                return(self.getRunIdByInfo(run_data=run))
-            else:
-                self.logger.exception("ERROR : unknown IntegrityError exception in rapd_mysql_adapter.add_run")
-                return(False)
-
-        except:
-            self.logger.exception("ERROR : unknown exception in rapd_mysql_adapter.add_run")
-            self.closeConnection(connection, cursor)
-            return(False)
+        # try:
+        #     # Connect
+        #     connection, cursor = self.connect_to_data()
+        #
+        #     # Save into database
+        #     self.logger.debug("Adding run from into database directory:%s image_prefix:%s" % (run["directory"], run["prefix"]))
+        #     cursor.execute("""INSERT INTO runs (directory,
+        #                                         image_prefix,
+        #                                         run_number,
+        #                                         start_image_number,
+        #                                         number_images,
+        #                                         distance,
+        #                                         phi,
+        #                                         kappa,
+        #                                         omega,
+        #                                         osc_axis,
+        #                                         osc_start,
+        #                                         osc_width,
+        #                                         time,
+        #                                         transmission,
+        #                                         energy,
+        #                                         anomalous,
+        #                                         site) VALUES (%s,
+        #                                                       %s,
+        #                                                       %s,
+        #                                                       %s,
+        #                                                       %s,
+        #                                                       %s,
+        #                                                       %s,
+        #                                                       %s,
+        #                                                       %s,
+        #                                                       %s,
+        #                                                       %s,
+        #                                                       %s,
+        #                                                       %s,
+        #                                                       %s,
+        #                                                       %s,
+        #                                                       %s,
+        #                                                       %s)""",
+        #                                      (run_data.get("directory", ""),
+        #                                       run_data.get("image_prefix", ""),
+        #                                       run_data.get("run_number", None),
+        #                                       run_data.get("start_image_number", 0),
+        #                                       run_data.get("number_images", 0),
+        #                                       run_data.get("distance", 0.0),
+        #                                       run_data.get("phi_start", None),
+        #                                       run_data.get("kappa_start", None),
+        #                                       run_data.get("omega_start", None),
+        #                                       run_data.get("osc_axis", "phi"),
+        #                                       run_data.get("osc_start", 0.0),
+        #                                       run_data.get("osc_width", 0.0),
+        #                                       run_data.get("time", 0.0),
+        #                                       run_data.get("transmission", 0.0),
+        #                                       run_data.get("energy", 0.0),
+        #                                       run_data.get("anomalous", "False"),
+        #                                       site_id))
+        #     run_id = cursor.lastrowid
+        #     self.closeConnection(connection,cursor)
+        #     return(run_id)
+        #
+        # except pymysql.IntegrityError , (errno, strerror):
+        #     if errno == 1062:
+        #         self.logger.debug("Run is already in the database")
+        #         self.closeConnection(connection,cursor)
+        #
+        #         # Get the run_id and return it
+        #         return(self.getRunIdByInfo(run_data=run))
+        #     else:
+        #         self.logger.exception("ERROR : unknown IntegrityError exception in rapd_mysql_adapter.add_run")
+        #         return(False)
+        #
+        # except:
+        #     self.logger.exception("ERROR : unknown exception in rapd_mysql_adapter.add_run")
+        #     self.closeConnection(connection, cursor)
+        #     return(False)
 
     def getRunIdByInfo(self,run_data):
         """
