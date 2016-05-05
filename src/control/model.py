@@ -42,12 +42,8 @@ from control.control_server import LaunchAction, ControllerServer
 from utils.modules import load_module
 from utils.site import get_ip_address
 # from rapd_console import ConsoleFeeder
-# from rapd_site import GetDataRootDir, TransferToUI, TransferToBeamline, CopyToUser
+# from rapd_site import TransferToUI, TransferToBeamline, CopyToUser
 
-# database = None
-# detector = None
-# image_monitor = None
-# run_monitor = None
 # cloud_monitor = None
 site_adapter = None
 remote_adapter = None

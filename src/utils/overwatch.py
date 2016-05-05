@@ -99,7 +99,7 @@ class Registrar(object):
 
         # Create an entry
         entry = {"ow_type":self.ow_type,
-                 "id":self.id,
+                 "id":self.uuid,
                  "ow_id":self.ow_id,
                  "timestamp":time.time()}
 
@@ -109,10 +109,10 @@ class Registrar(object):
         # Wrap potential redis down
         try:
             # Put entry in the redis db
-            red.hmset("OW:"+self.id, entry)
+            red.hmset("OW:"+self.uuid, entry)
 
             # Expire the current entry in N seconds
-            red.expire("OW:"+self.id, OVERWATCH_TIMEOUT)
+            red.expire("OW:"+self.uuid, OVERWATCH_TIMEOUT)
 
             # Announce by publishing
             red.publish("OW:registering", json.dumps(entry))
@@ -120,10 +120,10 @@ class Registrar(object):
             # If this process has an overwatcher
             if not self.ow_id == None:
                 # Put entry in the redis db
-                red.hmset("OW:"+self.id+":"+self.ow_id, entry)
+                red.hmset("OW:"+self.uuid+":"+self.ow_id, entry)
 
                 # Expire the current entry in N seconds
-                red.expire("OW:"+self.id+":"+self.ow_id, OVERWATCH_TIMEOUT)
+                red.expire("OW:"+self.uuid+":"+self.ow_id, OVERWATCH_TIMEOUT)
 
         # Redis is down
         except redis.exceptions.ConnectionError:
@@ -143,7 +143,7 @@ class Registrar(object):
 
         # Create entry
         entry = {"ow_type":self.ow_type,
-                 "id":self.id,
+                 "id":self.uuid,
                  "ow_id":self.ow_id,
                  "timestamp":time.time()}
 
@@ -153,14 +153,14 @@ class Registrar(object):
         # Wrap potential redis down
         try:
             # Update timestamp
-            red.hset("OW:"+self.id, "timestamp", time.time())
+            red.hset("OW:"+self.uuid, "timestamp", time.time())
 
             # Update any custom_vars
             for k, v in custom_vars.iteritems():
-                red.hset("OW:"+self.id, k, v)
+                red.hset("OW:"+self.uuid, k, v)
 
             # Expire the current entry in N seconds
-            red.expire("OW:"+self.id, OVERWATCH_TIMEOUT)
+            red.expire("OW:"+self.uuid, OVERWATCH_TIMEOUT)
 
             # Announce by publishing
             red.publish("OW:updating", json.dumps(entry))
@@ -168,14 +168,14 @@ class Registrar(object):
             # If this process has an overwatcher
             if not self.ow_id == None:
                 # Put entry in the redis db
-                red.hset("OW:"+self.id+":"+self.ow_id, "timestamp", time.time())
+                red.hset("OW:"+self.uuid+":"+self.ow_id, "timestamp", time.time())
 
                 # Update any custom_vars
                 for k, v in custom_vars.iteritems():
-                    red.hset("OW:"+self.id+":"+self.ow_id, k, v)
+                    red.hset("OW:"+self.uuid+":"+self.ow_id, k, v)
 
                 # Expire the current entry in N seconds
-                red.expire("OW:"+self.id+":"+self.ow_id, OVERWATCH_TIMEOUT)
+                red.expire("OW:"+self.uuid+":"+self.ow_id, OVERWATCH_TIMEOUT)
 
         # Redis is down
         except redis.exceptions.ConnectionError:
@@ -219,7 +219,7 @@ class Overwatcher(Registrar):
         print managed_file_flags
 
         # Create a unique id
-        self.id = uuid.uuid4().hex
+        self.uuid = uuid.uuid4().hex
 
         # Run
         self.run()
@@ -235,7 +235,7 @@ class Overwatcher(Registrar):
         # Register self
         self.register()
 
-        # Start microservice with self.id as overwatch id
+        # Start microservice with self.uuid as overwatch id
         self.start_managed_process()
 
         # Register to kill the managed process on overwatch exit
@@ -282,7 +282,7 @@ class Overwatcher(Registrar):
         command.insert(0, self.managed_file)
         command.insert(0, "rapd.python")
         command.append("--overwatch_id")
-        command.append(self.id)
+        command.append(self.uuid)
 
         # Run the input command
         self.managed_process = subprocess.Popen(command, env=path)
@@ -368,9 +368,9 @@ class Overwatcher(Registrar):
         red = redis.Redis(connection_pool=self.redis_pool)
 
         # Look for keys
-        print "Looking for OW:*:%s" % self.id
+        print "Looking for OW:*:%s" % self.uuid
         try:
-            keys = red.keys("OW:*:%s" % self.id)
+            keys = red.keys("OW:*:%s" % self.uuid)
         # Redis is down - no keys to be found
         except redis.exceptions.ConnectionError:
             return None
