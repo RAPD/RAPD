@@ -29,6 +29,7 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
+import atexit
 import importlib
 import json
 import os
@@ -249,13 +250,22 @@ class Overwatcher(Registrar):
         self.ow_managed_id = None
 
         # Kill
-        self.managed_process.kill()
+        self.kill_managed_process()
 
         # Wait
         time.sleep(2)
 
         # Start
         self.start_managed_process()
+
+    @atexit.regsiter
+    def kill_managed_process(self):
+        """
+        Kill the managed process
+        """
+
+        self.managed_process.kill()
+
 
     def start_managed_process(self):
         """
