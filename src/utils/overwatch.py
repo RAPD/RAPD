@@ -238,6 +238,9 @@ class Overwatcher(Registrar):
         # Start microservice with self.id as overwatch id
         self.start_managed_process()
 
+        # Register to kill the managed process on overwatch exit
+        atexit.register(self.kill_managed_process, self)
+
         # Start listening for information on managed service and updating
         self.listen_and_update()
 
@@ -258,14 +261,12 @@ class Overwatcher(Registrar):
         # Start
         self.start_managed_process()
 
-    @atexit.register
     def kill_managed_process(self):
         """
         Kill the managed process
         """
 
         self.managed_process.kill()
-
 
     def start_managed_process(self):
         """
