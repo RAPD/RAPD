@@ -27,14 +27,14 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
 # Standard imports
-import getpass
-import pymysql
 import sys
+
+import pymysql
 
 # RAPD imports
 import utils.text as text
 
-VERSION = "2.1"
+VERSION = "2.0"
 
 class MakeDB(object):
     """
@@ -1679,6 +1679,37 @@ def get_host_info():
 
     return hostname, port, username, password
 
+def perform_mysql_command(hostname, port, username, password, db, command):
+    """
+    Run a MySQL command_back
+
+    Keyword arguments
+    hostname -- server where the database is accessed
+    port -- port for the database
+    username -- name to use accessing the database
+    password -- the password
+    db -- the database to run on
+    command -- compatible MySQL command
+    """
+    print "perform_mysql_command"
+    print command
+
+    connection = pymysql.connect(host=hostname,
+                                 port=port,
+                                 db=db,
+                                 user=username,
+                                 passwd=password)
+
+    cursor = connection.cursor()
+
+    cursor.execute(command)
+    connection.commit()
+
+    # cursor.close()
+    # connection.close()
+
+    return True
+
 def check_database_connection(hostname, port, username, password):
     """
     Attempts to connect to the database using the input parameters
@@ -1736,9 +1767,14 @@ def check_database_connection(hostname, port, username, password):
 
     return True
 
-def check_database_status(hostname, port, username, password):
+def check_database_version(hostname, port, username, password):
     """
-    Find the status of the RAPD MySQL database
+    Find the status of the RAPD MySQL database.
+    Returns 0 for no database present or a version number found.
+
+    The NE-CAT RAPD v1.x database is version 4.
+    The database version should match the RAPD version from here on, so the
+    version currently under development is 2.0
 
     Keyword arguments
     hostname -- server where the database is accessed
@@ -1750,7 +1786,7 @@ def check_database_status(hostname, port, username, password):
     try:
         connection = pymysql.connect(host=hostname,
                                      port=port,
-                                     db="rapd_data",
+                                     db="rapd",
                                      user=username,
                                      passwd=password)
 
@@ -1763,19 +1799,156 @@ def check_database_status(hostname, port, username, password):
 
         if error_number == 1049:
             print text.blue+"Looks like a new installation of RAPD database"+text.stop
-            return "NAIVE"
-
-    # Get the tables in the database
-    cursor.execute("SHOW tables")
-    tables = []
-    for row in cursor.fetchall():
-        tables.append(row[0])
-        print row[0]
+            return 0
 
     # Get the RAPD database version number
-    cursor.execute("SELECT * FROM version")
-    for row in cursor.fetchall():
-        print row
+    try:
+        cursor.execute("SELECT * FROM version")
+        for row in cursor.fetchall():
+            version, timestamp = row
+            return version
+    except pymysql.err.ProgrammingError as e: #(1049, u"Unknown database 'rapd'")
+        error_number, error_message = e
+        if error_number == 1146:
+            print text.blue+"Looks like a new installation of RAPD database"+text.stop
+            return 0
+
+def create_db(hostname, port, username, password, db, drop=False):
+    """
+    Generic method for db creation
+
+    Keyword arguments
+    hostname -- server where the database is accessed
+    port -- port for the database
+    username -- name to use accessing the database
+    password -- the password
+    db -- name of the db to be created
+    drop -- drop the table first?
+    """
+
+    connection = pymysql.connect(host=hostname,
+                                 port=port,
+                                 user=username,
+                                 passwd=password)
+
+    cursor = connection.cursor()
+
+    # Try to delete the database - used in testing
+    if drop == True:
+        try:
+            cursor.execute("drop database %s" % db)
+            connection.commit()
+            print text.green+"Database %s dropped" % db + text.stop
+        except:
+            print "Database %s does not exist to delete" % db
+
+    # Create the database
+    # try:
+    cursor.execute("CREATE DATABASE %s" % db)
+    connection.commit()
+    # except _mysql_exceptions.ProgrammingError:
+    #     if self.verbose:
+    #         print 'Database rapd_data already exists'
+
+    print text.green+"Database %s created" % db + text.stop
+
+def create_table(hostname,
+                 port,
+                 username,
+                 password,
+                 db,
+                 table,
+                 table_definition,
+                 drop=False):
+    """
+    Generic method for db creation
+
+    Keyword arguments
+    hostname -- server where the database is accessed
+    port -- port for the database
+    username -- name to use accessing the database
+    password -- the password
+    db -- db to put table in
+    table -- name of the table to be created
+    table_definition -- table definition string
+    drop -- drop the table first?
+    """
+
+    connection = pymysql.connect(host=hostname,
+                                 port=port,
+                                 db=db,
+                                 user=username,
+                                 passwd=password)
+
+    cursor = connection.cursor()
+
+    # Try to delete the database - used in testing
+    if drop == True:
+        try:
+            cursor.execute("drop table %s" % table)
+            connection.commit()
+            print text.green+"Table %s dropped" % table + text.stop
+        except pymysql.err.InternalError as e:
+            error_number, error_message = e
+            if error_number == 1051:
+                print text.blue+"Table %s does not exist to drop." % table +text.stop
+
+    # Create the database
+    # try:
+    cursor.execute("CREATE TABLE %s (%s)" % (table, table_definition))
+    connection.commit()
+    # except _mysql_exceptions.ProgrammingError:
+    #     if self.verbose:
+    #         print 'Database rapd_data already exists'
+
+    print text.green+"Table %s created" % table + text.stop
+
+def perform_naive_install(hostname, port, username, password):
+    """
+    Orchestrate the installation of v2.0 of the RAPD MySQL database
+
+    Keyword arguments
+    hostname -- server where the database is accessed
+    port -- port for the database
+    username -- name to use accessing the database
+    password -- the password
+    """
+
+    print text.blue+"Performing installation of RAPD database version %s" % VERSION + text.stop
+
+    # Create the rapd database
+    create_db(hostname=hostname,
+              port=port,
+              username=username,
+              password=password,
+              db="rapd",
+              drop=True)
+
+    # Create the version table
+    version_table_string = """version   VARCHAR(16) NOT NULL,
+                              timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                        PRIMARY KEY (version)"""
+    create_table(hostname=hostname,
+                 port=port,
+                 username=username,
+                 password=password,
+                 db="rapd",
+                 table="version",
+                 table_definition=version_table_string,
+                 drop=False)
+
+    # Inerst version into the table
+    version_insert_string = "INSERT INTO version (version) VALUES (%s)" % VERSION
+    perform_mysql_command(hostname=hostname,
+                          port=port,
+                          username=username,
+                          password=password,
+                          db="rapd",
+                          command=version_insert_string)
+    print "Version set to %s" % VERSION
+
+
+
 
 def main():
     """
@@ -1797,7 +1970,21 @@ def main():
     check_database_connection(hostname, port, username, password)
 
     # Check the current state of the database
-    check_database_status(hostname, port, username, password)
+    database_version = check_database_version(hostname, port, username, password)
+
+    # Perform install
+    if database_version in (0, None):
+        perform_naive_install(hostname, port, username, password)
+
+    # Version is current
+    elif database_version == VERSION:
+        print text.green+"RAPD database version %s is current." % database_version + text.stop
+        # For Development
+        perform_naive_install(hostname, port, username, password)
+
+    # Version is not understood
+    else:
+        print text.error+"RAPD database version %s is NOT understood." % database_version + text.stop
 
 if __name__ == '__main__':
 
