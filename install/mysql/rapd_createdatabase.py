@@ -1954,8 +1954,8 @@ def create_data_tables(hostname, port, username, password):
         directory varchar(128) DEFAULT NULL,
         image_prefix varchar(64) DEFAULT NULL,
         run_number smallint(5) unsigned DEFAULT NULL,
-        start_image_number smallint(5) unsigned DEFAULT NULL,
-        number_images smallint(5) unsigned DEFAULT NULL,
+        start_image_number mediumint(8) unsigned DEFAULT NULL,
+        number_images mediumint(8) unsigned DEFAULT NULL,
         distance float DEFAULT NULL,
         phi float DEFAULT NULL,
         kappa float DEFAULT NULL,
@@ -1967,7 +1967,7 @@ def create_data_tables(hostname, port, username, password):
         transmission float DEFAULT NULL,
         energy float DEFAULT NULL,
         anomalous varchar(6) DEFAULT NULL,
-        site_tag varchar(12) DEFAULT NULL,
+        site_tag varchar(16) DEFAULT NULL,
         timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (run_id))"""
 
