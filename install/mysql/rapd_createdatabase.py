@@ -1948,28 +1948,90 @@ def create_data_tables(hostname, port, username, password):
     password -- the password
     """
 
-    # Create the version table
-    runs_table_string = """CREATE TABLE runs (
-        run_id mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+    # Create the images table
+    images_table_string = """image_id int unsigned NOT NULL AUTO_INCREMENT,
+        fullname varchar(128) DEFAULT NULL,
+        adc varchar(5) DEFAULT NULL,
+        axis varchar(6) DEFAULT NULL,
+        beam_center_x float DEFAULT NULL,
+        beam_center_y float DEFAULT NULL,
+        binning varchar(5) DEFAULT NULL,
+        byte_order varchar(14) DEFAULT NULL,
+        ccd_image_saturation smallint(5) unsigned DEFAULT NULL,
+        collect_mode varchar(8) DEFAULT NULL,
+        count_cutoff mediumint(8) unsigned DEFAULT NULL,
+        date datetime DEFAULT NULL,
+        detector varchar(12) DEFAULT NULL,
+        detector_sn varchar(12) DEFAULT NULL,
+        dim tinyint(4) DEFAULT NULL,
+        distance float DEFAULT NULL,
+        header_bytes smallint(6) DEFAULT NULL,
+        osc_range float DEFAULT NULL,
+        osc_start float DEFAULT NULL,
+        phi float DEFAULT NULL,
+        kappa float DEFAULT NULL,
+        pixel_size float DEFAULT NULL,
+        size1 smallint(5) unsigned DEFAULT NULL,
+        size2 smallint(5) unsigned DEFAULT NULL,
+        time float DEFAULT NULL,
+        period float DEFAULT NULL,
+        twotheta float DEFAULT NULL,
+        type varchar(15) DEFAULT NULL,
+        unif_ped smallint(6) DEFAULT NULL,
+        wavelength float DEFAULT NULL,
         directory varchar(128) DEFAULT NULL,
         image_prefix varchar(64) DEFAULT NULL,
         run_number smallint(5) unsigned DEFAULT NULL,
-        start_image_number mediumint(8) unsigned DEFAULT NULL,
-        number_images mediumint(8) unsigned DEFAULT NULL,
+        image_number smallint(5) unsigned DEFAULT NULL,
+        transmission float DEFAULT NULL,
+        puck varchar(1) DEFAULT NULL,
+        sample tinyint(3) unsigned DEFAULT NULL,
+        sample_id mediumint(8) unsigned DEFAULT NULL,
+        ring_current float DEFAULT NULL,
+        ring_mode varchar(48) DEFAULT NULL,
+        md2_aperture tinyint(3) unsigned DEFAULT NULL,
+        md2_prg_exp float DEFAULT NULL,
+        md2_net_exp mediumint(8) unsigned DEFAULT NULL,
+        md2_x float DEFAULT NULL,
+        md2_y float DEFAULT NULL,
+        md2_z float DEFAULT NULL,
+        acc_time mediumint(8) unsigned DEFAULT NULL,
+        site varchar(12) DEFAULT NULL,
+        calc_beam_center_x float DEFAULT NULL,
+        calc_beam_center_y float DEFAULT NULL,
+        flux float DEFAULT NULL,
+        beam_size_x float DEFAULT NULL,
+        beam_size_y float DEFAULT NULL,
+        gauss_x float DEFAULT NULL,
+        gauss_y float DEFAULT NULL,
+        run_id mediumint(8) unsigned DEFAULT NULL,
+        timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (image_id),
+        UNIQUE KEY blocker (fullname,date),
+        KEY run_id (run_id),
+        KEY timestamp (timestamp)"""
+
+    # Create the runs table
+    runs_table_string = """run_id mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+        anomalous varchar(6) DEFAULT NULL,
+        directory varchar(128) DEFAULT NULL,
         distance float DEFAULT NULL,
-        phi float DEFAULT NULL,
+        energy float DEFAULT NULL,
+        image_prefix varchar(64) DEFAULT NULL,
         kappa float DEFAULT NULL,
+        number_images mediumint(8) unsigned DEFAULT NULL,
         omega float DEFAULT NULL,
         osc_axis varchar(6) DEFAULT NULL,
         osc_start float DEFAULT NULL,
         osc_width float DEFAULT NULL,
+        phi float DEFAULT NULL,
+        run_number smallint(5) unsigned DEFAULT NULL,
+        site_tag varchar(16) DEFAULT NULL,
+        start_image_number mediumint(8) unsigned DEFAULT NULL,
         time float DEFAULT NULL,
         transmission float DEFAULT NULL,
-        energy float DEFAULT NULL,
-        anomalous varchar(6) DEFAULT NULL,
-        site_tag varchar(16) DEFAULT NULL,
         timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (run_id))"""
+        PRIMARY KEY (run_id)"""
 
     create_table(hostname=hostname,
                  port=port,
@@ -1977,7 +2039,7 @@ def create_data_tables(hostname, port, username, password):
                  password=password,
                  db="rapd",
                  table="runs",
-                 table_definition=run_table_string,
+                 table_definition=runs_table_string,
                  drop=False)
 
     return True
@@ -2031,6 +2093,11 @@ def main():
     port = 3306
     username = "rapd1"
     password = "necatm)nster!"
+
+    hostname = "192.168.99.100"
+    port = 3306
+    username = "root"
+    password = "root_password"
 
     # Check that the db is accessible
     check_database_connection(hostname, port, username, password)
