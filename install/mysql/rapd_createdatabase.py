@@ -1903,6 +1903,85 @@ def create_table(hostname,
 
     print text.green+"Table %s created" % table + text.stop
 
+def create_version_table(hostname, port, username, password):
+    """
+    Create the version table
+
+    Keyword arguments
+    hostname -- server where the database is accessed
+    port -- port for the database
+    username -- name to use accessing the database
+    password -- the password
+    """
+
+    # Create the version table
+    version_table_string = """version VARCHAR(16) NOT NULL,
+                              timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                              PRIMARY KEY (version)"""
+    create_table(hostname=hostname,
+                 port=port,
+                 username=username,
+                 password=password,
+                 db="rapd",
+                 table="version",
+                 table_definition=version_table_string,
+                 drop=False)
+
+    # Inerst version into the table
+    version_insert_string = "INSERT INTO version (version) VALUES (%s)" % VERSION
+    perform_mysql_command(hostname=hostname,
+                          port=port,
+                          username=username,
+                          password=password,
+                          db="rapd",
+                          command=version_insert_string)
+    print "Version set to %s" % VERSION
+
+def create_data_tables(hostname, port, username, password):
+    """
+    Create the "data" tables
+
+    Keyword arguments
+    hostname -- server where the database is accessed
+    port -- port for the database
+    username -- name to use accessing the database
+    password -- the password
+    """
+
+    # Create the version table
+    runs_table_string = """CREATE TABLE runs (
+        run_id mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+        directory varchar(128) DEFAULT NULL,
+        image_prefix varchar(64) DEFAULT NULL,
+        run_number smallint(5) unsigned DEFAULT NULL,
+        start_image_number smallint(5) unsigned DEFAULT NULL,
+        number_images smallint(5) unsigned DEFAULT NULL,
+        distance float DEFAULT NULL,
+        phi float DEFAULT NULL,
+        kappa float DEFAULT NULL,
+        omega float DEFAULT NULL,
+        osc_axis varchar(6) DEFAULT NULL,
+        osc_start float DEFAULT NULL,
+        osc_width float DEFAULT NULL,
+        time float DEFAULT NULL,
+        transmission float DEFAULT NULL,
+        energy float DEFAULT NULL,
+        anomalous varchar(6) DEFAULT NULL,
+        site_tag varchar(12) DEFAULT NULL,
+        timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (run_id))"""
+
+    create_table(hostname=hostname,
+                 port=port,
+                 username=username,
+                 password=password,
+                 db="rapd",
+                 table="runs",
+                 table_definition=run_table_string,
+                 drop=False)
+
+    return True
+
 def perform_naive_install(hostname, port, username, password):
     """
     Orchestrate the installation of v2.0 of the RAPD MySQL database
@@ -1925,29 +2004,16 @@ def perform_naive_install(hostname, port, username, password):
               drop=True)
 
     # Create the version table
-    version_table_string = """version   VARCHAR(16) NOT NULL,
-                              timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                                        PRIMARY KEY (version)"""
-    create_table(hostname=hostname,
-                 port=port,
-                 username=username,
-                 password=password,
-                 db="rapd",
-                 table="version",
-                 table_definition=version_table_string,
-                 drop=False)
+    create_version_table(hostname=hostname,
+                         port=port,
+                         username=username,
+                         password=password)
 
-    # Inerst version into the table
-    version_insert_string = "INSERT INTO version (version) VALUES (%s)" % VERSION
-    perform_mysql_command(hostname=hostname,
-                          port=port,
-                          username=username,
-                          password=password,
-                          db="rapd",
-                          command=version_insert_string)
-    print "Version set to %s" % VERSION
-
-
+    # Create "data" tables
+    create_data_tables(hostname=hostname,
+                       port=port,
+                       username=username,
+                       password=password)
 
 
 def main():
