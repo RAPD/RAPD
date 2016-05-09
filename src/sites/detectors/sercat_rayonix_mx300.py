@@ -163,9 +163,8 @@ def read_header(fullname, beam_settings):
     # Perform the header read form the file
     header = detector.read_header(fullname)
 
-    # Clean up the header
-    #header["detector"] = header["vendortype"]
-    #del header["vendortype"]
+    # Add tag for module to header
+    header["rapd_detector_id"] = "sercat_rayonix_mx300"
 
     # Add some values HACK
     header["aperture_x"] = 50

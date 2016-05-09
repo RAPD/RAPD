@@ -1948,68 +1948,185 @@ def create_data_tables(hostname, port, username, password):
     password -- the password
     """
 
+    # Changes from v4
+    # axis >> osc_axis
+    # calc_beam_center_x >> beam_center_calc_x
+    # calc_beam_center_y >> beam_center_calc_y
+    # image_prefix >> prefix
+    # md2_x >> sample_x
+    # md2_y >> sample_y
+    # md2_z >> sample_z
+    # puck + sample >> robot_position varchar(16)
+    # ring_current >> source_current
+    # ring_mode varchar(48) >> source_mode varchar(96)
+    # sample_id mediumint(8) >> sample_id varchar(16)
+    # site varchar(12) > site_tag varchar(16)
+    # wavelength >>>>> energy
+    #
+    # ADDED
+    # omega float
+    # rapd_detector_id varchar(64)
+    #
+    # DELETED
+    # acc_time
+    # adc
+    # byte_order
+    # ccd_image_saturation
+    # count_cutoff
+    # dim
+    # header_bytes
+    # md2_aperture
+    # md2_prg_exp
+    # md2_net_exp
+    # type
+    # unif_ped
+
     # Create the images table
     images_table_string = """image_id int unsigned NOT NULL AUTO_INCREMENT,
-        fullname varchar(128) DEFAULT NULL,
-        adc varchar(5) DEFAULT NULL,
-        axis varchar(6) DEFAULT NULL,
+        beam_center_calc_x float DEFAULT NULL,
+        beam_center_calc_y float DEFAULT NULL,
         beam_center_x float DEFAULT NULL,
         beam_center_y float DEFAULT NULL,
+        beam_gauss_x float DEFAULT NULL,
+        beam_gauss_y float DEFAULT NULL,
+        beam_size_x float DEFAULT NULL,
+        beam_size_y float DEFAULT NULL,
         binning varchar(5) DEFAULT NULL,
-        byte_order varchar(14) DEFAULT NULL,
-        ccd_image_saturation smallint(5) unsigned DEFAULT NULL,
         collect_mode varchar(8) DEFAULT NULL,
-        count_cutoff mediumint(8) unsigned DEFAULT NULL,
         date datetime DEFAULT NULL,
         detector varchar(12) DEFAULT NULL,
         detector_sn varchar(12) DEFAULT NULL,
-        dim tinyint(4) DEFAULT NULL,
+        directory varchar(128) DEFAULT NULL,
         distance float DEFAULT NULL,
-        header_bytes smallint(6) DEFAULT NULL,
+        energy float DEFAULT NULL,
+        flux float DEFAULT NULL,
+        fullname varchar(128) DEFAULT NULL,
+        image_number smallint(5) unsigned DEFAULT NULL,
+        kappa float DEFAULT NULL,
+        omega float DEFAULT NULL,
+        osc_axis varchar(6) DEFAULT NULL
         osc_range float DEFAULT NULL,
         osc_start float DEFAULT NULL,
         phi float DEFAULT NULL,
-        kappa float DEFAULT NULL,
+        period float DEFAULT NULL,
         pixel_size float DEFAULT NULL,
+        prefix varchar(64) DEFAULT NULL,
+        rapd_detector_id varchar(64) DEFAULT NULL,
+        robot_position varchar(16) DEFAULT NULL,
+        run_id mediumint(8) unsigned DEFAULT NULL,
+        run_number smallint(5) unsigned DEFAULT NULL,
+        sample_id varchar(16) unsigned DEFAULT NULL,
+        sample_x float DEFAULT NULL,
+        sample_y float DEFAULT NULL,
+        sample_z float DEFAULT NULL,
+        site_tag varchar(16) DEFAULT NULL,
         size1 smallint(5) unsigned DEFAULT NULL,
         size2 smallint(5) unsigned DEFAULT NULL,
+        source_current float DEFAULT NULL,
+        source_mode varchar(96) DEFAULT NULL,
         time float DEFAULT NULL,
-        period float DEFAULT NULL,
-        twotheta float DEFAULT NULL,
-        type varchar(15) DEFAULT NULL,
-        unif_ped smallint(6) DEFAULT NULL,
-        wavelength float DEFAULT NULL,
-        directory varchar(128) DEFAULT NULL,
-        image_prefix varchar(64) DEFAULT NULL,
-        run_number smallint(5) unsigned DEFAULT NULL,
-        image_number smallint(5) unsigned DEFAULT NULL,
         transmission float DEFAULT NULL,
-        puck varchar(1) DEFAULT NULL,
-        sample tinyint(3) unsigned DEFAULT NULL,
-        sample_id mediumint(8) unsigned DEFAULT NULL,
-        ring_current float DEFAULT NULL,
-        ring_mode varchar(48) DEFAULT NULL,
-        md2_aperture tinyint(3) unsigned DEFAULT NULL,
-        md2_prg_exp float DEFAULT NULL,
-        md2_net_exp mediumint(8) unsigned DEFAULT NULL,
-        md2_x float DEFAULT NULL,
-        md2_y float DEFAULT NULL,
-        md2_z float DEFAULT NULL,
-        acc_time mediumint(8) unsigned DEFAULT NULL,
-        site varchar(12) DEFAULT NULL,
-        calc_beam_center_x float DEFAULT NULL,
-        calc_beam_center_y float DEFAULT NULL,
-        flux float DEFAULT NULL,
-        beam_size_x float DEFAULT NULL,
-        beam_size_y float DEFAULT NULL,
-        gauss_x float DEFAULT NULL,
-        gauss_y float DEFAULT NULL,
-        run_id mediumint(8) unsigned DEFAULT NULL,
+        twotheta float DEFAULT NULL,
         timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (image_id),
         UNIQUE KEY blocker (fullname,date),
         KEY run_id (run_id),
         KEY timestamp (timestamp)"""
+
+    create_table(hostname=hostname,
+                 port=port,
+                 username=username,
+                 password=password,
+                 db="rapd",
+                 table="images",
+                 table_definition=images_table_string,
+                 drop=False)
+
+    # Create integration tables
+
+    # Changes from v4
+    #
+    # download_file >> file_download
+    # hkl_file >> file_hkl
+    # sample_id mediumint(8) >> sample_id varchar(16)
+    # type >> request_type
+    # image_end >> image_number_end
+    # image_start >> image_number_start
+    # merge_file >> file_merge
+    # mtz_file >> file_mtz
+    # parsed >> file_parsed
+    # plots >> file_plots
+    # sca_file >> file_sca
+    # scala_log >> file_scala_log
+    # summary_long >> file_summary_long
+    # unmerged_sca_file >> file_unmerged_sca
+    # wavelength >> energy
+    # xds_log >> file_xds_log
+    # xia_log >> file_xia_log
+    #
+    # DELETED
+    # rd_analysis
+    # rd_conclusion
+    # twinscore
+    # xscale_log
+
+
+    integrate_results_table_string = """integrate_result_id mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+        a float DEFAULT NULL,
+        alpha float DEFAULT NULL,
+        b float DEFAULT NULL,
+        beta float DEFAULT NULL,
+        c float DEFAULT NULL,
+        gamma float DEFAULT NULL,
+        data_root_dir varchar(256) DEFAULT NULL,
+        date datetime DEFAULT NULL,
+        energy float DEFAULT NULL,
+
+        file_download varchar(256) DEFAULT NULL,
+        file_hkl varchar(256) DEFAULT NULL,
+        file_merge varchar(256) DEFAULT NULL,
+        file_mtz varchar(256) DEFAULT NULL,
+        file_parsed varchar(256) DEFAULT NULL,
+        file_plots varchar(256) DEFAULT NULL,
+        file_sca varchar(256) DEFAULT NULL,
+        file_scala_log varchar(256) DEFAULT NULL,
+        file_summary_long varchar(256) DEFAULT NULL,
+        file_unmerged_sca_ varchar(256) DEFAULT NULL,
+        file_xds_log varchar(256) DEFAULT NULL,
+        file_xia_log varchar(256) DEFAULT NULL,
+        images_dir varchar(256) DEFAULT NULL,
+        image_number_end smallint(5) unsigned DEFAULT NULL,
+        image_number_start smallint(5) unsigned DEFAULT NULL,
+        integrate_status varchar(12) DEFAULT NULL,
+        pipeline varchar(12) DEFAULT NULL,
+        process_id mediumint(8) unsigned DEFAULT NULL,
+        repr varchar(128) DEFAULT NULL,
+        request_id mediumint(8) unsigned DEFAULT NULL,
+        request_type varchar(12) DEFAULT NULL,
+        result_id mediumint(8) unsigned DEFAULT NULL,
+        run_id mediumint(8) unsigned DEFAULT NULL,
+        sample_id varchar(16) unsigned DEFAULT NULL,
+        settings_id mediumint(8) unsigned DEFAULT NULL,
+        spacegroup varchar(12) DEFAULT NULL,
+        solved varchar(8) DEFAULT NULL,
+        template varchar(256) DEFAULT NULL,
+        version smallint(5) unsigned DEFAULT '0',
+        work_dir varchar(256) DEFAULT NULL,
+
+        cc_anom float DEFAULT NULL,
+        cc_cut_res float DEFAULT NULL,
+        cc_cut_val float DEFAULT NULL,
+        rcr_anom float DEFAULT NULL,
+        rcr_cut_res float DEFAULT NULL,
+        rcr_cut_val float DEFAULT NULL,
+        proc_time time DEFAULT NULL,
+        shell_overall mediumint(8) unsigned DEFAULT NULL,
+        shell_inner mediumint(8) unsigned DEFAULT NULL,
+        shell_outer mediumint(8) unsigned DEFAULT NULL,
+        timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (integrate_result_id),
+        KEY result_id (result_id)"""
+
 
     # Create the runs table
     runs_table_string = """run_id mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
@@ -2030,6 +2147,7 @@ def create_data_tables(hostname, port, username, password):
         start_image_number mediumint(8) unsigned DEFAULT NULL,
         time float DEFAULT NULL,
         transmission float DEFAULT NULL,
+        twotheta float DEFAULT NULL,
         timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (run_id)"""
 
