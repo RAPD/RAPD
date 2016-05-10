@@ -516,8 +516,8 @@ def create_data_tables(hostname, port, username, password):
         mosstrat_norm_result_id mediumint(8) DEFAULT NULL,
         fullname_1 varchar(256) DEFAULT NULL,
         fullname_2 varchar(256) DEFAULT NULL,
-        image1_id int(10) unsigned DEFAULT NULL,
-        image2_id int(10) unsigned DEFAULT NULL,
+        image_id_1 int(10) unsigned DEFAULT NULL,
+        image_id_2 int(10) unsigned DEFAULT NULL,
         process_id mediumint(8) unsigned DEFAULT NULL,
         repr varchar(128) DEFAULT NULL,
         result_id mediumint(8) unsigned DEFAULT NULL,
@@ -550,9 +550,9 @@ def create_data_tables(hostname, port, username, password):
     # calc_beam_center_x >> beam_center_calc_x
     # calc_beam_center_y >> beam_center_calc_y
     # image_prefix >> prefix
-    # md2_x >> sample_x
-    # md2_y >> sample_y
-    # md2_z >> sample_z
+    # md2_x >> sample_pos_x
+    # md2_y >> sample_pos_y
+    # md2_z >> sample_pos_z
     # puck + sample >> robot_position varchar(16)
     # ring_current >> source_current
     # ring_mode varchar(48) >> source_mode varchar(96)
@@ -579,7 +579,7 @@ def create_data_tables(hostname, port, username, password):
     # unif_ped
 
     # Create the images table
-    images = """image_id int unsigned NOT NULL AUTO_INCREMENT,
+    images = """image_id int(10) unsigned NOT NULL AUTO_INCREMENT,
         beam_center_calc_x float DEFAULT NULL,
         beam_center_calc_y float DEFAULT NULL,
         beam_center_x float DEFAULT NULL,
@@ -593,7 +593,6 @@ def create_data_tables(hostname, port, username, password):
         date datetime DEFAULT NULL,
         detector varchar(12) DEFAULT NULL,
         detector_sn varchar(12) DEFAULT NULL,
-        directory varchar(128) DEFAULT NULL,
         distance float DEFAULT NULL,
         energy float DEFAULT NULL,
         flux float DEFAULT NULL,
@@ -604,8 +603,8 @@ def create_data_tables(hostname, port, username, password):
         osc_axis varchar(6) DEFAULT NULL,
         osc_range float DEFAULT NULL,
         osc_start float DEFAULT NULL,
-        phi float DEFAULT NULL,
         period float DEFAULT NULL,
+        phi float DEFAULT NULL,
         pixel_size float DEFAULT NULL,
         prefix varchar(64) DEFAULT NULL,
         rapd_detector_id varchar(64) DEFAULT NULL,
@@ -613,9 +612,9 @@ def create_data_tables(hostname, port, username, password):
         run_id mediumint(8) unsigned DEFAULT NULL,
         run_number smallint(5) unsigned DEFAULT NULL,
         sample_id varchar(16) DEFAULT NULL,
-        sample_x float DEFAULT NULL,
-        sample_y float DEFAULT NULL,
-        sample_z float DEFAULT NULL,
+        sample_pos_x float DEFAULT NULL,
+        sample_pos_y float DEFAULT NULL,
+        sample_pos_z float DEFAULT NULL,
         site_tag varchar(16) DEFAULT NULL,
         size1 smallint(5) unsigned DEFAULT NULL,
         size2 smallint(5) unsigned DEFAULT NULL,
@@ -626,7 +625,7 @@ def create_data_tables(hostname, port, username, password):
         twotheta float DEFAULT NULL,
         timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (image_id),
-        UNIQUE KEY blocker (fullname,date),
+        UNIQUE KEY blocker (fullname, date),
         KEY run_id (run_id),
         KEY timestamp (timestamp)"""
 

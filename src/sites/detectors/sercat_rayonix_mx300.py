@@ -178,16 +178,16 @@ def read_header(fullname, beam_settings):
     header["beam_size_y"] = beam_size_y
 
     # Add source parameters
-    header["gauss_x"] = beam_settings["BEAM_GAUSS_X"]
-    header["gauss_y"] = beam_settings["BEAM_GAUSS_Y"]
+    header["beam_gauss_x"] = beam_settings["BEAM_GAUSS_X"]
+    header["beam_gauss_y"] = beam_settings["BEAM_GAUSS_Y"]
 
     # Calculate beam center - cannot be done with just header information!
     calc_beam_center_x, calc_beam_center_y = calculate_beam_center(
         distance=header["distance"],
         beam_settings=beam_settings,
         v_offset=0)
-    header["x_beam"] = calc_beam_center_x
-    header["y_beam"] = calc_beam_center_y
+    header["beam_center_calc_x"] = calc_beam_center_x
+    header["beam_center_calc_y"] = calc_beam_center_y
 
     # Set the header version value - future flexibility
     header["header_version"] = HEADER_VERSION

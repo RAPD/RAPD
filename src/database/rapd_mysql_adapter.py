@@ -1,4 +1,9 @@
 """
+This is an adapter for RAPD to connect to the control database when it is a MySQL
+type database.
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2009-2016, Cornell University
@@ -23,22 +28,21 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
 """
-This is an adapter for RAPD to connect to the control database when it is a MySQL
-type database.
-
 To run a mariadb instance in docker:
-sudo docker run --name mariadb -v /home/schuerjp/data:/var/lib/mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=root_password -d mariadb
+sudo docker run --name mariadb -v /home/schuerjp/data:/var/lib/mysql -p 3306:3306
+            -e MYSQL_ROOT_PASSWORD=root_password -d mariadb
 """
 
-
+# Standard imports
 import json
 import logging
-import numpy
 import operator
 import os
-import pymysql
 import threading
 import time
+
+import numpy
+import pymysql
 
 MYSQL_ATTEMPTS = 30
 
@@ -51,12 +55,18 @@ class Database(object):
                  port=None,
                  user=None,
                  password=None,
-                 data_name="rapd_data",
-                 users_name="rapd_users",
-                 cloud_name="rapd_cloud",
                  settings=None):
 
-        """Initialize the adapter"""
+        """
+        Initialize the adapter
+
+        Keyword arguments
+        host --
+        port --
+        user --
+        password --
+        settings --
+        """
 
         # Get the logger
         self.logger = logging.getLogger("RAPDLogger")
@@ -68,18 +78,18 @@ class Database(object):
             self.db_port = settings["DATABASE_PORT"]
             self.db_user = settings["DATABASE_USER"]
             self.db_password = settings["DATABASE_PASSWORD"]
-            self.db_data_name = settings["DATABASE_NAME_DATA"]
-            self.db_users_name = settings["DATABASE_NAME_USERS"]
-            self.db_cloud_name = settings["DATABASE_NAME_CLOUD"]
+            # self.db_data_name = settings["DATABASE_NAME_DATA"]
+            # self.db_users_name = settings["DATABASE_NAME_USERS"]
+            # self.db_cloud_name = settings["DATABASE_NAME_CLOUD"]
         # Olde Style
         else:
             self.db_host = host
             self.db_port = port
             self.db_user = user
             self.db_password = password
-            self.db_data_name = data_name
-            self.db_users_name = users_name
-            self.db_cloud_name = cloud_name
+            # self.db_data_name = data_name
+            # self.db_users_name = users_name
+            # self.db_cloud_name = cloud_name
 
         # A lock for troublesome fast-acting data entry
         self.LOCK = threading.Lock()
@@ -88,12 +98,33 @@ class Database(object):
     #Functions for connecting to the database                                  #
     ############################################################################
 
+    def get_db_connection(self):
+        """
+        Returns a connection and cursor for interaction with the database.
+        """
+        attempts = 0
+        while attempts < MYSQL_ATTEMPTS:
+            try:
+                # Connect
+                connection = pymysql.connect(host=self.db_host,
+                                             port=self.db_port,
+                                             db="rapd",
+                                             user=self.db_user,
+                                             password=self.db_password)
+                cursor = connection.cursor()
+                cursor.execute("SET AUTOCOMMIT=1")
+                return(connection, cursor)
+            except:
+                self.logger.exception("Error connecting to MySQL server")
+                attempts += 1
+                time.sleep(10)
+
     def connect_to_data(self):
         """
         Returns a connection and cursor for interaction with the database.
         """
         attempts = 0
-        while (attempts < MYSQL_ATTEMPTS):
+        while attempts < MYSQL_ATTEMPTS:
             try:
                 # Connect
                 connection = pymysql.connect(host=self.db_host,
@@ -114,7 +145,7 @@ class Database(object):
         Returns a connection and cursor for interaction with the database.
         """
         attempts = 0
-        while (attempts < MYSQL_ATTEMPTS):
+        while attempts < MYSQL_ATTEMPTS:
             try:
                 # Connect
                 connection = pymysql.connect(host=self.db_host,
@@ -124,7 +155,7 @@ class Database(object):
                                              password=self.db_password)
                 cursor = connection.cursor()
                 cursor.execute("SET AUTOCOMMIT=1")
-                return(connection,cursor)
+                return(connection, cursor)
             except:
                 self.logger.exception("Error connecting to MySQL server")
                 attempts += 1
@@ -135,7 +166,7 @@ class Database(object):
         Returns a connection and cursor for interaction with the database.
         """
         attempts = 0
-        while (attempts < MYSQL_ATTEMPTS):
+        while attempts < MYSQL_ATTEMPTS:
             try:
                 # Connect
                 connection = pymysql.connect(host=self.db_host,
@@ -145,7 +176,7 @@ class Database(object):
                                              password=self.db_password)
                 cursor = connection.cursor()
                 cursor.execute("SET AUTOCOMMIT=1")
-                return(connection,cursor)
+                return(connection, cursor)
             except:
                 self.logger.exception("Error connecting to MySQL server")
                 attempts += 1
@@ -161,120 +192,112 @@ class Database(object):
         except:
             self.logger.exception("Error closing connection to MySQL database")
 
-    ##################################################################################################################
-    # Functions for images                                                                                           #
-    ##################################################################################################################
+    ############################################################################
+    # Functions for images                                                     #
+    ############################################################################
     def add_image(self, data):
         """
         Add new image to the MySQL database.
         """
 
-        self.logger.debug('Database::add_image')
         self.logger.debug(data)
-        connection, cursor = self.connect_to_data()
 
-        # if data["fullname"].endswith(".cbf"):
-        #     return self.add_pilatus_image(data)
+        connection, cursor = self.get_db_connection()
 
-        cursor.execute("""INSERT INTO images (fullname,
-                                            #   adsc_number,
-                                              adc,
-                                              axis,
+        cursor.execute("""INSERT INTO images (beam_center_calc_x,
+                                              beam_center_calc_y,
                                               beam_center_x,
                                               beam_center_y,
+                                              beam_gauss_x,
+                                              beam_gauss_y,
+                                              beam_size_x,
+                                              beam_size_y,
                                               binning,
-                                              byte_order,
+                                              collect_mode,
                                               date,
                                               detector,
                                               detector_sn,
-                                              collect_mode,
-                                              site,
-                                              dim,
                                               distance,
-                                              header_bytes,
+                                              energy,
+                                              flux,
+                                              fullname,
+                                              image_number,
+                                              kappa,
+                                              omega,
+                                              osc_axis,
                                               osc_range,
                                               osc_start,
                                               phi,
-                                              pixel_size ,
+                                              period,
+                                              pixel_size,
+                                              prefix,
+                                              rapd_detector_id,
+                                              robot_position,
+                                              run_id,
+                                              run_number,
+                                              sample_id,
+                                              sample_pos_x,
+                                              sample_pos_y,
+                                              sample_pos_z,
+                                              site_tag,
                                               size1,
                                               size2,
+                                              source_current,
+                                              source_mode,
                                               time,
-                                              twotheta,
-                                              type,
-                                              wavelength,
-                                              directory,
-                                              image_prefix,
-                                              run_number,
-                                              image_number,
                                               transmission,
-                                              puck,
-                                              sample,
-                                              ring_current,
-                                              ring_mode,
-                                              md2_aperture,
-                                              md2_x,
-                                              md2_y,
-                                              md2_z,
-                                              flux,
-                                              beam_size_x,
-                                              beam_size_y,
-                                              gauss_x,
-                                              gauss_y,
-                                              run_id) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                                                               (data['fullname'],
-                                                                # data['adsc_number'],
-                                                                data['adc'],
-                                                                data['axis'],
-                                                                data['x_beam'],
-                                                                data['y_beam'],
-                                                                data['bin'],
-                                                                data['byte_order'],
-                                                                data['date'],
-                                                                data['detector'],
-                                                                data['detector_sn'],
-                                                                data['collect_mode'],
-                                                                data['site'],
-                                                                data['dim'],
-                                                                data['distance'],
-                                                                data['header_bytes'],
-                                                                data['osc_range'],
-                                                                data['osc_start'],
-                                                                data['phi'],
-                                                                data['pixel_size'],
-                                                                data['size1'],
-                                                                data['size2'],
-                                                                data['time'],
-                                                                data['twotheta'],
-                                                                data['type'],
-                                                                data['wavelength'],
-                                                                data['directory'],
-                                                                data['image_prefix'],
-                                                                data['run_number'],
-                                                                data['image_number'],
-                                                                data['transmission'],
-                                                                data['puck'],
-                                                                data['sample'],
-                                                                data['ring_cur'],
-                                                                data['ring_mode'],
-                                                                data['md2_aperture'],
-                                                                data['md2_x'],
-                                                                data['md2_y'],
-                                                                data['md2_z'],
-                                                                data['flux'],
-                                                                data['beam_size_x'],
-                                                                data['beam_size_y'],
-                                                                data['gauss_x'],
-                                                                data['gauss_y'],
-                                                                data.get('run_id', 0)))
-        #connection.commit()
-        #put the image_id in the dict for future use
+                                              twotheta) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                       (data.get("beam_center_calc_x", None),
+                        data.get("beam_center_calc_y", None),
+                        data.get("beam_center_x", None),
+                        data.get("beam_center_y", None),
+                        data.get("beam_gauss_x", None),
+                        data.get("beam_gauss_y", None),
+                        data.get("beam_size_x", None),
+                        data.get("beam_size_y", None),
+                        data.get("binning", None),
+                        data.get("collect_mode", None),
+                        data.get("date", None),
+                        data.get("detector", None),
+                        data.get("detector_sn", None),
+                        data.get("distance", None),
+                        data.get("energy", None),
+                        data.get("flux", None),
+                        data.get("fullname", None),
+                        data.get("image_number", None),
+                        data.get("kappa", None),
+                        data.get("omega", None),
+                        data.get("osc_axis", None),
+                        data.get("osc_range", None),
+                        data.get("osc_start", None),
+                        data.get("period", None),
+                        data.get("phi", None),
+                        data.get("pixel_size", None),
+                        data.get("prefix", None),
+                        data.get("rapd_detector_id", None),
+                        data.get("robot_position", None),
+                        data.get("run_id", None),
+                        data.get("run_number", None),
+                        data.get("sample_id", None),
+                        data.get("sample_pos_x", None),
+                        data.get("sample_pos_y", None),
+                        data.get("sample_pos_z", None),
+                        data.get("site_tag", None),
+                        data.get("size1", None),
+                        data.get("size_2", None),
+                        data.get("source_current", None),
+                        data.get("source_mode", None),
+                        data.get("time", None),
+                        data.get("transmission", None),
+                        data.get("twotheta", None)))
+
+        # Put the image_id in the dict for future use
         image_id = cursor.lastrowid
 
         self.closeConnection(connection, cursor)
 
-        #now grab the dict from the MySQL table
+        # Now grab the dict from the MySQL table
         image_dict = self.get_image_by_image_id(image_id=image_id)
-
 
         return(image_dict, True)
 
@@ -606,9 +629,9 @@ class Database(object):
 
 
 
-    ##################################################################################################################
-    # Functions for settings                                                                                         #
-    ##################################################################################################################
+    ############################################################################
+    # Functions for settings                                                   #
+    ############################################################################
     def addSettings(self, settings, preset=False):
         """
         Updates the mysql database with settings in the passed-in dict and returns the setting_id
@@ -1814,18 +1837,18 @@ class Database(object):
                                        strategy_program = 'best',
                                        results = results['Best results'])
             elif (norm_strat_type == 'mosflm') :
-                self.addStrategyWedges(id = single_result_dict['single_result_id'],
-                                       int_type = 'single',
-                                       strategy_type = 'normal',
-                                       strategy_program = 'mosflm',
-                                       results = results['Mosflm strategy results'])
+                self.addStrategyWedges(id=single_result_dict['single_result_id'],
+                                       int_type='single',
+                                       strategy_type='normal',
+                                       strategy_program='mosflm',
+                                       results=results['Mosflm strategy results'])
             #log the anomalous strategy wedges
             if (anom_strat_type == 'best'):
-                self.addStrategyWedges(id = single_result_dict['single_result_id'],
-                                       int_type = 'single',
-                                       strategy_type = 'anomalous',
-                                       strategy_program = 'best',
-                                       results = results['Best ANOM results'])
+                self.addStrategyWedges(id=single_result_dict['single_result_id'],
+                                       int_type='single',
+                                       strategy_type='anomalous',
+                                       strategy_program='best',
+                                       results=results['Best ANOM results'])
             elif (anom_strat_type == 'mosflm') :
                 self.addStrategyWedges(id = single_result_dict['single_result_id'],
                                        int_type = 'single',
