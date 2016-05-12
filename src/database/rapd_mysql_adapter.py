@@ -6084,29 +6084,17 @@ class Database(object):
 
         # Limit to a time window
         else:
-            # query = "SELECT * FROM runs WHERE site_tag=%s AND directory=%s AND image_prefix=%s AND run_number=%s AND start_image_number=%s AND number_images=%s AND timestamp > NOW()-INTERVAL %s MINUTE ORDER BY timestamp %s"
-            # params = (site_tag,
-            #           run_data.get("directory", None),
-            #           run_data.get("image_prefix", None),
-            #           run_data.get("run_number", None),
-            #           run_data.get("start_image_number", None),
-            #           run_data.get("number_images", None),
-            #           minutes,
-            #           order_param)
-            query = "SELECT * FROM runs WHERE site_tag=%r AND directory=%r "#AND image_prefix=%s AND run_number=%s AND start_image_number=%s AND number_images=%s AND timestamp > NOW()-INTERVAL %s MINUTE ORDER BY timestamp %s"
-            params = ("1", "2")
-            # params = (site_tag,
-            #           run_data.get("directory", None))
-                    #   run_data.get("image_prefix", None))
-                    #   run_data.get("run_number", None),
-                    #   run_data.get("start_image_number", None),
-                    #   run_data.get("number_images", None),
-                    #   minutes,
-                    #   order_param)
-
-        self.logger.debug(query)
-        self.logger.debug(query, params)
-        self.logger.debug(params)
+            query = "SELECT * FROM runs WHERE site_tag=%r AND directory=%r AND image_prefix=%r AND run_number=%r AND start_image_number=%r AND number_images=%r AND timestamp > NOW()-INTERVAL %r MINUTE ORDER BY timestamp %r"
+            params = (site_tag,
+                      run_data.get("directory", None),
+                      run_data.get("image_prefix", None),
+                      run_data.get("run_number", None),
+                      run_data.get("start_image_number", None),
+                      run_data.get("number_images", None),
+                      minutes,
+                      order_param)
+            query_string = query % params
+            self.logger.debug(query_string)
 
         return {}
 
