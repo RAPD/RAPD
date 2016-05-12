@@ -6046,7 +6046,8 @@ class Database(object):
                      site_tag=None,
                      run_data=None,
                      minutes=0,
-                     order="descending"):
+                     order="descending",
+                     boolean=True):
         """
         Return information for runs that fit the data within the last minutes
         window. If minutes=0, no time limit.
@@ -6060,6 +6061,7 @@ class Database(object):
         minutes -- time window to look back into the data (default 0)
         order -- the order in which to sort the results, must be None, descending
                  or ascending (default descending)
+        boolean -- return just True if there is a or False
         """
 
         self.logger.debug("site_tag:%s run_data:%s minutes:%d", site_tag, run_data, minutes)
@@ -6106,7 +6108,92 @@ class Database(object):
         if len(result_dicts) == 0:
             return False
         else:
-            return result_dicts
+            if boolean:
+                return True
+            else:
+                return result_dicts
+
+    def query_in_run(site_tag,
+                     directory,
+                     image_prefix,
+                     run_number,
+                     image_number,
+                     minutes=0,
+                     order="descending",
+                     boolean=True):
+        """
+        Return True/False depending on whether the image information could
+        correspond to a run stored in the database
+
+        Keyword arguments
+        site_tag -- string describing site (default None)
+        directory -- where the image is located
+        prefix -- the image prefix
+        run_number -- number for the run
+        image_number -- number for the image
+        minutes -- time window to look back into the data (default 0)
+        boolean -- return just True if there is a or False
+        """
+
+        self.logger.debug(site_tag, directory, prefix, run_number, image_number, minutes, boolean)
+
+        # Order
+        if order == "descending":
+            order_param = "DESC"
+        elif order == "ascending":
+            order_param = "ASC"
+        else:
+            raise Exception("get_run_data order argument must be None, ascending, or descending")
+
+        # Boolean
+        if boolean:
+            select_param = "run_id"
+        else:
+            select_param = "*"
+
+        # Construct the query
+        # No limit on the results
+        if minutes == 0:
+            query = "SELECT %s FROM runs WHERE directory='%s' AND image_prefix='%s' AND run_number=%s AND start_image_number<=%s AND %s<=total+start_image_number+1"
+
+            params = (select_param,
+                      directory,
+                      image_prefix,
+                      run_number,
+                      image_number,
+                      image_number)
+
+        # Limit to a time window
+        else:
+            query = "SELECT %s FROM runs WHERE directory='%s' AND image_prefix='%s' AND run_number=%s AND start_image_number<=%s AND %s<=total+start_image_number+1 AND timestamp > NOW()-INTERVAL %d MINUTE"
+            params = (select_param,
+                      directory,
+                      image_prefix,
+                      run_number,
+                      image_number,
+                      image_number,
+                      minutes)
+
+        # Add sorting
+        if not boolean:
+            query +=  "ORDER BY timestamp %s"
+            params = params + (order_param,)
+
+        # Turn into a query string and handle None values
+        query_string = (query % params).replace("=None", " is NULL")
+        self.logger.debug(query_string)
+
+        # Query the database
+        result_dicts = self.make_dicts(query=query_string)
+
+        # If no return, return a False
+        if len(result_dicts) == 0:
+            return False
+        else:
+            if bool:
+                return True
+            else:
+                return result_dicts
 
     def getRunIdByInfo(self, run_data):
         """

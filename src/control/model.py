@@ -516,7 +516,8 @@ class Model(object):
         # that are runs that match or a False
         recent_run_data = self.database.get_run_data(site_tag=site_tag,
                                                      run_data=run_data,
-                                                     minutes=60)
+                                                     minutes=60,
+                                                     bool=True)
 
         if recent_run_data != False:
 
@@ -872,12 +873,17 @@ class Model(object):
         detector = self.detectors[site_tag.lower()]
 
         # Tease out the info from the file name
-        directory, basename, prefix, run_number, image_number = detector.parse_file_name(fullname)
+        directory, basename, image_prefix, run_number, image_number = detector.parse_file_name(fullname)
 
         self.logger.debug("%s %s %s %s %s", directory, basename, prefix, run_number, image_number)
 
-        # SNAP
-        if run_number in (0, "unknown"):
+        # SNAP?
+        if self.database.query_in_run(site_tag=site_tag,
+                                      directory=directory,
+                                      image_prefix=image_prefix,
+                                      run_number=run_number,
+                                      image_number=image_number,
+                                      minutes=60)
             return "SNAP", None
 
         # NOT a snap
