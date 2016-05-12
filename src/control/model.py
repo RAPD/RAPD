@@ -517,7 +517,7 @@ class Model(object):
         recent_run_data = self.database.get_run_data(site_tag=site_tag,
                                                      run_data=run_data,
                                                      minutes=60,
-                                                     bool=True)
+                                                     boolean=True)
 
         if recent_run_data != False:
 
@@ -883,7 +883,8 @@ class Model(object):
                                       image_prefix=image_prefix,
                                       run_number=run_number,
                                       image_number=image_number,
-                                      minutes=60)
+                                      minutes=60,
+                                      boolean=True):
             return "SNAP", None
 
         # NOT a snap

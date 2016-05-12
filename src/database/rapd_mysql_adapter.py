@@ -6074,30 +6074,41 @@ class Database(object):
         else:
             raise Exception("get_run_data order argument must be None, ascending, or descending")
 
+        # Boolean
+        if boolean:
+            select_param = "run_id"
+        else:
+            select_param = "*"
+
         # No limit on the results
         if minutes == 0:
-            query = "SELECT * FROM runs WHERE site_tag='%s' AND directory='%s' AND image_prefix='%s' AND run_number=%s AND start_image_number=%s AND number_images=%s ORDER BY timestamp %s"
-            params = (site_tag,
+            query = "SELECT %s FROM runs WHERE site_tag='%s' AND directory='%s' AND image_prefix='%s' AND run_number=%s AND start_image_number=%s AND number_images=%s"
+            params = (select_param,
+                      site_tag,
                       run_data.get("directory", None),
                       run_data.get("image_prefix", None),
                       run_data.get("run_number", None),
                       run_data.get("start_image_number", None),
-                      run_data.get("number_images", None),
-                      order_param)
+                      run_data.get("number_images", None))
 
         # Limit to a time window
         else:
-            query = "SELECT * FROM runs WHERE site_tag='%s' AND directory='%s' AND image_prefix='%s' AND run_number=%s AND start_image_number=%s AND number_images=%s AND timestamp > NOW()-INTERVAL %d MINUTE ORDER BY timestamp %s"
-            params = (site_tag,
+            query = "SELECT %s FROM runs WHERE site_tag='%s' AND directory='%s' AND image_prefix='%s' AND run_number=%s AND start_image_number=%s AND number_images=%s AND timestamp > NOW()-INTERVAL %d MINUTE"
+            params = (select_param,
+                      site_tag,
                       run_data.get("directory", None),
                       run_data.get("image_prefix", None),
                       run_data.get("run_number", None),
                       run_data.get("start_image_number", None),
                       run_data.get("number_images", None),
-                      minutes,
-                      order_param)
+                      minutes)
 
-        # Handle None values
+        # Sort order
+        if not boolean:
+            query +=  " ORDER BY timestamp %s"
+            params = params + (order_param,)
+
+        # Convert to string and handle None values
         query_string = (query % params).replace("=None", " is NULL")
         self.logger.debug(query_string)
 
@@ -6176,7 +6187,7 @@ class Database(object):
 
         # Add sorting
         if not boolean:
-            query +=  "ORDER BY timestamp %s"
+            query +=  " ORDER BY timestamp %s"
             params = params + (order_param,)
 
         # Turn into a query string and handle None values
@@ -6190,7 +6201,7 @@ class Database(object):
         if len(result_dicts) == 0:
             return False
         else:
-            if bool:
+            if boolean:
                 return True
             else:
                 return result_dicts
