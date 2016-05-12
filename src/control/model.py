@@ -878,23 +878,23 @@ class Model(object):
         self.logger.debug("%s %s %s %s %s", directory, basename, image_prefix, run_number, image_number)
 
         # SNAP?
-        if self.database.query_in_run(site_tag=site_tag,
-                                      directory=directory,
-                                      image_prefix=image_prefix,
-                                      run_number=run_number,
-                                      image_number=image_number,
-                                      minutes=60,
-                                      boolean=True):
+        if not self.database.query_in_run(site_tag=site_tag,
+                                          directory=directory,
+                                          image_prefix=image_prefix,
+                                          run_number=run_number,
+                                          image_number=image_number,
+                                          minutes=60,
+                                          boolean=True):
             return "SNAP", None
 
         # NOT a snap
         else:
             self.logger.debug("run_info %s", run_info)
-            self.logger.debug("%s %s %s %d %d", (directory,
-                                                 basename,
-                                                 image_prefix,
-                                                 run_number,
-                                                 image_number))
+            self.logger.debug("%s %s %s %d %d", directory,
+                                                basename,
+                                                image_prefix,
+                                                run_number,
+                                                image_number)
 
             # There is information in the run
             if run_info:
