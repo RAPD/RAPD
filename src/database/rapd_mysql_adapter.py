@@ -6140,14 +6140,14 @@ class Database(object):
         Keyword arguments
         site_tag -- string describing site (default None)
         directory -- where the image is located
-        prefix -- the image prefix
+        image_prefix -- the image prefix
         run_number -- number for the run
         image_number -- number for the image
         minutes -- time window to look back into the data (default 0)
         boolean -- return just True if there is a or False
         """
 
-        self.logger.debug(site_tag, directory, prefix, run_number, image_number, minutes, boolean)
+        self.logger.debug(site_tag, directory, image_prefix, run_number, image_number, minutes, boolean)
 
         # Order
         if order == "descending":
