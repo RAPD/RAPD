@@ -6093,8 +6093,8 @@ class Database(object):
             #           run_data.get("number_images", None),
             #           minutes,
             #           order_param)
-            query = "SELECT * FROM runs WHERE site_tag=%s AND directory=%s "#AND image_prefix=%s AND run_number=%s AND start_image_number=%s AND number_images=%s AND timestamp > NOW()-INTERVAL %s MINUTE ORDER BY timestamp %s"
-            params = ("1", "2", "3")
+            query = "SELECT * FROM runs WHERE site_tag=%r AND directory=%r "#AND image_prefix=%s AND run_number=%s AND start_image_number=%s AND number_images=%s AND timestamp > NOW()-INTERVAL %s MINUTE ORDER BY timestamp %s"
+            params = ("1", "2")
             # params = (site_tag,
             #           run_data.get("directory", None))
                     #   run_data.get("image_prefix", None))
