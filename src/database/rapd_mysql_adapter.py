@@ -6093,7 +6093,7 @@ class Database(object):
                       run_data.get("number_images", None),
                       minutes,
                       order_param)
-            query_string = (query % params).replace("=None", "=NULL")
+            query_string = (query % params).replace("=None", " is NULL")
             self.logger.debug(query_string)
 
         # Query the database
