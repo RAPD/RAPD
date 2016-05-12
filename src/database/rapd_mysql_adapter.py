@@ -6092,6 +6092,7 @@ class Database(object):
                       run_data.get("number_images", None),
                       minutes,
                       order_param)
+            self.logger.debug(query, params)
 
         # Query the database
         result_dicts = self.make_dicts(query=query,
