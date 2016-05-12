@@ -53,7 +53,7 @@ def parse_file_name(fullname):
     print prefix
     image_number = int(sbase[-1])
     print image_number
-    run_number = "unknown"
+    run_number = None
 
     return directory, basename, prefix, run_number, image_number
 
