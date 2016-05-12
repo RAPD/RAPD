@@ -6124,7 +6124,8 @@ class Database(object):
             else:
                 return result_dicts
 
-    def query_in_run(site_tag,
+    def query_in_run(self,
+                     site_tag,
                      directory,
                      image_prefix,
                      run_number,
