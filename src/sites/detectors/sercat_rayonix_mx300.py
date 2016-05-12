@@ -171,6 +171,9 @@ def read_header(fullname, beam_settings):
     header["aperture_y"] = 50
     header["transmission"] = 50
 
+    # Translate wavelength to energy
+    header["energy"] = 12400.0 / header["wavelength"]
+
     # Perform flux calculation
     flux, beam_size_x, beam_size_y = calculate_flux(header, beam_settings)
     header["flux"] = flux

@@ -5953,15 +5953,15 @@ class Database(object):
     ############################################################################
     # Functions for runs                                                       #
     ############################################################################
-    def add_run(self, site_id, run_data):
+    def add_run(self, site_tag, run_data):
         """
         Add a new run to the MySQL database
 
         Keyword arguments
         run_data -- dict containing run information
-        site_id -- unique identifier for the run origin site
+        site_tag -- unique identifier for the run origin site
         """
-        self.logger.debug("Database.add_run %s %s", site_id, run_data)
+        self.logger.debug("Database.add_run %s %s", site_tag, run_data)
 
         try:
             # Connect
@@ -5969,56 +5969,59 @@ class Database(object):
 
             # Save into database
             self.logger.debug("Adding run from into database directory:%s image_prefix:%s" % (run["directory"], run["prefix"]))
-            cursor.execute("""INSERT INTO runs (directory,
-                                                image_prefix,
-                                                run_number,
-                                                start_image_number,
-                                                number_images,
+            cursor.execute("""INSERT INTO runs (anomalous,
+                                                directory,
                                                 distance,
-                                                phi,
+                                                energy,
+                                                image_prefix,
                                                 kappa,
+                                                number_images,
                                                 omega,
                                                 osc_axis,
                                                 osc_start,
                                                 osc_width,
+                                                phi,
+                                                run_number,
+                                                site_tag
+                                                start_image_number,
                                                 time,
                                                 transmission,
-                                                energy,
-                                                anomalous,
-                                                site_tag) VALUES (%s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s)""",
-                                             (run_data.get("directory", ""),
-                                              run_data.get("image_prefix", ""),
+                                                two_theta) VALUES (%s,
+                                                                   %s,
+                                                                   %s,
+                                                                   %s,
+                                                                   %s,
+                                                                   %s,
+                                                                   %s,
+                                                                   %s,
+                                                                   %s,
+                                                                   %s,
+                                                                   %s,
+                                                                   %s,
+                                                                   %s,
+                                                                   %s,
+                                                                   %s,
+                                                                   %s,
+                                                                   %s,
+                                                                   %s)""",
+                                             (run_data.get("anomalous", None),
+                                              run_data.get("directory", None),
+                                              run_data.get("distance", None),
+                                              run_data.get("energy", None),
+                                              run_data.get("image_prefix", None),
+                                              run_data.get("kappa", None),
+                                              run_data.get("number_images", None),
+                                              run_data.get("omega", None),
+                                              run_data.get("osc_axis", None),
+                                              run_data.get("osc_start", None),
+                                              run_data.get("osc_width", None),
+                                              run_data.get("phi", None),
                                               run_data.get("run_number", None),
+                                              site_tag,
                                               run_data.get("start_image_number", 0),
-                                              run_data.get("number_images", 0),
-                                              run_data.get("distance", 0.0),
-                                              run_data.get("phi_start", None),
-                                              run_data.get("kappa_start", None),
-                                              run_data.get("omega_start", None),
-                                              run_data.get("osc_axis", "phi"),
-                                              run_data.get("osc_start", 0.0),
-                                              run_data.get("osc_width", 0.0),
                                               run_data.get("time", 0.0),
                                               run_data.get("transmission", 0.0),
-                                              run_data.get("energy", 0.0),
-                                              run_data.get("anomalous", "False"),
-                                              site_id))
+                                              run_data.get("two_theta", 0.0)))
             run_id = cursor.lastrowid
             self.closeConnection(connection,cursor)
             return(run_id)

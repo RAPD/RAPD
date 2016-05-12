@@ -309,7 +309,7 @@ class Gatherer(object):
         if self.run_data_file:
             # Copy the file to prevent conflicts with other programs
             # HACK
-            tmp_file = "/tmp/"+uuid.uuid4().hex
+            tmp_file = "/dev/shm/"+uuid.uuid4().hex
             shutil.copyfile(self.run_data_file, tmp_file)
 
             # Read in the pickled file
@@ -317,6 +317,7 @@ class Gatherer(object):
             raw_run_data = pickle.load(f)
             f.close()
             self.logger.debug(raw_run_data)
+
             # Remove the temporary file
             os.unlink(tmp_file)
 
@@ -341,6 +342,7 @@ class Gatherer(object):
                 anomalous
             """
             run_data = {
+                "anomalous":None,
                 "beamline":raw_run_data.get("beamline", None),              # Non-standard
                 "beam_size_x":float(raw_run_data.get("beamsize", 0.0)),     # Non-standard
                 "beam_size_y":float(raw_run_data.get("beamsize", 0.0)),     # Non-standard
@@ -348,16 +350,18 @@ class Gatherer(object):
                 "distance":float(raw_run_data.get("dist", 0.0)),
                 "energy":float(raw_run_data.get("energy", 0.0)),
                 "image_prefix":raw_run_data.get("image_prefix", None),
+                "kappa":None,
                 "number_images":int(float(raw_run_data.get("Nframes", 0))),
+                "omega":None,
                 "osc_axis":"phi",
                 "osc_start":float(raw_run_data.get("start", 0.0)),
                 "osc_width":float(raw_run_data.get("width", 0.0)),
-                "phi_start":float(raw_run_data.get("start", 0.0)),
+                "phi":float(raw_run_data.get("start", 0.0)),
                 "run_number":None,
                 "start_image_number":int(float(raw_run_data.get("first_image", 0))),
                 "time":float(raw_run_data.get("time", 0.0)),
                 "transmission":float(raw_run_data.get("trans", 0.0)),
-                "wavelength": 12400.0 / float(raw_run_data.get("energy", 1.0))
+                "two_theta":None
             }
 
         else:
