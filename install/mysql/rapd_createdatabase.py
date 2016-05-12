@@ -840,17 +840,17 @@ def main():
     print "==========================="
 
     # Get the host information
-    #hostname, port, username, password = get_host_info()
+    hostname, port, username, password = get_host_info()
 
-    hostname = "rapd"
-    port = 3306
-    username = "rapd1"
-    password = "necatm)nster!"
-
-    hostname = "192.168.99.100"
-    port = 3306
-    username = "root"
-    password = "root_password"
+    # hostname = "rapd"
+    # port = 3306
+    # username = "rapd1"
+    # password = "necatm)nster!"
+    #
+    # hostname = "192.168.99.100"
+    # port = 3306
+    # username = "root"
+    # password = "root_password"
 
     # Check that the database is accessible
     check_database_connection(hostname, port, username, password)
