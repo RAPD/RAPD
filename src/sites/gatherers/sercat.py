@@ -412,7 +412,7 @@ def main():
     else:
         log_level = SITE.LOG_LEVEL
     logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
-                                  logfile_id="gatherer",
+                                  logfile_id="rapd_gatherer",
                                   level=log_level)
 
     logger.debug("Commandline arguments:")

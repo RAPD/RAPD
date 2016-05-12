@@ -119,7 +119,7 @@ class Database(object):
                 attempts += 1
                 time.sleep(10)
 
-    def connect_to_data(self):
+    def get_db_connection(self):
         """
         Returns a connection and cursor for interaction with the database.
         """
@@ -308,7 +308,7 @@ class Database(object):
 
         self.logger.debug("Database::add_pilatus_image")
         self.logger.debug(data)
-        connection, cursor = self.connect_to_data()
+        connection, cursor = self.get_db_connection()
 
         try:
             cursor.execute("""INSERT INTO images (fullname,
@@ -428,7 +428,7 @@ class Database(object):
         """
 
         self.logger.debug('Database::updateImageCBC image_id: %d, cbcx: %d, cbcy: %d' % (image_id,cbcx,cbcy))
-        connection,cursor = self.connect_to_data()
+        connection,cursor = self.get_db_connection()
 
         try:
             cursor.execute('UPDATE images set calc_beam_center_x=%s, calc_beam_center_y=%s WHERE image_id=%s',(cbcx,cbcy,image_id))
@@ -494,7 +494,7 @@ class Database(object):
 
         try:
             #connect to the mysql server
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             #retrieve the sample id for the Puck:Sample in the image header
             query1 = '''SELECT samples.sample_id as sample_id from samples
@@ -594,7 +594,7 @@ class Database(object):
         #query for list of pucks
         try:
             #connect to the mysql server
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
             query  = "SELECT puckset_id FROM current WHERE site=%s" % (site_id)
             cursor.execute(query, site_id)
             puckset_id = cursor.fetchone()[0]
@@ -619,7 +619,7 @@ class Database(object):
 
         try:
             #connect to the mysql server
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
             query = "UPDATE current SET puckset_id=0 WHERE site=%s"
             cursor.execute(query, (site_id, ))
             self.closeConnection(connection, cursor)
@@ -678,7 +678,7 @@ class Database(object):
         blank.update(settings)
 
         #connect to the mysql server
-        connection,cursor = self.connect_to_data()
+        connection,cursor = self.get_db_connection()
 
         try:
             cursor.execute("""INSERT INTO settings  ( site,
@@ -816,7 +816,7 @@ class Database(object):
         self.logger.debug(in_dict)
 
         #connect
-        connection,cursor = self.connect_to_data()
+        connection,cursor = self.get_db_connection()
 
         #make sure there is a row for this site
         cursor.execute("SELECT * FROM current WHERE site=%s",(in_dict['site']))
@@ -879,7 +879,7 @@ class Database(object):
         self.logger.debug('Database::addPreset')
 
         #connect
-        connection,cursor = self.connect_to_data()
+        connection,cursor = self.get_db_connection()
 
         #make sure there is a row for this site
         cursor.execute("SELECT * FROM presets WHERE site=%s and data_root_dir='DEFAULTS'",(settings['site']))
@@ -906,7 +906,7 @@ class Database(object):
         d = beamcenter_data
 
         #connect
-        connection,cursor = self.connect_to_data()
+        connection,cursor = self.get_db_connection()
 
         #add to the table
         cursor.execute('''INSERT INTO site (site,x_b,x_m1,x_m2,x_m3,x_m4,x_m5,x_m6,x_r,y_b,y_m1,y_m2,y_m3,y_m4,y_m5,y_m6,y_r)
@@ -1108,7 +1108,7 @@ class Database(object):
 
         try:
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             #the query
             query         = 'INSERT INTO processes (type,rtype,data_root_dir,repr,display) VALUES (%s,%s,%s,%s,%s)'
@@ -1137,7 +1137,7 @@ class Database(object):
 
         try:
             #get cursor
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             #change the line
             cursor.execute("UPDATE processes SET display=%s, timestamp2=NOW() WHERE process_id=%s",(display_value,process_id))
@@ -1164,7 +1164,7 @@ class Database(object):
 
         try:
             #get cursor
-            connection, cursor = self.connect_to_data()
+            connection, cursor = self.get_db_connection()
             #create entry
             query = "INSERT INTO "+rtype+"_results (process_id,data_root_dir) VALUES (%s, %s)"
             cursor.execute(query, (process_id, data_root_dir))
@@ -1209,7 +1209,7 @@ class Database(object):
 
         try:
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             #regardless of failure level
             command_front = """INSERT INTO single_results ( process_id,
@@ -1887,7 +1887,7 @@ class Database(object):
         for i in range(len(results[tag+'run number'])):
             try:
                 #connect to the database
-                connection,cursor = self.connect_to_data()
+                connection,cursor = self.get_db_connection()
 
                 if (strategy_program == 'best'):
 
@@ -2006,7 +2006,7 @@ class Database(object):
 
         try:
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             #regardless of failure level
             command_front = """INSERT INTO pair_results ( process_id,
@@ -2718,7 +2718,7 @@ class Database(object):
         self.logger.debug(results)
         try:
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             #regardless of failure level
             command = '''INSERT INTO diffcenter_results ( process_id,
@@ -2825,7 +2825,7 @@ class Database(object):
 
         try:
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             #regardless of failure level
             command = '''INSERT INTO quickanalysis_results ( process_id,
@@ -2947,7 +2947,7 @@ class Database(object):
             insert_values = ['Yes',
                             request_dict[0]['result_id']]
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             cursor.execute(command,insert_values)
             #change timestamp in results table to cue runs list update
@@ -2982,7 +2982,7 @@ class Database(object):
 
         try:
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             #Information stored regardless of failure level
             command = '''UPDATE integrate_results SET timestamp=NOW(),
@@ -3179,7 +3179,7 @@ class Database(object):
 
         try:
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             if not (isr_id):
                 cursor.execute("INSERT INTO integrate_shell_results () VALUES ()")
@@ -3289,7 +3289,7 @@ class Database(object):
         try:
             self.logger.debug("Enter try")
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             #Information stored regardless of failure level
             command = '''UPDATE integrate_results SET timestamp=NOW(),
@@ -3547,7 +3547,7 @@ class Database(object):
         try:
             self.logger.debug("Enter try")
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             #Information stored regardless of failure level
             command = '''UPDATE integrate_results SET timestamp=NOW(),
@@ -3769,7 +3769,7 @@ class Database(object):
 
         try:
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             if not (isr_id):
                 cursor.execute("INSERT INTO integrate_shell_results () VALUES ()")
@@ -3863,7 +3863,7 @@ class Database(object):
         try:
             self.logger.debug("Enter try")
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             #Information stored regardless of failure level
             command = '''UPDATE merge_results SET timestamp=NOW(),
@@ -4031,7 +4031,7 @@ class Database(object):
 
         try:
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             if not (msr_id):
                 cursor.execute("INSERT INTO merge_shell_results () VALUES ()")
@@ -4131,7 +4131,7 @@ class Database(object):
 
         try:
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             #regardless of failure level
             command_front = """INSERT INTO integrate_results ( process_id,
@@ -4365,7 +4365,7 @@ class Database(object):
 
         try:
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             if (type != 'overall'):
                  shell_dict['wilsonB'] = '0'
@@ -4518,7 +4518,7 @@ class Database(object):
                     results['status'] = "COMPLETE"
 
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
             #self.logger.debug('Database::addMrResult5')
             #Information stored regardless of failure level
             command = '''UPDATE mr_results SET  timestamp=NOW(),
@@ -4590,7 +4590,7 @@ class Database(object):
         tmp_dict = self.make_dicts(query=query1,
                                   params=(mr_result_id,spacegroup))
         #connect to the database
-        connection,cursor = self.connect_to_data()
+        connection,cursor = self.get_db_connection()
 
         if (len(tmp_dict) > 0):
             query2 = """UPDATE mr_trial_results SET gain=%s,
@@ -4693,7 +4693,7 @@ class Database(object):
         self.LOCK.release()
         try:
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             #Information stored regardless of failure level
             command = '''UPDATE sad_results SET timestamp=NOW(),
@@ -4873,7 +4873,7 @@ class Database(object):
 
         try:
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             if not (shelxc_result_id):
                 cursor.execute("INSERT INTO shelxc_results () VALUES ()")
@@ -4917,7 +4917,7 @@ class Database(object):
 
         try:
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             if not (shelxd_result_id):
                 cursor.execute("INSERT INTO shelxd_results () VALUES ()")
@@ -4996,7 +4996,7 @@ class Database(object):
 
         try:
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             if not (shelxe_result_id):
                 cursor.execute("INSERT INTO shelxe_results () VALUES ()")
@@ -5073,7 +5073,7 @@ class Database(object):
 
         try:
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             command = '''INSERT INTO shelxe_sites (shelxe_result_id,
                                                    sad_result_id,
@@ -5121,7 +5121,7 @@ class Database(object):
 
         try:
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             if not (autosol_result_id):
                 cursor.execute("INSERT INTO autosol_results () VALUES ()")
@@ -5231,7 +5231,7 @@ class Database(object):
 
         try:
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             #Information stored regardless of failure level
             command = '''UPDATE mad_results SET timestamp=NOW(),
@@ -5413,7 +5413,7 @@ class Database(object):
 
         try:
             #connect to the database
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             for pdb,cell_analysis_result in cell_analysis_results.iteritems():
 
@@ -5497,7 +5497,7 @@ class Database(object):
             #The stats_results section
             try:
                 #connect to the database
-                connection,cursor = self.connect_to_data()
+                connection,cursor = self.get_db_connection()
 
                 command = '''INSERT INTO stats_results (result_id,
                                                         process_id,
@@ -5587,7 +5587,7 @@ class Database(object):
         self.logger.debug(date)
 
         #connect to the database
-        connection,cursor = self.connect_to_data()
+        connection,cursor = self.get_db_connection()
 
         try:
             #deposit the result
@@ -5783,7 +5783,7 @@ class Database(object):
         self.logger.debug('Database::getWavelengthFromRunId run_id=%d' % (run_id))
 
         #connect to the database
-        connection,cursor = self.connect_to_data()
+        connection,cursor = self.get_db_connection()
 
         try:
             query = "SELECT wavelength FROM images WHERE run_id=%s LIMIT 1"
@@ -5822,7 +5822,7 @@ class Database(object):
         self.logger.debug('Database::updateIntegrateResults %s' % status)
 
         #connect to the database
-        connection,cursor = self.connect_to_data()
+        connection,cursor = self.get_db_connection()
         try:
             if status == True:
                 query = '''UPDATE integrate_results SET integrate_status  = %s,
@@ -5850,7 +5850,7 @@ class Database(object):
         self.logger.debug('Database::updateIntegrateDatafiles %s %s %s' % (files[0],files[1],files[2]))
 
         #connect to the database
-        connection,cursor = self.connect_to_data()
+        connection,cursor = self.get_db_connection()
         try:
             query = '''UPDATE integrate_results SET unmerged_sca_file = %s,
                                                     sca_file          = %s,
@@ -5868,7 +5868,7 @@ class Database(object):
         self.logger.debug('Database::removeResult %d, %s' % (result_id,type))
 
         #connect to the database
-        connection,cursor = self.connect_to_data()
+        connection,cursor = self.get_db_connection()
 
         try:
             #delete from type-specific table
@@ -5965,7 +5965,7 @@ class Database(object):
 
         try:
             # Connect
-            connection, cursor = self.connect_to_data()
+            connection, cursor = self.get_db_connection()
 
             # Save into database
             self.logger.debug("Adding run from into database directory:%s image_prefix:%s" % (run["directory"], run["prefix"]))
@@ -6023,21 +6023,21 @@ class Database(object):
             self.closeConnection(connection,cursor)
             return(run_id)
 
-        except pymysql.IntegrityError , (errno, strerror):
+        except pymysql.IntegrityError, (errno, strerror):
             if errno == 1062:
                 self.logger.debug("Run is already in the database")
-                self.closeConnection(connection,cursor)
+                self.closeConnection(connection, cursor)
 
                 # Get the run_id and return it
-                return(self.getRunIdByInfo(run_data=run))
+                return self.getRunIdByInfo(run_data=run)
             else:
                 self.logger.exception("ERROR : unknown IntegrityError exception in rapd_mysql_adapter.add_run")
-                return(False)
+                return False
 
         except:
             self.logger.exception("ERROR : unknown exception in rapd_mysql_adapter.add_run")
             self.closeConnection(connection, cursor)
-            return(False)
+            return False
 
     def get_run_data(self,
                      site_tag=None,
@@ -6133,7 +6133,7 @@ class Database(object):
             self.logger.debug(image_dict)
 
             #connect to mysql server
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             #now search the runs table for a compatible run
             query2 = 'select run_id,total from runs where directory=%s AND image_prefix=%s AND run_number=%s AND %s>=start AND %s<= start+total'
@@ -6151,7 +6151,7 @@ class Database(object):
                 #self.logger.debug('%s is in a run\n' % image_dict['fullname'])
                 #mark the image with the run_id
                 cursor.execute("UPDATE images SET run_id=%s WHERE image_id=%s",(run_id,image_id))
-                self.closeConnection(connection,cursor)
+                self.closeConnection(connection, cursor)
                 #return True
                 return(run_id,total)
             else:
@@ -6169,7 +6169,7 @@ class Database(object):
 
         try:
             #connect
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
 
             #get the run information
             query1 = 'select start FROM runs WHERE run_id=%s'
@@ -6195,7 +6195,7 @@ class Database(object):
         self.logger.debug('Database::inRunPosition  image_number: %d  run_id: %d  position: %d' % (image_number,run_id,position))
 
         #connect
-        connection,cursor = self.connect_to_data()
+        connection,cursor = self.get_db_connection()
 
         #get the run information
         query1 = 'select start FROM runs WHERE run_id=%s'
@@ -6220,7 +6220,7 @@ class Database(object):
         self.logger.debug('Database::lastInRun')
 
         #connect to mysql server
-        connection,cursor = self.connect_to_data()
+        connection,cursor = self.get_db_connection()
 
         #get the start and total images of the run in question
         query1 = 'select start,total FROM runs WHERE run_id=%s'
@@ -6279,7 +6279,7 @@ class Database(object):
         self.logger.debug('Database::runAborted  run_id: %d' % run_dict['run_id'])
 
         #get cursor
-        connection,cursor = self.connect_to_data()
+        connection,cursor = self.get_db_connection()
 
         try:
             #get the images associated with the run
@@ -6320,7 +6320,7 @@ class Database(object):
       else:
         db_update = "UPDATE runs SET total=%d WHERE run_id=%d" % (run_data["total"],my_dicts[0]["run_id"])
         #get cursor
-        connection,cursor = self.connect_to_data()
+        connection,cursor = self.get_db_connection()
         cursor.execute(db_update)
         self.closeConnection(connection,cursor)
         my_dicts[0]["total"] = run_data["total"]
@@ -6749,7 +6749,7 @@ class Database(object):
         self.logger.debug("Database::update_controller_status")
 
         #connect to database
-        connection, cursor = self.connect_to_data()
+        connection, cursor = self.get_db_connection()
 
         #construct and run query
         try:
@@ -6765,7 +6765,7 @@ class Database(object):
         self.logger.debug('Database::updateClusterStatus')
 
         #connect to database
-        connection,cursor = self.connect_to_data()
+        connection,cursor = self.get_db_connection()
 
         #construct and run query
         try:
@@ -6777,7 +6777,7 @@ class Database(object):
     def bc_test(self):
         import math
         #connect to database
-        connection,cursor = self.connect_to_data()
+        connection,cursor = self.get_db_connection()
 
         cursor.execute('''SELECT single_results.labelit_res,single_results.labelit_mosaicity,single_results.labelit_rmsd,
                             single_results.timestamp,single_results.labelit_x_beam,single_results.labelit_y_beam,
@@ -6818,7 +6818,7 @@ class Database(object):
         self.logger.debug('Database::updatePdbLocation pdbs_id:%d  location:%s' % (pdbs_id,location))
 
         #connect to database
-        connection,cursor = self.connect_to_data()
+        connection,cursor = self.get_db_connection()
         #construct query
         query = "UPDATE pdbs SET location=%s WHERE pdbs_id=%s"
         params = (location,pdbs_id)
@@ -6841,7 +6841,7 @@ class Database(object):
         """
         #get the connection
         if (db == 'DATA'):
-            connection,cursor = self.connect_to_data()
+            connection,cursor = self.get_db_connection()
         elif (db == 'USERS'):
             connection,cursor = self.connect_to_user()
         elif (db == 'CLOUD'):
