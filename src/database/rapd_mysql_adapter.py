@@ -5968,7 +5968,7 @@ class Database(object):
             connection, cursor = self.get_db_connection()
 
             # Save into database
-            self.logger.debug("Adding run from into database directory:%s image_prefix:%s" % (run_data.get("directory", None), run_data,get("prefix", None)))
+            self.logger.debug("Adding run from into database directory:%s image_prefix:%s" % (run_data.get("directory", None), run_data.get("prefix", None)))
             cursor.execute("""INSERT INTO runs (anomalous,
                                                 directory,
                                                 distance,
