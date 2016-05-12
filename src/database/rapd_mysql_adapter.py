@@ -6093,14 +6093,11 @@ class Database(object):
                       run_data.get("number_images", None),
                       minutes,
                       order_param)
-            query_string = query % params
+            query_string = (query % params).replace("=None", "=NULL")
             self.logger.debug(query_string)
 
-        return {}
-
         # Query the database
-        result_dicts = self.make_dicts(query=query,
-                                       params=params)
+        result_dicts = self.make_dicts(query=query_string)
 
         # If no return, return a False
         if len(result_dicts) == 0:
@@ -6859,10 +6856,10 @@ class Database(object):
         #     connection,cursor = self.connect_to_cloud()
 
         # Execute the query
-        if (len(params)==0):
+        if len(params) == 0:
             cursor.execute(query)
         else:
-            cursor.execute(query,params)
+            cursor.execute(query, params)
 
         # Assemble the dict(s) into an array
         colnames = [desc[0] for desc in cursor.description]
