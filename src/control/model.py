@@ -257,11 +257,9 @@ class Model(object):
 
         # Instantiate the database connection
         self.database = database.Database(host=site.CONTROL_DATABASE_HOST,
+                                          port=site.CONTROL_DATABASE_PORT,
                                           user=site.CONTROL_DATABASE_USER,
-                                          password=site.CONTROL_DATABASE_PASSWORD,
-                                          data_name=site.CONTROL_DATABASE_DATA,
-                                          users_name=site.CONTROL_DATABASE_USERS,
-                                          cloud_name=site.CONTROL_DATABASE_CLOUD)
+                                          password=site.CONTROL_DATABASE_PASSWORD)
 
     def start_server(self):
         """Start up the listening process for core"""

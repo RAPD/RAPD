@@ -52,7 +52,7 @@ class Database(object):
     """
     def __init__(self,
                  host=None,
-                 port=None,
+                 port=3306,
                  user=None,
                  password=None,
                  settings=None):
