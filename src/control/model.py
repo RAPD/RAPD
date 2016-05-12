@@ -526,7 +526,7 @@ class Model(object):
         else:
 
             # Save to the database
-            run_id = self.database.add_run(site_id=site_tag,
+            run_id = self.database.add_run(site_tag=site_tag,
                                            run_data=run_data)
 
             # Save the current_run to somewhere handy
