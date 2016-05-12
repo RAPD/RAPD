@@ -35,7 +35,6 @@ import importlib
 import logging
 import os
 import socket
-import time
 
 # RAPD imports
 from control.control_server import LaunchAction, ControllerServer
@@ -136,7 +135,7 @@ class Model(object):
         self.start_run_monitor()
 
         # Start the image monitor
-        # self.start_image_monitor()
+        self.start_image_monitor()
 
         # Start the cloud monitor
         # self.start_cloud_monitor()
