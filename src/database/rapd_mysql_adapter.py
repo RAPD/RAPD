@@ -6021,7 +6021,7 @@ class Database(object):
                                               run_data.get("start_image_number", None),
                                               run_data.get("time", None),
                                               run_data.get("transmission", None),
-                                              run_data.get("two_theta", None)))
+                                              run_data.get("twotheta", None)))
             run_id = cursor.lastrowid
             self.closeConnection(connection,cursor)
             return(run_id)

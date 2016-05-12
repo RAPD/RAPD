@@ -361,7 +361,7 @@ class Gatherer(object):
                 "start_image_number":int(float(raw_run_data.get("first_image", 0))),
                 "time":float(raw_run_data.get("time", 0.0)),
                 "transmission":float(raw_run_data.get("trans", 0.0)),
-                "two_theta":None
+                "twotheta":None
             }
 
         else:
