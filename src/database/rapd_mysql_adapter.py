@@ -5961,14 +5961,14 @@ class Database(object):
         run_data -- dict containing run information
         site_tag -- unique identifier for the run origin site
         """
-        self.logger.debug("Database.add_run %s %s", site_tag, run_data)
+        self.logger.debug("add_run %s %s", site_tag, run_data)
 
         try:
             # Connect
             connection, cursor = self.get_db_connection()
 
             # Save into database
-            self.logger.debug("Adding run from into database directory:%s image_prefix:%s" % (run["directory"], run["prefix"]))
+            self.logger.debug("Adding run from into database directory:%s image_prefix:%s" % (run_data.get("directory", None), run_data,get("prefix", None)))
             cursor.execute("""INSERT INTO runs (anomalous,
                                                 directory,
                                                 distance,
