@@ -521,7 +521,7 @@ class Model(object):
 
         if recent_run_data != False:
 
-            pass
+            self.logger.debug("This run has already been recorded")
 
         else:
 
