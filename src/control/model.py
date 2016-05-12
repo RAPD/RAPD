@@ -875,7 +875,7 @@ class Model(object):
         # Tease out the info from the file name
         directory, basename, image_prefix, run_number, image_number = detector.parse_file_name(fullname)
 
-        self.logger.debug("%s %s %s %s %s", directory, basename, prefix, run_number, image_number)
+        self.logger.debug("%s %s %s %s %s", directory, basename, image_prefix, run_number, image_number)
 
         # SNAP?
         if self.database.query_in_run(site_tag=site_tag,
@@ -892,7 +892,7 @@ class Model(object):
             self.logger.debug("run_info %s", run_info)
             self.logger.debug("%s %s %s %d %d", (directory,
                                                  basename,
-                                                 prefix,
+                                                 image_prefix,
                                                  run_number,
                                                  image_number))
 
