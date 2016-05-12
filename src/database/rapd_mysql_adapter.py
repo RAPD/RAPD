@@ -6095,14 +6095,15 @@ class Database(object):
             #           order_param)
             query = "SELECT * FROM runs WHERE site_tag=%s AND directory=%s "#AND image_prefix=%s AND run_number=%s AND start_image_number=%s AND number_images=%s AND timestamp > NOW()-INTERVAL %s MINUTE ORDER BY timestamp %s"
             params = (site_tag,
-                      run_data.get("directory", None))
-                    #   run_data.get("image_prefix", None),
+                      run_data.get("directory", None),
+                      run_data.get("image_prefix", None))
                     #   run_data.get("run_number", None),
                     #   run_data.get("start_image_number", None),
                     #   run_data.get("number_images", None),
                     #   minutes,
                     #   order_param)
 
+        self.logger.debug(query)
         self.logger.debug(query, params)
         self.logger.debug(params)
 
