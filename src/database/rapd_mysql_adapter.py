@@ -6147,8 +6147,6 @@ class Database(object):
         boolean -- return just True if there is a or False
         """
 
-        self.logger.debug(site_tag, directory, image_prefix, run_number, image_number, minutes, boolean)
-
         # Order
         if order == "descending":
             order_param = "DESC"
