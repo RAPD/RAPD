@@ -6084,7 +6084,7 @@ class Database(object):
 
         # Limit to a time window
         else:
-            query = "SELECT * FROM runs WHERE site_tag=%r AND directory=%r AND image_prefix=%r AND run_number=%r AND start_image_number=%r AND number_images=%r AND timestamp > NOW()-INTERVAL %r MINUTE ORDER BY timestamp %r"
+            query = "SELECT * FROM runs WHERE site_tag='%s' AND directory='%s' AND image_prefix='%s' AND run_number=%d AND start_image_number=%d AND number_images=%d AND timestamp > NOW()-INTERVAL %d MINUTE ORDER BY timestamp %s"
             params = (site_tag,
                       run_data.get("directory", None),
                       run_data.get("image_prefix", None),
