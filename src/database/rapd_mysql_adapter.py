@@ -6165,7 +6165,7 @@ class Database(object):
         # Construct the query
         # No limit on the results
         if minutes == 0:
-            query = "SELECT %s FROM runs WHERE directory='%s' AND image_prefix='%s' AND run_number=%s AND start_image_number<=%s AND %s<=total+start_image_number+1"
+            query = "SELECT %s FROM runs WHERE directory='%s' AND image_prefix='%s' AND run_number=%s AND start_image_number<=%s AND %s<=number_images+start_image_number+1"
 
             params = (select_param,
                       directory,
@@ -6176,7 +6176,7 @@ class Database(object):
 
         # Limit to a time window
         else:
-            query = "SELECT %s FROM runs WHERE directory='%s' AND image_prefix='%s' AND run_number=%s AND start_image_number<=%s AND %s<=total+start_image_number+1 AND timestamp > NOW()-INTERVAL %d MINUTE"
+            query = "SELECT %s FROM runs WHERE directory='%s' AND image_prefix='%s' AND run_number=%s AND start_image_number<=%s AND %s<=number_images+start_image_number+1 AND timestamp > NOW()-INTERVAL %d MINUTE"
             params = (select_param,
                       directory,
                       image_prefix,
