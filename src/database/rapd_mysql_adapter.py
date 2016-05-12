@@ -6074,10 +6074,11 @@ class Database(object):
 
         # No limit on the results
         if minutes == 0:
-            query = "SELECT * FROM runs WHERE site_tag=%s AND directory=%s AND image_prefix=%s AND start_image_number=%s AND number_images=%s ORDER BY timestamp %s"
+            query = "SELECT * FROM runs WHERE site_tag='%s' AND directory='%s' AND image_prefix='%s' AND run_number=%s AND start_image_number=%s AND number_images=%s ORDER BY timestamp %s"
             params = (site_tag,
                       run_data.get("directory", None),
-                      run_data.get("prefix", None),
+                      run_data.get("image_prefix", None),
+                      run_data.get("run_number", None),
                       run_data.get("start_image_number", None),
                       run_data.get("number_images", None),
                       order_param)
@@ -6093,8 +6094,10 @@ class Database(object):
                       run_data.get("number_images", None),
                       minutes,
                       order_param)
-            query_string = (query % params).replace("=None", " is NULL")
-            self.logger.debug(query_string)
+
+        # Handle None values
+        query_string = (query % params).replace("=None", " is NULL")
+        self.logger.debug(query_string)
 
         # Query the database
         result_dicts = self.make_dicts(query=query_string)
