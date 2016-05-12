@@ -878,6 +878,7 @@ class Model(object):
         self.logger.debug("%s %s %s %s %s", directory, basename, image_prefix, run_number, image_number)
 
         # SNAP?
+        print ">>>>>>%s<<<<<<" % site_tag
         if self.database.query_in_run(site_tag=site_tag,
                                       directory=directory,
                                       image_prefix=image_prefix,
