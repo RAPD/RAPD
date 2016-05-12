@@ -379,8 +379,8 @@ class Model(object):
         """Handle a new image being recorded by the site"""
 
         # Unpack image_data
-        fullname = image_data.get("fullname", False)
-        site_tag = image_data.get("site_tag", False)
+        fullname = image_data.get("fullname", None)
+        site_tag = image_data.get("site_tag", None)
 
         self.logger.debug("Received new image %s", fullname)
 
@@ -858,7 +858,7 @@ class Model(object):
         fullname -- full path name of the image in question
         run_info -- dict describing run
         """
-        self.logger.info(fullname)
+        self.logger.debug("%s %s", site_tag, fullname)
 
         if run_info == None:
             if self.current_run == None:
