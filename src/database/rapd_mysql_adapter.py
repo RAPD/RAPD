@@ -6094,7 +6094,7 @@ class Database(object):
             #           minutes,
             #           order_param)
             query = "SELECT * FROM runs WHERE site_tag=%s AND directory=%s "#AND image_prefix=%s AND run_number=%s AND start_image_number=%s AND number_images=%s AND timestamp > NOW()-INTERVAL %s MINUTE ORDER BY timestamp %s"
-            params = ("1", "2")
+            params = ("1", "2", "3")
             # params = (site_tag,
             #           run_data.get("directory", None))
                     #   run_data.get("image_prefix", None))
