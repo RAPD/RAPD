@@ -129,7 +129,7 @@ class Database(object):
                 # Connect
                 connection = pymysql.connect(host=self.db_host,
                                              port=self.db_port,
-                                             db=self.db_data_name,
+                                             db="rapd",
                                              user=self.db_user,
                                              password=self.db_password)
                 cursor = connection.cursor()
