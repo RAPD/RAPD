@@ -207,7 +207,8 @@ class Database(object):
 
         connection, cursor = self.get_db_connection()
 
-        cursor.execute("""INSERT INTO images (beam_center_calc_x,
+        # Construct the query
+        query = """INSERT INTO images (beam_center_calc_x,
                                               beam_center_calc_y,
                                               beam_center_x,
                                               beam_center_y,
@@ -247,58 +248,112 @@ class Database(object):
                                               source_mode,
                                               time,
                                               transmission,
-                                              twotheta) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                       (data.get("beam_center_calc_x", None),
-                        data.get("beam_center_calc_y", None),
-                        data.get("beam_center_x", None),
-                        data.get("beam_center_y", None),
-                        data.get("beam_gauss_x", None),
-                        data.get("beam_gauss_y", None),
-                        data.get("beam_size_x", None),
-                        data.get("beam_size_y", None),
-                        data.get("collect_mode", None),
-                        data.get("date", None),
-                        data.get("detector", None),
-                        data.get("detector_sn", None),
-                        data.get("distance", None),
-                        data.get("energy", None),
-                        data.get("flux", None),
-                        data.get("fullname", None),
-                        data.get("image_number", None),
-                        data.get("image_prefix", None),
-                        data.get("kappa", None),
-                        data.get("omega", None),
-                        data.get("osc_axis", None),
-                        data.get("osc_range", None),
-                        data.get("osc_start", None),
-                        data.get("phi", None),
-                        data.get("pixel_size", None),
-                        data.get("rapd_detector_id", None),
-                        data.get("robot_position", None),
-                        data.get("run_id", None),
-                        data.get("run_number", None),
-                        data.get("sample_id", None),
-                        data.get("sample_pos_x", None),
-                        data.get("sample_pos_y", None),
-                        data.get("sample_pos_z", None),
-                        data.get("site_tag", None),
-                        data.get("size1", None),
-                        data.get("size2", None),
-                        data.get("source_current", None),
-                        data.get("source_mode", None),
-                        data.get("time", None),
-                        data.get("transmission", None),
-                        data.get("twotheta", None)))
+                                              twotheta) values (%s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s,
+                                                                %s)"""
+        parameters = (data.get("beam_center_calc_x", None),
+                      data.get("beam_center_calc_y", None),
+                      data.get("beam_center_x", None),
+                      data.get("beam_center_y", None),
+                      data.get("beam_gauss_x", None),
+                      data.get("beam_gauss_y", None),
+                      data.get("beam_size_x", None),
+                      data.get("beam_size_y", None),
+                      data.get("collect_mode", None),
+                      data.get("date", None),
+                      data.get("detector", None),
+                      data.get("detector_sn", None),
+                      data.get("distance", None),
+                      data.get("energy", None),
+                      data.get("flux", None),
+                      data.get("fullname", None),
+                      data.get("image_number", None),
+                      data.get("image_prefix", None),
+                      data.get("kappa", None),
+                      data.get("omega", None),
+                      data.get("osc_axis", None),
+                      data.get("osc_range", None),
+                      data.get("osc_start", None),
+                      data.get("phi", None),
+                      data.get("pixel_size", None),
+                      data.get("rapd_detector_id", None),
+                      data.get("robot_position", None),
+                      data.get("run_id", None),
+                      data.get("run_number", None),
+                      data.get("sample_id", None),
+                      data.get("sample_pos_x", None),
+                      data.get("sample_pos_y", None),
+                      data.get("sample_pos_z", None),
+                      data.get("site_tag", None),
+                      data.get("size1", None),
+                      data.get("size2", None),
+                      data.get("source_current", None),
+                      data.get("source_mode", None),
+                      data.get("time", None),
+                      data.get("transmission", None),
+                      data.get("twotheta", None))
+
+        # Execute the query
+        try:
+            cursor.execute(query, parameters)
+
+        except pymysql.err.IntegrityError as error:
+            error_number, error_message = error
+            if error_number == 1062:
+                self.logger.error("Duplicate image entry - ignoring")
+                self.close_connection(connection, cursor)
+                return False
+            else:
+                self.logger.error(error_number, error_message)
 
         # Put the image_id in the dict for future use
         image_id = cursor.lastrowid
 
-        self.close_connection(connection, cursor)
-
         # Now grab the dict from the MySQL table
         image_dict = self.get_image_by_image_id(image_id=image_id)
 
-        return(image_dict, True)
+        # Close connection
+        self.close_connection(connection, cursor)
+
+        return image_dict
 
     def add_pilatus_image(self, data):
         """

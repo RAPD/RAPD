@@ -444,8 +444,13 @@ class Model(object):
                 header["data_root_dir"] = data_root_dir
 
                 # Add to database
-                db_result, __ = self.database.add_image(header)
-                header.update(db_result)
+                db_result = self.database.add_image(header)
+
+                # Duplicate entry
+                if db_result == False:
+                    return False
+                else:
+                    header.update(db_result)
 
                 # Mark the run as INTEGRATING
                 self.current_run["status"] = "INTEGRATING"
@@ -476,8 +481,13 @@ class Model(object):
                 header.update(site_data)
 
             # Add to database
-            db_result, __ = self.database.add_image(header)
-            header.update(db_result)
+            db_result= self.database.add_image(header)
+
+            # Duplicate entry
+            if db_result == False:
+                return False
+            else:
+                header.update(db_result)
 
             # Update remote client
             if self.remote_adapter:
