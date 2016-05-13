@@ -458,11 +458,11 @@ class Model(object):
 
             # Get all the image information
             header = detector.read_header(fullname=fullname,
-                                          beam_settings=self.site.BEAM_SETTINGS)
+                                          beam_settings=self.site.BEAM_INFO[site_tag.upper()])
 
-            # Add some data to the header
-            header["run_id"] = 0
-            header["data_root_dir"] = data_root_dir
+            # Add some data to the header - no run_id for snaps
+            header["run_id"] = None
+            # header["data_root_dir"] = data_root_dir
 
             # Grab extra data for the image and add to the header
             if self.site_adapter:

@@ -57,6 +57,21 @@ def parse_file_name(fullname):
 
     return directory, basename, prefix, run_number, image_number
 
+# Derive data root dir from image name
+def get_data_root_dir(fullname):
+    """
+    Derive the data root directory from the user directory
+
+    The logic will most likely be unique for each site
+    """
+
+    # Isolate distinct properties of the images path
+    path_split = fullname.split(os.path.sep)
+    data_root_dir = os.path.join("/", *path_split[1:3])
+
+    # Return the determined directory
+    return data_root_dir
+
 def create_image_fullname(directory,
                           image_prefix,
                           run_number=None,
@@ -163,9 +178,6 @@ def read_header(fullname, beam_settings):
     # Perform the header read form the file
     header = detector.read_header(fullname)
 
-    # Add tag for module to header
-    header["rapd_detector_id"] = "sercat_rayonix_mx300"
-
     # Add some values HACK
     header["aperture_x"] = 50
     header["aperture_y"] = 50
@@ -192,26 +204,17 @@ def read_header(fullname, beam_settings):
     header["beam_center_calc_x"] = calc_beam_center_x
     header["beam_center_calc_y"] = calc_beam_center_y
 
+    # Get the data_root_dir
+    header["data_root_dir"] = get_data_root_dir(fullname)
+
     # Set the header version value - future flexibility
     header["header_version"] = HEADER_VERSION
 
+    # Add tag for module to header
+    header["rapd_detector_id"] = "sercat_rayonix_mx300"
+
     # Return the header
     return header
-
-# Derive data root dir from image name
-def get_data_root_dir(fullname):
-    """
-    Derive the data root directory from the user directory
-
-    The logic will most likely be unique for each site
-    """
-
-    # Isolate distinct properties of the images path
-    path_split = fullname.split(os.path.sep)
-    data_root_dir = os.path.join("/", *path_split[1:3])
-
-    # Return the determined directory
-    return data_root_dir
 
 if __name__ == "__main__":
 
