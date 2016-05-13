@@ -879,14 +879,17 @@ def create_data_tables(hostname, port, username, password):
     # For storing information about launched agent processes
     agent_processes = """agent_process_id int(10) unsigned NOT NULL AUTO_INCREMENT,
         agent_type varchar(64) DEFAULT NULL,
+        data_root_dir varchar(128) DEFAULT NULL,
         display varchar(12) DEFAULT NULL,
         progress tinyint(3) unsigned DEFAULT NULL,
         representation varchar(128) DEFAULT NULL,
         request_type varchar(12) DEFAULT NULL,
+        session_uuid varchar(64) DEFAULT NULL,
         timestamp1 timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
         timestamp2 timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
         PRIMARY KEY (agent_process_id),
         KEY data_root_dir (data_root_dir),
+        KEY session_uuid (session_uuid),
         KEY timestamp1 (timestamp1)"""
 
     create_table(hostname=hostname,
