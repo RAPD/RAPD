@@ -454,7 +454,7 @@ class Model(object):
                 header["run"] = self.current_run.copy()
 
                 # KBO
-                self.new_data_image(data=header)
+                self.new_data_image(header=header)
 
         # Image is a snap
         elif place == "SNAP":
@@ -484,7 +484,7 @@ class Model(object):
                 self.remote_adapter.add_image(header)
 
             # KBO
-            self.new_data_image(data=header)
+            self.new_data_image(header=header)
 
         # Image is in a past run
         elif isinstance(place, int) and isinstance(run_info, dict):
@@ -619,7 +619,7 @@ class Model(object):
     #
     #                 self.current_run["status"] = "INTEGRATING"
     #                 header["run"] = self.current_run.copy()
-    #                 self.new_data_image(data=header)
+    #                 self.new_data_image(header=header)
     #
     #         # Image is not in the current run
     #         else:
@@ -641,7 +641,7 @@ class Model(object):
     #                 header.update(db_result)
     #
     #                 # Run the image as a new data image
-    #                 self.new_data_image(data=header)
+    #                 self.new_data_image(header=header)
     #
     #             # Image is in a past run
     #             elif place == "PAST_RUN":
@@ -670,7 +670,7 @@ class Model(object):
     #                         #Now trigger integration - if not integrating
     #                         if run["status"] != "INTEGRATING":
     #                             run["status"] = "INTEGRATING"
-    #                             self.new_data_image(data=header)
+    #                             self.new_data_image(header=header)
 
     def add_pilatus_image(self, fullname):
         """A new Pilatus6MF image has arrived"""
@@ -737,7 +737,7 @@ class Model(object):
                     header["run"] = self.current_run
 
                     self.current_run["status"] = "INTEGRATING"
-                    self.new_data_image(data=header)
+                    self.new_data_image(header=header)
 
                 # Already integrating the run - no need to do a full query
                 else:
@@ -763,7 +763,7 @@ class Model(object):
                     header.update(db_result)
 
                     #Run the image as a new data image
-                    self.new_data_image(data=header)
+                    self.new_data_image(header=header)
 
                 # A past run
                 elif place == "PAST_RUN":
@@ -794,7 +794,7 @@ class Model(object):
                             #Now trigger integration - if not integrating
                             if run["status"] != "INTEGRATING":
                                 run["status"] = "INTEGRATING"
-                                self.new_data_image(data=header)
+                                self.new_data_image(header=header)
 
     def get_pilatus_header(self,
                            fullname,
@@ -965,6 +965,9 @@ class Model(object):
             3. The image is first in a wedge of data collection
             4. The image is in the middle of a wedge of data collection
             5. The image is last in a wedge of data collection
+
+        Keyword argument
+        header -- dict containing lots of image information
         """
 
         self.logger.debug(header["fullname"])
@@ -1031,8 +1034,8 @@ class Model(object):
                                                          progress=0,
                                                          display="show")
 
-            # Add the ID entry to the data dict
-            data.update({"agent_process_id":process_id,
+            # Add the ID entry to the header dict
+            header.update({"agent_process_id":process_id,
                          "repr":new_repr})
 
             # Run autoindex and strategy agent
@@ -1061,7 +1064,7 @@ class Model(object):
                     data1 = self.database.get_image_by_image_id(image_id=self.pair_id[0])
 
                     # Make a copy of the second pair to be LESS confusing
-                    data2 = data.copy()
+                    data2 = header.copy()
 
                     # Derive  directory and repr
                     work_dir, new_repr = self.get_index_work_dir(process_settings["work_directory"],
