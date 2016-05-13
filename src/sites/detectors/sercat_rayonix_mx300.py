@@ -178,11 +178,15 @@ def read_header(fullname, beam_settings):
 
     # Perform the header read form the file
     header = detector.read_header(fullname)
-
-    print header
-
+    
     # Label with detector
     header["detector"] = DETECTOR
+
+    # Set the header version value - future flexibility
+    header["header_version"] = HEADER_VERSION
+
+    # Add tag for module to header
+    header["rapd_detector_id"] = "sercat_rayonix_mx300"
 
     # Add some values HACK
     header["aperture_x"] = 50
@@ -195,9 +199,11 @@ def read_header(fullname, beam_settings):
 
     # Translate from mar to RAPD
     header["osc_axis"] = header["axis"]
+    header["omega"] = header["omega_start"]
+
+    # Missing values
     header["kappa"] = None
     header["phi"] = None
-    header["omega"] = header["omega_start"]
     header["robot_position"] = None
     header["run_number"] = None
     header["sample_id"] = None
@@ -227,12 +233,6 @@ def read_header(fullname, beam_settings):
 
     # Get the data_root_dir
     header["data_root_dir"] = get_data_root_dir(fullname)
-
-    # Set the header version value - future flexibility
-    header["header_version"] = HEADER_VERSION
-
-    # Add tag for module to header
-    header["rapd_detector_id"] = "sercat_rayonix_mx300"
 
     # Return the header
     return header
