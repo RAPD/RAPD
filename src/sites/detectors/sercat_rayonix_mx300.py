@@ -194,9 +194,9 @@ def read_header(fullname, beam_settings):
 
     # Translate from mar to RAPD
     header["osc_axis"] = header["axis"]
-
-    header[""] = header[""]
-    header[""] = header[""]
+    # 
+    # header[""] = header[""]
+    # header[""] = header[""]
 
     # Perform flux calculation
     flux, beam_size_x, beam_size_y = calculate_flux(header, beam_settings)
