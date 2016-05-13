@@ -118,7 +118,7 @@ LOG_LEVEL = 50
 # Process is a singleton? The file to lock to. False if no locking.
 CONTROL_LOCK_FILE = "/tmp/lock/rapd_control.lock"
 
-# Root of working directories for control
+
 
 
 # Where files from UI are uploaded - should be visible by launch instance
@@ -195,7 +195,7 @@ SITE_ADAPTER_REDIS_CLUSTER = False
 
 # For connecting to the remote access system fr the site
 REMOTE_ADAPTER = "sites.site_adapters.necat_remote"     # file name prefix for adapter in src/
-REMOTE_ADAPTER_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER
+# REMOTE_ADAPTER_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER
 
 
 ##
