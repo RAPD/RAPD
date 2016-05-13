@@ -189,12 +189,13 @@ def read_header(fullname, beam_settings):
     header["aperture_y"] = 50
     header["transmission"] = 50
 
-    # Translate wavelength to energy
-    header["energy"] = 12400.0 / header["wavelength"]
-
+    # Correct error wavelength >> energy
+    header["energy"] = header["wavelength"]
+    del header["wavelength"]
+    
     # Translate from mar to RAPD
     header["osc_axis"] = header["axis"]
-    # 
+    #
     # header[""] = header[""]
     # header[""] = header[""]
 
