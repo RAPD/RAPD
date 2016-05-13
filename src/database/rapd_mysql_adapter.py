@@ -198,6 +198,9 @@ class Database(object):
     def add_image(self, data):
         """
         Add new image to the MySQL database.
+
+        Keyword arguments
+        data -- dict with all the requisite parts
         """
 
         self.logger.debug(data)
@@ -212,7 +215,6 @@ class Database(object):
                                               beam_gauss_y,
                                               beam_size_x,
                                               beam_size_y,
-                                              binning,
                                               collect_mode,
                                               date,
                                               detector,
@@ -222,13 +224,13 @@ class Database(object):
                                               flux,
                                               fullname,
                                               image_number,
+                                              image_prefix,
                                               kappa,
                                               omega,
                                               osc_axis,
                                               osc_range,
                                               osc_start,
                                               phi,
-                                              period,
                                               pixel_size,
                                               prefix,
                                               rapd_detector_id,
@@ -246,7 +248,7 @@ class Database(object):
                                               source_mode,
                                               time,
                                               transmission,
-                                              twotheta) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                                              twotheta) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                        (data.get("beam_center_calc_x", None),
                         data.get("beam_center_calc_y", None),
                         data.get("beam_center_x", None),
@@ -255,7 +257,6 @@ class Database(object):
                         data.get("beam_gauss_y", None),
                         data.get("beam_size_x", None),
                         data.get("beam_size_y", None),
-                        data.get("binning", None),
                         data.get("collect_mode", None),
                         data.get("date", None),
                         data.get("detector", None),
@@ -265,6 +266,7 @@ class Database(object):
                         data.get("flux", None),
                         data.get("fullname", None),
                         data.get("image_number", None),
+                        data.get("image_prefix", None),
                         data.get("kappa", None),
                         data.get("omega", None),
                         data.get("osc_axis", None),
@@ -273,7 +275,6 @@ class Database(object):
                         data.get("period", None),
                         data.get("phi", None),
                         data.get("pixel_size", None),
-                        data.get("prefix", None),
                         data.get("rapd_detector_id", None),
                         data.get("robot_position", None),
                         data.get("run_id", None),

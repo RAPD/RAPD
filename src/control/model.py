@@ -461,6 +461,7 @@ class Model(object):
                                           beam_settings=self.site.BEAM_INFO[site_tag.upper()])
 
             # Add some data to the header - no run_id for snaps
+            header["collect_mode"] = "snap"
             header["run_id"] = None
             header["site_tag"] = site_tag
 

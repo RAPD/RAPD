@@ -588,7 +588,6 @@ def create_data_tables(hostname, port, username, password):
         beam_gauss_y float DEFAULT NULL,
         beam_size_x float DEFAULT NULL,
         beam_size_y float DEFAULT NULL,
-        binning varchar(5) DEFAULT NULL,
         collect_mode varchar(8) DEFAULT NULL,
         date datetime DEFAULT NULL,
         detector varchar(64) DEFAULT NULL,
