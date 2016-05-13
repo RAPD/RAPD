@@ -35,6 +35,7 @@ import sys
 # RAPD imports
 import detectors.rayonix_mx300 as detector
 
+DETECTOR = "rayonix_mx300"
 DETECTOR_SUFFIX = ""
 HEADER_VERSION = 1
 
@@ -178,6 +179,11 @@ def read_header(fullname, beam_settings):
     # Perform the header read form the file
     header = detector.read_header(fullname)
 
+    print header
+
+    # Label with detector
+    header["detector"] = DETECTOR
+
     # Add some values HACK
     header["aperture_x"] = 50
     header["aperture_y"] = 50
@@ -185,6 +191,12 @@ def read_header(fullname, beam_settings):
 
     # Translate wavelength to energy
     header["energy"] = 12400.0 / header["wavelength"]
+
+    # Translate from mar to RAPD
+    header["osc_axis"] = header["axis"]
+
+    header[""] = header[""]
+    header[""] = header[""]
 
     # Perform flux calculation
     flux, beam_size_x, beam_size_y = calculate_flux(header, beam_settings)

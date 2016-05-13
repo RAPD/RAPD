@@ -591,7 +591,7 @@ def create_data_tables(hostname, port, username, password):
         binning varchar(5) DEFAULT NULL,
         collect_mode varchar(8) DEFAULT NULL,
         date datetime DEFAULT NULL,
-        detector varchar(12) DEFAULT NULL,
+        detector varchar(64) DEFAULT NULL,
         detector_sn varchar(12) DEFAULT NULL,
         distance float DEFAULT NULL,
         energy float DEFAULT NULL,
