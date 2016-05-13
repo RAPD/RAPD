@@ -60,8 +60,8 @@ class Model(object):
     detectors = {}
 
     # Keeping track of image pairs
-    pair = collections.deque(["", ""], 2)
-    pair_id = collections.deque(["", ""], 2)
+    pairs = {}
+    pair_ids = {}
 
     # Controlling simultaneous image processing
     indexing_queue = collections.deque()
@@ -239,10 +239,15 @@ class Model(object):
         # A string is input - one tag
         if isinstance(self.site.ID, str):
             self.site_ids = [self.site.ID]
+            self.pairs[self.site.ID] = collections.deque(["", ""], 2)
+            self.pair_ids[self.site.ID] = collections.deque(["", ""], 2)
+
         # Tuple or list
         elif isinstance(self.site.ID, tuple) or isinstance(self.site.ID, list):
             for site_id in self.site.ID:
                 self.site_ids.append(site_id)
+                self.pairs[site_id] = collections.deque(["", ""], 2)
+                self.pair_ids[site_id] = collections.deque(["", ""], 2)
 
     def connect_to_database(self):
         """Set up database connection"""
@@ -461,7 +466,7 @@ class Model(object):
                                           beam_settings=self.site.BEAM_INFO[site_tag.upper()])
 
             # Add some data to the header - no run_id for snaps
-            header["collect_mode"] = "snap"
+            header["collect_mode"] = "SNAP"
             header["run_id"] = None
             header["site_tag"] = site_tag
 
@@ -950,7 +955,7 @@ class Model(object):
             else:
                 return "PAST", None
 
-    def new_data_image(self, data):
+    def new_data_image(self, header):
         """
         Handle the information that there is a new image in the database.
 
@@ -962,87 +967,78 @@ class Model(object):
             5. The image is last in a wedge of data collection
         """
 
-        self.logger.debug("Model::new_data_image %s", data["fullname"])
-        self.logger.debug(data)
+        self.logger.debug(header["fullname"])
 
         # Save some typing
         site = self.site
         data_root_dir = data["data_root_dir"]
 
-        # Acquire the settings for this image in case they have changed via UI
-        process_settings = self.database.get_current_settings(id=self.site.ID)
+        # Grab out some run information
+        # try:
+        #     run_id = data["run_id"]
+        #     run_total = data["run"]["total"]
+        # except:
+        #     run_id = 0
+        #     run_total = 0
 
-        try:
-            run_id = data["run_id"]
-            run_total = data["run"]["total"]
-        except:
-            run_id = 0
-            run_total = 0
-
-        # data_root_dir has changed
-        if data_root_dir != self.data_root_dir:
-
-            #reset the pucks since we are presumably a new user
-            #this works in a NO-CONSOLE version of pucks
-            #self.database.resetPucks(beamline=self.site)
-
-            # We have a new drd - check for a previous setting
-            self.logger.debug("DRD has changed to %s", data_root_dir)
-            check = self.database.check_new_data_root_dir_setting(data_root_dir=data_root_dir,
-                                                                  site_id=site.ID)
-            if check:
-                self.logger.debug("Found and will employ settings this new data root dir")
-
-            # Set the instance data_root_dir to the new one
-            self.data_root_dir = data_root_dir
-
-            # New settings have been returned - use them
-            if check:
-                process_settings = check
-                self.logger.debug(process_settings)
-
-        # No change in data_root_dir
-        else:
-            self.logger.debug("Data root directory is unchanged %s", data_root_dir)
-            # Update the current table in the database
-            self.database.update_current(process_settings)
+        # # data_root_dir has changed
+        # if data_root_dir != self.data_root_dir:
+        #
+        #     # We have a new drd - check for a previous setting
+        #     self.logger.debug("DRD has changed to %s", data_root_dir)
+        #     check = self.database.check_new_data_root_dir_setting(data_root_dir=data_root_dir,
+        #                                                           site_id=site.ID)
+        #     if check:
+        #         self.logger.debug("Found and will employ settings this new data root dir")
+        #
+        #     # Set the instance data_root_dir to the new one
+        #     self.data_root_dir = data_root_dir
+        #
+        #     # New settings have been returned - use them
+        #     if check:
+        #         process_settings = check
+        #         self.logger.debug(process_settings)
+        #
+        # # No change in data_root_dir
+        # else:
+        #     self.logger.debug("Data root directory is unchanged %s", data_root_dir)
+        #     # Update the current table in the database
+        #     self.database.update_current(process_settings)
 
         # Sample identification
         # This is a hack for getting sample_id into the images
         # if process_settings.has_key("puckset_id"):
         #     data = self.database.setImageSampleId(image_dict=data,
         #                                           puckset_id=process_settings["puckset_id"])
-        print run_id
-        print data
-        if data["collect_mode"] == "SNAP":
+
+        if header["collect_mode"] == "SNAP":
 
             # Add the image to self.pair
-            self.pair.append(data["fullname"].lower())
-            self.pair_id.append(data["image_id"])
+            self.pairs[header["site_tag"].upper()].append(header["fullname"].lower())
+            self.pair_ids[header["site_tag"].upper()].append(header["image_id"])
 
-            work_dir, new_repr = self.get_work_dir(top_level = process_settings["work_directory"],
-                                                   type_level = "single",
-                                                   image_data1 = data)
+            work_dir, new_repr = self.get_index_work_dir(type_level = "index_strategy_single",
+                                                         image_data1 = header)
 
             # Now package directories into a dict for easy access by worker class
             new_dirs = {"work":work_dir,
                         "data_root_dir":data_root_dir}
 
             # Add the process to the database to display as in-process
-            process_id = self.database.addNewProcess(type="single",
-                                                     rtype="original",
-                                                     data_root_dir=data_root_dir,
-                                                     repr=new_repr)
+            process_id = self.database.add_agent_process(agent_type="index+strategy:single",
+                                                         request_type="original",
+                                                         representation=new_repr,
+                                                         progress=0,
+                                                         display="show")
 
             # Add the ID entry to the data dict
-            data.update({"ID":os.path.basename(work_dir),
-                         "process_id":process_id,
+            data.update({"agent_process_id":process_id,
                          "repr":new_repr})
 
             # Run autoindex and strategy agent
             LaunchAction(command=("AUTOINDEX",
                                   new_dirs,
-                                  data,
+                                  header,
                                   site.LAUNCH_SETTINGS,
                                   self.return_address),
                           settings=process_settings)
@@ -1068,7 +1064,7 @@ class Model(object):
                     data2 = data.copy()
 
                     # Derive  directory and repr
-                    work_dir, new_repr = self.get_work_dir(process_settings["work_directory"],
+                    work_dir, new_repr = self.get_index_work_dir(process_settings["work_directory"],
                                                            "pair",
                                                            data1,
                                                            data2)
@@ -1123,7 +1119,7 @@ class Model(object):
             run_dict = data["run"].copy()
 
             # Derive  directory and repr
-            work_dir, new_repr = self.get_work_dir(process_settings["work_directory"],
+            work_dir, new_repr = self.get_index_work_dir(process_settings["work_directory"],
                                                    "integrate",
                                                    data)
 
@@ -1164,13 +1160,17 @@ class Model(object):
                 integration pipeline")
 
 
-    def get_work_dir(self, top_level, type_level, image_data1, image_data2=None):
-        """Return a valid working directory for rapd_agent to work in"""
+    def get_index_work_dir(self, type_level, image_data1, image_data2=False):
+        """
+        Return a valid working directory for rapd_agent to work in
 
-        print "get_work_dir", top_level, type_level, image_data1, image_data2
+        Keyword arguments
+        type_level -- the type of indexing, single or pair
+        image_data1 -- header information from the first image
+        image_data2 -- header information from the second image
+        """
 
-        # Top level
-        toplevel_dir = top_level
+        print "get_index_work_dir", top_level, type_level, image_data1, image_data2
 
         # Type level
         typelevel_dir = type_level
@@ -1180,29 +1180,28 @@ class Model(object):
 
         # Lowest level
         if type_level == "single":
-            sub_dir = image_data1["basename"]
+            sub_dir = "%s:%s" % (image_data1["image_prefix"], image_data1["image_number"])
         elif type_level == "pair":
-            sub_dir = image_data1["basename"] + "+" + str(image_data2["image_number"])
-        elif type_level == "integrate":
-            sub_dir = "_".join((image_data1["image_prefix"], str(image_data1["run_number"])))
+            sub_dir = "%s:%s+%s" % (image_data1["image_prefix"], image_data1["image_number"], image_data2["image_number"])
+
+        # Use the last leg of the directory as the repr
         new_repr = sub_dir
 
         # Join the  levels
-        work_dir_candidate = os.path.join(toplevel_dir,
-                                          typelevel_dir,
+        work_dir_candidate = os.path.join(typelevel_dir,
                                           datelevel_dir,
                                           sub_dir)
 
-        # Make sure this is an original directory
-        if os.path.exists(work_dir_candidate):
-            # Already exists
-            for i in range(1, 1000):
-                if not os.path.exists("_".join((work_dir_candidate, str(i)))):
-                    work_dir_candidate = "_".join((work_dir_candidate, str(i)))
-                    new_repr = "_".join((new_repr, str(i)))
-                    break
-                else:
-                    i += 1
+        # # Make sure this is an original directory
+        # if os.path.exists(work_dir_candidate):
+        #     # Already exists
+        #     for i in range(1, 1000):
+        #         if not os.path.exists("_".join((work_dir_candidate, str(i)))):
+        #             work_dir_candidate = "_".join((work_dir_candidate, str(i)))
+        #             new_repr = "_".join((new_repr, str(i)))
+        #             break
+        #         else:
+        #             i += 1
 
         return work_dir_candidate, new_repr
 

@@ -793,6 +793,112 @@ def create_data_tables(hostname, port, username, password):
                  table_definition=runs,
                  drop=False)
 
+    # Preferences
+    prefs = """"""
+
+    # Preferences for indexing
+    prefs_index = """prefs_indexing_id mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+        site varchar(12) DEFAULT NULL,
+        data_root_dir varchar(256) DEFAULT NULL,
+        multiprocessing varchar(5) DEFAULT NULL,
+        spacegroup varchar(12) DEFAULT NULL,
+        sample_type varchar(12) DEFAULT NULL,
+        solvent_content float DEFAULT NULL,
+        susceptibility float DEFAULT NULL,
+        crystal_size_x smallint(5) unsigned DEFAULT NULL,
+        crystal_size_y smallint(5) unsigned DEFAULT NULL,
+        crystal_size_z smallint(5) unsigned DEFAULT NULL,
+        a float DEFAULT NULL,
+        b float DEFAULT NULL,
+        c float DEFAULT NULL,
+        alpha float DEFAULT NULL,
+        beta float DEFAULT NULL,
+        gamma float DEFAULT NULL,
+        work_dir_override varchar(5) DEFAULT NULL,
+        work_directory varchar(256) DEFAULT NULL,
+        beam_flip varchar(5) DEFAULT NULL,
+        x_beam varchar(12) DEFAULT NULL,
+        y_beam varchar(12) DEFAULT NULL,
+        index_hi_res float DEFAULT NULL,
+        strategy_type varchar(8) DEFAULT NULL,
+        best_complexity varchar(4) DEFAULT NULL,
+        mosflm_seg tinyint(3) unsigned DEFAULT NULL,
+        mosflm_rot float DEFAULT NULL,
+        mosflm_start float DEFAULT '0',
+        mosflm_end float DEFAULT '360',
+        aimed_res float DEFAULT NULL,
+        beam_size_x varchar(12) DEFAULT NULL,
+        beam_size_y varchar(12) DEFAULT NULL,
+        integrate varchar(5) DEFAULT NULL,
+        reference_data_id mediumint(8) unsigned DEFAULT '0',
+        setting_type varchar(8) DEFAULT NULL,
+        timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (setting_id)"""
+
+    create_table(hostname=hostname,
+                 port=port,
+                 username=username,
+                 password=password,
+                 database="rapd",
+                 table="prefs_index",
+                 table_definition=prefs_index,
+                 drop=False)
+
+    # Preferences for site
+    # These are admin-level settings that can be manipulated on the fly
+
+    # Preferences for strategy
+    prefs_strategy = """prefs_strategy_id mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
+        aimed_res float DEFAULT NULL,
+        best_complexity varchar(4) DEFAULT NULL,
+        crystal_size_x smallint(5) unsigned DEFAULT NULL,
+        crystal_size_y smallint(5) unsigned DEFAULT NULL,
+        crystal_size_z smallint(5) unsigned DEFAULT NULL,
+        mosflm_end float DEFAULT NULL,
+        mosflm_rot float DEFAULT NULL,
+        mosflm_seg tinyint(3) unsigned DEFAULT NULL,
+        mosflm_start float DEFAULT NULL,
+        sample_type varchar(12) DEFAULT NULL,
+        solvent_content float DEFAULT NULL,
+        spacegroup varchar(12) DEFAULT NULL,
+        strategy_type varchar(8) DEFAULT NULL,
+        susceptibility float DEFAULT NULL,
+        timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (prefs_strategy_id)"""
+
+    create_table(hostname=hostname,
+                 port=port,
+                 username=username,
+                 password=password,
+                 database="rapd",
+                 table="prefs_strategy",
+                 table_definition=prefs_strategy,
+                 drop=False)
+
+    # agent_processes
+    # For storing information about launched agent processes
+    agent_processes = """agent_process_id int(10) unsigned NOT NULL AUTO_INCREMENT,
+        agent_type varchar(64) DEFAULT NULL,
+        display varchar(12) DEFAULT NULL,
+        progress tinyint(3) unsigned DEFAULT NULL,
+        representation varchar(128) DEFAULT NULL,
+        request_type varchar(12) DEFAULT NULL,
+        timestamp1 timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        timestamp2 timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+        PRIMARY KEY (agent_process_id),
+        KEY data_root_dir (data_root_dir),
+        KEY timestamp1 (timestamp1)"""
+
+    create_table(hostname=hostname,
+                 port=port,
+                 username=username,
+                 password=password,
+                 database="rapd",
+                 table="agent_processes",
+                 table_definition=agent_processes,
+                 drop=False)
+
+
     return True
 
 def perform_naive_install(hostname, port, username, password):

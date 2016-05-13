@@ -182,7 +182,7 @@ class Database(object):
                 attempts += 1
                 time.sleep(10)
 
-    def closeConnection(self, connection, cursor):
+    def close_connection(self, connection, cursor):
         try:
             cursor.close()
         except:
@@ -283,7 +283,7 @@ class Database(object):
                         data.get("sample_pos_z", None),
                         data.get("site_tag", None),
                         data.get("size1", None),
-                        data.get("size_2", None),
+                        data.get("size2", None),
                         data.get("source_current", None),
                         data.get("source_mode", None),
                         data.get("time", None),
@@ -293,7 +293,7 @@ class Database(object):
         # Put the image_id in the dict for future use
         image_id = cursor.lastrowid
 
-        self.closeConnection(connection, cursor)
+        self.close_connection(connection, cursor)
 
         # Now grab the dict from the MySQL table
         image_dict = self.get_image_by_image_id(image_id=image_id)
@@ -392,7 +392,7 @@ class Database(object):
             #put the image_id in the dict for future use
             image_id = cursor.lastrowid
 
-            self.closeConnection(connection, cursor)
+            self.close_connection(connection, cursor)
 
             #now grab the dict from the MySQL table
             image_dict = self.get_image_by_image_id(image_id=image_id)
@@ -400,7 +400,7 @@ class Database(object):
             return(image_dict, True)
 
         except pymysql.IntegrityError, (errno, strerror):
-            self.closeConnection(connection, cursor)
+            self.close_connection(connection, cursor)
             if errno == 1062:
                 self.logger.warning('%s is already in the database' % data['fullname'])
                 #check if this image is in one of the special use image sets and try to add anyway
@@ -413,7 +413,7 @@ class Database(object):
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::add_pilatus_image')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
     def updateImageCBC(self,image_id,cbcx,cbcy):
@@ -431,11 +431,11 @@ class Database(object):
 
         try:
             cursor.execute('UPDATE images set calc_beam_center_x=%s, calc_beam_center_y=%s WHERE image_id=%s',(cbcx,cbcy,image_id))
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(True)
         except:
             self.logger.exception('Exception in updating calculated beam center values in database')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
 
     def get_image_by_image_id(self, image_id):
         """
@@ -511,11 +511,11 @@ class Database(object):
             cursor.execute(query2,(sample_id,image_dict['image_id']))
             #return the image dict with the sample_id in it
             image_dict['sample_id'] = sample_id
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(image_dict)
         except:
             self.logger.exception('Error in setImageSampleId')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             #return the original image_dict
             return(image_dict)
 
@@ -604,7 +604,7 @@ class Database(object):
         except:
             request_dict = False
 
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
 
         #see if we have a request
         return(request_dict)
@@ -621,7 +621,7 @@ class Database(object):
             connection,cursor = self.get_db_connection()
             query = "UPDATE current SET puckset_id=0 WHERE site=%s"
             cursor.execute(query, (site_id, ))
-            self.closeConnection(connection, cursor)
+            self.close_connection(connection, cursor)
         except:
             self.logger.exception("Error in resetPucks")
 
@@ -786,7 +786,7 @@ class Database(object):
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::setSettings')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
         try:
@@ -797,12 +797,12 @@ class Database(object):
             #nowupdate the preset table, if necessary
             if preset:
                 self.addPreset(settings_dict)
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(settings_dict)
 
         except:
             self.logger.exception('ERROR in updating settings from database')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
 
@@ -865,10 +865,10 @@ class Database(object):
             if (do_and):
                 cursor.execute(command,value_array)
 
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
         except:
             self.logger.exception('ERROR in updating current settings')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
 
     def addPreset(self, settings):
         """
@@ -893,7 +893,7 @@ class Database(object):
         else:
             cursor.execute("UPDATE presets SET setting_id=%s  WHERE site=%s and data_root_dir=%s", (settings['setting_id'], settings['site'], 'DEFAULTS'))
 
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
 
     def putBeamcenter(self,beamcenter_data):
         """
@@ -912,7 +912,7 @@ class Database(object):
                           VALUES (d.site,d.x_b,d.x_m1,d.x_m2,d.x_m3,d.x_m4,d.x_m5,d.x_m6,d.x_r,d.y_b,d.y_m1,d.y_m2,d.y_m3,d.y_m4,d.y_m5,d.y_m6,d.y_r,json.dumps(d.image_ids))''')
 
         #clean up connection
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
 
         #return the latest values
         return(self.getBeamcenter(d.site))
@@ -1092,7 +1092,54 @@ class Database(object):
     ##################################################################################################################
     # Functions for processes                                                                                        #
     ##################################################################################################################
-    def addNewProcess(self,type,rtype,data_root_dir,repr,display='show'):
+    def add_agent_process(self,
+                          agent_type=None,
+                          request_type=None,
+                          representation=None,
+                          progress=0,
+                          display="show"):
+        """
+        Add an entry to the agent_processes table - for keeping track of
+        launched processes and their state
+
+        Keyword arguments
+        agent_type -- type of agent
+        request_type -- request type, such as original
+        representation -- how the request is represented to users
+        progress -- progress from 0 to 100 (default = 0)
+        display -- display state of this process (default = show)
+        """
+
+        self.logger.debug("%s %s %s %s %s %s", agent_type, request_type, representation, progress, display)
+
+        # Connect to the database
+        connection, cursor = self.get_db_connection()
+
+        # Construct the query
+        query = """INSERT INTO agent_processes (agent_type,
+                                                display,
+                                                progress,
+                                                representation,
+                                                request_type) VALUES (%s,
+                                                                      %s,
+                                                                      %s,
+                                                                      %s,
+                                                                      %s)"""
+        insert_values = (agent_type, display, progress, representation, request_type)
+
+        # Commit to the database
+        cursor.execute(query, insert_values)
+
+        # Get the process_id for the inserted process
+        process_id = cursor.lastrowid
+
+        # Close the connection
+        self.close_connection(connection, cursor)
+
+        # Return the process id
+        return process_id
+
+    def addNewProcess(self, type, rtype, data_root_dir, repr, display='show'):
         """
         Add an entry to the processes table which enables the GUI to display current processes
 
@@ -1120,12 +1167,12 @@ class Database(object):
 
             #now get the process_id for the inserted process
             process_id = cursor.lastrowid
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(process_id)
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::addNewProcess')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
     def modifyProcessDisplay(self,process_id,display_value):
@@ -1140,12 +1187,12 @@ class Database(object):
 
             #change the line
             cursor.execute("UPDATE processes SET display=%s, timestamp2=NOW() WHERE process_id=%s",(display_value,process_id))
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(True)
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::modifyProcessDisplay')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
     ############################################################################
@@ -1173,13 +1220,13 @@ class Database(object):
             cursor.execute("INSERT INTO results (type,id,process_id,data_root_dir,display) VALUES (%s,%s,%s,%s,%s)",(rtype,rtype_result_id,process_id,data_root_dir,'none'))
             #get the result_id
             result_id = cursor.lastrowid
-            self.closeConnection(connection, cursor)
+            self.close_connection(connection, cursor)
             #return to the caller
             return(rtype_result_id, result_id)
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::makeNewResult')
-            self.closeConnection(connection, cursor)
+            self.close_connection(connection, cursor)
             return(False, False)
 
 
@@ -1854,12 +1901,12 @@ class Database(object):
                                        strategy_type = 'anomalous',
                                        strategy_program = 'mosflm',
                                        results = results['Mosflm ANOM strategy results'])
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(single_result_dict)
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::addSingleResult - results updating subsection')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
     def addStrategyWedges(self,id,int_type,strategy_type,strategy_program,results):
@@ -1961,11 +2008,11 @@ class Database(object):
 
             except:
                 self.logger.exception('ERROR : unknown exception in Database::addStrategyWedges')
-                self.closeConnection(connection,cursor)
+                self.close_connection(connection, cursor)
                 return(False)
 
         #close connection and return
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
         return(True)
 
     def getStrategyWedges(self,id):
@@ -2701,12 +2748,12 @@ class Database(object):
                                        strategy_program = 'mosflm',
                                        results = results['Mosflm ANOM strategy results'])
 
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(pair_result_dict)
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::addPairResult - results updating subsection')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
     def addDiffcenterResult(self,dirs,info,settings,results):
@@ -2803,12 +2850,12 @@ class Database(object):
             self.logger.debug(insert_values)
             cursor.execute(command,insert_values)
             diffcenter_result_dict = self.make_dicts('SELECT * FROM diffcenter_results WHERE diffcenter_result_id=%s',(cursor.lastrowid,))[0]
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(diffcenter_result_dict)
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::addDiffcenterResult')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
     def addQuickanalysisResult(self,dirs,info,settings,results):
@@ -2915,13 +2962,13 @@ class Database(object):
               self.logger.debug(insert_values)
             cursor.execute(command,insert_values)
             quickanalysis_result_dict = self.make_dicts('SELECT * FROM quickanalysis_results WHERE quickanalysis_result_id=%s',(cursor.lastrowid,))[0]
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(quickanalysis_result_dict)
 
         except:
             if self.logger:
               self.logger.exception('ERROR : unknown exception in Database::addQuickAnalysisResult')
-              self.closeConnection(connection,cursor)
+              self.close_connection(connection, cursor)
             return(False)
 
     def addYesSolved(self,result_id,sad_result_id=False):
@@ -3161,12 +3208,12 @@ class Database(object):
                            (new_integrate_result_dict['settings_id'],new_integrate_result_dict['process_id'],new_integrate_result_dict['sample_id'],new_integrate_result_dict['data_root_dir'],new_integrate_result_dict['timestamp'],result_id))
 
             #close the connection to the database
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(new_integrate_result_dict)
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult - results updating subsection')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
     def addXia2ShellResult(self,shell_dict,type,isr_id=None):
@@ -3233,12 +3280,12 @@ class Database(object):
             self.logger.debug(command)
             self.logger.debug(insert_values)
             cursor.execute(command,insert_values)
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(isr_id)
 
         except:
             self.logger.exception('Error in addXia2ShellResult')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(0)
 
     def addIntegrateResult(self,dirs,info,settings,results):
@@ -3470,7 +3517,7 @@ class Database(object):
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
         try:
@@ -3482,12 +3529,12 @@ class Database(object):
                            (new_integrate_result_dict['settings_id'],new_integrate_result_dict['process_id'],new_integrate_result_dict['sample_id'],new_integrate_result_dict['data_root_dir'],new_integrate_result_dict['timestamp'],result_id))
 
             #close the connection to the database
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(new_integrate_result_dict)
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult - results updating subsection')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
     def addReIntegrateResult(self,dirs,info,settings,results):
@@ -3729,7 +3776,7 @@ class Database(object):
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
         try:
@@ -3739,12 +3786,12 @@ class Database(object):
             #update the result in results table
             cursor.execute('UPDATE results SET setting_id=%s,process_id=%s,sample_id=%s,data_root_dir=%s,timestamp=%s WHERE result_id=%s',
                            (new_integrate_result_dict['settings_id'],new_integrate_result_dict['process_id'],new_integrate_result_dict['sample_id'],new_integrate_result_dict['data_root_dir'],new_integrate_result_dict['timestamp'],result_id))
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(new_integrate_result_dict)
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult - results updating subsection')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
     def addIntegrateShellResult(self,shell_dict,type,isr_id=None):
@@ -3820,12 +3867,12 @@ class Database(object):
             self.logger.debug(command)
             self.logger.debug(insert_values)
             cursor.execute(command,insert_values)
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(isr_id)
 
         except:
             self.logger.exception('Error in addXia2ShellResult')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(0)
 
     def addSimpleMergeResult(self,dirs,info,settings,results):
@@ -3996,7 +4043,7 @@ class Database(object):
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::addMergeResult')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
         try:
@@ -4006,12 +4053,12 @@ class Database(object):
             #update the result in results table
             cursor.execute('UPDATE results SET setting_id=%s,process_id=%s,data_root_dir=%s,timestamp=%s WHERE result_id=%s',
                            (new_merge_result_dict['settings_id'],new_merge_result_dict['process_id'],new_merge_result_dict['data_root_dir'],new_merge_result_dict['timestamp'],result_id))
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(new_merge_result_dict)
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::addMergeResult - results updating subsection')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
     def addMergeShellResult(self,shell_dict,type,msr_id=None):
@@ -4080,12 +4127,12 @@ class Database(object):
             self.logger.debug(command)
             self.logger.debug(insert_values)
             cursor.execute(command,insert_values)
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(msr_id)
 
         except:
             self.logger.exception('Error in addMergeShellResult')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(0)
 
     def traceRunFromMerge(self,merge_id):
@@ -4332,7 +4379,7 @@ class Database(object):
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
         try:
@@ -4347,12 +4394,12 @@ class Database(object):
 
             #update the integrate_results table with the result_id
             cursor.execute("UPDATE integrate_results SET result_id=%s WHERE integrate_result_id=%s",(integrate_result_dict['result_id'],integrate_result_dict['integrate_result_id']))
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(integrate_result_dict)
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult - results updating subsection')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
     def addIntegrateShellResult1(self,shell_dict,type):
@@ -4435,12 +4482,12 @@ class Database(object):
 
             #now get the isr_id to return
             isr_id = cursor.lastrowid
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(isr_id)
 
         except:
             self.logger.exception('Error in addIntegrateShellResult')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(0)
 
     ##########################
@@ -4555,7 +4602,7 @@ class Database(object):
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::addMrResult')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
         #Update the results table
@@ -4567,10 +4614,10 @@ class Database(object):
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::addMrResult - results updating subsection')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
         #self.logger.debug('Database::addMrResult7')
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
         return(new_mr_result_dict)
 
     def addMrSolution(self,mr_result_id,spacegroup,result_dict):
@@ -4624,7 +4671,7 @@ class Database(object):
 
         #commit the data to the database
         cursor.execute(query2,insert_values)
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
 
     def getMrTrialResult(self,mr_result_id):
         """
@@ -4844,7 +4891,7 @@ class Database(object):
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::addSadResult')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
         try:
@@ -4855,12 +4902,12 @@ class Database(object):
             #update the result in results table
             cursor.execute('UPDATE results SET setting_id=%s,process_id=%s,data_root_dir=%s,timestamp=%s WHERE result_id=%s',
                            (new_sad_result_dict['settings_id'],new_sad_result_dict['process_id'],new_sad_result_dict['data_root_dir'],new_sad_result_dict['timestamp'],result_id))
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(new_sad_result_dict)
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::addSadResult - results updating subsection')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
     def addShelxcResult(self,shelx_results,sad_result_id,shelxc_result_id=None):
@@ -4899,12 +4946,12 @@ class Database(object):
             self.logger.debug(command)
             self.logger.debug(insert_values)
             cursor.execute(command,insert_values)
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(shelxc_result_id)
 
         except:
             self.logger.exception('Error in addShelxcResult')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(0)
 
     def addShelxdResult(self,shelx_results,sad_result_id,shelxd_result_id=None):
@@ -4978,12 +5025,12 @@ class Database(object):
             self.logger.debug(compiled_command)
             #cursor.execute(command,insert_values)
             cursor.execute(compiled_command)
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(shelxd_result_id)
 
         except:
             self.logger.exception('Error in addShelxdResult')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(0)
 
     def addShelxeResult(self,shelx_results,sad_result_id,shelxe_result_id=None):
@@ -5053,12 +5100,12 @@ class Database(object):
                     self.addShelxeSite(shelx_site=site,
                                        sad_result_id=sad_result_id,
                                        shelxe_result_id=shelxe_result_id)
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(shelxe_result_id)
 
         except:
             self.logger.exception('Error in addShelxeResult')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(0)
 
     def addShelxeSite(self,shelx_site,sad_result_id,shelxe_result_id):
@@ -5103,12 +5150,12 @@ class Database(object):
             self.logger.debug(command)
             self.logger.debug(insert_values)
             cursor.execute(command,insert_values)
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(True)
 
         except:
             self.logger.exception('Error in addShelxeResult')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
     def addAutosolResult(self,autosol_results,sad_result_id,autosol_result_id=None):
@@ -5171,12 +5218,12 @@ class Database(object):
             self.logger.debug(command)
             self.logger.debug(insert_values)
             cursor.execute(command,insert_values)
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(autosol_result_id)
 
         except:
             self.logger.exception('Error in addAutosolResult')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(0)
 
 
@@ -5383,7 +5430,7 @@ class Database(object):
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::addMadResult')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
         try:
@@ -5394,12 +5441,12 @@ class Database(object):
             #update the result in results table
             cursor.execute('UPDATE results SET setting_id=%s,process_id=%s,data_root_dir=%s,timestamp=%s WHERE result_id=%s',
                            (new_mad_result_dict['settings_id'],new_mad_result_dict['process_id'],new_mad_result_dict['data_root_dir'],new_mad_result_dict['timestamp'],result_id))
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(new_mad_result_dict)
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::addMadResult - results updating subsection')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
 
@@ -5464,12 +5511,12 @@ class Database(object):
 
                 #add flag to solved column in either integrate_results or merge_results
 
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(True)
 
         except:
             self.logger.exception('Error in addCellAnalysisResults')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
     def addStatsResults(self,info,results):
@@ -5546,16 +5593,16 @@ class Database(object):
 
                 #get the result's stats_result dict
                 new_stats_result_dict = self.make_dicts('SELECT * FROM stats_results WHERE stats_result_id=%s',(stats_result_id,))[0]
-                self.closeConnection(connection,cursor)
+                self.close_connection(connection, cursor)
                 return(new_stats_result_dict)
 
             except:
                 self.logger.exception('Error in addStatsResults')
-                self.closeConnection(connection,cursor)
+                self.close_connection(connection, cursor)
                 return(False)
         else:
             self.logger.debug("ERROR in addStatsResults - no result_id!!")
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
     def getArrayStats(self,in_array,mode='float'):
@@ -5600,12 +5647,12 @@ class Database(object):
                                                                                      root,
                                                                                      id,
                                                                                      date ))
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(True)
 
         except:
             self.logger.exception('ERROR : unknown exception in Database::addOrphanResult')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
     def getTypeResultId(self,process_id):
@@ -5793,7 +5840,7 @@ class Database(object):
             wavelength = False
 
         print "1"
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
         print "2"
 
         return(wavelength)
@@ -5839,7 +5886,7 @@ class Database(object):
                 cursor.execute(query,('FAILED',files,result_id))
         except:
             pass
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
 
     def updateIntegrateDatafiles(self,result_id,files):
         """
@@ -5858,7 +5905,7 @@ class Database(object):
             cursor.execute(query,(files[0],files[1],files[2],result_id))
         except:
             pass
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
 
     def removeResult(self,result_id,type):
         """
@@ -5879,7 +5926,7 @@ class Database(object):
             cursor.execute(query,(result_id,type))
         except:
             self.logger.exception('Error in removeResult result_id %d %s' % (result_id,type))
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
 
 
     ##################################################################################################################
@@ -5899,7 +5946,7 @@ class Database(object):
             cursor.execute('UPDATE trips SET trip_finish=%s WHERE trip_id=%s AND (trip_finish IS NULL OR trip_finish<%s)',(date,trip_id,date))
         except:
             self.logger.exception('Error in updateTrip')
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
 
     def getTrips(self,data_root_dir=False,result_id=False):
         """
@@ -6022,13 +6069,13 @@ class Database(object):
                                               run_data.get("transmission", None),
                                               run_data.get("twotheta", None)))
             run_id = cursor.lastrowid
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(run_id)
 
         except pymysql.IntegrityError, (errno, strerror):
             if errno == 1062:
                 self.logger.debug("Run is already in the database")
-                self.closeConnection(connection, cursor)
+                self.close_connection(connection, cursor)
 
                 # Get the run_id and return it
                 return self.getRunIdByInfo(run_data=run)
@@ -6038,7 +6085,7 @@ class Database(object):
 
         except:
             self.logger.exception("ERROR : unknown exception in rapd_mysql_adapter.add_run")
-            self.closeConnection(connection, cursor)
+            self.close_connection(connection, cursor)
             return False
 
     def get_run_data(self,
@@ -6257,12 +6304,12 @@ class Database(object):
                 #self.logger.debug('%s is in a run\n' % image_dict['fullname'])
                 #mark the image with the run_id
                 cursor.execute("UPDATE images SET run_id=%s WHERE image_id=%s",(run_id,image_id))
-                self.closeConnection(connection, cursor)
+                self.close_connection(connection, cursor)
                 #return True
                 return(run_id,total)
             else:
                 self.logger.debug('%s is NOT in a run\n' % image_dict['fullname'])
-                self.closeConnection(connection,cursor)
+                self.close_connection(connection, cursor)
                 return(False,False)
         else:
             return(False,False)
@@ -6285,11 +6332,11 @@ class Database(object):
             if sql_ret:
                 start = sql_ret[0]
                 position = int(image_number) - start + 1
-                self.closeConnection(connection,cursor)
+                self.close_connection(connection, cursor)
                 return(position)
         except:
             self.logger.exception('Error in Database::getRunPosition')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(0)
 
 
@@ -6307,7 +6354,7 @@ class Database(object):
         query1 = 'select start FROM runs WHERE run_id=%s'
         cursor.execute(query1,(run_id))
         sql_ret = cursor.fetchone()
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
         if sql_ret:
             start = sql_ret[0]
             #determine the image_number for the posiiton
@@ -6338,7 +6385,7 @@ class Database(object):
             final = 0
 
         self.logger.debug('Final image in run is number %d' % final)
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
         if image_number == final:
             self.logger.debug('Final image!')
             return(True)
@@ -6397,13 +6444,13 @@ class Database(object):
             #now modify the run such that total reflects the maximum image number collected
             new_total = image_number - run_dict['start'] + 1
             cursor.execute("UPDATE runs SET total=%s WHERE run_id=%s",(new_total,run_dict['run_id']))
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             #return
             return(image_id)
 
         except:
             self.logger.exception('Error in runAborted')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             #return
             return(False)
 
@@ -6428,7 +6475,7 @@ class Database(object):
         #get cursor
         connection,cursor = self.get_db_connection()
         cursor.execute(db_update)
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
         my_dicts[0]["total"] = run_data["total"]
         return my_dicts[0]
 
@@ -6472,7 +6519,7 @@ class Database(object):
 
         connection,cursor = self.connect_to_cloud()
         cursor.execute("UPDATE minikappa SET status=%s WHERE minikappa_id=%s",(mark,minikappa_id))
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
 
     def getDatacollectionRequest(self):
         """
@@ -6509,7 +6556,7 @@ class Database(object):
 
         connection,cursor = self.connect_to_cloud()
         cursor.execute("UPDATE datacollection SET status=%s WHERE datacollection_id=%s",(mark,datacollection_id))
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
 
     def getCloudRequest(self):
         """
@@ -6535,7 +6582,7 @@ class Database(object):
 
         connection,cursor = self.connect_to_cloud()
         cursor.execute("UPDATE cloud_requests SET status=%s WHERE cloud_request_id=%s",(mark,cloud_request_id))
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
 
     def addCloudCurrent(self,request):
         """
@@ -6546,7 +6593,7 @@ class Database(object):
 
         connection,cursor = self.connect_to_cloud()
         cursor.execute("INSERT cloud_current (cloud_request_id,request_timestamp) VALUES (%s,%s)",(request['cloud_request_id'],request['timestamp']))
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
 
     def removeCloudCurrent(self,cloud_request_id):
         """
@@ -6557,7 +6604,7 @@ class Database(object):
 
         connection,cursor = self.connect_to_cloud()
         cursor.execute("DELETE FROM cloud_current WHERE cloud_request_id='%s'",(cloud_request_id,))
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
 
     def enterCloudComplete(self,cloud_request_id,request_timestamp,request_type,data_root_dir,ip_address='0.0.0.0',start_timestamp=0,result_id=0,archive=False):
         """
@@ -6584,7 +6631,7 @@ class Database(object):
                                                                                                            ip_address,
                                                                                                            'new',
                                                                                                            archive))
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
         except:
             self.logger.exception("Error in enterCloudComplete")
 
@@ -6790,14 +6837,14 @@ class Database(object):
             cursor.execute('SELECT remote_concurrent_allowed from cloud_state')
             allowed_cloud_processes = cursor.fetchone()[0]
             self.logger.debug(allowed_cloud_processes)
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             if (current_cloud_processes >= allowed_cloud_processes):
                 return(False)
             elif (current_cloud_processes < allowed_cloud_processes):
                 return(True)
         except:
             self.logger.exception('Error in getCloudClearance')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
     def addToCloudQueue(self):
@@ -6812,12 +6859,12 @@ class Database(object):
 
             #increment the entry
             cursor.execute('UPDATE cloud_state set current_queue = current_queue + 1')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(True)
 
         except:
             self.logger.exception('Error in addToCloudQueue')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
     def subtractFromCloudQueue(self):
@@ -6832,12 +6879,12 @@ class Database(object):
 
             #increment the entry
             cursor.execute('UPDATE cloud_state set current_queue = current_queue - 1 WHERE current_queue > 0')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(True)
 
         except:
             self.logger.exception('Error in subtractFromCloudQueue')
-            self.closeConnection(connection,cursor)
+            self.close_connection(connection, cursor)
             return(False)
 
     ##################################################################################################################
@@ -6862,7 +6909,7 @@ class Database(object):
             cursor.execute('INSERT INTO status_controller (controller_ip,data_root_dir,site,dataserver_ip,cluster_ip) VALUES (%s,%s,%s,%s,%s) ON DUPLICATE KEY UPDATE data_root_dir=%s,site=%s,dataserver_ip=%s,cluster_ip=%s,timestamp=CURRENT_TIMESTAMP ', (controller_ip, data_root_dir, site_id, dataserver_ip, cluster_ip, data_root_dir, site_id, dataserver_ip, cluster_ip))
         except:
             self.logger.exception('Trouble writing the status of the controller into the database')
-        self.closeConnection(connection, cursor)
+        self.close_connection(connection, cursor)
 
     def updateClusterStatus(self,cluster_ip=None):
         """
@@ -6878,7 +6925,7 @@ class Database(object):
             cursor.execute('INSERT INTO status_cluster (ip_address) VALUES (%s) ON DUPLICATE KEY UPDATE timestamp=CURRENT_TIMESTAMP ',(cluster_ip))
         except:
             self.logger.exception('Trouble writing the status of the cluster into the database')
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
 
     def bc_test(self):
         import math
@@ -6895,7 +6942,7 @@ class Database(object):
         for row in cursor.fetchall():
             if (0.5 < (1-0.7*math.e**(-4/row[0])-1.5*row[2]-0.2*row[1])):
                 print ('%s  %6.2f %4.2f  %4.2f' % (str(row[3]),row[6],row[4],row[5]))
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
 
     ##################################################################################################################
     #PDB Functions                                                                                                   #
@@ -6930,7 +6977,7 @@ class Database(object):
         params = (location,pdbs_id)
         #run query
         cursor.execute(query,params)
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
         return(True)
 
 
@@ -6963,7 +7010,7 @@ class Database(object):
         # Assemble the dict(s) into an array
         colnames = [desc[0] for desc in cursor.description]
         rowdicts = [dict(zip(colnames,row)) for row in cursor.fetchall()]
-        self.closeConnection(connection,cursor)
+        self.close_connection(connection, cursor)
 
         # Return the array of dicts
         return rowdicts

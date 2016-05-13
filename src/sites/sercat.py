@@ -30,7 +30,7 @@ import sys
 # RAPD imports
 from utils.site import read_secrets
 
-# Site ID - limited to 12 characters by MySQL
+# Site ID - limited to 12 characters. Should be UPPERCASE
 # May be a string or list or tuple of strings
 ID = ("SERCAT_ID", "SERCAT_BM")
 
@@ -117,18 +117,20 @@ LOG_LEVEL = 50
 # Control process settings
 # Process is a singleton? The file to lock to. False if no locking.
 CONTROL_LOCK_FILE = "/tmp/lock/rapd_control.lock"
+
+# Root of working directories for control
+
+
 # Where files from UI are uploaded - should be visible by launch instance
 UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"
 
 # Control settings
 # Database to use for control operations. Options: "mysql"
 CONTROL_DATABASE = "mysql"
-CONTROL_DATABASE_DATA = "rapd_data"
-CONTROL_DATABASE_USERS = "rapd_users"
-CONTROL_DATABASE_CLOUD = "rapd_cloud"
+
 # Redis databse
 # Running in a cluster configuration - True || False
-CONTROL_REDIS_CLUSTER = False
+# CONTROL_REDIS_CLUSTER = False
 
 # Detector settings
 # Must have a file in detectors that is all lowercase of this string
@@ -167,7 +169,7 @@ GATHERER_LOCK_FILE = "/tmp/lock/gatherer.lock"
 IMAGE_MONITOR = "monitors.image_monitors.redis_image_monitor"
 # Redis databse
 # Running in a cluster configuration - True || False
-IMAGE_MONITOR_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER
+# IMAGE_MONITOR_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER
 # Images collected into following directories will be ignored
 IMAGE_IGNORE_DIRECTORIES = ()
 # Images collected containing the following string will be ignored
@@ -176,7 +178,7 @@ IMAGE_IGNORE_STRINGS = ("ignore", )
 # Monitor for collected run information
 RUN_MONITOR = "monitors.run_monitors.redis_run_monitor"
 # Running in a cluster configuration - True || False
-RUN_MONITOR_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER
+# RUN_MONITOR_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER
 
 # Cloud Settings
 # The cloud monitor module
@@ -237,14 +239,14 @@ LAUNCH_SETTINGS = {
 
 IMAGE_MONITOR_SETTINGS = {"REDIS_HOST" : IMAGE_MONITOR_REDIS_HOST,
                           "REDIS_PORT" : IMAGE_MONITOR_REDIS_PORT,
-                          "REDIS_CLUSTER" : IMAGE_MONITOR_REDIS_CLUSTER,
+                        #   "REDIS_CLUSTER" : IMAGE_MONITOR_REDIS_CLUSTER,
                           "SENTINEL_HOST" : IMAGE_MONITOR_SENTINEL_HOST,
                           "SENTINEL_PORT" : IMAGE_MONITOR_SENTINEL_PORT,
                           "REDIS_MASTER_NAME" : IMAGE_MONITOR_REDIS_MASTER_NAME}
 
 RUN_MONITOR_SETTINGS = {"REDIS_HOST" : RUN_MONITOR_REDIS_HOST,
                         "REDIS_PORT" : RUN_MONITOR_REDIS_PORT,
-                        "REDIS_CLUSTER" : RUN_MONITOR_REDIS_CLUSTER,
+                        # "REDIS_CLUSTER" : RUN_MONITOR_REDIS_CLUSTER,
                         "SENTINEL_HOST" : RUN_MONITOR_SENTINEL_HOST,
                         "SENTINEL_PORT" : RUN_MONITOR_SENTINEL_PORT,
                         "REDIS_MASTER_NAME" : RUN_MONITOR_REDIS_MASTER_NAME}
@@ -266,7 +268,7 @@ SITE_ADAPTER_SETTINGS = {"ID" : ID,
 
 REMOTE_ADAPTER_SETTINGS = {"ID" : ID,
                            "MONGO_CONNECTION_STRING" : REMOTE_ADAPTER_MONGO_CONNECTION_STRING,
-                           "REDIS_CLUSTER" : REMOTE_ADAPTER_REDIS_CLUSTER,
+                        #    "REDIS_CLUSTER" : REMOTE_ADAPTER_REDIS_CLUSTER,
                            "SENTINEL_HOST" : REMOTE_ADAPTER_SENTINEL_HOST,
                            "SENTINEL_PORT" : REMOTE_ADAPTER_SENTINEL_PORT,
                            "REDIS_MASTER_NAME" : REMOTE_ADAPTER_REDIS_MASTER_NAME,
