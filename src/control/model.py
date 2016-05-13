@@ -462,7 +462,7 @@ class Model(object):
 
             # Add some data to the header - no run_id for snaps
             header["run_id"] = None
-            # header["data_root_dir"] = data_root_dir
+            header["site_tag"] = site_tag
 
             # Grab extra data for the image and add to the header
             if self.site_adapter:

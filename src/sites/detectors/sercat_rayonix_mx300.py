@@ -192,12 +192,20 @@ def read_header(fullname, beam_settings):
     # Correct error wavelength >> energy
     header["energy"] = header["wavelength"]
     del header["wavelength"]
-    
+
     # Translate from mar to RAPD
     header["osc_axis"] = header["axis"]
-    #
-    # header[""] = header[""]
-    # header[""] = header[""]
+    header["kappa"] = None
+    header["phi"] = None
+    header["omega"] = header["omega_start"]
+    header["robot_position"] = None
+    header["run_number"] = None
+    header["sample_id"] = None
+    header["sample_pos_x"] = None
+    header["sample_pos_y"] = None
+    header["sample_pos_z"] = None
+    header["source_current"] = None
+    header["source_mode"] = None
 
     # Perform flux calculation
     flux, beam_size_x, beam_size_y = calculate_flux(header, beam_settings)
