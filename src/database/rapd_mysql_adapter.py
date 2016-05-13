@@ -271,7 +271,6 @@ class Database(object):
                         data.get("osc_axis", None),
                         data.get("osc_range", None),
                         data.get("osc_start", None),
-                        data.get("period", None),
                         data.get("phi", None),
                         data.get("pixel_size", None),
                         data.get("rapd_detector_id", None),
