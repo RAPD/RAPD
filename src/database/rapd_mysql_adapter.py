@@ -339,7 +339,10 @@ class Database(object):
             error_number, error_message = error
             if error_number == 1062:
                 self.logger.error("Duplicate image entry - ignoring")
+
+                # Close connection
                 self.close_connection(connection, cursor)
+                
                 return False
             else:
                 self.logger.error(error_number, error_message)

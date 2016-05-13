@@ -161,10 +161,11 @@ class Monitor(threading.Thread):
 
                     # Have a new_image
                     if new_image:
+                        self.logger.debug("New image %s - %s", tag, new_image)
+
                         # Notify core thread that an image has been collected
                         self.notify(("NEWIMAGE", {"fullname":new_image,
                                                   "site_tag":tag}))
-                        self.logger.debug("New image %s - %s", tag, new_image)
 
                     # Slow it down a little
                     time.sleep(POLLING_REST)
