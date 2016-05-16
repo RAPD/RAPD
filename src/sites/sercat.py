@@ -143,6 +143,10 @@ DETECTORS = {"SERCAT_ID":("SERCAT_RAYONIX_MX300HS", ""),
 # Launcher settings
 LAUNCHER_LOCK_FILE = "/tmp/lock/launcher.lock"
 
+# Launcher to send jobs to
+# The value should be the key of the launcher to select in LAUNCHER_SPECIFICATIONS
+LAUNCHER_TARGET = 2
+
 # Directories to look for rapd agents
 RAPD_AGENT_DIRECTORIES = ("sites.agents",
                           "agents")
@@ -222,7 +226,8 @@ LAUNCHER_SETTINGS = {
 
 LAUNCH_SETTINGS = {
     "RAPD_AGENT_DIRECTORIES":RAPD_AGENT_DIRECTORIES,
-    "LAUNCHER":(LAUNCHER_REGISTER[0][0], LAUNCHER_SPECIFICATIONS[LAUNCHER_REGISTER[0][2]]["port"])
+    "LAUNCHER_ADDRESS":(LAUNCHER_SPECIFICATIONS[LAUNCHER_TARGET]["ip_address"],
+                        LAUNCHER_SPECIFICATIONS[LAUNCHER_TARGET]["port"])
 }
 
 # BEAM_SETTINGS = {"BEAM_FLUX":BEAM_FLUX,

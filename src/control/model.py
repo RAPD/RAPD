@@ -1054,6 +1054,7 @@ class Model(object):
                                   "header1":header,
                                   "preferences":{},
                                   "return_address":self.return_address},
+                         launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
                          settings=None)
 
             # If the last two images have "pair" in their name - look more closely
