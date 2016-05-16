@@ -1,4 +1,8 @@
 """
+Provides a simple launcher adapter that will launch processes via qsub
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2016, Cornell University
@@ -22,12 +26,7 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
-"""
-Provides a simple launcher adapter that will launch processes via qsub
-
-This is the stock version used at NE-CAT
-"""
-
+# Standard imports
 import logging
 import json
 import os
@@ -73,6 +72,7 @@ class LauncherAdapter(object):
         command_file = launch_tools.write_command_file(qsub_dir, command, self.message)
 
         # The command has to come in the form of a script on the SERCAT install
+        site_tag = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["site_tag"]
         command_line = "rapd.launch -vs %s %s" % (self.site.ID, command_file)
         command_script = launch_tools.write_command_script(command_file.replace(".rapd", ".sh"), command_line)
 
@@ -91,7 +91,7 @@ class LauncherAdapter(object):
         # Determine the processor specs
         def determine_qsub_proc(command):
             """Determine the queue to use"""
-            if command == "AUTO":
+            if command.startswith("index"):
                 qsub_proc = "nodes=1:ppn=4"
             else:
                 qsub_proc = "nodes=1:ppn=1"
