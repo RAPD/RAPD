@@ -75,8 +75,7 @@ class Launcher(object):
         """
 
         # Get the logger Instance
-        self.logger = logging.getLogger("RAPDLogger")
-        self.logger.debug("__init__")
+        self.logger = logging.getLogger("Starting Launcher")
 
         # Save passed-in variables
         self.site = site
@@ -296,5 +295,7 @@ def main():
                         overwatch_id=commandline_args.overwatch_id)
 
 if __name__ == "__main__":
+
+    print "!!!!!!!!!!!!!!!!!!!!!!!!!"
 
     main()
