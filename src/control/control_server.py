@@ -162,7 +162,7 @@ class LaunchAction(threading.Thread):
     def run(self):
         """Start the thread"""
 
-        self.logger.debug("LaunchAction::run")
+        self.logger.debug("Attempting to send launch action to %s:%s", self.launcher_address)
 
         # Put the command in rapd server-speak
         message = json.dumps(self.command)
