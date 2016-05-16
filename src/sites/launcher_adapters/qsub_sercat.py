@@ -73,7 +73,7 @@ class LauncherAdapter(object):
 
         # The command has to come in the form of a script on the SERCAT install
         site_tag = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["site_tag"]
-        command_line = "rapd.launch -vs %s %s" % (self.site.ID, command_file)
+        command_line = "rapd.launch -vs %s %s" % (site_tag, command_file)
         command_script = launch_tools.write_command_script(command_file.replace(".rapd", ".sh"), command_line)
 
         # Set the path for qsub
