@@ -1049,11 +1049,11 @@ class Model(object):
                            "repr":new_repr})
 
             # Run autoindex and strategy agent
-            LaunchAction(command=("INDEX+STRATEGY",
-                                  new_dirs,
-                                  header,
-                                  site.LAUNCH_SETTINGS,
-                                  self.return_address),
+            LaunchAction(command={"command":"INDEX+STRATEGY",
+                                  "directories":new_dirs,
+                                  "header1":header,
+                                  "preferences":{},
+                                  "return_address":self.return_address},
                          settings=None)
 
             # If the last two images have "pair" in their name - look more closely
@@ -1078,12 +1078,12 @@ class Model(object):
 
                     # Derive  directory and repr
                     work_dir, new_repr = self.get_index_work_dir(process_settings["work_directory"],
-                                                           "pair",
-                                                           data1,
-                                                           data2)
+                                                                 "pair",
+                                                                 data1,
+                                                                 data2)
 
                     # Now package directories into a dict for easy access by worker class
-                    new_dirs = {"work"          : work_dir,
+                    new_dirs = {"work" : work_dir,
                                 "data_root_dir" : data_root_dir}
 
                     # Add the process to the database to display as in-process

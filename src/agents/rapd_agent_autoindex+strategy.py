@@ -1,4 +1,8 @@
 """
+An autoindex & strategy rapd_agent
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2009-2016, Cornell University
@@ -22,10 +26,6 @@ __maintainer__ = "Jon Schuermann"
 __email__ = "schuerjp@anl.gov"
 __status__ = "Production"
 
-"""
-An autoindex & strategy rapd_agent
-"""
-
 # This is an active rapd agent
 RAPD_AGENT = True
 
@@ -37,8 +37,8 @@ AGENT_SUBTYPE = "CORE"
 ID = "3b3448aee4a811e59c0aac87a3333966"
 
 # Standard imports
-from multiprocessing import Process, Queue, Event
 import logging
+from multiprocessing import Process, Queue, Event
 import os
 import shutil
 import subprocess
@@ -57,7 +57,7 @@ class RapdAgent(Process):
     """
     command format
     {
-        "command":"AUTOINDEX+STRATEGY",
+        "command":"INDEX+STRATEGY",
         "directories":
             {
                 "work":""                           # Where to perform the work
@@ -2538,7 +2538,7 @@ if __name__ == '__main__':
   #This is an example input dict used for testing this script.
   #Input dict file. If autoindexing from two images, just include a third dict section for the second image header.
   ###To see all the input options look at extras/rapd_input.py (autoindexInput)###
-  
+
   command = {
         "command":"AUTOINDEX+STRATEGY",
         "directories":
@@ -2586,7 +2586,7 @@ if __name__ == '__main__':
 	   	"STAC file1": '/gpfs6/users/necat/Jon/RAPD_test/mosflm.mat', #XOAlign
 	   	"STAC file2": '/gpfs6/users/necat/Jon/RAPD_test/bestfile.par', #XOAlign
 	   	"axis_align": 'long',	 #long,all,a,b,c,ab,ac,bc #XOAlign
-		},				  
+		},
         "header2":{#"wavelength": "0.9792", #RADDOSE
 	    "wavelength": 1.000, #RADDOSE
 	    "detector":'ray300',
@@ -2627,7 +2627,7 @@ if __name__ == '__main__':
 	    "STAC file1": '/gpfs6/users/necat/Jon/RAPD_test/mosflm.mat', #XOAlign
 	    "STAC file2": '/gpfs6/users/necat/Jon/RAPD_test/bestfile.par', #XOAlign
 	    "axis_align": 'long',    #long,all,a,b,c,ab,ac,bc #XOAlign
-	    },			      
+	    },
 	  "preferences":{"strategy_type": 'best', #Preferred program for strategy
 	  		#"strategy_type": 'mosflm', #
 	  	  	"crystal_size_x": "100", #RADDOSE
@@ -2666,7 +2666,7 @@ if __name__ == '__main__':
 			  },			     # Settings for calculations
 	  "return_address":("127.0.0.1", 50001),      # Location of control process
     }
-  
+
   #OLD INPUT
   inp_OLD = ["AUTOINDEX",
   {#"work": "/gpfs6/users/necat/Jon/RAPD_test/Output",
