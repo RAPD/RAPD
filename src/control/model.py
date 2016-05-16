@@ -681,165 +681,165 @@ class Model(object):
     #                             run["status"] = "INTEGRATING"
     #                             self.new_data_image(header=header)
 
-    def add_pilatus_image(self, fullname):
-        """A new Pilatus6MF image has arrived"""
-
-        self.logger.info("add_pilatus_image %s" % fullname)
-
-        # Set current_image
-        self.current_image = fullname
-        dirname = os.path.dirname(fullname)
-
-        # Short circuit for priming image
-        if "priming_shot" in fullname:
-            self.logger.info("Priming shot is ignored")
-            return False
-
-        # Short circuit for fast analysis
-        if dirname in self.Settings["analysis_shortcircuits"]:
-            self.logger.info("Short-circuit")
-            return False
-
-        # Non-short-circuit image
-        else:
-
-            # Derive the data_root_dir
-            my_data_root_dir = GetDataRootDir(fullname=fullname,
-                                              logger=self.logger)
-
-            # Derive place of image in run
-            place = self.in_current_run(fullname)
-
-            # Image is in the current sweep of data
-            if isinstance(place, int):
-                self.logger.info("%s in current run at position %d" % \
-                    (fullname, place))
-
-                #If not integrating, continue
-                if self.current_run["status"] != "INTEGRATING":
-
-                    # Handle getting to the party late
-                    if place != 1:
-                        self.logger.info("Creating first image in run")
-                        fullname = "%s/%s_%d_%04d.%s" % (
-                            self.current_run["directory"],
-                            self.current_run["prefix"],
-                            self.current_run["run_number"],
-                            int(self.current_run["start"]),
-                            "cbf")
-                    # Right on time
-                    else:
-                        pass
-                        # fullname = data["image_name"]
-
-                    #Get all the image information
-                    header = self.get_pilatus_header(
-                        fullname=fullname,
-                        mode="RUN",
-                        run_id=self.current_run["run_id"],
-                        drd=my_data_root_dir,
-                        place_in_run=1)
-
-                    #Add to database & update local image data
-                    db_result, status = self.database.add_pilatus_image(header)
-                    header.update(db_result)
-                    header["run"] = self.current_run
-
-                    self.current_run["status"] = "INTEGRATING"
-                    self.new_data_image(header=header)
-
-                # Already integrating the run - no need to do a full query
-                else:
-                    self.logger.info("    Already integrating the run")
-
-            # Not in the current sweep
-            else:
-
-                # A snap
-                if place == "SNAP":
-
-                    self.logger.debug("%s is a snap" % fullname)
-
-                    #Get all the image information
-                    header = self.get_pilatus_header(
-                        fullname=fullname,
-                        mode="SNAP",
-                        run_id=0,
-                        drd=my_data_root_dir)
-
-                    #Add to database
-                    db_result, status = self.database.add_pilatus_image(header)
-                    header.update(db_result)
-
-                    #Run the image as a new data image
-                    self.new_data_image(header=header)
-
-                # A past run
-                elif place == "PAST_RUN":
-                    self.logger.info("In past run")
-
-                    # Get the run information for the past run
-                    my_place, run = self.in_past_run(fullname)
-
-                    # Have run data - handle appropriately
-                    if run:
-                        if my_place == run["total"]:
-                            self.logger.info("Final image in past run")
-                            #Get all the image information
-                            header = self.get_pilatus_header(
-                                fullname=fullname,
-                                mode="RUN",
-                                run_id=run["run_id"],
-                                drd=my_data_root_dir,
-                                place_in_run=my_place)
-
-                            #Add to database
-                            db_result, status = self.database.add_pilatus_image(header)
-                            header.update(db_result)
-
-                            #tag the header with run data
-                            header["run"] = run
-
-                            #Now trigger integration - if not integrating
-                            if run["status"] != "INTEGRATING":
-                                run["status"] = "INTEGRATING"
-                                self.new_data_image(header=header)
-
-    def get_pilatus_header(self,
-                           fullname,
-                           mode,
-                           run_id=None,
-                           drd=None,
-                           place_in_run=None):
-        """Retrieve header information for a Pilatus image"""
-
-        # Read the header
-        header = pilatus_read_header(image=fullname,
-                                     mode=mode,
-                                     run_id=run_id,
-                                     place_in_run=place_in_run,
-                                     logger=self.logger)
-
-        # Put data root dir in the header info
-        header["data_root_dir"] = drd
-
-        #Grab extra data for the image
-        header.update(self.BEAMLINE_CONNECTION.GetImageData())
-
-        #Now perform beamline-specific calculations
-        header = determine_flux(header_in=header,
-                                beamline=self.site,
-                                logger=self.logger)
-
-        #Calculate beam center
-        header["x_beam"], header["y_beam"] = self.calculate_beam_center(
-            float(header["distance"]))
-
-        #update remote client
-        if self.remote_adapter:
-            self.remote_adapter.add_image(header)
-
-        return header
+    # def add_pilatus_image(self, fullname):
+    #     """A new Pilatus6MF image has arrived"""
+    #
+    #     self.logger.info("add_pilatus_image %s" % fullname)
+    #
+    #     # Set current_image
+    #     self.current_image = fullname
+    #     dirname = os.path.dirname(fullname)
+    #
+    #     # Short circuit for priming image
+    #     if "priming_shot" in fullname:
+    #         self.logger.info("Priming shot is ignored")
+    #         return False
+    #
+    #     # Short circuit for fast analysis
+    #     if dirname in self.site["analysis_shortcircuits"]:
+    #         self.logger.info("Short-circuit")
+    #         return False
+    #
+    #     # Non-short-circuit image
+    #     else:
+    #
+    #         # Derive the data_root_dir
+    #         my_data_root_dir = GetDataRootDir(fullname=fullname,
+    #                                           logger=self.logger)
+    #
+    #         # Derive place of image in run
+    #         place = self.in_current_run(fullname)
+    #
+    #         # Image is in the current sweep of data
+    #         if isinstance(place, int):
+    #             self.logger.info("%s in current run at position %d" % \
+    #                 (fullname, place))
+    #
+    #             #If not integrating, continue
+    #             if self.current_run["status"] != "INTEGRATING":
+    #
+    #                 # Handle getting to the party late
+    #                 if place != 1:
+    #                     self.logger.info("Creating first image in run")
+    #                     fullname = "%s/%s_%d_%04d.%s" % (
+    #                         self.current_run["directory"],
+    #                         self.current_run["prefix"],
+    #                         self.current_run["run_number"],
+    #                         int(self.current_run["start"]),
+    #                         "cbf")
+    #                 # Right on time
+    #                 else:
+    #                     pass
+    #                     # fullname = data["image_name"]
+    #
+    #                 #Get all the image information
+    #                 header = self.get_pilatus_header(
+    #                     fullname=fullname,
+    #                     mode="RUN",
+    #                     run_id=self.current_run["run_id"],
+    #                     drd=my_data_root_dir,
+    #                     place_in_run=1)
+    #
+    #                 #Add to database & update local image data
+    #                 db_result, status = self.database.add_pilatus_image(header)
+    #                 header.update(db_result)
+    #                 header["run"] = self.current_run
+    #
+    #                 self.current_run["status"] = "INTEGRATING"
+    #                 self.new_data_image(header=header)
+    #
+    #             # Already integrating the run - no need to do a full query
+    #             else:
+    #                 self.logger.info("    Already integrating the run")
+    #
+    #         # Not in the current sweep
+    #         else:
+    #
+    #             # A snap
+    #             if place == "SNAP":
+    #
+    #                 self.logger.debug("%s is a snap" % fullname)
+    #
+    #                 #Get all the image information
+    #                 header = self.get_pilatus_header(
+    #                     fullname=fullname,
+    #                     mode="SNAP",
+    #                     run_id=0,
+    #                     drd=my_data_root_dir)
+    #
+    #                 #Add to database
+    #                 db_result, status = self.database.add_pilatus_image(header)
+    #                 header.update(db_result)
+    #
+    #                 #Run the image as a new data image
+    #                 self.new_data_image(header=header)
+    #
+    #             # A past run
+    #             elif place == "PAST_RUN":
+    #                 self.logger.info("In past run")
+    #
+    #                 # Get the run information for the past run
+    #                 my_place, run = self.in_past_run(fullname)
+    #
+    #                 # Have run data - handle appropriately
+    #                 if run:
+    #                     if my_place == run["total"]:
+    #                         self.logger.info("Final image in past run")
+    #                         #Get all the image information
+    #                         header = self.get_pilatus_header(
+    #                             fullname=fullname,
+    #                             mode="RUN",
+    #                             run_id=run["run_id"],
+    #                             drd=my_data_root_dir,
+    #                             place_in_run=my_place)
+    #
+    #                         #Add to database
+    #                         db_result, status = self.database.add_pilatus_image(header)
+    #                         header.update(db_result)
+    #
+    #                         #tag the header with run data
+    #                         header["run"] = run
+    #
+    #                         #Now trigger integration - if not integrating
+    #                         if run["status"] != "INTEGRATING":
+    #                             run["status"] = "INTEGRATING"
+    #                             self.new_data_image(header=header)
+    #
+    # def get_pilatus_header(self,
+    #                        fullname,
+    #                        mode,
+    #                        run_id=None,
+    #                        drd=None,
+    #                        place_in_run=None):
+    #     """Retrieve header information for a Pilatus image"""
+    #
+    #     # Read the header
+    #     header = pilatus_read_header(image=fullname,
+    #                                  mode=mode,
+    #                                  run_id=run_id,
+    #                                  place_in_run=place_in_run,
+    #                                  logger=self.logger)
+    #
+    #     # Put data root dir in the header info
+    #     header["data_root_dir"] = drd
+    #
+    #     #Grab extra data for the image
+    #     header.update(self.BEAMLINE_CONNECTION.GetImageData())
+    #
+    #     #Now perform beamline-specific calculations
+    #     header = determine_flux(header_in=header,
+    #                             beamline=self.site,
+    #                             logger=self.logger)
+    #
+    #     #Calculate beam center
+    #     header["x_beam"], header["y_beam"] = self.calculate_beam_center(
+    #         float(header["distance"]))
+    #
+    #     #update remote client
+    #     if self.remote_adapter:
+    #         self.remote_adapter.add_image(header)
+    #
+    #     return header
 
     def in_past_run(self, fullname):
         """Determine the place in a past run the image is
@@ -1030,8 +1030,8 @@ class Model(object):
             self.pairs[header["site_tag"].upper()].append(header["fullname"].lower())
             self.pair_ids[header["site_tag"].upper()].append(header["image_id"])
 
-            work_dir, new_repr = self.get_index_work_dir(type_level = "index_strategy_single",
-                                                         image_data1 = header)
+            work_dir, new_repr = self.get_index_work_dir(type_level="single",
+                                                         image_data1=header)
 
             # Now package directories into a dict for easy access by worker class
             new_dirs = {"work":work_dir,
@@ -1191,9 +1191,12 @@ class Model(object):
 
         # Lowest level
         if type_level == "single":
-            sub_dir = "%s:%s" % (image_data1["image_prefix"], image_data1["image_number"])
+            sub_dir = "%s:%s" % (image_data1["image_prefix"],
+                                 image_data1["image_number"])
         elif type_level == "pair":
-            sub_dir = "%s:%s+%s" % (image_data1["image_prefix"], image_data1["image_number"], image_data2["image_number"])
+            sub_dir = "%s:%s+%s" % (image_data1["image_prefix"],
+                                    image_data1["image_number"],
+                                    image_data2["image_number"])
 
         # Use the last leg of the directory as the repr
         new_repr = sub_dir
@@ -1257,7 +1260,7 @@ class Model(object):
         """
 
         self.logger.debug("Model::receive")
-        self.logger.debug("length returned %d" % len(message))
+        self.logger.debug("length returned %d", len(message))
         self.logger.debug(message)
 
         try:
@@ -1581,9 +1584,9 @@ class Model(object):
                     self.indexing_active.appendleft("unknown")
                     #send the job to be done
                     LaunchAction(command=job[0],
-                                  settings=job[1],
-                                  secret_settings=job[2],
-                                  logger=job[3])
+                                 settings=job[1],
+                                 secret_settings=job[2],
+                                 logger=job[3])
 
             #add result to database
             result_db = self.database.addSingleResult(dirs=dirs,
