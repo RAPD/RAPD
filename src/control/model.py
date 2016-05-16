@@ -1183,8 +1183,6 @@ class Model(object):
         image_data2 -- header information from the second image
         """
 
-        print "get_index_work_dir", top_level, type_level, image_data1, image_data2
-
         # Type level
         typelevel_dir = type_level
 
