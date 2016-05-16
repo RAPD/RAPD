@@ -229,8 +229,6 @@ class Overwatcher(Registrar):
         Orchestrate core functioning of the Overwatcher instance
         """
 
-        print "run"
-
         # Connect to redis
         self.connect()
 
