@@ -105,10 +105,14 @@ class LauncherAdapter(object):
         # Call the launch process on the command file
         # qsub_command = "qsub -cwd -V -b y -N %s %s rapd.python %s %s" %
         #       (qsub_label, qsub_queue, command_file_path, command_file)
+        # qsub_command = "qsub -d %s -v %s -N %s -l %s %s" % (
+        #     qsub_dir, qsub_path, qsub_label, qsub_proc, command_script)
         qsub_command = "qsub -d %s -v %s -N %s -l %s %s" % (
             qsub_dir, qsub_path, qsub_label, qsub_proc, command_script)
 
         # Launch it
+        print "!!!!!!!!!!!!!"
+        print qsub_command
         self.logger.debug(qsub_command)
         p = Popen(qsub_command, shell=True)
         sts = os.waitpid(p.pid, 0)[1]
