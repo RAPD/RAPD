@@ -79,7 +79,7 @@ class Model(object):
 
     image_monitor = None
     current_image = None
-    image_monitor_reconnect_attempts = 0
+    # image_monitor_reconnect_attempts = 0
 
     cloud_monitor = None
     site_adapter = None
@@ -331,11 +331,10 @@ class Model(object):
             # Import the specific run monitor module
             run_monitor = importlib.import_module("%s" % site.RUN_MONITOR.lower())
             self.logger.debug(run_monitor)
-            self.run_monitor = run_monitor.Monitor(
-                site=self.site,
-                notify=self.receive,
-                # Not using overwatch in run monitor - could if we wanted to
-                overwatch_id=None)
+            self.run_monitor = run_monitor.Monitor(site=self.site,
+                                                   notify=self.receive,
+                                                   # Not using overwatch in run monitor - could if we wanted to
+                                                   overwatch_id=None)
 
     def start_cloud_monitor(self):
         """Start up the cloud listening process for core"""
@@ -481,7 +480,7 @@ class Model(object):
                 header.update(site_data)
 
             # Add to database
-            db_result= self.database.add_image(header)
+            db_result = self.database.add_image(header)
 
             # Duplicate entry
             if db_result == False:
@@ -906,11 +905,12 @@ class Model(object):
         # NOT a snap
         else:
             self.logger.debug("run_info %s", run_info)
-            self.logger.debug("%s %s %s %d %d", directory,
-                                                basename,
-                                                image_prefix,
-                                                run_number,
-                                                image_number)
+            self.logger.debug("%s %s %s %d %d",
+                              directory,
+                              basename,
+                              image_prefix,
+                              run_number,
+                              image_number)
 
             # There is information in the run
             if run_info:
@@ -984,7 +984,7 @@ class Model(object):
 
         # Save some typing
         site = self.site
-        data_root_dir = data["data_root_dir"]
+        data_root_dir = header["data_root_dir"]
 
         # Grab out some run information
         # try:
