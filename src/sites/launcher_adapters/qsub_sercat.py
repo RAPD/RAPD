@@ -100,7 +100,7 @@ class LauncherAdapter(object):
             else:
                 qsub_proc = "nodes=1:ppn=1"
             return qsub_proc
-        qsub_proc = determine_qsub_proc(command)
+        qsub_proc = determine_qsub_proc(decoded_message["command"])
 
         # Call the launch process on the command file
         # qsub_command = "qsub -cwd -V -b y -N %s %s rapd.python %s %s" %
