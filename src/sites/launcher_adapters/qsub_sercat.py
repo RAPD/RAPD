@@ -63,16 +63,17 @@ class LauncherAdapter(object):
         """
 
         # Decode message
-        command = json.loads(self.message)["command"]
+        decoded_message = json.loads(self.message)
 
         # Adjust the working directory for the launch computer
-        command["directories"]["work"] = os.path.join(self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"], command["directories"]["work"])
+        decoded_message["directories"]["work"] = os.path.join(self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"],
+                                                              decoded_message["directories"]["work"])
 
         # Get the launcher directory - in launcher specification
         qsub_dir = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"]+"/command_files"
 
         # Put the message into a rapd-readable file
-        command_file = launch_tools.write_command_file(qsub_dir, command, self.message)
+        command_file = launch_tools.write_command_file(qsub_dir, decoded_message["command"], json.dumps(decoded_message))
 
         # The command has to come in the form of a script on the SERCAT install
         site_tag = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["site_tag"]
