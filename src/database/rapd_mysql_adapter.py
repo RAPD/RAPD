@@ -342,7 +342,7 @@ class Database(object):
 
                 # Close connection
                 self.close_connection(connection, cursor)
-                
+
                 return False
             else:
                 self.logger.error(error_number, error_message)
@@ -1168,7 +1168,7 @@ class Database(object):
         display -- display state of this process (default = show)
         """
 
-        self.logger.debug("%s %s %s %s %s %s", agent_type, request_type, representation, progress, display)
+        self.logger.debug("%s %s %s %s %s", agent_type, request_type, representation, progress, display)
 
         # Connect to the database
         connection, cursor = self.get_db_connection()

@@ -985,6 +985,7 @@ class Model(object):
         # Save some typing
         site = self.site
         data_root_dir = header["data_root_dir"]
+        site_tag = header["site_tag"].upper()
 
         # Grab out some run information
         # try:
@@ -1027,8 +1028,8 @@ class Model(object):
         if header["collect_mode"] == "SNAP":
 
             # Add the image to self.pair
-            self.pairs[header["site_tag"].upper()].append(header["fullname"].lower())
-            self.pair_ids[header["site_tag"].upper()].append(header["image_id"])
+            self.pairs[site_tag].append(header["fullname"].lower())
+            self.pair_ids[site_tag].append(header["image_id"])
 
             work_dir, new_repr = self.get_index_work_dir(type_level="single",
                                                          image_data1=header)
@@ -1058,7 +1059,7 @@ class Model(object):
                          settings=None)
 
             # If the last two images have "pair" in their name - look more closely
-            if ("pair" in self.pair[0]) and ("pair" in self.pair[1]):
+            if ("pair" in self.pairs[site_tag][0]) and ("pair" in self.pairs[site_tag][1]):
 
                 self.logger.debug("Potentially a pair of images")
 
@@ -1068,8 +1069,9 @@ class Model(object):
 
                 # Everything matches up to the image number, which is incremented by 1
                 if (directory1, basename1, prefix1) == (directory2, basename2, prefix2) and (image_number1 == image_number2-1):
-                    self.logger.info("This looks like a pair to me: %s, %s" %
-                                     (self.pair[1], self.pair[0]))
+                    self.logger.info("This looks like a pair to me: %s, %s",
+                                     self.pairs[site_tag][0],
+                                     self.pairs[site_tag][1])
 
                     # Get the data for the first image
                     data1 = self.database.get_image_by_image_id(image_id=self.pair_id[0])

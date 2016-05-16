@@ -89,9 +89,6 @@ class Launcher(object):
         # Load the adapter
         self.load_adapter()
 
-        # Set up connection to the control database - not used yet!
-        # self.connect_to_database()
-
         # Start listening for commands
         self.run()
 
@@ -114,7 +111,8 @@ class Launcher(object):
         while 1:
             try:
                 # Have Registrar update status
-                self.ow_registrar.update({"site_id":self.site.ID})
+                if self.overwatch_id:
+                    self.ow_registrar.update({"site_id":self.site.ID})
 
                 # Listen for connections
                 _socket.listen(5)

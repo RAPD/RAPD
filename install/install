@@ -498,7 +498,7 @@ echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --ma
 chmod +x ./rapd.gather
 
 echo "#! /bin/bash" > ./rapd.launcher
-echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launcher.py \"\$@\"" >>./rapd.launcher
+echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launcher.py \"\$@\"" >>./rapd.launcher
 chmod +x ./rapd.launcher
 
 echo "#! /bin/bash" > ./rapd.launch
