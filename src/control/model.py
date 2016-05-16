@@ -1049,12 +1049,12 @@ class Model(object):
                            "repr":new_repr})
 
             # Run autoindex and strategy agent
-            LaunchAction(command=("AUTOINDEX",
+            LaunchAction(command=("INDEX+STRATEGY",
                                   new_dirs,
                                   header,
                                   site.LAUNCH_SETTINGS,
                                   self.return_address),
-                          settings=process_settings)
+                         settings=None)
 
             # If the last two images have "pair" in their name - look more closely
             if ("pair" in self.pair[0]) and ("pair" in self.pair[1]):
