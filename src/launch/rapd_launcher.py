@@ -134,7 +134,8 @@ class Launcher(object):
                 self.handle_message(message)
 
             except socket.timeout:
-                print "5 seconds up"
+                pass
+                # print "5 seconds up"
 
         # If we exit...
         _socket.close()
@@ -295,7 +296,5 @@ def main():
                         overwatch_id=commandline_args.overwatch_id)
 
 if __name__ == "__main__":
-
-    print "!!!!!!!!!!!!!!!!!!!!!!!!!"
 
     main()

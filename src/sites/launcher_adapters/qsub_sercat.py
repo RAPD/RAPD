@@ -65,8 +65,11 @@ class LauncherAdapter(object):
         # Decode message
         command = json.loads(self.message)["command"]
 
+        # Adjust the working directory for the launch computer
+        command["directories"]["work"] = os.path.join(self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"], command["directories"]["work"])
+
         # Get the launcher directory - in launcher specification
-        qsub_dir = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"]
+        qsub_dir = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"]+"/command_files"
 
         # Put the message into a rapd-readable file
         command_file = launch_tools.write_command_file(qsub_dir, command, self.message)

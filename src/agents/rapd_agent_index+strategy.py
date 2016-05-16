@@ -2285,7 +2285,7 @@ class RunLabelit(Process):
             if self.test:
                 labelit_jobs["junk%s" % iteration] = iteration
             else:
-                log = os.path.join(os.getcwd(), 'labelit.log')
+                log = os.path.join(os.getcwd(), "labelit.log")
                 #queue to retrieve the PID or JobIB once submitted.
                 pid_queue = Queue()
                 if self.cluster_adapter:
