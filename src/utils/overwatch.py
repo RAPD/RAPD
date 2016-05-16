@@ -229,6 +229,8 @@ class Overwatcher(Registrar):
         Orchestrate core functioning of the Overwatcher instance
         """
 
+        print "run"
+
         # Connect to redis
         self.connect()
 
@@ -432,15 +434,12 @@ def main():
 
     # Import the site settings
     print "Importing %s" % site_file
-    # for i in sys.path:
-    #     print i
     SITE = importlib.import_module(site_file)
-    print SITE
 
     # Create a list from the parsed_args
     parsed_args_list = []
     for arg, val in parsed_args._get_kwargs():
-        # print "  arg:%s  val:%s" % (arg, val)
+        print "  arg:%s  val:%s" % (arg, val)
         if arg != "managed_file":
             if val == True:
                 parsed_args_list.append("--%s" % arg)
