@@ -10,20 +10,20 @@ if [ "$RAPD_HOME" != "" ]; then
   chmod +x $RAPD_HOME/bin/rapd.control
 
   echo "#! /bin/bash" > ./rapd.gather
-  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/src\/sites\/gather\/rapd_gather.py \"\$@\"" >>$SAFE_PREFIX\/bin\/rapd.gather
-  chmod +x $SAFE_PREFIX\/bin\/rapd.gather
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/src\/sites\/gather\/rapd_gather.py \"\$@\"" >>$RAPD_HOME/bin/rapd.gather
+  chmod +x $RAPD_HOME/bin/rapd.gather
 
   echo "#! /bin/bash" > ./rapd.launcher
-  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launcher.py \"\$@\"" >>$SAFE_PREFIX\/bin\/rapd.launcher
-  chmod +x $SAFE_PREFIX\/bin\/rapd.launcher
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launcher.py \"\$@\"" >>$RAPD_HOME/bin/rapd.launcher
+  chmod +x $RAPD_HOME/bin/rapd.launcher
 
   echo "#! /bin/bash" > ./rapd.launch
-  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launch.py \"\$@\"" >>$SAFE_PREFIX\/bin\/rapd.launch
-  chmod +x $SAFE_PREFIX\/bin\/rapd.launch
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launch.py \"\$@\"" >>$RAPD_HOME/bin/rapd.launch
+  chmod +x $RAPD_HOME/bin/rapd.launch
 
   echo "#! /bin/bash" > ./rapd.overwatch
-  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py \"\$@\"" >>$SAFE_PREFIX\/bin\/rapd.overwatch
-  chmod +x $SAFE_PREFIX\/bin\/rapd.overwatch
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py \"\$@\"" >>$RAPD_HOME/bin/rapd.overwatch
+  chmod +x $RAPD_HOME/bin/rapd.overwatch
 
 # Environmental var not set - don't run
 else
