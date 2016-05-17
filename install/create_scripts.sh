@@ -29,5 +29,5 @@ if [ -z "$RAPD_HOME" ]; then
   # chmod +x ./rapd.overwatch
 else
   echo "The RAPD_HOME environmental variable must be set. Exiting"
-  exit(9)
+  exit
 fi
