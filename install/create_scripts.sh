@@ -28,5 +28,6 @@ if [ -z "$RAPD_HOME" ]; then
   # echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py \"\$@\"" >>./rapd.overwatch
   # chmod +x ./rapd.overwatch
 else
-
+  echo "The RAPD_HOME environmental variable must be set. Exiting"
+  exit(9)
 fi
