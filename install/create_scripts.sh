@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ -z "$RAPD_HOME" ]; then
+if [ -z $RAPD_HOME ]; then
 
   SAFE_PREFIX=$(echo "$RAPD_HOME" | sed -e 's/\//\\\//g')
 
