@@ -120,7 +120,7 @@ CLUSTER_ADAPTER = "sites.cluster.sercat"
 
 # Data gatherer settings
 # The data gatherer for this site, in the src/sites/gatherers directory
-GATHERER = "sercat_id.py"
+GATHERER = "sercat.py"
 GATHERER_LOCK_FILE = "/tmp/lock/gatherer.lock"
 
 # Monitor for collected images
