@@ -6,8 +6,8 @@ if [ "$RAPD_HOME" != "" ]; then
 
   # Create scripts
   echo "#! /bin/bash" > ./rapd.control
-  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/src\/control\/rapd_control.py \"\$@\"" >>$SAFE_PREFIX\/bin\/rapd.control
-  chmod +x $SAFE_PREFIX\/bin\/rapd.control
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/src\/control\/rapd_control.py \"\$@\"" >>$RAPD_HOME/bin/rapd.control
+  chmod +x $RAPD_HOME/bin/rapd.control
 
   echo "#! /bin/bash" > ./rapd.gather
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/src\/sites\/gather\/rapd_gather.py \"\$@\"" >>$SAFE_PREFIX\/bin\/rapd.gather
