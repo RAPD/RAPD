@@ -1,4 +1,9 @@
 """
+Methods for reading and understanding the images from SERCAT Rayonix MX300HS
+detector
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2016, Cornell University
@@ -22,7 +27,7 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
-# Standar imports
+# Standard imports
 import math
 import os
 import sys
@@ -30,12 +35,16 @@ import sys
 # RAPD imports
 import rayonix_mx300hs
 
+DETECTOR = "rayonix_mx300hs"
 DETECTOR_SUFFIX = ""
 HEADER_VERSION = 1
 
 def parse_file_name(fullname):
     """Parse the fullname of an image and return
     (directory, basename, prefix, run_number, image_number)
+
+    Keyword arguments
+    fullname -- the full path name of the image file
     """
     print fullname
     directory = os.path.dirname(fullname)
@@ -48,17 +57,43 @@ def parse_file_name(fullname):
     print prefix
     image_number = int(sbase[-1])
     print image_number
-    run_number = "unknown"
+    run_number = None
 
     return directory, basename, prefix, run_number, image_number
+
+# Derive data root dir from image name
+def get_data_root_dir(fullname):
+    """
+    Derive the data root directory from the user directory
+
+    The logic will most likely be unique for each site
+
+    Keyword arguments
+    fullname -- the full path name of the image file
+    """
+
+    # Isolate distinct properties of the images path
+    path_split = fullname.split(os.path.sep)
+    data_root_dir = os.path.join("/", *path_split[1:3])
+
+    # Return the determined directory
+    return data_root_dir
 
 def create_image_fullname(directory,
                           image_prefix,
                           run_number=None,
                           image_number=None):
-    """Create an image name from parts - the reverse of parse"""
+    """
+    Create an image name from parts - the reverse of parse
 
-    if run_number != "unknown":
+    Keyword arguments
+    directory -- in which the image file appears
+    image_prefix -- the prefix before run number or image number
+    run_number -- number for the run
+    image_number -- number for the image
+    """
+
+    if run_number != None:
         filename = "%s.%s.%04d" % (image_prefix,
                                    run_number,
                                    image_number)
@@ -72,7 +107,13 @@ def create_image_fullname(directory,
 
 # Calculate the flux of the beam
 def calculate_flux(header, beam_settings):
-    """Return the flux and size of the beam given parameters"""
+    """
+    Return the flux and size of the beam given parameters
+
+    Keyword arguments
+    header -- data from the header of the image file
+    beam_settings -- incident beam information from the site definitions module
+    """
 
     # Save some typing
     beam_size_raw_x = beam_settings["BEAM_SIZE_X"]
@@ -121,7 +162,14 @@ def calculate_flux(header, beam_settings):
     return flux, beam_size_x/1000.0, beam_size_y/1000.0
 
 def calculate_beam_center(distance, beam_settings, v_offset=0):
-    """ Return a beam center, given a distance and vertical offset"""
+    """
+    Return a beam center, given a distance and vertical offset
+
+    Keyword arguments
+    distance -- sample to detector distance in mm
+    beam_settings -- incident beam information from the site definitions module
+    v_offset -- the vertical offset of the detector
+    """
 
     x_coeff = beam_settings["BEAM_CENTER_X"]
     y_coeff = beam_settings["BEAM_CENTER_Y"]
@@ -147,19 +195,46 @@ def calculate_beam_center(distance, beam_settings, v_offset=0):
 
 # Standard header reading
 def read_header(fullname, beam_settings):
-    """Read the header and add some site-specific data"""
+    """
+    Read the header and add some site-specific data
+
+    Keyword variables
+    fullname -- full path name of the image file to be read
+    beam_settings -- source information from site file
+    """
 
     # Perform the header read form the file
     header = rayonix_mx300hs.read_header(fullname)
 
-    # Clean up the header
-    #header["detector"] = header["vendortype"]
-    #del header["vendortype"]
+    # Label with detector
+    header["detector"] = DETECTOR
+
+    # Set the header version value - future flexibility
+    header["header_version"] = HEADER_VERSION
+
+    # Add tag for module to header
+    header["rapd_detector_id"] = "sercat_rayonix_mx300hs"
 
     # Add some values HACK
     header["aperture_x"] = 50
     header["aperture_y"] = 50
     header["transmission"] = 50
+
+    # Translate from mar to RAPD
+    header["osc_axis"] = header["axis"]
+    header["omega"] = header["omega_start"]
+
+    # Missing values
+    header["kappa"] = None
+    header["phi"] = None
+    header["robot_position"] = None
+    header["run_number"] = None
+    header["sample_id"] = None
+    header["sample_pos_x"] = None
+    header["sample_pos_y"] = None
+    header["sample_pos_z"] = None
+    header["source_current"] = None
+    header["source_mode"] = None
 
     # Perform flux calculation
     flux, beam_size_x, beam_size_y = calculate_flux(header, beam_settings)
@@ -176,29 +251,16 @@ def read_header(fullname, beam_settings):
         distance=header["distance"],
         beam_settings=beam_settings,
         v_offset=0)
-    header["x_beam"] = calc_beam_center_x
-    header["y_beam"] = calc_beam_center_y
+    header["beam_center_calc_x"] = calc_beam_center_x
+    header["beam_center_calc_y"] = calc_beam_center_y
 
-    # Set the header version value - future flexibility
-    header["header_version"] = HEADER_VERSION
+    # Get the data_root_dir
+    header["data_root_dir"] = get_data_root_dir(fullname)
 
     # Return the header
     return header
 
-# Derive data root dir from image name
-def get_data_root_dir(fullname):
-    """
-    Derive the data root directory from the user directory
 
-    The logic will most likely be unique for each site
-    """
-
-    # Isolate distinct properties of the images path
-    path_split = fullname.split(os.path.sep)
-    data_root_dir = os.path.join("/", *path_split[1:3])
-
-    # Return the determined directory
-    return data_root_dir
 
 if __name__ == "__main__":
 

@@ -27,7 +27,7 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
-# Standar imports
+# Standard imports
 import math
 import os
 import sys
@@ -40,8 +40,12 @@ DETECTOR_SUFFIX = ""
 HEADER_VERSION = 1
 
 def parse_file_name(fullname):
-    """Parse the fullname of an image and return
+    """
+    Parse the fullname of an image and return
     (directory, basename, prefix, run_number, image_number)
+
+    Keyword arguments
+    fullname -- the full path name of the image file
     """
     print fullname
     directory = os.path.dirname(fullname)
@@ -64,6 +68,9 @@ def get_data_root_dir(fullname):
     Derive the data root directory from the user directory
 
     The logic will most likely be unique for each site
+
+    Keyword arguments
+    fullname -- the full path name of the image file
     """
 
     # Isolate distinct properties of the images path
@@ -77,7 +84,15 @@ def create_image_fullname(directory,
                           image_prefix,
                           run_number=None,
                           image_number=None):
-    """Create an image name from parts - the reverse of parse"""
+    """
+    Create an image name from parts - the reverse of parse
+
+    Keyword arguments
+    directory -- in which the image file appears
+    image_prefix -- the prefix before run number or image number
+    run_number -- number for the run
+    image_number -- number for the image
+    """
 
     if not run_number in (None, "unknown"):
         filename = "%s.%s.%04d" % (image_prefix,
@@ -93,7 +108,13 @@ def create_image_fullname(directory,
 
 # Calculate the flux of the beam
 def calculate_flux(header, beam_settings):
-    """Return the flux and size of the beam given parameters"""
+    """
+    Return the flux and size of the beam given parameters
+
+    Keyword arguments
+    header -- data from the header of the image file
+    beam_settings -- incident beam information from the site definitions module
+    """
 
     # Save some typing
     beam_size_raw_x = beam_settings["BEAM_SIZE_X"]
@@ -142,7 +163,14 @@ def calculate_flux(header, beam_settings):
     return flux, beam_size_x/1000.0, beam_size_y/1000.0
 
 def calculate_beam_center(distance, beam_settings, v_offset=0):
-    """ Return a beam center, given a distance and vertical offset"""
+    """
+    Return a beam center, given a distance and vertical offset
+
+    Keyword arguments
+    distance -- sample to detector distance in mm
+    beam_settings -- incident beam information from the site definitions module
+    v_offset -- the vertical offset of the detector
+    """
 
     x_coeff = beam_settings["BEAM_CENTER_X"]
     y_coeff = beam_settings["BEAM_CENTER_Y"]
@@ -178,7 +206,7 @@ def read_header(fullname, beam_settings):
 
     # Perform the header read form the file
     header = detector.read_header(fullname)
-    
+
     # Label with detector
     header["detector"] = DETECTOR
 
