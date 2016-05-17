@@ -55,6 +55,9 @@ class LauncherAdapter(object):
         self.message = message
         self.settings = settings
 
+        # Decode message
+        self.decoded_message = json.loads(self.message)
+
         self.run()
 
     def run(self):
@@ -62,18 +65,14 @@ class LauncherAdapter(object):
         Orchestrate the adapter's actions
         """
 
-        # Decode message
-        decoded_message = json.loads(self.message)
-
-        # Adjust the working directory for the launch computer
-        decoded_message["directories"]["work"] = os.path.join(self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"],
-                                                              decoded_message["directories"]["work"])
+        # Adjust the message to this site
+        self.fix_command()
 
         # Get the launcher directory - in launcher specification
         qsub_dir = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"]+"/command_files"
 
         # Put the message into a rapd-readable file
-        command_file = launch_tools.write_command_file(qsub_dir, decoded_message["command"], json.dumps(decoded_message))
+        command_file = launch_tools.write_command_file(qsub_dir, self.decoded_message["command"], json.dumps(self.decoded_message))
 
         # The command has to come in the form of a script on the SERCAT install
         site_tag = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["site_tag"]
@@ -100,7 +99,7 @@ class LauncherAdapter(object):
             else:
                 qsub_proc = "nodes=1:ppn=1"
             return qsub_proc
-        qsub_proc = determine_qsub_proc(decoded_message["command"])
+        qsub_proc = determine_qsub_proc(self.decoded_message["command"])
 
         # Call the launch process on the command file
         # qsub_command = "qsub -cwd -V -b y -N %s %s rapd.python %s %s" %
@@ -116,3 +115,27 @@ class LauncherAdapter(object):
         self.logger.debug(qsub_command)
         p = Popen(qsub_command, shell=True)
         sts = os.waitpid(p.pid, 0)[1]
+
+    def fix_command(self):
+        """
+        Adjust the command passed in in install-specific ways
+        """
+
+        # Adjust the working directory for the launch computer
+        self.decoded_message["directories"]["work"] = os.path.join(self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"],
+                                                                   self.decoded_message["directories"]["work"])
+
+        # Filesystem is NOT shared
+        # For header_1 & header_2
+        for header_iter in ("1", "2"):
+            header_key = "header%s" % header_iter
+            if header_key in self.decoded_message:
+                # Values that need changed
+                for value_key in ("fullname", "directory"):
+                    # Store originals
+                    self.decoded_message[header_key][value_key+"_orig"] = self.decoded_message[header_key][value_key]
+
+                    # Change
+                    for prepended_string in ("/raw", "/archive"):
+                        if self.decoded_message[header_key][value_key].startswith(prepended_string):
+                            self.decoded_message[header_key][value_key] = self.decoded_message[header_key][value_key].replace(prepended_string, "/panfs/panfs0.localdomain"+prepended_string)
