@@ -490,8 +490,8 @@ chmod +x ./rapd.python
 
 
 # Create scripts
-export SAFE_PREFIX $SAFE_PREFIX
-export RAPD_BIN_DIR $BINDIR
+RAPD_HOME=$PREFIX
+export RAPD_HOME
 ./create_scripts.sh
 <!-- echo "#! /bin/bash" > ./rapd.control
 echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/src\/control\/rapd_control.py \"\$@\"" >>./rapd.control
