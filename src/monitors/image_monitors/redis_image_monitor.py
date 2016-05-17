@@ -92,12 +92,12 @@ class Monitor(threading.Thread):
 
         # A string is input - one tag
         if isinstance(self.site.ID, str):
-            self.tags = [self.site.ID.lower()]
+            self.tags = [self.site.ID.upper()]
 
         # Tuple or list
         elif isinstance(self.site.ID, tuple) or isinstance(self.site.ID, list):
             for site_id in self.site.ID:
-                self.tags.append(site_id.lower())
+                self.tags.append(site_id.upper())
 
         # Figure out where we are going to look
         for tag in self.tags:

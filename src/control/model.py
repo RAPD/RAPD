@@ -289,17 +289,15 @@ class Model(object):
         # A single detector
         if site.DETECTOR:
             detector, suffix = site.DETECTOR
-            detector = detector.lower()
-            # self.detectors[self.site_ids[0].lower()] = importlib.import_module("detectors.%s" % detector)
-            self.detectors[self.site_ids[0].lower()] = load_module(detector, ("sites.detectors", "detectors"))
+            detector = detector.upper()
+            self.detectors[self.site_ids[0].upper()] = load_module(detector, ("sites.detectors", "detectors"))
 
         # Multiple detectors
         elif site.DETECTORS:
             for site_id in self.site_ids:
                 detector, suffix = site.DETECTORS[site_id]
-                detector = detector.lower()
-                # self.detectors[site_id.lower()] = importlib.import_module("detectors.%s" % detector)
-                self.detectors[site_id.lower()] = load_module(detector, ("sites.detectors", "detectors"))
+                detector = detector.upper()
+                self.detectors[site_id.upper()] = load_module(detector, ("sites.detectors", "detectors"))
 
     def start_image_monitor(self):
         """Start up the image listening process for core"""
@@ -310,7 +308,7 @@ class Model(object):
         site = self.site
 
         if site.IMAGE_MONITOR:
-            # global image_monitor
+            # import image_monitor
             image_monitor = importlib.import_module("%s" % site.IMAGE_MONITOR.lower())
 
             # Instantiate the monitor
@@ -330,7 +328,6 @@ class Model(object):
         if site.RUN_MONITOR:
             # Import the specific run monitor module
             run_monitor = importlib.import_module("%s" % site.RUN_MONITOR.lower())
-            self.logger.debug(run_monitor)
             self.run_monitor = run_monitor.Monitor(site=self.site,
                                                    notify=self.receive,
                                                    # Not using overwatch in run monitor - could if we wanted to
@@ -885,7 +882,7 @@ class Model(object):
         site = self.site
 
         # The detector
-        detector = self.detectors[site_tag.lower()]
+        detector = self.detectors[site_tag.upper()]
 
         # Tease out the info from the file name
         directory, basename, image_prefix, run_number, image_number = detector.parse_file_name(fullname)

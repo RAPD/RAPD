@@ -179,8 +179,8 @@ class Gatherer(object):
         if self.site.GATHERERS.has_key(self.ip_address):
             self.image_data_file, self.run_data_file, self.tag = self.site.GATHERERS[self.ip_address]
 
-            # Make sure we enforce lowercase for tag
-            self.tag = self.tag.lower()
+            # Make sure we enforce uppercase for tag
+            self.tag = self.tag.upper()
         else:
             print "ERROR - no settings for this host"
             self.tag = "test"
