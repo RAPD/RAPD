@@ -478,6 +478,7 @@ printf "\n\033[94mInstalling rapd executables\033[0m\n"
 
 # Create a script for calling rapd.python
 SAFE_PREFIX=$(echo "$PREFIX" | sed -e 's/\//\\\//g')
+
 cd $BINDIR
 printf "rapd.python\n"
  sed -e 's/LIBTBX_DISPATCHER_NAME="cctbx.python"/LIBTBX_DISPATCHER_NAME="rapd.python"/' \
@@ -489,7 +490,10 @@ chmod +x ./rapd.python
 
 
 # Create scripts
-echo "#! /bin/bash" > ./rapd.control
+export SAFE_PREFIX $SAFE_PREFIX
+export RAPD_BIN_DIR $BINDIR
+./create_scripts.sh
+<!-- echo "#! /bin/bash" > ./rapd.control
 echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/src\/control\/rapd_control.py \"\$@\"" >>./rapd.control
 chmod +x ./rapd.control
 
@@ -507,7 +511,7 @@ chmod +x ./rapd.launch
 
 echo "#! /bin/bash" > ./rapd.overwatch
 echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py \"\$@\"" >>./rapd.overwatch
-chmod +x ./rapd.overwatch
+chmod +x ./rapd.overwatch -->
 
 
 # Create the rapd.shrc script

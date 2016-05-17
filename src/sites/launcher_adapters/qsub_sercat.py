@@ -39,12 +39,19 @@ class LauncherAdapter(object):
     """
     An adapter for launcher process.
 
-    Will launch requested job via qsub on current machine
+    Will launch requested job via qsub on current machine.
+
+    NB - this adapter is highly specific to SERCAT install.
     """
 
     def __init__(self, site, message, settings):
         """
         Initialize the adapter
+
+        Keyword arguments
+        site -- imported site definition module
+        message -- command from the control process, encoded as JSON
+        settings --
         """
 
         # Get the logger Instance
