@@ -80,7 +80,7 @@ def main():
         sys.exit(9)
 
     # Import the site settings
-    print "Iporting %s" % site_file
+    # print "Importing %s" % site_file
     SITE = importlib.import_module(site_file)
 
 	# Single process lock?

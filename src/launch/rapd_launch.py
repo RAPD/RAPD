@@ -1,4 +1,8 @@
 """
+Orchestrates the launch process by wrapping a launch plugin
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2009-2016, Cornell University
@@ -26,6 +30,7 @@ __status__ = "Production"
 import argparse
 import importlib
 import json
+import os
 
 # RAPD imports
 import utils.commandline
@@ -40,19 +45,14 @@ class Launch(object):
     """
 
     agent = None
+    logger = None
 
-    def __init__(self, site, command_file, logger):
+    def __init__(self, site, command_file):
         """Initialize the Launch"""
-
-        # Get the logger Instance
-        self.logger = logger
-        self.logger.debug("__init__")
 
         # Save passed-in variables
         self.site = site
         self.command_file = command_file
-
-        self.logger.debug("%s", self.site)
 
         self.run()
 
@@ -60,16 +60,19 @@ class Launch(object):
         """Orchsetrate the Launch process"""
 
         # Load and decode json command file
-        command = self.load_command()
+        self.command = self.load_command()
 
-        self.logger.debug("command: %s", command.get("command", None))
-        self.logger.debug("reply_address: %s", command.get("reply_address", None))
+        # Start the logger
+        self.init_logger()
+
+        self.logger.debug("command: %s", self.command.get("command", None))
+        self.logger.debug("reply_address: %s", self.command.get("reply_address", None))
 
         # Load the agent for this command
-        self.load_agent(command.get("command"))
+        self.load_agent(self.command.get("command"))
 
         # Run the agent
-        self.agent.RapdAgent(self.site, command)
+        self.agent.RapdAgent(self.site, self.command)
 
     def load_command(self):
         """Load and parse the command file"""
@@ -81,13 +84,33 @@ class Launch(object):
         return json.loads(message)
 
     def load_agent(self, command):
-        """Load the agent file for this command"""
+        """
+        Load the agent file for this command
+
+        Keyword arguments
+        command -- the command to be run (index+strategy for example)
+        """
 
         # Agent we are looking for
         seek_module = "rapd_agent_%s" % command.lower()
 
+        # Load the agent from directories defined in site file
         self.agent = load_module(seek_module=seek_module,
                                  directories=self.site.RAPD_AGENT_DIRECTORIES)
+
+    def init_logger(self):
+        """
+        Start the logger for this launched process
+        """
+
+        # Derive definitions for log file
+        logfile_dir = os.path.dirname(self.command_file.replace("command_files", "log_files"))
+        logfile_id = os.path.basename(self.command_file).replace(".rapd", "")
+
+        # Instantiate a logger at verbose level
+        self.logger = utils.log.get_logger(logfile_dir=logfile_dir,
+                                           logfile_id=logfile_id,
+                                           level=10)
 
 
 
@@ -114,7 +137,6 @@ def main():
 
     # Get the commandline args
     commandline_args = get_commandline()
-    print commandline_args
 
     # Determine the site
     site_file = utils.site.determine_site(site_arg=commandline_args.site)
@@ -134,12 +156,13 @@ def main():
 
     logger.debug("Commandline arguments:")
     for pair in commandline_args._get_kwargs():
-        logger.debug("  arg:%s  val:%s" % pair)
+        logger.debug("  arg:%s  val:%s", pair[0], pair[1])
 
     # Run command file[s]
     if commandline_args.command_files:
         for command_file in commandline_args.command_files:
-            Launch(SITE, command_file, logger)
+            logger.info("Launching %s", command_file)
+            Launch(SITE, command_file)
     else:
         raise Exception("Not sure what to do!")
 
