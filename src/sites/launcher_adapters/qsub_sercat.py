@@ -76,6 +76,7 @@ class LauncherAdapter(object):
         self.fix_command()
 
         # Get the launcher directory - in launcher specification
+        # Add command_files to keep files isolated
         qsub_dir = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"]+"/command_files"
 
         # Put the message into a rapd-readable file
@@ -98,7 +99,7 @@ class LauncherAdapter(object):
         # Parse a label for qsub job from the command_file name
         qsub_label = os.path.basename(command_file).replace(".rapd", "")
 
-        # Determine the processor specs
+        # Determine the processor specs to be used
         def determine_qsub_proc(command):
             """Determine the queue to use"""
             if command.startswith("index"):

@@ -20,7 +20,6 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
 __created__ = "2009-07-10"
 __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
@@ -48,7 +47,9 @@ class Launch(object):
     logger = None
 
     def __init__(self, site, command_file):
-        """Initialize the Launch"""
+        """
+        Initialize the Launch
+        """
 
         # Save passed-in variables
         self.site = site
@@ -57,7 +58,9 @@ class Launch(object):
         self.run()
 
     def run(self):
-        """Orchsetrate the Launch process"""
+        """
+        Orchsetrate the Launch process
+        """
 
         # Load and decode json command file
         self.command = self.load_command()
@@ -75,7 +78,9 @@ class Launch(object):
         self.agent.RapdAgent(self.site, self.command)
 
     def load_command(self):
-        """Load and parse the command file"""
+        """
+        Load and parse the command file
+        """
 
         # Load the file
         message = open(self.command_file, "r").read()
@@ -115,7 +120,9 @@ class Launch(object):
 
 
 def get_commandline():
-    """Get the commandline variables and handle them"""
+    """
+    Get the commandline variables and handle them
+    """
 
     # Parse the commandline arguments
     commandline_description = """The Launch process for handling calls for
@@ -132,7 +139,9 @@ def get_commandline():
     return parser.parse_args()
 
 def main():
-    """Run the main process"""
+    """
+    Run the main process
+    """
 
     # Get the commandline args
     commandline_args = get_commandline()
@@ -165,6 +174,6 @@ def main():
     else:
         raise Exception("Not sure what to do!")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     main()

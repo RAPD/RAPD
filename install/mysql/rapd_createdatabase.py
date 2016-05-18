@@ -20,7 +20,6 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
 __created__ = "2009-07-08"
 __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
@@ -503,7 +502,7 @@ def create_data_tables(hostname, port, username, password):
                  table_definition=mosstrat_results,
                  drop=False)
 
-    # Create index table
+    # Create indexstrategy table
     indexstrategy_results = """indexstrategy_result_id mediumint(8) unsigned NOT NULL AUTO_INCREMENT,
         data_root_dir varchar(256) DEFAULT NULL,
         distl_result_id_1 mediumint(8) DEFAULT NULL,
@@ -544,6 +543,9 @@ def create_data_tables(hostname, port, username, password):
                  table="indexstrategy_results",
                  table_definition=indexstrategy_results,
                  drop=False)
+
+
+
 
     # Changes from v4
     # axis >> osc_axis
@@ -782,7 +784,8 @@ def create_data_tables(hostname, port, username, password):
         transmission float DEFAULT NULL,
         twotheta float DEFAULT NULL,
         timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (run_id)"""
+        PRIMARY KEY (run_id),
+        UNIQUE KEY blocker (directory, image_prefix, run_number, start_image_number, number_images),"""
 
     create_table(hostname=hostname,
                  port=port,
@@ -874,6 +877,9 @@ def create_data_tables(hostname, port, username, password):
     #              table="prefs_strategy",
     #              table_definition=prefs_strategy,
     #              drop=False)
+
+
+
 
     # agent_processes
     # For storing information about launched agent processes

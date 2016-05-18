@@ -671,9 +671,9 @@ class Model(object):
                     header2 = header.copy()
 
                     # Derive  directory and repr
-                    work_dir, new_repr = self.get_work_dir("pair",
-                                                           header1,
-                                                           header2)
+                    work_dir, new_repr = self.get_work_dir(type_level="pair",
+                                                           image_data1=header1,
+                                                           image_data2=header2)
 
                     # Now package directories into a dict for easy access by worker class
                     new_dirs = {"work" : work_dir,
@@ -715,24 +715,25 @@ class Model(object):
             run_dict = header["run"].copy()
 
             # Derive  directory and repr
-            work_dir, new_repr = self.get_work_dir("integrate",
-                                                   header)
+            work_dir, new_repr = self.get_work_dir(type_level="integrate",
+                                                   image_data1=header)
 
             # Now package directories into a dict for easy access by worker class
-            new_dirs = {"work"          : work_dir,
+            new_dirs = {"work" : work_dir,
                         "data_root_dir" : data_root_dir}
 
             # If we are to integrate, do it
             try:
                 # Add the process to the database to display as in-process
-                process_id = self.database.addNewProcess(type="integrate",
-                                                         rtype="original",
-                                                         data_root_dir=data_root_dir,
-                                                         repr=new_repr)
+                process_id = self.database.add_agent_process(agent_type="integrate",
+                                                             request_type="original",
+                                                             representation=new_repr,
+                                                             progress=0,
+                                                             display="show")
 
-                # Make a new result for the integration - should show up in the user interface?
-                integrate_result_id, result_id = self.database.makeNewResult(rtype="integrate",
-                                                                             process_id=process_id)
+                # Add the ID entry to the header dict
+                header.update({"agent_process_id":process_id,
+                               "repr":new_repr})
 
                 # Add the ID entry to the data dict
                 data.update({"ID":os.path.basename(work_dir),

@@ -1256,36 +1256,58 @@ class Database(object):
     ############################################################################
     # Functions for results                                                    #
     ##########################################################################$#
-    def makeNewResult(self, rtype, process_id=0, data_root_dir=None):
+    def parse_agent_type(self, agent_type):
+        """
+        Parse the agent_type string into something workable with the database
+
+
+        agent_type                  result
+        index+strategy:single       indexstrategy
+        index+strategy:pair         indexstrategy
+
+
+        Keyword argument
+        agent_type -- corresponds to an agent_type as entered in the agent_processes
+                      table, ex. index+strategy:single
+        """
+
+        return agent_type.split(":")[0].replace("+", "")
+
+    def create_new_result(self, agent_type, process_id=0, data_root_dir=None):
         """
         Create a new (blank) entry for a given type of result
 
-        rtype - sad,single,pair,integrate
-        process_id - the index of the rapd_data.processes table for this result
+        Keyword arguments
+        agent_type -- agent type
+        process_id -- the index of the rapd_data.processes table for this result
+        data_root_dir -- the root directory for the data
         """
 
-        self.logger.debug("Database::makeNewResult  rtype:%s" % rtype)
+        self.logger.debug("create_new_result  rtype:%s", rtype)
 
-        try:
-            #get cursor
-            connection, cursor = self.get_db_connection()
-            #create entry
-            query = "INSERT INTO "+rtype+"_results (process_id,data_root_dir) VALUES (%s, %s)"
-            cursor.execute(query, (process_id, data_root_dir))
-            #get the rtype_result_id
-            rtype_result_id = cursor.lastrowid
-            #now add the rtype_result to the results table
-            cursor.execute("INSERT INTO results (type,id,process_id,data_root_dir,display) VALUES (%s,%s,%s,%s,%s)",(rtype,rtype_result_id,process_id,data_root_dir,'none'))
-            #get the result_id
-            result_id = cursor.lastrowid
-            self.close_connection(connection, cursor)
-            #return to the caller
-            return(rtype_result_id, result_id)
+        # Get cursor
+        connection, cursor = self.get_db_connection()
 
-        except:
-            self.logger.exception('ERROR : unknown exception in Database::makeNewResult')
-            self.close_connection(connection, cursor)
-            return(False, False)
+        # Parse the agent type into the correct table
+        result_table_prefix = self.parse_agent_type(agent_type)
+
+        # Create entry
+        query = "INSERT INTO "+result_table+"_results (process_id, data_root_dir) VALUES (%s, %s)"
+        cursor.execute(query, (process_id, data_root_dir))
+        #get the rtype_result_id
+        rtype_result_id = cursor.lastrowid
+        #now add the rtype_result to the results table
+        cursor.execute("INSERT INTO results (type,id,process_id,data_root_dir,display) VALUES (%s,%s,%s,%s,%s)",(rtype,rtype_result_id,process_id,data_root_dir,'none'))
+        #get the result_id
+        result_id = cursor.lastrowid
+        self.close_connection(connection, cursor)
+        #return to the caller
+        return(rtype_result_id, result_id)
+
+        # except:
+        #     self.logger.exception('ERROR : unknown exception in Database::makeNewResult')
+        #     self.close_connection(connection, cursor)
+        #     return(False, False)
 
 
     def addSingleResult(self,dirs,info,settings,results):
