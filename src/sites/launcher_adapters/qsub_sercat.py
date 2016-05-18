@@ -117,8 +117,6 @@ class LauncherAdapter(object):
             qsub_dir, qsub_path, qsub_label, qsub_proc, command_script)
 
         # Launch it
-        print "!!!!!!!!!!!!!"
-        print qsub_command
         self.logger.debug(qsub_command)
         p = Popen(qsub_command, shell=True)
         sts = os.waitpid(p.pid, 0)[1]
@@ -129,8 +127,22 @@ class LauncherAdapter(object):
         """
 
         # Adjust the working directory for the launch computer
-        self.decoded_message["directories"]["work"] = os.path.join(self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"],
-                                                                   self.decoded_message["directories"]["work"])
+        work_dir_candidate = os.path.join(
+            self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"],
+            self.decoded_message["directories"]["work"])
+
+        # Make sure this is an original directory
+        if os.path.exists(work_dir_candidate):
+            # Already exists
+            for i in range(1, 1000):
+                if not os.path.exists("_".join((work_dir_candidate, str(i)))):
+                    work_dir_candidate = "_".join((work_dir_candidate, str(i)))
+                    break
+                else:
+                    i += 1
+
+        # Modify command
+        self.decoded_message["directories"]["work"] = work_dir_candidate
 
         # Filesystem is NOT shared
         # For header_1 & header_2
