@@ -67,15 +67,15 @@ def get_logger(logfile_dir="/var/log",
     level -- Logging level CRITICAL=50, DEBUG=10 (default 10)
     """
 
-    print "get_logger logfile_dir:%s logfile_id:%s level:%d" % (logfile_dir, logfile_id, level)
+    # print "get_logger logfile_dir:%s logfile_id:%s level:%d" % (logfile_dir, logfile_id, level)
 
     # Make sure the logfile_dir exists
     if not os.path.exists(logfile_dir):
         os.makedirs(logfile_dir)
 
     # Set up file name
-    log_filename = os.path.join(logfile_dir, logfile_id.lower()+".log")
-    print "Log file: %s" % log_filename
+    log_filename = os.path.join(logfile_dir, logfile_id+".log")
+    # print "Log file: %s" % log_filename
 
     # Add the log message handler to the logger
     file_handler = logging.handlers.RotatingFileHandler(log_filename,

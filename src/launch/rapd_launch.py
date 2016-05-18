@@ -104,8 +104,8 @@ class Launch(object):
         """
 
         # Derive definitions for log file
-        logfile_dir = os.path.dirname(self.command_file.replace("command_files", "log_files"))
-        logfile_id = os.path.basename(self.command_file).replace(".rapd", "")
+        logfile_dir = os.path.dirname(self.command_file) #.replace("command_files", "log_files"))
+        logfile_id = os.path.basename(self.command_file) #.replace(".rapd", "")
 
         # Instantiate a logger at verbose level
         self.logger = utils.log.get_logger(logfile_dir=logfile_dir,

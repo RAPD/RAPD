@@ -46,7 +46,6 @@ import utils.site
 import utils.text as text
 
 BUFFER_SIZE = 8192
-database = None
 
 class Launcher(object):
     """
@@ -211,15 +210,14 @@ s IP address (%s), but not for the input tag (%s)" % (self.ip_address, self.tag)
 
         self.logger.debug(self.adapter)
 
-    def connect_to_database(self):
-        """Set up database connection"""
-
-        # Import the database adapter as database module
-        global database
-        database = importlib.import_module('database.rapd_%s_adapter' % self.site.CONTROL_DATABASE)
-
-        # Instantiate the database connection
-        self.database = database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+    # def connect_to_database(self):
+    #     """Set up database connection"""
+    #
+    #     # Import the database adapter as database module
+    #     database = importlib.import_module('database.rapd_%s_adapter' % self.site.CONTROL_DATABASE)
+    #
+    #     # Instantiate the database connection
+    #     self.database = database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
 
 
 
