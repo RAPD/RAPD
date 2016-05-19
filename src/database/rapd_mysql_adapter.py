@@ -1292,9 +1292,12 @@ class Database(object):
         result_table_prefix = self.parse_agent_type(agent_type)
 
         # Create entry
-        query = "INSERT INTO "+result_table+"_results (process_id, data_root_dir) VALUES (%s, %s)"
-        cursor.execute(query, (process_id, data_root_dir))
-        #get the rtype_result_id
+        query = "INSERT INTO "+result_table_prefix+"_results (process_id, data_root_dir) VALUES (%s, %s)"
+        parameters = (process_id, data_root_dir)
+
+        # Insert into
+        cursor.execute(query, parameters)
+        # Get the rtype_result_id
         rtype_result_id = cursor.lastrowid
         #now add the rtype_result to the results table
         cursor.execute("INSERT INTO results (type,id,process_id,data_root_dir,display) VALUES (%s,%s,%s,%s,%s)",(rtype,rtype_result_id,process_id,data_root_dir,'none'))
@@ -6079,15 +6082,14 @@ class Database(object):
     ############################################################################
     # Functions for runs                                                       #
     ############################################################################
-    def add_run(self, site_tag, run_data):
+    def add_run(self, run_data):
         """
         Add a new run to the MySQL database
 
         Keyword arguments
         run_data -- dict containing run information
-        site_tag -- unique identifier for the run origin site
         """
-        self.logger.debug("add_run %s %s", site_tag, run_data)
+        self.logger.debug("add_run %s", run_data)
 
         try:
             # Connect
@@ -6143,7 +6145,7 @@ class Database(object):
                                               run_data.get("osc_width", None),
                                               run_data.get("phi", None),
                                               run_data.get("run_number", None),
-                                              site_tag,
+                                              run_data.get("site_tag", None),
                                               run_data.get("start_image_number", None),
                                               run_data.get("time", None),
                                               run_data.get("transmission", None),
@@ -6169,7 +6171,6 @@ class Database(object):
             return False
 
     def get_run_data(self,
-                     site_tag=None,
                      run_data=None,
                      minutes=0,
                      order="descending",
@@ -6182,7 +6183,6 @@ class Database(object):
         total number of images.
 
         Keyword arguments
-        site_tag -- string describing site (default None)
         run_data -- dict of run information (default None)
         minutes -- time window to look back into the data (default 0)
         order -- the order in which to sort the results, must be None, descending
@@ -6190,7 +6190,7 @@ class Database(object):
         boolean -- return just True if there is a or False
         """
 
-        self.logger.debug("site_tag:%s run_data:%s minutes:%d", site_tag, run_data, minutes)
+        self.logger.debug("run_data:%s minutes:%d", run_data, minutes)
 
         # Order
         if order == "descending":
@@ -6210,7 +6210,7 @@ class Database(object):
         if minutes == 0:
             query = "SELECT %s FROM runs WHERE site_tag='%s' AND directory='%s' AND image_prefix='%s' AND run_number=%s AND start_image_number=%s AND number_images=%s"
             params = (select_param,
-                      site_tag,
+                      run_data.get("site_tag", None),
                       run_data.get("directory", None),
                       run_data.get("image_prefix", None),
                       run_data.get("run_number", None),
@@ -6221,7 +6221,7 @@ class Database(object):
         else:
             query = "SELECT %s FROM runs WHERE site_tag='%s' AND directory='%s' AND image_prefix='%s' AND run_number=%s AND start_image_number=%s AND number_images=%s AND timestamp > NOW()-INTERVAL %d MINUTE"
             params = (select_param,
-                      site_tag,
+                      run_data.get("site_tag", None),
                       run_data.get("directory", None),
                       run_data.get("image_prefix", None),
                       run_data.get("run_number", None),
@@ -6260,8 +6260,8 @@ class Database(object):
                      order="descending",
                      boolean=True):
         """
-        Return True/False depending on whether the image information could
-        correspond to a run stored in the database
+        Return True/False or with list of data depending on whether the image
+        information could correspond to a run stored in the database
 
         Keyword arguments
         site_tag -- string describing site (default None)

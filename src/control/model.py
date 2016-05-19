@@ -67,8 +67,7 @@ class Model(object):
     indexing_active = collections.deque()
 
     # Managing runs and images without going to the db
-    current_run = {}
-    recent_runs = collections.deque(maxlen=1000)
+    recent_runs = collections.deque(maxlen=200)
 
     data_root_dir = None
     database = None
@@ -322,12 +321,12 @@ class Model(object):
         data_root_dir = detector.get_data_root_dir(fullname)
 
         # Figure out if image in the current run...
-        place, run_info = self.in_run(site_tag, fullname)
+        run_id, place_in_run = self.in_run(site_tag, fullname)
 
-        # Image is in the current run
-        if isinstance(place, int) and run_info == "current_run":
+        # Image is in a run
+        if isinstance(place_in_run, int) and isinstance(run_id, int):
 
-            self.logger.debug("%s is in the current run at position %d", fullname, place)
+            self.logger.debug("%s is in run %s at position %s", fullname, run_id, place_in_run)
 
             # If not integrating trigger integration
             if self.current_run["status"] != "INTEGRATING":
@@ -372,7 +371,7 @@ class Model(object):
                 self.new_data_image(header=header)
 
         # Image is a snap
-        elif place == "SNAP":
+        elif run_id == "SNAP":
 
             self.logger.debug("%s is a snap", fullname)
 
@@ -406,25 +405,92 @@ class Model(object):
             # KBO
             self.new_data_image(header=header)
 
-        # Image is in a past run
-        elif isinstance(place, int) and isinstance(run_info, dict):
-
-            self.logger.debug("%s is in a past run", fullname)
-
-            # Figure out if image in the current run...
-            past_place, past_run_info = self.in_past_run(fullname)
-
-            if isinstance(past_place, int):
-
-                self.logger.debug("Have past run data for %s", fullname)
-
-            elif past_place == False:
-
-                self.logger.debug("Unable to find past run data for %s", fullname)
+        # # Image is in a past run
+        # elif isinstance(place, int) and isinstance(run_info, dict):
+        #
+        #     self.logger.debug("%s is in a past run", fullname)
+        #
+        #     # Figure out if image in the current run...
+        #     past_place, past_run_info = self.in_past_run(fullname)
+        #
+        #     if isinstance(past_place, int):
+        #
+        #         self.logger.debug("Have past run data for %s", fullname)
+        #
+        #     elif past_place == False:
+        #
+        #         self.logger.debug("Unable to find past run data for %s", fullname)
 
         # No information is findable
         else:
             self.logger.debug("Unable to figure out %s", fullname)
+
+    def query_for_run(self, run_data, boolean=True):
+        """
+        Look in the local store and the database for run that matches input data
+
+        Keyword argument
+        run_data -- dict containing run information
+        boolean -- return True/False (default True)
+        """
+
+        # Look in local store of information
+        for run in self.recent_runs:
+            if run_data.get("run_id", 0) == run.get("run_id", 1):
+                if boolean:
+                    return True
+                else:
+                    return run
+
+        # Look in the database since the local attempt has failed
+        return self.database.get_run_data(run_data=run_data,
+                                          minutes=60,
+                                          boolean=boolean)
+
+    def query_in_run(self,
+                     site_tag,
+                     directory,
+                     image_prefix,
+                     run_number,
+                     image_number,
+                     minutes=0,
+                     order="descending",
+                     boolean=True):
+        """
+        Return True/False or with list of data depending on whether the image
+        information could correspond to a run stored locally or in the database
+
+        Keyword arguments
+        site_tag -- string describing site (default None)
+        directory -- where the image is located
+        image_prefix -- the image prefix
+        run_number -- number for the run
+        image_number -- number for the image
+        minutes -- time window to look back into the data (default 0)
+        boolean -- return just True if there is a or False
+        """
+
+        # Query local runs
+        for run in self.recent_runs:
+            if run.get("directory", None) == directory and
+               run.get("image_prefix", None) == image_prefix and
+               run.get("run_number", None) == run_number:
+
+               # Check image number
+               run_start = run.get("start_image_number")
+               run_end = run.get("number_images") + run_start - 1
+               if image_number >= run_start and image_number <= run_end:
+
+
+
+
+        run_info = self.database.query_in_run(site_tag=site_tag,
+                                              directory=directory,
+                                              image_prefix=image_prefix,
+                                              run_number=run_number,
+                                              image_number=image_number,
+                                              minutes=minutes,
+                                              boolean=boolean)
 
     def add_run(self, run_dict):
         """
@@ -436,35 +502,28 @@ class Model(object):
 
         # Unpack the run_dict
         run_data = run_dict["run_data"]
-        site_tag = run_dict["site_tag"]
 
-        # Check if this run has already been collected - could be an array of dicts
-        # that are runs that match or a False
-        recent_run_data = self.database.get_run_data(site_tag=site_tag,
-                                                     run_data=run_data,
-                                                     minutes=60,
-                                                     boolean=True)
+        # Check if this run has already been stored
+        recent_run_data = self.query_for_run(run_data=run_data, boolean=True)
 
-        if recent_run_data != False:
+        # Run data already stored
+        if recent_run_data == True:
 
             self.logger.debug("This run has already been recorded")
 
+        # Run is new to RAPD
         else:
 
             # Save to the database
-            run_id = self.database.add_run(site_tag=site_tag,
-                                           run_data=run_data)
+            run_id = self.database.add_run(run_data=run_data)
 
-            # Save the current_run to somewhere handy
-            if self.current_run:
-                self.recent_runs.append(self.current_run.copy())
+            # Update the run data with the db run_id
+            run_data["run_id"] = run_id
 
-            # Set current_run to the new run
-            self.current_run = run_data
+            # Save the run_data to local store
+            self.recent_runs.append(run_data)
 
-            # Set the run_id that comes from the database for the current run
-            if run_id:
-                self.current_run["run_id"] = run_id
+        return True
 
     def in_past_run(self, fullname):
         """
@@ -505,15 +564,6 @@ class Model(object):
         """
         self.logger.debug("%s %s", site_tag, fullname)
 
-        if run_info == None:
-            if self.current_run == None:
-                pass
-            else:
-                run_info = self.current_run
-
-        # Save typing
-        site = self.site
-
         # The detector
         detector = self.detectors[site_tag.upper()]
 
@@ -530,6 +580,7 @@ class Model(object):
                                               image_number=image_number,
                                               minutes=60,
                                               boolean=False)
+
         # No run information - SNAP
         if not run_info:
             return "SNAP", None
@@ -547,50 +598,20 @@ class Model(object):
                               run_number,
                               image_number)
 
-            # Directory
-            if run_info["directory"] == directory:
-                self.logger.debug("directories match")
 
-                # Prefix
-                if run_info["image_prefix"] == image_prefix:
-                    self.logger.debug("prefixes match")
 
-                    # Run number
-                    if run_info["run_number"] == run_number:
-                        self.logger.debug("run_numbers match")
+            # Calculate the position of the image in the current run
+            run_position = image_number - run_info.get("start_image_number", 1) + 1
 
-                        # Image number
-                        if (image_number >= run_info["start_image_number"]) and (image_number <= run_info["number_images"]+run_info["start_image_number"]-1):
-                            self.logger.debug("image numbers in line")
+            # Update the remote system on the run
+            if self.remote_adapter:
+                self.remote_adapter.update_run_progress(
+                    run_position=run_position,
+                    image_name=basename,
+                    run_data=run_info)
 
-                            # Calculate the position of the image in the current run
-                            run_position = image_number - run_info.get("start", 1) + 1
-
-                            # Update the remote system on the run
-                            if self.remote_adapter:
-                                self.remote_adapter.update_run_progress(
-                                    run_position=run_position,
-                                    image_name=basename,
-                                    run_data=run_info)
-
-                            # Return the run position for this image
-                            return run_position, "current_run"
-
-                        # Image numbers not in line
-                        else:
-                            return "PAST", None
-
-                    # Run numbers do not match
-                    else:
-                        return "PAST", None
-
-                # Prefixes do not match
-                else:
-                    return "PAST", None
-
-            # Directories do not match
-            else:
-                return "PAST", None
+            # Return the run position for this image
+            return run_info["run_id"], run_position
 
     def new_data_image(self, header):
         """

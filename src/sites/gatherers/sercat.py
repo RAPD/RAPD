@@ -358,6 +358,7 @@ class Gatherer(object):
                 "osc_width":float(raw_run_data.get("width", 0.0)),
                 "phi":float(raw_run_data.get("start", 0.0)),
                 "run_number":None,
+                "site_tag":self.tag,
                 "start_image_number":int(float(raw_run_data.get("first_image", 0))),
                 "time":float(raw_run_data.get("time", 0.0)),
                 "transmission":float(raw_run_data.get("trans", 0.0)),
