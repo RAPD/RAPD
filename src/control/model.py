@@ -522,7 +522,7 @@ class Model(object):
 
         self.logger.debug("%s %s %s %s %s", directory, basename, image_prefix, run_number, image_number)
 
-        # SNAP?
+        # Look for run information for this image
         run_info = self.database.query_in_run(site_tag=site_tag,
                                               directory=directory,
                                               image_prefix=image_prefix,
@@ -530,6 +530,7 @@ class Model(object):
                                               image_number=image_number,
                                               minutes=60,
                                               boolean=False)
+        # No run information - SNAP
         if not run_info:
             return "SNAP", None
 
@@ -586,10 +587,6 @@ class Model(object):
             # Directories do not match
             else:
                 return "PAST", None
-
-        # There is no current run
-        else:
-            return "PAST", None
 
     def new_data_image(self, header):
         """
