@@ -536,6 +536,9 @@ class Model(object):
 
         # NOT a snap
         else:
+            # run_info is a list of dicts - take most recent match
+            run_info = run_info[0]
+
             self.logger.debug("run_info: %s", run_info)
             self.logger.debug("%s %s %s %s %s",
                               directory,
