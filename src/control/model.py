@@ -552,7 +552,7 @@ class Model(object):
                 self.logger.debug("directories match")
 
                 # Prefix
-                if run_info["prefix"] == image_prefix:
+                if run_info["image_prefix"] == image_prefix:
                     self.logger.debug("prefixes match")
 
                     # Run number
@@ -560,7 +560,7 @@ class Model(object):
                         self.logger.debug("run_numbers match")
 
                         # Image number
-                        if (image_number >= run_info["image_number_start"]) and (image_number <= run_info["image_number_end"]):
+                        if (image_number >= run_info["start_image_number"]) and (image_number <= run_info["number_images"]+run_info["start_image_number"]-1):
                             self.logger.debug("image numbers in line")
 
                             # Calculate the position of the image in the current run
