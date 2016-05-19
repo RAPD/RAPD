@@ -536,6 +536,7 @@ class Model(object):
 
         # NOT a snap
         else:
+            self.logger.debug("run_info: %s", run_info)
             self.logger.debug("%s %s %s %s %s",
                               directory,
                               basename,
