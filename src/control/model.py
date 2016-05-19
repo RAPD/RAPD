@@ -523,18 +523,18 @@ class Model(object):
         self.logger.debug("%s %s %s %s %s", directory, basename, image_prefix, run_number, image_number)
 
         # SNAP?
-        if not self.database.query_in_run(site_tag=site_tag,
-                                          directory=directory,
-                                          image_prefix=image_prefix,
-                                          run_number=run_number,
-                                          image_number=image_number,
-                                          minutes=60,
-                                          boolean=True):
+        run_info = self.database.query_in_run(site_tag=site_tag,
+                                              directory=directory,
+                                              image_prefix=image_prefix,
+                                              run_number=run_number,
+                                              image_number=image_number,
+                                              minutes=60,
+                                              boolean=False)
+        if not run_info:
             return "SNAP", None
 
         # NOT a snap
         else:
-            self.logger.debug("run_info %s", run_info)
             self.logger.debug("%s %s %s %d %d",
                               directory,
                               basename,
@@ -542,58 +542,54 @@ class Model(object):
                               run_number,
                               image_number)
 
-            # There is information in the run
-            if run_info:
-                self.logger.debug("There is run_info")
+            # Directory
+            if run_info["directory"] == directory:
+                self.logger.debug("directories match")
 
-                # Directory
-                if run_info["directory"] == directory:
-                    self.logger.debug("directories pass")
+                # Prefix
+                if run_info["prefix"] == image_prefix:
+                    self.logger.debug("prefixes match")
 
-                    # Prefix
-                    if run_info["prefix"] == image_prefix:
-                        self.logger.debug("prefixes match")
+                    # Run number
+                    if run_info["run_number"] == run_number:
+                        self.logger.debug("run_numbers match")
 
-                        # Run number
-                        if run_info["run_number"] == run_number:
-                            self.logger.debug("run_numbers match")
+                        # Image number
+                        if (image_number >= run_info["image_number_start"]) and (image_number <= run_info["image_number_end"]):
+                            self.logger.debug("image numbers in line")
 
-                            # Image number
-                            if (image_number >= run_info["image_number_start"]) and (image_number <= run_info["image_number_end"]):
-                                self.logger.debug("image numbers in line")
+                            # Calculate the position of the image in the current run
+                            run_position = image_number - run_info.get("start", 1) + 1
 
-                                # Calculate the position of the image in the current run
-                                run_position = image_number - run_info.get("start", 1) + 1
+                            # Update the remote system on the run
+                            if self.remote_adapter:
+                                self.remote_adapter.update_run_progress(
+                                    run_position=run_position,
+                                    image_name=basename,
+                                    run_data=run_info)
 
-                                # Update the remote system on the run
-                                if self.remote_adapter:
-                                    self.remote_adapter.update_run_progress(
-                                        run_position=run_position,
-                                        image_name=basename,
-                                        run_data=run_info)
+                            # Return the run position for this image
+                            return run_position, "current_run"
 
-                                # Return the run position for this image
-                                return run_position, "current_run"
-
-                            # Image numbers not in line
-                            else:
-                                return "PAST", None
-
-                        # Run numbers do not match
+                        # Image numbers not in line
                         else:
                             return "PAST", None
 
-                    # Prefixes do not match
+                    # Run numbers do not match
                     else:
                         return "PAST", None
 
-                # Directories do not match
+                # Prefixes do not match
                 else:
                     return "PAST", None
 
-            # There is no current run
+            # Directories do not match
             else:
                 return "PAST", None
+
+        # There is no current run
+        else:
+            return "PAST", None
 
     def new_data_image(self, header):
         """
