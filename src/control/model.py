@@ -740,20 +740,20 @@ class Model(object):
                 header.update({"agent_process_id":process_id,
                                "repr":new_repr})
 
-                # Add the ID entry to the data dict
-                data.update({"ID":os.path.basename(work_dir),
-                             "repr":new_repr,
-                             "process_id":process_id})
+                # # Add the ID entry to the data dict
+                # data.update({"ID":os.path.basename(work_dir),
+                #              "repr":new_repr,
+                #              "process_id":process_id})
 
-                # Construct data for the processing
-                out_data = {"run_data":run_dict,
-                            "image_data":data}
+                # # Construct data for the processing
+                # out_data = {"run_data":run_dict,
+                #             "image_data":data}
 
                 # Connect to the server and autoindex the single image
                 LaunchAction(command={"command":"INTEGRATE",
                                       "directories":new_dirs,
-                                      out_data,
-                                      process_settings,
+                                      "image_data":header,
+                                      "run_data":run_dict,
                                       "preferences":{},
                                       "return_address":self.return_address},
                              launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],

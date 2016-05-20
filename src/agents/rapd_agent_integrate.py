@@ -1,4 +1,8 @@
 """
+RAPD agent for fast integration with XDS
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2011-2016, Cornell University
@@ -16,66 +20,103 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
 __created__ = "2011-06-29"
 __maintainer__ = "David Neau"
 __email__ = "dneau@anl.gov"
 __status__ = "Production"
 
-from multiprocessing import Process, Queue, Pipe
-from rapd_communicate import Communicate
-from rapd_agent_stats import AutoStats
-from xdsme.xds2mos import Xds2Mosflm
-from numpy import interp
-import rapd_utils as Utils
-import subprocess
+# This is an active rapd agent
+RAPD_AGENT = True
+
+# This handler's request type
+AGENT_TYPE = "INTEGRATE"
+AGENT_SUBTYPE = "CORE"
+
+# A unique UUID for this handler (uuid.uuid1().hex)
+ID = "bd11f4401eaa11e697c3ac87a3333966"
+
+# Standard imports
+import logging
+import logging.handlers
 import math
-import threading
+from multiprocessing import Process, Queue, Pipe
 import os
 import os.path
 import shutil
-import sys
-import time
-import logging
-import logging.handlers
 import stat
-import rapd_beamlinespecific as BLspec
+import subprocess
+import sys
+import threading
+import time
+
+from numpy import interp
+
+# RAPD imports
+from subcontractors.xdsme.xds2mos import Xds2Mosflm
+from utils.communicate import rapd_send
+from rapd_agent_stats import AutoStats
+import utils.xutils as Utils
 
 # Import smartie.py from the installed CCP4 package
 # smartie.py is a python script for parsing log files from CCP4
 sys.path.append(os.path.join(os.environ["CCP4"],'share','smartie'))
 import smartie
 
-class FastIntegration(Process, Communicate):
-    '''
+class RapdAgent(Process):
+    """
     classdocs
-    '''
 
-    def __init__(self, input, logger):
-        '''
-        Constructor
-        '''
-        self.input = input[0:4]
-        self.controller_address = input[-1]
-        self.logger = logger
+    command format
+    {
+        "command":"INDEX+STRATEGY",
+        "directories":
+            {
+                "data_root_dir":""                  # Root directory for the data session
+                "work":""                           # Where to perform the work
+            },
+        "image_data":{},                            # Image information
+        "preferences":{}                            # Settings for calculations
+        "return_address":("127.0.0.1", 50000)       # Location of control process
+    }
+    """
+
+    def __init__(self, site, command): #input, logger):
+        """
+        Initialize the agent
+
+        Keyword arguments
+        site -- full site settings
+        command -- dict of all information for this agent to run
+        """
+
+        # Get the logger Instance
+        self.logger = logging.getLogger("RAPDLogger")
+        self.logger.debug("__init__")
+
+        # Store passed-in variables
+        self.site = site
+        self.command = command
+
+        # self.input = input[0:4]
+        self.controller_address = self.command["return_address"]# input[-1]
+        # self.logger = logger
         self.spacegroup = None
-        
-        
-        self.command = self.input[0]
-        self.dirs = self.input[1]
-        if 'image_data' in self.input[2]:
-            self.data = self.input[2]['image_data']
-            self.process_id = self.input[2]['image_data']['process_id']
-            if 'run_data' in self.input[2]:
-                self.data.update(self.input[2]['run_data'])
-        elif 'original' in self.input[2]:
-            self.data = self.input[2]['original']
+
+
+        self.dirs = self.command["directories"]
+        if "image_data" in self.command:
+            self.data = self.command["image_data"]
+            self.process_id = self.command["image_data"]["agent_process_id"]
+            if "run_data" in self.command:
+                self.data.update(self.command["run_data"])
+        elif 'original' in self.command:
+            self.data = self.command['original']
         else:
-            self.data = self.input[2]
+            self.data = self.command
 
         self.logger.debug('self.data = ')
         self.logger.debug('%s' %self.data)
-        self.settings = self.input[3]
+        self.settings = self.command["preferences"]
 
         if 'x_beam' not in self.data.keys():
             self.data['x_beam'] = self.data['beam_center_x']
@@ -86,7 +127,7 @@ class FastIntegration(Process, Communicate):
                                     + int(self.settings['request']['frame_finish']) - 1)
             if self.settings['request'].has_key('spacegroup'):
                 self.spacegroup = self.settings['request']['spacegroup']
-        
+
         if 'multiprocessing' in self.settings:
             self.cluster_use = self.settings['multiprocessing']
             if self.cluster_use == 'True':
@@ -95,22 +136,22 @@ class FastIntegration(Process, Communicate):
                 self.cluster_use = False
         else:
             self.cluster_use = False
-        
+
         if 'ram_integrate' in self.settings:
             self.ram_use = self.settings['ram_integrate']
             if self.ram_use == 'True':
                 self.ram_use = True
             elif self.ram_use == 'False':
                 self.ram_use = False
-            if self.ram_use == True: 
+            if self.ram_use == True:
                 self.ram_nodes = self.settings['ram_nodes']
             # ram_nodes is a list containing three lists.
-            # ram_nodes[0] is a list containing the name of the nodes where 
+            # ram_nodes[0] is a list containing the name of the nodes where
             # data was distributed to.
             # ram_nodes[1] is a list of the first frame number for the wedge
             # of images copied to the corresponding node.
             # ram_nodes[2] is a list of the last frame number for the wedge
-            # of images copied to the corresponding node. 
+            # of images copied to the corresponding node.
             else:
                 self.ram_nodes = None
         else:
@@ -134,9 +175,9 @@ class FastIntegration(Process, Communicate):
                 self.data['x_beam'] = self.settings['x_beam']
                 self.data['y_beam'] = self.settings['y_beam']
         self.xds_default = []
-        
+
         # Parameters likely to be changed based on beamline setup.
-        
+
         # Directory containing XDS.INP default files for detectors.
         self.detector_directory = '/home/necat/DETECTOR_DEFAULTS/'
             #Also check set_detector_data for other detector dependent values!
@@ -155,30 +196,30 @@ class FastIntegration(Process, Communicate):
         else:
             # Setting self.jobs > 1 provides some speed up on
             # multiprocessor machines.
-            # Should be set based on computer used for processing 
-            self.jobs = 4 
-            self.procs = 4 
-        
+            # Should be set based on computer used for processing
+            self.jobs = 4
+            self.procs = 4
+
         Process.__init__(self,name=FastIntegration)
         self.start()
-    
+
     def run(self):
         self.logger.debug('Fastintegration::run')
         self.preprocess()
         self.process()
         #self.postprocess()
-    
+
     def preprocess(self):
-        '''
+        """
         Things to do before main proces runs.
         1. Change to the correct working directory.
         2. Read in detector specific parameters.
-        '''
+        """
         self.logger.debug('FastIntegration::preprocess')
         if os.path.isdir(self.dirs['work']) == False:
             os.makedirs(self.dirs['work'])
         os.chdir(self.dirs['work'])
-        
+
         if 'detector' in self.data and self.data['detector'] == 'PILATUS':
             self.xds_default = self.set_detector_data(self.data['detector'])
         elif 'detector' in self.data and self.data['detector'] == 'HF4M':
@@ -200,20 +241,20 @@ class FastIntegration(Process, Communicate):
                     self.data['binning'] = 'unbinned'
                     self.data['detector'] = 'ADSC'
                     self.xds_default = self.set_detector_data('ADSC')
-    
+
     def process (self):
-        '''
+        """
         Things to do in main process:
         1. Run integration and scaling.
         2. Report integration results.
         3. Run analysis of data set.
-        '''
+        """
         self.logger.debug('FastIntegration::process')
         if self.command != 'INTEGRATE' and self.command != 'XDS':
             self.logger.debug('Program did not request an integration')
             self.logger.debug('Now Exiting!')
             return()
-        
+
         input = self.xds_default
         if self.command == 'XDS':
             integration_results = self.xds_total(input)
@@ -226,7 +267,7 @@ class FastIntegration(Process, Communicate):
             else:
                 if self.ram_use == True:
                     integration_results = self.ram_integrate(input)
-                elif (self.data['detector'] == 'ADSC' or 
+                elif (self.data['detector'] == 'ADSC' or
     #                  self.data['detector'] == 'PILATUS' or
                       self.cluster_use == False):
                     integration_results = self.xds_split(input)
@@ -236,14 +277,14 @@ class FastIntegration(Process, Communicate):
         if integration_results == 'False':
             # Do a quick clean up?
             pass
-        else:        
+        else:
             final_results = self.finish_data(integration_results)
-        
+
         results = self.input[:]
         results.append(final_results)
         self.logger.debug(results)
         #self.sendBack2(results)
-       
+
         analysis = self.run_analysis(final_results['files']['mtzfile'], self.dirs['work'])
         analysis = 'Success'
         if analysis == 'Failed':
@@ -254,15 +295,16 @@ class FastIntegration(Process, Communicate):
             self.logger.debug(analysis)
             results[-1]['status'] = 'SUCCESS'
             self.logger.debug(results)
-            self.sendBack2(results)
-        
+            # self.sendBack2(results)
+            rapd_send(self.controller_address, results)
+
         return()
-    
+
     def ram_total (self, xdsinput):
-        '''
+        """
         This function controls processing by XDS when the complete data
         is present and distributed to ramdisks on the cluster
-        '''
+        """
         self.logger.debug('Fastintegration::ram_total')
         first = int(self.data['start'])
         last = int(self.data['start']) + int(self.data['total']) -1
@@ -272,7 +314,7 @@ class FastIntegration(Process, Communicate):
         if os.path.isdir(xdsdir) == False:
             os.mkdir(xdsdir)
         os.chdir(xdsdir)
-        
+
         # Figure out how many images are on the first node.
         # If greater than self.procs, simply set up spot ranges with a number
         # of images equal to self.procs from the first and last ram nodes.
@@ -282,7 +324,7 @@ class FastIntegration(Process, Communicate):
         if Num_images  < self.procs:
             self.procs = Num_images
         spot_range = self.ram_nodes[1][0] + self.procs - 1
-            
+
         xdsinp = xdsinput[:]
         xdsinp.append('JOB=XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n')
         # Add the spot ranges.
@@ -295,9 +337,9 @@ class FastIntegration(Process, Communicate):
         xdsinp.append('DATA_RANGE=%s\n' % data_range)
         self.write_file('XDS.INP', xdsinp)
         self.write_forkscripts(self.ram_nodes, self.data['osc_range'])
-        
+
         self.xds_ram(self.ram_nodes[0][0])
-        
+
         newinp = self.check_for_xds_errors(xdsdir,xdsinp)
         if newinp == False:
             self.logger.debug('  Unknown xds error occurred. Please check for cause!')
@@ -316,7 +358,7 @@ class FastIntegration(Process, Communicate):
                 self.xds_ram(self.ram_nodes[0][0])
             # Prepare the display of results.
             final_results = self.run_results(xdsdir)
-            
+
             # Polish up xds processing by moving GXPARM.XDS to XPARM.XDS
             # and rerunning xds.
             #
@@ -349,13 +391,13 @@ class FastIntegration(Process, Communicate):
 
             final_results['status'] = 'SUCCESS'
             return(final_results)
-    
+
 
     def xds_total (self, xdsinput):
-        '''
+        """
         This function controls processing by XDS when the complete data
         set is already present on the computer system.
-        '''
+        """
         self.logger.debug('Fastintegration::xds_total')
         first = int(self.data['start'])
         last = int(self.data['start']) + int(self.data['total']) -1
@@ -367,7 +409,7 @@ class FastIntegration(Process, Communicate):
         xdsdir = os.path.join(self.dirs['work'],dir)
         if os.path.isdir(xdsdir) == False:
             os.mkdir(xdsdir)
-            
+
         xdsinp = xdsinput[:]
         #xdsinp= self.find_spot_range(first, last, self.data['osc_range'], xdsinput[:])
         xdsinp.append('MAXIMUM_NUMBER_OF_PROCESSORS=%s\n' % self.procs)
@@ -384,9 +426,9 @@ class FastIntegration(Process, Communicate):
         xdsinp[-2] =('JOB=IDXREF DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n')
         self.write_file(xdsfile, xdsinp)
         self.xds_run(xdsdir)
-        
+
         # If known xds_errors occur, catch them and take corrective action
-        newinp = self.check_for_xds_errors(xdsdir, xdsinp)         
+        newinp = self.check_for_xds_errors(xdsdir, xdsinp)
         if newinp == False:
             self.logger.debug('  Unknown xds error occurred. Please check for cause!')
             return('Failed')
@@ -412,14 +454,14 @@ class FastIntegration(Process, Communicate):
         # and rerunning xds.
         #
         # If low resolution, don't try to polish the data, as this tends to blow up.
-        
+
         if new_rescut <= 4.5:
             os.rename('%s/GXPARM.XDS' %xdsdir, '%s/XPARM.XDS' %xdsdir)
             os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.old' %xdsdir)
             os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.old' %xdsdir)
             #newinp[-2] = 'JOB=INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
             self.write_file(xdsfile, newinp)
-            self.xds_run(xdsdir) 
+            self.xds_run(xdsdir)
             final_results = self.run_results(xdsdir)
         else:
             # Check to see if a new resolution cutoff should be applied
@@ -443,19 +485,19 @@ class FastIntegration(Process, Communicate):
 
         final_results['status'] = 'ANALYSIS'
         return(final_results)
-    
+
     def xds_split (self, xdsinput):
-        '''
+        """
         Controls xds processing for unibinned ADSC data
         Launches XDS when half the data set has been collected and again once
         the complete data set has been collected.
-        '''
+        """
         self.logger.debug('FastIntegration::xds_split')
         first_frame = int(self.data['start'])
         half_set = (int(self.data['total']) / 2) + first_frame - 1
         last_frame = int(self.data['start']) + int(self.data['total']) - 1
         frame_count = first_frame + 1
-        
+
         file_template = os.path.join(self.data['directory'],self.image_template)
         # Figure out how many digits needed to pad image number.
         # First split off the <image number>.<extension> portion of the file_template.
@@ -467,16 +509,16 @@ class FastIntegration(Process, Communicate):
         replace_string = ''
         for i in range (0, pad, 1):
             replace_string += '?'
-        
+
         look_for_file = file_template.replace(replace_string,
                                               '%0*d' %(pad, frame_count))
-        
+
         # Maximum wait time for next image is exposure time + 30 seconds.
         wait_time = int(math.ceil(float(self.data['time']))) + 30
-        
+
         timer = Process(target=time.sleep, args=(wait_time,))
         timer.start()
-        
+
         while frame_count < last_frame:
             if os.path.isfile(look_for_file) == True:
                 if timer.is_alive():
@@ -485,7 +527,7 @@ class FastIntegration(Process, Communicate):
                 timer.start()
                 if frame_count == half_set:
                     proc_dir = 'wedge_%s_%s' % (first_frame, frame_count)
-                    xds_job = Process(target = self.xds_wedge, 
+                    xds_job = Process(target = self.xds_wedge,
                             args = (proc_dir, frame_count, xdsinput))
                     xds_job.start()
                 frame_count += 1
@@ -499,7 +541,7 @@ class FastIntegration(Process, Communicate):
                     self.data['last'] = frame_count - 1
                     results = self.xds_total(xdsinput)
                     return(results)
-                
+
         # If you reach here, frame_count equals the last frame, so look for the
         # last frame and then launch xds_total.
         while timer.is_alive():
@@ -509,7 +551,7 @@ class FastIntegration(Process, Communicate):
                 results = self.xds_total(xdsinput)
                 timer.terminate()
                 break
-        
+
         # If timer expires (ending the above loop) and last frame has not been
         # detected, launch xds_total with last detected image.
         if os.path.isfile(self.last_image) == False:
@@ -517,20 +559,20 @@ class FastIntegration(Process, Communicate):
                 xds_job.terminate()
             self.data['last'] = frame_count - 1
             results = self.xds_total(xdsinput)
-        
+
         return(results)
-                
-                
-                
+
+
+
     def xds_processing (self, xdsinput):
-        '''
+        """
         Controls processing of data on disks (i.e. not stored in RAM)
         by xds.  Attempts to process every 10 images up to 100 and then
         every 20 images after that. This function should be used for NE-CAT
         data collected on ADSC in binned mode
-        '''
-        
-        '''
+        """
+
+        """
         Need to set up a control where every ten frames an XDS processing is launched.
         Need to keep track of what's been launched.  To avoid launching too many XDS
         jobs, if an XDS job is running when next ten frames are collected, don't launch
@@ -538,14 +580,14 @@ class FastIntegration(Process, Communicate):
         common errors and rerun if needed.  A resolution cutoff should be generated at the
         CORRECT stage (pass this cutoff on to next wedge?).  Once the data set is complete,
         last XDS should be "polished" by moving GXPARM.XDS to XPARM.XDS
-        
+
         As XDS jobs finish, launch whatever generates the GUI display
-        
-        '''
+
+        """
         self.logger.debug('FastIntegration::xds_processing')
         first_frame = int(self.data['start'])
         last_frame = int(self.data['start']) + int(self.data['total']) - 1
-        
+
         frame_count = first_frame
         # Maximum wait time for next image is exposure time + 15 seconds.
         #wait_time = int(math.ceil(float(self.data['time']))) + 15
@@ -560,7 +602,7 @@ class FastIntegration(Process, Communicate):
             self.logger.debug('xds_processing:: dynamic wedge size allocation failed!')
             self.logger.debug('                 Setting wedge size to 10.')
             wedge_size = 10
-        
+
         file_template = os.path.join(self.data['directory'],self.image_template)
         # Figure out how many digits needed to pad image number.
         # First split off the <image number>.<extension> portion of the file_template.
@@ -572,10 +614,10 @@ class FastIntegration(Process, Communicate):
         replace_string = ''
         for i in range (0, pad, 1):
             replace_string += '?'
-        
+
         look_for_file = file_template.replace(replace_string,
                                               '%0*d' %(pad, frame_count))
-        
+
         timer = Process(target = time.sleep, args = (wait_time,))
         timer.start()
         # Create the process xds_job (runs a timer with no delay).
@@ -583,7 +625,7 @@ class FastIntegration(Process, Communicate):
         # Eventually xds_job is replaced by the actual integration jobs.
         xds_job = Process(target=time.sleep, args = (0,))
         xds_job.start()
-        
+
         while frame_count < last_frame:
             # Look for next look_for_file to see if it exists.
             # If it does, check to see if it is a tenth image.
@@ -604,10 +646,10 @@ class FastIntegration(Process, Communicate):
                 if ( ((frame_count + 1) -first_frame) % wedge_size == 0 and
                      xds_job.is_alive() == False):
                     proc_dir = 'wedge_%s_%s' %(first_frame, frame_count)
-                    xds_job = Process(target = self.xds_wedge, 
+                    xds_job = Process(target = self.xds_wedge,
                             args = (proc_dir, frame_count, xdsinput))
                     xds_job.start()
-                # Increment the frame count to look for next image 
+                # Increment the frame count to look for next image
                 frame_count += 1
                 look_for_file = file_template.replace(replace_string,
                                               '%0*d' %(pad, frame_count))
@@ -627,7 +669,7 @@ class FastIntegration(Process, Communicate):
                     if os.path.isfile(look_for_file) == True:
                         timer = Process(target = time.sleep, args = (wait_time,))
                         timer.start()
-                        # Increment the frame count to look for next image 
+                        # Increment the frame count to look for next image
                         frame_count += 1
                         look_for_file = file_template.replace(replace_string,
                                                       '%0*d' %(pad, frame_count))
@@ -646,7 +688,7 @@ class FastIntegration(Process, Communicate):
                             self.data['total'] = frame_count - 2 - first_frame
                             results = self.xds_total(xdsinput)
                             return(results)
-        
+
         # If you reach here, frame_count equals the last frame, so look for the
         # last frame and then launch xds_total.
         while timer.is_alive():
@@ -656,7 +698,7 @@ class FastIntegration(Process, Communicate):
                 results = self.xds_total(xdsinput)
                 timer.terminate()
                 break
-        
+
         # If timer expires (ending the above loop) and last frame has not been
         # detected, launch xds_total with last detected image.
         if os.path.isfile(self.last_image) == False:
@@ -664,20 +706,20 @@ class FastIntegration(Process, Communicate):
                 xds_job.terminate()
             self.data['total'] = frame_count - first_frame
             results = self.xds_total(xdsinput)
-        
+
         return(results)
-                    
+
     def xds_wedge (self, dir, last, xdsinput):
-        '''
+        """
         This function controls processing by XDS for an intermediate wedge
-        '''
+        """
         self.logger.debug('Fastintegration::xds_wedge')
         first = int(self.data['start'])
         data_range = '%s %s' %(first, last)
         xdsdir = os.path.join(self.dirs['work'],dir)
         if os.path.isdir(xdsdir) == False:
             os.mkdir(xdsdir)
-            
+
         xdsinp = xdsinput[:]
         #xdsinp = self.find_spot_range(first, last, self.data['osc_range'],xdsinput[:])
         xdsinp.append('MAXIMUM_NUMBER_OF_PROCESSORS=%s\n' % self.procs)
@@ -693,11 +735,11 @@ class FastIntegration(Process, Communicate):
         xdsinp[-2]=('JOB=IDXREF DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n')
         self.write_file(xdsfile, xdsinp)
         self.xds_run(xdsdir)
-        
+
         # If known xds_errors occur, catch them and take corrective action
         newinp = 'check_again'
         while newinp == 'check_again':
-            newinp = self.check_for_xds_errors(xdsdir, xdsinp)         
+            newinp = self.check_for_xds_errors(xdsdir, xdsinp)
         if newinp == False:
             self.logger.debug('  Unknown xds error occurred for %s.' %dir)
             self.logger.debug('  Please check for cause!')
@@ -716,30 +758,30 @@ class FastIntegration(Process, Communicate):
                 self.xds_run(xdsdir)
             results = self.run_results(xdsdir)
         return(results)
-                   
-         
+
+
     def set_detector_data (self, detector_type):
-        '''
+        """
         This function returns a list of strings that constitute the default
         parameters needed to create and XDS.INP file.
-        
+
         new detector types can be added by following the format of preexisting
         detector types.
-        
+
         Current detector types are:
         ADSC - unbinned ADSC Q315 as at NE-CAT
         ADSC_binned - binned ADSC Q315 as at NE-CAT
         PILATUS - Pilatus 6M
-        HF4M - ADSC HF4M 
-        '''
+        HF4M - ADSC HF4M
+        """
         self.logger.debug('FastIntegration::set_detector_type')
         last_frame = int(self.data['start']) + int(self.data['total']) -1
         self.logger.debug('last_frame = %s' % last_frame)
         self.logger.debug('detector_type = %s' % detector_type)
         background_range = '%s %s' %(int(self.data['start']), int(self.data['start']) + 4)
-        
-        # Detector specific paramters.  
-        # ADSC unbinned.  
+
+        # Detector specific paramters.
+        # ADSC unbinned.
         if detector_type == 'ADSC':
             x_beam = float(self.data['y_beam']) / 0.0513
             y_beam = float(self.data['x_beam']) / 0.0513
@@ -761,10 +803,10 @@ class FastIntegration(Process, Communicate):
             self.last_image = file_template.replace('???','%03d' %last_frame)
             self.first_image = file_template.replace('???','%03d' %int(self.data['start']))
             if self.ram_use == True:
-                file_template = os.path.join('/dev/shm/', 
+                file_template = os.path.join('/dev/shm/',
                                              self.data['prefix'],
                                              self.image_template)
-                            
+
         #ADSC binned.
         elif detector_type == 'ADSC_binned':
             x_beam = float(self.data['y_beam']) / 0.10259
@@ -786,10 +828,10 @@ class FastIntegration(Process, Communicate):
             self.last_image = file_template.replace('???','%03d' %last_frame)
             self.first_image = file_template.replace('???','%03d' %int(self.data['start']))
             if self.ram_use == True:
-                file_template = os.path.join('/dev/shm/', 
+                file_template = os.path.join('/dev/shm/',
                                              self.data['prefix'],
                                              self.image_template)
-                            
+
         # ADSC HF-4M
         elif detector_type == 'HF4M':
             x_beam = float(self.data['y_beam']) / 0.150
@@ -827,10 +869,10 @@ class FastIntegration(Process, Communicate):
             self.last_image = file_template.replace('????','%04d' %last_frame)
             self.first_image = file_template.replace('????','%04d' %int(self.data['start']))
             if self.ram_use == True:
-                file_template = os.path.join('/dev/shm/', 
+                file_template = os.path.join('/dev/shm/',
                                              self.data['image_prefix'],
                                              self.image_template)
-                
+
         self.logger.debug('	Last Image = %s' % self.last_image)
         # Begin xds input with parameters determined by data set.
         xds_input = ['!============ DATA SET DEPENDENT PARAMETERS====================\n',
@@ -854,29 +896,29 @@ class FastIntegration(Process, Communicate):
             xds_input.append('!***   Reset DIRECTION_OF_DETECTOR_Y-AXIS ***')
             xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS=0.0 %.4f %.4f\n' %(tilty, tiltz))
             xds_input.append('!0.0 cos(2theta) sin(2theta)\n\n')
-        
+
         # Read in default XDS.INP for detector and add to xds input.
         read_file = os.path.join(self.detector_directory, detector_file)
         detector_defaults = open(read_file,'r').readlines()
         xds_input.extend(detector_defaults)
-        
+
         return(xds_input)
-    
-    
+
+
     def write_file (self, filename, file_input):
-        '''
+        """
         Writes out file_input as filename.
         file_input should be a list containing the desired contents
         of the file to be written.
-        '''
+        """
         self.logger.debug('FastIntegration::write_file')
         self.logger.debug('    Filename = %s' % filename )
         with open (filename, 'w') as file:
             file.writelines(file_input)
         return()
-    
+
     def find_spot_range (self, first, last, osc, input):
-        '''
+        """
         Finds up to two spot ranges for peak picking.
         Ideally the two ranges each cover 5 degrees of data and
         are 90 degrees apart.  If the data set is 10 degrees or
@@ -884,7 +926,7 @@ class FastIntegration(Process, Communicate):
         set. If the data set is less than 90 degrees, return two
         spot ranges representing the first 5 degrees and the middle
         5 degrees of data.
-        '''
+        """
         self.logger.debug('FastIntegration::find_spot_range')
         self.logger.debug('     first_frame = %s' % first)
         self.logger.debug('     last_frame = %s' % last)
@@ -908,12 +950,12 @@ class FastIntegration(Process, Communicate):
         return(input)
 
     def xds_run (self, directory):
-        '''
+        """
         Launches the running of xds.
-        '''
+        """
         self.logger.debug('FastIntegration::xds_run')
         self.logger.debug('     directory = %s' % directory)
-        
+
         os.chdir(directory)
         if self.cluster_use == True:
             job = Process(target=BLspec.processCluster,args=(self,('xds_par','XDS.LOG','8','phase2.q')))
@@ -926,24 +968,24 @@ class FastIntegration(Process, Communicate):
         return()
 
     def xds_ram (self, first_node):
-        '''
+        """
         Launches xds_par via ssh on the first_node.
         This ensures that xds runs properly when trying to use
         data distributed to the cluster's ramdisks
-        '''
+        """
         self.logger.debug('FastIntegration::xds_ram')
         command = ('ssh -x %s "cd $PWD && xds_par > XDS.LOG"' % first_node)
         self.logger.debug('		%s' % command)
         p = subprocess.Popen(command, shell=True)
         sts = os.waitpid(p.pid, 0)[1]
-        
+
         return()
-    
+
     def find_correct_res (self, directory, isigi):
-        '''
+        """
         Looks at CORRECT.LP to find a resolution cutoff, where I/sigma is
         approximately 1.5
-        '''
+        """
         self.logger.debug('     directory = %s' % directory)
         self.logger.debug('     isigi = %s' % isigi)
         new_hi_res = False
@@ -954,11 +996,11 @@ class FastIntegration(Process, Communicate):
             self.logger.debug('Could not open CORRECT.LP')
             self.logger.debug(e)
             return(new_hi_res)
-        
+
         flag = 0
         IsigI = 0
         hires = 0
-        
+
         # Read from the bottom of CORRECT.LP up, looking for the first
         # occurence of "total", which signals that you've found the
         # last statistic table given giving I/sigma values in the file.
@@ -1000,15 +1042,15 @@ class FastIntegration(Process, Communicate):
         self.logger.debug('	New cutoff = %s' %new_hi_res)
         hi_res = float(new_hi_res)
         return(hi_res)
-    
+
     def check_for_xds_errors(self, dir, input):
-        '''
+        """
         Examines results of an XDS run and searches for known problems.
-        '''
+        """
         self.logger.debug('FastIntegration::check_for_xds_errors')
-        
+
         os.chdir(dir)
-        # Enter a loop that looks for an error, then tries to correct it 
+        # Enter a loop that looks for an error, then tries to correct it
         # and the reruns xds.
         # Loop should continue until all errors are corrected, or only
         # an unknown error is detected.
@@ -1061,25 +1103,25 @@ class FastIntegration(Process, Communicate):
                     self.logger.debug('Error = %s' %line)
                     return(False)
         return(input)
-    
+
     def write_forkscripts (self, node_list, osc):
-        '''
+        """
         Creates two small script files that are run in place of
-        XDS's forkcolspot and forkintegrate scripts to allow 
+        XDS's forkcolspot and forkintegrate scripts to allow
         utilization of data distributed on the cluster's ramdisks.
-        
+
         In order for the forkscripts to work, the forkcolspot and
         forkintegrate scripts in the xds directory should be modified
         appropriately.
-        '''
+        """
         self.logger.debug('FastIntegration::write_forkscripts')
-        
+
         niba0 = 5 // float(osc) # minimum number of images per batch
         ntask = len(node_list[0]) # Total number of jobs
         nodes = node_list[0] # list of nodes where data is distributed
         fframes = node_list[1] # list of first image on each node
         lframes = node_list[2] # list of last image on each node
-        
+
         forkc = ['#!/bin/bash\n']
         forkc.append('echo "1" | ssh -x %s "cd $PWD && mcolspot_par" &\n'
                      % nodes[0])
@@ -1087,7 +1129,7 @@ class FastIntegration(Process, Communicate):
                      % nodes[-1])
         forkc.append('wait\n')
         forkc.append('rm -f mcolspot.tmp')
-        
+
         forki = ['#!/bin/bash\n']
         for x in range (0, ntask, 1):
             itask = x + 1
@@ -1100,21 +1142,21 @@ class FastIntegration(Process, Communicate):
                          % (fframes[x], nitask, itask, nbatask, nodes[x]))
         forki.append('wait\n')
         forki.append('rm -f mintegrate.tmp')
-        
+
         self.write_file('forkc', forkc)
         self.write_file('forki', forki)
         os.chmod('forkc', stat.S_IRWXU)
         os.chmod('forki', stat.S_IRWXU)
         return()
-    
+
     def run_results (self, directory):
-        '''
+        """
         Takes the results from xds integration/scaling and prepares
         tables and plots for the user interface.
-        '''
+        """
         self.logger.debug('FastIntegration::run_results')
         os.chdir(directory)
-        
+
         orig_rescut = False
         # Run xdsstat on XDS_ASCII.HKL.
         xdsstat_log = self.xdsstat()
@@ -1155,22 +1197,22 @@ class FastIntegration(Process, Communicate):
 
         wedge = directory.split('_')[-2:]
         summary['wedge'] = '-'.join(wedge)
-        
+
         # Parse INTEGRATE.LP and add information about mosaicity to summary.
         summary['mosaicity'] = self.parse_integrateLP()
-        
+
         # Parse CORRECT.LP and add information from that to summary.
         summary['ISa'] = self.parse_correctLP()
-        
+
         # Parse xdsstat results and add to plots generated by parse_scala
         Rd_graph, Rd_table = self.parse_xdsstat(xdsstat_log, len(tables))
         if Rd_table != 'Failed':
             tables.append(Rd_table)
             graphs.append(Rd_graph)
-            
+
         # Parse CORRECT.LP and pull out per wedge statistics
         #self.parse_correct()
-        
+
         #scalamtz = mtzfile.replace('pointless','scala')
         #scalalog = scalamtz.replace('mtz','log')
         scalamtz = mtzfile.replace('pointless','aimless')
@@ -1179,13 +1221,13 @@ class FastIntegration(Process, Communicate):
         plotsHTML = self.make_plots(graphs,tables)
         shortHTML = self.make_short_results(directory, summary, orig_rescut)
         longHTML = self.make_long_results(scalalog)
-        
+
         shutil.copyfile(plotsHTML, os.path.join(self.dirs['work'], plotsHTML))
         shutil.copyfile(shortHTML, os.path.join(self.dirs['work'], shortHTML))
         shutil.copyfile(longHTML, os.path.join(self.dirs['work'], longHTML))
-        
-        
-        
+
+
+
         results = {'status'   : 'WORKING',
                    'plots'    : plotsHTML,
                    'short'    : shortHTML,
@@ -1198,18 +1240,19 @@ class FastIntegration(Process, Communicate):
         self.logger.debug(results)
         tmp = self.input[:]
         tmp.append(results)
-        self.sendBack2(tmp)
-        
-        
+        # self.sendBack2(tmp)
+        rapd_send(self.controller_address, tmp)
+
+
         return(results)
-    
+
     def make_long_results(self, logfile):
-        '''
+        """
         Grab the contents of various logfiles generated by data processing,
         and put them in a php file.
-        '''
+        """
         self.logger.debug('FastIntegration:make_long_results')
-        
+
         file = ['<?php\n//prevents caching\n',
                 'header("Expires: Sat, 01 Jan 2000 00:00:00 GMT");\n',
                 'header("Last-Modified: ".gmdate("D, d M Y H:i:s")." GMT");\n',
@@ -1224,7 +1267,7 @@ class FastIntegration(Process, Communicate):
                 '        exit();\n\n    }\n} else {\n    $local = 0;\n}\n?>\n',
                 '<head>\n    <!-- Inline Stylesheet -->\n',
                 '    <style type="text/css" media="screen"><!--\n',
-                '    body {\n        background-image: none;\n        font-size: 17px;\n', 
+                '    body {\n        background-image: none;\n        font-size: 17px;\n',
                 '        }\n    table.display td {padding: 1px 7px;}\n',
                 '    tr.GradeD {font-weight: bold;}\n',
                 '    table.integrate td, th {border-style: solid;\n',
@@ -1309,16 +1352,16 @@ class FastIntegration(Process, Communicate):
                 in_line = in_line.replace('>','&gt')
             file.append(in_line)
         file.append('</pre>\n</div>\n</div>\n</body>')
-                
+
         self.write_file('long_results.php',file)
         return('long_results.php')
-    
+
     def make_short_results(self, directory, results, orig_rescut=False):
-        '''
-        Parses the scala logfile and extracts the summary table 
+        """
+        Parses the scala logfile and extracts the summary table
         at the end of the file.  Then writes an html file to be
         displayed as the Summary of the data processing.
-        '''
+        """
         self.logger.debug('FastIntegration::make_short_results')
         parsed = ['<?php\n',
                   '//prevents caching\n',
@@ -1346,7 +1389,7 @@ class FastIntegration(Process, Communicate):
                   '    table.integrate tr.alt {background-color: #EAF2D3; }\n',
                   '--></style>\n</head>\n<body>\n<div id="container">\n',
                   '<div align="center">\n',
-                  '<h3 class="green">Processing Results for %s</h3>\n' 
+                  '<h3 class="green">Processing Results for %s</h3>\n'
                   % self.data['ID'],
                   '<h3 class="green">Images %s' % results['wedge'],
                   '<h2>Spacegroup: %s</h2>\n' % results['scaling_spacegroup'],
@@ -1389,7 +1432,7 @@ class FastIntegration(Process, Communicate):
             parsed.append(line)
             count += 1
         parsed.append('</table>\n</div><br>\n')
-        
+
         #slope = float(results['anom_slope'][0])
         #flag = False
         #parsed.extend(['<div align="left>\n',
@@ -1418,7 +1461,7 @@ class FastIntegration(Process, Communicate):
         #        parsed.append('\nA cutoff for the anomalous signal could not be determined')
         #        parsed.append(' based on either the\n anomalous correlation coefficient or')
         #        parsed.append(' by the r.m.s. correlation ratio.\n\n</pre></div><br>\n')
-                
+
         parsed.append('<p><div align="center"><b>%s</b></p>' % results['text2'])
         parsed.append('<div align="left"><pre>\n\n')
         #parsed.append('At currently defined resolution...\n')
@@ -1452,12 +1495,12 @@ class FastIntegration(Process, Communicate):
                        ])
         self.write_file('results.php', parsed)
         return('results.php')
-        
-    
+
+
     def make_plots (self, graphs, tables):
-        '''
+        """
         Generates the plots html file.
-        '''
+        """
         self.logger.debug('FastIntegration::make_plots')
         # plotThese contains a list of graph titles that you want plotted
         # addition plots may be requested by adding the title (stripped of
@@ -1484,7 +1527,7 @@ class FastIntegration(Process, Communicate):
                      'RMS correlation ratio'            : 'RCR',
                      'Rcp v. batch'                     : 'Rcp v batch'
                      }
-        
+
         plotfile = ['<html>\n',
                     '<head>\n',
                     '  <style type="text/css">\n',
@@ -1515,7 +1558,7 @@ class FastIntegration(Process, Communicate):
                 plotfile.append('                <li><a href="#tabs-22%s">%s</a></li>\n'
                                 % (i, title))
         plotfile.append('                </ul>\n')
-        
+
         # Define title and x-axis labels for each graph.
         for i,graph in enumerate(graphs):
             if graph[0] in plotThese:
@@ -1535,10 +1578,10 @@ class FastIntegration(Process, Communicate):
                          '<script id="source" language="javascript" type="text/javascript">\n',
                          '$(function () {\n'
                          ])
-        
+
         # varNames is a counter, such that the variables used for plotting
         # will simply be y+varName (i.e. y0, y1, y2, etc)
-        # actual labels are stored transiently in varLabel, and added 
+        # actual labels are stored transiently in varLabel, and added
         # as comments next to the variable when it is initialized
         varNum = 0
         for i,graph in enumerate(graphs):
@@ -1640,9 +1683,9 @@ class FastIntegration(Process, Communicate):
         plotfile.append('});\n</script>\n</body>\n</html>\n')
         self.write_file('plot.html', plotfile)
         return('plot.html')
-                
+
     def parse_aimless (self, logfile):
-        '''
+        """
         Parses the aimless logfile in order to pull out data for graphing
         and the results table.
         Relevant values from teh summary table are stored into a results
@@ -1653,7 +1696,7 @@ class FastIntegration(Process, Communicate):
         tables in the aimless logfile.
         Returns a dict called int_results that contains the information
         found in the results summary table of the aimless log file.
-        '''
+        """
         log = smartie.parselog(logfile)
         # The program expect there to be 10 tables in the aimless log file.
         ntables = log.ntables()
@@ -1693,7 +1736,7 @@ class FastIntegration(Process, Communicate):
             #elif flag == True and 'from half-dataset correlation' in line:
             #    flag = False
             #    res_cut = line
-        
+
         int_results={
                      'bins_low'     : summary[3].split()[-3:],
                      'bins_high'    : summary[4].split()[-3:],
@@ -1745,7 +1788,7 @@ class FastIntegration(Process, Communicate):
                   ['Rmerge, Rfull, Rmeas, Rpim v Resolution', 'Dmin (A)', ['Rmerge', 'Rfull', 'Rmeas', 'Rpim'], 1, [3,4,6,7], 3],
                   ['Average I, RMSdeviation and Sd', 'Dmin (A)', ['AvI', 'RMSdev', 'sd'], 1, [9,10,11], 3],
                   ['Fractional bias', 'Dmin (A)', ['FrcBias'], 1, [14], 3],
-                  ['Rmerge, Rmeas, Rpim v Resolution', 'Dmin (A)', 
+                  ['Rmerge, Rmeas, Rpim v Resolution', 'Dmin (A)',
                       ['Rmerge', 'RmergeOv', 'Rmeas', 'RmeasOv', 'Rpim', 'RpimOv'], 1, [3,4,7,8,9,10], 4],
                   ['Rmerge v Intensity', 'Imax', ['Rmerge', 'Rmeas', 'Rpim'], 0, [1,3,4], 5],
                   ['Completeness v Resolution', 'Dmin (A)', ['%poss', 'C%poss', 'AnoCmp', 'AnoFrc'], 1, [6,7,9,10], 6],
@@ -1756,24 +1799,24 @@ class FastIntegration(Process, Communicate):
                   ]
         return(graphs, tables, int_results)
     def parse_scala (self, logfile):
-        '''
+        """
         Parese the scala logfile in order to pull out data for graph and the
-        results table.  
+        results table.
         Also parse the summary table at the end of the scala logfile, and put
         relevant values into a results dictionary.
         Returns a list of tuples called graphs, a nested list called tables,
         and a dictionary called int_results.
-        
+
         tuples in graphs contain:
             '<*graph title *>', 'x_label', ['data_labels'], xcol, ycols, table#
             where:
             graph_title is the title to be used when plotting the data.
-            x_lable is the label for the x-axis 
+            x_lable is the label for the x-axis
             data_labels are the labels for data  set in a table.
             xcol = the column number where the x-axis data is.
-            ycols = the column numbers for the various data sets. 
+            ycols = the column numbers for the various data sets.
             table# gives a position for the table within the list talbes
-            
+
         tables contains all of the tables within the scala logfile
         such that table[n] is the nth table in the lofgilre
         and to read the data from table[n] you can loop as follows:
@@ -1781,13 +1824,13 @@ class FastIntegration(Process, Communicate):
         for line in table[n]:
             xvalue = line[0]
             yvalue = line[4]
-        '''
+        """
         self.logger.debug('FastIntegration::parse_scala')
         #log = open(logfile, 'r').readlines()
         int_results = {}
         log = logfile.split('\r\n')
         tables = []
-        
+
         # The list 'table_list' contains the names (as given in the scala log)
         # of the tables that you wish to extract data from.
         # Only tables with these names will be pulled out.
@@ -1796,7 +1839,7 @@ class FastIntegration(Process, Communicate):
                       'Completeness, multiplicity, Rmeas v. resolution',
                       'Correlations within dataset']
         # If you add to table_list, be sure to edit the creation of the graphs list below.
-        
+
         flag = 0
         summary_flag = 0
         anom_cut_flag = 0
@@ -1891,9 +1934,9 @@ class FastIntegration(Process, Communicate):
                 # spacegroup
                 elif 'Space group:' in v:
                     int_results['scaling_spacegroup'] = ''.join(vsplit[2:])
-                    summary_flag = 0                
-                
-                
+                    summary_flag = 0
+
+
         # Now create a list for each graph to be plotted.
         # This list should have [title, xlabel, ylabels, xcol, ycols, tableNum]
         # title is the graph title in the scala logfile,
@@ -1915,15 +1958,15 @@ class FastIntegration(Process, Communicate):
                   ['Anom & Imean CCs v resolution', 'Dmin (A)', ['CC_anom','CC_cen', 'CC_Imean'], 1, [3,5,11], 3],
                   ['RMS correlation ratio', 'Dmin (A)', ['RCR_anom', 'RCR_cen'], 1, [7,9], 3]
                   ]
-        
-        
+
+
         return(graphs,tables, int_results)
-                            
-                        
+
+
     def aimless (self, mtzin, resolution=False):
-        '''
+        """
         Runs aimless on the data, including the scaling step.
-        '''
+        """
         self.logger.debug('FastIntegration::aimless')
 
         mtzout = mtzin.replace('pointless','aimless')
@@ -1948,16 +1991,16 @@ class FastIntegration(Process, Communicate):
         return(logfile)
 
     def scala (self,mtzin):
-        '''
-        Runs scala for the purposes of generating the results statistics 
+        """
+        Runs scala for the purposes of generating the results statistics
         and graphs.  Scala does not actually do any scaling.
-        '''
+        """
         self.logger.debug('FastIntegration::scala')
-        
+
         mtzout = mtzin.replace('pointless', 'scala')
         logfile = mtzout.replace('mtz', 'log')
         comfile = mtzout.replace('mtz', 'com')
-        
+
         scala_file = ['#!/bin/tcsh\n',
                       'scala hklin %s hklout %s << eof > %s\n' % (mtzin, mtzout,logfile),
                       'run 1 all\n',
@@ -1972,17 +2015,17 @@ class FastIntegration(Process, Communicate):
         os.system(cmd)
         scala_log = open(logfile,'r').readlines()
         return(scala_log)
-    
+
     def pointless(self):
-        '''
+        """
         Runs pointless on the default reflection file, XDS_ASCII.HKl
         to produce an mtz file suitable for input to scala.
-        '''
+        """
         self.logger.debug('FastIntegration::pointless')
         hklfile = 'XDS_ASCII.HKL'
         mtzfile = '_'.join([self.data['image_prefix'], 'pointless.mtz'])
         logfile = mtzfile.replace('mtz', 'log')
-        
+
         cmd = ('pointless xdsin %s hklout %s << eof > %s\n SETTING C2 \n eof'
         #cmd = ('/home/necat/programs/ccp4-6.4.0/ccp4-6.4.0/bin/pointless xdsin %s hklout %s << eof > %s\n SETTING C2 \n eof'
         #cmd = ('pointless-1.10.13.linux64 xdsin %s hklout %s << eof > %s\n SETTING C2 \n eof'
@@ -1997,15 +2040,15 @@ class FastIntegration(Process, Communicate):
                 return_value=mtzfile
                 break
         return(return_value)
-    
+
     def parse_xdsstat (self, log, tables_length):
-        '''
+        """
         Parses the output of xdsstat (XDSSTAT.LP) to pull out the Rd
         information
-        
-        '''
+
+        """
         self.logger.debug('FastIntegration::parsse_xdsstat')
-        
+
         rd_table = []
         xdsstat = open(log,'r').readlines()
         for line in xdsstat:
@@ -2013,51 +2056,51 @@ class FastIntegration(Process, Communicate):
                 split_line = line.split()
                 # extract Framediff, R_d, Rd_notfriedel, Rd_friedel.
                 table_line = [split_line[0], split_line[2], split_line[4], split_line[6] ]
-                rd_table.append(table_line)       
+                rd_table.append(table_line)
         title = 'Rd vs frame_difference'
         xlabel = 'Frame Difference'
         ylabels = ['Rd', 'Rd_notfriedel', 'Rd_friedel']
         xcol = 0
         ycols = [1,2,3]
         tableNum = tables_length
-        rd_graph = (title, xlabel, ylabels, xcol, ycols, tableNum) 
-        
+        rd_graph = (title, xlabel, ylabels, xcol, ycols, tableNum)
+
         return(rd_graph, rd_table)
-    
+
     def xdsstat (self):
-        '''
+        """
         Runs xdsstat, a program that extracts some extra statistics
         from the results of XDS CORRECT.
-        
+
         In order for this to run, xdsstat should be installed in the user's path.
         And a script called xdsstat.sh should also be created and available in the path.
-        
+
         Information about the availability of xdssstat can be obtained at the xdswiki:
         http://strucbio.biologie.uni-konstanz.de/xdswiki/index.php/Xdsstat#Availability
-        
+
         xdsstat.sh is a simple three line shell script:
-        
+
         #!/bin/tcsh
         xdsstat << eof > XDSSTAT.LP
         XDS_ASCII.HKL
         eof
-        
+
         It runs xdsstat on the default reflection file XDS_ASCII.HKL and sends the
         output to the file XDSSTAT.LP
-        '''
+        """
         self.logger.debug('FastIntegration::xdsstat')
-        
+
         # Check to see if xdsstat exists in the path
         test = os.system('which xdsstat.sh')
         if test:
             self.logger.debug('    xdsstat.sh is not in the defined PATH')
             return('Failed')
-        
+
         try:
             job = Process(target=Utils.processLocal,args=(('xdsstat.sh'),self.logger))
             job.start()
             while job.is_alive():
-                time.sleep(1)     
+                time.sleep(1)
         except IOError as e:
             self.logger.debug('    xdsstat.sh failed to run properly')
             self.logger.debug(e)
@@ -2067,16 +2110,16 @@ class FastIntegration(Process, Communicate):
         else:
             self.logger.debug('    XDSSTAT.LP does not exist')
         return('Failed')
-    
+
     def finish_data (self, results):
-        '''
+        """
         Final creation of various files (e.g. an mtz file with R-flag added,
         .sca files with native or anomalous data treatment)
-        '''
+        """
         in_file = os.path.join(results['dir'],results['mtzfile'])
-        self.logger.debug('FastIntegration::finish_data - in_file = %s' 
+        self.logger.debug('FastIntegration::finish_data - in_file = %s'
                           % in_file)
-        
+
         # Truncate the data.
         comfile = ['#!/bin/csh\n',
                    'truncate hklin %s hklout truncated.mtz << eof > truncate.log\n'
@@ -2087,7 +2130,7 @@ class FastIntegration(Process, Communicate):
         os.chmod('truncate.sh', stat.S_IRWXU)
         p = subprocess.Popen('./truncate.sh', shell=True)
         sts = os.waitpid(p.pid,0)[1]
-        
+
         # Set the free R flag.
         comfile = ['#!/bin/csh\n',
                    'freerflag hklin truncated.mtz hklout freer.mtz <<eof > freer.log\n',
@@ -2097,7 +2140,7 @@ class FastIntegration(Process, Communicate):
         os.chmod('freer.sh', stat.S_IRWXU)
         p = subprocess.Popen('./freer.sh', shell=True)
         sts = os.waitpid(p.pid,0)[1]
-        
+
         # Create the merged scalepack format file.
         comfile = ['#!/bin/csh\n',
                    'mtz2various hklin truncated.mtz hklout NATIVE.sca ',
@@ -2112,7 +2155,7 @@ class FastIntegration(Process, Communicate):
         sts = os.waitpid(p.pid, 0)[1]
         self.fixMtz2Sca('NATIVE.sca')
         Utils.fixSCA(self, 'NATIVE.sca')
-        
+
         # Create the unmerged scalepack format file.
         comfile = ['#!/bin/csh\n',
                    'mtz2various hklin truncated.mtz hklout ANOM.sca ',
@@ -2127,11 +2170,11 @@ class FastIntegration(Process, Communicate):
         sts = os.waitpid(p.pid, 0)[1]
         self.fixMtz2Sca('ANOM.sca')
         Utils.fixSCA(self, 'ANOM.sca')
-        
+
         # Create a mosflm matrix file
         correct_file = os.path.join(results['dir'], 'CORRECT.LP')
         Xds2Mosflm(xds_file = correct_file, mat_file='reference.mat')
-        
+
         self.logger.debug('I AM HERE')
         # Run Shelxc for anomalous signal information
         #if float(results['summary']['bins_high'][-1]) > 4.5:
@@ -2151,7 +2194,7 @@ class FastIntegration(Process, Communicate):
         if os.path.isdir('%s/xds_lp_files' % self.dirs['work']) == False:
             os.mkdir('%s/xds_lp_files' % self.dirs['work'])
         os.system('cp %s/*.LP %s/xds_lp_files/' % (results['dir'], self.dirs['work']))
-        
+
         tar_name = '_'.join([self.data['image_prefix'], str(self.data['run_number'])])
         results_dir = os.path.join(self.dirs['work'], tar_name)
         if os.path.isdir(results_dir) == False:
@@ -2171,7 +2214,7 @@ class FastIntegration(Process, Communicate):
         os.system('cp %s/INTEGRATE.LP %s_INTEGRATE.LP' %(results['dir'], prefix))
         os.system('cp %s/XDSSTAT.LP %s_XDSSTAT.LP' %(results['dir'], prefix))
         os.system('cp %s/XDS_ASCII.HKL %s_XDS.HKL' %(results['dir'], prefix))
-        
+
         # Remove any integration directories.
         os.system('rm -rf wedge_*')
         # Remove extra files in working directory.
@@ -2193,7 +2236,7 @@ class FastIntegration(Process, Communicate):
                 command2 = 'ssh -x %s "%s"' %(node, command)
                 p = subprocess.Popen(command2, shell=True)
                 sts = os.waitpid(p.pid,0)[1]
-        
+
         tmp = results
         #if shelxc_results != None:
         #    tmp['shelxc_results'] = shelxc_results
@@ -2209,14 +2252,14 @@ class FastIntegration(Process, Communicate):
                  'downloadable' : tarname
                  }
         tmp['files'] = files
-        
+
         return(tmp)
-    
+
     def fixMtz2Sca (self, scafile):
-        '''
+        """
         Corrects the scalepack file generated by mtz2various by removing
         whitespace in the spacegroup name.
-        '''
+        """
         self.logger.debug('FastIntegration::fixMtz2Sca scafile = %s' % scafile)
         inlines = open(scafile, 'r').readlines()
         symline = inlines[2]
@@ -2225,13 +2268,13 @@ class FastIntegration(Process, Communicate):
         inlines[2] = newline
         self.write_file(scafile, inlines)
         return()
-    
+
     def run_analysis (self, data, dir):
-        '''
+        """
         Runs "pdbquery" and xtriage on the integrated data.
         data = the integrated mtzfile
         dir = the working integration directory
-        '''
+        """
         self.logger.debug('FastIntegration::run_analysis')
         self.logger.debug('                 data = %s' % data)
         self.logger.debug('                 dir = %s' % dir)
@@ -2248,7 +2291,7 @@ class FastIntegration(Process, Communicate):
                    }
         pdb_input = []
         pdb_dict = {}
-        pdb_dict['run'] = run_dict 
+        pdb_dict['run'] = run_dict
         pdb_dict['dir'] = analysis_dir
         pdb_dict['data'] = data
         pdb_dict['control'] = self.controller_address
@@ -2262,12 +2305,12 @@ class FastIntegration(Process, Communicate):
             self.logger.debug('    Execution of AutoStats failed')
             return('Failed')
         return('Success')
-    
+
     def process_shelxC (self, unitcell, spacegroup, scafile):
-        '''
+        """
         Runs shelxC.  Determines an appropriate cutoff for anomalous signal.
         Inserts table of shelxC results into the results summary page.
-        '''
+        """
         self.logger.debug('FastIntegration::process_shelxC')
         command = ('shelxc junk << EOF\nCELL %s\nSPAG %s\nSAD %s\nEOF'
                    % (unitcell, spacegroup, scafile) )
@@ -2286,11 +2329,11 @@ class FastIntegration(Process, Communicate):
         results['shelx_rescut'] = res
         #self.insert_shelx_results(results)
         return(results)
-    
+
     def parse_shelxC(self, logfile):
-        '''
+        """
         Parses the shelxc output.
-        '''
+        """
         self.logger.debug('FastIntegration::parse_shelxC')
         shelxc_results={}
         for line in logfile:
@@ -2310,13 +2353,13 @@ class FastIntegration(Process, Communicate):
             elif line.startswith('<d"/sig>'):
                 shelxc_results['shelx_dsig'] = line.split()[1:]
         return(shelxc_results)
-    
+
     def insert_shelx_results (self, results):
-        '''
+        """
         Inserts shelxC results into the results summary webpage.
-        '''
+        """
         self.logger.debug('FastIntegration::insert_shelx_results')
-        
+
         htmlfile = open('results.php', 'r').readlines()
         if results['shelx_rescut'] == False:
             text = ('\nAnalysis of ShelxC results finds no resolution shell '
@@ -2349,28 +2392,28 @@ class FastIntegration(Process, Communicate):
             htmlfile.insert(-9, shelxc)
         self.write_file('results.php', htmlfile)
         return()
-    
+
     def parse_integrateLP (self):
-        '''
+        """
         Parse the INTEGRATE.LP file and extract information
         about the mosaicity.
-        '''
+        """
         self.logger.debug('FastIntegration::parse_integrateLP')
-        
+
         lp = open('INTEGRATE.LP', 'r').readlines()
-        
+
         for linenum, line in enumerate(lp):
             if 'SUGGESTED VALUES FOR INPUT PARAMETERS' in line:
                 avg_mosaicity_line = lp[linenum + 2]
         avg_mosaicity = avg_mosaicity_line.strip().split(' ')[-1]
         return(avg_mosaicity)
-    
+
     def parse_correctLP (self):
-        '''
+        """
         Parses the CORRECT.LP file to extract information
-        '''
+        """
         self.logger.debug('FastIntegration::parse_correctLP')
-        
+
         lp = open('CORRECT.LP', 'r').readlines()
         for i, line in enumerate(lp):
             if 'ISa\n' in line:
@@ -2378,12 +2421,12 @@ class FastIntegration(Process, Communicate):
                 break
         ISa = isa_line.strip().split()[-1]
         return(ISa)
-    
+
     def find_xds_symm (self, xdsdir, xdsinp):
-        '''
+        """
         Checks xds results for consistency with user input spacegroup.
         If inconsistent, tries to force user input spacegroup on data.
-        '''
+        """
         sym_dict = {'P1' : 1,
                     'P2' : 3, 'P21' : 4,
                     'C2' : 5,
@@ -2422,11 +2465,11 @@ class FastIntegration(Process, Communicate):
                 self.logger.debug('  Unknown xds error occurred. Please check for cause!')
                 return('Failed')
         return(newinp)
-    
+
     def modify_xdsinput_for_symm(self, xdsinp, sg_num, logfile):
-        '''
+        """
         Modifys the XDS input to rerun integration in user input spacegroup
-        '''
+        """
         if sg_num == 1:
             bravais = 'aP'
         elif sg_num >= 3 <= 4:
@@ -2455,7 +2498,7 @@ class FastIntegration(Process, Communicate):
             bravais = 'cF'
         elif sg_num == 197 or sg_num == 199 or sg_num == 211 or sg_num == 214:
             bravais = 'cI'
-        
+
         # Now search IDXREF.LP for matching cell information.
         idxref = open(logfile, 'r').readlines()
         for line in idxref:
@@ -2468,10 +2511,10 @@ class FastIntegration(Process, Communicate):
         xdsinp.append('UNIT_CELL_CONSTANTS=%s' % cell)
         self.write_file('XDS.INP', xdsinp)
         return()
-        
-                
-        
-        
+
+
+
+
 class DataHandler(threading.Thread, Communicate):
     """
     Handles the data that is received from the incoming clientsocket
@@ -2523,7 +2566,7 @@ if __name__ == '__main__':
                   'osc_range' : '0.10',
                   'size1' : '2463',
                   'size2' : '2527',
-                  
+
                   'image_prefix' : 'lysozym-1',
                   'beamline' : '24_ID_C',
                   'ID' : 'lysozym-1_1',
@@ -2568,4 +2611,4 @@ if __name__ == '__main__':
     controller_address = ['127.0.0.1' , 50001]
     input = [command, dirs, data, settings, controller_address]
     # Call the handler.
-    T = DataHandler(input, logger)      
+    T = DataHandler(input, logger)

@@ -20,7 +20,6 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
 __created__ = "2009-07-14"
 __maintainer__ = "Jon Schuermann"
 __email__ = "schuerjp@anl.gov"
