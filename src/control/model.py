@@ -149,7 +149,7 @@ class Model(object):
         # A string is input - one tag
         if isinstance(self.site.ID, str):
             self.site_ids = [self.site.ID]
-            self.pairs[self.site.ID] = collections.deque(["", ""], 2)
+            self.pairs[self.site.ID] = collections.deque([("",0), ("",0)], 2)
 
         # Tuple or list
         elif isinstance(self.site.ID, tuple) or isinstance(self.site.ID, list):
