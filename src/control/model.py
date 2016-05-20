@@ -471,6 +471,8 @@ class Model(object):
         # If boolean, just return
         if boolean:
             return identified_runs
+        if identified_runs == False:
+            return False
         elif len(identified_runs) == 0:
             return False
         else:
