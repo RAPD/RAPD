@@ -507,11 +507,13 @@ class Database(object):
         self.logger.debug("Database::get_image_by_image_id %d", image_id)
 
         query1 = "SELECT * FROM images WHERE image_id=%s"
-        image_dict = self.make_dicts(query=query1, params=(image_id,) )[0]
+        image_dict = self.make_dicts(query=query1,
+                                     params=(image_id,),
+                                     json_compatible=True)[0]
 
-        #format the dates to be JSON-compatible
-        image_dict["timestamp"] = image_dict["timestamp"].isoformat()
-        image_dict["date"] = image_dict["date"].isoformat()
+        # #format the dates to be JSON-compatible
+        # image_dict["timestamp"] = image_dict["timestamp"].isoformat()
+        # image_dict["date"] = image_dict["date"].isoformat()
 
         return(image_dict)
 
@@ -592,7 +594,7 @@ class Database(object):
         #query for puck_settings
         try:
             query1  = 'SELECT A,B,C,D FROM puck_settings WHERE puckset_id="%s"' % (str(puckset_id))
-            request_dict = self.make_dicts(query1, (), 'DATA')[0]
+            request_dict = self.make_dicts(query1, ())[0]
         except:
             request_dict = False
 
@@ -609,7 +611,7 @@ class Database(object):
         self.logger.debug('Database::getPuckInfo puckid:%s' %str(puckid))
         try:
             query1  = 'SELECT sample, CrystalID, PuckID FROM samples WHERE PuckID="%s" ORDER BY sample' % (str(puckid))
-            request_dict = self.make_dicts(query1, (), 'DATA')
+            request_dict = self.make_dicts(query1, ())
             #force the dictionary to be sorted
             if len(request_dict) < 16:
                 temp_dict = []
@@ -637,7 +639,7 @@ class Database(object):
         #query for list of pucks
         try:
             query1  = 'SELECT PuckID FROM samples WHERE timestamp>"%s" GROUP BY PuckID' % (puck_cutoff)
-            request_dict = self.make_dicts(query1,(),'DATA')
+            request_dict = self.make_dicts(query1, ())
         except:
             request_dict = False
          #see if we have a request
@@ -1053,8 +1055,7 @@ class Database(object):
         #get the information in the reference_data table
         query1 = ('SELECT * from reference_data WHERE reference_data_id=%s')
         reference_data_dict = self.make_dicts(query=query1,
-                                             params=(reference_data_id,),
-                                             db='DATA')[0]
+                                             params=(reference_data_id,))[0]
 
         runs_dict = {}
         for key,value in reference_data_dict.iteritems():
@@ -1065,8 +1066,7 @@ class Database(object):
                 #query = '''SELECT runs.directory as directory,runs.image_prefix as prefix,runs.run_number as run_number,runs.start as start_image_number,runs.phi as phi_start,runs.phi+runs.width*runs.total as phi_end
                 #           FROM integrate_results LEFT JOIN runs ON integrate_results.run_id=runs.run_id WHERE integrate_results.result_id=%s;'''
                 temp_dict = self.make_dicts(query=query,
-                                             params=(value,),
-                                             db='DATA')[0]
+                                             params=(value,))[0]
                 runs_dict[key] = temp_dict
 
         #print runs_dict
@@ -1092,8 +1092,7 @@ class Database(object):
             # 1st get the imagesettings_id from current
             query1 = 'SELECT * FROM current WHERE site=%s'
             current_dict = self.make_dicts(query=query1,
-                                          params=(id,),
-                                          db='DATA')[0]
+                                          params=(id,))[0]
 
             my_id = current_dict['setting_id']
 
@@ -5767,7 +5766,7 @@ class Database(object):
         self.logger.debug('Database::getTypeByResultId  result_id:%d' % result_id)
 
         query = "SELECT * FROM results WHERE result_id=%s"
-        my_dict = self.make_dicts(query, (result_id,), "DATA")
+        my_dict = self.make_dicts(query, (result_id,))
 
         if (len(my_dict)>0):
             if full:
@@ -6055,7 +6054,7 @@ class Database(object):
                 data = result_id
             #query the database
             self.logger.debug(query%data)
-            trip_dict = self.make_dicts(query,(data,),'USERS')
+            trip_dict = self.make_dicts(query,(data,))
         except:
             self.logger.exception('Error in getTrips')
             trip_dict = False
@@ -6072,7 +6071,7 @@ class Database(object):
         #query the database
         try:
             query1 = 'SELECT * FROM trips WHERE username=%s'
-            trip_dict = self.make_dicts(query1,(username,),'USERS')
+            trip_dict = self.make_dicts(query1,(username,))
         except:
             self.logger.exception('Error in getTripsByUser')
             trip_dict = False
@@ -6582,7 +6581,7 @@ class Database(object):
         #Get ALL requests, sort by most recent
         try:
             query1  = 'SELECT * FROM minikappa WHERE status="request" ORDER BY timestamp DESC'
-            request_dict = self.make_dicts(query1,(),'CLOUD')
+            request_dict = self.make_dicts(query1,())
             #request_dict['timestamp'] = request_dict['timestamp'].isoformat()
         except:
             request_dict = False
@@ -6620,7 +6619,7 @@ class Database(object):
         #Get ALL requests, sort by most recent
         try:
             query1  = 'SELECT * FROM datacollection WHERE status="request" ORDER BY timestamp DESC'
-            request_dict = self.make_dicts(query1,(),'CLOUD')
+            request_dict = self.make_dicts(query1,())
         except:
             request_dict = False
 
@@ -6656,7 +6655,7 @@ class Database(object):
         # self.logger.debug('Database.getCloudRequest')
         try:
             query1  = 'SELECT * FROM cloud_requests WHERE status="request" ORDER BY cloud_request_id LIMIT 1'
-            request_dict = self.make_dicts(query1,(),'CLOUD')[0]
+            request_dict = self.make_dicts(query1,())[0]
             request_dict['timestamp'] = request_dict['timestamp'].isoformat()
         except:
             request_dict = False
