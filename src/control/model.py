@@ -798,7 +798,7 @@ class Model(object):
                                     image_data2["image_number"])
 
         elif type_level == "integrate":
-            subdir = "%s" % image_data1["image_prefix"]
+            sub_dir = "%s" % image_data1["image_prefix"]
 
         # Use the last leg of the directory as the repr
         new_repr = sub_dir
