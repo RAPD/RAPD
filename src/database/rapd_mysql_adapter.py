@@ -591,7 +591,7 @@ class Database(object):
         #query for puck_settings
         try:
             query1  = 'SELECT A,B,C,D FROM puck_settings WHERE puckset_id="%s"' % (str(puckset_id))
-            request_dict = self.make_dicts(query1,(),'DATA')[0]
+            request_dict = self.make_dicts(query1, (), 'DATA')[0]
         except:
             request_dict = False
 
@@ -608,7 +608,7 @@ class Database(object):
         self.logger.debug('Database::getPuckInfo puckid:%s' %str(puckid))
         try:
             query1  = 'SELECT sample, CrystalID, PuckID FROM samples WHERE PuckID="%s" ORDER BY sample' % (str(puckid))
-            request_dict = self.make_dicts(query1,(),'DATA')
+            request_dict = self.make_dicts(query1, (), 'DATA')
             #force the dictionary to be sorted
             if len(request_dict) < 16:
                 temp_dict = []
@@ -6243,10 +6243,11 @@ class Database(object):
 
         # Convert to string and handle None values
         query_string = (query % params).replace("=None", " is NULL")
-        self.logger.debug(query_string)
+        # self.logger.debug(query_string)
 
         # Query the database
-        result_dicts = self.make_dicts(query=query_string)
+        result_dicts = self.make_dicts(query=query_string,
+                                       json_compatible=True)
 
         # If no return, return a False
         if len(result_dicts) == 0:
@@ -6327,7 +6328,8 @@ class Database(object):
         self.logger.debug(query_string)
 
         # Query the database
-        result_dicts = self.make_dicts(query=query_string)
+        result_dicts = self.make_dicts(query=query_string,
+                                       json_compatible=True)
 
         # If no return, return a False
         if len(result_dicts) == 0:
@@ -7078,15 +7080,15 @@ class Database(object):
     def make_dicts(self, query, params=(), db="DATA", json_compatible=True):
         """
         Got the idea for this from Programming Python p 1241
+
+        Keyword arguments
+        query -- search query in MySQL
+        params -- parameters to fill into the search query
+        db -- database in MySQL to use - deprecated
+        json_compatible -- make sure results are JSON compatible
         """
         # Get the connection
         connection,cursor = self.get_db_connection()
-        # if (db == 'DATA'):
-        #     connection,cursor = self.get_db_connection()
-        # elif (db == 'USERS'):
-        #     connection,cursor = self.connect_to_user()
-        # elif (db == 'CLOUD'):
-        #     connection,cursor = self.connect_to_cloud()
 
         # Execute the query
         if len(params) == 0:
@@ -7111,6 +7113,6 @@ class Database(object):
 
 
 
-if __name__ == '__main__':
+if __name__ == "__main__':
 
-    print 'rapd_mysql_adapter.py.__main__'
+    print "rapd_mysql_adapter.py.__main__"
