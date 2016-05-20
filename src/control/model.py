@@ -347,7 +347,7 @@ class Model(object):
                         directory=current_run["directory"],
                         image_prefix=current_run["image_prefix"],
                         run_number=current_run["run_number"],
-                        image_number=current_run["start"])
+                        image_number=current_run["start_image_number"])
 
                     # Now run through the normal channels with the first image
                     self.add_image({"site_tag": current_run["site_tag"],
