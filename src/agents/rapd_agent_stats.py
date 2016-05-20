@@ -40,8 +40,9 @@ import time
 # from utils.communicate import rapd_send
 # import utils.xutils as Utils
 
-# class AutoStats(Process,Communicate):
-#   def __init__(self,input,logger=None):
+class AutoStats(Process):
+  def __init__(self,input,logger=None):
+      pass
 #     logger.info('AutoStats.__init__')
 #     self.st = time.time()
 #     self.input                              = input
