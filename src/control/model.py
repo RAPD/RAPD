@@ -468,10 +468,11 @@ class Model(object):
                                                      minutes=minutes,
                                                      boolean=boolean)
 
-        # If no return, return a False
-        if len(identified_runs) == 0:
+        # If boolean, just return
+        if boolean:
+            return identified_runs
+        elif len(identified_runs) == 0:
             return False
-        # Return result
         else:
             # Add to local store
             self.recent_runs[identified_runs[0]["run_id"]] = identified_runs[0]
