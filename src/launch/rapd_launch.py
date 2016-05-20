@@ -69,7 +69,7 @@ class Launch(object):
         self.init_logger()
 
         self.logger.debug("command: %s", self.command.get("command", None))
-        self.logger.debug("reply_address: %s", self.command.get("reply_address", None))
+        self.logger.debug("return_address: %s", self.command.get("return_address", None))
 
         # Load the agent for this command
         self.load_agent(self.command.get("command"))
