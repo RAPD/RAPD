@@ -7102,7 +7102,7 @@ class Database(object):
         # Do the results need to be JSON compatible?
         if json_compatible:
             for rowdict in rowdicts:
-                for key, value in rowdict:
+                for key, value in rowdict.iteritems():
                     if isinstance(value, datetime.datetime):
                         rowdict[key] = value.isoformat()
 
