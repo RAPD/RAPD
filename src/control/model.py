@@ -331,12 +331,12 @@ class Model(object):
 
                 # Right on time
                 if place_in_run == 1:
-                    first_image_fullname = fullname
-
+                    # Get all the image information
+                    header = detector.read_header(fullname=fullname,
+                                                  beam_settings=self.site.BEAM_INFO[site_tag.upper()])
                     # Put data about run in the header object
-                    image_data["run"] = self.recent_runs[run_id].copy()
-                    image_data["place_in_run"] = 1
-                    image_data["data_root_dir"] = data_root_dir
+                    header["run"] = self.recent_runs[run_id].copy()
+                    header["place_in_run"] = 1
 
                     # Send to be processed
                     self.new_data_image(header=image_data)
