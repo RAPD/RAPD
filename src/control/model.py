@@ -336,6 +336,7 @@ class Model(object):
                     # Put data about run in the header object
                     image_data["run"] = self.recent_runs[run_id].copy()
                     image_data["place_in_run"] = 1
+                    image_data["data_root_dir"] = data_root_dir
 
                     # Send to be processed
                     self.new_data_image(header=image_data)
