@@ -54,8 +54,8 @@ from numpy import interp
 # RAPD imports
 from subcontractors.xdsme.xds2mos import Xds2Mosflm
 from utils.communicate import rapd_send
-# from rapd_agent_stats import AutoStats
-import utils.xutils as Utils
+from rapd_agent_stats import AutoStats
+# import utils.xutils as Utils
 
 #
 # # Import smartie.py from the installed CCP4 package
