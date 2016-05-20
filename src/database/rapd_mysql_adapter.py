@@ -7113,6 +7113,6 @@ class Database(object):
 
 
 
-if __name__ == "__main__':
+if __name__ == "__main__":
 
     print "rapd_mysql_adapter.py.__main__"
