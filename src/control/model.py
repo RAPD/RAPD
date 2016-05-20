@@ -335,8 +335,12 @@ class Model(object):
                     header = detector.read_header(fullname=fullname,
                                                   beam_settings=self.site.BEAM_INFO[site_tag.upper()])
                     # Put data about run in the header object
+                    header["run_id"] = run_id
                     header["run"] = self.recent_runs[run_id].copy()
                     header["place_in_run"] = 1
+
+                    # Add to the database
+                    db_result = self.database.add_image(header)
 
                     # Send to be processed
                     self.new_data_image(header=header)
