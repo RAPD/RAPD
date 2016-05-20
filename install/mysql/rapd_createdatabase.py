@@ -769,7 +769,7 @@ def create_data_tables(hostname, port, username, password):
         directory varchar(128) DEFAULT NULL,
         distance float DEFAULT NULL,
         energy float DEFAULT NULL,
-        file_ctime timestamp DEFAULT NULL,
+        file_ctime timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
         image_prefix varchar(64) DEFAULT NULL,
         kappa float DEFAULT NULL,
         number_images mediumint(8) unsigned DEFAULT NULL,
