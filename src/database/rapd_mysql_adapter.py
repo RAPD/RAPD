@@ -1014,7 +1014,7 @@ class Database(object):
                 settings_dict['reference_data'] = self.getReferenceData(reference_data_id=settings_dict['reference_data_id'])
 
             #change the datetimes to JSON encodable
-            settings_dict['timestamp'] = settings_dict['timestamp'].isoformat()
+            # settings_dict['timestamp'] = settings_dict['timestamp'].isoformat()
 
             return(settings_dict)
 
@@ -1038,7 +1038,7 @@ class Database(object):
                 settings_dict['reference_data'] = self.getReferenceData(reference_data_id=settings_dict['reference_data_id'])
 
             #change the datetimes to JSON encodable
-            settings_dict['timestamp'] = settings_dict['timestamp'].isoformat()
+            # settings_dict['timestamp'] = settings_dict['timestamp'].isoformat()
 
             return(settings_dict)
 
@@ -1058,7 +1058,7 @@ class Database(object):
                                              params=(reference_data_id,))[0]
 
         runs_dict = {}
-        for key,value in reference_data_dict.iteritems():
+        for key, value in reference_data_dict.iteritems():
             if key.startswith('result_id_') and value:
                 query = '''SELECT integrate_results.repr as repr,integrate_results.spacegroup as spacegroup,integrate_results.work_dir as work_dir,
                                   runs.phi as phi_start,runs.phi+runs.width*runs.total as phi_end
@@ -1066,7 +1066,8 @@ class Database(object):
                 #query = '''SELECT runs.directory as directory,runs.image_prefix as prefix,runs.run_number as run_number,runs.start as start_image_number,runs.phi as phi_start,runs.phi+runs.width*runs.total as phi_end
                 #           FROM integrate_results LEFT JOIN runs ON integrate_results.run_id=runs.run_id WHERE integrate_results.result_id=%s;'''
                 temp_dict = self.make_dicts(query=query,
-                                             params=(value,))[0]
+                                             params=(value,),
+                                             json_compatible=True)[0]
                 runs_dict[key] = temp_dict
 
         #print runs_dict
@@ -1130,7 +1131,9 @@ class Database(object):
 
             print query
             print site_id
-            settings_dict = self.make_dicts(query, (site_id, "DEFAULTS"))[0]
+            settings_dict = self.make_dicts(query=query,
+                                            params=(site_id, "DEFAULTS"),
+                                            json_compatible=True)[0]
 
             # Update the dict with current data
             my_dict = {"site":site_id, "data_root_dir":data_root_dir}
@@ -1140,11 +1143,11 @@ class Database(object):
             settings_dict = self.addSettings(settings_dict)
             self.logger.debug(settings_dict)
 
-        # Change the datetimes to JSON encodable
-        try:
-            settings_dict["timestamp"] = settings_dict["timestamp"].isoformat()
-        except:
-            pass
+        # # Change the datetimes to JSON encodable
+        # try:
+        #     settings_dict["timestamp"] = settings_dict["timestamp"].isoformat()
+        # except:
+        #     pass
 
         return(settings_dict)
 
@@ -5790,7 +5793,9 @@ class Database(object):
         else:
             query = "SELECT * FROM "+type+"_results WHERE "+type+"_result_id=%s"
         #now query the database
-        my_dict = self.make_dicts(query,(id,))[0]
+        my_dict = self.make_dicts(query=query,
+                                  params=(id,),
+                                  json_compatible=True)[0]
 
         if (type == "integrate"):
             specials_dict = self.getBeamcenterFromRunId(my_dict['run_id'])
@@ -5803,25 +5808,25 @@ class Database(object):
         if specials_dict:
             my_dict.update(specials_dict)
 
-        #fix the timestamps for json transport
-        my_dict['timestamp'] = my_dict['timestamp'].isoformat()
-        if my_dict.has_key('proc_time'):
-            my_dict['proc_time'] = None
-        if my_dict.has_key('date'):
-            try:
-                my_dict['date'] = my_dict['date'].isoformat()
-            except AttributeError:
-                my_dict['date'] = None
-        if my_dict.has_key('date1'):
-            try:
-                my_dict['date1'] = my_dict['date1'].isoformat()
-            except AttributeError:
-                my_dict['date1'] = None
-        if my_dict.has_key('date2'):
-            try:
-                my_dict['date2'] = my_dict['date2'].isoformat()
-            except AttributeError:
-                my_dict['date2'] = None
+        # #fix the timestamps for json transport
+        # my_dict['timestamp'] = my_dict['timestamp'].isoformat()
+        # if my_dict.has_key('proc_time'):
+        #     my_dict['proc_time'] = None
+        # if my_dict.has_key('date'):
+        #     try:
+        #         my_dict['date'] = my_dict['date'].isoformat()
+        #     except AttributeError:
+        #         my_dict['date'] = None
+        # if my_dict.has_key('date1'):
+        #     try:
+        #         my_dict['date1'] = my_dict['date1'].isoformat()
+        #     except AttributeError:
+        #         my_dict['date1'] = None
+        # if my_dict.has_key('date2'):
+        #     try:
+        #         my_dict['date2'] = my_dict['date2'].isoformat()
+        #     except AttributeError:
+        #         my_dict['date2'] = None
 
         #return
         return(my_dict)
@@ -6489,13 +6494,15 @@ class Database(object):
         self.logger.debug('Database::getRunByRunId  run_id: %d' % run_id)
 
         try:
-            query1   = 'SELECT * FROM runs WHERE run_id=%s'
-            run_dict = self.make_dicts(query1, (run_id,))[0]
+            query1   = "SELECT * FROM runs WHERE run_id=%s"
+            run_dict = self.make_dicts(query=query1,
+                                       params=(run_id,),
+                                       json_compatible=True)[0]
             #change the datetimes to JSON encodable
-            run_dict['timestamp'] = run_dict['timestamp'].isoformat()
+            # run_dict['timestamp'] = run_dict['timestamp'].isoformat()
             return(run_dict)
         except:
-            self.logger.exception('Error in getRunByRunId')
+            self.logger.exception("Error in getRunByRunId")
             return(False)
 
     def getRunWedges(self,run_id=-1):
@@ -6581,7 +6588,9 @@ class Database(object):
         #Get ALL requests, sort by most recent
         try:
             query1  = 'SELECT * FROM minikappa WHERE status="request" ORDER BY timestamp DESC'
-            request_dict = self.make_dicts(query1,())
+            request_dict = self.make_dicts(query=query1,
+                                           params=(),
+                                           json_compatible=True)
             #request_dict['timestamp'] = request_dict['timestamp'].isoformat()
         except:
             request_dict = False
@@ -6589,7 +6598,7 @@ class Database(object):
         if (request_dict):
             #the most recent request will be used
             request_return = request_dict[0]
-            request_return['timestamp'] = request_return['timestamp'].isoformat()
+            # request_return['timestamp'] = request_return['timestamp'].isoformat()
             #mark all entries for the given site as 'read'
             site = request_return['site']
             for request in request_dict:
@@ -6619,14 +6628,16 @@ class Database(object):
         #Get ALL requests, sort by most recent
         try:
             query1  = 'SELECT * FROM datacollection WHERE status="request" ORDER BY timestamp DESC'
-            request_dict = self.make_dicts(query1,())
+            request_dict = self.make_dicts(query=query1,
+                                           params=(),
+                                           json_compatible=True)
         except:
             request_dict = False
 
         if (request_dict):
             #the most recent request will be used
             request_return = request_dict[0]
-            request_return['timestamp'] = request_return['timestamp'].isoformat()
+            # request_return['timestamp'] = request_return['timestamp'].isoformat()
             #mark all entries for the given site as 'read'
             site = request_return['site']
             for request in request_dict:
@@ -6654,9 +6665,11 @@ class Database(object):
         # query for oldest download request
         # self.logger.debug('Database.getCloudRequest')
         try:
-            query1  = 'SELECT * FROM cloud_requests WHERE status="request" ORDER BY cloud_request_id LIMIT 1'
-            request_dict = self.make_dicts(query1,())[0]
-            request_dict['timestamp'] = request_dict['timestamp'].isoformat()
+            query1  = "SELECT * FROM cloud_requests WHERE status='request' ORDER BY cloud_request_id LIMIT 1"
+            request_dict = self.make_dicts(query=query1,
+                                           params=(),
+                                           json_compatible=True)[0]
+            # request_dict['timestamp'] = request_dict['timestamp'].isoformat()
         except:
             request_dict = False
 
@@ -7077,14 +7090,13 @@ class Database(object):
         import base64
         return(base64.b64decode(item))
 
-    def make_dicts(self, query, params=(), db="DATA", json_compatible=True):
+    def make_dicts(self, query, params=(), json_compatible=False):
         """
         Got the idea for this from Programming Python p 1241
 
         Keyword arguments
         query -- search query in MySQL
-        params -- parameters to fill into the search query
-        db -- database in MySQL to use - deprecated
+        params -- tuple of parameters to fill into the search query (default ())
         json_compatible -- make sure results are JSON compatible
         """
         # Get the connection
