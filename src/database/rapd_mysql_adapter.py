@@ -353,6 +353,7 @@ class Database(object):
         # Now grab the dict from the MySQL table
         image_dict = self.get_image_by_image_id(image_id=image_id)
 
+
         # Close connection
         self.close_connection(connection, cursor)
 
@@ -7074,7 +7075,7 @@ class Database(object):
         import base64
         return(base64.b64decode(item))
 
-    def make_dicts(self, query, params=(), db="DATA"):
+    def make_dicts(self, query, params=(), db="DATA", json_compatible=True):
         """
         Got the idea for this from Programming Python p 1241
         """
@@ -7097,6 +7098,13 @@ class Database(object):
         colnames = [desc[0] for desc in cursor.description]
         rowdicts = [dict(zip(colnames,row)) for row in cursor.fetchall()]
         self.close_connection(connection, cursor)
+
+        # Do the results need to be JSON compatible?
+        if json_compatible:
+            for rowdict in rowdicts:
+                for key, value in rowdict:
+                    if isinstance(value, datetime.datetime):
+                        rowdict[key] = value.isoformat()
 
         # Return the array of dicts
         return rowdicts
