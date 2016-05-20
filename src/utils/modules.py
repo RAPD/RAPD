@@ -28,7 +28,7 @@ Provides tools for loading modules
 
 import importlib
 
-def load_module(seek_module, directories=False):
+def load_module(seek_module, directories=False, logger=False):
     """
     Load the module file for the input specifications
 
@@ -36,8 +36,9 @@ def load_module(seek_module, directories=False):
     seek_module -- the module to find and import
     directories -- iterable of directories to query
     """
-    print "seek_module %s" % str(seek_module)
-    print "directories %s" % str(directories)
+    if logger:
+        logger.debug("seek_module %s", seek_module)
+        logger.debug("directories %s", directories)
 
     # # Agent we are looking for
     # seek_module = "rapd_agent_%s" % command.lower()
@@ -46,12 +47,13 @@ def load_module(seek_module, directories=False):
     # Look for rapd agents in the specified directories
     if directories:
         for directory in directories:
-            print directory+"."+seek_module
-            try:
-                module = importlib.import_module(directory+"."+seek_module)
-                break
-            except ImportError:
-                continue
+            # try:
+            if logger:
+                logger.debug("Attempting to load module %s", directory+"."+seek_module)
+            module = importlib.import_module(directory+"."+seek_module)
+            break
+            # except ImportError:
+            #     continue
     else:
         try:
             module = importlib.import_module(directory+"."+seek_module)
