@@ -1,4 +1,8 @@
 """
+Provides tools for loading modules
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2016, Cornell University
@@ -16,16 +20,14 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
 __created__ = "2016-03-08"
 __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
-"""
-Provides tools for loading modules
-"""
 
+# Standard imports
+import glob
 import importlib
 
 def load_module(seek_module, directories=False, logger=False):
@@ -49,6 +51,7 @@ def load_module(seek_module, directories=False, logger=False):
         for directory in directories:
             # try:
             if logger:
+                logger.debug(glob.glob("*"))
                 logger.debug("Attempting to load module %s", directory+"."+seek_module)
             module = importlib.import_module(directory+"."+seek_module)
             break
