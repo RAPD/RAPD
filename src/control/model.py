@@ -155,7 +155,7 @@ class Model(object):
         elif isinstance(self.site.ID, tuple) or isinstance(self.site.ID, list):
             for site_id in self.site.ID:
                 self.site_ids.append(site_id)
-                self.pairs[site_id] = collections.deque(["", ""], 2)
+                self.pairs[site_id] = collections.deque([("",0), ("",0)], 2)
 
     def connect_to_database(self):
         """Set up database connection"""
