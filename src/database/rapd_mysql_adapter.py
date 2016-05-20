@@ -34,6 +34,7 @@ sudo docker run --name mariadb -v /home/schuerjp/data:/var/lib/mysql -p 3306:330
 """
 
 # Standard imports
+import datetime
 import json
 import logging
 import operator
