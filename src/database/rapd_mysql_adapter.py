@@ -6101,6 +6101,7 @@ class Database(object):
                                                 directory,
                                                 distance,
                                                 energy,
+                                                file_ctime,
                                                 image_prefix,
                                                 kappa,
                                                 number_images,
@@ -6109,6 +6110,7 @@ class Database(object):
                                                 osc_start,
                                                 osc_width,
                                                 phi,
+                                                rapd_status,
                                                 run_number,
                                                 site_tag,
                                                 start_image_number,
@@ -6131,11 +6133,14 @@ class Database(object):
                                                                   %s,
                                                                   %s,
                                                                   %s,
+                                                                  %s,
+                                                                  %s,
                                                                   %s)""",
                                              (run_data.get("anomalous", None),
                                               run_data.get("directory", None),
                                               run_data.get("distance", None),
                                               run_data.get("energy", None),
+                                              run_data.get("file_ctime", None),
                                               run_data.get("image_prefix", None),
                                               run_data.get("kappa", None),
                                               run_data.get("number_images", None),
@@ -6144,6 +6149,7 @@ class Database(object):
                                               run_data.get("osc_start", None),
                                               run_data.get("osc_width", None),
                                               run_data.get("phi", None),
+                                              run_data.get("rapd_status", None),
                                               run_data.get("run_number", None),
                                               run_data.get("site_tag", None),
                                               run_data.get("start_image_number", None),
@@ -6219,7 +6225,7 @@ class Database(object):
 
         # Limit to a time window
         else:
-            query = "SELECT %s FROM runs WHERE site_tag='%s' AND directory='%s' AND image_prefix='%s' AND run_number=%s AND start_image_number=%s AND number_images=%s AND timestamp > NOW()-INTERVAL %d MINUTE"
+            query = "SELECT %s FROM runs WHERE site_tag='%s' AND directory='%s' AND image_prefix='%s' AND run_number=%s AND start_image_number=%s AND number_images=%s AND file_ctime > NOW()-INTERVAL %d MINUTE"
             params = (select_param,
                       run_data.get("site_tag", None),
                       run_data.get("directory", None),
@@ -6231,7 +6237,7 @@ class Database(object):
 
         # Sort order
         if not boolean:
-            query +=  " ORDER BY timestamp %s"
+            query +=  " ORDER BY file_ctime %s"
             params = params + (order_param,)
 
         # Convert to string and handle None values
@@ -6301,7 +6307,7 @@ class Database(object):
 
         # Limit to a time window
         else:
-            query = "SELECT %s FROM runs WHERE directory='%s' AND image_prefix='%s' AND run_number=%s AND start_image_number<=%s AND %s<=number_images+start_image_number+1 AND timestamp > NOW()-INTERVAL %d MINUTE"
+            query = "SELECT %s FROM runs WHERE directory='%s' AND image_prefix='%s' AND run_number=%s AND start_image_number<=%s AND %s<=number_images+start_image_number+1 AND file_ctime > NOW()-INTERVAL %d MINUTE"
             params = (select_param,
                       directory,
                       image_prefix,
@@ -6312,7 +6318,7 @@ class Database(object):
 
         # Add sorting
         if not boolean:
-            query +=  " ORDER BY timestamp %s"
+            query +=  " ORDER BY file_ctime %s"
             params = params + (order_param,)
 
         # Turn into a query string and handle None values

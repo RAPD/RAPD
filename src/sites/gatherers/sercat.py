@@ -290,13 +290,13 @@ class Gatherer(object):
                     time.sleep(0.01)
                     tries += 1
 
-            #the modification time has not changed
-            if self.run_time == statinfo.st_mtime:
+            # The modification time has not changed
+            if self.run_time == statinfo.st_ctime:
                 return False
 
-            #the file has changed
+            # The file has changed
             else:
-                self.run_time = statinfo.st_mtime
+                self.run_time = statinfo.st_ctime
                 return True
         else:
             return False
@@ -307,9 +307,15 @@ class Gatherer(object):
         """
 
         if self.run_data_file:
+
             # Copy the file to prevent conflicts with other programs
-            # HACK
-            tmp_file = "/dev/shm/"+uuid.uuid4().hex
+            # Use the ramdisk if it is available
+            if os.path.exists("/dev/shm"):
+                tmp_dir = "/dev/shm/"
+            else:
+                tmp_dir = "/tmp/"
+
+            tmp_file = tmp_dir+uuid.uuid4().hex
             shutil.copyfile(self.run_data_file, tmp_file)
 
             # Read in the pickled file
@@ -349,6 +355,7 @@ class Gatherer(object):
                 "directory":raw_run_data.get("directory", None),
                 "distance":float(raw_run_data.get("dist", 0.0)),
                 "energy":float(raw_run_data.get("energy", 0.0)),
+                "file_ctime":datetime.datetime.fromtimestamp(self.run_time),
                 "image_prefix":raw_run_data.get("image_prefix", None),
                 "kappa":None,
                 "number_images":int(float(raw_run_data.get("Nframes", 0))),

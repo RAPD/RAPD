@@ -67,7 +67,7 @@ class Model(object):
     indexing_active = collections.deque()
 
     # Managing runs and images without going to the db
-    recent_runs = collections.deque(maxlen=200)
+    recent_runs = collections.OrderedDict()
 
     data_root_dir = None
     database = None
@@ -76,9 +76,7 @@ class Model(object):
     return_address = None
 
     image_monitor = None
-    current_image = None
-    # image_monitor_reconnect_attempts = 0
-
+    run_monitor = None
     cloud_monitor = None
     site_adapter = None
     remote_adapter = None
@@ -314,9 +312,6 @@ class Model(object):
             self.logger.debug("Images contains an ignore flag - skipping")
             return True
 
-        # Save current image to class-level variable
-        self.current_image = fullname
-
         # Derive the data_root_dir
         data_root_dir = detector.get_data_root_dir(fullname)
 
@@ -328,47 +323,35 @@ class Model(object):
 
             self.logger.debug("%s is in run %s at position %s", fullname, run_id, place_in_run)
 
-            # If not integrating trigger integration
-            if self.current_run["status"] != "INTEGRATING":
+            # Save some typing
+            current_run = self.recent_runs[run_id]
 
-                # Handle getting to the party late
-                if place != 1:
-                    self.logger.info("Creating first image in run")
-                    first_image_fullname = detector.create_image_fullname(
-                        directory=self.current_run["directory"],
-                        image_prefix=self.current_run["image_prefix"],
-                        run_number=self.current_run["run_number"],
-                        image_number=self.current_run["start"])
+            # If not integrating trigger integration
+            if not current_run.get("rapd_status", None) in ("INTEGRATING", "FINISHED"):
 
                 # Right on time
-                else:
+                if place_in_run == 1:
                     first_image_fullname = fullname
 
-                header = detector.read_header(fullname=first_image_fullname,
-                                              run_id=self.current_run["run_id"],
-                                              place_in_run=1)
+                    # Put data about run in the header object
+                    header["run"] = self.recent_runs[run_id].copy()
+                    header["place_in_run"] = 1
 
-                # Add some data to the header
-                header["run_id"] = self.current_run["run_id"]
-                header["data_root_dir"] = data_root_dir
+                    # Send to be processed
+                    self.new_data_image(header=header)
 
-                # Add to database
-                db_result = self.database.add_image(header)
-
-                # Duplicate entry
-                if db_result == False:
-                    return False
+                # Handle getting to the party late
                 else:
-                    header.update(db_result)
+                    self.logger.info("Creating first image in run")
+                    first_image_fullname = detector.create_image_fullname(
+                        directory=current_run["directory"],
+                        image_prefix=current_run["image_prefix"],
+                        run_number=current_run["run_number"],
+                        image_number=current_run["start"])
 
-                # Mark the run as INTEGRATING
-                self.current_run["status"] = "INTEGRATING"
-
-                # Put data about run in the header object
-                header["run"] = self.current_run.copy()
-
-                # KBO
-                self.new_data_image(header=header)
+                    # Now run through the normal channels with the first image
+                    self.add_image({"site_tag": current_run["site_tag"],
+                                    "fullname": first_image_fullname})
 
         # Image is a snap
         elif run_id == "SNAP":
@@ -405,21 +388,6 @@ class Model(object):
             # KBO
             self.new_data_image(header=header)
 
-        # # Image is in a past run
-        # elif isinstance(place, int) and isinstance(run_info, dict):
-        #
-        #     self.logger.debug("%s is in a past run", fullname)
-        #
-        #     # Figure out if image in the current run...
-        #     past_place, past_run_info = self.in_past_run(fullname)
-        #
-        #     if isinstance(past_place, int):
-        #
-        #         self.logger.debug("Have past run data for %s", fullname)
-        #
-        #     elif past_place == False:
-        #
-        #         self.logger.debug("Unable to find past run data for %s", fullname)
 
         # No information is findable
         else:
@@ -435,8 +403,8 @@ class Model(object):
         """
 
         # Look in local store of information
-        for run in self.recent_runs:
-            if run_data.get("run_id", 0) == run.get("run_id", 1):
+        for run_id, run in self.recent_runs.iteritems():
+            if run_data.get("run_id", 0) == run_id:
                 if boolean:
                     return True
                 else:
@@ -444,7 +412,7 @@ class Model(object):
 
         # Look in the database since the local attempt has failed
         return self.database.get_run_data(run_data=run_data,
-                                          minutes=60,
+                                          minutes=self.site.RUN_WINDOW,
                                           boolean=boolean)
 
     def query_in_run(self,
@@ -460,6 +428,10 @@ class Model(object):
         Return True/False or with list of data depending on whether the image
         information could correspond to a run stored locally or in the database
 
+        If the run is found in the local store, only the most recent match will
+        be returned if running in boolean=False mode. If found in the database,
+        all matching runs in the last minutes minutes will be returned
+
         Keyword arguments
         site_tag -- string describing site (default None)
         directory -- where the image is located
@@ -470,27 +442,45 @@ class Model(object):
         boolean -- return just True if there is a or False
         """
 
-        # Query local runs
-        for run in self.recent_runs:
-            if run.get("directory", None) == directory and
-               run.get("image_prefix", None) == image_prefix and
+        # Query local runs in reverse chronological order
+        for run_id in reversed(self.recent_runs):
+            run = self.recent_runs[run_id]
+            if run.get("site_tag", None) == site_tag and \
+               run.get("directory", None) == directory and \
+               run.get("image_prefix", None) == image_prefix and \
                run.get("run_number", None) == run_number:
 
-               # Check image number
-               run_start = run.get("start_image_number")
-               run_end = run.get("number_images") + run_start - 1
-               if image_number >= run_start and image_number <= run_end:
+                # Check image number
+                run_start = run.get("start_image_number")
+                run_end = run.get("number_images") + run_start - 1
+                if image_number >= run_start and image_number <= run_end:
+                    if boolean:
+                        return True
+                    else:
+                        return [run]
+
+        # If no run has been identified in local store, then search database
+        identified_runs = self.database.query_in_run(site_tag=site_tag,
+                                                     directory=directory,
+                                                     image_prefix=image_prefix,
+                                                     run_number=run_number,
+                                                     image_number=image_number,
+                                                     minutes=minutes,
+                                                     boolean=boolean)
+
+        # If no return, return a False
+        if len(identified_runs) == 0:
+            return False
+        # Return result
+        else:
+            # Add to local store
+            self.recent_runs[identified_runs[0]["run_id"]] = identified_runs[0]
+            if boolean:
+                return True
+            else:
+                return identified_runs
 
 
-
-
-        run_info = self.database.query_in_run(site_tag=site_tag,
-                                              directory=directory,
-                                              image_prefix=image_prefix,
-                                              run_number=run_number,
-                                              image_number=image_number,
-                                              minutes=minutes,
-                                              boolean=boolean)
 
     def add_run(self, run_dict):
         """
@@ -521,7 +511,7 @@ class Model(object):
             run_data["run_id"] = run_id
 
             # Save the run_data to local store
-            self.recent_runs.append(run_data)
+            self.recent_runs[run_id] = run_data
 
         return True
 
@@ -573,13 +563,13 @@ class Model(object):
         self.logger.debug("%s %s %s %s %s", directory, basename, image_prefix, run_number, image_number)
 
         # Look for run information for this image
-        run_info = self.database.query_in_run(site_tag=site_tag,
-                                              directory=directory,
-                                              image_prefix=image_prefix,
-                                              run_number=run_number,
-                                              image_number=image_number,
-                                              minutes=60,
-                                              boolean=False)
+        run_info = self.query_in_run(site_tag=site_tag,
+                                     directory=directory,
+                                     image_prefix=image_prefix,
+                                     run_number=run_number,
+                                     image_number=image_number,
+                                     minutes=self.site.RUN_WINDOW,
+                                     boolean=False)
 
         # No run information - SNAP
         if not run_info:
@@ -598,17 +588,15 @@ class Model(object):
                               run_number,
                               image_number)
 
-
-
             # Calculate the position of the image in the current run
             run_position = image_number - run_info.get("start_image_number", 1) + 1
 
             # Update the remote system on the run
-            if self.remote_adapter:
-                self.remote_adapter.update_run_progress(
-                    run_position=run_position,
-                    image_name=basename,
-                    run_data=run_info)
+            # if self.remote_adapter:
+            #     self.remote_adapter.update_run_progress(
+            #         run_position=run_position,
+            #         image_name=basename,
+            #         run_data=run_info)
 
             # Return the run position for this image
             return run_info["run_id"], run_position
@@ -617,7 +605,7 @@ class Model(object):
         """
         Handle the information that there is a new image in the database.
 
-        There are several calsses of images:
+        There are several classes of images:
             1. The image is standalone and will be autoindexed
             2. The image is one of a pair of images for autoindexing
             3. The image is first in a wedge of data collection
@@ -727,9 +715,8 @@ class Model(object):
             self.logger.debug("This is a run")
             self.logger.debug(header)
 
-            run_position = header["place_in_run"]
-
             # Make it easier to use run info
+            run_position = header["place_in_run"]
             run_dict = header["run"].copy()
 
             # Derive  directory and repr
@@ -763,12 +750,14 @@ class Model(object):
                             "image_data":data}
 
                 # Connect to the server and autoindex the single image
-                LaunchAction(command=("INTEGRATE",
-                                       new_dirs,
-                                       out_data,
-                                       process_settings,
-                                       self.return_address),
-                              settings=process_settings)
+                LaunchAction(command={"command":"INTEGRATE",
+                                      "directories":new_dirs,
+                                      out_data,
+                                      process_settings,
+                                      "preferences":{},
+                                      "return_address":self.return_address},
+                             launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
+                             settings=None)
             except:
                 self.logger.exception("Exception when attempting to run RAPD \
                 integration pipeline")
@@ -919,33 +908,33 @@ class Model(object):
         #     if run_id:
         #         self.current_run["run_id"] = run_id
 
-        elif command == "PILATUS_ABORT":
-            self.logger.debug("Run aborted")
-            if self.current_run:
-                self.current_run["status"] = "ABORTED"
+        # elif command == "PILATUS_ABORT":
+        #     self.logger.debug("Run aborted")
+        #     if self.current_run:
+        #         self.current_run["status"] = "ABORTED"
 
-        elif command == "CONSOLE RUN STATUS CHANGED":
-            #save to / check the db for this run
-            self.logger.debug("get runid")
-            run_id = self.database.add_run(site_id=self.site,
-                                           run_data=info)
-            self.logger.debug("run_id %s" % str(run_id))
-            if self.current_run:
-                if self.current_run["run_id"] == run_id:
-                    self.logger.debug("Same run again")
-                else:
-                    self.logger.debug("New run %s" % str(info))
-                    #save the current run
-                    self.recent_runs.append(self.current_run.copy())
-                    #set current run to the new run
-                    self.current_run = info
-                    self.current_run["run_id"] = run_id
-                    #self.sweepForMissedRunImages()
-            else:
-                self.logger.debug("New run %s" % str(info))
-                #set current run to the new run
-                self.current_run = info
-                self.current_run["run_id"] = run_id
+        # elif command == "CONSOLE RUN STATUS CHANGED":
+        #     #save to / check the db for this run
+        #     self.logger.debug("get runid")
+        #     run_id = self.database.add_run(site_id=self.site,
+        #                                    run_data=info)
+        #     self.logger.debug("run_id %s" % str(run_id))
+        #     if self.current_run:
+        #         if self.current_run["run_id"] == run_id:
+        #             self.logger.debug("Same run again")
+        #         else:
+        #             self.logger.debug("New run %s" % str(info))
+        #             #save the current run
+        #             self.recent_runs.append(self.current_run.copy())
+        #             #set current run to the new run
+        #             self.current_run = info
+        #             self.current_run["run_id"] = run_id
+        #             #self.sweepForMissedRunImages()
+        #     else:
+        #         self.logger.debug("New run %s" % str(info))
+        #         #set current run to the new run
+        #         self.current_run = info
+        #         self.current_run["run_id"] = run_id
 
         # elif command == "DIFF_CENTER":
         #     #add result to database
@@ -1161,707 +1150,707 @@ class Model(object):
         #                 cloud_request_id=settings["request"]["cloud_request_id"],
         #                 mark="failure"
         #                 )
-
-        elif command == "AUTOINDEX":
-            #Handle the ongoing throttling of autoindexing jobs
-            if self.SecretSettings["throttle_strategy"] == True:
-                #pop one marker off the indexing_active
-                try:
-                    self.indexing_active.pop()
-                except:
-                    pass
-                if len(self.indexing_queue) > 0:
-                    self.logger.debug("Running a command from the indexing_queue")
-                    job = self.indexing_queue.pop()
-                    self.indexing_active.appendleft("unknown")
-                    #send the job to be done
-                    LaunchAction(command=job[0],
-                                 settings=job[1],
-                                 secret_settings=job[2],
-                                 logger=job[3])
-
-            #add result to database
-            result_db = self.database.addSingleResult(dirs=dirs,
-                                                      info=info,
-                                                      settings=settings,
-                                                      results=results)
-
-            self.logger.debug("Added single result: %s" % str(result_db))
-
-            #mark the process as finished
-            self.database.modifyProcessDisplay(process_id=info["process_id"],
-                                               display_value="complete")
-
-            #move the files to the server & other
-            if result_db:
-
-                #Update the Remote project
-                if self.remote_adapter:
-                    wedges = self.database.getStrategyWedges(id=result_db["single_result_id"])
-                    result_db["image_id"] = info["image_id"]
-                    self.remote_adapterAdapter.update_image_stats(result_db, wedges)
-
-                #now mark the cloud database if this is a reprocess request
-                if result_db["type"] in ("reprocess", "stac"):
-                    #remove the process from cloud_current
-                    self.database.removeCloudCurrent(
-                        cloud_request_id=settings["request"]["cloud_request_id"]
-                        )
-                    #note the result in cloud_complete
-                    self.database.enterCloudComplete(
-                        cloud_request_id=settings["request"]["cloud_request_id"],
-                        request_timestamp=settings["request"]["timestamp"],
-                        request_type=settings["request"]["request_type"],
-                        data_root_dir=settings["request"]["data_root_dir"],
-                        ip_address=settings["request"]["ip_address"],
-                        start_timestamp=settings["request"]["timestamp"],
-                        result_id=result_db["result_id"],
-                        archive=False
-                        )
-                    #mark in cloud_requests
-                    self.database.markCloudRequest(
-                        cloud_request_id=settings["request"]["cloud_request_id"],
-                        mark="complete"
-                        )
-
-                trip_db = self.database.getTrips(data_root_dir=dirs["data_root_dir"])
-                #this data has an associated trip
-                if trip_db:
-                    for record in trip_db:
-                        #update the dates for the trip
-                        self.database.updateTrip(
-                            trip_id=record["trip_id"],
-                            date=result_db["date"]
-                            )
-                        #now transfer the files
-                        transferred = TransferToUI(
-                            type="single",
-                            settings=self.SecretSettings,
-                            result=result_db,
-                            trip=record,
-                            logger=self.logger
-                            )
-
-                #this data is an "orphan"
-                else:
-                    self.logger.debug("Orphan result")
-                    #add the orphan to the orphan database table
-                    self.database.addOrphanResult(
-                        type="single",
-                        root=dirs["data_root_dir"],
-                        id=result_db["single_result_id"],
-                        date=info["date"]
-                        )
-                    #copy the files to the UI host
-                    dest = os.path.join(self.SecretSettings["ui_user_dir"], "orphans/single/")
-                    #now transfer the files
-                    transferred = TransferToUI(
-                        type="single-orphan",
-                        settings=self.SecretSettings,
-                        result=result_db,
-                        trip=trip_db,
-                        logger=self.logger
-                        )
-
-
-            #the addition of result to db has failed, but still needs removed from the cloud
-            else:
-                if settings["request"]["request_type"] == "reprocess":
-                    #remove the process from cloud_current
-                    self.database.removeCloudCurrent(
-                        cloud_request_id=settings["request"]["cloud_request_id"]
-                        )
-                    #note the result in cloud_complete
-                    self.database.enterCloudComplete(
-                        cloud_request_id=settings["request"]["cloud_request_id"],
-                        request_timestamp=settings["request"]["timestamp"],
-                        request_type=settings["request"]["request_type"],
-                        data_root_dir=settings["request"]["data_root_dir"],
-                        ip_address=settings["request"]["ip_address"],
-                        start_timestamp=settings["request"]["timestamp"],
-                        result_id=0,
-                        archive=False
-                        )
-                    #mark in cloud_requests
-                    self.database.markCloudRequest(
-                        cloud_request_id=settings["request"]["cloud_request_id"],
-                        mark="failure"
-                        )
-
-
-        elif command == "AUTOINDEX-PAIR":
-            if self.SecretSettings["throttle_strategy"] == True:
-                #pop one off the indexing_active
-                try:
-                    self.indexing_active.pop()
-                except:
-                    self.logger.exception("Error popping from self.indexing_active")
-                if len(self.indexing_queue) > 0:
-                    self.logger.debug("Running a command from the indexing_queue")
-                    job = self.indexing_queue.pop()
-                    self.indexing_active.appendleft("unknown")
-                    LaunchAction(command=job[0],
-                                  settings=job[1],
-                                  secret_settings=job[2],
-                                  logger=job[3])
-
-            result_db = self.database.addPairResult(
-                dirs=dirs,
-                info1=info1,
-                info2=info2,
-                settings=settings,
-                results=results
-                )
-            self.logger.debug("Added pair result: %s" % str(result_db))
-
-            #mark the process as finished
-            self.database.modifyProcessDisplay(process_id=info1["process_id"],
-                                               display_value="complete")
-
-            #move the files to the server
-            if result_db:
-                #now mark the cloud database if this is a reprocess request
-                if result_db["type"] == "reprocess":
-                    #remove the process from cloud_current
-                    self.database.removeCloudCurrent(
-                        cloud_request_id=settings["request"]["cloud_request_id"]
-                        )
-                    #note the result in cloud_complete
-                    self.database.enterCloudComplete(
-                        cloud_request_id=settings["request"]["cloud_request_id"],
-                        request_timestamp=settings["request"]["timestamp"],
-                        request_type=settings["request"]["request_type"],
-                        data_root_dir=settings["request"]["data_root_dir"],
-                        ip_address=settings["request"]["ip_address"],
-                        start_timestamp=settings["request"]["timestamp"],
-                        result_id=result_db["result_id"],
-                        archive=False
-                        )
-                    #mark in cloud_requests
-                    self.database.markCloudRequest(
-                        cloud_request_id=settings["request"]["cloud_request_id"],
-                        mark="complete"
-                        )
-
-                trip_db = self.database.getTrips(data_root_dir=dirs["data_root_dir"])
-                #this data has an associated trip
-                if trip_db:
-                    for record in trip_db:
-                        #update the dates for the trip
-                        self.database.updateTrip(trip_id=record["trip_id"],
-                                                 date=result_db["date_2"])
-                        #now transfer the files
-                        transferred = TransferToUI(type="pair",
-                                                   settings=self.SecretSettings,
-                                                   result=result_db,
-                                                   trip=record,
-                                                   logger=self.logger)
-                #this data is an "orphan"
-                else:
-                    self.logger.debug("Orphan result")
-                    #add the orphan to the orphan database table
-                    self.database.addOrphanResult(type="pair",
-                                                  root=dirs["data_root_dir"],
-                                                  id=result_db["pair_result_id"],
-                                                  date=info["date"])
-                    #now transfer the files
-                    transferred = TransferToUI(type="pair-orphan",
-                                               settings=self.SecretSettings,
-                                               result=result_db,
-                                               trip=trip_db,
-                                               logger=self.logger)
-
-            #the addition of result to db has failed, but still needs removed from the cloud
-            else:
-                if settings.has_key(["request"]):
-                    if settings["request"]["request_type"] == "reprocess":
-                        #remove the process from cloud_current
-                        self.database.removeCloudCurrent(
-                            cloud_request_id=settings["request"]["cloud_request_id"]
-                            )
-                        #note the result in cloud_complete
-                        self.database.enterCloudComplete(
-                            cloud_request_id=settings["request"]["cloud_request_id"],
-                            request_timestamp=settings["request"]["timestamp"],
-                            request_type=settings["request"]["request_type"],
-                            data_root_dir=settings["request"]["data_root_dir"],
-                            ip_address=settings["request"]["ip_address"],
-                            start_timestamp=settings["request"]["timestamp"],
-                            result_id=0,
-                            archive=False
-                            )
-                        #mark in cloud_requests
-                        self.database.markCloudRequest(
-                            cloud_request_id=settings["request"]["cloud_request_id"],
-                            mark="failure"
-                            )
-
-        # Integration
-        elif command in ("INTEGRATE",):
-            result_db = self.database.addIntegrateResult(dirs=dirs,
-                                                         info=info,
-                                                         settings=settings,
-                                                         results=results)
-
-            self.logger.debug("Added integration result: %s" % str(result_db))
-
-            #mark the process as finished
-            self.database.modifyProcessDisplay(process_id=info["image_data"]["process_id"],
-                                               display_value="complete")
-
-            #move the files to the server
-            if result_db:
-                #Update the Remote project
-                if self.remote_adapter:
-                    try:
-                        wedges = self.database.getRunWedges(run_id=result_db["run_id"])
-                    except:
-                        self.logger.exception("Error in getting run wedges")
-                    try:
-                        self.remote_adapter.update_run_stats(result_db=result_db, wedges=wedges)
-                    except:
-                        self.logger.exception("Error in updating run stats")
-
-                trip_db = self.database.getTrips(data_root_dir=dirs["data_root_dir"])
-                #this data has an associated trip
-                if trip_db:
-                    for record in trip_db:
-                        #update the dates for the trip
-                        self.database.updateTrip(trip_id=record["trip_id"],
-                                                 date=result_db["date"])
-                        #now transfer the files
-                        transferred = TransferToUI(type="integrate",
-                                                   settings=self.SecretSettings,
-                                                   result=result_db,
-                                                   trip=record,
-                                                   logger=self.logger)
-                #this data is an "orphan"
-                else:
-                    self.logger.debug("Orphan result")
-                    #add the orphan to the orphan database table
-                    self.database.addOrphanResult(type="integrate",
-                                                  root=dirs["data_root_dir"],
-                                                  id=result_db["integrate_result_id"],
-                                                  date=result_db["date"])
-
-                    #now transfer the files
-                    transferred = TransferToUI(type="integrate-orphan",
-                                               settings=self.SecretSettings,
-                                               result=result_db,
-                                               trip=trip_db,
-                                               logger=self.logger)
-
-            #now place the files in the data_root_dir for the user to have and to hold
-            if self.SecretSettings["copy_data"]:
-                copied = CopyToUser(root=dirs["data_root_dir"],
-                                    res_type="integrate",
-                                    result=result_db,
-                                    logger=self.logger)
-            #the addition of result to db has failed, but still needs removed from the cloud
-            #this is not YET an option so pass for now
-            else:
-                pass
-
-        # Reintegration using RAPD pipeline
-        elif command in ("XDS", "XIA2"):
-            result_db = self.database.addReIntegrateResult(dirs=dirs,
-                                                           info=info,
-                                                           settings=settings,
-                                                           results=results)
-            self.logger.debug("Added reintegration result: %s" % str(result_db))
-
-            #mark the process as finished
-            self.database.modifyProcessDisplay(process_id=settings["process_id"],
-                                               display_value="complete")
-
-            #move the files to the server
-            if result_db:
-                trip_db = self.database.getTrips(data_root_dir=dirs["data_root_dir"])
-                #this data has an associated trip
-                if trip_db:
-                    for record in trip_db:
-                        #update the dates for the trip
-                        self.database.updateTrip(trip_id=record["trip_id"],
-                                                 date=result_db["date"])
-                        #now transfer the files
-                        transferred = TransferToUI(type="integrate",
-                                                   settings=self.SecretSettings,
-                                                   result=result_db,
-                                                   trip=record,
-                                                   logger=self.logger)
-                #this data is an "orphan"
-                else:
-                    self.logger.debug("Orphan result")
-                    #add the orphan to the orphan database table
-                    self.database.addOrphanResult(
-                        type="integrate",
-                        root=dirs["data_root_dir"],
-                        id=result_db["integrate_result_id"],
-                        date=result_db["date"]
-                        )
-
-                    #now transfer the files
-                    transferred = TransferToUI(
-                        type="integrate-orphan",
-                        settings=self.SecretSettings,
-                        result=result_db,
-                        trip=trip_db,
-                        logger=self.logger
-                        )
-
-            #now place the files in the data_root_dir for the user to have and to hold
-            if self.SecretSettings["copy_data"]:
-                copied = CopyToUser(root=dirs["data_root_dir"],
-                                    res_type="integrate",
-                                    result=result_db,
-                                    logger=self.logger)
-            #the addition of result to db has failed, but still needs removed from the cloud
-            #this is not YET an option so pass for now
-            else:
-                pass
-
-        # Merging two wedges
-        elif command == "SMERGE":
-            self.logger.debug("SMERGE Received")
-            self.logger.debug(dirs)
-            self.logger.debug(info)
-            self.logger.debug(settings)
-            self.logger.debug(results)
-
-
-            result_db = self.database.addSimpleMergeResult(dirs=dirs,
-                                                           info=info,
-                                                           settings=settings,
-                                                           results=results)
-            self.logger.debug("Added simple merge result: %s" % str(result_db))
-
-            #mark the process as finished
-            self.database.modifyProcessDisplay(process_id=result_db["process_id"],
-                                               display_value="complete")
-
-            #move the files to the server
-            if result_db:
-                trip_db = self.database.getTrips(data_root_dir=dirs["data_root_dir"])
-                self.logger.debug(trip_db)
-                #this data has an associated trip
-                if trip_db:
-                    for record in trip_db:
-                        #now transfer the files
-                        transferred = TransferToUI(type="smerge",
-                                                   settings=self.SecretSettings,
-                                                   result=result_db,
-                                                   trip=record,
-                                                   logger=self.logger)
-                #this data is an "orphan"
-                else:
-                    self.logger.debug("Orphan result")
-                    #add the orphan to the orphan database table
-                    self.database.addOrphanResult(type="smerge",
-                                                  root=dirs["data_root_dir"],
-                                                  id=result_db["integrate_result_id"],
-                                                  date=result_db["date"])
-
-                    #now transfer the files
-                    transferred = TransferToUI(type="smerge-orphan",
-                                               settings=self.SecretSettings,
-                                               result=result_db,
-                                               trip=trip_db,
-                                               logger=self.logger)
-
-                #now place the files in the data_root_dir for the user to have and to hold
-                if self.SecretSettings["copy_data"]:
-                    copied = CopyToUser(root=dirs["data_root_dir"],
-                                        res_type="smerge",
-                                        result=result_db,
-                                        logger=self.logger)
-                #the addition of result to db has failed, but still needs removed from the cloud
-                #this is not YET an option so pass for now
-                else:
-                    pass
-
-
-        # Merging two wedges
-        elif command == "BEAMCENTER":
-            self.logger.debug("BEAMCENTER Received")
-            self.logger.debug(dirs)
-            self.logger.debug(info)
-            self.logger.debug(settings)
-            self.logger.debug(results)
-
-        elif command == "SAD":
-            self.logger.debug("Received SAD result")
-            result_db = self.database.addSadResult(dirs=dirs,
-                                                   info=info,
-                                                   settings=settings,
-                                                   results=results)
-            self.logger.debug("Added SAD result: %s" % str(result_db))
-
-            #mark the process as finished
-            self.database.modifyProcessDisplay(process_id=settings["process_id"],
-                                               display_value="complete")
-
-            #move the files to the server
-            if result_db:
-                trip_db = self.database.getTrips(data_root_dir=dirs["data_root_dir"])
-                #this data has an associated trip
-                if trip_db:
-                    for record in trip_db:
-                        #update the dates for the trip
-                        self.database.updateTrip(trip_id=record["trip_id"],
-                                                 date=result_db["timestamp"])
-                        #now transfer the files
-                        transferred = TransferToUI(
-                            type="sad",
-                            settings=self.SecretSettings,
-                            result=result_db,
-                            trip=record,
-                            logger=self.logger
-                            )
-                #this data is an "orphan"
-                else:
-                    self.logger.debug("Orphan result")
-                    #add the orphan to the orphan database table
-                    self.database.addOrphanResult(
-                        type="sad",
-                        root=dirs["data_root_dir"],
-                        id=result_db["sad_result_id"],
-                        date=result_db["date"]
-                        )
-
-                    #now transfer the files
-                    transferred = TransferToUI(type="sad-orphan",
-                                               settings=self.SecretSettings,
-                                               result=result_db,
-                                               trip=trip_db,
-                                               logger=self.logger)
-
-            #now place the files in the data_root_dir for the user to have and to hold
-            if self.SecretSettings["copy_data"]:
-                if result_db["download_file"] != "None":
-                    copied = CopyToUser(root=dirs["data_root_dir"],
-                                        res_type="sad",
-                                        result=result_db,
-                                        logger=self.logger)
-            #the addition of result to db has failed, but still needs removed from the cloud
-            #this is not YET an option so pass for now
-            else:
-                pass
-
-        elif command == "MAD":
-            self.logger.debug("Received MAD result")
-
-            result_db = self.database.addMadResult(dirs=dirs,
-                                                   info=info,
-                                                   settings=settings,
-                                                   results=results)
-            self.logger.debug("Added MAD result: %s" % str(result_db))
-
-            #mark the process as finished
-            self.database.modifyProcessDisplay(process_id=settings["process_id"],
-                                               display_value="complete")
-
-            #move the files to the server
-            if result_db:
-                trip_db = self.database.getTrips(data_root_dir=dirs["data_root_dir"])
-                #this data has an associated trip
-                if trip_db:
-                    for record in trip_db:
-                        #update the dates for the trip
-                        self.database.updateTrip(trip_id=record["trip_id"],
-                                                 date=result_db["timestamp"])
-                        #now transfer the files
-                        transferred = TransferToUI(type="mad",
-                                                   settings=self.SecretSettings,
-                                                   result=result_db,
-                                                   trip=record,
-                                                   logger=self.logger)
-
-            #now place the files in the data_root_dir for the user to have and to hold
-            if self.SecretSettings["copy_data"]:
-                if (result_db["download_file"] not in ["None", "FAILED"]):
-                    copied = CopyToUser(root=dirs["data_root_dir"],
-                                        res_type="mad",
-                                        result=result_db,
-                                        logger=self.logger)
-            #the addition of result to db has failed, but still needs removed from the cloud
-            #this is not YET an option so pass for now
-            else:
-                pass
-
-        elif command == "MR":
-            self.logger.debug("Received MR result")
-            result_db = self.database.addMrResult(dirs=dirs,
-                                                  info=info,
-                                                  settings=settings,
-                                                  results=results)
-            #some debugging output
-            self.logger.debug("Added MR result: %s" % str(result_db))
-
-            #If the process is complete, mark it as such
-            if result_db["mr_status"] != "WORKING":
-                #mark the process as finished
-                self.database.modifyProcessDisplay(process_id=result_db["process_id"],
-                                                   display_value="complete")
-            #move the files to the server
-            if result_db:
-                #Get the trip for this data
-                trip_db = self.database.getTrips(data_root_dir=dirs["data_root_dir"])
-                #this data has an associated trip
-                if trip_db:
-                    for record in trip_db:
-                        #update the dates for the trip
-                        self.database.updateTrip(trip_id=record["trip_id"],
-                                                 date=result_db["timestamp"])
-                        #now transfer the files
-                        transferred = TransferToUI(type="mr",
-                                                   settings=self.SecretSettings,
-                                                   result=result_db,
-                                                   trip=record,
-                                                   logger=self.logger)
-
-            #now place the files in the data_root_dir for the user to have and to hold
-            if  self.SecretSettings["copy_data"]:
-                all_mr_results = self.database.getMrTrialResult(result_db["mr_result_id"])
-                #some debugging output
-                self.logger.debug("Transfer MR file: ID %s" % result_db["mr_result_id"])
-                if all_mr_results:
-                    for mr_result in all_mr_results:
-                        result_db["download_file"] = mr_result["archive"]
-                        copied = CopyToUser(root=dirs["data_root_dir"],
-                                            res_type="mr",
-                                            result=result_db,
-                                            logger=self.logger)
-
-            #the addition of result to db has failed, but still needs removed from the cloud
-            #this is not YET an option so pass for now
-            else:
-                pass
-
-
-        elif command == "DOWNLOAD":
-            #get the trip info
-            trip_db = self.database.getTrips(data_root_dir=info["data_root_dir"])
-
-            success = False
-            if trip_db:
-                for record in trip_db:
-                    #move files to the server
-                    transferred = TransferToUI(
-                        type="download",
-                        settings=self.SecretSettings,
-                        result=info,
-                        trip=record,
-                        logger=self.logger
-                        )
-                    if transferred:
-                        success = True
-
-            #update the database
-            if success:
-                #note the result in cloud_complete
-                self.database.enterCloudComplete(cloud_request_id=info["cloud_request_id"],
-                                                 request_timestamp=info["timestamp"],
-                                                 request_type=info["request_type"],
-                                                 data_root_dir=info["data_root_dir"],
-                                                 ip_address=info["ip_address"],
-                                                 start_timestamp=0,
-                                                 result_id=0,
-                                                 archive=os.path.basename(info["archive"]))
-
-                #mark in cloud_requests
-                self.database.markCloudRequest(
-                    cloud_request_id=info["cloud_request_id"],
-                    mark="complete"
-                    )
-
-            #the transfer was not successful
-            else:
-                #note the result in cloud_complete
-                self.database.enterCloudComplete(cloud_request_id=info["cloud_request_id"],
-                                                 request_timestamp=info["timestamp"],
-                                                 request_type=info["request_type"],
-                                                 data_root_dir=info["data_root_dir"],
-                                                 ip_address=info["ip_address"],
-                                                 start_timestamp=0,
-                                                 result_id=0,
-                                                 archive=os.path.basename(info["archive"]))
-
-                #mark in cloud_requests
-                self.database.markCloudRequest(cloud_request_id=info["cloud_request_id"],
-                                               mark="failure")
-
-        elif command == "STATS":
-            self.logger.debug("Received STATS result")
-
-            #rearrange results
-            results = server.copy()
-
-            #self.logger.debug(info)
-            #self.logger.debug(results)
-            result_db = self.database.addStatsResults(info=info,
-                                                      results=results)
-            self.logger.debug("Added STATS result: %s" % str(result_db))
-
-            #mark the process as finished
-            self.database.modifyProcessDisplay(process_id=info["process_id"],
-                                               display_value="complete")
-
-            #move the files to the server
-            if result_db:
-                #Get the trip for this data
-                trip_db = self.database.getTrips(result_id=result_db["result_id"])
-                #print trip_db
-                #this data has an associated trip
-                if trip_db:
-                    for record in trip_db:
-                        #update the dates for the trip
-                        self.database.updateTrip(trip_id=record["trip_id"],
-                                                 date=result_db["timestamp"])
-                        #now transfer the files
-                        transferred = TransferToUI(type="stats",
-                                                   settings=self.SecretSettings,
-                                                   result=result_db,
-                                                   trip=record,
-                                                   logger=self.logger)
-                #this data is an "orphan"
-                else:
-                    self.logger.debug("Orphan result")
-                    #now transfer the files
-                    transferred = TransferToUI(type="stats-orphan",
-                                               settings=self.SecretSettings,
-                                               result=result_db,
-                                               trip=trip_db,
-                                               logger=self.logger)
-
-        elif command == "TEST":
-            self.logger.debug("Cluster connection test successful")
-
-        elif command == "SPEEDTEST":
-            self.logger.debug("Cluster connection test successful")
-
-        elif command == "DISTL_PARMS_REQUEST":
-            self.logger.debug("DISTL params request for %s" % info)
-            cf = ConsoleFeeder(mode="DISTL_PARMS_REQUEST",
-                               db=self.database,
-                               bc=self.BEAMLINE_CONNECTION,
-                               data=info,
-                               logger=self.logger)
-
-        elif command == "CRYSTAL_PARMS_REQUEST":
-            self.logger.debug("CRYSTAL params request for %s" % info)
-            cf = ConsoleFeeder(mode="CRYSTAL_PARMS_REQUEST",
-                               db=self.database,
-                               bc=self.BEAMLINE_CONNECTION,
-                               data=info,
-                               logger=self.logger)
-
-        elif command == "BEST_PARMS_REQUEST":
-            self.logger.debug("BEST params request for %s" % info)
-            cf = ConsoleFeeder(mode="BEST_PARMS_REQUEST",
-                               db=self.database,
-                               bc=self.BEAMLINE_CONNECTION,
-                               data=info,
-                               logger=self.logger)
+        #
+        # elif command == "AUTOINDEX":
+        #     #Handle the ongoing throttling of autoindexing jobs
+        #     if self.SecretSettings["throttle_strategy"] == True:
+        #         #pop one marker off the indexing_active
+        #         try:
+        #             self.indexing_active.pop()
+        #         except:
+        #             pass
+        #         if len(self.indexing_queue) > 0:
+        #             self.logger.debug("Running a command from the indexing_queue")
+        #             job = self.indexing_queue.pop()
+        #             self.indexing_active.appendleft("unknown")
+        #             #send the job to be done
+        #             LaunchAction(command=job[0],
+        #                          settings=job[1],
+        #                          secret_settings=job[2],
+        #                          logger=job[3])
+        #
+        #     #add result to database
+        #     result_db = self.database.addSingleResult(dirs=dirs,
+        #                                               info=info,
+        #                                               settings=settings,
+        #                                               results=results)
+        #
+        #     self.logger.debug("Added single result: %s" % str(result_db))
+        #
+        #     #mark the process as finished
+        #     self.database.modifyProcessDisplay(process_id=info["process_id"],
+        #                                        display_value="complete")
+        #
+        #     #move the files to the server & other
+        #     if result_db:
+        #
+        #         #Update the Remote project
+        #         if self.remote_adapter:
+        #             wedges = self.database.getStrategyWedges(id=result_db["single_result_id"])
+        #             result_db["image_id"] = info["image_id"]
+        #             self.remote_adapterAdapter.update_image_stats(result_db, wedges)
+        #
+        #         #now mark the cloud database if this is a reprocess request
+        #         if result_db["type"] in ("reprocess", "stac"):
+        #             #remove the process from cloud_current
+        #             self.database.removeCloudCurrent(
+        #                 cloud_request_id=settings["request"]["cloud_request_id"]
+        #                 )
+        #             #note the result in cloud_complete
+        #             self.database.enterCloudComplete(
+        #                 cloud_request_id=settings["request"]["cloud_request_id"],
+        #                 request_timestamp=settings["request"]["timestamp"],
+        #                 request_type=settings["request"]["request_type"],
+        #                 data_root_dir=settings["request"]["data_root_dir"],
+        #                 ip_address=settings["request"]["ip_address"],
+        #                 start_timestamp=settings["request"]["timestamp"],
+        #                 result_id=result_db["result_id"],
+        #                 archive=False
+        #                 )
+        #             #mark in cloud_requests
+        #             self.database.markCloudRequest(
+        #                 cloud_request_id=settings["request"]["cloud_request_id"],
+        #                 mark="complete"
+        #                 )
+        #
+        #         trip_db = self.database.getTrips(data_root_dir=dirs["data_root_dir"])
+        #         #this data has an associated trip
+        #         if trip_db:
+        #             for record in trip_db:
+        #                 #update the dates for the trip
+        #                 self.database.updateTrip(
+        #                     trip_id=record["trip_id"],
+        #                     date=result_db["date"]
+        #                     )
+        #                 #now transfer the files
+        #                 transferred = TransferToUI(
+        #                     type="single",
+        #                     settings=self.SecretSettings,
+        #                     result=result_db,
+        #                     trip=record,
+        #                     logger=self.logger
+        #                     )
+        #
+        #         #this data is an "orphan"
+        #         else:
+        #             self.logger.debug("Orphan result")
+        #             #add the orphan to the orphan database table
+        #             self.database.addOrphanResult(
+        #                 type="single",
+        #                 root=dirs["data_root_dir"],
+        #                 id=result_db["single_result_id"],
+        #                 date=info["date"]
+        #                 )
+        #             #copy the files to the UI host
+        #             dest = os.path.join(self.SecretSettings["ui_user_dir"], "orphans/single/")
+        #             #now transfer the files
+        #             transferred = TransferToUI(
+        #                 type="single-orphan",
+        #                 settings=self.SecretSettings,
+        #                 result=result_db,
+        #                 trip=trip_db,
+        #                 logger=self.logger
+        #                 )
+        #
+        #
+        #     #the addition of result to db has failed, but still needs removed from the cloud
+        #     else:
+        #         if settings["request"]["request_type"] == "reprocess":
+        #             #remove the process from cloud_current
+        #             self.database.removeCloudCurrent(
+        #                 cloud_request_id=settings["request"]["cloud_request_id"]
+        #                 )
+        #             #note the result in cloud_complete
+        #             self.database.enterCloudComplete(
+        #                 cloud_request_id=settings["request"]["cloud_request_id"],
+        #                 request_timestamp=settings["request"]["timestamp"],
+        #                 request_type=settings["request"]["request_type"],
+        #                 data_root_dir=settings["request"]["data_root_dir"],
+        #                 ip_address=settings["request"]["ip_address"],
+        #                 start_timestamp=settings["request"]["timestamp"],
+        #                 result_id=0,
+        #                 archive=False
+        #                 )
+        #             #mark in cloud_requests
+        #             self.database.markCloudRequest(
+        #                 cloud_request_id=settings["request"]["cloud_request_id"],
+        #                 mark="failure"
+        #                 )
+        #
+        #
+        # elif command == "AUTOINDEX-PAIR":
+        #     if self.SecretSettings["throttle_strategy"] == True:
+        #         #pop one off the indexing_active
+        #         try:
+        #             self.indexing_active.pop()
+        #         except:
+        #             self.logger.exception("Error popping from self.indexing_active")
+        #         if len(self.indexing_queue) > 0:
+        #             self.logger.debug("Running a command from the indexing_queue")
+        #             job = self.indexing_queue.pop()
+        #             self.indexing_active.appendleft("unknown")
+        #             LaunchAction(command=job[0],
+        #                           settings=job[1],
+        #                           secret_settings=job[2],
+        #                           logger=job[3])
+        #
+        #     result_db = self.database.addPairResult(
+        #         dirs=dirs,
+        #         info1=info1,
+        #         info2=info2,
+        #         settings=settings,
+        #         results=results
+        #         )
+        #     self.logger.debug("Added pair result: %s" % str(result_db))
+        #
+        #     #mark the process as finished
+        #     self.database.modifyProcessDisplay(process_id=info1["process_id"],
+        #                                        display_value="complete")
+        #
+        #     #move the files to the server
+        #     if result_db:
+        #         #now mark the cloud database if this is a reprocess request
+        #         if result_db["type"] == "reprocess":
+        #             #remove the process from cloud_current
+        #             self.database.removeCloudCurrent(
+        #                 cloud_request_id=settings["request"]["cloud_request_id"]
+        #                 )
+        #             #note the result in cloud_complete
+        #             self.database.enterCloudComplete(
+        #                 cloud_request_id=settings["request"]["cloud_request_id"],
+        #                 request_timestamp=settings["request"]["timestamp"],
+        #                 request_type=settings["request"]["request_type"],
+        #                 data_root_dir=settings["request"]["data_root_dir"],
+        #                 ip_address=settings["request"]["ip_address"],
+        #                 start_timestamp=settings["request"]["timestamp"],
+        #                 result_id=result_db["result_id"],
+        #                 archive=False
+        #                 )
+        #             #mark in cloud_requests
+        #             self.database.markCloudRequest(
+        #                 cloud_request_id=settings["request"]["cloud_request_id"],
+        #                 mark="complete"
+        #                 )
+        #
+        #         trip_db = self.database.getTrips(data_root_dir=dirs["data_root_dir"])
+        #         #this data has an associated trip
+        #         if trip_db:
+        #             for record in trip_db:
+        #                 #update the dates for the trip
+        #                 self.database.updateTrip(trip_id=record["trip_id"],
+        #                                          date=result_db["date_2"])
+        #                 #now transfer the files
+        #                 transferred = TransferToUI(type="pair",
+        #                                            settings=self.SecretSettings,
+        #                                            result=result_db,
+        #                                            trip=record,
+        #                                            logger=self.logger)
+        #         #this data is an "orphan"
+        #         else:
+        #             self.logger.debug("Orphan result")
+        #             #add the orphan to the orphan database table
+        #             self.database.addOrphanResult(type="pair",
+        #                                           root=dirs["data_root_dir"],
+        #                                           id=result_db["pair_result_id"],
+        #                                           date=info["date"])
+        #             #now transfer the files
+        #             transferred = TransferToUI(type="pair-orphan",
+        #                                        settings=self.SecretSettings,
+        #                                        result=result_db,
+        #                                        trip=trip_db,
+        #                                        logger=self.logger)
+        #
+        #     #the addition of result to db has failed, but still needs removed from the cloud
+        #     else:
+        #         if settings.has_key(["request"]):
+        #             if settings["request"]["request_type"] == "reprocess":
+        #                 #remove the process from cloud_current
+        #                 self.database.removeCloudCurrent(
+        #                     cloud_request_id=settings["request"]["cloud_request_id"]
+        #                     )
+        #                 #note the result in cloud_complete
+        #                 self.database.enterCloudComplete(
+        #                     cloud_request_id=settings["request"]["cloud_request_id"],
+        #                     request_timestamp=settings["request"]["timestamp"],
+        #                     request_type=settings["request"]["request_type"],
+        #                     data_root_dir=settings["request"]["data_root_dir"],
+        #                     ip_address=settings["request"]["ip_address"],
+        #                     start_timestamp=settings["request"]["timestamp"],
+        #                     result_id=0,
+        #                     archive=False
+        #                     )
+        #                 #mark in cloud_requests
+        #                 self.database.markCloudRequest(
+        #                     cloud_request_id=settings["request"]["cloud_request_id"],
+        #                     mark="failure"
+        #                     )
+        #
+        # # Integration
+        # elif command in ("INTEGRATE",):
+        #     result_db = self.database.addIntegrateResult(dirs=dirs,
+        #                                                  info=info,
+        #                                                  settings=settings,
+        #                                                  results=results)
+        #
+        #     self.logger.debug("Added integration result: %s" % str(result_db))
+        #
+        #     #mark the process as finished
+        #     self.database.modifyProcessDisplay(process_id=info["image_data"]["process_id"],
+        #                                        display_value="complete")
+        #
+        #     #move the files to the server
+        #     if result_db:
+        #         #Update the Remote project
+        #         if self.remote_adapter:
+        #             try:
+        #                 wedges = self.database.getRunWedges(run_id=result_db["run_id"])
+        #             except:
+        #                 self.logger.exception("Error in getting run wedges")
+        #             try:
+        #                 self.remote_adapter.update_run_stats(result_db=result_db, wedges=wedges)
+        #             except:
+        #                 self.logger.exception("Error in updating run stats")
+        #
+        #         trip_db = self.database.getTrips(data_root_dir=dirs["data_root_dir"])
+        #         #this data has an associated trip
+        #         if trip_db:
+        #             for record in trip_db:
+        #                 #update the dates for the trip
+        #                 self.database.updateTrip(trip_id=record["trip_id"],
+        #                                          date=result_db["date"])
+        #                 #now transfer the files
+        #                 transferred = TransferToUI(type="integrate",
+        #                                            settings=self.SecretSettings,
+        #                                            result=result_db,
+        #                                            trip=record,
+        #                                            logger=self.logger)
+        #         #this data is an "orphan"
+        #         else:
+        #             self.logger.debug("Orphan result")
+        #             #add the orphan to the orphan database table
+        #             self.database.addOrphanResult(type="integrate",
+        #                                           root=dirs["data_root_dir"],
+        #                                           id=result_db["integrate_result_id"],
+        #                                           date=result_db["date"])
+        #
+        #             #now transfer the files
+        #             transferred = TransferToUI(type="integrate-orphan",
+        #                                        settings=self.SecretSettings,
+        #                                        result=result_db,
+        #                                        trip=trip_db,
+        #                                        logger=self.logger)
+        #
+        #     #now place the files in the data_root_dir for the user to have and to hold
+        #     if self.SecretSettings["copy_data"]:
+        #         copied = CopyToUser(root=dirs["data_root_dir"],
+        #                             res_type="integrate",
+        #                             result=result_db,
+        #                             logger=self.logger)
+        #     #the addition of result to db has failed, but still needs removed from the cloud
+        #     #this is not YET an option so pass for now
+        #     else:
+        #         pass
+        #
+        # # Reintegration using RAPD pipeline
+        # elif command in ("XDS", "XIA2"):
+        #     result_db = self.database.addReIntegrateResult(dirs=dirs,
+        #                                                    info=info,
+        #                                                    settings=settings,
+        #                                                    results=results)
+        #     self.logger.debug("Added reintegration result: %s" % str(result_db))
+        #
+        #     #mark the process as finished
+        #     self.database.modifyProcessDisplay(process_id=settings["process_id"],
+        #                                        display_value="complete")
+        #
+        #     #move the files to the server
+        #     if result_db:
+        #         trip_db = self.database.getTrips(data_root_dir=dirs["data_root_dir"])
+        #         #this data has an associated trip
+        #         if trip_db:
+        #             for record in trip_db:
+        #                 #update the dates for the trip
+        #                 self.database.updateTrip(trip_id=record["trip_id"],
+        #                                          date=result_db["date"])
+        #                 #now transfer the files
+        #                 transferred = TransferToUI(type="integrate",
+        #                                            settings=self.SecretSettings,
+        #                                            result=result_db,
+        #                                            trip=record,
+        #                                            logger=self.logger)
+        #         #this data is an "orphan"
+        #         else:
+        #             self.logger.debug("Orphan result")
+        #             #add the orphan to the orphan database table
+        #             self.database.addOrphanResult(
+        #                 type="integrate",
+        #                 root=dirs["data_root_dir"],
+        #                 id=result_db["integrate_result_id"],
+        #                 date=result_db["date"]
+        #                 )
+        #
+        #             #now transfer the files
+        #             transferred = TransferToUI(
+        #                 type="integrate-orphan",
+        #                 settings=self.SecretSettings,
+        #                 result=result_db,
+        #                 trip=trip_db,
+        #                 logger=self.logger
+        #                 )
+        #
+        #     #now place the files in the data_root_dir for the user to have and to hold
+        #     if self.SecretSettings["copy_data"]:
+        #         copied = CopyToUser(root=dirs["data_root_dir"],
+        #                             res_type="integrate",
+        #                             result=result_db,
+        #                             logger=self.logger)
+        #     #the addition of result to db has failed, but still needs removed from the cloud
+        #     #this is not YET an option so pass for now
+        #     else:
+        #         pass
+        #
+        # # Merging two wedges
+        # elif command == "SMERGE":
+        #     self.logger.debug("SMERGE Received")
+        #     self.logger.debug(dirs)
+        #     self.logger.debug(info)
+        #     self.logger.debug(settings)
+        #     self.logger.debug(results)
+        #
+        #
+        #     result_db = self.database.addSimpleMergeResult(dirs=dirs,
+        #                                                    info=info,
+        #                                                    settings=settings,
+        #                                                    results=results)
+        #     self.logger.debug("Added simple merge result: %s" % str(result_db))
+        #
+        #     #mark the process as finished
+        #     self.database.modifyProcessDisplay(process_id=result_db["process_id"],
+        #                                        display_value="complete")
+        #
+        #     #move the files to the server
+        #     if result_db:
+        #         trip_db = self.database.getTrips(data_root_dir=dirs["data_root_dir"])
+        #         self.logger.debug(trip_db)
+        #         #this data has an associated trip
+        #         if trip_db:
+        #             for record in trip_db:
+        #                 #now transfer the files
+        #                 transferred = TransferToUI(type="smerge",
+        #                                            settings=self.SecretSettings,
+        #                                            result=result_db,
+        #                                            trip=record,
+        #                                            logger=self.logger)
+        #         #this data is an "orphan"
+        #         else:
+        #             self.logger.debug("Orphan result")
+        #             #add the orphan to the orphan database table
+        #             self.database.addOrphanResult(type="smerge",
+        #                                           root=dirs["data_root_dir"],
+        #                                           id=result_db["integrate_result_id"],
+        #                                           date=result_db["date"])
+        #
+        #             #now transfer the files
+        #             transferred = TransferToUI(type="smerge-orphan",
+        #                                        settings=self.SecretSettings,
+        #                                        result=result_db,
+        #                                        trip=trip_db,
+        #                                        logger=self.logger)
+        #
+        #         #now place the files in the data_root_dir for the user to have and to hold
+        #         if self.SecretSettings["copy_data"]:
+        #             copied = CopyToUser(root=dirs["data_root_dir"],
+        #                                 res_type="smerge",
+        #                                 result=result_db,
+        #                                 logger=self.logger)
+        #         #the addition of result to db has failed, but still needs removed from the cloud
+        #         #this is not YET an option so pass for now
+        #         else:
+        #             pass
+        #
+        #
+        # # Merging two wedges
+        # elif command == "BEAMCENTER":
+        #     self.logger.debug("BEAMCENTER Received")
+        #     self.logger.debug(dirs)
+        #     self.logger.debug(info)
+        #     self.logger.debug(settings)
+        #     self.logger.debug(results)
+        #
+        # elif command == "SAD":
+        #     self.logger.debug("Received SAD result")
+        #     result_db = self.database.addSadResult(dirs=dirs,
+        #                                            info=info,
+        #                                            settings=settings,
+        #                                            results=results)
+        #     self.logger.debug("Added SAD result: %s" % str(result_db))
+        #
+        #     #mark the process as finished
+        #     self.database.modifyProcessDisplay(process_id=settings["process_id"],
+        #                                        display_value="complete")
+        #
+        #     #move the files to the server
+        #     if result_db:
+        #         trip_db = self.database.getTrips(data_root_dir=dirs["data_root_dir"])
+        #         #this data has an associated trip
+        #         if trip_db:
+        #             for record in trip_db:
+        #                 #update the dates for the trip
+        #                 self.database.updateTrip(trip_id=record["trip_id"],
+        #                                          date=result_db["timestamp"])
+        #                 #now transfer the files
+        #                 transferred = TransferToUI(
+        #                     type="sad",
+        #                     settings=self.SecretSettings,
+        #                     result=result_db,
+        #                     trip=record,
+        #                     logger=self.logger
+        #                     )
+        #         #this data is an "orphan"
+        #         else:
+        #             self.logger.debug("Orphan result")
+        #             #add the orphan to the orphan database table
+        #             self.database.addOrphanResult(
+        #                 type="sad",
+        #                 root=dirs["data_root_dir"],
+        #                 id=result_db["sad_result_id"],
+        #                 date=result_db["date"]
+        #                 )
+        #
+        #             #now transfer the files
+        #             transferred = TransferToUI(type="sad-orphan",
+        #                                        settings=self.SecretSettings,
+        #                                        result=result_db,
+        #                                        trip=trip_db,
+        #                                        logger=self.logger)
+        #
+        #     #now place the files in the data_root_dir for the user to have and to hold
+        #     if self.SecretSettings["copy_data"]:
+        #         if result_db["download_file"] != "None":
+        #             copied = CopyToUser(root=dirs["data_root_dir"],
+        #                                 res_type="sad",
+        #                                 result=result_db,
+        #                                 logger=self.logger)
+        #     #the addition of result to db has failed, but still needs removed from the cloud
+        #     #this is not YET an option so pass for now
+        #     else:
+        #         pass
+        #
+        # elif command == "MAD":
+        #     self.logger.debug("Received MAD result")
+        #
+        #     result_db = self.database.addMadResult(dirs=dirs,
+        #                                            info=info,
+        #                                            settings=settings,
+        #                                            results=results)
+        #     self.logger.debug("Added MAD result: %s" % str(result_db))
+        #
+        #     #mark the process as finished
+        #     self.database.modifyProcessDisplay(process_id=settings["process_id"],
+        #                                        display_value="complete")
+        #
+        #     #move the files to the server
+        #     if result_db:
+        #         trip_db = self.database.getTrips(data_root_dir=dirs["data_root_dir"])
+        #         #this data has an associated trip
+        #         if trip_db:
+        #             for record in trip_db:
+        #                 #update the dates for the trip
+        #                 self.database.updateTrip(trip_id=record["trip_id"],
+        #                                          date=result_db["timestamp"])
+        #                 #now transfer the files
+        #                 transferred = TransferToUI(type="mad",
+        #                                            settings=self.SecretSettings,
+        #                                            result=result_db,
+        #                                            trip=record,
+        #                                            logger=self.logger)
+        #
+        #     #now place the files in the data_root_dir for the user to have and to hold
+        #     if self.SecretSettings["copy_data"]:
+        #         if (result_db["download_file"] not in ["None", "FAILED"]):
+        #             copied = CopyToUser(root=dirs["data_root_dir"],
+        #                                 res_type="mad",
+        #                                 result=result_db,
+        #                                 logger=self.logger)
+        #     #the addition of result to db has failed, but still needs removed from the cloud
+        #     #this is not YET an option so pass for now
+        #     else:
+        #         pass
+        #
+        # elif command == "MR":
+        #     self.logger.debug("Received MR result")
+        #     result_db = self.database.addMrResult(dirs=dirs,
+        #                                           info=info,
+        #                                           settings=settings,
+        #                                           results=results)
+        #     #some debugging output
+        #     self.logger.debug("Added MR result: %s" % str(result_db))
+        #
+        #     #If the process is complete, mark it as such
+        #     if result_db["mr_status"] != "WORKING":
+        #         #mark the process as finished
+        #         self.database.modifyProcessDisplay(process_id=result_db["process_id"],
+        #                                            display_value="complete")
+        #     #move the files to the server
+        #     if result_db:
+        #         #Get the trip for this data
+        #         trip_db = self.database.getTrips(data_root_dir=dirs["data_root_dir"])
+        #         #this data has an associated trip
+        #         if trip_db:
+        #             for record in trip_db:
+        #                 #update the dates for the trip
+        #                 self.database.updateTrip(trip_id=record["trip_id"],
+        #                                          date=result_db["timestamp"])
+        #                 #now transfer the files
+        #                 transferred = TransferToUI(type="mr",
+        #                                            settings=self.SecretSettings,
+        #                                            result=result_db,
+        #                                            trip=record,
+        #                                            logger=self.logger)
+        #
+        #     #now place the files in the data_root_dir for the user to have and to hold
+        #     if  self.SecretSettings["copy_data"]:
+        #         all_mr_results = self.database.getMrTrialResult(result_db["mr_result_id"])
+        #         #some debugging output
+        #         self.logger.debug("Transfer MR file: ID %s" % result_db["mr_result_id"])
+        #         if all_mr_results:
+        #             for mr_result in all_mr_results:
+        #                 result_db["download_file"] = mr_result["archive"]
+        #                 copied = CopyToUser(root=dirs["data_root_dir"],
+        #                                     res_type="mr",
+        #                                     result=result_db,
+        #                                     logger=self.logger)
+        #
+        #     #the addition of result to db has failed, but still needs removed from the cloud
+        #     #this is not YET an option so pass for now
+        #     else:
+        #         pass
+        #
+        #
+        # elif command == "DOWNLOAD":
+        #     #get the trip info
+        #     trip_db = self.database.getTrips(data_root_dir=info["data_root_dir"])
+        #
+        #     success = False
+        #     if trip_db:
+        #         for record in trip_db:
+        #             #move files to the server
+        #             transferred = TransferToUI(
+        #                 type="download",
+        #                 settings=self.SecretSettings,
+        #                 result=info,
+        #                 trip=record,
+        #                 logger=self.logger
+        #                 )
+        #             if transferred:
+        #                 success = True
+        #
+        #     #update the database
+        #     if success:
+        #         #note the result in cloud_complete
+        #         self.database.enterCloudComplete(cloud_request_id=info["cloud_request_id"],
+        #                                          request_timestamp=info["timestamp"],
+        #                                          request_type=info["request_type"],
+        #                                          data_root_dir=info["data_root_dir"],
+        #                                          ip_address=info["ip_address"],
+        #                                          start_timestamp=0,
+        #                                          result_id=0,
+        #                                          archive=os.path.basename(info["archive"]))
+        #
+        #         #mark in cloud_requests
+        #         self.database.markCloudRequest(
+        #             cloud_request_id=info["cloud_request_id"],
+        #             mark="complete"
+        #             )
+        #
+        #     #the transfer was not successful
+        #     else:
+        #         #note the result in cloud_complete
+        #         self.database.enterCloudComplete(cloud_request_id=info["cloud_request_id"],
+        #                                          request_timestamp=info["timestamp"],
+        #                                          request_type=info["request_type"],
+        #                                          data_root_dir=info["data_root_dir"],
+        #                                          ip_address=info["ip_address"],
+        #                                          start_timestamp=0,
+        #                                          result_id=0,
+        #                                          archive=os.path.basename(info["archive"]))
+        #
+        #         #mark in cloud_requests
+        #         self.database.markCloudRequest(cloud_request_id=info["cloud_request_id"],
+        #                                        mark="failure")
+        #
+        # elif command == "STATS":
+        #     self.logger.debug("Received STATS result")
+        #
+        #     #rearrange results
+        #     results = server.copy()
+        #
+        #     #self.logger.debug(info)
+        #     #self.logger.debug(results)
+        #     result_db = self.database.addStatsResults(info=info,
+        #                                               results=results)
+        #     self.logger.debug("Added STATS result: %s" % str(result_db))
+        #
+        #     #mark the process as finished
+        #     self.database.modifyProcessDisplay(process_id=info["process_id"],
+        #                                        display_value="complete")
+        #
+        #     #move the files to the server
+        #     if result_db:
+        #         #Get the trip for this data
+        #         trip_db = self.database.getTrips(result_id=result_db["result_id"])
+        #         #print trip_db
+        #         #this data has an associated trip
+        #         if trip_db:
+        #             for record in trip_db:
+        #                 #update the dates for the trip
+        #                 self.database.updateTrip(trip_id=record["trip_id"],
+        #                                          date=result_db["timestamp"])
+        #                 #now transfer the files
+        #                 transferred = TransferToUI(type="stats",
+        #                                            settings=self.SecretSettings,
+        #                                            result=result_db,
+        #                                            trip=record,
+        #                                            logger=self.logger)
+        #         #this data is an "orphan"
+        #         else:
+        #             self.logger.debug("Orphan result")
+        #             #now transfer the files
+        #             transferred = TransferToUI(type="stats-orphan",
+        #                                        settings=self.SecretSettings,
+        #                                        result=result_db,
+        #                                        trip=trip_db,
+        #                                        logger=self.logger)
+        #
+        # elif command == "TEST":
+        #     self.logger.debug("Cluster connection test successful")
+        #
+        # elif command == "SPEEDTEST":
+        #     self.logger.debug("Cluster connection test successful")
+        #
+        # elif command == "DISTL_PARMS_REQUEST":
+        #     self.logger.debug("DISTL params request for %s" % info)
+        #     cf = ConsoleFeeder(mode="DISTL_PARMS_REQUEST",
+        #                        db=self.database,
+        #                        bc=self.BEAMLINE_CONNECTION,
+        #                        data=info,
+        #                        logger=self.logger)
+        #
+        # elif command == "CRYSTAL_PARMS_REQUEST":
+        #     self.logger.debug("CRYSTAL params request for %s" % info)
+        #     cf = ConsoleFeeder(mode="CRYSTAL_PARMS_REQUEST",
+        #                        db=self.database,
+        #                        bc=self.BEAMLINE_CONNECTION,
+        #                        data=info,
+        #                        logger=self.logger)
+        #
+        # elif command == "BEST_PARMS_REQUEST":
+        #     self.logger.debug("BEST params request for %s" % info)
+        #     cf = ConsoleFeeder(mode="BEST_PARMS_REQUEST",
+        #                        db=self.database,
+        #                        bc=self.BEAMLINE_CONNECTION,
+        #                        data=info,
+        #                        logger=self.logger)
 
         else:
             self.logger.info("Take no action for message")

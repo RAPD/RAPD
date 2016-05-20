@@ -769,6 +769,7 @@ def create_data_tables(hostname, port, username, password):
         directory varchar(128) DEFAULT NULL,
         distance float DEFAULT NULL,
         energy float DEFAULT NULL,
+        file_ctime timestamp DEFAULT NULL,
         image_prefix varchar(64) DEFAULT NULL,
         kappa float DEFAULT NULL,
         number_images mediumint(8) unsigned DEFAULT NULL,
@@ -777,6 +778,7 @@ def create_data_tables(hostname, port, username, password):
         osc_start float DEFAULT NULL,
         osc_width float DEFAULT NULL,
         phi float DEFAULT NULL,
+        rapd_status varchar(12) DEFAULT NULL,
         run_number smallint(5) unsigned DEFAULT NULL,
         site_tag varchar(16) DEFAULT NULL,
         start_image_number mediumint(8) unsigned DEFAULT NULL,
@@ -785,7 +787,7 @@ def create_data_tables(hostname, port, username, password):
         twotheta float DEFAULT NULL,
         timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (run_id),
-        UNIQUE KEY blocker (directory, image_prefix, run_number, start_image_number, number_images),"""
+        UNIQUE KEY blocker (directory, image_prefix, run_number, start_image_number, number_images, file_ctime),"""
 
     create_table(hostname=hostname,
                  port=port,
