@@ -1,4 +1,8 @@
 """
+Provides a comprehensive statistical analysis of an integrated data set
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2011-2016, Cornell University
@@ -16,28 +20,33 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
 __created__ = "2011-02-02"
 __maintainer__ = "Jon Schuermann"
 __email__ = "schuerjp@anl.gov"
 __status__ = "Production"
 
+# Standard imports
+
 from multiprocessing import Process, Queue
-import os, time
-from rapd_agent_cell import PDBQuery
-from rapd_communicate import Communicate
-from rapd_agent_pp import LabelitPP
-import rapd_utils as Utils
-import rapd_beamlinespecific as BLspec
-import rapd_parse as Parse
-import rapd_summary as Summary
+import os
+import time
+
+# RAPD imports
+# from rapd_agent_cell import PDBQuery
+# from rapd_agent_pp import LabelitPP
+
+# import rapd_beamlinespecific as BLspec
+import subcontractors.parse as Parse
+import subcontractors.summary as Summary
+from utils.communicate import rapd_send
+import utils.xutils as Utils
 
 class AutoStats(Process,Communicate):
   def __init__(self,input,logger=None):
     logger.info('AutoStats.__init__')
     self.st = time.time()
     self.input                              = input
-    self.logger                             = logger 
+    self.logger                             = logger
     self.working_dir                        = self.input[0].get('dir',os.getcwd())
     self.datafile                           = self.input[0].get('data',False)
     self.gui                                = self.input[0].get('gui',True)
@@ -45,16 +54,16 @@ class AutoStats(Process,Communicate):
     self.test                               = self.input[0].get('test',False)
     self.controller_address                 = self.input[0].get('control',False)
     self.verbose                            = self.input[0].get('verbose',False)
-    
+
     self.clean = False
     self.verbose = True
-    
+
     #Check if precession photo info included in input
     if self.input[0].has_key('run'):
       self.pp                                 = True
     else:
       self.pp                                 = False
-    
+
     self.stats_timer                            = 180
     self.xtriage_log                            = []
     self.jobs_output                            = {}
@@ -71,7 +80,7 @@ class AutoStats(Process,Communicate):
     self.failed                                 = False
     self.input_sg                               = False
     self.solvent_content                        = 0.55
-    
+
     #******BEAMLINE SPECIFIC*****
     #self.cluster_use = Utils.checkCluster()
     self.cluster_use = BLspec.checkCluster()
@@ -89,12 +98,12 @@ class AutoStats(Process,Communicate):
       self.logger.debug('AutoStats::run')
 
     self.preprocess()
-    
+
     self.processPDBQuery()
-    
+
     if self.pp:
       self.processPP()
-    
+
     if self.test:
       self.postprocessXtriage()
       self.postprocessMolrep()
@@ -104,15 +113,15 @@ class AutoStats(Process,Communicate):
       self.processMolrep()
       self.processNCS()
       self.Queue()
-    
+
     self.postprocess()
-    
+
   def preprocess(self):
     """
     Things to do before the main process runs
     1. Change to the correct directory
     2. Print out the reference for Stat pipeline
-    """       
+    """
     if self.verbose:
       self.logger.debug('AutoStats::preprocess')
     #Make the self.working_dir if it does not exist.
@@ -177,7 +186,7 @@ class AutoStats(Process,Communicate):
     try:
       #It won't create plots???
       Utils.runPhaserModule(self)
-    
+
     except:
       self.logger.exception('**ERROR in AutoStat.processNCS**')
 
@@ -329,7 +338,7 @@ class AutoStats(Process,Communicate):
               timed_out = True
               break
         if timed_out:
-          if self.verbose:    
+          if self.verbose:
             self.logger.debug('AutoStat timed out.')
             print 'AutoStat timed out.'
           for pid in self.pids.values():
@@ -365,7 +374,7 @@ class AutoStats(Process,Communicate):
       print 'Website: http://www.phenix-online.org/documentation/xtriage.htm\n'
       self.logger.debug('RAPD now using Phenix')
       self.logger.debug('=======================')
-      self.logger.debug('RAPD developed using Phenix')            
+      self.logger.debug('RAPD developed using Phenix')
       self.logger.debug('Reference: Adams PD, et al.(2010) Acta Cryst. D66:213-221')
       self.logger.debug('Website: http://www.phenix-online.org/ \n')
       self.logger.debug('RAPD developed using Xtriage and Fest')
@@ -381,7 +390,7 @@ class AutoStats(Process,Communicate):
     """
     if self.verbose:
       self.logger.debug('AutoStats::postprocess')
-    
+
     output = {}
     status = {}
     results = {}
@@ -390,7 +399,7 @@ class AutoStats(Process,Communicate):
     cell_out = False
     pp_results = False
     pp_out = False
-    
+
     #Make the output html files
     self.plotXtriage()
     if self.xtriage_results:
@@ -399,7 +408,7 @@ class AutoStats(Process,Communicate):
     if self.molrep_results:
       Summary.summaryMolrep(self)
     self.htmlSummaryMolrep()
-    
+
     if self.gui:
       e = '.php'
     else:
@@ -419,7 +428,7 @@ class AutoStats(Process,Communicate):
         output[l[i][1]] = 'FAILED'
         failed = True
 
-    #Get rapd_agent_cell results back       
+    #Get rapd_agent_cell results back
     try:
       cell_results = self.cell_output.get()
       if cell_results.has_key('status'):
@@ -451,7 +460,7 @@ class AutoStats(Process,Communicate):
           pp_out = {'LabelitPP summary html':os.path.join(self.working_dir,'jon_summary_pp%s'%e)}
         else:
           pp_out = {'LabelitPP summary html':'None'}
-            
+
     except:
       self.logger.exception('**Error importing rapd_agent_cell results**')
     #Get proper status.
@@ -508,7 +517,7 @@ class AutoStats(Process,Communicate):
   def plotXtriage(self):
     """
     generate plots html/php file
-    """      
+    """
     if self.verbose:
       self.logger.debug('AutoStats::plotXtriage')
     try:
@@ -542,7 +551,7 @@ class AutoStats(Process,Communicate):
       e = len(l) - 2
       if self.NCS_results:
         #If job is killed early, it will only have the before CID.
-        if cid0: 
+        if cid0:
           e += 1
         if cid1:
           e += 1
