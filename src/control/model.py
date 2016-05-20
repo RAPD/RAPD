@@ -334,11 +334,11 @@ class Model(object):
                     first_image_fullname = fullname
 
                     # Put data about run in the header object
-                    header["run"] = self.recent_runs[run_id].copy()
-                    header["place_in_run"] = 1
+                    image_data["run"] = self.recent_runs[run_id].copy()
+                    image_data["place_in_run"] = 1
 
                     # Send to be processed
-                    self.new_data_image(header=header)
+                    self.new_data_image(header=image_data)
 
                 # Handle getting to the party late
                 else:
