@@ -34,6 +34,7 @@ import threading
 import os
 import os.path
 import shutil
+import sys
 import time
 import logging
 import logging.handlers
@@ -192,7 +193,7 @@ class FastIntegration(Process, Communicate):
                     self.xds_default = self.set_detector_data('ADSC')
             elif 'bin' in self.data.keys():
                 if self.data['bin'] == '2x2':
-                    self.data['binninb'] = '2x2'
+                    self.data['binning'] = '2x2'
                     self.data['detector'] = 'ADSC_binned'
                     self.xds_default = self.set_detector_data('ADSC_binned')
                 elif self.data['bin'] == 'unbinned' or self.data['bin'] == 'none':
@@ -1128,7 +1129,6 @@ class FastIntegration(Process, Communicate):
             self.logger.debug('    Pointless did not run properly!')
             self.logger.debug('    Please check logs and files in %s' %self.dirs['work'])
             return('Failed')
-        
         # Parse the aimless logfile to look for resolution cutoff.
         aimlog = open(aimless_log, 'r').readlines()
         for line in aimlog:
@@ -1137,12 +1137,12 @@ class FastIntegration(Process, Communicate):
             elif 'from half-dataset correlation' in line:
                 resline = line
             elif 'from Mn(I/sd) >  1.50' in line:
-            	resline2 = line
+                resline2 = line
                 break
         res_cut = resline.split('=')[1].split('A')[0].strip()
         res_cut2 = resline2.split('=')[1].split('A')[0].strip()
         if float(res_cut2) < float(res_cut):
-        	res_cut = res_cut2
+            res_cut = res_cut2
 
         # Run aimless with a higher resolution cutoff if the suggested resolution
         # is greater than the initial resolution + 0.05.
@@ -1151,7 +1151,7 @@ class FastIntegration(Process, Communicate):
             orig_rescut = resline
             # rerun aimless
             aimless_log = self.aimless(mtzfile, res_cut)
-            graphs, tables, summary = self.parse_aimless(aimless_log)
+        graphs, tables, summary = self.parse_aimless(aimless_log)
 
         wedge = directory.split('_')[-2:]
         summary['wedge'] = '-'.join(wedge)
@@ -1562,6 +1562,7 @@ class FastIntegration(Process, Communicate):
                 #xcol = int(graph[3])
                 #ycols = graph[4]
                 #tableNum = graph[5]
+                self.logger.debug('table # %s' %tableNum)
                 for line in tables[tableNum]:
                     #self.logger.debug('tableNum = %s   line=%s    line[0]=%s' %(tableNum,line, line[0]))
                     if line[0] == '$$':
@@ -1653,7 +1654,6 @@ class FastIntegration(Process, Communicate):
         Returns a dict called int_results that contains the information
         found in the results summary table of the aimless log file.
         '''
-
         log = smartie.parselog(logfile)
         # The program expect there to be 10 tables in the aimless log file.
         ntables = log.ntables()
@@ -1664,20 +1664,24 @@ class FastIntegration(Process, Communicate):
         tables = []
         for i in range(0,ntables):
             data = []
+            # Ignore the Anisotropy analysis table (it's not always present
+            # and if you don't ignore it, it causes problems when it is not
+            # there.)
             if 'Anisotropy analysis' in log.tables()[i].title():
                 pass
-            for line in log.tables()[i].data().split('\n'):
-                if line != '':
-                    data.append(line.split())
-            tables.append(data)
+            else:
+                for line in log.tables()[i].data().split('\n'):
+                    if line != '':
+                        data.append(line.split())
+                tables.append(data)
 
         # Pull out information for the summary table.
         flag = True
         summary = log.keytext(0).message().split('\n')
-        # For some reason, 'Anomalous flag switched ON' was not always found,
-        # so this line below creates a black entry for anomalous_report so that
-        # it is not referenced before assignment.
-        anomalous_report=''
+        # For some reason, 'Anomalous flag switched ON' is not always being found.
+        # so this line creates a blank entry of anomalous_report so that it cannot
+        # be referenced before assignment.
+        anomalous_report = ''
 
         for line in summary:
             if 'Space group' in line:
@@ -1686,10 +1690,10 @@ class FastIntegration(Process, Communicate):
                 unit_cell = line.split()[3:]
             elif 'Anomalous flag switched ON' in line:
                 anomalous_report = line
-            elif flag == True and 'from half-dataset correlation' in line:
-                flag = False
-                res_cut = line
-
+            #elif flag == True and 'from half-dataset correlation' in line:
+            #    flag = False
+            #    res_cut = line
+        
         int_results={
                      'bins_low'     : summary[3].split()[-3:],
                      'bins_high'    : summary[4].split()[-3:],
@@ -1715,6 +1719,7 @@ class FastIntegration(Process, Communicate):
                      #'text'         : res_cut,
                      'text2'        : anomalous_report
                      }
+
         # Now create a list for each graph to be plotted.
         # This list should have [title, xlabel, ylabels, xcol, ycols, tableNum]
         # title is the graph title in the scala logfile,
@@ -1740,7 +1745,7 @@ class FastIntegration(Process, Communicate):
                   ['Rmerge, Rfull, Rmeas, Rpim v Resolution', 'Dmin (A)', ['Rmerge', 'Rfull', 'Rmeas', 'Rpim'], 1, [3,4,6,7], 3],
                   ['Average I, RMSdeviation and Sd', 'Dmin (A)', ['AvI', 'RMSdev', 'sd'], 1, [9,10,11], 3],
                   ['Fractional bias', 'Dmin (A)', ['FrcBias'], 1, [14], 3],
-                  ['Rmerge, Rmeas, Rpim v Resolution', 'Dmin (A)',
+                  ['Rmerge, Rmeas, Rpim v Resolution', 'Dmin (A)', 
                       ['Rmerge', 'RmergeOv', 'Rmeas', 'RmeasOv', 'Rpim', 'RpimOv'], 1, [3,4,7,8,9,10], 4],
                   ['Rmerge v Intensity', 'Imax', ['Rmerge', 'Rmeas', 'Rpim'], 0, [1,3,4], 5],
                   ['Completeness v Resolution', 'Dmin (A)', ['%poss', 'C%poss', 'AnoCmp', 'AnoFrc'], 1, [6,7,9,10], 6],
@@ -1750,7 +1755,6 @@ class FastIntegration(Process, Communicate):
                   ['Rcp v. batch', 'relative frame difference', ['Rcp'], 1, [-1], 8]
                   ]
         return(graphs, tables, int_results)
-
     def parse_scala (self, logfile):
         '''
         Parese the scala logfile in order to pull out data for graph and the
