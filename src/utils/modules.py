@@ -51,7 +51,7 @@ def load_module(seek_module, directories=False, logger=False):
         for directory in directories:
             # try:
             if logger:
-                logger.debug(glob.glob("*"))
+                logger.debug(glob.glob(directory+"/*"))
                 logger.debug("Attempting to load module %s", directory+"."+seek_module)
             module = importlib.import_module(directory+"."+seek_module)
             break

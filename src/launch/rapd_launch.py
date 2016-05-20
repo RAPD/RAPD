@@ -101,7 +101,8 @@ class Launch(object):
 
         # Load the agent from directories defined in site file
         self.agent = load_module(seek_module=seek_module,
-                                 directories=self.site.RAPD_AGENT_DIRECTORIES)
+                                 directories=self.site.RAPD_AGENT_DIRECTORIES,
+                                 logger=self.logger)
 
     def init_logger(self):
         """
