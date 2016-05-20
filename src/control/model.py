@@ -627,7 +627,7 @@ class Model(object):
         data_root_dir = header["data_root_dir"]
         site_tag = header["site_tag"].upper()
 
-        if header["collect_mode"] == "SNAP":
+        if header.get("collect_mode", None) == "SNAP":
 
             # Add the image to self.pair
             self.pairs[site_tag].append((header["fullname"].lower(), header["image_id"]))
