@@ -1,3 +1,7 @@
+"""
+rapd_utils has a number of useful dicts and functions used in rapd
+"""
+
 __license__ = """
 This file is part of RAPD
 
@@ -16,18 +20,18 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
 __created__ = "2009-07-08"
 __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
-"""
-rapd_utils has a number of useful dicts and functions used in rapd
-"""
-import os,subprocess
+# Standard imports
+import os
 import shutil
-import rapd_parse as Parse
+import subprocess
+
+# RAPD imports
+import agents.subcontractors.parse as Parse
 
 bravais   = ['1', '5', '3', '22', '23', '21', '16', '79', '75', '143', '146', '196', '197', '195']
 
