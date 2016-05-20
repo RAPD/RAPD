@@ -181,6 +181,8 @@ IMAGE_IGNORE_STRINGS = ("ignore", )
 
 # Monitor for collected run information
 RUN_MONITOR = "monitors.run_monitors.redis_run_monitor"
+# Expected time limit for a run to be collected in minutes (0 = forever)
+RUN_WINDOW = 60
 # Running in a cluster configuration - True || False
 # RUN_MONITOR_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER
 
