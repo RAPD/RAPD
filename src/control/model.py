@@ -339,19 +339,19 @@ class Model(object):
                     header["place_in_run"] = 1
 
                     # Send to be processed
-                    self.new_data_image(header=image_data)
+                    self.new_data_image(header=header)
 
                 # Handle getting to the party late
                 else:
                     self.logger.info("Creating first image in run")
                     first_image_fullname = detector.create_image_fullname(
-                        directory=current_run["directory"],
-                        image_prefix=current_run["image_prefix"],
-                        run_number=current_run["run_number"],
-                        image_number=current_run["start_image_number"])
+                        directory=current_run.get("directory", None),
+                        image_prefix=current_run.get("image_prefix", None),
+                        run_number=current_run.get("run_number", None),
+                        image_number=current_run.get("start_image_number", None))
 
                     # Now run through the normal channels with the first image
-                    self.add_image({"site_tag": current_run["site_tag"],
+                    self.add_image({"site_tag": current_run.get("site_tag", None),
                                     "fullname": first_image_fullname})
 
         # Image is a snap
