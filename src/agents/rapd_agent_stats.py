@@ -35,9 +35,9 @@ import time
 # from rapd_agent_pp import LabelitPP
 
 # import rapd_beamlinespecific as BLspec
-import subcontractors.parse as Parse
-import subcontractors.summary as Summary
-from utils.communicate import rapd_send
+# import subcontractors.parse as Parse
+# import subcontractors.summary as Summary
+# from utils.communicate import rapd_send
 # import utils.xutils as Utils
 
 # class AutoStats(Process,Communicate):
