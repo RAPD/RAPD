@@ -356,7 +356,7 @@ class Gatherer(object):
                 "directory":raw_run_data.get("directory", None),
                 "distance":float(raw_run_data.get("dist", 0.0)),
                 "energy":float(raw_run_data.get("energy", 0.0)),
-                "file_ctime":datetime.datetime.fromtimestamp(self.run_time),
+                "file_ctime":datetime.datetime.fromtimestamp(self.run_time).isoformat(),
                 "image_prefix":raw_run_data.get("image_prefix", None),
                 "kappa":None,
                 "number_images":int(float(raw_run_data.get("Nframes", 0))),
