@@ -38,7 +38,7 @@ import time
 import subcontractors.parse as Parse
 import subcontractors.summary as Summary
 from utils.communicate import rapd_send
-import utils.xutils as Utils
+# import utils.xutils as Utils
 
 # class AutoStats(Process,Communicate):
 #   def __init__(self,input,logger=None):
