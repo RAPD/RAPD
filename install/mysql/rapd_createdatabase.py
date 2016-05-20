@@ -787,7 +787,7 @@ def create_data_tables(hostname, port, username, password):
         twotheta float DEFAULT NULL,
         timestamp timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (run_id),
-        UNIQUE KEY blocker (directory, image_prefix, run_number, start_image_number, number_images, file_ctime),"""
+        UNIQUE KEY blocker (directory, image_prefix, run_number, start_image_number, number_images, file_ctime)"""
 
     create_table(hostname=hostname,
                  port=port,
