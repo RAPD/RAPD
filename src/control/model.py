@@ -714,6 +714,7 @@ class Model(object):
                                           "directories":new_dirs,
                                           "header1":header1,
                                           "header2":header2,
+                                          "site_parameters":self.site.BEAM_INFO[header1["site_tag"]]
                                           "preferences":{},
                                           "return_address":self.return_address},
                                  launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
@@ -762,6 +763,7 @@ class Model(object):
                                       "directories":new_dirs,
                                       "image_data":header,
                                       "run_data":run_dict,
+                                      "site_parameters":self.site.BEAM_INFO[header["site_tag"]]
                                       "preferences":{},
                                       "return_address":self.return_address},
                              launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
