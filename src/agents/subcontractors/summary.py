@@ -1,4 +1,8 @@
 """
+Routines for creating summaries fro user interfaces of some core agents
+"""
+
+__licenses__ = """
 This file is part of RAPD
 
 Copyright (C) 2011-2016, Cornell University
@@ -16,15 +20,17 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
 __created__ = "2011-04-19"
 __maintainer__ = "Jon Schuermann"
 __email__ = "schuerjp@anl.gov"
 __status__ = "Production"
 
+# Standard imports
 import os
-import time
-import rapd_utils as Utils
+
+# RAPD imports
+import utils.xutils as Utils
+# import rapd_utils as Utils
 
 def summaryLabelit(self):
   """
@@ -50,20 +56,20 @@ def summaryLabelit(self):
     mosflm_res        = self.labelit_results.get('Labelit results').get('mosflm_res')
     mosflm_mos        = self.labelit_results.get('Labelit results').get('mosflm_mos')
     mosflm_rms        = self.labelit_results.get('Labelit results').get('mosflm_rms')
-    #output            = self.labelit_results.get('Labelit results').get('output')            
+    #output            = self.labelit_results.get('Labelit results').get('output')
     #mosaicity      = str(self.labelit_results.get('Labelit results').get('mosaicity'))
-    
+
     l = [('Mosflm Integration Results','mosflm',
           ['&nbsp','Solution','Spacegroup','Beam X','Beam Y','Distance','Resolution','Mosaicity','RMS'],
           [mosflm_face,mosflm_solution,mosflm_sg,mosflm_beam_x,mosflm_beam_y,
            mosflm_distance,mosflm_res,mosflm_mos,mosflm_rms]),
-         
+
          ('Labelit Results','labelit',
           ['&nbsp','Solution','Metric','RMSD','# of Spots','Crystal System',
            'a','b','c','&alpha;','&beta;','&gamma;','Volume'],
           [labelit_face,labelit_solution,labelit_metric,labelit_rmsd,
            labelit_spots_fit,labelit_system,labelit_cell,labelit_volume])]
-    
+
     labelit = ''
     #Run for Mosflm and Labelit results.
     for z in range(2):
@@ -130,13 +136,13 @@ def summaryDistl(self):
       distl +="%11s</tr>\n"%''
     distl +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
     self.distl_summary = distl
-          
+
   except:
     self.logger.exception('**ERROR in Summary.summaryDistl**')
 
 def summaryRaddose(self):
   """
-  print RADDOSE results to screen and create variable for php file. 
+  print RADDOSE results to screen and create variable for php file.
   """
   if self.verbose:
     self.logger.debug('Summary::summaryRaddose')
@@ -162,7 +168,7 @@ def summaryRaddose(self):
       raddose +="%13s<td>%s</td>\n%11s</tr>\n"%('',p[1],'')
     raddose +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
     self.raddose_summary = raddose
-      
+
   except:
     self.logger.exception('**ERROR in Summary.summaryRaddose.**')
 
@@ -268,10 +274,10 @@ def summaryBest(self,anom=False):
       best +="%11s</tr>\n"%''
     best +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
     if anom:
-      self.best_anom_summary = best 
+      self.best_anom_summary = best
       self.best1_anom_summary = best.replace(best0,best1)
     else:
-      self.best_summary = best 
+      self.best_summary = best
       self.best1_summary = best.replace(best0,best1)
     best_long ='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
     """
@@ -463,7 +469,7 @@ def summaryShelx(self):
                '(Table will still show all resolution bins)</h4>\n'%('',self.resolution)
     fi = len(shelx_data)
     if len(mad_cc) > 0:
-      fi += 1 
+      fi += 1
     for z in range(fi):
       shelxc +='%7s<table cellpadding="0" cellspacing="0" border="0" class="display" id="shelxc%s">\n'%('',z)
       #Create table of CC's for MAD data.
@@ -521,7 +527,7 @@ def summaryShelx(self):
       z += 1
       shelxc +='        <table cellpadding="0" cellspacing="0" border="0" class="display" id="shelxc'+str(z)+'">\n'
       shelxc +='        <h2 class="results">Correlation coefficients (%) between signed anomalous differences</h2>\n'
-      shelxc +='          <thead align="left">\n'            
+      shelxc +='          <thead align="left">\n'
       shelxc +='            <tr>\n'
       shelxc +='            </tr>\n'
       shelxc +='            <tr>\n'
@@ -529,8 +535,8 @@ def summaryShelx(self):
       for x in range(0,10):
         shelxc +='              <th>'+shelxc_res[z][x]+'</th>\n'
       shelxc +='              <td>'+shelxc_res[z][10]+'</td>\n'
-      shelxc +='            </tr>\n'            
-      shelxc +='          </thead>\n'            
+      shelxc +='            </tr>\n'
+      shelxc +='          </thead>\n'
       shelxc +='          <tbody align="left">\n'
       for x in range(len(mad_cc)):
         shelxc +='            <tr class="gradeA">\n'
@@ -543,7 +549,7 @@ def summaryShelx(self):
       shelxc +='          </tbody>\n'
       shelxc +="        </table>\n"
     shelxc +="       </div>\n"
-    shelxc +="      </div>\n"  
+    shelxc +="      </div>\n"
     shelxc +="     </div>\n"
     """
     self.shelxc_summary = shelxc
@@ -691,7 +697,7 @@ def summaryAutoSol(self,autobuild=False):
       self.autobuild_summary = autosol
     else:
       self.autosol_summary = autosol
-  
+
   except:
     self.logger.exception('**ERROR in Summary.summaryAutoSol**')
 
@@ -842,10 +848,10 @@ def summaryMolrep(self):
 def summaryCell(self,inp='phaser'):
   """
   Summary of unit cell analysis.
-  """ 
+  """
   if self.verbose:
     self.logger.debug('Summary::summaryCell')
-  
+
   sol = []
   n = 7
   l2 = []
@@ -866,7 +872,7 @@ def summaryCell(self,inp='phaser'):
     #Not SURE if this is ACTIVE!
     title = 'sad-cell'
     title2 = 'sad-pdb'
-  
+
   def sortResults():
     #Sort results by pass or fail and if present in self.common
     for i in range(2):
@@ -892,14 +898,14 @@ def summaryCell(self,inp='phaser'):
           f.sort()
           p.sort()
           nkeys = p+f
-    return((ckeys,nkeys)) 
-  
+    return((ckeys,nkeys))
+
   def tD(inp1):
     if inp1%2 == 0:
       return('Name1')
     else:
       return('Name0')
-    
+
   def gen(inp2):
     j = 0
     temp = ''
@@ -988,7 +994,7 @@ def summaryCell(self,inp='phaser'):
         com1 +="%11s<tr class='gradeE'>\n%13s%s\n%11s</tr>\n"%('','',n*'<td>','')
     com1 +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
     return(com1)
-  
+
   try:
     cell  ='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
     if inp == 'phaser':
@@ -1038,7 +1044,7 @@ def summaryCell(self,inp='phaser'):
       cell += (gen(ckeys))
       """
     self.cell_summary = cell
-    
+
     if self.percent:
       percent = str(self.percent*100)
     opdb  ='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
@@ -1120,10 +1126,10 @@ def summaryCell(self,inp='phaser'):
 def summaryCell_OLD(self,inp='phaser'):
   """
   Summary of unit cell analysis.
-  """ 
+  """
   if self.verbose:
     self.logger.debug('Summary::summaryCell')
-  
+
   j = 0
 
   def tD(inp1):
@@ -1131,7 +1137,7 @@ def summaryCell_OLD(self,inp='phaser'):
       return('Name1')
     else:
       return('Name0')
-  
+
   try:
     sol = []
     n = 7
@@ -1378,7 +1384,7 @@ def summarySTAC_OLD(self):
   """
   if self.verbose:
     self.logger.debug('Summary::summarySTAC')
-  try:    
+  try:
     #STAC alignment results
     if self.stacalign_results:
       v1          = self.stacalign_results.get('STAC align results').get('v1')
@@ -1409,16 +1415,16 @@ def summarySTAC_OLD(self):
           if line.startswith(d1):
             eval(v).remove(line)
             eval(v).insert(x,d[d1])
-    
+
     l1 = ['ID','V1','V2','Omega','Kappa','Phi']
     #l2 = [str(x+1),v1,v2,align_omega,align_kappa,align_phi]
     l2 = [x,v1,v2,align_omega,align_kappa,align_phi]
-    
+
     #l2 = [v1,v2,align_omega,align_kappa,align_phi]
     if self.stac_trans:
       l1.append('Translation')
       l2.append(trans)
-    
+
     stac_align  ='%7s<h1 class="results">STAC Alignment Results</h1>\n'%''
     if self.align == 'smart':
       stac_align +='%7s<h4 class="results">Alignment for maximum spot separation without blind zone.</h4>\n'%''
@@ -1443,7 +1449,7 @@ def summarySTAC_OLD(self):
     if self.align == 'multi':
       data = str(self.header.get('dataset_repr'))
       stac_align +='%7s<h4 class="results">Aligning crystal to same orientation as %s.</h4>\n'%('',data)
-    
+
     stac_align +='%7s<table cellpadding="0" cellspacing="0" border="0" class="display" id="stac_align">\n'%''
     stac_align +='%9s<thead align="center">\n%11s<tr>\n'%('','')
     for p in l1:
@@ -1506,8 +1512,8 @@ def summaryXOalign(self):
   if self.verbose:
     self.logger.debug('Summary::summaryXOalign')
   #try:
-    
-    
+
+
   xoalign  ='%7s<h1 class="results">XOalign Results</h1>\n'%''
   #if self.align == 'smart':
   #  xoalign +='%7s<h4 class="results">Alignment for maximum spot separation without blind zone.</h4>\n'%''
@@ -1559,7 +1565,7 @@ def summaryXOalign(self):
         xoalign +="%11s</tr>\n"%''
   xoalign +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
   self.xoalign_summary = xoalign
-    
+
   """
   #When there aren't any solutions.
   for x in range(len(v1)):
@@ -1668,7 +1674,7 @@ def summaryLabelitBC(self):
       labelit +='          </tbody>\n'
       labelit +='        </table>\n'
       labelit +='      </div>\n'
-      labelit +='     </div>\n' 
+      labelit +='     </div>\n'
       labelit +='    </div>\n'
     if x == 1:
       labelit +='    <div id="container">\n'
@@ -1745,7 +1751,7 @@ def summaryLabelitBC(self):
     labelit +='      </div>\n'
     labelit +='     </div>\n'
     labelit +='    </div>\n'
-    
+
     self.labelit_summary = labelit
 
   except:
