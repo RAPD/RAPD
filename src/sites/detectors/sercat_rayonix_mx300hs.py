@@ -226,6 +226,12 @@ def read_header(fullname, beam_settings):
     header["osc_axis"] = header["axis"]
     header["omega"] = header["omega_start"]
 
+    # Binning
+    if header["size1"] == 3840:
+        header["binning"] = False
+    else:
+        header["binning"] = True
+
     # Missing values
     header["kappa"] = None
     header["phi"] = None

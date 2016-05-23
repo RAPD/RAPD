@@ -39,7 +39,7 @@ ID = "bd11f4401eaa11e697c3ac87a3333966"
 import logging
 import logging.handlers
 import math
-from multiprocessing import Process, Pipe
+from multiprocessing import Process
 import os
 import os.path
 import shutil
@@ -53,7 +53,7 @@ from numpy import interp
 # RAPD imports
 from subcontractors.xdsme.xds2mos import Xds2Mosflm
 from utils.communicate import rapd_send
-from rapd_agent_stats import AutoStats
+from subcontractors.stats import AutoStats
 import utils.xutils as Utils
 
 #
