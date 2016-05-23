@@ -116,8 +116,7 @@ class RapdAgent(Process):
         else:
             self.data = self.command
 
-        self.logger.debug('self.data = ')
-        self.logger.debug('%s' %self.data)
+        self.logger.debug("self.data = %s", self.data)
         self.settings = self.command["preferences"]
 
         if 'x_beam' not in self.data.keys():
@@ -258,7 +257,7 @@ class RapdAgent(Process):
             return()
 
         input = self.xds_default
-        if self.command == 'XDS':
+        if self.command["command"] == 'XDS':
             integration_results = self.xds_total(input)
         else:
             if os.path.isfile(self.last_image) == True:
