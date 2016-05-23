@@ -73,7 +73,15 @@ BEAM_INFO = {
                        1.1458201832002297e-07,
                        -1.7875879553926729e-10,
                        1.4579198435694557e-13,
-                       -4.7910792416525411e-17)
+                       -4.7910792416525411e-17),
+        # Detector information
+        "DETECTOR_DISTANCE_MAX":1000.0,
+        "DETECTOR_DISTANCE_MIN":100.0,
+        "DETECTOR_TIME_MAX":5.0,
+        "DETECTOR_TIME_MIN":0.5,
+        # Diffractometer information
+        "DIFFRACTOMETER_OSC_MAX":5.0,
+        "DIFFRACTOMETER_OSC_MIN":0.5
     },
     "SERCAT_ID" : {
         # Flux of the beam

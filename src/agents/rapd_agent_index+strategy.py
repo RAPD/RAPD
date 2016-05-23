@@ -63,6 +63,7 @@ class RapdAgent(Process):
             },
         "header1":{},                               # Image information
         ["header2":{},]                             # 2nd image information
+        "site_parameters":{}                        # Site data
         "preferences":{}                            # Settings for calculations
         "return_address":("127.0.0.1", 50000)       # Location of control process
     }
@@ -113,6 +114,7 @@ class RapdAgent(Process):
         self.setup = self.command["directories"]
         self.header = self.command["header1"]
         self.header2 = self.command.get("header2", False)
+        self.site_parameters = self.command.get("site_parameters")
         self.preferences = self.command["preferences"]
         self.controller_address = self.reply_address
 
@@ -559,10 +561,14 @@ class RapdAgent(Process):
                 from rapd_site import settings_C as settings
             else:
                 from rapd_site import settings_E as settings
-            max_dis = settings.get('max_distance')
-            min_dis = settings.get('min_distance')
-            min_d_o = settings.get('min_del_omega')
-            min_e_t = settings.get('min_exp_time')
+            # max_dis = settings.get('max_distance')
+            # min_dis = settings.get('min_distance')
+            # min_d_o = settings.get('min_del_omega')
+            # min_e_t = settings.get('min_exp_time')
+            max_dis = site_parameters.get("DETECTOR_DISTANCE_MAX")
+            min_dis = site_parameters.get("DETECTOR_DISTANCE_MIN")
+            min_d_o = site_parameters.get("DIFFRACTOMETER_OSC_MIN")
+            min_e_t = site_parameters.get("DETECTOR_TIME_MIN")
 
             image_number = []
             image_number.append(self.header.get('fullname')[self.header.get('fullname').rfind('_')+1:self.header.get('fullname').rfind('.')])
