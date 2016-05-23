@@ -45,7 +45,7 @@ import time
 
 # RAPD imports
 # import rapd_beamlinespecific as BLspec
-# import subcontractors.parse as Parse
+import subcontractors.parse as Parse
 # import subcontractors.summary as Summary
 # from subcontractors.xoalign import RunXOalign
 # from utils.communicate import rapd_send
