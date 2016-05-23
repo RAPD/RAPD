@@ -556,11 +556,11 @@ class RapdAgent(Process):
             self.logger.debug("AutoindexingStrategy::processBest")
 
         try:
-            # Get the beamline settings from rapd_site.py.
-            if self.vendortype in ['Pilatus-6M', 'ADSC-HF4M']:
-                from rapd_site import settings_C as settings
-            else:
-                from rapd_site import settings_E as settings
+            # # Get the beamline settings from rapd_site.py.
+            # if self.vendortype in ['Pilatus-6M', 'ADSC-HF4M']:
+            #     from rapd_site import settings_C as settings
+            # else:
+            #     from rapd_site import settings_E as settings
             # max_dis = settings.get('max_distance')
             # min_dis = settings.get('min_distance')
             # min_d_o = settings.get('min_del_omega')
