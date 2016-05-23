@@ -251,7 +251,7 @@ class RapdAgent(Process):
         3. Run analysis of data set.
         """
         self.logger.debug('FastIntegration::process')
-        if self.command != 'INTEGRATE' and self.command != 'XDS':
+        if not self.command["command"] in ("INTEGRATE", "XDS"):
             self.logger.debug('Program did not request an integration')
             self.logger.debug('Now Exiting!')
             return()
