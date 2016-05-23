@@ -37,6 +37,8 @@ import detectors.rayonix_mx300 as detector
 
 DETECTOR = "rayonix_mx300"
 DETECTOR_SUFFIX = ""
+IMAGE_TEMPLATE = "%s.????"
+RUN_NUMBER_IN_TEMPLATE = False
 HEADER_VERSION = 1
 
 def parse_file_name(fullname):
@@ -215,6 +217,10 @@ def read_header(fullname, beam_settings):
 
     # Add tag for module to header
     header["rapd_detector_id"] = "sercat_rayonix_mx300"
+
+    # The image template for processing
+    header["image_template"] = IMAGE_TEMPLATE
+    header["run_number_in_template"] = RUN_NUMBER_IN_TEMPLATE
 
     # Add some values HACK
     header["aperture_x"] = 50

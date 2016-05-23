@@ -37,6 +37,8 @@ import detectors.rayonix_mx300hs as detector
 
 DETECTOR = "rayonix_mx300hs"
 DETECTOR_SUFFIX = ""
+IMAGE_TEMPLATE = "%s.????"
+RUN_NUMBER_IN_TEMPLATE = False
 HEADER_VERSION = 1
 
 def parse_file_name(fullname):

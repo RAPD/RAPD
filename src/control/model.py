@@ -722,9 +722,6 @@ class Model(object):
         # This is the runs portion of the data image handling
         else:
 
-            self.logger.debug("This is a run")
-            self.logger.debug(header)
-
             # Make it easier to use run info
             run_position = header["place_in_run"]
             run_dict = header["run"].copy()
