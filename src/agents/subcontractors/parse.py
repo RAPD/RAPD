@@ -1,4 +1,8 @@
 """
+Parsing methods for multiple core functions
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2011, Cornell University
@@ -16,12 +20,12 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
 __created__ = "2011-02-02"
 __maintainer__ = "Jon Schuermann"
 __email__ = "schuerjp@anl.gov"
 __status__ = "Production"
 
+# Standard imports
 import os
 
 def setShelxResults(self, inp=False):
