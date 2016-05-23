@@ -1,4 +1,8 @@
 """
+Methods for running phaser
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2010-2016, Cornell University
@@ -16,41 +20,45 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
 __created__ = "2010-09-07"
 __maintainer__ = "Jon Schuermann"
 __email__ = "schuerjp@anl.gov"
 __status__ = "Production"
 
+# Standard imports
 from multiprocessing import Process, Queue
-import os, time, shutil
-from rapd_communicate import Communicate
-import rapd_utils as Utils
-import rapd_parse as Parse
-import rapd_summary as Summary
-import rapd_beamlinespecific as BLspec
+import os
+import shutil
+import time
 
-class AutoMolRep(Process, Communicate):
+# RAPD imports
+import subcontractors.parse as Parse
+import subcontractors.summary as Summary
+from utils.communicate import rapd_send
+import utils.xutils as Utils
+# import rapd_beamlinespecific as BLspec
+
+class AutoMolRep(Process):
   def __init__(self, input, logger=None):
     logger.info('AutoMolRep.__init__')
-    
+
     self.st = time.time()
-    self.input                              = input
-    self.logger                             = logger
+    self.input = input
+    self.logger = logger
     #Setting up data input
-    self.setup                              = self.input[1]
-    self.data                               = self.input[2]
-    self.preferences                        = self.input[3]
-    self.controller_address                 = self.input[-1]
-    
+    self.setup = self.input[1]
+    self.data = self.input[2]
+    self.preferences = self.input[3]
+    self.controller_address = self.input[-1]
+
     #For testing individual modules
-    self.test                               = False
+    self.test = False
     #Removes junk files and directories at end.
-    self.clean                              = False
+    self.clean = False
     #Calculate ADF for all solutions
-    self.adf                                = True
-    self.verbose                            = True
-    
+    self.adf = True
+    self.verbose = True
+
     #variables to set
     #self.phaser_timer                       = 600 #Timer will be double for full Phaser
     self.phaser_timer                       = False
@@ -69,7 +77,7 @@ class AutoMolRep(Process, Communicate):
     self.run_before                         = False
     self.dres                               = False
     self.large_cell                         = False
-    
+
     self.sample_type = self.preferences.get('sample_type','Protein')
     self.datafile = Utils.convertUnicode(self,self.data.get('original').get('mtz_file',None))
     if self.datafile == None:
@@ -84,9 +92,9 @@ class AutoMolRep(Process, Communicate):
       self.input_pdb = Utils.convertUnicode(self,self.preferences.get('request').get('pdb_code',None))
       #Used in SummaryCell for label.
       if self.input_pdb != None:
-        
+
         self.pdb_code = True
-    
+
     #Check if running from beamline and turn off testing if I forgot to.
     if self.preferences.get('request').has_key('request_type'):
       self.gui       = True
@@ -109,11 +117,11 @@ class AutoMolRep(Process, Communicate):
     if self.verbose:
       self.logger.debug('AutoMolRep::run')
     self.preprocess()
-    
+
     self.preprocessPhaser()
     self.Queue()
     self.postprocess()
-    
+
   def preprocess(self):
     """
     Things to do before the main process runs
@@ -163,7 +171,7 @@ class AutoMolRep(Process, Communicate):
       self.logger.debug('TEST IS SET "ON"')
     #print out recognition of the program being used
     self.PrintInfo()
-      
+
   def preprocessPhaser(self):
     """
     Setup which PHASER jobs to run.
@@ -197,7 +205,7 @@ class AutoMolRep(Process, Communicate):
     """
     if self.verbose:
       self.logger.debug('AutoMolRep::processPhaser')
-    
+
     def launchJob(inp2,k):
       """
       Launch Phaser job on cluster and pass back the process job and pid.
@@ -218,13 +226,13 @@ class AutoMolRep(Process, Communicate):
         self.output['pids'].update({k:queue.get()})
       #Setup initial results for all running jobs.
       self.phaser_results[k] = { 'AutoMR results' : Parse.setPhaserFailed('Still running')}
-        
+
     try:
       sg_name = []
       #set lays in self.output if not there.
       self.output.setdefault('jobs',None)
       self.output.setdefault('pids',None)
-      
+
       d = {'data':self.datafile,'pdb':self.pdb_info[chain]['file'],'verbose':self.verbose,
            'copy':self.pdb_info[chain]['NMol'],'test':self.test,'cluster':self.cluster_use,
            'res':Utils.setPhaserRes(self,self.pdb_info[chain]['res']),'large':self.large_cell,
@@ -355,30 +363,30 @@ class AutoMolRep(Process, Communicate):
     else:
       status = {'status': 'WORKING'}
 
-    #Put all the result dicts from all the programs run into one resultant dict and pass it back.       
+    #Put all the result dicts from all the programs run into one resultant dict and pass it back.
     try:
       if self.gui == False:
-        if self.input[0] == "SAD":
-          self.input.remove("SAD")
-          self.input.insert(0,'MR')
+          if self.input[0] == "SAD":
+              self.input.remove("SAD")
+              self.input.insert(0,'MR')
       if status:
-        results.update(status)
+          results.update(status)
       if cell_results:
-        results.update(cell_results)
-      #Utils.pp(self,cell_results)
+          results.update(cell_results)
+      # Utils.pp(self,cell_results)
       if output_files:
-        results.update(output_files)
-      #Utils.pp(results)
+          results.update(output_files)
+      # Utils.pp(results)
       if self.gui:
-        if results:
-          if len(self.input) == 6:
-            #Delete the previous Phaser results sent back.
-            del self.input[5]
-          self.input.append(results)
-        self.sendBack2(self.input)
+          if results:
+              if len(self.input) == 6:
+                  # Delete the previous Phaser results sent back.
+                  del self.input[5]
+              self.input.append(results)
+          rapd_send(self.controller_address, self.input)
 
     except:
-      self.logger.exception('**Could not send results to pipe in AutoMolRep.postprocess.**')
+        self.logger.exception('**Could not send results to pipe in AutoMolRep.postprocess.**')
 
     if final:
       try:
@@ -402,7 +410,7 @@ class AutoMolRep(Process, Communicate):
       print 'RAPD AutoMolRep complete.'
       print 'Total elapsed time: %s seconds'%t
       print 50*'-'
-  
+
   def Queue(self):
     """
     queue system.
@@ -552,7 +560,7 @@ class AutoMolRep(Process, Communicate):
       jon_summary.write('%7s</pre>\n%6s</div>\n%5s</div>\n%4s</div>\n%2s</body>\n</html>\n'%(5*('',)))
       """
       jon_summary.write('%2s</body>\n</html>\n'%'')
-      jon_summary.close()        
+      jon_summary.close()
       #copy html file to working dir
       shutil.copy(sl,self.working_dir)
 
@@ -595,7 +603,7 @@ class RunPhaser(Process):
     self.copy                               = self.input.get('copy',1)
     self.res                                = self.input.get('res',False)
     self.test                               = self.input.get('test',False)
-    self.cluster_use                        = self.input.get('cluster',True) 
+    self.cluster_use                        = self.input.get('cluster',True)
     self.datafile                           = self.input.get('data')
     self.input_pdb                          = self.input.get('pdb')
     self.sg                                 = self.input.get('sg')
@@ -604,7 +612,7 @@ class RunPhaser(Process):
     #self.mwna                               = self.input.get('mwna',False)
     self.n                                  = self.input.get('name',self.sg)
     self.large_cell                         = self.input.get('large',False)
-    
+
     Process.__init__(self,name='RunPhaser')
     self.start()
 
@@ -746,7 +754,7 @@ class RunPhaser2(Process):
     self.copy                               = self.input.get('copy',1)
     self.res                                = self.input.get('res',False)
     self.test                               = self.input.get('test',False)
-    self.cluster_use                        = self.input.get('cluster',True) 
+    self.cluster_use                        = self.input.get('cluster',True)
     self.datafile                           = self.input.get('data')
     self.input_pdb                          = self.input.get('pdb')
     self.sg                                 = self.input.get('sg')
@@ -755,7 +763,7 @@ class RunPhaser2(Process):
     #self.mwna                               = self.input.get('mwna',False)
     self.n                                  = self.input.get('name',self.sg)
     self.large_cell                         = self.input.get('large',False)
-    
+
     Process.__init__(self,name='RunPhaser2')
     self.start()
 
@@ -784,9 +792,9 @@ class RunPhaser2(Process):
     if r.Success():
       for i in range(2):
         print self.process(r)
-      
-      
-    
+
+
+
   def process(self,inp):
     import phaser
     r = inp
@@ -804,7 +812,7 @@ class RunPhaser2(Process):
       res0 = r1.get_target_resolution('junk')
     del(r1)
     return(res0)
-    
+
 
   def preprocess_OLD(self):
     """
@@ -899,7 +907,7 @@ class RunPhaser2(Process):
             queue = Queue()
             #Process(target=Utils.processCluster,args=(self,(command,'phaser.log',q),queue)).start()
             Process(target=BLspec.processCluster,args=(self,(command,'phaser.log',q),queue)).start()
-            
+
             self.output.put(queue.get())
           else:
             #Process(target=Utils.processCluster,args=(self,(command,'phaser.log',q))).start()
@@ -930,10 +938,10 @@ if __name__ == '__main__':
                        #'mtz_file': '/gpfs5/users/necat/rapd/uranium/trunk/integrate/2015-08-10/AL_C5_edge_1/reprocess_1/AL_C5_edge_1_free.mtz',
                        #'mtz_file': None,
                        }
-          }, 
+          },
          #input_sca was alternative input for reading HKL2000 processed datasets. This is still dev.
-         #mtz_NAT, mtz_INFL, mtz_HREM, mtz_LREM, mtz_SIRA used for MAD pipeline. 
-         {"request":{ #"input_sca": '/gpfs6/users/necat/Jon/RAPD_test/Datasets/SAD/PK_lu_peak.sca', 
+         #mtz_NAT, mtz_INFL, mtz_HREM, mtz_LREM, mtz_SIRA used for MAD pipeline.
+         {"request":{ #"input_sca": '/gpfs6/users/necat/Jon/RAPD_test/Datasets/SAD/PK_lu_peak.sca',
                      #"input_sca": '/gpfs6/users/necat/Jon/RAPD_test/Datasets/SAD/crystal26_ANOM.sca',
                      #"mtz_NAT":'/gpfs5/users/necat/rapd/uranium/trunk/integrate/2012-10-20/w6lr_1/w6lr_1/w6lr_1_free.mtz',
                      #"mtz_NAT":'/gpfs5/users/necat/rapd/uranium/trunk/integrate/2012-11-25/44b16_rem_1/44b16_rem_1/44b16_rem_1_free.mtz',
@@ -966,7 +974,7 @@ if __name__ == '__main__':
                      #"mtz_SIRA": '/gpfs5/users/necat/rapd/uranium/trunk/integrate/2012-10-24/BAS8-03_peak_1/BAS8-03_peak_1/BAS8-03_peak_1_free.mtz',
                      #"mtz_SIRA": '/gpfs1/users/rockefeller/charles_C_1497/process/rapd/integrate/DN31_data15_1/DN31_data15_1/DN31_data15_1_free.mtz',
                      "mtz_SIRA":None,
-                     #"input_map": '',               
+                     #"input_map": '',
                      "input_map": None,
                      #"pdb": None,
                      "pdb": '/gpfs6/users/necat/Jon/RAPD_test/Pdb/prok.pdb',
@@ -981,10 +989,10 @@ if __name__ == '__main__':
                      #"shelxd_try": 1024,
                      "shelxd_try": 4048,
                      "ha_type":'Se',
-                     #Set to 1 to let RAPD calculate # of Se based on 0.55 solvent content and 1 per 75 residues. 
+                     #Set to 1 to let RAPD calculate # of Se based on 0.55 solvent content and 1 per 75 residues.
                      "ha_number": 1,
                      #"ha_number": 20,
-                     #To override SHELXC's high res limit. 
+                     #To override SHELXC's high res limit.
                      "sad_res": 0.0,
                      #"sad_res": 4,
                      "wavelength":0.9792,
@@ -998,12 +1006,12 @@ if __name__ == '__main__':
                      #            reawgaefls paeatrldhd eikaadvfva fpgvpaspgt hveigwasgm gkpmvlller \
                      #            dedyaflvtg lesqanveil rfsgteeive rldgavarvl grageptvig'
                      }
-     
+
         },
-     
+
         ('164.54.212.165',50001)
         ]
-  
+
   import logging,logging.handlers
   #from extras import rapd_inputs
   #inp = rapd_inputs.phaserAnomInput()

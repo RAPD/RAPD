@@ -1,4 +1,8 @@
 """
+Provides tools for interface between the control process and launched processes
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2009-2016, Cornell University
@@ -16,7 +20,6 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
 __created__ = "2009-07-10"
 __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
@@ -71,10 +74,10 @@ class ControllerServer(threading.Thread):
             try:
                 _socket.listen(1)
                 conn, addr = _socket.accept()
-                tmp = ControllerHandler(conn=conn,
-                                        addr=addr,
-                                        receiver=self.receiver,
-                                        logger=self.logger)
+                __ = ControllerHandler(conn=conn,
+                                       addr=addr,
+                                       receiver=self.receiver,
+                                       logger=self.logger)
             except socket.timeout:
                 pass
 
@@ -96,10 +99,10 @@ class ControllerHandler(threading.Thread):
         threading.Thread.__init__(self)
 
         # Store the connection variable
-        self.conn     = conn
-        self.addr     = addr
+        self.conn = conn
+        self.addr = addr
         self.receiver = receiver
-        self.logger   = logger
+        self.logger = logger
 
         # Start the thread
         self.start()
@@ -112,14 +115,14 @@ class ControllerHandler(threading.Thread):
 
         #Receive the output back from the cluster
         message = ""
-        while not (message.endswith("<rapd_end>")):
+        while not message.endswith("<rapd_end>"):
             data = self.conn.recv(BUFFER_SIZE)
             message += data
             time.sleep(0.001)
         self.conn.close()
 
         # Strip off the start and end markers
-        stripped = message.rstrip().replace("<rapd_start>","").replace("<rapd_end>","")
+        stripped = message.rstrip().replace("<rapd_start>", "").replace("<rapd_end>", "")
 
         # Load the JSON
         decoded_received = json.loads(stripped)
@@ -130,7 +133,6 @@ class ControllerHandler(threading.Thread):
 
         # Assign the command
         self.receiver(decoded_received)
-
 
 class LaunchAction(threading.Thread):
     """

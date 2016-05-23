@@ -1,4 +1,8 @@
 """
+Query the PDB for similar unit cell parameters
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2010-2016, Cornell University
@@ -16,30 +20,33 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
 __created__ = "2010-11-10"
 __maintainer__ = "Jon Schuermann"
 __email__ = "schuerjp@anl.gov"
 __status__ = "Production"
 
+# Standar imports
 from multiprocessing import Process, Queue
-import os, time, shutil, urllib2
-from rapd_communicate import Communicate
-from rapd_agent_phaser import RunPhaser
-#import jon_utilities as Utils
-import rapd_utils as Utils
-import rapd_beamlinespecific as BLspec
-import rapd_parse as Parse
-import rapd_summary as Summary
+import os
+import shutil
+import time
+import urllib2
 
-class PDBQuery(Process,Communicate):
-  def __init__(self,input,output=None,logger=None):
+# RAPD imports
+from rapd_agent_phaser import RunPhaser
+import subcontractors.parse as Parse
+import subcontractors.summary as Summary
+from utils.communicate import rapd_send
+import utils.xutils as Utils
+
+class PDBQuery(Process):
+  def __init__(self, input, output=None, logger=None):
     logger.info('PDBQuery.__init__')
     self.st = time.time()
-    self.input                              = input
-    self.output                             = output
-    self.logger                             = logger
-    
+    self.input = input
+    self.output = output
+    self.logger = logger
+
     #Input parameters
     self.percent                            = 0.01
     #Calc ADF for each solution (creates a lot of big map files).
@@ -48,7 +55,7 @@ class PDBQuery(Process,Communicate):
     self.rigid                              = False
     #Search for common contaminants.
     self.search_common                      = True
-    
+
     #Params
     self.cell2                              = False
     self.working_dir                        = self.input[0].get('dir',os.getcwd())
@@ -76,7 +83,7 @@ class PDBQuery(Process,Communicate):
     self.phaser_timer                       = 2000 #was 600 but too short for mackinnon (144,144,288,90,90,90)
     #Used as technicality
     self.solvent_content                    = 0.55
-    
+
     Process.__init__(self,name='PDBQuery')
     self.start()
 
@@ -86,18 +93,18 @@ class PDBQuery(Process,Communicate):
     """
     if self.verbose:
         self.logger.debug('PDBQuery::run')
-    
+
     self.preprocess()
     #Utils.getSGInfo(self,'/gpfs5/users/necat/rapd/pdbq/pdb/y3/2y3e.cif')
-    
+
     self.processPDB()
     if self.search_common:
       self.processCommonPDB()
-    
+
     self.processPhaser()
     self.Queue()
     self.postprocess()
-    
+
   def preprocess(self):
     """
     Check input file and convert to mtz if neccessary.
@@ -115,7 +122,7 @@ class PDBQuery(Process,Communicate):
       if self.test:
         self.logger.debug('TEST IS SET "ON"')
       self.PrintInfo()
-      
+
     except:
       self.logger.exception('**ERROR in PDBQuery.preprocess**')
 
@@ -156,7 +163,7 @@ class PDBQuery(Process,Communicate):
         except:
           pass
         return(l)
-        
+
       def connectFrank(inp):
         import json
         _d0_ = inp
@@ -174,14 +181,14 @@ class PDBQuery(Process,Communicate):
           #print j
           _d0_.update(j)
         return(_d0_)
-      
+
       def limitOut(inp):
         l = inp.keys()[:i+1]
         for p in inp.keys():
           if l.count(p) == 0:
             del inp[p]
         return(inp)
-        
+
       d = {}
       permute = False
       end = 1
@@ -218,7 +225,7 @@ class PDBQuery(Process,Communicate):
             #remove anything bigger than 4 letters
             if len(line) > 4:
               del d[line]
-            
+
           #Do not limit number of results if many models come out really close in cell dimensions.
           if counter in (0,1):
             #Limit output
@@ -237,7 +244,7 @@ class PDBQuery(Process,Communicate):
       else:
         self.cell_output = {}
         self.logger.debug('Failed to find pdb with similar cell.')
-    
+
     except:
       self.logger.exception('**ERROR in PDBQuery.processPDBCell**')
 
@@ -307,18 +314,18 @@ class PDBQuery(Process,Communicate):
           del d[line]
           self.common.remove(line)
       self.cell_output.update(d)
-    
+
     except:
       self.logger.exception('**ERROR in PDBQuery.processCommonPDB**')
-    
-  
+
+
   def processPhaser(self):
     """
     Start Phaser for input pdb.
     """
     if self.verbose:
       self.logger.debug('PDBQuery::processPhaser')
-    
+
     def launchJob(inp):
       queue = Queue()
       job = Process(target=RunPhaser,args=(inp,queue,self.logger))
@@ -326,7 +333,7 @@ class PDBQuery(Process,Communicate):
       queue.get()#For the log I don't use
       self.jobs[job] = inp['name']
       self.pids[inp['name']] = queue.get()
-    
+
     try:
       for code in self.cell_output.keys():
       #for code in ['4ER2']:
@@ -337,7 +344,7 @@ class PDBQuery(Process,Communicate):
         #Check if symlink exists and create if not.
         if os.path.exists(f) == False:
           os.symlink(self.cell_output[code].get('path'),f)
-        #If mmCIF, checks if file exists or if it is super structure with 
+        #If mmCIF, checks if file exists or if it is super structure with
         #multiple PDB codes, and returns False, otherwise sends back SG.
         sg_pdb = Utils.fixSG(self,Utils.getSGInfo(self,f))
         #Remove codes that won't run or PDB/mmCIF's that don't exist.
@@ -359,7 +366,7 @@ class PDBQuery(Process,Communicate):
               if key != 'all':
                 del pdb_info[key]
           copy = pdb_info['all']['NMol']
-          if copy == 0: 
+          if copy == 0:
             copy = 1
           #if pdb_info['all']['res'] == 0.0:
           if pdb_info['all']['SC'] < 0.2:
@@ -372,7 +379,7 @@ class PDBQuery(Process,Communicate):
         #Same number of mols in AU.
         else:
           pdb_info = Utils.getPDBInfo(self,f,False,True)
-        
+
         d = {'data':self.datafile,'pdb':f,'name':code,'verbose':self.verbose,'sg':sg,
              'copy':copy,'test':self.test,'cluster':self.cluster_use,'cell analysis':True,
              'large':self.large_cell,'res':Utils.setPhaserRes(self,pdb_info['all']['res']),
@@ -523,7 +530,7 @@ class PDBQuery(Process,Communicate):
 
     except:
       self.logger.exception('**ERROR in PDBQuery.Queue**')
-  
+
   def PrintInfo(self):
     """
     Print information regarding programs utilized by RAPD
@@ -550,7 +557,7 @@ class PDBQuery(Process,Communicate):
     output_files = False
     cell_results = False
     failed = False
-    
+
     #Add tar info to automr results and take care of issue if no SCA file was input.
     try:
       def check_bz2(tar):
@@ -558,7 +565,7 @@ class PDBQuery(Process,Communicate):
         if os.path.exists(os.path.join(self.working_dir,'%s.bz2'%tar)):
           os.system('rm -rf %s'%os.path.join(self.working_dir,'%s.bz2'%tar))
         shutil.copy('%s.bz2'%tar,self.working_dir)
-      
+
       if self.cell_output:
         for pdb in self.phaser_results.keys():
           pdb_file = self.phaser_results[pdb].get('AutoMR results').get('AutoMR pdb')
@@ -642,7 +649,8 @@ class PDBQuery(Process,Communicate):
         self.output.put(results)
       else:
         if self.gui:
-          self.sendBack2(self.input)
+        #   self.sendBack2(self.input)
+          rapd_send(self.controller_address, self.input)
     except:
       self.logger.exception('**Could not send results to pipe.**')
 

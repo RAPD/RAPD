@@ -22,7 +22,6 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
 __created__ = "2009-07-08"
 __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
@@ -42,10 +41,6 @@ from utils.modules import load_module
 from utils.site import get_ip_address
 # from rapd_console import ConsoleFeeder
 # from rapd_site import TransferToUI, TransferToBeamline, CopyToUser
-
-# cloud_monitor = None
-site_adapter = None
-remote_adapter = None
 
 #####################################################################
 # The main Model Class                                              #
@@ -155,7 +150,7 @@ class Model(object):
         elif isinstance(self.site.ID, tuple) or isinstance(self.site.ID, list):
             for site_id in self.site.ID:
                 self.site_ids.append(site_id)
-                self.pairs[site_id] = collections.deque([("",0), ("",0)], 2)
+                self.pairs[site_id] = collections.deque([("", 0), ("", 0)], 2)
 
     def connect_to_database(self):
         """Set up database connection"""
@@ -263,7 +258,6 @@ class Model(object):
         site = self.site
 
         if site.SITE_ADAPTER:
-            global site_adapter
             site_adapter = importlib.import_module("%s" % site.SITE_ADAPTER.lower())
             self.site_adapter = site_adapter.Adapter(settings=site.SITE_ADAPTER_SETTINGS)
 
@@ -274,7 +268,6 @@ class Model(object):
         site = self.site
 
         if site.REMOTE_ADAPTER:
-            global remote_adapter
             remote_adapter = importlib.import_module("%s" % site.REMOTE_ADAPTER.lower())
             self.remote_adapter = remote_adapter.Adapter(settings=site.REMOTE_ADAPTER_SETTINGS)
 
@@ -311,9 +304,6 @@ class Model(object):
         if any(ignore_string in fullname for ignore_string in self.site.IMAGE_IGNORE_STRINGS):
             self.logger.debug("Images contains an ignore flag - skipping")
             return True
-
-        # Derive the data_root_dir
-        data_root_dir = detector.get_data_root_dir(fullname)
 
         # Figure out if image in the current run...
         run_id, place_in_run = self.in_run(site_tag, fullname)
@@ -450,8 +440,7 @@ class Model(object):
         """
 
         # Query local runs in reverse chronological order
-        for run_id in reversed(self.recent_runs):
-            run = self.recent_runs[run_id]
+        for run_id, run in self.recent_runs.iteritems():
             if run.get("site_tag", None) == site_tag and \
                run.get("directory", None) == directory and \
                run.get("image_prefix", None) == image_prefix and \
@@ -525,32 +514,32 @@ class Model(object):
 
         return True
 
-    def in_past_run(self, fullname):
-        """
-        Determine the place in a past run the image is
-
-        Keyword argument
-        fullname -- the full path name for an image
-        """
-
-        self.logger.info("in_past_run %s", fullname)
-
-        # Check older runs
-        for run_info in reversed(self.recent_runs):
-            place, __ = self.in_run(fullname, run_info)
-            # Next
-            if place == "PAST_RUN":
-                continue
-            # Found the run
-            elif isinstance(place, int):
-                return place, run_info
-            # SNAP - unlikely
-            elif place == "SNAP":
-                return "SNAP", None
-
-        # Go through all runs and fail to find a run or snap
-        else:
-            return False, None
+    # def in_past_run(self, fullname):
+    #     """
+    #     Determine the place in a past run the image is
+    #
+    #     Keyword argument
+    #     fullname -- the full path name for an image
+    #     """
+    #
+    #     self.logger.info("in_past_run %s", fullname)
+    #
+    #     # Check older runs
+    #     for run_info in reversed(self.recent_runs):
+    #         place, __ = self.in_run(fullname, run_info)
+    #         # Next
+    #         if place == "PAST_RUN":
+    #             continue
+    #         # Found the run
+    #         elif isinstance(place, int):
+    #             return place, run_info
+    #         # SNAP - unlikely
+    #         elif place == "SNAP":
+    #             return "SNAP", None
+    #
+    #     # Go through all runs and fail to find a run or snap
+    #     else:
+    #         return False, None
 
     def in_run(self, site_tag, fullname, run_info=None):
         """
@@ -714,7 +703,7 @@ class Model(object):
                                           "directories":new_dirs,
                                           "header1":header1,
                                           "header2":header2,
-                                          "site_parameters":self.site.BEAM_INFO[header1["site_tag"]]
+                                          "site_parameters":self.site.BEAM_INFO[header1["site_tag"]],
                                           "preferences":{},
                                           "return_address":self.return_address},
                                  launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
@@ -763,7 +752,7 @@ class Model(object):
                                       "directories":new_dirs,
                                       "image_data":header,
                                       "run_data":run_dict,
-                                      "site_parameters":self.site.BEAM_INFO[header["site_tag"]]
+                                      "site_parameters":self.site.BEAM_INFO[header["site_tag"]],
                                       "preferences":{},
                                       "return_address":self.return_address},
                              launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
@@ -902,49 +891,11 @@ class Model(object):
             self.logger.debug(info)
             self.add_run(info)
 
-        # # Pilatus run
-        # elif command == "PILATUS RUN":
-        #     self.logger.debug("New pilatus run")
-        #     self.logger.debug(info)
-        #     #Save the current_run
-        #     if self.current_run:
-        #         self.recent_runs.append(self.current_run.copy())
-        #     #Set current_run to the new run
-        #     self.current_run = info
-        #     #Save to the database
-        #     run_id = self.database.add_run(run=info,
-        #                                   site=self.site)
-        #     #Set the run_id that comes from the database for the current run
-        #     if run_id:
-        #         self.current_run["run_id"] = run_id
-
         # elif command == "PILATUS_ABORT":
         #     self.logger.debug("Run aborted")
         #     if self.current_run:
         #         self.current_run["status"] = "ABORTED"
 
-        # elif command == "CONSOLE RUN STATUS CHANGED":
-        #     #save to / check the db for this run
-        #     self.logger.debug("get runid")
-        #     run_id = self.database.add_run(site_id=self.site,
-        #                                    run_data=info)
-        #     self.logger.debug("run_id %s" % str(run_id))
-        #     if self.current_run:
-        #         if self.current_run["run_id"] == run_id:
-        #             self.logger.debug("Same run again")
-        #         else:
-        #             self.logger.debug("New run %s" % str(info))
-        #             #save the current run
-        #             self.recent_runs.append(self.current_run.copy())
-        #             #set current run to the new run
-        #             self.current_run = info
-        #             self.current_run["run_id"] = run_id
-        #             #self.sweepForMissedRunImages()
-        #     else:
-        #         self.logger.debug("New run %s" % str(info))
-        #         #set current run to the new run
-        #         self.current_run = info
-        #         self.current_run["run_id"] = run_id
 
         # elif command == "DIFF_CENTER":
         #     #add result to database
