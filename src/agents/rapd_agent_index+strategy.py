@@ -557,10 +557,10 @@ class RapdAgent(Process):
 
         try:
 
-            max_dis = site_parameters.get("DETECTOR_DISTANCE_MAX")
-            min_dis = site_parameters.get("DETECTOR_DISTANCE_MIN")
-            min_d_o = site_parameters.get("DIFFRACTOMETER_OSC_MIN")
-            min_e_t = site_parameters.get("DETECTOR_TIME_MIN")
+            max_dis = self.site_parameters.get("DETECTOR_DISTANCE_MAX")
+            min_dis = self.site_parameters.get("DETECTOR_DISTANCE_MIN")
+            min_d_o = self.site_parameters.get("DIFFRACTOMETER_OSC_MIN")
+            min_e_t = self.site_parameters.get("DETECTOR_TIME_MIN")
 
             image_number = []
             image_number.append(self.header.get('fullname')[self.header.get('fullname').rfind('_')+1:self.header.get('fullname').rfind('.')])
