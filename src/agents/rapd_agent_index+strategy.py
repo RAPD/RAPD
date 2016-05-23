@@ -344,9 +344,9 @@ class RapdAgent(Process):
           crystal_size_z = '0.5'
         else:
           #crystal dimensions (default 0.1 x 0.1 x 0.1 from rapd_site.py)
-          crystal_size_x = str(float(self.preferences.get('crystal_size_x'))/1000.0)
-          crystal_size_y = str(float(self.preferences.get('crystal_size_y'))/1000.0)
-          crystal_size_z = str(float(self.preferences.get('crystal_size_z'))/1000.0)
+          crystal_size_x = str(float(self.preferences.get("crystal_size_x", 100))/1000.0)
+          crystal_size_y = str(float(self.preferences.get("crystal_size_y", 100))/1000.0)
+          crystal_size_z = str(float(self.preferences.get("crystal_size_z", 100))/1000.0)
         if self.header.has_key('flux'):
           beam_size_x = str(self.header.get('beam_size_x'))
           beam_size_y = str(self.header.get('beam_size_y'))
@@ -365,7 +365,7 @@ class RapdAgent(Process):
         #self.shape    = max_size/aperture
         #put together the command script for Raddose
         """
-        raddose = open('raddose.com', 'w+')
+        raddose = open("raddose.com", "w+")
         setup = 'raddose << EOF\n'
         if beam_size_x and beam_size_y:
           setup += 'BEAM %s %s\n'%(beam_size_x,beam_size_y)
