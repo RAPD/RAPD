@@ -207,14 +207,14 @@ class RapdAgent(Process):
         self.vips_images                        = {}
 
         # Settings for all programs
-        self.beamline             = self.header.get("beamline")
-        self.time                 = str(self.header.get("time", "1.0"))
-        self.wavelength           = str(self.header.get("wavelength"))
-        self.transmission         = float(self.header.get("transmission"))
-        #self.aperture             = str(self.header.get("md2_aperture"))
-        self.spacegroup           = self.preferences.get("spacegroup")
-        self.flux                 = str(self.header.get("flux"))
-        self.solvent_content      = str(self.preferences.get("solvent_content", 0.55))
+        self.beamline = self.header.get("beamline")
+        self.time = str(self.header.get("time", "1.0"))
+        self.wavelength = str(self.header.get("wavelength"))
+        self.transmission = float(self.header.get("transmission"))
+        #self.aperture = str(self.header.get("md2_aperture"))
+        self.spacegroup = self.preferences.get("spacegroup", "None")
+        self.flux = str(self.header.get("flux"))
+        self.solvent_content = str(self.preferences.get("solvent_content", 0.55))
 
         #Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
         #This is used to determine if job submitted by rapd_cluster or script was launched for testing.
@@ -1065,41 +1065,44 @@ class RapdAgent(Process):
             highest = sol_dict[l[1]]
         #symmetry of best solution
         sym = sg_dict[highest]
-        #If there is a solution...
-        if sym != '0':
-          self.logger.debug('The sorted labelit solution was #%s'%highest)
-          #Save best results in corect place.
+        # If there is a solution...
+        if sym != "0":
+          self.logger.debug("The sorted labelit solution was #%s", highest)
+
+          # Save best results in corect place.
           self.labelit_results = self.labelit_results[highest]
-          #Set self.volume for best solution
+
+          # Set self.volume for best solution
           self.volume = vol[int(highest)]
-          #Set self.labelit_dir and go to it.
-          self.labelit_dir = os.path.join(self.working_dir,highest)
-          self.index_number = self.labelit_results.get('Labelit results').get('mosflm_index')
+
+          # Set self.labelit_dir and go to it.
+          self.labelit_dir = os.path.join(self.working_dir, highest)
+          self.index_number = self.labelit_results.get("Labelit results").get("mosflm_index")
           os.chdir(self.labelit_dir)
-          if self.spacegroup != 'None':
-            check_lg = Utils.checkSG(self,sym)
-            user_sg  = Utils.convertSG(self,self.spacegroup)
-            if user_sg != sym:
-              fixSG = False
-              for line in check_lg:
-                if line == user_sg:
-                  fixSG = True
-              if fixSG:
-                Utils.fixMosflmSG(self)
-                Utils.fixBestSG(self)
-              else:
-                self.ignore_user_SG = True
-          #Make an overlay jpeg
+          if self.spacegroup != "None":
+              check_lg = Utils.checkSG(self, sym)
+              user_sg  = Utils.convertSG(self, self.spacegroup)
+              if user_sg != sym:
+                  fixSG = False
+                  for line in check_lg:
+                      if line == user_sg:
+                          fixSG = True
+                  if fixSG:
+                      Utils.fixMosflmSG(self)
+                      Utils.fixBestSG(self)
+                  else:
+                      self.ignore_user_SG = True
+          # Make an overlay jpeg
           self.makeImages(1)
         else:
-          self.logger.debug('No solution was found when sorting Labelit results.')
+          self.logger.debug("No solution was found when sorting Labelit results.")
           self.labelit_failed = True
-          self.labelit_results = { 'Labelit results'  : 'FAILED'}
-          self.labelit_dir = os.path.join(self.working_dir,'0')
+          self.labelit_results = {"Labelit results":"FAILED"}
+          self.labelit_dir = os.path.join(self.working_dir, "0")
           os.chdir(self.labelit_dir)
           self.processDistl()
           self.postprocessDistl()
-          if os.path.exists('DISTL_pickle'):
+          if os.path.exists("DISTL_pickle"):
               self.makeImages(2)
           self.best_failed = True
           self.best_anom_failed = True

@@ -1115,7 +1115,7 @@ def errorBestPost(self,iteration,error,anom=False):
   except:
     self.logger.exception('**Error in Utils.errorBestPost**')
 
-def failedHTML(self,inp):
+def failedHTML(self, inp):
   """
   Generates failed html to output for GUI.
   """
@@ -1152,28 +1152,28 @@ def failedHTML(self,inp):
     self.logger.exception('**ERROR in Utils.failedHTML**.')
 
 def fixBestSG(self):
-  """
-  Make user selected SG correct for BEST.
-  """
-  if self.verbose:
-    self.logger.debug('Utilities::fixBestSG')
-  try:
-    temp = []
-    shutil.copy('bestfile.par','bestfile_orig.par')
+    """
+    Make user selected SG correct for BEST.
+    """
     if self.verbose:
-      self.logger.debug('Since user selected the space group, BEST files will be edited to match.')
-    for x,line in enumerate(open('bestfile_orig.par','r').readlines()):
-      temp.append(line)
-      if line.startswith('SYMMETRY'):
-        if line.split()[1] != self.spacegroup:
-          temp.remove(line)
-          temp.insert(x,line.replace(line.split()[1],self.spacegroup))
-    new = open('bestfile.par','w')
-    new.writelines(temp)
-    new.close()
+        self.logger.debug("Utilities::fixBestSG")
+    try:
+        temp = []
+        shutil.copy("bestfile.par", "bestfile_orig.par")
+        if self.verbose:
+            self.logger.debug("Since user selected the space group, BEST files will be edited to match.")
+        for x,line in enumerate(open("bestfile_orig.par", "r").readlines()):
+            temp.append(line)
+            if line.startswith("SYMMETRY"):
+                if line.split()[1] != self.spacegroup:
+                    temp.remove(line)
+                    temp.insert(x, line.replace(line.split()[1], self.spacegroup))
+        new = open("bestfile.par", "w")
+        new.writelines(temp)
+        new.close()
 
-  except:
-    self.logger.exception('**ERROR in Utils.fixBestSG**')
+    except:
+        self.logger.exception("**ERROR in Utils.fixBestSG**")
 
 def fixBestSGBack(self):
   """
