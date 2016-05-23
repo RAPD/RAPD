@@ -114,65 +114,65 @@ class AutoStats(Process):
       self.postprocess()
 
   def preprocess(self):
-    """
-    Things to do before the main process runs
-    1. Change to the correct directory
-    2. Print out the reference for Stat pipeline
-    """
-    if self.verbose:
-        self.logger.debug('AutoStats::preprocess')
-    # Make the self.working_dir if it does not exist.
-    if os.path.exists(self.working_dir) == False:
-        os.makedirs(self.working_dir)
-    # Change directory to the one specified in the incoming dict
-    os.chdir(self.working_dir)
-    # Print out recognition of the program being used
-    self.PrintInfo()
-    # Check if input file is sca and convert to mtz.
-    if self.datafile:
-        self.input_sg, self.cell, self.cell2, vol = Utils.getMTZInfo(self, False, True, True)
-        # Change timer to allow more time for Ribosome structures.
-        if Utils.calcResNumber(self, self.input_sg, False, vol) > 5000:
-            self.stats_timer = 300
-    if self.test:
-        self.logger.debug("TEST IS SET \"ON\"")
+      """
+      Things to do before the main process runs
+      1. Change to the correct directory
+      2. Print out the reference for Stat pipeline
+      """
+      if self.verbose:
+          self.logger.debug("AutoStats::preprocess")
+      # Make the self.working_dir if it does not exist.
+      if os.path.exists(self.working_dir) == False:
+          os.makedirs(self.working_dir)
+      # Change directory to the one specified in the incoming dict
+      os.chdir(self.working_dir)
+      # Print out recognition of the program being used
+      self.PrintInfo()
+      # Check if input file is sca and convert to mtz.
+      if self.datafile:
+          self.input_sg, self.cell, self.cell2, vol = Utils.getMTZInfo(self, False, True, True)
+          # Change timer to allow more time for Ribosome structures.
+          if Utils.calcResNumber(self, self.input_sg, False, vol) > 5000:
+              self.stats_timer = 300
+      if self.test:
+          self.logger.debug("TEST IS SET \"ON\"")
 
   def processPDBQuery(self):
-    """
-    Prepare and run PDBQuery.
-    """
-    if self.verbose:
-      self.logger.debug('AutoStats::processPDBQuery')
-    try:
-      self.cell_output = Queue()
-      Process(target=PDBQuery,args=(self.input,self.cell_output,self.logger)).start()
+      """
+      Prepare and run PDBQuery.
+      """
+      if self.verbose:
+          self.logger.debug("AutoStats::processPDBQuery")
+      try:
+          self.cell_output = Queue()
+          Process(target=PDBQuery,args=(self.input, self.cell_output, self.logger)).start()
 
-    except:
-      self.logger.exception('**Error in AutoStats.processPDBQuery**')
+      except:
+          self.logger.exception("**Error in AutoStats.processPDBQuery**")
 
   def processXtriage(self):
-    """
-    Run phenix.xtriage.
-    """
-    if self.verbose:
-      self.logger.debug('AutoStats::processXtriage')
-    try:
-      command  = '/share/apps/necat/programs/phenix-dev-1702/build/intel-linux-2.6-x86_64/bin/phenix.xtriage '
-      command += '%s scaling.input.xray_data.obs_labels="I(+),SIGI(+),I(-),SIGI(-)" '%self.datafile
-      #command += 'scaling.input.parameters.reporting.loggraphs=True'
-      #command = 'phenix.xtriage %s scaling.input.xray_data.obs_labels="I(+),SIGI(+),I(-),SIGI(-)"'%self.datafile
-      #command = 'phenix.xtriage %s scaling.input.xray_data.obs_labels="I(+),SIGI(+),I(-),SIGI(-)" loggraphs=True'%self.datafile
-      if self.test:
-        self.jobs_output[11111] = 'xtriage'
-      else:
-        xtriage_output = Queue()
-        job = Process(target=Utils.processLocal,args=((command,'xtriage.log'),self.logger,xtriage_output))
-        job.start()
-        self.jobs_output[job] = 'xtriage'
-        self.pids['xtriage'] = xtriage_output.get()
+      """
+      Run phenix.xtriage.
+      """
+      if self.verbose:
+          self.logger.debug('AutoStats::processXtriage')
+      try:
+          command  = "/share/apps/necat/programs/phenix-dev-1702/build/intel-linux-2.6-x86_64/bin/phenix.xtriage "
+          command += '%s scaling.input.xray_data.obs_labels="I(+),SIGI(+),I(-),SIGI(-)" ' % self.datafile
+          #command += 'scaling.input.parameters.reporting.loggraphs=True'
+          #command = 'phenix.xtriage %s scaling.input.xray_data.obs_labels="I(+),SIGI(+),I(-),SIGI(-)"'%self.datafile
+          #command = 'phenix.xtriage %s scaling.input.xray_data.obs_labels="I(+),SIGI(+),I(-),SIGI(-)" loggraphs=True'%self.datafile
+          if self.test:
+              self.jobs_output[11111] = "xtriage"
+          else:
+              xtriage_output = Queue()
+              job = Process(target=Utils.processLocal, args=((command, "xtriage.log"), self.logger, xtriage_output))
+              job.start()
+              self.jobs_output[job] = "xtriage"
+              self.pids["xtriage"] = xtriage_output.get()
 
-    except:
-      self.logger.exception('**ERROR in AutoStat.processXtriage**')
+      except:
+          self.logger.exception("**ERROR in AutoStat.processXtriage**")
 
   def processNCS2(self):
     """
