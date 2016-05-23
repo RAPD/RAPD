@@ -50,7 +50,7 @@ import time
 # from subcontractors.xoalign import RunXOalign
 # from utils.communicate import rapd_send
 # from utils.modules import load_module
-# import utils.xutils as Utils
+import utils.xutils as Utils
 
 class RapdAgent(Process):
     """
