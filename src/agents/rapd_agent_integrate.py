@@ -800,7 +800,7 @@ class RapdAgent(Process):
                                                self.data['run_number'])
                 else:
                     self.image_template = '%s_%s_???.img' %(self.data['image_prefix'], self.data['run_number'])
-            file_template = os.path.join(self.data['directory'],self.image_template)
+            file_template = os.path.join(self.data['directory'], self.image_template)
             self.last_image = file_template.replace('???','%03d' %last_frame)
             self.first_image = file_template.replace('???','%03d' %int(self.data['start']))
             if self.ram_use == True:
