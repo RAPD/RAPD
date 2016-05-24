@@ -894,7 +894,7 @@ class RapdAgent(Process):
             	self.image_template = self.data['image_template']
             else:
             	self.image_template = '%s.????' %self.data['image_prefix']
-            file_template = os.path.join(self.data['directory'],self.imagae_template)
+            file_template = os.path.join(self.data['directory'],self.image_template)
             self.last_image = file_template.replace('????', '%04d' %last_frame)
             self.first_iamge = file_template.replace('????', '%04d' %int(self.data['start']))
 
