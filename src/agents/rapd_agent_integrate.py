@@ -183,7 +183,8 @@ class RapdAgent(Process):
         # Parameters likely to be changed based on beamline setup.
 
         # Directory containing XDS.INP default files for detectors.
-        self.detector_directory = '/home/necat/DETECTOR_DEFAULTS/'
+        if os.path.isdir('/home/necat/DETECTOR_DEFAULTS'):
+            self.detector_directory = '/home/necat/DETECTOR_DEFAULTS/'
             #Also check set_detector_data for other detector dependent values!
         # XDS parameters for number of JOBS and PROCESSORS.
         # Values are beamline specific, depending on computing resources.
@@ -908,7 +909,23 @@ class RapdAgent(Process):
                      '\n',
                      'NAME_TEMPLATE_OF_DATA_FRAMES=%s\n' %file_template,
                      '\n',
-                     'BACKGROUND_RANGE=%s\n\n' % background_range]
+                     'BACKGROUND_RANGE=%s\n\n' % background_range,
+                     '!=============== DETECTOR PARAMETERS ========================\n',
+                     'DETECTOR=MAR345 MINIMUM_VALID_PIXEL_VALUE=0 OVERLOAD=%s\n' %self.data['cutoff'],
+                     'NX=%s NY=%S QX=%s QY=%s ! SER-CAT Rayonix MX300hs\n' %(
+                     	     self.data['size1'],self.data['size2'],self.data['pixel_size'],self.data['pixel_size']),
+                     'TRUSTED_REGION=0.0 1.05 !Relative radii limiting trusted detector region\n\n',
+                     'ROTATION_AXIS=1.0 0.0 0.0\n',
+                     'INCIDENT_BEAM_DIRECTION=0.0. 0.0 1.0\n',
+                     'FRACTION_OF_POLARIZATION=0.90 !default =0.5 for unpolarized beam\n',
+                     'POLARIZATION_PLANE_NORMAL= 0.0 1.0 0.0\n',
+                     "FRIEDEL'S_LAW=FALSE !Defaults is TRUE\n\n",
+                     'INCLUDE_RESOLUTION_RANGE=200.0 0.0 !Angstroems\n',
+                     'REFINE(IDXREF)=BEAM AXIS ORIENTATION CELL POSITION\n',
+                     'REFINE(INTEGRATE)=BEAM CELL ORIENATATION POSITION\n',
+                     'REFINE(CORRECT)=BEAM AXIS CELL ORIENTATION POSITION\n',
+                     'STRICT_ABSORPTION_CORRECTION=TRUE\n\n',
+                     'DIRECTION_OF_DETECTOR_X-AXIS=1.0 0.0 0.0\n']
         # If detector is tilted in two-theta, adjust DIRECTION_OF_Y-AXIS
         if self.data['twotheta'] == 0.0 or self.data['twotheta'] == None:
             xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS=0.0 1.0 0.0\n\n')
@@ -923,9 +940,12 @@ class RapdAgent(Process):
             xds_input.append('!0.0 cos(2theta) sin(2theta)\n\n')
 
         # Read in default XDS.INP for detector and add to xds input.
-        read_file = os.path.join(self.detector_directory, detector_file)
-        detector_defaults = open(read_file,'r').readlines()
-        xds_input.extend(detector_defaults)
+        if detector_type == 'rayonix_mx300hs':
+            pass
+        else:
+            read_file = os.path.join(self.detector_directory, detector_file)
+            detector_defaults = open(read_file,'r').readlines()
+            xds_input.extend(detector_defaults)
 
         return(xds_input)
 
