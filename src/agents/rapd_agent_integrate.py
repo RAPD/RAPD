@@ -45,6 +45,7 @@ import os.path
 import shutil
 import stat
 import subprocess
+import sys
 import threading
 import time
 
@@ -59,8 +60,8 @@ import utils.xutils as Utils
 
 # Import smartie.py from the installed CCP4 package
 # smartie.py is a python script for parsing log files from CCP4
-# sys.path.append(os.path.join(os.environ["CCP4"], "share", "smartie"))
-#import smartie
+sys.path.append(os.path.join(os.environ["CCP4"], "share", "smartie"))
+import smartie
 
 class RapdAgent(Process):
     """
