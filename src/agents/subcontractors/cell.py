@@ -619,22 +619,22 @@ class PDBQuery(Process):
             failed = True
 
         try:
-          #Create the output html file
-          os.chdir(self.working_dir)
-          Summary.summaryCell(self,'pdbquery')
-          self.htmlSummary()
-          if self.gui:
-            sl = 'jon_summary_cell.php'
-          else:
-            sl = 'jon_summary_cell.html'
-          if os.path.exists(os.path.join(self.working_dir,sl)):
-            output['Cell summary html'] = os.path.join(self.working_dir,sl)
-          else:
-            output['Cell summary html'] = 'None'
+            #Create the output html file
+            os.chdir(self.working_dir)
+            Summary.summaryCell(self,'pdbquery')
+            self.htmlSummary()
+            if self.gui:
+                sl = 'jon_summary_cell.php'
+            else:
+                sl = 'jon_summary_cell.html'
+            if os.path.exists(os.path.join(self.working_dir,sl)):
+                output['Cell summary html'] = os.path.join(self.working_dir,sl)
+            else:
+              output['Cell summary html'] = 'None'
         except:
-          self.logger.exception('**Could not update path of shelx summary html file.**')
-          output['Cell summary html']   = 'FAILED'
-          failed = True
+            self.logger.exception('**Could not update path of shelx summary html file.**')
+            output['Cell summary html']   = 'FAILED'
+            failed = True
 
         try:
           output_files = {'Output files' : output}

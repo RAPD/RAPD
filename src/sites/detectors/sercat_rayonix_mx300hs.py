@@ -217,6 +217,10 @@ def read_header(fullname, beam_settings):
     # Add tag for module to header
     header["rapd_detector_id"] = "sercat_rayonix_mx300hs"
 
+    # The image template for processing
+    header["image_template"] = IMAGE_TEMPLATE % header["image_prefix"]
+    header["run_number_in_template"] = RUN_NUMBER_IN_TEMPLATE
+
     # Add some values HACK
     header["aperture_x"] = 50
     header["aperture_y"] = 50
