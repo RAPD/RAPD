@@ -224,27 +224,30 @@ class RapdAgent(Process):
             os.makedirs(self.dirs['work'])
         os.chdir(self.dirs['work'])
 
-        if 'detector' in self.data and self.data['detector'] == 'PILATUS':
-            self.xds_default = self.set_detector_data(self.data['detector'])
-        elif 'detector' in self.data and self.data['detector'] == 'HF4M':
-            self.xds_default = self.set_detector_data(self.data['detector'])
-        else:
-            if 'binning' in self.data.keys():
-                if self.data['binning'] == '2x2':
-                    self.data['detector'] = 'ADSC_binned'
-                    self.xds_default = self.set_detector_data('ADSC_binned')
-                elif self.data['binning'] == 'unbinned' or self.data['binning'] == 'none':
-                    self.data['detector'] = 'ADSC'
-                    self.xds_default = self.set_detector_data('ADSC')
-            elif 'bin' in self.data.keys():
-                if self.data['bin'] == '2x2':
-                    self.data['binning'] = '2x2'
-                    self.data['detector'] = 'ADSC_binned'
-                    self.xds_default = self.set_detector_data('ADSC_binned')
-                elif self.data['bin'] == 'unbinned' or self.data['bin'] == 'none':
-                    self.data['binning'] = 'unbinned'
-                    self.data['detector'] = 'ADSC'
-                    self.xds_default = self.set_detector_data('ADSC')
+        if 'detector' in self.data:
+            if self.data['detector'] == 'PILATUS':
+                self.xds_default = self.set_detector_data(self.data['detector'])
+            elif self.data['detector'] == 'HF4M':
+                self.xds_default = self.set_detector_data(self.data['detector'])
+            elif self.data['detector'] == 'rayonix_mx300hs':
+            	self.xds_default = self.set_detector_data(self.data['detector'])
+            else:
+                if 'binning' in self.data.keys():
+                    if self.data['binning'] == '2x2':
+                        self.data['detector'] = 'ADSC_binned'
+                        self.xds_default = self.set_detector_data('ADSC_binned')
+                    elif self.data['binning'] == 'unbinned' or self.data['binning'] == 'none':
+                        self.data['detector'] = 'ADSC'
+                        self.xds_default = self.set_detector_data('ADSC')
+                elif 'bin' in self.data.keys():
+                    if self.data['bin'] == '2x2':
+                        self.data['binning'] = '2x2'
+                        self.data['detector'] = 'ADSC_binned'
+                        self.xds_default = self.set_detector_data('ADSC_binned')
+                    elif self.data['bin'] == 'unbinned' or self.data['bin'] == 'none':
+                        self.data['binning'] = 'unbinned'
+                        self.data['detector'] = 'ADSC'
+                        self.xds_default = self.set_detector_data('ADSC')
 
     def process (self):
         """
