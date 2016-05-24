@@ -122,6 +122,9 @@ class RapdAgent(Process):
         if 'x_beam' not in self.data.keys():
             self.data['x_beam'] = self.data['beam_center_x']
             self.data['y_beam'] = self.data['beam_center_y']
+        if 'start' not in self.data.keys():
+        	self.data['start'] = self.data['start_image_number']
+        	self.data['total'] = self.data['number_images']
         if self.command == 'XDS':
             self.data['start'] = self.settings['request']['frame_start']
             self.data['total'] = str( int(self.settings['request']['frame_start'])
@@ -774,6 +777,7 @@ class RapdAgent(Process):
         ADSC_binned - binned ADSC Q315 as at NE-CAT
         PILATUS - Pilatus 6M
         HF4M - ADSC HF4M
+        MX300hs - SER-CAT's Rayonix MX300hs
         """
         self.logger.debug('FastIntegration::set_detector_type')
         last_frame = int(self.data['start']) + int(self.data['total']) -1
@@ -873,6 +877,23 @@ class RapdAgent(Process):
                 file_template = os.path.join('/dev/shm/',
                                              self.data['image_prefix'],
                                              self.image_template)
+        
+        # Rayonix 300hs.
+        elif detector_type == 'rayonix_mx300hs':
+            x_beam = float(self.data['x_beam']) / float(self.data['pixel_size'])
+            y_beam = float(self.data['y_beam']) / float(self.data['pixel_size'])
+            if x_beam < 0 or x_beam > int(self.data['size1']):
+            	raise RuntimeError, 'x beam coordinate outside detector'
+            if y_beam < 0 or y_beam > int(self.data['size1']):
+            	raise RuntimeError, 'y beam coordinate outside detector'
+            detector_file = 'XDS-MX300HS.INP'
+            if 'image_template' in self.data:
+            	self.image_template = self.data['image_template']
+            else:
+            	self.image_template = '%s.????' %self.data['image_prefix']
+            file_template = os.path.join(self.data['directory'],self.imagae_template)
+            self.last_image = file_template.replace('????', '%04d' %last_frame)
+            self.first_iamge = file_template.replace('????', '%04d' %int(self.data['start']))
 
         self.logger.debug('	Last Image = %s' % self.last_image)
         # Begin xds input with parameters determined by data set.
