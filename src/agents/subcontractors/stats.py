@@ -31,10 +31,10 @@ import os
 import time
 
 # RAPD imports
-from rapd_agent_cell import PDBQuery
-from rapd_agent_pp import LabelitPP
-import subcontractors.parse as Parse
-import subcontractors.summary as Summary
+from agents.rapd_agent_cell import PDBQuery
+from agents.rapd_agent_pp import LabelitPP
+import parse as Parse
+import summary as Summary
 from utils.communicate import rapd_send
 import utils.xutils as Utils
 
@@ -43,33 +43,33 @@ class AutoStats(Process):
     cell = None
     cell2 = None
     cell_output = None
-    
+    pp_output = None
 
-    def __init__(self, input, logger=None):
+    def __init__(self, command_input, logger=None):
         """
         Provides a comprehensive statistical analysis of an integrated data set
 
         Keyword arguments
-        input --
+        command_input --
         logger -- a logger instance
         """
         logger.info("AutoStats.__init__")
         self.st = time.time()
-        self.input = input
+        self.command_input = command_input
         self.logger = logger
-        self.working_dir = self.input[0].get("dir", os.getcwd())
-        self.datafile = self.input[0].get("data", False)
-        self.gui = self.input[0].get("gui", True)
-        self.clean = self.input[0].get("clean", True)
-        self.test = self.input[0].get("test", False)
-        self.controller_address = self.input[0].get("control", False)
-        self.verbose = self.input[0].get("verbose", False)
+        self.working_dir = self.command_input[0].get("dir", os.getcwd())
+        self.datafile = self.command_input[0].get("data", False)
+        self.gui = self.command_input[0].get("gui", True)
+        self.clean = self.command_input[0].get("clean", True)
+        self.test = self.command_input[0].get("test", False)
+        self.controller_address = self.command_input[0].get("control", False)
+        self.verbose = self.command_input[0].get("verbose", False)
 
         self.clean = False
         self.verbose = True
 
-        #Check if precession photo info included in input
-        if self.input[0].has_key("run"):
+        #Check if precession photo info included in command_input
+        if self.command_input[0].has_key("run"):
             self.pp = True
         else:
             self.pp = False
@@ -85,15 +85,15 @@ class AutoStats(Process):
         self.molrep_log = False
         self.molrep_results = False
         self.molrep_summary = False
-        self.NCS_results = False
+        self.ncs_results = False
         self.sample_type = False
         self.failed = False
         self.input_sg = False
         self.solvent_content = 0.55
 
         #******BEAMLINE SPECIFIC*****
-        #self.cluster_use = Utils.checkCluster()
-        self.cluster_use = BLspec.checkCluster()
+        # self.cluster_use = Utils.checkCluster()
+        # self.cluster_use = BLspec.checkCluster()
         #******BEAMLINE SPECIFIC*****
         if self.test:
             self.clean = False
@@ -109,20 +109,20 @@ class AutoStats(Process):
 
         self.preprocess()
 
-        self.processPDBQuery()
+        self.process_pdb_query()
 
         if self.pp:
             self.processPP()
 
         if self.test:
-            self.postprocessXtriage()
+            self.postprocess_xtriage()
             self.postprocessMolrep()
-            self.postprocessNCS()
+            self.postprocess_ncs()
         else:
-            self.processXtriage()
+            self.process_xtriage()
             self.processMolrep()
             self.processNCS()
-            self.Queue()
+            self.run_queue()
 
         self.postprocess()
 
@@ -140,7 +140,7 @@ class AutoStats(Process):
         # Change directory to the one specified in the incoming dict
         os.chdir(self.working_dir)
         # Print out recognition of the program being used
-        self.PrintInfo()
+        self.print_info()
         # Check if input file is sca and convert to mtz.
         if self.datafile:
             self.input_sg, self.cell, self.cell2, vol = Utils.getMTZInfo(self, False, True, True)
@@ -150,25 +150,25 @@ class AutoStats(Process):
         if self.test:
             self.logger.debug("TEST IS SET \"ON\"")
 
-    def processPDBQuery(self):
+    def process_pdb_query(self):
         """
         Prepare and run PDBQuery.
         """
         if self.verbose:
-            self.logger.debug("AutoStats::processPDBQuery")
+            self.logger.debug("AutoStats::process_pdb_query")
         try:
             self.cell_output = Queue()
-            Process(target=PDBQuery, args=(self.input, self.cell_output, self.logger)).start()
+            Process(target=PDBQuery, args=(self.command_input, self.cell_output, self.logger)).start()
 
         except:
-            self.logger.exception("**Error in AutoStats.processPDBQuery**")
+            self.logger.exception("**Error in AutoStats.process_pdb_query**")
 
-    def processXtriage(self):
+    def process_xtriage(self):
         """
         Run phenix.xtriage.
         """
         if self.verbose:
-            self.logger.debug("AutoStats::processXtriage")
+            self.logger.debug("AutoStats::process_xtriage")
         try:
             command = "/share/apps/necat/programs/phenix-dev-1702/build/intel-linux-2.6-x86_64/bin/phenix.xtriage "
             command += '%s scaling.input.xray_data.obs_labels="I(+),SIGI(+),I(-),SIGI(-)" ' % self.datafile
@@ -185,9 +185,9 @@ class AutoStats(Process):
                 self.pids["xtriage"] = xtriage_output.get()
 
         except:
-            self.logger.exception("**ERROR in AutoStat.processXtriage**")
+            self.logger.exception("**ERROR in AutoStat.process_xtriage**")
 
-    def processNCS2(self):
+    def process_ncs2(self):
         """
         Run Phaser tNCS and anisotropy correction
         """
@@ -252,17 +252,17 @@ class AutoStats(Process):
 
         try:
             self.pp_output = Queue()
-            Process(target=LabelitPP, args=(self.input, self.pp_output, self.logger)).start()
+            Process(target=LabelitPP, args=(self.command_input, self.pp_output, self.logger)).start()
 
         except:
             self.logger.exception("**ERROR in AutoStats.processPP**")
 
-    def postprocessXtriage(self):
+    def postprocess_xtriage(self):
         """
         Sort Xtriage data.
         """
         if self.verbose:
-            self.logger.debug("AutoStats::postprocessXtriage")
+            self.logger.debug("AutoStats::postprocess_xtriage")
 
         try:
             if os.path.exists("logfile.log"):
@@ -276,7 +276,7 @@ class AutoStats(Process):
                 self.xtriage_log = open("xtriage.log", "r").readlines()
 
         except:
-            self.logger.exception("**ERROR in AutoStats.postprocessXtriage**")
+            self.logger.exception("**ERROR in AutoStats.postprocess_xtriage**")
 
     def postprocessMolrep(self):
         """
@@ -302,22 +302,22 @@ class AutoStats(Process):
         except:
             self.logger.exception("**ERROR in AutoStats.postprocessMolrep**")
 
-    def postprocessNCS(self):
+    def postprocess_ncs(self):
         if self.verbose:
-            self.logger.debug("AutoStats::postprocessNCS")
+            self.logger.debug("AutoStats::postprocess_ncs")
 
         try:
             if os.path.exists("phaser2.log"):
                 data = Parse.ParseOutputPhaserNCS(self, open("phaser2.log", "r").readlines())
                 if len(data["CID"].keys()) > 0:
-                    self.NCS_results = {"PhaserNCS results":data}
+                    self.ncs_results = {"PhaserNCS results":data}
                 else:
-                    self.NCS_results = False
+                    self.ncs_results = False
 
         except:
-            self.logger.exception("**ERROR in AutoStats.postprocessNCS**")
+            self.logger.exception("**ERROR in AutoStats.postprocess_ncs**")
 
-    def Queue(self):
+    def run_queue(self):
         """
         queue system.
         """
@@ -334,11 +334,11 @@ class AutoStats(Process):
                     for job in jobs:
                         if job.is_alive() == False:
                             if self.jobs_output[job] == "xtriage":
-                                self.postprocessXtriage()
+                                self.postprocess_xtriage()
                             if self.jobs_output[job] == "molrep":
                                 self.postprocessMolrep()
                             if self.jobs_output[job] == "NCS":
-                                self.postprocessNCS()
+                                self.postprocess_ncs()
                             jobs.remove(job)
                             del self.pids[self.jobs_output[job]]
                             counter -= 1
@@ -357,23 +357,23 @@ class AutoStats(Process):
                         Utils.killChildren(self, pid)
                     for job in jobs:
                         if self.jobs_output[job] == "xtriage":
-                            self.postprocessXtriage()
+                            self.postprocess_xtriage()
                         if self.jobs_output[job] == "molrep":
                             self.postprocessMolrep()
                         if self.jobs_output[job] == "NCS":
-                            self.postprocessNCS()
+                            self.postprocess_ncs()
                 if self.verbose:
                     self.logger.debug("AutoStats Queue finished.")
 
         except:
             self.logger.exception("**ERROR in Autostat.Queue**")
 
-    def PrintInfo(self):
+    def print_info(self):
         """
         Print information regarding programs utilized by RAPD
         """
         if self.verbose:
-            self.logger.debug("AutoStats::PrintInfo")
+            self.logger.debug("AutoStats::print_info")
         try:
             print "\nRAPD now using Phenix"
             print "======================="
@@ -393,7 +393,7 @@ class AutoStats(Process):
             self.logger.debug("Website: http://www.phenix-online.org/documentation/xtriage.htm\n")
 
         except:
-            self.logger.exception("**Error in AutoStats.PrintInfo**")
+            self.logger.exception("**Error in AutoStats.print_info**")
 
     def postprocess(self):
         """
@@ -412,10 +412,10 @@ class AutoStats(Process):
         pp_out = False
 
         #Make the output html files
-        self.plotXtriage()
+        self.plot_xtriage()
         if self.xtriage_results:
             Summary.summaryXtriage(self)
-        self.htmlSummaryXtriage()
+        self.html_summary_xtriage()
         if self.molrep_results:
             Summary.summaryMolrep(self)
         self.html_summary_molrep()
@@ -498,10 +498,10 @@ class AutoStats(Process):
                 if pp_out:
                     output.update(pp_out)
                 results.update(output)
-            self.input.insert(0, "STATS")
-            self.input.append(results)
+            self.command_input.insert(0, "STATS")
+            self.command_input.append(results)
             if self.gui:
-                rapd_send(self.controller_address, self.input)
+                rapd_send(self.controller_address, self.command_input)
 
         except:
             self.logger.exception("**Could not send results to pipe**")
@@ -527,21 +527,21 @@ class AutoStats(Process):
         print "Total elapsed time: %s seconds" % t
         print "-------------------------------------"
 
-    def plotXtriage(self):
+    def plot_xtriage(self):
         """
         generate plots html/php file
         """
         if self.verbose:
-            self.logger.debug("AutoStats::plotXtriage")
+            self.logger.debug("AutoStats::plot_xtriage")
 
         try:
             anom = self.xtriage_results.get("Xtriage results").get("Xtriage anom plot")
             intensity = self.xtriage_results.get("Xtriage results").get("Xtriage int plot")
             nz = self.xtriage_results.get("Xtriage results").get("Xtriage nz plot")
             l_test = self.xtriage_results.get("Xtriage results").get("Xtriage l-test plot")
-            if self.NCS_results:
-                cid0 = self.NCS_results.get("PhaserNCS results").get("CID").get("before", False)
-                cid1 = self.NCS_results.get("PhaserNCS results").get("CID").get("after", False)
+            if self.ncs_results:
+                cid0 = self.ncs_results.get("PhaserNCS results").get("CID").get("before", False)
+                cid1 = self.ncs_results.get("PhaserNCS results").get("CID").get("after", False)
             #List of params for parsing later.
             l = [["Intensity", "Mean I vs. Resolution", "Resolution(A)", "M e a n &nbsp I", intensity,
                   ("&lt I &gt smooth", "&lt I &gt binning", "&lt I &gt expected")],
@@ -559,7 +559,7 @@ class AutoStats(Process):
                   ("Acen_theo", "Acen_twin", "Acen_obs", "Cen_theo", "Cen_obs")]
                 ]
             e = len(l) - 2
-            if self.NCS_results:
+            if self.ncs_results:
                 #If job is killed early, it will only have the before CID.
                 if cid0:
                     e += 1
@@ -637,15 +637,15 @@ class AutoStats(Process):
                 Utils.failedHTML(self, "plots_xtriage")
 
         except:
-            self.logger.exception("**ERROR in AutoStats.plotXtriage**")
+            self.logger.exception("**ERROR in AutoStats.plot_xtriage**")
             Utils.failedHTML(self, "plots_xtriage")
 
-    def htmlSummaryXtriage(self):
+    def html_summary_xtriage(self):
         """
         Create HTML/php files for xtriage output results.
         """
         if self.verbose:
-            self.logger.debug("AutoStats::htmlSummaryXtriage")
+            self.logger.debug("AutoStats::html_summary_xtriage")
 
         try:
             if self.xtriage_summary:
@@ -684,7 +684,7 @@ class AutoStats(Process):
                 Utils.failedHTML(self, ("jon_summary_xtriage", "Input data could not be analysed, probably because resolution was too low."))
 
         except:
-            self.logger.exception("**ERROR in AutoStats.htmlSummaryXtriage**")
+            self.logger.exception("**ERROR in AutoStats.html_summary_xtriage**")
 
     def html_summary_molrep(self):
         """

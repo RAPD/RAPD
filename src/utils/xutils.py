@@ -1550,7 +1550,7 @@ def getMTZInfo(self,inp=False,convert=True,volume=False):
   if volume:
     return(sg,cell,cell2,vol)
   else:
-    return(sg,cell,cell2)
+    return(sg,cell,cell2,0)
 
 def getPDBInfo(self,inp,matthews=True,cell_analysis=False):
   """
