@@ -910,7 +910,7 @@ class RapdAgent(Process):
                      '\n',
                      'BACKGROUND_RANGE=%s\n\n' % background_range]
         # If detector is tilted in two-theta, adjust DIRECTION_OF_Y-AXIS
-        if self.data['twotheta'] == 0.0 of self.data['twotheta'] == None:
+        if self.data['twotheta'] == 0.0 or self.data['twotheta'] == None:
             xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS=0.0 1.0 0.0\n\n')
         else:
             twotheta = math.radians(float(self.data['twotheta']))
