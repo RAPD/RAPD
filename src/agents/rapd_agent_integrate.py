@@ -911,7 +911,7 @@ class RapdAgent(Process):
                      '\n',
                      'BACKGROUND_RANGE=%s\n\n' % background_range,
                      '!=============== DETECTOR PARAMETERS ========================\n',
-                     'DETECTOR=MAR345 MINIMUM_VALID_PIXEL_VALUE=0 OVERLOAD=%s\n' %self.data['cutoff'],
+                     'DETECTOR=MAR345 MINIMUM_VALID_PIXEL_VALUE=0 OVERLOAD=%s\n' %self.data['count_cutoff'],
                      'NX=%s NY=%S QX=%s QY=%s ! SER-CAT Rayonix MX300hs\n' %(
                      	     self.data['size1'],self.data['size2'],self.data['pixel_size'],self.data['pixel_size']),
                      'TRUSTED_REGION=0.0 1.05 !Relative radii limiting trusted detector region\n\n',
