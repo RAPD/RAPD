@@ -53,7 +53,7 @@ from numpy import interp
 # RAPD imports
 from subcontractors.xdsme.xds2mos import Xds2Mosflm
 from utils.communicate import rapd_send
-from subcontractors.stats import AutoStats
+# from subcontractors.stats import AutoStats
 import utils.xutils as Utils
 
 #
