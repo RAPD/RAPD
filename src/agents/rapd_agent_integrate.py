@@ -56,11 +56,11 @@ from utils.communicate import rapd_send
 from subcontractors.stats import AutoStats
 import utils.xutils as Utils
 
-#
-# # Import smartie.py from the installed CCP4 package
-# # smartie.py is a python script for parsing log files from CCP4
-# sys.path.append(os.path.join(os.environ["CCP4"], "share", "smartie"))
-# import smartie
+
+# Import smartie.py from the installed CCP4 package
+# smartie.py is a python script for parsing log files from CCP4
+sys.path.append(os.path.join(os.environ["CCP4"], "share", "smartie"))
+import smartie
 
 class RapdAgent(Process):
     """
