@@ -31,8 +31,8 @@ import os
 import time
 
 # RAPD imports
-from agents.rapd_agent_cell import PDBQuery
-from agents.rapd_agent_pp import LabelitPP
+# from agents.rapd_agent_cell import PDBQuery
+# from agents.rapd_agent_pp import LabelitPP
 import parse as Parse
 import summary as Summary
 from utils.communicate import rapd_send
