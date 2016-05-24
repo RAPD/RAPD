@@ -922,7 +922,7 @@ class RapdAgent(Process):
                      "FRIEDEL'S_LAW=FALSE !Defaults is TRUE\n\n",
                      'INCLUDE_RESOLUTION_RANGE=200.0 0.0 !Angstroems\n',
                      'REFINE(IDXREF)=BEAM AXIS ORIENTATION CELL POSITION\n',
-                     'REFINE(INTEGRATE)=BEAM CELL ORIENATATION POSITION\n',
+                     'REFINE(INTEGRATE)=BEAM CELL ORIENTATION POSITION\n',
                      'REFINE(CORRECT)=BEAM AXIS CELL ORIENTATION POSITION\n',
                      'STRICT_ABSORPTION_CORRECTION=TRUE\n\n',
                      'DIRECTION_OF_DETECTOR_X-AXIS=1.0 0.0 0.0\n']
