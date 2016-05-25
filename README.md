@@ -1,6 +1,7 @@
 # rapd
 
-A package for automated autoindexing, integration & structure soultion of macromolecular crystallographic data, complete with AJAX-based user interface
+A package for automated autoindexing, integration & structure solution of macromolecular crystallographic data, complete with AJAX-based user interface.
 
-For more detail on the package, check out the [RAPD wiki](https://rapd.nec.aps.anl.gov/wiki) at NE-CAT.
+The project is currently going through a radical rewrite to enable deploying to sites beyond NE-CAT.
 
+More documentation will be available soon! 
