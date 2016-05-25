@@ -918,6 +918,9 @@ class RapdAgent(Process):
             for rectangle in rectangles:
             	untrusted_region += 'UNTRUSTED_RECTANGLE= %s\n' %rectangle
             untrusted_region +='\n'
+            # We also use non-default values for SEPMIN and CLUSTER_RADIUS for the Pilatus, so add those.
+            untrusted_region +='SEPMIN=4 ! Default is 6 for other detectors.\n'
+            untrusted_region +='CLUSTER_RADIUS=2 ! Defaults is 3 for other detectors.\n\n'
             min_pixel_value = '0'
              
         # Rayonix 300hs.
@@ -937,6 +940,8 @@ class RapdAgent(Process):
             file_template = os.path.join(self.data['directory'],self.image_template)
             self.last_image = file_template.replace('????', '%04d' %last_frame)
             self.first_iamge = file_template.replace('????', '%04d' %int(self.data['start']))
+            # Set untrusted region for this detector on SER-CAT beamline
+            untrusted_region = ''
             min_pixel_value = '0'
 
         self.logger.debug('	Last Image = %s' % self.last_image)
@@ -979,6 +984,7 @@ class RapdAgent(Process):
             xds_input.append('!***   Reset DIRECTION_OF_DETECTOR_Y-AXIS ***')
             xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS=0.0 %.4f %.4f\n' %(tilty, tiltz))
             xds_input.append('!0.0 cos(2theta) sin(2theta)\n\n')
+        xds_input.append(untrusted_region)
 
         return(xds_input)
 
