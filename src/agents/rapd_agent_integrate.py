@@ -798,7 +798,6 @@ class RapdAgent(Process):
                 raise RuntimeError, 'x beam coordinate outside detector'
             if y_beam < 0 or y_beam > 6144:
                 raise RuntimeError, 'y beam coordinate outside detector'
-            detector_file = 'XDS-ADSC.INP'
             if 'image_template' in self.data:
                 self.image_template = self.data['image_template']
             else:
@@ -815,16 +814,22 @@ class RapdAgent(Process):
                 file_template = os.path.join('/dev/shm/',
                                              self.data['prefix'],
                                              self.image_template)
-
+            if self.data.has_key('pixel_size'):
+            	pass
+            else:
+            	self.data['pixel_size'] = '0.0513'
+            # Set untrusted region for this detector on NE-CAT 24ID-E
+            untrusted_region = 'UNTRUSTED_RECTANGLE= 0 1040 3080 4090\n\n'
+            
         #ADSC binned.
         elif detector_type == 'ADSC_binned':
+            detector_type = 'ADSC'	
             x_beam = float(self.data['y_beam']) / 0.10259
             y_beam = float(self.data['x_beam']) / 0.10259
             if x_beam < 0 or x_beam > 3072:
                 raise RuntimeError, 'x beam coordinate outside detector'
             if y_beam < 0 or y_beam > 3072:
                 raise RuntimeError, 'y beam coordinate outside detector'
-            detector_file = 'XDS-ADSC.INP'
             if 'image_template' in self.data:
                 self.image_template = self.data['image_template']
             else:
@@ -840,7 +845,15 @@ class RapdAgent(Process):
                 file_template = os.path.join('/dev/shm/',
                                              self.data['prefix'],
                                              self.image_template)
-
+            if self.data.has_key('pixel_size'):
+            	pass
+            else:
+            	self.data['pixel_size'] = '0.10259'
+            # Set untrusted region for this detector at NE-CAT 24ID-E.
+            untrusted_region = 'UNTRUSTED_RECTANGLE= 0 520 1540 2045\n\n'
+         if detector_type == 'ADSC':
+         	min_pixel_value = '1'
+         	
         # ADSC HF-4M
         elif detector_type == 'HF4M':
             x_beam = float(self.data['y_beam']) / 0.150
@@ -868,7 +881,6 @@ class RapdAgent(Process):
                 raise RuntimeError, 'x beam coordinate outside detector'
             if y_beam < 0 or y_beam > 2527:
                 raise RuntimeError, 'y beam coordinate outside detector'
-            detector_file = 'XDS-PILATUS.INP'
             if 'image_template' in self.data:
                 self.image_template = self.data['image_template']
             else:
@@ -881,9 +893,36 @@ class RapdAgent(Process):
                 file_template = os.path.join('/dev/shm/',
                                              self.data['image_prefix'],
                                              self.image_template)
-        
+            if self.data.has_key('pixel_size'):
+            	pass
+            else:
+            	self.data['pixel_size'] = '0.172'
+            # Set untrusted region for this detector on NE-CAT 24ID-C
+            # The Pilatus has a lot of regions untrusted between modules.
+            untrusted_region=''
+            rectangles = ['487 495 0 2527']
+            rectangles.extend('981 989 0 2527')
+            rectangles.extend('1475 1483 0 2527')
+            rectangles.extend('1969 1977 0 2527')
+            rectangles.extend('0 2463 195 213')
+            rectangles.extend('0 2463 407 425')
+            rectangles.extend('0 2463 619 637')
+            rectangles.extend('0 2463 831 849')
+            rectangles.extend('0 2463 1043 1061')
+            rectangles.extend('0 2463 1255 1273')
+            rectangles.extend('0 2463 1467 1485')
+            rectangles.extend('0 2463 1679 1697')
+            rectangles.extend('0 2463 1891 1909')
+            rectangles.extend('0 2463 2103 2121')
+            rectangles.extend('0 2463 2315 2333')
+            for rectangle in rectangles:
+            	untrusted_region += 'UNTRUSTED_RECTANGLE= %s\n' %rectangle
+            untrusted_region +='\n'
+            min_pixel_value = '0'
+             
         # Rayonix 300hs.
         elif detector_type == 'rayonix_mx300hs':
+            detector_type = 'MAR345'
             x_beam = float(self.data['x_beam']) / float(self.data['pixel_size'])
             y_beam = float(self.data['y_beam']) / float(self.data['pixel_size'])
             if x_beam < 0 or x_beam > int(self.data['size1']):
@@ -898,6 +937,7 @@ class RapdAgent(Process):
             file_template = os.path.join(self.data['directory'],self.image_template)
             self.last_image = file_template.replace('????', '%04d' %last_frame)
             self.first_iamge = file_template.replace('????', '%04d' %int(self.data['start']))
+            min_pixel_value = '0'
 
         self.logger.debug('	Last Image = %s' % self.last_image)
         # Begin xds input with parameters determined by data set.
@@ -911,8 +951,9 @@ class RapdAgent(Process):
                      '\n',
                      'BACKGROUND_RANGE=%s\n\n' % background_range,
                      '!=============== DETECTOR PARAMETERS ========================\n',
-                     'DETECTOR=MAR345 MINIMUM_VALID_PIXEL_VALUE=0 OVERLOAD=%s\n' %self.data['count_cutoff'],
-                     'NX=%s NY=%s QX=%s QY=%s ! SER-CAT Rayonix MX300hs\n' %(
+                     'DETECTOR=%s MINIMUM_VALID_PIXEL_VALUE=%s OVERLOAD=%s\n' %(
+                     	     detector_type, min_pixel_value,self.data['count_cutoff']),
+                     'NX=%s NY=%s QX=%s QY=%s\n' %(
                      	     self.data['size1'],self.data['size2'],self.data['pixel_size'],self.data['pixel_size']),
                      'TRUSTED_REGION=0.0 1.05 !Relative radii limiting trusted detector region\n\n',
                      'ROTATION_AXIS=1.0 0.0 0.0\n',
@@ -938,14 +979,6 @@ class RapdAgent(Process):
             xds_input.append('!***   Reset DIRECTION_OF_DETECTOR_Y-AXIS ***')
             xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS=0.0 %.4f %.4f\n' %(tilty, tiltz))
             xds_input.append('!0.0 cos(2theta) sin(2theta)\n\n')
-
-        # Read in default XDS.INP for detector and add to xds input.
-        if detector_type == 'rayonix_mx300hs':
-            pass
-        else:
-            read_file = os.path.join(self.detector_directory, detector_file)
-            detector_defaults = open(read_file,'r').readlines()
-            xds_input.extend(detector_defaults)
 
         return(xds_input)
 
