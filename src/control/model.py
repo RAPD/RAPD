@@ -144,7 +144,7 @@ class Model(object):
         # A string is input - one tag
         if isinstance(self.site.ID, str):
             self.site_ids = [self.site.ID]
-            self.pairs[self.site.ID] = collections.deque([("",0), ("",0)], 2)
+            self.pairs[self.site.ID] = collections.deque([("", 0), ("", 0)], 2)
 
         # Tuple or list
         elif isinstance(self.site.ID, tuple) or isinstance(self.site.ID, list):
@@ -806,6 +806,12 @@ class Model(object):
         """
         Receive information from ControllerServer (self.SERVER) and handle accordingly.
 
+        Keyword arguments
+        message -- information to be preocessed in the format (TYPE, {info})
+
+        Types currently handled: NEWIMAGE, NEWRUN
+        """
+        """
         Several return lengths are currently supported:
             2 - command, info
             3 - command, info, server
@@ -846,59 +852,27 @@ class Model(object):
         self.logger.debug("length returned %d", len(message))
         self.logger.debug(message)
 
-        try:
-            # As a hangover from initial design, it is possible to determine
-            # some command types based on the number objects passed in...
-
-            # Integrate
-            if len(message) == 5:
-                command, dirs, info, settings, results = message
-
-            # Autoindex, STAC
-            elif len(message) == 6:
-                command, dirs, info, settings, server, results = message
-
-            # Autoindex-pair, STAC-pair
-            elif len(message) == 7:
-                command, dirs, info1, info2, settings, server, results = message
-
-            # Download
-            elif len(message) == 3:
-                command, info, server = message
-
-            # Others
-            elif len(message) == 2:
-                command, info = message
-
-            # Anything else
-            else:
-                command = message
-        except:
-
-            # "OLD" format
-            command = message
+        # Unpack
+        command, information = message
 
         # Keep track adding to the database
         result_db = False
         trip_db = False
 
-        # New image
-        # info is fullname
+        # NEWIMAGE
+        # information is {"fullname":.., "site_tag":..}
         if command == "NEWIMAGE":
-            self.add_image(info)
+            self.add_image(information)
 
         # NEWRUN
-        # info is dict containing run information
+        # information is dict containing run information
         elif command == "NEWRUN":
-            self.logger.debug("NEWRUN")
-            self.logger.debug(info)
-            self.add_run(info)
+            self.add_run(information)
 
         # elif command == "PILATUS_ABORT":
         #     self.logger.debug("Run aborted")
         #     if self.current_run:
         #         self.current_run["status"] = "ABORTED"
-
 
         # elif command == "DIFF_CENTER":
         #     #add result to database
@@ -1115,10 +1089,13 @@ class Model(object):
         #                 mark="failure"
         #                 )
         #
+
+
+        
         # elif command == "AUTOINDEX":
-        #     #Handle the ongoing throttling of autoindexing jobs
+        #     # Handle the ongoing throttling of autoindexing jobs
         #     if self.SecretSettings["throttle_strategy"] == True:
-        #         #pop one marker off the indexing_active
+        #         # Pop one marker off the indexing_active
         #         try:
         #             self.indexing_active.pop()
         #         except:
@@ -1133,7 +1110,7 @@ class Model(object):
         #                          secret_settings=job[2],
         #                          logger=job[3])
         #
-        #     #add result to database
+        #     # Add result to database
         #     result_db = self.database.addSingleResult(dirs=dirs,
         #                                               info=info,
         #                                               settings=settings,
@@ -1141,20 +1118,20 @@ class Model(object):
         #
         #     self.logger.debug("Added single result: %s" % str(result_db))
         #
-        #     #mark the process as finished
+        #     # Mark the process as finished
         #     self.database.modifyProcessDisplay(process_id=info["process_id"],
         #                                        display_value="complete")
         #
-        #     #move the files to the server & other
+        #     # Move the files to the server & other
         #     if result_db:
         #
-        #         #Update the Remote project
+        #         # Update the Remote project
         #         if self.remote_adapter:
         #             wedges = self.database.getStrategyWedges(id=result_db["single_result_id"])
         #             result_db["image_id"] = info["image_id"]
         #             self.remote_adapterAdapter.update_image_stats(result_db, wedges)
         #
-        #         #now mark the cloud database if this is a reprocess request
+        #         # Now mark the cloud database if this is a reprocess request
         #         if result_db["type"] in ("reprocess", "stac"):
         #             #remove the process from cloud_current
         #             self.database.removeCloudCurrent(
@@ -1178,7 +1155,7 @@ class Model(object):
         #                 )
         #
         #         trip_db = self.database.getTrips(data_root_dir=dirs["data_root_dir"])
-        #         #this data has an associated trip
+        #         # This data has an associated trip
         #         if trip_db:
         #             for record in trip_db:
         #                 #update the dates for the trip
@@ -1195,7 +1172,7 @@ class Model(object):
         #                     logger=self.logger
         #                     )
         #
-        #         #this data is an "orphan"
+        #         # This data is an "orphan"
         #         else:
         #             self.logger.debug("Orphan result")
         #             #add the orphan to the orphan database table
@@ -1217,7 +1194,7 @@ class Model(object):
         #                 )
         #
         #
-        #     #the addition of result to db has failed, but still needs removed from the cloud
+        #     # The addition of result to db has failed, but still needs removed from the cloud
         #     else:
         #         if settings["request"]["request_type"] == "reprocess":
         #             #remove the process from cloud_current

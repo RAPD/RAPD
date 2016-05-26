@@ -1363,38 +1363,39 @@ class RapdAgent(Process):
           path = os.path.join(self.working_dir,l[i][0])
           path2 = os.path.join(self.dest_dir,l[i][0])
           if os.path.exists(path):
-            output[l[i][1]] = path2
+              output[l[i][1]] = path2
           else:
-            output[l[i][1]] = 'None'
+              output[l[i][1]] = 'None'
         except:
-          self.logger.exception('**Could not update path of %s file.**'%l[i][0])
-          output[l[i][1]] = 'FAILED'
-      #Put all output files into a singe dict to pass back.
+            self.logger.exception('**Could not update path of %s file.**'%l[i][0])
+            output[l[i][1]] = 'FAILED'
+
+      # Put all output files into a singe dict to pass back.
       output_files = {'Output files' : output}
+
       # Put all the result dicts from all the programs run into one resultant dict and pass back.
       try:
-        results = {}
-        if self.labelit_results:
-          results.update(self.labelit_results)
-        if self.distl_results:
-          results.update(self.distl_results)
-        if self.raddose_results:
-          results.update(self.raddose_results)
-        if self.best_results:
-          results.update(self.best_results)
-        if self.best_anom_results:
-          results.update(self.best_anom_results)
-        if self.mosflm_strat_results:
-          results.update(self.mosflm_strat_results)
-        if self.mosflm_strat_anom_results:
-          results.update(self.mosflm_strat_anom_results)
-        results.update(output_files)
-        self.input.append(results)
-        if self.gui:
-          # self.sendBack2(self.input)
-          rapd_send(self.controller_address, self.input)
+          results = {}
+          if self.labelit_results:
+              results.update(self.labelit_results)
+          if self.distl_results:
+              results.update(self.distl_results)
+          if self.raddose_results:
+              results.update(self.raddose_results)
+          if self.best_results:
+              results.update(self.best_results)
+          if self.best_anom_results:
+              results.update(self.best_anom_results)
+          if self.mosflm_strat_results:
+              results.update(self.mosflm_strat_results)
+          if self.mosflm_strat_anom_results:
+              results.update(self.mosflm_strat_anom_results)
+          results.update(output_files)
+          self.input.append(results)
+          if self.gui:
+              rapd_send(self.controller_address, self.input)
       except:
-        self.logger.exception('**Could not send results to pipe.**')
+          self.logger.exception('**Could not send results to pipe.**')
 
       #Cleanup my mess.
       try:
