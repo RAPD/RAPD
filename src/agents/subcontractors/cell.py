@@ -708,7 +708,7 @@ class PDBQuery(Process):
             jon_summary.write(Utils.getHTMLHeader(self, "pdbquery"))
             jon_summary.write("%6s$(document).ready(function() {\n" % "")
             if self.gui:
-                jon_summary.write("%8s$("button").button(); \n" % "")
+                jon_summary.write("%8s$('button').button(); \n" % "")
             if self.cell_summary:
                 jon_summary.write("%8s$('#pdbquery-cell').dataTable({\n" % "")
                 jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bSort": false,\n%11s"bAutoWidth": false });\n' % (5*("", )))
