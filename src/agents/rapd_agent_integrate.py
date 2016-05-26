@@ -57,7 +57,6 @@ from utils.communicate import rapd_send
 from subcontractors.stats import AutoStats
 import utils.xutils as Utils
 
-
 # Import smartie.py from the installed CCP4 package
 # smartie.py is a python script for parsing log files from CCP4
 sys.path.append(os.path.join(os.environ["CCP4"], "share", "smartie"))
@@ -820,10 +819,10 @@ class RapdAgent(Process):
             	self.data['pixel_size'] = '0.0513'
             # Set untrusted region for this detector on NE-CAT 24ID-E
             untrusted_region = 'UNTRUSTED_RECTANGLE= 0 1040 3080 4090\n\n'
-            
+
         #ADSC binned.
         elif detector_type == 'ADSC_binned':
-            detector_type = 'ADSC'	
+            detector_type = 'ADSC'
             x_beam = float(self.data['y_beam']) / 0.10259
             y_beam = float(self.data['x_beam']) / 0.10259
             if x_beam < 0 or x_beam > 3072:
@@ -851,9 +850,9 @@ class RapdAgent(Process):
             	self.data['pixel_size'] = '0.10259'
             # Set untrusted region for this detector at NE-CAT 24ID-E.
             untrusted_region = 'UNTRUSTED_RECTANGLE= 0 520 1540 2045\n\n'
-         if detector_type == 'ADSC':
+        if detector_type == 'ADSC':
          	min_pixel_value = '1'
-         	
+
         # ADSC HF-4M
         elif detector_type == 'HF4M':
             x_beam = float(self.data['y_beam']) / 0.150
@@ -922,7 +921,7 @@ class RapdAgent(Process):
             untrusted_region +='SEPMIN=4 ! Default is 6 for other detectors.\n'
             untrusted_region +='CLUSTER_RADIUS=2 ! Defaults is 3 for other detectors.\n\n'
             min_pixel_value = '0'
-             
+
         # Rayonix 300hs.
         elif detector_type == 'rayonix_mx300hs':
             detector_type = 'MAR345'
@@ -1875,7 +1874,7 @@ class RapdAgent(Process):
                   ['Rcp v. batch', 'relative frame difference', ['Rcp'], 1, [-1], 8]
                   ]
         return(graphs, tables, int_results)
-    
+
     def aimless (self, mtzin, resolution=False):
         """
         Runs aimless on the data, including the scaling step.
