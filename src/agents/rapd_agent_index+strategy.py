@@ -221,12 +221,12 @@ class RapdAgent(Process):
         #This is used to determine if job submitted by rapd_cluster or script was launched for testing.
         #******BEAMLINE SPECIFIC*****
         if self.header.has_key("acc_time"):
-            self.gui                   = True
-            self.test                  = False
-            self.clean                 = True
-            #self.verbose               = False
+            self.gui = True
+            self.test = False
+            self.clean = True
+            #self.verbose = False
         else:
-            self.gui                   = True
+            self.gui = True
         #******BEAMLINE SPECIFIC*****
 
         Process.__init__(self, name="AutoindexingStrategy")
@@ -276,7 +276,7 @@ class RapdAgent(Process):
                 self.preprocessRaddose()
                 self.processRaddose()
                 self.processStrategy()
-                self.Queue()
+                self.run_queue()
                 #Get the distl results
                 if self.multiproc:
                     self.postprocessDistl()
@@ -326,92 +326,94 @@ class RapdAgent(Process):
             self.running.set()
 
     def preprocessRaddose(self):
-      """
-      Create the raddose.com file which will run in processRaddose. Several beamline specific entries for flux and
-      aperture size passed in from rapd_site.py
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::preprocessRaddose')
-      try:
-        #Get unit cell
-        cell = Utils.getLabelitCell(self)
-        nres = Utils.calcTotResNumber(self,self.volume)
-        #Adding these typically does not change the Best strategy much, if it at all.
-        patm                 = False
-        satm                 = False
-        if self.sample_type == 'Ribosome':
-          crystal_size_x = '1'
-          crystal_size_y = '0.5'
-          crystal_size_z = '0.5'
-        else:
-          #crystal dimensions (default 0.1 x 0.1 x 0.1 from rapd_site.py)
-          crystal_size_x = str(float(self.preferences.get("crystal_size_x", 100))/1000.0)
-          crystal_size_y = str(float(self.preferences.get("crystal_size_y", 100))/1000.0)
-          crystal_size_z = str(float(self.preferences.get("crystal_size_z", 100))/1000.0)
-        if self.header.has_key('flux'):
-          beam_size_x = str(self.header.get('beam_size_x'))
-          beam_size_y = str(self.header.get('beam_size_y'))
-          gauss_x     = str(self.header.get('gauss_x'))
-          gauss_y     = str(self.header.get('gauss_y'))
         """
-        #**Beamline specific failsafe if aperture size is not sent correctly from MD2.
-        if self.aperture == '0' or '-1':
-          if self.beamline == '24_ID_C':
-            self.aperture = '70'
-          else:
-            self.aperture = '50'
-        #Get max crystal size to calculate the shape.(Currently disabled in Best, because no one changes it)
-        #max_size      = float(max(crystal_size_x,crystal_size_y,crystal_size_z))
-        #aperture      = float(self.aperture)/1000.0
-        #self.shape    = max_size/aperture
-        #put together the command script for Raddose
+        Create the raddose.com file which will run in processRaddose. Several beamline specific entries for flux and
+        aperture size passed in from rapd_site.py
         """
-        raddose = open("raddose.com", "w+")
-        setup = 'raddose << EOF\n'
-        if beam_size_x and beam_size_y:
-          setup += 'BEAM %s %s\n'%(beam_size_x,beam_size_y)
-        #Full-width-half-max of the beam
-        setup += 'GAUSS %s %s\nIMAGES 1\n'%(gauss_x,gauss_y)
-        if self.flux:
-          setup += 'PHOSEC %s\n'%self.flux
-        else:
-          setup += 'PHOSEC 3E10\n'
-        if cell:
-          setup += 'CELL %s %s %s %s %s %s\n'%(cell[0],cell[1],cell[2],cell[3],cell[4],cell[5])
-        else:
-          self.logger.debug('Could not get unit cell from bestfile.par')
-        #Set default solvent content based on sample type. User can override.
-        if self.solvent_content == '0.55':
-          if self.sample_type == 'Protein':
-            setup += 'SOLVENT 0.55\n'
-          else:
-            setup += 'SOLVENT 0.64\n'
-        else:
-          setup += 'SOLVENT %s\n'%self.solvent_content
-        #Sets crystal dimensions. Input from dict (0.1 x 0.1 x 0.1 mm), but user can override.
-        if crystal_size_x and crystal_size_y and crystal_size_z:
-          setup += 'CRYSTAL %s %s %s\n'%(crystal_size_x,crystal_size_y,crystal_size_z)
-        if self.wavelength:
-          setup += 'WAVELENGTH %s\n'%self.wavelength
-        if self.time:
-          setup += 'EXPOSURE %s\n'%self.time
-        setup += 'NMON 1\n'
-        if self.sample_type == 'Protein':
-          setup += 'NRES %s\n'%nres
-        elif self.sample_type == 'DNA':
-          setup += 'NDNA %s\n'%nres
-        else:
-          setup += 'NRNA %s\n'%nres
-        if patm:
-          setup += 'PATM %s\n'%patm
-        if satm:
-          setup += 'SATM %s\n'%satm
-        setup += 'END\nEOF\n'
-        raddose.writelines(setup)
-        raddose.close()
+        if self.verbose:
+            self.logger.debug("AutoindexingStrategy::preprocessRaddose")
 
-      except:
-        self.logger.exception("**ERROR in preprocessRaddose**")
+        try:
+            # Get unit cell
+            cell = Utils.getLabelitCell(self)
+            nres = Utils.calcTotResNumber(self,self.volume)
+            # Adding these typically does not change the Best strategy much, if it at all.
+            patm = False
+            satm = False
+            if self.sample_type == "Ribosome":
+                crystal_size_x = "1"
+                crystal_size_y = "0.5"
+                crystal_size_z = "0.5"
+            else:
+                # crystal dimensions (default 0.1 x 0.1 x 0.1 from rapd_site.py)
+                crystal_size_x = str(float(self.preferences.get("crystal_size_x", 100))/1000.0)
+                crystal_size_y = str(float(self.preferences.get("crystal_size_y", 100))/1000.0)
+                crystal_size_z = str(float(self.preferences.get("crystal_size_z", 100))/1000.0)
+            if self.header.has_key("flux"):
+                beam_size_x = str(self.header.get("beam_size_x"))
+                beam_size_y = str(self.header.get("beam_size_y"))
+                gauss_x     = str(self.header.get("gauss_x"))
+                gauss_y     = str(self.header.get("gauss_y"))
+            """
+            #**Beamline specific failsafe if aperture size is not sent correctly from MD2.
+            if self.aperture == "0" or "-1":
+              if self.beamline == "24_ID_C":
+                self.aperture = "70"
+              else:
+                self.aperture = "50"
+            #Get max crystal size to calculate the shape.(Currently disabled in Best, because no one changes it)
+            #max_size      = float(max(crystal_size_x,crystal_size_y,crystal_size_z))
+            #aperture      = float(self.aperture)/1000.0
+            #self.shape    = max_size/aperture
+            #put together the command script for Raddose
+            """
+            raddose = open("raddose.com", "w+")
+            setup = "raddose << EOF\n"
+            if beam_size_x and beam_size_y:
+                setup += "BEAM %s %s\n" % (beam_size_x, beam_size_y)
+            # Full-width-half-max of the beam
+            setup += "GAUSS %s %s\nIMAGES 1\n"%(gauss_x, gauss_y)
+            if self.flux:
+                setup += "PHOSEC %s\n" % self.flux
+            else:
+                setup += "PHOSEC 3E10\n"
+            if cell:
+                setup += "CELL %s %s %s %s %s %s\n" % (cell[0], cell[1], cell[2], cell[3], cell[4], cell[5])
+            else:
+                self.logger.debug("Could not get unit cell from bestfile.par")
+
+            # Set default solvent content based on sample type. User can override.
+            if self.solvent_content == "0.55":
+                if self.sample_type == "Protein":
+                    setup += "SOLVENT 0.55\n"
+                else:
+                    setup += "SOLVENT 0.64\n"
+            else:
+                setup += "SOLVENT %s\n"%self.solvent_content
+            # Sets crystal dimensions. Input from dict (0.1 x 0.1 x 0.1 mm), but user can override.
+            if crystal_size_x and crystal_size_y and crystal_size_z:
+                setup += "CRYSTAL %s %s %s\n" % (crystal_size_x, crystal_size_y, crystal_size_z)
+            if self.wavelength:
+                setup += "WAVELENGTH %s\n" % self.wavelength
+            if self.time:
+                setup += "EXPOSURE %s\n" % self.time
+            setup += "NMON 1\n"
+            if self.sample_type == "Protein":
+                setup += "NRES %s\n" % nres
+            elif self.sample_type == "DNA":
+                setup += "NDNA %s\n" % nres
+            else:
+                setup += "NRNA %s\n" % nres
+            if patm:
+                setup += "PATM %s\n" % patm
+            if satm:
+                setup += "SATM %s\n" % satm
+            setup += "END\nEOF\n"
+            raddose.writelines(setup)
+            raddose.close()
+
+        except:
+            self.logger.exception("**ERROR in preprocessRaddose**")
 
     def processLabelit(self):
         """
@@ -443,60 +445,60 @@ class RapdAgent(Process):
 
     def processXDSbg(self):
         """
-        Calculate the BKGINIT.cbf for the background calc on the Pilatis. This is
+        Calculate the BKGINIT.cbf for the background calc on the Pilatus. This is
         used in BEST.
         Gleb recommended this but it does not appear to make much difference except take longer.
         """
         if self.verbose:
-            self.logger.debug('AutoindexingStrategy::processXDSbg')
+            self.logger.debug("AutoindexingStrategy::processXDSbg")
 
         try:
-            name = str(self.header.get('fullname'))
-            temp = name[name.rfind('_')+1:name.rfind('.')]
-            new_name = name.replace(name[name.rfind('_')+1:name.rfind('.')],len(temp)*'?')
-            #range = str(int(temp))+' '+str(int(temp))
-            command  = 'JOB=XYCORR INIT\n'
+            name = str(self.header.get("fullname"))
+            temp = name[name.rfind("_")+1:name.rfind(".")]
+            new_name = name.replace(name[name.rfind("_")+1:name.rfind(".")],len(temp)*"?")
+            #range = str(int(temp))+" "+str(int(temp))
+            command  = "JOB=XYCORR INIT\n"
             command += Utils.calcXDSbc(self)
-            command += 'DETECTOR_DISTANCE=%s\n' % self.header.get('distance')
-            command += 'OSCILLATION_RANGE=%s\n' % self.header.get('osc_range')
-            command += 'X-RAY_WAVELENGTH=%s\n' % self.wavelength
-            command += 'NAME_TEMPLATE_OF_DATA_FRAMES=%s\n' % new_name
-            #command += 'BACKGROUND_RANGE='+range+'\n'
-            #command += 'DATA_RANGE='+range+'\n'
-            command += 'BACKGROUND_RANGE=%s %s\n' % (int(temp), int(temp))
-            command += 'DATA_RANGE=%s %s\n' % (int(temp), int(temp))
-            command += 'DIRECTION_OF_DETECTOR_Y-AXIS=0.0 1.0 0.0\n'
-            command += 'DETECTOR=PILATUS         MINIMUM_VALID_PIXEL_VALUE=0  OVERLOAD=1048500\n'
-            command += 'SENSOR_THICKNESS=0.32        !SILICON=-1.0\n'
-            command += 'NX=2463 NY=2527 QX=0.172  QY=0.172  !PILATUS 6M\n'
-            command += 'DIRECTION_OF_DETECTOR_X-AXIS= 1.0 0.0 0.0\n'
-            command += 'TRUSTED_REGION=0.0 1.05 !Relative radii limiting trusted detector region\n'
-            command += 'UNTRUSTED_RECTANGLE= 487  493     0 2528\n'
-            command += 'UNTRUSTED_RECTANGLE= 981  987     0 2528\n'
-            command += 'UNTRUSTED_RECTANGLE=1475 1481     0 2528\n'
-            command += 'UNTRUSTED_RECTANGLE=1969 1975     0 2528\n'
-            command += 'UNTRUSTED_RECTANGLE=   0 2464   195  211\n'
-            command += 'UNTRUSTED_RECTANGLE=   0 2464   407  423\n'
-            command += 'UNTRUSTED_RECTANGLE=   0 2464   619  635\n'
-            command += 'UNTRUSTED_RECTANGLE=   0 2464   831  847\n'
-            command += 'UNTRUSTED_RECTANGLE=   0 2464  1043 1059\n'
-            command += 'UNTRUSTED_RECTANGLE=   0 2464  1255 1271\n'
-            command += 'UNTRUSTED_RECTANGLE=   0 2464  1467 1483\n'
-            command += 'UNTRUSTED_RECTANGLE=   0 2464  1679 1695\n'
-            command += 'UNTRUSTED_RECTANGLE=   0 2464  1891 1907\n'
-            command += 'UNTRUSTED_RECTANGLE=   0 2464  2103 2119\n'
-            command += 'UNTRUSTED_RECTANGLE=   0 2464  2315 2331\n'
-            command += 'ROTATION_AXIS= 1.0 0.0 0.0\n'
-            command += 'INCIDENT_BEAM_DIRECTION=0.0 0.0 1.0\n'
-            command += 'FRACTION_OF_POLARIZATION=0.99 !default=0.5 for unpolarized beam\n'
-            command += 'POLARIZATION_PLANE_NORMAL= 0.0 1.0 0.0\n'
-            f = open('XDS.INP', 'w')
+            command += "DETECTOR_DISTANCE=%s\n" % self.header.get("distance")
+            command += "OSCILLATION_RANGE=%s\n" % self.header.get("osc_range")
+            command += "X-RAY_WAVELENGTH=%s\n" % self.wavelength
+            command += "NAME_TEMPLATE_OF_DATA_FRAMES=%s\n" % new_name
+            #command += "BACKGROUND_RANGE="+range+"\n"
+            #command += "DATA_RANGE="+range+"\n"
+            command += "BACKGROUND_RANGE=%s %s\n" % (int(temp), int(temp))
+            command += "DATA_RANGE=%s %s\n" % (int(temp), int(temp))
+            command += "DIRECTION_OF_DETECTOR_Y-AXIS=0.0 1.0 0.0\n"
+            command += "DETECTOR=PILATUS         MINIMUM_VALID_PIXEL_VALUE=0  OVERLOAD=1048500\n"
+            command += "SENSOR_THICKNESS=0.32        !SILICON=-1.0\n"
+            command += "NX=2463 NY=2527 QX=0.172  QY=0.172  !PILATUS 6M\n"
+            command += "DIRECTION_OF_DETECTOR_X-AXIS= 1.0 0.0 0.0\n"
+            command += "TRUSTED_REGION=0.0 1.05 !Relative radii limiting trusted detector region\n"
+            command += "UNTRUSTED_RECTANGLE= 487  493     0 2528\n"
+            command += "UNTRUSTED_RECTANGLE= 981  987     0 2528\n"
+            command += "UNTRUSTED_RECTANGLE=1475 1481     0 2528\n"
+            command += "UNTRUSTED_RECTANGLE=1969 1975     0 2528\n"
+            command += "UNTRUSTED_RECTANGLE=   0 2464   195  211\n"
+            command += "UNTRUSTED_RECTANGLE=   0 2464   407  423\n"
+            command += "UNTRUSTED_RECTANGLE=   0 2464   619  635\n"
+            command += "UNTRUSTED_RECTANGLE=   0 2464   831  847\n"
+            command += "UNTRUSTED_RECTANGLE=   0 2464  1043 1059\n"
+            command += "UNTRUSTED_RECTANGLE=   0 2464  1255 1271\n"
+            command += "UNTRUSTED_RECTANGLE=   0 2464  1467 1483\n"
+            command += "UNTRUSTED_RECTANGLE=   0 2464  1679 1695\n"
+            command += "UNTRUSTED_RECTANGLE=   0 2464  1891 1907\n"
+            command += "UNTRUSTED_RECTANGLE=   0 2464  2103 2119\n"
+            command += "UNTRUSTED_RECTANGLE=   0 2464  2315 2331\n"
+            command += "ROTATION_AXIS= 1.0 0.0 0.0\n"
+            command += "INCIDENT_BEAM_DIRECTION=0.0 0.0 1.0\n"
+            command += "FRACTION_OF_POLARIZATION=0.99 !default=0.5 for unpolarized beam\n"
+            command += "POLARIZATION_PLANE_NORMAL= 0.0 1.0 0.0\n"
+            f = open("XDS.INP", "w")
             f.writelines(command)
             f.close()
-            Process(target=Utils.processLocal, args=('xds_par', self.logger)).start()
+            Process(target=Utils.processLocal, args=("xds_par", self.logger)).start()
 
         except:
-            self.logger.exception('**Error in ProcessXDSbg.**')
+            self.logger.exception("**Error in ProcessXDSbg.**")
 
     def processDistl(self):
         """
@@ -516,12 +518,12 @@ class RapdAgent(Process):
                     job = Process(target=Utils.processLocal, args=(inp, self.logger))
                 else:
                     inp = "distl.signal_strength %s" % eval("self.header%s" % l[i]).get("fullname")
-                    job = Process(target=Utils.processLocal,args=((inp,'distl%s.log'%i),self.logger))
+                    job = Process(target=Utils.processLocal,args=((inp, "distl%s.log" % i), self.logger))
                 job.start()
                 self.distl_output.append(job)
 
         except:
-            self.logger.exception('**Error in ProcessDistl.**')
+            self.logger.exception("**Error in ProcessDistl**")
 
     def processRaddose(self):
         """
@@ -529,6 +531,7 @@ class RapdAgent(Process):
         """
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::processRaddose")
+
         self.raddose_log = []
         try:
             self.raddose_log.append("tcsh raddose.com\n")
@@ -540,14 +543,14 @@ class RapdAgent(Process):
         except:
             self.logger.exception("**ERROR in processRaddose**")
 
-        raddose = Parse.ParseOutputRaddose(self,self.raddose_log)
-        self.raddose_results = {"Raddose results" : raddose}
+        raddose = Parse.ParseOutputRaddose(self, self.raddose_log)
+        self.raddose_results = {"Raddose results":raddose}
         if self.raddose_results["Raddose results"] == None:
-            self.raddose_results = {"Raddose results" : "FAILED"}
+            self.raddose_results = {"Raddose results":"FAILED"}
             if self.verbose:
                 self.logger.debug("Raddose failed")
 
-    def processBest(self,iteration=0,runbefore=False):
+    def processBest(self, iteration=0, runbefore=False):
         """
         Construct the Best command and run. Passes back dict with PID:anom.
         """
@@ -555,7 +558,6 @@ class RapdAgent(Process):
             self.logger.debug("AutoindexingStrategy::processBest")
 
         try:
-
             max_dis = self.site_parameters.get("DETECTOR_DISTANCE_MAX")
             min_dis = self.site_parameters.get("DETECTOR_DISTANCE_MIN")
             min_d_o = self.site_parameters.get("DIFFRACTOMETER_OSC_MIN")
@@ -566,23 +568,23 @@ class RapdAgent(Process):
             if self.header2:
                 image_number.append(self.header2.get('fullname')[self.header2.get('fullname').rfind('_')+1:self.header2.get('fullname').rfind('.')])
             # Tell Best if two-theta is being used.
-            if int(float(self.header.get('twotheta'))) != 0:
+            if int(float(self.header.get("twotheta"))) != 0:
                 Utils.fixBestfile(self)
             # If Raddose failed, here are the defaults.
             dose = 100000.0
             exp_dose_lim = 300
             if self.raddose_results:
                 if self.raddose_results.get('Raddose results') != 'FAILED':
-                    dose         = self.raddose_results.get('Raddose results').get('dose per image')
+                    dose = self.raddose_results.get('Raddose results').get('dose per image')
                     exp_dose_lim = self.raddose_results.get('Raddose results').get('exp dose limit')
-            #Set how many frames a crystal will last at current exposure time.
+            # Set how many frames a crystal will last at current exposure time.
             self.crystal_life = str(int(float(exp_dose_lim) / float(self.time)))
             if self.crystal_life == '0':
                 self.crystal_life = '1'
-            #Adjust dose for ribosome crystals.
+            # Adjust dose for ribosome crystals.
             if self.sample_type == 'Ribosome':
                 dose = 500001
-            #If dose is too high, warns user and sets to reasonable amount and reruns Best but give warning.
+            # If dose is too high, warns user and sets to reasonable amount and reruns Best but give warning.
             if dose > 500000:
                 dose = 500000
                 exp_dose_lim = 100
@@ -928,12 +930,12 @@ class RapdAgent(Process):
       else:
         eval('%s_results'%l[1]).update({ l[2] : data })
 
-    def Queue(self):
+    def run_queue(self):
       """
-      Queue for strategy.
+      run_queue for strategy.
       """
       if self.verbose:
-        self.logger.debug('AutoindexingStrategy::Queue')
+        self.logger.debug('AutoindexingStrategy::run_queue')
       try:
         def set_best_results(i,x):
           #Set Best output if it failed after 3 tries
@@ -1003,7 +1005,7 @@ class RapdAgent(Process):
                   Utils.killChildren(self,self.jobs[str(i)].pid)
 
       except:
-        self.logger.exception('**Error in Queue**')
+        self.logger.exception('**Error in run_queue**')
 
     def labelitSort(self):
       """
@@ -2021,28 +2023,28 @@ class RapdAgent(Process):
                 </form>
             </div> \n
             ''')
-        jon_summary.write("%2s</body>\n</html>\n"%'')
+        jon_summary.write("%2s</body>\n</html>\n" % "")
         jon_summary.close()
         if os.path.exists(f):
-          shutil.copy(f,self.working_dir)
+            shutil.copy(f,self.working_dir)
 
       except:
-        self.logger.exception('**ERROR in htmlSummaryShort**')
+          self.logger.exception('**ERROR in htmlSummaryShort**')
 
 class RunLabelit(Process):
 
     def __init__(self, command, output, params, logger=None):
         """
         input >> command
-        #The minimum input
-        [   'AUTOINDEX',
-        {   'work': '/gpfs6/users/necat/Jon/RAPD_test/Output'},
-        {   'binning': '2x2',
-            'distance': '550.0',
-            'fullname': '/gpfs5/users/GU/WUSTL_Li_Feb12/images/M-native4/Feru2_6_091.img',
-            'twotheta': '0.0'},
-        {   'x_beam': '153.66', 'y_beam': '158.39'},
-        ('127.0.0.1', 50001)]
+        # The minimum input
+        [   "AUTOINDEX",
+        {   "work": "/gpfs6/users/necat/Jon/RAPD_test/Output"},
+        {   "binning": "2x2",
+            "distance": "550.0",
+            "fullname": "/gpfs5/users/GU/WUSTL_Li_Feb12/images/M-native4/Feru2_6_091.img",
+            "twotheta": "0.0"},
+        {   "x_beam": "153.66", "y_beam": "158.39"},
+        ("127.0.0.1", 50001)]
         """
         self.cluster_adapter = False
         self.st = time.time()
@@ -2063,60 +2065,60 @@ class RunLabelit(Process):
         #params
         self.test = params.get("test", False)
         #Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Adds 1-3s to total run time.
-        # self.cluster_use                        = params.get('cluster',True)
+        # self.cluster_use = params.get("cluster",True)
         #If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
-        self.cluster_queue                      = params.get('cluster_queue',False)
+        self.cluster_queue = params.get("cluster_queue", False)
         #Get detector vendortype for settings. Defaults to ADSC.
-        self.vendortype                         = params.get('vendortype','ADSC')
-        #Turn on verbose output
-        self.verbose                            = params.get('verbose',False)
-        #Number of Labelit iteration to run.
-        self.iterations                         = params.get('iterations',6)
-        #If limiting number of LABELIT run on cluster.
-        self.red                                = params.get('redis',False)
-        self.short                              = False
+        self.vendortype = params.get("vendortype", "ADSC")
+        # Turn on verbose output
+        self.verbose = params.get("verbose", False)
+        # Number of Labelit iteration to run.
+        self.iterations = params.get("iterations", 6)
+        # If limiting number of LABELIT run on cluster.
+        self.red = params.get("redis", False)
+        self.short = False
         if self.iterations != 6:
-          self.short                          = True
-        #Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
+            self.short = True
+        # Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
         #******BEAMLINE SPECIFIC*****
-        if self.header.has_key('acc_time'):
-          self.gui                   = True
-          self.test                  = False
+        if self.header.has_key("acc_time"):
+            self.gui = True
+            self.test = False
         else:
-          self.gui                   = True
+            self.gui = True
         #******BEAMLINE SPECIFIC*****
-        #Set times for processes. 'False' to disable.
+        #Set times for processes. "False" to disable.
         if self.header2:
-          self.labelit_timer                  = 180
+            self.labelit_timer = 180
         else:
-          self.labelit_timer                  = 120
-        #Turns on multiprocessing for everything
-        #Turns on all iterations of Labelit running at once, sorts out highest symmetry solution, then continues...(much better!!)
-        self.multiproc                          = True
-        if self.preferences.has_key('multiprocessing'):
-          if self.preferences.get('multiprocessing') == 'False':
-            self.multiproc                  = False
-        self.sample_type = self.preferences.get('sample_type','Protein')
-        self.spacegroup  = self.preferences.get('spacegroup','None')
+            self.labelit_timer = 120
+        # Turns on multiprocessing for everything
+        # Turns on all iterations of Labelit running at once, sorts out highest symmetry solution, then continues...(much better!!)
+        self.multiproc = True
+        if self.preferences.has_key("multiprocessing"):
+            if self.preferences.get("multiprocessing") == "False":
+                self.multiproc = False
+        self.sample_type = self.preferences.get("sample_type", "Protein")
+        self.spacegroup = self.preferences.get("spacegroup", "None")
 
-        #This is where I place my overall folder settings.
-        self.working_dir                        = self.setup.get('work')
-        #this is where I have chosen to place my results
-        self.auto_summary                       = False
-        self.labelit_input                      = False
-        self.labelit_log                        = {}
-        self.labelit_results                    = {}
-        self.labelit_summary                    = False
-        self.labelit_failed                     = False
-        #Labelit settings
-        self.index_number                       = False
-        self.ignore_user_cell                   = False
-        self.ignore_user_SG                     = False
-        self.min_good_spots                     = False
-        self.twotheta                           = False
-        #dicts for running the Queues
-        self.labelit_jobs                       = {}
-        self.pids                               = {}
+        # This is where I place my overall folder settings.
+        self.working_dir = self.setup.get("work")
+        # This is where I have chosen to place my results
+        self.auto_summary = False
+        self.labelit_input = False
+        self.labelit_log = {}
+        self.labelit_results = {}
+        self.labelit_summary = False
+        self.labelit_failed = False
+        # Labelit settings
+        self.index_number = False
+        self.ignore_user_cell = False
+        self.ignore_user_SG = False
+        self.min_good_spots = False
+        self.twotheta = False
+        # dicts for running the Queues
+        self.labelit_jobs = {}
+        self.pids = {}
 
         Process.__init__(self, name="RunLabelit")
         self.start()
@@ -2126,28 +2128,30 @@ class RunLabelit(Process):
         Convoluted path of modules to run.
         """
         if self.verbose:
-          self.logger.debug('RunLabelit::run')
+            self.logger.debug('RunLabelit::run')
+
         self.preprocess()
-        #Make the initial dataset_prefernces.py file
+
+        # Make the initial dataset_prefernces.py file
         self.preprocessLabelit()
         if self.short:
-          self.labelit_timer = 300
-          Utils.foldersLabelit(self,self.iterations)
-          #if a specific iteration is sent in then it only runs that one
-          if self.iterations == 0:
-            self.labelit_jobs[self.processLabelit().keys()[0]] = 0
-          else:
-            self.labelit_jobs[Utils.errorLabelit(self,self.iterations).keys()[0]] = self.iterations
+            self.labelit_timer = 300
+            Utils.foldersLabelit(self, self.iterations)
+            # if a specific iteration is sent in then it only runs that one
+            if self.iterations == 0:
+                self.labelit_jobs[self.processLabelit().keys()[0]] = 0
+            else:
+                self.labelit_jobs[Utils.errorLabelit(self, self.iterations).keys()[0]] = self.iterations
         else:
-          #Create the separate folders for the labelit runs, modify the dataset_preferences.py file, and launch for each iteration.
-          Utils.foldersLabelit(self)
-          #Launch first job
-          self.labelit_jobs[self.processLabelit().keys()[0]] = 0
-          #If self.multiproc==True runs all labelits at the same time.
-          if self.multiproc:
-            for i in range(1,self.iterations):
-              self.labelit_jobs[Utils.errorLabelit(self,i).keys()[0]] = i
-        self.Queue()
+            # Create the separate folders for the labelit runs, modify the dataset_preferences.py file, and launch for each iteration.
+            Utils.foldersLabelit(self)
+            # Launch first job
+            self.labelit_jobs[self.processLabelit().keys()[0]] = 0
+            # If self.multiproc==True runs all labelits at the same time.
+            if self.multiproc:
+                for i in range(1,self.iterations):
+                    self.labelit_jobs[Utils.errorLabelit(self,i).keys()[0]] = i
+        self.run_queue()
         if self.short == False:
           #Put the logs together
           self.labelitLog()
@@ -2397,12 +2401,12 @@ class RunLabelit(Process):
         except:
             self.logger.exception("**ERROR in RunLabelit.postprocess**")
 
-    def Queue(self):
+    def run_queue(self):
       """
-      Queue for Labelit.
+      Run Queue for Labelit.
       """
       if self.verbose:
-          self.logger.debug('RunLabelit::Queue')
+          self.logger.debug('RunLabelit::run_queue')
       try:
         timed_out = False
         timer = 0
@@ -2480,7 +2484,7 @@ class RunLabelit(Process):
           self.logger.debug('Labelit finished.')
 
       except:
-        self.logger.exception('**Error in RunLabelit.Queue**')
+        self.logger.exception('**Error in RunLabelit.run_queue**')
 
     def labelitLog(self):
       """
