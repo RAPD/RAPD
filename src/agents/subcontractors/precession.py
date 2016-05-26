@@ -73,7 +73,7 @@ class LabelitPP(Process):
         self.spacegroup = "None"
         self.min_spots = False
         self.ignore_user_cell = False
-        self.ignore_user_SG = False
+        self.ignore_user_sg = False
         self.blank_image = False
         self.pseudotrans = False
         self.min_good_spots = False
@@ -117,7 +117,7 @@ class LabelitPP(Process):
             self.preprocess_labelit()
             self.process_labelit()
             #Sorts labelit results by highest symmetry.
-            self.labelitSort()
+            self.labelit_sort()
             if self.labelit_failed == False:
                 #Run labelit_precession_photo for the 3 planes
                 self.process_labelit_precession()
@@ -138,7 +138,7 @@ class LabelitPP(Process):
             self.logger.debug("LabelitPP::preprocess")
         Utils.folders(self)
         #print out recognition of the program being used
-        self.PrintInfo()
+        self.print_info()
 
     def preprocess_labelit(self):
         """
@@ -215,7 +215,7 @@ class LabelitPP(Process):
             queue = Queue()
             params = {}
             params["test"] = self.test
-            params["cluster"] = self.cluster_use
+            params["cluster"] = False # self.cluster_use # TODO
             params["verbose"] = self.verbose
             args1 = {}
             if inp:
@@ -254,10 +254,11 @@ class LabelitPP(Process):
                 queue = Queue()
                 if self.test:
                     job = Process(target=Utils.processLocal, args=("ls", self.logger, queue))
-                elif self.cluster_use:
-                    #job = multiprocessing.Process(target=Utils.processCluster,args=(self,(command,"pp%s.log"%i),"all.q",queue))
-                    #job = Process(target=Utils.processCluster,args=(self,(command,"pp%s.log"%i,"all.q"),queue))
-                    job = Process(target=BLspec.processCluster, args=(self, (command, "pp%s.log" % i, "all.q"), queue))
+                elif False: # TODO self.cluster_use:
+                    pass
+                    # job = multiprocessing.Process(target=Utils.processCluster,args=(self,(command,"pp%s.log"%i),"all.q",queue))
+                    # job = Process(target=Utils.processCluster,args=(self,(command,"pp%s.log"%i,"all.q"),queue))
+                    # job = Process(target=BLspec.processCluster, args=(self, (command, "pp%s.log" % i, "all.q"), queue))
                 else:
                     job = Process(target=Utils.processLocal, args=((command, "pp%s.log" % i), self.logger, queue))
                 job.start()
@@ -320,8 +321,9 @@ class LabelitPP(Process):
                 self.logger.exception("**Could not save LabelitPP results**")
                 failed = True
         self.labelitpp_results = {"LabelitPP results": jpg}
-        #Create and save path of html summary file
-        self.htmlSummaryPP()
+
+        # Create and save path of html summary file
+        self.html_summary_pp()
 
         try:
             output = {}
@@ -428,9 +430,11 @@ class LabelitPP(Process):
                         self.logger.debug("Labelitpp timed out.")
                         print "Labelitpp timed out."
                     for pid in self.pids.values():
-                        if self.cluster_use:
-                            #Utils.killChildrenCluster(self,pid)
-                            BLspec.killChildrenCluster(self, pid)
+                        # TODO
+                        if False: # self.cluster_use:
+                            pass
+                            # Utils.killChildrenCluster(self,pid)
+                            # BLspec.killChildrenCluster(self, pid)
                         else:
                             Utils.killChildren(self, pid)
             if rerun:
@@ -446,13 +450,13 @@ class LabelitPP(Process):
         except:
             self.logger.exception("**Error in LabelitPP.run_queue**")
 
-    def labelitSort(self):
+    def labelit_sort(self):
         """
         Sort out which iteration of Labelit has the highest symmetry and choose that solution. If
         Labelit does not find a solution, finish up the pipeline.
         """
         if self.verbose:
-            self.logger.debug("LabelitPP::labelitSort")
+            self.logger.debug("LabelitPP::labelit_sort")
 
         import numpy
         rms_list1 = []
@@ -464,7 +468,7 @@ class LabelitPP(Process):
         try:
             for run in self.labelit_results.keys():
                 if type(self.labelit_results[run].get("Labelit results")) == dict:
-                    #Check for pseudotranslation
+                    # Check for pseudotranslation
                     if self.labelit_results[run].get("Labelit results").get("pseudotrans") == True:
                         self.pseudotrans = True
                     Utils.getLabelitStats(self, inp=run, simple=False)
@@ -507,7 +511,7 @@ class LabelitPP(Process):
                         del junk[3-self.cycle]
                         self.cycle += 1
                         self.process_labelit(junk)
-                        self.labelitSort()
+                        self.labelit_sort()
                     else:
                         failed = True
                 else:
@@ -519,14 +523,14 @@ class LabelitPP(Process):
                     self.labelit_results = {"Labelit results":"FAILED"}
 
         except:
-            self.logger.exception("**ERROR in LabelitPP.labelitSort**")
+            self.logger.exception("**ERROR in LabelitPP.labelit_sort**")
 
-    def PrintInfo(self):
+    def print_info(self):
         """
         Print information regarding programs utilized by RAPD
         """
         if self.verbose:
-            self.logger.debug("LabelitPP::PrintInfo")
+            self.logger.debug("LabelitPP::print_info")
         try:
             print "======================="
             print "RAPD developed using Labelit"
@@ -546,14 +550,14 @@ class LabelitPP(Process):
             self.logger.debug("=======================")
 
         except:
-            self.logger.exception("**Error in LabelitPP.PrintInfo**")
+            self.logger.exception("**Error in LabelitPP.print_info**")
 
-    def htmlSummaryPP(self):
+    def html_summary_pp(self):
         """
         Create HTML/php files for Labelit.precession_photo output results.
         """
         if self.verbose:
-            self.logger.debug("LabelitPP::htmlSummaryPP")
+            self.logger.debug("LabelitPP::html_summary_pp")
 
         try:
             l = ["0KL", "H0L", "HK0"]
@@ -583,56 +587,57 @@ class LabelitPP(Process):
             jon_summary.close()
 
         except:
-            self.logger.exception("**ERROR in LabelitPP.htmlSummaryPP**")
+            self.logger.exception("**ERROR in LabelitPP.html_summary_pp**")
 
 if __name__ == "__main__":
-    #Input
-    import logging,logging.handlers
-    """
-                   {'fullname':'/gpfs6/users/mizzou/tanner_E_443/images/Tanner/runs/AfUDPGlcD6/AfUDPGlcD6_1_001.img',
-                     'total':90,
-                     'osc_range':'1.0',
-                     'x_beam':'153.75',
-                     'y_beam':'158.93',
-                     #'x_beam':'0',
-                     #'y_beam':'0',
-                     'binning':'2x2',
-                     'two_theta':0.0,
-                     'distance':'309.3',
-                     },
-                     """
-    inp = [{'run':{'fullname':'/gpfs1/users/necat/Jon/images/Gaudet_4zi9/P118-WW-A9RUN_1_001.img',
-                     'total':180,
-                     'osc_range':'1.0',
-                     'x_beam':'156.3',
-                     'y_beam':'165.2',
-                     #'x_beam':'0',
-                     #'y_beam':'0',
-                     'binning':'2x2',
-                     'two_theta':0.0,
-                     'distance':'250.0',
-                   },
+    # Input
+    import logging, logging.handlers
 
-              'dir' :  '/gpfs6/users/necat/Jon/RAPD_test/Output',
-              #'data': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/SAD/PK_lu_peak.sca',
-              #'data': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/insulin.sca',
-              #'data': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/Y567A_ATrich_dTTP_free.mtz',
-              #'data': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz',
-              #'data': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/SAD/UGM_PTS.sca',
-              #'data': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/1UXM_A4V_twin.mtz',
-              #'data': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/SAD/r3_tricky_ANOM.sca',
-              'data': '/gpfs6/run2013_3/24ID-E/mizzou/tanner_E_443/process/rapd/integrate/AfUDPGlcD6_1/AfUDPGlcD6_1_1/AfUDPGlcD6_1_1_free.mtz',
-              #'timer': 15,
-              'clean': False,
-              'test': False,
-              'verbose':True,
-              'gui'  : False,
-              'control': ('164.54.212.165', 50001),
-              'passback': True,
-              'process_id': 11111,
-              }]
+    """
+    {'fullname':'/gpfs6/users/mizzou/tanner_E_443/images/Tanner/runs/AfUDPGlcD6/AfUDPGlcD6_1_001.img',
+     'total':90,
+     'osc_range':'1.0',
+     'x_beam':'153.75',
+     'y_beam':'158.93',
+     #'x_beam':'0',
+     #'y_beam':'0',
+     'binning':'2x2',
+     'two_theta':0.0,
+     'distance':'309.3',
+    },
+    """
+    inp = [{'run':{'fullname':'/gpfs1/users/necat/Jon/images/Gaudet_4zi9/P118-WW-A9RUN_1_001.img',
+                   'total':180,
+                   'osc_range':'1.0',
+                   'x_beam':'156.3',
+                   'y_beam':'165.2',
+                   #'x_beam':'0',
+                   #'y_beam':'0',
+                   'binning':'2x2',
+                   'two_theta':0.0,
+                   'distance':'250.0',
+                  },
+
+            'dir' :  '/gpfs6/users/necat/Jon/RAPD_test/Output',
+            #'data': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/SAD/PK_lu_peak.sca',
+            #'data': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/insulin.sca',
+            #'data': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/Y567A_ATrich_dTTP_free.mtz',
+            #'data': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/thau_free.mtz',
+            #'data': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/SAD/UGM_PTS.sca',
+            #'data': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/MR/1UXM_A4V_twin.mtz',
+            #'data': '/gpfs6/users/necat/Jon/RAPD_test/Datasets/SAD/r3_tricky_ANOM.sca',
+            'data': '/gpfs6/run2013_3/24ID-E/mizzou/tanner_E_443/process/rapd/integrate/AfUDPGlcD6_1/AfUDPGlcD6_1_1/AfUDPGlcD6_1_1_free.mtz',
+            #'timer': 15,
+            'clean': False,
+            'test': False,
+            'verbose':True,
+            'gui'  : False,
+            'control': ('164.54.212.165', 50001),
+            'passback': True,
+            'process_id': 11111,
+           }]
     #start logging
-    LOG_FILENAME = os.path.join(inp[0].get('dir'),'rapd.log')
+    LOG_FILENAME = os.path.join(inp[0].get('dir'), 'rapd.log')
     # Set up a specific logger with our desired output level
     logger = logging.getLogger('RAPDLogger')
     logger.setLevel(logging.DEBUG)
@@ -642,4 +647,4 @@ if __name__ == "__main__":
     formatter = logging.Formatter("%(asctime)s - %(message)s")
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    LabelitPP(inp,output=None,logger=logger)
+    LabelitPP(inp, output=None, logger=logger)
