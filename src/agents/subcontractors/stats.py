@@ -31,7 +31,7 @@ import os
 import time
 
 # RAPD imports
-# from cell import PDBQuery
+from cell import PDBQuery
 # from precession import LabelitPP
 import parse as Parse
 import summary as Summary
