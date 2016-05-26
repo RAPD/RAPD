@@ -33,7 +33,7 @@ import time
 import urllib2
 
 # RAPD imports
-# from agents.rapd_agent_phaser import RunPhaser
+from agents.rapd_agent_phaser import RunPhaser
 import parse as Parse
 import summary as Summary
 from utils.communicate import rapd_send
