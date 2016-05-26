@@ -35,6 +35,7 @@ import time
 # from agents.rapd_agent_strategy import RunLabelit
 import parse as Parse
 from utils.communicate import rapd_send
+from utils.modules import load_module
 import utils.xutils as Utils
 
 class LabelitPP(Process):
@@ -45,6 +46,7 @@ class LabelitPP(Process):
         self.output = output
         self.logger = logger
         self.working_dir = self.input[0].get("dir", os.getcwd())
+        self.agent_directories = self.input[0].get("agent_directories")
         self.gui = self.input[0].get("gui", True)
         self.test = self.input[0].get("test", False)
         self.clean = self.input[0].get("clean", True)
@@ -225,7 +227,13 @@ class LabelitPP(Process):
             args1["output"] = queue
             args1["params"] = params
             args1["logger"] = self.logger
-            Process(target=RunLabelit, kwargs=args1).start()
+
+            # Import the RunLabelit class
+            agent = load_module(seek_module="rapd_agent_index+strategy",
+                                directories=self.agent_directories,
+                                logger=self.logger)
+
+            Process(target=agent.RunLabelit, kwargs=args1).start()
             self.labelit_results = queue.get()
             self.labelit_log = queue.get()
 

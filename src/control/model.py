@@ -722,8 +722,9 @@ class Model(object):
                                                    image_data1=header)
 
             # Now package directories into a dict for easy access by worker class
-            new_dirs = {"work" : work_dir,
-                        "data_root_dir" : data_root_dir}
+            new_dirs = {"work":work_dir,
+                        "data_root_dir":data_root_dir,
+                        "agent_directories":self.site.RAPD_AGENT_DIRECTORIES}
 
             # If we are to integrate, do it
             try:

@@ -2180,6 +2180,7 @@ class RapdAgent(Process):
         pdb_dict['run'] = run_dict
         pdb_dict['dir'] = analysis_dir
         pdb_dict['data'] = data
+        pdb_dict["agent_directories"] = self.dirs.get("agent_directories", False)
         pdb_dict['control'] = self.controller_address
         pdb_dict['process_id'] = self.process_id
         pdb_input.append(pdb_dict)

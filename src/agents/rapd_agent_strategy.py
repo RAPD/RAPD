@@ -1,4 +1,4 @@
-"""
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2009-2016, Cornell University
@@ -28,6 +28,7 @@ An autoindex & strategy rapd_agent
 
 # This is an active rapd agent
 RAPD_AGENT = True
+AGENT_SUBTYPE = "CORE"
 
 # This handler's request type
 AGENT_TYPE = "autoindex+strategy"
@@ -252,13 +253,13 @@ class RapdAgent(Process):
     if self.verbose:
       self.logger.debug('AutoindexingStrategy::run')
     self.preprocess()
-    
+
     if self.minikappa:
       self.processXOalign()
     else:
       #Make the labelit.png image
       self.makeImages(0)
-      
+
       #Run Labelit
       self.processLabelit()
 
@@ -536,7 +537,7 @@ class RapdAgent(Process):
     """
     if self.verbose:
       self.logger.debug('AutoindexingStrategy::processBest')
-    
+
     #figuring out correct detector name for BEST (detector-inf.dat)
     def det_input():
       detectors = {'ADSC'       : 'q315',
@@ -548,7 +549,7 @@ class RapdAgent(Process):
                    'ray300'     : 'ray300',
                    }
       return(detectors[self.vendortype])
-    
+
     try:
       #Simplify detector names.
       det = det_input()
@@ -2203,7 +2204,7 @@ class RunLabelit(Process):
         if self.header.get('binning') == 'none':
           binning = False
       """
-      
+
       if self.test == False:
         preferences    = open('dataset_preferences.py','w')
         preferences.write('#####Base Labelit settings#####\n')
@@ -2543,12 +2544,12 @@ if __name__ == '__main__':
   #This is an example input dict used for testing this script.
   #Input dict file. If autoindexing from two images, just include a third dict section for the second image header.
   ###To see all the input options look at extras/rapd_input.py (autoindexInput)###
-  
-  inp = ["AUTOINDEX", 
+
+  inp = ["AUTOINDEX",
   {#"work": "/gpfs6/users/necat/Jon/RAPD_test/Output",
    "work": "/home/schuerjp/temp",
    },
-  #Info from first image 
+  #Info from first image
   {#"wavelength": "0.9792", #RADDOSE
    "wavelength": 1.000, #RADDOSE
    "detector":'ray300',
@@ -2579,7 +2580,7 @@ if __name__ == '__main__':
    #"fullname": "/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0001",
    #"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0001",
    "fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_04_chrzas_feb_4_2016/SER4-TRYP_Pn3/SER4-TRYP_Pn3.0001",
-   
+
    #minikappa
    #Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
    #"mk3_phi":"0.0", #
@@ -2621,8 +2622,8 @@ if __name__ == '__main__':
    #"fullname": "/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0020",
    #"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0020",
    "fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_04_chrzas_feb_4_2016/SER4-TRYP_Pn3/SER4-TRYP_Pn3.0050",
-   
-   
+
+
    #minikappa
    #Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
    #"mk3_phi":"0.0", #
@@ -2632,7 +2633,7 @@ if __name__ == '__main__':
    "STAC file2": '/gpfs6/users/necat/Jon/RAPD_test/bestfile.par', #XOAlign
    "axis_align": 'long',    #long,all,a,b,c,ab,ac,bc #XOAlign
   },
-  
+
   #Beamline params
   {"strategy_type": 'best', #Preferred program for strategy
    #"strategy_type": 'mosflm', #
@@ -2658,7 +2659,7 @@ if __name__ == '__main__':
    "alpha":0.0, #LABELIT
    "beta":0.0, #LABELIT
    "gamma":0.0, #LABELIT
-  
+
    #Change these if user wants to continue dataset with other crystal(s).
    "reference_data_id": None, #MOSFLM
    #"reference_data_id": 1,#MOSFLM
@@ -2671,15 +2672,15 @@ if __name__ == '__main__':
    "mosflm_start":0.0,#MOSFLM
    "mosflm_end":360.0,#MOSFLM
     },
-   
+
   ('127.0.0.1',50001)#self.sendBack2 for sending results back to rapd_cluster.
   ]
-  
-  inp1 = ["AUTOINDEX", 
+
+  inp1 = ["AUTOINDEX",
   {"work": "/gpfs6/users/necat/Jon/RAPD_test/Output",
    },
-  
-  #Info from first image 
+
+  #Info from first image
   {"wavelength": "0.9792", #RADDOSE
    "binning": "none", #LABELIT
    #"binning": "none", #
@@ -2698,7 +2699,7 @@ if __name__ == '__main__':
    "gauss_x":'0.03', #RADDOSE
    "gauss_y":'0.01', #RADDOSE
    "fullname": "/gpfs2/users/chicago/Lewis_E_Dec15/images/snaps/NE51_H4_PAIR_0_001.img",
-   
+
    #minikappa
    #Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
    #"mk3_phi":"0.0", #
