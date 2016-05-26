@@ -631,8 +631,9 @@ class Model(object):
                                                    image_data1=header)
 
             # Now package directories into a dict for easy access by worker class
-            new_dirs = {"work":work_dir,
-                        "data_root_dir":data_root_dir}
+            directories = {"work":work_dir,
+                           "data_root_dir":data_root_dir,
+                           "agent_directories":self.site.RAPD_AGENT_DIRECTORIES}
 
             # Add the process to the database to display as in-process
             process_id = self.database.add_agent_process(agent_type="index+strategy:single",
@@ -647,7 +648,7 @@ class Model(object):
 
             # Run autoindex and strategy agent
             LaunchAction(command={"command":"INDEX+STRATEGY",
-                                  "directories":new_dirs,
+                                  "directories":directories,
                                   "header1":header,
                                   "site_parameters":self.site.BEAM_INFO[header1["site_tag"]],
                                   "preferences":{},
@@ -682,8 +683,9 @@ class Model(object):
                                                            image_data2=header2)
 
                     # Now package directories into a dict for easy access by worker class
-                    new_dirs = {"work" : work_dir,
-                                "data_root_dir" : data_root_dir}
+                    directories = {"work" : work_dir,
+                                   "data_root_dir" : data_root_dir,
+                                   "agent_directories":self.site.RAPD_AGENT_DIRECTORIES}
 
                     # Add the process to the database to display as in-process
                     process_id = self.database.add_agent_process(agent_type="index+strategy:pair",
@@ -700,7 +702,7 @@ class Model(object):
 
                     # Run autoindex and strategy agent
                     LaunchAction(command={"command":"INDEX+STRATEGY",
-                                          "directories":new_dirs,
+                                          "directories":directories,
                                           "header1":header1,
                                           "header2":header2,
                                           "site_parameters":self.site.BEAM_INFO[header1["site_tag"]],
@@ -722,9 +724,9 @@ class Model(object):
                                                    image_data1=header)
 
             # Now package directories into a dict for easy access by worker class
-            new_dirs = {"work":work_dir,
-                        "data_root_dir":data_root_dir,
-                        "agent_directories":self.site.RAPD_AGENT_DIRECTORIES}
+            directories = {"work":work_dir,
+                           "data_root_dir":data_root_dir,
+                           "agent_directories":self.site.RAPD_AGENT_DIRECTORIES}
 
             # If we are to integrate, do it
             try:
@@ -750,7 +752,7 @@ class Model(object):
 
                 # Connect to the server and autoindex the single image
                 LaunchAction(command={"command":"INTEGRATE",
-                                      "directories":new_dirs,
+                                      "directories":directories,
                                       "image_data":header,
                                       "run_data":run_dict,
                                       "site_parameters":self.site.BEAM_INFO[header["site_tag"]],
