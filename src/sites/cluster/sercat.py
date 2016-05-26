@@ -35,6 +35,19 @@ import drmaa
 import random
 import subprocess
 
+def check_cluster():
+    """
+    Quick check run at beginning of pipelines to see if job was subitted to computer cluster node (returns True) or
+    run locally (returns False). The pipelines will use this to know whether to subprocess.Process subjobs or submit to
+    compute cluster queueing system. This is the master switch for turning on or off a compute cluster.
+    """
+    import socket
+    #Can create a list of names of your compute nodes for checking. Ours all start with 'scyld'.
+    if socket.gethostname().startswith('scyld'):
+        return True
+    else:
+        return False
+
 def process_cluster(self, inp, output=False):
     """
     Submit job to cluster using DRMAA (when you are already on the cluster).

@@ -25,8 +25,13 @@ __status__ = "Production"
 #Required params for script to run.
 WORK_DIR = '/gpfs6/users/necat/Jon/RAPD_test/Temp'
 #Known SG for images. P4 assumes lysozyme or thaumatin.
-SPACEGROUP = 'P4'
 #SPACEGROUP = 'None'
+SPACEGROUP = 'P4'
+##Number of labelit runs to fine tune beam center and spacing from original
+#Jobs per distance will be (ITERATIONS+1)^2. 
+ITERATIONS = 10
+#Copy images to RAM on all cluster nodes
+RAM = True
 
 import warnings
 #Remove stupid warnings about sha and md5.
@@ -45,7 +50,7 @@ class FindBeamCenter(Process):
   def __init__(self, inp, output, logger=None):
     logger.info('FindBeamCenter.__init__')
     self.st = time.time()
-    self.input,self.cpu,self.verbose,self.clean,self.ram,self.red = inp
+    self.input,self.cpu,self.verbose,self.clean = inp
     self.output                             = output
     self.logger                             = logger
     #Setting up data input
@@ -60,7 +65,7 @@ class FindBeamCenter(Process):
     self.controller_address                 = self.input[-1]
     #Number of labelit runs to fine tune beam center and spacing from original
     #Should be even number for symmetry around original beam center
-    self.iterations2                        = 10
+    self.iterations2                        = ITERATIONS
     self.iterations2_space                  = 0.3
     #self.iterations2                        = 15
     #self.iterations2_space                  = 0.1
@@ -70,6 +75,7 @@ class FindBeamCenter(Process):
     #Sets settings to check output on my machine and does not send results to database.
     #******BEAMLINE SPECIFIC*****
     self.cluster_use = BLspec.checkCluster()
+    #self.cluster_use = Utils.checkCluster()
     if self.cluster_use:
       self.test                           = False
     else:
@@ -84,15 +90,16 @@ class FindBeamCenter(Process):
     self.multiproc                          = True
     self.labelit_jobs                       = {}
     self.results                            = {}
-    self.runs                               = {}
+    #self.runs                               = {}
     self.pool                               = {}
+    self.new_input                          = {}
     #Settings for all programs
     self.x_beam         = self.header.get('beam_center_x')
     self.y_beam         = self.header.get('beam_center_y')
     self.working_dir    = self.setup.get('work')
-    #self.sg             = self.header.get('spacegroup','None')
+    self.sg             = self.header.get('spacegroup','None')
     self.distance       = os.path.basename(self.working_dir)
-    self.vendortype     = Utils.getVendortype(self,self.header)
+    self.vendortype     = self.header.get('vendortype')
     
     Process.__init__(self,name='FindBeamCenter')
     self.start()
@@ -104,11 +111,13 @@ class FindBeamCenter(Process):
     if self.verbose:
       self.logger.debug('FindBeamCenter::run')
     self.preprocess()
+    
     self.sortJobs()
+    self.processLabelit()
     self.queue()
     self.labelitSort()
     self.postprocess()
-      
+    
   def preprocess(self):
     """
     Setup the working dir in the RAM and save the dir where the results will go at the end.
@@ -119,57 +128,70 @@ class FindBeamCenter(Process):
     if os.path.exists(self.working_dir) == False:
       os.makedirs(self.working_dir)
     os.chdir(self.working_dir)
-    #transfer images to /dev/shm on all cluster nodes
-    if self.ram:
-      self.transferImages()
     #print out recognition of the program being used
     #self.PrintInfo()
       
+  def processLabelit(self):
+    """
+    Labelit error correction. Set/reset setting in dataset_preferences.py according to error iteration.
+    Commented out things were tried before.
+    """
+    if self.verbose:
+      self.logger.debug('FindBeamCenter::processLabelit')
+    try:
+      params = {}
+      params['test'] = self.test
+      #params['cluster'] = self.cluster_use
+      params['cluster_queue'] = 'all.q,general.q'
+      params['vendortype'] = self.vendortype
+      #params['iterations'] = 1
+      if self.vendortype in ['Pilatus-6M','ADSC-HF4M']:
+        params['iterations'] = 1
+      else:
+        params['iterations'] = 4
+      params['verbose'] = False
+      
+      #Have to add to the sleep as more runs are submitted
+      add_time = 2*len(self.new_input.keys())/10000
+      for name in self.new_input.keys():
+        self.pool[name] = Queue()
+        job = Process(target=RunLabelit,args=(self.new_input[name],self.pool[name],params,self.logger))
+        job.start()
+        self.labelit_jobs[job] = name
+        #Have to do a small sleep otherwise jobs lock and take >10s to submit jobs to cluster??
+        #The problem builds with more iterations to run.
+        time.sleep(0.05 + add_time)
+      #Send back message to say when all jobs are submitted.
+      self.output.put('done')
+
+    except:
+      self.logger.exception('**Error in FindBeamCenter::processLabelit**')
+  
   def queue(self):
     """
-    Queue for monitoring multiprocessing.process jobs.
+    Queue for Labelit.
     """
     if self.verbose:
       self.logger.debug('FindBeamCenter::queue')
     try:
-      for run in self.pool.keys():
-        self.postprocessJobs(self.pool[run].get())
-
+      counter = len(self.labelit_jobs.keys())
+      while counter != 0:
+        for job in self.labelit_jobs.keys():
+          if job.is_alive() == False:
+            if self.labelit_results.has_key(self.labelit_jobs[job]):
+              self.labelit_results[self.labelit_jobs[job]].update(self.pool[self.labelit_jobs[job]].get())
+            else:
+              self.labelit_results[self.labelit_jobs[job]] = self.pool[self.labelit_jobs[job]].get()
+            #clean up folders
+            if self.clean:
+              if os.path.exists(os.path.join(self.working_dir,self.labelit_jobs[job])):
+                shutil.rmtree(os.path.join(self.working_dir,self.labelit_jobs[job]),ignore_errors=True)
+            del self.labelit_jobs[job]
+            counter -= 1
+        time.sleep(2)
+    
     except:
       self.logger.exception('**Error in FindBeamCenter.queue**')
-      
-  def transferImages(self):
-    """
-    Copy images to RAM on nodes and wait for completion.
-    """
-    if self.verbose:
-      self.logger.debug('FindBeamCenter::transferImages')
-    try:
-      pids = []
-      end = 1
-      if self.test == False:
-        if self.header2:
-          end = 2
-        for i in range(0,end):
-          if i == 0:
-            orig = self.header.get('fullname')
-            self.header['fullname'] = '/dev/shm/%s'%os.path.basename(orig)
-          else:
-            orig = self.header2.get('fullname')
-            self.header2['fullname'] = '/dev/shm/%s'%os.path.basename(orig)
-          command = 'cp %s %s'%(orig,os.path.join('/dev/shm',os.path.basename(orig)))
-          #job = Process(target=Utils.rocksCommand,args=(self,command))
-          job = Process(target=BLspec.rocksCommand,args=(self,command))
-          job.start()
-          pids.append(job)
-        while len(pids) != 0:
-          for job in pids:
-            if job.is_alive() == False:
-              pids.remove(job)
-          time.sleep(2)
-
-    except:
-      self.logger.exception('**Error in FindBeamCenter.transferImages**')
 
   def postprocessJobs(self,inp):
     """
@@ -200,14 +222,12 @@ class FindBeamCenter(Process):
       #Cleanup folders
       if self.clean:
         #If images in RAM then delete. Could put in handler and run once...
-        if self.ram:
+        if RAM == True:
           if self.header.get('fullname').startswith('/dev/shm'):
-            #Utils.rocksCommand(self,'rm -rf %s'%self.header.get('fullname'))
-            BLspec.rocksCommand(self,'rm -rf %s'%self.header.get('fullname'))
+            Utils.rocksCommand('rm -rf %s'%self.header.get('fullname'),self.logger)
           if self.header2:
             if self.header2.get('fullname').startswith('/dev/shm'):
-              #Utils.rocksCommand(self,'rm -rf %s'%self.header2.get('fullname'))
-              BLspec.rocksCommand(self,'rm -rf %s'%self.header2.get('fullname'))
+              Utils.rocksCommand('rm -rf %s'%self.header2.get('fullname'),self.logger)
         #Cleanup folders in working dir.
         shutil.rmtree(self.working_dir,ignore_errors=True)
             
@@ -221,7 +241,7 @@ class FindBeamCenter(Process):
     if self.verbose:
       self.logger.debug('FindBeamCenter::sortJobs')
     try:
-      inp = {}
+      #inp = {}
       #Save initial beam center.
       orig_x = self.x_beam
       orig_y = self.y_beam
@@ -230,7 +250,7 @@ class FindBeamCenter(Process):
         i = 4
       else:
         i = 3
-      #Remove alternative way to input beam center.
+      #Remove alternative way to input beam center in preferences.
       if self.input[i].has_key('x_beam'):
         #self.input[i].pop('x_beam')
         del self.input[i]['x_beam']
@@ -260,28 +280,11 @@ class FindBeamCenter(Process):
             else:
               junk.update({'beam_center_x': str(new_x_beam),'beam_center_y': str(new_y_beam)})
             new_input[z+1] = junk
-          inp[name] = copy.copy(new_input)
-      #Split up the jobs and run on separate CPU's.
-      tot2 = len(self.labelit_results)
-      split = int(tot2/self.cpu)
-      diff = tot2-(split*self.cpu)
-      for x in range(self.cpu):
-        runs = {}
-        s = int(split*x)
-        #Add left over runs to last run
-        if x == self.cpu-1:
-          f = int(split*(x+1)+diff)
-        else:
-          f = int(split*(x+1))
-        for name in self.labelit_results.keys()[s:f]:
-            runs[name] = inp[name]
-        self.pool[str(x)] = Queue()
-        inp1 = {'inp':(runs,self.clean,self.test,self.verbose,self.vendortype,self.red),'output':self.pool[str(x)],'logger':self.logger}
-        Process(target=LabelitAction,kwargs=inp1).start()
-    
+          self.new_input[name] = copy.copy(new_input)
+
     except:
       self.logger.exception('**ERROR in FindBeamCenter.sortJobs**')
-      
+
   def labelitSort(self):
     """
     Figure out which round has the best index fit.
@@ -294,11 +297,11 @@ class FindBeamCenter(Process):
       stats = {}
       passed = True
       orig_sg = 1
-      #if self.sg == None:
-      if SPACEGROUP == 'None':
+      if self.sg == None:
         find_sg = True
       else:
         find_sg = False
+      tr = len(self.labelit_results.keys())
       #Label the SG and grab the solutions with the highest SG.
       for i in range(0,2):
         for run in self.labelit_results.keys():
@@ -316,11 +319,11 @@ class FindBeamCenter(Process):
                 self.labelit_results[run].update({'labelit_best_sg#': new_sg})
                 if find_sg:
                   if new_sg > orig_sg:
-                    SPACEGROUP = sg
+                    self.sg = sg
                     orig_sg = new_sg
               else:
                 #Make sure I compare same SG.
-                if self.labelit_results[run].get('labelit_stats').get('best').get('SG') == SPACEGROUP:
+                if self.labelit_results[run].get('labelit_stats').get('best').get('SG') == self.sg:
                   li.append(run)
                 else:
                   del self.labelit_results[run]
@@ -340,21 +343,23 @@ class FindBeamCenter(Process):
             passed = False
         """
         #Print results for testing.
-        if self.verbose:
-          #print 'Iteration=',str(self.iteration)
-          print 'Total number of Labelit runs: %s'%len(self.labelit_results.keys())
-          print 'Total number of solutions in %s: %s'%(SPACEGROUP, l)
-          print 'Number of solutions in the top 10%% = %s'%top
-          self.logger.debug('Total number of Labelit runs: %s'%len(self.labelit_results.keys()))
-          self.logger.debug('Total number of solutions in %s: %s'%(SPACEGROUP, l))
-          self.logger.debug('Number of solutions in the top 10%% = %s'%top)
+        #if self.verbose:
+        #print 'Iteration=',str(self.iteration)
+        """
+        print 'Total number of Labelit runs: %s'%tr
+        print 'Total number of solutions in %s: %s'%(self.sg, l)
+        print 'Number of solutions in the top 10%% = %s'%top
+        """
+        self.logger.debug('Total number of Labelit runs: %s'%tr)
+        self.logger.debug('Total number of solutions in %s: %s'%(self.sg, l))
+        self.logger.debug('Number of solutions in the top 10%% = %s'%top)
         #Sort solutions in correct SG by each param
         ls = [("self.labelit_results[run].get('labelit_stats').get('P1').get('rmsd')","Labelit P1 RMSD"),
               ("self.labelit_results[run].get('labelit_stats').get('P1').get('mos_rms')","Mosflm P1 RMS"),
               ("self.labelit_results[run].get('labelit_stats').get('best').get('metric')","Labelit Metric"),
               ("self.labelit_results[run].get('labelit_stats').get('best').get('rmsd')","Labelit RMSD"),
               ("self.labelit_results[run].get('labelit_stats').get('best').get('mos_rms')","Mosflm RMS")]
-        for z in range(5):
+        for z in range(len(ls)):
           dict1 = {}
           for run in li:
             dict1[run] = float(eval(ls[z][0]))
@@ -376,8 +381,6 @@ class FindBeamCenter(Process):
           for run in li2:
             x.append(float(self.labelit_results[run].get('Labelit results').get('labelit_bc').get('labelit_x_beam')))
             y.append(float(self.labelit_results[run].get('Labelit results').get('labelit_bc').get('labelit_y_beam')))
-          #stats[li[z][1]] = {'avg_x': numpy.average(x), 'std_x': numpy.std(x), 'avg_y': numpy.average(y), 'std_y': numpy.std(y),
-          #                      'sum_std': numpy.std(x)+numpy.std(y), 'j1': li[z][0], 'top': top1}
           stats[ls[z][1]] = {'avg_x': numpy.average(x), 'std_x': numpy.std(x), 'avg_y': numpy.average(y), 'std_y': numpy.std(y),
                              'sum_std': numpy.std(x)+numpy.std(y), 'j1': ls[z][0], 'top': top1}
         #Sort all results by lowest sum of std dev (x+y) and save the best.
@@ -401,21 +404,24 @@ class FindBeamCenter(Process):
                 self.results['Y'] = stats[key].get('avg_y')
                 self.results['passed'] = passed
                 #best = stats[key].get('top')
-                if self.verbose:
-                  print '****************************************'
-                  print 'At %s mm:'%self.distance
-                  print 'Best stats from %s'%key
-                  print 'X =%s std=%s'%(stats[key].get('avg_x'),stats[key].get('std_x'))
-                  print 'Y =%s std=%s'%(stats[key].get('avg_y'),stats[key].get('std_y'))
-                  print 'Good results=%s'%passed
-                  print '****************************************'
-                  self.logger.debug('****************************************')
-                  self.logger.debug('At %s mm:'%self.distance)
-                  self.logger.debug('Best stats from %s'%key)
-                  self.logger.debug('X =%s std=%s'%(stats[key].get('avg_x'),stats[key].get('std_x')))
-                  self.logger.debug('Y =%s std=%s'%(stats[key].get('avg_y'),stats[key].get('std_y')))
-                  self.logger.debug('Good results=%s'%passed)
-                  self.logger.debug('****************************************')
+                #if self.verbose:
+                """
+                print '****************************************'
+                print 'At %s mm:'%self.distance
+                print 'Best stats from %s'%key
+                print 'X =%s std=%s'%(stats[key].get('avg_x'),stats[key].get('std_x'))
+                print 'Y =%s std=%s'%(stats[key].get('avg_y'),stats[key].get('std_y'))
+                print 'Good results=%s'%passed
+                print '****************************************'
+                """
+                self.logger.debug('****************************************')
+                self.logger.debug('At %s mm:'%self.distance)
+                self.logger.debug('Best stats from %s'%key)
+                self.logger.debug('X =%s std=%s'%(stats[key].get('avg_x'),stats[key].get('std_x')))
+                self.logger.debug('Y =%s std=%s'%(stats[key].get('avg_y'),stats[key].get('std_y')))
+                self.logger.debug('Good results=%s'%passed)
+                self.logger.debug('****************************************')
+                break
           if i == 0:
             temp.sort()
       else:
@@ -424,95 +430,6 @@ class FindBeamCenter(Process):
     except:
       self.logger.exception('**ERROR in FindBeamCenter.labelitSort**')
       self.results = {'passed':False}
-
-class LabelitAction(Process):
-  """
-  Run Labelit.
-  """
-  def __init__(self,inp,output,logger=None):
-    logger.info('LabelitAction.__init__')
-    self.st = time.time()
-    self.input,self.clean,self.test,self.verbose,self.vendortype,self.red = inp
-    self.output2                              = output
-    self.logger                               = logger
-    
-    self.labelit_jobs                       = {}
-    self.pool                               = {}
-    self.working_dir                        = os.getcwd()
-    self.multiproc                          = True
-    
-    #******BEAMLINE SPECIFIC*****
-    #self.cluster_use = Utils.checkCluster()
-    self.cluster_use = BLspec.checkCluster()
-    #******BEAMLINE SPECIFIC*****
-    
-    #initialize the thread
-    Process.__init__(self,name='LabelitAction')
-    #start the process
-    self.start()
-      
-  def run(self):
-    if self.verbose:
-      self.logger.debug('LabelitAction::run')
-    
-    self.processLabelit()
-    self.Queue()
-      
-  def processLabelit(self):
-    """
-    Labelit error correction. Set/reset setting in dataset_preferences.py according to error iteration.
-    Commented out things were tried before.
-    """
-    if self.verbose:
-      self.logger.debug('LabelitAction::preprocessLabelit')
-    try:
-      params = {}
-      params['test'] = self.test
-      params['cluster'] = self.cluster_use
-      params['redis'] = self.red
-      params['vendortype'] = self.vendortype
-      #params['iterations'] = 1
-      if self.vendortype in ['Pilatus-6M','ADSC-HF4M']:
-        params['iterations'] = 1
-      else:
-        params['iterations'] = 4
-      
-      #Otherwise too much goes to the log.
-      params['verbose'] = False
-      for name in self.input.keys():
-        self.pool[name] = Queue()
-        if self.red:
-          self.red.blpop('bc_throttler')
-        job = Process(target=RunLabelit,args=(self.input[name],self.pool[name],params,self.logger))
-        job.start()
-        self.labelit_jobs[job] = name
-
-    except:
-      self.logger.exception('**Error in LabelitAction.preprocessLabelit**')
-
-  def Queue(self):
-    """
-    Queue for Labelit.
-    """
-    if self.verbose:
-      self.logger.debug('LabelitAction::Queue')
-    try:
-      out = {}
-      #pids = self.labelit_jobs.keys()[:100]
-      for job in self.labelit_jobs.keys():
-        iteration = self.labelit_jobs[job]
-        out[str(iteration)] = self.pool[iteration].get()
-        #clean up folders
-        if self.clean:
-          if os.path.exists(os.path.join(self.working_dir,str(iteration))):
-            shutil.rmtree(os.path.join(self.working_dir,str(iteration)),ignore_errors=True)
-      self.logger.debug('RunLabelit finished.')
-      #Send back the results.
-      self.output2.put(out)
-
-    except:
-      self.logger.exception('**Error in LabelitAction.Queue**')
-      self.output2.put(None)
 
 #class Handler(threading.Thread,Communicate):
 class Handler(Process,Communicate):
@@ -538,27 +455,18 @@ class Handler(Process,Communicate):
     #Cleanup all the folders and files after running.
     self.clean                              = True
     #Turn on verbose output.
-    self.verbose                            = True
-    #Setup a Redis database for comtrolling job submission to cluster. Its much faster and doesn't clog the queue.
-    self.red                                = True
-    #Copy images to RAM on all cluster nodes
-    self.ram                                = True
-    #Limit launching of LABELIT jobs to this number (FALSE to disable).
-    self.job_limit                          = 256
+    self.verbose                            = False
     
-    #Utils.pp(self.input)
     #******BEAMLINE SPECIFIC*****
-    """
+    #Used to know when to send the results back to Core, otherwise sent to terminal.
     if self.input[-2].get('aperture',False):
       self.beamline_use                   = True
     else:
       self.beamline_use                   = False
-    """
-    self.beamline_use                   = True
     #******BEAMLINE SPECIFIC*****
+    
     #initialize the thread
     Process.__init__(self)
-    
     #start the thread
     self.start()
       
@@ -569,7 +477,7 @@ class Handler(Process,Communicate):
     self.queue()
     self.sort()
     self.postprocess()
-      
+  
   def process(self):
     """
     Create input dict and send to FindBeamCenter.
@@ -587,16 +495,9 @@ class Handler(Process,Communicate):
       """
       #Seems to give best load and speed on our cluster.
       ncpu = 1
-      #Limit the number of Labelit jobs running at a time on cluster. Could use queue system on cluster, but this seems much faster.
-      if self.job_limit:
-        import redis
-        self.red = redis.Redis('164.54.212.169',6380)#remote
-        for i in range(self.job_limit):
-          self.red.lpush('bc_throttler',1)
-
       od = self.input[1].get('work')
       for job in setup.keys():
-        #if job in ('200'):
+        #if job in ('500.0'):
         new_input = []
         new_input.append(self.input[0])
         nd = os.path.join(od,job)
@@ -605,10 +506,12 @@ class Handler(Process,Communicate):
           new_input.append(header)
         new_input.extend(self.input[-2:])
         self.output[job] = Queue()
-        j = Process(target=FindBeamCenter,kwargs={'inp':(new_input,ncpu,self.verbose,self.clean,self.ram,self.red),
-                                                         'output':self.output[job],'logger':self.logger})
+        j = Process(target=FindBeamCenter,kwargs={'inp':(new_input,ncpu,self.verbose,self.clean),
+                                                  'output':self.output[job],'logger':self.logger})
         j.start()
         self.jobs[j] = job
+        #Wait for the previous jobs to be submitted.
+        self.output[job].get()
         
     except:
       self.logger.exception('**Error in Handler.process**')
@@ -643,9 +546,6 @@ class Handler(Process,Communicate):
                 self.clean = False
                 break 
         self.logger.debug('Labelit finished.')
-        #Delete the redis database.
-        if self.red:
-          self.red.delete('bc_throttler')
 
     except:
       self.logger.exception('**Error in Handler.queue**')
@@ -692,80 +592,6 @@ class Handler(Process,Communicate):
                                      'orig_Y': '155.56',
                                      'passed': True}
                       }
-      
-      #Pilatus
-      self.results = {   '150': {   'X': 217.52400000000003,
-                                   'Y': 221.81199999999998,
-                                   #'diff_X': '-0.136',
-                                   #'diff_Y': '-0.268',
-                                   'passed': True,
-                                   'orig_X': '217.66',
-                                   'orig_Y': '222.08'},
-                          '200': {   'X': 217.38666666666668,
-                                   'Y': 221.73166666666668,
-                                   #'diff_X': '-0.0633333333333',
-                                   #'diff_Y': '-0.158333333333',
-                                   'passed': True,
-                                   'orig_X': '217.45',
-                                   'orig_Y': '221.89'},
-                          '300': {   'X': 217.31777777777774,
-                                   'Y': 221.72888888888892,
-                                   #'diff_X': '0.0777777777777',
-                                   #'diff_Y': '-0.0811111111111',
-                                   'passed': True,
-                                   'orig_X': '217.24',
-                                   'orig_Y': '221.81'},
-                          '400': {   'X': 217.21818181818179,
-                                   'Y': 221.64272727272729,
-                                   #'diff_X': '0.0681818181818',
-                                   #'diff_Y': '-0.167272727273',
-                                   'passed': True,
-                                   'orig_X': '217.15',
-                                   'orig_Y': '221.81'},
-                          '500': {   'X': 217.21333333333334,
-                                   'Y': 221.60249999999996,
-                                   #'diff_X': '0.103333333333',
-                                   #'diff_Y': '-0.1375',
-                                   'passed': True,
-                                   'orig_X': '217.11',
-                                   'orig_Y': '221.74'},
-                          '600': {   'X': 217.17416666666668,
-                                   'Y': 221.4433333333333,
-                                   #'diff_X': '0.0741666666667',
-                                   #'diff_Y': '-0.186666666667',
-                                   'passed': True,
-                                   'orig_X': '217.10',
-                                   'orig_Y': '221.63'},
-                          '700': {   'X': 217.17333333333329,
-                                   'Y': 221.39166666666668,
-                                   #'diff_X': '0.0233333333333',
-                                   #'diff_Y': '-0.138333333333',
-                                   'passed': True,
-                                   'orig_X': '217.15',
-                                   'orig_Y': '221.53'},
-                          '800': {   'X': 217.3075,
-                                   'Y': 221.41999999999999,
-                                   #'diff_X': '0.0875',
-                                   #'diff_Y': '-0.09',
-                                   'passed': True,
-                                   'orig_X': '217.22',
-                                   'orig_Y': '221.51'},
-                          '1000': {   'X': 217.32666666666668,
-                                    'Y': 221.51416666666668,
-                                    #'diff_X': '0.0466666666667',
-                                    #'diff_Y': '-0.0958333333333',
-                                    'passed': True,
-                                    'orig_X': '217.28',
-                                    'orig_Y': '221.61'},
-                          '1200': {   'X': 217.28666666666672,
-                                    'Y': 221.43166666666664,
-                                    #'diff_X': '-0.0333333333333',
-                                    #'diff_Y': '-0.148333333333',
-                                    'passed': True,
-                                    'orig_X': '217.32',
-                                    'orig_Y': '221.58'},
-                      }
-      
       """
       #Separate out the same distance runs.
       res = {}
@@ -928,9 +754,6 @@ class RunCluster(Thread):
     logger.info('RunCluster.__init__')
     self.image_dir            = inp
     self.logger               = logger
-    #self.ex                   = ex
-    #self.work_dir             = '/gpfs6/users/necat/Jon/RAPD_test/Temp'
-    #self.work_dir             = os.getcwd()
     self.log = os.path.join(WORK_DIR,'bc.log')
     self.timer                = 600
     self.verbose              = True
@@ -953,13 +776,16 @@ class RunCluster(Thread):
     If not running on computer cluster, connect to node and launch.
     """
     try:
+      #get path of running file
+      from inspect import getsourcefile
+      fpath = os.path.abspath(getsourcefile(lambda:0))
+      
       #command = '-pe smp 8 -o %s rapd.python /gpfs5/users/necat/rapd/gadolinium/trunk/rapd_agent_beamcenter.py %s'%(self.log,self.image_dir)
-      command = '-pe smp 8 -o %s rapd.python /gpfs6/users/necat/Jon/Programs/CCTBX_x64/modules/rapd/src/rapd_agent_beamcenter.py %s'%(self.log,self.image_dir)
-      #os.chdir(self.work_dir)
+      #command = '-pe smp 8 -q phase2.q -o %s /gpfs6/users/necat/Jon/Programs/RAPD/bin/rapd.python /gpfs6/users/necat/Jon/Programs/CCTBX_x64/modules/rapd/src/rapd_agent_beamcenter.py %s'%(self.log,self.image_dir)
+      command = '-pe smp 8 -q phase2.q -o %s rapd.python %s %s'%(self.log,fpath,self.image_dir)
       os.chdir(WORK_DIR)
-      #self.pid = Utils.connectCluster(command)
       self.pid = BLspec.connectCluster(command)
-
+      
     except:
       self.logger.exception('**Error in RunCluster::conCluster**')
       
@@ -968,7 +794,6 @@ class RunCluster(Thread):
       self.logger.debug('RunCluster::queue')
     timer = 0
     while timer < self.timer:
-      #if Utils.stillRunningCluster(self,self.pid) == False:
       if BLspec.stillRunningCluster(self,self.pid) == False:
         self.postprocess()
         break
@@ -994,69 +819,78 @@ class RunCluster(Thread):
 def createInput(image_dir,logger):
   logger.debug('createInput')
   import glob
-  
+  from iotbx.detectors import ImageFactory
   try:
-    l = glob.glob(os.path.join(image_dir,'*.cbf'))
+    l = []
     l1 = []
     l2 = []
     d = {}
-    if len(l) == 0:
-      #from rapd_adsc import AdscReadHeader as getHeader
-      import aps_24ide as Detector
-      l = glob.glob(os.path.join(image_dir,'*.img'))
-    else:
-      #from rapd_pilatus import PilatusReadHeader as getHeader
-      import aps_24idc as Detector
-    #Remove priming shot (NE-CAT ONLY)
+    pids = []
+    #check for different image suffixes in the folder.
+    l0 = ['*.cbf','*.img','*.[0-9]*']
+    for x in range(len(l0)):
+      l = glob.glob(os.path.join(image_dir,l0[x]))
+      if len(l) != 0:
+        break
     l.sort()
+    vendortype = ImageFactory(l[0]).vendortype
+    if vendortype == 'ADSC-HF4M':
+      from rapd_adsc import Hf4mReadHeader as readHeader
+    elif vendortype == 'Pilatus-6M':
+      from rapd_pilatus import pilatus_read_header as readHeader
+    elif  vendortype == 'ADSC':
+      from rapd_adsc import Q315ReadHeader as readHeader
+    else:
+      from rapd_mar import MarReadHeader as readHeader
+    
+    #Remove priming shot (NE-CAT ONLY)
     l = [p for p in l if p.count('priming_shot') == False]
     for x in range(2):
       for i in l:
         if x == 0:
           #Get headers first
-          header = Detector.read_header(i)
-          l1.append({'beam_center_x' : header.get('beam_x'),
-                       'beam_center_y' : header.get('beam_y'),
-                       'spacegroup'    : SPACEGROUP,
-                       'fullname'      : header.get('fullname'),
-                       'distance'      : round(header.get('distance'))
-                       })
-          """
-          #For overwriting an incorrect BC from a header.
-          if round(header.get('distance')) == 1000.0:
-            l1.append({'beam_center_x' : 145.30,
-                       'beam_center_y' : 158.60,
-                       #Assuming thaumatin or lysozyme
-                       'spacegroup'    : SPACEGROUP,
-                       'fullname'      : header.get('fullname'),
-                       'distance'      : round(header.get('distance'))
-                     })
+          header = readHeader(i)
+          #Send images to ImageFactory to read the header (TODO).
+          #Send images to RAM on all cluster nodes first.
+          if RAM == True:
+            image_path = os.path.join('/dev/shm',os.path.basename(header.get('fullname')))
+            command = 'cp %s %s'%(header.get('fullname'),image_path)
+            job = Process(target=Utils.rocksCommand,args=(command,logger))
+            job.start()
+            pids.append(job)
           else:
-            l1.append({'beam_center_x' : header.get('beam_x'),
-                       'beam_center_y' : header.get('beam_y'),
-                       #Assuming thaumatin or lysozyme
-                       'spacegroup'    : SPACEGROUP,
-                       'fullname'      : header.get('fullname'),
-                       'distance'      : round(header.get('distance'))
-                       })
-          """
+            image_path = header.get('fullname')
+          l1.append({'beam_center_x' : header.get('beam_x'),
+                     'beam_center_y' : header.get('beam_y'),
+                     'spacegroup'    : SPACEGROUP,
+                     'fullname'      : image_path,
+                     'distance'      : round(header.get('distance')),
+                     'vendortype'    : vendortype,
+                    })
         else:
           #Then sort by distance for input
           l3 = []
-          if i not in (l2):
+          if os.path.basename(i) not in (l2):
             for y in range(2):
               for z in range(len(l1)):
                 if y == 0:
-                  if i == l1[z].get('fullname'):
+                  if os.path.basename(i) == os.path.basename(l1[z].get('fullname')):
                     dist = l1[z].get('distance')
                     l3.append(l1[z])
-                    l2.append(l1[z].get('fullname'))
+                    l2.append(os.path.basename(l1[z].get('fullname')))
                 elif l1[z].get('distance') == dist:
-                  if l1[z].get('fullname') not in l2:
+                  if os.path.basename(l1[z].get('fullname')) not in l2:
                     l3.append(l1[z])
-                    l2.append(l1[z].get('fullname'))
+                    l2.append(os.path.basename(l1[z].get('fullname')))
             d[str(dist)] = tuple(l3[:2])
-    #Utils.pp(d)
+    #wait for images to be copied to RAM.
+    if RAM == True:
+      while len(pids) != 0:
+        for job in pids:
+          if job.is_alive() == False:
+            pids.remove(job)
+        time.sleep(1)
+
     inp = ["AUTOINDEX",{"work": WORK_DIR,"info": d},None,
            {"sample_type": "Protein","beam_flip": "False","multiprocessing":"True",
             "a":0.0,"b":0.0,"c":0.0,"alpha":0.0,"beta":0.0,"gamma":0.0},
@@ -1075,7 +909,8 @@ def main():
   """
   #start logging
   import logging,logging.handlers
-  LOG_FILENAME = os.path.join(os.getcwd(),'rapd.log')
+  #LOG_FILENAME = os.path.join(os.getcwd(),'rapd.log')
+  LOG_FILENAME = WORK_DIR+'/rapd.log'
   #inp = Input.input()
   # Set up a specific logger with our desired output level
   logger = logging.getLogger('RAPDLogger')
@@ -1097,12 +932,15 @@ def main():
     image_dir = raw_input('In what folder do the direct beam shots exist?: ')
   else:
     image_dir = args['inp'][0]
-  #if Utils.checkCluster():
+  #print createInput('/gpfs2/users/necat/24ID-E_feb-16/images/bs',logger)
+  #createInput(image_dir,logger)
+  
   if BLspec.checkCluster():
     #Creates the input dict and passes it to the Handler.
     Handler(createInput(image_dir,logger),logger=logger)
   else:
     #Connect to the cluster and rerun this script if not launched on computer cluster.
     RunCluster(image_dir,logger=logger)
+  
 if __name__ == '__main__':
   main()

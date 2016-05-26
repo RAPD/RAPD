@@ -122,6 +122,9 @@ class RapdAgent(Process):
         if 'x_beam' not in self.data.keys():
             self.data['x_beam'] = self.data['beam_center_x']
             self.data['y_beam'] = self.data['beam_center_y']
+        if 'start' not in self.data.keys():
+        	self.data['start'] = self.data['start_image_number']
+        	self.data['total'] = self.data['number_images']
         if self.command == 'XDS':
             self.data['start'] = self.settings['request']['frame_start']
             self.data['total'] = str( int(self.settings['request']['frame_start'])
@@ -180,7 +183,8 @@ class RapdAgent(Process):
         # Parameters likely to be changed based on beamline setup.
 
         # Directory containing XDS.INP default files for detectors.
-        self.detector_directory = '/home/necat/DETECTOR_DEFAULTS/'
+        if os.path.isdir('/home/necat/DETECTOR_DEFAULTS'):
+            self.detector_directory = '/home/necat/DETECTOR_DEFAULTS/'
             #Also check set_detector_data for other detector dependent values!
         # XDS parameters for number of JOBS and PROCESSORS.
         # Values are beamline specific, depending on computing resources.
@@ -221,27 +225,30 @@ class RapdAgent(Process):
             os.makedirs(self.dirs['work'])
         os.chdir(self.dirs['work'])
 
-        if 'detector' in self.data and self.data['detector'] == 'PILATUS':
-            self.xds_default = self.set_detector_data(self.data['detector'])
-        elif 'detector' in self.data and self.data['detector'] == 'HF4M':
-            self.xds_default = self.set_detector_data(self.data['detector'])
-        else:
-            if 'binning' in self.data.keys():
-                if self.data['binning'] == '2x2':
-                    self.data['detector'] = 'ADSC_binned'
-                    self.xds_default = self.set_detector_data('ADSC_binned')
-                elif self.data['binning'] == 'unbinned' or self.data['binning'] == 'none':
-                    self.data['detector'] = 'ADSC'
-                    self.xds_default = self.set_detector_data('ADSC')
-            elif 'bin' in self.data.keys():
-                if self.data['bin'] == '2x2':
-                    self.data['binning'] = '2x2'
-                    self.data['detector'] = 'ADSC_binned'
-                    self.xds_default = self.set_detector_data('ADSC_binned')
-                elif self.data['bin'] == 'unbinned' or self.data['bin'] == 'none':
-                    self.data['binning'] = 'unbinned'
-                    self.data['detector'] = 'ADSC'
-                    self.xds_default = self.set_detector_data('ADSC')
+        if 'detector' in self.data:
+            if self.data['detector'] == 'PILATUS':
+                self.xds_default = self.set_detector_data(self.data['detector'])
+            elif self.data['detector'] == 'HF4M':
+                self.xds_default = self.set_detector_data(self.data['detector'])
+            elif self.data['detector'] == 'rayonix_mx300hs':
+            	self.xds_default = self.set_detector_data(self.data['detector'])
+            else:
+                if 'binning' in self.data.keys():
+                    if self.data['binning'] == '2x2':
+                        self.data['detector'] = 'ADSC_binned'
+                        self.xds_default = self.set_detector_data('ADSC_binned')
+                    elif self.data['binning'] == 'unbinned' or self.data['binning'] == 'none':
+                        self.data['detector'] = 'ADSC'
+                        self.xds_default = self.set_detector_data('ADSC')
+                elif 'bin' in self.data.keys():
+                    if self.data['bin'] == '2x2':
+                        self.data['binning'] = '2x2'
+                        self.data['detector'] = 'ADSC_binned'
+                        self.xds_default = self.set_detector_data('ADSC_binned')
+                    elif self.data['bin'] == 'unbinned' or self.data['bin'] == 'none':
+                        self.data['binning'] = 'unbinned'
+                        self.data['detector'] = 'ADSC'
+                        self.xds_default = self.set_detector_data('ADSC')
 
     def process (self):
         """
@@ -774,6 +781,7 @@ class RapdAgent(Process):
         ADSC_binned - binned ADSC Q315 as at NE-CAT
         PILATUS - Pilatus 6M
         HF4M - ADSC HF4M
+        MX300hs - SER-CAT's Rayonix MX300hs
         """
         self.logger.debug('FastIntegration::set_detector_type')
         last_frame = int(self.data['start']) + int(self.data['total']) -1
@@ -790,7 +798,6 @@ class RapdAgent(Process):
                 raise RuntimeError, 'x beam coordinate outside detector'
             if y_beam < 0 or y_beam > 6144:
                 raise RuntimeError, 'y beam coordinate outside detector'
-            detector_file = 'XDS-ADSC.INP'
             if 'image_template' in self.data:
                 self.image_template = self.data['image_template']
             else:
@@ -807,16 +814,22 @@ class RapdAgent(Process):
                 file_template = os.path.join('/dev/shm/',
                                              self.data['prefix'],
                                              self.image_template)
-
+            if self.data.has_key('pixel_size'):
+            	pass
+            else:
+            	self.data['pixel_size'] = '0.0513'
+            # Set untrusted region for this detector on NE-CAT 24ID-E
+            untrusted_region = 'UNTRUSTED_RECTANGLE= 0 1040 3080 4090\n\n'
+            
         #ADSC binned.
         elif detector_type == 'ADSC_binned':
+            detector_type = 'ADSC'	
             x_beam = float(self.data['y_beam']) / 0.10259
             y_beam = float(self.data['x_beam']) / 0.10259
             if x_beam < 0 or x_beam > 3072:
                 raise RuntimeError, 'x beam coordinate outside detector'
             if y_beam < 0 or y_beam > 3072:
                 raise RuntimeError, 'y beam coordinate outside detector'
-            detector_file = 'XDS-ADSC.INP'
             if 'image_template' in self.data:
                 self.image_template = self.data['image_template']
             else:
@@ -832,7 +845,15 @@ class RapdAgent(Process):
                 file_template = os.path.join('/dev/shm/',
                                              self.data['prefix'],
                                              self.image_template)
-
+            if self.data.has_key('pixel_size'):
+            	pass
+            else:
+            	self.data['pixel_size'] = '0.10259'
+            # Set untrusted region for this detector at NE-CAT 24ID-E.
+            untrusted_region = 'UNTRUSTED_RECTANGLE= 0 520 1540 2045\n\n'
+         if detector_type == 'ADSC':
+         	min_pixel_value = '1'
+         	
         # ADSC HF-4M
         elif detector_type == 'HF4M':
             x_beam = float(self.data['y_beam']) / 0.150
@@ -860,7 +881,6 @@ class RapdAgent(Process):
                 raise RuntimeError, 'x beam coordinate outside detector'
             if y_beam < 0 or y_beam > 2527:
                 raise RuntimeError, 'y beam coordinate outside detector'
-            detector_file = 'XDS-PILATUS.INP'
             if 'image_template' in self.data:
                 self.image_template = self.data['image_template']
             else:
@@ -873,6 +893,56 @@ class RapdAgent(Process):
                 file_template = os.path.join('/dev/shm/',
                                              self.data['image_prefix'],
                                              self.image_template)
+            if self.data.has_key('pixel_size'):
+            	pass
+            else:
+            	self.data['pixel_size'] = '0.172'
+            # Set untrusted region for this detector on NE-CAT 24ID-C
+            # The Pilatus has a lot of regions untrusted between modules.
+            untrusted_region=''
+            rectangles = ['487 495 0 2527']
+            rectangles.extend('981 989 0 2527')
+            rectangles.extend('1475 1483 0 2527')
+            rectangles.extend('1969 1977 0 2527')
+            rectangles.extend('0 2463 195 213')
+            rectangles.extend('0 2463 407 425')
+            rectangles.extend('0 2463 619 637')
+            rectangles.extend('0 2463 831 849')
+            rectangles.extend('0 2463 1043 1061')
+            rectangles.extend('0 2463 1255 1273')
+            rectangles.extend('0 2463 1467 1485')
+            rectangles.extend('0 2463 1679 1697')
+            rectangles.extend('0 2463 1891 1909')
+            rectangles.extend('0 2463 2103 2121')
+            rectangles.extend('0 2463 2315 2333')
+            for rectangle in rectangles:
+            	untrusted_region += 'UNTRUSTED_RECTANGLE= %s\n' %rectangle
+            untrusted_region +='\n'
+            # We also use non-default values for SEPMIN and CLUSTER_RADIUS for the Pilatus, so add those.
+            untrusted_region +='SEPMIN=4 ! Default is 6 for other detectors.\n'
+            untrusted_region +='CLUSTER_RADIUS=2 ! Defaults is 3 for other detectors.\n\n'
+            min_pixel_value = '0'
+             
+        # Rayonix 300hs.
+        elif detector_type == 'rayonix_mx300hs':
+            detector_type = 'MAR345'
+            x_beam = float(self.data['x_beam']) / float(self.data['pixel_size'])
+            y_beam = float(self.data['y_beam']) / float(self.data['pixel_size'])
+            if x_beam < 0 or x_beam > int(self.data['size1']):
+            	raise RuntimeError, 'x beam coordinate outside detector'
+            if y_beam < 0 or y_beam > int(self.data['size1']):
+            	raise RuntimeError, 'y beam coordinate outside detector'
+            detector_file = 'XDS-MX300HS.INP'
+            if 'image_template' in self.data:
+            	self.image_template = self.data['image_template']
+            else:
+            	self.image_template = '%s.????' %self.data['image_prefix']
+            file_template = os.path.join(self.data['directory'],self.image_template)
+            self.last_image = file_template.replace('????', '%04d' %last_frame)
+            self.first_iamge = file_template.replace('????', '%04d' %int(self.data['start']))
+            # Set untrusted region for this detector on SER-CAT beamline
+            untrusted_region = ''
+            min_pixel_value = '0'
 
         self.logger.debug('	Last Image = %s' % self.last_image)
         # Begin xds input with parameters determined by data set.
@@ -884,9 +954,26 @@ class RapdAgent(Process):
                      '\n',
                      'NAME_TEMPLATE_OF_DATA_FRAMES=%s\n' %file_template,
                      '\n',
-                     'BACKGROUND_RANGE=%s\n\n' % background_range]
+                     'BACKGROUND_RANGE=%s\n\n' % background_range,
+                     '!=============== DETECTOR PARAMETERS ========================\n',
+                     'DETECTOR=%s MINIMUM_VALID_PIXEL_VALUE=%s OVERLOAD=%s\n' %(
+                     	     detector_type, min_pixel_value,self.data['count_cutoff']),
+                     'NX=%s NY=%s QX=%s QY=%s\n' %(
+                     	     self.data['size1'],self.data['size2'],self.data['pixel_size'],self.data['pixel_size']),
+                     'TRUSTED_REGION=0.0 1.05 !Relative radii limiting trusted detector region\n\n',
+                     'ROTATION_AXIS=1.0 0.0 0.0\n',
+                     'INCIDENT_BEAM_DIRECTION=0.0. 0.0 1.0\n',
+                     'FRACTION_OF_POLARIZATION=0.90 !default =0.5 for unpolarized beam\n',
+                     'POLARIZATION_PLANE_NORMAL= 0.0 1.0 0.0\n',
+                     "FRIEDEL'S_LAW=FALSE !Defaults is TRUE\n\n",
+                     'INCLUDE_RESOLUTION_RANGE=200.0 0.0 !Angstroems\n',
+                     'REFINE(IDXREF)=BEAM AXIS ORIENTATION CELL POSITION\n',
+                     'REFINE(INTEGRATE)=BEAM CELL ORIENTATION POSITION\n',
+                     'REFINE(CORRECT)=BEAM AXIS CELL ORIENTATION POSITION\n',
+                     'STRICT_ABSORPTION_CORRECTION=TRUE\n\n',
+                     'DIRECTION_OF_DETECTOR_X-AXIS=1.0 0.0 0.0\n']
         # If detector is tilted in two-theta, adjust DIRECTION_OF_Y-AXIS
-        if self.data['twotheta'] == 0.0:
+        if self.data['twotheta'] == 0.0 or self.data['twotheta'] == None:
             xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS=0.0 1.0 0.0\n\n')
         else:
             twotheta = math.radians(float(self.data['twotheta']))
@@ -897,11 +984,7 @@ class RapdAgent(Process):
             xds_input.append('!***   Reset DIRECTION_OF_DETECTOR_Y-AXIS ***')
             xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS=0.0 %.4f %.4f\n' %(tilty, tiltz))
             xds_input.append('!0.0 cos(2theta) sin(2theta)\n\n')
-
-        # Read in default XDS.INP for detector and add to xds input.
-        read_file = os.path.join(self.detector_directory, detector_file)
-        detector_defaults = open(read_file,'r').readlines()
-        xds_input.extend(detector_defaults)
+        xds_input.append(untrusted_region)
 
         return(xds_input)
 
@@ -1163,10 +1246,9 @@ class RapdAgent(Process):
         xdsstat_log = self.xdsstat()
         # Run pointless to convert XDS_ASCII.HKL to mtz format.
         mtzfile = self.pointless()
-        # Run dummy run of scala to generate various stats and plots.
-        # i.e. We don't use scala for scaling.
+        # Run dummy run of aimless to generate various stats and plots.
+        # i.e. We don't use aimless for actual scaling, it's already done by XDS.
         if mtzfile != 'Failed':
-        #    scala_log = self.scala(mtzfile)
             aimless_log = self.aimless(mtzfile)
         else:
             self.logger.debug('    Pointless did not run properly!')
@@ -1204,12 +1286,6 @@ class RapdAgent(Process):
 
         # Parse CORRECT.LP and add information from that to summary.
         summary['ISa'] = self.parse_correctLP()
-
-        # Parse xdsstat results and add to plots generated by parse_scala
-        Rd_graph, Rd_table = self.parse_xdsstat(xdsstat_log, len(tables))
-        if Rd_table != 'Failed':
-            tables.append(Rd_table)
-            graphs.append(Rd_graph)
 
         # Parse CORRECT.LP and pull out per wedge statistics
         #self.parse_correct()
@@ -1359,7 +1435,7 @@ class RapdAgent(Process):
 
     def make_short_results(self, directory, results, orig_rescut=False):
         """
-        Parses the scala logfile and extracts the summary table
+        Parses the aimless logfile and extracts the summary table
         at the end of the file.  Then writes an html file to be
         displayed as the Summary of the data processing.
         """
@@ -1522,7 +1598,7 @@ class RapdAgent(Process):
                      'Multiplicity v Resolution'        : 'Redundancy',
                      'Rmeas, Rsym & PCV v Resolution'   : 'Rmeas',
                      'Rpim (precision R) v Resolution'  : 'Rpim',
-                     'Rd vs frame_difference'           : 'Rd',
+                     #'Rd vs frame_difference'           : 'Rd',
                      'Anom & Imean CCs v resolution -'  : 'Anom Corr',
                      'Anom & Imean CCs v resolution'    : 'CCanom and CC1/2',
                      'RMS correlation ratio'            : 'RCR',
@@ -1766,7 +1842,7 @@ class RapdAgent(Process):
 
         # Now create a list for each graph to be plotted.
         # This list should have [title, xlabel, ylabels, xcol, ycols, tableNum]
-        # title is the graph title in the scala logfile,
+        # title is the graph title in the aimless logfile,
         # xlabel is the label to be used for the x-axis, ylabels are the labels
         # to be used for the data sets in the graph, xcol is the position within
         # the table where the x-values are , ycols are the position of the y-vaules,
@@ -1799,171 +1875,7 @@ class RapdAgent(Process):
                   ['Rcp v. batch', 'relative frame difference', ['Rcp'], 1, [-1], 8]
                   ]
         return(graphs, tables, int_results)
-    def parse_scala (self, logfile):
-        """
-        Parese the scala logfile in order to pull out data for graph and the
-        results table.
-        Also parse the summary table at the end of the scala logfile, and put
-        relevant values into a results dictionary.
-        Returns a list of tuples called graphs, a nested list called tables,
-        and a dictionary called int_results.
-
-        tuples in graphs contain:
-            '<*graph title *>', 'x_label', ['data_labels'], xcol, ycols, table#
-            where:
-            graph_title is the title to be used when plotting the data.
-            x_lable is the label for the x-axis
-            data_labels are the labels for data  set in a table.
-            xcol = the column number where the x-axis data is.
-            ycols = the column numbers for the various data sets.
-            table# gives a position for the table within the list talbes
-
-        tables contains all of the tables within the scala logfile
-        such that table[n] is the nth table in the lofgilre
-        and to read the data from table[n] you can loop as follows:
-        (example would read out the 1st and 5th column of data)
-        for line in table[n]:
-            xvalue = line[0]
-            yvalue = line[4]
-        """
-        self.logger.debug('FastIntegration::parse_scala')
-        #log = open(logfile, 'r').readlines()
-        int_results = {}
-        log = logfile.split('\r\n')
-        tables = []
-
-        # The list 'table_list' contains the names (as given in the scala log)
-        # of the tables that you wish to extract data from.
-        # Only tables with these names will be pulled out.
-        table_list = ['Analysis against all Batches for all runs',
-                      'Analysis against resolution',
-                      'Completeness, multiplicity, Rmeas v. resolution',
-                      'Correlations within dataset']
-        # If you add to table_list, be sure to edit the creation of the graphs list below.
-
-        flag = 0
-        summary_flag = 0
-        anom_cut_flag = 0
-        int_results['CC_cut'] = False
-        int_results['RCR_cut'] = False
-        for v in log:
-            if 'TABLE' in v:
-                for title in table_list:
-                    if title in v:
-                        # Signal the potential start of a table (flag = 1),
-                        # and reinitialize the data lists.
-                        data = []
-                        flag = 1
-            elif flag == 1:
-                line = v.strip()
-                if 'applet>' in v:
-                    tables.append(data)
-                    flag = 0
-                elif len(line) > 0 and line.split()[0].isdigit():
-                    sline = line.split()
-                    data.append(sline)
-                    if anom_cut_flag == 1:
-                        if sline[3] == '-' or sline[7] =='-':
-                            pass
-                        else:
-                            anom_cc = float(sline[3])
-                            anom_rcr = float(sline[7])
-                            if anom_cc >= 0.3:
-                                int_results['CC_cut'] = [ sline[2], sline[3] ]
-                            if anom_rcr >= 1.5:
-                                int_results['RCR_cut'] = [ sline[2], sline[7]]
-                elif 'GRAPHS: Anom & Imean CCs' in line:
-                    anom_cut_flag = 1
-                elif anom_cut_flag == 1:
-                    if line.startswith('Overall'):
-                        anom_cut_flag = 0
-                        int_results['CC_anom_overall'] = line.split()[1]
-                        int_results['RCR_anom_overall'] = line.split()[5]
-            elif 'Summary data for' in v:
-                summary_flag = 1
-            elif summary_flag == 1:
-                vsplit = v.split()
-                # bin resolution limits
-                if 'Low resolution limit' in v:
-                    int_results['bins_low'] = vsplit[3:6]
-                elif 'High resolution limit' in v:
-                    int_results['bins_high'] = vsplit[3:6]
-                # Rmerge
-                elif 'Rmerge    ' in v:
-                    int_results['rmerge'] = vsplit[1:4]
-                elif 'Rmerge in top intensity bin' in v:
-                    int_results['rmerge_top'] = [vsplit[5]]
-                # Rmeas
-                elif 'Rmeas (within I+/I-)' in v:
-                    int_results['rmeas_anom'] = vsplit[3:6]
-                elif 'Rmeas (all I+ & I-)' in v:
-                    int_results['rmeas_norm'] = vsplit[5:8]
-                # Rpim
-                elif 'Rpim (within I+/I-)' in v:
-                    int_results['rpim_anom'] = vsplit[3:6]
-                elif 'Rpim (all I+ & I-)' in v:
-                    int_results['rpim_norm'] = vsplit[5:8]
-                # Fractional partial bias
-                elif 'Fractional partial bias' in v:
-                    int_results['bias'] = vsplit[3:6]
-                # Number of reflections
-                elif 'Total number of observations' in v:
-                    int_results['total_obs'] = vsplit[4:7]
-                elif 'Total number unique' in v:
-                    int_results['unique_obs'] = vsplit[3:6]
-                # I/sigI
-                elif 'Mean((I)/sd(I))' in v:
-                    int_results['isigi'] = vsplit[1:4]
-                # % complete
-                elif 'Completeness' in v:
-                    int_results['completeness'] = vsplit[1:4]
-                elif 'Anomalous completeness' in v:
-                    int_results['anom_completeness'] = vsplit[2:5]
-                # Multiplicity
-                elif 'Multiplicity' in v:
-                    int_results['multiplicity'] = vsplit[1:4]
-                elif 'Anomalous multiplicity' in v:
-                    int_results['anom_multiplicity'] = vsplit[2:5]
-                # Anomalous indicators
-                elif 'DelAnom correlation between half-sets' in v:
-                    int_results['anom_correlation'] = vsplit[4:7]
-                elif 'Mid-Slope of Anom Normal Probability' in v:
-                    int_results['anom_slope'] = [vsplit[5]]
-                # unit cell
-                elif 'Average unit cell' in v:
-                    int_results['scaling_unit_cell'] = vsplit[3:]
-                # spacegroup
-                elif 'Space group:' in v:
-                    int_results['scaling_spacegroup'] = ''.join(vsplit[2:])
-                    summary_flag = 0
-
-
-        # Now create a list for each graph to be plotted.
-        # This list should have [title, xlabel, ylabels, xcol, ycols, tableNum]
-        # title is the graph title in the scala logfile,
-        # xlabel is the label to be used for the x-axis, ylabels are the labels
-        # to be used for the data sets in the graph, xcol is the position within
-        # the table where the x-values are , ycols are the position of the y-vaules,
-        # and tableNum is the position of the table within the list tables.
-        graphs = [
-                  ['Rmerge v Batch for all runs', 'image number', ['Rmerge'], 0, [8], 0],
-                  ['Imean & RMS Scatter', 'image_number', ['Mn(Imean)', 'Scatter from I+/I- (Sigma)','Scatter from Imean'], 0, [2,3,6], 0],
-                  ['Imean/RMS scatter', 'image number', ['Imean/RMS scatter'], 0, [7], 0],
-                  ['I/sigma, Mean Mn(I)/sd(Mn(I))', 'Dmin (A)', ['I/sigma','Mn(I/sd)'], 1, [10,12], 1],
-                  ['Rmerge v Resolution', 'Dmin (A)', ['Rmerge', 'Rfull', 'Ranom'], 1, [3,4,6], 1],
-                  ['Average I, sd, and Sigma', 'Dmin (A)', ['Average I','SIGMA','sd'], 1, [8,9,11], 1],
-                  ['Completeness v Resolution', 'Dmin (A)', ['%poss','C%poss', 'AnoCmp', 'AnoFrc'], 1, [6,7,9,10], 2],
-                  ['Multiplicity v Resolution', 'Dmin (A)', ['Mlplct', 'AnoMlt'], 1, [8,11], 2],
-                  ['Rpim (precision R) v Resolution', 'Dmin (A)', ['Rpim', 'RpimO'], 1, [15,16], 2],
-                  ['Rmeas, Rsym, & PCV v Resolution', 'Dmin (A)',['Rmeas', 'Rmeas0', 'Rsym', 'PCV', 'PCV0'], 1, [12, 13, 14, 17, 18], 2],
-                  ['Anom & Imean CCs v resolution', 'Dmin (A)', ['CC_anom','CC_cen', 'CC_Imean'], 1, [3,5,11], 3],
-                  ['RMS correlation ratio', 'Dmin (A)', ['RCR_anom', 'RCR_cen'], 1, [7,9], 3]
-                  ]
-
-
-        return(graphs,tables, int_results)
-
-
+    
     def aimless (self, mtzin, resolution=False):
         """
         Runs aimless on the data, including the scaling step.
@@ -1991,36 +1903,10 @@ class RapdAgent(Process):
         os.system(cmd)
         return(logfile)
 
-    def scala (self,mtzin):
-        """
-        Runs scala for the purposes of generating the results statistics
-        and graphs.  Scala does not actually do any scaling.
-        """
-        self.logger.debug('FastIntegration::scala')
-
-        mtzout = mtzin.replace('pointless', 'scala')
-        logfile = mtzout.replace('mtz', 'log')
-        comfile = mtzout.replace('mtz', 'com')
-
-        scala_file = ['#!/bin/tcsh\n',
-                      'scala hklin %s hklout %s << eof > %s\n' % (mtzin, mtzout,logfile),
-                      'run 1 all\n',
-                      'anomalous on\n',
-                      'scales constant\n',
-                      'sdcorrection noadjust norefine both 1 0 0\n',
-                      'cycles 0\n',
-                      'eof']
-        self.write_file(comfile, scala_file)
-        os.chmod(comfile, stat.S_IRWXU)
-        cmd = './%s' %comfile
-        os.system(cmd)
-        scala_log = open(logfile,'r').readlines()
-        return(scala_log)
-
     def pointless(self):
         """
         Runs pointless on the default reflection file, XDS_ASCII.HKl
-        to produce an mtz file suitable for input to scala.
+        to produce an mtz file suitable for input to aimless.
         """
         self.logger.debug('FastIntegration::pointless')
         hklfile = 'XDS_ASCII.HKL'
