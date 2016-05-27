@@ -225,12 +225,12 @@ class RapdAgent(Process):
         os.chdir(self.dirs['work'])
 
         if 'detector' in self.data:
-            if self.data['detector'] == 'PILATUS':
+            if self.data['detector'] in ['PILATUS', 'HF4M', 'rayonix_mx300hs']:
                 self.xds_default = self.set_detector_data(self.data['detector'])
-            elif self.data['detector'] == 'HF4M':
-                self.xds_default = self.set_detector_data(self.data['detector'])
-            elif self.data['detector'] == 'rayonix_mx300hs':
-            	self.xds_default = self.set_detector_data(self.data['detector'])
+            #elif self.data['detector'] == 'HF4M':
+            #    self.xds_default = self.set_detector_data(self.data['detector'])
+            #elif self.data['detector'] == 'rayonix_mx300hs':
+            #	self.xds_default = self.set_detector_data(self.data['detector'])
             else:
                 if 'binning' in self.data.keys():
                     if self.data['binning'] == '2x2':
@@ -919,7 +919,8 @@ class RapdAgent(Process):
             untrusted_region +='\n'
             # We also use non-default values for SEPMIN and CLUSTER_RADIUS for the Pilatus, so add those.
             untrusted_region +='SEPMIN=4 ! Default is 6 for other detectors.\n'
-            untrusted_region +='CLUSTER_RADIUS=2 ! Defaults is 3 for other detectors.\n\n'
+            untrusted_region +='CLUSTER_RADIUS=2 ! Defaults is 3 for other detectors.\n'
+            untrusted_region +='SENSOR_THICKNESS=0.32\n\n'
             min_pixel_value = '0'
 
         # Rayonix 300hs.
