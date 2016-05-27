@@ -193,18 +193,14 @@ class Model(object):
         if site.DETECTOR:
             detector, suffix = site.DETECTOR
             detector = detector.lower()
-            self.detectors[self.site_ids[0].upper()] = load_module(
-                seek_module=detector,
-                directories=("sites.detectors", "detectors"))
+            self.detectors[self.site_ids[0].upper()] = load_module(detector, ("sites.detectors", "detectors"))
 
         # Multiple detectors
         elif site.DETECTORS:
             for site_id in self.site_ids:
                 detector, suffix = site.DETECTORS[site_id]
                 detector = detector.lower()
-                self.detectors[site_id.upper()] = load_module(
-                    seek_module=detector,
-                    directories=("sites.detectors", "detectors"))
+                self.detectors[site_id.upper()] = load_module(detector, ("sites.detectors", "detectors"))
 
     def start_image_monitor(self):
         """Start up the image listening process for core"""
@@ -483,6 +479,8 @@ class Model(object):
             else:
                 return identified_runs
 
+
+
     def add_run(self, run_dict):
         """
         Add potentially new run to RAPD system
@@ -515,6 +513,33 @@ class Model(object):
             self.recent_runs[run_id] = run_data
 
         return True
+
+    # def in_past_run(self, fullname):
+    #     """
+    #     Determine the place in a past run the image is
+    #
+    #     Keyword argument
+    #     fullname -- the full path name for an image
+    #     """
+    #
+    #     self.logger.info("in_past_run %s", fullname)
+    #
+    #     # Check older runs
+    #     for run_info in reversed(self.recent_runs):
+    #         place, __ = self.in_run(fullname, run_info)
+    #         # Next
+    #         if place == "PAST_RUN":
+    #             continue
+    #         # Found the run
+    #         elif isinstance(place, int):
+    #             return place, run_info
+    #         # SNAP - unlikely
+    #         elif place == "SNAP":
+    #             return "SNAP", None
+    #
+    #     # Go through all runs and fail to find a run or snap
+    #     else:
+    #         return False, None
 
     def in_run(self, site_tag, fullname, run_info=None):
         """
@@ -611,21 +636,21 @@ class Model(object):
                            "agent_directories":self.site.RAPD_AGENT_DIRECTORIES}
 
             # Add the process to the database to display as in-process
-            process_id = self.database.add_agent_process(agent_type="index+strategy:single",
-                                                         request_type="original",
-                                                         representation=new_repr,
-                                                         progress=1,
-                                                         display="show")
+            agent_process_id = self.database.add_agent_process(agent_type="index+strategy:single",
+                                                               request_type="original",
+                                                               representation=new_repr,
+                                                               status=1,
+                                                               display="show")
 
             # Add the ID entry to the header dict
-            header.update({"agent_process_id":process_id,
+            header.update({"agent_process_id":agent_process_id,
                            "repr":new_repr})
 
             # Run autoindex and strategy agent
             LaunchAction(command={"command":"INDEX+STRATEGY",
                                   "directories":directories,
                                   "header1":header,
-                                  "site_parameters":self.site.BEAM_INFO[site_tag],
+                                  "site_parameters":self.site.BEAM_INFO[header1["site_tag"]],
                                   "preferences":{},
                                   "return_address":self.return_address},
                          launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
@@ -663,16 +688,16 @@ class Model(object):
                                    "agent_directories":self.site.RAPD_AGENT_DIRECTORIES}
 
                     # Add the process to the database to display as in-process
-                    process_id = self.database.add_agent_process(agent_type="index+strategy:pair",
-                                                                 request_type="original",
-                                                                 representation=new_repr,
-                                                                 progress=0,
-                                                                 display="show")
+                    agent_process_id = self.database.add_agent_process(agent_type="index+strategy:pair",
+                                                                       request_type="original",
+                                                                       representation=new_repr,
+                                                                       status=1,
+                                                                       display="show")
 
                     # Add the ID entry to the header dict
-                    header1.update({"agent_process_id":process_id,
+                    header1.update({"agent_process_id":agent_process_id,
                                     "repr":new_repr})
-                    header2.update({"agent_process_id":process_id,
+                    header2.update({"agent_process_id":agent_process_id,
                                     "repr":new_repr})
 
                     # Run autoindex and strategy agent
@@ -706,14 +731,14 @@ class Model(object):
             # If we are to integrate, do it
             try:
                 # Add the process to the database to display as in-process
-                process_id = self.database.add_agent_process(agent_type="integrate",
-                                                             request_type="original",
-                                                             representation=new_repr,
-                                                             progress=0,
-                                                             display="show")
+                agent_process_id = self.database.add_agent_process(agent_type="integrate",
+                                                                   request_type="original",
+                                                                   representation=new_repr,
+                                                                   status=1,
+                                                                   display="show")
 
                 # Add the ID entry to the header dict
-                header.update({"agent_process_id":process_id,
+                header.update({"agent_process_id":agent_process_id,
                                "repr":new_repr})
 
                 # # Add the ID entry to the data dict
@@ -777,6 +802,14 @@ class Model(object):
 
         return work_dir_candidate, new_repr
 
+    def handle_agent_communication(command, information):
+        """
+        Handle incoming communications from agents
+        """
+
+        pass
+
+
     def receive(self, message):
         """
         Receive information from ControllerServer (self.SERVER) and handle accordingly.
@@ -823,16 +856,10 @@ class Model(object):
             CRYSTAL_PARAMS_REQUEST - request from console for data
         """
 
-        self.logger.debug("Model::receive")
-        self.logger.debug("length returned %d", len(message))
-        self.logger.debug(message)
+        self.logger.debug("Received: %s", message)
 
         # Unpack
         command, information = message
-
-        # Keep track adding to the database
-        result_db = False
-        trip_db = False
 
         # NEWIMAGE
         # information is {"fullname":.., "site_tag":..}
@@ -843,6 +870,13 @@ class Model(object):
         # information is dict containing run information
         elif command == "NEWRUN":
             self.add_run(information)
+
+        # AGENTS
+        elif command.startswith("AGENT"):
+            self.logger.debug("Communication from agent")
+
+            self.handle_agent_communication(command=command,
+                                            information=information)
 
         # elif command == "PILATUS_ABORT":
         #     self.logger.debug("Run aborted")
@@ -1065,12 +1099,7 @@ class Model(object):
         #                 )
         #
 
-        # INDEX or INDEX+STRATEGY
-        elif command.startswith("INDEX"):
 
-            # Mark the process with the status
-            self.database.update_(process_id=information["process_id"],
-                                               status=information["status"])
 
         # elif command == "AUTOINDEX":
         #     # Handle the ongoing throttling of autoindexing jobs
