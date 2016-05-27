@@ -1355,6 +1355,23 @@ class Database(object):
         #     self.close_connection(connection, cursor)
         #     return(False, False)
 
+    def add_index_result(self, information):
+        """
+        Add and AUTOINDEX+STRATEGY result from the core agent
+
+        Keyword argument
+        information -- dict of information from agent
+        """
+
+        # Save some typing / work with old interface
+        process = information.get("process", {})
+        dirs = information.get("directories", {})
+        info = information.get("information", {})
+        settings = information.get("preferences", {})
+        results = information.get("results", {})
+
+        
+
 
     def addSingleResult(self,dirs,info,settings,results):
         """

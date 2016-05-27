@@ -805,9 +805,143 @@ class Model(object):
     def handle_agent_communication(command, information):
         """
         Handle incoming communications from agents
+
+        Keyword arguments
+        command -- source of the communication (AGENT:INDEX+STRATEGY)
+        information -- dict of pertinent information. Needs to at least contain
+                       a dict under the key process with entries for agent_process_id
+                       and status
+
+        This form of handling returns from agents is soon to be discontinued. To
+        make RAPD more flexible to new agents changes will be coming.
         """
 
-        pass
+        # Update the agent_process in the DB
+        self.database.update_agent_process(
+            agent_process_id=information["process"].get("agent_process_id", None),
+            status=information["process"].get("status", 1))
+
+        # Now by agent
+        agent_type = command.split(":")[1]
+
+        if agent_type == "INDEX+STRATEGY":
+
+            # Put results into the database
+            result_db = self.database.add_index_result(dirs=dirs,
+                                                       info=info,
+                                                       settings=settings,
+                                                       results=results)
+
+            # Add result to database
+            #     result_db = self.database.addSingleResult(dirs=dirs,
+            #                                               info=info,
+            #                                               settings=settings,
+            #                                               results=results)
+            #
+            #     self.logger.debug("Added single result: %s" % str(result_db))
+            #
+            #     # Mark the process as finished
+            #     self.database.modifyProcessDisplay(process_id=info["process_id"],
+            #                                        display_value="complete")
+            #
+            #     # Move the files to the server & other
+            #     if result_db:
+            #
+            #         # Update the Remote project
+            #         if self.remote_adapter:
+            #             wedges = self.database.getStrategyWedges(id=result_db["single_result_id"])
+            #             result_db["image_id"] = info["image_id"]
+            #             self.remote_adapterAdapter.update_image_stats(result_db, wedges)
+            #
+            #         # Now mark the cloud database if this is a reprocess request
+            #         if result_db["type"] in ("reprocess", "stac"):
+            #             #remove the process from cloud_current
+            #             self.database.removeCloudCurrent(
+            #                 cloud_request_id=settings["request"]["cloud_request_id"]
+            #                 )
+            #             #note the result in cloud_complete
+            #             self.database.enterCloudComplete(
+            #                 cloud_request_id=settings["request"]["cloud_request_id"],
+            #                 request_timestamp=settings["request"]["timestamp"],
+            #                 request_type=settings["request"]["request_type"],
+            #                 data_root_dir=settings["request"]["data_root_dir"],
+            #                 ip_address=settings["request"]["ip_address"],
+            #                 start_timestamp=settings["request"]["timestamp"],
+            #                 result_id=result_db["result_id"],
+            #                 archive=False
+            #                 )
+            #             #mark in cloud_requests
+            #             self.database.markCloudRequest(
+            #                 cloud_request_id=settings["request"]["cloud_request_id"],
+            #                 mark="complete"
+            #                 )
+            #
+            #         trip_db = self.database.getTrips(data_root_dir=dirs["data_root_dir"])
+            #         # This data has an associated trip
+            #         if trip_db:
+            #             for record in trip_db:
+            #                 #update the dates for the trip
+            #                 self.database.updateTrip(
+            #                     trip_id=record["trip_id"],
+            #                     date=result_db["date"]
+            #                     )
+            #                 #now transfer the files
+            #                 transferred = TransferToUI(
+            #                     type="single",
+            #                     settings=self.SecretSettings,
+            #                     result=result_db,
+            #                     trip=record,
+            #                     logger=self.logger
+            #                     )
+            #
+            #         # This data is an "orphan"
+            #         else:
+            #             self.logger.debug("Orphan result")
+            #             #add the orphan to the orphan database table
+            #             self.database.addOrphanResult(
+            #                 type="single",
+            #                 root=dirs["data_root_dir"],
+            #                 id=result_db["single_result_id"],
+            #                 date=info["date"]
+            #                 )
+            #             #copy the files to the UI host
+            #             dest = os.path.join(self.SecretSettings["ui_user_dir"], "orphans/single/")
+            #             #now transfer the files
+            #             transferred = TransferToUI(
+            #                 type="single-orphan",
+            #                 settings=self.SecretSettings,
+            #                 result=result_db,
+            #                 trip=trip_db,
+            #                 logger=self.logger
+            #                 )
+            #
+            #
+            #     # The addition of result to db has failed, but still needs removed from the cloud
+            #     else:
+            #         if settings["request"]["request_type"] == "reprocess":
+            #             #remove the process from cloud_current
+            #             self.database.removeCloudCurrent(
+            #                 cloud_request_id=settings["request"]["cloud_request_id"]
+            #                 )
+            #             #note the result in cloud_complete
+            #             self.database.enterCloudComplete(
+            #                 cloud_request_id=settings["request"]["cloud_request_id"],
+            #                 request_timestamp=settings["request"]["timestamp"],
+            #                 request_type=settings["request"]["request_type"],
+            #                 data_root_dir=settings["request"]["data_root_dir"],
+            #                 ip_address=settings["request"]["ip_address"],
+            #                 start_timestamp=settings["request"]["timestamp"],
+            #                 result_id=0,
+            #                 archive=False
+            #                 )
+            #             #mark in cloud_requests
+            #             self.database.markCloudRequest(
+            #                 cloud_request_id=settings["request"]["cloud_request_id"],
+            #                 mark="failure"
+            #                 )
+
+        elif agent_type == "INTEGRATE":
+            pass
 
 
     def receive(self, message):
