@@ -889,7 +889,7 @@ def create_data_tables(hostname, port, username, password):
         agent_type varchar(64) DEFAULT NULL,
         data_root_dir varchar(128) DEFAULT NULL,
         display varchar(12) DEFAULT NULL,
-        progress tinyint(3) unsigned DEFAULT NULL,
+        status tinyint(3) DEFAULT NULL,
         representation varchar(128) DEFAULT NULL,
         request_type varchar(12) DEFAULT NULL,
         session_uuid varchar(64) DEFAULT NULL,

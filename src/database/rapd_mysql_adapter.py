@@ -1158,7 +1158,7 @@ class Database(object):
                           agent_type=None,
                           request_type=None,
                           representation=None,
-                          progress=0,
+                          status=0,
                           display="show"):
         """
         Add an entry to the agent_processes table - for keeping track of
@@ -1168,7 +1168,8 @@ class Database(object):
         agent_type -- type of agent
         request_type -- request type, such as original
         representation -- how the request is represented to users
-        progress -- progress from 0 to 100 (default = 0)
+        status -- progress from 0 to 100 (default = 0) 1 = started,
+                  100 = finished, -1 = error
         display -- display state of this process (default = show)
         """
 
@@ -1180,14 +1181,14 @@ class Database(object):
         # Construct the query
         query = """INSERT INTO agent_processes (agent_type,
                                                 display,
-                                                progress,
+                                                status,
                                                 representation,
                                                 request_type) VALUES (%s,
                                                                       %s,
                                                                       %s,
                                                                       %s,
                                                                       %s)"""
-        insert_values = (agent_type, display, progress, representation, request_type)
+        insert_values = (agent_type, display, status, representation, request_type)
 
         # Commit to the database
         cursor.execute(query, insert_values)
@@ -1200,6 +1201,44 @@ class Database(object):
 
         # Return the process id
         return process_id
+
+    def update_agent_process(self,
+                             agent_process_id,
+                             status=False,
+                             display=False):
+        """
+        Add an entry to the agent_processes table - for keeping track of
+        launched processes and their state
+
+        Keyword arguments
+        agent_process_id -- unique identifier for process
+        status -- progress from 0 to 100 (default = 0) 1 = started,
+                  100 = finished, -1 = error
+        display -- display state of this process (default = show)
+        """
+
+        # Connect to the database
+        connection, cursor = self.get_db_connection()
+
+        # Construct the query
+        query = "UPDATE agent_processes SET "
+        update_values = []
+
+        if status:
+            query += "status=%s, "
+            update_values.append(status)
+
+        if display:
+            query += "display=%s "
+            update_values.append(display)
+
+        query += "WHERE agent_process_id=%s"
+        update_values.append(agent_process_id)
+
+        # Commit to the database
+        cursor.execute(query, update_values)
+
+        return True
 
     def addNewProcess(self, type, rtype, data_root_dir, repr, display='show'):
         """
