@@ -1039,12 +1039,17 @@ class RapdAgent(Process):
         """
         self.logger.debug('FastIntegration::xds_run')
         self.logger.debug('     directory = %s' % directory)
+        
+        if self.detector='sercat_rayonix_mx300hs':
+            xds_command = '/usr/local/XDS-INTEL64_Linux_x86_64/xds_par'
+        else:
+            xds_command = 'xds_par'
 
         os.chdir(directory)
         if self.cluster_use == True:
-            job = Process(target=BLspec.processCluster,args=(self,('xds_par','XDS.LOG','8','phase2.q')))
+            job = Process(target=BLspec.processCluster,args=(self,(xds_command,'XDS.LOG','8','phase2.q')))
         else:
-            job = Process(target=Utils.processLocal,args=(('xds_par','XDS.LOG'),self.logger))
+            job = Process(target=Utils.processLocal,args=((xds_command,'XDS.LOG'),self.logger))
         job.start()
         while job.is_alive():
 	    time.sleep(1)
