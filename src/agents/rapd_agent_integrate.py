@@ -962,7 +962,7 @@ class RapdAgent(Process):
                      	     self.data['size1'],self.data['size2'],self.data['pixel_size'],self.data['pixel_size']),
                      'TRUSTED_REGION=0.0 1.05 !Relative radii limiting trusted detector region\n\n',
                      'ROTATION_AXIS=1.0 0.0 0.0\n',
-                     'INCIDENT_BEAM_DIRECTION=0.0. 0.0 1.0\n',
+                     'INCIDENT_BEAM_DIRECTION=0.0 0.0 1.0\n',
                      'FRACTION_OF_POLARIZATION=0.90 !default =0.5 for unpolarized beam\n',
                      'POLARIZATION_PLANE_NORMAL= 0.0 1.0 0.0\n',
                      "FRIEDEL'S_LAW=FALSE !Defaults is TRUE\n\n",
