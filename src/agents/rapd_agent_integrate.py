@@ -1248,7 +1248,7 @@ class RapdAgent(Process):
 
         orig_rescut = False
         # Run xdsstat on XDS_ASCII.HKL.
-        xdsstat_log = self.xdsstat()
+        #xdsstat_log = self.xdsstat()
         # Run pointless to convert XDS_ASCII.HKL to mtz format.
         mtzfile = self.pointless()
         # Run dummy run of aimless to generate various stats and plots.
