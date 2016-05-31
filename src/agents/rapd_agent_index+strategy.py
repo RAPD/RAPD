@@ -1307,37 +1307,37 @@ class RapdAgent(Process):
         output["Stac summary html"]  = "None"
 
         # Get the raw tiff, autoindex_overlay, or distl_overlay of the diff pattern.
-        l = [("raw", "image_path_raw"), ("overlay", "image_path_pred")]
-        for x in range(len(l)):
-            # Set output files defaults
-            for i in range(2):
-                output["%s_%s" % (l[x][1], i+1)] = "None"
-            run = True
-            if x == 0:
-                dir1 = self.working_dir
-            else:
-                dir1 = self.labelit_dir
-                if os.path.exists(os.path.join(self.labelit_dir,"DISTL_pickle")) == False:
-                    run = False
-            if run:
-                for i in range(len(self.vips_images[l[x][0]])):
-                    try:
-                        f1 = os.path.join(dir1, self.vips_images[l[x][0]][i][0])
-                        job  = self.vips_images[l[x][0]][i][1]
-                        timer = 0
-                        while job.is_alive():
-                            time.sleep(0.2)
-                            timer += 0.2
-                            if self.verbose:
-                                number = round(timer % 1, 1)
-                                if number in (0.0, 1.0):
-                                    print "Waiting for %s %s seconds" % (f1, timer)
-                        if x != 0:
-                            if os.path.exists(f1):
-                                shutil.copy(f1, os.path.join(self.working_dir,os.path.basename(f1)))
-                        output["%s_%s" % (l[x][1], i+1)] = os.path.join(self.dest_dir, os.path.basename(f1))
-                    except:
-                        output["%s_%s" % (l[x][1], i+1)] = False
+        # l = [("raw", "image_path_raw"), ("overlay", "image_path_pred")]
+        # for x in range(len(l)):
+        #     # Set output files defaults
+        #     for i in range(2):
+        #         output["%s_%s" % (l[x][1], i+1)] = "None"
+        #     run = True
+        #     if x == 0:
+        #         dir1 = self.working_dir
+        #     else:
+        #         dir1 = self.labelit_dir
+        #         if os.path.exists(os.path.join(self.labelit_dir,"DISTL_pickle")) == False:
+        #             run = False
+        #     if run:
+        #         for i in range(len(self.vips_images[l[x][0]])):
+        #             try:
+        #                 f1 = os.path.join(dir1, self.vips_images[l[x][0]][i][0])
+        #                 job  = self.vips_images[l[x][0]][i][1]
+        #                 timer = 0
+        #                 while job.is_alive():
+        #                     time.sleep(0.2)
+        #                     timer += 0.2
+        #                     if self.verbose:
+        #                         number = round(timer % 1, 1)
+        #                         if number in (0.0, 1.0):
+        #                             print "Waiting for %s %s seconds" % (f1, timer)
+        #                 if x != 0:
+        #                     if os.path.exists(f1):
+        #                         shutil.copy(f1, os.path.join(self.working_dir,os.path.basename(f1)))
+        #                 output["%s_%s" % (l[x][1], i+1)] = os.path.join(self.dest_dir, os.path.basename(f1))
+        #             except:
+        #                 output["%s_%s" % (l[x][1], i+1)] = False
 
         # Save path for files required for future STAC runs.
         try:
