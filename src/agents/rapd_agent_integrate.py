@@ -1445,6 +1445,10 @@ class RapdAgent(Process):
         displayed as the Summary of the data processing.
         """
         self.logger.debug('FastIntegration::make_short_results')
+        if 'ID' in self.data.keys():
+            pass
+        else:
+            self.data['ID'] = self.data['image_prefix']
         parsed = ['<?php\n',
                   '//prevents caching\n',
                   'header("Expires: Sat, 01 Jan 2000 00:00:00 GMT");\n',
