@@ -261,7 +261,7 @@ class RapdAgent(Process):
             self.processXOalign()
         else:
     	    # Make the labelit.png image
-            self.makeImages(0)
+            # self.makeImages(0)
 
             # Run Labelit
             self.processLabelit()
@@ -1098,7 +1098,7 @@ class RapdAgent(Process):
                   else:
                       self.ignore_user_SG = True
           # Make an overlay jpeg
-          self.makeImages(1)
+        #   self.makeImages(1)
         else:
           self.logger.debug("No solution was found when sorting Labelit results.")
           self.labelit_failed = True
@@ -1107,8 +1107,8 @@ class RapdAgent(Process):
           os.chdir(self.labelit_dir)
           self.processDistl()
           self.postprocessDistl()
-          if os.path.exists("DISTL_pickle"):
-              self.makeImages(2)
+          #   if os.path.exists("DISTL_pickle"):
+            #   self.makeImages(2)
           self.best_failed = True
           self.best_anom_failed = True
 
@@ -1402,8 +1402,9 @@ class RapdAgent(Process):
                 results.update(self.mosflm_strat_anom_results)
             results.update(output_files)
             # self.results.append(results)
-            if self.gui:
-                rapd_send(self.controller_address, results)
+            # if self.gui:
+            self.logger.debug(results)
+            rapd_send(self.controller_address, results)
         except:
             self.logger.exception("**Could not send results to pipe**")
 
