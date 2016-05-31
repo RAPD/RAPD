@@ -225,7 +225,8 @@ class RapdAgent(Process):
         # if self.header.has_key("acc_time"):
         self.gui = True
         self.test = False
-        self.clean = True
+        #self.clean = True
+	self.clean = False
         #     #self.verbose = False
         # else:
         #     self.gui = True
@@ -694,17 +695,23 @@ class RapdAgent(Process):
         try:
             l = [("mosflm_strat", "", ""), ("mosflm_strat_anom", "_anom", "ANOMALOUS")]
             #Opens file from Labelit/Mosflm autoindexing and edit it to run a strategy.
-            mosflm_rot = str(self.preferences.get("mosflm_rot"))
-            mosflm_seg = str(self.preferences.get("mosflm_seg"))
-            mosflm_st = str(self.preferences.get("mosflm_start"))
-            mosflm_end = str(self.preferences.get("mosflm_end"))
+            mosflm_rot = str(self.preferences.get("mosflm_rot","0.0"))
+            mosflm_seg = str(self.preferences.get("mosflm_seg","1"))
+            mosflm_st = str(self.preferences.get("mosflm_start","0.0"))
+            mosflm_end = str(self.preferences.get("mosflm_end","360.0"))
             #Does the user request a start or end range?
             range1 = False
-            if mosflm_st != "0.0":
+            """
+	    if mosflm_st not in ("0.0", None):
+                range1 = True
+            if mosflm_end not in ("360.0", None):
+                range1 = True
+	    """
+	    if mosflm_st != "0.0":
                 range1 = True
             if mosflm_end != "360.0":
                 range1 = True
-            if range1:
+	    if range1:
                 if mosflm_rot == "0.0":
                     # mosflm_rot = str(360/float(Utils.symopsSG(self,Utils.getMosflmSG(self))))
                     mosflm_rot = str(360/float(Utils.symopsSG(self, Utils.getLabelitCell(self, "sym"))))

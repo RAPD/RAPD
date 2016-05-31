@@ -1034,7 +1034,7 @@ def ParseOutputMosflm_strat(self,inp,anom=False):
       else:
         osc_range  = str(self.header.get('osc_range'))
     distance   = str(self.header.get('distance'))
-    mosflm_seg = str(self.preferences.get('mosflm_seg'))
+    mosflm_seg = str(self.preferences.get('mosflm_seg',"1"))
 
     for x,line in enumerate(inp):
       temp.append(line)
