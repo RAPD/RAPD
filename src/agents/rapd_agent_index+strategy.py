@@ -222,13 +222,13 @@ class RapdAgent(Process):
         #Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
         #This is used to determine if job submitted by rapd_cluster or script was launched for testing.
         #******BEAMLINE SPECIFIC*****
-        if self.header.has_key("acc_time"):
-            self.gui = True
-            self.test = False
-            self.clean = True
-            #self.verbose = False
-        else:
-            self.gui = True
+        # if self.header.has_key("acc_time"):
+        self.gui = True
+        self.test = False
+        self.clean = True
+        #     #self.verbose = False
+        # else:
+        #     self.gui = True
         #******BEAMLINE SPECIFIC*****
 
         Process.__init__(self, name="AutoindexingStrategy")
@@ -1436,7 +1436,7 @@ class RapdAgent(Process):
             self.logger.exception("**Could not move files from RAM to destination dir.**")
 
         # Say job is complete.
-        t = round(time.time()-self.st)
+        t = round(time.time() - self.st)
         self.logger.debug("-------------------------------------")
         self.logger.debug("RAPD autoindexing/strategy complete.")
         self.logger.debug("Total elapsed time: %s seconds", t)
@@ -2092,11 +2092,11 @@ class RunLabelit(Process):
             self.short = True
         # Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
         #******BEAMLINE SPECIFIC*****
-        if self.header.has_key("acc_time"):
-            self.gui = True
-            self.test = False
-        else:
-            self.gui = True
+        # if self.header.has_key("acc_time"):
+        self.gui = True
+        #     self.test = False
+        # else:
+        #     self.gui = True
         #******BEAMLINE SPECIFIC*****
         #Set times for processes. "False" to disable.
         if self.header2:
