@@ -290,7 +290,7 @@ class RapdAgent(Process):
         # Set up the results for return
         self.results['process'] = {
         	'agent_process_id':self.header.get('agent_process_id'),
-        	'status':100
+        	'status':100 }
         self.results['results'] = final_results
         self.logger.debug(self.results)
         #self.sendBack2(results)
