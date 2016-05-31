@@ -1040,7 +1040,7 @@ class RapdAgent(Process):
         self.logger.debug('FastIntegration::xds_run')
         self.logger.debug('     directory = %s' % directory)
         
-        if self.detector='sercat_rayonix_mx300hs':
+        if self.detector=='sercat_rayonix_mx300hs':
             xds_command = '/usr/local/XDS-INTEL64_Linux_x86_64/xds_par'
         else:
             xds_command = 'xds_par'
