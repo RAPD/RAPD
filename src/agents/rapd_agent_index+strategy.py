@@ -675,7 +675,7 @@ class RapdAgent(Process):
                         for job in jobs.keys():
                             if jobs[job].is_alive() == False:
                                 del jobs[job]
-                                start,ran = self.findBestStrat(d['log'+l[int(job)][1]].replace('log', 'plt'))
+                                start, ran = self.findBestStrat(d['log'+l[int(job)][1]].replace('log', 'plt'))
                                 if start != False:
                                     self.processBest(iteration, (start, ran, int(job), int(job)+1))
                                 counter -= 1
@@ -1128,36 +1128,35 @@ class RapdAgent(Process):
         except:
             self.logger.exception("**ERROR in labelitSort**")
 
-    def findBestStrat(self, inp):
+    def findBestStrat(self,inp):
         """
         Find the BEST strategy according to the plots.
-
-        Keyword argument
-        inp --
         """
+
         if self.verbose:
             self.logger.debug('AutoindexingStrategy::findBestStrat')
 
-    def getBestRotRange(inp):
-        """
-        Parse lines from XML file.
-        """
-        try:
-            p_s = []
-            p_e = False
-            for line in inp:
-                if line.count('"phi_start"'):
-                    p_s.append(line[line.find(">")+1:line.rfind("<")])
-                if line.count('"phi_end">'):
-                    p_e = line[line.find(">")+1:line.rfind("<")]
-            # If BEST failed...
-            if p_e == False:
-                return("FAILED")
-            else:
-                return(int(round(float(p_e)-float(p_s[0]))))
-        except:
-            self.logger.exception("**Error in getBestRotRange**")
-            return("FAILED")
+        def getBestRotRange(inp):
+            """
+            Parse lines from XML file.
+            """
+            try:
+                p_s = []
+                p_e = False
+                for line in inp:
+                    if line.count('"phi_start"'):
+                        p_s.append(line[line.find('>')+1:line.rfind('<')])
+                    if line.count('"phi_end">'):
+                        p_e = line[line.find('>')+1:line.rfind('<')]
+                # If BEST failed...
+                if p_e == False:
+                    return('FAILED')
+                else:
+                    return(int(round(float(p_e)-float(p_s[0]))))
+            except:
+                self.logger.exception('**Error in getBestRotRange**')
+                return('FAILED')
+
         try:
             phi_st = []
             phi_rn = []
@@ -1165,8 +1164,8 @@ class RapdAgent(Process):
             end = False
             run = False
             if os.path.exists(inp):
-                f = open(inp, "r").readlines()
-                for x,line in enumerate(f):
+                f = open(inp, 'r').readlines()
+                for x, line in enumerate(f):
                     if line.startswith("% linelabel  = 'compl -99.%'"):
                         st = x
                     if line.startswith("% linelabel  = 'compl -95.%'"):
@@ -1178,21 +1177,21 @@ class RapdAgent(Process):
                             phi_rn.append(int(line.split()[1]))
                     min1 = min(phi_rn)
                     # If xml exists, check if new strategy is at least 5 degrees less rotation range.
-                    if os.path.exists(inp.replace(".plt", ".xml")):
-                        orig_range = getBestRotRange(open(inp.replace(".plt", ".xml"), "r").readlines())
-                        if orig_range != "FAILED":
+                    if os.path.exists(inp.replace('.plt', '.xml')):
+                        orig_range = getBestRotRange(open(inp.replace('.plt', '.xml'), 'r').readlines())
+                        if orig_range != 'FAILED':
                             if orig_range - min1 >= 5:
                                 run = True
                     else:
                         run = True
             if run:
-                return((str(phi_st[phi_rn.index(min1)]),str(min1)))
+                return((str(phi_st[phi_rn.index(min1)]), str(min1)))
             else:
-                return (False, False)
+                return((False, False))
 
         except:
-            self.logger.exception("**Error in findBestStrat**")
-            return (False, False)
+            self.logger.exception('**Error in findBestStrat**')
+            return((False, False))
 
     def PrintInfo(self):
         """
