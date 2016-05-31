@@ -84,12 +84,12 @@ def summaryLabelit(self):
         labelit +='%11s<tr class="gradeA">\n'%''
         for p in l[z][3]:
           if p == labelit_system:
-            labelit +="%13s<td>%s %s</td>\n"%('',p[x][0],p[x][1])
+            labelit +="%13s<td>%s %s</td>\n" % ('',p[x][0],p[x][1])
           elif p == labelit_cell:
             for y in range(len(p[x])):
-              labelit +="%13s<td>%s</td>\n"%('',p[x][y])
+              labelit +="%13s<td>%s</td>\n" % ('',p[x][y])
           else:
-            labelit +="%13s<td>%s</td>\n"%('',p[x])
+            labelit +="%13s<td>%s</td>\n" % ('',p[x])
         labelit +="%11s</tr>\n"%''
       labelit +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
     self.labelit_summary = labelit
@@ -132,7 +132,7 @@ def summaryDistl(self):
     for x in range(len(total_spots)):
       distl +='%11s<tr class="gradeA">\n'%''
       for p in l:
-        distl +="%13s<td>%s</td>\n"%('',p[x])
+        distl +="%13s<td>%s</td>\n" % ('',p[x])
       distl +="%11s</tr>\n"%''
     distl +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
     self.distl_summary = distl
@@ -165,7 +165,7 @@ def summaryRaddose(self):
          ('Time (S) to reach experimental dose limit (30 MGy)',exp_dose_lim)]
     for p in l:
       raddose +='%11s<tr>\n%13s<th>%s</th>\n'%('','',p[0])
-      raddose +="%13s<td>%s</td>\n%11s</tr>\n"%('',p[1],'')
+      raddose +="%13s<td>%s</td>\n%11s</tr>\n" % ('',p[1],'')
     raddose +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
     self.raddose_summary = raddose
 
@@ -187,24 +187,24 @@ def summaryBest(self,anom=False):
       j  = 'self.best_results'
       j1 = 'Best results'
       j2 = ' '
-    run_number      = eval("%s.get('%s').get('strategy%srun number')"%(j,j1,j2))
-    phi_start       = eval("%s.get('%s').get('strategy%sphi start')"%(j,j1,j2))
-    num_images      = eval("%s.get('%s').get('strategy%snum of images')"%(j,j1,j2))
-    delta_phi       = eval("%s.get('%s').get('strategy%sdelta phi')"%(j,j1,j2))
-    time            = eval("%s.get('%s').get('strategy%simage exp time')"%(j,j1,j2))
-    distance        = eval("%s.get('%s').get('strategy%sdistance')"%(j,j1,j2))
-    phi_end         = eval("%s.get('%s').get('strategy%sphi end')"%(j,j1,j2))
-    res             = eval("%s.get('%s').get('strategy%sres limit')"%(j,j1,j2))
-    completeness    = eval("%s.get('%s').get('strategy%scompleteness')"%(j,j1,j2))
-    redundancy      = eval("%s.get('%s').get('strategy%sredundancy')"%(j,j1,j2))
-    rot_range       = eval("%s.get('%s').get('strategy%srot range')"%(j,j1,j2))
-    r_factor        = eval("%s.get('%s').get('strategy%sR-factor')"%(j,j1,j2))
-    i_sig           = eval("%s.get('%s').get('strategy%sI/sig')"%(j,j1,j2))
-    tot_time        = eval("%s.get('%s').get('strategy%stotal exposure time')"%(j,j1,j2))
-    data_col_time   = eval("%s.get('%s').get('strategy%sdata collection time')"%(j,j1,j2))
-    blind           = eval("%s.get('%s').get('strategy%sfrac of unique in blind region')"%(j,j1,j2))
-    #attenuation     = float(eval("%s.get('%s').get('strategy%sattenuation')"%(j,j1,j2)))
-    best_trans      = eval("%s.get('%s').get('strategy%snew transmission')"%(j,j1,j2))
+    run_number      = eval("%s.get('%s').get('strategy%srun number')" % (j,j1,j2))
+    phi_start       = eval("%s.get('%s').get('strategy%sphi start')" % (j,j1,j2))
+    num_images      = eval("%s.get('%s').get('strategy%snum of images')" % (j,j1,j2))
+    delta_phi       = eval("%s.get('%s').get('strategy%sdelta phi')" % (j,j1,j2))
+    time            = eval("%s.get('%s').get('strategy%simage exp time')" % (j,j1,j2))
+    distance        = eval("%s.get('%s').get('strategy%sdistance')" % (j,j1,j2))
+    phi_end         = eval("%s.get('%s').get('strategy%sphi end')" % (j,j1,j2))
+    res             = eval("%s.get('%s').get('strategy%sres limit')" % (j,j1,j2))
+    completeness    = eval("%s.get('%s').get('strategy%scompleteness')" % (j,j1,j2))
+    redundancy      = eval("%s.get('%s').get('strategy%sredundancy')" % (j,j1,j2))
+    rot_range       = eval("%s.get('%s').get('strategy%srot range')" % (j,j1,j2))
+    r_factor        = eval("%s.get('%s').get('strategy%sR-factor')" % (j,j1,j2))
+    i_sig           = eval("%s.get('%s').get('strategy%sI/sig')" % (j,j1,j2))
+    tot_time        = eval("%s.get('%s').get('strategy%stotal exposure time')" % (j,j1,j2))
+    data_col_time   = eval("%s.get('%s').get('strategy%sdata collection time')" % (j,j1,j2))
+    blind           = eval("%s.get('%s').get('strategy%sfrac of unique in blind region')" % (j,j1,j2))
+    #attenuation     = float(eval("%s.get('%s').get('strategy%sattenuation')" % (j,j1,j2)))
+    best_trans      = eval("%s.get('%s').get('strategy%snew transmission')" % (j,j1,j2))
     #best_trans = Utils.calcTransmission(self,attenuation)
     if self.sample_type != 'Ribosome':
       if self.high_dose:
@@ -268,9 +268,9 @@ def summaryBest(self,anom=False):
       l = [run_number[x],phi_start[x],se,ss,num_images[x],delta_phi[x],time[x],distance[x],best_trans[x]]
       for i in xrange(len(l)):
         if i in (1,2,3):
-          best +="%13s<td><b>%s</b></td>\n"%('',l[i])
+          best +="%13s<td><b>%s</b></td>\n" % ('',l[i])
         else:
-          best +="%13s<td>%s</td>\n"%('',l[i])
+          best +="%13s<td>%s</td>\n" % ('',l[i])
       best +="%11s</tr>\n"%''
     best +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
     if anom:
@@ -281,9 +281,9 @@ def summaryBest(self,anom=False):
       self.best1_summary = best.replace(best0,best1)
     best_long ='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
     """
-    best_long +="%7s<h2 class='results'>Image: %s</h2>\n"%('',self.header.get('fullname'))
+    best_long +="%7s<h2 class='results'>Image: %s</h2>\n" % ('',self.header.get('fullname'))
     if self.header2:
-      best_long +="%7s<h2 class='results'>Image: %s</h2>\n"%('',self.header2.get('fullname'))
+      best_long +="%7s<h2 class='results'>Image: %s</h2>\n" % ('',self.header2.get('fullname'))
     """
     if anom:
       best_long +='%7s<table cellpadding="2" cellspacing="2" border="0" class="display" id="bestanomdata">\n'%''
@@ -314,127 +314,133 @@ def summaryBest(self,anom=False):
   except:
     self.logger.exception('**Summary.summaryBest. Could not create Best html variable.**')
 
-def summaryMosflm(self,anom=False):
-  """
-  Create html files Mosflm strategy.
-  """
-  if self.verbose:
-    self.logger.debug('Summary::summaryMosflm')
-  try:
-    if anom:
-      j  = 'self.mosflm_strat_anom_results'
-      j1 = 'Mosflm ANOM strategy results'
-      j2 = ' anom '
-    else:
-      j  = 'self.mosflm_strat_results'
-      j1 = 'Mosflm strategy results'
-      j2 = ' '
-    run_number      = eval("%s.get('%s').get('strategy%srun number')"%(j,j1,j2))
-    phi_start       = eval("%s.get('%s').get('strategy%sphi start')"%(j,j1,j2))
-    phi_end         = eval("%s.get('%s').get('strategy%sphi end')"%(j,j1,j2))
-    num_images      = eval("%s.get('%s').get('strategy%snum of images')"%(j,j1,j2))
-    res             = eval("%s.get('%s').get('strategy%sresolution')"%(j,j1,j2))
-    completeness    = eval("%s.get('%s').get('strategy%scompleteness')"%(j,j1,j2))
-    redundancy      = eval("%s.get('%s').get('strategy%sredundancy')"%(j,j1,j2))
-    distance        = eval("%s.get('%s').get('strategy%sdistance')"%(j,j1,j2))
-    time            = eval("%s.get('%s').get('strategy%simage exp time')"%(j,j1,j2))
-    delta_phi       = eval("%s.get('%s').get('strategy%sdelta phi')"%(j,j1,j2))
-    mosflm_trans = Utils.calcTransmission(self)
+def summaryMosflm(self, anom=False):
+    """
+    Create html files Mosflm strategy.
+
+    Keyword argument
+    anom -- (default False)
+    """
+
     if self.verbose:
-      if anom:
-        print '\n\n\t\tOptimal Plan of ANOMALOUS data collection according to Mosflm'
-      else:
-        print '\n\n\t\tOptimal Plan of data collection according to Mosflm'
-      print '\t\t================================\n'
-      print '-----------------------------------------------------------------------------------'
-      print ' N |  Omega_start |  N.of.images | Rot.width |  Exposure | Distance | % Transmission |'
-      print '-----------------------------------------------------------------------------------'
-      for x in range(len(run_number)):
-        print '%2s | %8s   | %7s      |%9s  | %9s | %7s  |     %3.0f      |' \
-            % (run_number[x],phi_start[x],num_images[x],delta_phi,time,distance,mosflm_trans)
-  except:
-    self.logger.exception('**summaryMosflm_strat Could not print Mosflm strategy to screen.**')
-  #Create Mosflm variable for php files.
-  try:
-    mosflm ='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%('','','')
-    if anom:
-      mosflm +='%7s<h1 class="results">ANOMALOUS data collection strategy from Mosflm</h1>\n'%''
-    else:
-      mosflm +='%7s<h1 class="results">Data collection strategy from Mosflm</h1>\n'%''
-    if self.high_dose:
-      mosflm +='%7s<h4 class="results">Dosage is too high! Crystal will last for %s images. '\
-                'Strategy calculated from realistic dosage.</h4>\n'%('',self.crystal_life)
-    if self.multicrystalstrat:
-      for line in self.preferences.get('reference_data'):
-        mosflm +='%7s<h2 class="results">Data collected from %s taken into account for strategy.</h2>\n'%('',line[3])
-    if anom:
-      line    ='%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="stratanom">\n'%''
-      mosflm += line
-      mosflm0 = line
-      mosflm1 = '%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="stratanom1">\n'%''
-    else:
-      line    ='%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="strat">\n'%''
-      mosflm += line
-      mosflm0 = line
-      mosflm1 = '%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="strat1">\n'%''
-    mosflm +='%9s<thead align="center">\n%11s<tr>\n'%('','')
-    l = ['N','Omega Start','Omega End','Rot Range','N of Images',
-         'Delta Omega','Exposure time','Distance','% Transmission']
-    for p in l:
-      mosflm +='%13s<th>%s</th>\n'%('',p)
-    mosflm +='%11s</tr>\n%9s</thead>\n%9s<tbody align="center">\n'%(3*('',))
-    tot_sweep = []
-    for x in range(len(run_number)):
-      ss = int(num_images[x])*(float(delta_phi))
-      se = float(phi_start[x])+ss
-      if se > 360:
-        se -= 360
-      tot_sweep.append(ss)
-      if anom:
-        mosflm +='%11s<tr class="gradeD">\n'%''
-      else:
-        mosflm +='%11s<tr class="gradeC">\n'%''
-      if self.high_dose:
-        time = '1.00'
-      l = [run_number[x],phi_start[x],se,ss,num_images[x],
-           delta_phi,time,distance,mosflm_trans]
-      for p in l:
-        mosflm +="%13s<td>%s</td>\n"%('',p)
-      mosflm +="%11s</tr>\n"%''
-    mosflm +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
-    if anom:
-      self.mosflm_strat_anom_summary = mosflm
-      self.mosflm_strat1_anom_summary = mosflm.replace(mosflm0,mosflm1)
-    else:
-      self.mosflm_strat_summary = mosflm
-      self.mosflm_strat1_summary = mosflm.replace(mosflm0,mosflm1)
-    mosflm_long ='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
-    mosflm_long +="%7s<h2 class='results'>Image: %s</h2>\n"%('',self.header.get('fullname'))
-    if self.header2:
-      mosflm_long +="%7s<h2 class='results'>Image: %s</h2>\n"%('',self.header2.get('fullname'))
-    if anom:
-      mosflm_long +='%7s<table cellpadding="2" cellspacing="2" border="0" class="display" id="mosflmanomdata">\n'%''
-    else:
-      mosflm_long +='%7s<table cellpadding="2" cellspacing="2" border="0" class="display" id="mosflmdata">\n'%''
-    mosflm_long +='%9s<thead>\n%11s<tr>\n'%('','')
-    for i in range(5):
-      mosflm_long +='%13s<th></th>\n'%''
-    mosflm_long +='%11s</tr>\n%9s</thead>\n%9s<tbody align="left">\n'%(3*('',))
-    l = [('Resolution Limit','%s Angstroms'%res),('Anomalous data',anom),
-         ('Omega_start - Omega_finish','%s-%s'%(phi_start[0],phi_end[-1])),
-         ('Total rotation range','%s Degrees'%sum(tot_sweep)),
-         ('Total N.of images',sum(int(i) for i in num_images)),
-         ('Overall Completeness',completeness),('Redundancy',redundancy)]
-    for p in l:
-      mosflm_long +='%11s<tr>\n%13s<th>%s</th>\n'%('','',p[0])
-      mosflm_long +='%13s<td>%s</td>\n%11s</tr>\n'%('',p[1],'')
-    mosflm_long +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
-    if anom:
-      self.mosflm_strat_anom_summary_long = mosflm_long
-    else:
-      self.mosflm_strat_summary_long = mosflm_long
-  except:
-    self.logger.exception('**Summary.summaryMosflm Could not Mosflm strategy html.**')
+        self.logger.debug('Summary::summaryMosflm')
+
+    try:
+        if anom:
+            j  = 'self.mosflm_strat_anom_results'
+            j1 = 'Mosflm ANOM strategy results'
+            j2 = ' anom '
+        else:
+            j  = 'self.mosflm_strat_results'
+            j1 = 'Mosflm strategy results'
+            j2 = ' '
+        run_number = eval("%s.get('%s').get('strategy%srun number')" % (j, j1, j2))
+        phi_start = eval("%s.get('%s').get('strategy%sphi start')" % (j, j1, j2))
+        phi_end = eval("%s.get('%s').get('strategy%sphi end')" % (j, j1, j2))
+        num_images = eval("%s.get('%s').get('strategy%snum of images')" % (j, j1, j2))
+        res = eval("%s.get('%s').get('strategy%sresolution')" % (j, j1, j2))
+        completeness = eval("%s.get('%s').get('strategy%scompleteness')" % (j, j1, j2))
+        redundancy = eval("%s.get('%s').get('strategy%sredundancy')" % (j, j1, j2))
+        distance = eval("%s.get('%s').get('strategy%sdistance')" % (j, j1, j2))
+        time = eval("%s.get('%s').get('strategy%simage exp time')" % (j, j1, j2))
+        delta_phi = eval("%s.get('%s').get('strategy%sdelta phi')" % (j, j1, j2))
+        mosflm_trans = Utils.calcTransmission(self)
+        if self.verbose:
+            if anom:
+                print '\n\n\t\tOptimal Plan of ANOMALOUS data collection according to Mosflm'
+            else:
+                print '\n\n\t\tOptimal Plan of data collection according to Mosflm'
+            print '\t\t================================\n'
+            print '-----------------------------------------------------------------------------------'
+            print ' N |  Omega_start |  N.of.images | Rot.width |  Exposure | Distance | % Transmission |'
+            print '-----------------------------------------------------------------------------------'
+            for x in range(len(run_number)):
+                print '%2s | %8s   | %7s      |%9s  | %9s | %7s  |     %3.0f      |' \
+                    % (run_number[x], phi_start[x], num_images[x], delta_phi, time, distance, mosflm_trans)
+    except:
+        self.logger.exception('**summaryMosflm_strat Could not print Mosflm strategy to screen.**')
+
+    # Create Mosflm variable for php files.
+    try:
+        mosflm ='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%('','','')
+        if anom:
+          mosflm +='%7s<h1 class="results">ANOMALOUS data collection strategy from Mosflm</h1>\n'%''
+        else:
+          mosflm +='%7s<h1 class="results">Data collection strategy from Mosflm</h1>\n'%''
+        if self.high_dose:
+          mosflm +='%7s<h4 class="results">Dosage is too high! Crystal will last for %s images. '\
+                    'Strategy calculated from realistic dosage.</h4>\n'%('',self.crystal_life)
+        if self.multicrystalstrat:
+          for line in self.preferences.get('reference_data'):
+            mosflm +='%7s<h2 class="results">Data collected from %s taken into account for strategy.</h2>\n'%('',line[3])
+        if anom:
+          line    ='%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="stratanom">\n'%''
+          mosflm += line
+          mosflm0 = line
+          mosflm1 = '%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="stratanom1">\n'%''
+        else:
+          line    ='%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="strat">\n'%''
+          mosflm += line
+          mosflm0 = line
+          mosflm1 = '%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="strat1">\n'%''
+        mosflm +='%9s<thead align="center">\n%11s<tr>\n'%('','')
+        l = ['N','Omega Start','Omega End','Rot Range','N of Images',
+             'Delta Omega','Exposure time','Distance','% Transmission']
+        for p in l:
+          mosflm +='%13s<th>%s</th>\n'%('',p)
+        mosflm +='%11s</tr>\n%9s</thead>\n%9s<tbody align="center">\n'%(3*('',))
+        tot_sweep = []
+        for x in range(len(run_number)):
+            ss = int(num_images[x])*(float(delta_phi))
+            se = float(phi_start[x])+ss
+            if se > 360:
+                se -= 360
+            tot_sweep.append(ss)
+            if anom:
+                mosflm +='%11s<tr class="gradeD">\n'%''
+            else:
+                mosflm +='%11s<tr class="gradeC">\n'%''
+            if self.high_dose:
+                time = '1.00'
+            l = [run_number[x], phi_start[x], se, ss, num_images[x],
+                 delta_phi, time, distance, mosflm_trans]
+            for p in l:
+                mosflm +="%13s<td>%s</td>\n" % ('',p)
+            mosflm +="%11s</tr>\n"%''
+        mosflm +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
+        if anom:
+            self.mosflm_strat_anom_summary = mosflm
+            self.mosflm_strat1_anom_summary = mosflm.replace(mosflm0,mosflm1)
+        else:
+            self.mosflm_strat_summary = mosflm
+            self.mosflm_strat1_summary = mosflm.replace(mosflm0,mosflm1)
+        mosflm_long ='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
+        mosflm_long +="%7s<h2 class='results'>Image: %s</h2>\n" % ('',self.header.get('fullname'))
+        if self.header2:
+            mosflm_long +="%7s<h2 class='results'>Image: %s</h2>\n" % ('',self.header2.get('fullname'))
+        if anom:
+            mosflm_long +='%7s<table cellpadding="2" cellspacing="2" border="0" class="display" id="mosflmanomdata">\n'%''
+        else:
+            mosflm_long +='%7s<table cellpadding="2" cellspacing="2" border="0" class="display" id="mosflmdata">\n'%''
+        mosflm_long +='%9s<thead>\n%11s<tr>\n'%('','')
+        for i in range(5):
+            mosflm_long +='%13s<th></th>\n'%''
+        mosflm_long +='%11s</tr>\n%9s</thead>\n%9s<tbody align="left">\n'%(3*('',))
+        l = [('Resolution Limit','%s Angstroms'%res),('Anomalous data',anom),
+             ('Omega_start - Omega_finish','%s-%s'%(phi_start[0],phi_end[-1])),
+             ('Total rotation range','%s Degrees'%sum(tot_sweep)),
+             ('Total N.of images',sum(int(i) for i in num_images)),
+             ('Overall Completeness',completeness),('Redundancy',redundancy)]
+        for p in l:
+            mosflm_long +='%11s<tr>\n%13s<th>%s</th>\n'%('','',p[0])
+            mosflm_long +='%13s<td>%s</td>\n%11s</tr>\n'%('',p[1],'')
+        mosflm_long +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
+        if anom:
+            self.mosflm_strat_anom_summary_long = mosflm_long
+        else:
+            self.mosflm_strat_summary_long = mosflm_long
+    except:
+        self.logger.exception('**Summary.summaryMosflm Could not Mosflm strategy html.**')
 
 def summaryShelx(self):
   """
@@ -518,10 +524,10 @@ def summaryShelx(self):
             shelxc +='%11s<tr class="gradeA">\n%13s<td class="Name1">%s</td>\n'%('','',l[i][1])
           #shelxc +='%11s<tr class="gradeA">\n%13s<td class="name">%s</td>\n'%('','',l[i][1])
           for x in range(len(l[i][0])):
-            shelxc +="%13s<td>%s</td>\n"%('',l[i][0][x])
+            shelxc +="%13s<td>%s</td>\n" % ('',l[i][0][x])
           shelxc +='%11s</tr>\n'%''
       shelxc +='%9s</tbody>\n%7s</table>\n'%('','')
-    shelxc +="%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',))
+    shelxc +="%6s</div>\n%5s</div>\n%4s</div>\n" % (3*('',))
     """
     if len(mad_cc) > 0:
       z += 1
@@ -572,15 +578,15 @@ def summaryShelx(self):
       else:
         shelxd +='%11s<tr class="gradeA">\n'%''
       if line == inv_sg:
-        shelxd +="%13s<td>%s</td>\n"%('',line)
+        shelxd +="%13s<td>%s</td>\n" % ('',line)
       else:
-        shelxd +="%13s<td>%s (%s)</td>\n"%('',line,inv_sg)
+        shelxd +="%13s<td>%s (%s)</td>\n" % ('',line,inv_sg)
       l = [self.shelxd_dict[line].get('cc'),self.shelxd_dict[line].get('ccw'),
            self.shelxd_dict[line].get('cfom'),self.shelxd_dict[line].get('fom')]
       for p in l:
-        shelxd +="%13s<td>%s</td>\n"%('',p)
+        shelxd +="%13s<td>%s</td>\n" % ('',p)
       shelxd +='%11s</tr>\n'%''
-    shelxd +="%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n"%(5*('',))
+    shelxd +="%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n" % (5*('',))
     self.shelxd_summary = shelxd
     #SHELXE
     shelxe  ='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
@@ -600,7 +606,7 @@ def summaryShelx(self):
     for line in shelxe_sites:
       shelxe +='%11s<tr class="gradeA">\n'%''
       for i in range(len(line.split())):
-        shelxe +="%13s<td>%s</td>\n"%('',line.split()[i])
+        shelxe +="%13s<td>%s</td>\n" % ('',line.split()[i])
       shelxe +="%11s</tr>\n"%''
     shelxe +='%9s</tbody>\n%7s</table>\n'%('','')
     shelxe +='%7s<table cellpadding="0" cellspacing="0" border="0" class="display" id="shelxe2">\n'%''
@@ -621,7 +627,7 @@ def summaryShelx(self):
             shelxe +='%7s<h3 class="results">Phenix AutoSol completed successfully.</h3>\n'%''
         else:
           shelxe +='%7s<h4 class="results">Phasing and autobuilding will now be attempted in Phenix AutoSol.</h4>\n'%''
-    shelxe +="%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',))
+    shelxe +="%6s</div>\n%5s</div>\n%4s</div>\n" % (3*('',))
     self.shelxe_summary = shelxe
 
   except:
@@ -673,7 +679,7 @@ def summaryAutoSol(self,autobuild=False):
       l.extend([('Number of sequenced residues built',placed),('Build Score',score)])
     for i in range(len(l)):
       autosol +='%11s<tr class="gradeA">\n%13s<th>%s</th>\n%13s<td>%s</td>\n%11s</tr>\n'%('','',l[i][0],'',l[i][1],'')
-    autosol +="%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n"%(5*('',))
+    autosol +="%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n" % (5*('',))
     """
     autosol +='    <div id="container">\n'
     autosol +='     <div class="full_width big">\n'
@@ -724,10 +730,10 @@ def summaryXtriage(self):
       for p in l:
         xtriage +='%13s<th>%s</th>\n'%('',p)
       xtriage +='%11s</tr>\n%9s</thead>\n%9s<tbody align="center">\n%11s<tr class="gradeA">\n'%(4*('',))
-      xtriage +="%13s<td>%s</td>\n"%('',self.input_sg)
+      xtriage +="%13s<td>%s</td>\n" % ('',self.input_sg)
       for i in range(len(self.cell2)):
-        xtriage +="%13s<td>%s</td>\n"%('',self.cell2[i])
-      xtriage +="%11s</tr>\n%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n"%(6*('',))
+        xtriage +="%13s<td>%s</td>\n" % ('',self.cell2[i])
+      xtriage +="%11s</tr>\n%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n" % (6*('',))
       xtriage +='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
       xtriage +='%7s<h1 class="results">Patterson Analysis</h1>\n'%''
       if xtriage_pts:
@@ -751,7 +757,7 @@ def summaryXtriage(self):
         for p in l:
           xtriage +='%13s<td>%s</td>\n'%('',p)
         xtriage +='%11s</tr>\n'%''
-      xtriage +="%9s</tbody>\n%7s</table>\n"%('','')
+      xtriage +="%9s</tbody>\n%7s</table>\n" % ('','')
       if len(xtriage_pts_info.keys()) != 0:
         xtriage +='%7s<h4 class="results">If the observed pseudo-translationals are crystallographic, then the following info is possible.</h4>\n'%''
         xtriage +='%7s<table cellpadding="2" cellspacing="2" border="0" class="display" id="xtriage_pts">\n'%''
@@ -766,8 +772,8 @@ def summaryXtriage(self):
           for p in l:
             xtriage +='%13s<td>%s</td>\n'%('',p)
           xtriage +='%11s</tr>\n'%''
-        xtriage +="%9s</tbody>\n%7s</table>\n"%('','')
-      xtriage +="%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',))
+        xtriage +="%9s</tbody>\n%7s</table>\n" % ('','')
+      xtriage +="%6s</div>\n%5s</div>\n%4s</div>\n" % (3*('',))
       if xtriage_twin:
         self.twin = True
         xtriage +='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
@@ -787,7 +793,7 @@ def summaryXtriage(self):
           for p in l:
             xtriage +='%13s<td>%s</td>\n'%('',p)
           xtriage +='%11s</tr>\n'%''
-        xtriage +="%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n"%(5*('',))
+        xtriage +="%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n" % (5*('',))
       if xtriage_sum:
         xtriage +='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
         xtriage +='%7s<h1 class="results">Xtriage Summary</h1>\n%7s<P class="t">\n'%('','')
@@ -837,8 +843,8 @@ def summaryMolrep(self):
         for p in l:
           molrep +='%13s<td>%s</td>\n'%('',p)
         molrep +='%11s</tr>\n'%''
-      molrep +="%9s</tbody>\n%7s</table>\n"%('','')
-    molrep +="%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',))
+      molrep +="%9s</tbody>\n%7s</table>\n" % ('','')
+    molrep +="%6s</div>\n%5s</div>\n%4s</div>\n" % (3*('',))
     self.molrep_summary = molrep
 
   except:
@@ -991,7 +997,7 @@ def summaryCell(self,inp='phaser'):
       com1 +="%11s</tr>\n"%''
       if skip:
         #p = 7+n
-        com1 +="%11s<tr class='gradeE'>\n%13s%s\n%11s</tr>\n"%('','',n*'<td>','')
+        com1 +="%11s<tr class='gradeE'>\n%13s%s\n%11s</tr>\n" % ('','',n*'<td>','')
     com1 +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
     return(com1)
 
@@ -1010,15 +1016,15 @@ def summaryCell(self,inp='phaser'):
       cell +='%13s<th>%s</th>\n'%('',p)
     cell +='%11s</tr>\n%9s<tbody align="center">\n%11s<tr class="gradeA">\n'%(3*('',))
     for i in range(len(self.cell2)):
-      cell +="%13s<td>%s</td>\n"%('',self.cell2[i])
-    cell +="%11s</tr>\n%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n"%(6*('',))
+      cell +="%13s<td>%s</td>\n" % ('',self.cell2[i])
+    cell +="%11s</tr>\n%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n" % (6*('',))
     if len(l2) > 0:
       #Write the results for the common contaminating proteins.
       cell += '%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
       cell += '%7s<h1 class="results">MR results for common contaminating proteins</h1>\n'%''
       cell +='%7s<table cellpadding="0" cellspacing="0" border="0" class="display" id="pdbquery-cc">\n'%''
       cell +='%9s<thead align="left">\n%11s<tr>\n'%('','')
-      cell +="%13s<th colspan='%s'></th>\n%13s<th colspan='4' align='center'>Phaser Statistics</th>\n%11s</tr>\n%11s<tr>\n"%('',n-5,'','','')
+      cell +="%13s<th colspan='%s'></th>\n%13s<th colspan='4' align='center'>Phaser Statistics</th>\n%11s</tr>\n%11s<tr>\n" % ('',n-5,'','','')
       l = ['PDB ID','Description','LL-Gain','RF Z-score','TF Z-score','# of Clashes','&nbsp']
       for p in l:
         cell +='%13s<th>%s</th>\n'%('',p)
@@ -1067,8 +1073,8 @@ def summaryCell(self,inp='phaser'):
           opdb +='%7s<h4 class="results">Phaser detected tNCS and has corrected for it.</h4>\n'%''
       opdb +='%7s<table cellpadding="0" cellspacing="0" border="0" class="display" id="%s">\n'%('',title2)
       opdb +='%9s<thead align="left">\n%11s<tr>\n'%('','')
-      #opdb +="%13s<th colspan='%s'></th>\n%13s<th colspan='4' align='center'>Phaser Statistics</th>\n%11s</tr>\n%11s<tr>\n"%('',2+n,'','','')
-      opdb +="%13s<th colspan='%s'></th>\n%13s<th colspan='4' align='center'>Phaser Statistics</th>\n%11s</tr>\n%11s<tr>\n"%('',n-5,'','','')
+      #opdb +="%13s<th colspan='%s'></th>\n%13s<th colspan='4' align='center'>Phaser Statistics</th>\n%11s</tr>\n%11s<tr>\n" % ('',2+n,'','','')
+      opdb +="%13s<th colspan='%s'></th>\n%13s<th colspan='4' align='center'>Phaser Statistics</th>\n%11s</tr>\n%11s<tr>\n" % ('',n-5,'','','')
       if inp == 'phaser':
         l = ['Space Group','Search model','N placed']
       else:
@@ -1109,13 +1115,13 @@ def summaryCell(self,inp='phaser'):
       opdb += gen(keys)
       """
       if len(sol) != 0:
-        tooltips  = "%8s//Tooltips\n%8s$('#pdb tbody td').each(function(){\n"%('','')
+        tooltips  = "%8s//Tooltips\n%8s$('#pdb tbody td').each(function(){\n" % ('','')
         for i in range(len(sol)):
           if i == 0:
-            tooltips += "%11sif ($(this).text() == '%s') {\n"%('',sol[i])
+            tooltips += "%11sif ($(this).text() == '%s') {\n" % ('',sol[i])
           else:
-            tooltips += "%11selse if ($(this).text() == '%s') {\n"%('',sol[i])
-          tooltips += "%14sthis.setAttribute('title','%s');\n%11s}\n"%('',os.path.join(self.working_dir,sol[i]+'.tar.bz2'),'')
+            tooltips += "%11selse if ($(this).text() == '%s') {\n" % ('',sol[i])
+          tooltips += "%14sthis.setAttribute('title','%s');\n%11s}\n" % ('',os.path.join(self.working_dir,sol[i]+'.tar.bz2'),'')
         tooltips += '%8s});\n'%''
         self.tooltips = tooltips
     self.pdb_summary = opdb
@@ -1169,8 +1175,8 @@ def summaryCell_OLD(self,inp='phaser'):
       cell +='%13s<th>%s</th>\n'%('',p)
     cell +='%11s</tr>\n%9s<tbody align="center">\n%11s<tr class="gradeA">\n'%(3*('',))
     for i in range(len(self.cell2)):
-      cell +="%13s<td>%s</td>\n"%('',self.cell2[i])
-    cell +="%11s</tr>\n%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n"%(6*('',))
+      cell +="%13s<td>%s</td>\n" % ('',self.cell2[i])
+    cell +="%11s</tr>\n%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n" % (6*('',))
     self.cell_summary = cell
     if self.percent:
       percent = str(self.percent*100)
@@ -1194,8 +1200,8 @@ def summaryCell_OLD(self,inp='phaser'):
           opdb +='%7s<h4 class="results">Phaser detected tNCS and has corrected for it.</h4>\n'%''
       opdb +='%7s<table cellpadding="0" cellspacing="0" border="0" class="display" id="%s">\n'%('',title2)
       opdb +='%9s<thead align="left">\n%11s<tr>\n'%('','')
-      #opdb +="%13s<th colspan='%s'></th>\n%13s<th colspan='4' align='center'>Phaser Statistics</th>\n%11s</tr>\n%11s<tr>\n"%('',2+n,'','','')
-      opdb +="%13s<th colspan='%s'></th>\n%13s<th colspan='4' align='center'>Phaser Statistics</th>\n%11s</tr>\n%11s<tr>\n"%('',n-5,'','','')
+      #opdb +="%13s<th colspan='%s'></th>\n%13s<th colspan='4' align='center'>Phaser Statistics</th>\n%11s</tr>\n%11s<tr>\n" % ('',2+n,'','','')
+      opdb +="%13s<th colspan='%s'></th>\n%13s<th colspan='4' align='center'>Phaser Statistics</th>\n%11s</tr>\n%11s<tr>\n" % ('',n-5,'','','')
       if inp == 'phaser':
         l = ['Space Group','Search model','N placed']
       else:
@@ -1309,16 +1315,16 @@ def summaryCell_OLD(self,inp='phaser'):
         opdb +="%11s</tr>\n"%''
         if skip:
           #p = 7+n
-          opdb +="%11s<tr class='gradeE'>\n%13s%s\n%11s</tr>\n"%('','',n*'<td>','')
+          opdb +="%11s<tr class='gradeE'>\n%13s%s\n%11s</tr>\n" % ('','',n*'<td>','')
       opdb +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
       if len(sol) != 0:
-        tooltips  = "%8s//Tooltips\n%8s$('#pdb tbody td').each(function(){\n"%('','')
+        tooltips  = "%8s//Tooltips\n%8s$('#pdb tbody td').each(function(){\n" % ('','')
         for i in range(len(sol)):
           if i == 0:
-            tooltips += "%11sif ($(this).text() == '%s') {\n"%('',sol[i])
+            tooltips += "%11sif ($(this).text() == '%s') {\n" % ('',sol[i])
           else:
-            tooltips += "%11selse if ($(this).text() == '%s') {\n"%('',sol[i])
-          tooltips += "%14sthis.setAttribute('title','%s');\n%11s}\n"%('',os.path.join(self.working_dir,sol[i]+'.tar.bz2'),'')
+            tooltips += "%11selse if ($(this).text() == '%s') {\n" % ('',sol[i])
+          tooltips += "%14sthis.setAttribute('title','%s');\n%11s}\n" % ('',os.path.join(self.working_dir,sol[i]+'.tar.bz2'),'')
         tooltips += '%8s});\n'%''
         self.tooltips = tooltips
     else:
@@ -1366,9 +1372,9 @@ def summaryAutoCell(self,labelit=False):
     for p in l2:
       if p == cell:
         for i in range(len(cell)):
-          auto +="%13s<td>%s</td>\n"%('',p[i])
+          auto +="%13s<td>%s</td>\n" % ('',p[i])
       else:
-        auto +="%13s<td>%s</td>\n"%('',p)
+        auto +="%13s<td>%s</td>\n" % ('',p)
     auto +='%11s</tr>\n%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(6*('',))
     if labelit:
       self.auto_summary = auto
@@ -1497,7 +1503,7 @@ def summarySTAC_OLD(self):
             l = [strat_id[x],omega_start[x],omega_end[x],strat_kappa[x],strat_phi[x],completeness[x],strat_rank[x]]
             stac_strat +='%11s<tr class="gradeA">\n'%''
             for p in l:
-              stac_strat +="%13s<td>%5.2f</td>\n"%('',float(p))
+              stac_strat +="%13s<td>%5.2f</td>\n" % ('',float(p))
             stac_strat +="%11s</tr>\n"%''
           stac_strat +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
           self.stac_strat_summary = stac_strat
