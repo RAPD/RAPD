@@ -701,12 +701,6 @@ class RapdAgent(Process):
             mosflm_end = str(self.preferences.get("mosflm_end","360.0"))
             #Does the user request a start or end range?
             range1 = False
-            """
-	    if mosflm_st not in ("0.0", None):
-                range1 = True
-            if mosflm_end not in ("360.0", None):
-                range1 = True
-	    """
 	    if mosflm_st != "0.0":
                 range1 = True
             if mosflm_end != "360.0":
