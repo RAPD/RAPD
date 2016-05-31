@@ -925,7 +925,7 @@ class RapdAgent(Process):
 
         # Rayonix 300hs.
         elif detector_type == 'rayonix_mx300hs':
-            detector_type = 'MAR345'
+            detector_type = 'MARCCD'
             x_beam = float(self.data['x_beam']) / float(self.data['pixel_size'])
             y_beam = float(self.data['y_beam']) / float(self.data['pixel_size'])
             if x_beam < 0 or x_beam > int(self.data['size1']):
@@ -960,7 +960,7 @@ class RapdAgent(Process):
                      	     detector_type, min_pixel_value,self.data['count_cutoff']),
                      'NX=%s NY=%s QX=%s QY=%s\n' %(
                      	     self.data['size1'],self.data['size2'],self.data['pixel_size'],self.data['pixel_size']),
-                     'TRUSTED_REGION=0.0 1.05 !Relative radii limiting trusted detector region\n\n',
+                     'TRUSTED_REGION=0.0 1.0 !Relative radii limiting trusted detector region\n\n',
                      'ROTATION_AXIS=1.0 0.0 0.0\n',
                      'INCIDENT_BEAM_DIRECTION=0.0 0.0 1.0\n',
                      'FRACTION_OF_POLARIZATION=0.90 !default =0.5 for unpolarized beam\n',
