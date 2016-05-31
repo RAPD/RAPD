@@ -287,9 +287,12 @@ class RapdAgent(Process):
         else:
             final_results = self.finish_data(integration_results)
 
-        results = self.input[:]
-        results.append(final_results)
-        self.logger.debug(results)
+        # Set up the results for return
+        self.results['process'] = {
+        	'agent_process_id':self.header.get('agent_process_id'),
+        	'status':100
+        self.results['results'] = final_results
+        self.logger.debug(self.results)
         #self.sendBack2(results)
 
         analysis = self.run_analysis(final_results['files']['mtzfile'], self.dirs['work'])
@@ -303,7 +306,7 @@ class RapdAgent(Process):
             results[-1]['status'] = 'SUCCESS'
             self.logger.debug(results)
             # self.sendBack2(results)
-            rapd_send(self.controller_address, results)
+            rapd_send(self.controller_address, self.results)
 
         return()
 
@@ -1320,8 +1323,13 @@ class RapdAgent(Process):
                    }
         self.logger.debug('    Returning results!')
         self.logger.debug(results)
-        tmp = self.input[:]
-        tmp.append(results)
+         # Set up the results for return
+        tmp['process'] = {
+        	'agent_process_id':self.header.get('agent_process_id'),
+        	'status':50
+        tmp['results'] = results
+        self.logger.debug(tmp)
+        
         # self.sendBack2(tmp)
         rapd_send(self.controller_address, tmp)
 
