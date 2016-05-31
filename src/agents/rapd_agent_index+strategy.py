@@ -85,7 +85,7 @@ class RapdAgent(Process):
     # Number of Labelit iterations to run.
     iterations = 6
     # The results of the agent
-    results = []
+    results = {}
 
     def __init__(self, site, command):
         """
@@ -116,7 +116,7 @@ class RapdAgent(Process):
         self.header = self.command["header1"]
         self.header2 = self.command.get("header2", False)
         self.site_parameters = self.command.get("site_parameters")
-        self.preferences = self.command["preferences"]
+        self.preferences = self.command.get("preferences", {})
         self.controller_address = self.reply_address
 
         # Set timer for distl. "False" will disable.
@@ -1264,6 +1264,14 @@ class RapdAgent(Process):
         output = {}
         # output_files = False
 
+        # Set up the results for return
+        self.results["process"] = {
+            "agent_process_id":self.header.get("agent_process_id"),
+            "status":100}
+        self.results["directories"] = self.setup
+        self.results["information"] = self.header
+        self.results["preferences"] = self.preferences
+
         # Generate the proper summaries that go into the output HTML files
         if self.labelit_failed == False:
             if self.labelit_results:
@@ -1403,8 +1411,9 @@ class RapdAgent(Process):
             results.update(output_files)
             # self.results.append(results)
             # if self.gui:
-            self.logger.debug(results)
-            rapd_send(self.controller_address, results)
+            self.results["results"] = results
+            self.logger.debug(self.results)
+            rapd_send(self.controller_address, self.results)
         except:
             self.logger.exception("**Could not send results to pipe**")
 
