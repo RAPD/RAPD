@@ -1332,7 +1332,7 @@ class RapdAgent(Process):
         self.logger.debug(self.results)
         
         # self.sendBack2(tmp)
-        rapd_send(self.controller_address, tmp)
+        rapd_send(self.controller_address, self.results)
 
 
         return(results)
