@@ -68,22 +68,24 @@ class RapdAgent(Process):
     }
     """
 
-    #For testing individual modules (Will not run in Test mode on cluster!! Can be set at end of __init__.)
+    # For testing individual modules (Will not run in Test mode on cluster!! Can be set at end of __init__.)
     test = False
-    #Removes junk files and directories at end. (Will still clean on cluster!! Can be set at end of __init__.)
+    # Removes junk files and directories at end. (Will still clean on cluster!! Can be set at end of __init__.)
     clean = False
-    #Runs in RAM (slightly faster), but difficult to debug.
+    # Runs in RAM (slightly faster), but difficult to debug.
     ram = False
-    #Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Slower (>10%). Mainly
-    #used for rapd_agent_beamcenter.py to launch a lot of jobs at once.
+    # Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Slower (>10%). Mainly
+    # used for rapd_agent_beamcenter.py to launch a lot of jobs at once.
     cluster_use = False
-    #If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
+    # If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
     cluster_queue = "index.q"
-    #self.cluster_queue                      = False
-    #Switch for verbose
+    # self.cluster_queue                      = False
+    # Switch for verbose
     verbose = True
-    #Number of Labelit iterations to run.
+    # Number of Labelit iterations to run.
     iterations = 6
+    # The results of the agent
+    results = []
 
     def __init__(self, site, command):
         """
@@ -705,7 +707,7 @@ class RapdAgent(Process):
             if range1:
                 if mosflm_rot == '0.0':
                   #mosflm_rot = str(360/float(Utils.symopsSG(self,Utils.getMosflmSG(self))))
-                  mosflm_rot = str(360/float(Utils.symopsSG(self,Utils.getLabelitCell(self, 'sym'))))
+                  mosflm_rot = str(360/float(Utils.symopsSG(self, Utils.getLabelitCell(self, "sym"))))
             #Save info from previous data collections.
             if self.multicrystalstrat:
                 ref_data = self.preferences.get('reference_data')
@@ -764,55 +766,59 @@ class RapdAgent(Process):
         except:
             self.logger.exception("**Error in processMosflm**")
 
-    def processStrategy(self,iteration=False):
-      """
-      Initiate all the strategy runs using multiprocessing.
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::processStrategy')
-      try:
-        if iteration:
-          st  = iteration
-          end = iteration+1
-        else:
-          st  = 0
-          end = 5
-          if self.strategy == 'mosflm':
-            st = 4
-          if self.multiproc == False:
-            end = st+1
-        for i in range(st,end):
-          if i == 4:
-            Utils.folders(self,self.labelit_dir)
-            job = Process(target=self.processMosflm,name='mosflm%s'%i)
-          else:
-            Utils.foldersStrategy(self,os.path.join(os.path.basename(self.labelit_dir),str(i)))
-            #Reduces resolution and reruns Mosflm to calc new files, then runs Best.
-            job = Process(target=Utils.errorBest,name='best%s'%i,args=(self,i))
-          job.start()
-          self.jobs[str(i)] = job
+    def processStrategy(self, iteration=False):
+        """
+        Initiate all the strategy runs using multiprocessing.
 
-      except:
-        self.logger.exception('**Error in processStrategy**')
+        Keyword arguments
+        iteration -- (default False)
+        """
+        if self.verbose:
+            self.logger.debug('AutoindexingStrategy::processStrategy')
+        try:
+            if iteration:
+                st  = iteration
+                end = iteration+1
+            else:
+                st  = 0
+                end = 5
+                if self.strategy == "mosflm":
+                    st = 4
+                if self.multiproc == False:
+                    end = st+1
+            for i in range(st,end):
+                if i == 4:
+                    Utils.folders(self,self.labelit_dir)
+                    job = Process(target=self.processMosflm, name="mosflm%s" % i)
+                else:
+                    Utils.foldersStrategy(self, os.path.join(os.path.basename(self.labelit_dir), str(i)))
+                    # Reduces resolution and reruns Mosflm to calc new files, then runs Best.
+                    job = Process(target=Utils.errorBest, name="best%s" % i, args=(self, i))
+                job.start()
+                self.jobs[str(i)] = job
+
+        except:
+            self.logger.exception("**Error in processStrategy**")
 
     def processXOalign(self):
-      """
-      Run XOalign using rapd_agent_xoalign.py
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::processXOalign')
-      try:
-        params = {}
-        params['xoalign_timer'] = self.xoalign_timer
-        params['test'] = self.test
-        params['gui'] = self.gui
-        params['dir'] = self.dest_dir
-        params['clean'] = self.clean
-        params['verbose'] = self.verbose
-        Process(target=RunXOalign, args=(self.input, params, self.logger)).start()
+        """
+        Run XOalign using rapd_agent_xoalign.py
+        """
+        if self.verbose:
+            self.logger.debug("AutoindexingStrategy::processXOalign")
 
-      except:
-        self.logger.exception('**ERROR in processXOalign**')
+        try:
+            params = {}
+            params["xoalign_timer"] = self.xoalign_timer
+            params["test"] = self.test
+            params["gui"] = self.gui
+            params["dir"] = self.dest_dir
+            params["clean"] = self.clean
+            params["verbose"] = self.verbose
+            Process(target=RunXOalign, args=(self.input, params, self.logger)).start()
+
+        except:
+          self.logger.exception("**ERROR in processXOalign**")
 
     def postprocessDistl(self):
       """
@@ -1249,194 +1255,198 @@ class RapdAgent(Process):
         self.logger.exception('**Error in makeImages.**')
 
     def postprocess(self):
-      """
-      Make all the HTML files, pass results back, and cleanup.
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::postprocess')
-      output = {}
-      #output_files = False
-      #Generate the proper summaries that go into the output HTML files
-      if self.labelit_failed == False:
-        if self.labelit_results:
-          Summary.summaryLabelit(self)
-          Summary.summaryAutoCell(self,True)
-      if self.distl_results:
-        Summary.summaryDistl(self)
-      if self.raddose_results:
-        Summary.summaryRaddose(self)
-      if self.labelit_failed == False:
-        if self.strategy == 'mosflm':
-          self.htmlBestPlotsFailed()
-          Summary.summaryMosflm(self,False)
-          Summary.summaryMosflm(self,True)
-        else:
-          if self.best_failed:
-            if self.best_anom_failed:
-              self.htmlBestPlotsFailed()
-              Summary.summaryMosflm(self,False)
-              Summary.summaryMosflm(self,True)
-            else:
-              Summary.summaryMosflm(self,False)
-              Summary.summaryBest(self,True)
-              self.htmlBestPlots()
-          elif self.best_anom_failed:
-            Summary.summaryMosflm(self,True)
-            Summary.summaryBest(self,False)
-            self.htmlBestPlots()
-          else:
-            Summary.summaryBest(self,False)
-            Summary.summaryBest(self,True)
-            self.htmlBestPlots()
-      else:
-        self.htmlBestPlotsFailed()
-      #Generate the long and short summary HTML files
-      self.htmlSummaryShort()
-      self.htmlSummaryLong()
-      #Set STAC output to send back as None since it did not run.
-      output['Stac summary html']  = 'None'
+        """
+        Make all the HTML files, pass results back, and cleanup.
+        """
+        if self.verbose:
+            self.logger.debug("AutoindexingStrategy::postprocess")
 
-      #Get the raw tiff, autoindex_overlay, or distl_overlay of the diff pattern.
-      l = [('raw','image_path_raw'),('overlay','image_path_pred')]
-      for x in range(len(l)):
-        #Set output files defaults
-        for i in range(2):
-          output['%s_%s'%(l[x][1],i+1)] = 'None'
-        run = True
-        if x == 0:
-          dir1 = self.working_dir
-        else:
-          dir1 = self.labelit_dir
-          if os.path.exists(os.path.join(self.labelit_dir,'DISTL_pickle')) == False:
-            run = False
-        if run:
-          for i in range(len(self.vips_images[l[x][0]])):
-            try:
-              f1 = os.path.join(dir1,self.vips_images[l[x][0]][i][0])
-              job  = self.vips_images[l[x][0]][i][1]
-              timer = 0
-              while job.is_alive():
-                time.sleep(0.2)
-                timer += 0.2
-                if self.verbose:
-                  number = round(timer%1,1)
-                  if number in (0.0,1.0):
-                    print 'Waiting for %s %s seconds'%(f1,timer)
-              if x != 0:
-                if os.path.exists(f1):
-                  shutil.copy(f1,os.path.join(self.working_dir,os.path.basename(f1)))
-              output['%s_%s'%(l[x][1],i+1)] = os.path.join(self.dest_dir,os.path.basename(f1))
-            except:
-              output['%s_%s'%(l[x][1],i+1)] = False
+        output = {}
+        # output_files = False
 
-      #Save path for files required for future STAC runs.
-      try:
+        # Generate the proper summaries that go into the output HTML files
         if self.labelit_failed == False:
-          os.chdir(self.labelit_dir)
-          #files = ['DNA_mosflm.inp','bestfile.par']
-          #files = ['mosflm.inp','%s.mat'%self.index_number]
-          files = ['%s.mat'%self.index_number,'bestfile.par']
-          for x,f in enumerate(files):
-            shutil.copy(f,self.working_dir)
-            if os.path.exists(os.path.join(self.working_dir,f)):
-              output['STAC file%s'%str(x+1)] = os.path.join(self.dest_dir,f)
+            if self.labelit_results:
+                Summary.summaryLabelit(self)
+                Summary.summaryAutoCell(self, True)
+        if self.distl_results:
+            Summary.summaryDistl(self)
+        if self.raddose_results:
+            Summary.summaryRaddose(self)
+        if self.labelit_failed == False:
+            if self.strategy == "mosflm":
+                self.htmlBestPlotsFailed()
+                Summary.summaryMosflm(self, False)
+                Summary.summaryMosflm(self, True)
             else:
-              output['STAC file%s'%str(x+1)] = 'None'
+                if self.best_failed:
+                    if self.best_anom_failed:
+                        self.htmlBestPlotsFailed()
+                        Summary.summaryMosflm(self, False)
+                        Summary.summaryMosflm(self, True)
+                    else:
+                        Summary.summaryMosflm(self, False)
+                        Summary.summaryBest(self, True)
+                        self.htmlBestPlots()
+                elif self.best_anom_failed:
+                    Summary.summaryMosflm(self, True)
+                    Summary.summaryBest(self, False)
+                    self.htmlBestPlots()
+                else:
+                    Summary.summaryBest(self, False)
+                    Summary.summaryBest(self, True)
+                    self.htmlBestPlots()
         else:
-          output['STAC file1'] = 'None'
-          output['STAC file2'] = 'None'
-      except:
-        self.logger.exception('**Could not update path of STAC files**')
-        output['STAC file1'] = 'FAILED'
-        output['STAC file2'] = 'FAILED'
+            self.htmlBestPlotsFailed()
 
-      #Pass back paths for html files
-      if self.gui:
-        e = '.php'
-      else:
-        e = '.html'
-      l = [('best_plots%s'%e,'Best plots html'),
-           ('jon_summary_long%s'%e,'Long summary html'),
-           ('jon_summary_short%s'%e,'Short summary html')]
-      for i in range(len(l)):
+        # Generate the long and short summary HTML files
+        self.htmlSummaryShort()
+        self.htmlSummaryLong()
+
+        # Set STAC output to send back as None since it did not run.
+        output["Stac summary html"]  = "None"
+
+        # Get the raw tiff, autoindex_overlay, or distl_overlay of the diff pattern.
+        l = [("raw", "image_path_raw"), ("overlay", "image_path_pred")]
+        for x in range(len(l)):
+            # Set output files defaults
+            for i in range(2):
+                output["%s_%s" % (l[x][1], i+1)] = "None"
+            run = True
+            if x == 0:
+                dir1 = self.working_dir
+            else:
+                dir1 = self.labelit_dir
+                if os.path.exists(os.path.join(self.labelit_dir,"DISTL_pickle")) == False:
+                    run = False
+            if run:
+                for i in range(len(self.vips_images[l[x][0]])):
+                    try:
+                        f1 = os.path.join(dir1, self.vips_images[l[x][0]][i][0])
+                        job  = self.vips_images[l[x][0]][i][1]
+                        timer = 0
+                        while job.is_alive():
+                            time.sleep(0.2)
+                            timer += 0.2
+                            if self.verbose:
+                                number = round(timer % 1, 1)
+                                if number in (0.0, 1.0):
+                                    print "Waiting for %s %s seconds" % (f1, timer)
+                        if x != 0:
+                            if os.path.exists(f1):
+                                shutil.copy(f1, os.path.join(self.working_dir,os.path.basename(f1)))
+                        output["%s_%s" % (l[x][1], i+1)] = os.path.join(self.dest_dir, os.path.basename(f1))
+                    except:
+                        output["%s_%s" % (l[x][1], i+1)] = False
+
+        # Save path for files required for future STAC runs.
         try:
-          path = os.path.join(self.working_dir,l[i][0])
-          path2 = os.path.join(self.dest_dir,l[i][0])
-          if os.path.exists(path):
-              output[l[i][1]] = path2
-          else:
-              output[l[i][1]] = 'None'
+            if self.labelit_failed == False:
+                os.chdir(self.labelit_dir)
+                # files = ["DNA_mosflm.inp","bestfile.par"]
+                # files = ["mosflm.inp","%s.mat"%self.index_number]
+                files = ["%s.mat" % self.index_number, "bestfile.par"]
+                for x,f in enumerate(files):
+                    shutil.copy(f,self.working_dir)
+                    if os.path.exists(os.path.join(self.working_dir, f)):
+                        output["STAC file%s"%str(x+1)] = os.path.join(self.dest_dir, f)
+                    else:
+                        output["STAC file%s"%str(x+1)] = "None"
+            else:
+                output["STAC file1"] = "None"
+                output["STAC file2"] = "None"
         except:
-            self.logger.exception('**Could not update path of %s file.**'%l[i][0])
-            output[l[i][1]] = 'FAILED'
+            self.logger.exception("**Could not update path of STAC files**")
+            output["STAC file1"] = "FAILED"
+            output["STAC file2"] = "FAILED"
 
-      # Put all output files into a singe dict to pass back.
-      output_files = {'Output files' : output}
-
-      # Put all the result dicts from all the programs run into one resultant dict and pass back.
-      try:
-          results = {}
-          if self.labelit_results:
-              results.update(self.labelit_results)
-          if self.distl_results:
-              results.update(self.distl_results)
-          if self.raddose_results:
-              results.update(self.raddose_results)
-          if self.best_results:
-              results.update(self.best_results)
-          if self.best_anom_results:
-              results.update(self.best_anom_results)
-          if self.mosflm_strat_results:
-              results.update(self.mosflm_strat_results)
-          if self.mosflm_strat_anom_results:
-              results.update(self.mosflm_strat_anom_results)
-          results.update(output_files)
-          self.input.append(results)
-          if self.gui:
-              rapd_send(self.controller_address, self.input)
-      except:
-          self.logger.exception('**Could not send results to pipe.**')
-
-      #Cleanup my mess.
-      try:
-        os.chdir(self.working_dir)
-        if self.clean:
-          if self.test == False:
-            if self.verbose:
-              self.logger.debug('Cleaning up files and folders')
-            os.system('rm -rf labelit_iteration* dataset_preferences.py')
-            for i in range(0,self.iterations):
-              os.system('rm -rf %s'%i)
-      except:
-        self.logger.exception('**Could not cleanup**')
-
-      #Move files from RAM to destination folder
-      try:
-        if self.working_dir == self.dest_dir:
-          pass
+        # Pass back paths for html files
+        if self.gui:
+            e = ".php"
         else:
-          if self.gui:
-            if os.path.exists(self.dest_dir):
-              shutil.rmtree(self.dest_dir)
-            shutil.move(self.working_dir,self.dest_dir)
-          else:
-            os.system('cp -R * %s'%self.dest_dir)
-            os.system('rm -rf %s'%self.working_dir)
-      except:
-        self.logger.exception('**Could not move files from RAM to destination dir.**')
+            e = ".html"
+        l = [("best_plots%s" % e, "Best plots html"),
+             ("jon_summary_long%s" % e, "Long summary html"),
+             ("jon_summary_short%s" % e, "Short summary html")]
+        for i in range(len(l)):
+            try:
+                path = os.path.join(self.working_dir, l[i][0])
+                path2 = os.path.join(self.dest_dir, l[i][0])
+                if os.path.exists(path):
+                    output[l[i][1]] = path2
+                else:
+                    output[l[i][1]] = "None"
+            except:
+                self.logger.exception("**Could not update path of %s file.**" % l[i][0])
+                output[l[i][1]] = "FAILED"
 
-      #Say job is complete.
-      t = round(time.time()-self.st)
-      self.logger.debug('-------------------------------------')
-      self.logger.debug('RAPD autoindexing/strategy complete.')
-      self.logger.debug('Total elapsed time: %s seconds'%t)
-      self.logger.debug('-------------------------------------')
-      print '\n-------------------------------------'
-      print 'RAPD autoindexing/strategy complete.'
-      print 'Total elapsed time: %s seconds'%t
-      print '-------------------------------------'
-      #sys.exit(0) #did not appear to end script with some programs continuing on for some reason.
-      #os._exit(0)
+        # Put all output files into a singe dict to pass back.
+        output_files = {"Output files" : output}
+
+        # Put all the result dicts from all the programs run into one resultant dict and pass back.
+        try:
+            results = {}
+            if self.labelit_results:
+                results.update(self.labelit_results)
+            if self.distl_results:
+                results.update(self.distl_results)
+            if self.raddose_results:
+                results.update(self.raddose_results)
+            if self.best_results:
+                results.update(self.best_results)
+            if self.best_anom_results:
+                results.update(self.best_anom_results)
+            if self.mosflm_strat_results:
+                results.update(self.mosflm_strat_results)
+            if self.mosflm_strat_anom_results:
+                results.update(self.mosflm_strat_anom_results)
+            results.update(output_files)
+            # self.results.append(results)
+            if self.gui:
+                rapd_send(self.controller_address, results)
+        except:
+            self.logger.exception("**Could not send results to pipe**")
+
+        # Cleanup my mess.
+        try:
+            os.chdir(self.working_dir)
+            if self.clean:
+                if self.test == False:
+                    if self.verbose:
+                        self.logger.debug("Cleaning up files and folders")
+                    os.system("rm -rf labelit_iteration* dataset_preferences.py")
+                    for i in range(0, self.iterations):
+                        os.system("rm -rf %s" % i)
+        except:
+            self.logger.exception("**Could not cleanup**")
+
+        # Move files from RAM to destination folder
+        try:
+            if self.working_dir == self.dest_dir:
+                pass
+            else:
+                if self.gui:
+                    if os.path.exists(self.dest_dir):
+                        shutil.rmtree(self.dest_dir)
+                    shutil.move(self.working_dir, self.dest_dir)
+                else:
+                    os.system("cp -R * %s" % self.dest_dir)
+                    os.system("rm -rf %s" % self.working_dir)
+        except:
+            self.logger.exception("**Could not move files from RAM to destination dir.**")
+
+        # Say job is complete.
+        t = round(time.time()-self.st)
+        self.logger.debug("-------------------------------------")
+        self.logger.debug("RAPD autoindexing/strategy complete.")
+        self.logger.debug("Total elapsed time: %s seconds", t)
+        self.logger.debug("-------------------------------------")
+        print "\n-------------------------------------"
+        print "RAPD autoindexing/strategy complete."
+        print "Total elapsed time: %s seconds" % t
+        print "-------------------------------------"
+        # sys.exit(0) #did not appear to end script with some programs continuing on for some reason.
+        # os._exit(0)
 
     def htmlBestPlots(self):
       """
