@@ -689,29 +689,29 @@ class RapdAgent(Process):
         Creates Mosflm executable for running strategy and run. Passes back dict with PID:logfile.
         """
         if self.verbose:
-            self.logger.debug('AutoindexingStrategy::processMosflm')
+            self.logger.debug("AutoindexingStrategy::processMosflm")
 
         try:
-            l = [('mosflm_strat','',''),('mosflm_strat_anom','_anom','ANOMALOUS')]
+            l = [("mosflm_strat", "", ""), ("mosflm_strat_anom", "_anom", "ANOMALOUS")]
             #Opens file from Labelit/Mosflm autoindexing and edit it to run a strategy.
-            mosflm_rot = str(self.preferences.get('mosflm_rot'))
-            mosflm_seg = str(self.preferences.get('mosflm_seg'))
-            mosflm_st  = str(self.preferences.get('mosflm_start'))
-            mosflm_end = str(self.preferences.get('mosflm_end'))
+            mosflm_rot = str(self.preferences.get("mosflm_rot"))
+            mosflm_seg = str(self.preferences.get("mosflm_seg"))
+            mosflm_st = str(self.preferences.get("mosflm_start"))
+            mosflm_end = str(self.preferences.get("mosflm_end"))
             #Does the user request a start or end range?
             range1 = False
-            if mosflm_st != '0.0':
+            if mosflm_st != "0.0":
                 range1 = True
-            if mosflm_end != '360.0':
+            if mosflm_end != "360.0":
                 range1 = True
             if range1:
-                if mosflm_rot == '0.0':
-                  #mosflm_rot = str(360/float(Utils.symopsSG(self,Utils.getMosflmSG(self))))
-                  mosflm_rot = str(360/float(Utils.symopsSG(self, Utils.getLabelitCell(self, "sym"))))
+                if mosflm_rot == "0.0":
+                    # mosflm_rot = str(360/float(Utils.symopsSG(self,Utils.getMosflmSG(self))))
+                    mosflm_rot = str(360/float(Utils.symopsSG(self, Utils.getLabelitCell(self, "sym"))))
             #Save info from previous data collections.
             if self.multicrystalstrat:
-                ref_data = self.preferences.get('reference_data')
-                if self.spacegroup == 'None':
+                ref_data = self.preferences.get("reference_data")
+                if self.spacegroup == "None":
                     self.spacegroup = ref_data[0][-1]
                     Utils.fixMosflmSG(self)
                     #For posting in summary
@@ -723,40 +723,40 @@ class RapdAgent(Process):
                 shutil.copy(self.index_number, l[i][0])
                 temp = []
                 #Read the Mosflm input file from Labelit and use only the top part.
-                for x, line in enumerate(open(l[i][0], 'r').readlines()):
+                for x, line in enumerate(open(l[i][0], "r").readlines()):
                     temp.append(line)
-                    if line.count('ipmosflm'):
-                        newline = line.replace(self.index_number,l[i][0])
+                    if line.count("ipmosflm"):
+                        newline = line.replace(self.index_number, l[i][0])
                         temp.remove(line)
-                        temp.insert(x,newline)
-                    if line.count('FINDSPOTS'):
+                        temp.insert(x, newline)
+                    if line.count("FINDSPOTS"):
                         im = line.split()[-1]
-                    if line.startswith('MATRIX'):
+                    if line.startswith("MATRIX"):
                         fi = x
                 #Load the image as per Andrew Leslie for Mosflm bug.
-                new_line = 'IMAGE %s\nLOAD\nGO\n' % im
+                new_line = "IMAGE %s\nLOAD\nGO\n" % im
                 #New lines for strategy calculation
                 if ref_data:
                     for x in range(len(ref_data)):
-                        new_line += 'MATRIX %s\nSTRATEGY start %s end %s PARTS %s\nGO\n' %  d(ref_data[x][0], ref_data[x][1], ref_data[x][2], len(ref_data)+1)
-                    new_line += 'MATRIX %s.mat\n'%self.index_number
+                        new_line += "MATRIX %s\nSTRATEGY start %s end %s PARTS %s\nGO\n" %  d(ref_data[x][0], ref_data[x][1], ref_data[x][2], len(ref_data)+1)
+                    new_line += "MATRIX %s.mat\n"%self.index_number
                 if range1:
-                    new_line += 'STRATEGY START %s END %s\nGO\n' % (mosflm_st, mosflm_end)
-                    new_line += 'ROTATE %s SEGMENTS %s %s\n' % (mosflm_rot, mosflm_seg, l[i][2])
+                    new_line += "STRATEGY START %s END %s\nGO\n" % (mosflm_st, mosflm_end)
+                    new_line += "ROTATE %s SEGMENTS %s %s\n" % (mosflm_rot, mosflm_seg, l[i][2])
                 else:
-                    if mosflm_rot == '0.0':
-                        new_line += 'STRATEGY AUTO %s\n'%l[i][2]
-                    elif mosflm_seg != '1':
-                        new_line += 'STRATEGY AUTO ROTATE %s SEGMENTS %s %s\n'%(mosflm_rot, mosflm_seg, l[i][2])
+                    if mosflm_rot == "0.0":
+                        new_line += "STRATEGY AUTO %s\n"%l[i][2]
+                    elif mosflm_seg != "1":
+                        new_line += "STRATEGY AUTO ROTATE %s SEGMENTS %s %s\n"%(mosflm_rot, mosflm_seg, l[i][2])
                     else:
-                        new_line += 'STRATEGY AUTO ROTATE %s %s\n'%(mosflm_rot, l[i][2])
-                new_line += 'GO\nSTATS\nEXIT\neof\n'
+                        new_line += "STRATEGY AUTO ROTATE %s %s\n"%(mosflm_rot, l[i][2])
+                new_line += "GO\nSTATS\nEXIT\neof\n"
                 if self.test == False:
-                    new = open(l[i][0], 'w')
+                    new = open(l[i][0], "w")
                     new.writelines(temp[:fi+1])
                     new.writelines(new_line)
                     new.close()
-                    log = os.path.join(os.getcwd(), l[i][0]+'.out')
+                    log = os.path.join(os.getcwd(), l[i][0]+".out")
                     inp = "tcsh %s" % l[i][0]
                     if self.cluster_adapter:
                         Process(target=self.cluster_adapter.processCluster, args=(self, (inp, log, self.cluster_queue))).start()
@@ -774,21 +774,21 @@ class RapdAgent(Process):
         iteration -- (default False)
         """
         if self.verbose:
-            self.logger.debug('AutoindexingStrategy::processStrategy')
+            self.logger.debug("AutoindexingStrategy::processStrategy")
         try:
             if iteration:
-                st  = iteration
+                st = iteration
                 end = iteration+1
             else:
-                st  = 0
+                st = 0
                 end = 5
                 if self.strategy == "mosflm":
                     st = 4
                 if self.multiproc == False:
                     end = st+1
-            for i in range(st,end):
+            for i in range(st, end):
                 if i == 4:
-                    Utils.folders(self,self.labelit_dir)
+                    Utils.folders(self, self.labelit_dir)
                     job = Process(target=self.processMosflm, name="mosflm%s" % i)
                 else:
                     Utils.foldersStrategy(self, os.path.join(os.path.basename(self.labelit_dir), str(i)))
@@ -818,441 +818,459 @@ class RapdAgent(Process):
             Process(target=RunXOalign, args=(self.input, params, self.logger)).start()
 
         except:
-          self.logger.exception("**ERROR in processXOalign**")
+            self.logger.exception("**ERROR in processXOalign**")
 
     def postprocessDistl(self):
-      """
-      Send Distl log to parsing and make sure it didn't fail. Save output dict.
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::postprocessDistl')
-      try:
-        timer = 0
-        while len(self.distl_output) != 0:
-          for job in self.distl_output:
-            if job.is_alive() == False:
-              self.distl_output.remove(job)
-          time.sleep(0.2)
-          timer += 0.2
-          if self.verbose:
-            number = round(timer%1,1)
-            if number in (0.0,1.0):
-              print 'Waiting for Distl to finish %s seconds'%timer
-          if self.distl_timer:
-            if timer >= self.distl_timer:
-              job.terminate()
-              self.distl_output.remove(job)
-              self.distl_log.append('Distl timed out\n')
-              if self.verbose:
-                print 'Distl timed out.'
-                self.logger.debug('Distl timed out.')
-
-        os.chdir(self.labelit_dir)
-        f = 1
-        if self.header2:
-          f = 2
-        for x in range(0,f):
-          log = open('distl%s.log'%x,'r').readlines()
-          self.distl_log.extend(log)
-          distl = Parse.ParseOutputDistl(self,log)
-          if distl == None:
-            self.distl_results = {'Distl results':'FAILED'}
-          else:
-            self.distl_results[str(x)] = {'Distl results': distl}
-        Utils.distlComb(self)
-
-      except:
-        self.logger.exception('**Error in postprocessDistl.**')
-
-    def postprocessBest(self,inp,runbefore=False):
-      """
-      Send Best log to parsing and save output dict. Error check the results and rerun if neccessary.
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::postprocessBest')
-      try:
-        xml = 'None'
-        anom = False
-        if inp.count('anom'):
-          anom = True
-        log = open(inp,'r').readlines()
-        if os.path.exists(inp.replace('log','xml')):
-          xml = open(inp.replace('log','xml'),'r').readlines()
-        iteration = os.path.dirname(inp)[-1]
-        if anom:
-          self.best_anom_log.extend(log)
-        else:
-          self.best_log.extend(log)
-
-      except:
-        self.logger.exception('**Error in postprocessBest.**')
-
-      data = Parse.ParseOutputBest(self,(log,xml),anom)
-      #print data.get('strategy res limit')
-      if self.labelit_results['Labelit results'] != 'FAILED':
-        #Best error checking. Most errors caused by B-factor calculation problem.
-        #If no errors...
-        if type(data) == dict:
-          data.update({'directory':os.path.dirname(inp)})
-          if anom:
-            self.best_anom_results = {'Best ANOM results':data}
-          else:
-            self.best_results = {'Best results':data}
-          return('OK')
-        else:
-          if self.multiproc == False:
-            out = {'None'        :'No Best Strategy.',
-                   'neg B'       :'Adjusting resolution',
-                   'isotropic B' :'Isotropic B detected'}
-            if out.has_key(data):
-              Utils.errorBestPost(self,iteration,out[data],anom)
-          return('FAILED')
-
-    def postprocessMosflm(self,inp):
-      """
-      Pass Mosflm log into parsing and save output dict.
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::postprocessMosflm')
-      try:
-        if inp.count('anom'):
-          l = ['ANOM','self.mosflm_strat_anom','Mosflm ANOM strategy results']
-        else:
-          l = ['','self.mosflm_strat','Mosflm strategy results']
-        out = open(inp,'r').readlines()
-        eval('%s_log'%l[1]).extend(out)
-      except:
-        self.logger.exception('**ERROR in postprocessMosflm**')
-
-      data = Parse.ParseOutputMosflm_strat(self,out,inp.count('anom'))
-      if data == None:
+        """
+        Send Distl log to parsing and make sure it didn't fail. Save output dict.
+        """
         if self.verbose:
-          self.logger.debug('No Mosflm %s strategy.'%l[0])
-        eval('%s_results'%l[1]).update({ l[2] : 'FAILED' })
-      elif data == 'sym':
+            self.logger.debug("AutoindexingStrategy::postprocessDistl")
+
+        try:
+            timer = 0
+            while len(self.distl_output) != 0:
+                for job in self.distl_output:
+                    if job.is_alive() == False:
+                        self.distl_output.remove(job)
+                time.sleep(0.2)
+                timer += 0.2
+                if self.verbose:
+                    number = round(timer % 1, 1)
+                    if number in (0.0, 1.0):
+                        print "Waiting for Distl to finish %s seconds"%timer
+                if self.distl_timer:
+                    if timer >= self.distl_timer:
+                        job.terminate()
+                        self.distl_output.remove(job)
+                        self.distl_log.append("Distl timed out\n")
+                        if self.verbose:
+                            print "Distl timed out."
+                            self.logger.debug("Distl timed out.")
+
+            os.chdir(self.labelit_dir)
+            f = 1
+            if self.header2:
+                f = 2
+            for x in range(0,f):
+                log = open("distl%s.log" % x, "r").readlines()
+                self.distl_log.extend(log)
+                distl = Parse.ParseOutputDistl(self, log)
+                if distl == None:
+                    self.distl_results = {"Distl results":"FAILED"}
+                else:
+                    self.distl_results[str(x)] = {"Distl results": distl}
+            Utils.distlComb(self)
+
+        except:
+          self.logger.exception("**Error in postprocessDistl**")
+
+    def postprocessBest(self, inp, runbefore=False):
+        """
+        Send Best log to parsing and save output dict. Error check the results and
+        rerun if neccessary.
+
+        Keyword arguments
+        inp --
+        runbefore -- (default False)
+        """
         if self.verbose:
-          self.logger.debug('dataset symmetry not compatible with autoindex symmetry')
-        eval('%s_results'%l[1]).update({ l[2] : 'SYM' })
-      else:
-        eval('%s_results'%l[1]).update({ l[2] : data })
+            self.logger.debug("AutoindexingStrategy::postprocessBest")
+
+        try:
+            xml = "None"
+            anom = False
+            if inp.count("anom"):
+                anom = True
+            log = open(inp, "r").readlines()
+            if os.path.exists(inp.replace("log", "xml")):
+                xml = open(inp.replace("log", "xml"), "r").readlines()
+            iteration = os.path.dirname(inp)[-1]
+            if anom:
+                self.best_anom_log.extend(log)
+            else:
+                self.best_log.extend(log)
+
+        except:
+            self.logger.exception("**Error in postprocessBest.**")
+
+        data = Parse.ParseOutputBest(self, (log, xml), anom)
+        # print data.get("strategy res limit")
+        if self.labelit_results["Labelit results"] != "FAILED":
+            # Best error checking. Most errors caused by B-factor calculation problem.
+            # If no errors...
+            if type(data) == dict:
+                data.update({"directory":os.path.dirname(inp)})
+                if anom:
+                    self.best_anom_results = {"Best ANOM results":data}
+                else:
+                    self.best_results = {"Best results":data}
+                return("OK")
+            else:
+                if self.multiproc == False:
+                    out = {"None":"No Best Strategy.",
+                           "neg B":"Adjusting resolution",
+                           "isotropic B":"Isotropic B detected"}
+                    if out.has_key(data):
+                        Utils.errorBestPost(self, iteration, out[data],anom)
+                return("FAILED")
+
+    def postprocessMosflm(self, inp):
+        """
+        Pass Mosflm log into parsing and save output dict.
+
+        Keyword argument
+        inp --
+        """
+        if self.verbose:
+            self.logger.debug("AutoindexingStrategy::postprocessMosflm")
+
+        try:
+            if inp.count("anom"):
+                l = ["ANOM", "self.mosflm_strat_anom", "Mosflm ANOM strategy results"]
+            else:
+                l = ["", "self.mosflm_strat", "Mosflm strategy results"]
+            out = open(inp, "r").readlines()
+            eval("%s_log" % l[1]).extend(out)
+        except:
+            self.logger.exception("**ERROR in postprocessMosflm**")
+
+        data = Parse.ParseOutputMosflm_strat(self,out,inp.count("anom"))
+        if data == None:
+            if self.verbose:
+                self.logger.debug("No Mosflm %s strategy.", l[0])
+            eval("%s_results"%l[1]).update({l[2]:"FAILED"})
+        elif data == "sym":
+            if self.verbose:
+                self.logger.debug("dataset symmetry not compatible with autoindex symmetry")
+            eval("%s_results"%l[1]).update({l[2]:"SYM"})
+        else:
+            eval("%s_results" % l[1]).update({l[2]:data})
 
     def run_queue(self):
-      """
-      run_queue for strategy.
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::run_queue')
-      try:
-        def set_best_results(i,x):
-          #Set Best output if it failed after 3 tries
-          if i == 3:
-            if x == 0:
-              self.best_results = { 'Best results' : 'FAILED'}
-              self.best_failed = True
-            else:
-              self.best_anom_results = { 'Best ANOM results' : 'FAILED'}
-              self.best_anom_failed = True
+        """
+        run_queue for strategy.
+        """
+        if self.verbose:
+            self.logger.debug("AutoindexingStrategy::run_queue")
 
-        st = 0
-        if self.strategy == 'mosflm':
-          st = 4
-        #dict = {}
-        #Run twice for regular(0) and anomalous(1) strategies
-        l = ['','_anom']
-        for x in range(0,2):
-          for i in range(st,5):
-            timed_out = False
-            timer = 0
-            job = self.jobs[str(i)]
-            while 1:
-              if job.is_alive() == False:
-                if i == 4:
-                  log = os.path.join(self.labelit_dir,'mosflm_strat%s.out'%l[x])
-                else:
-                  log = os.path.join(self.labelit_dir,str(i))+'/best%s.log'%l[x]
-                break
-              time.sleep(0.1)
-              timer += 0.1
-              if self.verbose:
-                number = round(timer%1,1)
-                if number in (0.0,1.0):
-                  print 'Waiting for strategy to finish %s seconds'%timer
-              if self.strategy_timer:
-                if timer >= self.strategy_timer:
-                  timed_out = True
-                  break
-            if timed_out:
-              set_best_results(i,x)
-            else:
-              if i == 4:
-                self.postprocessMosflm(log)
-              else:
-                job1 = self.postprocessBest(log)
-                if job1 == 'OK':
-                  break
-                #If Best failed...
-                else:
-                  if self.multiproc == False:
-                    self.processStrategy(i+1)
-                  set_best_results(i,x)
-              pass
-        if self.test == False:
-          if self.multiproc:
-            if self.cluster_adapter:
-              #kill child process on DRMAA job causes error on cluster.
-              #turn off multiprocessing.event so any jobs still running on cluster are terminated.
-              self.running.clear()
-            else:
-              #kill all the remaining running jobs
-              for i in range(st,5):
-                if self.jobs[str(i)].is_alive():
-                  if self.verbose:
-                    self.logger.debug('terminating job: %s'%self.jobs[str(i)])
-                  Utils.killChildren(self,self.jobs[str(i)].pid)
+        try:
+            def set_best_results(i,x):
+                #Set Best output if it failed after 3 tries
+                if i == 3:
+                    if x == 0:
+                        self.best_results = {"Best results":"FAILED"}
+                        self.best_failed = True
+                    else:
+                        self.best_anom_results = {"Best ANOM results":"FAILED"}
+                        self.best_anom_failed = True
 
-      except:
-        self.logger.exception('**Error in run_queue**')
+            st = 0
+            if self.strategy == "mosflm":
+                st = 4
+            # dict = {}
+            # Run twice for regular(0) and anomalous(1) strategies
+            l = ["", "_anom"]
+            for x in range(0, 2):
+                for i in range(st, 5):
+                    timed_out = False
+                    timer = 0
+                    job = self.jobs[str(i)]
+                    while 1:
+                        if job.is_alive() == False:
+                            if i == 4:
+                                log = os.path.join(self.labelit_dir, "mosflm_strat%s.out" % l[x])
+                            else:
+                                log = os.path.join(self.labelit_dir, str(i))+"/best%s.log" % l[x]
+                            break
+                        time.sleep(0.1)
+                        timer += 0.1
+                        if self.verbose:
+                            number = round(timer%1,1)
+                            if number in (0.0,1.0):
+                                print "Waiting for strategy to finish %s seconds"%timer
+                        if self.strategy_timer:
+                            if timer >= self.strategy_timer:
+                                timed_out = True
+                                break
+                    if timed_out:
+                        set_best_results(i,x)
+                    else:
+                        if i == 4:
+                            self.postprocessMosflm(log)
+                        else:
+                            job1 = self.postprocessBest(log)
+                            if job1 == "OK":
+                                break
+                            # If Best failed...
+                            else:
+                                if self.multiproc == False:
+                                    self.processStrategy(i+1)
+                                set_best_results(i, x)
+                        pass
+            if self.test == False:
+                if self.multiproc:
+                    if self.cluster_adapter:
+                        # kill child process on DRMAA job causes error on cluster.
+                        # turn off multiprocessing.event so any jobs still running on cluster are terminated.
+                        self.running.clear()
+                    else:
+                        # kill all the remaining running jobs
+                        for i in range(st, 5):
+                            if self.jobs[str(i)].is_alive():
+                                if self.verbose:
+                                    self.logger.debug("terminating job: %s" % self.jobs[str(i)])
+                                Utils.killChildren(self, self.jobs[str(i)].pid)
+
+        except:
+            self.logger.exception("**Error in run_queue**")
 
     def labelitSort(self):
-      """
-      Sort out which iteration of Labelit has the highest symmetry and choose that solution. If
-      Labelit does not find a solution, finish up the pipeline.
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::labelitSort')
-      import numpy
+        """
+        Sort out which iteration of Labelit has the highest symmetry and choose that solution. If
+        Labelit does not find a solution, finish up the pipeline.
+        """
+        if self.verbose:
+            self.logger.debug("AutoindexingStrategy::labelitSort")
+        import numpy
 
-      rms_list1 = []
-      sg_list1 = []
-      metric_list1 = []
-      vol = []
-      sg_dict  = {}
-      sol_dict = {}
-      sym = '0'
-      try:
-        #Get the results and logs
-        self.labelit_results = self.labelitQueue.get()
-        self.labelit_log = self.labelitQueue.get()
+        rms_list1 = []
+        sg_list1 = []
+        metric_list1 = []
+        vol = []
+        sg_dict  = {}
+        sol_dict = {}
+        sym = "0"
 
-        for run in self.labelit_results.keys():
-          if type(self.labelit_results[run].get('Labelit results')) == dict:
-            #Check for pseudotranslation in any Labelit run
-            if self.labelit_results[run].get('Labelit results').get('pseudotrans') == True:
-                self.pseudotrans = True
-            s,r,m,v = Utils.getLabelitStats(self,inp=run,simple=True)
-            sg = Utils.convertSG(self,s)
-            sg_dict[run] = sg
-            sg_list1.append(float(sg))
-            rms_list1.append(float(r))
-            metric_list1.append(float(m))
-            vol.append(v)
-          else:
-            #If Labelit failed, set dummy params
-            sg_dict[run] = '0'
-            sg_list1.append(0)
-            rms_list1.append(100)
-            metric_list1.append(100)
-            vol.append('0')
-        for x in range(len(sg_list1)):
-          if sg_list1[x] == numpy.amax(sg_list1):
-            #If its P1 look at the Mosflm RMS, else look at the Labelit metric.
-            if str(sg_list1[x]) == '1.0':
-              sol_dict[rms_list1[x]]    = self.labelit_results.keys()[x]
+        try:
+            # Get the results and logs
+            self.labelit_results = self.labelitQueue.get()
+            self.labelit_log = self.labelitQueue.get()
+
+            for run in self.labelit_results.keys():
+                if type(self.labelit_results[run].get("Labelit results")) == dict:
+                    #Check for pseudotranslation in any Labelit run
+                    if self.labelit_results[run].get("Labelit results").get("pseudotrans") == True:
+                        self.pseudotrans = True
+                    s, r, m, v = Utils.getLabelitStats(self, inp=run, simple=True)
+                    sg = Utils.convertSG(self, s)
+                    sg_dict[run] = sg
+                    sg_list1.append(float(sg))
+                    rms_list1.append(float(r))
+                    metric_list1.append(float(m))
+                    vol.append(v)
+                else:
+                    #If Labelit failed, set dummy params
+                    sg_dict[run] = "0"
+                    sg_list1.append(0)
+                    rms_list1.append(100)
+                    metric_list1.append(100)
+                    vol.append("0")
+            for x in range(len(sg_list1)):
+                if sg_list1[x] == numpy.amax(sg_list1):
+                    # If its P1 look at the Mosflm RMS, else look at the Labelit metric.
+                    if str(sg_list1[x]) == "1.0":
+                        sol_dict[rms_list1[x]]    = self.labelit_results.keys()[x]
+                    else:
+                        sol_dict[metric_list1[x]] = self.labelit_results.keys()[x]
+            l = sol_dict.keys()
+            l.sort()
+            # Best Labelit_results key
+            highest = sol_dict[l[0]]
+            # Since iter 5 cuts res, it is often the best. Only choose if its the only solution.
+            if len(l) > 1:
+                if highest == "5":
+                    highest = sol_dict[l[1]]
+            #symmetry of best solution
+            sym = sg_dict[highest]
+            # If there is a solution...
+            if sym != "0":
+                self.logger.debug("The sorted labelit solution was #%s", highest)
+
+                # Save best results in corect place.
+                self.labelit_results = self.labelit_results[highest]
+
+                # Set self.volume for best solution
+                self.volume = vol[int(highest)]
+
+                # Set self.labelit_dir and go to it.
+                self.labelit_dir = os.path.join(self.working_dir, highest)
+                self.index_number = self.labelit_results.get("Labelit results").get("mosflm_index")
+                os.chdir(self.labelit_dir)
+                if self.spacegroup != "None":
+                    check_lg = Utils.checkSG(self, sym)
+                    user_sg  = Utils.convertSG(self, self.spacegroup)
+                    if user_sg != sym:
+                        fixSG = False
+                        for line in check_lg:
+                            if line == user_sg:
+                                fixSG = True
+                        if fixSG:
+                            Utils.fixMosflmSG(self)
+                            Utils.fixBestSG(self)
+                        else:
+                            self.ignore_user_SG = True
+                # Make an overlay jpeg
+                # self.makeImages(1)
             else:
-              sol_dict[metric_list1[x]] = self.labelit_results.keys()[x]
-        l = sol_dict.keys()
-        l.sort()
-        #Best Labelit_results key
-        highest = sol_dict[l[0]]
-        #Since iter 5 cuts res, it is often the best. Only choose if its the only solution.
-        if len(l) > 1:
-          if highest == '5':
-            highest = sol_dict[l[1]]
-        #symmetry of best solution
-        sym = sg_dict[highest]
-        # If there is a solution...
-        if sym != "0":
-          self.logger.debug("The sorted labelit solution was #%s", highest)
+                self.logger.debug("No solution was found when sorting Labelit results.")
+                self.labelit_failed = True
+                self.labelit_results = {"Labelit results":"FAILED"}
+                self.labelit_dir = os.path.join(self.working_dir, "0")
+                os.chdir(self.labelit_dir)
+                self.processDistl()
+                self.postprocessDistl()
+                #   if os.path.exists("DISTL_pickle"):
+                  #   self.makeImages(2)
+                self.best_failed = True
+                self.best_anom_failed = True
 
-          # Save best results in corect place.
-          self.labelit_results = self.labelit_results[highest]
+        except:
+            self.logger.exception("**ERROR in labelitSort**")
 
-          # Set self.volume for best solution
-          self.volume = vol[int(highest)]
+    def findBestStrat(self, inp):
+        """
+        Find the BEST strategy according to the plots.
 
-          # Set self.labelit_dir and go to it.
-          self.labelit_dir = os.path.join(self.working_dir, highest)
-          self.index_number = self.labelit_results.get("Labelit results").get("mosflm_index")
-          os.chdir(self.labelit_dir)
-          if self.spacegroup != "None":
-              check_lg = Utils.checkSG(self, sym)
-              user_sg  = Utils.convertSG(self, self.spacegroup)
-              if user_sg != sym:
-                  fixSG = False
-                  for line in check_lg:
-                      if line == user_sg:
-                          fixSG = True
-                  if fixSG:
-                      Utils.fixMosflmSG(self)
-                      Utils.fixBestSG(self)
-                  else:
-                      self.ignore_user_SG = True
-          # Make an overlay jpeg
-        #   self.makeImages(1)
-        else:
-          self.logger.debug("No solution was found when sorting Labelit results.")
-          self.labelit_failed = True
-          self.labelit_results = {"Labelit results":"FAILED"}
-          self.labelit_dir = os.path.join(self.working_dir, "0")
-          os.chdir(self.labelit_dir)
-          self.processDistl()
-          self.postprocessDistl()
-          #   if os.path.exists("DISTL_pickle"):
-            #   self.makeImages(2)
-          self.best_failed = True
-          self.best_anom_failed = True
+        Keyword argument
+        inp --
+        """
+        if self.verbose:
+            self.logger.debug('AutoindexingStrategy::findBestStrat')
 
-      except:
-        self.logger.exception('**ERROR in labelitSort**')
-
-    def findBestStrat(self,inp):
-      """
-      Find the BEST strategy according to the plots.
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::findBestStrat')
-
-      def getBestRotRange(inp):
+    def getBestRotRange(inp):
         """
         Parse lines from XML file.
         """
         try:
-          p_s = []
-          p_e = False
-          for line in inp:
-            if line.count('"phi_start"'):
-              p_s.append(line[line.find('>')+1:line.rfind('<')])
-            if line.count('"phi_end">'):
-              p_e = line[line.find('>')+1:line.rfind('<')]
-          #If BEST failed...
-          if p_e == False:
-            return('FAILED')
-          else:
-            return(int(round(float(p_e)-float(p_s[0]))))
-        except:
-          self.logger.exception('**Error in getBestRotRange**')
-          return('FAILED')
-      try:
-        phi_st = []
-        phi_rn = []
-        st  = False
-        end = False
-        run = False
-        if os.path.exists(inp):
-          f = open(inp,'r').readlines()
-          for x,line in enumerate(f):
-            if line.startswith("% linelabel  = 'compl -99.%'"):
-              st = x
-            if line.startswith("% linelabel  = 'compl -95.%'"):
-              end = x
-          if st and end:
-            for line in f[st:end]:
-              if len(line.split()) == 2:
-                phi_st.append(line.split()[0])
-                phi_rn.append(int(line.split()[1]))
-            min1 = min(phi_rn)
-            #If xml exists, check if new strategy is at least 5 degrees less rotation range.
-            if os.path.exists(inp.replace('.plt','.xml')):
-              orig_range = getBestRotRange(open(inp.replace('.plt','.xml'),'r').readlines())
-              if orig_range != 'FAILED':
-                if orig_range - min1 >= 5:
-                  run = True
+            p_s = []
+            p_e = False
+            for line in inp:
+                if line.count('"phi_start"'):
+                    p_s.append(line[line.find(">")+1:line.rfind("<")])
+                if line.count('"phi_end">'):
+                    p_e = line[line.find(">")+1:line.rfind("<")]
+            # If BEST failed...
+            if p_e == False:
+                return("FAILED")
             else:
-              run = True
-        if run:
-          return((str(phi_st[phi_rn.index(min1)]),str(min1)))
-        else:
-          return((False,False))
+                return(int(round(float(p_e)-float(p_s[0]))))
+        except:
+            self.logger.exception("**Error in getBestRotRange**")
+            return("FAILED")
+        try:
+            phi_st = []
+            phi_rn = []
+            st  = False
+            end = False
+            run = False
+            if os.path.exists(inp):
+                f = open(inp, "r").readlines()
+                for x,line in enumerate(f):
+                    if line.startswith("% linelabel  = 'compl -99.%'"):
+                        st = x
+                    if line.startswith("% linelabel  = 'compl -95.%'"):
+                        end = x
+                if st and end:
+                    for line in f[st:end]:
+                        if len(line.split()) == 2:
+                            phi_st.append(line.split()[0])
+                            phi_rn.append(int(line.split()[1]))
+                    min1 = min(phi_rn)
+                    # If xml exists, check if new strategy is at least 5 degrees less rotation range.
+                    if os.path.exists(inp.replace(".plt", ".xml")):
+                        orig_range = getBestRotRange(open(inp.replace(".plt", ".xml"), "r").readlines())
+                        if orig_range != "FAILED":
+                            if orig_range - min1 >= 5:
+                                run = True
+                    else:
+                        run = True
+            if run:
+                return((str(phi_st[phi_rn.index(min1)]),str(min1)))
+            else:
+                return (False, False)
 
-      except:
-        self.logger.exception('**Error in findBestStrat**')
-        return((False,False))
+        except:
+            self.logger.exception("**Error in findBestStrat**")
+            return (False, False)
 
     def PrintInfo(self):
-      """
-      Print information regarding programs utilized by RAPD
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::PrintInfo')
-      try:
-        print '======================='
-        print 'RAPD developed using Labelit'
-        print 'Reference:  J. Appl. Cryst. 37, 399-409 (2004)'
-        print 'Website:    http://adder.lbl.gov/labelit/ \n'
-        print 'RAPD developed using Mosflm'
-        print 'Reference: Leslie, A.G.W., (1992), Joint CCP4 + ESF-EAMCB Newsletter on Protein Crystallography, No. 26'
-        print 'Website:   http://www.mrc-lmb.cam.ac.uk/harry/mosflm/ \n'
-        print 'RAPD developed using RADDOSE'
-        print 'Reference: Paithankar et. al. (2009)J. Synch. Rad. 16, 152-162.'
-        print 'Website: http://biop.ox.ac.uk/www/garman/lab_tools.html/ \n'
-        print 'RAPD developed using Best'
-        print 'Reference: G.P. Bourenkov and A.N. Popov,  Acta Cryst. (2006). D62, 58-64'
-        print 'Website:   http://www.embl-hamburg.de/BEST/ \n'
-        print '======================='
-        self.logger.debug('=======================')
-        self.logger.debug('RAPD developed using Labelit')
-        self.logger.debug('Reference:  J. Appl. Cryst. 37, 399-409 (2004)')
-        self.logger.debug('Website:    http://adder.lbl.gov/labelit/ \n')
-        self.logger.debug('RAPD developed using Mosflm')
-        self.logger.debug('Reference: Leslie, A.G.W., (1992), Joint CCP4 + ESF-EAMCB Newsletter on Protein Crystallography, No. 26')
-        self.logger.debug('Website:   http://www.mrc-lmb.cam.ac.uk/harry/mosflm/ \n')
-        self.logger.debug('RAPD developed using RADDOSE')
-        self.logger.debug('Reference: Paithankar et. al. (2009)J. Synch. Rad. 16, 152-162.')
-        self.logger.debug('Website: http://biop.ox.ac.uk/www/garman/lab_tools.html/ \n')
-        self.logger.debug('RAPD developed using Best')
-        self.logger.debug('Reference: G.P. Bourenkov and A.N. Popov,  Acta Cryst. (2006). D62, 58-64')
-        self.logger.debug('Website:   http://www.embl-hamburg.de/BEST/ \n')
-        self.logger.debug('=======================')
-      except:
-        self.logger.exception('**Error in PrintInfo**')
+        """
+        Print information regarding programs utilized by RAPD
+        """
+        if self.verbose:
+            self.logger.debug('AutoindexingStrategy::PrintInfo')
 
-    def makeImages(self,predictions):
-      """
-      Create images for iipimage server in an alternate process
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::makeImages')
-      try:
-        l = [('raw','labelit.png'),('overlay','labelit.overlay_index -large'),
-             ('overlay','labelit.overlay_distl -large')]
-        l1 = []
-        #aggregate the source images
-        src_images = []
-        #1st image
-        src_images.append(self.header.get('fullname'))
-        #if we have a pair
-        if self.header2:
-          src_images.append(self.header2.get('fullname'))
-        for image in src_images:
-          if predictions == 0:
-            png = '%s.png'%os.path.basename(image)[:-4]
-          else:
-            png = '%s_overlay.png'%os.path.basename(image)[:-4]
-          tif = png.replace('.png','.tif')
-          if self.test:
-            command = 'ls'
-          else:
-            command = '%s %s %s; vips im_vips2tiff %s %s:jpeg:100,tile:192x192,pyramid; rm -rf %s'%(l[predictions][1],image,png,png,tif,png)
-            #command = '%s %s %s; vips im_vips2tiff %s %s:jpeg:100,tile:192x192,pyramid'%(l[predictions][1],image,png,png,tif)
-          job = Process(target=Utils.processLocal,args=(command,self.logger))
-          #job = Process(target=Utils.processLocal,args=((command,'junk.log'),self.logger))
-          job.start()
-          l1.append((tif,job))
+        try:
+            print '======================='
+            print 'RAPD developed using Labelit'
+            print 'Reference:  J. Appl. Cryst. 37, 399-409 (2004)'
+            print 'Website:    http://adder.lbl.gov/labelit/ \n'
+            print 'RAPD developed using Mosflm'
+            print 'Reference: Leslie, A.G.W., (1992), Joint CCP4 + ESF-EAMCB Newsletter on Protein Crystallography, No. 26'
+            print 'Website:   http://www.mrc-lmb.cam.ac.uk/harry/mosflm/ \n'
+            print 'RAPD developed using RADDOSE'
+            print 'Reference: Paithankar et. al. (2009)J. Synch. Rad. 16, 152-162.'
+            print 'Website: http://biop.ox.ac.uk/www/garman/lab_tools.html/ \n'
+            print 'RAPD developed using Best'
+            print 'Reference: G.P. Bourenkov and A.N. Popov,  Acta Cryst. (2006). D62, 58-64'
+            print 'Website:   http://www.embl-hamburg.de/BEST/ \n'
+            print '======================='
+            self.logger.debug('=======================')
+            self.logger.debug('RAPD developed using Labelit')
+            self.logger.debug('Reference:  J. Appl. Cryst. 37, 399-409 (2004)')
+            self.logger.debug('Website:    http://adder.lbl.gov/labelit/ \n')
+            self.logger.debug('RAPD developed using Mosflm')
+            self.logger.debug('Reference: Leslie, A.G.W., (1992), Joint CCP4 + ESF-EAMCB Newsletter on Protein Crystallography, No. 26')
+            self.logger.debug('Website:   http://www.mrc-lmb.cam.ac.uk/harry/mosflm/ \n')
+            self.logger.debug('RAPD developed using RADDOSE')
+            self.logger.debug('Reference: Paithankar et. al. (2009)J. Synch. Rad. 16, 152-162.')
+            self.logger.debug('Website: http://biop.ox.ac.uk/www/garman/lab_tools.html/ \n')
+            self.logger.debug('RAPD developed using Best')
+            self.logger.debug('Reference: G.P. Bourenkov and A.N. Popov,  Acta Cryst. (2006). D62, 58-64')
+            self.logger.debug('Website:   http://www.embl-hamburg.de/BEST/ \n')
+            self.logger.debug('=======================')
 
-        self.vips_images[l[predictions][0]] = l1
+        except:
+            self.logger.exception('**Error in PrintInfo**')
 
-      except:
-        self.logger.exception('**Error in makeImages.**')
+    # def makeImages(self,predictions):
+    #   """
+    #   Create images for iipimage server in an alternate process
+    #   """
+    #   if self.verbose:
+    #     self.logger.debug('AutoindexingStrategy::makeImages')
+    #   try:
+    #     l = [('raw','labelit.png'),('overlay','labelit.overlay_index -large'),
+    #          ('overlay','labelit.overlay_distl -large')]
+    #     l1 = []
+    #     #aggregate the source images
+    #     src_images = []
+    #     #1st image
+    #     src_images.append(self.header.get('fullname'))
+    #     #if we have a pair
+    #     if self.header2:
+    #       src_images.append(self.header2.get('fullname'))
+    #     for image in src_images:
+    #       if predictions == 0:
+    #         png = '%s.png'%os.path.basename(image)[:-4]
+    #       else:
+    #         png = '%s_overlay.png'%os.path.basename(image)[:-4]
+    #       tif = png.replace('.png','.tif')
+    #       if self.test:
+    #         command = 'ls'
+    #       else:
+    #         command = '%s %s %s; vips im_vips2tiff %s %s:jpeg:100,tile:192x192,pyramid; rm -rf %s'%(l[predictions][1],image,png,png,tif,png)
+    #         #command = '%s %s %s; vips im_vips2tiff %s %s:jpeg:100,tile:192x192,pyramid'%(l[predictions][1],image,png,png,tif)
+    #       job = Process(target=Utils.processLocal,args=(command,self.logger))
+    #       #job = Process(target=Utils.processLocal,args=((command,'junk.log'),self.logger))
+    #       job.start()
+    #       l1.append((tif,job))
+    #
+    #     self.vips_images[l[predictions][0]] = l1
+    #
+    #   except:
+    #     self.logger.exception('**Error in makeImages.**')
 
     def postprocess(self):
         """
@@ -1459,139 +1477,140 @@ class RapdAgent(Process):
         # os._exit(0)
 
     def htmlBestPlots(self):
-      """
-      generate plots html/php file
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::htmlBestPlots')
-      try:
-        run = True
-        plot = False
-        plotanom = False
-        dir1 = self.best_results.get('Best results').get('directory',False)
-        dir2 = self.best_anom_results.get('Best ANOM results').get('directory',False)
+        """
+        generate plots html/php file
+        """
+        if self.verbose:
+            self.logger.debug('AutoindexingStrategy::htmlBestPlots')
 
-        #Get the parsed results for reg and anom results and put them into a single dict.
-        if dir1:
-          plot = Parse.ParseOutputBestPlots(self,open(os.path.join(dir1,'best.plt'),'r').readlines())
-          if dir2:
-            plotanom = Parse.ParseOutputBestPlots(self,open(os.path.join(dir2,'best_anom.plt'),'r').readlines())
-            plot.update({'companom':plotanom.get('comp')})
-        elif dir2:
-          plot = Parse.ParseOutputBestPlots(self,open(os.path.join(dir2,'best_anom.plt'),'r').readlines())
-          plot.update({'companom':plot.pop('comp')})
-        else:
-          self.htmlBestPlotsFailed()
-          run = False
+        try:
+            run = True
+            plot = False
+            plotanom = False
+            dir1 = self.best_results.get('Best results').get('directory',False)
+            dir2 = self.best_anom_results.get('Best ANOM results').get('directory',False)
 
-        #Place holder for settings.
-        l = [['Omega start','Min osc range for different completenesses','O m e g a &nbsp R a n g e','Omega Start',
-              'comp','"start at " + x + " for " + y + " degrees");'],
-             ['ANOM Omega start','Min osc range for different completenesses','O m e g a &nbsp R a n g e','Omega Start',
-              'companom','"start at " + x + " for " + y + " degrees");'],
-             ['Max delta Omega','Maximal Oscillation Width','O m e g a &nbsp S t e p','Omega',
-              'width','"max delta Omega of " + y + " at Omega=" + x);'],
-             ['Wilson Plot','Wilson Plot','I n t e n s i t y','1/Resolution<sup>2</sup>',
-              'wilson','item.series.label + " of " + x + " = " + y);']]
-        if self.sample_type != 'Ribosome':
-          temp = [['Rad damage1','Intensity decrease due to radiation damage','R e l a t i v e &nbsp I n t e n s i t y',
-                   'Cumulative exposure time (sec)','damage','"at res=" + item.series.label + " after " + x + " seconds intensity drops to " + y);'],
-                  ['Rad damage2','Rdamage vs. Cumulative Exposure time','R f a c t o r','Cumulative exposure time (sec)',
-                   'rdamage','"at res=" + item.series.label + " after " + x + " seconds Rdamage increases to " + y);']]
-          l.extend(temp)
-
-        if run:
-          if self.gui:
-            f = 'best_plots.php'
-          else:
-            f = 'best_plots.html'
-          best_plot = open(f,'w')
-          best_plot.write(Utils.getHTMLHeader(self,'plots'))
-          best_plot.write('%4s$(function() {\n%6s// Tabs\n'%('',''))
-          best_plot.write("%6s$('.tabs').tabs();\n%4s});\n"%('',''))
-          best_plot.write('%4s</script>\n%2s</head>\n%2s<body>\n%4s<table>\n%6s<tr>\n'%(5*('',)))
-          best_plot.write('%8s<td width="%s">\n%10s<div class="tabs">\n%12s<ul>\n'%('','100%','',''))
-          for i in range(len(l)):
-            best_plot.write('%14s<li><a href="#tabs-22%s">%s</a></li>\n'%('',i,l[i][0]))
-          best_plot.write("%12s</ul>\n"%'')
-          for i in range(len(l)):
-            best_plot.write('%12s<div id="tabs-22%s">\n'%('',i))
-            if i == 0 and self.best_failed:
-              best_plot.write('%14s<div class=title><b>BEST strategy calculation failed</b></div>\n'%'')
-            elif i == 1 and self.best_anom_failed:
-              best_plot.write('%14s<div class=title><b>BEST ANOM strategy calculation failed</b></div>\n'%'')
+            # Get the parsed results for reg and anom results and put them into a single dict.
+            if dir1:
+                plot = Parse.ParseOutputBestPlots(self, open(os.path.join(dir1, 'best.plt'), 'r').readlines())
+                if dir2:
+                    plotanom = Parse.ParseOutputBestPlots(self, open(os.path.join(dir2, 'best_anom.plt'), 'r').readlines())
+                    plot.update({'companom':plotanom.get('comp')})
+            elif dir2:
+                plot = Parse.ParseOutputBestPlots(self, open(os.path.join(dir2, 'best_anom.plt'), 'r').readlines())
+                plot.update({'companom':plot.pop('comp')})
             else:
-              best_plot.write('%14s<div class=title><b>%s</b></div>\n'%('',l[i][1]))
-              best_plot.write('%14s<div id="chart%s_div" style="width:800px;height:600px"></div>\n'%('',i))
-              best_plot.write('%14s<div class=x-label>%s</div>\n%14s<span class=y-label>%s</span>\n'%('',l[i][3],'',l[i][2]))
-            best_plot.write("%12s</div>\n"%'')
-          best_plot.write("%10s</div>\n%8s</td>\n%6s</tr>\n%4s</table>\n"%(4*('',)))
-          best_plot.write('%4s<script id="source" language="javascript" type="text/javascript">\n'%'')
-          best_plot.write("%2s$(function () {\n\n"%'')
-          s = '    var '
-          for i in range(len(l)):
-            l1 = []
-            l2 = []
-            label = ['%6s[\n'%'']
-            s1 = s
-            #In case comp or companom are not present.
-            if plot.has_key(l[i][4]):
-              data = plot.get(l[i][4])
-              for x in range(len(data)):
-                var = '%s%s'%(l[i][4].upper(),x)
-                s1 += '%s=[],'%var
-                label.append('%8s{ data: %s, label:%s },\n'%('',var,data[x].keys()[0]))
-                for y in range(len(data[x].get(data[x].keys()[0]))):
-                  l1.append('%4s%s.push([%s,%s]);\n'%('',var,data[x].get(data[x].keys()[0])[y][0],data[x].get(data[x].keys()[0])[y][1]))
-                  if l[i][4].startswith('comp') and x == 0:
-                    l2.append(data[x].get(data[x].keys()[0])[y][1])
-              if i == 0:
-                best_plot.write('%s,mark=[];\n'%s1[:-1])
-                label.append('%8s{ data: mark, label: "Best starting Omega", color: "black"},\n'%'')
-              elif i == 1:
-                best_plot.write('%s,markanom=[];\n'%s1[:-1])
-                label.append('%8s{ data: markanom, label: "Best starting Omega", color: "black"},\n'%'')
-              else:
-                best_plot.write('%s;\n'%s1[:-1])
-            label.append('%6s],\n'%'')
-            l[i].append(label)
-            for line in l1:
-              best_plot.write(line)
-            if len(l2) > 0:
-              if i == 0:
-                best_plot.write("%4sfor (var i = 0; i < %s; i += 5)\n"%('',max(l2)))
-                best_plot.write("%4smark.push([%s,i]);\n"%('',self.best_results.get('Best results').get('strategy phi start')[0]))
-              if i == 1:
-                best_plot.write("%4sfor (var i = 0; i < %s; i += 5)\n"%('',max(l2)))
-                best_plot.write("%4smarkanom.push([%s,i]);\n"%('',self.best_anom_results.get('Best ANOM results').get('strategy anom phi start')[0]))
-          for i in range(len(l)):
-            best_plot.write('%4svar plot%s = $.plot($("#chart%s_div"),\n'%('',i,i))
-            for line in l[i][-1]:
-              best_plot.write(line)
-            best_plot.write("%6s{ lines: { show: true},\n%8spoints: { show: false },\n"%('',''))
-            best_plot.write("%8sselection: { mode: 'xy' },\n%8sgrid: { hoverable: true, clickable: true },\n%6s});\n"%(3*('',)))
-          best_plot.write( "%4sfunction showTooltip(x, y, contents) {\n"%'')
-          best_plot.write("%6s$('<div id=tooltip>' + contents + '</div>').css( {\n%8sposition: 'absolute',\n"%('',''))
-          best_plot.write("%8sdisplay: 'none',\n%8stop: y + 5,\n%8sleft: x + 5,\n%8sborder: '1px solid #fdd',\n"%(4*('',)))
-          best_plot.write("%8spadding: '2px',\n%8s'background-color': '#fee',\n%8s opacity: 0.80\n"%(3*('',)))
-          best_plot.write('%6s}).appendTo("body").fadeIn(200);\n%4s}\n%4svar previousPoint = null;\n'%(3*('',)))
-          for i in range(len(l)):
-            best_plot.write('%4s$("#chart%s_div").bind("plothover", function (event, pos, item) {\n'%('',i))
-            best_plot.write('%6s$("#x").text(pos.x.toFixed(2));\n%6s$("#y").text(pos.y.toFixed(2));\n'%('',''))
-            best_plot.write("%6sif (true) {\n%8sif (item) {\n%10sif (previousPoint != item.datapoint) {\n"%(3*('',)))
-            best_plot.write('%14spreviousPoint = item.datapoint;\n%14s$("#tooltip").remove();\n'%('',''))
-            best_plot.write('%14svar x = item.datapoint[0].toFixed(2),\n%18sy = item.datapoint[1].toFixed(2);\n'%('',''))
-            best_plot.write('%14sshowTooltip(item.pageX, item.pageY,\n'%'')
-            best_plot.write('%26s%s\n%10s}\n%8s}\n'%('',l[i][5],'',''))
-            best_plot.write('%8selse {\n%10s$("#tooltip").remove();\n%10spreviousPoint = null;\n%8s}\n%6s}\n%4s});\n'%(6*('',)))
-          best_plot.write( "%2s});\n%4s</script>\n%2s</body>\n</html>\n"%(3*('',)))
-          best_plot.close()
-          if os.path.exists(f):
-            shutil.copy(f,self.working_dir)
+                self.htmlBestPlotsFailed()
+                run = False
 
-      except:
-        self.logger.exception('**ERROR in htmlBestPlots**')
-        self.htmlBestPlotsFailed()
+            #Place holder for settings.
+            l = [['Omega start','Min osc range for different completenesses','O m e g a &nbsp R a n g e','Omega Start',
+                  'comp','"start at " + x + " for " + y + " degrees");'],
+                 ['ANOM Omega start','Min osc range for different completenesses','O m e g a &nbsp R a n g e','Omega Start',
+                  'companom','"start at " + x + " for " + y + " degrees");'],
+                 ['Max delta Omega','Maximal Oscillation Width','O m e g a &nbsp S t e p','Omega',
+                  'width','"max delta Omega of " + y + " at Omega=" + x);'],
+                 ['Wilson Plot','Wilson Plot','I n t e n s i t y','1/Resolution<sup>2</sup>',
+                  'wilson','item.series.label + " of " + x + " = " + y);']]
+            if self.sample_type != 'Ribosome':
+                temp = [['Rad damage1','Intensity decrease due to radiation damage','R e l a t i v e &nbsp I n t e n s i t y',
+                         'Cumulative exposure time (sec)','damage','"at res=" + item.series.label + " after " + x + " seconds intensity drops to " + y);'],
+                        ['Rad damage2','Rdamage vs. Cumulative Exposure time','R f a c t o r','Cumulative exposure time (sec)',
+                         'rdamage','"at res=" + item.series.label + " after " + x + " seconds Rdamage increases to " + y);']]
+                l.extend(temp)
+
+            if run:
+                if self.gui:
+                    f = 'best_plots.php'
+                else:
+                    f = 'best_plots.html'
+                best_plot = open(f, 'w')
+                best_plot.write(Utils.getHTMLHeader(self, 'plots'))
+                best_plot.write('%4s$(function() {\n%6s// Tabs\n' % ('', ''))
+                best_plot.write("%6s$('.tabs').tabs();\n%4s});\n" % ('', ''))
+                best_plot.write('%4s</script>\n%2s</head>\n%2s<body>\n%4s<table>\n%6s<tr>\n' % (5*('', )))
+                best_plot.write('%8s<td width="%s">\n%10s<div class="tabs">\n%12s<ul>\n' % ('', '100%', '', ''))
+                for i in range(len(l)):
+                    best_plot.write('%14s<li><a href="#tabs-22%s">%s</a></li>\n' % ('', i, l[i][0]))
+                best_plot.write("%12s</ul>\n" % '')
+                for i in range(len(l)):
+                    best_plot.write('%12s<div id="tabs-22%s">\n'%('',i))
+                    if i == 0 and self.best_failed:
+                        best_plot.write('%14s<div class=title><b>BEST strategy calculation failed</b></div>\n'%'')
+                    elif i == 1 and self.best_anom_failed:
+                        best_plot.write('%14s<div class=title><b>BEST ANOM strategy calculation failed</b></div>\n'%'')
+                    else:
+                        best_plot.write('%14s<div class=title><b>%s</b></div>\n'%('',l[i][1]))
+                        best_plot.write('%14s<div id="chart%s_div" style="width:800px;height:600px"></div>\n'%('',i))
+                        best_plot.write('%14s<div class=x-label>%s</div>\n%14s<span class=y-label>%s</span>\n'%('',l[i][3],'',l[i][2]))
+                    best_plot.write("%12s</div>\n"%'')
+                best_plot.write("%10s</div>\n%8s</td>\n%6s</tr>\n%4s</table>\n"%(4*('',)))
+                best_plot.write('%4s<script id="source" language="javascript" type="text/javascript">\n'%'')
+                best_plot.write("%2s$(function () {\n\n"%'')
+                s = '    var '
+                for i in range(len(l)):
+                  l1 = []
+                  l2 = []
+                  label = ['%6s[\n'%'']
+                  s1 = s
+                  #In case comp or companom are not present.
+                  if plot.has_key(l[i][4]):
+                    data = plot.get(l[i][4])
+                    for x in range(len(data)):
+                      var = '%s%s'%(l[i][4].upper(),x)
+                      s1 += '%s=[],'%var
+                      label.append('%8s{ data: %s, label:%s },\n'%('',var,data[x].keys()[0]))
+                      for y in range(len(data[x].get(data[x].keys()[0]))):
+                        l1.append('%4s%s.push([%s,%s]);\n'%('',var,data[x].get(data[x].keys()[0])[y][0],data[x].get(data[x].keys()[0])[y][1]))
+                        if l[i][4].startswith('comp') and x == 0:
+                          l2.append(data[x].get(data[x].keys()[0])[y][1])
+                    if i == 0:
+                      best_plot.write('%s,mark=[];\n'%s1[:-1])
+                      label.append('%8s{ data: mark, label: "Best starting Omega", color: "black"},\n'%'')
+                    elif i == 1:
+                      best_plot.write('%s,markanom=[];\n'%s1[:-1])
+                      label.append('%8s{ data: markanom, label: "Best starting Omega", color: "black"},\n'%'')
+                    else:
+                      best_plot.write('%s;\n'%s1[:-1])
+                  label.append('%6s],\n'%'')
+                  l[i].append(label)
+                  for line in l1:
+                    best_plot.write(line)
+                  if len(l2) > 0:
+                    if i == 0:
+                      best_plot.write("%4sfor (var i = 0; i < %s; i += 5)\n"%('',max(l2)))
+                      best_plot.write("%4smark.push([%s,i]);\n"%('',self.best_results.get('Best results').get('strategy phi start')[0]))
+                    if i == 1:
+                      best_plot.write("%4sfor (var i = 0; i < %s; i += 5)\n"%('',max(l2)))
+                      best_plot.write("%4smarkanom.push([%s,i]);\n"%('',self.best_anom_results.get('Best ANOM results').get('strategy anom phi start')[0]))
+                for i in range(len(l)):
+                  best_plot.write('%4svar plot%s = $.plot($("#chart%s_div"),\n'%('',i,i))
+                  for line in l[i][-1]:
+                    best_plot.write(line)
+                  best_plot.write("%6s{ lines: { show: true},\n%8spoints: { show: false },\n"%('',''))
+                  best_plot.write("%8sselection: { mode: 'xy' },\n%8sgrid: { hoverable: true, clickable: true },\n%6s});\n"%(3*('',)))
+                best_plot.write( "%4sfunction showTooltip(x, y, contents) {\n"%'')
+                best_plot.write("%6s$('<div id=tooltip>' + contents + '</div>').css( {\n%8sposition: 'absolute',\n"%('',''))
+                best_plot.write("%8sdisplay: 'none',\n%8stop: y + 5,\n%8sleft: x + 5,\n%8sborder: '1px solid #fdd',\n"%(4*('',)))
+                best_plot.write("%8spadding: '2px',\n%8s'background-color': '#fee',\n%8s opacity: 0.80\n"%(3*('',)))
+                best_plot.write('%6s}).appendTo("body").fadeIn(200);\n%4s}\n%4svar previousPoint = null;\n'%(3*('',)))
+                for i in range(len(l)):
+                    best_plot.write('%4s$("#chart%s_div").bind("plothover", function (event, pos, item) {\n'%('',i))
+                    best_plot.write('%6s$("#x").text(pos.x.toFixed(2));\n%6s$("#y").text(pos.y.toFixed(2));\n'%('',''))
+                    best_plot.write("%6sif (true) {\n%8sif (item) {\n%10sif (previousPoint != item.datapoint) {\n"%(3*('',)))
+                    best_plot.write('%14spreviousPoint = item.datapoint;\n%14s$("#tooltip").remove();\n'%('',''))
+                    best_plot.write('%14svar x = item.datapoint[0].toFixed(2),\n%18sy = item.datapoint[1].toFixed(2);\n'%('',''))
+                    best_plot.write('%14sshowTooltip(item.pageX, item.pageY,\n'%'')
+                    best_plot.write('%26s%s\n%10s}\n%8s}\n'%('',l[i][5],'',''))
+                    best_plot.write('%8selse {\n%10s$("#tooltip").remove();\n%10spreviousPoint = null;\n%8s}\n%6s}\n%4s});\n' % (6*("",)))
+                best_plot.write( "%2s});\n%4s</script>\n%2s</body>\n</html>\n" % (3*("", )))
+                best_plot.close()
+                if os.path.exists(f):
+                    shutil.copy(f,  self.working_dir)
+
+        except:
+          self.logger.exception('**ERROR in htmlBestPlots**')
+          self.htmlBestPlotsFailed()
 
     def htmlBestPlotsFailed(self):
       """
