@@ -374,7 +374,7 @@ class RapdAgent(Process):
             if beam_size_x and beam_size_y:
                 setup += "BEAM %s %s\n" % (beam_size_x, beam_size_y)
             # Full-width-half-max of the beam
-            setup += "GAUSS %s %s\nIMAGES 1\n"%(gauss_x, gauss_y)
+            setup += "GAUSS %s %s\nIMAGES 1\n" % (gauss_x, gauss_y)
             if self.flux:
                 setup += "PHOSEC %s\n" % self.flux
             else:
@@ -613,8 +613,8 @@ class RapdAgent(Process):
                 command += ' -t 1.0'
             else:
                 command += ' -t %s'%self.time
-            command += ' -e %s -sh %s -su %s'%(self.preferences.get('best_complexity','none'),\
-                                               self.preferences.get('shape','2.0'),self.preferences.get('susceptibility','1.0'))
+            command += ' -e %s -sh %s -su %s' % (self.preferences.get('best_complexity','none'),\
+                                                 self.preferences.get('shape','2.0'),self.preferences.get('susceptibility','1.0'))
             if self.preferences.get('aimed_res') != 0.0:
                 command += ' -r %s' % self.preferences.get('aimed_res')
             command += ' -Trans %s' % self.transmission
@@ -633,7 +633,7 @@ class RapdAgent(Process):
             else:
                 command += ' -T 185'
             if runbefore:
-                command += ' -p %s %s'%(runbefore[0], runbefore[1])
+                command += ' -p %s %s' % (runbefore[0], runbefore[1])
             command1 = command
             command1 += ' -a -o best_anom.plt -dna best_anom.xml'
             command += ' -o best.plt -dna best.xml'
@@ -641,7 +641,7 @@ class RapdAgent(Process):
             """
             if self.pilatus:
               if os.path.exists(os.path.join(self.working_dir,'BKGINIT.cbf')):
-                end = ' -MXDS bestfile.par BKGINIT.cbf %s_%s.hkl '%(self.index_number,image_number[0])
+                end = ' -MXDS bestfile.par BKGINIT.cbf %s_%s.hkl ' % (self.index_number,image_number[0])
             """
             if self.header2:
                 end += '%s_%s.hkl' % (self.index_number, image_number[1])
@@ -747,9 +747,9 @@ class RapdAgent(Process):
                     if mosflm_rot == "0.0":
                         new_line += "STRATEGY AUTO %s\n"%l[i][2]
                     elif mosflm_seg != "1":
-                        new_line += "STRATEGY AUTO ROTATE %s SEGMENTS %s %s\n"%(mosflm_rot, mosflm_seg, l[i][2])
+                        new_line += "STRATEGY AUTO ROTATE %s SEGMENTS %s %s\n" % (mosflm_rot, mosflm_seg, l[i][2])
                     else:
-                        new_line += "STRATEGY AUTO ROTATE %s %s\n"%(mosflm_rot, l[i][2])
+                        new_line += "STRATEGY AUTO ROTATE %s %s\n" % (mosflm_rot, l[i][2])
                 new_line += "GO\nSTATS\nEXIT\neof\n"
                 if self.test == False:
                     new = open(l[i][0], "w")
@@ -863,7 +863,7 @@ class RapdAgent(Process):
             Utils.distlComb(self)
 
         except:
-          self.logger.exception("**Error in postprocessDistl**")
+            self.logger.exception("**Error in postprocessDistl**")
 
     def postprocessBest(self, inp, runbefore=False):
         """
@@ -1260,8 +1260,8 @@ class RapdAgent(Process):
     #       if self.test:
     #         command = 'ls'
     #       else:
-    #         command = '%s %s %s; vips im_vips2tiff %s %s:jpeg:100,tile:192x192,pyramid; rm -rf %s'%(l[predictions][1],image,png,png,tif,png)
-    #         #command = '%s %s %s; vips im_vips2tiff %s %s:jpeg:100,tile:192x192,pyramid'%(l[predictions][1],image,png,png,tif)
+    #         command = '%s %s %s; vips im_vips2tiff %s %s:jpeg:100,tile:192x192,pyramid; rm -rf %s' % (l[predictions][1],image,png,png,tif,png)
+    #         #command = '%s %s %s; vips im_vips2tiff %s %s:jpeg:100,tile:192x192,pyramid' % (l[predictions][1],image,png,png,tif)
     #       job = Process(target=Utils.processLocal,args=(command,self.logger))
     #       #job = Process(target=Utils.processLocal,args=((command,'junk.log'),self.logger))
     #       job.start()
@@ -1369,8 +1369,8 @@ class RapdAgent(Process):
         try:
             if self.labelit_failed == False:
                 os.chdir(self.labelit_dir)
-                # files = ["DNA_mosflm.inp","bestfile.par"]
-                # files = ["mosflm.inp","%s.mat"%self.index_number]
+                # files = ["DNA_mosflm.inp", "bestfile.par"]
+                # files = ["mosflm.inp", "%s.mat"%self.index_number]
                 files = ["%s.mat" % self.index_number, "bestfile.par"]
                 for x,f in enumerate(files):
                     shutil.copy(f,self.working_dir)
@@ -1481,595 +1481,599 @@ class RapdAgent(Process):
         generate plots html/php file
         """
         if self.verbose:
-            self.logger.debug('AutoindexingStrategy::htmlBestPlots')
+            self.logger.debug("AutoindexingStrategy::htmlBestPlots")
 
         try:
             run = True
             plot = False
             plotanom = False
-            dir1 = self.best_results.get('Best results').get('directory',False)
-            dir2 = self.best_anom_results.get('Best ANOM results').get('directory',False)
+            dir1 = self.best_results.get("Best results").get("directory", False)
+            dir2 = self.best_anom_results.get("Best ANOM results").get("directory", False)
 
             # Get the parsed results for reg and anom results and put them into a single dict.
             if dir1:
-                plot = Parse.ParseOutputBestPlots(self, open(os.path.join(dir1, 'best.plt'), 'r').readlines())
+                plot = Parse.ParseOutputBestPlots(self, open(os.path.join(dir1, "best.plt"), "r").readlines())
                 if dir2:
-                    plotanom = Parse.ParseOutputBestPlots(self, open(os.path.join(dir2, 'best_anom.plt'), 'r').readlines())
-                    plot.update({'companom':plotanom.get('comp')})
+                    plotanom = Parse.ParseOutputBestPlots(self, open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
+                    plot.update({"companom":plotanom.get("comp")})
             elif dir2:
-                plot = Parse.ParseOutputBestPlots(self, open(os.path.join(dir2, 'best_anom.plt'), 'r').readlines())
-                plot.update({'companom':plot.pop('comp')})
+                plot = Parse.ParseOutputBestPlots(self, open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
+                plot.update({"companom":plot.pop("comp")})
             else:
                 self.htmlBestPlotsFailed()
                 run = False
 
             #Place holder for settings.
-            l = [['Omega start','Min osc range for different completenesses','O m e g a &nbsp R a n g e','Omega Start',
-                  'comp','"start at " + x + " for " + y + " degrees");'],
-                 ['ANOM Omega start','Min osc range for different completenesses','O m e g a &nbsp R a n g e','Omega Start',
-                  'companom','"start at " + x + " for " + y + " degrees");'],
-                 ['Max delta Omega','Maximal Oscillation Width','O m e g a &nbsp S t e p','Omega',
-                  'width','"max delta Omega of " + y + " at Omega=" + x);'],
-                 ['Wilson Plot','Wilson Plot','I n t e n s i t y','1/Resolution<sup>2</sup>',
-                  'wilson','item.series.label + " of " + x + " = " + y);']]
-            if self.sample_type != 'Ribosome':
-                temp = [['Rad damage1','Intensity decrease due to radiation damage','R e l a t i v e &nbsp I n t e n s i t y',
-                         'Cumulative exposure time (sec)','damage','"at res=" + item.series.label + " after " + x + " seconds intensity drops to " + y);'],
-                        ['Rad damage2','Rdamage vs. Cumulative Exposure time','R f a c t o r','Cumulative exposure time (sec)',
-                         'rdamage','"at res=" + item.series.label + " after " + x + " seconds Rdamage increases to " + y);']]
+            l = [["Omega start", "Min osc range for different completenesses", "O m e g a &nbsp R a n g e", "Omega Start",
+                  "comp",'"start at " + x + " for " + y + " degrees");'],
+                 ["ANOM Omega start", "Min osc range for different completenesses", "O m e g a &nbsp R a n g e", "Omega Start",
+                  "companom",'"start at " + x + " for " + y + " degrees");'],
+                 ["Max delta Omega", "Maximal Oscillation Width", "O m e g a &nbsp S t e p", "Omega",
+                  "width",'"max delta Omega of " + y + " at Omega=" + x);'],
+                 ["Wilson Plot", "Wilson Plot", "I n t e n s i t y", "1/Resolution<sup>2</sup>",
+                  "wilson",'item.series.label + " of " + x + " = " + y);']]
+            if self.sample_type != "Ribosome":
+                temp = [["Rad damage1", "Intensity decrease due to radiation damage", "R e l a t i v e &nbsp I n t e n s i t y",
+                         "Cumulative exposure time (sec)", "damage",'"at res=" + item.series.label + " after " + x + " seconds intensity drops to " + y);'],
+                        ["Rad damage2", "Rdamage vs. Cumulative Exposure time", "R f a c t o r", "Cumulative exposure time (sec)",
+                         "rdamage",'"at res=" + item.series.label + " after " + x + " seconds Rdamage increases to " + y);']]
                 l.extend(temp)
 
             if run:
                 if self.gui:
-                    f = 'best_plots.php'
+                    f = "best_plots.php"
                 else:
-                    f = 'best_plots.html'
-                best_plot = open(f, 'w')
-                best_plot.write(Utils.getHTMLHeader(self, 'plots'))
-                best_plot.write('%4s$(function() {\n%6s// Tabs\n' % ('', ''))
-                best_plot.write("%6s$('.tabs').tabs();\n%4s});\n" % ('', ''))
-                best_plot.write('%4s</script>\n%2s</head>\n%2s<body>\n%4s<table>\n%6s<tr>\n' % (5*('', )))
-                best_plot.write('%8s<td width="%s">\n%10s<div class="tabs">\n%12s<ul>\n' % ('', '100%', '', ''))
+                    f = "best_plots.html"
+                best_plot = open(f, "w")
+                best_plot.write(Utils.getHTMLHeader(self, "plots"))
+                best_plot.write("%4s$(function() {\n%6s// Tabs\n" % ("", ""))
+                best_plot.write("%6s$('.tabs').tabs();\n%4s});\n" % ("", ""))
+                best_plot.write("%4s</script>\n%2s</head>\n%2s<body>\n%4s<table>\n%6s<tr>\n" % (5*("", )))
+                best_plot.write('%8s<td width="%s">\n%10s<div class="tabs">\n%12s<ul>\n' % ("", "100%", "", ""))
                 for i in range(len(l)):
-                    best_plot.write('%14s<li><a href="#tabs-22%s">%s</a></li>\n' % ('', i, l[i][0]))
-                best_plot.write("%12s</ul>\n" % '')
+                    best_plot.write('%14s<li><a href="#tabs-22%s">%s</a></li>\n' % ("", i, l[i][0]))
+                best_plot.write("%12s</ul>\n" % "")
                 for i in range(len(l)):
-                    best_plot.write('%12s<div id="tabs-22%s">\n'%('',i))
+                    best_plot.write('%12s<div id="tabs-22%s">\n' % ("", i))
                     if i == 0 and self.best_failed:
-                        best_plot.write('%14s<div class=title><b>BEST strategy calculation failed</b></div>\n'%'')
+                        best_plot.write("%14s<div class=title><b>BEST strategy calculation failed</b></div>\n" % "")
                     elif i == 1 and self.best_anom_failed:
-                        best_plot.write('%14s<div class=title><b>BEST ANOM strategy calculation failed</b></div>\n'%'')
+                        best_plot.write("%14s<div class=title><b>BEST ANOM strategy calculation failed</b></div>\n" % "")
                     else:
-                        best_plot.write('%14s<div class=title><b>%s</b></div>\n'%('',l[i][1]))
-                        best_plot.write('%14s<div id="chart%s_div" style="width:800px;height:600px"></div>\n'%('',i))
-                        best_plot.write('%14s<div class=x-label>%s</div>\n%14s<span class=y-label>%s</span>\n'%('',l[i][3],'',l[i][2]))
-                    best_plot.write("%12s</div>\n"%'')
-                best_plot.write("%10s</div>\n%8s</td>\n%6s</tr>\n%4s</table>\n"%(4*('',)))
-                best_plot.write('%4s<script id="source" language="javascript" type="text/javascript">\n'%'')
-                best_plot.write("%2s$(function () {\n\n"%'')
-                s = '    var '
+                        best_plot.write("%14s<div class=title><b>%s</b></div>\n" % ("", l[i][1]))
+                        best_plot.write('%14s<div id="chart%s_div" style="width:800px;height:600px"></div>\n' % ("", i))
+                        best_plot.write("%14s<div class=x-label>%s</div>\n%14s<span class=y-label>%s</span>\n" % ("", l[i][3], "", l[i][2]))
+                    best_plot.write("%12s</div>\n" % "")
+                best_plot.write("%10s</div>\n%8s</td>\n%6s</tr>\n%4s</table>\n" % (4*("", )))
+                best_plot.write('%4s<script id="source" language="javascript" type="text/javascript">\n' % "")
+                best_plot.write("%2s$(function () {\n\n" % "")
+                s = "    var "
                 for i in range(len(l)):
-                  l1 = []
-                  l2 = []
-                  label = ['%6s[\n'%'']
-                  s1 = s
-                  #In case comp or companom are not present.
-                  if plot.has_key(l[i][4]):
-                    data = plot.get(l[i][4])
-                    for x in range(len(data)):
-                      var = '%s%s'%(l[i][4].upper(),x)
-                      s1 += '%s=[],'%var
-                      label.append('%8s{ data: %s, label:%s },\n'%('',var,data[x].keys()[0]))
-                      for y in range(len(data[x].get(data[x].keys()[0]))):
-                        l1.append('%4s%s.push([%s,%s]);\n'%('',var,data[x].get(data[x].keys()[0])[y][0],data[x].get(data[x].keys()[0])[y][1]))
-                        if l[i][4].startswith('comp') and x == 0:
-                          l2.append(data[x].get(data[x].keys()[0])[y][1])
-                    if i == 0:
-                      best_plot.write('%s,mark=[];\n'%s1[:-1])
-                      label.append('%8s{ data: mark, label: "Best starting Omega", color: "black"},\n'%'')
-                    elif i == 1:
-                      best_plot.write('%s,markanom=[];\n'%s1[:-1])
-                      label.append('%8s{ data: markanom, label: "Best starting Omega", color: "black"},\n'%'')
-                    else:
-                      best_plot.write('%s;\n'%s1[:-1])
-                  label.append('%6s],\n'%'')
-                  l[i].append(label)
-                  for line in l1:
-                    best_plot.write(line)
-                  if len(l2) > 0:
-                    if i == 0:
-                      best_plot.write("%4sfor (var i = 0; i < %s; i += 5)\n"%('',max(l2)))
-                      best_plot.write("%4smark.push([%s,i]);\n"%('',self.best_results.get('Best results').get('strategy phi start')[0]))
-                    if i == 1:
-                      best_plot.write("%4sfor (var i = 0; i < %s; i += 5)\n"%('',max(l2)))
-                      best_plot.write("%4smarkanom.push([%s,i]);\n"%('',self.best_anom_results.get('Best ANOM results').get('strategy anom phi start')[0]))
+                    l1 = []
+                    l2 = []
+                    label = ["%6s[\n" % ""]
+                    s1 = s
+                    # In case comp or companom are not present.
+                    if plot.has_key(l[i][4]):
+                        data = plot.get(l[i][4])
+                        for x in range(len(data)):
+                            var = "%s%s" % (l[i][4].upper(), x)
+                            s1 += "%s=[]," % var
+                            label.append("%8s{ data: %s, label:%s },\n" % ("", var, data[x].keys()[0]))
+                            for y in range(len(data[x].get(data[x].keys()[0]))):
+                                l1.append("%4s%s.push([%s,%s]);\n" % ("", var, data[x].get(data[x].keys()[0])[y][0], data[x].get(data[x].keys()[0])[y][1]))
+                                if l[i][4].startswith("comp") and x == 0:
+                                    l2.append(data[x].get(data[x].keys()[0])[y][1])
+                        if i == 0:
+                            best_plot.write("%s,mark=[];\n" % s1[:-1])
+                            label.append('%8s{ data: mark, label: "Best starting Omega", color: "black"},\n' % "")
+                        elif i == 1:
+                            best_plot.write("%s,markanom=[];\n" % s1[:-1])
+                            label.append('%8s{ data: markanom, label: "Best starting Omega", color: "black"},\n' % "")
+                        else:
+                            best_plot.write("%s;\n" % s1[:-1])
+                    label.append("%6s],\n" % "")
+                    l[i].append(label)
+                    for line in l1:
+                        best_plot.write(line)
+                    if len(l2) > 0:
+                        if i == 0:
+                            best_plot.write("%4sfor (var i = 0; i < %s; i += 5)\n" % ("", max(l2)))
+                            best_plot.write("%4smark.push([%s,i]);\n" % ("", self.best_results.get("Best results").get("strategy phi start")[0]))
+                        if i == 1:
+                            best_plot.write("%4sfor (var i = 0; i < %s; i += 5)\n" % ("", max(l2)))
+                            best_plot.write("%4smarkanom.push([%s,i]);\n" % ("", self.best_anom_results.get("Best ANOM results").get("strategy anom phi start")[0]))
                 for i in range(len(l)):
-                  best_plot.write('%4svar plot%s = $.plot($("#chart%s_div"),\n'%('',i,i))
-                  for line in l[i][-1]:
-                    best_plot.write(line)
-                  best_plot.write("%6s{ lines: { show: true},\n%8spoints: { show: false },\n"%('',''))
-                  best_plot.write("%8sselection: { mode: 'xy' },\n%8sgrid: { hoverable: true, clickable: true },\n%6s});\n"%(3*('',)))
-                best_plot.write( "%4sfunction showTooltip(x, y, contents) {\n"%'')
-                best_plot.write("%6s$('<div id=tooltip>' + contents + '</div>').css( {\n%8sposition: 'absolute',\n"%('',''))
-                best_plot.write("%8sdisplay: 'none',\n%8stop: y + 5,\n%8sleft: x + 5,\n%8sborder: '1px solid #fdd',\n"%(4*('',)))
-                best_plot.write("%8spadding: '2px',\n%8s'background-color': '#fee',\n%8s opacity: 0.80\n"%(3*('',)))
-                best_plot.write('%6s}).appendTo("body").fadeIn(200);\n%4s}\n%4svar previousPoint = null;\n'%(3*('',)))
+                    best_plot.write("%4svar plot%s = $.plot($('#chart%s_div'),\n" % ("", i, i))
+                    for line in l[i][-1]:
+                        best_plot.write(line)
+                    best_plot.write("%6s{ lines: { show: true},\n%8spoints: { show: false },\n" % ("", ""))
+                    best_plot.write("%8sselection: { mode: 'xy' },\n%8sgrid: { hoverable: true, clickable: true },\n%6s});\n" % (3*("", )))
+                best_plot.write( "%4sfunction showTooltip(x, y, contents) {\n" % "")
+                best_plot.write("%6s$('<div id=tooltip>' + contents + '</div>').css( {\n%8sposition: 'absolute',\n" % ("", ""))
+                best_plot.write("%8sdisplay: 'none',\n%8stop: y + 5,\n%8sleft: x + 5,\n%8sborder: '1px solid #fdd',\n" % (4*("", )))
+                best_plot.write("%8spadding: '2px',\n%8s'background-color': '#fee',\n%8s opacity: 0.80\n" % (3*("", )))
+                best_plot.write('%6s}).appendTo("body").fadeIn(200);\n%4s}\n%4svar previousPoint = null;\n' % (3*("", )))
                 for i in range(len(l)):
-                    best_plot.write('%4s$("#chart%s_div").bind("plothover", function (event, pos, item) {\n'%('',i))
-                    best_plot.write('%6s$("#x").text(pos.x.toFixed(2));\n%6s$("#y").text(pos.y.toFixed(2));\n'%('',''))
-                    best_plot.write("%6sif (true) {\n%8sif (item) {\n%10sif (previousPoint != item.datapoint) {\n"%(3*('',)))
-                    best_plot.write('%14spreviousPoint = item.datapoint;\n%14s$("#tooltip").remove();\n'%('',''))
-                    best_plot.write('%14svar x = item.datapoint[0].toFixed(2),\n%18sy = item.datapoint[1].toFixed(2);\n'%('',''))
-                    best_plot.write('%14sshowTooltip(item.pageX, item.pageY,\n'%'')
-                    best_plot.write('%26s%s\n%10s}\n%8s}\n'%('',l[i][5],'',''))
-                    best_plot.write('%8selse {\n%10s$("#tooltip").remove();\n%10spreviousPoint = null;\n%8s}\n%6s}\n%4s});\n' % (6*("",)))
+                    best_plot.write('%4s$("#chart%s_div").bind("plothover", function (event, pos, item) {\n' % ("", i))
+                    best_plot.write('%6s$("#x").text(pos.x.toFixed(2));\n%6s$("#y").text(pos.y.toFixed(2));\n' % ("", ""))
+                    best_plot.write("%6sif (true) {\n%8sif (item) {\n%10sif (previousPoint != item.datapoint) {\n" % (3*("", )))
+                    best_plot.write('%14spreviousPoint = item.datapoint;\n%14s$("#tooltip").remove();\n' % ("", ""))
+                    best_plot.write("%14svar x = item.datapoint[0].toFixed(2),\n%18sy = item.datapoint[1].toFixed(2);\n" % ("", ""))
+                    best_plot.write("%14sshowTooltip(item.pageX, item.pageY,\n" % "")
+                    best_plot.write("%26s%s\n%10s}\n%8s}\n" % ("", l[i][5], "", ""))
+                    best_plot.write('%8selse {\n%10s$("#tooltip").remove();\n%10spreviousPoint = null;\n%8s}\n%6s}\n%4s});\n' % (6*("", )))
                 best_plot.write( "%2s});\n%4s</script>\n%2s</body>\n</html>\n" % (3*("", )))
                 best_plot.close()
                 if os.path.exists(f):
                     shutil.copy(f,  self.working_dir)
 
         except:
-          self.logger.exception('**ERROR in htmlBestPlots**')
-          self.htmlBestPlotsFailed()
+            self.logger.exception("**ERROR in htmlBestPlots**")
+            self.htmlBestPlotsFailed()
 
     def htmlBestPlotsFailed(self):
-      """
-      If Best failed or was not run, this is the resultant html/php file.
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::htmlBestPlotsFailed')
-      try:
-        if self.strategy == 'mosflm':
-          error = 'Mosflm strategy was chosen so no plots are calculated.'
-        else:
-          error = 'Best Failed. Could not calculate plots.'
-        Utils.failedHTML(self,('best_plots',error))
-        if self.gui:
-          f = 'best_plots.php'
-        else:
-          f = 'best_plots.html'
-        if os.path.exists(f):
-          shutil.copy(f,self.working_dir)
+        """
+        If Best failed or was not run, this is the resultant html/php file.
+        """
+        if self.verbose:
+            self.logger.debug("AutoindexingStrategy::htmlBestPlotsFailed")
 
-      except:
-        self.logger.exception('**ERROR in htmlBestPlotsFailed**')
+        try:
+            if self.strategy == "mosflm":
+                error = "Mosflm strategy was chosen so no plots are calculated."
+            else:
+                error = "Best Failed. Could not calculate plots."
+            Utils.failedHTML(self, ("best_plots", error))
+            if self.gui:
+                f = "best_plots.php"
+            else:
+                f = "best_plots.html"
+            if os.path.exists(f):
+                shutil.copy(f, self.working_dir)
+
+        except:
+            self.logger.exception("**ERROR in htmlBestPlotsFailed**")
 
     def htmlSummaryLong(self):
-      """
-      Create HTML/php files for autoindex/strategy output results.
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::htmlSummaryLong')
-      try:
-        if self.gui:
-          f = 'jon_summary_long.php'
-        else:
-          f = 'jon_summary_long.html'
-        jon_summary = open(f,'w')
-        jon_summary.write(Utils.getHTMLHeader(self,'strat'))
-        jon_summary.write("%6s$(document).ready(function() {\n%8s$('#accordion').accordion({\n"%('',''))
-        jon_summary.write('%11scollapsible: true,\n%11sactive: false         });\n'%('',''))
-        if self.best_summary:
-          jon_summary.write("%8s$('#best').dataTable({\n"%'')
-          jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false    });\n'%(4*('',)))
-        if self.best_anom_summary:
-          jon_summary.write("%8s$('#bestanom').dataTable({\n"%'')
-          jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false    });\n'%(4*('',)))
-        if self.best_failed or self.strategy == 'mosflm':
-          if self.mosflm_strat_summary:
-            jon_summary.write("%8s$('#strat').dataTable({\n"%'')
-            jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false    });\n'%(4*('',)))
-        if self.best_anom_failed or self.strategy == 'mosflm':
-          if self.mosflm_strat_anom_summary:
-            jon_summary.write("%8s$('#stratanom').dataTable({\n"%'')
-            jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false    });\n'%(4*('',)))
-        if self.labelit_summary:
-          jon_summary.write("%8s$('#mosflm').dataTable({\n"%'')
-          jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false    });\n'%(4*('',)))
-          jon_summary.write("%8s$('#labelit').dataTable({\n"%'')
-          jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false    });\n'%(4*('',)))
-        if self.distl_summary:
-          jon_summary.write("%8s$('#distl').dataTable({\n"%'')
-          jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false    });\n'%(4*('',)))
-        jon_summary.write('%6s});\n%4s</script>\n%2s</head>\n%2s<body id="dt_example">\n'%(4*('',)))
-        if self.best_summary:
-          jon_summary.writelines(self.best_summary)
-        if self.best_summary_long:
-          jon_summary.writelines(self.best_summary_long)
-        if self.best_results:
-          if self.best_results.get('Best results') == 'FAILED':
-            jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
-            jon_summary.write('%7s<h4 class="results">Best Failed. Trying Mosflm strategy.</h3>\n'%'')
-            jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',)))
-        if self.mosflm_strat_summary:
-          jon_summary.writelines(self.mosflm_strat_summary)
-        if self.mosflm_strat_summary_long:
-          jon_summary.writelines(self.mosflm_strat_summary_long)
-        if self.mosflm_strat_results:
-          if self.mosflm_strat_results.get('Mosflm strategy results') == 'FAILED':
-            jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
-            jon_summary.write('%7s<h3 class="results">Mosflm Strategy Failed. Could not calculate a strategy.</h3>\n'%'')
-            jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',)))
-        if self.best_anom_summary:
-          jon_summary.writelines(self.best_anom_summary)
-        if self.best_anom_summary_long:
-          jon_summary.writelines(self.best_anom_summary_long)
-        if self.best_anom_results:
-          if self.best_anom_results.get('Best ANOM results') == 'FAILED':
-            jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
-            jon_summary.write('%7s<br><h4 class="results">Best Failed. Trying Mosflm ANOMALOUS strategy.</h3>\n'%'')
-            jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',)))
-        if self.mosflm_strat_anom_summary:
-          jon_summary.writelines(self.mosflm_strat_anom_summary)
-        if self.mosflm_strat_anom_summary_long:
-          jon_summary.writelines(self.mosflm_strat_anom_summary_long)
-        if self.mosflm_strat_anom_results:
-          if self.mosflm_strat_anom_results.get('Mosflm ANOM strategy results') == 'FAILED':
-            jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
-            jon_summary.write('%7s<br><h3 class="results">Mosflm Strategy Failed. Could not calculate an ANOMALOUS strategy.</h3>\n'%'')
-            jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',)))
-        if self.raddose_summary:
-          jon_summary.writelines(self.raddose_summary)
-        if self.raddose_results:
-          if self.raddose_results.get('Raddose results') == 'FAILED':
-            jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
-            jon_summary.write('%7s<h4 class="results">Raddose failed. Using default dosage. Best results are still good.</h4>\n'%'')
-            jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',)))
-        if self.labelit_summary:
-          jon_summary.writelines(self.labelit_summary)
-        if self.labelit_results:
-          if self.labelit_results.get('Labelit results') == 'FAILED':
-            jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
-            jon_summary.write('%7s<h3 class="results">Autoindexing FAILED</h3>\n'%'')
-            if self.header2:
-              jon_summary.write('%7s<h4 class="results">Pair of snapshots did not autoindex. Possibly not from same crystal.</h3>\n'%'')
-            else:
-              jon_summary.write('%7s<h4 class="results">You can add "pair" to the snapshot name and collect '\
-                                'one at 0 and 90 degrees. Much better for poor diffraction.</h3>\n'%'')
-              jon_summary.write('%7s<h4 class="results">eg."snap_pair_99_001.img"</h3>\n'%'')
-            jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',)))
-        if self.distl_summary:
-          jon_summary.writelines(self.distl_summary)
-        if self.distl_results:
-          if self.distl_results.get('Distl results') == 'FAILED':
-            jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
-            jon_summary.write('%7s<h4 class="results">Distl failed. Could not parse peak search file. '\
-                              'If you see this, not an indexing problem. Best results are still good.</h4>\n'%'')
-            jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',)))
-        jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
-        jon_summary.write("%7s<h1 class='Results'>RAPD Logfile</h1>\n%6s</div>\n%5s</div>\n"%(3*('',)))
-        jon_summary.write('%5s<div id="accordion">\n%6s<h3><a href="#">Click to view log</a></h3>\n%6s<div>\n%7s<pre>\n'%(4*('',)))
-        jon_summary.write('\n---------------Autoindexing RESULTS---------------\n\n')
-        if self.labelit_log.has_key('run1'):
-          for line in self.labelit_log['run1'][1:]:
-            jon_summary.write(line)
-        else:
-          jon_summary.write('---------------LABELIT FAILED---------------\n')
-        jon_summary.write('\n---------------Peak Picking RESULTS---------------\n\n')
-        if self.distl_log:
-          for line in self.distl_log:
-            jon_summary.write(line)
-        #Don't write error messages from programs that did not run.
-        if self.labelit_results.get('Labelit results') != 'FAILED':
-          jon_summary.write('\n---------------Raddose RESULTS---------------\n\n')
-          if self.raddose_log:
-            for line in self.raddose_log:
-              jon_summary.write(line)
-          else:
-            jon_summary.write('---------------RADDOSE FAILED---------------\n')
-          jon_summary.write('\n\n---------------Data Collection Strategy RESULTS---------------\n\n')
-          if self.best_log:
-            for line in self.best_log:
-              jon_summary.write(line)
-          else:
-            jon_summary.write('---------------BEST FAILED. TRYING MOSFLM STRATEGY---------------\n')
-          if self.best_failed or self.strategy == 'mosflm' or self.multicrystalstrat:
-            if self.mosflm_strat_log:
-              jon_summary.write('\n---------------Data Collection Strategy RESULTS from Mosflm---------------\n\n')
-              for line in self.mosflm_strat_log:
-                jon_summary.write(line)
-            else:
-              jon_summary.write('---------------MOSFLM STRATEGY FAILED---------------\n')
-          jon_summary.write('\n---------------ANOMALOUS Data Collection Strategy RESULTS---------------\n\n')
-          if self.best_anom_log:
-            for line in self.best_anom_log:
-              jon_summary.write(line)
-          else:
-            jon_summary.write('---------------BEST ANOM STRATEGY FAILED. TRYING MOSFLM STRATEGY---------------\n')
-          if self.best_anom_failed or self.strategy == 'mosflm' or self.multicrystalstrat:
-            if self.mosflm_strat_anom_log:
-              jon_summary.write('\n---------------ANOMALOUS Data Collection Strategy RESULTS from Mosflm---------------\n\n')
-              for line in self.mosflm_strat_anom_log:
-                jon_summary.write(line)
-            else:
-              jon_summary.write('---------------MOSFLM ANOM STRATEGY FAILED---------------\n')
-        jon_summary.write('%7s</pre>\n%6s</div>\n%5s</div>\n%4s</div>\n%2s</body>\n</html>\n'%(5*('',)))
-        jon_summary.close()
-        if os.path.exists(f):
-          shutil.copy(f,self.working_dir)
+        """
+        Create HTML/php files for autoindex/strategy output results.
+        """
+        if self.verbose:
+            self.logger.debug("AutoindexingStrategy::htmlSummaryLong")
 
-      except:
-        self.logger.exception('**ERROR in htmlSummaryLong**')
+        try:
+            if self.gui:
+                f = "jon_summary_long.php"
+            else:
+                f = "jon_summary_long.html"
+
+            jon_summary = open(f, "w")
+            jon_summary.write(Utils.getHTMLHeader(self, "strat"))
+            jon_summary.write("%6s$(document).ready(function() {\n%8s$('#accordion').accordion({\n" % ("", ""))
+            jon_summary.write("%11scollapsible: true,\n%11sactive: false         });\n" % ("", ""  ))
+            if self.best_summary:
+                jon_summary.write("%8s$('#best').dataTable({\n" % "")
+                jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false    });\n' % (4*("", )))
+            if self.best_anom_summary:
+                jon_summary.write("%8s$('#bestanom').dataTable({\n" % "")
+                jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false    });\n' % (4*("", )))
+            if self.best_failed or self.strategy == 'mosflm':
+                if self.mosflm_strat_summary:
+                    jon_summary.write("%8s$('#strat').dataTable({\n" % "")
+                    jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false    });\n' % (4*("", )))
+            if self.best_anom_failed or self.strategy == "mosflm":
+                if self.mosflm_strat_anom_summary:
+                    jon_summary.write("%8s$('#stratanom').dataTable({\n" % "")
+                    jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false    });\n' % (4*("", )))
+            if self.labelit_summary:
+                jon_summary.write("%8s$('#mosflm').dataTable({\n" % "")
+                jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false    });\n' % (4*("", )))
+                jon_summary.write("%8s$('#labelit').dataTable({\n" % "")
+                jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false    });\n' % (4*("", )))
+            if self.distl_summary:
+                jon_summary.write("%8s$('#distl').dataTable({\n" % "")
+                jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false    });\n' % (4*("", )))
+            jon_summary.write('%6s});\n%4s</script>\n%2s</head>\n%2s<body id="dt_example">\n' % (4*("", )))
+            if self.best_summary:
+                jon_summary.writelines(self.best_summary)
+            if self.best_summary_long:
+                jon_summary.writelines(self.best_summary_long)
+            if self.best_results:
+                if self.best_results.get("Best results") == "FAILED":
+                    jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n' % (3*("", )))
+                    jon_summary.write('%7s<h4 class="results">Best Failed. Trying Mosflm strategy.</h3>\n' % "")
+                    jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n" % (3*("", )))
+            if self.mosflm_strat_summary:
+                jon_summary.writelines(self.mosflm_strat_summary)
+            if self.mosflm_strat_summary_long:
+                jon_summary.writelines(self.mosflm_strat_summary_long)
+            if self.mosflm_strat_results:
+                if self.mosflm_strat_results.get("Mosflm strategy results") == "FAILED":
+                    jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n' % (3*("", )))
+                    jon_summary.write('%7s<h3 class="results">Mosflm Strategy Failed. Could not calculate a strategy.</h3>\n' % "")
+                    jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n" % (3*("", )))
+            if self.best_anom_summary:
+                jon_summary.writelines(self.best_anom_summary)
+            if self.best_anom_summary_long:
+                jon_summary.writelines(self.best_anom_summary_long)
+            if self.best_anom_results:
+                if self.best_anom_results.get("Best ANOM results") == "FAILED":
+                    jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n' % (3*("", )))
+                    jon_summary.write('%7s<br><h4 class="results">Best Failed. Trying Mosflm ANOMALOUS strategy.</h3>\n' % "")
+                    jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n" % (3*("", )))
+            if self.mosflm_strat_anom_summary:
+                jon_summary.writelines(self.mosflm_strat_anom_summary)
+            if self.mosflm_strat_anom_summary_long:
+                jon_summary.writelines(self.mosflm_strat_anom_summary_long)
+            if self.mosflm_strat_anom_results:
+                if self.mosflm_strat_anom_results.get("Mosflm ANOM strategy results") == "FAILED":
+                    jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n' % (3*("", )))
+                    jon_summary.write('%7s<br><h3 class="results">Mosflm Strategy Failed. Could not calculate an ANOMALOUS strategy.</h3>\n' % "")
+                    jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n" % (3*("", )))
+            if self.raddose_summary:
+                jon_summary.writelines(self.raddose_summary)
+            if self.raddose_results:
+                if self.raddose_results.get("Raddose results") == "FAILED":
+                    jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n' % (3*("", )))
+                    jon_summary.write('%7s<h4 class="results">Raddose failed. Using default dosage. Best results are still good.</h4>\n' % "")
+                    jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n" % (3*("", )))
+            if self.labelit_summary:
+                jon_summary.writelines(self.labelit_summary)
+            if self.labelit_results:
+                if self.labelit_results.get("Labelit results") == "FAILED":
+                    jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n' % (3*("", )))
+                    jon_summary.write('%7s<h3 class="results">Autoindexing FAILED</h3>\n' % "")
+                    if self.header2:
+                        jon_summary.write('%7s<h4 class="results">Pair of snapshots did not autoindex. Possibly not from same crystal.</h3>\n' % "")
+                    else:
+                        jon_summary.write('%7s<h4 class="results">You can add "pair" to the snapshot name and collect '\
+                                          "one at 0 and 90 degrees. Much better for poor diffraction.</h3>\n"%"")
+                        jon_summary.write('%7s<h4 class="results">eg."snap_pair_99_001.img"</h3>\n' % "")
+                    jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n" % (3*("", )))
+            if self.distl_summary:
+                jon_summary.writelines(self.distl_summary)
+            if self.distl_results:
+                if self.distl_results.get("Distl results") == "FAILED":
+                    jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n' % (3*("", )))
+                    jon_summary.write('%7s<h4 class="results">Distl failed. Could not parse peak search file. '\
+                                      "If you see this, not an indexing problem. Best results are still good.</h4>\n" % "")
+                    jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n" % (3*("", )))
+            jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n' % (3*("", )))
+            jon_summary.write("%7s<h1 class='Results'>RAPD Logfile</h1>\n%6s</div>\n%5s</div>\n" % (3*("", )))
+            jon_summary.write('%5s<div id="accordion">\n%6s<h3><a href="#">Click to view log</a></h3>\n%6s<div>\n%7s<pre>\n' % (4*("", )))
+            jon_summary.write("\n---------------Autoindexing RESULTS---------------\n\n")
+            if self.labelit_log.has_key("run1"):
+                for line in self.labelit_log["run1"][1:]:
+                    jon_summary.write(line)
+            else:
+                jon_summary.write("---------------LABELIT FAILED---------------\n")
+            jon_summary.write("\n---------------Peak Picking RESULTS---------------\n\n")
+            if self.distl_log:
+                for line in self.distl_log:
+                    jon_summary.write(line)
+            # Don't write error messages from programs that did not run.
+            if self.labelit_results.get("Labelit results") != "FAILED":
+                jon_summary.write("\n---------------Raddose RESULTS---------------\n\n")
+                if self.raddose_log:
+                    for line in self.raddose_log:
+                        jon_summary.write(line)
+                else:
+                    jon_summary.write("---------------RADDOSE FAILED---------------\n")
+                jon_summary.write("\n\n---------------Data Collection Strategy RESULTS---------------\n\n")
+                if self.best_log:
+                    for line in self.best_log:
+                        jon_summary.write(line)
+                else:
+                    jon_summary.write("---------------BEST FAILED. TRYING MOSFLM STRATEGY---------------\n")
+                if self.best_failed or self.strategy == "mosflm" or self.multicrystalstrat:
+                    if self.mosflm_strat_log:
+                        jon_summary.write("\n---------------Data Collection Strategy RESULTS from Mosflm---------------\n\n")
+                        for line in self.mosflm_strat_log:
+                            jon_summary.write(line)
+                    else:
+                        jon_summary.write("---------------MOSFLM STRATEGY FAILED---------------\n")
+                jon_summary.write("\n---------------ANOMALOUS Data Collection Strategy RESULTS---------------\n\n")
+                if self.best_anom_log:
+                    for line in self.best_anom_log:
+                        jon_summary.write(line)
+                else:
+                    jon_summary.write("---------------BEST ANOM STRATEGY FAILED. TRYING MOSFLM STRATEGY---------------\n")
+                if self.best_anom_failed or self.strategy == "mosflm" or self.multicrystalstrat:
+                    if self.mosflm_strat_anom_log:
+                        jon_summary.write("\n---------------ANOMALOUS Data Collection Strategy RESULTS from Mosflm---------------\n\n")
+                        for line in self.mosflm_strat_anom_log:
+                            jon_summary.write(line)
+                    else:
+                        jon_summary.write("---------------MOSFLM ANOM STRATEGY FAILED---------------\n")
+            jon_summary.write("%7s</pre>\n%6s</div>\n%5s</div>\n%4s</div>\n%2s</body>\n</html>\n" % (5*("", )))
+            jon_summary.close()
+            if os.path.exists(f):
+                shutil.copy(f, self.working_dir)
+
+        except:
+            self.logger.exception("**ERROR in htmlSummaryLong**")
 
     def htmlSummaryShort(self):
-      """
-      Create short summary HTML/php file for autoindex/strategy output results.
-      """
-      if self.verbose:
-        self.logger.debug('AutoindexingStrategy::htmlSummaryShort')
-      try:
-        if self.gui:
-          f = 'jon_summary_short.php'
-        else:
-          f = 'jon_summary_short.html'
-        jon_summary = open(f,'w')
-        jon_summary.write(Utils.getHTMLHeader(self,'strat'))
-        jon_summary.write("%6s$(document).ready(function() {\n"%'')
-        if self.auto_summary:
-          jon_summary.write("%8s$('#auto').dataTable({\n"%'')
-          jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false });\n'%(4*('',)))
-        if self.best_summary:
-          jon_summary.write("%8snormSimpleBestTable = $('#best1').dataTable({\n"%'')
-          jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false });\n'%(4*('',)))
-        if self.best_anom_summary:
-          jon_summary.write("%8sanomSimpleBestTable = $('#bestanom1').dataTable({\n"%'')
-          jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false });\n'%(4*('',)))
-        if self.best_failed or self.strategy == 'mosflm':
-          if self.mosflm_strat_summary:
-            jon_summary.write("%8s$('#strat1').dataTable({\n"%'')
-            jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false });\n'%(4*('',)))
-        if self.best_anom_failed or self.strategy == 'mosflm':
-          if self.mosflm_strat_anom_summary:
-            jon_summary.write("%8s$('#stratanom1').dataTable({\n"%'')
-            jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false });\n'%(4*('',)))
-        if self.best_summary:
-          jon_summary.write('''
-               //Double click handlers for tables
-               $("#best1 tbody tr").dblclick(function(event) {
-                      //Get the current data of the clicked-upon row
-                      aData = normSimpleBestTable.fnGetData(this);
-                      //Parse out the image prefix from the currently selected snap
-                      var tmp_repr = image_repr.toString().split("_");
-                      var tmp_repr2 = tmp_repr.slice(0,-2).join('_');
-                      //Use the values from the line to fill the form
-                      $("#image_prefix").val(tmp_repr2);
-                      $("#omega_start").val(aData[1]);
-                      $("#delta_omega").val(aData[5]);
-                      $("#number_images").val(aData[4]);
-                      $("#time").val(aData[6]);
-                      $("#distance").val(aData[7]);
-                      $("#transmission").val(aData[8]);
-                      //Open up the dialog form
-                      $('#dialog-form-datacollection').dialog('open');
-               }); \n''')
-          if self.best_anom_summary:
-              jon_summary.write('''
-               //Single click handlers
-               $("#best1 tbody tr").click(function(event) {
-                       $(normSimpleBestTable.fnSettings().aoData).each(function (){
-                       $(this.nTr).removeClass('row_selected');
-                   });
-                   $(anomSimpleBestTable.fnSettings().aoData).each(function (){
-                       $(this.nTr).removeClass('row_selected');
-                   });
-                   $(event.target.parentNode).toggleClass('row_selected');
-               });
+        """
+        Create short summary HTML/php file for autoindex/strategy output results.
+        """
+        if self.verbose:
+            self.logger.debug('AutoindexingStrategy::htmlSummaryShort')
 
-               $("#bestanom1 tbody tr").click(function(event) {
-                   $(normSimpleBestTable.fnSettings().aoData).each(function (){
-                       $(this.nTr).removeClass('row_selected');
-                   });
-                   $(anomSimpleBestTable.fnSettings().aoData).each(function (){
-                       $(this.nTr).removeClass('row_selected');
-                   });
-                   $(event.target.parentNode).toggleClass('row_selected');
-               }); \n''')
-        if self.best_anom_summary:
-          jon_summary.write('''
-               $("#bestanom1 tbody tr").dblclick(function(event) {
-                      //Get the current data of the clicked-upon row
-                      aData = anomSimpleBestTable.fnGetData(this);
-                      //Parse out the image prefix from the currently selected snap
-                      var tmp_repr = image_repr.toString().split("_");
-                      var tmp_repr2 = tmp_repr.slice(0,-2).join('_');
-                      //Use the values from the line to fill the form
-                      $("#image_prefix").val(tmp_repr2);
-                      $("#omega_start").val(aData[1]);
-                      $("#delta_omega").val(aData[5]);
-                      $("#number_images").val(aData[4]);
-                      $("#time").val(aData[6]);
-                      $("#distance").val(aData[7]);
-                      $("#transmission").val(aData[8]);
-                      //Open up the dialog form
-                      $('#dialog-form-datacollection').dialog('open');
-               }); \n''')
-
-        jon_summary.write('''
-             //The dialog form for data collection
-             $("#dialog-form-datacollection").dialog({
-                    autoOpen: false,
-                    width: 350,
-                    modal: true,
-                    buttons: {
-                        'Send to Beamline': function() {
-                                            //POST the data to the php tool
-                                            $.ajax({
-                                                type: "POST",
-                                                url: "d_add_datacollection.php",
-                                                data: {prefix:$("#image_prefix").val(),
-                                                       run_number:$("#run_number").val(),
-                                                       image_start:$("#image_start").val(),
-                                                       omega_start:$("#omega_start").val(),
-                                                       delta_omega:$("#delta_omega").val(),
-                                                       number_images:$("#number_images").val(),
-                                                       time:$("#time").val(),
-                                                       distance:$("#distance").val(),
-                                                       transmission:$("#transmission").val(),
-                                                       ip_address:my_ip,
-                                                       beamline:my_beamline}
-                                            });
-                            $(this).dialog('close');
-                        },
-                        Cancel: function() {
-                            $(this).dialog('close');
-                        }
-                    },
-             }); \n''')
-        #The end of the Jquery
-        jon_summary.write('%6s});\n%4s</script>\n%2s</head>\n%2s<body id="dt_example">\n'%(4*('',)))
-        jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
-        jon_summary.write('%7s<h1 class="results">Labelit autoindexing summary for:</h1>\n'%'')
-        jon_summary.write("%7s<h2 class='results'>Image: %s</h2>\n"%('',self.header.get('fullname')))
-        if self.header2:
-          jon_summary.write("%7s<h2 class='results'>Image: %s</h2>\n"%('',self.header2.get('fullname')))
-        if self.prev_sg:
-          jon_summary.write("%7s<h4 class='results'>Space group %s selected from previous dataset.</h4>\n"%('',self.spacegroup))
-        else:
-          if self.spacegroup != 'None':
-            jon_summary.write("%7s<h4 class='results'>User chose space group as %s</h4>\n"%('',self.spacegroup))
-            if self.ignore_user_SG == True:
-              jon_summary.write("%7s<h4 class='results'>Unit cell not compatible with user chosen SG.</h4>\n"%'')
-        if self.pseudotrans:
-          jon_summary.write("%7s<h4 class='results'>Caution. Labelit suggests the possible presence "\
-                            "of pseudotranslation. Look at the log file for more info.</h4>\n"%'')
-        if self.auto_summary:
-          jon_summary.writelines(self.auto_summary)
-        if self.labelit_results:
-          if self.labelit_results.get('Labelit results') == 'FAILED':
-            jon_summary.write('%7s<h3 class="results">Autoindexing FAILED.</h3>\n'%'')
-            if self.header2:
-              jon_summary.write('%7s<h4 class="results">Pair of snapshots did not autoindex. Possibly not from same crystal.</h3>\n'%'')
+        try:
+            if self.gui:
+                f = 'jon_summary_short.php'
             else:
-              jon_summary.write('%7s<h4 class="results">You can add "pair" to the snapshot name and collect one '\
-                                'at 0 and 90 degrees. Much better for poor diffraction.</h3>\n'%'')
-              jon_summary.write('%7s<h4 class="results">eg."snap_pair_99_001.img"</h3>\n'%'')
-            jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',)))
-        if self.best1_summary:
-          jon_summary.writelines(self.best1_summary)
-        if self.best_results:
-          if self.best_results.get('Best results') == 'FAILED':
-            jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
-            jon_summary.write('%7s<h4 class="results">Best Failed. Trying Mosflm strategy.</h3>\n'%'')
-            jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',)))
-        if self.mosflm_strat1_summary:
-          jon_summary.writelines(self.mosflm_strat1_summary)
-        if self.mosflm_strat_results:
-          jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
-          if self.mosflm_strat_results.get('Mosflm strategy results') == 'FAILED':
-            jon_summary.write('%7s<h3 class="results">Mosflm strategy failed. Could not calculate a strategy.</h3>\n'%'')
-          elif self.mosflm_strat_results.get('Mosflm strategy results') == 'SYM':
-            jon_summary.write('%7s<h3 class="results">Mosflm strategy failed because the SG or unit cell '\
-                              'is not compatible with the reference dataset.</h3>\n'%'')
-          jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',)))
-        if self.best1_anom_summary:
-          jon_summary.writelines('%4s<br>\n'%'')
-          jon_summary.writelines(self.best1_anom_summary)
-        if self.best_anom_results:
-          if self.best_anom_results.get('Best ANOM results') == 'FAILED':
-            jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
-            jon_summary.write('%7s<h4 class="results">Best Failed. Trying Mosflm ANOMALOUS strategy.</h3>\n'%'')
-            jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',)))
-        if self.mosflm_strat1_anom_summary:
-          jon_summary.writelines(self.mosflm_strat1_anom_summary)
-        if self.mosflm_strat_anom_results:
-          jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
-          if self.mosflm_strat_anom_results.get('Mosflm ANOM strategy results') == 'FAILED':
-            jon_summary.write('%7s<h3 class="results">Mosflm strategy failed. Could not calculate an ANOMALOUS strategy.</h3>\n'%'')
-          elif self.mosflm_strat_anom_results.get('Mosflm ANOM strategy results') == 'SYM':
-            jon_summary.write('%7s<h3 class="results">Mosflm strategy failed because the SG or unit '\
-                              'cell is not compatible with the reference dataset.</h3>\n'%'')
-          jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',)))
-        jon_summary.write('''
-            <div id="dialog-form-datacollection" title="Send Datacollection Parameters to Beamline">
-                <p class="validateTips">All form fields are required.</p>
-                <form id="datacollection-form" method="POST" action="d_add_minikappa.php">
-                <fieldset>
-                        <table>
-                          <tr>
-                            <td>
-                              <label for="image_prefix">Image prefix</label>
-                            </td>
-                            <td>
-                              <input type="text" name="image_prefix" id="image_prefix" value="" class="text ui-widget-content ui-corner-all" "size=6"/>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <label for="run_number">Run number</label>
-                            </td>
-                            <td>
-                              <input type="text" name="run_number" id="run_number" value="1" class="text ui-widget-content ui-corner-all" "size=6"/>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <label for="image_start">First image number</label>
-                            </td>
-                            <td>
-                              <input type="text" name="image_start" id="image_start" value="1" class="text ui-widget-content ui-corner-all" "size=6"/>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <label for="name">Omega start (&deg;)</label>
-                            </td>
-                            <td>
-                              <input type="text" name="omega_start" id="omega_start" value="" class="text ui-widget-content ui-corner-all" "size=6"/>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <label for="delta_omega">Delta omega (&deg;)</label>
-                            </td>
-                            <td>
-                              <input type="text" name="delta_omega" id="delta_omega" value="" class="text ui-widget-content ui-corner-all" "size=6"/>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <label for="number_images">Number of images</label>
-                            </td>
-                            <td>
-                              <input type="text" name="number_images" id="number_images" value="" class="text ui-widget-content ui-corner-all" "size=6"/>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <label for="time">Exposure time (s)</label>
-                            </td>
-                            <td>
-                              <input type="text" name="time" id="time" value="" class="text ui-widget-content ui-corner-all" "size=6"/>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <label for="distance">Distance (mm)</label>
-                            </td>
-                            <td>
-                              <input type="text" name="distance" id="distance" value="" class="text ui-widget-content ui-corner-all" "size=6"/>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td>
-                              <label for="transmission">Transmission (%)</label>
-                            </td>
-                            <td>
-                              <input type="text" name="transmission" id="transmission" value="" class="text ui-widget-content ui-corner-all" "size=6"/>
-                            </td>
-                          </tr>
+                f = 'jon_summary_short.html'
+            jon_summary = open(f, 'w')
+            jon_summary.write(Utils.getHTMLHeader(self, 'strat'))
+            jon_summary.write("%6s$(document).ready(function() {\n" % '')
+            if self.auto_summary:
+                jon_summary.write("%8s$('#auto').dataTable({\n" % '')
+                jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false });\n' % (4*("", )))
+            if self.best_summary:
+                jon_summary.write("%8snormSimpleBestTable = $('#best1').dataTable({\n" % '')
+                jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false });\n' % (4*("", )))
+            if self.best_anom_summary:
+                jon_summary.write("%8sanomSimpleBestTable = $('#bestanom1').dataTable({\n" % '')
+                jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false });\n' % (4*("", )))
+            if self.best_failed or self.strategy == 'mosflm':
+                if self.mosflm_strat_summary:
+                    jon_summary.write("%8s$('#strat1').dataTable({\n" % '')
+                    jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false });\n' % (4*("", )))
+            if self.best_anom_failed or self.strategy == 'mosflm':
+                if self.mosflm_strat_anom_summary:
+                    jon_summary.write("%8s$('#stratanom1').dataTable({\n" % '')
+                    jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false });\n' % (4*("", )))
+            if self.best_summary:
+                jon_summary.write('''
+                     //Double click handlers for tables
+                     $("#best1 tbody tr").dblclick(function(event) {
+                            //Get the current data of the clicked-upon row
+                            aData = normSimpleBestTable.fnGetData(this);
+                            //Parse out the image prefix from the currently selected snap
+                            var tmp_repr = image_repr.toString().split("_");
+                            var tmp_repr2 = tmp_repr.slice(0,-2).join('_');
+                            //Use the values from the line to fill the form
+                            $("#image_prefix").val(tmp_repr2);
+                            $("#omega_start").val(aData[1]);
+                            $("#delta_omega").val(aData[5]);
+                            $("#number_images").val(aData[4]);
+                            $("#time").val(aData[6]);
+                            $("#distance").val(aData[7]);
+                            $("#transmission").val(aData[8]);
+                            //Open up the dialog form
+                            $('#dialog-form-datacollection').dialog('open');
+                     }); \n''')
+                if self.best_anom_summary:
+                    jon_summary.write('''
+                     //Single click handlers
+                     $("#best1 tbody tr").click(function(event) {
+                             $(normSimpleBestTable.fnSettings().aoData).each(function (){
+                             $(this.nTr).removeClass('row_selected');
+                         });
+                         $(anomSimpleBestTable.fnSettings().aoData).each(function (){
+                             $(this.nTr).removeClass('row_selected');
+                         });
+                         $(event.target.parentNode).toggleClass('row_selected');
+                     });
 
-                       </table>
-                </fieldset>
-                </form>
-            </div> \n
-            ''')
-        jon_summary.write("%2s</body>\n</html>\n" % "")
-        jon_summary.close()
-        if os.path.exists(f):
-            shutil.copy(f,self.working_dir)
+                     $("#bestanom1 tbody tr").click(function(event) {
+                         $(normSimpleBestTable.fnSettings().aoData).each(function (){
+                             $(this.nTr).removeClass('row_selected');
+                         });
+                         $(anomSimpleBestTable.fnSettings().aoData).each(function (){
+                             $(this.nTr).removeClass('row_selected');
+                         });
+                         $(event.target.parentNo  de).toggleClass('row_selected');
+                   }); \n''')
+            if self.best_anom_summary:
+                jon_summary.write('''
+                   $("#bestanom1 tbody tr").dblclick(function(event) {
+                          //Get the current data of the clicked-upon row
+                          aData = anomSimpleBestTable.fnGetData(this);
+                          //Parse out the image prefix from the currently selected snap
+                          var tmp_repr = image_repr.toString().split("_");
+                          var tmp_repr2 = tmp_repr.slice(0,-2).join('_');
+                          //Use the values from the line to fill the form
+                          $("#image_prefix").val(tmp_repr2);
+                          $("#omega_start").val(aData[1]);
+                          $("#delta_omega").val(aData[5]);
+                          $("#number_images").val(aData[4]);
+                          $("#time").val(aData[6]);
+                          $("#distance").val(aData[7]);
+                          $("#transmission").val(aData[8]);
+                          //Open up the dialog form
+                          $('#dialog-form-datacollection').dialog('open');
+                   }); \n''')
 
-      except:
-          self.logger.exception('**ERROR in htmlSummaryShort**')
+            jon_summary.write('''
+                 //The dialog form for data collection
+                 $("#dialog-form-datacollection").dialog({
+                        autoOpen: false,
+                        width: 350,
+                        modal: true,
+                        buttons: {
+                            'Send to Beamline': function() {
+                                                //POST the data to the php tool
+                                                $.ajax({
+                                                    type: "POST",
+                                                    url: "d_add_datacollection.php",
+                                                    data: {prefix:$("#image_prefix").val(),
+                                                           run_number:$("#run_number").val(),
+                                                           image_start:$("#image_start").val(),
+                                                           omega_start:$("#omega_start").val(),
+                                                           delta_omega:$("#delta_omega").val(),
+                                                           number_images:$("#number_images").val(),
+                                                           time:$("#time").val(),
+                                                           distance:$("#distance").val(),
+                                                           transmission:$("#transmission").val(),
+                                                           ip_address:my_ip,
+                                                           beamline:my_beamline}
+                                                });
+                                $(this).dialog('close');
+                            },
+                            Cancel: function() {
+                                $(this).dialog('close');
+                            }
+                        },
+                 }); \n''')
+            #The end of the Jquery
+            jon_summary.write('%6s});\n%4s</script>\n%2s</head>\n%2s<body id="dt_example">\n' % (4*("", )))
+            jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n' % (3*("", )))
+            jon_summary.write('%7s<h1 class="results">Labelit autoindexing summary for:</h1>\n' % '')
+            jon_summary.write("%7s<h2 class='results'>Image: %s</h2>\n" % ('', self.header.get('fullname')))
+            if self.header2:
+                jon_summary.write("%7s<h2 class='results'>Image: %s</h2>\n" % ('', self.header2.get('fullname')))
+            if self.prev_sg:
+                jon_summary.write("%7s<h4 class='results'>Space group %s selected from previous dataset.</h4>\n" % ('', self.spacegroup))
+            else:
+                if self.spacegroup != 'None':
+                    jon_summary.write("%7s<h4 class='results'>User chose space group as %s</h4>\n" % ('', self.spacegroup))
+                    if self.ignore_user_SG == True:
+                        jon_summary.write("%7s<h4 class='results'>Unit cell not compatible with user chosen SG.</h4>\n" % '')
+            if self.pseudotrans:
+                jon_summary.write("%7s<h4 class='results'>Caution. Labelit suggests the possible presence "\
+                                  "of pseudotranslation. Look at the log file for more info.</h4>\n" % '')
+            if self.auto_summary:
+                jon_summary.writelines(self.auto_summary)
+            if self.labelit_results:
+                if self.labelit_results.get('Labelit results') == 'FAILED':
+                    jon_summary.write('%7s<h3 class="results">Autoindexing FAILED.</h3>\n' % '')
+                    if self.header2:
+                        jon_summary.write('%7s<h4 class="results">Pair of snapshots did not autoindex. Possibly not from same crystal.</h3>\n' % '')
+                    else:
+                        jon_summary.write('%7s<h4 class="results">You can add "pair" to the snapshot name and collect one '\
+                                          'at 0 and 90 degrees. Much better for poor diffraction.</h3>\n' % '')
+                        jon_summary.write('%7s<h4 class="results">eg."snap_pair_99_001.img"</h3>\n' % '')
+                    jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n" % (3*("", )))
+            if self.best1_summary:
+                jon_summary.writelines(self.best1_summary)
+            if self.best_results:
+                if self.best_results.get('Best results') == 'FAILED':
+                    jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n' % (3*("", )))
+                    jon_summary.write('%7s<h4 class="results">Best Failed. Trying Mosflm strategy.</h3>\n' % '')
+                    jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n" % (3*("", )))
+            if self.mosflm_strat1_summary:
+                jon_summary.writelines(self.mosflm_strat1_summary)
+            if self.mosflm_strat_results:
+                jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n' % (3*("", )))
+                if self.mosflm_strat_results.get('Mosflm strategy results') == 'FAILED':
+                    jon_summary.write('%7s<h3 class="results">Mosflm strategy failed. Could not calculate a strategy.</h3>\n' % '')
+                elif self.mosflm_strat_results.get('Mosflm strategy results') == 'SYM':
+                    jon_summary.write('%7s<h3 class="results">Mosflm strategy failed because the SG or unit cell '\
+                                      'is not compatible with the reference dataset.</h3>\n' % '')
+                jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n" % (3*("", )))
+            if self.best1_anom_summary:
+                jon_summary.writelines('%4s<br>\n' % '')
+                jon_summary.writelines(self.best1_anom_summary)
+            if self.best_anom_results:
+                if self.best_anom_results.get('Best ANOM results') == 'FAILED':
+                    jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n' % (3*("", )))
+                    jon_summary.write('%7s<h4 class="results">Best Failed. Trying Mosflm ANOMALOUS strategy.</h3>\n' % '')
+                    jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n" % (3*("", )))
+            if self.mosflm_strat1_anom_summary:
+                jon_summary.writelines(self.mosflm_strat1_anom_summary)
+            if self.mosflm_strat_anom_results:
+                jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n' % (3*("", )))
+                if self.mosflm_strat_anom_results.get('Mosflm ANOM strategy results') == 'FAILED':
+                    jon_summary.write('%7s<h3 class="results">Mosflm strategy failed. Could not calculate an ANOMALOUS strategy.</h3>\n' % '')
+                elif self.mosflm_strat_anom_results.get('Mosflm ANOM strategy results') == 'SYM':
+                    jon_summary.write('%7s<h3 class="results">Mosflm strategy failed because the SG or unit '\
+                                      'cell is not compatible with the reference dataset.</h3>\n' % '')
+                jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n" % (3*("", )))
+            jon_summary.write('''
+                <div id="dialog-form-datacollection" title="Send Datacollection Parameters to Beamline">
+                    <p class="validateTips">All form fields are required.</p>
+                    <form id="datacollection-form" method="POST" action="d_add_minikappa.php">
+                    <fieldset>
+                            <table>
+                              <tr>
+                                <td>
+                                  <label for="image_prefix">Image prefix</label>
+                                </td>
+                                <td>
+                                  <input type="text" name="image_prefix" id="image_prefix" value="" class="text ui-widget-content ui-corner-all" "size=6"/>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>
+                                  <label for="run_number">Run number</label>
+                                </td>
+                                <td>
+                                  <input type="text" name="run_number" id="run_number" value="1" class="text ui-widget-content ui-corner-all" "size=6"/>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>
+                                  <label for="image_start">First image number</label>
+                                </td>
+                                <td>
+                                  <input type="text" name="image_start" id="image_start" value="1" class="text ui-widget-content ui-corner-all" "size=6"/>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>
+                                  <label for="name">Omega start (&deg;)</label>
+                                </td>
+                                <td>
+                                  <input type="text" name="omega_start" id="omega_start" value="" class="text ui-widget-content ui-corner-all" "size=6"/>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>
+                                  <label for="delta_omega">Delta omega (&deg;)</label>
+                                </td>
+                                <td>
+                                  <input type="text" name="delta_omega" id="delta_omega" value="" class="text ui-widget-content ui-corner-all" "size=6"/>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>
+                                  <label for="number_images">Number of images</label>
+                                </td>
+                                <td>
+                                  <input type="text" name="number_images" id="number_images" value="" class="text ui-widget-content ui-corner-all" "size=6"/>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>
+                                  <label for="time">Exposure time (s)</label>
+                                </td>
+                                <td>
+                                  <input type="text" name="time" id="time" value="" class="text ui-widget-content ui-corner-all" "size=6"/>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>
+                                  <label for="distance">Distance (mm)</label>
+                                </td>
+                                <td>
+                                  <input type="text" name="distance" id="distance" value="" class="text ui-widget-content ui-corner-all" "size=6"/>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td>
+                                  <label for="transmission">Transmission (%)</label>
+                                </td>
+                                <td>
+                                  <input type="text" name="transmission" id="transmission" value="" class="text ui-widget-content ui-corner-all" "size=6"/>
+                                </td>
+                              </tr>
+
+                           </table>
+                    </fieldset>
+                    </form>
+                </div> \n
+                ''')
+            jon_summary.write("%2s</body>\n</html>\n" % "")
+            jon_summary.close()
+            if os.path.exists(f):
+                shutil.copy(f,self.working_dir)
+
+        except:
+            self.logger.exception('**ERROR in htmlSummaryShort**')
 
 class RunLabelit(Process):
 
@@ -2221,10 +2225,10 @@ class RunLabelit(Process):
       try:
         twotheta       = str(self.header.get('twotheta','0'))
         #distance       = str(self.header.get('distance'))
-        #x_beam         = str(self.preferences.get('x_beam',self.header.get('beam_center_x'))) #OLD
+        #x_beam         = str(self.preferences.get('x_beam', self.header.get('beam_center_x'))) #OLD
         #Once we figure out the beam center issue, I can switch to this.
-	#x_beam         = str(self.header.get('beam_center_calc_x',self.header.get('beam_center_x')))
-        #y_beam         = str(self.header.get('beam_center_calc_y',self.header.get('beam_center_y')))
+	#x_beam         = str(self.header.get('beam_center_calc_x', self.header.get('beam_center_x')))
+        #y_beam         = str(self.header.get('beam_center_calc_y', self.header.get('beam_center_y')))
 	x_beam         = str(self.header.get('beam_center_x'))
         y_beam         = str(self.header.get('beam_center_y'))
         binning = True
@@ -2254,9 +2258,9 @@ class RunLabelit(Process):
           #Always specify the beam center.
           #If Malcolm flips the beam center in the image header...
           if self.preferences.get('beam_flip','False') == 'True':
-            preferences.write('autoindex_override_beam=(%s,%s)\n'%(y_beam,x_beam))
+            preferences.write('autoindex_override_beam=(%s,%s)\n' % (y_beam,x_beam))
           else:
-            preferences.write('autoindex_override_beam=(%s,%s)\n'%(x_beam,y_beam))
+            preferences.write('autoindex_override_beam=(%s,%s)\n' % (x_beam,y_beam))
           #If two-theta is being used, specify the angle and distance correctly.
           if twotheta.startswith('0'):
             preferences.write('beam_search_scope=0.2\n')
