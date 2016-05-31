@@ -1326,7 +1326,7 @@ class RapdAgent(Process):
          # Set up the results for return
         tmp['process'] = {
         	'agent_process_id':self.header.get('agent_process_id'),
-        	'status':50
+        	'status':50 }
         tmp['results'] = results
         self.logger.debug(tmp)
         
