@@ -201,7 +201,7 @@ class RapdAgent(Process):
             # Setting self.jobs > 1 provides some speed up on
             # multiprocessor machines.
             # Should be set based on computer used for processing
-            self.jobs = 4
+            self.jobs = 1
             self.procs = 4
 
         Process.__init__(self, name="FastIntegration")
