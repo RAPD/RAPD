@@ -97,6 +97,7 @@ class RapdAgent(Process):
         # Store passed-in variables
         self.site = site
         self.command = command
+        self.results = {}
 
         # self.input = input[0:4]
         self.controller_address = self.command["return_address"]# input[-1]
@@ -1324,11 +1325,11 @@ class RapdAgent(Process):
         self.logger.debug('    Returning results!')
         self.logger.debug(results)
          # Set up the results for return
-        tmp['process'] = {
+        self.results['process'] = {
         	'agent_process_id':self.process_id,
         	'status':50 }
-        tmp['results'] = results
-        self.logger.debug(tmp)
+        self.results['results'] = results
+        self.logger.debug(self.results)
         
         # self.sendBack2(tmp)
         rapd_send(self.controller_address, tmp)
