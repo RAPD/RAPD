@@ -63,18 +63,19 @@ class Launcher(object):
     adapter_file = None
     launcher = None
 
-    def __init__(self, site, tag="", overwatch_id=False):
+    def __init__(self, site, tag="", logger=None, overwatch_id=False):
         """
         Initialize the Launcher instance
 
         Keyword arguments:
         site -- site object with relevant information to run
         tag -- optional string describing launcher. Defined in site.LAUNCHER_REGISTER
+        logger -- logger instance (default = None)
         overwatch_id -- id for optional overwatcher instance
         """
 
         # Get the logger Instance
-        self.logger = logging.getLogger("Starting Launcher")
+        self.logger = logger
 
         # Save passed-in variables
         self.site = site
@@ -291,6 +292,7 @@ def main():
 
     LAUNCHER = Launcher(site=SITE,
                         tag=tag,
+                        logger=logger,
                         overwatch_id=commandline_args.overwatch_id)
 
 if __name__ == "__main__":
