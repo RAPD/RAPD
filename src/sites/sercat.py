@@ -134,7 +134,7 @@ UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"
 
 # Control settings
 # Database to use for control operations. Options: "mysql"
-CONTROL_DATABASE = "mysql"
+CONTROL_DATABASE = "mongodb"
 
 # Redis databse
 # Running in a cluster configuration - True || False
