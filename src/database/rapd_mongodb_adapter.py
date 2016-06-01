@@ -838,7 +838,7 @@ class Database(object):
                           agent_type,
                           request_type,
                           representation,
-                          progress,
+                          status,
                           display)
 
         # Connect to the database
