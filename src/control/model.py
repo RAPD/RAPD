@@ -137,6 +137,9 @@ class Model(object):
         # Initialize the remote adapter
         # self.init_remote_adapter()
 
+        # Launch an echo
+        self.send_echo()
+
     def init_site(self):
         """Process the site definitions to set up instance variables"""
 
@@ -274,6 +277,27 @@ class Model(object):
         if site.REMOTE_ADAPTER:
             remote_adapter = importlib.import_module("%s" % site.REMOTE_ADAPTER.lower())
             self.remote_adapter = remote_adapter.Adapter(settings=site.REMOTE_ADAPTER_SETTINGS)
+
+    def send_echo(self):
+        """Send a test echo request to Launch"""
+
+        # Add the process to the database to display as in-process
+        agent_process_id = self.database.add_agent_process(agent_type="echo",
+                                                           request_type="original",
+                                                           representation="echo",
+                                                           status=1,
+                                                           display="hide")
+
+        # Add the ID entry to the header dict
+        header.update({"agent_process_id":agent_process_id,
+                       "repr":new_repr})
+
+        # Run autoindex and strategy agent
+        LaunchAction(command={"command":"ECHO",
+                              "process":{"agent_process_id":agent_process_id},
+                              "return_address":self.return_address},
+                     launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
+                     settings=None)
 
     def stop(self):
         """Stop the ImageMonitor,CloudMonitor and StatusRegistrar."""

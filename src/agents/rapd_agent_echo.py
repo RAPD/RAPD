@@ -1,4 +1,8 @@
 """
+An echo RAPD agent
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2016, Cornell University
@@ -16,21 +20,17 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
 __created__ = "2016-03-02"
 __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
-"""
-An echo rapd_agent
-"""
-
 # This is an active rapd agent
 RAPD_AGENT = True
 
 # This handler's request type
-AGENT_TYPE = "echo"
+AGENT_TYPE = "ECHO"
+AGENT_SUBTYPE = "CORE"
 
 # A unique UUID for this handler (uuid.uuid1().hex)
 ID = "4eb96075e0a911e590d2c82a1400d5bc"
@@ -97,7 +97,6 @@ class RapdAgent(multiprocessing.Process):
         # Get the reply_settings
         self.reply_settings = self.command["return_address"]
 
-
     def process(self):
         """
         The main process
@@ -108,7 +107,12 @@ class RapdAgent(multiprocessing.Process):
         self.logger.debug("process")
 
         # Put the gathered data into a dict for return
-        self.results = self.command        
+        self.results = self.command
+
+        # Add the agent information
+        self.results["process"]["agent_id"] = ID
+        self.results["process"]["agent_type"] = AGENT_TYPE
+        self.results["process"]["agent_subtype"] = AGENT_SUBTYPE
 
     def postprocess(self):
         """
