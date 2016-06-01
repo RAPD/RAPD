@@ -40,17 +40,19 @@ import logging
 import operator
 import os
 import threading
-import time
 
 import numpy
 import pymongo
 
-MYSQL_ATTEMPTS = 30
+CONNECTION_ATTEMPTS = 30
 
 class Database(object):
     """
     Provides connection to MongoDB for Model.
     """
+
+    client = False
+
     def __init__(self,
                  host=None,
                  port=3306,
@@ -98,404 +100,68 @@ class Database(object):
     ############################################################################
     #Functions for connecting to the database                                  #
     ############################################################################
-
     def get_db_connection(self):
         """
         Returns a connection and cursor for interaction with the database.
         """
-        attempts = 0
-        while attempts < MYSQL_ATTEMPTS:
-            try:
-                # Connect
-                connection = pymysql.connect(host=self.db_host,
-                                             port=self.db_port,
-                                             db="rapd",
-                                             user=self.db_user,
-                                             password=self.db_password)
-                cursor = connection.cursor()
-                cursor.execute("SET AUTOCOMMIT=1")
-                return(connection, cursor)
-            except:
-                self.logger.exception("Error connecting to MySQL server")
-                attempts += 1
-                time.sleep(10)
 
-    def get_db_connection(self):
-        """
-        Returns a connection and cursor for interaction with the database.
-        """
-        attempts = 0
-        while attempts < MYSQL_ATTEMPTS:
-            try:
-                # Connect
-                connection = pymysql.connect(host=self.db_host,
-                                             port=self.db_port,
-                                             db="rapd",
-                                             user=self.db_user,
-                                             password=self.db_password)
-                cursor = connection.cursor()
-                cursor.execute("SET AUTOCOMMIT=1")
-                return(connection, cursor)
-            except:
-                self.logger.exception("Error connecting to MySQL server")
-                attempts += 1
-                time.sleep(10)
+        # No client - then connect
+        if not self.client:
+            # Connect
+            self.client = pymongo.MongoClient(host=self.db_host,
+                                              port=self.db_port)
 
-    def connect_to_user(self):
-        """
-        Returns a connection and cursor for interaction with the database.
-        """
-        attempts = 0
-        while attempts < MYSQL_ATTEMPTS:
-            try:
-                # Connect
-                connection = pymysql.connect(host=self.db_host,
-                                             port=self.db_port,
-                                             db=self.db_users_name,
-                                             user=self.db_user,
-                                             password=self.db_password)
-                cursor = connection.cursor()
-                cursor.execute("SET AUTOCOMMIT=1")
-                return(connection, cursor)
-            except:
-                self.logger.exception("Error connecting to MySQL server")
-                attempts += 1
-                time.sleep(10)
+            # Not using user/password for now
 
-    def connect_to_cloud(self):
-        """
-        Returns a connection and cursor for interaction with the database.
-        """
-        attempts = 0
-        while attempts < MYSQL_ATTEMPTS:
-            try:
-                # Connect
-                connection = pymysql.connect(host=self.db_host,
-                                             port=self.db_port,
-                                             db=self.db_cloud_name,
-                                             user=self.db_user,
-                                             password=self.db_password)
-                cursor = connection.cursor()
-                cursor.execute("SET AUTOCOMMIT=1")
-                return(connection, cursor)
-            except:
-                self.logger.exception("Error connecting to MySQL server")
-                attempts += 1
-                time.sleep(10)
+        # Get the db
+        db = self.client.rapd
 
-    def close_connection(self, connection, cursor):
-        try:
-            cursor.close()
-        except:
-            self.logger.exception("Error closing cursor to MySQL database")
-        try:
-            connection.close()
-        except:
-            self.logger.exception("Error closing connection to MySQL database")
+        return db
 
     ############################################################################
     # Functions for images                                                     #
     ############################################################################
-    def add_image(self, data):
+    def add_image(self, data, return_dict=True):
         """
         Add new image to the MySQL database.
 
         Keyword arguments
         data -- dict with all the requisite parts
+        return_dict -- if True, return the full dict from the db, otherwise return just the _id
         """
 
         self.logger.debug(data)
 
-        connection, cursor = self.get_db_connection()
+        db = self.get_db_connection()
 
-        # Construct the query
-        query = """INSERT INTO images (beam_center_calc_x,
-                                              beam_center_calc_y,
-                                              beam_center_x,
-                                              beam_center_y,
-                                              beam_gauss_x,
-                                              beam_gauss_y,
-                                              beam_size_x,
-                                              beam_size_y,
-                                              collect_mode,
-                                              date,
-                                              detector,
-                                              detector_sn,
-                                              distance,
-                                              energy,
-                                              flux,
-                                              fullname,
-                                              image_number,
-                                              image_prefix,
-                                              kappa,
-                                              omega,
-                                              osc_axis,
-                                              osc_range,
-                                              osc_start,
-                                              phi,
-                                              pixel_size,
-                                              rapd_detector_id,
-                                              robot_position,
-                                              run_id,
-                                              run_number,
-                                              sample_id,
-                                              sample_pos_x,
-                                              sample_pos_y,
-                                              sample_pos_z,
-                                              site_tag,
-                                              size1,
-                                              size2,
-                                              source_current,
-                                              source_mode,
-                                              time,
-                                              transmission,
-                                              twotheta) values (%s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s)"""
-        parameters = (data.get("beam_center_calc_x", None),
-                      data.get("beam_center_calc_y", None),
-                      data.get("beam_center_x", None),
-                      data.get("beam_center_y", None),
-                      data.get("beam_gauss_x", None),
-                      data.get("beam_gauss_y", None),
-                      data.get("beam_size_x", None),
-                      data.get("beam_size_y", None),
-                      data.get("collect_mode", None),
-                      data.get("date", None),
-                      data.get("detector", None),
-                      data.get("detector_sn", None),
-                      data.get("distance", None),
-                      data.get("energy", None),
-                      data.get("flux", None),
-                      data.get("fullname", None),
-                      data.get("image_number", None),
-                      data.get("image_prefix", None),
-                      data.get("kappa", None),
-                      data.get("omega", None),
-                      data.get("osc_axis", None),
-                      data.get("osc_range", None),
-                      data.get("osc_start", None),
-                      data.get("phi", None),
-                      data.get("pixel_size", None),
-                      data.get("rapd_detector_id", None),
-                      data.get("robot_position", None),
-                      data.get("run_id", None),
-                      data.get("run_number", None),
-                      data.get("sample_id", None),
-                      data.get("sample_pos_x", None),
-                      data.get("sample_pos_y", None),
-                      data.get("sample_pos_z", None),
-                      data.get("site_tag", None),
-                      data.get("size1", None),
-                      data.get("size2", None),
-                      data.get("source_current", None),
-                      data.get("source_mode", None),
-                      data.get("time", None),
-                      data.get("transmission", None),
-                      data.get("twotheta", None))
+        # Insert into db
+        result = db.images.insert_one(data.update({"timestamp":datetime.datetime.utcnow()}))
 
-        # Execute the query
-        try:
-            cursor.execute(query, parameters)
+        if return_dict:
+            return db.find_one({"_id":result.inserted_id})
+        else:
+            return result.inserted_id
 
-        except pymysql.err.IntegrityError as error:
-            error_number, error_message = error
-            if error_number == 1062:
-                self.logger.error("Duplicate image entry - ignoring")
-
-                # Close connection
-                self.close_connection(connection, cursor)
-
-                return False
-            else:
-                self.logger.error(error_number, error_message)
-
-        # Put the image_id in the dict for future use
-        image_id = cursor.lastrowid
-
-        # Now grab the dict from the MySQL table
-        image_dict = self.get_image_by_image_id(image_id=image_id)
-
-
-        # Close connection
-        self.close_connection(connection, cursor)
-
-        return image_dict
-
-    def add_pilatus_image(self, data):
-        """
-        Add new Pilatus image to the MySQL database.
-        """
-
-        self.logger.debug("Database::add_pilatus_image")
-        self.logger.debug(data)
-        connection, cursor = self.get_db_connection()
-
-        try:
-            cursor.execute("""INSERT INTO images (fullname,
-                                                  axis,
-                                                  beam_center_x,
-                                                  beam_center_y,
-                                                  count_cutoff,
-                                                  date,
-                                                  detector,
-                                                  detector_sn,
-                                                  collect_mode,
-                                                  site,
-                                                  distance,
-                                                  osc_range,
-                                                  osc_start,
-                                                  phi,
-                                                  kappa,
-                                                  pixel_size,
-                                                  time,
-                                                  period,
-                                                  twotheta,
-                                                  wavelength,
-                                                  directory,
-                                                  image_prefix,
-                                                  run_number,
-                                                  image_number,
-                                                  transmission,
-                                                  puck,
-                                                  sample,
-                                                  ring_current,
-                                                  ring_mode,
-                                                  md2_aperture,
-                                                  md2_x,
-                                                  md2_y,
-                                                  md2_z,
-                                                  flux,
-                                                  beam_size_x,
-                                                  beam_size_y,
-                                                  gauss_x,
-                                                  gauss_y,
-                                                  run_id) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-                                                                   (data['fullname'],
-                                                                    data['axis'],
-                                                                    data['x_beam'],
-                                                                    data['y_beam'],
-                                                                    data['count_cutoff'],
-                                                                    data['date'],
-                                                                    data['detector'],
-                                                                    data['detector_sn'],
-                                                                    data['collect_mode'],
-                                                                    data['site'],
-                                                                    data['distance'],
-                                                                    data['osc_range'],
-                                                                    data['osc_start'],
-                                                                    data['phi'],
-                                                                    data['kappa'],
-                                                                    data['pixel_size'],
-                                                                    data['time'],
-                                                                    data['period'],
-                                                                    data['twotheta'],
-                                                                    data['wavelength'],
-                                                                    data['directory'],
-                                                                    data['image_prefix'],
-                                                                    data['run_number'],
-                                                                    data['image_number'],
-                                                                    data['transmission'],
-                                                                    data['puck'],
-                                                                    data['sample'],
-                                                                    data['ring_current'],
-                                                                    data['ring_mode'],
-                                                                    data['md2_aperture'],
-                                                                    data['md2_x'],
-                                                                    data['md2_y'],
-                                                                    data['md2_z'],
-                                                                    data['flux'],
-                                                                    data['beam_size_x'],
-                                                                    data['beam_size_y'],
-                                                                    data['gauss_x'],
-                                                                    data['gauss_y'],
-                                                                    data['run_id']))
-            #connection.commit()
-            #put the image_id in the dict for future use
-            image_id = cursor.lastrowid
-
-            self.close_connection(connection, cursor)
-
-            #now grab the dict from the MySQL table
-            image_dict = self.get_image_by_image_id(image_id=image_id)
-
-            return(image_dict, True)
-
-        except pymysql.IntegrityError, (errno, strerror):
-            self.close_connection(connection, cursor)
-            if errno == 1062:
-                self.logger.warning('%s is already in the database' % data['fullname'])
-                #check if this image is in one of the special use image sets and try to add anyway
-                return(data, False)
-            else:
-                self.logger.exception('ERROR : unknown IntegrityError exception in Database::add_pilatus_image')
-                self.logger.warning(errno)
-                self.logger.warning(strerror)
-            return(False)
-
-        except:
-            self.logger.exception('ERROR : unknown exception in Database::add_pilatus_image')
-            self.close_connection(connection, cursor)
-            return(False)
-
-    def updateImageCBC(self,image_id,cbcx,cbcy):
-        """
-        Updates the calc_beam_center_x/y for a given image_id.
-
-        image_id - an int that indexes the rapd_data.images table
-        cbcx - float of the X beam center in mm
-        cbcy - float of the Y beam center in mm
-
-        """
-
-        self.logger.debug('Database::updateImageCBC image_id: %d, cbcx: %d, cbcy: %d' % (image_id,cbcx,cbcy))
-        connection,cursor = self.get_db_connection()
-
-        try:
-            cursor.execute('UPDATE images set calc_beam_center_x=%s, calc_beam_center_y=%s WHERE image_id=%s',(cbcx,cbcy,image_id))
-            self.close_connection(connection, cursor)
-            return(True)
-        except:
-            self.logger.exception('Exception in updating calculated beam center values in database')
-            self.close_connection(connection, cursor)
+    # def updateImageCBC(self,image_id,cbcx,cbcy):
+    #     """
+    #     Updates the calc_beam_center_x/y for a given image_id.
+    #
+    #     image_id - an int that indexes the rapd_data.images table
+    #     cbcx - float of the X beam center in mm
+    #     cbcy - float of the Y beam center in mm
+    #
+    #     """
+    #
+    #     self.logger.debug('Database::updateImageCBC image_id: %d, cbcx: %d, cbcy: %d' % (image_id,cbcx,cbcy))
+    #     connection,cursor = self.get_db_connection()
+    #
+    #     try:
+    #         cursor.execute('UPDATE images set calc_beam_center_x=%s, calc_beam_center_y=%s WHERE image_id=%s',(cbcx,cbcy,image_id))
+    #         self.close_connection(connection, cursor)
+    #         return(True)
+    #     except:
+    #         self.logger.exception('Exception in updating calculated beam center values in database')
+    #         self.close_connection(connection, cursor)
 
     def get_image_by_image_id(self, image_id):
         """
@@ -504,188 +170,183 @@ class Database(object):
         image_id - an int that indexes the rapd_data.images table
         """
 
-        self.logger.debug("Database::get_image_by_image_id %d", image_id)
+        self.logger.debug(image_id)
 
-        query1 = "SELECT * FROM images WHERE image_id=%s"
-        image_dict = self.make_dicts(query=query1,
-                                     params=(image_id,),
-                                     json_compatible=True)[0]
+        # Get connection to database
+        db = self.get_db_connection()
 
-        # #format the dates to be JSON-compatible
-        # image_dict["timestamp"] = image_dict["timestamp"].isoformat()
-        # image_dict["date"] = image_dict["date"].isoformat()
+        # Query and return
+        return db.find_one({"_id":result.image_id})
 
-        return(image_dict)
-
-    def getImageIDByFullname(self, fullname):
-        """
-        Returns an image_id given a fullname.
-
-        fullname - the image name including full path
-
-        """
-
-        if self.logger:
-          self.logger.debug('Database::getImageIDByFullname %s' % fullname)
-        else:
-          print 'Database::getImageIDByFullname %s' % fullname
-
-        try:
-            query1 = 'SELECT image_id FROM images WHERE fullname=%s LIMIT 1'
-            image_dict = self.make_dicts(query=query1, params=(fullname,))[0]
-            return(image_dict['image_id'])
-
-        except:
-            return(0)
+    # def getImageIDByFullname(self, fullname):
+    #     """
+    #     Returns an image_id given a fullname.
+    #
+    #     fullname - the image name including full path
+    #
+    #     """
+    #
+    #     if self.logger:
+    #       self.logger.debug('Database::getImageIDByFullname %s' % fullname)
+    #     else:
+    #       print 'Database::getImageIDByFullname %s' % fullname
+    #
+    #     try:
+    #         query1 = 'SELECT image_id FROM images WHERE fullname=%s LIMIT 1'
+    #         image_dict = self.make_dicts(query=query1, params=(fullname,))[0]
+    #         return(image_dict['image_id'])
+    #
+    #     except:
+    #         return(0)
 
 
     ##################################################################################################################
     # Functions for sample identification                                                                            #
     ##################################################################################################################
-    def setImageSampleId(self,image_dict,puckset_id):
-        """
-        Updates an image record with the sample_id, given a puckset_id.
+    # def setImageSampleId(self,image_dict,puckset_id):
+    #     """
+    #     Updates an image record with the sample_id, given a puckset_id.
+    #
+    #     image_dict - a dict formed from a row of rapd_data.images
+    #     puckset_id - an int used to index pucksets in rapd_data.puck_settings
+    #
+    #     """
+    #
+    #     self.logger.debug('Database::setImageSampleId image_id:%d  puckset_id:%s' %(image_dict['image_id'],str(puckset_id)))
+    #
+    #     try:
+    #         #connect to the mysql server
+    #         connection,cursor = self.get_db_connection()
+    #
+    #         #retrieve the sample id for the Puck:Sample in the image header
+    #         query1 = '''SELECT samples.sample_id as sample_id from samples
+    #                         JOIN (puck_settings,images)
+    #                             ON (puck_settings.'''+image_dict['puck']+'''=samples.PuckID
+    #                                 AND samples.sample=images.sample)
+    #                         WHERE puck_settings.puckset_id=%s
+    #                             AND  images.image_id=%s'''
+    #         #print query1 % (puckset_id,image_dict['image_id'])
+    #         cursor.execute(query1,(puckset_id,image_dict['image_id']))
+    #         sample_id = cursor.fetchone()[0]
+    #
+    #         #update the image record with the new sample_id
+    #         query2 = 'UPDATE images set sample_id=%s WHERE image_id=%s'
+    #         cursor.execute(query2,(sample_id,image_dict['image_id']))
+    #         #return the image dict with the sample_id in it
+    #         image_dict['sample_id'] = sample_id
+    #         self.close_connection(connection, cursor)
+    #         return(image_dict)
+    #     except:
+    #         self.logger.exception('Error in setImageSampleId')
+    #         self.close_connection(connection, cursor)
+    #         #return the original image_dict
+    #         return(image_dict)
 
-        image_dict - a dict formed from a row of rapd_data.images
-        puckset_id - an int used to index pucksets in rapd_data.puck_settings
+    # def getSetPuckInfo(self,puckset_id):
+    #     """
+    #     Return the entries for the given puckset_id.
+    #
+    #     puckset_id - a varchar used to identify pucks in rapd_data.samples and rapd_data.puck_settings
+    #
+    #     """
+    #
+    #     self.logger.debug('Database::getSetPuckInfo puckset_id:%s' %str(puckset_id))
+    #
+    #     #query for puck_settings
+    #     try:
+    #         query1  = 'SELECT A,B,C,D FROM puck_settings WHERE puckset_id="%s"' % (str(puckset_id))
+    #         request_dict = self.make_dicts(query1, ())[0]
+    #     except:
+    #         request_dict = False
+    #
+    #     #see if we have a request
+    #     return(request_dict)
 
-        """
+    # def getPuckInfo(self,puckid):
+    #     """
+    #     Return the CrystalIDs for a given puckid in ascending order.
+    #
+    #     puckid - a varchar used to identify pucks in rapd_data.samples and rapd_data.puck_settings
+    #
+    #     """
+    #     self.logger.debug('Database::getPuckInfo puckid:%s' %str(puckid))
+    #     try:
+    #         query1  = 'SELECT sample, CrystalID, PuckID FROM samples WHERE PuckID="%s" ORDER BY sample' % (str(puckid))
+    #         request_dict = self.make_dicts(query1, ())
+    #         #force the dictionary to be sorted
+    #         if len(request_dict) < 16:
+    #             temp_dict = []
+    #             for i in range(1,17):
+    #                 temp_dict.append({'sample': i, 'CrystalID': 'NULL', 'PuckID': puckid})
+    #             for entry in request_dict:
+    #                 temp_dict[entry['sample']-1] = entry
+    #             request_dict = temp_dict
+    #         request_dict.sort(key=operator.itemgetter('sample'))
+    #
+    #     except:
+    #         request_dict = False
+    #
+    #     #see if we have a request
+    #     return(request_dict)
 
-        self.logger.debug('Database::setImageSampleId image_id:%d  puckset_id:%s' %(image_dict['image_id'],str(puckset_id)))
+    # def getAllPucks(self,puck_cutoff):
+    #     """
+    #     Return a list of all available pucks for CONSOLE.  Limited by a cutoff date.
+    #
+    #     puck_cutoff - a variable describing the cutoff date in MYSQL format.
+    #     """
+    #     self.logger.debug('Database::getAllPucks after %s' % (puck_cutoff))
+    #
+    #     #query for list of pucks
+    #     try:
+    #         query1  = 'SELECT PuckID FROM samples WHERE timestamp>"%s" GROUP BY PuckID' % (puck_cutoff)
+    #         request_dict = self.make_dicts(query1, ())
+    #     except:
+    #         request_dict = False
+    #      #see if we have a request
+    #     return(request_dict)
 
-        try:
-            #connect to the mysql server
-            connection,cursor = self.get_db_connection()
+    # def getCurrentPucks(self, site_id="C"):
+    #     """
+    #     Return a list of all currently selected pucks for a site.
+    #
+    #     """
+    #     self.logger.debug('Database::getCurrentPucks for %s' % (site_id))
+    #
+    #     #query for list of pucks
+    #     try:
+    #         #connect to the mysql server
+    #         connection,cursor = self.get_db_connection()
+    #         query  = "SELECT puckset_id FROM current WHERE site=%s" % (site_id)
+    #         cursor.execute(query, site_id)
+    #         puckset_id = cursor.fetchone()[0]
+    #         if puckset_id == 0:
+    #             request_dict = False
+    #         else:
+    #             request_dict = self.getSetPuckInfo(puckset_id)
+    #     except:
+    #         request_dict = False
+    #
+    #     self.close_connection(connection, cursor)
+    #
+    #     #see if we have a request
+    #     return(request_dict)
 
-            #retrieve the sample id for the Puck:Sample in the image header
-            query1 = '''SELECT samples.sample_id as sample_id from samples
-                            JOIN (puck_settings,images)
-                                ON (puck_settings.'''+image_dict['puck']+'''=samples.PuckID
-                                    AND samples.sample=images.sample)
-                            WHERE puck_settings.puckset_id=%s
-                                AND  images.image_id=%s'''
-            #print query1 % (puckset_id,image_dict['image_id'])
-            cursor.execute(query1,(puckset_id,image_dict['image_id']))
-            sample_id = cursor.fetchone()[0]
-
-            #update the image record with the new sample_id
-            query2 = 'UPDATE images set sample_id=%s WHERE image_id=%s'
-            cursor.execute(query2,(sample_id,image_dict['image_id']))
-            #return the image dict with the sample_id in it
-            image_dict['sample_id'] = sample_id
-            self.close_connection(connection, cursor)
-            return(image_dict)
-        except:
-            self.logger.exception('Error in setImageSampleId')
-            self.close_connection(connection, cursor)
-            #return the original image_dict
-            return(image_dict)
-
-    def getSetPuckInfo(self,puckset_id):
-        """
-        Return the entries for the given puckset_id.
-
-        puckset_id - a varchar used to identify pucks in rapd_data.samples and rapd_data.puck_settings
-
-        """
-
-        self.logger.debug('Database::getSetPuckInfo puckset_id:%s' %str(puckset_id))
-
-        #query for puck_settings
-        try:
-            query1  = 'SELECT A,B,C,D FROM puck_settings WHERE puckset_id="%s"' % (str(puckset_id))
-            request_dict = self.make_dicts(query1, ())[0]
-        except:
-            request_dict = False
-
-        #see if we have a request
-        return(request_dict)
-
-    def getPuckInfo(self,puckid):
-        """
-        Return the CrystalIDs for a given puckid in ascending order.
-
-        puckid - a varchar used to identify pucks in rapd_data.samples and rapd_data.puck_settings
-
-        """
-        self.logger.debug('Database::getPuckInfo puckid:%s' %str(puckid))
-        try:
-            query1  = 'SELECT sample, CrystalID, PuckID FROM samples WHERE PuckID="%s" ORDER BY sample' % (str(puckid))
-            request_dict = self.make_dicts(query1, ())
-            #force the dictionary to be sorted
-            if len(request_dict) < 16:
-                temp_dict = []
-                for i in range(1,17):
-                    temp_dict.append({'sample': i, 'CrystalID': 'NULL', 'PuckID': puckid})
-                for entry in request_dict:
-                    temp_dict[entry['sample']-1] = entry
-                request_dict = temp_dict
-            request_dict.sort(key=operator.itemgetter('sample'))
-
-        except:
-            request_dict = False
-
-        #see if we have a request
-        return(request_dict)
-
-    def getAllPucks(self,puck_cutoff):
-        """
-        Return a list of all available pucks for CONSOLE.  Limited by a cutoff date.
-
-        puck_cutoff - a variable describing the cutoff date in MYSQL format.
-        """
-        self.logger.debug('Database::getAllPucks after %s' % (puck_cutoff))
-
-        #query for list of pucks
-        try:
-            query1  = 'SELECT PuckID FROM samples WHERE timestamp>"%s" GROUP BY PuckID' % (puck_cutoff)
-            request_dict = self.make_dicts(query1, ())
-        except:
-            request_dict = False
-         #see if we have a request
-        return(request_dict)
-
-    def getCurrentPucks(self, site_id="C"):
-        """
-        Return a list of all currently selected pucks for a site.
-
-        """
-        self.logger.debug('Database::getCurrentPucks for %s' % (site_id))
-
-        #query for list of pucks
-        try:
-            #connect to the mysql server
-            connection,cursor = self.get_db_connection()
-            query  = "SELECT puckset_id FROM current WHERE site=%s" % (site_id)
-            cursor.execute(query, site_id)
-            puckset_id = cursor.fetchone()[0]
-            if puckset_id == 0:
-                request_dict = False
-            else:
-                request_dict = self.getSetPuckInfo(puckset_id)
-        except:
-            request_dict = False
-
-        self.close_connection(connection, cursor)
-
-        #see if we have a request
-        return(request_dict)
-
-    def resetPucks(self, site_id="C"):
-        """
-        Reset the puckset to none for a given site_id.
-        """
-
-        self.logger.debug("resetPucks")
-
-        try:
-            #connect to the mysql server
-            connection,cursor = self.get_db_connection()
-            query = "UPDATE current SET puckset_id=0 WHERE site=%s"
-            cursor.execute(query, (site_id, ))
-            self.close_connection(connection, cursor)
-        except:
-            self.logger.exception("Error in resetPucks")
+    # def resetPucks(self, site_id="C"):
+    #     """
+    #     Reset the puckset to none for a given site_id.
+    #     """
+    #
+    #     self.logger.debug("resetPucks")
+    #
+    #     try:
+    #         #connect to the mysql server
+    #         connection,cursor = self.get_db_connection()
+    #         query = "UPDATE current SET puckset_id=0 WHERE site=%s"
+    #         cursor.execute(query, (site_id, ))
+    #         self.close_connection(connection, cursor)
+    #     except:
+    #         self.logger.exception("Error in resetPucks")
 
 
 
@@ -1173,34 +834,25 @@ class Database(object):
         display -- display state of this process (default = show)
         """
 
-        self.logger.debug("%s %s %s %s %s", agent_type, request_type, representation, progress, display)
+        self.logger.debug("%s %s %s %s %s",
+                          agent_type,
+                          request_type,
+                          representation,
+                          progress,
+                          display)
 
         # Connect to the database
-        connection, cursor = self.get_db_connection()
+        db = self.get_db_connection()
 
-        # Construct the query
-        query = """INSERT INTO agent_processes (agent_type,
-                                                display,
-                                                status,
-                                                representation,
-                                                request_type) VALUES (%s,
-                                                                      %s,
-                                                                      %s,
-                                                                      %s,
-                                                                      %s)"""
-        insert_values = (agent_type, display, status, representation, request_type)
+        # Insert into db
+        result = db.agent_processes.insert_one({"agent_type":agent_type,
+                                                "display":display,
+                                                "status":status,
+                                                "representation":representation,
+                                                "request_type":request_type,
+                                                "timestamp":datetime.datetime.utcnow()})
 
-        # Commit to the database
-        cursor.execute(query, insert_values)
-
-        # Get the process_id for the inserted process
-        process_id = cursor.lastrowid
-
-        # Close the connection
-        self.close_connection(connection, cursor)
-
-        # Return the process id
-        return process_id
+        return result.inserted_id
 
     def update_agent_process(self,
                              agent_process_id,
@@ -1218,83 +870,76 @@ class Database(object):
         """
 
         # Connect to the database
-        connection, cursor = self.get_db_connection()
+        db = self.get_db_connection()
 
-        # Construct the query
-        query = "UPDATE agent_processes SET "
-        update_values = []
-
+        # Construct the values to be updated
+        set_dict = {"timestamp":datetime.datetime.utcnow()}
         if status:
-            query += "status=%s, "
-            update_values.append(status)
+            set_dict["status"] = status
 
         if display:
-            query += "display=%s "
-            update_values.append(display)
+            set_dict["display"] = display
 
-        query += "WHERE agent_process_id=%s"
-        update_values.append(agent_process_id)
-
-        # Commit to the database
-        cursor.execute(query, update_values)
+        db.agent_processes.update({"_id":agent_process_id},
+                                  {"$set":set_dict})
 
         return True
 
-    def addNewProcess(self, type, rtype, data_root_dir, repr, display='show'):
-        """
-        Add an entry to the processes table which enables the GUI to display current processes
-
-        type - sad,
-        rtype - reprocess or original
-        data_root_dir -
-        repr - representation of the run to be shown in the UI
-        display - show,hide  - controls whether a process will be displayed in the UI
-        """
-
-        self.logger.debug('Database::addNewProcess %s %s %s %s %s' % (type,rtype,data_root_dir,repr,display))
-
-        try:
-            #connect to the database
-            connection,cursor = self.get_db_connection()
-
-            #the query
-            query         = 'INSERT INTO processes (type,rtype,data_root_dir,repr,display) VALUES (%s,%s,%s,%s,%s)'
-            insert_values = [type,rtype,data_root_dir,repr,display]
-
-            #deposit the result
-            self.logger.debug(query)
-            self.logger.debug(insert_values)
-            cursor.execute(query,insert_values)
-
-            #now get the process_id for the inserted process
-            process_id = cursor.lastrowid
-            self.close_connection(connection, cursor)
-            return(process_id)
-
-        except:
-            self.logger.exception('ERROR : unknown exception in Database::addNewProcess')
-            self.close_connection(connection, cursor)
-            return(False)
-
-    def modifyProcessDisplay(self,process_id,display_value):
-        """
-        Modify display property of an entry in processes to value
-        """
-        self.logger.debug('Database::modifyProcessDisplay %d  %s' % (process_id,display_value))
-
-        try:
-            #get cursor
-            connection,cursor = self.get_db_connection()
-
-            #change the line
-            cursor.execute("UPDATE processes SET display=%s, timestamp2=NOW() WHERE process_id=%s",(display_value,process_id))
-            self.close_connection(connection, cursor)
-            return(True)
-
-        except:
-            self.logger.exception('ERROR : unknown exception in Database::modifyProcessDisplay')
-            self.close_connection(connection, cursor)
-            return(False)
+    # def addNewProcess(self, type, rtype, data_root_dir, repr, display='show'):
+    #     """
+    #     Add an entry to the processes table which enables the GUI to display current processes
+    #
+    #     type - sad,
+    #     rtype - reprocess or original
+    #     data_root_dir -
+    #     repr - representation of the run to be shown in the UI
+    #     display - show,hide  - controls whether a process will be displayed in the UI
+    #     """
+    #
+    #     self.logger.debug('Database::addNewProcess %s %s %s %s %s' % (type,rtype,data_root_dir,repr,display))
+    #
+    #     try:
+    #         #connect to the database
+    #         connection,cursor = self.get_db_connection()
+    #
+    #         #the query
+    #         query         = 'INSERT INTO processes (type,rtype,data_root_dir,repr,display) VALUES (%s,%s,%s,%s,%s)'
+    #         insert_values = [type,rtype,data_root_dir,repr,display]
+    #
+    #         #deposit the result
+    #         self.logger.debug(query)
+    #         self.logger.debug(insert_values)
+    #         cursor.execute(query,insert_values)
+    #
+    #         #now get the process_id for the inserted process
+    #         process_id = cursor.lastrowid
+    #         self.close_connection(connection, cursor)
+    #         return(process_id)
+    #
+    #     except:
+    #         self.logger.exception('ERROR : unknown exception in Database::addNewProcess')
+    #         self.close_connection(connection, cursor)
+    #         return(False)
+    #
+    # def modifyProcessDisplay(self,process_id,display_value):
+    #     """
+    #     Modify display property of an entry in processes to value
+    #     """
+    #     self.logger.debug('Database::modifyProcessDisplay %d  %s' % (process_id,display_value))
+    #
+    #     try:
+    #         #get cursor
+    #         connection,cursor = self.get_db_connection()
+    #
+    #         #change the line
+    #         cursor.execute("UPDATE processes SET display=%s, timestamp2=NOW() WHERE process_id=%s",(display_value,process_id))
+    #         self.close_connection(connection, cursor)
+    #         return(True)
+    #
+    #     except:
+    #         self.logger.exception('ERROR : unknown exception in Database::modifyProcessDisplay')
+    #         self.close_connection(connection, cursor)
+    #         return(False)
 
     ############################################################################
     # Functions for results                                                    #
@@ -6260,64 +5905,48 @@ class Database(object):
 
         self.logger.debug("run_data:%s minutes:%d", run_data, minutes)
 
+        # Get connection to database
+        db = self.get_db_connection()
+
         # Order
         if order == "descending":
-            order_param = "DESC"
+            order_param = -1
         elif order == "ascending":
-            order_param = "ASC"
+            order_param = 1
+        elif order=None:
+            order_param = -1
         else:
             raise Exception("get_run_data order argument must be None, ascending, or descending")
 
         # Boolean
         if boolean:
-            select_param = "run_id"
+            projection = {"_id":1}
         else:
-            select_param = "*"
+            projection = {}
 
-        # No limit on the results
-        if minutes == 0:
-            query = "SELECT %s FROM runs WHERE site_tag='%s' AND directory='%s' AND image_prefix='%s' AND run_number=%s AND start_image_number=%s AND number_images=%s"
-            params = (select_param,
-                      run_data.get("site_tag", None),
-                      run_data.get("directory", None),
-                      run_data.get("image_prefix", None),
-                      run_data.get("run_number", None),
-                      run_data.get("start_image_number", None),
-                      run_data.get("number_images", None))
+        # Search parameters
+        query = {"site_tag":run_data.get("site_tag", None),
+                 "directory":run_data.get("directory", None),
+                 "image_prefix":run_data.get("image_prefix", None),
+                 "run_number":run_data.get("run_number", None),
+                 "start_image_number":run_data.get("start_image_number", None),
+                 "number_images":run_data.get("number_images", None)}
 
         # Limit to a time window
-        else:
-            query = "SELECT %s FROM runs WHERE site_tag='%s' AND directory='%s' AND image_prefix='%s' AND run_number=%s AND start_image_number=%s AND number_images=%s AND file_ctime > NOW()-INTERVAL %d MINUTE"
-            params = (select_param,
-                      run_data.get("site_tag", None),
-                      run_data.get("directory", None),
-                      run_data.get("image_prefix", None),
-                      run_data.get("run_number", None),
-                      run_data.get("start_image_number", None),
-                      run_data.get("number_images", None),
-                      minutes)
+        if minutes != 0:
+            time_limit = datetime.datetime.utcnow() - datetime.timedelta(minutes=minutes)
+            query.update({"file_ctime":{"$lt":time_limit}})
 
-        # Sort order
-        if not boolean:
-            query +=  " ORDER BY file_ctime %s"
-            params = params + (order_param,)
-
-        # Convert to string and handle None values
-        query_string = (query % params).replace("=None", " is NULL")
-        # self.logger.debug(query_string)
-
-        # Query the database
-        result_dicts = self.make_dicts(query=query_string,
-                                       json_compatible=True)
+        results = db.runs.find(query, projection).sort("file_ctime", order_param)
 
         # If no return, return a False
-        if len(result_dicts) == 0:
+        if results.count == 0:
             return False
         else:
             if boolean:
                 return True
             else:
-                return result_dicts
+                return results
 
     def query_in_run(self,
                      site_tag,
@@ -6343,126 +5972,103 @@ class Database(object):
         """
 
         # Order
-        if order == "descending":
+        if order in ("descending", None):
             order_param = "DESC"
         elif order == "ascending":
             order_param = "ASC"
         else:
             raise Exception("get_run_data order argument must be None, ascending, or descending")
 
-        # Boolean
-        if boolean:
-            select_param = "run_id"
-        else:
-            select_param = "*"
-
-        # Construct the query
-        # No limit on the results
-        if minutes == 0:
-            query = "SELECT %s FROM runs WHERE directory='%s' AND image_prefix='%s' AND run_number=%s AND start_image_number<=%s AND %s<=number_images+start_image_number+1"
-
-            params = (select_param,
-                      directory,
-                      image_prefix,
-                      run_number,
-                      image_number,
-                      image_number)
+        # Search parameters
+        query = {"site_tag":site_tag,
+                 "directory":directory,
+                 "image_prefix":image_prefix,
+                 "run_number":run_number,
+                 "start_image_number":{"$lte":image_number}}
 
         # Limit to a time window
-        else:
-            query = "SELECT %s FROM runs WHERE directory='%s' AND image_prefix='%s' AND run_number=%s AND start_image_number<=%s AND %s<=number_images+start_image_number+1 AND file_ctime > NOW()-INTERVAL %d MINUTE"
-            params = (select_param,
-                      directory,
-                      image_prefix,
-                      run_number,
-                      image_number,
-                      image_number,
-                      minutes)
+        if minutes != 0:
+            time_limit = datetime.datetime.utcnow() - datetime.timedelta(minutes=minutes)
+            query.update({"file_ctime":{"$lt":time_limit}})
 
-        # Add sorting
-        if not boolean:
-            query +=  " ORDER BY file_ctime %s"
-            params = params + (order_param,)
+        results = db.runs.find(query).sort("file_ctime", order_param)
 
-        # Turn into a query string and handle None values
-        query_string = (query % params).replace("=None", " is NULL")
-        self.logger.debug(query_string)
-
-        # Query the database
-        result_dicts = self.make_dicts(query=query_string,
-                                       json_compatible=True)
+        filtered_results = []
+        for result in results:
+            if image_number <= (result["start_image_number"]+result["number_images"]+1):
+                filtered_results.append(result)
 
         # If no return, return a False
-        if len(result_dicts) == 0:
+        if len(filtered_results) == 0:
             return False
         else:
             if boolean:
                 return True
             else:
-                return result_dicts
+                return filtered_results
 
-    def getRunIdByInfo(self, run_data):
-        """
-        Return a run_id from data in a dict
-        """
-        self.logger.debug('getRunIdByInfo run_data:%s' % str(run_data))
-
-        if (not run_data.has_key("run_number")):
-            run_data["run_number"] = run_data['image_prefix'].split('_')[-1]
-
-        query = "SELECT * FROM runs WHERE directory=%s AND run_number=%s AND image_prefix=%s AND start=%s AND total=%s"
-        self.logger.debug("SELECT * FROM runs WHERE directory=%s AND run_number=%s AND image_prefix=%s AND start=%s AND total=%s" % (run_data['directory'],run_data['run_number'],run_data['prefix'],run_data['start'],run_data['total']))
-        my_dicts = self.make_dicts(query,(run_data['directory'],run_data['run_number'],run_data['prefix'],run_data['start'],run_data['total']))
-        if (len(my_dicts) > 0):
-            return(my_dicts[0]['run_id'])
-        else:
-            return(False)
-
-    def inRun(self,image_id):
-        """
-        Determine is an image is in a run.
-        Return the run_id if the image is in run, False if not
-        """
-        self.logger.debug('Database::inRun %d' % image_id)
-
-        #get a dict from images table for this image
-        query1 = 'select fullname,directory,image_prefix,run_number,image_number,run_id from images where image_id=%s'
-        image_dict = self.make_dicts(query1,(image_id,))
-
-        if image_dict:
-            image_dict = image_dict[0]
-
-            self.logger.debug('Data retrieved from the mysql database for matching images:')
-            self.logger.debug(image_dict)
-
-            #connect to mysql server
-            connection,cursor = self.get_db_connection()
-
-            #now search the runs table for a compatible run
-            query2 = 'select run_id,total from runs where directory=%s AND image_prefix=%s AND run_number=%s AND %s>=start AND %s<= start+total'
-            params = (image_dict['directory'],image_dict['image_prefix'],image_dict['run_number'],image_dict['image_number'],image_dict['image_number'])
-            self.logger.debug(query2%params)
-            cursor.execute(query2,params)
-
-            try:
-                run_id,total = cursor.fetchone()
-            except:
-                run_id = False
-                total = False
-
-            if run_id:
-                #self.logger.debug('%s is in a run\n' % image_dict['fullname'])
-                #mark the image with the run_id
-                cursor.execute("UPDATE images SET run_id=%s WHERE image_id=%s",(run_id,image_id))
-                self.close_connection(connection, cursor)
-                #return True
-                return(run_id,total)
-            else:
-                self.logger.debug('%s is NOT in a run\n' % image_dict['fullname'])
-                self.close_connection(connection, cursor)
-                return(False,False)
-        else:
-            return(False,False)
+    # def getRunIdByInfo(self, run_data):
+    #     """
+    #     Return a run_id from data in a dict
+    #     """
+    #     self.logger.debug('getRunIdByInfo run_data:%s' % str(run_data))
+    #
+    #     if (not run_data.has_key("run_number")):
+    #         run_data["run_number"] = run_data['image_prefix'].split('_')[-1]
+    #
+    #     query = "SELECT * FROM runs WHERE directory=%s AND run_number=%s AND image_prefix=%s AND start=%s AND total=%s"
+    #     self.logger.debug("SELECT * FROM runs WHERE directory=%s AND run_number=%s AND image_prefix=%s AND start=%s AND total=%s" % (run_data['directory'],run_data['run_number'],run_data['prefix'],run_data['start'],run_data['total']))
+    #     my_dicts = self.make_dicts(query,(run_data['directory'],run_data['run_number'],run_data['prefix'],run_data['start'],run_data['total']))
+    #     if (len(my_dicts) > 0):
+    #         return(my_dicts[0]['run_id'])
+    #     else:
+    #         return(False)
+    #
+    # def inRun(self,image_id):
+    #     """
+    #     Determine is an image is in a run.
+    #     Return the run_id if the image is in run, False if not
+    #     """
+    #     self.logger.debug('Database::inRun %d' % image_id)
+    #
+    #     #get a dict from images table for this image
+    #     query1 = 'select fullname,directory,image_prefix,run_number,image_number,run_id from images where image_id=%s'
+    #     image_dict = self.make_dicts(query1,(image_id,))
+    #
+    #     if image_dict:
+    #         image_dict = image_dict[0]
+    #
+    #         self.logger.debug('Data retrieved from the mysql database for matching images:')
+    #         self.logger.debug(image_dict)
+    #
+    #         #connect to mysql server
+    #         connection,cursor = self.get_db_connection()
+    #
+    #         #now search the runs table for a compatible run
+    #         query2 = 'select run_id,total from runs where directory=%s AND image_prefix=%s AND run_number=%s AND %s>=start AND %s<= start+total'
+    #         params = (image_dict['directory'],image_dict['image_prefix'],image_dict['run_number'],image_dict['image_number'],image_dict['image_number'])
+    #         self.logger.debug(query2%params)
+    #         cursor.execute(query2,params)
+    #
+    #         try:
+    #             run_id,total = cursor.fetchone()
+    #         except:
+    #             run_id = False
+    #             total = False
+    #
+    #         if run_id:
+    #             #self.logger.debug('%s is in a run\n' % image_dict['fullname'])
+    #             #mark the image with the run_id
+    #             cursor.execute("UPDATE images SET run_id=%s WHERE image_id=%s",(run_id,image_id))
+    #             self.close_connection(connection, cursor)
+    #             #return True
+    #             return(run_id,total)
+    #         else:
+    #             self.logger.debug('%s is NOT in a run\n' % image_dict['fullname'])
+    #             self.close_connection(connection, cursor)
+    #             return(False,False)
+    #     else:
+    #         return(False,False)
 
     def getRunPosition(self,image_number,run_id):
         """

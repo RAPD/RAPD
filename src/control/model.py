@@ -336,7 +336,7 @@ class Model(object):
                     header["site_tag"] = site_tag
 
                     # Add to the database
-                    db_result = self.database.add_image(header)
+                    db_result = self.database.add_image(data=header, return_dict=False)
 
                     # Send to be processed
                     self.new_data_image(header=header)
@@ -374,7 +374,7 @@ class Model(object):
                 header.update(site_data)
 
             # Add to database
-            db_result = self.database.add_image(header)
+            db_result = self.database.add_image(data=header, return_dict=True)
 
             # Duplicate entry
             if db_result == False:
