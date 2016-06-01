@@ -37,12 +37,13 @@ sudo docker run --name mariadb -v /home/schuerjp/data:/var/lib/mysql -p 3306:330
 import datetime
 import json
 import logging
-import operator
 import os
 import threading
 
+from bson.objectid import ObjectId
 import numpy
 import pymongo
+
 
 CONNECTION_ATTEMPTS = 30
 
@@ -871,6 +872,9 @@ class Database(object):
 
         # Connect to the database
         db = self.get_db_connection()
+
+        # Make sure the agent_process_id is an ObjectId
+        agent_process_id = ObjectId(str(agent_process_id))
 
         # Construct the values to be updated
         set_dict = {"timestamp":datetime.datetime.utcnow()}

@@ -290,7 +290,7 @@ class Model(object):
 
         # Run autoindex and strategy agent
         LaunchAction(command={"command":"ECHO",
-                              "process":{"agent_process_id":agent_process_id},
+                              "process":{"agent_process_id":str(agent_process_id)},
                               "return_address":self.return_address},
                      launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
                      settings=None)
