@@ -36,7 +36,9 @@ def load_module(seek_module, directories=False, logger=False):
 
     Keyword arguments
     seek_module -- the module to find and import
-    directories -- iterable of directories to query
+    directories -- iterable or string of directories to query (default = False)
+                   Should be in dot format relative to the src directory
+                   (ex. launch.launcher_adapters)
     """
     if logger:
         logger.debug("seek_module %s", seek_module)
@@ -45,6 +47,11 @@ def load_module(seek_module, directories=False, logger=False):
     # # Agent we are looking for
     # seek_module = "rapd_agent_%s" % command.lower()
     module = None
+
+    # Wrap the directories as a string into an iterable
+    if directories:
+        if isinstance(directories, str):
+            directories = (directories,)
 
     # Look for rapd agents in the specified directories
     if directories:

@@ -193,14 +193,18 @@ class Model(object):
         if site.DETECTOR:
             detector, suffix = site.DETECTOR
             detector = detector.lower()
-            self.detectors[self.site_ids[0].upper()] = load_module(detector, ("sites.detectors", "detectors"))
+            self.detectors[self.site_ids[0].upper()] = load_module(
+                seek_module=detector,
+                directories=("sites.detectors", "detectors"))
 
         # Multiple detectors
         elif site.DETECTORS:
             for site_id in self.site_ids:
                 detector, suffix = site.DETECTORS[site_id]
                 detector = detector.lower()
-                self.detectors[site_id.upper()] = load_module(detector, ("sites.detectors", "detectors"))
+                self.detectors[site_id.upper()] = load_module(
+                    seek_module=detector,
+                    directories=("sites.detectors", "detectors"))
 
     def start_image_monitor(self):
         """Start up the image listening process for core"""
