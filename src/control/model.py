@@ -288,10 +288,6 @@ class Model(object):
                                                            status=1,
                                                            display="hide")
 
-        # Add the ID entry to the header dict
-        header.update({"agent_process_id":agent_process_id,
-                       "repr":new_repr})
-
         # Run autoindex and strategy agent
         LaunchAction(command={"command":"ECHO",
                               "process":{"agent_process_id":agent_process_id},
