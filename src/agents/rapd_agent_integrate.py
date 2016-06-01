@@ -813,6 +813,7 @@ class RapdAgent(Process):
             file_template = os.path.join(self.data['directory'], self.image_template)
             self.last_image = file_template.replace('???','%03d' %last_frame)
             self.first_image = file_template.replace('???','%03d' %int(self.data['start']))
+            
             if self.ram_use == True:
                 file_template = os.path.join('/dev/shm/',
                                              self.data['prefix'],
@@ -929,7 +930,7 @@ class RapdAgent(Process):
 
         # Rayonix 300hs.
         elif detector_type == 'rayonix_mx300hs':
-            detector_type = 'MARCCD'
+            detector_type = 'MAR345'
             x_beam = float(self.data['x_beam']) / float(self.data['pixel_size'])
             y_beam = float(self.data['y_beam']) / float(self.data['pixel_size'])
             if x_beam < 0 or x_beam > int(self.data['size1']):
@@ -2186,7 +2187,8 @@ class RapdAgent(Process):
         analysis_dir = os.path.join(dir, 'analysis')
         if os.path.isdir(analysis_dir) == False:
             os.mkdir(analysis_dir)
-        run_dict = {'fullname'  : self.first_image,
+        run_dict = {'fullname'  : self.data['fullname'],
+        #           'fullname'  : self.first_image
                     'total'     : self.data['total'],
                     'osc_range' : self.data['osc_range'],
                     'x_beam'    : self.data['x_beam'],
