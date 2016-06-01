@@ -5913,7 +5913,7 @@ class Database(object):
             order_param = -1
         elif order == "ascending":
             order_param = 1
-        elif order=None:
+        elif order == None:
             order_param = -1
         else:
             raise Exception("get_run_data order argument must be None, ascending, or descending")
