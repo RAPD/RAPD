@@ -929,7 +929,7 @@ class RapdAgent(Process):
 
         # Rayonix 300hs.
         elif detector_type == 'rayonix_mx300hs':
-            detector_type = 'MARCCD'
+            detector_type = 'MAR345'
             x_beam = float(self.data['x_beam']) / float(self.data['pixel_size'])
             y_beam = float(self.data['y_beam']) / float(self.data['pixel_size'])
             if x_beam < 0 or x_beam > int(self.data['size1']):
