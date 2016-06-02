@@ -46,6 +46,7 @@ def read_secrets(secrets_file, target):
         secrets = importlib.import_module(secrets_file)
     except ImportError:
         print "ERROR - unable to import %s" % secrets_file
+        sys.exit(9)
 
     copy_attrs(secrets, target)
 
