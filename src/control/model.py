@@ -859,7 +859,7 @@ class Model(object):
         # Update the agent_process in the DB
         self.database.update_agent_process(
             agent_process_id=message["process"].get("agent_process_id", None),
-            status=mess'age["process"].get("status", 1))
+            status=message["process"].get("status", 1))
 
         # Save the results for the agent
         if message.get("results", False):
