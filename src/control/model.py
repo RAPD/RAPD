@@ -281,16 +281,20 @@ class Model(object):
     def send_echo(self):
         """Send a test echo request to Launch"""
 
+        # Construct a working directory and repr
+        work_dir, new_repr = self.get_work_dir(type_level="echo")
+
         # Add the process to the database to display as in-process
         agent_process_id = self.database.add_agent_process(agent_type="echo",
                                                            request_type="original",
-                                                           representation="echo",
+                                                           representation=new_repr,
                                                            status=1,
                                                            display="hide")
 
         # Run autoindex and strategy agent
         LaunchAction(command={"command":"ECHO",
                               "process":{"agent_process_id":str(agent_process_id)},
+                              "directories":{"work":work_dir},
                               "return_address":self.return_address},
                      launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
                      settings=None)
@@ -815,6 +819,9 @@ class Model(object):
 
         elif type_level == "integrate":
             sub_dir = "%s" % image_data1["image_prefix"]
+
+        else:
+            sub_dir = type_level
 
         # Use the last leg of the directory as the repr
         new_repr = sub_dir

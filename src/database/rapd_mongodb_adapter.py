@@ -5771,7 +5771,7 @@ class Database(object):
 
         return(trip_dict)
 
-    def getTripsByUser(self,username):
+    def getTripsByUser(self, username):
         """
         Determine if the given username has any assigned trips
         Returns a list of trips details in dicts, False if no matching trips
@@ -5787,7 +5787,6 @@ class Database(object):
             trip_dict = False
 
         return(trip_dict)
-
 
 
     ############################################################################
