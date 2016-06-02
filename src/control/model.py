@@ -663,12 +663,22 @@ class Model(object):
                            "data_root_dir":data_root_dir,
                            "agent_directories":self.site.RAPD_AGENT_DIRECTORIES}
 
+            # Is the session information figured out by the image file name
+            if site.SESSION_METHOD == "image_file":
+                session_id = self.database.get_session_id(data_root_dir=data_root_dir,
+                                                          group=header["rapd_group"],
+                                                          session_name=header["rapd_session_name"])
+
+            else:
+                session_id = None
+
             # Add the process to the database to display as in-process
             agent_process_id = self.database.add_agent_process(agent_type="index+strategy:single",
                                                                request_type="original",
                                                                representation=new_repr,
                                                                status=1,
-                                                               display="show")
+                                                               display="show",
+                                                               session_id=session_id)
 
             # Add the ID entry to the header dict
             header.update({"agent_process_id":agent_process_id,
@@ -849,7 +859,7 @@ class Model(object):
         # Update the agent_process in the DB
         self.database.update_agent_process(
             agent_process_id=message["process"].get("agent_process_id", None),
-            status=message["process"].get("status", 1))
+            status=mess'age["process"].get("status", 1))
 
         # Save the results for the agent
         if message.get("results", False):

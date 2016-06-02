@@ -99,7 +99,7 @@ class Database(object):
         self.LOCK = threading.Lock()
 
     ############################################################################
-    #Functions for connecting to the database                                  #
+    # Functions for connecting to the database                                 #
     ############################################################################
     def get_db_connection(self):
         """
@@ -118,6 +118,16 @@ class Database(object):
         db = self.client.rapd
 
         return db
+
+    ############################################################################
+    # Functions for sessions & users                                           #
+    ############################################################################
+    def get_session_id(self, data_root_dir=None, group=None, session_name=None):
+        """
+
+        """
+        pass
+
 
     ############################################################################
     # Functions for images                                                     #
@@ -143,32 +153,11 @@ class Database(object):
         else:
             return result.inserted_id
 
-    # def updateImageCBC(self,image_id,cbcx,cbcy):
-    #     """
-    #     Updates the calc_beam_center_x/y for a given image_id.
-    #
-    #     image_id - an int that indexes the rapd_data.images table
-    #     cbcx - float of the X beam center in mm
-    #     cbcy - float of the Y beam center in mm
-    #
-    #     """
-    #
-    #     self.logger.debug('Database::updateImageCBC image_id: %d, cbcx: %d, cbcy: %d' % (image_id,cbcx,cbcy))
-    #     connection,cursor = self.get_db_connection()
-    #
-    #     try:
-    #         cursor.execute('UPDATE images set calc_beam_center_x=%s, calc_beam_center_y=%s WHERE image_id=%s',(cbcx,cbcy,image_id))
-    #         self.close_connection(connection, cursor)
-    #         return(True)
-    #     except:
-    #         self.logger.exception('Exception in updating calculated beam center values in database')
-    #         self.close_connection(connection, cursor)
-
     def get_image_by_image_id(self, image_id):
         """
         Returns a dict from the database when queried with image_id.
 
-        image_id - an int that indexes the rapd_data.images table
+        image_id - the _id for the images collection. May be a string or ObjectId
         """
 
         self.logger.debug(image_id)
@@ -177,28 +166,7 @@ class Database(object):
         db = self.get_db_connection()
 
         # Query and return
-        return db.find_one({"_id":result.image_id})
-
-    # def getImageIDByFullname(self, fullname):
-    #     """
-    #     Returns an image_id given a fullname.
-    #
-    #     fullname - the image name including full path
-    #
-    #     """
-    #
-    #     if self.logger:
-    #       self.logger.debug('Database::getImageIDByFullname %s' % fullname)
-    #     else:
-    #       print 'Database::getImageIDByFullname %s' % fullname
-    #
-    #     try:
-    #         query1 = 'SELECT image_id FROM images WHERE fullname=%s LIMIT 1'
-    #         image_dict = self.make_dicts(query=query1, params=(fullname,))[0]
-    #         return(image_dict['image_id'])
-    #
-    #     except:
-    #         return(0)
+        return db.find_one({"_id":ObjectId(str(image_id))})
 
 
     ##################################################################################################################
@@ -1023,3272 +991,3283 @@ class Database(object):
         agent_result["timestamp"] = datetime.datetime.utcnow()
 
         # Add to results
-        result = db.agent_results.update({"process.agent_process_id":agent_result["process"]["agent_process_id"]},
-                                         {"$set":agent_result},
-                                         upsert=True)
+        result = db.agent_results.update(
+            {"process.agent_process_id":agent_result["process"]["agent_process_id"]},
+            {"$set":agent_result},
+            upsert=True)
 
         self.logger.debug(result)
 
-    def addSingleResult(self,dirs,info,settings,results):
-        """
-        Add data to the single_results table
-        """
-        #Put out some info to the logger
-        self.logger.debug('Database::addSingleResult')
-        self.logger.debug(dirs['data_root_dir'])
-        self.logger.debug(os.path.basename(info['fullname']))
-        self.logger.debug(info['fullname'])
-        # self.logger.debug(info['adsc_number'])
-
-        #Get a nuanced version of the type of single result this is
-        if (settings['reference_data_id'] > 0):
-            my_type = 'ref_strat'
-        elif settings.has_key('request'):
-            my_type = settings['request']['request_type']
+        # Work out the _id for the result
+        # update
+        if result.get("updatedExisting", True):
+            return str(db.agent_results.find_one(
+                {"process.agent_process_id":agent_result["process"]["agent_process_id"]},
+                {"_id":1})["_id"])
+        # upsert
         else:
-            my_type ='original'
-
-        #set up some variables for the logic (so-called)
-        norm_strat_type = None
-        anom_strat_type = None
-
-        try:
-            #connect to the database
-            connection,cursor = self.get_db_connection()
-
-            #regardless of failure level
-            command_front = """INSERT INTO single_results ( process_id,
-                                                       data_root_dir,
-                                                       settings_id,
-                                                       repr,
-                                                       fullname,
-                                                       image_id,
-                                                    #    adsc_number,
-                                                       date,
-                                                       sample_id,
-                                                       work_dir,
-                                                       type"""
-
-            command_back = """) VALUES ( %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                # %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s"""
-
-            insert_values = [ info['process_id'],
-                              dirs['data_root_dir'],
-                              settings['setting_id'],
-                              info['repr'],
-                              info['fullname'],
-                              info['image_id'],
-                            #   info['adsc_number'],
-                              info['date'],
-                              info['sample_id'],
-                              dirs['work'],
-                              my_type]
-
-            #DISTL
-            try:
-                if results['Distl results'] == 'FAILED':
-                    command_front += """,
-                                           distl_status"""
-
-                    command_back += """,
-                                           %s"""
-
-                    insert_values.append("FAILED")
-
-                else:
-                    if (results['Distl results']['max cell'][0] == 'None'):
-                        results['Distl results']['max cell'][0] = 0
-                    tmp_command_front = """,
-                                                       distl_status,
-                                                       distl_res,
-                                                       distl_labelit_res,
-                                                       distl_ice_rings,
-                                                       distl_total_spots,
-                                                       distl_spots_in_res,
-                                                       distl_good_bragg_spots,
-                                                       distl_overloads,
-                                                       distl_max_cell,
-                                                       distl_mean_int_signal,
-                                                       distl_min_signal_strength,
-                                                       distl_max_signal_strength"""
-
-                    tmp_command_back = """,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s"""
-
-                    tmp_insert_values = ['SUCCESS',
-                                      results['Distl results']['distl res'][0],
-                                      results['Distl results']['labelit res'][0],
-                                      results['Distl results']['ice rings'][0],
-                                      results['Distl results']['total spots'][0],
-                                      results['Distl results']['spots in res'][0],
-                                      results['Distl results']['good Bragg spots'][0],
-                                      results['Distl results']['overloads'][0],
-                                      results['Distl results']['max cell'][0],
-                                      results['Distl results']['mean int signal'][0],
-                                      results['Distl results']['min signal strength'][0],
-                                      results['Distl results']['max signal strength'][0]]
-
-                    #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                    command_front += tmp_command_front
-                    command_back  += tmp_command_back
-                    insert_values += tmp_insert_values
-            except:
-                command_front += """,
-                                                       distl_status"""
-
-                command_back += """,
-                                                                %s"""
-
-                insert_values.append("FAILED")
-
-            #LABELIT
-            try:
-                if results['Labelit results'] == 'FAILED':
-                    command_front += """,
-                                                       labelit_status"""
-
-                    command_back += """,
-                                                                %s"""
-
-                    insert_values.append("FAILED")
-
-                else:
-                    tmp_command_front = """,
-                                                       labelit_status,
-                                                       labelit_iteration,
-                                                       labelit_res,
-                                                       labelit_spots_fit,
-                                                       labelit_metric,
-                                                       labelit_spacegroup,
-                                                       labelit_distance,
-                                                       labelit_x_beam,
-                                                       labelit_y_beam,
-                                                       labelit_a,
-                                                       labelit_b,
-                                                       labelit_c,
-                                                       labelit_alpha,
-                                                       labelit_beta,
-                                                       labelit_gamma,
-                                                       labelit_mosaicity,
-                                                       labelit_rmsd"""
-
-                    tmp_command_back = """,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s"""
-
-                    tmp_insert_values = ['SUCCESS',
-                                      results['Labelit results']['labelit_iteration'],
-                                      results['Labelit results']['mosflm_res'][0],
-                                      results['Labelit results']['labelit_spots_fit'][0],
-                                      results['Labelit results']['labelit_metric'][0],
-                                      results['Labelit results']['mosflm_sg'][0],
-                                      results['Labelit results']['mosflm_distance'][0],
-                                      results['Labelit results']['mosflm_beam_x'][0],
-                                      results['Labelit results']['mosflm_beam_y'][0],
-                                      results['Labelit results']['labelit_cell'][0][0],
-                                      results['Labelit results']['labelit_cell'][0][1],
-                                      results['Labelit results']['labelit_cell'][0][2],
-                                      results['Labelit results']['labelit_cell'][0][3],
-                                      results['Labelit results']['labelit_cell'][0][4],
-                                      results['Labelit results']['labelit_cell'][0][5],
-                                      results['Labelit results']['mosflm_mos'][0],
-                                      results['Labelit results']['labelit_rmsd'][0]]
-
-                    #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                    command_front += tmp_command_front
-                    command_back  += tmp_command_back
-                    insert_values += tmp_insert_values
-
-            except:
-                command_front += """,
-                                                       labelit_status"""
-
-                command_back += """,
-                                                                %s"""
-
-                insert_values.append("FAILED")
-
-
-            #RADDOSE
-            try:
-                if results['Raddose results'] == 'FAILED':
-                    command_front += """,
-                                                       raddose_status"""
-
-                    command_back += """,
-                                                                %s"""
-
-                    insert_values.append("FAILED")
-
-                else:
-                    tmp_command_front = """,
-                                                       raddose_status,
-                                                       raddose_dose_per_image,
-                                                       raddose_henderson_limit,
-                                                       raddose_exp_dose_limit"""
-
-                    tmp_command_back = """,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s"""
-
-                    tmp_insert_values = ['SUCCESS',
-                                      results['Raddose results']['dose per image'],
-                                      results['Raddose results']['henderson limit'],
-                                      results['Raddose results']['exp dose limit']]
-
-                    #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                    command_front += tmp_command_front
-                    command_back  += tmp_command_back
-                    insert_values += tmp_insert_values
-
-            except:
-                command_front += """,
-                                                       raddose_status"""
-
-                command_back += """,
-                                                                %s"""
-
-                insert_values.append("FAILED")
-
-
-            #The normal strategy results
-            enter_norm_mosflm = False
-            try:
-                if results.has_key('Best results'):
-                #if results['Best results']:
-                    self.logger.debug('Best results is there')
-                    if results['Best results'] == 'FAILED':
-                        tmp_command_front = """,
-                                                           best_norm_status"""
-
-                        tmp_command_back = """,
-                                                                    %s"""
-
-                        tmp_insert_values = ["FAILED"]
-
-                        #MOSFLM STRATEGY
-                        if results['Mosflm strategy results'] == 'FAILED':
-                            tmp_command_front += """,
-                                                           mosflm_norm_status"""
-
-                            tmp_command_back += """,
-                                                                    %s"""
-
-                            tmp_insert_values.append("FAILED")
-                        else:
-                            enter_norm_mosflm = True
-
-                    else:
-                        norm_strat_type = 'best'
-                        tmp_command_front = """,
-                                                       best_complexity,
-                                                       best_norm_status,
-                                                       best_norm_res_limit,
-                                                       best_norm_completeness,
-                                                       best_norm_atten,
-                                                       best_norm_rot_range,
-                                                       best_norm_phi_end,
-                                                       best_norm_total_exp,
-                                                       best_norm_redundancy,
-                                                       best_norm_i_sigi_all,
-                                                       best_norm_i_sigi_high,
-                                                       best_norm_r_all,
-                                                       best_norm_r_high,
-                                                       best_norm_unique_in_blind,
-                                                       mosflm_norm_status"""
-
-                        tmp_command_back = """,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s"""
-
-                        tmp_insert_values = [settings['best_complexity'],
-                                          'SUCCESS',
-                                          results['Best results']['strategy res limit'],
-                                          results['Best results']['strategy completeness'][:-1],
-                                          results['Best results']['strategy attenuation'],
-                                          results['Best results']['strategy rot range'],
-                                          results['Best results']['strategy phi end'],
-                                          results['Best results']['strategy total exposure time'],
-                                          results['Best results']['strategy redundancy'],
-                                          results['Best results']['strategy I/sig'].split(' ')[0],
-                                          results['Best results']['strategy I/sig'].split(' ')[1][1:-1],
-                                          results['Best results']['strategy R-factor'].split(' ')[0][:-1],
-                                          results['Best results']['strategy R-factor'].split(' ')[1][1:-2],
-                                          results['Best results']['strategy frac of unique in blind region'][:-1],
-                                          'NONE' ]
-
-                #There is no entry in the results for 'Best results'
-                else:
-                    self.logger.debug('NO key Best results')
-                    #BEST STRATEGY
-                    tmp_command_front = """,
-                                                           best_norm_status"""
-                    tmp_command_back = """,
-                                                                    %s"""
-                    tmp_insert_values = ["NONE"]
-
-                    #MOSFLM STRATEGY
-                    if results.has_key('Mosflm strategy results'):
-                        if results['Mosflm strategy results'] == 'FAILED':
-                            tmp_command_front += """,
-                                                               mosflm_norm_status"""
-                            tmp_command_back += """,
-                                                                        %s"""
-                            tmp_insert_values.append("FAILED")
-                        else:
-                            enter_norm_mosflm = True
-                    else:
-                        tmp_command_front += """,
-                                                               mosflm_norm_status"""
-                        tmp_command_back += """,
-                                                                        %s"""
-                        tmp_insert_values.append("NONE")
-
-                #If it is necessary, enterthe mosflm strategy results into the database
-                if enter_norm_mosflm:
-                    norm_strat_type = 'mosflm'
-                    tmp_command_front += """,
-                                                           mosflm_norm_status,
-                                                           mosflm_norm_res_limit,
-                                                           mosflm_norm_completeness,
-                                                           mosflm_norm_redundancy,
-                                                           mosflm_norm_distance,
-                                                           mosflm_norm_delta_phi,
-                                                           mosflm_norm_img_exposure_time
-                                                           """
-
-                    tmp_command_back += """,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s"""
-
-                    tmp_insert_values += [ 'SUCCESS',
-                                         results['Mosflm strategy results']['strategy resolution'],
-                                         results['Mosflm strategy results']['strategy completeness'][:-1],
-                                         results['Mosflm strategy results']['strategy redundancy'],
-                                         results['Mosflm strategy results']['strategy distance'],
-                                         results['Mosflm strategy results']['strategy delta phi'],
-                                         results['Mosflm strategy results']['strategy image exp time'] ]
-
-                #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                command_front += tmp_command_front
-                command_back  += tmp_command_back
-                insert_values += tmp_insert_values
-
-            except:
-                self.logger.exception('Exception in addSingleResult in the normal strategy results section')
-                command_front += """,
-                                                       best_norm_status,
-                                                       mosflm_norm_status"""
-
-                command_back += """,
-                                                                %s,
-                                                                %s"""
-
-                insert_values += ['FAILED',
-                                  'FAILED']
-
-            #The anomalous strategy results
-            enter_anom_mosflm = False
-            try:
-                if results.has_key('Best ANOM results'):
-                    self.logger.debug('Best ANOM results present')
-                    if results['Best ANOM results'] == 'FAILED':
-                        tmp_command_front = """,
-                                                           best_anom_status"""
-
-                        tmp_command_back = """,
-                                                                    %s"""
-
-                        tmp_insert_values = ["FAILED"]
-
-                        #MOSFLM STRATEGY
-                        if results['Mosflm strategy results'] == 'FAILED':
-                            command_front += """,
-                                                           mosflm_anom_status"""
-
-                            command_back += """,
-                                                                    %s"""
-
-                            insert_values.append("FAILED")
-                        else:
-                            enter_anom_mosflm = True
-
-                    else:
-                        anom_strat_type = 'best'
-                        tmp_command_front = """,
-                                                       best_anom_status,
-                                                       best_anom_res_limit,
-                                                       best_anom_completeness,
-                                                       best_anom_atten,
-                                                       best_anom_rot_range,
-                                                       best_anom_phi_end,
-                                                       best_anom_total_exp,
-                                                       best_anom_redundancy,
-                                                       best_anom_i_sigi_all,
-                                                       best_anom_i_sigi_high,
-                                                       best_anom_r_all,
-                                                       best_anom_r_high,
-                                                       best_anom_unique_in_blind,
-                                                       mosflm_anom_status"""
-
-                        tmp_command_back = """,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s"""
-
-                        tmp_insert_values = ['SUCCESS',
-                                          results['Best ANOM results']['strategy anom res limit'],
-                                          results['Best ANOM results']['strategy anom completeness'][:-1],
-                                          results['Best ANOM results']['strategy anom attenuation'],
-                                          results['Best ANOM results']['strategy anom rot range'],
-                                          results['Best ANOM results']['strategy anom phi end'],
-                                          results['Best ANOM results']['strategy anom total exposure time'],
-                                          results['Best ANOM results']['strategy anom redundancy'],
-                                          results['Best ANOM results']['strategy anom I/sig'].split(' ')[0],
-                                          results['Best ANOM results']['strategy anom I/sig'].split(' ')[1][1:-1],
-                                          results['Best ANOM results']['strategy anom R-factor'].split(' ')[0][:-1],
-                                          results['Best ANOM results']['strategy anom R-factor'].split(' ')[1][1:-2],
-                                          results['Best ANOM results']['strategy anom frac of unique in blind region'][:-1],
-                                          'NONE' ]
-
-                #There is no entry in the results for 'Best results'
-                else:
-                    self.logger.debug('NO key Best ANOM results')
-                    #BEST STRATEGY
-                    tmp_command_front = """,
-                                                           best_anom_status"""
-                    tmp_command_back = """,
-                                                                    %s"""
-                    tmp_insert_values = ["NONE"]
-
-                    #MOSFLM STRATEGY
-                    if ((results.has_key('Mosflm ANOM strategy results')) and (results['Mosflm ANOM strategy results']['strategy anom run number'] != 'skip')):
-                        self.logger.debug('Has key Mosflm ANOM results')
-                        if results['Mosflm ANOM strategy results'] == 'FAILED':
-                            tmp_command_front += """,
-                                                               mosflm_anom_status"""
-                            tmp_command_back += """,
-                                                                        %s"""
-                            tmp_insert_values.append("FAILED")
-                        else:
-                            enter_anom_mosflm = True
-                    else:
-                        self.logger.debug('NO key Mosflm ANOM results')
-                        tmp_command_front += """,
-                                                               mosflm_anom_status"""
-                        tmp_command_back += """,
-                                                                        %s"""
-                        tmp_insert_values.append("NONE")
-
-                #If it is necessary, enterthe mosflm strategy results into the database
-                if enter_anom_mosflm:
-                    anom_strat_type = 'mosflm'
-                    tmp_command_front = """,
-                                                           mosflm_anom_status,
-                                                           mosflm_anom_res_limit,
-                                                           mosflm_anom_completeness,
-                                                           mosflm_anom_redundancy,
-                                                           mosflm_anom_distance,
-                                                           mosflm_anom_delta_phi,
-                                                           mosflm_anom_img_exposure_time
-                                                           """
-
-                    tmp_command_back = """,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s"""
-
-                    tmp_insert_values = [ 'SUCCESS',
-                                         results['Mosflm ANOM strategy results']['strategy anom resolution'],
-                                         results['Mosflm ANOM strategy results']['strategy anom completeness'][:-1],
-                                         results['Mosflm ANOM strategy results']['strategy anom redundancy'],
-                                         results['Mosflm ANOM strategy results']['strategy anom distance'],
-                                         results['Mosflm ANOM strategy results']['strategy anom delta phi'],
-                                         results['Mosflm ANOM strategy results']['strategy anom image exp time'] ]
-
-                #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                command_front += tmp_command_front
-                command_back  += tmp_command_back
-                insert_values += tmp_insert_values
-
-            except:
-                self.logger.exception('Exception in addSingleResult in the anomalous strategy results section')
-                command_front += """,
-                                                       best_anom_status,
-                                                       mosflm_anom_status"""
-
-                command_back += """,
-                                                                %s,
-                                                                %s"""
-
-                insert_values += ['FAILED',
-                                  'FAILED']
-
-            #NOW the html, image and stac files
-            try:
-                #Add stac summary only if there is a stac run
-                if (info.has_key('mk3_phi')):
-                    summary_stac = results['Output files']['Stac summary html']
-                else:
-                    summary_stac = 'None'
-
-                if results['Output files'] == 'FAILED':
-                        command_back += ")"
-
-
-                else:
-                    tmp_command_front = """,
-                                                       summary_short,
-                                                       summary_long,
-                                                       summary_stac,
-                                                       image_raw,
-                                                       image_preds,
-                                                       best_plots,
-                                                       stac_file1,
-                                                       stac_file2"""
-
-                    tmp_command_back = """,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s,
-                                                                %s)"""
-
-                    tmp_insert_values = [ results['Output files']['Short summary html'],
-                                          results['Output files']['Long summary html'],
-                                          summary_stac,
-                                          results['Output files']['image_path_raw_1'],
-                                          results['Output files']['image_path_pred_1'],
-                                          results['Output files']['Best plots html'],
-                                          results['Output files']['STAC file1'],
-                                          results['Output files']['STAC file2'] ]
-
-                    #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                    command_front += tmp_command_front
-                    command_back  += tmp_command_back
-                    insert_values += tmp_insert_values
-
-            except:
-                command_back += ")"
-
-
-            #deposit the result
-            self.logger.debug(command_front+command_back)
-            self.logger.debug(insert_values)
-            cursor.execute(command_front+command_back,insert_values)
-
-        except:
-            self.logger.exception('ERROR : unknown exception in Database::addSingleResult')
-            return(False)
-
-
-        try:
-            #get the result's pair_result_dict
-            single_result_dict = self.make_dicts('SELECT * FROM single_results WHERE single_result_id=%s',(cursor.lastrowid,))[0]
-
-            #register the result in results table
-            cursor.execute('INSERT INTO results (type,id,setting_id,process_id,sample_id,data_root_dir) VALUES (%s, %s, %s, %s, %s, %s)',
-                                 ('single',
-                                  single_result_dict['single_result_id'],
-                                  single_result_dict['settings_id'],
-                                  single_result_dict['process_id'],
-                                  single_result_dict['sample_id'],
-                                  single_result_dict['data_root_dir']))
-
-            #add the result_id to the current dict
-            single_result_dict['result_id'] = cursor.lastrowid
-
-            #update the single_results table with the result_id
-            cursor.execute("UPDATE single_results SET result_id=%s WHERE single_result_id=%s",(single_result_dict['result_id'],single_result_dict['single_result_id']))
-
-            #log the "normal" strategy wedges
-            if (norm_strat_type == 'best') :
-                self.addStrategyWedges(id = single_result_dict['single_result_id'],
-                                       int_type = 'single',
-                                       strategy_type = 'normal',
-                                       strategy_program = 'best',
-                                       results = results['Best results'])
-            elif (norm_strat_type == 'mosflm') :
-                self.addStrategyWedges(id=single_result_dict['single_result_id'],
-                                       int_type='single',
-                                       strategy_type='normal',
-                                       strategy_program='mosflm',
-                                       results=results['Mosflm strategy results'])
-            #log the anomalous strategy wedges
-            if (anom_strat_type == 'best'):
-                self.addStrategyWedges(id=single_result_dict['single_result_id'],
-                                       int_type='single',
-                                       strategy_type='anomalous',
-                                       strategy_program='best',
-                                       results=results['Best ANOM results'])
-            elif (anom_strat_type == 'mosflm') :
-                self.addStrategyWedges(id = single_result_dict['single_result_id'],
-                                       int_type = 'single',
-                                       strategy_type = 'anomalous',
-                                       strategy_program = 'mosflm',
-                                       results = results['Mosflm ANOM strategy results'])
-            self.close_connection(connection, cursor)
-            return(single_result_dict)
-
-        except:
-            self.logger.exception('ERROR : unknown exception in Database::addSingleResult - results updating subsection')
-            self.close_connection(connection, cursor)
-            return(False)
-
-    def addStrategyWedges(self,id,int_type,strategy_type,strategy_program,results):
-        """
-        Add a strategy wedge entry to the database
-        """
-        self.logger.debug('Database::addStrategyWedges')
-        self.logger.debug(id)
-        self.logger.debug(int_type)
-        self.logger.debug(strategy_type)
-        self.logger.debug(strategy_program)
-        self.logger.debug(results)
-
-        if (results == None):
-            return False
-
-        #accomodate normal and anomalous entries
-        if strategy_type == 'anomalous':
-            tag = 'strategy anom '
-        else:
-            tag = 'strategy '
-
-        #there can be multiple runs depending on various factors
-        for i in range(len(results[tag+'run number'])):
-            try:
-                #connect to the database
-                connection,cursor = self.get_db_connection()
-
-                if (strategy_program == 'best'):
-
-                    cmd = '''INSERT INTO strategy_wedges ( id,
-                                                           int_type,
-                                                           strategy_type,
-                                                           run_number,
-                                                           phi_start,
-                                                           number_images,
-                                                           delta_phi,
-                                                           overlap,
-                                                           distance,
-                                                           exposure_time ) VALUES ( %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s)'''
-                    insert_values = ( id,
-                                      int_type,
-                                      strategy_type,
-                                      results[tag+'run number'][i],
-                                      results[tag+'phi start'][i],
-                                      results[tag+'num of images'][i],
-                                      results[tag+'delta phi'][i],
-                                      results[tag+'overlap'][i],
-                                      results[tag+'distance'][i],
-                                      results[tag+'image exp time'][i] )
-
-                elif (strategy_program == 'mosflm'):
-
-                    cmd = '''INSERT INTO strategy_wedges ( id,
-                                                        int_type,
-                                                        strategy_type,
-                                                        run_number,
-                                                        phi_start,
-                                                        number_images,
-                                                        delta_phi,
-                                                        overlap,
-                                                        distance,
-                                                        exposure_time ) VALUES ( %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s)'''
-                    insert_values = ( id,
-                                      int_type,
-                                      strategy_type,
-                                      results[tag+'run number'][i],
-                                      results[tag+'phi start'][i],
-                                      results[tag+'num of images'][i],
-                                      results[tag+'delta phi'],
-                                      'NULL',
-                                      results[tag+'distance'],
-                                      results[tag+'image exp time'] )
-
-                #output for log
-                self.logger.debug(cmd)
-                self.logger.debug(insert_values)
-
-                #put in the database
-                cursor.execute(cmd,insert_values)
-
-            except:
-                self.logger.exception('ERROR : unknown exception in Database::addStrategyWedges')
-                self.close_connection(connection, cursor)
-                return(False)
-
-        #close connection and return
-        self.close_connection(connection, cursor)
-        return(True)
-
-    def getStrategyWedges(self,id):
-        """
-        Retrieve strategy wedges, given an id (either single_result_id or pair_result_id)
-        """
-        self.logger.debug('Database::getStrategyWedges %s' % str(id))
-
-        #find all solutions for this result
-        query = "SELECT * FROM strategy_wedges WHERE id=%s"
-        request_dict = self.make_dicts(query=query,
-                                      params=(id,))
-
-        return(request_dict)
-
-    def addPairResult(self,dirs,info1,info2,settings,results):
-        """
-        Add data to the pair_results table
-        """
-        self.logger.debug('Database::addPairResult')
-        self.logger.debug(dirs['data_root_dir'])
-        self.logger.debug(info1['fullname'])
-        # self.logger.debug(info1['adsc_number'])
-        self.logger.debug(info2['fullname'])
-        # self.logger.debug(info2['adsc_number'])
-
-        #set the request type
-        if (settings['reference_data_id'] > 0):
-             my_type = 'ref_strat'
-        elif settings.has_key('request'):
-            my_type = settings['request']['request_type']
-        else:
-            my_type ='original'
-
-        norm_strat_type = None
-        anom_strat_type = None
-
-        try:
-            #connect to the database
-            connection,cursor = self.get_db_connection()
-
-            #regardless of failure level
-            command_front = """INSERT INTO pair_results ( process_id,
-                                                       data_root_dir,
-                                                       settings_id,
-                                                       repr,
-                                                       fullname_1,
-                                                       image1_id,
-                                                    #    adsc_number_1,
-                                                       date_1,
-                                                       fullname_2,
-                                                       image2_id,
-                                                    #    adsc_number_2,
-                                                       date_2,
-                                                       sample_id,
-                                                       work_dir,
-                                                       type"""
-
-            command_back = """) VALUES ( %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            # %s,
-                                                                            # %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s"""
-
-            insert_values = [info1['process_id'],
-                             dirs['data_root_dir'],
-                             settings['setting_id'],
-                             info1['repr'],
-                             info1['fullname'],
-                             info1['image_id'],
-                            #  info1['adsc_number'],
-                             info1['date'],
-                             info2['fullname'],
-                             info2['image_id'],
-                            #  info2['adsc_number'],
-                             info2['date'],
-                             info1['sample_id'],
-                             dirs['work'],
-                             my_type]
-
-            #DISTL
-            try:
-                if results['Distl results'] == 'FAILED':
-                    command_front += """,
-                                                       distl_status"""
-
-                    command_back += """,
-                                                                            %s"""
-
-                    insert_values.append("FAILED")
-
-                else:
-                    if (results['Distl results']['max cell'][0] == 'None'):
-                        results['Distl results']['max cell'][0] = 0
-                    if (results['Distl results']['max cell'][1] == 'None'):
-                        results['Distl results']['max cell'][1] = 0
-
-                    tmp_command_front = """,
-                                                       distl_status,
-                                                       distl_res_1,
-                                                       distl_labelit_res_1,
-                                                       distl_ice_rings_1,
-                                                       distl_total_spots_1,
-                                                       distl_spots_in_res_1,
-                                                       distl_good_bragg_spots_1,
-                                                       distl_overloads_1,
-                                                       distl_max_cell_1,
-                                                       distl_mean_int_signal_1,
-                                                       distl_min_signal_strength_1,
-                                                       distl_max_signal_strength_1,
-                                                       distl_res_2,
-                                                       distl_labelit_res_2,
-                                                       distl_ice_rings_2,
-                                                       distl_total_spots_2,
-                                                       distl_spots_in_res_2,
-                                                       distl_good_bragg_spots_2,
-                                                       distl_overloads_2,
-                                                       distl_max_cell_2,
-                                                       distl_mean_int_signal_2,
-                                                       distl_min_signal_strength_2,
-                                                       distl_max_signal_strength_2"""
-
-                    tmp_command_back = """,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s"""
-
-                    tmp_insert_values = ['SUCCESS',
-                                      results['Distl results']['distl res'][0],
-                                      results['Distl results']['labelit res'][0],
-                                      results['Distl results']['ice rings'][0],
-                                      results['Distl results']['total spots'][0],
-                                      results['Distl results']['spots in res'][0],
-                                      results['Distl results']['good Bragg spots'][0],
-                                      results['Distl results']['overloads'][0],
-                                      results['Distl results']['max cell'][0],
-                                      results['Distl results']['mean int signal'][0],
-                                      results['Distl results']['min signal strength'][0],
-                                      results['Distl results']['max signal strength'][0],
-                                      results['Distl results']['distl res'][1],
-                                      results['Distl results']['labelit res'][1],
-                                      results['Distl results']['ice rings'][1],
-                                      results['Distl results']['total spots'][1],
-                                      results['Distl results']['spots in res'][1],
-                                      results['Distl results']['good Bragg spots'][1],
-                                      results['Distl results']['overloads'][1],
-                                      results['Distl results']['max cell'][1],
-                                      results['Distl results']['mean int signal'][1],
-                                      results['Distl results']['min signal strength'][1],
-                                      results['Distl results']['max signal strength'][1]]
-
-                    #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                    command_front += tmp_command_front
-                    command_back  += tmp_command_back
-                    insert_values += tmp_insert_values
-
-            except:
-                command_front += """,
-                                                       distl_status"""
-
-                command_back += """,
-                                                                            %s"""
-
-                insert_values.append("FAILED")
-
-            #LABELIT
-            try:
-                if results['Labelit results'] == 'FAILED':
-                    command_front += """,
-                                                       labelit_status"""
-
-                    command_back += """,
-                                                                            %s"""
-
-                    insert_values.append("FAILED")
-
-                else:
-                    tmp_command_front = """,
-                                                       labelit_status,
-                                                       labelit_iteration,
-                                                       labelit_res,
-                                                       labelit_spots_fit,
-                                                       labelit_metric,
-                                                       labelit_spacegroup,
-                                                       labelit_distance,
-                                                       labelit_x_beam,
-                                                       labelit_y_beam,
-                                                       labelit_a,
-                                                       labelit_b,
-                                                       labelit_c,
-                                                       labelit_alpha,
-                                                       labelit_beta,
-                                                       labelit_gamma,
-                                                       labelit_mosaicity,
-                                                       labelit_rmsd"""
-
-                    tmp_command_back = """,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s"""
-
-                    tmp_insert_values = ['SUCCESS',
-                                      results['Labelit results']['labelit_iteration'],
-                                      results['Labelit results']['mosflm_res'][0],
-                                      results['Labelit results']['labelit_spots_fit'][0],
-                                      results['Labelit results']['labelit_metric'][0],
-                                      results['Labelit results']['mosflm_sg'][0],
-                                      results['Labelit results']['mosflm_distance'][0],
-                                      results['Labelit results']['mosflm_beam_x'][0],
-                                      results['Labelit results']['mosflm_beam_y'][0],
-                                      results['Labelit results']['labelit_cell'][0][0],
-                                      results['Labelit results']['labelit_cell'][0][1],
-                                      results['Labelit results']['labelit_cell'][0][2],
-                                      results['Labelit results']['labelit_cell'][0][3],
-                                      results['Labelit results']['labelit_cell'][0][4],
-                                      results['Labelit results']['labelit_cell'][0][5],
-                                      results['Labelit results']['mosflm_mos'][0],
-                                      results['Labelit results']['labelit_rmsd'][0]]
-
-                    #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                    command_front += tmp_command_front
-                    command_back  += tmp_command_back
-                    insert_values += tmp_insert_values
-
-            except:
-                command_front += """,
-                                                       labelit_status"""
-
-                command_back += """,
-                                                                            %s"""
-
-                insert_values.append("FAILED")
-
-
-            #RADDOSE
-            try:
-                if results['Raddose results'] == 'FAILED':
-                    command_front += """,
-                                                       raddose_status"""
-
-                    command_back += """,
-                                                                            %s"""
-
-                    insert_values.append("FAILED")
-
-                else:
-                    tmp_command_front = """,
-                                                       raddose_status,
-                                                       raddose_dose_per_image,
-                                                       raddose_henderson_limit,
-                                                       raddose_exp_dose_limit"""
-
-                    tmp_command_back = """,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s"""
-
-                    tmp_insert_values = ['SUCCESS',
-                                      results['Raddose results']['dose per image'],
-                                      results['Raddose results']['henderson limit'],
-                                      results['Raddose results']['exp dose limit']]
-
-                    #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                    command_front += tmp_command_front
-                    command_back  += tmp_command_back
-                    insert_values += tmp_insert_values
-
-            except:
-                command_front += """,
-                                                       raddose_status"""
-
-                command_back += """,
-                                                                            %s"""
-
-                insert_values.append("FAILED")
-
-            #The normal strategy results
-            enter_norm_mosflm = False
-            try:
-                if results.has_key('Best results'):
-                #if results['Best results']:
-                    self.logger.debug('Best results is there')
-                    if results['Best results'] == 'FAILED':
-                        tmp_command_front = """,
-                                                           best_norm_status"""
-
-                        tmp_command_back = """,
-                                                                    %s"""
-
-                        tmp_insert_values = ["FAILED"]
-
-                        #MOSFLM STRATEGY
-                        if results['Mosflm strategy results'] == 'FAILED':
-                            tmp_command_front += """,
-                                                           mosflm_norm_status"""
-
-                            tmp_command_back += """,
-                                                                    %s"""
-
-                            tmp_insert_values.append("FAILED")
-                        else:
-                            enter_norm_mosflm = True
-
-                    else:
-                        norm_strat_type = 'best'
-                        tmp_command_front = """,
-                                                       best_complexity,
-                                                       best_norm_status,
-                                                       best_norm_res_limit,
-                                                       best_norm_completeness,
-                                                       best_norm_atten,
-                                                       best_norm_rot_range,
-                                                       best_norm_phi_end,
-                                                       best_norm_total_exp,
-                                                       best_norm_redundancy,
-                                                       best_norm_i_sigi_all,
-                                                       best_norm_i_sigi_high,
-                                                       best_norm_r_all,
-                                                       best_norm_r_high,
-                                                       best_norm_unique_in_blind,
-                                                       mosflm_norm_status"""
-
-                        tmp_command_back = """,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s"""
-
-                        tmp_insert_values = [settings['best_complexity'],
-                                          'SUCCESS',
-                                          results['Best results']['strategy res limit'],
-                                          results['Best results']['strategy completeness'][:-1],
-                                          results['Best results']['strategy attenuation'],
-                                          results['Best results']['strategy rot range'],
-                                          results['Best results']['strategy phi end'],
-                                          results['Best results']['strategy total exposure time'],
-                                          results['Best results']['strategy redundancy'],
-                                          results['Best results']['strategy I/sig'].split(' ')[0],
-                                          results['Best results']['strategy I/sig'].split(' ')[1][1:-1],
-                                          results['Best results']['strategy R-factor'].split(' ')[0][:-1],
-                                          results['Best results']['strategy R-factor'].split(' ')[1][1:-2],
-                                          results['Best results']['strategy frac of unique in blind region'][:-1],
-                                          'NONE' ]
-
-                #There is no entry in the results for 'Best results'
-                else:
-                    self.logger.debug('NO key Best results')
-                    #BEST STRATEGY
-                    tmp_command_front = """,
-                                                           best_norm_status"""
-                    tmp_command_back = """,
-                                                                    %s"""
-                    tmp_insert_values = ["NONE"]
-
-                    #MOSFLM STRATEGY
-                    if results.has_key('Mosflm strategy results'):
-                        if results['Mosflm strategy results'] == 'FAILED':
-                            tmp_command_front += """,
-                                                               mosflm_norm_status"""
-                            tmp_command_back += """,
-                                                                        %s"""
-                            tmp_insert_values.append("FAILED")
-                        else:
-                            enter_norm_mosflm = True
-                    else:
-                        tmp_command_front += """,
-                                                               mosflm_norm_status"""
-                        tmp_command_back += """,
-                                                                        %s"""
-                        tmp_insert_values.append("NONE")
-
-                #If it is necessary, enterthe mosflm strategy results into the database
-                if enter_norm_mosflm:
-                    norm_strat_type = 'mosflm'
-                    tmp_command_front += """,
-                                                           mosflm_norm_status,
-                                                           mosflm_norm_res_limit,
-                                                           mosflm_norm_completeness,
-                                                           mosflm_norm_redundancy,
-                                                           mosflm_norm_distance,
-                                                           mosflm_norm_delta_phi,
-                                                           mosflm_norm_img_exposure_time
-                                                           """
-
-                    tmp_command_back += """,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s"""
-
-                    tmp_insert_values += [ 'SUCCESS',
-                                         results['Mosflm strategy results']['strategy resolution'],
-                                         results['Mosflm strategy results']['strategy completeness'][:-1],
-                                         results['Mosflm strategy results']['strategy redundancy'],
-                                         results['Mosflm strategy results']['strategy distance'],
-                                         results['Mosflm strategy results']['strategy delta phi'],
-                                         results['Mosflm strategy results']['strategy image exp time'] ]
-
-                #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                command_front += tmp_command_front
-                command_back  += tmp_command_back
-                insert_values += tmp_insert_values
-
-            except:
-                self.logger.exception('Exception in addPairResult in the normal strategy results section')
-                command_front += """,
-                                                       best_norm_status,
-                                                       mosflm_norm_status"""
-
-                command_back += """,
-                                                                %s,
-                                                                %s"""
-
-                insert_values += ['FAILED',
-                                  'FAILED']
-
-            #The anomalous strategy results
-            enter_anom_mosflm = False
-            try:
-                if results.has_key('Best ANOM results'):
-                    self.logger.debug('Best ANOM results present')
-                    if results['Best ANOM results'] == 'FAILED':
-                        tmp_command_front = """,
-                                                           best_anom_status"""
-
-                        tmp_command_back = """,
-                                                                    %s"""
-
-                        tmp_insert_values = ["FAILED"]
-
-                        #MOSFLM STRATEGY
-                        if results['Mosflm strategy results'] == 'FAILED':
-                            command_front += """,
-                                                           mosflm_anom_status"""
-
-                            command_back += """,
-                                                                    %s"""
-
-                            insert_values.append("FAILED")
-                        else:
-                            enter_anom_mosflm = True
-
-                    else:
-                        anom_strat_type = 'best'
-                        tmp_command_front = """,
-                                                       best_anom_status,
-                                                       best_anom_res_limit,
-                                                       best_anom_completeness,
-                                                       best_anom_atten,
-                                                       best_anom_rot_range,
-                                                       best_anom_phi_end,
-                                                       best_anom_total_exp,
-                                                       best_anom_redundancy,
-                                                       best_anom_i_sigi_all,
-                                                       best_anom_i_sigi_high,
-                                                       best_anom_r_all,
-                                                       best_anom_r_high,
-                                                       best_anom_unique_in_blind,
-                                                       mosflm_anom_status"""
-
-                        tmp_command_back = """,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s"""
-
-                        tmp_insert_values = ['SUCCESS',
-                                          results['Best ANOM results']['strategy anom res limit'],
-                                          results['Best ANOM results']['strategy anom completeness'][:-1],
-                                          results['Best ANOM results']['strategy anom attenuation'],
-                                          results['Best ANOM results']['strategy anom rot range'],
-                                          results['Best ANOM results']['strategy anom phi end'],
-                                          results['Best ANOM results']['strategy anom total exposure time'],
-                                          results['Best ANOM results']['strategy anom redundancy'],
-                                          results['Best ANOM results']['strategy anom I/sig'].split(' ')[0],
-                                          results['Best ANOM results']['strategy anom I/sig'].split(' ')[1][1:-1],
-                                          results['Best ANOM results']['strategy anom R-factor'].split(' ')[0][:-1],
-                                          results['Best ANOM results']['strategy anom R-factor'].split(' ')[1][1:-2],
-                                          results['Best ANOM results']['strategy anom frac of unique in blind region'][:-1],
-                                          'NONE' ]
-
-                #There is no entry in the results for 'Best results'
-                else:
-                    self.logger.debug('NO key Best ANOM results')
-                    #BEST STRATEGY
-                    tmp_command_front = """,
-                                                           best_anom_status"""
-                    tmp_command_back = """,
-                                                                    %s"""
-                    tmp_insert_values = ["NONE"]
-
-                    #MOSFLM STRATEGY
-                    if results.has_key('Mosflm ANOM strategy results'):
-                        self.logger.debug('Has key Mosflm ANOM results')
-                        if results['Mosflm ANOM strategy results'] == 'FAILED':
-                            tmp_command_front += """,
-                                                               mosflm_anom_status"""
-                            tmp_command_back += """,
-                                                                        %s"""
-                            tmp_insert_values.append("FAILED")
-                        else:
-                            enter_anom_mosflm = True
-                    else:
-                        self.logger.debug('NO key Mosflm ANOM results')
-                        tmp_command_front += """,
-                                                               mosflm_anom_status"""
-                        tmp_command_back += """,
-                                                                        %s"""
-                        tmp_insert_values.append("NONE")
-
-                #If it is necessary, enterthe mosflm strategy results into the database
-                if enter_anom_mosflm:
-                    anom_strat_type = 'mosflm'
-                    tmp_command_front = """,
-                                                           mosflm_anom_status,
-                                                           mosflm_anom_res_limit,
-                                                           mosflm_anom_completeness,
-                                                           mosflm_anom_redundancy,
-                                                           mosflm_anom_distance,
-                                                           mosflm_anom_delta_phi,
-                                                           mosflm_anom_img_exposure_time
-                                                           """
-
-                    tmp_command_back = """,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s,
-                                                                    %s"""
-
-                    tmp_insert_values = [ 'SUCCESS',
-                                         results['Mosflm ANOM strategy results']['strategy anom resolution'],
-                                         results['Mosflm ANOM strategy results']['strategy anom completeness'][:-1],
-                                         results['Mosflm ANOM strategy results']['strategy anom redundancy'],
-                                         results['Mosflm ANOM strategy results']['strategy anom distance'],
-                                         results['Mosflm ANOM strategy results']['strategy anom delta phi'],
-                                         results['Mosflm ANOM strategy results']['strategy anom image exp time'] ]
-
-                #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                command_front += tmp_command_front
-                command_back  += tmp_command_back
-                insert_values += tmp_insert_values
-
-            except:
-                self.logger.exception('Exception in addPairResult in the anomalous strategy results section')
-                command_front += """,
-                                                       best_anom_status,
-                                                       mosflm_anom_status"""
-
-                command_back += """,
-                                                                %s,
-                                                                %s"""
-
-                insert_values += ['FAILED',
-                                  'FAILED']
-
-            #NOW the html and image files
-            try:
-                #Add stac summary only if there is a stac run
-                if (info1.has_key('mk3_phi')):
-                    summary_stac = results['Output files']['Stac summary html']
-                else:
-                    summary_stac = 'None'
-
-
-                if results['Output files'] == 'FAILED':
-                        command_back += ")"
-
-
-                else:
-                    tmp_command_front = """,
-                                                       summary_short,
-                                                       summary_long,
-                                                       summary_stac,
-                                                       image_raw_1,
-                                                       image_preds_1,
-                                                       image_raw_2,
-                                                       image_preds_2,
-                                                       best_plots,
-                                                       stac_file1,
-                                                       stac_file2"""
-
-                    tmp_command_back = """,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s)"""
-
-                    tmp_insert_values = [results['Output files']['Short summary html'],
-                                      results['Output files']['Long summary html'],
-                                      summary_stac,
-                                      results['Output files']['image_path_raw_1'],
-                                      results['Output files']['image_path_pred_1'],
-                                      results['Output files']['image_path_raw_2'],
-                                      results['Output files']['image_path_pred_2'],
-                                      results['Output files']['Best plots html'],
-                                      results['Output files']['STAC file1'],
-                                      results['Output files']['STAC file2']]
-
-                    #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                    command_front += tmp_command_front
-                    command_back  += tmp_command_back
-                    insert_values += tmp_insert_values
-
-            except:
-                command_back += ")"
-
-
-            #deposit the result
-            self.logger.debug(command_front+command_back)
-            self.logger.debug(insert_values)
-            cursor.execute(command_front+command_back,insert_values)
-
-        except:
-            self.logger.exception('ERROR : unknown exception in Database::addPairResult')
-            return(False)
-
-        try:
-
-            #get the result's pair_result_dict
-            pair_result_dict = self.make_dicts('SELECT * FROM pair_results WHERE pair_result_id=%s',(cursor.lastrowid,))[0]
-
-            #register the result in results table
-            cursor.execute('INSERT INTO results (type,id,setting_id,process_id,sample_id,data_root_dir) VALUES (%s, %s, %s, %s, %s, %s)',('pair',pair_result_dict['pair_result_id'],pair_result_dict['settings_id'],pair_result_dict['process_id'],pair_result_dict['sample_id'],pair_result_dict['data_root_dir']))
-
-            #add the result_id to the current dict
-            pair_result_dict['result_id'] = cursor.lastrowid;
-
-            #update the pair_results table with the result_id
-            cursor.execute("UPDATE pair_results SET result_id=%s WHERE pair_result_id=%s",(pair_result_dict['result_id'],pair_result_dict['pair_result_id']))
-
-            #log the "normal" strategy wedges
-            if (norm_strat_type == 'best') :
-                self.addStrategyWedges(id = pair_result_dict['pair_result_id'],
-                                       int_type = 'pair',
-                                       strategy_type = 'normal',
-                                       strategy_program = 'best',
-                                       results = results['Best results'])
-            elif (norm_strat_type == 'mosflm') :
-                self.addStrategyWedges(id = pair_result_dict['pair_result_id'],
-                                       int_type = 'pair',
-                                       strategy_type = 'normal',
-                                       strategy_program = 'mosflm',
-                                       results = results['Mosflm strategy results'])
-            #log the anomalous strategy wedges
-            if (anom_strat_type == 'best'):
-                self.addStrategyWedges(id = pair_result_dict['pair_result_id'],
-                                       int_type = 'pair',
-                                       strategy_type = 'anomalous',
-                                       strategy_program = 'best',
-                                       results = results['Best ANOM results'])
-            elif (anom_strat_type == 'mosflm') :
-                self.addStrategyWedges(id = pair_result_dict['pair_result_id'],
-                                       int_type = 'pair',
-                                       strategy_type = 'anomalous',
-                                       strategy_program = 'mosflm',
-                                       results = results['Mosflm ANOM strategy results'])
-
-            self.close_connection(connection, cursor)
-            return(pair_result_dict)
-
-        except:
-            self.logger.exception('ERROR : unknown exception in Database::addPairResult - results updating subsection')
-            self.close_connection(connection, cursor)
-            return(False)
-
-    def addDiffcenterResult(self,dirs,info,settings,results):
-        """
-        Add data from diffraction-based centering analysis to diffcenter_results table
-        """
-        self.logger.debug('Database::addDiffcenterResult')
-        self.logger.debug(results)
-        try:
-            #connect to the database
-            connection,cursor = self.get_db_connection()
-
-            #regardless of failure level
-            command = '''INSERT INTO diffcenter_results ( process_id,
-                                                          settings_id,
-                                                          image_id,
-                                                          fullname,
-                                                          sample_id,
-                                                          work_dir,
-                                                          ice_rings,
-                                                          max_cell,
-                                                          distl_res,
-                                                          overloads,
-                                                          labelit_res,
-                                                          total_spots,
-                                                          good_b_spots,
-                                                          max_signal_str,
-                                                          mean_int_signal,
-                                                          min_signal_str,
-                                                          total_signal,
-                                                          in_res_spots,
-                                                          saturation_50) VALUES (%s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s,
-                                                                                 %s )'''
-            if dirs == False:
-                insert_values = [None,
-                                 None,
-                                 results['image_id'],
-                                 results['fullname'],
-                                 results['sample_id'],
-                                 None,
-                                 results['ice_rings'],
-                                 results['max_cell'],
-                                 results['distl_res'],
-                                 results['overloads'],
-                                 results['labelit_res'],
-                                 results['total_spots'],
-                                 results['good_b_spots'],
-                                 results['max_signal_str'],
-                                 results['mean_int_signal'],
-                                 results['min_signal_str'],
-                                 results['total_signal'],
-                                 results['in_res_spots'],
-                                 results['saturation_50']]
-            else:
-                insert_values = [info['process_id'],
-                                 settings['setting_id'],
-                                 info['image_id'],
-                                 info['fullname'],
-                                 info['sample_id'],
-                                 dirs['work'],
-                                 results['Distl results']['ice_rings'][0],
-                                 results['Distl results']['max_cell'][0],
-                                 results['Distl results']['distl_res'][0],
-                                 results['Distl results']['overloads'][0],
-                                 results['Distl results']['labelit_res'][0],
-                                 results['Distl results']['total_spots'][0],
-                                 results['Distl results']['good_b_spots'][0],
-                                 results['Distl results']['max_signal_str'][0],
-                                 results['Distl results']['mean_int_signal'][0],
-                                 results['Distl results']['min_signal_str'][0],
-                                 results['Distl results']['total_signal'][0],
-                                 results['Distl results']['in_res_spots'][0],
-                                 results['Distl results']['saturation_50'][0]]
-
-            #deposit the result
-            self.logger.debug(command)
-            self.logger.debug(insert_values)
-            cursor.execute(command,insert_values)
-            diffcenter_result_dict = self.make_dicts('SELECT * FROM diffcenter_results WHERE diffcenter_result_id=%s',(cursor.lastrowid,))[0]
-            self.close_connection(connection, cursor)
-            return(diffcenter_result_dict)
-
-        except:
-            self.logger.exception('ERROR : unknown exception in Database::addDiffcenterResult')
-            self.close_connection(connection, cursor)
-            return(False)
-
-    def addQuickanalysisResult(self,dirs,info,settings,results):
-        """
-        Add data from snapshot-based analysis  analysis to quickanalysis_results table
-        """
-        if self.logger:
-          self.logger.debug('Database::addQuickanalysisResult')
-          self.logger.debug(info)
-          self.logger.debug(results)
-        else:
-          print 'Database::addQuickanalysisResult'
-
-        try:
-            #connect to the database
-            connection,cursor = self.get_db_connection()
-
-            #regardless of failure level
-            command = '''INSERT INTO quickanalysis_results ( process_id,
-                                                             settings_id,
-                                                             image_id,
-                                                             fullname,
-                                                             sample_id,
-                                                             work_dir,
-                                                             ice_rings,
-                                                             max_cell,
-                                                             distl_res,
-                                                             overloads,
-                                                             labelit_res,
-                                                             total_spots,
-                                                             good_b_spots,
-                                                             max_signal_str,
-                                                             mean_int_signal,
-                                                             min_signal_str,
-                                                             total_signal,
-                                                             in_res_spots,
-                                                             saturation_50) VALUES (%s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s,
-                                                                                    %s )'''
-            if dirs == False:
-                insert_values = [None,
-                                 None,
-                                 results['image_id'],
-                                 results['fullname'],
-                                 results['sample_id'],
-                                 None,
-                                 results['ice_rings'],
-                                 results['max_cell'],
-                                 results['resolution_1'],
-                                 results['overloads'],
-                                 results['resolution_2'],
-                                 results['total_spots'],
-                                 results['good_b_spots'],
-                                 results['signal_max'],
-                                 results['signal_mean'],
-                                 results['signal_min'],
-                                 results['total_signal'],
-                                 results['in_res_spots'],
-                                 results['saturation_50']]
-            # TODO - add saturation min mean and max to the result
-            else:
-                if ('image_id' not in info):
-                    info['image_id'] = 0
-                    info['sample_id'] = 0
-                insert_values = [info['process_id'],
-                                 None,   #settings['setting_id']
-                                 info['image_id'],
-                                 info['fullname'],
-                                 info['sample_id'],
-                                 dirs['work'],
-                                 results['Distl results']['ice_rings'][0],
-                                 results['Distl results']['max_cell'][0],
-                                 results['Distl results']['distl_res'][0],
-                                 results['Distl results']['overloads'][0],
-                                 results['Distl results']['labelit_res'][0],
-                                 results['Distl results']['total_spots'][0],
-                                 results['Distl results']['good_b_spots'][0],
-                                 results['Distl results']['max_signal_str'][0],
-                                 results['Distl results']['mean_int_signal'][0],
-                                 results['Distl results']['min_signal_str'][0],
-                                 results['total_signal'][0],
-                                 results['Distl results']['in_res_spots'][0],
-                                 results['saturation_50'][0]]
-
-            #deposit the result
-            if self.logger:
-              self.logger.debug(command)
-              self.logger.debug(insert_values)
-            cursor.execute(command,insert_values)
-            quickanalysis_result_dict = self.make_dicts('SELECT * FROM quickanalysis_results WHERE quickanalysis_result_id=%s',(cursor.lastrowid,))[0]
-            self.close_connection(connection, cursor)
-            return(quickanalysis_result_dict)
-
-        except:
-            if self.logger:
-              self.logger.exception('ERROR : unknown exception in Database::addQuickAnalysisResult')
-              self.close_connection(connection, cursor)
-            return(False)
-
-    def addYesSolved(self,result_id,sad_result_id=False):
-        """
-        Add a Yes status to solved column in integrate_ or merge_ results tables
-        To be triggered by addSadResult, addCellAnalysisResult or addMrResult
-        """
-        self.logger.debug('Database::addYesSolved')
-
-        if sad_result_id:
-            #join sad_results and results tables to get type
-            query = '''SELECT results.* FROM results,sad_results WHERE sad_results.sad_result_id=%s
-                        AND sad_results.source_data_id=results.result_id'''
-            request_dict = self.make_dicts(query=query, params=(sad_result_id,))
-        elif result_id:
-            query = "SELECT * FROM results WHERE result_id=%s"
-            request_dict = self.make_dicts(query=query, params=(result_id,))
-        result_table = request_dict[0]['type']
-        if result_table == 'merge' or result_table == 'integrate':
-            command = "UPDATE %s_results " % (result_table)
-            command += "SET solved=%s WHERE result_id=%s"
-            insert_values = ['Yes',
-                            request_dict[0]['result_id']]
-            #connect to the database
-            connection,cursor = self.get_db_connection()
-
-            cursor.execute(command,insert_values)
-            #change timestamp in results table to cue runs list update
-            command_restamp = "UPDATE results SET timestamp=NOW() WHERE result_id=%s"
-            insert_restamp = [request_dict[0]['result_id']]
-            cursor.execute(command_restamp,insert_restamp)
-        else:
-            self.logger.debug('Database::Wrong Type::Aborting Flagging')
-
-    def addXia2Result(self,dirs,info,settings,results):
-        """
-        Add data to the integrate_results table
-        Modified to work with updates (i.e. adding results from the same process over and over)
-        """
-        self.logger.debug('Database::addXia2Result DRD:%s' % dirs['data_root_dir'])
-
-        #Determine the type of run this is
-        if settings.has_key('request'):
-            my_type = settings['request']['request_type']
-        else:
-            my_type ='original'
-
-        #Check to see if there is a previous result with this process_id
-        integrate_result_id,result_id = self.getTypeResultId(process_id=info['image_data']['process_id'])
-        if (integrate_result_id):
-            integrate_result_dict = self.getResultById(integrate_result_id, 'integrate')
-        else:
-            #make a new entry to then update
-            integrate_result_id,result_id = self.makeNewResult(rtype='integrate',
-                                                               process_id=info['image_data']['process_id'])
-            integrate_result_dict = False
-
-        try:
-            #connect to the database
-            connection,cursor = self.get_db_connection()
-
-            #Information stored regardless of failure level
-            command = '''UPDATE integrate_results SET timestamp=NOW(),
-                                                       result_id=%s,
-                                                       process_id=%s,
-                                                       run_id=%s,
-                                                       version=version+1,
-                                                       pipeline=%s,
-                                                       data_root_dir=%s,
-                                                       settings_id=%s,
-                                                       repr=%s,
-                                                       template=%s,
-                                                       date=%s,
-                                                       work_dir=%s,
-                                                       type=%s,
-                                                       images_dir=%s,
-                                                       image_start=%s,
-                                                       image_end=%s'''
-
-            insert_values = [ result_id,
-                              info['image_data']['process_id'],
-                              info['run_data']['run_id'],
-                              'xia2',
-                              dirs['data_root_dir'],
-                              settings['setting_id'],
-                              os.path.basename(dirs['work']),
-                              info['image_data']['repr'],
-                              info['image_data']['date'],
-                              dirs['work'],
-                              my_type,
-                              info['image_data']['directory'],
-                              info['run_data']['start'],
-                              info['run_data']['total']+info['run_data']['start']-1 ]
-
-            #FILES
-            try:
-                if (results['status'] == 'Error'):
-                    tmp_command = ''',
-                                                          integrate_status=%s,
-                                                          parsed=%s,
-                                                          plots=%s,
-                                                          xia_log=%s'''
-
-                    tmp_insert_values = ['FAILED','None','None',results['files']['xia_log']]
-
-                else:
-                    tmp_command = ''',
-                                                          integrate_status=%s,
-                                                          parsed=%s,
-                                                          plots=%s,
-                                                          xia_log=%s,
-                                                          xscale_log=%s,
-                                                          scala_log=%s,
-                                                          unmerged_sca_file=%s,
-                                                          sca_file=%s,
-                                                          mtz_file=%s,
-                                                          merge_file=%s'''
-
-                    tmp_insert_values = [ results['status'],
-                                          os.path.join(dirs['work'],results['parsed']),
-                                          os.path.join(dirs['work'],results['plots']),
-                                          results['files']['xia_log'],
-                                          results['files']['xscale_log'],
-                                          results['files']['scala_log'],
-                                          results['files']['unmerged'],
-                                          results['files']['scafile'],
-                                          results['files']['mtzfile'],
-                                          results['files']['mergable'] ]
-
-                #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                command += tmp_command
-                insert_values += tmp_insert_values
-
-            except:
-                self.logger.exception('Error in writing files section of integrate_result table')
-
-            #SPACEGROUP and CELL info
-            try:
-                if (results['status'] == 'SUCCESS'):
-                    cell = results['summary']['cell'].split()
-                    #change the format of the time for database entry
-                    proc_time = ''
-                    for i in results['summary']['procTime'].split():
-                        proc_time += i[:2]
-                        if i[2] != 's':
-                            proc_time += ':'
-                    #handle rD values
-                    if not results['summary'].has_key('rD_analysis'):
-                        results['summary']['rD_analysis'] = 0
-                        results['summary']['rD_conclusion'] = 0
-
-                    tmp_command = ''',
-                                                          spacegroup=%s,
-                                                          a=%s,
-                                                          b=%s,
-                                                          c=%s,
-                                                          alpha=%s,
-                                                          beta=%s,
-                                                          gamma=%s,
-                                                          twinscore=%s,
-                                                          proc_time=%s,
-                                                          rd_analysis=%s,
-                                                          rd_conclusion=%s'''
-
-                    tmp_insert_values = [ results['summary']['spacegroup'],
-                                          cell[0],
-                                          cell[1],
-                                          cell[2],
-                                          cell[3],
-                                          cell[4],
-                                          cell[5],
-                                          results['summary']['twinScore'],
-                                          proc_time,
-                                          results['summary']['rD_analysis'],
-                                          results['summary']['rD_conclusion'] ]
-
-                    #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                    command += tmp_command
-                    insert_values += tmp_insert_values
-
-            except:
-                self.logger.exception('Error in writing spacegroup and cell info section of integrate_result table')
-
-
-            #integrate_shell_results section
-            try:
-                if (results['status'] == 'SUCCESS'):
-                    if integrate_result_dict:
-                        overall_shell_id = self.addXia2ShellResult(shell_dict=results['summary']['overall'],
-                                                                        type='overall',
-                                                                        isr_id=integrate_result_dict['shell_overall'])
-                        inner_shell_id   = self.addXia2ShellResult(shell_dict=results['summary']['innerShell'],
-                                                                        type='inner',
-                                                                        isr_id=integrate_result_dict['shell_inner'])
-                        outer_shell_id   = self.addXia2ShellResult(shell_dict=results['summary']['outerShell'],
-                                                                        type='outer',
-                                                                        isr_id=integrate_result_dict['shell_outer'])
-                    else:
-                        overall_shell_id = self.addXia2ShellResult(shell_dict=results['summary']['overall'],
-                                                                        type='overall')
-                        inner_shell_id   = self.addXia2ShellResult(shell_dict=results['summary']['innerShell'],
-                                                                        type='inner')
-                        outer_shell_id   = self.addXia2ShellResult(shell_dict=results['summary']['outerShell'],
-                                                                        type='outer')
-
-                    command += ''',
-                                                          shell_overall=%s,
-                                                          shell_inner=%s,
-                                                          shell_outer=%s'''
-
-                    insert_values += [ overall_shell_id,
-                                       inner_shell_id,
-                                       outer_shell_id ]
-
-            except:
-                self.logger.exception('Error in writing integrate_shell_results section of integrate_result table')
-
-            #finish up the commands
-            command += ' WHERE integrate_result_id=%s'
-            insert_values.append(integrate_result_id)
-
-            #deposit the result
-            self.logger.debug(command)
-            self.logger.debug(insert_values)
-            cursor.execute(command,insert_values)
-
-        except:
-            self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult')
-            return(False)
-
-        try:
-            #get the result's pair_result_dict
-            new_integrate_result_dict = self.make_dicts('SELECT * FROM integrate_results WHERE integrate_result_id=%s',(integrate_result_id,))[0]
-
-            #update the result in results table
-            cursor.execute('UPDATE results SET setting_id=%s,process_id=%s,sample_id=%s,data_root_dir=%s,timestamp=%s WHERE result_id=%s',
-                           (new_integrate_result_dict['settings_id'],new_integrate_result_dict['process_id'],new_integrate_result_dict['sample_id'],new_integrate_result_dict['data_root_dir'],new_integrate_result_dict['timestamp'],result_id))
-
-            #close the connection to the database
-            self.close_connection(connection, cursor)
-            return(new_integrate_result_dict)
-
-        except:
-            self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult - results updating subsection')
-            self.close_connection(connection, cursor)
-            return(False)
-
-    def addXia2ShellResult(self,shell_dict,type,isr_id=None):
-        """
-        Add a shell result from integration and return the isr_id
-        """
-        self.logger.debug('addXia2ShellResult %s' % type)
-        self.logger.debug(shell_dict)
-
-        try:
-            #connect to the database
-            connection,cursor = self.get_db_connection()
-
-            if not (isr_id):
-                cursor.execute("INSERT INTO integrate_shell_results () VALUES ()")
-                isr_id = cursor.lastrowid
-
-            if (type != 'overall'):
-                 shell_dict['wilsonB'] = '0'
-
-            #regardless of failure level
-            command = '''UPDATE integrate_shell_results SET shell_type=%s,
-                                                             high_res=%s,
-                                                             low_res=%s,
-                                                             completeness=%s,
-                                                             multiplicity=%s,
-                                                             i_sigma=%s,
-                                                             r_merge=%s,
-                                                             r_meas=%s,
-                                                             r_meas_pm=%s,
-                                                             r_pim=%s,
-                                                             r_pim_pm=%s,
-                                                             wilson_b=%s,
-                                                             partial_bias=%s,
-                                                             anom_completeness=%s,
-                                                             anom_multiplicity=%s,
-                                                             anom_correlation=%s,
-                                                             anom_slope=%s,
-                                                             total_obs=%s,
-                                                             unique_obs=%s WHERE isr_id=%s'''
-
-            insert_values = [ type,
-                              shell_dict['high_res'],
-                              shell_dict['low_res'],
-                              shell_dict['completeness'],
-                              shell_dict['multiplicity'],
-                              shell_dict['I/sigma'],
-                              shell_dict['Rmerge'],
-                              shell_dict['Rmeas(I)'],
-                              shell_dict['Rmeas(I+/-)'],
-                              shell_dict['Rpim(I)'],
-                              shell_dict['Rpim(I+/-)'],
-                              shell_dict['wilsonB'],
-                              shell_dict['partialBias'],
-                              shell_dict['anomComp'],
-                              shell_dict['anomMult'],
-                              shell_dict['anomCorr'],
-                              shell_dict['anomSlope'],
-                              shell_dict['totalObs'],
-                              shell_dict['totalUnique'],
-                              isr_id ]
-
-            #deposit the result
-            self.logger.debug(command)
-            self.logger.debug(insert_values)
-            cursor.execute(command,insert_values)
-            self.close_connection(connection, cursor)
-            return(isr_id)
-
-        except:
-            self.logger.exception('Error in addXia2ShellResult')
-            self.close_connection(connection, cursor)
-            return(0)
-
-    def addIntegrateResult(self,dirs,info,settings,results):
-        """
-        Add data to the integrate_results table
-        This function works with the new XDS-based fast integration pipeline
-        Modified to work with updates (i.e. adding results from the same process over and over)
-        """
-        self.logger.debug('Database::addIntegrateResult DRD:%s' % dirs['data_root_dir'])
-
-        #Determine the type of run this is
-        if settings.has_key('request'):
-            my_type = settings['request']['request_type']
-        else:
-            my_type ='original'
-
-        #Check the results to construct a new repr on the fly
-        my_repr = os.path.basename(dirs['work'])
-
-        #Construct a template on the fly
-        my_template = info["image_data"]["fullname"][:-7]+"###.img"
-
-        #Check for request_id - if this is a reprocess event
-        if (settings.has_key('request')):
-            request_id = settings['request']['cloud_request_id']
-        else:
-            request_id = 0
-
-        #Acquire the lock to avoid pesky problem with two rapid results
-        self.LOCK.acquire()
-        try:
-            #Check to see if there is a previous result with this process_id
-            integrate_result_id,result_id = self.getTypeResultId(process_id=info['image_data']['process_id'])
-            if (integrate_result_id):
-                integrate_result_dict = self.getResultById(integrate_result_id, 'integrate')
-            else:
-                #make a new entry to then update
-                integrate_result_id,result_id = self.makeNewResult(rtype='integrate',
-                                                                   process_id=info['image_data']['process_id'])
-                integrate_result_dict = False
-        except:
-            self.logger.exception("Error in addIntegrateResult acquiring the result_ids")
-
-        #Release the lock
-        self.LOCK.release()
-
-        try:
-            self.logger.debug("Enter try")
-            #connect to the database
-            connection,cursor = self.get_db_connection()
-
-            #Information stored regardless of failure level
-            command = '''UPDATE integrate_results SET timestamp=NOW(),
-                                                       result_id=%s,
-                                                       process_id=%s,
-                                                       run_id=%s,
-                                                       sample_id=%s,
-                                                       version=version+1,
-                                                       pipeline=%s,
-                                                       data_root_dir=%s,
-                                                       settings_id=%s,
-                                                       request_id=%s,
-                                                       repr=%s,
-                                                       template=%s,
-                                                       date=%s,
-                                                       work_dir=%s,
-                                                       type=%s,
-                                                       images_dir=%s,
-                                                       image_start=%s,
-                                                       image_end=%s'''
-
-            insert_values = [ result_id,
-                              info['image_data']['process_id'],
-                              info['run_data']['run_id'],
-                              info['image_data']['sample_id'],
-                              'fastint',
-                              dirs['data_root_dir'],
-                              settings['setting_id'],
-                              request_id,
-                              my_repr,
-                              my_template,
-                              #info['image_data']['repr'],
-                              info['image_data']['date'],
-                              dirs['work'],
-                              my_type,
-                              info['image_data']['directory'],
-                              results['summary']['wedge'].split('-')[0],
-                              results['summary']['wedge'].split('-')[1] ]
-
-            #FILES
-            try:
-                #a failed run
-                if (results['status'] == 'FAILED'):
-                    tmp_command = ''',
-                                                          integrate_status=%s,
-                                                          parsed=%s,
-                                                          plots=%s,
-                                                          xia_log=%s'''
-
-                    tmp_insert_values = ['FAILED','None','None',results['files']['xia_log']]
-
-                #The final result
-                elif (results.has_key('files')):
-                    tmp_command = ''',
-                                                          integrate_status=%s,
-                                                          parsed=%s,
-                                                          summary_long=%s,
-                                                          plots=%s,
-                                                          xds_log=%s,
-                                                          scala_log=%s,
-                                                          mtz_file=%s,
-                                                          hkl_file=%s,
-                                                          merge_file=%s,
-                                                          download_file=%s'''
-
-                    tmp_insert_values = [ results['status'],
-                                          os.path.join(dirs['work'],results['short']),
-                                          os.path.join(dirs['work'],results['long']),
-                                          os.path.join(dirs['work'],results['plots']),
-                                          results['files']['xds_log'],
-                                          results['files']['scala_log'],
-                                          results['files']['mtzfile'],
-                                          results['files']['xds_data'],
-                                          results['files']['mergable'],
-                                          results['files']['downloadable'] ]
-
-
-                    if results['files'].has_key('ANOM_sca'):
-                        tmp_command += ''',
-                                                                  unmerged_sca_file=%s,
-                                                                  sca_file=%s'''
-                        tmp_insert_values += [ results['files']['ANOM_sca'],
-                                              results['files']['NATIVE_sca'] ]
-
-                        #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                        command += tmp_command
-                        insert_values += tmp_insert_values
-
-                #a partial run
-                else:
-                    tmp_command = ''',
-                                                          integrate_status=%s,
-                                                          parsed=%s,
-                                                          summary_long=%s,
-                                                          plots=%s'''
-
-                    tmp_insert_values = [ results['status'],
-                                          os.path.join(dirs['work'],results['short']),
-                                          os.path.join(dirs['work'],results['long']),
-                                          os.path.join(dirs['work'],results['plots']) ]
-
-                #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                command += tmp_command
-                insert_values += tmp_insert_values
-
-            except:
-                self.logger.exception('Error in writing files section of integrate_result table')
-
-            #SPACEGROUP, CELL and anomalous
-            try:
-                if (results['status'] in ('SUCCESS','ANALYSIS','WORKING','FAILED')):
-                    cell = results['summary']['scaling_unit_cell'][:]
-                    tmp_command = ''',
-                                                          spacegroup=%s,
-                                                          a=%s,
-                                                          b=%s,
-                                                          c=%s,
-                                                          alpha=%s,
-                                                          beta=%s,
-                                                          gamma=%s'''
-
-                    tmp_insert_values = [ results['summary']['scaling_spacegroup'],
-                                          cell[0],
-                                          cell[1],
-                                          cell[2],
-                                          cell[3],
-                                          cell[4],
-                                          cell[5]]
-
-                    #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                    command += tmp_command
-                    insert_values += tmp_insert_values
-
-            except:
-                self.logger.exception('Error in writing spacegroup and cell info section of integrate_result table')
-
-
-            #integrate_shell_results section
-            try:
-                if (results['status'] in ('SUCCESS','ANALYSIS','WORKING','FAILED')):
-                    if integrate_result_dict:
-                        overall_shell_id = self.addIntegrateShellResult(shell_dict=results['summary'],
-                                                                        type='overall',
-                                                                        isr_id=integrate_result_dict['shell_overall'])
-                        inner_shell_id   = self.addIntegrateShellResult(shell_dict=results['summary'],
-                                                                        type='inner',
-                                                                        isr_id=integrate_result_dict['shell_inner'])
-                        outer_shell_id   = self.addIntegrateShellResult(shell_dict=results['summary'],
-                                                                        type='outer',
-                                                                        isr_id=integrate_result_dict['shell_outer'])
-                    else:
-                        overall_shell_id = self.addIntegrateShellResult(shell_dict=results['summary'],
-                                                                        type='overall')
-                        inner_shell_id   = self.addIntegrateShellResult(shell_dict=results['summary'],
-                                                                        type='inner')
-                        outer_shell_id   = self.addIntegrateShellResult(shell_dict=results['summary'],
-                                                                        type='outer')
-
-                    command += ''',
-                                                          shell_overall=%s,
-                                                          shell_inner=%s,
-                                                          shell_outer=%s'''
-
-                    insert_values += [ overall_shell_id,
-                                       inner_shell_id,
-                                       outer_shell_id ]
-
-            except:
-                self.logger.exception('Error in writing integrate_shell_results section of integrate_result table')
-
-            #finish up the commands
-            command += ' WHERE integrate_result_id=%s'
-            insert_values.append(integrate_result_id)
-
-            #deposit the result
-            self.logger.debug(command)
-            self.logger.debug(insert_values)
-            cursor.execute(command,insert_values)
-
-        except:
-            self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult')
-            self.close_connection(connection, cursor)
-            return(False)
-
-        try:
-            #get the result's pair_result_dict
-            new_integrate_result_dict = self.make_dicts('SELECT * FROM integrate_results WHERE integrate_result_id=%s',(integrate_result_id,))[0]
-
-            #update the result in results table
-            cursor.execute('UPDATE results SET setting_id=%s,process_id=%s,sample_id=%s,data_root_dir=%s,timestamp=%s WHERE result_id=%s',
-                           (new_integrate_result_dict['settings_id'],new_integrate_result_dict['process_id'],new_integrate_result_dict['sample_id'],new_integrate_result_dict['data_root_dir'],new_integrate_result_dict['timestamp'],result_id))
-
-            #close the connection to the database
-            self.close_connection(connection, cursor)
-            return(new_integrate_result_dict)
-
-        except:
-            self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult - results updating subsection')
-            self.close_connection(connection, cursor)
-            return(False)
-
-    def addReIntegrateResult(self,dirs,info,settings,results):
-        """
-        Add data to the integrate_results table
-        This function works with the new XDS-based fast integration pipeline
-        Modified to work with updates (i.e. adding results from the same process over and over)
-        """
-        self.logger.debug('Database::addIntegrateResult DRD:%s' % dirs['data_root_dir'])
-
-        #Determine the type of run this is
-        if settings.has_key('request'):
-            if (settings['request']['request_type'] == "start-fastin"):
-                my_type = "refastint"
-                my_pipeline = "fastint"
-                results['files']['xia2_log'] = "None"
-            else:
-                my_type = "rexia2"
-                my_pipeline = "xia2"
-                results['files']['xds_log'] = "None"
-                results['files']['scala_log'] = "None"
-
-        #Check the results to construct a new repr on the fly
-        #my_repr = "_".join(info["original"]["repr"].split("_")[:-1])+"_"+str(settings["request"]["frame_start"])+"-"+str(settings["request"]["frame_finish"])
-        my_repr = info["original"]["repr"] + "_" + str(settings["request"]["frame_start"]) + "-" + str(settings["request"]["frame_finish"])
-
-        #Check for request_id - if this is a reprocess event
-        if (settings.has_key('request')):
-            request_id = settings['request']['cloud_request_id']
-        else:
-            request_id = 0
-
-        #Acquire the lock to avoid pesky problem with two rapid results
-        self.LOCK.acquire()
-        try:
-            #Check to see if there is a previous result with this process_id
-            integrate_result_id,result_id = self.getTypeResultId(process_id=settings['process_id'])
-            try:
-                if (integrate_result_id):
-                    integrate_result_dict = self.getResultById(integrate_result_id, 'integrate')
-                else:
-                    #make a new entry to then update
-                    integrate_result_id,result_id = self.makeNewResult(rtype='integrate',
-                                                                       process_id=settings['process_id'])
-                    integrate_result_dict = False
-            except:
-                self.logger.exception("Got the integrate_result_id, but no result dict")
-                integrate_result_dict = False
-
-        except:
-            self.logger.exception("Error in addReIntegrateResult acquisition of result ids")
-
-        #Release the lock
-        self.LOCK.release()
-
-        try:
-            self.logger.debug("Enter try")
-            #connect to the database
-            connection,cursor = self.get_db_connection()
-
-            #Information stored regardless of failure level
-            command = '''UPDATE integrate_results SET timestamp=NOW(),
-                                                       result_id=%s,
-                                                       process_id=%s,
-                                                       run_id=%s,
-                                                       sample_id=%s,
-                                                       version=version+1,
-                                                       pipeline=%s,
-                                                       data_root_dir=%s,
-                                                       settings_id=%s,
-                                                       request_id=%s,
-                                                       repr=%s,
-                                                       template=%s,
-                                                       date=%s,
-                                                       work_dir=%s,
-                                                       type=%s,
-                                                       images_dir=%s,
-                                                       image_start=%s,
-                                                       image_end=%s'''
-
-            insert_values = [ result_id,
-                              settings['process_id'],
-                              info['original']['run_id'],
-                              info['original']['sample_id'],
-                              my_pipeline,
-                              dirs['data_root_dir'],
-                              settings['setting_id'],
-                              request_id,
-                              my_repr,
-                              info['original']['template'],
-                              info['original']['date'],
-                              dirs['work'],
-                              my_type,
-                              info['original']['images_dir'],
-                              settings['request']['frame_start'],
-                              settings['request']['frame_finish'] ]
-
-            #FILES
-            try:
-                #a failed run
-                if (results['status'] == 'FAILED'):
-                    tmp_command = ''',
-                                                          integrate_status=%s,
-                                                          parsed=%s,
-                                                          plots=%s,
-                                                          xia_log=%s'''
-
-                    tmp_insert_values = ['FAILED','None','None',results['files']['xia_log']]
-
-                #The final result
-                elif (results.has_key('files')):
-                    tmp_command = ''',
-                                                          integrate_status=%s,
-                                                          parsed=%s,
-                                                          summary_long=%s,
-                                                          plots=%s,
-                                                          xia_log=%s,
-                                                          xds_log=%s,
-                                                          scala_log=%s,
-                                                          mtz_file=%s,
-                                                          hkl_file=%s,
-                                                          merge_file=%s,
-                                                          download_file=%s'''
-
-                    tmp_insert_values = [ results['status'],
-                                          os.path.join(dirs['work'],results['short']),
-                                          os.path.join(dirs['work'],results['long']),
-                                          os.path.join(dirs['work'],results['plots']),
-                                          results['files']['xia2_log'],
-                                          results['files']['xds_log'],
-                                          results['files']['scala_log'],
-                                          results['files']['mtzfile'],
-                                          results['files']['xds_data'],
-                                          results['files']['mergable'],
-                                          results['files']['downloadable'] ]
-
-
-                    if results['files'].has_key('ANOM_sca'):
-                        tmp_command += ''',
-                                                                  unmerged_sca_file=%s,
-                                                                  sca_file=%s'''
-                        tmp_insert_values += [ results['files']['ANOM_sca'],
-                                              results['files']['NATIVE_sca'] ]
-
-                        #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                        command += tmp_command
-                        insert_values += tmp_insert_values
-
-                #a partial run
-                else:
-                    tmp_command = ''',
-                                                          integrate_status=%s,
-                                                          parsed=%s,
-                                                          summary_long=%s,
-                                                          plots=%s'''
-
-                    tmp_insert_values = [ results['status'],
-                                          os.path.join(dirs['work'],results['short']),
-                                          os.path.join(dirs['work'],results['long']),
-                                          os.path.join(dirs['work'],results['plots']) ]
-
-                #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                command += tmp_command
-                insert_values += tmp_insert_values
-
-            except:
-                self.logger.exception('Error in writing files section of integrate_result table')
-
-            #SPACEGROUP, CELL and anomalous
-            try:
-                if (results['status'] in ('SUCCESS','ANALYSIS','WORKING','FAILED')):
-                    cell = results['summary']['scaling_unit_cell'][:]
-                    tmp_command = ''',
-                                                          spacegroup=%s,
-                                                          a=%s,
-                                                          b=%s,
-                                                          c=%s,
-                                                          alpha=%s,
-                                                          beta=%s,
-                                                          gamma=%s'''
-
-                    tmp_insert_values = [ results['summary']['scale_spacegroup'],
-                                          cell[0],
-                                          cell[1],
-                                          cell[2],
-                                          cell[3],
-                                          cell[4],
-                                          cell[5] ]
-
-                    #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                    command += tmp_command
-                    insert_values += tmp_insert_values
-
-            except:
-                self.logger.exception('Error in writing spacegroup and cell info section of integrate_result table')
-
-
-            #integrate_shell_results section
-            try:
-                if (results['status'] in ('SUCCESS','ANALYSIS','WORKING','FAILED')):
-                    if integrate_result_dict:
-                        overall_shell_id = self.addIntegrateShellResult(shell_dict=results['summary'],
-                                                                        type='overall',
-                                                                        isr_id=integrate_result_dict['shell_overall'])
-                        inner_shell_id   = self.addIntegrateShellResult(shell_dict=results['summary'],
-                                                                        type='inner',
-                                                                        isr_id=integrate_result_dict['shell_inner'])
-                        outer_shell_id   = self.addIntegrateShellResult(shell_dict=results['summary'],
-                                                                        type='outer',
-                                                                        isr_id=integrate_result_dict['shell_outer'])
-                    else:
-                        overall_shell_id = self.addIntegrateShellResult(shell_dict=results['summary'],
-                                                                        type='overall')
-                        inner_shell_id   = self.addIntegrateShellResult(shell_dict=results['summary'],
-                                                                        type='inner')
-                        outer_shell_id   = self.addIntegrateShellResult(shell_dict=results['summary'],
-                                                                        type='outer')
-
-                    command += ''',
-                                                          shell_overall=%s,
-                                                          shell_inner=%s,
-                                                          shell_outer=%s'''
-
-                    insert_values += [ overall_shell_id,
-                                       inner_shell_id,
-                                       outer_shell_id ]
-
-            except:
-                self.logger.exception('Error in writing integrate_shell_results section of integrate_result table')
-
-            #finish up the commands
-            command += ' WHERE integrate_result_id=%s'
-            insert_values.append(integrate_result_id)
-
-            #deposit the result
-            self.logger.debug(command)
-            self.logger.debug(insert_values)
-            cursor.execute(command,insert_values)
-
-        except:
-            self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult')
-            self.close_connection(connection, cursor)
-            return(False)
-
-        try:
-            #get the result's pair_result_dict
-            new_integrate_result_dict = self.make_dicts('SELECT * FROM integrate_results WHERE integrate_result_id=%s',(integrate_result_id,))[0]
-
-            #update the result in results table
-            cursor.execute('UPDATE results SET setting_id=%s,process_id=%s,sample_id=%s,data_root_dir=%s,timestamp=%s WHERE result_id=%s',
-                           (new_integrate_result_dict['settings_id'],new_integrate_result_dict['process_id'],new_integrate_result_dict['sample_id'],new_integrate_result_dict['data_root_dir'],new_integrate_result_dict['timestamp'],result_id))
-            self.close_connection(connection, cursor)
-            return(new_integrate_result_dict)
-
-        except:
-            self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult - results updating subsection')
-            self.close_connection(connection, cursor)
-            return(False)
-
-    def addIntegrateShellResult(self,shell_dict,type,isr_id=None):
-        """
-        Add a shell result from integration and return the isr_id
-        """
-        self.logger.debug('addIntegrateShellResult %s' % type)
-        self.logger.debug(shell_dict)
-
-        #filter NaNs out of dict
-        for k,v in shell_dict.iteritems():
-            if (v == 'NaN'):
-                shell_dict[k] = 0
-
-        if (type == 'overall'):
-            pos = 0
-        elif (type == 'inner'):
-            pos = 1
-        elif (type == 'outer'):
-            pos = 2
-
-        try:
-            #connect to the database
-            connection,cursor = self.get_db_connection()
-
-            if not (isr_id):
-                cursor.execute("INSERT INTO integrate_shell_results () VALUES ()")
-                isr_id = cursor.lastrowid
-
-            #regardless of failure level
-            command = '''UPDATE integrate_shell_results SET shell_type=%s,
-                                                             high_res=%s,
-                                                             low_res=%s,
-                                                             completeness=%s,
-                                                             multiplicity=%s,
-                                                             i_sigma=%s,
-                                                             cc_half=%s,
-                                                             r_merge=%s,
-                                                             r_merge_anom=%s,
-                                                             r_meas=%s,
-                                                             r_meas_pm=%s,
-                                                             r_pim=%s,
-                                                             r_pim_pm=%s,
-                                                             anom_completeness=%s,
-                                                             anom_multiplicity=%s,
-                                                             anom_correlation=%s,
-                                                             anom_slope=%s,
-                                                             total_obs=%s,
-                                                             unique_obs=%s WHERE isr_id=%s'''
-
-            insert_values = [ type,
-                              shell_dict['bins_high'][pos],
-                              shell_dict['bins_low'][pos],
-                              shell_dict['completeness'][pos],
-                              shell_dict['multiplicity'][pos],
-                              shell_dict['isigi'][pos],
-                              shell_dict['cc-half'][pos],
-                              shell_dict['rmerge_norm'][pos],
-                              shell_dict['rmerge_anom'][pos],
-                              shell_dict['rmeas_norm'][pos],
-                              shell_dict['rmeas_anom'][pos],
-                              shell_dict['rpim_norm'][pos],
-                              shell_dict['rpim_anom'][pos],
-                              shell_dict['anom_completeness'][pos],
-                              shell_dict['anom_multiplicity'][pos],
-                              shell_dict['anom_correlation'][pos],
-                              shell_dict['anom_slope'][0],
-                              shell_dict['total_obs'][pos],
-                              shell_dict['unique_obs'][pos],
-                              isr_id ]
-
-            #deposit the result
-            self.logger.debug(command)
-            self.logger.debug(insert_values)
-            cursor.execute(command,insert_values)
-            self.close_connection(connection, cursor)
-            return(isr_id)
-
-        except:
-            self.logger.exception('Error in addXia2ShellResult')
-            self.close_connection(connection, cursor)
-            return(0)
-
-    def addSimpleMergeResult(self,dirs,info,settings,results):
-        """
-        Add data to the merge_results table
-        """
-        self.logger.debug('Database::addSimpleMergeResult DRD:%s' % dirs['data_root_dir'])
-
-        #Check for request_id - if this is a reprocess event
-        if (settings.has_key('request')):
-            request_id = settings['request']['cloud_request_id']
-        else:
-            request_id = 0
-
-        #get the lock
-        self.LOCK.acquire()
-
-        try:
-            #Check to see if there is a previous result with this process_id
-            merge_result_id,result_id = self.getTypeResultId(process_id=info['process_id'])
-            if (merge_result_id):
-                merge_result_dict = self.getResultById(merge_result_id, 'merge')
-            else:
-                #make a new entry to then update
-                merge_result_id,result_id = self.makeNewResult(rtype='merge',
-                                                               process_id=info['process_id'])
-                merge_result_dict = False
-        except:
-            self.logger.exception("Error in addSimpleMergeResult acquisition of result ids")
-
-        #Release the lock
-        self.LOCK.release()
-
-        try:
-            self.logger.debug("Enter try")
-            #connect to the database
-            connection,cursor = self.get_db_connection()
-
-            #Information stored regardless of failure level
-            command = '''UPDATE merge_results SET timestamp=NOW(),
-                                                  result_id=%s,
-                                                  process_id=%s,
-                                                  data_root_dir=%s,
-                                                  settings_id=%s,
-                                                  request_id=%s,
-                                                  repr=%s,
-                                                  work_dir=%s,
-                                                  set1=%s,
-                                                  set2=%s,
-                                                  wavelength=%s'''
-
-            insert_values = [ result_id,
-                              info['process_id'],
-                              dirs['data_root_dir'],
-                              settings['setting_id'],
-                              settings["request"]["cloud_request_id"],
-                              info["repr"],
-                              dirs['work'],
-                              info['original']['result_id'],
-                              info['secondary']['result_id'],
-                              info['original']['wavelength']]
-
-            #FILES
-            try:
-                tmp_command = ''',
-                                                  merge_status=%s,
-                                                  summary=%s,
-                                                  details=%s,
-                                                  plots=%s,
-                                                  merge_file=%s,
-                                                  mtz_file=%s,
-                                                  download_file=%s'''
-
-                tmp_insert_values = [ "SUCCESS",
-                                      os.path.join(dirs['work'],results['short']),
-                                      os.path.join(dirs['work'],results['long']),
-                                      os.path.join(dirs['work'],results['plots']),
-                                      results['merge_file'],
-                                      results['mtz_file'],
-                                      results['download_file'] ]
-
-
-                #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                command += tmp_command
-                insert_values += tmp_insert_values
-
-            except:
-                self.logger.exception('Error in writing files section of merge_results table')
-                #a failed run
-                tmp_command = ''',
-                                          merge_status=%s,
-                                          parsed=%s,
-                                          details=%s
-                                          plots=%s,
-                                          merge_file=%s,
-                                          download_file=%s'''
-
-                tmp_insert_values = ['FAILED',
-                                     'None',
-                                     'None',
-                                     'None',
-                                     'None',
-                                     'None']
-
-                #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                command += tmp_command
-                insert_values += tmp_insert_values
-
-            #SPACEGROUP, CELL and anomalous
-            try:
-                if (results['status'] in ('SUCCESS','WORKING','FAILED')):
-                    cell = results['summary']['scaling_unit_cell'][:]
-                    tmp_command = ''',
-                                                          spacegroup=%s,
-                                                          a=%s,
-                                                          b=%s,
-                                                          c=%s,
-                                                          alpha=%s,
-                                                          beta=%s,
-                                                          gamma=%s'''
-
-                    tmp_insert_values = [ results['summary']['scale_spacegroup'],
-                                          cell[0],
-                                          cell[1],
-                                          cell[2],
-                                          cell[3],
-                                          cell[4],
-                                          cell[5]]
-
-                    #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                    command += tmp_command
-                    insert_values += tmp_insert_values
-
-            except:
-                self.logger.exception('Error in writing spacegroup and cell info section of merge_results table')
-
-            #merge_shell_results section
-            try:
-                if (results['status'] in ('SUCCESS','WORKING','FAILED')):
-
-                    overall_shell_id = self.addMergeShellResult(shell_dict=results['summary'],
-                                                                    type='overall')
-                    inner_shell_id   = self.addMergeShellResult(shell_dict=results['summary'],
-                                                                    type='inner')
-                    outer_shell_id   = self.addMergeShellResult(shell_dict=results['summary'],
-                                                                    type='outer')
-
-                    command += ''',
-                                                          shell_overall=%s,
-                                                          shell_inner=%s,
-                                                          shell_outer=%s'''
-
-                    insert_values += [ overall_shell_id,
-                                       inner_shell_id,
-                                       outer_shell_id ]
-
-            except:
-                self.logger.exception('Error in writing merge_shell_results section of merge_result table')
-
-            #finish up the commands
-            command += ' WHERE merge_result_id=%s'
-            insert_values.append(merge_result_id)
-
-            #deposit the result
-            self.logger.debug(command)
-            self.logger.debug(insert_values)
-            cursor.execute(command,insert_values)
-
-        except:
-            self.logger.exception('ERROR : unknown exception in Database::addMergeResult')
-            self.close_connection(connection, cursor)
-            return(False)
-
-        try:
-            #get the result's pair_result_dict
-            new_merge_result_dict = self.make_dicts('SELECT * FROM merge_results WHERE merge_result_id=%s',(merge_result_id,))[0]
-
-            #update the result in results table
-            cursor.execute('UPDATE results SET setting_id=%s,process_id=%s,data_root_dir=%s,timestamp=%s WHERE result_id=%s',
-                           (new_merge_result_dict['settings_id'],new_merge_result_dict['process_id'],new_merge_result_dict['data_root_dir'],new_merge_result_dict['timestamp'],result_id))
-            self.close_connection(connection, cursor)
-            return(new_merge_result_dict)
-
-        except:
-            self.logger.exception('ERROR : unknown exception in Database::addMergeResult - results updating subsection')
-            self.close_connection(connection, cursor)
-            return(False)
-
-    def addMergeShellResult(self,shell_dict,type,msr_id=None):
-        """
-        Add a shell result from merging and return the msr_id
-        """
-        self.logger.debug('addMergeShellResult %s' % type)
-        self.logger.debug(shell_dict)
-
-        if (type == 'overall'):
-            pos = 0
-        elif (type == 'inner'):
-            pos = 1
-        elif (type == 'outer'):
-            pos = 2
-
-        try:
-            #connect to the database
-            connection,cursor = self.get_db_connection()
-
-            if not (msr_id):
-                cursor.execute("INSERT INTO merge_shell_results () VALUES ()")
-                msr_id = cursor.lastrowid
-
-            #regardless of failure level
-            command = ''' UPDATE merge_shell_results SET shell_type=%s,
-                                                         high_res=%s,
-                                                         low_res=%s,
-                                                         completeness=%s,
-                                                         multiplicity=%s,
-                                                         i_sigma=%s,
-                                                         r_merge=%s,
-                                                         r_meas=%s,
-                                                         r_meas_pm=%s,
-                                                         r_pim=%s,
-                                                         r_pim_pm=%s,
-                                                         partial_bias=%s,
-                                                         anom_completeness=%s,
-                                                         anom_multiplicity=%s,
-                                                         anom_correlation=%s,
-                                                         anom_slope=%s,
-                                                         total_obs=%s,
-                                                         unique_obs=%s WHERE msr_id=%s'''
-
-            insert_values = [ type,
-                              shell_dict['bins_high'][pos],
-                              shell_dict['bins_low'][pos],
-                              shell_dict['completeness'][pos],
-                              shell_dict['multiplicity'][pos],
-                              shell_dict['isigi'][pos],
-                              shell_dict['rmerge'][pos],
-                              shell_dict['rmeas_norm'][pos],
-                              shell_dict['rmeas_anom'][pos],
-                              shell_dict['rpim_norm'][pos],
-                              shell_dict['rpim_anom'][pos],
-                              shell_dict['bias'][pos],
-                              shell_dict['anom_completeness'][pos],
-                              shell_dict['anom_multiplicity'][pos],
-                              shell_dict['anom_correlation'][pos],
-                              shell_dict['anom_slope'][0],
-                              shell_dict['total_obs'][pos],
-                              shell_dict['unique_obs'][pos],
-                              msr_id ]
-
-            #deposit the result
-            self.logger.debug(command)
-            self.logger.debug(insert_values)
-            cursor.execute(command,insert_values)
-            self.close_connection(connection, cursor)
-            return(msr_id)
-
-        except:
-            self.logger.exception('Error in addMergeShellResult')
-            self.close_connection(connection, cursor)
-            return(0)
-
-    def traceRunFromMerge(self,merge_id):
-        """
-        Acquire run numbers for a given merge_results_id
-        """
-        self.logger.debug('Database::traceRunFromMerge merge_result_id:%d' % merge_id)
-
-        #Get all the result ids - down to when all the result_ids are from integrate_results
-        integrate_ids = []
-        merge_ids = [merge_id,]
-        for m_id in merge_ids:
-            my_dict = self.getResultById(merge_id, "merge")
-            sets = (my_dict['set1'],my_dict['set2'])
-            for set in sets:
-                my_type = self.getTypeByResultId(set)
-                if (my_type == 'integrate'):
-                    integrate_ids.append(set)
-                elif (my_type == 'merge'):
-                    merge_ids.append(set)
-        self.logger.debug(integrate_ids)
-
-        #now get the runs for the integrates
-        run_ids = []
-        for integrate_id in integrate_ids:
-            run_ids.append(self.make_dicts("SELECT run_id FROM integrate_results WHERE result_id=%s", (integrate_id,),'DATA')[0]['run_id'])
-        self.logger.debug(run_ids)
-        #
-        return(run_ids)
-
-    def addIntegrateResult1(self,dirs,info,settings,results):
-        """
-        Add data to the integrate_results table
-        """
-        self.logger.debug('Database::addIntegrateResult DRD:%s' % dirs['data_root_dir'])
-
-        #Determine the type of run this is
-        if settings.has_key('request'):
-            my_type = settings['request']['request_type']
-        else:
-            my_type ='original'
-
-        try:
-            #connect to the database
-            connection,cursor = self.get_db_connection()
-
-            #regardless of failure level
-            command_front = """INSERT INTO integrate_results ( process_id,
-                                                          run_id,
-                                                          data_root_dir,
-                                                          settings_id,
-                                                          repr,
-                                                          template,
-                                                          date,
-                                                          work_dir,
-                                                          type,
-                                                          images_dir,
-                                                          image_start,
-                                                          image_end"""
-
-            command_back = """) VALUES ( %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s"""
-
-            insert_values = [ info['image_data']['process_id'],
-                              info['run_data']['run_id'],
-                              dirs['data_root_dir'],
-                              settings['setting_id'],
-                              os.path.basename(dirs['work']),
-                              info['image_data']['repr'],
-                              info['image_data']['date'],
-                              dirs['work'],
-                              my_type,
-                              info['image_data']['directory'],
-                              info['run_data']['start'],
-                              info['run_data']['total']+info['run_data']['start']-1 ]
-
-            #FILES
-            try:
-                if (results['status'] == 'Error'):
-                    tmp_command_front = """,
-                                                          integrate_status,
-                                                          parsed,
-                                                          plots,
-                                                          xia_log"""
-
-                    tmp_command_back = """,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s"""
-
-                    tmp_insert_values = ['FAILED','None','None',results['files']['xia_log']]
-
-                else:
-                    tmp_command_front = """,
-                                                          integrate_status,
-                                                          parsed,
-                                                          plots,
-                                                          xia_log,
-                                                          xscale_log,
-                                                          scala_log,
-                                                          unmerged_sca_file,
-                                                          sca_file,
-                                                          mtz_file,
-                                                          merge_file,
-                                                          wavelength"""
-
-                    tmp_command_back = """,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s"""
-
-                    tmp_insert_values = [ results['status'],
-                                          os.path.join(dirs['work'],results['parsed']),
-                                          os.path.join(dirs['work'],results['plots']),
-                                          results['files']['xia_log'],
-                                          results['files']['xscale_log'],
-                                          results['files']['scala_log'],
-                                          results['files']['unmerged'],
-                                          results['files']['scafile'],
-                                          results['files']['mtzfile'],
-                                          results['files']['mergable'],
-                                          info['image_data']['wavelength'] ]
-
-                #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                command_front += tmp_command_front
-                command_back  += tmp_command_back
-                insert_values += tmp_insert_values
-
-            except:
-                self.logger.exception('Error in writing files section of integrate_result table')
-
-            #SPACEGROUP and CELL info
-            try:
-                if (results['status'] == 'SUCCESS'):
-                    cell = results['summary']['cell'].split()
-                    #change the format of the time for database entry
-                    proc_time = ''
-                    for i in results['summary']['procTime'].split():
-                        proc_time += i[:2]
-                        if i[2] != 's':
-                            proc_time += ':'
-                    #handle rD values
-                    if not results['summary'].has_key('rD_analysis'):
-                        results['summary']['rD_analysis'] = 0
-                        results['summary']['rD_conclusion'] = 0
-
-                    tmp_command_front = """,
-                                                          spacegroup,
-                                                          a,
-                                                          b,
-                                                          c,
-                                                          alpha,
-                                                          beta,
-                                                          gamma,
-                                                          twinscore,
-                                                          proc_time,
-                                                          rd_analysis,
-                                                          rd_conclusion"""
-
-                    tmp_command_back = """,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s"""
-
-                    tmp_insert_values = [ results['summary']['spacegroup'],
-                                          cell[0],
-                                          cell[1],
-                                          cell[2],
-                                          cell[3],
-                                          cell[4],
-                                          cell[5],
-                                          results['summary']['twinScore'],
-                                          proc_time,
-                                          results['summary']['rD_analysis'],
-                                          results['summary']['rD_conclusion'] ]
-
-                    #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
-                    command_front += tmp_command_front
-                    command_back  += tmp_command_back
-                    insert_values += tmp_insert_values
-
-            except:
-                self.logger.exception('Error in writing spacegroup and cell info section of integrate_result table')
-
-
-            #integrate_shell_results section
-            try:
-                if (results['status'] == 'SUCCESS'):
-                    overall_shell_id = self.addIntegrateShellResult(results['summary']['overall'],   'overall')
-                    inner_shell_id   = self.addIntegrateShellResult(results['summary']['innerShell'],'inner')
-                    outer_shell_id   = self.addIntegrateShellResult(results['summary']['outerShell'],'outer')
-
-                    command_front += """,
-                                                          shell_overall,
-                                                          shell_inner,
-                                                          shell_outer"""
-
-                    command_back += """,
-                                                                            %s,
-                                                                            %s,
-                                                                            %s"""
-
-                    insert_values += [ overall_shell_id,
-                                       inner_shell_id,
-                                       outer_shell_id ]
-
-            except:
-                self.logger.exception('Error in writing integrate_shell_results section of integrate_result table')
-
-            #finish up the commands
-            command_back += ")"
-
-            #deposit the result
-            self.logger.debug(command_front+command_back)
-            self.logger.debug(insert_values)
-            cursor.execute(command_front+command_back,insert_values)
-
-        except:
-            self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult')
-            self.close_connection(connection, cursor)
-            return(False)
-
-        try:
-            #get the result's pair_result_dict
-            integrate_result_dict = self.make_dicts('SELECT * FROM integrate_results WHERE integrate_result_id=%s',(cursor.lastrowid,))[0]
-
-            #register the result in results table
-            cursor.execute('INSERT INTO results (type,id,setting_id,process_id,data_root_dir) VALUES (%s, %s, %s, %s, %s, %s)',('integrate',integrate_result_dict['integrate_result_id'],integrate_result_dict['settings_id'],integrate_result_dict['process_id'],integrate_result_dict['sample_id'],integrate_result_dict['data_root_dir']))
-
-            #add the result_id to the current dict
-            integrate_result_dict['result_id'] = cursor.lastrowid;
-
-            #update the integrate_results table with the result_id
-            cursor.execute("UPDATE integrate_results SET result_id=%s WHERE integrate_result_id=%s",(integrate_result_dict['result_id'],integrate_result_dict['integrate_result_id']))
-            self.close_connection(connection, cursor)
-            return(integrate_result_dict)
-
-        except:
-            self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult - results updating subsection')
-            self.close_connection(connection, cursor)
-            return(False)
-
-    def addIntegrateShellResult1(self,shell_dict,type):
-        """
-        Add a shell result from integration and return the isr_id
-        """
-        self.logger.debug('addIntegrateShellResult %s' % type)
-        self.logger.debug(shell_dict)
-
-        try:
-            #connect to the database
-            connection,cursor = self.get_db_connection()
-
-            if (type != 'overall'):
-                 shell_dict['wilsonB'] = '0'
-
-            #regardless of failure level
-            command = """INSERT INTO integrate_shell_results ( shell_type,
-                                                                high_res,
-                                                                low_res,
-                                                                completeness,
-                                                                multiplicity,
-                                                                i_sigma,
-                                                                r_merge,
-                                                                r_meas,
-                                                                r_meas_pm,
-                                                                r_pim,
-                                                                r_pim_pm,
-                                                                wilson_b,
-                                                                partial_bias,
-                                                                anom_completeness,
-                                                                anom_multiplicity,
-                                                                anom_correlation,
-                                                                anom_slope,
-                                                                total_obs,
-                                                                unique_obs ) VALUES ( %s,
-                                                                                        %s,
-                                                                                        %s,
-                                                                                        %s,
-                                                                                        %s,
-                                                                                        %s,
-                                                                                        %s,
-                                                                                        %s,
-                                                                                        %s,
-                                                                                        %s,
-                                                                                        %s,
-                                                                                        %s,
-                                                                                        %s,
-                                                                                        %s,
-                                                                                        %s,
-                                                                                        %s,
-                                                                                        %s,
-                                                                                        %s,
-                                                                                        %s)"""
-
-            insert_values = [ type,
-                              shell_dict['high_res'],
-                              shell_dict['low_res'],
-                              shell_dict['completeness'],
-                              shell_dict['multiplicity'],
-                              shell_dict['I/sigma'],
-                              shell_dict['Rmerge'],
-                              shell_dict['Rmeas(I)'],
-                              shell_dict['Rmeas(I+/-)'],
-                              shell_dict['Rpim(I)'],
-                              shell_dict['Rpim(I+/-)'],
-                              shell_dict['wilsonB'],
-                              shell_dict['partialBias'],
-                              shell_dict['anomComp'],
-                              shell_dict['anomMult'],
-                              shell_dict['anomCorr'],
-                              shell_dict['anomSlope'],
-                              shell_dict['totalObs'],
-                              shell_dict['totalUnique'] ]
-
-            #deposit the result
-            self.logger.debug(command)
-            self.logger.debug(insert_values)
-            cursor.execute(command,insert_values)
-
-            #now get the isr_id to return
-            isr_id = cursor.lastrowid
-            self.close_connection(connection, cursor)
-            return(isr_id)
-
-        except:
-            self.logger.exception('Error in addIntegrateShellResult')
-            self.close_connection(connection, cursor)
-            return(0)
-
+            return str(result["upserted"])
+
+    # def addSingleResult(self,dirs,info,settings,results):
+    #     """
+    #     Add data to the single_results table
+    #     """
+    #     #Put out some info to the logger
+    #     self.logger.debug('Database::addSingleResult')
+    #     self.logger.debug(dirs['data_root_dir'])
+    #     self.logger.debug(os.path.basename(info['fullname']))
+    #     self.logger.debug(info['fullname'])
+    #     # self.logger.debug(info['adsc_number'])
+    #
+    #     #Get a nuanced version of the type of single result this is
+    #     if (settings['reference_data_id'] > 0):
+    #         my_type = 'ref_strat'
+    #     elif settings.has_key('request'):
+    #         my_type = settings['request']['request_type']
+    #     else:
+    #         my_type ='original'
+    #
+    #     #set up some variables for the logic (so-called)
+    #     norm_strat_type = None
+    #     anom_strat_type = None
+    #
+    #     try:
+    #         #connect to the database
+    #         connection,cursor = self.get_db_connection()
+    #
+    #         #regardless of failure level
+    #         command_front = """INSERT INTO single_results ( process_id,
+    #                                                    data_root_dir,
+    #                                                    settings_id,
+    #                                                    repr,
+    #                                                    fullname,
+    #                                                    image_id,
+    #                                                 #    adsc_number,
+    #                                                    date,
+    #                                                    sample_id,
+    #                                                    work_dir,
+    #                                                    type"""
+    #
+    #         command_back = """) VALUES ( %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             # %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s"""
+    #
+    #         insert_values = [ info['process_id'],
+    #                           dirs['data_root_dir'],
+    #                           settings['setting_id'],
+    #                           info['repr'],
+    #                           info['fullname'],
+    #                           info['image_id'],
+    #                         #   info['adsc_number'],
+    #                           info['date'],
+    #                           info['sample_id'],
+    #                           dirs['work'],
+    #                           my_type]
+    #
+    #         #DISTL
+    #         try:
+    #             if results['Distl results'] == 'FAILED':
+    #                 command_front += """,
+    #                                        distl_status"""
+    #
+    #                 command_back += """,
+    #                                        %s"""
+    #
+    #                 insert_values.append("FAILED")
+    #
+    #             else:
+    #                 if (results['Distl results']['max cell'][0] == 'None'):
+    #                     results['Distl results']['max cell'][0] = 0
+    #                 tmp_command_front = """,
+    #                                                    distl_status,
+    #                                                    distl_res,
+    #                                                    distl_labelit_res,
+    #                                                    distl_ice_rings,
+    #                                                    distl_total_spots,
+    #                                                    distl_spots_in_res,
+    #                                                    distl_good_bragg_spots,
+    #                                                    distl_overloads,
+    #                                                    distl_max_cell,
+    #                                                    distl_mean_int_signal,
+    #                                                    distl_min_signal_strength,
+    #                                                    distl_max_signal_strength"""
+    #
+    #                 tmp_command_back = """,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s"""
+    #
+    #                 tmp_insert_values = ['SUCCESS',
+    #                                   results['Distl results']['distl res'][0],
+    #                                   results['Distl results']['labelit res'][0],
+    #                                   results['Distl results']['ice rings'][0],
+    #                                   results['Distl results']['total spots'][0],
+    #                                   results['Distl results']['spots in res'][0],
+    #                                   results['Distl results']['good Bragg spots'][0],
+    #                                   results['Distl results']['overloads'][0],
+    #                                   results['Distl results']['max cell'][0],
+    #                                   results['Distl results']['mean int signal'][0],
+    #                                   results['Distl results']['min signal strength'][0],
+    #                                   results['Distl results']['max signal strength'][0]]
+    #
+    #                 #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #                 command_front += tmp_command_front
+    #                 command_back  += tmp_command_back
+    #                 insert_values += tmp_insert_values
+    #         except:
+    #             command_front += """,
+    #                                                    distl_status"""
+    #
+    #             command_back += """,
+    #                                                             %s"""
+    #
+    #             insert_values.append("FAILED")
+    #
+    #         #LABELIT
+    #         try:
+    #             if results['Labelit results'] == 'FAILED':
+    #                 command_front += """,
+    #                                                    labelit_status"""
+    #
+    #                 command_back += """,
+    #                                                             %s"""
+    #
+    #                 insert_values.append("FAILED")
+    #
+    #             else:
+    #                 tmp_command_front = """,
+    #                                                    labelit_status,
+    #                                                    labelit_iteration,
+    #                                                    labelit_res,
+    #                                                    labelit_spots_fit,
+    #                                                    labelit_metric,
+    #                                                    labelit_spacegroup,
+    #                                                    labelit_distance,
+    #                                                    labelit_x_beam,
+    #                                                    labelit_y_beam,
+    #                                                    labelit_a,
+    #                                                    labelit_b,
+    #                                                    labelit_c,
+    #                                                    labelit_alpha,
+    #                                                    labelit_beta,
+    #                                                    labelit_gamma,
+    #                                                    labelit_mosaicity,
+    #                                                    labelit_rmsd"""
+    #
+    #                 tmp_command_back = """,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s"""
+    #
+    #                 tmp_insert_values = ['SUCCESS',
+    #                                   results['Labelit results']['labelit_iteration'],
+    #                                   results['Labelit results']['mosflm_res'][0],
+    #                                   results['Labelit results']['labelit_spots_fit'][0],
+    #                                   results['Labelit results']['labelit_metric'][0],
+    #                                   results['Labelit results']['mosflm_sg'][0],
+    #                                   results['Labelit results']['mosflm_distance'][0],
+    #                                   results['Labelit results']['mosflm_beam_x'][0],
+    #                                   results['Labelit results']['mosflm_beam_y'][0],
+    #                                   results['Labelit results']['labelit_cell'][0][0],
+    #                                   results['Labelit results']['labelit_cell'][0][1],
+    #                                   results['Labelit results']['labelit_cell'][0][2],
+    #                                   results['Labelit results']['labelit_cell'][0][3],
+    #                                   results['Labelit results']['labelit_cell'][0][4],
+    #                                   results['Labelit results']['labelit_cell'][0][5],
+    #                                   results['Labelit results']['mosflm_mos'][0],
+    #                                   results['Labelit results']['labelit_rmsd'][0]]
+    #
+    #                 #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #                 command_front += tmp_command_front
+    #                 command_back  += tmp_command_back
+    #                 insert_values += tmp_insert_values
+    #
+    #         except:
+    #             command_front += """,
+    #                                                    labelit_status"""
+    #
+    #             command_back += """,
+    #                                                             %s"""
+    #
+    #             insert_values.append("FAILED")
+    #
+    #
+    #         #RADDOSE
+    #         try:
+    #             if results['Raddose results'] == 'FAILED':
+    #                 command_front += """,
+    #                                                    raddose_status"""
+    #
+    #                 command_back += """,
+    #                                                             %s"""
+    #
+    #                 insert_values.append("FAILED")
+    #
+    #             else:
+    #                 tmp_command_front = """,
+    #                                                    raddose_status,
+    #                                                    raddose_dose_per_image,
+    #                                                    raddose_henderson_limit,
+    #                                                    raddose_exp_dose_limit"""
+    #
+    #                 tmp_command_back = """,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s"""
+    #
+    #                 tmp_insert_values = ['SUCCESS',
+    #                                   results['Raddose results']['dose per image'],
+    #                                   results['Raddose results']['henderson limit'],
+    #                                   results['Raddose results']['exp dose limit']]
+    #
+    #                 #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #                 command_front += tmp_command_front
+    #                 command_back  += tmp_command_back
+    #                 insert_values += tmp_insert_values
+    #
+    #         except:
+    #             command_front += """,
+    #                                                    raddose_status"""
+    #
+    #             command_back += """,
+    #                                                             %s"""
+    #
+    #             insert_values.append("FAILED")
+    #
+    #
+    #         #The normal strategy results
+    #         enter_norm_mosflm = False
+    #         try:
+    #             if results.has_key('Best results'):
+    #             #if results['Best results']:
+    #                 self.logger.debug('Best results is there')
+    #                 if results['Best results'] == 'FAILED':
+    #                     tmp_command_front = """,
+    #                                                        best_norm_status"""
+    #
+    #                     tmp_command_back = """,
+    #                                                                 %s"""
+    #
+    #                     tmp_insert_values = ["FAILED"]
+    #
+    #                     #MOSFLM STRATEGY
+    #                     if results['Mosflm strategy results'] == 'FAILED':
+    #                         tmp_command_front += """,
+    #                                                        mosflm_norm_status"""
+    #
+    #                         tmp_command_back += """,
+    #                                                                 %s"""
+    #
+    #                         tmp_insert_values.append("FAILED")
+    #                     else:
+    #                         enter_norm_mosflm = True
+    #
+    #                 else:
+    #                     norm_strat_type = 'best'
+    #                     tmp_command_front = """,
+    #                                                    best_complexity,
+    #                                                    best_norm_status,
+    #                                                    best_norm_res_limit,
+    #                                                    best_norm_completeness,
+    #                                                    best_norm_atten,
+    #                                                    best_norm_rot_range,
+    #                                                    best_norm_phi_end,
+    #                                                    best_norm_total_exp,
+    #                                                    best_norm_redundancy,
+    #                                                    best_norm_i_sigi_all,
+    #                                                    best_norm_i_sigi_high,
+    #                                                    best_norm_r_all,
+    #                                                    best_norm_r_high,
+    #                                                    best_norm_unique_in_blind,
+    #                                                    mosflm_norm_status"""
+    #
+    #                     tmp_command_back = """,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s"""
+    #
+    #                     tmp_insert_values = [settings['best_complexity'],
+    #                                       'SUCCESS',
+    #                                       results['Best results']['strategy res limit'],
+    #                                       results['Best results']['strategy completeness'][:-1],
+    #                                       results['Best results']['strategy attenuation'],
+    #                                       results['Best results']['strategy rot range'],
+    #                                       results['Best results']['strategy phi end'],
+    #                                       results['Best results']['strategy total exposure time'],
+    #                                       results['Best results']['strategy redundancy'],
+    #                                       results['Best results']['strategy I/sig'].split(' ')[0],
+    #                                       results['Best results']['strategy I/sig'].split(' ')[1][1:-1],
+    #                                       results['Best results']['strategy R-factor'].split(' ')[0][:-1],
+    #                                       results['Best results']['strategy R-factor'].split(' ')[1][1:-2],
+    #                                       results['Best results']['strategy frac of unique in blind region'][:-1],
+    #                                       'NONE' ]
+    #
+    #             #There is no entry in the results for 'Best results'
+    #             else:
+    #                 self.logger.debug('NO key Best results')
+    #                 #BEST STRATEGY
+    #                 tmp_command_front = """,
+    #                                                        best_norm_status"""
+    #                 tmp_command_back = """,
+    #                                                                 %s"""
+    #                 tmp_insert_values = ["NONE"]
+    #
+    #                 #MOSFLM STRATEGY
+    #                 if results.has_key('Mosflm strategy results'):
+    #                     if results['Mosflm strategy results'] == 'FAILED':
+    #                         tmp_command_front += """,
+    #                                                            mosflm_norm_status"""
+    #                         tmp_command_back += """,
+    #                                                                     %s"""
+    #                         tmp_insert_values.append("FAILED")
+    #                     else:
+    #                         enter_norm_mosflm = True
+    #                 else:
+    #                     tmp_command_front += """,
+    #                                                            mosflm_norm_status"""
+    #                     tmp_command_back += """,
+    #                                                                     %s"""
+    #                     tmp_insert_values.append("NONE")
+    #
+    #             #If it is necessary, enterthe mosflm strategy results into the database
+    #             if enter_norm_mosflm:
+    #                 norm_strat_type = 'mosflm'
+    #                 tmp_command_front += """,
+    #                                                        mosflm_norm_status,
+    #                                                        mosflm_norm_res_limit,
+    #                                                        mosflm_norm_completeness,
+    #                                                        mosflm_norm_redundancy,
+    #                                                        mosflm_norm_distance,
+    #                                                        mosflm_norm_delta_phi,
+    #                                                        mosflm_norm_img_exposure_time
+    #                                                        """
+    #
+    #                 tmp_command_back += """,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s"""
+    #
+    #                 tmp_insert_values += [ 'SUCCESS',
+    #                                      results['Mosflm strategy results']['strategy resolution'],
+    #                                      results['Mosflm strategy results']['strategy completeness'][:-1],
+    #                                      results['Mosflm strategy results']['strategy redundancy'],
+    #                                      results['Mosflm strategy results']['strategy distance'],
+    #                                      results['Mosflm strategy results']['strategy delta phi'],
+    #                                      results['Mosflm strategy results']['strategy image exp time'] ]
+    #
+    #             #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #             command_front += tmp_command_front
+    #             command_back  += tmp_command_back
+    #             insert_values += tmp_insert_values
+    #
+    #         except:
+    #             self.logger.exception('Exception in addSingleResult in the normal strategy results section')
+    #             command_front += """,
+    #                                                    best_norm_status,
+    #                                                    mosflm_norm_status"""
+    #
+    #             command_back += """,
+    #                                                             %s,
+    #                                                             %s"""
+    #
+    #             insert_values += ['FAILED',
+    #                               'FAILED']
+    #
+    #         #The anomalous strategy results
+    #         enter_anom_mosflm = False
+    #         try:
+    #             if results.has_key('Best ANOM results'):
+    #                 self.logger.debug('Best ANOM results present')
+    #                 if results['Best ANOM results'] == 'FAILED':
+    #                     tmp_command_front = """,
+    #                                                        best_anom_status"""
+    #
+    #                     tmp_command_back = """,
+    #                                                                 %s"""
+    #
+    #                     tmp_insert_values = ["FAILED"]
+    #
+    #                     #MOSFLM STRATEGY
+    #                     if results['Mosflm strategy results'] == 'FAILED':
+    #                         command_front += """,
+    #                                                        mosflm_anom_status"""
+    #
+    #                         command_back += """,
+    #                                                                 %s"""
+    #
+    #                         insert_values.append("FAILED")
+    #                     else:
+    #                         enter_anom_mosflm = True
+    #
+    #                 else:
+    #                     anom_strat_type = 'best'
+    #                     tmp_command_front = """,
+    #                                                    best_anom_status,
+    #                                                    best_anom_res_limit,
+    #                                                    best_anom_completeness,
+    #                                                    best_anom_atten,
+    #                                                    best_anom_rot_range,
+    #                                                    best_anom_phi_end,
+    #                                                    best_anom_total_exp,
+    #                                                    best_anom_redundancy,
+    #                                                    best_anom_i_sigi_all,
+    #                                                    best_anom_i_sigi_high,
+    #                                                    best_anom_r_all,
+    #                                                    best_anom_r_high,
+    #                                                    best_anom_unique_in_blind,
+    #                                                    mosflm_anom_status"""
+    #
+    #                     tmp_command_back = """,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s"""
+    #
+    #                     tmp_insert_values = ['SUCCESS',
+    #                                       results['Best ANOM results']['strategy anom res limit'],
+    #                                       results['Best ANOM results']['strategy anom completeness'][:-1],
+    #                                       results['Best ANOM results']['strategy anom attenuation'],
+    #                                       results['Best ANOM results']['strategy anom rot range'],
+    #                                       results['Best ANOM results']['strategy anom phi end'],
+    #                                       results['Best ANOM results']['strategy anom total exposure time'],
+    #                                       results['Best ANOM results']['strategy anom redundancy'],
+    #                                       results['Best ANOM results']['strategy anom I/sig'].split(' ')[0],
+    #                                       results['Best ANOM results']['strategy anom I/sig'].split(' ')[1][1:-1],
+    #                                       results['Best ANOM results']['strategy anom R-factor'].split(' ')[0][:-1],
+    #                                       results['Best ANOM results']['strategy anom R-factor'].split(' ')[1][1:-2],
+    #                                       results['Best ANOM results']['strategy anom frac of unique in blind region'][:-1],
+    #                                       'NONE' ]
+    #
+    #             #There is no entry in the results for 'Best results'
+    #             else:
+    #                 self.logger.debug('NO key Best ANOM results')
+    #                 #BEST STRATEGY
+    #                 tmp_command_front = """,
+    #                                                        best_anom_status"""
+    #                 tmp_command_back = """,
+    #                                                                 %s"""
+    #                 tmp_insert_values = ["NONE"]
+    #
+    #                 #MOSFLM STRATEGY
+    #                 if ((results.has_key('Mosflm ANOM strategy results')) and (results['Mosflm ANOM strategy results']['strategy anom run number'] != 'skip')):
+    #                     self.logger.debug('Has key Mosflm ANOM results')
+    #                     if results['Mosflm ANOM strategy results'] == 'FAILED':
+    #                         tmp_command_front += """,
+    #                                                            mosflm_anom_status"""
+    #                         tmp_command_back += """,
+    #                                                                     %s"""
+    #                         tmp_insert_values.append("FAILED")
+    #                     else:
+    #                         enter_anom_mosflm = True
+    #                 else:
+    #                     self.logger.debug('NO key Mosflm ANOM results')
+    #                     tmp_command_front += """,
+    #                                                            mosflm_anom_status"""
+    #                     tmp_command_back += """,
+    #                                                                     %s"""
+    #                     tmp_insert_values.append("NONE")
+    #
+    #             #If it is necessary, enterthe mosflm strategy results into the database
+    #             if enter_anom_mosflm:
+    #                 anom_strat_type = 'mosflm'
+    #                 tmp_command_front = """,
+    #                                                        mosflm_anom_status,
+    #                                                        mosflm_anom_res_limit,
+    #                                                        mosflm_anom_completeness,
+    #                                                        mosflm_anom_redundancy,
+    #                                                        mosflm_anom_distance,
+    #                                                        mosflm_anom_delta_phi,
+    #                                                        mosflm_anom_img_exposure_time
+    #                                                        """
+    #
+    #                 tmp_command_back = """,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s"""
+    #
+    #                 tmp_insert_values = [ 'SUCCESS',
+    #                                      results['Mosflm ANOM strategy results']['strategy anom resolution'],
+    #                                      results['Mosflm ANOM strategy results']['strategy anom completeness'][:-1],
+    #                                      results['Mosflm ANOM strategy results']['strategy anom redundancy'],
+    #                                      results['Mosflm ANOM strategy results']['strategy anom distance'],
+    #                                      results['Mosflm ANOM strategy results']['strategy anom delta phi'],
+    #                                      results['Mosflm ANOM strategy results']['strategy anom image exp time'] ]
+    #
+    #             #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #             command_front += tmp_command_front
+    #             command_back  += tmp_command_back
+    #             insert_values += tmp_insert_values
+    #
+    #         except:
+    #             self.logger.exception('Exception in addSingleResult in the anomalous strategy results section')
+    #             command_front += """,
+    #                                                    best_anom_status,
+    #                                                    mosflm_anom_status"""
+    #
+    #             command_back += """,
+    #                                                             %s,
+    #                                                             %s"""
+    #
+    #             insert_values += ['FAILED',
+    #                               'FAILED']
+    #
+    #         #NOW the html, image and stac files
+    #         try:
+    #             #Add stac summary only if there is a stac run
+    #             if (info.has_key('mk3_phi')):
+    #                 summary_stac = results['Output files']['Stac summary html']
+    #             else:
+    #                 summary_stac = 'None'
+    #
+    #             if results['Output files'] == 'FAILED':
+    #                     command_back += ")"
+    #
+    #
+    #             else:
+    #                 tmp_command_front = """,
+    #                                                    summary_short,
+    #                                                    summary_long,
+    #                                                    summary_stac,
+    #                                                    image_raw,
+    #                                                    image_preds,
+    #                                                    best_plots,
+    #                                                    stac_file1,
+    #                                                    stac_file2"""
+    #
+    #                 tmp_command_back = """,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s,
+    #                                                             %s)"""
+    #
+    #                 tmp_insert_values = [ results['Output files']['Short summary html'],
+    #                                       results['Output files']['Long summary html'],
+    #                                       summary_stac,
+    #                                       results['Output files']['image_path_raw_1'],
+    #                                       results['Output files']['image_path_pred_1'],
+    #                                       results['Output files']['Best plots html'],
+    #                                       results['Output files']['STAC file1'],
+    #                                       results['Output files']['STAC file2'] ]
+    #
+    #                 #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #                 command_front += tmp_command_front
+    #                 command_back  += tmp_command_back
+    #                 insert_values += tmp_insert_values
+    #
+    #         except:
+    #             command_back += ")"
+    #
+    #
+    #         #deposit the result
+    #         self.logger.debug(command_front+command_back)
+    #         self.logger.debug(insert_values)
+    #         cursor.execute(command_front+command_back,insert_values)
+    #
+    #     except:
+    #         self.logger.exception('ERROR : unknown exception in Database::addSingleResult')
+    #         return(False)
+    #
+    #
+    #     try:
+    #         #get the result's pair_result_dict
+    #         single_result_dict = self.make_dicts('SELECT * FROM single_results WHERE single_result_id=%s',(cursor.lastrowid,))[0]
+    #
+    #         #register the result in results table
+    #         cursor.execute('INSERT INTO results (type,id,setting_id,process_id,sample_id,data_root_dir) VALUES (%s, %s, %s, %s, %s, %s)',
+    #                              ('single',
+    #                               single_result_dict['single_result_id'],
+    #                               single_result_dict['settings_id'],
+    #                               single_result_dict['process_id'],
+    #                               single_result_dict['sample_id'],
+    #                               single_result_dict['data_root_dir']))
+    #
+    #         #add the result_id to the current dict
+    #         single_result_dict['result_id'] = cursor.lastrowid
+    #
+    #         #update the single_results table with the result_id
+    #         cursor.execute("UPDATE single_results SET result_id=%s WHERE single_result_id=%s",(single_result_dict['result_id'],single_result_dict['single_result_id']))
+    #
+    #         #log the "normal" strategy wedges
+    #         if (norm_strat_type == 'best') :
+    #             self.addStrategyWedges(id = single_result_dict['single_result_id'],
+    #                                    int_type = 'single',
+    #                                    strategy_type = 'normal',
+    #                                    strategy_program = 'best',
+    #                                    results = results['Best results'])
+    #         elif (norm_strat_type == 'mosflm') :
+    #             self.addStrategyWedges(id=single_result_dict['single_result_id'],
+    #                                    int_type='single',
+    #                                    strategy_type='normal',
+    #                                    strategy_program='mosflm',
+    #                                    results=results['Mosflm strategy results'])
+    #         #log the anomalous strategy wedges
+    #         if (anom_strat_type == 'best'):
+    #             self.addStrategyWedges(id=single_result_dict['single_result_id'],
+    #                                    int_type='single',
+    #                                    strategy_type='anomalous',
+    #                                    strategy_program='best',
+    #                                    results=results['Best ANOM results'])
+    #         elif (anom_strat_type == 'mosflm') :
+    #             self.addStrategyWedges(id = single_result_dict['single_result_id'],
+    #                                    int_type = 'single',
+    #                                    strategy_type = 'anomalous',
+    #                                    strategy_program = 'mosflm',
+    #                                    results = results['Mosflm ANOM strategy results'])
+    #         self.close_connection(connection, cursor)
+    #         return(single_result_dict)
+    #
+    #     except:
+    #         self.logger.exception('ERROR : unknown exception in Database::addSingleResult - results updating subsection')
+    #         self.close_connection(connection, cursor)
+    #         return(False)
+    #
+    # def addStrategyWedges(self,id,int_type,strategy_type,strategy_program,results):
+    #     """
+    #     Add a strategy wedge entry to the database
+    #     """
+    #     self.logger.debug('Database::addStrategyWedges')
+    #     self.logger.debug(id)
+    #     self.logger.debug(int_type)
+    #     self.logger.debug(strategy_type)
+    #     self.logger.debug(strategy_program)
+    #     self.logger.debug(results)
+    #
+    #     if (results == None):
+    #         return False
+    #
+    #     #accomodate normal and anomalous entries
+    #     if strategy_type == 'anomalous':
+    #         tag = 'strategy anom '
+    #     else:
+    #         tag = 'strategy '
+    #
+    #     #there can be multiple runs depending on various factors
+    #     for i in range(len(results[tag+'run number'])):
+    #         try:
+    #             #connect to the database
+    #             connection,cursor = self.get_db_connection()
+    #
+    #             if (strategy_program == 'best'):
+    #
+    #                 cmd = '''INSERT INTO strategy_wedges ( id,
+    #                                                        int_type,
+    #                                                        strategy_type,
+    #                                                        run_number,
+    #                                                        phi_start,
+    #                                                        number_images,
+    #                                                        delta_phi,
+    #                                                        overlap,
+    #                                                        distance,
+    #                                                        exposure_time ) VALUES ( %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s)'''
+    #                 insert_values = ( id,
+    #                                   int_type,
+    #                                   strategy_type,
+    #                                   results[tag+'run number'][i],
+    #                                   results[tag+'phi start'][i],
+    #                                   results[tag+'num of images'][i],
+    #                                   results[tag+'delta phi'][i],
+    #                                   results[tag+'overlap'][i],
+    #                                   results[tag+'distance'][i],
+    #                                   results[tag+'image exp time'][i] )
+    #
+    #             elif (strategy_program == 'mosflm'):
+    #
+    #                 cmd = '''INSERT INTO strategy_wedges ( id,
+    #                                                     int_type,
+    #                                                     strategy_type,
+    #                                                     run_number,
+    #                                                     phi_start,
+    #                                                     number_images,
+    #                                                     delta_phi,
+    #                                                     overlap,
+    #                                                     distance,
+    #                                                     exposure_time ) VALUES ( %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s)'''
+    #                 insert_values = ( id,
+    #                                   int_type,
+    #                                   strategy_type,
+    #                                   results[tag+'run number'][i],
+    #                                   results[tag+'phi start'][i],
+    #                                   results[tag+'num of images'][i],
+    #                                   results[tag+'delta phi'],
+    #                                   'NULL',
+    #                                   results[tag+'distance'],
+    #                                   results[tag+'image exp time'] )
+    #
+    #             #output for log
+    #             self.logger.debug(cmd)
+    #             self.logger.debug(insert_values)
+    #
+    #             #put in the database
+    #             cursor.execute(cmd,insert_values)
+    #
+    #         except:
+    #             self.logger.exception('ERROR : unknown exception in Database::addStrategyWedges')
+    #             self.close_connection(connection, cursor)
+    #             return(False)
+    #
+    #     #close connection and return
+    #     self.close_connection(connection, cursor)
+    #     return(True)
+    #
+    # def getStrategyWedges(self,id):
+    #     """
+    #     Retrieve strategy wedges, given an id (either single_result_id or pair_result_id)
+    #     """
+    #     self.logger.debug('Database::getStrategyWedges %s' % str(id))
+    #
+    #     #find all solutions for this result
+    #     query = "SELECT * FROM strategy_wedges WHERE id=%s"
+    #     request_dict = self.make_dicts(query=query,
+    #                                   params=(id,))
+    #
+    #     return(request_dict)
+    #
+    # def addPairResult(self,dirs,info1,info2,settings,results):
+    #     """
+    #     Add data to the pair_results table
+    #     """
+    #     self.logger.debug('Database::addPairResult')
+    #     self.logger.debug(dirs['data_root_dir'])
+    #     self.logger.debug(info1['fullname'])
+    #     # self.logger.debug(info1['adsc_number'])
+    #     self.logger.debug(info2['fullname'])
+    #     # self.logger.debug(info2['adsc_number'])
+    #
+    #     #set the request type
+    #     if (settings['reference_data_id'] > 0):
+    #          my_type = 'ref_strat'
+    #     elif settings.has_key('request'):
+    #         my_type = settings['request']['request_type']
+    #     else:
+    #         my_type ='original'
+    #
+    #     norm_strat_type = None
+    #     anom_strat_type = None
+    #
+    #     try:
+    #         #connect to the database
+    #         connection,cursor = self.get_db_connection()
+    #
+    #         #regardless of failure level
+    #         command_front = """INSERT INTO pair_results ( process_id,
+    #                                                    data_root_dir,
+    #                                                    settings_id,
+    #                                                    repr,
+    #                                                    fullname_1,
+    #                                                    image1_id,
+    #                                                 #    adsc_number_1,
+    #                                                    date_1,
+    #                                                    fullname_2,
+    #                                                    image2_id,
+    #                                                 #    adsc_number_2,
+    #                                                    date_2,
+    #                                                    sample_id,
+    #                                                    work_dir,
+    #                                                    type"""
+    #
+    #         command_back = """) VALUES ( %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         # %s,
+    #                                                                         # %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s"""
+    #
+    #         insert_values = [info1['process_id'],
+    #                          dirs['data_root_dir'],
+    #                          settings['setting_id'],
+    #                          info1['repr'],
+    #                          info1['fullname'],
+    #                          info1['image_id'],
+    #                         #  info1['adsc_number'],
+    #                          info1['date'],
+    #                          info2['fullname'],
+    #                          info2['image_id'],
+    #                         #  info2['adsc_number'],
+    #                          info2['date'],
+    #                          info1['sample_id'],
+    #                          dirs['work'],
+    #                          my_type]
+    #
+    #         #DISTL
+    #         try:
+    #             if results['Distl results'] == 'FAILED':
+    #                 command_front += """,
+    #                                                    distl_status"""
+    #
+    #                 command_back += """,
+    #                                                                         %s"""
+    #
+    #                 insert_values.append("FAILED")
+    #
+    #             else:
+    #                 if (results['Distl results']['max cell'][0] == 'None'):
+    #                     results['Distl results']['max cell'][0] = 0
+    #                 if (results['Distl results']['max cell'][1] == 'None'):
+    #                     results['Distl results']['max cell'][1] = 0
+    #
+    #                 tmp_command_front = """,
+    #                                                    distl_status,
+    #                                                    distl_res_1,
+    #                                                    distl_labelit_res_1,
+    #                                                    distl_ice_rings_1,
+    #                                                    distl_total_spots_1,
+    #                                                    distl_spots_in_res_1,
+    #                                                    distl_good_bragg_spots_1,
+    #                                                    distl_overloads_1,
+    #                                                    distl_max_cell_1,
+    #                                                    distl_mean_int_signal_1,
+    #                                                    distl_min_signal_strength_1,
+    #                                                    distl_max_signal_strength_1,
+    #                                                    distl_res_2,
+    #                                                    distl_labelit_res_2,
+    #                                                    distl_ice_rings_2,
+    #                                                    distl_total_spots_2,
+    #                                                    distl_spots_in_res_2,
+    #                                                    distl_good_bragg_spots_2,
+    #                                                    distl_overloads_2,
+    #                                                    distl_max_cell_2,
+    #                                                    distl_mean_int_signal_2,
+    #                                                    distl_min_signal_strength_2,
+    #                                                    distl_max_signal_strength_2"""
+    #
+    #                 tmp_command_back = """,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s"""
+    #
+    #                 tmp_insert_values = ['SUCCESS',
+    #                                   results['Distl results']['distl res'][0],
+    #                                   results['Distl results']['labelit res'][0],
+    #                                   results['Distl results']['ice rings'][0],
+    #                                   results['Distl results']['total spots'][0],
+    #                                   results['Distl results']['spots in res'][0],
+    #                                   results['Distl results']['good Bragg spots'][0],
+    #                                   results['Distl results']['overloads'][0],
+    #                                   results['Distl results']['max cell'][0],
+    #                                   results['Distl results']['mean int signal'][0],
+    #                                   results['Distl results']['min signal strength'][0],
+    #                                   results['Distl results']['max signal strength'][0],
+    #                                   results['Distl results']['distl res'][1],
+    #                                   results['Distl results']['labelit res'][1],
+    #                                   results['Distl results']['ice rings'][1],
+    #                                   results['Distl results']['total spots'][1],
+    #                                   results['Distl results']['spots in res'][1],
+    #                                   results['Distl results']['good Bragg spots'][1],
+    #                                   results['Distl results']['overloads'][1],
+    #                                   results['Distl results']['max cell'][1],
+    #                                   results['Distl results']['mean int signal'][1],
+    #                                   results['Distl results']['min signal strength'][1],
+    #                                   results['Distl results']['max signal strength'][1]]
+    #
+    #                 #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #                 command_front += tmp_command_front
+    #                 command_back  += tmp_command_back
+    #                 insert_values += tmp_insert_values
+    #
+    #         except:
+    #             command_front += """,
+    #                                                    distl_status"""
+    #
+    #             command_back += """,
+    #                                                                         %s"""
+    #
+    #             insert_values.append("FAILED")
+    #
+    #         #LABELIT
+    #         try:
+    #             if results['Labelit results'] == 'FAILED':
+    #                 command_front += """,
+    #                                                    labelit_status"""
+    #
+    #                 command_back += """,
+    #                                                                         %s"""
+    #
+    #                 insert_values.append("FAILED")
+    #
+    #             else:
+    #                 tmp_command_front = """,
+    #                                                    labelit_status,
+    #                                                    labelit_iteration,
+    #                                                    labelit_res,
+    #                                                    labelit_spots_fit,
+    #                                                    labelit_metric,
+    #                                                    labelit_spacegroup,
+    #                                                    labelit_distance,
+    #                                                    labelit_x_beam,
+    #                                                    labelit_y_beam,
+    #                                                    labelit_a,
+    #                                                    labelit_b,
+    #                                                    labelit_c,
+    #                                                    labelit_alpha,
+    #                                                    labelit_beta,
+    #                                                    labelit_gamma,
+    #                                                    labelit_mosaicity,
+    #                                                    labelit_rmsd"""
+    #
+    #                 tmp_command_back = """,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s"""
+    #
+    #                 tmp_insert_values = ['SUCCESS',
+    #                                   results['Labelit results']['labelit_iteration'],
+    #                                   results['Labelit results']['mosflm_res'][0],
+    #                                   results['Labelit results']['labelit_spots_fit'][0],
+    #                                   results['Labelit results']['labelit_metric'][0],
+    #                                   results['Labelit results']['mosflm_sg'][0],
+    #                                   results['Labelit results']['mosflm_distance'][0],
+    #                                   results['Labelit results']['mosflm_beam_x'][0],
+    #                                   results['Labelit results']['mosflm_beam_y'][0],
+    #                                   results['Labelit results']['labelit_cell'][0][0],
+    #                                   results['Labelit results']['labelit_cell'][0][1],
+    #                                   results['Labelit results']['labelit_cell'][0][2],
+    #                                   results['Labelit results']['labelit_cell'][0][3],
+    #                                   results['Labelit results']['labelit_cell'][0][4],
+    #                                   results['Labelit results']['labelit_cell'][0][5],
+    #                                   results['Labelit results']['mosflm_mos'][0],
+    #                                   results['Labelit results']['labelit_rmsd'][0]]
+    #
+    #                 #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #                 command_front += tmp_command_front
+    #                 command_back  += tmp_command_back
+    #                 insert_values += tmp_insert_values
+    #
+    #         except:
+    #             command_front += """,
+    #                                                    labelit_status"""
+    #
+    #             command_back += """,
+    #                                                                         %s"""
+    #
+    #             insert_values.append("FAILED")
+    #
+    #
+    #         #RADDOSE
+    #         try:
+    #             if results['Raddose results'] == 'FAILED':
+    #                 command_front += """,
+    #                                                    raddose_status"""
+    #
+    #                 command_back += """,
+    #                                                                         %s"""
+    #
+    #                 insert_values.append("FAILED")
+    #
+    #             else:
+    #                 tmp_command_front = """,
+    #                                                    raddose_status,
+    #                                                    raddose_dose_per_image,
+    #                                                    raddose_henderson_limit,
+    #                                                    raddose_exp_dose_limit"""
+    #
+    #                 tmp_command_back = """,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s"""
+    #
+    #                 tmp_insert_values = ['SUCCESS',
+    #                                   results['Raddose results']['dose per image'],
+    #                                   results['Raddose results']['henderson limit'],
+    #                                   results['Raddose results']['exp dose limit']]
+    #
+    #                 #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #                 command_front += tmp_command_front
+    #                 command_back  += tmp_command_back
+    #                 insert_values += tmp_insert_values
+    #
+    #         except:
+    #             command_front += """,
+    #                                                    raddose_status"""
+    #
+    #             command_back += """,
+    #                                                                         %s"""
+    #
+    #             insert_values.append("FAILED")
+    #
+    #         #The normal strategy results
+    #         enter_norm_mosflm = False
+    #         try:
+    #             if results.has_key('Best results'):
+    #             #if results['Best results']:
+    #                 self.logger.debug('Best results is there')
+    #                 if results['Best results'] == 'FAILED':
+    #                     tmp_command_front = """,
+    #                                                        best_norm_status"""
+    #
+    #                     tmp_command_back = """,
+    #                                                                 %s"""
+    #
+    #                     tmp_insert_values = ["FAILED"]
+    #
+    #                     #MOSFLM STRATEGY
+    #                     if results['Mosflm strategy results'] == 'FAILED':
+    #                         tmp_command_front += """,
+    #                                                        mosflm_norm_status"""
+    #
+    #                         tmp_command_back += """,
+    #                                                                 %s"""
+    #
+    #                         tmp_insert_values.append("FAILED")
+    #                     else:
+    #                         enter_norm_mosflm = True
+    #
+    #                 else:
+    #                     norm_strat_type = 'best'
+    #                     tmp_command_front = """,
+    #                                                    best_complexity,
+    #                                                    best_norm_status,
+    #                                                    best_norm_res_limit,
+    #                                                    best_norm_completeness,
+    #                                                    best_norm_atten,
+    #                                                    best_norm_rot_range,
+    #                                                    best_norm_phi_end,
+    #                                                    best_norm_total_exp,
+    #                                                    best_norm_redundancy,
+    #                                                    best_norm_i_sigi_all,
+    #                                                    best_norm_i_sigi_high,
+    #                                                    best_norm_r_all,
+    #                                                    best_norm_r_high,
+    #                                                    best_norm_unique_in_blind,
+    #                                                    mosflm_norm_status"""
+    #
+    #                     tmp_command_back = """,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s"""
+    #
+    #                     tmp_insert_values = [settings['best_complexity'],
+    #                                       'SUCCESS',
+    #                                       results['Best results']['strategy res limit'],
+    #                                       results['Best results']['strategy completeness'][:-1],
+    #                                       results['Best results']['strategy attenuation'],
+    #                                       results['Best results']['strategy rot range'],
+    #                                       results['Best results']['strategy phi end'],
+    #                                       results['Best results']['strategy total exposure time'],
+    #                                       results['Best results']['strategy redundancy'],
+    #                                       results['Best results']['strategy I/sig'].split(' ')[0],
+    #                                       results['Best results']['strategy I/sig'].split(' ')[1][1:-1],
+    #                                       results['Best results']['strategy R-factor'].split(' ')[0][:-1],
+    #                                       results['Best results']['strategy R-factor'].split(' ')[1][1:-2],
+    #                                       results['Best results']['strategy frac of unique in blind region'][:-1],
+    #                                       'NONE' ]
+    #
+    #             #There is no entry in the results for 'Best results'
+    #             else:
+    #                 self.logger.debug('NO key Best results')
+    #                 #BEST STRATEGY
+    #                 tmp_command_front = """,
+    #                                                        best_norm_status"""
+    #                 tmp_command_back = """,
+    #                                                                 %s"""
+    #                 tmp_insert_values = ["NONE"]
+    #
+    #                 #MOSFLM STRATEGY
+    #                 if results.has_key('Mosflm strategy results'):
+    #                     if results['Mosflm strategy results'] == 'FAILED':
+    #                         tmp_command_front += """,
+    #                                                            mosflm_norm_status"""
+    #                         tmp_command_back += """,
+    #                                                                     %s"""
+    #                         tmp_insert_values.append("FAILED")
+    #                     else:
+    #                         enter_norm_mosflm = True
+    #                 else:
+    #                     tmp_command_front += """,
+    #                                                            mosflm_norm_status"""
+    #                     tmp_command_back += """,
+    #                                                                     %s"""
+    #                     tmp_insert_values.append("NONE")
+    #
+    #             #If it is necessary, enterthe mosflm strategy results into the database
+    #             if enter_norm_mosflm:
+    #                 norm_strat_type = 'mosflm'
+    #                 tmp_command_front += """,
+    #                                                        mosflm_norm_status,
+    #                                                        mosflm_norm_res_limit,
+    #                                                        mosflm_norm_completeness,
+    #                                                        mosflm_norm_redundancy,
+    #                                                        mosflm_norm_distance,
+    #                                                        mosflm_norm_delta_phi,
+    #                                                        mosflm_norm_img_exposure_time
+    #                                                        """
+    #
+    #                 tmp_command_back += """,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s"""
+    #
+    #                 tmp_insert_values += [ 'SUCCESS',
+    #                                      results['Mosflm strategy results']['strategy resolution'],
+    #                                      results['Mosflm strategy results']['strategy completeness'][:-1],
+    #                                      results['Mosflm strategy results']['strategy redundancy'],
+    #                                      results['Mosflm strategy results']['strategy distance'],
+    #                                      results['Mosflm strategy results']['strategy delta phi'],
+    #                                      results['Mosflm strategy results']['strategy image exp time'] ]
+    #
+    #             #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #             command_front += tmp_command_front
+    #             command_back  += tmp_command_back
+    #             insert_values += tmp_insert_values
+    #
+    #         except:
+    #             self.logger.exception('Exception in addPairResult in the normal strategy results section')
+    #             command_front += """,
+    #                                                    best_norm_status,
+    #                                                    mosflm_norm_status"""
+    #
+    #             command_back += """,
+    #                                                             %s,
+    #                                                             %s"""
+    #
+    #             insert_values += ['FAILED',
+    #                               'FAILED']
+    #
+    #         #The anomalous strategy results
+    #         enter_anom_mosflm = False
+    #         try:
+    #             if results.has_key('Best ANOM results'):
+    #                 self.logger.debug('Best ANOM results present')
+    #                 if results['Best ANOM results'] == 'FAILED':
+    #                     tmp_command_front = """,
+    #                                                        best_anom_status"""
+    #
+    #                     tmp_command_back = """,
+    #                                                                 %s"""
+    #
+    #                     tmp_insert_values = ["FAILED"]
+    #
+    #                     #MOSFLM STRATEGY
+    #                     if results['Mosflm strategy results'] == 'FAILED':
+    #                         command_front += """,
+    #                                                        mosflm_anom_status"""
+    #
+    #                         command_back += """,
+    #                                                                 %s"""
+    #
+    #                         insert_values.append("FAILED")
+    #                     else:
+    #                         enter_anom_mosflm = True
+    #
+    #                 else:
+    #                     anom_strat_type = 'best'
+    #                     tmp_command_front = """,
+    #                                                    best_anom_status,
+    #                                                    best_anom_res_limit,
+    #                                                    best_anom_completeness,
+    #                                                    best_anom_atten,
+    #                                                    best_anom_rot_range,
+    #                                                    best_anom_phi_end,
+    #                                                    best_anom_total_exp,
+    #                                                    best_anom_redundancy,
+    #                                                    best_anom_i_sigi_all,
+    #                                                    best_anom_i_sigi_high,
+    #                                                    best_anom_r_all,
+    #                                                    best_anom_r_high,
+    #                                                    best_anom_unique_in_blind,
+    #                                                    mosflm_anom_status"""
+    #
+    #                     tmp_command_back = """,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s"""
+    #
+    #                     tmp_insert_values = ['SUCCESS',
+    #                                       results['Best ANOM results']['strategy anom res limit'],
+    #                                       results['Best ANOM results']['strategy anom completeness'][:-1],
+    #                                       results['Best ANOM results']['strategy anom attenuation'],
+    #                                       results['Best ANOM results']['strategy anom rot range'],
+    #                                       results['Best ANOM results']['strategy anom phi end'],
+    #                                       results['Best ANOM results']['strategy anom total exposure time'],
+    #                                       results['Best ANOM results']['strategy anom redundancy'],
+    #                                       results['Best ANOM results']['strategy anom I/sig'].split(' ')[0],
+    #                                       results['Best ANOM results']['strategy anom I/sig'].split(' ')[1][1:-1],
+    #                                       results['Best ANOM results']['strategy anom R-factor'].split(' ')[0][:-1],
+    #                                       results['Best ANOM results']['strategy anom R-factor'].split(' ')[1][1:-2],
+    #                                       results['Best ANOM results']['strategy anom frac of unique in blind region'][:-1],
+    #                                       'NONE' ]
+    #
+    #             #There is no entry in the results for 'Best results'
+    #             else:
+    #                 self.logger.debug('NO key Best ANOM results')
+    #                 #BEST STRATEGY
+    #                 tmp_command_front = """,
+    #                                                        best_anom_status"""
+    #                 tmp_command_back = """,
+    #                                                                 %s"""
+    #                 tmp_insert_values = ["NONE"]
+    #
+    #                 #MOSFLM STRATEGY
+    #                 if results.has_key('Mosflm ANOM strategy results'):
+    #                     self.logger.debug('Has key Mosflm ANOM results')
+    #                     if results['Mosflm ANOM strategy results'] == 'FAILED':
+    #                         tmp_command_front += """,
+    #                                                            mosflm_anom_status"""
+    #                         tmp_command_back += """,
+    #                                                                     %s"""
+    #                         tmp_insert_values.append("FAILED")
+    #                     else:
+    #                         enter_anom_mosflm = True
+    #                 else:
+    #                     self.logger.debug('NO key Mosflm ANOM results')
+    #                     tmp_command_front += """,
+    #                                                            mosflm_anom_status"""
+    #                     tmp_command_back += """,
+    #                                                                     %s"""
+    #                     tmp_insert_values.append("NONE")
+    #
+    #             #If it is necessary, enterthe mosflm strategy results into the database
+    #             if enter_anom_mosflm:
+    #                 anom_strat_type = 'mosflm'
+    #                 tmp_command_front = """,
+    #                                                        mosflm_anom_status,
+    #                                                        mosflm_anom_res_limit,
+    #                                                        mosflm_anom_completeness,
+    #                                                        mosflm_anom_redundancy,
+    #                                                        mosflm_anom_distance,
+    #                                                        mosflm_anom_delta_phi,
+    #                                                        mosflm_anom_img_exposure_time
+    #                                                        """
+    #
+    #                 tmp_command_back = """,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s,
+    #                                                                 %s"""
+    #
+    #                 tmp_insert_values = [ 'SUCCESS',
+    #                                      results['Mosflm ANOM strategy results']['strategy anom resolution'],
+    #                                      results['Mosflm ANOM strategy results']['strategy anom completeness'][:-1],
+    #                                      results['Mosflm ANOM strategy results']['strategy anom redundancy'],
+    #                                      results['Mosflm ANOM strategy results']['strategy anom distance'],
+    #                                      results['Mosflm ANOM strategy results']['strategy anom delta phi'],
+    #                                      results['Mosflm ANOM strategy results']['strategy anom image exp time'] ]
+    #
+    #             #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #             command_front += tmp_command_front
+    #             command_back  += tmp_command_back
+    #             insert_values += tmp_insert_values
+    #
+    #         except:
+    #             self.logger.exception('Exception in addPairResult in the anomalous strategy results section')
+    #             command_front += """,
+    #                                                    best_anom_status,
+    #                                                    mosflm_anom_status"""
+    #
+    #             command_back += """,
+    #                                                             %s,
+    #                                                             %s"""
+    #
+    #             insert_values += ['FAILED',
+    #                               'FAILED']
+    #
+    #         #NOW the html and image files
+    #         try:
+    #             #Add stac summary only if there is a stac run
+    #             if (info1.has_key('mk3_phi')):
+    #                 summary_stac = results['Output files']['Stac summary html']
+    #             else:
+    #                 summary_stac = 'None'
+    #
+    #
+    #             if results['Output files'] == 'FAILED':
+    #                     command_back += ")"
+    #
+    #
+    #             else:
+    #                 tmp_command_front = """,
+    #                                                    summary_short,
+    #                                                    summary_long,
+    #                                                    summary_stac,
+    #                                                    image_raw_1,
+    #                                                    image_preds_1,
+    #                                                    image_raw_2,
+    #                                                    image_preds_2,
+    #                                                    best_plots,
+    #                                                    stac_file1,
+    #                                                    stac_file2"""
+    #
+    #                 tmp_command_back = """,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s)"""
+    #
+    #                 tmp_insert_values = [results['Output files']['Short summary html'],
+    #                                   results['Output files']['Long summary html'],
+    #                                   summary_stac,
+    #                                   results['Output files']['image_path_raw_1'],
+    #                                   results['Output files']['image_path_pred_1'],
+    #                                   results['Output files']['image_path_raw_2'],
+    #                                   results['Output files']['image_path_pred_2'],
+    #                                   results['Output files']['Best plots html'],
+    #                                   results['Output files']['STAC file1'],
+    #                                   results['Output files']['STAC file2']]
+    #
+    #                 #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #                 command_front += tmp_command_front
+    #                 command_back  += tmp_command_back
+    #                 insert_values += tmp_insert_values
+    #
+    #         except:
+    #             command_back += ")"
+    #
+    #
+    #         #deposit the result
+    #         self.logger.debug(command_front+command_back)
+    #         self.logger.debug(insert_values)
+    #         cursor.execute(command_front+command_back,insert_values)
+    #
+    #     except:
+    #         self.logger.exception('ERROR : unknown exception in Database::addPairResult')
+    #         return(False)
+    #
+    #     try:
+    #
+    #         #get the result's pair_result_dict
+    #         pair_result_dict = self.make_dicts('SELECT * FROM pair_results WHERE pair_result_id=%s',(cursor.lastrowid,))[0]
+    #
+    #         #register the result in results table
+    #         cursor.execute('INSERT INTO results (type,id,setting_id,process_id,sample_id,data_root_dir) VALUES (%s, %s, %s, %s, %s, %s)',('pair',pair_result_dict['pair_result_id'],pair_result_dict['settings_id'],pair_result_dict['process_id'],pair_result_dict['sample_id'],pair_result_dict['data_root_dir']))
+    #
+    #         #add the result_id to the current dict
+    #         pair_result_dict['result_id'] = cursor.lastrowid;
+    #
+    #         #update the pair_results table with the result_id
+    #         cursor.execute("UPDATE pair_results SET result_id=%s WHERE pair_result_id=%s",(pair_result_dict['result_id'],pair_result_dict['pair_result_id']))
+    #
+    #         #log the "normal" strategy wedges
+    #         if (norm_strat_type == 'best') :
+    #             self.addStrategyWedges(id = pair_result_dict['pair_result_id'],
+    #                                    int_type = 'pair',
+    #                                    strategy_type = 'normal',
+    #                                    strategy_program = 'best',
+    #                                    results = results['Best results'])
+    #         elif (norm_strat_type == 'mosflm') :
+    #             self.addStrategyWedges(id = pair_result_dict['pair_result_id'],
+    #                                    int_type = 'pair',
+    #                                    strategy_type = 'normal',
+    #                                    strategy_program = 'mosflm',
+    #                                    results = results['Mosflm strategy results'])
+    #         #log the anomalous strategy wedges
+    #         if (anom_strat_type == 'best'):
+    #             self.addStrategyWedges(id = pair_result_dict['pair_result_id'],
+    #                                    int_type = 'pair',
+    #                                    strategy_type = 'anomalous',
+    #                                    strategy_program = 'best',
+    #                                    results = results['Best ANOM results'])
+    #         elif (anom_strat_type == 'mosflm') :
+    #             self.addStrategyWedges(id = pair_result_dict['pair_result_id'],
+    #                                    int_type = 'pair',
+    #                                    strategy_type = 'anomalous',
+    #                                    strategy_program = 'mosflm',
+    #                                    results = results['Mosflm ANOM strategy results'])
+    #
+    #         self.close_connection(connection, cursor)
+    #         return(pair_result_dict)
+    #
+    #     except:
+    #         self.logger.exception('ERROR : unknown exception in Database::addPairResult - results updating subsection')
+    #         self.close_connection(connection, cursor)
+    #         return(False)
+    #
+    # def addDiffcenterResult(self,dirs,info,settings,results):
+    #     """
+    #     Add data from diffraction-based centering analysis to diffcenter_results table
+    #     """
+    #     self.logger.debug('Database::addDiffcenterResult')
+    #     self.logger.debug(results)
+    #     try:
+    #         #connect to the database
+    #         connection,cursor = self.get_db_connection()
+    #
+    #         #regardless of failure level
+    #         command = '''INSERT INTO diffcenter_results ( process_id,
+    #                                                       settings_id,
+    #                                                       image_id,
+    #                                                       fullname,
+    #                                                       sample_id,
+    #                                                       work_dir,
+    #                                                       ice_rings,
+    #                                                       max_cell,
+    #                                                       distl_res,
+    #                                                       overloads,
+    #                                                       labelit_res,
+    #                                                       total_spots,
+    #                                                       good_b_spots,
+    #                                                       max_signal_str,
+    #                                                       mean_int_signal,
+    #                                                       min_signal_str,
+    #                                                       total_signal,
+    #                                                       in_res_spots,
+    #                                                       saturation_50) VALUES (%s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s,
+    #                                                                              %s )'''
+    #         if dirs == False:
+    #             insert_values = [None,
+    #                              None,
+    #                              results['image_id'],
+    #                              results['fullname'],
+    #                              results['sample_id'],
+    #                              None,
+    #                              results['ice_rings'],
+    #                              results['max_cell'],
+    #                              results['distl_res'],
+    #                              results['overloads'],
+    #                              results['labelit_res'],
+    #                              results['total_spots'],
+    #                              results['good_b_spots'],
+    #                              results['max_signal_str'],
+    #                              results['mean_int_signal'],
+    #                              results['min_signal_str'],
+    #                              results['total_signal'],
+    #                              results['in_res_spots'],
+    #                              results['saturation_50']]
+    #         else:
+    #             insert_values = [info['process_id'],
+    #                              settings['setting_id'],
+    #                              info['image_id'],
+    #                              info['fullname'],
+    #                              info['sample_id'],
+    #                              dirs['work'],
+    #                              results['Distl results']['ice_rings'][0],
+    #                              results['Distl results']['max_cell'][0],
+    #                              results['Distl results']['distl_res'][0],
+    #                              results['Distl results']['overloads'][0],
+    #                              results['Distl results']['labelit_res'][0],
+    #                              results['Distl results']['total_spots'][0],
+    #                              results['Distl results']['good_b_spots'][0],
+    #                              results['Distl results']['max_signal_str'][0],
+    #                              results['Distl results']['mean_int_signal'][0],
+    #                              results['Distl results']['min_signal_str'][0],
+    #                              results['Distl results']['total_signal'][0],
+    #                              results['Distl results']['in_res_spots'][0],
+    #                              results['Distl results']['saturation_50'][0]]
+    #
+    #         #deposit the result
+    #         self.logger.debug(command)
+    #         self.logger.debug(insert_values)
+    #         cursor.execute(command,insert_values)
+    #         diffcenter_result_dict = self.make_dicts('SELECT * FROM diffcenter_results WHERE diffcenter_result_id=%s',(cursor.lastrowid,))[0]
+    #         self.close_connection(connection, cursor)
+    #         return(diffcenter_result_dict)
+    #
+    #     except:
+    #         self.logger.exception('ERROR : unknown exception in Database::addDiffcenterResult')
+    #         self.close_connection(connection, cursor)
+    #         return(False)
+    #
+    # def addQuickanalysisResult(self,dirs,info,settings,results):
+    #     """
+    #     Add data from snapshot-based analysis  analysis to quickanalysis_results table
+    #     """
+    #     if self.logger:
+    #       self.logger.debug('Database::addQuickanalysisResult')
+    #       self.logger.debug(info)
+    #       self.logger.debug(results)
+    #     else:
+    #       print 'Database::addQuickanalysisResult'
+    #
+    #     try:
+    #         #connect to the database
+    #         connection,cursor = self.get_db_connection()
+    #
+    #         #regardless of failure level
+    #         command = '''INSERT INTO quickanalysis_results ( process_id,
+    #                                                          settings_id,
+    #                                                          image_id,
+    #                                                          fullname,
+    #                                                          sample_id,
+    #                                                          work_dir,
+    #                                                          ice_rings,
+    #                                                          max_cell,
+    #                                                          distl_res,
+    #                                                          overloads,
+    #                                                          labelit_res,
+    #                                                          total_spots,
+    #                                                          good_b_spots,
+    #                                                          max_signal_str,
+    #                                                          mean_int_signal,
+    #                                                          min_signal_str,
+    #                                                          total_signal,
+    #                                                          in_res_spots,
+    #                                                          saturation_50) VALUES (%s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s,
+    #                                                                                 %s )'''
+    #         if dirs == False:
+    #             insert_values = [None,
+    #                              None,
+    #                              results['image_id'],
+    #                              results['fullname'],
+    #                              results['sample_id'],
+    #                              None,
+    #                              results['ice_rings'],
+    #                              results['max_cell'],
+    #                              results['resolution_1'],
+    #                              results['overloads'],
+    #                              results['resolution_2'],
+    #                              results['total_spots'],
+    #                              results['good_b_spots'],
+    #                              results['signal_max'],
+    #                              results['signal_mean'],
+    #                              results['signal_min'],
+    #                              results['total_signal'],
+    #                              results['in_res_spots'],
+    #                              results['saturation_50']]
+    #         # TODO - add saturation min mean and max to the result
+    #         else:
+    #             if ('image_id' not in info):
+    #                 info['image_id'] = 0
+    #                 info['sample_id'] = 0
+    #             insert_values = [info['process_id'],
+    #                              None,   #settings['setting_id']
+    #                              info['image_id'],
+    #                              info['fullname'],
+    #                              info['sample_id'],
+    #                              dirs['work'],
+    #                              results['Distl results']['ice_rings'][0],
+    #                              results['Distl results']['max_cell'][0],
+    #                              results['Distl results']['distl_res'][0],
+    #                              results['Distl results']['overloads'][0],
+    #                              results['Distl results']['labelit_res'][0],
+    #                              results['Distl results']['total_spots'][0],
+    #                              results['Distl results']['good_b_spots'][0],
+    #                              results['Distl results']['max_signal_str'][0],
+    #                              results['Distl results']['mean_int_signal'][0],
+    #                              results['Distl results']['min_signal_str'][0],
+    #                              results['total_signal'][0],
+    #                              results['Distl results']['in_res_spots'][0],
+    #                              results['saturation_50'][0]]
+    #
+    #         #deposit the result
+    #         if self.logger:
+    #           self.logger.debug(command)
+    #           self.logger.debug(insert_values)
+    #         cursor.execute(command,insert_values)
+    #         quickanalysis_result_dict = self.make_dicts('SELECT * FROM quickanalysis_results WHERE quickanalysis_result_id=%s',(cursor.lastrowid,))[0]
+    #         self.close_connection(connection, cursor)
+    #         return(quickanalysis_result_dict)
+    #
+    #     except:
+    #         if self.logger:
+    #           self.logger.exception('ERROR : unknown exception in Database::addQuickAnalysisResult')
+    #           self.close_connection(connection, cursor)
+    #         return(False)
+    #
+    # def addYesSolved(self,result_id,sad_result_id=False):
+    #     """
+    #     Add a Yes status to solved column in integrate_ or merge_ results tables
+    #     To be triggered by addSadResult, addCellAnalysisResult or addMrResult
+    #     """
+    #     self.logger.debug('Database::addYesSolved')
+    #
+    #     if sad_result_id:
+    #         #join sad_results and results tables to get type
+    #         query = '''SELECT results.* FROM results,sad_results WHERE sad_results.sad_result_id=%s
+    #                     AND sad_results.source_data_id=results.result_id'''
+    #         request_dict = self.make_dicts(query=query, params=(sad_result_id,))
+    #     elif result_id:
+    #         query = "SELECT * FROM results WHERE result_id=%s"
+    #         request_dict = self.make_dicts(query=query, params=(result_id,))
+    #     result_table = request_dict[0]['type']
+    #     if result_table == 'merge' or result_table == 'integrate':
+    #         command = "UPDATE %s_results " % (result_table)
+    #         command += "SET solved=%s WHERE result_id=%s"
+    #         insert_values = ['Yes',
+    #                         request_dict[0]['result_id']]
+    #         #connect to the database
+    #         connection,cursor = self.get_db_connection()
+    #
+    #         cursor.execute(command,insert_values)
+    #         #change timestamp in results table to cue runs list update
+    #         command_restamp = "UPDATE results SET timestamp=NOW() WHERE result_id=%s"
+    #         insert_restamp = [request_dict[0]['result_id']]
+    #         cursor.execute(command_restamp,insert_restamp)
+    #     else:
+    #         self.logger.debug('Database::Wrong Type::Aborting Flagging')
+    #
+    # def addXia2Result(self,dirs,info,settings,results):
+    #     """
+    #     Add data to the integrate_results table
+    #     Modified to work with updates (i.e. adding results from the same process over and over)
+    #     """
+    #     self.logger.debug('Database::addXia2Result DRD:%s' % dirs['data_root_dir'])
+    #
+    #     #Determine the type of run this is
+    #     if settings.has_key('request'):
+    #         my_type = settings['request']['request_type']
+    #     else:
+    #         my_type ='original'
+    #
+    #     #Check to see if there is a previous result with this process_id
+    #     integrate_result_id,result_id = self.getTypeResultId(process_id=info['image_data']['process_id'])
+    #     if (integrate_result_id):
+    #         integrate_result_dict = self.getResultById(integrate_result_id, 'integrate')
+    #     else:
+    #         #make a new entry to then update
+    #         integrate_result_id,result_id = self.makeNewResult(rtype='integrate',
+    #                                                            process_id=info['image_data']['process_id'])
+    #         integrate_result_dict = False
+    #
+    #     try:
+    #         #connect to the database
+    #         connection,cursor = self.get_db_connection()
+    #
+    #         #Information stored regardless of failure level
+    #         command = '''UPDATE integrate_results SET timestamp=NOW(),
+    #                                                    result_id=%s,
+    #                                                    process_id=%s,
+    #                                                    run_id=%s,
+    #                                                    version=version+1,
+    #                                                    pipeline=%s,
+    #                                                    data_root_dir=%s,
+    #                                                    settings_id=%s,
+    #                                                    repr=%s,
+    #                                                    template=%s,
+    #                                                    date=%s,
+    #                                                    work_dir=%s,
+    #                                                    type=%s,
+    #                                                    images_dir=%s,
+    #                                                    image_start=%s,
+    #                                                    image_end=%s'''
+    #
+    #         insert_values = [ result_id,
+    #                           info['image_data']['process_id'],
+    #                           info['run_data']['run_id'],
+    #                           'xia2',
+    #                           dirs['data_root_dir'],
+    #                           settings['setting_id'],
+    #                           os.path.basename(dirs['work']),
+    #                           info['image_data']['repr'],
+    #                           info['image_data']['date'],
+    #                           dirs['work'],
+    #                           my_type,
+    #                           info['image_data']['directory'],
+    #                           info['run_data']['start'],
+    #                           info['run_data']['total']+info['run_data']['start']-1 ]
+    #
+    #         #FILES
+    #         try:
+    #             if (results['status'] == 'Error'):
+    #                 tmp_command = ''',
+    #                                                       integrate_status=%s,
+    #                                                       parsed=%s,
+    #                                                       plots=%s,
+    #                                                       xia_log=%s'''
+    #
+    #                 tmp_insert_values = ['FAILED','None','None',results['files']['xia_log']]
+    #
+    #             else:
+    #                 tmp_command = ''',
+    #                                                       integrate_status=%s,
+    #                                                       parsed=%s,
+    #                                                       plots=%s,
+    #                                                       xia_log=%s,
+    #                                                       xscale_log=%s,
+    #                                                       scala_log=%s,
+    #                                                       unmerged_sca_file=%s,
+    #                                                       sca_file=%s,
+    #                                                       mtz_file=%s,
+    #                                                       merge_file=%s'''
+    #
+    #                 tmp_insert_values = [ results['status'],
+    #                                       os.path.join(dirs['work'],results['parsed']),
+    #                                       os.path.join(dirs['work'],results['plots']),
+    #                                       results['files']['xia_log'],
+    #                                       results['files']['xscale_log'],
+    #                                       results['files']['scala_log'],
+    #                                       results['files']['unmerged'],
+    #                                       results['files']['scafile'],
+    #                                       results['files']['mtzfile'],
+    #                                       results['files']['mergable'] ]
+    #
+    #             #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #             command += tmp_command
+    #             insert_values += tmp_insert_values
+    #
+    #         except:
+    #             self.logger.exception('Error in writing files section of integrate_result table')
+    #
+    #         #SPACEGROUP and CELL info
+    #         try:
+    #             if (results['status'] == 'SUCCESS'):
+    #                 cell = results['summary']['cell'].split()
+    #                 #change the format of the time for database entry
+    #                 proc_time = ''
+    #                 for i in results['summary']['procTime'].split():
+    #                     proc_time += i[:2]
+    #                     if i[2] != 's':
+    #                         proc_time += ':'
+    #                 #handle rD values
+    #                 if not results['summary'].has_key('rD_analysis'):
+    #                     results['summary']['rD_analysis'] = 0
+    #                     results['summary']['rD_conclusion'] = 0
+    #
+    #                 tmp_command = ''',
+    #                                                       spacegroup=%s,
+    #                                                       a=%s,
+    #                                                       b=%s,
+    #                                                       c=%s,
+    #                                                       alpha=%s,
+    #                                                       beta=%s,
+    #                                                       gamma=%s,
+    #                                                       twinscore=%s,
+    #                                                       proc_time=%s,
+    #                                                       rd_analysis=%s,
+    #                                                       rd_conclusion=%s'''
+    #
+    #                 tmp_insert_values = [ results['summary']['spacegroup'],
+    #                                       cell[0],
+    #                                       cell[1],
+    #                                       cell[2],
+    #                                       cell[3],
+    #                                       cell[4],
+    #                                       cell[5],
+    #                                       results['summary']['twinScore'],
+    #                                       proc_time,
+    #                                       results['summary']['rD_analysis'],
+    #                                       results['summary']['rD_conclusion'] ]
+    #
+    #                 #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #                 command += tmp_command
+    #                 insert_values += tmp_insert_values
+    #
+    #         except:
+    #             self.logger.exception('Error in writing spacegroup and cell info section of integrate_result table')
+    #
+    #
+    #         #integrate_shell_results section
+    #         try:
+    #             if (results['status'] == 'SUCCESS'):
+    #                 if integrate_result_dict:
+    #                     overall_shell_id = self.addXia2ShellResult(shell_dict=results['summary']['overall'],
+    #                                                                     type='overall',
+    #                                                                     isr_id=integrate_result_dict['shell_overall'])
+    #                     inner_shell_id   = self.addXia2ShellResult(shell_dict=results['summary']['innerShell'],
+    #                                                                     type='inner',
+    #                                                                     isr_id=integrate_result_dict['shell_inner'])
+    #                     outer_shell_id   = self.addXia2ShellResult(shell_dict=results['summary']['outerShell'],
+    #                                                                     type='outer',
+    #                                                                     isr_id=integrate_result_dict['shell_outer'])
+    #                 else:
+    #                     overall_shell_id = self.addXia2ShellResult(shell_dict=results['summary']['overall'],
+    #                                                                     type='overall')
+    #                     inner_shell_id   = self.addXia2ShellResult(shell_dict=results['summary']['innerShell'],
+    #                                                                     type='inner')
+    #                     outer_shell_id   = self.addXia2ShellResult(shell_dict=results['summary']['outerShell'],
+    #                                                                     type='outer')
+    #
+    #                 command += ''',
+    #                                                       shell_overall=%s,
+    #                                                       shell_inner=%s,
+    #                                                       shell_outer=%s'''
+    #
+    #                 insert_values += [ overall_shell_id,
+    #                                    inner_shell_id,
+    #                                    outer_shell_id ]
+    #
+    #         except:
+    #             self.logger.exception('Error in writing integrate_shell_results section of integrate_result table')
+    #
+    #         #finish up the commands
+    #         command += ' WHERE integrate_result_id=%s'
+    #         insert_values.append(integrate_result_id)
+    #
+    #         #deposit the result
+    #         self.logger.debug(command)
+    #         self.logger.debug(insert_values)
+    #         cursor.execute(command,insert_values)
+    #
+    #     except:
+    #         self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult')
+    #         return(False)
+    #
+    #     try:
+    #         #get the result's pair_result_dict
+    #         new_integrate_result_dict = self.make_dicts('SELECT * FROM integrate_results WHERE integrate_result_id=%s',(integrate_result_id,))[0]
+    #
+    #         #update the result in results table
+    #         cursor.execute('UPDATE results SET setting_id=%s,process_id=%s,sample_id=%s,data_root_dir=%s,timestamp=%s WHERE result_id=%s',
+    #                        (new_integrate_result_dict['settings_id'],new_integrate_result_dict['process_id'],new_integrate_result_dict['sample_id'],new_integrate_result_dict['data_root_dir'],new_integrate_result_dict['timestamp'],result_id))
+    #
+    #         #close the connection to the database
+    #         self.close_connection(connection, cursor)
+    #         return(new_integrate_result_dict)
+    #
+    #     except:
+    #         self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult - results updating subsection')
+    #         self.close_connection(connection, cursor)
+    #         return(False)
+    #
+    # def addXia2ShellResult(self,shell_dict,type,isr_id=None):
+    #     """
+    #     Add a shell result from integration and return the isr_id
+    #     """
+    #     self.logger.debug('addXia2ShellResult %s' % type)
+    #     self.logger.debug(shell_dict)
+    #
+    #     try:
+    #         #connect to the database
+    #         connection,cursor = self.get_db_connection()
+    #
+    #         if not (isr_id):
+    #             cursor.execute("INSERT INTO integrate_shell_results () VALUES ()")
+    #             isr_id = cursor.lastrowid
+    #
+    #         if (type != 'overall'):
+    #              shell_dict['wilsonB'] = '0'
+    #
+    #         #regardless of failure level
+    #         command = '''UPDATE integrate_shell_results SET shell_type=%s,
+    #                                                          high_res=%s,
+    #                                                          low_res=%s,
+    #                                                          completeness=%s,
+    #                                                          multiplicity=%s,
+    #                                                          i_sigma=%s,
+    #                                                          r_merge=%s,
+    #                                                          r_meas=%s,
+    #                                                          r_meas_pm=%s,
+    #                                                          r_pim=%s,
+    #                                                          r_pim_pm=%s,
+    #                                                          wilson_b=%s,
+    #                                                          partial_bias=%s,
+    #                                                          anom_completeness=%s,
+    #                                                          anom_multiplicity=%s,
+    #                                                          anom_correlation=%s,
+    #                                                          anom_slope=%s,
+    #                                                          total_obs=%s,
+    #                                                          unique_obs=%s WHERE isr_id=%s'''
+    #
+    #         insert_values = [ type,
+    #                           shell_dict['high_res'],
+    #                           shell_dict['low_res'],
+    #                           shell_dict['completeness'],
+    #                           shell_dict['multiplicity'],
+    #                           shell_dict['I/sigma'],
+    #                           shell_dict['Rmerge'],
+    #                           shell_dict['Rmeas(I)'],
+    #                           shell_dict['Rmeas(I+/-)'],
+    #                           shell_dict['Rpim(I)'],
+    #                           shell_dict['Rpim(I+/-)'],
+    #                           shell_dict['wilsonB'],
+    #                           shell_dict['partialBias'],
+    #                           shell_dict['anomComp'],
+    #                           shell_dict['anomMult'],
+    #                           shell_dict['anomCorr'],
+    #                           shell_dict['anomSlope'],
+    #                           shell_dict['totalObs'],
+    #                           shell_dict['totalUnique'],
+    #                           isr_id ]
+    #
+    #         #deposit the result
+    #         self.logger.debug(command)
+    #         self.logger.debug(insert_values)
+    #         cursor.execute(command,insert_values)
+    #         self.close_connection(connection, cursor)
+    #         return(isr_id)
+    #
+    #     except:
+    #         self.logger.exception('Error in addXia2ShellResult')
+    #         self.close_connection(connection, cursor)
+    #         return(0)
+    #
+    # def addIntegrateResult(self,dirs,info,settings,results):
+    #     """
+    #     Add data to the integrate_results table
+    #     This function works with the new XDS-based fast integration pipeline
+    #     Modified to work with updates (i.e. adding results from the same process over and over)
+    #     """
+    #     self.logger.debug('Database::addIntegrateResult DRD:%s' % dirs['data_root_dir'])
+    #
+    #     #Determine the type of run this is
+    #     if settings.has_key('request'):
+    #         my_type = settings['request']['request_type']
+    #     else:
+    #         my_type ='original'
+    #
+    #     #Check the results to construct a new repr on the fly
+    #     my_repr = os.path.basename(dirs['work'])
+    #
+    #     #Construct a template on the fly
+    #     my_template = info["image_data"]["fullname"][:-7]+"###.img"
+    #
+    #     #Check for request_id - if this is a reprocess event
+    #     if (settings.has_key('request')):
+    #         request_id = settings['request']['cloud_request_id']
+    #     else:
+    #         request_id = 0
+    #
+    #     #Acquire the lock to avoid pesky problem with two rapid results
+    #     self.LOCK.acquire()
+    #     try:
+    #         #Check to see if there is a previous result with this process_id
+    #         integrate_result_id,result_id = self.getTypeResultId(process_id=info['image_data']['process_id'])
+    #         if (integrate_result_id):
+    #             integrate_result_dict = self.getResultById(integrate_result_id, 'integrate')
+    #         else:
+    #             #make a new entry to then update
+    #             integrate_result_id,result_id = self.makeNewResult(rtype='integrate',
+    #                                                                process_id=info['image_data']['process_id'])
+    #             integrate_result_dict = False
+    #     except:
+    #         self.logger.exception("Error in addIntegrateResult acquiring the result_ids")
+    #
+    #     #Release the lock
+    #     self.LOCK.release()
+    #
+    #     try:
+    #         self.logger.debug("Enter try")
+    #         #connect to the database
+    #         connection,cursor = self.get_db_connection()
+    #
+    #         #Information stored regardless of failure level
+    #         command = '''UPDATE integrate_results SET timestamp=NOW(),
+    #                                                    result_id=%s,
+    #                                                    process_id=%s,
+    #                                                    run_id=%s,
+    #                                                    sample_id=%s,
+    #                                                    version=version+1,
+    #                                                    pipeline=%s,
+    #                                                    data_root_dir=%s,
+    #                                                    settings_id=%s,
+    #                                                    request_id=%s,
+    #                                                    repr=%s,
+    #                                                    template=%s,
+    #                                                    date=%s,
+    #                                                    work_dir=%s,
+    #                                                    type=%s,
+    #                                                    images_dir=%s,
+    #                                                    image_start=%s,
+    #                                                    image_end=%s'''
+    #
+    #         insert_values = [ result_id,
+    #                           info['image_data']['process_id'],
+    #                           info['run_data']['run_id'],
+    #                           info['image_data']['sample_id'],
+    #                           'fastint',
+    #                           dirs['data_root_dir'],
+    #                           settings['setting_id'],
+    #                           request_id,
+    #                           my_repr,
+    #                           my_template,
+    #                           #info['image_data']['repr'],
+    #                           info['image_data']['date'],
+    #                           dirs['work'],
+    #                           my_type,
+    #                           info['image_data']['directory'],
+    #                           results['summary']['wedge'].split('-')[0],
+    #                           results['summary']['wedge'].split('-')[1] ]
+    #
+    #         #FILES
+    #         try:
+    #             #a failed run
+    #             if (results['status'] == 'FAILED'):
+    #                 tmp_command = ''',
+    #                                                       integrate_status=%s,
+    #                                                       parsed=%s,
+    #                                                       plots=%s,
+    #                                                       xia_log=%s'''
+    #
+    #                 tmp_insert_values = ['FAILED','None','None',results['files']['xia_log']]
+    #
+    #             #The final result
+    #             elif (results.has_key('files')):
+    #                 tmp_command = ''',
+    #                                                       integrate_status=%s,
+    #                                                       parsed=%s,
+    #                                                       summary_long=%s,
+    #                                                       plots=%s,
+    #                                                       xds_log=%s,
+    #                                                       scala_log=%s,
+    #                                                       mtz_file=%s,
+    #                                                       hkl_file=%s,
+    #                                                       merge_file=%s,
+    #                                                       download_file=%s'''
+    #
+    #                 tmp_insert_values = [ results['status'],
+    #                                       os.path.join(dirs['work'],results['short']),
+    #                                       os.path.join(dirs['work'],results['long']),
+    #                                       os.path.join(dirs['work'],results['plots']),
+    #                                       results['files']['xds_log'],
+    #                                       results['files']['scala_log'],
+    #                                       results['files']['mtzfile'],
+    #                                       results['files']['xds_data'],
+    #                                       results['files']['mergable'],
+    #                                       results['files']['downloadable'] ]
+    #
+    #
+    #                 if results['files'].has_key('ANOM_sca'):
+    #                     tmp_command += ''',
+    #                                                               unmerged_sca_file=%s,
+    #                                                               sca_file=%s'''
+    #                     tmp_insert_values += [ results['files']['ANOM_sca'],
+    #                                           results['files']['NATIVE_sca'] ]
+    #
+    #                     #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #                     command += tmp_command
+    #                     insert_values += tmp_insert_values
+    #
+    #             #a partial run
+    #             else:
+    #                 tmp_command = ''',
+    #                                                       integrate_status=%s,
+    #                                                       parsed=%s,
+    #                                                       summary_long=%s,
+    #                                                       plots=%s'''
+    #
+    #                 tmp_insert_values = [ results['status'],
+    #                                       os.path.join(dirs['work'],results['short']),
+    #                                       os.path.join(dirs['work'],results['long']),
+    #                                       os.path.join(dirs['work'],results['plots']) ]
+    #
+    #             #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #             command += tmp_command
+    #             insert_values += tmp_insert_values
+    #
+    #         except:
+    #             self.logger.exception('Error in writing files section of integrate_result table')
+    #
+    #         #SPACEGROUP, CELL and anomalous
+    #         try:
+    #             if (results['status'] in ('SUCCESS','ANALYSIS','WORKING','FAILED')):
+    #                 cell = results['summary']['scaling_unit_cell'][:]
+    #                 tmp_command = ''',
+    #                                                       spacegroup=%s,
+    #                                                       a=%s,
+    #                                                       b=%s,
+    #                                                       c=%s,
+    #                                                       alpha=%s,
+    #                                                       beta=%s,
+    #                                                       gamma=%s'''
+    #
+    #                 tmp_insert_values = [ results['summary']['scaling_spacegroup'],
+    #                                       cell[0],
+    #                                       cell[1],
+    #                                       cell[2],
+    #                                       cell[3],
+    #                                       cell[4],
+    #                                       cell[5]]
+    #
+    #                 #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #                 command += tmp_command
+    #                 insert_values += tmp_insert_values
+    #
+    #         except:
+    #             self.logger.exception('Error in writing spacegroup and cell info section of integrate_result table')
+    #
+    #
+    #         #integrate_shell_results section
+    #         try:
+    #             if (results['status'] in ('SUCCESS','ANALYSIS','WORKING','FAILED')):
+    #                 if integrate_result_dict:
+    #                     overall_shell_id = self.addIntegrateShellResult(shell_dict=results['summary'],
+    #                                                                     type='overall',
+    #                                                                     isr_id=integrate_result_dict['shell_overall'])
+    #                     inner_shell_id   = self.addIntegrateShellResult(shell_dict=results['summary'],
+    #                                                                     type='inner',
+    #                                                                     isr_id=integrate_result_dict['shell_inner'])
+    #                     outer_shell_id   = self.addIntegrateShellResult(shell_dict=results['summary'],
+    #                                                                     type='outer',
+    #                                                                     isr_id=integrate_result_dict['shell_outer'])
+    #                 else:
+    #                     overall_shell_id = self.addIntegrateShellResult(shell_dict=results['summary'],
+    #                                                                     type='overall')
+    #                     inner_shell_id   = self.addIntegrateShellResult(shell_dict=results['summary'],
+    #                                                                     type='inner')
+    #                     outer_shell_id   = self.addIntegrateShellResult(shell_dict=results['summary'],
+    #                                                                     type='outer')
+    #
+    #                 command += ''',
+    #                                                       shell_overall=%s,
+    #                                                       shell_inner=%s,
+    #                                                       shell_outer=%s'''
+    #
+    #                 insert_values += [ overall_shell_id,
+    #                                    inner_shell_id,
+    #                                    outer_shell_id ]
+    #
+    #         except:
+    #             self.logger.exception('Error in writing integrate_shell_results section of integrate_result table')
+    #
+    #         #finish up the commands
+    #         command += ' WHERE integrate_result_id=%s'
+    #         insert_values.append(integrate_result_id)
+    #
+    #         #deposit the result
+    #         self.logger.debug(command)
+    #         self.logger.debug(insert_values)
+    #         cursor.execute(command,insert_values)
+    #
+    #     except:
+    #         self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult')
+    #         self.close_connection(connection, cursor)
+    #         return(False)
+    #
+    #     try:
+    #         #get the result's pair_result_dict
+    #         new_integrate_result_dict = self.make_dicts('SELECT * FROM integrate_results WHERE integrate_result_id=%s',(integrate_result_id,))[0]
+    #
+    #         #update the result in results table
+    #         cursor.execute('UPDATE results SET setting_id=%s,process_id=%s,sample_id=%s,data_root_dir=%s,timestamp=%s WHERE result_id=%s',
+    #                        (new_integrate_result_dict['settings_id'],new_integrate_result_dict['process_id'],new_integrate_result_dict['sample_id'],new_integrate_result_dict['data_root_dir'],new_integrate_result_dict['timestamp'],result_id))
+    #
+    #         #close the connection to the database
+    #         self.close_connection(connection, cursor)
+    #         return(new_integrate_result_dict)
+    #
+    #     except:
+    #         self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult - results updating subsection')
+    #         self.close_connection(connection, cursor)
+    #         return(False)
+    #
+    # def addReIntegrateResult(self,dirs,info,settings,results):
+    #     """
+    #     Add data to the integrate_results table
+    #     This function works with the new XDS-based fast integration pipeline
+    #     Modified to work with updates (i.e. adding results from the same process over and over)
+    #     """
+    #     self.logger.debug('Database::addIntegrateResult DRD:%s' % dirs['data_root_dir'])
+    #
+    #     #Determine the type of run this is
+    #     if settings.has_key('request'):
+    #         if (settings['request']['request_type'] == "start-fastin"):
+    #             my_type = "refastint"
+    #             my_pipeline = "fastint"
+    #             results['files']['xia2_log'] = "None"
+    #         else:
+    #             my_type = "rexia2"
+    #             my_pipeline = "xia2"
+    #             results['files']['xds_log'] = "None"
+    #             results['files']['scala_log'] = "None"
+    #
+    #     #Check the results to construct a new repr on the fly
+    #     #my_repr = "_".join(info["original"]["repr"].split("_")[:-1])+"_"+str(settings["request"]["frame_start"])+"-"+str(settings["request"]["frame_finish"])
+    #     my_repr = info["original"]["repr"] + "_" + str(settings["request"]["frame_start"]) + "-" + str(settings["request"]["frame_finish"])
+    #
+    #     #Check for request_id - if this is a reprocess event
+    #     if (settings.has_key('request')):
+    #         request_id = settings['request']['cloud_request_id']
+    #     else:
+    #         request_id = 0
+    #
+    #     #Acquire the lock to avoid pesky problem with two rapid results
+    #     self.LOCK.acquire()
+    #     try:
+    #         #Check to see if there is a previous result with this process_id
+    #         integrate_result_id,result_id = self.getTypeResultId(process_id=settings['process_id'])
+    #         try:
+    #             if (integrate_result_id):
+    #                 integrate_result_dict = self.getResultById(integrate_result_id, 'integrate')
+    #             else:
+    #                 #make a new entry to then update
+    #                 integrate_result_id,result_id = self.makeNewResult(rtype='integrate',
+    #                                                                    process_id=settings['process_id'])
+    #                 integrate_result_dict = False
+    #         except:
+    #             self.logger.exception("Got the integrate_result_id, but no result dict")
+    #             integrate_result_dict = False
+    #
+    #     except:
+    #         self.logger.exception("Error in addReIntegrateResult acquisition of result ids")
+    #
+    #     #Release the lock
+    #     self.LOCK.release()
+    #
+    #     try:
+    #         self.logger.debug("Enter try")
+    #         #connect to the database
+    #         connection,cursor = self.get_db_connection()
+    #
+    #         #Information stored regardless of failure level
+    #         command = '''UPDATE integrate_results SET timestamp=NOW(),
+    #                                                    result_id=%s,
+    #                                                    process_id=%s,
+    #                                                    run_id=%s,
+    #                                                    sample_id=%s,
+    #                                                    version=version+1,
+    #                                                    pipeline=%s,
+    #                                                    data_root_dir=%s,
+    #                                                    settings_id=%s,
+    #                                                    request_id=%s,
+    #                                                    repr=%s,
+    #                                                    template=%s,
+    #                                                    date=%s,
+    #                                                    work_dir=%s,
+    #                                                    type=%s,
+    #                                                    images_dir=%s,
+    #                                                    image_start=%s,
+    #                                                    image_end=%s'''
+    #
+    #         insert_values = [ result_id,
+    #                           settings['process_id'],
+    #                           info['original']['run_id'],
+    #                           info['original']['sample_id'],
+    #                           my_pipeline,
+    #                           dirs['data_root_dir'],
+    #                           settings['setting_id'],
+    #                           request_id,
+    #                           my_repr,
+    #                           info['original']['template'],
+    #                           info['original']['date'],
+    #                           dirs['work'],
+    #                           my_type,
+    #                           info['original']['images_dir'],
+    #                           settings['request']['frame_start'],
+    #                           settings['request']['frame_finish'] ]
+    #
+    #         #FILES
+    #         try:
+    #             #a failed run
+    #             if (results['status'] == 'FAILED'):
+    #                 tmp_command = ''',
+    #                                                       integrate_status=%s,
+    #                                                       parsed=%s,
+    #                                                       plots=%s,
+    #                                                       xia_log=%s'''
+    #
+    #                 tmp_insert_values = ['FAILED','None','None',results['files']['xia_log']]
+    #
+    #             #The final result
+    #             elif (results.has_key('files')):
+    #                 tmp_command = ''',
+    #                                                       integrate_status=%s,
+    #                                                       parsed=%s,
+    #                                                       summary_long=%s,
+    #                                                       plots=%s,
+    #                                                       xia_log=%s,
+    #                                                       xds_log=%s,
+    #                                                       scala_log=%s,
+    #                                                       mtz_file=%s,
+    #                                                       hkl_file=%s,
+    #                                                       merge_file=%s,
+    #                                                       download_file=%s'''
+    #
+    #                 tmp_insert_values = [ results['status'],
+    #                                       os.path.join(dirs['work'],results['short']),
+    #                                       os.path.join(dirs['work'],results['long']),
+    #                                       os.path.join(dirs['work'],results['plots']),
+    #                                       results['files']['xia2_log'],
+    #                                       results['files']['xds_log'],
+    #                                       results['files']['scala_log'],
+    #                                       results['files']['mtzfile'],
+    #                                       results['files']['xds_data'],
+    #                                       results['files']['mergable'],
+    #                                       results['files']['downloadable'] ]
+    #
+    #
+    #                 if results['files'].has_key('ANOM_sca'):
+    #                     tmp_command += ''',
+    #                                                               unmerged_sca_file=%s,
+    #                                                               sca_file=%s'''
+    #                     tmp_insert_values += [ results['files']['ANOM_sca'],
+    #                                           results['files']['NATIVE_sca'] ]
+    #
+    #                     #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #                     command += tmp_command
+    #                     insert_values += tmp_insert_values
+    #
+    #             #a partial run
+    #             else:
+    #                 tmp_command = ''',
+    #                                                       integrate_status=%s,
+    #                                                       parsed=%s,
+    #                                                       summary_long=%s,
+    #                                                       plots=%s'''
+    #
+    #                 tmp_insert_values = [ results['status'],
+    #                                       os.path.join(dirs['work'],results['short']),
+    #                                       os.path.join(dirs['work'],results['long']),
+    #                                       os.path.join(dirs['work'],results['plots']) ]
+    #
+    #             #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #             command += tmp_command
+    #             insert_values += tmp_insert_values
+    #
+    #         except:
+    #             self.logger.exception('Error in writing files section of integrate_result table')
+    #
+    #         #SPACEGROUP, CELL and anomalous
+    #         try:
+    #             if (results['status'] in ('SUCCESS','ANALYSIS','WORKING','FAILED')):
+    #                 cell = results['summary']['scaling_unit_cell'][:]
+    #                 tmp_command = ''',
+    #                                                       spacegroup=%s,
+    #                                                       a=%s,
+    #                                                       b=%s,
+    #                                                       c=%s,
+    #                                                       alpha=%s,
+    #                                                       beta=%s,
+    #                                                       gamma=%s'''
+    #
+    #                 tmp_insert_values = [ results['summary']['scale_spacegroup'],
+    #                                       cell[0],
+    #                                       cell[1],
+    #                                       cell[2],
+    #                                       cell[3],
+    #                                       cell[4],
+    #                                       cell[5] ]
+    #
+    #                 #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #                 command += tmp_command
+    #                 insert_values += tmp_insert_values
+    #
+    #         except:
+    #             self.logger.exception('Error in writing spacegroup and cell info section of integrate_result table')
+    #
+    #
+    #         #integrate_shell_results section
+    #         try:
+    #             if (results['status'] in ('SUCCESS','ANALYSIS','WORKING','FAILED')):
+    #                 if integrate_result_dict:
+    #                     overall_shell_id = self.addIntegrateShellResult(shell_dict=results['summary'],
+    #                                                                     type='overall',
+    #                                                                     isr_id=integrate_result_dict['shell_overall'])
+    #                     inner_shell_id   = self.addIntegrateShellResult(shell_dict=results['summary'],
+    #                                                                     type='inner',
+    #                                                                     isr_id=integrate_result_dict['shell_inner'])
+    #                     outer_shell_id   = self.addIntegrateShellResult(shell_dict=results['summary'],
+    #                                                                     type='outer',
+    #                                                                     isr_id=integrate_result_dict['shell_outer'])
+    #                 else:
+    #                     overall_shell_id = self.addIntegrateShellResult(shell_dict=results['summary'],
+    #                                                                     type='overall')
+    #                     inner_shell_id   = self.addIntegrateShellResult(shell_dict=results['summary'],
+    #                                                                     type='inner')
+    #                     outer_shell_id   = self.addIntegrateShellResult(shell_dict=results['summary'],
+    #                                                                     type='outer')
+    #
+    #                 command += ''',
+    #                                                       shell_overall=%s,
+    #                                                       shell_inner=%s,
+    #                                                       shell_outer=%s'''
+    #
+    #                 insert_values += [ overall_shell_id,
+    #                                    inner_shell_id,
+    #                                    outer_shell_id ]
+    #
+    #         except:
+    #             self.logger.exception('Error in writing integrate_shell_results section of integrate_result table')
+    #
+    #         #finish up the commands
+    #         command += ' WHERE integrate_result_id=%s'
+    #         insert_values.append(integrate_result_id)
+    #
+    #         #deposit the result
+    #         self.logger.debug(command)
+    #         self.logger.debug(insert_values)
+    #         cursor.execute(command,insert_values)
+    #
+    #     except:
+    #         self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult')
+    #         self.close_connection(connection, cursor)
+    #         return(False)
+    #
+    #     try:
+    #         #get the result's pair_result_dict
+    #         new_integrate_result_dict = self.make_dicts('SELECT * FROM integrate_results WHERE integrate_result_id=%s',(integrate_result_id,))[0]
+    #
+    #         #update the result in results table
+    #         cursor.execute('UPDATE results SET setting_id=%s,process_id=%s,sample_id=%s,data_root_dir=%s,timestamp=%s WHERE result_id=%s',
+    #                        (new_integrate_result_dict['settings_id'],new_integrate_result_dict['process_id'],new_integrate_result_dict['sample_id'],new_integrate_result_dict['data_root_dir'],new_integrate_result_dict['timestamp'],result_id))
+    #         self.close_connection(connection, cursor)
+    #         return(new_integrate_result_dict)
+    #
+    #     except:
+    #         self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult - results updating subsection')
+    #         self.close_connection(connection, cursor)
+    #         return(False)
+    #
+    # def addIntegrateShellResult(self,shell_dict,type,isr_id=None):
+    #     """
+    #     Add a shell result from integration and return the isr_id
+    #     """
+    #     self.logger.debug('addIntegrateShellResult %s' % type)
+    #     self.logger.debug(shell_dict)
+    #
+    #     #filter NaNs out of dict
+    #     for k,v in shell_dict.iteritems():
+    #         if (v == 'NaN'):
+    #             shell_dict[k] = 0
+    #
+    #     if (type == 'overall'):
+    #         pos = 0
+    #     elif (type == 'inner'):
+    #         pos = 1
+    #     elif (type == 'outer'):
+    #         pos = 2
+    #
+    #     try:
+    #         #connect to the database
+    #         connection,cursor = self.get_db_connection()
+    #
+    #         if not (isr_id):
+    #             cursor.execute("INSERT INTO integrate_shell_results () VALUES ()")
+    #             isr_id = cursor.lastrowid
+    #
+    #         #regardless of failure level
+    #         command = '''UPDATE integrate_shell_results SET shell_type=%s,
+    #                                                          high_res=%s,
+    #                                                          low_res=%s,
+    #                                                          completeness=%s,
+    #                                                          multiplicity=%s,
+    #                                                          i_sigma=%s,
+    #                                                          cc_half=%s,
+    #                                                          r_merge=%s,
+    #                                                          r_merge_anom=%s,
+    #                                                          r_meas=%s,
+    #                                                          r_meas_pm=%s,
+    #                                                          r_pim=%s,
+    #                                                          r_pim_pm=%s,
+    #                                                          anom_completeness=%s,
+    #                                                          anom_multiplicity=%s,
+    #                                                          anom_correlation=%s,
+    #                                                          anom_slope=%s,
+    #                                                          total_obs=%s,
+    #                                                          unique_obs=%s WHERE isr_id=%s'''
+    #
+    #         insert_values = [ type,
+    #                           shell_dict['bins_high'][pos],
+    #                           shell_dict['bins_low'][pos],
+    #                           shell_dict['completeness'][pos],
+    #                           shell_dict['multiplicity'][pos],
+    #                           shell_dict['isigi'][pos],
+    #                           shell_dict['cc-half'][pos],
+    #                           shell_dict['rmerge_norm'][pos],
+    #                           shell_dict['rmerge_anom'][pos],
+    #                           shell_dict['rmeas_norm'][pos],
+    #                           shell_dict['rmeas_anom'][pos],
+    #                           shell_dict['rpim_norm'][pos],
+    #                           shell_dict['rpim_anom'][pos],
+    #                           shell_dict['anom_completeness'][pos],
+    #                           shell_dict['anom_multiplicity'][pos],
+    #                           shell_dict['anom_correlation'][pos],
+    #                           shell_dict['anom_slope'][0],
+    #                           shell_dict['total_obs'][pos],
+    #                           shell_dict['unique_obs'][pos],
+    #                           isr_id ]
+    #
+    #         #deposit the result
+    #         self.logger.debug(command)
+    #         self.logger.debug(insert_values)
+    #         cursor.execute(command,insert_values)
+    #         self.close_connection(connection, cursor)
+    #         return(isr_id)
+    #
+    #     except:
+    #         self.logger.exception('Error in addXia2ShellResult')
+    #         self.close_connection(connection, cursor)
+    #         return(0)
+    #
+    # def addSimpleMergeResult(self,dirs,info,settings,results):
+    #     """
+    #     Add data to the merge_results table
+    #     """
+    #     self.logger.debug('Database::addSimpleMergeResult DRD:%s' % dirs['data_root_dir'])
+    #
+    #     #Check for request_id - if this is a reprocess event
+    #     if (settings.has_key('request')):
+    #         request_id = settings['request']['cloud_request_id']
+    #     else:
+    #         request_id = 0
+    #
+    #     #get the lock
+    #     self.LOCK.acquire()
+    #
+    #     try:
+    #         #Check to see if there is a previous result with this process_id
+    #         merge_result_id,result_id = self.getTypeResultId(process_id=info['process_id'])
+    #         if (merge_result_id):
+    #             merge_result_dict = self.getResultById(merge_result_id, 'merge')
+    #         else:
+    #             #make a new entry to then update
+    #             merge_result_id,result_id = self.makeNewResult(rtype='merge',
+    #                                                            process_id=info['process_id'])
+    #             merge_result_dict = False
+    #     except:
+    #         self.logger.exception("Error in addSimpleMergeResult acquisition of result ids")
+    #
+    #     #Release the lock
+    #     self.LOCK.release()
+    #
+    #     try:
+    #         self.logger.debug("Enter try")
+    #         #connect to the database
+    #         connection,cursor = self.get_db_connection()
+    #
+    #         #Information stored regardless of failure level
+    #         command = '''UPDATE merge_results SET timestamp=NOW(),
+    #                                               result_id=%s,
+    #                                               process_id=%s,
+    #                                               data_root_dir=%s,
+    #                                               settings_id=%s,
+    #                                               request_id=%s,
+    #                                               repr=%s,
+    #                                               work_dir=%s,
+    #                                               set1=%s,
+    #                                               set2=%s,
+    #                                               wavelength=%s'''
+    #
+    #         insert_values = [ result_id,
+    #                           info['process_id'],
+    #                           dirs['data_root_dir'],
+    #                           settings['setting_id'],
+    #                           settings["request"]["cloud_request_id"],
+    #                           info["repr"],
+    #                           dirs['work'],
+    #                           info['original']['result_id'],
+    #                           info['secondary']['result_id'],
+    #                           info['original']['wavelength']]
+    #
+    #         #FILES
+    #         try:
+    #             tmp_command = ''',
+    #                                               merge_status=%s,
+    #                                               summary=%s,
+    #                                               details=%s,
+    #                                               plots=%s,
+    #                                               merge_file=%s,
+    #                                               mtz_file=%s,
+    #                                               download_file=%s'''
+    #
+    #             tmp_insert_values = [ "SUCCESS",
+    #                                   os.path.join(dirs['work'],results['short']),
+    #                                   os.path.join(dirs['work'],results['long']),
+    #                                   os.path.join(dirs['work'],results['plots']),
+    #                                   results['merge_file'],
+    #                                   results['mtz_file'],
+    #                                   results['download_file'] ]
+    #
+    #
+    #             #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #             command += tmp_command
+    #             insert_values += tmp_insert_values
+    #
+    #         except:
+    #             self.logger.exception('Error in writing files section of merge_results table')
+    #             #a failed run
+    #             tmp_command = ''',
+    #                                       merge_status=%s,
+    #                                       parsed=%s,
+    #                                       details=%s
+    #                                       plots=%s,
+    #                                       merge_file=%s,
+    #                                       download_file=%s'''
+    #
+    #             tmp_insert_values = ['FAILED',
+    #                                  'None',
+    #                                  'None',
+    #                                  'None',
+    #                                  'None',
+    #                                  'None']
+    #
+    #             #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #             command += tmp_command
+    #             insert_values += tmp_insert_values
+    #
+    #         #SPACEGROUP, CELL and anomalous
+    #         try:
+    #             if (results['status'] in ('SUCCESS','WORKING','FAILED')):
+    #                 cell = results['summary']['scaling_unit_cell'][:]
+    #                 tmp_command = ''',
+    #                                                       spacegroup=%s,
+    #                                                       a=%s,
+    #                                                       b=%s,
+    #                                                       c=%s,
+    #                                                       alpha=%s,
+    #                                                       beta=%s,
+    #                                                       gamma=%s'''
+    #
+    #                 tmp_insert_values = [ results['summary']['scale_spacegroup'],
+    #                                       cell[0],
+    #                                       cell[1],
+    #                                       cell[2],
+    #                                       cell[3],
+    #                                       cell[4],
+    #                                       cell[5]]
+    #
+    #                 #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #                 command += tmp_command
+    #                 insert_values += tmp_insert_values
+    #
+    #         except:
+    #             self.logger.exception('Error in writing spacegroup and cell info section of merge_results table')
+    #
+    #         #merge_shell_results section
+    #         try:
+    #             if (results['status'] in ('SUCCESS','WORKING','FAILED')):
+    #
+    #                 overall_shell_id = self.addMergeShellResult(shell_dict=results['summary'],
+    #                                                                 type='overall')
+    #                 inner_shell_id   = self.addMergeShellResult(shell_dict=results['summary'],
+    #                                                                 type='inner')
+    #                 outer_shell_id   = self.addMergeShellResult(shell_dict=results['summary'],
+    #                                                                 type='outer')
+    #
+    #                 command += ''',
+    #                                                       shell_overall=%s,
+    #                                                       shell_inner=%s,
+    #                                                       shell_outer=%s'''
+    #
+    #                 insert_values += [ overall_shell_id,
+    #                                    inner_shell_id,
+    #                                    outer_shell_id ]
+    #
+    #         except:
+    #             self.logger.exception('Error in writing merge_shell_results section of merge_result table')
+    #
+    #         #finish up the commands
+    #         command += ' WHERE merge_result_id=%s'
+    #         insert_values.append(merge_result_id)
+    #
+    #         #deposit the result
+    #         self.logger.debug(command)
+    #         self.logger.debug(insert_values)
+    #         cursor.execute(command,insert_values)
+    #
+    #     except:
+    #         self.logger.exception('ERROR : unknown exception in Database::addMergeResult')
+    #         self.close_connection(connection, cursor)
+    #         return(False)
+    #
+    #     try:
+    #         #get the result's pair_result_dict
+    #         new_merge_result_dict = self.make_dicts('SELECT * FROM merge_results WHERE merge_result_id=%s',(merge_result_id,))[0]
+    #
+    #         #update the result in results table
+    #         cursor.execute('UPDATE results SET setting_id=%s,process_id=%s,data_root_dir=%s,timestamp=%s WHERE result_id=%s',
+    #                        (new_merge_result_dict['settings_id'],new_merge_result_dict['process_id'],new_merge_result_dict['data_root_dir'],new_merge_result_dict['timestamp'],result_id))
+    #         self.close_connection(connection, cursor)
+    #         return(new_merge_result_dict)
+    #
+    #     except:
+    #         self.logger.exception('ERROR : unknown exception in Database::addMergeResult - results updating subsection')
+    #         self.close_connection(connection, cursor)
+    #         return(False)
+    #
+    # def addMergeShellResult(self,shell_dict,type,msr_id=None):
+    #     """
+    #     Add a shell result from merging and return the msr_id
+    #     """
+    #     self.logger.debug('addMergeShellResult %s' % type)
+    #     self.logger.debug(shell_dict)
+    #
+    #     if (type == 'overall'):
+    #         pos = 0
+    #     elif (type == 'inner'):
+    #         pos = 1
+    #     elif (type == 'outer'):
+    #         pos = 2
+    #
+    #     try:
+    #         #connect to the database
+    #         connection,cursor = self.get_db_connection()
+    #
+    #         if not (msr_id):
+    #             cursor.execute("INSERT INTO merge_shell_results () VALUES ()")
+    #             msr_id = cursor.lastrowid
+    #
+    #         #regardless of failure level
+    #         command = ''' UPDATE merge_shell_results SET shell_type=%s,
+    #                                                      high_res=%s,
+    #                                                      low_res=%s,
+    #                                                      completeness=%s,
+    #                                                      multiplicity=%s,
+    #                                                      i_sigma=%s,
+    #                                                      r_merge=%s,
+    #                                                      r_meas=%s,
+    #                                                      r_meas_pm=%s,
+    #                                                      r_pim=%s,
+    #                                                      r_pim_pm=%s,
+    #                                                      partial_bias=%s,
+    #                                                      anom_completeness=%s,
+    #                                                      anom_multiplicity=%s,
+    #                                                      anom_correlation=%s,
+    #                                                      anom_slope=%s,
+    #                                                      total_obs=%s,
+    #                                                      unique_obs=%s WHERE msr_id=%s'''
+    #
+    #         insert_values = [ type,
+    #                           shell_dict['bins_high'][pos],
+    #                           shell_dict['bins_low'][pos],
+    #                           shell_dict['completeness'][pos],
+    #                           shell_dict['multiplicity'][pos],
+    #                           shell_dict['isigi'][pos],
+    #                           shell_dict['rmerge'][pos],
+    #                           shell_dict['rmeas_norm'][pos],
+    #                           shell_dict['rmeas_anom'][pos],
+    #                           shell_dict['rpim_norm'][pos],
+    #                           shell_dict['rpim_anom'][pos],
+    #                           shell_dict['bias'][pos],
+    #                           shell_dict['anom_completeness'][pos],
+    #                           shell_dict['anom_multiplicity'][pos],
+    #                           shell_dict['anom_correlation'][pos],
+    #                           shell_dict['anom_slope'][0],
+    #                           shell_dict['total_obs'][pos],
+    #                           shell_dict['unique_obs'][pos],
+    #                           msr_id ]
+    #
+    #         #deposit the result
+    #         self.logger.debug(command)
+    #         self.logger.debug(insert_values)
+    #         cursor.execute(command,insert_values)
+    #         self.close_connection(connection, cursor)
+    #         return(msr_id)
+    #
+    #     except:
+    #         self.logger.exception('Error in addMergeShellResult')
+    #         self.close_connection(connection, cursor)
+    #         return(0)
+    #
+    # def traceRunFromMerge(self,merge_id):
+    #     """
+    #     Acquire run numbers for a given merge_results_id
+    #     """
+    #     self.logger.debug('Database::traceRunFromMerge merge_result_id:%d' % merge_id)
+    #
+    #     #Get all the result ids - down to when all the result_ids are from integrate_results
+    #     integrate_ids = []
+    #     merge_ids = [merge_id,]
+    #     for m_id in merge_ids:
+    #         my_dict = self.getResultById(merge_id, "merge")
+    #         sets = (my_dict['set1'],my_dict['set2'])
+    #         for set in sets:
+    #             my_type = self.getTypeByResultId(set)
+    #             if (my_type == 'integrate'):
+    #                 integrate_ids.append(set)
+    #             elif (my_type == 'merge'):
+    #                 merge_ids.append(set)
+    #     self.logger.debug(integrate_ids)
+    #
+    #     #now get the runs for the integrates
+    #     run_ids = []
+    #     for integrate_id in integrate_ids:
+    #         run_ids.append(self.make_dicts("SELECT run_id FROM integrate_results WHERE result_id=%s", (integrate_id,),'DATA')[0]['run_id'])
+    #     self.logger.debug(run_ids)
+    #     #
+    #     return(run_ids)
+    #
+    # def addIntegrateResult1(self,dirs,info,settings,results):
+    #     """
+    #     Add data to the integrate_results table
+    #     """
+    #     self.logger.debug('Database::addIntegrateResult DRD:%s' % dirs['data_root_dir'])
+    #
+    #     #Determine the type of run this is
+    #     if settings.has_key('request'):
+    #         my_type = settings['request']['request_type']
+    #     else:
+    #         my_type ='original'
+    #
+    #     try:
+    #         #connect to the database
+    #         connection,cursor = self.get_db_connection()
+    #
+    #         #regardless of failure level
+    #         command_front = """INSERT INTO integrate_results ( process_id,
+    #                                                       run_id,
+    #                                                       data_root_dir,
+    #                                                       settings_id,
+    #                                                       repr,
+    #                                                       template,
+    #                                                       date,
+    #                                                       work_dir,
+    #                                                       type,
+    #                                                       images_dir,
+    #                                                       image_start,
+    #                                                       image_end"""
+    #
+    #         command_back = """) VALUES ( %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s"""
+    #
+    #         insert_values = [ info['image_data']['process_id'],
+    #                           info['run_data']['run_id'],
+    #                           dirs['data_root_dir'],
+    #                           settings['setting_id'],
+    #                           os.path.basename(dirs['work']),
+    #                           info['image_data']['repr'],
+    #                           info['image_data']['date'],
+    #                           dirs['work'],
+    #                           my_type,
+    #                           info['image_data']['directory'],
+    #                           info['run_data']['start'],
+    #                           info['run_data']['total']+info['run_data']['start']-1 ]
+    #
+    #         #FILES
+    #         try:
+    #             if (results['status'] == 'Error'):
+    #                 tmp_command_front = """,
+    #                                                       integrate_status,
+    #                                                       parsed,
+    #                                                       plots,
+    #                                                       xia_log"""
+    #
+    #                 tmp_command_back = """,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s"""
+    #
+    #                 tmp_insert_values = ['FAILED','None','None',results['files']['xia_log']]
+    #
+    #             else:
+    #                 tmp_command_front = """,
+    #                                                       integrate_status,
+    #                                                       parsed,
+    #                                                       plots,
+    #                                                       xia_log,
+    #                                                       xscale_log,
+    #                                                       scala_log,
+    #                                                       unmerged_sca_file,
+    #                                                       sca_file,
+    #                                                       mtz_file,
+    #                                                       merge_file,
+    #                                                       wavelength"""
+    #
+    #                 tmp_command_back = """,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s"""
+    #
+    #                 tmp_insert_values = [ results['status'],
+    #                                       os.path.join(dirs['work'],results['parsed']),
+    #                                       os.path.join(dirs['work'],results['plots']),
+    #                                       results['files']['xia_log'],
+    #                                       results['files']['xscale_log'],
+    #                                       results['files']['scala_log'],
+    #                                       results['files']['unmerged'],
+    #                                       results['files']['scafile'],
+    #                                       results['files']['mtzfile'],
+    #                                       results['files']['mergable'],
+    #                                       info['image_data']['wavelength'] ]
+    #
+    #             #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #             command_front += tmp_command_front
+    #             command_back  += tmp_command_back
+    #             insert_values += tmp_insert_values
+    #
+    #         except:
+    #             self.logger.exception('Error in writing files section of integrate_result table')
+    #
+    #         #SPACEGROUP and CELL info
+    #         try:
+    #             if (results['status'] == 'SUCCESS'):
+    #                 cell = results['summary']['cell'].split()
+    #                 #change the format of the time for database entry
+    #                 proc_time = ''
+    #                 for i in results['summary']['procTime'].split():
+    #                     proc_time += i[:2]
+    #                     if i[2] != 's':
+    #                         proc_time += ':'
+    #                 #handle rD values
+    #                 if not results['summary'].has_key('rD_analysis'):
+    #                     results['summary']['rD_analysis'] = 0
+    #                     results['summary']['rD_conclusion'] = 0
+    #
+    #                 tmp_command_front = """,
+    #                                                       spacegroup,
+    #                                                       a,
+    #                                                       b,
+    #                                                       c,
+    #                                                       alpha,
+    #                                                       beta,
+    #                                                       gamma,
+    #                                                       twinscore,
+    #                                                       proc_time,
+    #                                                       rd_analysis,
+    #                                                       rd_conclusion"""
+    #
+    #                 tmp_command_back = """,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s"""
+    #
+    #                 tmp_insert_values = [ results['summary']['spacegroup'],
+    #                                       cell[0],
+    #                                       cell[1],
+    #                                       cell[2],
+    #                                       cell[3],
+    #                                       cell[4],
+    #                                       cell[5],
+    #                                       results['summary']['twinScore'],
+    #                                       proc_time,
+    #                                       results['summary']['rD_analysis'],
+    #                                       results['summary']['rD_conclusion'] ]
+    #
+    #                 #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
+    #                 command_front += tmp_command_front
+    #                 command_back  += tmp_command_back
+    #                 insert_values += tmp_insert_values
+    #
+    #         except:
+    #             self.logger.exception('Error in writing spacegroup and cell info section of integrate_result table')
+    #
+    #
+    #         #integrate_shell_results section
+    #         try:
+    #             if (results['status'] == 'SUCCESS'):
+    #                 overall_shell_id = self.addIntegrateShellResult(results['summary']['overall'],   'overall')
+    #                 inner_shell_id   = self.addIntegrateShellResult(results['summary']['innerShell'],'inner')
+    #                 outer_shell_id   = self.addIntegrateShellResult(results['summary']['outerShell'],'outer')
+    #
+    #                 command_front += """,
+    #                                                       shell_overall,
+    #                                                       shell_inner,
+    #                                                       shell_outer"""
+    #
+    #                 command_back += """,
+    #                                                                         %s,
+    #                                                                         %s,
+    #                                                                         %s"""
+    #
+    #                 insert_values += [ overall_shell_id,
+    #                                    inner_shell_id,
+    #                                    outer_shell_id ]
+    #
+    #         except:
+    #             self.logger.exception('Error in writing integrate_shell_results section of integrate_result table')
+    #
+    #         #finish up the commands
+    #         command_back += ")"
+    #
+    #         #deposit the result
+    #         self.logger.debug(command_front+command_back)
+    #         self.logger.debug(insert_values)
+    #         cursor.execute(command_front+command_back,insert_values)
+    #
+    #     except:
+    #         self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult')
+    #         self.close_connection(connection, cursor)
+    #         return(False)
+    #
+    #     try:
+    #         #get the result's pair_result_dict
+    #         integrate_result_dict = self.make_dicts('SELECT * FROM integrate_results WHERE integrate_result_id=%s',(cursor.lastrowid,))[0]
+    #
+    #         #register the result in results table
+    #         cursor.execute('INSERT INTO results (type,id,setting_id,process_id,data_root_dir) VALUES (%s, %s, %s, %s, %s, %s)',('integrate',integrate_result_dict['integrate_result_id'],integrate_result_dict['settings_id'],integrate_result_dict['process_id'],integrate_result_dict['sample_id'],integrate_result_dict['data_root_dir']))
+    #
+    #         #add the result_id to the current dict
+    #         integrate_result_dict['result_id'] = cursor.lastrowid;
+    #
+    #         #update the integrate_results table with the result_id
+    #         cursor.execute("UPDATE integrate_results SET result_id=%s WHERE integrate_result_id=%s",(integrate_result_dict['result_id'],integrate_result_dict['integrate_result_id']))
+    #         self.close_connection(connection, cursor)
+    #         return(integrate_result_dict)
+    #
+    #     except:
+    #         self.logger.exception('ERROR : unknown exception in Database::addIntegrateResult - results updating subsection')
+    #         self.close_connection(connection, cursor)
+    #         return(False)
+    #
+    # def addIntegrateShellResult1(self,shell_dict,type):
+    #     """
+    #     Add a shell result from integration and return the isr_id
+    #     """
+    #     self.logger.debug('addIntegrateShellResult %s' % type)
+    #     self.logger.debug(shell_dict)
+    #
+    #     try:
+    #         #connect to the database
+    #         connection,cursor = self.get_db_connection()
+    #
+    #         if (type != 'overall'):
+    #              shell_dict['wilsonB'] = '0'
+    #
+    #         #regardless of failure level
+    #         command = """INSERT INTO integrate_shell_results ( shell_type,
+    #                                                             high_res,
+    #                                                             low_res,
+    #                                                             completeness,
+    #                                                             multiplicity,
+    #                                                             i_sigma,
+    #                                                             r_merge,
+    #                                                             r_meas,
+    #                                                             r_meas_pm,
+    #                                                             r_pim,
+    #                                                             r_pim_pm,
+    #                                                             wilson_b,
+    #                                                             partial_bias,
+    #                                                             anom_completeness,
+    #                                                             anom_multiplicity,
+    #                                                             anom_correlation,
+    #                                                             anom_slope,
+    #                                                             total_obs,
+    #                                                             unique_obs ) VALUES ( %s,
+    #                                                                                     %s,
+    #                                                                                     %s,
+    #                                                                                     %s,
+    #                                                                                     %s,
+    #                                                                                     %s,
+    #                                                                                     %s,
+    #                                                                                     %s,
+    #                                                                                     %s,
+    #                                                                                     %s,
+    #                                                                                     %s,
+    #                                                                                     %s,
+    #                                                                                     %s,
+    #                                                                                     %s,
+    #                                                                                     %s,
+    #                                                                                     %s,
+    #                                                                                     %s,
+    #                                                                                     %s,
+    #                                                                                     %s)"""
+    #
+    #         insert_values = [ type,
+    #                           shell_dict['high_res'],
+    #                           shell_dict['low_res'],
+    #                           shell_dict['completeness'],
+    #                           shell_dict['multiplicity'],
+    #                           shell_dict['I/sigma'],
+    #                           shell_dict['Rmerge'],
+    #                           shell_dict['Rmeas(I)'],
+    #                           shell_dict['Rmeas(I+/-)'],
+    #                           shell_dict['Rpim(I)'],
+    #                           shell_dict['Rpim(I+/-)'],
+    #                           shell_dict['wilsonB'],
+    #                           shell_dict['partialBias'],
+    #                           shell_dict['anomComp'],
+    #                           shell_dict['anomMult'],
+    #                           shell_dict['anomCorr'],
+    #                           shell_dict['anomSlope'],
+    #                           shell_dict['totalObs'],
+    #                           shell_dict['totalUnique'] ]
+    #
+    #         #deposit the result
+    #         self.logger.debug(command)
+    #         self.logger.debug(insert_values)
+    #         cursor.execute(command,insert_values)
+    #
+    #         #now get the isr_id to return
+    #         isr_id = cursor.lastrowid
+    #         self.close_connection(connection, cursor)
+    #         return(isr_id)
+    #
+    #     except:
+    #         self.logger.exception('Error in addIntegrateShellResult')
+    #         self.close_connection(connection, cursor)
+    #         return(0)
+    #
     ##########################
     # Methods for MR results #
     ##########################

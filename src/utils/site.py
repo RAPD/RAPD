@@ -42,7 +42,11 @@ def copy_attrs(source, target):
 
 def read_secrets(secrets_file, target):
     """Read in secrets file and put attrs in target context"""
-    secrets = importlib.import_module(secrets_file)
+    try:
+        secrets = importlib.import_module(secrets_file)
+    except ImportError:
+        print "ERROR - unable to import %s" % secrets_file
+
     copy_attrs(secrets, target)
 
 def get_ip_address():

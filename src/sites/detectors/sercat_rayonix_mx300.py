@@ -274,6 +274,18 @@ def read_header(fullname, beam_settings):
     # Get the data_root_dir
     header["data_root_dir"] = get_data_root_dir(fullname)
 
+    # Group and session are interpreted from the image name
+    try:
+        header["rapd_session_name"] = header["data_root_dir"].split(os.path.sep)[2]
+    except IndexError:
+        header["rapd_session_name"] = None
+
+    try:
+        line, year, month, day, group, user = header["data_root_dir"].split(os.path.sep)[2].split("_")
+        header["rapd_group"] = "_".join((group, user))
+    except ValueError:
+        header["rapd_group"] = None
+
     # Return the header
     return header
 
