@@ -287,6 +287,9 @@ def main():
     port = 27017
     username = None
     password = None
+
+    hostname = "164.54.208.142"
+    port = 27017
     #
     # hostname = "192.168.99.100"
     # port = 3306
