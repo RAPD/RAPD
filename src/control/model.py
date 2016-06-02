@@ -977,42 +977,6 @@ class Model(object):
 
         Types currently handled: NEWIMAGE, NEWRUN
         """
-        """
-        Several return lengths are currently supported:
-            2 - command, info
-            3 - command, info, server
-            5 - command, dirs, info, settings, results
-            6 - command, dirs, info, settings, server,results
-            7 - command, dirs, info1, info2, settings, server, results
-        Otherwise the message will be taken as a naked command
-
-        Several commands are handled:
-            NEWIMAGE - new data image has arrived
-            NEWRUN - new data run description has arived
-            PILATUS RUN - new run in Pilatus style
-            PILATUS_ABOORT - run has been aborted, Pilatus-style
-            CONSOLE RUN STATUS CHANGED
-            DIFF_CENTER
-            QUICK_ANALYSIS
-            STAC
-            STAC-PAIR
-            AUTOINDEX
-            AUTOINDEX-PAIR
-            INTEGRATE
-            XDS - reintegration performed using the RAPD pipeline
-            XIA2
-            SMERGE
-            BEAMCENTER
-            SAD
-            MAD
-            MR
-            STATS
-            DOWNLOAD
-            TEST
-            SPEEDTEST
-            DISTL_PARAMS_REQUEST - request from console for data
-            CRYSTAL_PARAMS_REQUEST - request from console for data
-        """
 
         self.logger.debug("Received: %s", message)
 
