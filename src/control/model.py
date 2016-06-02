@@ -1016,21 +1016,16 @@ class Model(object):
 
         self.logger.debug("Received: %s", message)
 
-        # Unpack
-        # command, information = message
-
         # NEWIMAGE
-        # information is {"fullname":.., "site_tag":..}
-        # if command == "NEWIMAGE":
-        #     self.add_image(information)
-        #
-        # # NEWRUN
-        # # information is dict containing run information
-        # elif command == "NEWRUN":
-        #     self.add_run(information)
+        if message.get("message_type", None) == "NEWIMAGE":
+            self.add_image(message)
+
+        # NEWRUN
+        elif message.get("message_type", None) == "NEWRUN":
+            self.add_run(message)
 
         # AGENTS
-        if message["process"]["origin"] == "AGENT":
+        elif message["process"]["origin"] == "AGENT":
             self.logger.debug("Communication from agent")
 
             self.handle_agent_communication(message=message)
