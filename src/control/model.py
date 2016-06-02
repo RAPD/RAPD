@@ -289,11 +289,13 @@ class Model(object):
                                                            request_type="original",
                                                            representation=new_repr,
                                                            status=1,
-                                                           display="hide")
+                                                           display="hide",
+                                                           session_id=None,
+                                                           data_root_dir=None)
 
         # Run autoindex and strategy agent
         LaunchAction(command={"command":"ECHO",
-                              "process":{"agent_process_id":str(agent_process_id)},
+                              "process":{"agent_process_id":agent_process_id},
                               "directories":{"work":work_dir},
                               "return_address":self.return_address},
                      launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
@@ -664,13 +666,10 @@ class Model(object):
                            "agent_directories":self.site.RAPD_AGENT_DIRECTORIES}
 
             # Is the session information figured out by the image file name
-            if site.SESSION_METHOD == "image_file":
-                session_id = self.database.get_session_id(data_root_dir=data_root_dir,
-                                                          group=header["rapd_group"],
-                                                          session_name=header["rapd_session_name"])
-
-            else:
-                session_id = None
+            session_id = self.database.get_session_id(
+                data_root_dir=data_root_dir,
+                group=header.get("rapd_group", None),
+                session_name=header.get("rapd_session_name", None))
 
             # Add the process to the database to display as in-process
             agent_process_id = self.database.add_agent_process(agent_type="index+strategy:single",
@@ -678,7 +677,8 @@ class Model(object):
                                                                representation=new_repr,
                                                                status=1,
                                                                display="show",
-                                                               session_id=session_id)
+                                                               session_id=session_id,
+                                                               data_root_dir=data_root_dir)
 
             # Add the ID entry to the header dict
             header.update({"agent_process_id":agent_process_id,
@@ -686,6 +686,7 @@ class Model(object):
 
             # Run autoindex and strategy agent
             LaunchAction(command={"command":"INDEX+STRATEGY",
+                                  "process":{"agent_process_id":agent_process_id},
                                   "directories":directories,
                                   "header1":header,
                                   "site_parameters":self.site.BEAM_INFO[header1["site_tag"]],
@@ -725,12 +726,20 @@ class Model(object):
                                    "data_root_dir" : data_root_dir,
                                    "agent_directories":self.site.RAPD_AGENT_DIRECTORIES}
 
+                    # Is the session information figured out by the image file name
+                    session_id = self.database.get_session_id(
+                        data_root_dir=data_root_dir,
+                        group=header1.get("rapd_group", None),
+                        session_name=header1.get("rapd_session_name", None))
+
                     # Add the process to the database to display as in-process
                     agent_process_id = self.database.add_agent_process(agent_type="index+strategy:pair",
                                                                        request_type="original",
                                                                        representation=new_repr,
                                                                        status=1,
-                                                                       display="show")
+                                                                       display="show",
+                                                                       session_id=session_id,
+                                                                       data_root_dir=data_root_dir)
 
                     # Add the ID entry to the header dict
                     header1.update({"agent_process_id":agent_process_id,
@@ -740,6 +749,7 @@ class Model(object):
 
                     # Run autoindex and strategy agent
                     LaunchAction(command={"command":"INDEX+STRATEGY",
+                                          "process":{"agent_process_id":agent_process_id},
                                           "directories":directories,
                                           "header1":header1,
                                           "header2":header2,
@@ -768,28 +778,30 @@ class Model(object):
 
             # If we are to integrate, do it
             try:
+
+                # Is the session information figured out by the image file name
+                session_id = self.database.get_session_id(
+                    data_root_dir=data_root_dir,
+                    group=header.get("rapd_group", None),
+                    session_name=header.get("rapd_session_name", None))
+
+
                 # Add the process to the database to display as in-process
                 agent_process_id = self.database.add_agent_process(agent_type="integrate",
                                                                    request_type="original",
                                                                    representation=new_repr,
                                                                    status=1,
-                                                                   display="show")
+                                                                   display="show",
+                                                                   session_id=session_id,
+                                                                   data_root_dir=data_root_dir)
 
                 # Add the ID entry to the header dict
                 header.update({"agent_process_id":agent_process_id,
                                "repr":new_repr})
 
-                # # Add the ID entry to the data dict
-                # data.update({"ID":os.path.basename(work_dir),
-                #              "repr":new_repr,
-                #              "process_id":process_id})
-
-                # # Construct data for the processing
-                # out_data = {"run_data":run_dict,
-                #             "image_data":data}
-
                 # Connect to the server and autoindex the single image
                 LaunchAction(command={"command":"INTEGRATE",
+                                      "process":{"agent_process_id":agent_process_id},
                                       "directories":directories,
                                       "image_data":header,
                                       "run_data":run_dict,

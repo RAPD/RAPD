@@ -169,9 +169,9 @@ class Database(object):
         result = db.images.insert_one(data.update({"timestamp":datetime.datetime.utcnow()}))
 
         if return_dict:
-            return db.find_one({"_id":result.inserted_id})
+            return str(db.find_one({"_id":result.inserted_id}))
         else:
-            return result.inserted_id
+            return str(result.inserted_id)
 
     def get_image_by_image_id(self, image_id):
         """
@@ -809,7 +809,9 @@ class Database(object):
                           request_type=None,
                           representation=None,
                           status=0,
-                          display="show"):
+                          display="show",
+                          session_id=None,
+                          data_root_dir=None):
         """
         Add an entry to the agent_processes table - for keeping track of
         launched processes and their state
@@ -821,14 +823,18 @@ class Database(object):
         status -- progress from 0 to 100 (default = 0) 1 = started,
                   100 = finished, -1 = error
         display -- display state of this process (default = show)
+        session_id -- unique _id for session in sessions create_data_collections (default = None)
+        data_root_dir -- unique root of the data for data collected at a site (default = None)
         """
 
-        self.logger.debug("%s %s %s %s %s",
+        self.logger.debug("%s %s %s %s %s %s %s",
                           agent_type,
                           request_type,
                           representation,
                           status,
-                          display)
+                          display,
+                          session_id,
+                          data_root_dir)
 
         # Connect to the database
         db = self.get_db_connection()
@@ -839,9 +845,11 @@ class Database(object):
                                                 "status":status,
                                                 "representation":representation,
                                                 "request_type":request_type,
+                                                "session_id":session_id,
+                                                "data_root_dir":data_root_dir,
                                                 "timestamp":datetime.datetime.utcnow()})
 
-        return result.inserted_id
+        return str(result.inserted_id)
 
     def update_agent_process(self,
                              agent_process_id,
