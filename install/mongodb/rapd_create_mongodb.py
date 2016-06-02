@@ -230,9 +230,9 @@ def create_data_collections(hostname, port, username, password):
     db.create_collection(name="runs")
     db.runs.create_index([("directory", pymongo.ASCENDING),
                           ("image_prefix", pymongo.ASCENDING),
-                          ("run_number", pymongo.ASCENDING)
-                          ("start_image_number", pymongo.ASCENDING)
-                          ("number_images", pymongo.ASCENDING)
+                          ("run_number", pymongo.ASCENDING),
+                          ("start_image_number", pymongo.ASCENDING),
+                          ("number_images", pymongo.ASCENDING),
                           ("file_ctime", pymongo.ASCENDING)],
                          unique=True,
                          name="blocker")
