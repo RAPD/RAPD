@@ -870,6 +870,8 @@ class Database(object):
         display -- display state of this process (default = show)
         """
 
+        self.logger.debug("update_agent_process %s %s %s", agent_process_id, status, display)
+
         # Connect to the database
         db = self.get_db_connection()
 
