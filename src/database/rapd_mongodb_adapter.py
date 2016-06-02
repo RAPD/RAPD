@@ -1014,7 +1014,7 @@ class Database(object):
         agent_result -- dict of information from agent - must have a process key pointing to a dict
         """
 
-        self.logger.debug("save_agent_result", agent_result)
+        self.logger.debug("save_agent_result %s", agent_result)
 
         # Connect to the database
         db = self.get_db_connection()
