@@ -1024,7 +1024,8 @@ class Database(object):
 
         # Add to results
         db.agent_processes.update({"process.agent_process_id":agent_result["process"]["agent_process_id"]},
-                                  {"$set":agent_result})
+                                  {"$set":agent_result},
+                                  upsert=True)
 
     def addSingleResult(self,dirs,info,settings,results):
         """
