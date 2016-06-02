@@ -5762,8 +5762,8 @@ class Database(object):
             elif (result_id):
                 query = "SELECT * FROM rapd_users.trips JOIN rapd_data.results ON (rapd_users.trips.data_root_dir = rapd_data.results.data_root_dir) WHERE rapd_data.results.result_id=%s"
                 data = result_id
-            #query the database
-            self.logger.debug(query%data)
+            # query the database
+            self.logger.debug(query, data)
             trip_dict = self.make_dicts(query,(data,))
         except:
             self.logger.exception('Error in getTrips')

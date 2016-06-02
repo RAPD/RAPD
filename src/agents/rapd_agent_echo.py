@@ -110,6 +110,7 @@ class RapdAgent(multiprocessing.Process):
         self.results = self.command
 
         # Add the agent information
+        self.results["process"]["origin"] = "AGENT"
         self.results["process"]["agent_id"] = ID
         self.results["process"]["agent_type"] = AGENT_TYPE
         self.results["process"]["agent_subtype"] = AGENT_SUBTYPE

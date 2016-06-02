@@ -833,13 +833,12 @@ class Model(object):
 
         return work_dir_candidate, new_repr
 
-    def handle_agent_communication(command, information):
+    def handle_agent_communication(self, message):
         """
         Handle incoming communications from agents
 
         Keyword arguments
-        command -- source of the communication (AGENT:INDEX+STRATEGY)
-        information -- dict of pertinent information. Needs to at least contain
+        message -- dict of pertinent information. Needs to at least contain
                        a dict under the key process with entries for agent_process_id
                        and status
 
@@ -849,19 +848,19 @@ class Model(object):
 
         # Update the agent_process in the DB
         self.database.update_agent_process(
-            agent_process_id=information["process"].get("agent_process_id", None),
-            status=information["process"].get("status", 1))
+            agent_process_id=message["process"].get("agent_process_id", None),
+            status=message["process"].get("status", 1))
 
-        # Now by agent
-        agent_type = command.split(":")[1]
-
-        if agent_type == "INDEX+STRATEGY":
-
-            # Put results into the database
-            result_db = self.database.add_index_result(dirs=dirs,
-                                                       info=info,
-                                                       settings=settings,
-                                                       results=results)
+        # # Now by agent
+        # agent_type = command.split(":")[1]
+        #
+        # if agent_type == "INDEX+STRATEGY":
+        #
+        #     # Put results into the database
+        #     result_db = self.database.add_index_result(dirs=dirs,
+        #                                                info=info,
+        #                                                settings=settings,
+        #                                                results=results)
 
             # Add result to database
             #     result_db = self.database.addSingleResult(dirs=dirs,
@@ -980,7 +979,7 @@ class Model(object):
         Receive information from ControllerServer (self.SERVER) and handle accordingly.
 
         Keyword arguments
-        message -- information to be preocessed in the format (TYPE, {info})
+        message -- information to be preocessed, a dict
 
         Types currently handled: NEWIMAGE, NEWRUN
         """
@@ -1024,24 +1023,24 @@ class Model(object):
         self.logger.debug("Received: %s", message)
 
         # Unpack
-        command, information = message
+        # command, information = message
 
         # NEWIMAGE
         # information is {"fullname":.., "site_tag":..}
-        if command == "NEWIMAGE":
-            self.add_image(information)
-
-        # NEWRUN
-        # information is dict containing run information
-        elif command == "NEWRUN":
-            self.add_run(information)
+        # if command == "NEWIMAGE":
+        #     self.add_image(information)
+        #
+        # # NEWRUN
+        # # information is dict containing run information
+        # elif command == "NEWRUN":
+        #     self.add_run(information)
 
         # AGENTS
-        elif command.startswith("AGENT"):
+        if message["process"]["origin"] == "AGENT":
             self.logger.debug("Communication from agent")
 
-            self.handle_agent_communication(command=command,
-                                            information=information)
+            self.handle_agent_communication(message=message)
+
 
         # elif command == "PILATUS_ABORT":
         #     self.logger.debug("Run aborted")
@@ -1966,7 +1965,3 @@ class Model(object):
         #                        bc=self.BEAMLINE_CONNECTION,
         #                        data=info,
         #                        logger=self.logger)
-
-        else:
-            self.logger.info("Take no action for message")
-            self.logger.info(message)
