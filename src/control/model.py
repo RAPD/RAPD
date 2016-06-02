@@ -792,14 +792,14 @@ class Model(object):
                 self.logger.exception("Exception when attempting to run RAPD \
                 integration pipeline")
 
-    def get_work_dir(self, type_level, image_data1, image_data2=False):
+    def get_work_dir(self, type_level, image_data1=False, image_data2=False):
         """
         Return a valid working directory for rapd_agent to work in
 
         Keyword arguments
-        type_level -- the type of work, single, pair, integrate
-        image_data1 -- header information from the first image
-        image_data2 -- header information from the second image
+        type_level -- the type of work, single, pair, integrate, echo
+        image_data1 -- header information from the first image (default = False)
+        image_data2 -- header information from the second image (default = False)
         """
 
         # Type level
