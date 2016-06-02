@@ -1023,7 +1023,7 @@ class Database(object):
         agent_result["timestamp"] = datetime.datetime.utcnow()
 
         # Add to results
-        db.agent_processes.update({"process.agent_process_id":agent_process_id},
+        db.agent_processes.update({"process.agent_process_id":agent_result["process"]["agent_process_id"]},
                                   {"$set":agent_result})
 
     def addSingleResult(self,dirs,info,settings,results):
