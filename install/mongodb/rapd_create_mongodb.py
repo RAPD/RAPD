@@ -241,6 +241,10 @@ def create_data_collections(hostname, port, username, password):
     db.drop_collection("agent_processes")
     db.create_collection(name="agent_processes")
 
+    # agent_results
+    db.drop_collection("agent_results")
+    db.create_collection(name="agent_results")
+
     return True
 
 def perform_naive_install(hostname, port, username, password):

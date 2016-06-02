@@ -1006,23 +1006,25 @@ class Database(object):
         #     self.close_connection(connection, cursor)
         #     return(False, False)
 
-    def add_index_result(self, information):
+    def save_agent_result(self, agent_result):
         """
         Add and AUTOINDEX+STRATEGY result from the core agent
 
         Keyword argument
-        information -- dict of information from agent
+        agent_result -- dict of information from agent - must have a process key pointing to a dict
         """
 
-        # Save some typing / work with old interface
-        process = information.get("process", {})
-        dirs = information.get("directories", {})
-        info = information.get("information", {})
-        settings = information.get("preferences", {})
-        results = information.get("results", {})
+        self.logger.debug("save_agent_result", agent_result)
 
+        # Connect to the database
+        db = self.get_db_connection()
 
+        # Add the current timestamp to the agent_result
+        agent_result["timestamp"] = datetime.datetime.utcnow()
 
+        # Add to results
+        db.agent_processes.update({"process.agent_process_id":agent_process_id},
+                                  {"$set":agent_result})
 
     def addSingleResult(self,dirs,info,settings,results):
         """

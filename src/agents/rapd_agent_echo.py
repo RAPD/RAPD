@@ -115,6 +115,9 @@ class RapdAgent(multiprocessing.Process):
         self.results["process"]["agent_type"] = AGENT_TYPE
         self.results["process"]["agent_subtype"] = AGENT_SUBTYPE
 
+        # Spoof that this agent has a real results
+        self.results["results"] = True
+
     def postprocess(self):
         """
         Things to do after the main process runs

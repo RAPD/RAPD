@@ -851,16 +851,10 @@ class Model(object):
             agent_process_id=message["process"].get("agent_process_id", None),
             status=message["process"].get("status", 1))
 
-        # # Now by agent
-        # agent_type = command.split(":")[1]
-        #
-        # if agent_type == "INDEX+STRATEGY":
-        #
-        #     # Put results into the database
-        #     result_db = self.database.add_index_result(dirs=dirs,
-        #                                                info=info,
-        #                                                settings=settings,
-        #                                                results=results)
+        # Save the results for the agent
+        if message.get("results", False):
+            self.database.save_agent_result({"process":message["process"],
+                                             "results":message["results"]})
 
             # Add result to database
             #     result_db = self.database.addSingleResult(dirs=dirs,
