@@ -122,11 +122,31 @@ class Database(object):
     ############################################################################
     # Functions for sessions & users                                           #
     ############################################################################
-    def get_session_id(self, data_root_dir=None, group=None, session_name=None):
+    def get_session_id(self, data_root_dir, group_name=None, session_name=None):
+        """
+        Get the session _id for the input information. The entry will be made it does not yet exist.
+        The data_root_dir must be input for this to work.
+
+        Keyword arguments
+        data_root_dir -- root of data for a session (ex. /raw/ID_16_05_25_uga_jjc)
+        group_name -- name for a group (ex. uga_jjc) (default = None)
+        session_name -- name for a session (ex. ID_16_05_25_uga_jjc) (default = None)
         """
 
-        """
-        pass
+        # Connect
+        db = self.get_db_connection()
+
+        # Retrieve the session id
+        session_id = db.sessions.find_one({"data_root_dir":data_root_dir},{"_id"}).get("_id", False)
+
+        if not session_id:
+            result = db.sessions.insert({"data_root_dir":data_root_dir,
+                                         "group_name":group_name,
+                                         "session_name":session_name,
+                                         "timestamp":datetime.datetime.utcnow()})
+            session_id = result.inserted_id
+
+        return str(session_id)
 
 
     ############################################################################
