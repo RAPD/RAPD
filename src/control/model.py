@@ -970,8 +970,8 @@ class Model(object):
             #                 mark="failure"
             #                 )
 
-        elif agent_type == "INTEGRATE":
-            pass
+        # elif agent_type == "INTEGRATE":
+        #     pass
 
 
     def receive(self, message):
