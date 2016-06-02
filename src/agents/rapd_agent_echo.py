@@ -27,13 +27,11 @@ __status__ = "Development"
 
 # This is an active rapd agent
 RAPD_AGENT = True
-
-# This handler's request type
 AGENT_TYPE = "ECHO"
 AGENT_SUBTYPE = "CORE"
-
+AGENT_VERSION = "2.0"
 # A unique UUID for this handler (uuid.uuid1().hex)
-ID = "4eb96075e0a911e590d2c82a1400d5bc"
+AGENT_ID = "4eb96075e0a911e590d2c82a1400d5bc"
 
 # Standard imports
 import logging
@@ -97,6 +95,16 @@ class RapdAgent(multiprocessing.Process):
         # Get the reply_settings
         self.reply_settings = self.command["return_address"]
 
+        # Put the gathered data into a dict for return
+        self.results = self.command
+
+        # Add the agent information
+        self.results["process"]["origin"] = "AGENT"
+        self.results["process"]["agent_id"] = AGENT_ID
+        self.results["process"]["agent_type"] = AGENT_TYPE
+        self.results["process"]["agent_subtype"] = AGENT_SUBTYPE
+        self.results["process"]["agent_version"] = AGENT_VERSION
+
     def process(self):
         """
         The main process
@@ -105,15 +113,6 @@ class RapdAgent(multiprocessing.Process):
         3. Parse the labelit output
         """
         self.logger.debug("process")
-
-        # Put the gathered data into a dict for return
-        self.results = self.command
-
-        # Add the agent information
-        self.results["process"]["origin"] = "AGENT"
-        self.results["process"]["agent_id"] = ID
-        self.results["process"]["agent_type"] = AGENT_TYPE
-        self.results["process"]["agent_subtype"] = AGENT_SUBTYPE
 
         # Spoof that this agent has a real results
         self.results["results"] = True
