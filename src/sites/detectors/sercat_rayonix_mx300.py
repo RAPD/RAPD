@@ -308,16 +308,6 @@ def read_header(fullname, beam_settings):
     rapd_session_name, rapd_group = get_group_and_session(header["data_root_dir"])
     header["rapd_session_name"] = rapd_session_name
     header["rapd_group"] = rapd_group
-    # try:
-    #     header["rapd_session_name"] = header["data_root_dir"].split(os.path.sep)[2]
-    # except IndexError:
-    #     header["rapd_session_name"] = None
-    #
-    # try:
-    #     line, year, month, day, group, user = header["data_root_dir"].split(os.path.sep)[2].split("_")
-    #     header["rapd_group"] = "_".join((group, user))
-    # except ValueError:
-    #     header["rapd_group"] = None
 
     # Return the header
     return header
