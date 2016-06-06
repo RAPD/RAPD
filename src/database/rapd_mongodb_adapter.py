@@ -21,16 +21,14 @@ GNU Affero General Public License for more details.
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
-
 __created__ = "2016-05-31"
 __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
 """
-To run a mariadb instance in docker:
-sudo docker run --name mariadb -v /home/schuerjp/data:/var/lib/mysql -p 3306:3306
-            -e MYSQL_ROOT_PASSWORD=root_password -d mariadb
+To run a MongoDB instance in docker:
+sudo docker run --name mongo -p 27017:27017 -d mongo --storageEngine wiredTiger
 """
 
 # Standard imports
@@ -152,13 +150,13 @@ class Database(object):
     ############################################################################
     # Functions for images                                                     #
     ############################################################################
-    def add_image(self, data, return_dict=True):
+    def add_image(self, data, return_type="id"):
         """
         Add new image to the MySQL database.
 
         Keyword arguments
         data -- dict with all the requisite parts
-        return_dict -- if True, return the full dict from the db, otherwise return just the _id
+        return_type -- "boolean", "id", or "dict" (default = "id")
         """
 
         self.logger.debug(data)
@@ -166,12 +164,21 @@ class Database(object):
         db = self.get_db_connection()
 
         # Insert into db
-        result = db.images.insert_one(data.update({"timestamp":datetime.datetime.utcnow()}))
+        try:
+            result = db.images.insert_one(data.update({"timestamp":datetime.datetime.utcnow()}))
+        # Image already entered
+        except pymongo.errors.DuplicateKeyError:
+            return False
 
-        if return_dict:
-            return str(db.find_one({"_id":result.inserted_id}))
-        else:
-            return str(result.inserted_id)
+        # Return the requested type
+        if return_type == "boolean":
+            return True
+        elif return_type == "id":
+            return str(db.find_one({"_id":result.inserted_id},{"_id":1}))
+        elif return_type == "dict":
+            result_dict = db.find_one({"_id":result.inserted_id})
+            result_dict["_id"] = str(result_dict["_id"])
+            return result_dict
 
     def get_image_by_image_id(self, image_id):
         """
@@ -185,7 +192,7 @@ class Database(object):
         # Get connection to database
         db = self.get_db_connection()
 
-        # Query and return
+        # Query and return, transform _id to string
         return db.find_one({"_id":ObjectId(str(image_id))})
 
 
@@ -871,9 +878,6 @@ class Database(object):
         # Connect to the database
         db = self.get_db_connection()
 
-        # Make sure the agent_process_id is an ObjectId
-        agent_process_id = ObjectId(str(agent_process_id))
-
         # Construct the values to be updated
         set_dict = {"timestamp":datetime.datetime.utcnow()}
         if status:
@@ -882,7 +886,7 @@ class Database(object):
         if display:
             set_dict["display"] = display
 
-        db.agent_processes.update({"_id":agent_process_id},
+        db.agent_processes.update({"_id":ObjectId(str(agent_process_id))},
                                   {"$set":set_dict})
 
         return True
@@ -5806,108 +5810,43 @@ class Database(object):
     ############################################################################
     # Functions for runs                                                       #
     ############################################################################
-    def add_run(self, run_data):
+    def add_run(self, data, return_type="id"):
         """
-        Add a new run to the MySQL database
+        Add new run to the MySQL database.
 
         Keyword arguments
-        run_data -- dict containing run information
+        data -- dict with all the requisite parts
+        return_type -- "boolean", "id", or "dict" (default = "id")
         """
-        self.logger.debug("add_run %s", run_data)
+
+        db = self.get_db_connection()
 
         try:
-            # Connect
-            connection, cursor = self.get_db_connection()
+            # Insert into db
+            result = db.runs.insert_one(data.update({"timestamp":datetime.datetime.utcnow()}))
 
-            # Save into database
-            self.logger.debug("Adding run from into database directory:%s image_prefix:%s" % (run_data.get("directory", None), run_data.get("prefix", None)))
-            cursor.execute("""INSERT INTO runs (anomalous,
-                                                directory,
-                                                distance,
-                                                energy,
-                                                file_ctime,
-                                                image_prefix,
-                                                kappa,
-                                                number_images,
-                                                omega,
-                                                osc_axis,
-                                                osc_start,
-                                                osc_width,
-                                                phi,
-                                                rapd_status,
-                                                run_number,
-                                                site_tag,
-                                                start_image_number,
-                                                time,
-                                                transmission,
-                                                twotheta) VALUES (%s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s,
-                                                                  %s)""",
-                                             (run_data.get("anomalous", None),
-                                              run_data.get("directory", None),
-                                              run_data.get("distance", None),
-                                              run_data.get("energy", None),
-                                              run_data.get("file_ctime", None),
-                                              run_data.get("image_prefix", None),
-                                              run_data.get("kappa", None),
-                                              run_data.get("number_images", None),
-                                              run_data.get("omega", None),
-                                              run_data.get("osc_axis", None),
-                                              run_data.get("osc_start", None),
-                                              run_data.get("osc_width", None),
-                                              run_data.get("phi", None),
-                                              run_data.get("rapd_status", None),
-                                              run_data.get("run_number", None),
-                                              run_data.get("site_tag", None),
-                                              run_data.get("start_image_number", None),
-                                              run_data.get("time", None),
-                                              run_data.get("transmission", None),
-                                              run_data.get("twotheta", None)))
-            run_id = cursor.lastrowid
-            self.close_connection(connection, cursor)
-            return(run_id)
+            # Return the requested type
+            if return_type == "boolean":
+                return True
+            elif return_type == "id":
+                return str(db.find_one({"_id":result.inserted_id},{"_id":1}))
+            elif return_type == "dict":
+                result_dict = db.find_one({"_id":result.inserted_id})
+                result_dict["_id"] = str(result_dict["_id"])
+                return result_dict
 
-        except pymysql.IntegrityError, (errno, strerror):
-            if errno == 1062:
-                self.logger.debug("Run is already in the database")
-                self.close_connection(connection, cursor)
-
-                # Get the run_id and return it
-                return self.getRunIdByInfo(run_data=run)
-            else:
-                self.logger.exception("ERROR : unknown IntegrityError exception in rapd_mysql_adapter.add_run")
-                return False
-
-        except:
-            self.logger.exception("ERROR : unknown exception in rapd_mysql_adapter.add_run")
-            self.close_connection(connection, cursor)
+        # Run already entered
+        except pymongo.errors.DuplicateKeyError:
             return False
 
-    def get_run_data(self,
-                     run_data=None,
-                     minutes=0,
-                     order="descending",
-                     boolean=True):
+    def get_run(self,
+                run_data=None,
+                minutes=0,
+                order="descending",
+                return_type="boolean"):
         """
-        Return information for runs that fit the data within the last minutes
-        window. If minutes=0, no time limit.
+        Return information for runs that fit the data within the last minutes window. If minutes=0,
+        no time limit. The return will either be a boolean, or a list of results.
 
         Match is performed on the directory, prefix, starting image number and
         total number of images.
@@ -5917,7 +5856,7 @@ class Database(object):
         minutes -- time window to look back into the data (default 0)
         order -- the order in which to sort the results, must be None, descending
                  or ascending (default descending)
-        boolean -- return just True if there is a or False
+        return_type -- "boolean", "id", "dict" (default = "boolean")
         """
 
         self.logger.debug("run_data:%s minutes:%d", run_data, minutes)
@@ -5935,8 +5874,8 @@ class Database(object):
         else:
             raise Exception("get_run_data order argument must be None, ascending, or descending")
 
-        # Boolean
-        if boolean:
+        # Projection determined by return_type
+        if return_type in ("boolean", "id"):
             projection = {"_id":1}
         else:
             projection = {}
@@ -5960,7 +5899,7 @@ class Database(object):
         if results.count == 0:
             return False
         else:
-            if boolean:
+            if return_type == "boolean":
                 return True
             else:
                 return results
@@ -5973,10 +5912,12 @@ class Database(object):
                      image_number,
                      minutes=0,
                      order="descending",
-                     boolean=True):
+                     return_type="boolean"):
         """
-        Return True/False or with list of data depending on whether the image
-        information could correspond to a run stored in the database
+        Return True/False or with list of data depending on whether the image information could
+        correspond to a run stored in the database.
+
+        Depending on the return_type, return could be True/False, a list of dicts, or a list of ids.
 
         Keyword arguments
         site_tag -- string describing site (default None)
@@ -5985,16 +5926,19 @@ class Database(object):
         run_number -- number for the run
         image_number -- number for the image
         minutes -- time window to look back into the data (default 0)
-        boolean -- return just True if there is a or False
+        return_type -- "boolean", "id", "dict" (default = "boolean")
         """
 
         # Order
         if order in ("descending", None):
-            order_param = "DESC"
+            order_param = -1
         elif order == "ascending":
-            order_param = "ASC"
+            order_param = 1
         else:
             raise Exception("get_run_data order argument must be None, ascending, or descending")
+
+        # Get connection to database
+        db = self.get_db_connection()
 
         # Search parameters
         query = {"site_tag":site_tag,
@@ -6008,8 +5952,15 @@ class Database(object):
             time_limit = datetime.datetime.utcnow() - datetime.timedelta(minutes=minutes)
             query.update({"file_ctime":{"$lt":time_limit}})
 
-        results = db.runs.find(query).sort("file_ctime", order_param)
+        # Projection determined by return_type
+        if return_type in ("boolean", "id"):
+            projection = {"_id":1, "start_image_number":1, "number_images":1}
+        else:
+            projection = {}
 
+        results = db.runs.find(query, projection).sort("file_ctime", order_param)
+
+        # Now filter for image_number inclusion
         filtered_results = []
         for result in results:
             if image_number <= (result["start_image_number"]+result["number_images"]+1):
@@ -6019,10 +5970,18 @@ class Database(object):
         if len(filtered_results) == 0:
             return False
         else:
-            if boolean:
+            # boolean
+            if return_type == "boolean":
                 return True
-            else:
+            elif return_type == "dict":
+                for result in filtered_results:
+                    result["_id"] = str(result["_id"])
                 return filtered_results
+            elif return_type == "id":
+                result_ids = []
+                for result in filtered_results:
+                    result_ids.append(str(result["_id"]))
+                return result_ids
 
     # def getRunIdByInfo(self, run_data):
     #     """

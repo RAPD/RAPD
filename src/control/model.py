@@ -362,7 +362,7 @@ class Model(object):
                     header["site_tag"] = site_tag
 
                     # Add to the database
-                    db_result = self.database.add_image(data=header, return_dict=False)
+                    image_status = self.database.add_image(data=header, return_type="boolean")
 
                     # Send to be processed
                     self.new_data_image(header=header)
@@ -400,13 +400,11 @@ class Model(object):
                 header.update(site_data)
 
             # Add to database
-            db_result = self.database.add_image(data=header, return_dict=True)
+            image_status = self.database.add_image(data=header, return_type="boolean")
 
             # Duplicate entry
             if db_result == False:
                 return False
-            else:
-                header.update(db_result)
 
             # Update remote client
             if self.remote_adapter:
@@ -438,9 +436,9 @@ class Model(object):
                     return run
 
         # Look in the database since the local attempt has failed
-        return self.database.get_run_data(run_data=run_data,
-                                          minutes=self.site.RUN_WINDOW,
-                                          boolean=boolean)
+        return self.database.get_run(run_data=run_data,
+                                     minutes=self.site.RUN_WINDOW,
+                                     return_type="boolean")
 
     def query_in_run(self,
                      site_tag,
@@ -450,7 +448,7 @@ class Model(object):
                      image_number,
                      minutes=0,
                      order="descending",
-                     boolean=True):
+                     return_type="boolean"):
         """
         Return True/False or with list of data depending on whether the image
         information could correspond to a run stored locally or in the database
@@ -492,24 +490,22 @@ class Model(object):
                                                      run_number=run_number,
                                                      image_number=image_number,
                                                      minutes=minutes,
-                                                     boolean=boolean)
+                                                     return_type=return_type)
 
         # If boolean, just return
-        if boolean:
+        if return_type == "boolean":
             return identified_runs
-        if identified_runs == False:
-            return False
-        elif len(identified_runs) == 0:
-            return False
         else:
-            # Add to local store
-            self.recent_runs[identified_runs[0]["run_id"]] = identified_runs[0]
-            if boolean:
-                return True
-            else:
+            if identified_runs == False:
+                return False
+            elif return_type == "id":
                 return identified_runs
-
-
+            elif return_type == "dict":
+                # Update the local store
+                for run in identified_runs:
+                    self.recent_runs[run["_id"]] = run
+                # Return runs
+                return identified_runs
 
     def add_run(self, run_dict):
         """
@@ -598,7 +594,7 @@ class Model(object):
                                      run_number=run_number,
                                      image_number=image_number,
                                      minutes=self.site.RUN_WINDOW,
-                                     boolean=False)
+                                     return_type="dict")
 
         # No run information - SNAP
         if not run_info:
@@ -681,12 +677,12 @@ class Model(object):
                                                                data_root_dir=data_root_dir)
 
             # Add the ID entry to the header dict
-            header.update({"agent_process_id":agent_process_id,
-                           "repr":new_repr})
+            header.update({"repr":new_repr})
 
             # Run autoindex and strategy agent
             LaunchAction(command={"command":"INDEX+STRATEGY",
-                                  "process":{"agent_process_id":agent_process_id},
+                                  "process":{"agent_process_id":agent_process_id,
+                                             "session_id":session_id},
                                   "directories":directories,
                                   "header1":header,
                                   "site_parameters":self.site.BEAM_INFO[header1["site_tag"]],
@@ -749,7 +745,8 @@ class Model(object):
 
                     # Run autoindex and strategy agent
                     LaunchAction(command={"command":"INDEX+STRATEGY",
-                                          "process":{"agent_process_id":agent_process_id},
+                                          "process":{"agent_process_id":agent_process_id,
+                                                     "session_id":session_id},
                                           "directories":directories,
                                           "header1":header1,
                                           "header2":header2,
@@ -801,7 +798,8 @@ class Model(object):
 
                 # Connect to the server and autoindex the single image
                 LaunchAction(command={"command":"INTEGRATE",
-                                      "process":{"agent_process_id":agent_process_id},
+                                      "process":{"agent_process_id":agent_process_id,
+                                                 "session_id":session_id},
                                       "directories":directories,
                                       "image_data":header,
                                       "run_data":run_dict,
@@ -875,8 +873,8 @@ class Model(object):
 
         # Save the results for the agent
         if message.get("results", False):
-            self.database.save_agent_result({"process":message["process"],
-                                             "results":message["results"]})
+            result_id = self.database.save_agent_result({"process":message["process"],
+                                                         "results":message["results"]})
 
             # Add result to database
             #     result_db = self.database.addSingleResult(dirs=dirs,
