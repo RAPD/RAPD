@@ -87,7 +87,7 @@ class RapdAgent(Process):
     # The results of the agent
     results = {}
 
-    def __init__(self, site, command):
+    def __init__(self, site, command, logger=False):
         """
         Initialize the agent
 
@@ -97,14 +97,17 @@ class RapdAgent(Process):
         """
 
         self.cluster_adapter = False
-
-        # Get the logger Instance
-        self.logger = logging.getLogger("RAPDLogger")
-        self.logger.debug("__init__")
-
-        self.logger.info(site)
+	# If the logging instance is passed in...
+        if logger:
+	  self.logger = logger
+	else:
+          # Otherwise get the logger Instance
+          self.logger = logging.getLogger("RAPDLogger")
+          self.logger.debug("__init__")
+        
+	self.logger.info(site)
         self.logger.info(command)
-        self.st = time.time()
+	self.st = time.time()
 
         # Store passed-in variables
         self.site = site
@@ -115,11 +118,17 @@ class RapdAgent(Process):
         self.setup = self.command["directories"]
         self.header = self.command["header1"]
         self.header2 = self.command.get("header2", False)
-        self.site_parameters = self.command.get("site_parameters")
+        self.site_parameters = self.command.get("site_parameters",False)
         self.preferences = self.command.get("preferences", {})
         self.controller_address = self.reply_address
 
-        # Set timer for distl. "False" will disable.
+        # If running from command line, site_parameters is not in there. Needed for BEST.
+	if self.site_parameters == False:
+	  print Utils.getSite(self.header['fullname'],False)[1]
+	  self.site_parameters = self.site.BEAM_INFO.get(Utils.getSite(self.header['fullname'],False)[1])
+	  #self.site_parameters = self.site['BEAM_INFO'].get(Utils.getSite(self.header['fullname'],False)[1])
+	
+	# Set timer for distl. "False" will disable.
         if self.header2:
             self.distl_timer = 60
         else:
@@ -130,7 +139,8 @@ class RapdAgent(Process):
         self.xoalign_timer = 30
 
         # Turns on multiprocessing for everything
-        # Turns on all iterations of Labelit running at once, sorts out highest symmetry solution, then continues...(much better!!)
+        # Turns on all iterations of Labelit running at once, sorts out highest symmetry solution,
+        # then continues...(much better!!)
         self.multiproc = True
         if self.preferences.has_key("multiprocessing"):
             if self.preferences.get("multiprocessing") == "False":
@@ -257,7 +267,7 @@ class RapdAgent(Process):
             self.logger.debug("AutoindexingStrategy::run")
 
         self.preprocess()
-
+        
         if self.minikappa:
             self.processXOalign()
         else:
@@ -285,7 +295,7 @@ class RapdAgent(Process):
                     self.postprocessDistl()
     	    # Make PHP files for GUI, passback results, and cleanup.
             self.postprocess()
-
+        
     def preprocess(self):
         """
         Setup the working dir in the RAM and save the dir where the results will go at the end.
@@ -295,22 +305,10 @@ class RapdAgent(Process):
 
         # Determine detector vendortype
         self.vendortype = Utils.getVendortype(self, self.header)
-
-        """
-        #For determining detector type. Same notation as CCTBX.
-        #Grab the beamline info from rapd_site.py that give the specifics of this beamline.
-        #You will have to modify how a beamline/detector is selected. If multiple detectors
-        #of same type, you could look at S/N.
-        if self.header.get("fullname")[-3:] == "cbf":
-          if float(self.header.get("beam_center_y")) > 200.0:
-            self.vendortype = "Pilatus-6M"
-          else:
-            self.vendortype = "ADSC-HF4M"
-        else:
-          self.vendortype = "ADSC"
-        """
-
-        self.dest_dir = self.setup.get("work")
+	#Utils.getSite(self,self.header['fullname'])
+	#self.site = Utils.getSite(self,'/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0001')
+	#self.site = Utils.getSite(self,'/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0001')
+	self.dest_dir = self.setup.get("work")
         if self.test or self.cluster_use:
             self.working_dir = self.dest_dir
         elif self.ram:
@@ -1844,7 +1842,7 @@ class RapdAgent(Process):
                             $("#distance").val(aData[7]);
                             $("#transmission").val(aData[8]);
                             //Open up the dialog form
-                            $('#dialog-form-datacollection').dialog('open');
+                            $("#dialog-form-datacollection").dialog("open");
                      }); \n''')
                 if self.best_anom_summary:
                     jon_summary.write('''
@@ -1885,7 +1883,7 @@ class RapdAgent(Process):
                           $("#distance").val(aData[7]);
                           $("#transmission").val(aData[8]);
                           //Open up the dialog form
-                          $('#dialog-form-datacollection').dialog('open');
+                          $("#dialog-form-datacollection").dialog("open");
                    }); \n''')
 
             jon_summary.write('''
@@ -2080,7 +2078,7 @@ class RunLabelit(Process):
     def __init__(self, command, output, params, logger=None):
         """
         input >> command
-        # The minimum input
+        # The minimum input **OLD**
         [   "AUTOINDEX",
         {   "work": "/gpfs6/users/necat/Jon/RAPD_test/Output"},
         {   "binning": "2x2",
@@ -2089,13 +2087,32 @@ class RunLabelit(Process):
             "twotheta": "0.0"},
         {   "x_beam": "153.66", "y_beam": "158.39"},
         ("127.0.0.1", 50001)]
-        """
+	#New minimum input
+	{   'command': 'INDEX+STRATEGY',
+        'directories': {   'work': '/home/schuerjp/temp/beamcenter/800.0'},
+        'header1': {   'beam_center_x': 149.871,
+  		 'beam_center_y': 145.16,
+  		 'distance': 800.0,
+  		 'fullname': '/home/schuerjp/temp/beamcenter/SER-9_Pn0.0020',
+  		 'spacegroup': 'None',
+  		 'vendortype': 'MARCCD'},
+        'preferences': {   'a': 0.0,
+  		     'alpha': 0.0,
+  		     'b': 0.0,
+  		     'beam_flip': 'False',
+  		     'beta': 0.0,
+  		     'c': 0.0,
+  		     'gamma': 0.0,
+  		     'multiprocessing': 'True',
+  		     'sample_type': 'Protein'},
+        'return_address': ('127.0.0.1', 50000)}
+	"""
         self.cluster_adapter = False
         self.st = time.time()
 
         # Passed-in vars
         self.command = command
-        self.input = command
+        #self.input = command
         self.output = output
         self.logger = logger
 
@@ -2104,13 +2121,21 @@ class RunLabelit(Process):
         self.header = command["header1"]
         self.header2 = command.get("header2", False)
         self.preferences = command["preferences"]
+	self.site_parameters = command.get("site_parameters", {})
         self.controller_address = command["return_address"]
+	
+	# Read site file is available
+	if self.site_parameters.has_key('site'):
+	  self.site = load_module(seek_module=self.site_parameters.get('site'),
+	                          directories='sites')
+	else:
+	  self.site = False
 
         #params
         self.test = params.get("test", False)
         #Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Adds 1-3s to total run time.
-        # self.cluster_use = params.get("cluster",True)
-        #If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
+        self.cluster_use = params.get("cluster",True)
+	#If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
         self.cluster_queue = params.get("cluster_queue", False)
         #Get detector vendortype for settings. Defaults to ADSC.
         self.vendortype = params.get("vendortype", "ADSC")
@@ -2119,11 +2144,17 @@ class RunLabelit(Process):
         # Number of Labelit iteration to run.
         self.iterations = params.get("iterations", 6)
         # If limiting number of LABELIT run on cluster.
-        self.red = params.get("redis", False)
+        #self.red = params.get("redis", False)
         self.short = False
-        if self.iterations != 6:
+        
+	# Make decisions based on input params
+	if self.iterations != 6:
             self.short = True
-        # Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
+        # Setup the cluster_adapter only if requested and site is sent.
+	if self.cluster_use and self.site:
+	   if self.site.CLUSTER_ADAPTER:
+             self.cluster_adapter = load_module(self.site.CLUSTER_ADAPTER,)
+	# Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
         #******BEAMLINE SPECIFIC*****
         # if self.header.has_key("acc_time"):
         self.gui = True
@@ -2175,7 +2206,7 @@ class RunLabelit(Process):
             self.logger.debug('RunLabelit::run')
 
         self.preprocess()
-
+        
         # Make the initial dataset_prefernces.py file
         self.preprocessLabelit()
         if self.short:
@@ -2200,7 +2231,7 @@ class RunLabelit(Process):
           #Put the logs together
           self.labelitLog()
         self.postprocess()
-
+        
     def preprocess(self):
       """
       Setup the working dir in the RAM and save the dir where the results will go at the end.
@@ -2331,15 +2362,9 @@ class RunLabelit(Process):
                     #Delete the previous log still in the folder, otherwise the cluster jobs will append to it.
                     if os.path.exists(log):
                         os.system("rm -rf %s" % log)
-                    if self.short:
-                        if self.red:
-                            run = Process(target=self.cluster_adapter.processCluster, args=(self, (command, log, 1, self.cluster_queue, "bc_throttler"), pid_queue))
-                        else:
-                            #run = Process(target=Utils.processCluster, args=(self,(command,log,'all.q'),queue))
-                            run = Process(target=self.cluster_adapter.processCluster, args=(self, (command, log, self.cluster_queue), pid_queue))
-                    else:
-                        #run = Process(target=Utils.processCluster,args=(self,(command,log,'index.q'),queue))
-                        run = Process(target=self.cluster_adapter.processCluster, args=(self, (command, log, self.cluster_queue), pid_queue))
+		    #run = Process(target=self.cluster_adapter.processCluster, args=(self, (command, log, self.cluster_queue), pid_queue))
+		    
+		    run = Process(target=self.cluster_adapter.process_cluster, args=({ 'command': command, 'log': log, 'queue': self.cluster_queue, 'pid': pid_queue},))
                 else:
                     run = Process(target=Utils.processLocal, args=((command, log), self.logger, pid_queue))
                 run.start()
@@ -2360,7 +2385,7 @@ class RunLabelit(Process):
         self.logger.debug('RunLabelit::postprocessLabelit')
       try:
         Utils.foldersLabelit(self,iteration)
-        #labelit_failed = False
+	#labelit_failed = False
         if blank:
           error = 'Not enough spots for autoindexing.'
           if self.verbose:
@@ -2368,6 +2393,12 @@ class RunLabelit(Process):
           self.labelit_log[str(iteration)].extend(error+'\n')
           return(None)
         else:
+	  import glob
+	  #time.sleep(5)
+	  #print os.getcwd()
+	  #print os.path.join(os.getcwd(),'*.log')
+	  #print glob.glob(os.path.join(os.getcwd(),'*.log'))
+	  #print os.stat(os.getcwd()+'/labelit.log')
           log = open('labelit.log','r').readlines()
           self.labelit_log[str(iteration)].extend('\n\n')
           self.labelit_log[str(iteration)].extend(log)
@@ -2433,10 +2464,11 @@ class RunLabelit(Process):
             self.logger.debug("RunLabelit::postprocess")
 
         try:
-            #Free up spot on cluster.
+            """
+	    #Free up spot on cluster.
             if self.short and self.red:
                 self.red.lpush("bc_throttler", 1)
-
+            """
             #Pass back output
             self.output.put(self.labelit_results)
             if self.short == False:
@@ -2852,5 +2884,13 @@ if __name__ == '__main__':
   #handler.setFormatter(formatter)
   #logger.addHandler(handler)
   #RapdAgent(inp, logger=logger)
-  import sites.sercat_id as site
-  RapdAgent(site,command)
+  #import sites.sercat_id as site
+  import sites.sercat as site
+  import utils.log
+  
+  log = utils.log.get_logger(logfile_dir=command['directories']['work'],)
+  #log = utils.log.get_logger(logfile_dir=logfile_dir,
+  #                              logfile_id=logfile_id,
+  #                              level=10)
+
+  RapdAgent(site,command,log)

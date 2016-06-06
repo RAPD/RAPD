@@ -1854,6 +1854,25 @@ def getRes(self,inp=False):
     self.logger.exception('**ERROR in Utils.getRes**')
     return (0.0)
 
+def getSite(image, load=False):
+  """
+  Figures out the correct site file by reading in an image.
+  """
+  from utils.modules import load_module
+  from iotbx.detectors import ImageFactory
+  
+  d = {('MARCCD', 7)   : 'sercat_bm',
+       ('MARCCD', 101) : 'sercat_id', 
+       }
+       
+  i = ImageFactory(image)
+  if load:
+    return (load_module(seek_module=d[(i.vendortype, i.parameters['DETECTOR_SN'])],
+                           directories='sites'))
+  else:
+    return (d[(i.vendortype, i.parameters['DETECTOR_SN'])])
+  
+
 def getWavelength(self,inp=False):
   """
   Returns wavelength of dataset.
@@ -1906,7 +1925,8 @@ def getVendortype(self,inp):
   #If not in header, use ImageFactory
   if vendortype == False:
     from iotbx.detectors import ImageFactory
-    vendortype = ImageFactory(l[0]).vendortype
+    #vendortype = ImageFactory(l[0]).vendortype
+    vendortype = ImageFactory(inp.get('fullname')).vendortype
   return (vendortype)
 
 def killChildren(self,pid):
