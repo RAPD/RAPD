@@ -81,6 +81,34 @@ def get_data_root_dir(fullname):
     # Return the determined directory
     return data_root_dir
 
+def get_group_and_session(data_root_dir):
+    """
+    Return the group and session for the directory input. This should be the RAPD system user and
+    group
+
+    Keyword arguments
+    data_root_dir -- root directory of the images being collected
+    """
+
+    # Get the session name
+    # /raw/ID_16_04_22_NIH_dxia_2 >> ID_16_04_22_NIH_dxia_2
+    try:
+        rapd_session_name = data_root_dir.split(os.path.sep)[2]
+    except IndexError:
+        rapd_session_name = None
+
+    # Get the RAPD group
+    # /raw/ID_16_04_22_NIH_dxia_2 >>
+    stat_info = os.stat(data_root_dir)
+    user = pwd.getpwuid(stat_info.st_uid)[0]
+    group = grp.getgrgid(stat_info.st_gid)[0]
+    # Filter group for "wheel"
+    if group == "wheel":
+        group = "staff"
+    rapd_group = "_".join((group, user))
+
+    return rapd_group, rapd_session_name
+
 def create_image_fullname(directory,
                           image_prefix,
                           run_number=None,
@@ -268,6 +296,11 @@ def read_header(fullname, beam_settings):
 
     # Get the data_root_dir
     header["data_root_dir"] = get_data_root_dir(fullname)
+
+    # Group and session are interpreted from the image name
+    rapd_session_name, rapd_group = get_group_and_session(header["data_root_dir"])
+    header["rapd_session_name"] = rapd_session_name
+    header["rapd_group"] = rapd_group
 
     # Return the header
     return header

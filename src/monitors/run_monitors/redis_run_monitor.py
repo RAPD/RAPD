@@ -153,11 +153,9 @@ class Monitor(threading.Thread):
             # ~5 seconds between overwatch updates
             for __ in range(ow_round_interval):
 
-                self.logger.debug(__)
-
                 for run_list, site_tag in self.run_lists:
 
-                    self.logger.debug("Querying %s %s", run_list, site_tag)
+                    # self.logger.debug("Querying %s %s", run_list, site_tag)
 
                     # Try to pop the oldest image off the list
                     raw_run_data = self.redis.rpop(run_list)
@@ -168,8 +166,11 @@ class Monitor(threading.Thread):
                         run_data = json.loads(raw_run_data)
 
                         # Notify core thread that an image has been collected
-                        self.notify(("NEWRUN", {"run_data":run_data,
-                                                "site_tag":site_tag}))
+                        self.notify({"message_type":"NEWRUN",
+                                     "run_data":run_data,
+                                     "site_tag":site_tag})
+                        # self.notify(("NEWRUN", {"run_data":run_data,
+                        #                         "site_tag":site_tag}))
 
                         self.logger.debug("New run data %s", raw_run_data)
 

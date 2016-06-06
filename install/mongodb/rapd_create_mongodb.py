@@ -245,6 +245,12 @@ def create_data_collections(hostname, port, username, password):
     db.drop_collection("agent_results")
     db.create_collection(name="agent_results")
 
+    # sessions
+    db.drop_collection("sessions")
+    db.create_collection(name="sessions")
+    db.sessions.create_index("data_root_dir",
+                             unique=True)
+
     return True
 
 def perform_naive_install(hostname, port, username, password):

@@ -289,11 +289,13 @@ class Model(object):
                                                            request_type="original",
                                                            representation=new_repr,
                                                            status=1,
-                                                           display="hide")
+                                                           display="hide",
+                                                           session_id=None,
+                                                           data_root_dir=None)
 
         # Run autoindex and strategy agent
         LaunchAction(command={"command":"ECHO",
-                              "process":{"agent_process_id":str(agent_process_id)},
+                              "process":{"agent_process_id":agent_process_id},
                               "directories":{"work":work_dir},
                               "return_address":self.return_address},
                      launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
@@ -360,7 +362,7 @@ class Model(object):
                     header["site_tag"] = site_tag
 
                     # Add to the database
-                    db_result = self.database.add_image(data=header, return_dict=False)
+                    image_status = self.database.add_image(data=header, return_type="boolean")
 
                     # Send to be processed
                     self.new_data_image(header=header)
@@ -398,13 +400,11 @@ class Model(object):
                 header.update(site_data)
 
             # Add to database
-            db_result = self.database.add_image(data=header, return_dict=True)
+            image_status = self.database.add_image(data=header, return_type="boolean")
 
             # Duplicate entry
             if db_result == False:
                 return False
-            else:
-                header.update(db_result)
 
             # Update remote client
             if self.remote_adapter:
@@ -436,9 +436,9 @@ class Model(object):
                     return run
 
         # Look in the database since the local attempt has failed
-        return self.database.get_run_data(run_data=run_data,
-                                          minutes=self.site.RUN_WINDOW,
-                                          boolean=boolean)
+        return self.database.get_run(run_data=run_data,
+                                     minutes=self.site.RUN_WINDOW,
+                                     return_type="boolean")
 
     def query_in_run(self,
                      site_tag,
@@ -448,7 +448,7 @@ class Model(object):
                      image_number,
                      minutes=0,
                      order="descending",
-                     boolean=True):
+                     return_type="boolean"):
         """
         Return True/False or with list of data depending on whether the image
         information could correspond to a run stored locally or in the database
@@ -490,24 +490,22 @@ class Model(object):
                                                      run_number=run_number,
                                                      image_number=image_number,
                                                      minutes=minutes,
-                                                     boolean=boolean)
+                                                     return_type=return_type)
 
         # If boolean, just return
-        if boolean:
+        if return_type == "boolean":
             return identified_runs
-        if identified_runs == False:
-            return False
-        elif len(identified_runs) == 0:
-            return False
         else:
-            # Add to local store
-            self.recent_runs[identified_runs[0]["run_id"]] = identified_runs[0]
-            if boolean:
-                return True
-            else:
+            if identified_runs == False:
+                return False
+            elif return_type == "id":
                 return identified_runs
-
-
+            elif return_type == "dict":
+                # Update the local store
+                for run in identified_runs:
+                    self.recent_runs[run["_id"]] = run
+                # Return runs
+                return identified_runs
 
     def add_run(self, run_dict):
         """
@@ -596,7 +594,7 @@ class Model(object):
                                      run_number=run_number,
                                      image_number=image_number,
                                      minutes=self.site.RUN_WINDOW,
-                                     boolean=False)
+                                     return_type="dict")
 
         # No run information - SNAP
         if not run_info:
@@ -663,19 +661,28 @@ class Model(object):
                            "data_root_dir":data_root_dir,
                            "agent_directories":self.site.RAPD_AGENT_DIRECTORIES}
 
+            # Is the session information figured out by the image file name
+            session_id = self.database.get_session_id(
+                data_root_dir=data_root_dir,
+                group=header.get("rapd_group", None),
+                session_name=header.get("rapd_session_name", None))
+
             # Add the process to the database to display as in-process
             agent_process_id = self.database.add_agent_process(agent_type="index+strategy:single",
                                                                request_type="original",
                                                                representation=new_repr,
                                                                status=1,
-                                                               display="show")
+                                                               display="show",
+                                                               session_id=session_id,
+                                                               data_root_dir=data_root_dir)
 
             # Add the ID entry to the header dict
-            header.update({"agent_process_id":agent_process_id,
-                           "repr":new_repr})
+            header.update({"repr":new_repr})
 
             # Run autoindex and strategy agent
             LaunchAction(command={"command":"INDEX+STRATEGY",
+                                  "process":{"agent_process_id":agent_process_id,
+                                             "session_id":session_id},
                                   "directories":directories,
                                   "header1":header,
                                   "site_parameters":self.site.BEAM_INFO[header1["site_tag"]],
@@ -715,12 +722,20 @@ class Model(object):
                                    "data_root_dir" : data_root_dir,
                                    "agent_directories":self.site.RAPD_AGENT_DIRECTORIES}
 
+                    # Is the session information figured out by the image file name
+                    session_id = self.database.get_session_id(
+                        data_root_dir=data_root_dir,
+                        group=header1.get("rapd_group", None),
+                        session_name=header1.get("rapd_session_name", None))
+
                     # Add the process to the database to display as in-process
                     agent_process_id = self.database.add_agent_process(agent_type="index+strategy:pair",
                                                                        request_type="original",
                                                                        representation=new_repr,
                                                                        status=1,
-                                                                       display="show")
+                                                                       display="show",
+                                                                       session_id=session_id,
+                                                                       data_root_dir=data_root_dir)
 
                     # Add the ID entry to the header dict
                     header1.update({"agent_process_id":agent_process_id,
@@ -730,6 +745,8 @@ class Model(object):
 
                     # Run autoindex and strategy agent
                     LaunchAction(command={"command":"INDEX+STRATEGY",
+                                          "process":{"agent_process_id":agent_process_id,
+                                                     "session_id":session_id},
                                           "directories":directories,
                                           "header1":header1,
                                           "header2":header2,
@@ -758,28 +775,31 @@ class Model(object):
 
             # If we are to integrate, do it
             try:
+
+                # Is the session information figured out by the image file name
+                session_id = self.database.get_session_id(
+                    data_root_dir=data_root_dir,
+                    group=header.get("rapd_group", None),
+                    session_name=header.get("rapd_session_name", None))
+
+
                 # Add the process to the database to display as in-process
                 agent_process_id = self.database.add_agent_process(agent_type="integrate",
                                                                    request_type="original",
                                                                    representation=new_repr,
                                                                    status=1,
-                                                                   display="show")
+                                                                   display="show",
+                                                                   session_id=session_id,
+                                                                   data_root_dir=data_root_dir)
 
                 # Add the ID entry to the header dict
                 header.update({"agent_process_id":agent_process_id,
                                "repr":new_repr})
 
-                # # Add the ID entry to the data dict
-                # data.update({"ID":os.path.basename(work_dir),
-                #              "repr":new_repr,
-                #              "process_id":process_id})
-
-                # # Construct data for the processing
-                # out_data = {"run_data":run_dict,
-                #             "image_data":data}
-
                 # Connect to the server and autoindex the single image
                 LaunchAction(command={"command":"INTEGRATE",
+                                      "process":{"agent_process_id":agent_process_id,
+                                                 "session_id":session_id},
                                       "directories":directories,
                                       "image_data":header,
                                       "run_data":run_dict,
@@ -853,8 +873,8 @@ class Model(object):
 
         # Save the results for the agent
         if message.get("results", False):
-            self.database.save_agent_result({"process":message["process"],
-                                             "results":message["results"]})
+            result_id = self.database.save_agent_result({"process":message["process"],
+                                                         "results":message["results"]})
 
             # Add result to database
             #     result_db = self.database.addSingleResult(dirs=dirs,
@@ -977,60 +997,19 @@ class Model(object):
 
         Types currently handled: NEWIMAGE, NEWRUN
         """
-        """
-        Several return lengths are currently supported:
-            2 - command, info
-            3 - command, info, server
-            5 - command, dirs, info, settings, results
-            6 - command, dirs, info, settings, server,results
-            7 - command, dirs, info1, info2, settings, server, results
-        Otherwise the message will be taken as a naked command
-
-        Several commands are handled:
-            NEWIMAGE - new data image has arrived
-            NEWRUN - new data run description has arived
-            PILATUS RUN - new run in Pilatus style
-            PILATUS_ABOORT - run has been aborted, Pilatus-style
-            CONSOLE RUN STATUS CHANGED
-            DIFF_CENTER
-            QUICK_ANALYSIS
-            STAC
-            STAC-PAIR
-            AUTOINDEX
-            AUTOINDEX-PAIR
-            INTEGRATE
-            XDS - reintegration performed using the RAPD pipeline
-            XIA2
-            SMERGE
-            BEAMCENTER
-            SAD
-            MAD
-            MR
-            STATS
-            DOWNLOAD
-            TEST
-            SPEEDTEST
-            DISTL_PARAMS_REQUEST - request from console for data
-            CRYSTAL_PARAMS_REQUEST - request from console for data
-        """
 
         self.logger.debug("Received: %s", message)
 
-        # Unpack
-        # command, information = message
-
         # NEWIMAGE
-        # information is {"fullname":.., "site_tag":..}
-        # if command == "NEWIMAGE":
-        #     self.add_image(information)
-        #
-        # # NEWRUN
-        # # information is dict containing run information
-        # elif command == "NEWRUN":
-        #     self.add_run(information)
+        if message.get("message_type", None) == "NEWIMAGE":
+            self.add_image(message)
+
+        # NEWRUN
+        elif message.get("message_type", None) == "NEWRUN":
+            self.add_run(message)
 
         # AGENTS
-        if message["process"]["origin"] == "AGENT":
+        elif message["process"]["origin"] == "AGENT":
             self.logger.debug("Communication from agent")
 
             self.handle_agent_communication(message=message)
