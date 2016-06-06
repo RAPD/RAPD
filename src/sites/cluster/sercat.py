@@ -48,13 +48,24 @@ def check_cluster():
     else:
         return False
 
-def process_cluster(self, inp, output=False):
+def check_queue(inp):
+    """
+    Returns which cluster queue should be used with the pipeline.
+    """
+    d = {"INDEX+STRATEGY" : False,
+         "BEAMCENTER"     : False,
+         }
+    return(d[inp])
+    
+
+def process_cluster_drmaa(self, inp, output=False):
     """
     Submit job to cluster using DRMAA (when you are already on the cluster).
     Main script should not end with os._exit() otherwise running jobs could be orphanned.
     To eliminate this issue, setup self.running = multiprocessing.Event(),
     self.running.set() in main script, then set it to False (self.running.clear())
     during postprocess to kill running jobs smoothly.
+    Will not allow jobs to submit child processes!!!
     """
 
     s = False
@@ -162,7 +173,7 @@ def process_cluster(self, inp, output=False):
 
     print "Job finished"
     
-def process_cluster2(self, inp, output=False):
+def process_cluster_old(self, inp, output=False):
     s = False
     jt = False
     running = True
@@ -222,3 +233,71 @@ def process_cluster2(self, inp, output=False):
       output.put(l[0])
    
     print "Job finished"
+
+def process_cluster(inp):
+    """
+    Launch job on SERCAT's scyld cluster.
+    """
+    running = True
+    command = inp.get('command')
+    log = inp.get('log', False)
+    queue = inp.get('queue', False)
+    smp = inp.get('smp',1)
+    d = inp.get('dir', os.getcwd())
+    name = inp.get('name', False)
+    # Sends job/process ID back
+    pid = inp.get('pid', False)
+    l = []
+
+    # Check if self.running is setup... used for Best and Mosflm strategies
+    # because you can't kill child processes launched on cluster easily.
+    """
+    try:
+        __ = self.running
+    except AttributeError:
+        running = False
+    """
+    # Make an input script if not input
+    if command[-3] == '.sh':
+      fname = command
+    else:  
+      fname = 'qsub%s.sh'%random.randint(0,5000)
+      f = open(fname,'w')
+      print >>f, command
+      f.close()
+    
+    # Setup path
+    v = "-v PATH=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
+/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/bin:\
+/home/schuerjp/Programs/best:\
+/home/schuerjp/Programs/RAPD/bin:\
+/home/schuerjp/Programs/RAPD/share/phenix-1.10.1-2155/build/bin:\
+/home/schuerjp/Programs/raddose-20-05-09-distribute-noexec/bin:\
+/usr/local/bin:/bin:/usr/bin"
+    
+    # Setup the qsub command
+    qs = 'qsub -d %s -j oe '%d
+    if log:
+      if log.count('/'):
+        qs += '-o %s '%log
+      else:
+        qs += '-o %s '%os.path.join(d,log)
+    qs += "%s -l nodes=1:ppn=%s %s" % (v, smp, fname)
+    
+    #Launch the job on the cluster
+    job = subprocess.Popen(qs,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+    # Return job_id.
+    #if isinstance(output, dict):
+    if pid != False:
+      if name == False:
+        # For my pipelines
+	for line in job.stdout:
+          l.append(line)
+        pid.put(l[0])
+      else:
+        # For Frank's main launcher
+        pid.put(job.pid)
+   
+    print "Job finished"
+
+

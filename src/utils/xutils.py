@@ -1861,8 +1861,8 @@ def getSite(image, load=False):
   from utils.modules import load_module
   from iotbx.detectors import ImageFactory
   
-  d = {('MARCCD', 7)   : 'sercat_bm',
-       ('MARCCD', 101) : 'sercat_id', 
+  d = {('MARCCD', 7)   : ('sercat', 'SERCAT_BM'),
+       ('MARCCD', 101) : ('sercat', 'SERCAT_ID'), 
        }
        
   i = ImageFactory(image)
