@@ -70,20 +70,26 @@ class RapdAgent(Process):
 
     # For testing individual modules (Will not run in Test mode on cluster!! Can be set at end of __init__.)
     test = False
+    
     # Removes junk files and directories at end. (Will still clean on cluster!! Can be set at end of __init__.)
     clean = False
+    
     # Runs in RAM (slightly faster), but difficult to debug.
     ram = False
-    # Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Slower (>10%). Mainly
-    # used for rapd_agent_beamcenter.py to launch a lot of jobs at once.
+    
+    # Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Slower (>10%).
     cluster_use = False
+    
     # If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
-    cluster_queue = "index.q"
+    #cluster_queue = "index.q"
     # self.cluster_queue                      = False
+    
     # Switch for verbose
     verbose = True
+    
     # Number of Labelit iterations to run.
     iterations = 6
+    
     # The results of the agent
     results = {}
 
@@ -95,8 +101,6 @@ class RapdAgent(Process):
         site -- full site settings
         command -- dict of all information for this agent to run
         """
-
-        self.cluster_adapter = False
 	# If the logging instance is passed in...
         if logger:
 	  self.logger = logger
@@ -122,12 +126,26 @@ class RapdAgent(Process):
         self.preferences = self.command.get("preferences", {})
         self.controller_address = self.reply_address
 
-        # If running from command line, site_parameters is not in there. Needed for BEST.
-	if self.site_parameters == False:
-	  print Utils.getSite(self.header['fullname'],False)[1]
-	  self.site_parameters = self.site.BEAM_INFO.get(Utils.getSite(self.header['fullname'],False)[1])
-	  #self.site_parameters = self.site['BEAM_INFO'].get(Utils.getSite(self.header['fullname'],False)[1])
+	# Assumes that Core sent job if present. Overrides values for clean and test from top.
+	if self.site_parameters != False:
+	  self.gui = True
+	  self.test = False
+	  #self.clean = True
+	  self.clean = False
+	  #self.verbose = False
+	else:
+	  # If running from command line, site_parameters is not in there. Needed for BEST.
+	  self.site_parameters = self.site.BEAM_INFO.get(Utils.get_site(self.header['fullname'],False)[1])
+	  #Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
+	  self.gui = False
 	
+	# Load the appropriate cluster adapter or set to False
+	if self.cluster_use:
+	  Utils.load_cluster_adapter(self)
+	  
+	else:
+	  self.cluster_adapter = False
+	  
 	# Set timer for distl. "False" will disable.
         if self.header2:
             self.distl_timer = 60
@@ -145,7 +163,8 @@ class RapdAgent(Process):
         if self.preferences.has_key("multiprocessing"):
             if self.preferences.get("multiprocessing") == "False":
                 self.multiproc = False
-        # Set for Eisenberg peptide work.
+        
+	# Set for Eisenberg peptide work.
         self.sample_type = self.preferences.get("sample_type", "Protein")
         if self.sample_type == "Peptide":
             self.peptide     = True
@@ -165,7 +184,7 @@ class RapdAgent(Process):
         else:
             self.multicrystalstrat = True
             self.strategy = "mosflm"
-
+        
         # This is where I place my overall folder settings.
         self.working_dir                        = False
         # This is where I have chosen to place my results
@@ -218,7 +237,7 @@ class RapdAgent(Process):
         # Dicts for running the Queues
         self.jobs                               = {}
         self.vips_images                        = {}
-
+        
         # Settings for all programs
         self.beamline = self.header.get("beamline")
         self.time = str(self.header.get("time", "1.0"))
@@ -229,35 +248,9 @@ class RapdAgent(Process):
         self.flux = str(self.header.get("flux"))
         self.solvent_content = str(self.preferences.get("solvent_content", 0.55))
 
-        #Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
-        #This is used to determine if job submitted by rapd_cluster or script was launched for testing.
-        #******BEAMLINE SPECIFIC*****
-        # if self.header.has_key("acc_time"):
-        self.gui = True
-        self.test = False
-        #self.clean = True
-	self.clean = False
-        #     #self.verbose = False
-        # else:
-        #     self.gui = True
-        #******BEAMLINE SPECIFIC*****
-
         Process.__init__(self, name="AutoindexingStrategy")
 
         self.start()
-
-    def setup_cluster(self):
-        """Import cluster functions"""
-
-        self.logger.debug("setup_cluster")
-
-    def load_cluster_adapter(self):
-        """Load the appropriate cluster adapter"""
-
-        if self.site.CLUSTER_ADAPTER:
-            self.cluster_adapter = load_module(self.site.CLUSTER_ADAPTER)
-        else:
-            self.cluster_adapter = False
 
     def run(self):
         """
@@ -2125,8 +2118,8 @@ class RunLabelit(Process):
         self.controller_address = command["return_address"]
 	
 	# Read site file is available
-	if self.site_parameters.has_key('site'):
-	  self.site = load_module(seek_module=self.site_parameters.get('site'),
+	if self.site_parameters.has_key('cluster_site'):
+	  self.site = load_module(seek_module=self.site_parameters.get('cluster_site'),
 	                          directories='sites')
 	else:
 	  self.site = False

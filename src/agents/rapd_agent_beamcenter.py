@@ -47,7 +47,7 @@ with warnings.catch_warnings():
   import utils.xutils as Utils
   #import rapd_beamlinespecific as BLspec
   #Should have module to find site from Core so I won't have to specify
-  from sites.cluster import sercat as Cluster
+  #from sites.cluster import sercat as Cluster
   from utils.modules import load_module
   #Used to get path of running file
   from inspect import getsourcefile
@@ -60,11 +60,6 @@ class FindBeamCenter(Process):
     self.output                             = output
     self.logger                             = logger
     
-    # Setup the weird named rapd_agent_index+strategy pipeline
-    self.Labelit = load_module(seek_module="rapd_agent_index+strategy",
-                                directories=('agents'),
-                                logger=self.logger)
-    
     # Store passed-in variables
     #self.site = site
     #self.command = command
@@ -74,22 +69,19 @@ class FindBeamCenter(Process):
     self.setup = self.input["directories"]
     self.header = self.input["header1"]
     self.header2 = self.input.get("header2", False)
-    self.site_parameters = self.input.get("site_parameters", {})
+    self.site_parameters = self.input.get("site_parameters")
     self.preferences = self.input.get("preferences", {})
     self.controller_address = self.reply_address
     
-    """
-    #Setting up data input
-    self.setup                              = self.input[1]
-    self.header                             = self.input[2]
-    self.header2                            = False
-    if self.input[3].has_key('distance'):
-      self.header2                            = self.input[3]
-      self.preferences                        = self.input[4]
-    else:
-      self.preferences                        = self.input[3]
-    self.controller_address                 = self.input[-1]
-    """
+    # Setup the weird named rapd_agent_index+strategy pipeline
+    self.Labelit = load_module(seek_module="rapd_agent_index+strategy",
+                                directories=('agents'),
+                                logger=self.logger)
+    # Setup the proper computer cluster for site.
+    self.Cluster = load_module(seek_module=self.site_parameters.get('cluster_site') ,
+                                directories=('sites.cluster'),
+                                logger=self.logger)
+    
     #Number of labelit runs to fine tune beam center and spacing from original
     #Should be even number for symmetry around original beam center
     self.iterations2                        = ITERATIONS
@@ -100,15 +92,11 @@ class FindBeamCenter(Process):
     self.std_dev                            = 0.1
     
     #Sets settings to check output on my machine and does not send results to database.
-    #******BEAMLINE SPECIFIC*****
-    #self.cluster_use = BLspec.checkCluster()
-    #self.cluster_use = Utils.checkCluster()
-    self.cluster_use =  Cluster.check_cluster()
+    self.cluster_use =  self.Cluster.check_cluster()
     if self.cluster_use:
       self.test                           = False
     else:
       self.test                           = True
-    #******BEAMLINE SPECIFIC*****
 
     #this is where I have chosen to place my results
     self.labelit_results                    = {}
@@ -172,10 +160,9 @@ class FindBeamCenter(Process):
       params = {}
       params['test'] = self.test
       #params['cluster'] = self.cluster_use
-      #params['cluster_queue'] = 'all.q,general.q'
-      params['cluster_queue'] = Cluster.check_queue(self.input.get('command'))
+      params['cluster_queue'] = self.Cluster.check_queue(self.input.get('command'))
       params['vendortype'] = self.vendortype
-      params['site'] = self.site_parameters.get('site',False)
+      params['site'] = self.site_parameters.get('cluster_site',False)
       #params['iterations'] = 1
       if self.vendortype in ['Pilatus-6M','ADSC-HF4M']:
         params['iterations'] = 1
@@ -283,19 +270,7 @@ class FindBeamCenter(Process):
         del self.preferences['x_beam']
       if self.preferences.has_key('y_beam'):
         del self.preferences['y_beam']
-      """
-      if self.header2:
-        i = 4
-      else:
-        i = 3
-      #Remove alternative way to input beam center in preferences.
-      if self.input[i].has_key('x_beam'):
-        #self.input[i].pop('x_beam')
-        del self.input[i]['x_beam']
-      if self.input[i].has_key('y_beam'):
-        #self.input[i].pop('y_beam')
-        del self.input[i]['y_beam']
-      """
+      
       #Calculate new beam centers and save them.
       med = int(self.iterations2/2)
       for x in range(self.iterations2+1):
@@ -314,7 +289,6 @@ class FindBeamCenter(Process):
           #Save the working path and new beam center to new input. 
           new_input = {'command': self.input['command']}
 	  new_input.update({'directories': {'work':os.path.join(os.getcwd(),name)}})
-	  #new_input['directories']['work'] = os.path.join(os.getcwd(),name)
 	  new_input['header1'] = self.input['header1'].copy()
 	  new_input['header1']['beam_center_x'] = str(new_x_beam)
 	  new_input['header1']['beam_center_y'] = str(new_y_beam)
@@ -322,25 +296,10 @@ class FindBeamCenter(Process):
 	    new_input['header2'] = self.input['header2'].copy()
 	    new_input['header2']['beam_center_x'] = str(new_x_beam)
 	    new_input['header2']['beam_center_y'] = str(new_y_beam)
-	  #new_input['site_paramters'] = self.input['preferences']
-	  #new_input['preferences'] = self.input['preferences']
-	  #new_input['return_address'] = self.input['return_address']
 	  new_input['site_parameters'] = self.site_parameters
 	  new_input['preferences'] = self.preferences
 	  new_input['return_address'] = self.reply_address
 	  self.new_input[name] = new_input
-	  #self.new_input[name] = copy.copy(new_input)
-	  """
-	  for z in range(i-1):
-            junk = new_input[z+1].copy()
-            if z == 0:
-              junk.update({'work': os.path.join(os.getcwd(),name)})
-            else:
-              junk.update({'beam_center_x': str(new_x_beam),'beam_center_y': str(new_y_beam)})
-            new_input[z+1] = junk
-	  self.new_input[name] = copy.copy(new_input)
-	  """
-	  
       #Utils.pp(self.new_input)
 
     except:
@@ -588,26 +547,6 @@ class Handler(Process):
         #Wait for the previous jobs to be submitted.
         self.output[job].get()
       #Utils.pp(new_input)
-      """
-      od = self.input[1].get('work')
-      for job in setup.keys():
-        #if job in ('500.0'):
-        new_input = []
-        new_input.append(self.input[0])
-        nd = os.path.join(od,job)
-        new_input.append({'work':nd})
-        for header in setup[job]:
-          new_input.append(header)
-        new_input.extend(self.input[-2:])
-	self.output[job] = Queue()
-        j = Process(target=FindBeamCenter,kwargs={'inp':(new_input,ncpu,self.verbose,self.clean),
-                                                  'output':self.output[job],'logger':self.logger})
-        j.start()
-        self.jobs[j] = job
-        #Wait for the previous jobs to be submitted.
-        self.output[job].get()
-      """
-      
         
     except:
       self.logger.exception('**Error in Handler.process**')
@@ -828,7 +767,8 @@ class Handler(Process):
 	"""
 	Utils.pp(self.results)
 	#Save results to file so it can be read in RunCLuster if needed.
-        Utils.pp2((self.results,os.path.join(self.input[1].get('work'),'bc.log')))
+        #Utils.pp2((self.results,os.path.join(self.input[1].get('work'),'bc.log')))
+	Utils.pp2((self.results,os.path.join(self.input['directories']['work'],'bc.log')))
 	
       except:
         self.logger.exception('**Could not send results to pipe.**')
@@ -879,7 +819,6 @@ class RunCluster(Thread):
     """
     try:
       #get path of running file
-      #from inspect import getsourcefile
       fpath = os.path.abspath(getsourcefile(lambda:0))
       
       #command = '-pe smp 8 -o %s rapd.python /gpfs5/users/necat/rapd/gadolinium/trunk/rapd_agent_beamcenter.py %s'%(self.log,self.image_dir)
@@ -918,7 +857,7 @@ class RunCluster(Thread):
         for line in open(l[x],'r').readlines():
           print line.rstrip()
         
-def createInput(image_dir,logger):
+def createInput(image_dir,site,logger):
   logger.debug('createInput')
   import glob
   from iotbx.detectors import ImageFactory
@@ -937,7 +876,7 @@ def createInput(image_dir,logger):
     l.sort()
     vendortype = ImageFactory(l[0]).vendortype
     #Save the site so we can get info on beam center, or computer cluster.
-    site = Utils.getSite(l[0],False)
+    img_site = Utils.get_site(l[0],False)
     
     if vendortype == 'ADSC-HF4M':
       from detectors.rapd_adsc import Hf4mReadHeader as readHeader
@@ -958,7 +897,8 @@ def createInput(image_dir,logger):
           if RAM == True:
             image_path = os.path.join('/dev/shm',os.path.basename(header.get('fullname')))
             command = 'cp %s %s'%(header.get('fullname'),image_path)
-            job = Process(target=Utils.rocksCommand,args=(command,logger))
+            #ONLY work at NE-CAT
+	    job = Process(target=Utils.rocksCommand,args=(command,logger))
             job.start()
             pids.append(job)
           else:
@@ -1004,8 +944,9 @@ def createInput(image_dir,logger):
 	   'command' : 'INDEX+STRATEGY',
 	   'preferences': {"sample_type": "Protein","beam_flip": "False","multiprocessing":"True",
                            "a":0.0,"b":0.0,"c":0.0,"alpha":0.0,"beta":0.0,"gamma":0.0},
-	   'site_parameters': {'site_id': site[1],
-	                       'site': site[0]},
+	   'site_parameters': {'img_site_id': img_site[1],
+	                       'img_site': img_site[0],
+			       'cluster_site': site},
 	   'return_address': ("127.0.0.1", 50000)
           }
     #Utils.pp(inp)
@@ -1022,23 +963,31 @@ def main():
   for each distance, then looks at all the refined beam center outputs and fits to a 6th order polymonial.
   """
   #start logging
-  import logging,logging.handlers
+  #import logging,logging.handlers
   #LOG_FILENAME = os.path.join(os.getcwd(),'rapd.log')
-  LOG_FILENAME = WORK_DIR+'/rapd.log'
+  #LOG_FILENAME = WORK_DIR+'/rapd.log'
   #inp = Input.input()
   # Set up a specific logger with our desired output level
-  logger = logging.getLogger('RAPDLogger')
-  logger.setLevel(logging.DEBUG)
+  #logger = logging.getLogger('RAPDLogger')
+  #logger.setLevel(logging.DEBUG)
   # Add the log message handler to the logger
-  handler = logging.handlers.RotatingFileHandler(LOG_FILENAME,maxBytes=10000000,backupCount=5)
+  #handler = logging.handlers.RotatingFileHandler(LOG_FILENAME,maxBytes=10000000,backupCount=5)
   #add a formatter
-  formatter = logging.Formatter("%(asctime)s - %(message)s")
-  handler.setFormatter(formatter)
-  logger.addHandler(handler)
-  logger.info('__init__')
+  #formatter = logging.Formatter("%(asctime)s - %(message)s")
+  #handler.setFormatter(formatter)
+  #logger.addHandler(handler)
+  #logger.info('__init__')
   
-  import argparse
+  import utils.log
+  logger = utils.log.get_logger(logfile_dir=WORK_DIR,)
+
+  # Determine the site and load cluster. May be different from where images are from...
+  cluster_site_name = os.getenv('RAPD_SITE', None).lower()
+  cluster_site = load_module(seek_module=cluster_site_name, directories='sites')
+  cluster = load_module(cluster_site.CLUSTER_ADAPTER)
+  
   #Parse the command line for commands.
+  import argparse
   parser = argparse.ArgumentParser(description='Run job on computer cluster.')
   parser.add_argument('inp' ,nargs='*', type=str, help='folder')
   args = vars(parser.parse_args())
@@ -1047,15 +996,14 @@ def main():
   else:
     image_dir = args['inp'][0]
   
-  Handler(createInput('/home/schuerjp/temp/beamcenter/images',logger),logger=logger)
+  Handler(createInput('/home/schuerjp/temp/beamcenter/images',cluster_site_name, logger),logger=logger)
   #createInput('/home/schuerjp/temp/beamcenter',logger)
   #createInput(image_dir,logger)
   
   """
-  #if BLspec.checkCluster():
-  if Cluster.check_cluster():
+  if cluster.check_cluster():
     #Creates the input dict and passes it to the Handler.
-    Handler(createInput(image_dir,logger),logger=logger)
+    Handler(createInput(image_dir, cluster_site_name, logger),logger=logger)
   else:
     #Connect to the cluster and rerun this script if not launched on computer cluster.
     RunCluster(image_dir,logger=logger)
