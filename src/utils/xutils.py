@@ -1854,7 +1854,7 @@ def getRes(self,inp=False):
     self.logger.exception('**ERROR in Utils.getRes**')
     return (0.0)
 
-def getSite(image, load=False):
+def get_site(image, load=False):
   """
   Figures out the correct site file by reading in an image.
   """
@@ -1928,6 +1928,14 @@ def getVendortype(self,inp):
     #vendortype = ImageFactory(l[0]).vendortype
     vendortype = ImageFactory(inp.get('fullname')).vendortype
   return (vendortype)
+
+def load_cluster_adapter(self):
+  """Load the appropriate cluster adapter"""
+
+  if self.site.CLUSTER_ADAPTER:
+    self.cluster_adapter = load_module(self.site.CLUSTER_ADAPTER)
+  else:
+    self.cluster_adapter = False
 
 def killChildren(self,pid):
   """
