@@ -123,8 +123,8 @@ class RapdAgent(Process):
             self.data['x_beam'] = self.data['beam_center_x']
             self.data['y_beam'] = self.data['beam_center_y']
         if 'start' not in self.data.keys():
-        	self.data['start'] = self.data['start_image_number']
-        	self.data['total'] = self.data['number_images']
+            self.data['start'] = self.data['start_image_number']
+            self.data['total'] = self.data['number_images']
         if self.command == 'XDS':
             self.data['start'] = self.settings['request']['frame_start']
             self.data['total'] = str( int(self.settings['request']['frame_start'])
@@ -813,7 +813,7 @@ class RapdAgent(Process):
             file_template = os.path.join(self.data['directory'], self.image_template)
             self.last_image = file_template.replace('???','%03d' %last_frame)
             self.first_image = file_template.replace('???','%03d' %int(self.data['start']))
-            
+
             if self.ram_use == True:
                 file_template = os.path.join('/dev/shm/',
                                              self.data['prefix'],
@@ -1265,7 +1265,7 @@ class RapdAgent(Process):
             self.logger.debug('    Please check logs and files in %s' %self.dirs['work'])
             return('Failed')
         # Parse the aimless logfile to look for resolution cutoff.
-        aimlog = open(aimless_log, 'r').readlines()
+        aimlog = open(aimless_log, "r").readlines()
         for line in aimlog:
             if 'High resolution limit' in line:
                 current_resolution = line.split()[-1]
@@ -1302,10 +1302,10 @@ class RapdAgent(Process):
 
         #scalamtz = mtzfile.replace('pointless','scala')
         #scalalog = scalamtz.replace('mtz','log')
-        scalamtz = mtzfile.replace('pointless','aimless')
-        scalalog = scalamtz.replace('mtz','log')
+        scalamtz = mtzfile.replace('pointless', 'aimless')
+        scalalog = scalamtz.replace('mtz', 'log')
         # generate web files for results display in the UI
-        plotsHTML = self.make_plots(graphs,tables)
+        plotsHTML = self.make_plots(graphs, tables)
         shortHTML = self.make_short_results(directory, summary, orig_rescut)
         longHTML = self.make_long_results(scalalog)
 
@@ -1331,7 +1331,7 @@ class RapdAgent(Process):
         	'status':50 }
         self.results['results'] = results
         self.logger.debug(self.results)
-        
+
         # self.sendBack2(tmp)
         rapd_send(self.controller_address, self.results)
 
@@ -1593,9 +1593,13 @@ class RapdAgent(Process):
         return('results.php')
 
 
-    def make_plots (self, graphs, tables):
+    def make_plots(self, graphs, tables):
         """
         Generates the plots html file.
+
+        Keyword arguments
+        graphs --
+        tables --
         """
         self.logger.debug('FastIntegration::make_plots')
         # plotThese contains a list of graph titles that you want plotted
@@ -1747,7 +1751,7 @@ class RapdAgent(Process):
                          '       }\n\n',
                          '    var previousPoint = null;\n'
                          ])
-        for i,graph in enumerate(graphs):
+        for i, graph in enumerate(graphs):
             title = graph[0]
             xlabel = graph[1]
             if title in plotThese:

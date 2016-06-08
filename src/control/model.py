@@ -876,6 +876,8 @@ class Model(object):
             result_id = self.database.save_agent_result({"process":message["process"],
                                                          "results":message["results"]})
 
+        
+
             # Add result to database
             #     result_db = self.database.addSingleResult(dirs=dirs,
             #                                               info=info,
