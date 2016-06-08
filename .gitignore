@@ -21,6 +21,9 @@ Python-*
 # Test data
 test_data
 
+# Just there for local reference
+ui
+
 # Files that should be hidden
 *secret*
 *foo*
