@@ -78,9 +78,14 @@ class FindBeamCenter(Process):
                                 directories=('agents'),
                                 logger=self.logger)
     # Setup the proper computer cluster for site.
-    self.Cluster = load_module(seek_module=self.site_parameters.get('cluster_site') ,
-                                directories=('sites.cluster'),
-                                logger=self.logger)
+    if self.site_parameters.get('cluster_site', False):
+      self.Cluster = load_module(seek_module=self.site_parameters.get('cluster_site') ,
+                                 directories=('sites.cluster'),
+                                 logger=self.logger)
+    else:
+      self.Cluster = load_module(seek_module=self.site_parameters.get('img_site') ,
+                                 directories=('sites.cluster'),
+                                 logger=self.logger)
     
     #Number of labelit runs to fine tune beam center and spacing from original
     #Should be even number for symmetry around original beam center
@@ -159,10 +164,9 @@ class FindBeamCenter(Process):
     try:
       params = {}
       params['test'] = self.test
-      #params['cluster'] = self.cluster_use
+      params['cluster'] = self.Cluster
       params['cluster_queue'] = self.Cluster.check_queue(self.input.get('command'))
       params['vendortype'] = self.vendortype
-      params['site'] = self.site_parameters.get('cluster_site',False)
       #params['iterations'] = 1
       if self.vendortype in ['Pilatus-6M','ADSC-HF4M']:
         params['iterations'] = 1
@@ -859,25 +863,15 @@ class RunCluster(Thread):
         
 def createInput(image_dir,site,logger):
   logger.debug('createInput')
-  import glob
+  #import glob
   from iotbx.detectors import ImageFactory
   try:
-    l = []
+    img_site_id, img_site, c_site, imgs = site
     l1 = []
     l2 = []
     d = {}
     pids = []
-    #check for different image suffixes in the folder.
-    l0 = ['*.cbf','*.img','*.[0-9]*']
-    for x in range(len(l0)):
-      l = glob.glob(os.path.join(image_dir,l0[x]))
-      if len(l) != 0:
-        break
-    l.sort()
-    vendortype = ImageFactory(l[0]).vendortype
-    #Save the site so we can get info on beam center, or computer cluster.
-    img_site = Utils.get_site(l[0],False)
-    
+    vendortype = ImageFactory(imgs[0]).vendortype
     if vendortype == 'ADSC-HF4M':
       from detectors.rapd_adsc import Hf4mReadHeader as readHeader
     elif vendortype == 'Pilatus-6M':
@@ -886,7 +880,7 @@ def createInput(image_dir,site,logger):
       from detectors.rapd_adsc import Q315ReadHeader as readHeader
     else:
       from detectors.mar import MarReadHeader as readHeader
-    l = [p for p in l if p.count('priming_shot') == False] #Remove priming shot (NE-CAT ONLY)
+    l = [p for p in imgs if p.count('priming_shot') == False] #Remove priming shot (NE-CAT ONLY)
     for x in range(2):
       for i in l:
 	if x == 0:
@@ -944,9 +938,9 @@ def createInput(image_dir,site,logger):
 	   'command' : 'INDEX+STRATEGY',
 	   'preferences': {"sample_type": "Protein","beam_flip": "False","multiprocessing":"True",
                            "a":0.0,"b":0.0,"c":0.0,"alpha":0.0,"beta":0.0,"gamma":0.0},
-	   'site_parameters': {'img_site_id': img_site[1],
-	                       'img_site': img_site[0],
-			       'cluster_site': site},
+	   'site_parameters': {'img_site_id': img_site_id,
+	                       'img_site': img_site,
+			       'cluster_site': c_site},
 	   'return_address': ("127.0.0.1", 50000)
           }
     #Utils.pp(inp)
@@ -957,34 +951,46 @@ def createInput(image_dir,site,logger):
       print 'Could not create input script from folder specified!'
       return(None)
 
+def sort_dir(image_dir):
+  import glob
+  #check for different image suffixes in the folder.
+  _l = ['*.cbf','*.img','*.[0-9]*']
+  for x in range(len(_l)):
+    l = glob.glob(os.path.join(image_dir,_l[x]))
+    if len(l) != 0:
+      break
+  l.sort()
+  return (l)
+  
+def load_cluster(image_dir):
+  """
+  Load the computer cluster module so the job can be submitted.
+  """
+  # Determine the site and load cluster. May be different from where images are from...
+  # Check the images
+  imgs = sort_dir(image_dir)
+  site = Utils.get_site(imgs[0],False)
+  cluster_site_name = os.getenv('RAPD_SITE1', False)
+  # Determine the site by env variable first.
+  if cluster_site_name:
+    cluster_site_name = cluster_site_name.lower()
+    cluster_site = load_module(seek_module=cluster_site_name, directories='sites')
+  else:
+    # Otherwise use the image origin as site.
+    cluster_site = load_module(seek_module=site[0], directories='sites')
+  cluster = load_module(cluster_site.CLUSTER_ADAPTER)
+  out = (site[1], site[0], cluster_site_name, imgs)
+  return ((out, cluster))
+  
+
 def main():
   """
   This pipeline has to be run on a computer cluster. It launches many Labelit autoindexing runs varying input beamcenter
   for each distance, then looks at all the refined beam center outputs and fits to a 6th order polymonial.
   """
   #start logging
-  #import logging,logging.handlers
-  #LOG_FILENAME = os.path.join(os.getcwd(),'rapd.log')
-  #LOG_FILENAME = WORK_DIR+'/rapd.log'
-  #inp = Input.input()
-  # Set up a specific logger with our desired output level
-  #logger = logging.getLogger('RAPDLogger')
-  #logger.setLevel(logging.DEBUG)
-  # Add the log message handler to the logger
-  #handler = logging.handlers.RotatingFileHandler(LOG_FILENAME,maxBytes=10000000,backupCount=5)
-  #add a formatter
-  #formatter = logging.Formatter("%(asctime)s - %(message)s")
-  #handler.setFormatter(formatter)
-  #logger.addHandler(handler)
-  #logger.info('__init__')
-  
   import utils.log
   logger = utils.log.get_logger(logfile_dir=WORK_DIR,)
-
-  # Determine the site and load cluster. May be different from where images are from...
-  cluster_site_name = os.getenv('RAPD_SITE', None).lower()
-  cluster_site = load_module(seek_module=cluster_site_name, directories='sites')
-  cluster = load_module(cluster_site.CLUSTER_ADAPTER)
   
   #Parse the command line for commands.
   import argparse
@@ -995,11 +1001,13 @@ def main():
     image_dir = raw_input('In what folder do the direct beam shots exist?: ')
   else:
     image_dir = args['inp'][0]
+    
+  #cluster = load_cluster(image_dir)
+  (site_info, cluster) = load_cluster('/home/schuerjp/temp/beamcenter/images')
+  #createInput('/home/schuerjp/temp/beamcenter/images',c_site_name, logger)
+  #createInput('/home/schuerjp/temp/beamcenter/images', site_info, logger)
   
-  Handler(createInput('/home/schuerjp/temp/beamcenter/images',cluster_site_name, logger),logger=logger)
-  #createInput('/home/schuerjp/temp/beamcenter',logger)
-  #createInput(image_dir,logger)
-  
+  Handler(createInput('/home/schuerjp/temp/beamcenter/images',site_info, logger),logger=logger)
   """
   if cluster.check_cluster():
     #Creates the input dict and passes it to the Handler.

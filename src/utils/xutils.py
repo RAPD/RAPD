@@ -1900,42 +1900,29 @@ def getWavelength(self,inp=False):
 def getVendortype(self,inp):
   """
   Returns which detector vendortype the image is from by passing in the header.
-<<<<<<< HEAD:src/rapd_utils.py
   If it is not in the header, use ImageFactory to get it.
-=======
-  For determining detector type. Same notation as CCTBX.
-  Grab the beamline info from rapd_site.py that give the specifics of this beamline.
-  You will have to modify how a beamline/detector is selected. If multiple detectors
-  of same type, you could look at S/N. At NE-CAT it is more complicated because we
-  can interchange detectors on the same beamline, so I used the y_beamcenter.
->>>>>>> c336fd52f86e56709882069014af0bbf48356d80:src/utils/xutils.py
   """
   if self.verbose:
     self.logger.debug('Utilities::getVendortype')
-  """
-  if inp.get('fullname')[-3:] == 'cbf':
-    if float(inp.get('beam_center_y')) > 200.0:
-      vendortype = 'Pilatus-6M'
-    else:
-      vendortype = 'ADSC-HF4M'
-  else:
-    vendortype = 'ADSC'
-  """
   vendortype = inp.get('detector',False)
   #If not in header, use ImageFactory
   if vendortype == False:
     from iotbx.detectors import ImageFactory
-    #vendortype = ImageFactory(l[0]).vendortype
     vendortype = ImageFactory(inp.get('fullname')).vendortype
   return (vendortype)
 
 def load_cluster_adapter(self):
-  """Load the appropriate cluster adapter"""
-
-  if self.site.CLUSTER_ADAPTER:
-    self.cluster_adapter = load_module(self.site.CLUSTER_ADAPTER)
-  else:
-    self.cluster_adapter = False
+  """Load the appropriate cluster adapter. 
+     Need self.site set so it knows which cluster to import.
+  """
+  try:
+    if self.site.CLUSTER_ADAPTER:
+      return (load_module(self.site.CLUSTER_ADAPTER))
+    else:
+      return (False)
+  except:
+    # If self.site is not set.
+    return (False) 
 
 def killChildren(self,pid):
   """

@@ -80,15 +80,63 @@ class RapdAgent(Process):
     # Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Slower (>10%).
     cluster_use = False
     
-    # If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
-    #cluster_queue = "index.q"
-    # self.cluster_queue                      = False
-    
     # Switch for verbose
     verbose = True
     
     # Number of Labelit iterations to run.
     iterations = 6
+    
+    # This is where I place my overall folder settings.
+    working_dir			       = False
+    auto_summary		       = False
+    labelit_log 		       = {}
+    labelit_results		       = {}
+    labelit_summary		       = False
+    labelit_failed		       = False
+    distl_log			       = []
+    distl_results		       = {}
+    distl_summary		       = False
+    raddose_results		       = False
+    raddose_summary		       = False
+    best_log			       = []
+    best_results		       = False
+    best_summary		       = False
+    best1_summary		       = False
+    best_summary_long		       = False
+    best_anom_log		       = []
+    best_anom_results		       = False
+    best_anom_summary		       = False
+    best1_anom_summary  	       = False
+    best_anom_summary_long	       = False
+    best_failed 		       = False
+    best_anom_failed		       = False
+    rerun_best  		       = False
+    mosflm_strat_log		       = []
+    mosflm_strat_anom_log	       = []
+    mosflm_strat_results	       = {}
+    mosflm_strat_anom_results	       = {}
+    mosflm_strat_summary	       = False
+    mosflm_strat1_summary	       = False
+    mosflm_strat_summary_long	       = False
+    mosflm_strat_anom_summary	       = False
+    mosflm_strat1_anom_summary         = False
+    mosflm_strat_anom_summary_long     = False
+    # Labelit settings
+    index_number		       = False
+    ignore_user_SG		       = False
+    pseudotrans 		       = False
+    # Raddose settings
+    volume			       = False
+    calc_num_residues  		       = False
+    # Mosflm settings
+    prev_sg			       = False
+    # Extra features for BEST
+    high_dose			       = False
+    crystal_life		       = None
+    iso_B			       = False
+    # Dicts for running the Queues
+    jobs			       = {}
+    vips_images 		       = {}
     
     # The results of the agent
     results = {}
@@ -101,6 +149,9 @@ class RapdAgent(Process):
         site -- full site settings
         command -- dict of all information for this agent to run
         """
+	# Save the start time
+	self.st = time.time()
+	
 	# If the logging instance is passed in...
         if logger:
 	  self.logger = logger
@@ -108,11 +159,9 @@ class RapdAgent(Process):
           # Otherwise get the logger Instance
           self.logger = logging.getLogger("RAPDLogger")
           self.logger.debug("__init__")
-        
 	self.logger.info(site)
         self.logger.info(command)
-	self.st = time.time()
-
+	
         # Store passed-in variables
         self.site = site
         self.command = command
@@ -130,7 +179,6 @@ class RapdAgent(Process):
 	if self.site_parameters != False:
 	  self.gui = True
 	  self.test = False
-	  #self.clean = True
 	  self.clean = False
 	  #self.verbose = False
 	else:
@@ -141,8 +189,8 @@ class RapdAgent(Process):
 	
 	# Load the appropriate cluster adapter or set to False
 	if self.cluster_use:
-	  Utils.load_cluster_adapter(self)
-	  
+	  self.cluster_adapter = Utils.load_cluster_adapter(self)
+	  self.cluster_queue = self.cluster_adapter.check_queue(self.command["command"])
 	else:
 	  self.cluster_adapter = False
 	  
@@ -159,10 +207,7 @@ class RapdAgent(Process):
         # Turns on multiprocessing for everything
         # Turns on all iterations of Labelit running at once, sorts out highest symmetry solution,
         # then continues...(much better!!)
-        self.multiproc = True
-        if self.preferences.has_key("multiprocessing"):
-            if self.preferences.get("multiprocessing") == "False":
-                self.multiproc = False
+        self.multiproc = self.preferences.get("multiprocessing", True) 
         
 	# Set for Eisenberg peptide work.
         self.sample_type = self.preferences.get("sample_type", "Protein")
@@ -170,7 +215,10 @@ class RapdAgent(Process):
             self.peptide     = True
         else:
             self.peptide     = False
-        self.strategy = self.preferences.get("strategy_type", "best")
+        
+	# BEST is default and if it fails Mosflm results are shown as backup.
+	# Setting to 'mosflm' will force it to show Mosflm results regardless.
+	self.strategy = self.preferences.get("strategy_type", "best")
 
         # Check to see if XOALign should run.
         if self.header.has_key("mk3_phi") and self.header.has_key("mk3_kappa"):
@@ -184,7 +232,7 @@ class RapdAgent(Process):
         else:
             self.multicrystalstrat = True
             self.strategy = "mosflm"
-        
+        """
         # This is where I place my overall folder settings.
         self.working_dir                        = False
         # This is where I have chosen to place my results
@@ -237,15 +285,15 @@ class RapdAgent(Process):
         # Dicts for running the Queues
         self.jobs                               = {}
         self.vips_images                        = {}
-        
+        """
         # Settings for all programs
-        self.beamline = self.header.get("beamline")
+        #self.beamline = self.header.get("beamline")
         self.time = str(self.header.get("time", "1.0"))
         self.wavelength = str(self.header.get("wavelength"))
         self.transmission = float(self.header.get("transmission"))
         #self.aperture = str(self.header.get("md2_aperture"))
         self.spacegroup = self.preferences.get("spacegroup", "None")
-        self.flux = str(self.header.get("flux"))
+        self.flux = str(self.header.get("flux",'3E10'))
         self.solvent_content = str(self.preferences.get("solvent_content", 0.55))
 
         Process.__init__(self, name="AutoindexingStrategy")
@@ -298,9 +346,6 @@ class RapdAgent(Process):
 
         # Determine detector vendortype
         self.vendortype = Utils.getVendortype(self, self.header)
-	#Utils.getSite(self,self.header['fullname'])
-	#self.site = Utils.getSite(self,'/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0001')
-	#self.site = Utils.getSite(self,'/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0001')
 	self.dest_dir = self.setup.get("work")
         if self.test or self.cluster_use:
             self.working_dir = self.dest_dir
@@ -314,8 +359,8 @@ class RapdAgent(Process):
         if self.verbose:
             # Print out recognition of the program being used
             self.PrintInfo()
-        # Setup event for job control on cluster
-        if self.cluster_use:
+        # Setup event for job control on cluster (Only works at NE-CAT using DRMAA for job submission)
+        if self.cluster_adapter:
             self.running = Event()
             self.running.set()
 
@@ -348,30 +393,15 @@ class RapdAgent(Process):
                 beam_size_y = str(self.header.get("beam_size_y"))
                 gauss_x     = str(self.header.get("gauss_x"))
                 gauss_y     = str(self.header.get("gauss_y"))
-            """
-            #**Beamline specific failsafe if aperture size is not sent correctly from MD2.
-            if self.aperture == "0" or "-1":
-              if self.beamline == "24_ID_C":
-                self.aperture = "70"
-              else:
-                self.aperture = "50"
-            #Get max crystal size to calculate the shape.(Currently disabled in Best, because no one changes it)
-            #max_size      = float(max(crystal_size_x,crystal_size_y,crystal_size_z))
-            #aperture      = float(self.aperture)/1000.0
-            #self.shape    = max_size/aperture
-            #put together the command script for Raddose
-            """
             raddose = open("raddose.com", "w+")
             setup = "raddose << EOF\n"
             if beam_size_x and beam_size_y:
                 setup += "BEAM %s %s\n" % (beam_size_x, beam_size_y)
             # Full-width-half-max of the beam
             setup += "GAUSS %s %s\nIMAGES 1\n" % (gauss_x, gauss_y)
-            if self.flux:
-                setup += "PHOSEC %s\n" % self.flux
-            else:
-                setup += "PHOSEC 3E10\n"
-            if cell:
+            setup += "PHOSEC %s\n" % self.flux
+            setup += "EXPOSURE %s\n" % self.time
+	    if cell:
                 setup += "CELL %s %s %s %s %s %s\n" % (cell[0], cell[1], cell[2], cell[3], cell[4], cell[5])
             else:
                 self.logger.debug("Could not get unit cell from bestfile.par")
@@ -389,8 +419,6 @@ class RapdAgent(Process):
                 setup += "CRYSTAL %s %s %s\n" % (crystal_size_x, crystal_size_y, crystal_size_z)
             if self.wavelength:
                 setup += "WAVELENGTH %s\n" % self.wavelength
-            if self.time:
-                setup += "EXPOSURE %s\n" % self.time
             setup += "NMON 1\n"
             if self.sample_type == "Protein":
                 setup += "NRES %s\n" % nres
@@ -421,7 +449,7 @@ class RapdAgent(Process):
             self.labelitQueue = Queue()
             params = {}
             params["test"] = self.test
-            params["cluster"] = self.cluster_use
+	    params["cluster"] = self.cluster_adapter
             params["verbose"] = self.verbose
             params["cluster_queue"] = self.cluster_queue
             params["vendortype"] = self.vendortype
@@ -2116,18 +2144,19 @@ class RunLabelit(Process):
         self.preferences = command["preferences"]
 	self.site_parameters = command.get("site_parameters", {})
         self.controller_address = command["return_address"]
-	
+	"""
 	# Read site file is available
 	if self.site_parameters.has_key('cluster_site'):
 	  self.site = load_module(seek_module=self.site_parameters.get('cluster_site'),
 	                          directories='sites')
 	else:
 	  self.site = False
-
+        """
         #params
         self.test = params.get("test", False)
         #Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Adds 1-3s to total run time.
-        self.cluster_use = params.get("cluster",True)
+        #self.cluster_use = params.get("cluster",True)
+	
 	#If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
         self.cluster_queue = params.get("cluster_queue", False)
         #Get detector vendortype for settings. Defaults to ADSC.
@@ -2139,14 +2168,19 @@ class RunLabelit(Process):
         # If limiting number of LABELIT run on cluster.
         #self.red = params.get("redis", False)
         self.short = False
+	#If using the cluster, get the correct module (already loaded)
+	if params.get("cluster",False):
+	  self.cluster_adapter = params.get("cluster",False)
         
 	# Make decisions based on input params
 	if self.iterations != 6:
             self.short = True
         # Setup the cluster_adapter only if requested and site is sent.
+	"""
 	if self.cluster_use and self.site:
 	   if self.site.CLUSTER_ADAPTER:
              self.cluster_adapter = load_module(self.site.CLUSTER_ADAPTER,)
+	"""
 	# Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
         #******BEAMLINE SPECIFIC*****
         # if self.header.has_key("acc_time"):
