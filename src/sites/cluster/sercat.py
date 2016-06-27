@@ -236,8 +236,10 @@ def process_cluster_old(self, inp, output=False):
 
 def process_cluster(inp):
     """
-    Launch job on SERCAT's scyld cluster.
+    Launch job on SERCAT's scyld cluster. Does not wait for jobs to end!
     """
+    import utils.xutils as Utils
+    import time
     running = True
     command = inp.get('command')
     log = inp.get('log', False)
@@ -288,16 +290,72 @@ def process_cluster(inp):
     job = subprocess.Popen(qs,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
     # Return job_id.
     #if isinstance(output, dict):
+    for line in job.stdout:
+      if len(line)!= 0:
+        l.append(line)
     if pid != False:
+      # For my pipelines
       if name == False:
-        # For my pipelines
-	for line in job.stdout:
-          l.append(line)
         pid.put(l[0])
       else:
         # For Frank's main launcher
         pid.put(job.pid)
-   
+    # Wait for job to complete
+    time.sleep(1)
+    while check_qsub_job(l[0]):
+      time.sleep(0.2)
     print "Job finished"
 
+def process_cluster_beorun(inp):
+    """
+    Launch job on SERCAT's scyld cluster. Assumes job uses single processor.
+    """
+    running = True
+    command = inp.get('command')
+    log = inp.get('log', False)
+    queue = inp.get('queue', False)
+    smp = inp.get('smp',1)
+    d = inp.get('dir', os.getcwd())
+    name = inp.get('name', False)
+    # Sends job/process ID back
+    pid = inp.get('pid', False)
+    l = []
 
+    # Check if self.running is setup... used for Best and Mosflm strategies
+    # because you can't kill child processes launched on cluster easily.
+    """
+    try:
+        __ = self.running
+    except AttributeError:
+        running = False
+    """
+    qs = 'beorun -np 1 -nolocal %s'%command
+    if log:
+      if log.count('/'):
+        qs += ' > %s '%log
+      else:
+        qs += ' > %s '%os.path.join(d,log)
+    
+    #Launch the job on the cluster
+    job = subprocess.Popen(qs,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+    # Return job_id.
+    #if isinstance(output, dict):
+    if pid != False:
+      pid.put(job.pid)
+    job.wait()
+    print "Job finished"
+    
+def check_qsub_job(job):
+  """
+  Check to see if process and/or its children and/or children's children are still running.
+  """
+  #try:
+  running = False
+  if job.count('localdomain'):
+    job = job[:job.rfind('.')]
+  output = subprocess.Popen('/usr/bin/qstat',shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+  for line in output.stdout:
+    if line.split()[0] == job:
+      if line.split()[4] == 'R':
+        running = True
+  return(running)

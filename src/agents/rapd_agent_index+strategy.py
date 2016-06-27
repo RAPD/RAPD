@@ -2099,15 +2099,6 @@ class RunLabelit(Process):
     def __init__(self, command, output, params, logger=None):
         """
         input >> command
-        # The minimum input **OLD**
-        [   "AUTOINDEX",
-        {   "work": "/gpfs6/users/necat/Jon/RAPD_test/Output"},
-        {   "binning": "2x2",
-            "distance": "550.0",
-            "fullname": "/gpfs5/users/GU/WUSTL_Li_Feb12/images/M-native4/Feru2_6_091.img",
-            "twotheta": "0.0"},
-        {   "x_beam": "153.66", "y_beam": "158.39"},
-        ("127.0.0.1", 50001)]
 	#New minimum input
 	{   'command': 'INDEX+STRATEGY',
         'directories': {   'work': '/home/schuerjp/temp/beamcenter/800.0'},
@@ -2168,6 +2159,7 @@ class RunLabelit(Process):
         # If limiting number of LABELIT run on cluster.
         #self.red = params.get("redis", False)
         self.short = False
+	
 	#If using the cluster, get the correct module (already loaded)
 	if params.get("cluster",False):
 	  self.cluster_adapter = params.get("cluster",False)
@@ -2175,12 +2167,6 @@ class RunLabelit(Process):
 	# Make decisions based on input params
 	if self.iterations != 6:
             self.short = True
-        # Setup the cluster_adapter only if requested and site is sent.
-	"""
-	if self.cluster_use and self.site:
-	   if self.site.CLUSTER_ADAPTER:
-             self.cluster_adapter = load_module(self.site.CLUSTER_ADAPTER,)
-	"""
 	# Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
         #******BEAMLINE SPECIFIC*****
         # if self.header.has_key("acc_time"):
@@ -2382,16 +2368,18 @@ class RunLabelit(Process):
             if self.test:
                 labelit_jobs["junk%s" % iteration] = iteration
             else:
-                log = os.path.join(os.getcwd(), "labelit.log")
+                print command
+		log = os.path.join(os.getcwd(), "labelit.log")
                 #queue to retrieve the PID or JobIB once submitted.
                 pid_queue = Queue()
                 if self.cluster_adapter:
                     #Delete the previous log still in the folder, otherwise the cluster jobs will append to it.
                     if os.path.exists(log):
                         os.system("rm -rf %s" % log)
-		    #run = Process(target=self.cluster_adapter.processCluster, args=(self, (command, log, self.cluster_queue), pid_queue))
-		    
-		    run = Process(target=self.cluster_adapter.process_cluster, args=({ 'command': command, 'log': log, 'queue': self.cluster_queue, 'pid': pid_queue},))
+		    #run = Process(target=self.cluster_adapter.process_cluster, 
+		    #               args=({ 'command': command, 'log': log, 'queue': self.cluster_queue, 'pid': pid_queue},))
+		    run = Process(target=self.cluster_adapter.process_cluster_beorun, 
+		                  args=({ 'command': command, 'log': log, 'queue': self.cluster_queue, 'pid': pid_queue},) )
                 else:
                     run = Process(target=Utils.processLocal, args=((command, log), self.logger, pid_queue))
                 run.start()

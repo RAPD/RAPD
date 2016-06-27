@@ -2542,28 +2542,30 @@ def setScalingXDS(self):
   except:
     self.logger.exception('**ERROR in Utils.setScalingXDS**')
 
-def stillRunning(self,pid):
+def stillRunning(pid):
   """
   Check to see if process and/or its children and/or children's children are still running.
   """
-  try:
-    running = False
-    output = subprocess.Popen('ps -F -A | grep %s'%pid,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-    for line in output.stdout:
-      if line.split()[1] == str(pid):
-        running = True
-      if line.split()[2] == str(pid):
-        running = True
-        pid1 = line.split()[:][1]
-        output2 = subprocess.Popen('ps -F -A | grep %s'%pid1,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-        for line in output2.stdout:
-          if line.split()[2] == str(pid1):
-            running = True
-    return(running)
-
+  #try:
+  running = False
+  output = subprocess.Popen('ps -F -A | grep %s'%pid,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+  for line in output.stdout:
+    if line.split()[1] == str(pid):
+      running = True
+    """
+    if line.split()[2] == str(pid):
+      running = True
+      pid1 = line.split()[:][1]
+      output2 = subprocess.Popen('ps -F -A | grep %s'%pid1,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+      for line in output2.stdout:
+  	if line.split()[2] == str(pid1):
+  	  running = True
+  """
+  return(running)
+  """
   except:
     self.logger.exception('**Error in Utils.stillRunning**')
-
+  """
 def subGroups(self,inp1,inp2='shelx'):
   """
   Determine which SG's to run.

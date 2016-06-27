@@ -25,8 +25,8 @@ __status__ = "Production"
 #Required params for script to run.
 WORK_DIR = '/home/schuerjp/temp/beamcenter'
 #Known SG for images. P4 assumes lysozyme or thaumatin.
-SPACEGROUP = 'None'
-#SPACEGROUP = 'P4'
+#SPACEGROUP = None
+SPACEGROUP = 'P222'
 ##Number of labelit runs to fine tune beam center and spacing from original
 #Jobs per distance will be (ITERATIONS+1)^2. 
 #ITERATIONS = 10
@@ -42,12 +42,7 @@ with warnings.catch_warnings():
   from threading import Thread
   import os
   import time, shutil, numpy, decimal, copy
-  #from rapd_communicate import Communicate
-  from rapd_agent_index_strategy import RunLabelit
   import utils.xutils as Utils
-  #import rapd_beamlinespecific as BLspec
-  #Should have module to find site from Core so I won't have to specify
-  #from sites.cluster import sercat as Cluster
   from utils.modules import load_module
   #Used to get path of running file
   from inspect import getsourcefile
@@ -94,10 +89,12 @@ class FindBeamCenter(Process):
     #self.iterations2                        = 15
     #self.iterations2_space                  = 0.1
     #Sets the limit of the std dev (mm) of either x or y beam position in the top 10% of the solutions.
-    self.std_dev                            = 0.1
+    #self.std_dev                            = 0.1
+    self.std_dev                            = 0.25
     
     #Sets settings to check output on my machine and does not send results to database.
     self.cluster_use =  self.Cluster.check_cluster()
+    #self.test = True
     if self.cluster_use:
       self.test                           = False
     else:
@@ -111,7 +108,6 @@ class FindBeamCenter(Process):
     self.multiproc                          = True
     self.labelit_jobs                       = {}
     self.results                            = {}
-    #self.runs                               = {}
     self.pool                               = {}
     self.new_input                          = {}
     #Settings for all programs
@@ -167,11 +163,11 @@ class FindBeamCenter(Process):
       params['cluster'] = self.Cluster
       params['cluster_queue'] = self.Cluster.check_queue(self.input.get('command'))
       params['vendortype'] = self.vendortype
-      #params['iterations'] = 1
-      if self.vendortype in ['Pilatus-6M','ADSC-HF4M']:
-        params['iterations'] = 1
-      else:
-        params['iterations'] = 4
+      params['iterations'] = 1
+      #if self.vendortype in ['Pilatus-6M','ADSC-HF4M']:
+      #  params['iterations'] = 1
+      #else:
+      #  params['iterations'] = 4
       params['verbose'] = False
       
       #Have to add to the sleep as more runs are submitted
@@ -183,9 +179,10 @@ class FindBeamCenter(Process):
         self.labelit_jobs[job] = name
         #Have to do a small sleep otherwise jobs lock and take >10s to submit jobs to cluster??
         #The problem builds with more iterations to run.
-        time.sleep(0.05 + add_time)
+        #time.sleep(0.05 + add_time)
+	time.sleep(0.1)
       #Send back message to say when all jobs are submitted.
-      self.output.put('done')
+      #self.output.put('done')
 
     except:
       self.logger.exception('**Error in FindBeamCenter::processLabelit**')
@@ -212,6 +209,8 @@ class FindBeamCenter(Process):
             del self.labelit_jobs[job]
             counter -= 1
         time.sleep(2)
+      #Send back message to say when all jobs are submitted.
+      self.output.put('done')
     
     except:
       self.logger.exception('**Error in FindBeamCenter.queue**')
@@ -268,8 +267,6 @@ class FindBeamCenter(Process):
       #Save initial beam center.
       orig_x = self.x_beam
       orig_y = self.y_beam
-      #Make a copy of the original input
-      #new_input = copy.copy(self.input)
       if self.preferences.has_key('x_beam'):
         del self.preferences['x_beam']
       if self.preferences.has_key('y_beam'):
@@ -331,7 +328,7 @@ class FindBeamCenter(Process):
         for run in self.labelit_results.keys():
           if run.startswith('bc_'):
             if type(self.labelit_results[run].get('Labelit results')) == dict:
-              if i == 0:
+	      if i == 0:
                 #Check for pseudotranslation, meaning bad snap!!!
                 if self.labelit_results[run].get('Labelit results').get('pseudotrans'):
                   #passed = False
@@ -339,7 +336,7 @@ class FindBeamCenter(Process):
                 #Get Labelit stats and SG#
                 Utils.getLabelitStats(self,run)
                 sg = self.labelit_results[run].get('labelit_stats').get('best').get('SG')
-                new_sg = float(Utils.convertSG(self,sg))
+		new_sg = float(Utils.convertSG(self,sg))
                 self.labelit_results[run].update({'labelit_best_sg#': new_sg})
                 if find_sg:
                   if new_sg > orig_sg:
@@ -457,7 +454,8 @@ class FindBeamCenter(Process):
 
 #class Handler(threading.Thread,Communicate):
 #class Handler(Process,Communicate):
-class Handler(Process):
+#class Handler(Process):
+class Handler(Thread):
   """
   Looks at the input to determine how to run the process. Runs the process and passes the results back.
   """
@@ -494,8 +492,8 @@ class Handler(Process):
     self.beamline_use = False
     
     #initialize the thread
-    Process.__init__(self)
-    #start the thread
+    #Process.__init__(self)
+    Thread.__init__(self)
     self.start()
       
   def run(self):
@@ -525,8 +523,9 @@ class Handler(Process):
       #Seems to give best load and speed on our cluster.
       ncpu = 1
       od = self.input.get('directories').get('work')
-      for job in setup.keys():
-        #if job in ('500.0'):
+      jobs = ['510.0']
+      for job in jobs:
+      #for job in setup.keys():
         new_input = {}
 	new_input['command'] = self.input.get('command')
         #new_input.append(self.input[0])
@@ -548,7 +547,7 @@ class Handler(Process):
                                                   'output':self.output[job],'logger':self.logger})
         j.start()
         self.jobs[j] = job
-        #Wait for the previous jobs to be submitted.
+        #Wait for the previous jobs to be finished.
         self.output[job].get()
       #Utils.pp(new_input)
         
@@ -860,7 +859,12 @@ class RunCluster(Thread):
       if os.path.exists(l[x]):
         for line in open(l[x],'r').readlines():
           print line.rstrip()
-        
+
+def calc_beamcenter(inp):
+  x = 0.001202*inp + 150.03498
+  y = -0.001318*inp + 149.80818
+  return(x,y)       
+
 def createInput(image_dir,site,logger):
   logger.debug('createInput')
   #import glob
@@ -897,8 +901,17 @@ def createInput(image_dir,site,logger):
             pids.append(job)
           else:
             image_path = header.get('fullname')
-          l1.append({'beam_center_x' : round(header.get('beam_center_x'),3),
-                     'beam_center_y' : round(header.get('beam_center_y'),3),
+          x1,y1 = calc_beamcenter(round(header.get('distance')))
+	  l1.append({#'beam_center_x' : round(header.get('beam_center_x'),3),
+                     #'beam_center_y' : round(header.get('beam_center_y'),3),
+		     #'beam_center_x' : 150.049, #BM
+		     #'beam_center_y' : 151.148, #BM
+		     #'beam_center_x' : 151.186, #ID
+		     #'beam_center_y' : 144.821, #ID
+		     #'beam_center_x' : 150.31, #BM
+		     #'beam_center_y' : 149.53, #BM
+		     'beam_center_x' : x1, #BM
+		     'beam_center_y' : y1, #BM
 		     'spacegroup'    : SPACEGROUP,
                      'fullname'      : image_path,
                      'distance'      : round(header.get('distance')),
@@ -927,23 +940,19 @@ def createInput(image_dir,site,logger):
           if job.is_alive() == False:
             pids.remove(job)
         time.sleep(1)
-    """
-    inp = ["AUTOINDEX",{"work": WORK_DIR,"info": d},None,
-           {"sample_type": "Protein","beam_flip": "False","multiprocessing":"True",
-            "a":0.0,"b":0.0,"c":0.0,"alpha":0.0,"beta":0.0,"gamma":0.0},
-           ("127.0.0.1",50001)]
-    """
+
     inp = {'directories': {'work': WORK_DIR},
            'info' : d,
 	   'command' : 'INDEX+STRATEGY',
 	   'preferences': {"sample_type": "Protein","beam_flip": "False","multiprocessing":"True",
-                           "a":0.0,"b":0.0,"c":0.0,"alpha":0.0,"beta":0.0,"gamma":0.0},
+                           #"a":0.0,"b":0.0,"c":0.0,"alpha":0.0,"beta":0.0,"gamma":0.0},
+			   "a":54,"b":58,"c":67,"alpha":90,"beta":90,"gamma":90, 'spacegroup': 'P222'},
 	   'site_parameters': {'img_site_id': img_site_id,
 	                       'img_site': img_site,
 			       'cluster_site': c_site},
 	   'return_address': ("127.0.0.1", 50000)
           }
-    #Utils.pp(inp)
+    Utils.pp(inp)
     return(inp)
   
   except:
@@ -1003,11 +1012,11 @@ def main():
     image_dir = args['inp'][0]
     
   #cluster = load_cluster(image_dir)
-  (site_info, cluster) = load_cluster('/home/schuerjp/temp/beamcenter/images')
+  (site_info, cluster) = load_cluster('/home/schuerjp/temp/beamcenter/images/BM')
   #createInput('/home/schuerjp/temp/beamcenter/images',c_site_name, logger)
   #createInput('/home/schuerjp/temp/beamcenter/images', site_info, logger)
-  
-  Handler(createInput('/home/schuerjp/temp/beamcenter/images',site_info, logger),logger=logger)
+  #createInput('/home/schuerjp/temp/beamcenter/images/BM',site_info, logger)
+  Handler(createInput('/home/schuerjp/temp/beamcenter/images/BM',site_info, logger),logger=logger)
   """
   if cluster.check_cluster():
     #Creates the input dict and passes it to the Handler.
