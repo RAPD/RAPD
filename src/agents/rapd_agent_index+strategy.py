@@ -193,6 +193,7 @@ class RapdAgent(Process):
 	  self.cluster_queue = self.cluster_adapter.check_queue(self.command["command"])
 	else:
 	  self.cluster_adapter = False
+	  self.cluster_queue = False
 	  
 	# Set timer for distl. "False" will disable.
         if self.header2:
@@ -2650,16 +2651,17 @@ if __name__ == '__main__':
 	   	#"beam_center_y": "158.68", #Q315
 	   	#"beam_center_x": "172.80", #HF4M
 	   	#"beam_center_y": "157.18", #HF4M
-	   	#"beam_center_x": "149.87", #22ID
-	   	#"beam_center_y": "145.16", #22ID
-	   	"beam_center_x": "150.25", #22BM
-	   	"beam_center_y": "151.35", #22BM
+	   	"beam_center_x": "151.19", #22ID
+	        "beam_center_y": "144.82", #22ID
+	   	#"beam_center_x": "150.25", #22BM
+	   	#"beam_center_y": "151.35", #22BM
 	   	"flux":'1.6e11', #RADDOSE
 	   	"beam_size_x":"0.07", #RADDOSE
 	   	"beam_size_y":"0.03", #RADDOSE
 	   	"gauss_x":'0.03', #RADDOSE
 	   	"gauss_y":'0.01', #RADDOSE
-	   	"fullname": "/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0001",
+		"fullname": "/panfs/panfs0.localdomain/archive/ID_16_06_01_staff_test/Se-Tryp_SER16-pn10/SER-16_Pn10_1.0001",
+	   	#"fullname": "/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0001",
 	   	#"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0001",
 	   	#"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_04_chrzas_feb_4_2016/SER4-TRYP_Pn3/SER4-TRYP_Pn3.0001",
 	   	#"fullname": "/gpfs6/users/necat/Jon/RAPD_test/Temp/mar/SER4-TRYP_Pn3.0001",
@@ -2691,16 +2693,17 @@ if __name__ == '__main__':
 	    #"beam_center_y": "158.68", #Q315
 	    #"beam_center_x": "172.80", #HF4M
 	    #"beam_center_y": "157.18", #HF4M
-	    #"beam_center_x": "149.87", #22ID
-	    #"beam_center_y": "145.16", #22ID
-	    "beam_center_x": "150.25", #22BM
-	    "beam_center_y": "151.35", #22BM
+	    "beam_center_x": "151.19", #22ID
+	    "beam_center_y": "144.82", #22ID
+	    #"beam_center_x": "150.25", #22BM
+	    #"beam_center_y": "151.35", #22BM
 	    "flux":'1.6e11', #RADDOSE
 	    "beam_size_x":"0.07", #RADDOSE
 	    "beam_size_y":"0.03", #RADDOSE
 	    "gauss_x":'0.03', #RADDOSE
 	    "gauss_y":'0.01', #RADDOSE
-	    "fullname": "/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0090",
+	    "fullname": "/panfs/panfs0.localdomain/archive/ID_16_06_01_staff_test/Se-Tryp_SER16-pn10/SER-16_Pn10_1.0090",
+	    #"fullname": "/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0090",
 	    #"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0020",
 	    #"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_04_chrzas_feb_4_2016/SER4-TRYP_Pn3/SER4-TRYP_Pn3.0050",
 	    #"fullname": "/gpfs6/users/necat/Jon/RAPD_test/Temp/mar/SER4-TRYP_Pn3.0050",
@@ -2883,25 +2886,11 @@ if __name__ == '__main__':
    "mosflm_end":360.0,#MOSFLM
     },
 
-  ('127.0.0.1', 50001)#self.sendBack2 for sending results back to rapd_cluster.
-  ]
-  #start logging
-  #import logging, logging.handlers
-  #LOG_FILENAME = os.path.join(inp[1].get('work'),'rapd.log')
-  #LOG_FILENAME = '/gpfs6/users/necat/Jon/RAPD_test/Output/rapd_jon.log'
-  # Set up a specific logger with our desired output level
-  #logger = logging.getLogger('RAPDLogger')
-  #logger.setLevel(logging.DEBUG)
-  # Add the log message handler to the logger
-  #handler = logging.handlers.RotatingFileHandler(LOG_FILENAME,maxBytes=100000,backupCount=5)
-  #add a formatter
-  #formatter = logging.Formatter("%(asctime)s - %(message)s")
-  #handler.setFormatter(formatter)
-  #logger.addHandler(handler)
-  #RapdAgent(inp, logger=logger)
-  #import sites.sercat_id as site
+  ('127.0.0.1', 50001)]#self.sendBack2 for sending results back to rapd_cluster.
+  
   import sites.sercat as site
   import utils.log
+  
   
   log = utils.log.get_logger(logfile_dir=command['directories']['work'],)
   #log = utils.log.get_logger(logfile_dir=logfile_dir,
