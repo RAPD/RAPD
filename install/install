@@ -64,6 +64,8 @@ if [[ $PLATFORM == "Linux" ]]; then
     printf "The following packages need to be installed: $missing_packages \n"
     exit 1
   fi
+elif [[ $PLATFORM == "Linux" ]]; then
+  printf "\033[94mPerforming installation on Mac OS \033[0m\n"
 fi
 
 # Handle command line
@@ -158,242 +160,200 @@ fi
 
 if [ $INSTALL_PHENIX == 1 ]; then
 
-  printf "\n\033[94mInstalling Phenix $PHENIX_VERSION\033[0m\n"
+  printf "$PREFIX/share/phenix"
 
-  PHENIX_PREFIX_SRC=$SRC_DIR"/phenix"
-  PHENIX_PREFIX_TGT=$PREFIX"/share/phenix-dev-$PHENIX_VERSION"
-  cd $PHENIX_PREFIX_SRC
+  if [[ -e $PREFIX/share/phenix ]]; then
+    printf "\n\033[94mIt appears Phenix is already installed for RAPD - skipping\033[0m\n"
+  else
+    printf "\n\033[94mInstalling Phenix $PHENIX_VERSION\033[0m\n"
 
-  if [[ $PLATFORM == "Darwin" ]]; then
+    PHENIX_PREFIX_SRC=$SRC_DIR"/phenix"
+    PHENIX_PREFIX_TGT=$PREFIX"/share/phenix-dev-$PHENIX_VERSION"
+    cd $PHENIX_PREFIX_SRC
 
-    PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-mac-intel-osx-x86_64"
-    PHENIX_INSTALLER_DIR="phenix-installer-$PHENIX_VERSION-mac-intel-osx-x86_64-10.9"
-    PHENIX_DOWNLOAD_REPR="OS X 10.6.7+ (64-bit Intel) [ \033[4;34mdownload command-line installer\033[0m ]"
+    if [[ $PLATFORM == "Darwin" ]]; then
 
-  elif [[ $PLATFORM == "Linux" ]]; then
+      PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-mac-intel-osx-x86_64"
+      PHENIX_INSTALLER_DIR="phenix-installer-$PHENIX_VERSION-mac-intel-osx-x86_64-10.9"
+      PHENIX_DOWNLOAD_REPR="OS X 10.6.7+ (64-bit Intel) [ \033[4;34mdownload command-line installer\033[0m ]"
 
-    # CentOS 6-7
-    if [ -f /etc/centos-release ]; then
+    elif [[ $PLATFORM == "Linux" ]]; then
 
-      DIST='CentOS'
-      REV=`cat /etc/centos-release | sed s/.*release\ // | sed s/\ .*//`
+      # CentOS 6-7
+      if [ -f /etc/centos-release ]; then
 
-      if [ ${REV:0:1} == "6" ]; then
-        printf "  CentOS 6\n"
-        PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos6"
-        PHENIX_DOWNLOAD_REPR="Kernel 2.6 (64-bit; CentOS 6) [ \033[4;34mdownload command-line installer\033[0m ]"
+        DIST='CentOS'
+        REV=`cat /etc/centos-release | sed s/.*release\ // | sed s/\ .*//`
 
-      elif [ ${REV:0:1} == "7" ]; then
-        printf "  CentOS 7\n"
-        PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos6"
-        PHENIX_DOWNLOAD_REPR="Kernel 2.6 (64-bit; CentOS 6) [ \033[4;34mdownload command-line installer\033[0m ]"
-        printf "  \033[91mN.B. - CentOS 7 is currently experimental\033[0m\n"
-      fi
-
-    # RedHat & Scientific & CentOS 5
-    elif [ -f /etc/redhat-release ]; then
-
-      DIST=`cat /etc/redhat-release | sed s/\ .*//`
-      REV=`cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*//`
-
-      # Scientific Linux
-      if [[ $DIST == "Scientific" ]];then
-
-        if [ ${REV:0:1} == "5" ]; then
-            printf "  Scientific Linux 5\n"
-            PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos5"
-            PHENIX_DOWNLOAD_REPR="Kernel 2.6 (64-bit; CentOS 5) [ \033[4;34mdownload command-line installer\033[0m ]"
-
-        elif [ ${REV:0:1} == "6" ]; then
-            printf "  Scientific Linux 6\n"
-            PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos6"
-            PHENIX_DOWNLOAD_REPR="Kernel 2.6 (64-bit; CentOS 6) [ \033[4;34mdownload command-line installer\033[0m ]"
+        if [ ${REV:0:1} == "6" ]; then
+          printf "  CentOS 6\n"
+          PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos6"
+          PHENIX_DOWNLOAD_REPR="Kernel 2.6 (64-bit; CentOS 6) [ \033[4;34mdownload command-line installer\033[0m ]"
 
         elif [ ${REV:0:1} == "7" ]; then
-            printf "  Scientific Linux 7\n"
-            PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos6"
-            PHENIX_DOWNLOAD_REPR="Kernel 2.6 (64-bit; CentOS 6) [ \033[4;34mdownload command-line installer\033[0m ]"
-            printf "  \033[91mN.B. - Scientific Linux 7 is currently experimental.\033[0m\n"
+          printf "  CentOS 7\n"
+          PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos6"
+          PHENIX_DOWNLOAD_REPR="Kernel 2.6 (64-bit; CentOS 6) [ \033[4;34mdownload command-line installer\033[0m ]"
+          printf "  \033[91mN.B. - CentOS 7 is currently experimental\033[0m\n"
         fi
 
-      # CentOS 5
-      elif [[ $DIST == "CentOS" ]]; then
+      # RedHat & Scientific & CentOS 5
+      elif [ -f /etc/redhat-release ]; then
 
-        if [ ${REV:0:1} == "5" ]; then
-            # printf "  \033[91mCentOS 5 is currently not supported. Please enter an issue or work on a patch!\033[0m\n"
-            # exit 1
-            printf "  CentOS 5\n"
-            PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos5"
-            PHENIX_DOWNLOAD_REPR="Kernel 2.6 (64-bit; CentOS 5) [ \033[4;34mdownload command-line installer\033[0m ]"
+        DIST=`cat /etc/redhat-release | sed s/\ .*//`
+        REV=`cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*//`
+
+        # Scientific Linux
+        if [[ $DIST == "Scientific" ]];then
+
+          if [ ${REV:0:1} == "5" ]; then
+              printf "  Scientific Linux 5\n"
+              PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos5"
+              PHENIX_DOWNLOAD_REPR="Kernel 2.6 (64-bit; CentOS 5) [ \033[4;34mdownload command-line installer\033[0m ]"
+
+          elif [ ${REV:0:1} == "6" ]; then
+              printf "  Scientific Linux 6\n"
+              PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos6"
+              PHENIX_DOWNLOAD_REPR="Kernel 2.6 (64-bit; CentOS 6) [ \033[4;34mdownload command-line installer\033[0m ]"
+
+          elif [ ${REV:0:1} == "7" ]; then
+              printf "  Scientific Linux 7\n"
+              PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos6"
+              PHENIX_DOWNLOAD_REPR="Kernel 2.6 (64-bit; CentOS 6) [ \033[4;34mdownload command-line installer\033[0m ]"
+              printf "  \033[91mN.B. - Scientific Linux 7 is currently experimental.\033[0m\n"
+          fi
+
+        # CentOS 5
+        elif [[ $DIST == "CentOS" ]]; then
+
+          if [ ${REV:0:1} == "5" ]; then
+              # printf "  \033[91mCentOS 5 is currently not supported. Please enter an issue or work on a patch!\033[0m\n"
+              # exit 1
+              printf "  CentOS 5\n"
+              PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos5"
+              PHENIX_DOWNLOAD_REPR="Kernel 2.6 (64-bit; CentOS 5) [ \033[4;34mdownload command-line installer\033[0m ]"
+          fi
+
         fi
+      fi # end elif [ -f /etc/redhat-release ]; then
+    fi # end elif [[ $PLATFORM == "Linux" ]]; then
 
-      fi
-    fi # end elif [ -f /etc/redhat-release ]; then
-  fi # end elif [[ $PLATFORM == "Linux" ]]; then
-
-  if [[ $PHENIX_INSTALLER_DIR == "" ]]; then
-    PHENIX_INSTALLER_DIR=$PHENIX_DOWNLOAD
-  fi
-
-  # Downloaded and unpacked
-  echo `pwd`
-  printf "Looking for $PHENIX_INSTALLER_DIR \n"
-  while [ ! -d $PHENIX_INSTALLER_DIR ]
-  do
-    printf "Looking for ~/Downloads/$PHENIX_DOWNLOAD \n"
-    # Downloaded and uncompressed
-    if [ -a $PHENIX_DOWNLOAD.tar ]; then
-      printf "  Phenix install present as archive\n"
-      printf "  Unpacking\n"
-      tar -xf $PHENIX_DOWNLOAD.tar
-
-    # Downloaded only
-    elif [ -a $PHENIX_DOWNLOAD.tar.gz ]; then
-      printf "  Phenix install present as compressed archive\n"
-      printf "  Uncompressing\n"
-      gunzip $PHENIX_DOWNLOAD.tar.gz
-      printf "  Unpacking\n"
-      tar -xf $PHENIX_DOWNLOAD.tar
-
-    # Downloaded in the ~/Downloads directory
-    elif [ -a ~/Downloads/$PHENIX_DOWNLOAD.tar.gz ]; then
-      printf "  Phenix install present as compressed archive in ~/Downloads\n"
-      printf "  Copying\n"
-      cp ~/Downloads/$PHENIX_DOWNLOAD.tar.gz .
-      printf "  Uncompressing\n"
-      gunzip $PHENIX_DOWNLOAD.tar.gz
-      printf "  Unpacking\n"
-      tar -xf $PHENIX_DOWNLOAD.tar
-
-    # Downloaded and uncompressed in the ~/Downloads directory
-    elif [ -a ~/Downloads/$PHENIX_DOWNLOAD.tar ]; then
-      printf "  Phenix install present as archive in ~/Downloads\n"
-      printf "  Copying\n"
-      cp ~/Downloads/$PHENIX_DOWNLOAD.tar .
-      printf "  Unpacking\n"
-      tar -xf $PHENIX_DOWNLOAD.tar
-
-    # Downloaded and uncompressed and unpacked in the ~/Downloads directory
-    elif [ -a ~/Downloads/$PHENIX_DOWNLOAD ]; then
-      printf "  Phenix install present in ~/Downloads\n"
-      printf "  Copying\n"
-      cp -r ~/Downloads/$PHENIX_DOWNLOAD .
-
-    else
-      printf "  \033[91mInstaller needs the Phenix installer\033[0m\n"
-      printf "  Please navigate to https://www.phenix-online.org/download/phenix/release/ \n"
-      printf "  click on $PHENIX_DOWNLOAD_REPR \n"
-      printf "  to download $PHENIX_DOWNLOAD.tar.gz\n"
-      printf "  and place it in the directory ~/Downloads or $PHENIX_PREFIX_SRC\n"
-      printf "  Hit return when you have done so..."
-      read foo
+    if [[ $PHENIX_INSTALLER_DIR == "" ]]; then
+      PHENIX_INSTALLER_DIR=$PHENIX_DOWNLOAD
     fi
-  done
 
-  # Install phenix
-  cd $PHENIX_INSTALLER_DIR
-  ./install --prefix=$PREFIX/share
+    # Downloaded and unpacked
+    echo `pwd`
+    printf "Looking for $PHENIX_INSTALLER_DIR \n"
+    while [ ! -d $PHENIX_INSTALLER_DIR ]
+    do
+      printf "Looking for ~/Downloads/$PHENIX_DOWNLOAD \n"
+      # Downloaded and uncompressed
+      if [ -a $PHENIX_DOWNLOAD.tar ]; then
+        printf "  Phenix install present as archive\n"
+        printf "  Unpacking\n"
+        tar -xf $PHENIX_DOWNLOAD.tar
 
-  # Create soft link
-  ln -s $PREFIX/share/phenix-$PHENIX_VERSION $PREFIX/share/phenix
+      # Downloaded only
+      elif [ -a $PHENIX_DOWNLOAD.tar.gz ]; then
+        printf "  Phenix install present as compressed archive\n"
+        printf "  Uncompressing\n"
+        gunzip $PHENIX_DOWNLOAD.tar.gz
+        printf "  Unpacking\n"
+        tar -xf $PHENIX_DOWNLOAD.tar
 
-  # Hack the phenix python distribution
-  cd $PYTHON_PREFIX_SRC
-  if [[ $PLATFORM == "Darwin" ]]; then
+      # Downloaded in the ~/Downloads directory
+      elif [ -a ~/Downloads/$PHENIX_DOWNLOAD.tar.gz ]; then
+        printf "  Phenix install present as compressed archive in ~/Downloads\n"
+        printf "  Copying\n"
+        cp ~/Downloads/$PHENIX_DOWNLOAD.tar.gz .
+        printf "  Uncompressing\n"
+        gunzip $PHENIX_DOWNLOAD.tar.gz
+        printf "  Unpacking\n"
+        tar -xf $PHENIX_DOWNLOAD.tar
 
-    echo "Darwin"
-    SYSCONFIG_DIR="$PREFIX/share/phenix/base/Python.framework/Versions/2.7/lib/python2.7"
-    echo $SYSCONFIG_DIR
+      # Downloaded and uncompressed in the ~/Downloads directory
+      elif [ -a ~/Downloads/$PHENIX_DOWNLOAD.tar ]; then
+        printf "  Phenix install present as archive in ~/Downloads\n"
+        printf "  Copying\n"
+        cp ~/Downloads/$PHENIX_DOWNLOAD.tar .
+        printf "  Unpacking\n"
+        tar -xf $PHENIX_DOWNLOAD.tar
 
-    # Copy _sysconfigdata.py to local dir
-    cp $SYSCONFIG_DIR/_sysconfigdata.py ./_sysconfigdata.py.orig
-    mv $SYSCONFIG_DIR/_sysconfigdata.py $SYSCONFIG_DIR/_sysconfigdata.py.orig
-    echo "# This file modified by rapd install" > ./tmp.py
-    echo "# find the original file in this directory with the name" >> ./tmp.py
-    echo "# _sysconfigdata.py.orig" >> ./tmp.py
-    echo "this_python_root='$PREFIX/share/phenix/base/Python.framework/Versions/2.7'" >> ./tmp.py
-    cat tmp.py  _sysconfigdata.py.orig > tmp_sysconfigdata.py
+      # Downloaded and uncompressed and unpacked in the ~/Downloads directory
+      elif [ -a ~/Downloads/$PHENIX_DOWNLOAD ]; then
+        printf "  Phenix install present in ~/Downloads\n"
+        printf "  Copying\n"
+        cp -r ~/Downloads/$PHENIX_DOWNLOAD .
 
-    # replacing '/Users/builder/slave/phenix-nightly-mac-intel-osx-x86_64-10_9/base/Python.framework/Versions/2.7/lib'
-    sed -e "s/\'\/Users\/builder\/slave\/phenix-nightly-mac-intel-osx-x86_64-10_9\/base\/Python\.framework\/Versions\/2\.7/this_python_root\+\'/g" \
-        -e "s/\/Users\/builder\/slave\/phenix-nightly-mac-intel-osx-x86_64-10_9\/base\/Python\.framework\/Versions\/2\.7/\'\+this_python_root\+\'/g" \
-    tmp_sysconfigdata.py > new_sysconfigdata.py
-
-    cp ./new_sysconfigdata.py $SYSCONFIG_DIR/_sysconfigdata.py
-    rm ./_sysconfigdata.py.orig
-    rm ./tmp_sysconfigdata.py
-    rm ./tmp.py
-    rm ./new_sysconfigdata.py
-
-  elif [[ $PLATFORM == "Linux" ]]; then
-
-    # CentOS
-    if [ -f /etc/centos-release ]; then
-      DIST='CentOS'
-      REV=`cat /etc/centos-release | sed s/.*release\ // | sed s/\ .*//`
-
-      if [ ${REV:0:1} == "6" ]; then
-        printf "  CentOS 6\n"
-        SYSCONFIG_DIR="$PREFIX/share/phenix/base/lib/python2.7"
-        echo $SYSCONFIG_DIR
-
-        # Copy _sysconfigdata.py to local dir
-        cp $SYSCONFIG_DIR/_sysconfigdata.py ./_sysconfigdata.py.orig
-        mv $SYSCONFIG_DIR/_sysconfigdata.py $SYSCONFIG_DIR/_sysconfigdata.py.orig
-        echo "# This file modified by rapd install" > ./tmp.py
-        echo "# find the original file in this directory with the name" >> ./tmp.py
-        echo "# _sysconfigdata.py.orig" >> ./tmp.py
-        echo "this_python_root='$PREFIX/share/phenix/base'" >> ./tmp.py
-        cat tmp.py  _sysconfigdata.py.orig > tmp_sysconfigdata.py
-
-        # replacing '/home/builder/slave/phenix-nightly-intel-linux-2_6-x86_64/base'
-        sed -e "s/\'\/home\/builder\/slave\/phenix-nightly-intel-linux-2_6-x86_64-centos6\/base/this_python_root\+\'/g" \
-            -e   "s/\/home\/builder\/slave\/phenix-nightly-intel-linux-2_6-x86_64-centos6\/base/\'\+this_python_root\+\'/g" \
-        tmp_sysconfigdata.py > new_sysconfigdata.py
-
-        cp ./new_sysconfigdata.py $SYSCONFIG_DIR/_sysconfigdata.py
-        rm ./_sysconfigdata.py.orig
-        rm ./tmp_sysconfigdata.py
-        rm ./tmp.py
-        rm ./new_sysconfigdata.py
+      else
+        printf "  \033[91mInstaller needs the Phenix installer\033[0m\n"
+        printf "  Please navigate to https://www.phenix-online.org/download/phenix/release/ \n"
+        printf "  click on $PHENIX_DOWNLOAD_REPR \n"
+        printf "  to download $PHENIX_DOWNLOAD.tar.gz\n"
+        printf "  and place it in the directory ~/Downloads or $PHENIX_PREFIX_SRC\n"
+        printf "  Hit return when you have done so..."
+        read foo
       fi
+    done
 
-    # RedHat & Scientific
-    elif [ -f /etc/redhat-release ]; then
+    # Install phenix
+    cd $PHENIX_INSTALLER_DIR
+    ./install --prefix=$PREFIX/share
 
-      printf "  RedHat Derivative\n"
+    # Create soft link
+    ln -s $PREFIX/share/phenix-$PHENIX_VERSION $PREFIX/share/phenix
 
-      DIST=`cat /etc/redhat-release | sed s/\ .*//`
-      REV=`cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*//`
+    # Hack the phenix python distribution
+    cd $PYTHON_PREFIX_SRC
+    if [[ $PLATFORM == "Darwin" ]]; then
 
-      if [[ $DIST == "Scientific" ]];then
+      echo "Darwin"
+      SYSCONFIG_DIR="$PREFIX/share/phenix/base/Python.framework/Versions/2.7/lib/python2.7"
+      echo $SYSCONFIG_DIR
 
-        if [ ${REV:0:1} == "7" ]; then
-            printf "  Scientific Linux 7\n"
-            PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos6"
+      # Copy _sysconfigdata.py to local dir
+      cp $SYSCONFIG_DIR/_sysconfigdata.py ./_sysconfigdata.py.orig
+      mv $SYSCONFIG_DIR/_sysconfigdata.py $SYSCONFIG_DIR/_sysconfigdata.py.orig
+      echo "# This file modified by rapd install" > ./tmp.py
+      echo "# find the original file in this directory with the name" >> ./tmp.py
+      echo "# _sysconfigdata.py.orig" >> ./tmp.py
+      echo "this_python_root='$PREFIX/share/phenix/base/Python.framework/Versions/2.7'" >> ./tmp.py
+      cat tmp.py  _sysconfigdata.py.orig > tmp_sysconfigdata.py
 
-        elif [ ${REV:0:1} == "6" ]; then
-          printf "  Scientific Linux 6\n"
+      # replacing '/Users/builder/slave/phenix-nightly-mac-intel-osx-x86_64-10_9/base/Python.framework/Versions/2.7/lib'
+      sed -e "s/\'\/Users\/builder\/slave\/phenix-nightly-mac-intel-osx-x86_64-10_9\/base\/Python\.framework\/Versions\/2\.7/this_python_root\+\'/g" \
+          -e "s/\/Users\/builder\/slave\/phenix-nightly-mac-intel-osx-x86_64-10_9\/base\/Python\.framework\/Versions\/2\.7/\'\+this_python_root\+\'/g" \
+      tmp_sysconfigdata.py > new_sysconfigdata.py
+
+      cp ./new_sysconfigdata.py $SYSCONFIG_DIR/_sysconfigdata.py
+      rm ./_sysconfigdata.py.orig
+      rm ./tmp_sysconfigdata.py
+      rm ./tmp.py
+      rm ./new_sysconfigdata.py
+
+    elif [[ $PLATFORM == "Linux" ]]; then
+
+      # CentOS
+      if [ -f /etc/centos-release ]; then
+        DIST='CentOS'
+        REV=`cat /etc/centos-release | sed s/.*release\ // | sed s/\ .*//`
+
+        if [ ${REV:0:1} == "6" ]; then
+          printf "  CentOS 6\n"
           SYSCONFIG_DIR="$PREFIX/share/phenix/base/lib/python2.7"
           echo $SYSCONFIG_DIR
 
           # Copy _sysconfigdata.py to local dir
-          # cp /Users/frankmurphy/workspace/rapd2test/share/phenix-1.10.1-2155/base/Python.framework/Versions/2.7/lib/python2.7/_sysconfigdata.py ./_sysconfigdata.py.orig
-          # cp $PREFIX/share/phenix/base/Python.framework/Versions/2.7/lib/python2.7/_sysconfigdata.py ./_sysconfigdata.py.orig
           cp $SYSCONFIG_DIR/_sysconfigdata.py ./_sysconfigdata.py.orig
-          #cp /Users/frankmurphy/workspace/rapd2test/share/phenix-1.10.1-2155/base/Python.framework/Versions/2.7/lib/python2.7/_sysconfigdata.py /Users/frankmurphy/workspace/rapd2test/share/phenix-1.10.1-2155/base/Python.framework/Versions/2.7/lib/python2.7/_sysconfigdata.py.orig
           mv $SYSCONFIG_DIR/_sysconfigdata.py $SYSCONFIG_DIR/_sysconfigdata.py.orig
           echo "# This file modified by rapd install" > ./tmp.py
           echo "# find the original file in this directory with the name" >> ./tmp.py
           echo "# _sysconfigdata.py.orig" >> ./tmp.py
-          # echo "#from os import environ as env" >> ./tmp.py
-          # echo "#this_python_root=env['PYTHON_ROOT']" >> ./tmp.py
-          # echo "#this_python_dir=env['PYTHON_DIR']" >> ./tmp.py
-          # echo "#this_sqlite_dir=env['SQLITE_DIR']\n" >> ./tmp.py
           echo "this_python_root='$PREFIX/share/phenix/base'" >> ./tmp.py
           cat tmp.py  _sysconfigdata.py.orig > tmp_sysconfigdata.py
 
-          # replacing '/Users/builder/slave/phenix-nightly-mac-intel-osx-x86_64-10_9/base/Python.framework/Versions/2.7/lib'
+          # replacing '/home/builder/slave/phenix-nightly-intel-linux-2_6-x86_64/base'
           sed -e "s/\'\/home\/builder\/slave\/phenix-nightly-intel-linux-2_6-x86_64-centos6\/base/this_python_root\+\'/g" \
               -e   "s/\/home\/builder\/slave\/phenix-nightly-intel-linux-2_6-x86_64-centos6\/base/\'\+this_python_root\+\'/g" \
           tmp_sysconfigdata.py > new_sysconfigdata.py
@@ -403,67 +363,115 @@ if [ $INSTALL_PHENIX == 1 ]; then
           rm ./tmp_sysconfigdata.py
           rm ./tmp.py
           rm ./new_sysconfigdata.py
-
-        elif [ ${REV:0:1} == "5" ]; then
-          printf "  Scientific Linux 5\n"
-
-          SYSCONFIG_DIR="$PREFIX/share/phenix/base/lib/python2.7"
-          echo $SYSCONFIG_DIR
-
-          # Copy _sysconfigdata.py to local dir
-          cp $SYSCONFIG_DIR/_sysconfigdata.py ./_sysconfigdata.py.orig
-          mv $SYSCONFIG_DIR/_sysconfigdata.py $SYSCONFIG_DIR/_sysconfigdata.py.orig
-          echo "# This file modified by rapd install" > ./tmp.py
-          echo "# find the original file in this directory with the name" >> ./tmp.py
-          echo "# _sysconfigdata.py.orig" >> ./tmp.py
-          echo "this_python_root='$PREFIX/share/phenix/base'" >> ./tmp.py
-          cat tmp.py  _sysconfigdata.py.orig > tmp_sysconfigdata.py
-
-          # replacing '/home/builder/slave/phenix-nightly-intel-linux-2_6-x86_64-centos5/base'
-          sed -e "s/\'\/home\/builder\/slave\/phenix-nightly-intel-linux-2_6-x86_64-centos5\/base/this_python_root\+\'/g" \
-              -e   "s/\/home\/builder\/slave\/phenix-nightly-intel-linux-2_6-x86_64-centos5\/base/\'\+this_python_root\+\'/g" \
-          tmp_sysconfigdata.py > new_sysconfigdata.py
-
-          cp ./new_sysconfigdata.py $SYSCONFIG_DIR/_sysconfigdata.py
-          rm ./_sysconfigdata.py.orig
-          rm ./tmp_sysconfigdata.py
-          rm ./tmp.py
-          rm ./new_sysconfigdata.py
         fi
 
-      elif [[ $DIST == "CentOS" ]]; then
+      # RedHat & Scientific
+      elif [ -f /etc/redhat-release ]; then
 
-        if [ ${REV:0:1} == "5" ]; then
+        printf "  RedHat Derivative\n"
 
-          printf "  CentOS 5\n"
-          SYSCONFIG_DIR="$PREFIX/share/phenix/base/lib/python2.7"
-          echo $SYSCONFIG_DIR
+        DIST=`cat /etc/redhat-release | sed s/\ .*//`
+        REV=`cat /etc/redhat-release | sed s/.*release\ // | sed s/\ .*//`
 
-          # Copy _sysconfigdata.py to local dir
-          cp $SYSCONFIG_DIR/_sysconfigdata.py ./_sysconfigdata.py.orig
-          mv $SYSCONFIG_DIR/_sysconfigdata.py $SYSCONFIG_DIR/_sysconfigdata.py.orig
-          echo "# This file modified by rapd install" > ./tmp.py
-          echo "# find the original file in this directory with the name" >> ./tmp.py
-          echo "# _sysconfigdata.py.orig" >> ./tmp.py
-          echo "this_python_root='$PREFIX/share/phenix/base'" >> ./tmp.py
-          cat tmp.py  _sysconfigdata.py.orig > tmp_sysconfigdata.py
+        if [[ $DIST == "Scientific" ]];then
 
-          # replacing '/home/builder/slave/phenix-nightly-intel-linux-2_6-x86_64-centos5/base'
-          sed -e "s/\'\/home\/builder\/slave\/phenix-nightly-intel-linux-2_6-x86_64-centos5\/base/this_python_root\+\'/g" \
-              -e   "s/\/home\/builder\/slave\/phenix-nightly-intel-linux-2_6-x86_64-centos5\/base/\'\+this_python_root\+\'/g" \
-          tmp_sysconfigdata.py > new_sysconfigdata.py
+          if [ ${REV:0:1} == "7" ]; then
+              printf "  Scientific Linux 7\n"
+              PHENIX_DOWNLOAD="phenix-installer-$PHENIX_VERSION-intel-linux-2.6-x86_64-centos6"
 
-          cp ./new_sysconfigdata.py $SYSCONFIG_DIR/_sysconfigdata.py
-          rm ./_sysconfigdata.py.orig
-          rm ./tmp_sysconfigdata.py
-          rm ./tmp.py
-          rm ./new_sysconfigdata.py
+          elif [ ${REV:0:1} == "6" ]; then
+            printf "  Scientific Linux 6\n"
+            SYSCONFIG_DIR="$PREFIX/share/phenix/base/lib/python2.7"
+            echo $SYSCONFIG_DIR
+
+            # Copy _sysconfigdata.py to local dir
+            # cp /Users/frankmurphy/workspace/rapd2test/share/phenix-1.10.1-2155/base/Python.framework/Versions/2.7/lib/python2.7/_sysconfigdata.py ./_sysconfigdata.py.orig
+            # cp $PREFIX/share/phenix/base/Python.framework/Versions/2.7/lib/python2.7/_sysconfigdata.py ./_sysconfigdata.py.orig
+            cp $SYSCONFIG_DIR/_sysconfigdata.py ./_sysconfigdata.py.orig
+            #cp /Users/frankmurphy/workspace/rapd2test/share/phenix-1.10.1-2155/base/Python.framework/Versions/2.7/lib/python2.7/_sysconfigdata.py /Users/frankmurphy/workspace/rapd2test/share/phenix-1.10.1-2155/base/Python.framework/Versions/2.7/lib/python2.7/_sysconfigdata.py.orig
+            mv $SYSCONFIG_DIR/_sysconfigdata.py $SYSCONFIG_DIR/_sysconfigdata.py.orig
+            echo "# This file modified by rapd install" > ./tmp.py
+            echo "# find the original file in this directory with the name" >> ./tmp.py
+            echo "# _sysconfigdata.py.orig" >> ./tmp.py
+            # echo "#from os import environ as env" >> ./tmp.py
+            # echo "#this_python_root=env['PYTHON_ROOT']" >> ./tmp.py
+            # echo "#this_python_dir=env['PYTHON_DIR']" >> ./tmp.py
+            # echo "#this_sqlite_dir=env['SQLITE_DIR']\n" >> ./tmp.py
+            echo "this_python_root='$PREFIX/share/phenix/base'" >> ./tmp.py
+            cat tmp.py  _sysconfigdata.py.orig > tmp_sysconfigdata.py
+
+            # replacing '/Users/builder/slave/phenix-nightly-mac-intel-osx-x86_64-10_9/base/Python.framework/Versions/2.7/lib'
+            sed -e "s/\'\/home\/builder\/slave\/phenix-nightly-intel-linux-2_6-x86_64-centos6\/base/this_python_root\+\'/g" \
+                -e   "s/\/home\/builder\/slave\/phenix-nightly-intel-linux-2_6-x86_64-centos6\/base/\'\+this_python_root\+\'/g" \
+            tmp_sysconfigdata.py > new_sysconfigdata.py
+
+            cp ./new_sysconfigdata.py $SYSCONFIG_DIR/_sysconfigdata.py
+            rm ./_sysconfigdata.py.orig
+            rm ./tmp_sysconfigdata.py
+            rm ./tmp.py
+            rm ./new_sysconfigdata.py
+
+          elif [ ${REV:0:1} == "5" ]; then
+            printf "  Scientific Linux 5\n"
+
+            SYSCONFIG_DIR="$PREFIX/share/phenix/base/lib/python2.7"
+            echo $SYSCONFIG_DIR
+
+            # Copy _sysconfigdata.py to local dir
+            cp $SYSCONFIG_DIR/_sysconfigdata.py ./_sysconfigdata.py.orig
+            mv $SYSCONFIG_DIR/_sysconfigdata.py $SYSCONFIG_DIR/_sysconfigdata.py.orig
+            echo "# This file modified by rapd install" > ./tmp.py
+            echo "# find the original file in this directory with the name" >> ./tmp.py
+            echo "# _sysconfigdata.py.orig" >> ./tmp.py
+            echo "this_python_root='$PREFIX/share/phenix/base'" >> ./tmp.py
+            cat tmp.py  _sysconfigdata.py.orig > tmp_sysconfigdata.py
+
+            # replacing '/home/builder/slave/phenix-nightly-intel-linux-2_6-x86_64-centos5/base'
+            sed -e "s/\'\/home\/builder\/slave\/phenix-nightly-intel-linux-2_6-x86_64-centos5\/base/this_python_root\+\'/g" \
+                -e   "s/\/home\/builder\/slave\/phenix-nightly-intel-linux-2_6-x86_64-centos5\/base/\'\+this_python_root\+\'/g" \
+            tmp_sysconfigdata.py > new_sysconfigdata.py
+
+            cp ./new_sysconfigdata.py $SYSCONFIG_DIR/_sysconfigdata.py
+            rm ./_sysconfigdata.py.orig
+            rm ./tmp_sysconfigdata.py
+            rm ./tmp.py
+            rm ./new_sysconfigdata.py
+          fi
+
+        elif [[ $DIST == "CentOS" ]]; then
+
+          if [ ${REV:0:1} == "5" ]; then
+
+            printf "  CentOS 5\n"
+            SYSCONFIG_DIR="$PREFIX/share/phenix/base/lib/python2.7"
+            echo $SYSCONFIG_DIR
+
+            # Copy _sysconfigdata.py to local dir
+            cp $SYSCONFIG_DIR/_sysconfigdata.py ./_sysconfigdata.py.orig
+            mv $SYSCONFIG_DIR/_sysconfigdata.py $SYSCONFIG_DIR/_sysconfigdata.py.orig
+            echo "# This file modified by rapd install" > ./tmp.py
+            echo "# find the original file in this directory with the name" >> ./tmp.py
+            echo "# _sysconfigdata.py.orig" >> ./tmp.py
+            echo "this_python_root='$PREFIX/share/phenix/base'" >> ./tmp.py
+            cat tmp.py  _sysconfigdata.py.orig > tmp_sysconfigdata.py
+
+            # replacing '/home/builder/slave/phenix-nightly-intel-linux-2_6-x86_64-centos5/base'
+            sed -e "s/\'\/home\/builder\/slave\/phenix-nightly-intel-linux-2_6-x86_64-centos5\/base/this_python_root\+\'/g" \
+                -e   "s/\/home\/builder\/slave\/phenix-nightly-intel-linux-2_6-x86_64-centos5\/base/\'\+this_python_root\+\'/g" \
+            tmp_sysconfigdata.py > new_sysconfigdata.py
+
+            cp ./new_sysconfigdata.py $SYSCONFIG_DIR/_sysconfigdata.py
+            rm ./_sysconfigdata.py.orig
+            rm ./tmp_sysconfigdata.py
+            rm ./tmp.py
+            rm ./new_sysconfigdata.py
+          fi
         fi
       fi
     fi
-  fi
 
-  printf "\033[92mPhenix install complete.\033[0m\n\n"
+    printf "\033[92mPhenix install complete.\033[0m\n\n"
+  fi
 fi
 
 # Set up rapd
@@ -488,30 +496,30 @@ printf "rapd.python\n"
      $PREFIX/share/phenix/build/bin/cctbx.python > ./rapd.python
 chmod +x ./rapd.python
 
-
 # Create scripts
 RAPD_HOME=$PREFIX
 export RAPD_HOME
+cd $THIS_DIR
 ./create_scripts.sh
-<!-- echo "#! /bin/bash" > ./rapd.control
-echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/src\/control\/rapd_control.py \"\$@\"" >>./rapd.control
-chmod +x ./rapd.control
-
-echo "#! /bin/bash" > ./rapd.gather
-echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/src\/sites\/gather\/rapd_gather.py \"\$@\"" >>./rapd.gather
-chmod +x ./rapd.gather
-
-echo "#! /bin/bash" > ./rapd.launcher
-echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launcher.py \"\$@\"" >>./rapd.launcher
-chmod +x ./rapd.launcher
-
-echo "#! /bin/bash" > ./rapd.launch
-echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launch.py \"\$@\"" >>./rapd.launch
-chmod +x ./rapd.launch
-
-echo "#! /bin/bash" > ./rapd.overwatch
-echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py \"\$@\"" >>./rapd.overwatch
-chmod +x ./rapd.overwatch -->
+# echo "#! /bin/bash" > ./rapd.control
+# echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/src\/control\/rapd_control.py \"\$@\"" >>./rapd.control
+# chmod +x ./rapd.control
+#
+# echo "#! /bin/bash" > ./rapd.gather
+# echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/src\/sites\/gather\/rapd_gather.py \"\$@\"" >>./rapd.gather
+# chmod +x ./rapd.gather
+#
+# echo "#! /bin/bash" > ./rapd.launcher
+# echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launcher.py \"\$@\"" >>./rapd.launcher
+# chmod +x ./rapd.launcher
+#
+# echo "#! /bin/bash" > ./rapd.launch
+# echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launch.py \"\$@\"" >>./rapd.launch
+# chmod +x ./rapd.launch
+#
+# echo "#! /bin/bash" > ./rapd.overwatch
+# echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py \"\$@\"" >>./rapd.overwatch
+# chmod +x ./rapd.overwatch
 
 
 # Create the rapd.shrc script

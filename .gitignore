@@ -27,3 +27,6 @@ ui
 # Files that should be hidden
 *secret*
 *foo*
+
+# Temporary workspaces
+tmp

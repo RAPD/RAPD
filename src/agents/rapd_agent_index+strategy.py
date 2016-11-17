@@ -70,22 +70,22 @@ class RapdAgent(Process):
 
     # For testing individual modules (Will not run in Test mode on cluster!! Can be set at end of __init__.)
     test = False
-    
+
     # Removes junk files and directories at end. (Will still clean on cluster!! Can be set at end of __init__.)
     clean = False
-    
+
     # Runs in RAM (slightly faster), but difficult to debug.
     ram = False
-    
+
     # Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Slower (>10%).
     cluster_use = False
-    
+
     # Switch for verbose
     verbose = True
-    
+
     # Number of Labelit iterations to run.
     iterations = 6
-    
+
     # This is where I place my overall folder settings.
     working_dir			       = False
     auto_summary		       = False
@@ -137,7 +137,7 @@ class RapdAgent(Process):
     # Dicts for running the Queues
     jobs			       = {}
     vips_images 		       = {}
-    
+
     # The results of the agent
     results = {}
 
@@ -151,7 +151,7 @@ class RapdAgent(Process):
         """
 	# Save the start time
 	self.st = time.time()
-	
+
 	# If the logging instance is passed in...
         if logger:
 	  self.logger = logger
@@ -161,7 +161,7 @@ class RapdAgent(Process):
           self.logger.debug("__init__")
 	self.logger.info(site)
         self.logger.info(command)
-	
+
         # Store passed-in variables
         self.site = site
         self.command = command
@@ -186,7 +186,7 @@ class RapdAgent(Process):
 	  self.site_parameters = self.site.BEAM_INFO.get(Utils.get_site(self.header['fullname'],False)[1])
 	  #Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
 	  self.gui = False
-	
+
 	# Load the appropriate cluster adapter or set to False
 	if self.cluster_use:
 	  self.cluster_adapter = Utils.load_cluster_adapter(self)
@@ -194,7 +194,7 @@ class RapdAgent(Process):
 	else:
 	  self.cluster_adapter = False
 	  self.cluster_queue = False
-	  
+
 	# Set timer for distl. "False" will disable.
         if self.header2:
             self.distl_timer = 60
@@ -208,15 +208,15 @@ class RapdAgent(Process):
         # Turns on multiprocessing for everything
         # Turns on all iterations of Labelit running at once, sorts out highest symmetry solution,
         # then continues...(much better!!)
-        self.multiproc = self.preferences.get("multiprocessing", True) 
-        
+        self.multiproc = self.preferences.get("multiprocessing", True)
+
 	# Set for Eisenberg peptide work.
         self.sample_type = self.preferences.get("sample_type", "Protein")
         if self.sample_type == "Peptide":
             self.peptide     = True
         else:
             self.peptide     = False
-        
+
 	# BEST is default and if it fails Mosflm results are shown as backup.
 	# Setting to 'mosflm' will force it to show Mosflm results regardless.
 	self.strategy = self.preferences.get("strategy_type", "best")
@@ -309,7 +309,7 @@ class RapdAgent(Process):
             self.logger.debug("AutoindexingStrategy::run")
 
         self.preprocess()
-        
+
         if self.minikappa:
             self.processXOalign()
         else:
@@ -337,7 +337,7 @@ class RapdAgent(Process):
                     self.postprocessDistl()
     	    # Make PHP files for GUI, passback results, and cleanup.
             self.postprocess()
-        
+
     def preprocess(self):
         """
         Setup the working dir in the RAM and save the dir where the results will go at the end.
@@ -2148,7 +2148,7 @@ class RunLabelit(Process):
         self.test = params.get("test", False)
         #Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Adds 1-3s to total run time.
         #self.cluster_use = params.get("cluster",True)
-	
+
 	#If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
         self.cluster_queue = params.get("cluster_queue", False)
         #Get detector vendortype for settings. Defaults to ADSC.
@@ -2160,11 +2160,11 @@ class RunLabelit(Process):
         # If limiting number of LABELIT run on cluster.
         #self.red = params.get("redis", False)
         self.short = False
-	
+
 	#If using the cluster, get the correct module (already loaded)
 	if params.get("cluster",False):
 	  self.cluster_adapter = params.get("cluster",False)
-        
+
 	# Make decisions based on input params
 	if self.iterations != 6:
             self.short = True
@@ -2220,7 +2220,7 @@ class RunLabelit(Process):
             self.logger.debug('RunLabelit::run')
 
         self.preprocess()
-        
+
         # Make the initial dataset_prefernces.py file
         self.preprocessLabelit()
         if self.short:
@@ -2245,7 +2245,7 @@ class RunLabelit(Process):
           #Put the logs together
           self.labelitLog()
         self.postprocess()
-        
+
     def preprocess(self):
       """
       Setup the working dir in the RAM and save the dir where the results will go at the end.
@@ -2377,9 +2377,9 @@ class RunLabelit(Process):
                     #Delete the previous log still in the folder, otherwise the cluster jobs will append to it.
                     if os.path.exists(log):
                         os.system("rm -rf %s" % log)
-		    #run = Process(target=self.cluster_adapter.process_cluster, 
+		    #run = Process(target=self.cluster_adapter.process_cluster,
 		    #               args=({ 'command': command, 'log': log, 'queue': self.cluster_queue, 'pid': pid_queue},))
-		    run = Process(target=self.cluster_adapter.process_cluster_beorun, 
+		    run = Process(target=self.cluster_adapter.process_cluster_beorun,
 		                  args=({ 'command': command, 'log': log, 'queue': self.cluster_queue, 'pid': pid_queue},) )
                 else:
                     run = Process(target=Utils.processLocal, args=((command, log), self.logger, pid_queue))
@@ -2628,52 +2628,49 @@ if __name__ == '__main__':
 
   command = {
         "command":"AUTOINDEX+STRATEGY",
-        "directories":
-            {
-	        #"work": "/gpfs6/users/necat/Jon/RAPD_test/Output",
-                "work":"/home/schuerjp/temp/Junk",
-            },
-        "header1":{#"wavelength": "0.9792", #RADDOSE
-	   	"wavelength": 1.000, #RADDOSE
-	   	"detector":'ray300',
-	   	#"binning": "2x2", #LABELIT
-	   	"binning": "none", #
-	   	"time": "1.00",  #BEST
-	   	"twotheta": "0.00", #LABELIT
-	   	"transmission": "20",  #BEST
-	   	'osc_range': 1.0,
-	   	'distance' : 200.0,
-	   	'count_cutoff': 65535,
-	   	'omega_start': 0.0,
-	   	#"beam_center_x": "216.71", #PILATUS
-	   	#"beam_center_y": "222.45", #PILATUS
-	   	#"beam_center_x": "150.72", #Q315
-	   	#"beam_center_y": "158.68", #Q315
-	   	#"beam_center_x": "172.80", #HF4M
-	   	#"beam_center_y": "157.18", #HF4M
-	   	"beam_center_x": "151.19", #22ID
-	        "beam_center_y": "144.82", #22ID
-	   	#"beam_center_x": "150.25", #22BM
-	   	#"beam_center_y": "151.35", #22BM
-	   	"flux":'1.6e11', #RADDOSE
-	   	"beam_size_x":"0.07", #RADDOSE
-	   	"beam_size_y":"0.03", #RADDOSE
-	   	"gauss_x":'0.03', #RADDOSE
-	   	"gauss_y":'0.01', #RADDOSE
-		"fullname": "/panfs/panfs0.localdomain/archive/ID_16_06_01_staff_test/Se-Tryp_SER16-pn10/SER-16_Pn10_1.0001",
-	   	#"fullname": "/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0001",
-	   	#"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0001",
-	   	#"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_04_chrzas_feb_4_2016/SER4-TRYP_Pn3/SER4-TRYP_Pn3.0001",
-	   	#"fullname": "/gpfs6/users/necat/Jon/RAPD_test/Temp/mar/SER4-TRYP_Pn3.0001",
+        "directories": { "work": "/tmp/rapd_test" },
+        "header1":{
+            #"wavelength": "0.9792", #RADDOSE
+    	   	"wavelength": 1.000, #RADDOSE
+    	   	"detector":'ray300',
+    	   	#"binning": "2x2", #LABELIT
+    	   	"binning": "none", #
+    	   	"time": "1.00",  #BEST
+    	   	"twotheta": "0.00", #LABELIT
+    	   	"transmission": "20",  #BEST
+    	   	'osc_range': 1.0,
+    	   	'distance' : 200.0,
+    	   	'count_cutoff': 65535,
+    	   	'omega_start': 0.0,
+    	   	#"beam_center_x": "216.71", #PILATUS
+    	   	#"beam_center_y": "222.45", #PILATUS
+    	   	#"beam_center_x": "150.72", #Q315
+    	   	#"beam_center_y": "158.68", #Q315
+    	   	#"beam_center_x": "172.80", #HF4M
+    	   	#"beam_center_y": "157.18", #HF4M
+    	   	"beam_center_x": "151.19", #22ID
+    	        "beam_center_y": "144.82", #22ID
+    	   	#"beam_center_x": "150.25", #22BM
+    	   	#"beam_center_y": "151.35", #22BM
+    	   	"flux":'1.6e11', #RADDOSE
+    	   	"beam_size_x":"0.07", #RADDOSE
+    	   	"beam_size_y":"0.03", #RADDOSE
+    	   	"gauss_x":'0.03', #RADDOSE
+    	   	"gauss_y":'0.01', #RADDOSE
+    		"fullname": "/panfs/panfs0.localdomain/archive/ID_16_06_01_staff_test/Se-Tryp_SER16-pn10/SER-16_Pn10_1.0001",
+    	   	#"fullname": "/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0001",
+    	   	#"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0001",
+    	   	#"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_04_chrzas_feb_4_2016/SER4-TRYP_Pn3/SER4-TRYP_Pn3.0001",
+    	   	#"fullname": "/gpfs6/users/necat/Jon/RAPD_test/Temp/mar/SER4-TRYP_Pn3.0001",
 
-	   	#minikappa
-	   	#Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
-	   	#"mk3_phi":"0.0", #
-	   	#"mk3_kappa":"0.0", #
-	   	"phi": "0.000",
-	   	"STAC file1": '/gpfs6/users/necat/Jon/RAPD_test/mosflm.mat', #XOAlign
-	   	"STAC file2": '/gpfs6/users/necat/Jon/RAPD_test/bestfile.par', #XOAlign
-	   	"axis_align": 'long',	 #long,all,a,b,c,ab,ac,bc #XOAlign
+    	   	#minikappa
+    	   	#Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
+    	   	#"mk3_phi":"0.0", #
+    	   	#"mk3_kappa":"0.0", #
+    	   	"phi": "0.000",
+    	   	"STAC file1": '/gpfs6/users/necat/Jon/RAPD_test/mosflm.mat', #XOAlign
+    	   	"STAC file2": '/gpfs6/users/necat/Jon/RAPD_test/bestfile.par', #XOAlign
+    	   	"axis_align": 'long',	 #long,all,a,b,c,ab,ac,bc #XOAlign
 		},
         "header2":{#"wavelength": "0.9792", #RADDOSE
 	    "wavelength": 1.000, #RADDOSE
@@ -2887,14 +2884,14 @@ if __name__ == '__main__':
     },
 
   ('127.0.0.1', 50001)]#self.sendBack2 for sending results back to rapd_cluster.
-  
+
   import sites.sercat as site
   import utils.log
-  
-  
+
+
   log = utils.log.get_logger(logfile_dir=command['directories']['work'],)
   #log = utils.log.get_logger(logfile_dir=logfile_dir,
   #                              logfile_id=logfile_id,
   #                              level=10)
 
-  RapdAgent(site,command,log)
+  RapdAgent(site, command, log)
