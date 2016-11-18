@@ -1854,24 +1854,38 @@ def getRes(self,inp=False):
     self.logger.exception('**ERROR in Utils.getRes**')
     return (0.0)
 
+def get_detector(image, load=False):
+    """
+    Returns the best detector file for a given an image. If the detector is
+    unknown to RAPD, a generic file will be suggested
+    """
+    from iotbx.detectors import ImageFactory
+
+    # If this detector corresponds to a site
+
+    # Try a generic detector
+
+    # No idea
+    return False
+
 def get_site(image, load=False):
   """
   Figures out the correct site file by reading in an image.
   """
   from utils.modules import load_module
   from iotbx.detectors import ImageFactory
-  
+
   d = {('MARCCD', 7)   : ('sercat', 'SERCAT_BM'),
-       ('MARCCD', 101) : ('sercat', 'SERCAT_ID'), 
+       ('MARCCD', 101) : ('sercat', 'SERCAT_ID'),
        }
-       
+
   i = ImageFactory(image)
   if load:
     return (load_module(seek_module=d[(i.vendortype, i.parameters['DETECTOR_SN'])],
                            directories='sites'))
   else:
     return (d[(i.vendortype, i.parameters['DETECTOR_SN'])])
-  
+
 
 def getWavelength(self,inp=False):
   """
@@ -1912,7 +1926,7 @@ def getVendortype(self,inp):
   return (vendortype)
 
 def load_cluster_adapter(self):
-  """Load the appropriate cluster adapter. 
+  """Load the appropriate cluster adapter.
      Need self.site set so it knows which cluster to import.
   """
   try:
@@ -1922,7 +1936,7 @@ def load_cluster_adapter(self):
       return (False)
   except:
     # If self.site is not set.
-    return (False) 
+    return (False)
 
 def killChildren(self,pid):
   """
