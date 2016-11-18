@@ -280,63 +280,63 @@ def calcTotResNumber(self,volume):
     return (None)
 
 def calcTransmission(self,attenuation=1):
-  """
-  NOT run for Best strategy. Calculate appropriate setting for % transmission for Mosflm strategy.
-  """
-  if self.verbose:
-    self.logger.debug('Utilities::calcTransmission')
-  try:
-    if self.distl_results:
-      if self.distl_results['Distl results'] != 'FAILED':
-        mean_int_sig = float(max(self.distl_results.get('Distl results').get('mean int signal')))
-        if mean_int_sig < 1:
-          mean_int_sig = -1
-    else:
-      mean_int_sig = -1
+    """
+    NOT run for Best strategy. Calculate appropriate setting for % transmission for Mosflm strategy.
+    """
+    if self.verbose:
+        self.logger.debug('Utilities::calcTransmission')
+    try:
+        if self.distl_results:
+            if self.distl_results['Distl results'] != 'FAILED':
+                mean_int_sig = float(max(self.distl_results.get('Distl results').get('mean int signal')))
+                if mean_int_sig < 1:
+                    mean_int_sig = -1
+        else:
+            mean_int_sig = -1
 
-    #TESTING: Adjusting the '4000' number to give reasonable results for expected transmission setting.
-    #if self.best_failed == False:
-    if mean_int_sig != -1:
-      trans = int((4000/(mean_int_sig))*self.transmission*attenuation)
-      if trans > 100:
-        trans = int(100)
-      if trans < 1:
-        trans = int(1)
-    else:
-      trans = int(attenuation*self.transmission)
-    return (trans)
+        #TESTING: Adjusting the '4000' number to give reasonable results for expected transmission setting.
+        #if self.best_failed == False:
+        if mean_int_sig != -1:
+            trans = int((4000/(mean_int_sig))*self.transmission*attenuation)
+            if trans > 100:
+                trans = int(100)
+                if trans < 1:
+                    trans = int(1)
+        else:
+            trans = int(attenuation*self.transmission)
+        return (trans)
 
-  except:
-    self.logger.exception('**Error in Utils.calcTransmission**')
-    return (1)
+    except:
+        self.logger.exception('**Error in Utils.calcTransmission**')
+        return (1)
 
 def calcVolume(self):
-  """
-  Calculate and return volume of unit cell.
-  """
-  if self.verbose:
-    self.logger.debug('Utilities::calcVolume')
-  try:
-    log = []
-    volume = False
-    #put together the command script for Raddose
-    if type(self.cell) == list:
-      cell = ' '.join(self.cell)
-    else:
-      cell = self.cell
-    #Run Raddose to get the volume of the cell.
-    command = 'raddose << EOF\nCELL %s\nEND\nEOF\n'%cell
-    output = subprocess.Popen(command,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-    for line in output.stdout:
-      log.append(line)
-      #self.logger.debug(line.rstrip())
-      if line.startswith('Unit Cell Volume'):
-        volume = float((line.split())[4])
-    return(volume)
+    """
+    Calculate and return volume of unit cell.
+    """
+    if self.verbose:
+        self.logger.debug('Utilities::calcVolume')
+    try:
+        log = []
+        volume = False
+        #put together the command script for Raddose
+        if isinstance(self.cell, list):
+            cell = ' '.join(self.cell)
+        else:
+            cell = self.cell
+        #Run Raddose to get the volume of the cell.
+        command = 'raddose << EOF\nCELL %s\nEND\nEOF\n'%cell
+        output = subprocess.Popen(command,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+        for line in output.stdout:
+            log.append(line)
+            #self.logger.debug(line.rstrip())
+            if line.startswith('Unit Cell Volume'):
+                volume = float((line.split())[4])
+        return(volume)
 
-  except:
-    self.logger.exception('**Error in Utils.calcVolume**')
-    return(None)
+    except:
+        self.logger.exception('**Error in Utils.calcVolume**')
+        return(None)
 
 def changeIns(self):
   """
@@ -434,30 +434,30 @@ def checkAnom(self):
     Parse.setShelxResults(self)
     return(False)
 
-def checkInverse(self,inp):
-  """
-  Check if inverse SG is possible.
-  """
-  if self.verbose:
-    self.logger.debug('Utilities::checkInverse')
+def checkInverse(self, inp):
+    """
+    Check if inverse SG is possible.
+    """
+    if self.verbose:
+        self.logger.debug('Utilities::checkInverse')
 
-  subgroups = {  '76' : ['78'],
-                 '91' : ['95'],
-                 '92' : ['96'],
-                 '144': ['145'],
-                 '151': ['153'],
-                 '152': ['154'],
-                 '169': ['170'],
-                 '171': ['172'],
-                 '178': ['179'],
-                 '180': ['181'],
-                 '212': ['213']
-                 }
-  if subgroups.has_key(inp):
-    sg = subgroups[inp]
-    return(sg)
-  else:
-    return([inp])
+    subgroups = {  '76' : ['78'],
+                   '91' : ['95'],
+                   '92' : ['96'],
+                   '144': ['145'],
+                   '151': ['153'],
+                   '152': ['154'],
+                   '169': ['170'],
+                   '171': ['172'],
+                   '178': ['179'],
+                   '180': ['181'],
+                   '212': ['213']
+                   }
+    if subgroups.has_key(inp):
+        sg = subgroups[inp]
+        return(sg)
+    else:
+        return([inp])
 
 def checkSG(self,inp):
   """
@@ -1869,22 +1869,22 @@ def get_detector(image, load=False):
     return False
 
 def get_site(image, load=False):
-  """
-  Figures out the correct site file by reading in an image.
-  """
-  from utils.modules import load_module
-  from iotbx.detectors import ImageFactory
+    """
+    Figures out the correct site file by reading in an image.
+    """
+    from utils.modules import load_module
+    from iotbx.detectors import ImageFactory
 
-  d = {('MARCCD', 7)   : ('sercat', 'SERCAT_BM'),
-       ('MARCCD', 101) : ('sercat', 'SERCAT_ID'),
-       }
+    d = {('MARCCD', 7) : ('sercat', 'SERCAT_BM'),
+         ('MARCCD', 101) : ('sercat', 'SERCAT_ID'),
+         }
 
-  i = ImageFactory(image)
-  if load:
-    return (load_module(seek_module=d[(i.vendortype, i.parameters['DETECTOR_SN'])],
-                           directories='sites'))
-  else:
-    return (d[(i.vendortype, i.parameters['DETECTOR_SN'])])
+    i = ImageFactory(image)
+    if load:
+        return (load_module(seek_module=d[(i.vendortype, i.parameters['DETECTOR_SN'])],
+                            directories='sites'))
+    else:
+        return (d[(i.vendortype, i.parameters['DETECTOR_SN'])])
 
 
 def getWavelength(self,inp=False):

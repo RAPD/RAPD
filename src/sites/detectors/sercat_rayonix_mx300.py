@@ -36,12 +36,19 @@ import sys
 
 # RAPD imports
 import detectors.rayonix_mx300 as detector
+XDS_INP = detector.XDS_INP
 
+# Detector information
 DETECTOR = "rayonix_mx300"
+VENDORTYPE = "MARCCD"
+DETECTOR_SN = 7
 DETECTOR_SUFFIX = ""
 IMAGE_TEMPLATE = "%s.????"
 RUN_NUMBER_IN_TEMPLATE = False
 HEADER_VERSION = 1
+
+# XDS information
+XDS_INP = {"test":"foo2"}
 
 def parse_file_name(fullname):
     """
@@ -51,17 +58,17 @@ def parse_file_name(fullname):
     Keyword arguments
     fullname -- the full path name of the image file
     """
-    print fullname
+    # print fullname
     directory = os.path.dirname(fullname)
-    print directory
+    # print directory
     basename = os.path.basename(fullname).rstrip(DETECTOR_SUFFIX)
-    print basename
+    # print basename
     sbase = basename.split(".")
-    print sbase
+    # print sbase
     prefix = ".".join(sbase[0:-1])
-    print prefix
+    # print prefix
     image_number = int(sbase[-1])
-    print image_number
+    # print image_number
     run_number = None
 
     return directory, basename, prefix, run_number, image_number
@@ -314,7 +321,7 @@ def read_header(fullname, beam_settings):
 
 if __name__ == "__main__":
 
-    if sys.argv[1]:
+    if len(sys.argv) > 1:
         test_image = sys.argv[1]
     else:
         test_image = "/Users/frankmurphy/workspace/rapd_github/src/test/sercat_id/t\

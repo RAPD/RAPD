@@ -36,6 +36,8 @@ import sys
 import detectors.rayonix_mx300hs as detector
 
 DETECTOR = "rayonix_mx300hs"
+VENDORTYPE = "MARCCD"
+DETECTOR_SN = 101
 DETECTOR_SUFFIX = ""
 IMAGE_TEMPLATE = "%s.????"
 RUN_NUMBER_IN_TEMPLATE = False

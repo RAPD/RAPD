@@ -5,6 +5,10 @@ Modules that need to be installed before installing RAPD2 for CentOS:
 yum install epel-release
 yum install blas-devel lapack-devel atlas-sse3-devel atlas-devel openblas-devel libffi-devel ImageMagick-devel
 
+## Mac OS
+
+## Docker
+
 ## Crystallographic Software
 Required software that should be installed prior to RAPD2 install:
 BEST (http://www.embl-hamburg.de/BEST/)
@@ -20,3 +24,11 @@ have to input the parameters for your detector and give it a unique name. Then u
 first column ('Name') and edit rapd_agent_strategy.py 'processBest' for the first line
 in command to specify the name of the detector (ie. 'best -f pilatus6m').If this is not
 correct, your strategies will not be very accurate.
+
+
+# Install Procedure
+
+## Full Install
+
+## Minimal Install
+The minimal install is useful for gatherer processes, not for data processing nodes.

@@ -32,6 +32,10 @@ import sys
 # RAPD imports
 import mar
 
+# RAPD information
+DETECTOR = "rayonix_mx300hs"
+VENDORTYPE = "MARCCD"
+
 def read_header(image):
     """Read header from rayonix mx300hs"""
     return mar.MarReadHeader(image)
