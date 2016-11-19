@@ -1,5 +1,5 @@
 """
-List of detectors understood by RAPD
+Utilities for detectors
 """
 
 __license__ = """
@@ -21,12 +21,33 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__created__ = "2016-11-18"
+__created__ = "2016-11-19"
 __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
-DETECTORS = {
-    ("MARCCD", 7): "sercat_rayonix_mx300",
-    ("MARCCD", 101): "sercat_rayonix_mx300hs"
-}
+# Standard imports
+import sys
+
+def print_details(image):
+    """
+    Print out the details for a given image
+    """
+    from iotbx.detectors import ImageFactory
+
+    # Read in the image
+    i = ImageFactory(image)
+
+    
+
+    # No idea
+    return True
+
+if __name__ == "__main__":
+
+    # Commandline for image
+    if len(sys.argv) > 1:
+        test_image = sys.argv[1]
+        print "Image read from command line %s" % test_image
+
+    print_details(test_image)
