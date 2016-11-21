@@ -81,6 +81,7 @@ Installs RAPD v$RAPD_VERSION
     -b           batch mode
     -h           print this help message and exit
     -p PREFIX    install prefix, defaults to $PREFIX
+    -u           update
     -c           cleanup
 "
             exit 2
@@ -93,6 +94,9 @@ Installs RAPD v$RAPD_VERSION
             ;;
         p)
             PREFIX="$OPTARG"
+            ;;
+        u)
+            UPDATE=1
             ;;
         # Clean up the source directories
         c)
@@ -163,7 +167,7 @@ if [ $INSTALL_PHENIX == 1 ]; then
 
   printf "$PREFIX/share/phenix"
 
-  if [[ -e $PREFIX/share/phenix ]]; then
+  if [[ -e $PREFIX/share/phenix-$PHENIX_VERSION ]]; then
     printf "\n\033[94mIt appears Phenix is already installed for RAPD - skipping\033[0m\n"
   else
     printf "\n\033[94mInstalling Phenix $PHENIX_VERSION\033[0m\n"
