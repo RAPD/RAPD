@@ -27,6 +27,7 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 DETECTORS = {
+    ("ADSC", 916): "necat_adsc_q315",
     ("MARCCD", 7): "sercat_rayonix_mx300",
     ("MARCCD", 101): "sercat_rayonix_mx300hs"
 }
