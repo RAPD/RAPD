@@ -74,7 +74,7 @@ def get_site_files():
     walks it to find all files that have names that match "*.py" and do not start with
     "_" or have the word "secret"
     """
-    print "get_site_files"
+    # print "get_site_files"
 
     def look_for_sites_files(directory):
         potential_files = []
@@ -83,8 +83,11 @@ def get_site_files():
             if "secret" in filename:
                 continue
             # No files that start with _
-            if filename.startswith("_"):
+            if os.path.basename(filename).startswith("_"):
                 continue
+            # Must be a python file
+            # if not filename.endswith(".py"):
+            #     continue
             # Filename OK
             potential_files.append(os.path.join(path, filename))
 
@@ -101,7 +104,7 @@ def get_site_files():
             sites_dir = os.path.join(path, "sites")
             break
 
-    print sites_dir
+    # print sites_dir
     if sites_dir:
         possible_files += look_for_sites_files(sites_dir)
 

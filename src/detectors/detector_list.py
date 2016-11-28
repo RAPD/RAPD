@@ -27,7 +27,10 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 DETECTORS = {
-    ("ADSC", 916): "necat_adsc_q315",
-    ("MARCCD", 7): "sercat_rayonix_mx300",
-    ("MARCCD", 101): "sercat_rayonix_mx300hs"
+    ("ADSC", 446): "adsc_q315",                 # NSLS X25 > X26C
+    ("ADSC", 911): "necat_adsc_q315",           # APS 24-ID-C
+    ("ADSC", 916): "necat_adsc_q315",           # APS 24-ID-E
+    ("MARCCD", 0): ["lscat_mar_300",],          # APS 21-ID-F
+    ("MARCCD", 7): "sercat_rayonix_mx300",      # APS 22BM
+    ("MARCCD", 101): "sercat_rayonix_mx300hs"   # APS 22ID
 }

@@ -32,32 +32,27 @@ import importlib
 import sys
 
 # RAPD imports
-import utils.commandline
+# import utils.commandline
 import utils.log
-import utils.lock
-import utils.site
+# import utils.lock
+# import utils.site
 import utils.text as text
-from control.model import Model
+import commandline_utils
+
 
 def get_commandline():
     """Get the commandline variables and handle them"""
 
     # Parse the commandline arguments
     commandline_description = """Launch an index & strategy on input image(s)"""
-    parser = argparse.ArgumentParser(parents=[utils.commandline.base_parser],
+    parser = argparse.ArgumentParser(parents=[commandline_utils.dp_parser],
                                      description=commandline_description)
 
-    # Specify detector
-    parser.add_argument("-d",
-                        action="store",
-                        dest="detector",
-                        help="Specify a detector for the analysis")
-
-    # parser.add_argument("command_files",
-    #                     nargs="*",
-    #                     default=False,
-    #                     help="Command files to execute")
-
+    # Pair?
+    # parser.add_argument("-d",
+    #                     action="store",
+    #                     dest="detector",
+    #                     help="Specify a detector for the analysis")
 
     return parser.parse_args()
 
@@ -67,9 +62,22 @@ def main():
 
     # Get the commandline args
     commandline_args = get_commandline()
+    tprint(commandline_args)
+
+    if commandline_args.listsites:
+        tprint(text.info + "Available sites:" + text.stop)
+        commandline_utils.print_sites(left_buffer="  ")
+        sys.exit()
+
+    # if commandline_args.listdetectors:
+    #     tprint(text.info + "Available detectors:" + text.stop)
+    #     commandline_utils.print_detectors(left_buffer="  ")
+    #     sys.exit()
 
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
+
+    tprint(environmental_vars)
 
     # Get site - commandline wins
     site = False

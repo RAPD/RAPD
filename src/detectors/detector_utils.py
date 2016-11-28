@@ -31,6 +31,7 @@ import sys
 
 # RAPD imports
 import utils.text as text
+import detector_list
 
 def print_detector_info(image):
     """
@@ -39,21 +40,65 @@ def print_detector_info(image):
 
     from iotbx.detectors import ImageFactory
 
-    i = ImageFactory(image)
+    try:
+        i = ImageFactory(image)
+    except IOError as e:
+        if "no format support found for" in e.message:
+            print text.red + "No format support for %s" % image + text.stop
+            return False
+        else:
+            print e
+            return False
+    except AttributeError as e:
+        if "object has no attribute 'detectorbase'" in e.message:
+            print text.red + "No format support for %s" % image + text.stop
+            return False
+        else:
+            print text.red + e.message + text.stop
+            return False
 
+
+    print "\n" + image
     print "%20s: %s" % ("vendortype", str(i.vendortype))
-    print "\nParameters:"
-    print "==========="
+    print "%20s" % "Parameters"
     for key, val in i.parameters.iteritems():
         print "%20s: %s" % (key, val)
+
+def get_detector_file(image):
+    """
+    Returns the RAPD detector file given an image file
+    """
+
+    from iotbx.detectors import ImageFactory
+
+    try:
+        i = ImageFactory(image)
+        # print i.vendortype
+        # print i.parameters["DETECTOR_SN"]
+    except: # (IOError, AttributeError, RuntimeError):
+        # print error
+        return False
+
+
+    if (i.vendortype, i.parameters["DETECTOR_SN"]) in detector_list.DETECTORS:
+        print "%s: %s %s %s" % (image, detector_list.DETECTORS[(i.vendortype, i.parameters["DETECTOR_SN"])], i.vendortype, i.parameters["DETECTOR_SN"])
+        return True
+    else:
+        return False
 
 if __name__ == "__main__":
 
     # Get image name from the commandline
     if len(sys.argv) > 1:
-        test_image = sys.argv[1]
+        test_images = sys.argv[1:]
     else:
         print text.red + "No input image" + text.stop
         sys.exit(9)
 
-    print_detector_info(test_image)
+
+    for test_image in test_images:
+        try:
+            if not get_detector_file(test_image):
+                print_detector_info(test_image)
+        except:
+            print text.red + "Severe error reading %s" % test_image + text.stop
