@@ -47,6 +47,18 @@ def get_commandline():
     parser = argparse.ArgumentParser(parents=[utils.commandline.base_parser],
                                      description=commandline_description)
 
+    # Specify detector
+    parser.add_argument("-d",
+                        action="store",
+                        dest="detector",
+                        help="Specify a detector for the analysis")
+
+    # parser.add_argument("command_files",
+    #                     nargs="*",
+    #                     default=False,
+    #                     help="Command files to execute")
+
+
     return parser.parse_args()
 
 def main():
