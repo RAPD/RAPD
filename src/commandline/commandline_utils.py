@@ -32,6 +32,7 @@ import os
 import sys
 
 # RAPD imports
+import detectors.detector_utils as detector_utils
 # import utils.log
 # import utils.lock
 import utils.site
@@ -84,8 +85,24 @@ dp_parser.add_argument("-sg", "--spacegroup",
                        nargs=1,
                        help="Input a spacegroup")
 
+# Sample type
+dp_parser.add_argument("--sample_type",
+                       action="store",
+                       dest="sample_type",
+                       nargs=1,
+                       choices=["protein", "dna", "rna", "peptide"],
+                       help="The type of sample")
+
+# Solvent fraction
+dp_parser.add_argument("--solvent",
+                       action="store",
+                       dest="solvent",
+                       nargs=1,
+                       type=float,
+                       help="Solvent fraction 0.0-1.0")
+
 # Resolution low
-dp_parser.add_argument("-lo", "--lowres",
+dp_parser.add_argument("--lowres",
                        action="store",
                        dest="lowres",
                        nargs=1,
@@ -93,7 +110,7 @@ dp_parser.add_argument("-lo", "--lowres",
                        help="Low resolution limit")
 
 # Resolution hi
-dp_parser.add_argument("-hi", "--hires",
+dp_parser.add_argument("--hires",
                        action="store",
                        dest="hires",
                        nargs=1,
@@ -118,23 +135,51 @@ def print_sites(left_buffer=""):
     for site in sites:
         print left_buffer + os.path.basename(site)
 
+def print_detectors(left_buffer=""):
+    """
+    Print out all the detectors
+    """
+    detectors = detector_utils.get_detector_files()
+
+    for detector in detectors:
+        print left_buffer + os.path.basename(detector)
+
 def analyze_data_sources(sources, mode="index"):
     """
     Return information on files or directory from input
     """
-    print "analyze_data_sources", sources
+    # print "analyze_data_sources", sources
 
     return_data = {}
 
     for source in sources:
-        print source
         source_abspath = os.path.abspath(source)
 
+        # Does file/dir exist?
         if os.path.exists(source_abspath):
             if os.path.isdir(source_abspath):
                 pass
             elif os.path.isfile(source_abspath):
-                pass
+                if mode == "index":
+                    # 1st file of 1 or 2
+                    if not "files" in return_data:
+                        return_data["files"] = [source_abspath]
+                    # 3rd file - error
+                    elif len(return_data["files"]) > 1:
+                        raise Exception("Up to two images can be submitted for indexing")
+                    # 2nd file - presumably a pair
+                    else:
+                        # Same file twice
+                        if source_abspath == return_data["files"][0]:
+                            raise Exception("The same image has been submitted twice for indexing")
+                        else:
+                            return_data["files"].append(source_abspath)
+                            break
+        else:
+            raise Exception("%s does not exist" % source_abspath)
+
+
+    return return_data
 
 
 if __name__ == "__main__":

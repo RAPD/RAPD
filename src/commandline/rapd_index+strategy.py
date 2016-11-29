@@ -48,11 +48,60 @@ def get_commandline():
     parser = argparse.ArgumentParser(parents=[commandline_utils.dp_parser],
                                      description=commandline_description)
 
-    # Pair?
-    # parser.add_argument("-d",
-    #                     action="store",
-    #                     dest="detector",
-    #                     help="Specify a detector for the analysis")
+    # Index only
+    parser.add_argument("--index_only",
+                        action="store",
+                        dest="index_only",
+                        help="Specify only indexing, no strategy calculation")
+
+    # Strategy type
+    parser.add_argument("--strategy_type",
+                        action="store",
+                        dest="strategy_type",
+                        nargs=1,
+                        choices=["best", "mosflm"],
+                        help="Type of strategy")
+
+    # Complexity of BEST strategy
+    parser.add_argument("--best_complexity",
+                        action="store",
+                        dest="best_complexity",
+                        nargs=1,
+                        choices=["min", "full"],
+                        help="Complexity of BEST strategy")
+
+    # Number of mosflm segments
+    parser.add_argument("--mosflm_segments",
+                        action="store",
+                        dest="mosflm_segments",
+                        nargs=1,
+                        choices=[1, 2, 3, 4, 5],
+                        help="Number of mosflm segments")
+
+    # Rotation range for mosflm segments
+    parser.add_argument("--mosflm_range",
+                        action="store",
+                        dest="mosflm_range",
+                        nargs=1,
+                        type=float,
+                        help="Rotation range for mosflm segments")
+
+    # Rotation range for mosflm segments
+    parser.add_argument("--mosflm_start",
+                        action="store",
+                        dest="mosflm_start",
+                        nargs=1,
+                        type=float,
+                        help="Start of allowable rotation range for mosflm segments")
+
+    # Rotation range for mosflm segments
+    parser.add_argument("--mosflm_end",
+                        action="store",
+                        dest="mosflm_end",
+                        nargs=1,
+                        type=float,
+                        help="End of allowable rotation range for mosflm segments")
+
 
     return parser.parse_args()
 
@@ -64,24 +113,27 @@ def main():
     commandline_args = get_commandline()
     tprint(commandline_args)
 
+    # List sites?
     if commandline_args.listsites:
         tprint(text.info + "Available sites:" + text.stop)
         commandline_utils.print_sites(left_buffer="  ")
         sys.exit()
 
-    # if commandline_args.listdetectors:
-    #     tprint(text.info + "Available detectors:" + text.stop)
-    #     commandline_utils.print_detectors(left_buffer="  ")
-    #     sys.exit()
+    # List detectors?
+    if commandline_args.listdetectors:
+        tprint(text.info + "Available detectors:" + text.stop)
+        commandline_utils.print_detectors(left_buffer="  ")
+        sys.exit()
 
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
 
-    tprint(environmental_vars)
+    # tprint(environmental_vars)
 
-    # Process the input data sources
-    data_description = commandline_utils.analyze_data_sources(commandline_args.sources)
-
+    # The data files to be processed
+    data_files = commandline_utils.analyze_data_sources(sources=commandline_args.sources,
+                                                        mode="index")
+    tprint(data_files)
 
     # Get site - commandline wins
     site = False

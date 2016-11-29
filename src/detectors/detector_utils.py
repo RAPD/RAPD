@@ -27,6 +27,8 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 # Standard imports
+import glob
+import os
 import sys
 
 # RAPD imports
@@ -63,6 +65,59 @@ def print_detector_info(image):
     print "%20s" % "Parameters"
     for key, val in i.parameters.iteritems():
         print "%20s: %s" % (key, val)
+
+def get_detector_files():
+    """
+    Returns a list of detector files
+
+    Uses the PYTHONPATH to find the sites/detectors directory and the detectors directory
+    for this rapd install and then walks them to find all files that have names that match "*.py"
+    and do not start with "_" or have the word "secret"
+    """
+
+    print "get_detector_files"
+
+    def look_for_detector_files(directory):
+        """
+        Look for detector files in the given directory
+        """
+        potential_files = []
+        for filename in glob.glob(directory+"/*.py"):
+            # No secret-containing files
+            if "secret" in filename:
+                continue
+            # No files that start with _
+            if os.path.basename(filename).startswith("_"):
+                continue
+            # Filename OK
+            potential_files.append(os.path.join(path, filename))
+
+        return potential_files
+
+    possible_files = []
+
+    # Looking for the rapd src directory
+    detectors_dir = False
+    for path in sys.path:
+        if path.endswith("src") and os.path.exists(os.path.join(path, "detectors")):
+            detectors_dir = os.path.join(path, "detectors")
+            break
+    # print detectors_dir
+
+    if detectors_dir:
+        possible_files += look_for_detector_files(detectors_dir + "/*")
+        # print possible_files
+
+    site_detectors_dir = False
+    for path in sys.path:
+        if path.endswith("src") and os.path.exists(os.path.join(path, "sites/detectors")):
+            site_detectors_dir = os.path.join(path, "sites/detectors")
+            break
+    print site_detectors_dir
+    if site_detectors_dir:
+        possible_files += look_for_detector_files(site_detectors_dir)
+
+    return possible_files
 
 def get_detector_file(image):
     """
