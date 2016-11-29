@@ -111,29 +111,59 @@ def main():
 
     # Get the commandline args
     commandline_args = get_commandline()
-    tprint(commandline_args)
+    # tprint(commandline_args)
 
-    # List sites?
-    if commandline_args.listsites:
-        tprint(text.info + "Available sites:" + text.stop)
-        commandline_utils.print_sites(left_buffer="  ")
-        sys.exit()
+    # verbosity
+    if commandline_args.verbose:
+        verbosity = 5
+    else:
+        verbosity = 1
 
-    # List detectors?
-    if commandline_args.listdetectors:
-        tprint(text.info + "Available detectors:" + text.stop)
-        commandline_utils.print_detectors(left_buffer="  ")
-        sys.exit()
+    # Set up terminal printer
+    tprint = utils.log.get_terminal_printer(verbosity=verbosity)
+
+    # Print out commandline args
+    if verbosity > 2:
+        tprint("\n" + text.info + "Commandline arguments" + text.stop, 3)
+        for key, val in vars(commandline_args).iteritems():
+            tprint("  %s : %s" % (key, val), 3)
 
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
-
-    # tprint(environmental_vars)
+    if verbosity > 2:
+        tprint("\n" + text.info + "Environmental variables" + text.stop, 3)
+        for key, val in environmental_vars.iteritems():
+            tprint("  " + key + " : " + val, 3)
 
     # The data files to be processed
     data_files = commandline_utils.analyze_data_sources(sources=commandline_args.sources,
                                                         mode="index")
-    tprint(data_files)
+    if verbosity > 2:
+        tprint("\n" + text.info + "Data files" + text.stop, 3)
+        if len(data_files) == 0:
+            tprint("  None", 3)
+        else:
+            for data_file in data_files:
+                tprint("  " + data_file, 3)
+
+    # List sites?
+    if commandline_args.listsites:
+        print "\n" + text.info + "Available sites:" + text.stop
+        commandline_utils.print_sites(left_buffer="  ")
+        if not commandline_args.listdetectors:
+            sys.exit()
+
+    # List detectors?
+    if commandline_args.listdetectors:
+        print "\n" + text.info + "Available detectors:" + text.stop
+        commandline_utils.print_detectors(left_buffer="  ")
+        sys.exit()
+
+    
+
+
+
+
 
     # Get site - commandline wins
     site = False
@@ -181,7 +211,7 @@ def main():
 
 if __name__ == "__main__":
 
-	# Set up terminal printer
-    tprint = utils.log.get_terminal_printer(verbosity=1)
+	# # Set up terminal printer
+    # tprint = utils.log.get_terminal_printer(verbosity=1)
 
     main()

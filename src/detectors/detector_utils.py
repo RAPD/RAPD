@@ -75,8 +75,6 @@ def get_detector_files():
     and do not start with "_" or have the word "secret"
     """
 
-    print "get_detector_files"
-
     def look_for_detector_files(directory):
         """
         Look for detector files in the given directory
@@ -113,7 +111,7 @@ def get_detector_files():
         if path.endswith("src") and os.path.exists(os.path.join(path, "sites/detectors")):
             site_detectors_dir = os.path.join(path, "sites/detectors")
             break
-    print site_detectors_dir
+
     if site_detectors_dir:
         possible_files += look_for_detector_files(site_detectors_dir)
 
