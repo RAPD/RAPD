@@ -102,7 +102,7 @@ dp_parser.add_argument("-hi", "--hires",
 
 # Directory or files
 dp_parser.add_argument(action="store",
-                       dest="files",
+                       dest="sources",
                        nargs="*",
                        help="Directory or files")
 
@@ -116,7 +116,25 @@ def print_sites(left_buffer=""):
     sites = utils.site.get_site_files()
 
     for site in sites:
-        print left_buffer+os.path.basename(site)
+        print left_buffer + os.path.basename(site)
+
+def analyze_data_sources(sources, mode="index"):
+    """
+    Return information on files or directory from input
+    """
+    print "analyze_data_sources", sources
+
+    return_data = {}
+
+    for source in sources:
+        print source
+        source_abspath = os.path.abspath(source)
+
+        if os.path.exists(source_abspath):
+            if os.path.isdir(source_abspath):
+                pass
+            elif os.path.isfile(source_abspath):
+                pass
 
 
 if __name__ == "__main__":

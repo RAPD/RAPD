@@ -29,6 +29,7 @@ SRC_DIR=$THIS_DIR"/sources"
 PREFIX=`echo $THIS_DIR | sed -e "s%/install%%"`
 BATCH=0
 FORCE=0
+OVERWRITE=0
 PLATFORM=$(uname -s)
 INSTALL_PHENIX=1
 # PHENIX_VERSION="1.10.1-2155"
@@ -70,7 +71,7 @@ elif [[ $PLATFORM == "Linux" ]]; then
 fi
 
 # Handle command line
-while getopts "bfhcvp:" x; do
+while getopts "bfhcvop:" x; do
     case "$x" in
         h)
             echo "usage: $0 [options]
@@ -81,7 +82,7 @@ Installs RAPD v$RAPD_VERSION
     -b           batch mode
     -h           print this help message and exit
     -p PREFIX    install prefix, defaults to $PREFIX
-    -u           update
+    -o           overwrite phenix
     -c           cleanup
 "
             exit 2
@@ -95,8 +96,8 @@ Installs RAPD v$RAPD_VERSION
         p)
             PREFIX="$OPTARG"
             ;;
-        u)
-            UPDATE=1
+        o)
+            OVERWRITE=1
             ;;
         # Clean up the source directories
         c)
@@ -167,7 +168,7 @@ if [ $INSTALL_PHENIX == 1 ]; then
 
   printf "$PREFIX/share/phenix"
 
-  if [[ -e $PREFIX/share/phenix-$PHENIX_VERSION ]]; then
+  if [[ ( -e $PREFIX/share/phenix-$PHENIX_VERSION ) && ( OVERWRITE == 0 ) ]]; then
     printf "\n\033[94mIt appears Phenix is already installed for RAPD - skipping\033[0m\n"
   else
     printf "\n\033[94mInstalling Phenix $PHENIX_VERSION\033[0m\n"
@@ -307,6 +308,9 @@ if [ $INSTALL_PHENIX == 1 ]; then
     ./install --prefix=$PREFIX/share
 
     # Create soft link
+    if [[ -e  $PREFIX/share/phenix ]]; then
+      rm $PREFIX/share/phenix
+    fi
     ln -s $PREFIX/share/phenix-$PHENIX_VERSION $PREFIX/share/phenix
 
     # Hack the phenix python distribution

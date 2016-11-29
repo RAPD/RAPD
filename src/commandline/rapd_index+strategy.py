@@ -79,6 +79,10 @@ def main():
 
     tprint(environmental_vars)
 
+    # Process the input data sources
+    data_description = commandline_utils.analyze_data_sources(commandline_args.sources)
+
+
     # Get site - commandline wins
     site = False
     if commandline_args.site:

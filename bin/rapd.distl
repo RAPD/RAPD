@@ -1,2 +1,0 @@
-#! /bin/bash
-\/home\/schuerjp\/Programs\/RAPD\/bin\/rapd.python \/home\/schuerjp\/Programs\/RAPD\/src\/utils\/test_distl.py "$@"
