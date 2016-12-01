@@ -42,29 +42,31 @@ def print_detector_info(image):
 
     from iotbx.detectors import ImageFactory
 
+    image_basename = os.path.basename(image)
+
     try:
         i = ImageFactory(image)
     except IOError as e:
         if "no format support found for" in e.message:
-            print text.red + "No format support for %s" % image + text.stop
+            print "No format support for %s" % image_basename
             return False
         else:
             print e
             return False
     except AttributeError as e:
         if "object has no attribute 'detectorbase'" in e.message:
-            print text.red + "No format support for %s" % image + text.stop
+            print "No format support for %s" % image_basename
             return False
         else:
             print text.red + e.message + text.stop
             return False
 
 
-    print "\n" + image
-    print "%20s: %s" % ("vendortype", str(i.vendortype))
-    print "%20s" % "Parameters"
+    print "\n%20s::%s" % ("image", image_basename)
+    print "%20s::%s" % ("vendortype", str(i.vendortype))
+    # print "%20s" % "Parameters"
     for key, val in i.parameters.iteritems():
-        print "%20s: %s" % (key, val)
+        print "%20s::%s" % (key, val)
 
 def get_detector_files():
     """
@@ -134,8 +136,8 @@ def get_detector_file(image):
 
 
     if (i.vendortype, i.parameters["DETECTOR_SN"]) in detector_list.DETECTORS:
-        print "%s: %s %s %s" % (image, detector_list.DETECTORS[(i.vendortype, i.parameters["DETECTOR_SN"])], i.vendortype, i.parameters["DETECTOR_SN"])
-        return True
+        #print "%s: %s %s %s" % (image, detector_list.DETECTORS[(i.vendortype, i.parameters["DETECTOR_SN"])], i.vendortype, i.parameters["DETECTOR_SN"])
+        return detector_list.DETECTORS[(i.vendortype, i.parameters["DETECTOR_SN"])]
     else:
         return False
 
@@ -151,7 +153,13 @@ if __name__ == "__main__":
 
     for test_image in test_images:
         try:
-            if not get_detector_file(test_image):
-                print_detector_info(test_image)
+            print_detector_info(test_image)
+            detector = get_detector_file(test_image)
+            if detector:
+                print "%20s::%s" % ("detector", detector)
+            else:
+                print "%20s::%s" % ("detector", "unknown")
         except:
-            print text.red + "Severe error reading %s" % test_image + text.stop
+            print "%20s::%s" % ("error", "Severe error reading %s" % os.path.basename(test_image))
+
+        print "====="
