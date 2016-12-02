@@ -75,3 +75,37 @@ if __name__ == "__main__":
                 detector[key] = val
 
     pprint.pprint(detectors_sorted)
+
+    detector_keys = detectors_sorted.keys()
+    detector_keys.sort()
+    out_doc = []
+    index = 0
+    for detector_key in detector_keys:
+        print "index %d >> %s %s" % (index, detector_key[0], detector_key[1])
+        out_doc.append("%s,%s" % (detector_key[0], detector_key[1]))
+        detector_records = detectors_sorted[detector_key]
+        new_detector = True
+        for detector_record in detector_records:
+            detector_record_keys = detector_record.keys()
+            detector_record_keys.sort()
+            key_index = 0
+            for key in detector_record_keys:
+                key_index += 1
+                if new_detector:
+                    out_doc.append("%s,%s," % (key, detector_record[key]))
+                else:
+                    print "index+key_index %d >> %s:%s" % (index+key_index, key, detector_record[key])
+                    out_doc[index+key_index] += "%s,%s," % (key, detector_record[key])
+
+            new_detector = False
+        out_doc.append(",")
+        index = index + key_index + 1
+
+
+    # for line in out_doc:
+    #     print line
+
+    out_file = open("detectors.csv", "w")
+    for line in out_doc:
+        out_file.write(line+"\n")
+    out_file.close()

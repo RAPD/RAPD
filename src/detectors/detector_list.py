@@ -27,6 +27,8 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 DETECTORS = {
+    ("ADSC", 413): "",                          # ESRF ID14-2
+    ("ADSC", 430): "",                          #
     ("ADSC", 446): "adsc_q315",                 # NSLS X25 > X26C
     ("ADSC", 911): "necat_adsc_q315",           # APS 24-ID-C
     ("ADSC", 916): "necat_adsc_q315",           # APS 24-ID-E

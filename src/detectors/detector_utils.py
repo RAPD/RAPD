@@ -31,6 +31,9 @@ import glob
 import os
 import sys
 
+# Phenix imports
+from dxtbx.format.Registry import Registry
+
 # RAPD imports
 import utils.text as text
 import detector_list
@@ -67,6 +70,17 @@ def print_detector_info(image):
     # print "%20s" % "Parameters"
     for key, val in i.parameters.iteritems():
         print "%20s::%s" % (key, val)
+
+def print_detector_info2(image):
+    """
+    Print out information on the detector given an image
+    """
+
+    format_instance = Registry.find(image)
+    instance = format_instance(image)
+    # adds parameters (iotbx)
+    temp = instance.get_detectorbase()
+    print temp.parameters
 
 def get_detector_files():
     """
@@ -154,6 +168,7 @@ if __name__ == "__main__":
     for test_image in test_images:
         try:
             print_detector_info(test_image)
+            print_detector_info2(test_image)
             detector = get_detector_file(test_image)
             if detector:
                 print "%20s::%s" % ("detector", detector)
