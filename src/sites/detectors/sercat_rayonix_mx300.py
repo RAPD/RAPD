@@ -35,7 +35,7 @@ import os
 import sys
 
 # RAPD imports
-import detectors.rayonix_mx300 as detector
+import detectors.rayonix.rayonix_mx300 as detector
 XDS_INP = detector.XDS_INP
 
 # Detector information
