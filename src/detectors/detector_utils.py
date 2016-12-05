@@ -28,6 +28,7 @@ __status__ = "Development"
 
 # Standard imports
 import glob
+import importlib
 import os
 import sys
 
@@ -154,6 +155,51 @@ def get_detector_file(image):
         return detector_list.DETECTORS[(i.vendortype, i.parameters["DETECTOR_SN"])]
     else:
         return False
+
+def load_detector(detector):
+    """
+    Search for detector file, load, and return it
+    """
+
+    print "load_detector %s" % detector
+
+    def look_for_detector_file(file, directory):
+        """
+        Look for a detector file in the given directory
+        """
+
+        print "look_for_detector_file %s %s" % (file, directory)
+        files = glob.glob(directory+"/*/"+file+".py")
+        fullpath_file = files[0]
+        print fullpath_file
+        split_path_file = fullpath_file.split("/")
+        if "sites" in split_path_file:
+            return ".".join(split_path_file[split_path_file.index("sites"):]).replace(".py", "")
+        else:
+            return ".".join(split_path_file[split_path_file.index("detectors"):]).replace(".py", "")
+
+    # Look for the src/detectors directory
+    detectors_dir = False
+    for path in sys.path:
+        if path.endswith("src") and os.path.exists(os.path.join(path, "detectors")):
+            detectors_dir = os.path.join(path, "detectors")
+            break
+
+    detector_file = False
+
+    # Search the src/detectors dir
+    detector_file = look_for_detector_file(detector, detectors_dir)
+
+    # Search the sites/detectors dir
+    if not detector_file:
+        pass
+        
+    # No module found == bad
+    if detector_file == False:
+        raise Exception("No detector file found for %s", detector)
+    else:
+        module = importlib.import_module(detector_file)
+        return module
 
 if __name__ == "__main__":
 

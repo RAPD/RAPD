@@ -46,6 +46,13 @@ dp_parser.add_argument("-v", "--verbose",
                        action="store_true",
                        dest="verbose",
                        help="Enable verbose feedback")
+
+# Test mode?
+dp_parser.add_argument("-t", "--test",
+                       action="store_true",
+                       dest="test",
+                       help="Run in test mode")
+
 # The site
 dp_parser.add_argument("-s", "--site",
                        action="store",
@@ -135,14 +142,19 @@ def print_sites(left_buffer=""):
     for site in sites:
         print left_buffer + os.path.basename(site)
 
-def print_detectors(left_buffer=""):
+def print_detectors(left_buffer="", show_py=False):
     """
     Print out all the detectors
     """
     detectors = detector_utils.get_detector_files()
 
     for detector in detectors:
-        print left_buffer + os.path.basename(detector)
+        if not show_py:
+            detector_name = os.path.basename(detector).replace(".py", "")
+        else:
+            detector_name = os.path.basename(detector)
+
+        print left_buffer + detector_name
 
 def analyze_data_sources(sources, mode="index"):
     """
