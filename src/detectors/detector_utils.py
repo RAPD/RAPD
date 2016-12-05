@@ -169,14 +169,22 @@ def load_detector(detector):
         """
 
         print "look_for_detector_file %s %s" % (file, directory)
-        files = glob.glob(directory+"/*/"+file+".py")
-        fullpath_file = files[0]
-        print fullpath_file
-        split_path_file = fullpath_file.split("/")
-        if "sites" in split_path_file:
-            return ".".join(split_path_file[split_path_file.index("sites"):]).replace(".py", "")
+
+        if "sites" in directory:
+            files = glob.glob(directory+"/"+file+".py")
         else:
-            return ".".join(split_path_file[split_path_file.index("detectors"):]).replace(".py", "")
+            files = glob.glob(directory+"/*/"+file+".py")
+
+        print files
+        if len(files):
+            fullpath_file = files[0]
+            split_path_file = fullpath_file.split("/")
+            if "sites" in split_path_file:
+                return ".".join(split_path_file[split_path_file.index("sites"):]).replace(".py", "")
+            else:
+                return ".".join(split_path_file[split_path_file.index("detectors"):]).replace(".py", "")
+        else:
+            return False
 
     # Look for the src/detectors directory
     detectors_dir = False
@@ -192,11 +200,16 @@ def load_detector(detector):
 
     # Search the sites/detectors dir
     if not detector_file:
-        pass
-        
+        sites_dir = False
+        for path in sys.path:
+            if path.endswith("src") and os.path.exists(os.path.join(path, "sites", "detectors")):
+                sites_dir = os.path.join(path, "sites", "detectors")
+                break
+        detector_file = look_for_detector_file(detector, sites_dir)
+
     # No module found == bad
     if detector_file == False:
-        raise Exception("No detector file found for %s", detector)
+        raise Exception, "No detector file found for %s" % detector
     else:
         module = importlib.import_module(detector_file)
         return module
