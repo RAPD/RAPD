@@ -38,7 +38,10 @@ SECRETS_FILE = "sites.secrets_sercat_bm"
 
 # Copy the secrets attribute to the local scope
 # Do not remove unless you know what you are doing!
-read_secrets(SECRETS_FILE, sys.modules[__name__])
+try:
+    read_secrets(SECRETS_FILE, sys.modules[__name__])
+except:
+    pass
 
 # X-ray source characteristics
 # Flux of the beam

@@ -29,6 +29,8 @@ __status__ = "Development"
 # Standard imports
 import argparse
 import importlib
+import os
+import pprint
 import sys
 
 # RAPD imports
@@ -41,7 +43,7 @@ import commandline_utils
 import detectors.detector_utils as detector_utils
 
 
-def construct_command():
+def construct_command(image_headers, commandline_args):
     """
     Put together the command for the agent
     """
@@ -53,6 +55,63 @@ def construct_command():
     command["directories"] = { "work": os.path.abspath(os.path.curdir) }
 
     # Image data
+    images = image_headers.keys()
+    images.sort()
+    counter = 1
+    for image in images:
+        command["header%d" % counter] = image_headers[image]
+
+    # Agent settings
+    command["preferences"] = {}
+
+    # Strategy type
+    if isinstance(commandline_args.strategy_type, list):
+        command["preferences"]["strategy_type"] = commandline_args.strategy_type[0]
+    else:
+        command["preferences"]["strategy_type"] = commandline_args.strategy_type
+
+    # Crystal parameters
+    
+
+    # "preferences":{"strategy_type": 'best', #Preferred program for strategy
+    #  	  		#"strategy_type": 'mosflm', #
+    #  	  	  	"crystal_size_x": "100", #RADDOSE
+    #  		 	 "crystal_size_y": "100", #RADDOSE
+    #  		  	"crystal_size_z": "100", #RADDOSE
+    #  			  "shape": "2.0", #BEST
+    #  			  "sample_type": "Protein", #LABELIT, BEST
+    #  			  "best_complexity": "none", #BEST
+    #  			  "susceptibility": "1.0", #BEST
+    #  			  "index_hi_res": 0.0, #LABELIT
+    #  			  "spacegroup": "None", #LABELIT, BEST, beam_center
+    #  			  #"spacegroup": "R3", #
+    #  			  "solvent_content": 0.55, #RADDOSE
+    #  			  "beam_flip": "False", #NECAT, when x and y are sent reversed.
+    #  			  "multiprocessing":"True", #Specifies to use 4 cores to make Autoindex much faster.
+    #  			  "x_beam": "0",#Used if position not in header info
+    #  			  "y_beam": "0",#Used if position not in header info
+    #  			  "aimed_res": 0.0, #BEST to override high res limit
+    #  			  "a":0.0, ##LABELIT
+    #  			  "b":0.0, ##LABELIT
+    #  			  "c":0.0, ##LABELIT
+    #  			  "alpha":0.0, #LABELIT
+    #  			  "beta":0.0, #LABELIT
+    #  			  "gamma":0.0, #LABELIT
+         #
+    #  			  #Change these if user wants to continue dataset with other crystal(s).
+    #  			  "reference_data_id": None, #MOSFLM
+    #  			  #"reference_data_id": 1,#MOSFLM
+    #  			  #"reference_data": [['/gpfs6/users/necat/Jon/RAPD_test/index09.mat', 0.0, 30.0, 'junk_1_1-30','P41212']],#MOSFLM
+    #  			  'reference_data': [['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',0.0,20.0,'junk','P3'],['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',40.0,50.0,'junk2','P3']],#MOSFLM
+    #  			  #MOSFLM settings for multisegment strategy (like give me best 30 degrees to collect). Ignored if "mosflm_rot" !=0.0
+    #  			  "mosflm_rot": 0.0, #MOSFLM
+    #  			  "mosflm_seg":1, #MOSFLM
+    #  			  "mosflm_start":0.0,#MOSFLM
+    #  			  "mosflm_end":360.0,#MOSFLM
+    #  			  },
+
+
+    pprint.pprint(command)
 
     #       "header1":{
     #           #"wavelength": "0.9792", #RADDOSE
@@ -83,11 +142,6 @@ def construct_command():
     #   	   	"gauss_x":'0.03', #RADDOSE
     #   	   	"gauss_y":'0.01', #RADDOSE
     #   		"fullname": "/panfs/panfs0.localdomain/archive/ID_16_06_01_staff_test/Se-Tryp_SER16-pn10/SER-16_Pn10_1.0001",
-    #   	   	#"fullname": "/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0001",
-    #   	   	#"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0001",
-    #   	   	#"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_04_chrzas_feb_4_2016/SER4-TRYP_Pn3/SER4-TRYP_Pn3.0001",
-    #   	   	#"fullname": "/gpfs6/users/necat/Jon/RAPD_test/Temp/mar/SER4-TRYP_Pn3.0001",
-      #
     #   	   	#minikappa
     #   	   	#Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
     #   	   	#"mk3_phi":"0.0", #
@@ -197,6 +251,7 @@ def get_commandline():
     parser.add_argument("--strategy_type",
                         action="store",
                         dest="strategy_type",
+                        default="best",
                         nargs=1,
                         choices=["best", "mosflm"],
                         help="Type of strategy")
@@ -282,7 +337,7 @@ def main():
         if len(data_files) == 0:
             tprint("  None", 3)
         else:
-            for data_file in data_files:
+            for data_file in data_files["files"]:
                 tprint("  " + data_file, 3)
 
     # List sites?
@@ -308,19 +363,30 @@ def main():
 
     # Get site - commandline wins over the environmental variable
     site = False
+    detecttor = False
+    detector_module = False
     if commandline_args.site:
         site = commandline_args.site
     elif environmental_vars.has_key("RAPD_SITE"):
         site = environmental_vars["RAPD_SITE"]
 
-    detector = False
     if commandline_args.detector:
         detector = commandline_args.detector
-        detector_utils.load_detector(detector)
+        detector_module = detector_utils.load_detector(detector)
 
     # If no site or detector, try to figure out the detector
     if not (site or detector):
         print "Have to figure out the detector"
+
+    # Have a detector - read in file data
+    if detector_module:
+        image_headers = {}
+        for data_file in data_files["files"]:
+            image_headers[data_file] = detector_module.read_header(data_file)
+        pprint.pprint(image_headers)
+
+    construct_command(image_headers=image_headers,
+                      commandline_args=commandline_args)
 
     # If no site, error
     # if site == False:

@@ -36,7 +36,6 @@ import sys
 
 # RAPD imports
 import detectors.rayonix.rayonix_mx300 as detector
-XDS_INP = detector.XDS_INP
 
 # Detector information
 DETECTOR = "rayonix_mx300"
@@ -47,7 +46,49 @@ IMAGE_TEMPLATE = "%s.????"
 RUN_NUMBER_IN_TEMPLATE = False
 HEADER_VERSION = 1
 
+# X-ray source characteristics
+# Flux of the beam
+BEAM_FLUX = 8E11
+# Size of the beam in microns
+BEAM_SIZE_X = 50
+BEAM_SIZE_Y = 20
+# Shape of the beam - ellipse, rectangle
+BEAM_SHAPE = "ellipse"
+# Shape of the attenuated beam - circle or rectangle
+BEAM_APERTURE_SHAPE = "circle"
+# Gaussian description of the beam for raddose
+BEAM_GAUSS_X = 0.03
+BEAM_GAUSS_Y = 0.01
+# Beam center calibration
+BEAM_CENTER_DATE = "2015-12-07"
+# Beamcenter equation coefficients (b, m1, m2, m3, m4, m5, m6)
+BEAM_CENTER_X = (153.94944895756946,
+                 -0.016434436106566495,
+                 3.5990848937868658e-05,
+                 -8.2987834172005917e-08,
+                 1.0732920112697317e-10,
+                 -7.339858946384788e-14,
+                 2.066312749407257e-17)
+BEAM_CENTER_Y = (158.56546190593907,
+                 0.0057578279496966192,
+                 -3.9726067083100419e-05,
+                 1.1458201832002297e-07,
+                 -1.7875879553926729e-10,
+                 1.4579198435694557e-13,
+                 -4.7910792416525411e-17)
+_BEAM_SETTINGS = {"BEAM_FLUX":BEAM_FLUX,
+                 "BEAM_SIZE_X":BEAM_SIZE_X,
+                 "BEAM_SIZE_Y":BEAM_SIZE_Y,
+                 "BEAM_SHAPE":BEAM_SHAPE,
+                 "BEAM_APERTURE_SHAPE":BEAM_APERTURE_SHAPE,
+                 "BEAM_GAUSS_X":BEAM_GAUSS_X,
+                 "BEAM_GAUSS_Y":BEAM_GAUSS_Y,
+                 "BEAM_CENTER_DATE":BEAM_CENTER_DATE,
+                 "BEAM_CENTER_X":BEAM_CENTER_X,
+                 "BEAM_CENTER_Y":BEAM_CENTER_Y}
+
 # XDS information
+XDS_INP = detector.XDS_INP
 XDS_INP = {"test":"foo2"}
 
 def parse_file_name(fullname):
@@ -146,7 +187,7 @@ def create_image_fullname(directory,
     return fullname
 
 # Calculate the flux of the beam
-def calculate_flux(header, beam_settings):
+def calculate_flux(header, beam_settings=_BEAM_SETTINGS):
     """
     Return the flux and size of the beam given parameters
 
@@ -156,7 +197,7 @@ def calculate_flux(header, beam_settings):
     """
 
     # Save some typing
-    beam_size_raw_x = beam_settings["BEAM_SIZE_X"]
+    beam_size_raw_x = beam_settings.get("BEAM_SIZE_X")
     beam_size_raw_y = beam_settings["BEAM_SIZE_Y"]
     aperture_x = header["aperture_x"]
     aperture_y = header["aperture_y"]
@@ -234,7 +275,7 @@ def calculate_beam_center(distance, beam_settings, v_offset=0):
     return x_beam, y_beam
 
 # Standard header reading
-def read_header(fullname, beam_settings):
+def read_header(fullname, beam_settings=_BEAM_SETTINGS):
     """
     Read the header and add some site-specific data
 

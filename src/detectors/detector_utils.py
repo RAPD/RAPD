@@ -161,21 +161,20 @@ def load_detector(detector):
     Search for detector file, load, and return it
     """
 
-    print "load_detector %s" % detector
+    # print "load_detector %s" % detector
 
     def look_for_detector_file(file, directory):
         """
         Look for a detector file in the given directory
         """
 
-        print "look_for_detector_file %s %s" % (file, directory)
+        # print "look_for_detector_file %s %s" % (file, directory)
 
         if "sites" in directory:
             files = glob.glob(directory+"/"+file+".py")
         else:
             files = glob.glob(directory+"/*/"+file+".py")
 
-        print files
         if len(files):
             fullpath_file = files[0]
             split_path_file = fullpath_file.split("/")
