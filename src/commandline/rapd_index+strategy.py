@@ -28,7 +28,6 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
-import importlib
 import os
 import pprint
 import sys
@@ -36,12 +35,12 @@ import sys
 # RAPD imports
 # import utils.commandline
 import utils.log
+from utils.modules import load_module
 # import utils.lock
 # import utils.site
 import utils.text as text
 import commandline_utils
 import detectors.detector_utils as detector_utils
-
 
 def construct_command(image_headers, commandline_args):
     """
@@ -57,180 +56,65 @@ def construct_command(image_headers, commandline_args):
     # Image data
     images = image_headers.keys()
     images.sort()
-    counter = 1
+    counter = 0
     for image in images:
+        counter += 1
         command["header%d" % counter] = image_headers[image]
+    if counter == 1:
+        command["header2"] = None
 
     # Agent settings
     command["preferences"] = {}
 
     # Strategy type
-    if isinstance(commandline_args.strategy_type, list):
-        command["preferences"]["strategy_type"] = commandline_args.strategy_type[0]
-    else:
-        command["preferences"]["strategy_type"] = commandline_args.strategy_type
+    command["preferences"]["strategy_type"] = commandline_args.strategy_type
 
-    # Crystal parameters
-    
+    # Best
+    command["preferences"]["best_complexity"] = commandline_args.best_complexity
+    command["preferences"]["shape"] = "2.0"
+    command["preferences"]["susceptibility"] = "1.0"
+    command["preferences"]["aimed_res"] = 0.0
 
-    # "preferences":{"strategy_type": 'best', #Preferred program for strategy
-    #  	  		#"strategy_type": 'mosflm', #
-    #  	  	  	"crystal_size_x": "100", #RADDOSE
-    #  		 	 "crystal_size_y": "100", #RADDOSE
-    #  		  	"crystal_size_z": "100", #RADDOSE
-    #  			  "shape": "2.0", #BEST
-    #  			  "sample_type": "Protein", #LABELIT, BEST
-    #  			  "best_complexity": "none", #BEST
-    #  			  "susceptibility": "1.0", #BEST
-    #  			  "index_hi_res": 0.0, #LABELIT
-    #  			  "spacegroup": "None", #LABELIT, BEST, beam_center
-    #  			  #"spacegroup": "R3", #
-    #  			  "solvent_content": 0.55, #RADDOSE
-    #  			  "beam_flip": "False", #NECAT, when x and y are sent reversed.
-    #  			  "multiprocessing":"True", #Specifies to use 4 cores to make Autoindex much faster.
-    #  			  "x_beam": "0",#Used if position not in header info
-    #  			  "y_beam": "0",#Used if position not in header info
-    #  			  "aimed_res": 0.0, #BEST to override high res limit
-    #  			  "a":0.0, ##LABELIT
-    #  			  "b":0.0, ##LABELIT
-    #  			  "c":0.0, ##LABELIT
-    #  			  "alpha":0.0, #LABELIT
-    #  			  "beta":0.0, #LABELIT
-    #  			  "gamma":0.0, #LABELIT
-         #
-    #  			  #Change these if user wants to continue dataset with other crystal(s).
-    #  			  "reference_data_id": None, #MOSFLM
-    #  			  #"reference_data_id": 1,#MOSFLM
-    #  			  #"reference_data": [['/gpfs6/users/necat/Jon/RAPD_test/index09.mat', 0.0, 30.0, 'junk_1_1-30','P41212']],#MOSFLM
-    #  			  'reference_data': [['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',0.0,20.0,'junk','P3'],['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',40.0,50.0,'junk2','P3']],#MOSFLM
-    #  			  #MOSFLM settings for multisegment strategy (like give me best 30 degrees to collect). Ignored if "mosflm_rot" !=0.0
-    #  			  "mosflm_rot": 0.0, #MOSFLM
-    #  			  "mosflm_seg":1, #MOSFLM
-    #  			  "mosflm_start":0.0,#MOSFLM
-    #  			  "mosflm_end":360.0,#MOSFLM
-    #  			  },
+    # Best & Labelit
+    command["preferences"]["sample_type"] = commandline_args.sample_type
+    command["preferences"]["spacegroup"] = str(commandline_args.spacegroup)
 
+    # Labelit
+    command["preferences"]["a"] = 0.0
+    command["preferences"]["b"] = 0.0
+    command["preferences"]["c"] = 0.0
+    command["preferences"]["alpha"] = 0.0
+    command["preferences"]["beta"] = 0.0
+    command["preferences"]["gamma"] = 0.0
+    command["preferences"]["index_hi_res"] = str(commandline_args.hires)
+    command["preferences"]["x_beam"] = str(commandline_args.beamcenter[0])
+    command["preferences"]["y_beam"] = str(commandline_args.beamcenter[1])
+
+    # Mosflm
+    command["preferences"]["mosflm_rot"] = float(commandline_args.mosflm_range)
+    command["preferences"]["mosflm_seg"] = int(commandline_args.mosflm_segments)
+    command["preferences"]["mosflm_start"] = float(commandline_args.mosflm_start)
+    command["preferences"]["mosflm_end"] = float(commandline_args.mosflm_start)
+    command["preferences"]["reference_data"] = None
+    command["preferences"]["reference_data_id"] = None
+    # Change these if user wants to continue dataset with other crystal(s).
+    # "reference_data_id": None, #MOSFLM
+    # #"reference_data_id": 1,#MOSFLM
+    # #"reference_data": [['/gpfs6/users/necat/Jon/RAPD_test/index09.mat', 0.0, 30.0, 'junk_1_1-30','P41212']],#MOSFLM
+    # 'reference_data': [['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',0.0,20.0,'junk','P3'],['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',40.0,50.0,'junk2','P3']],#MOSFLM
+
+    # Raddose
+    command["preferences"]["crystal_size_x"] = "100"
+    command["preferences"]["crystal_size_y"] = "100"
+    command["preferences"]["crystal_size_z"] = "100"
+    command["preferences"]["solvent_content"] = 0.55
+
+    # Unknown
+    command["preferences"]["beam_flip"] = "False"
+    command["preferences"]["multiprocessing"] = "True"
 
     pprint.pprint(command)
-
-    #       "header1":{
-    #           #"wavelength": "0.9792", #RADDOSE
-    #   	   	"wavelength": 1.000, #RADDOSE
-    #   	   	"detector":'ray300',
-    #   	   	#"binning": "2x2", #LABELIT
-    #   	   	"binning": "none", #
-    #   	   	"time": "1.00",  #BEST
-    #   	   	"twotheta": "0.00", #LABELIT
-    #   	   	"transmission": "20",  #BEST
-    #   	   	'osc_range': 1.0,
-    #   	   	'distance' : 200.0,
-    #   	   	'count_cutoff': 65535,
-    #   	   	'omega_start': 0.0,
-    #   	   	#"beam_center_x": "216.71", #PILATUS
-    #   	   	#"beam_center_y": "222.45", #PILATUS
-    #   	   	#"beam_center_x": "150.72", #Q315
-    #   	   	#"beam_center_y": "158.68", #Q315
-    #   	   	#"beam_center_x": "172.80", #HF4M
-    #   	   	#"beam_center_y": "157.18", #HF4M
-    #   	   	"beam_center_x": "151.19", #22ID
-    #   	        "beam_center_y": "144.82", #22ID
-    #   	   	#"beam_center_x": "150.25", #22BM
-    #   	   	#"beam_center_y": "151.35", #22BM
-    #   	   	"flux":'1.6e11', #RADDOSE
-    #   	   	"beam_size_x":"0.07", #RADDOSE
-    #   	   	"beam_size_y":"0.03", #RADDOSE
-    #   	   	"gauss_x":'0.03', #RADDOSE
-    #   	   	"gauss_y":'0.01', #RADDOSE
-    #   		"fullname": "/panfs/panfs0.localdomain/archive/ID_16_06_01_staff_test/Se-Tryp_SER16-pn10/SER-16_Pn10_1.0001",
-    #   	   	#minikappa
-    #   	   	#Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
-    #   	   	#"mk3_phi":"0.0", #
-    #   	   	#"mk3_kappa":"0.0", #
-    #   	   	"phi": "0.000",
-    #   	   	"STAC file1": '/gpfs6/users/necat/Jon/RAPD_test/mosflm.mat', #XOAlign
-    #   	   	"STAC file2": '/gpfs6/users/necat/Jon/RAPD_test/bestfile.par', #XOAlign
-    #   	   	"axis_align": 'long',	 #long,all,a,b,c,ab,ac,bc #XOAlign
- #  		},
-    #       "header2":{#"wavelength": "0.9792", #RADDOSE
- #  	    "wavelength": 1.000, #RADDOSE
- #  	    "detector":'ray300',
- #  	    #"binning": "2x2", #LABELIT
- #  	    "binning": "none", #
- #  	    "time": "1.00",  #BEST
- #  	    "twotheta": "0.00", #LABELIT
- #  	    "transmission": "20",  #BEST
- #  	    'osc_range': 1.0,
- #  	    'distance' : 200.0,
- #  	    'count_cutoff': 65535,
- #  	    'omega_start': 0.0,
- #  	    #"beam_center_x": "216.71", #PILATUS
- #  	    #"beam_center_y": "222.45", #PILATUS
- #  	    #"beam_center_x": "150.72", #Q315
- #  	    #"beam_center_y": "158.68", #Q315
- #  	    #"beam_center_x": "172.80", #HF4M
- #  	    #"beam_center_y": "157.18", #HF4M
- #  	    "beam_center_x": "151.19", #22ID
- #  	    "beam_center_y": "144.82", #22ID
- #  	    #"beam_center_x": "150.25", #22BM
- #  	    #"beam_center_y": "151.35", #22BM
- #  	    "flux":'1.6e11', #RADDOSE
- #  	    "beam_size_x":"0.07", #RADDOSE
- #  	    "beam_size_y":"0.03", #RADDOSE
- #  	    "gauss_x":'0.03', #RADDOSE
- #  	    "gauss_y":'0.01', #RADDOSE
- #  	    "fullname": "/panfs/panfs0.localdomain/archive/ID_16_06_01_staff_test/Se-Tryp_SER16-pn10/SER-16_Pn10_1.0090",
- #  	    #"fullname": "/panfs/panfs0.localdomain/archive/BM_16_03_03_staff_staff/Tryp/SERX12_Pn1_r1_1.0090",
- #  	    #"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_23_chrzas/21281_p422x01/image/21281.0020",
- #  	    #"fullname": "/panfs/panfs0.localdomain/archive/ID_16_02_04_chrzas_feb_4_2016/SER4-TRYP_Pn3/SER4-TRYP_Pn3.0050",
- #  	    #"fullname": "/gpfs6/users/necat/Jon/RAPD_test/Temp/mar/SER4-TRYP_Pn3.0050",
-      #
- #  	    #minikappa
- #  	    #Uncomment 'mk3_phi' and 'mk3_kappa' commands to tell script to run a minikappa alignment, instead of strategy.
- #  	    #"mk3_phi":"0.0", #
- #  	    #"mk3_kappa":"0.0", #
- #  	    "phi": "0.000",
- #  	    "STAC file1": '/gpfs6/users/necat/Jon/RAPD_test/mosflm.mat', #XOAlign
- #  	    "STAC file2": '/gpfs6/users/necat/Jon/RAPD_test/bestfile.par', #XOAlign
- #  	    "axis_align": 'long',    #long,all,a,b,c,ab,ac,bc #XOAlign
- #  	    },
- #  	  "preferences":{"strategy_type": 'best', #Preferred program for strategy
- #  	  		#"strategy_type": 'mosflm', #
- #  	  	  	"crystal_size_x": "100", #RADDOSE
- #  		 	 "crystal_size_y": "100", #RADDOSE
- #  		  	"crystal_size_z": "100", #RADDOSE
- #  			  "shape": "2.0", #BEST
- #  			  "sample_type": "Protein", #LABELIT, BEST
- #  			  "best_complexity": "none", #BEST
- #  			  "susceptibility": "1.0", #BEST
- #  			  "index_hi_res": 0.0, #LABELIT
- #  			  "spacegroup": "None", #LABELIT, BEST, beam_center
- #  			  #"spacegroup": "R3", #
- #  			  "solvent_content": 0.55, #RADDOSE
- #  			  "beam_flip": "False", #NECAT, when x and y are sent reversed.
- #  			  "multiprocessing":"True", #Specifies to use 4 cores to make Autoindex much faster.
- #  			  "x_beam": "0",#Used if position not in header info
- #  			  "y_beam": "0",#Used if position not in header info
- #  			  "aimed_res": 0.0, #BEST to override high res limit
- #  			  "a":0.0, ##LABELIT
- #  			  "b":0.0, ##LABELIT
- #  			  "c":0.0, ##LABELIT
- #  			  "alpha":0.0, #LABELIT
- #  			  "beta":0.0, #LABELIT
- #  			  "gamma":0.0, #LABELIT
-      #
- #  			  #Change these if user wants to continue dataset with other crystal(s).
- #  			  "reference_data_id": None, #MOSFLM
- #  			  #"reference_data_id": 1,#MOSFLM
- #  			  #"reference_data": [['/gpfs6/users/necat/Jon/RAPD_test/index09.mat', 0.0, 30.0, 'junk_1_1-30','P41212']],#MOSFLM
- #  			  'reference_data': [['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',0.0,20.0,'junk','P3'],['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',40.0,50.0,'junk2','P3']],#MOSFLM
- #  			  #MOSFLM settings for multisegment strategy (like give me best 30 degrees to collect). Ignored if "mosflm_rot" !=0.0
- #  			  "mosflm_rot": 0.0, #MOSFLM
- #  			  "mosflm_seg":1, #MOSFLM
- #  			  "mosflm_start":0.0,#MOSFLM
- #  			  "mosflm_end":360.0,#MOSFLM
- #  			  },			     # Settings for calculations
- #  	  "return_address":("127.0.0.1", 50001),      # Location of control process
-    #   }
+    return command
 
 
 def get_commandline():
@@ -252,7 +136,7 @@ def get_commandline():
                         action="store",
                         dest="strategy_type",
                         default="best",
-                        nargs=1,
+                        # nargs=1,
                         choices=["best", "mosflm"],
                         help="Type of strategy")
 
@@ -260,15 +144,16 @@ def get_commandline():
     parser.add_argument("--best_complexity",
                         action="store",
                         dest="best_complexity",
-                        nargs=1,
-                        choices=["min", "full"],
+                        # nargs=1,
+                        default="none",
+                        choices=["none", "min", "full"],
                         help="Complexity of BEST strategy")
 
     # Number of mosflm segments
     parser.add_argument("--mosflm_segments",
                         action="store",
                         dest="mosflm_segments",
-                        nargs=1,
+                        default=1,
                         choices=[1, 2, 3, 4, 5],
                         help="Number of mosflm segments")
 
@@ -276,7 +161,7 @@ def get_commandline():
     parser.add_argument("--mosflm_range",
                         action="store",
                         dest="mosflm_range",
-                        nargs=1,
+                        default=0.0,
                         type=float,
                         help="Rotation range for mosflm segments")
 
@@ -284,7 +169,7 @@ def get_commandline():
     parser.add_argument("--mosflm_start",
                         action="store",
                         dest="mosflm_start",
-                        nargs=1,
+                        default=0.0,
                         type=float,
                         help="Start of allowable rotation range for mosflm segments")
 
@@ -292,7 +177,7 @@ def get_commandline():
     parser.add_argument("--mosflm_end",
                         action="store",
                         dest="mosflm_end",
-                        nargs=1,
+                        default=360.0,
                         type=float,
                         help="End of allowable rotation range for mosflm segments")
 
@@ -385,8 +270,10 @@ def main():
             image_headers[data_file] = detector_module.read_header(data_file)
         pprint.pprint(image_headers)
 
-    construct_command(image_headers=image_headers,
-                      commandline_args=commandline_args)
+    command = construct_command(image_headers=image_headers,
+                                commandline_args=commandline_args)
+
+
 
     # If no site, error
     # if site == False:
@@ -409,21 +296,29 @@ def main():
     # utils.lock.file_lock(SITE.CONTROL_LOCK_FILE)
 
     # Set up logging
-    # if commandline_args.verbose:
-    #     log_level = 10
-    # else:
-    #     log_level = SITE.LOG_LEVEL
-    # logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
-    #                               logfile_id="rapd_control",
-    #                               level=log_level)
-    #
-    # logger.debug("Commandline arguments:")
-    # for pair in commandline_args._get_kwargs():
-    #     logger.debug("  arg:%s  val:%s" % pair)
+    if commandline_args.verbose:
+        log_level = 10
+    else:
+        log_level = 5
+    logger = utils.log.get_logger(logfile_dir="./",
+                                  logfile_id="rapd_index",
+                                  level=log_level)
 
-    # Instantiate the model
-    # MODEL = Model(SITE=SITE,
-    #               overwatch_id=commandline_args.overwatch_id)
+    logger.debug("Commandline arguments:")
+    for pair in commandline_args._get_kwargs():
+        logger.debug("  arg:%s  val:%s" % pair)
+
+    # Instantiate the agent
+    # Load the agent from directories defined in site file
+    for d in sys.path:
+        if d.endswith("src"):
+            toplevel_dir = d+".agents"
+
+    agent_module = load_module(seek_module="rapd_agent_index+strategy",
+                               directories=["agents"],
+                               logger=logger)
+
+    agent_module.RapdAgent(None, command, logger)
 
 if __name__ == "__main__":
 

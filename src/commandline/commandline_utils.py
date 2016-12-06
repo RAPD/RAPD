@@ -81,6 +81,7 @@ dp_parser.add_argument("-ld", "--listdetectors",
 dp_parser.add_argument("-b", "--beamcenter",
                        action="store",
                        dest="beamcenter",
+                       default=[0, 0],
                        nargs=2,
                        type=float,
                        help="Define the beam center x,y")
@@ -89,14 +90,14 @@ dp_parser.add_argument("-b", "--beamcenter",
 dp_parser.add_argument("-sg", "--spacegroup",
                        action="store",
                        dest="spacegroup",
-                       nargs=1,
+                       default="None",
                        help="Input a spacegroup")
 
 # Sample type
 dp_parser.add_argument("--sample_type",
                        action="store",
                        dest="sample_type",
-                       nargs=1,
+                       default="protein",
                        choices=["protein", "dna", "rna", "peptide"],
                        help="The type of sample")
 
@@ -104,7 +105,6 @@ dp_parser.add_argument("--sample_type",
 dp_parser.add_argument("--solvent",
                        action="store",
                        dest="solvent",
-                       nargs=1,
                        type=float,
                        help="Solvent fraction 0.0-1.0")
 
@@ -112,7 +112,6 @@ dp_parser.add_argument("--solvent",
 dp_parser.add_argument("--lowres",
                        action="store",
                        dest="lowres",
-                       nargs=1,
                        type=float,
                        help="Low resolution limit")
 
@@ -120,7 +119,7 @@ dp_parser.add_argument("--lowres",
 dp_parser.add_argument("--hires",
                        action="store",
                        dest="hires",
-                       nargs=1,
+                       default=0.0,
                        type=float,
                        help="High resolution limit")
 
