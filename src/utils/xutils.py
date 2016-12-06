@@ -2134,36 +2134,32 @@ def pp2(inp):
   junk.pprint(inp1)
   f1.close()
 
-def processLocal(inp,logger=False,output=False):
+def processLocal(inp, logger=False, output=False):
   """
   Run job as subprocess on local machine.
   """
   from subprocess import Popen
-  #logger.debug('Utilities::processLocal')
-  try:
-    if type(inp) == tuple:
-      command,log = inp
-      f = open(log,'w')
-      myoutput = Popen(command,shell=True,stdout=f,stderr=f)
-    else:
-      myoutput = Popen(inp,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-    if output:
-      output.put(myoutput.pid)
-    myoutput.wait()
-    if type(inp) == tuple:
-      f.close()
-    """
-    else:
-      for line in myoutput.stdout:
-        print line
-    """
-  except:
-    if logger:
-      logger.exception('**Error in Utilities.processLocal**')
-    else:
-      print '**Error in Utilities.processLocal**'
 
-def rocksCommand(inp,logger=False):
+  try:
+      if type(inp) == tuple:
+          command,log = inp
+          f = open(log,'w')
+          myoutput = Popen(command, shell=True, stdout=f, stderr=f)
+      else:
+          myoutput = Popen(inp,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+      if output:
+          output.put(myoutput.pid)
+      myoutput.wait()
+      if type(inp) == tuple:
+          f.close()
+
+  except:
+      if logger:
+          logger.exception('**Error in Utilities.processLocal**')
+      else:
+          print '**Error in Utilities.processLocal**'
+
+def rocksCommand(inp, logger=False):
   """
   Run Rocks command on all cluster nodes. Mainly used by rapd_agent_beamcenter.py to copy
   specific images to /dev/shm on each node for processing in RAM.

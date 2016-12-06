@@ -33,16 +33,13 @@ import pprint
 import sys
 
 # RAPD imports
-# import utils.commandline
 import utils.log
 from utils.modules import load_module
-# import utils.lock
-# import utils.site
 import utils.text as text
 import commandline_utils
 import detectors.detector_utils as detector_utils
 
-def construct_command(image_headers, commandline_args):
+def construct_command(image_headers, commandline_args, detector_module):
     """
     Put together the command for the agent
     """
@@ -51,7 +48,7 @@ def construct_command(image_headers, commandline_args):
     command = { "command":"AUTOINDEX+STRATEGY" }
 
     # Where to do the work
-    command["directories"] = { "work": os.path.abspath(os.path.curdir) }
+    command["directories"] = { "work": os.path.join(os.path.abspath(os.path.curdir), image_headers.keys()[0].replace(detector_module.DETECTOR_SUFFIX, "")) }
 
     # Image data
     images = image_headers.keys()
@@ -281,7 +278,8 @@ def main():
         pprint.pprint(image_headers)
 
     command = construct_command(image_headers=image_headers,
-                                commandline_args=commandline_args)
+                                commandline_args=commandline_args,
+                                detector_module=detector_module)
 
 
 
@@ -328,7 +326,7 @@ def main():
                                directories=["agents"],
                                logger=logger)
 
-    agent_module.RapdAgent(None, command, logger)
+    # agent_module.RapdAgent(None, command, logger)
 
 if __name__ == "__main__":
 

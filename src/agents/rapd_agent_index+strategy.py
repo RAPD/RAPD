@@ -87,27 +87,27 @@ class RapdAgent(Process):
     iterations = 6
 
     # This is where I place my overall folder settings.
-    working_dir			       = False
-    auto_summary		       = False
-    labelit_log 		       = {}
-    labelit_results		       = {}
-    labelit_summary		       = False
-    labelit_failed		       = False
-    distl_log			       = []
-    distl_results		       = {}
-    distl_summary		       = False
-    raddose_results		       = False
-    raddose_summary		       = False
-    best_log			       = []
-    best_results		       = False
-    best_summary		       = False
-    best1_summary		       = False
-    best_summary_long		       = False
-    best_anom_log		       = []
-    best_anom_results		       = False
-    best_anom_summary		       = False
-    best1_anom_summary  	       = False
-    best_anom_summary_long	       = False
+    working_dir = False
+    auto_summary = False
+    labelit_log = {}
+    labelit_results = {}
+    labelit_summary = False
+    labelit_failed = False
+    distl_log = []
+    distl_results = {}
+    distl_summary = False
+    raddose_results = False
+    raddose_summary = False
+    best_log = []
+    best_results = False
+    best_summary = False
+    best1_summary = False
+    best_summary_long = False
+    best_anom_log = []
+    best_anom_results = False
+    best_anom_summary = False
+    best1_anom_summary = False
+    best_anom_summary_long = False
     best_failed 		       = False
     best_anom_failed		       = False
     rerun_best  		       = False
@@ -2268,59 +2268,61 @@ class RunLabelit(Process):
       Setup extra parameters for Labelit if turned on. Will always set beam center from image header.
       Creates dataset_preferences.py file for editing later in the Labelit error iterations if needed.
       """
+
       if self.verbose:
-        self.logger.debug('RunLabelit::preprocessLabelit')
+          self.logger.debug('RunLabelit::preprocessLabelit')
+
       try:
-        twotheta       = str(self.header.get('twotheta','0'))
-        #distance       = str(self.header.get('distance'))
-        #x_beam         = str(self.preferences.get('x_beam', self.header.get('beam_center_x'))) #OLD
-        #Once we figure out the beam center issue, I can switch to this.
-	#x_beam         = str(self.header.get('beam_center_calc_x', self.header.get('beam_center_x')))
-        #y_beam         = str(self.header.get('beam_center_calc_y', self.header.get('beam_center_y')))
-	x_beam         = str(self.header.get('beam_center_x'))
-        y_beam         = str(self.header.get('beam_center_y'))
-        binning = True
-	if self.header.has_key('binning'):
-	  binning = self.header.get('binning')
-	"""
-        if self.vendortype == 'ADSC':
-          if self.header.get('binning') == 'none':
-            binning = False
-        """
-        if self.test == False:
-          preferences    = open('dataset_preferences.py','w')
-          preferences.write('#####Base Labelit settings#####\n')
-          preferences.write('best_support=True\n')
-          #Set Mosflm RMSD tolerance larger
-          preferences.write('mosflm_rmsd_tolerance=4.0\n')
+          twotheta       = str(self.header.get('twotheta','0'))
+          #distance       = str(self.header.get('distance'))
+          #x_beam         = str(self.preferences.get('x_beam', self.header.get('beam_center_x'))) #OLD
+          #Once we figure out the beam center issue, I can switch to this.
+  	      #x_beam         = str(self.header.get('beam_center_calc_x', self.header.get('beam_center_x')))
+          #y_beam         = str(self.header.get('beam_center_calc_y', self.header.get('beam_center_y')))
+          x_beam         = str(self.header.get('beam_center_x'))
+          y_beam         = str(self.header.get('beam_center_y'))
+          binning = True
+          if self.header.has_key('binning'):
+  	           binning = self.header.get('binning')
+          """
+          if self.vendortype == 'ADSC':
+            if self.header.get('binning') == 'none':
+              binning = False
+          """
+          if self.test == False:
+              preferences    = open('dataset_preferences.py','w')
+              preferences.write('#####Base Labelit settings#####\n')
+              preferences.write('best_support=True\n')
+              #Set Mosflm RMSD tolerance larger
+              preferences.write('mosflm_rmsd_tolerance=4.0\n')
 
-          #If binning is off. Force Labelit to use all pixels(MAKES THINGS WORSE). Increase number of spots to use for indexing.
-          if binning == False:
-            preferences.write('distl_permit_binning=False\n')
-            preferences.write('distl_maximum_number_spots_for_indexing=600\n')
+                #If binning is off. Force Labelit to use all pixels(MAKES THINGS WORSE). Increase number of spots to use for indexing.
+              if binning == False:
+                  preferences.write('distl_permit_binning=False\n')
+                  preferences.write('distl_maximum_number_spots_for_indexing=600\n')
 
-          #If user wants to change the res limit for autoindexing.
-          if str(self.preferences.get('index_hi_res','0.0')) != '0.0':
-            #preferences.write('distl.res.outer='+index_hi_res+'\n')
-            preferences.write('distl_highres_limit=%s\n'%self.preferences.get('index_hi_res'))
-          #Always specify the beam center.
-          #If Malcolm flips the beam center in the image header...
-          if self.preferences.get('beam_flip','False') == 'True':
-            preferences.write('autoindex_override_beam=(%s,%s)\n' % (y_beam,x_beam))
-          else:
-            preferences.write('autoindex_override_beam=(%s,%s)\n' % (x_beam,y_beam))
-          #If two-theta is being used, specify the angle and distance correctly.
-          if twotheta.startswith('0'):
-            preferences.write('beam_search_scope=0.2\n')
-          else:
-            self.twotheta = True
-            preferences.write('beam_search_scope=0.5\n')
-            preferences.write('autoindex_override_twotheta=%s\n'%twotheta)
-            #preferences.write('autoindex_override_distance='+distance+'\n')
-          preferences.close()
+                #If user wants to change the res limit for autoindexing.
+              if str(self.preferences.get('index_hi_res','0.0')) != '0.0':
+                  #preferences.write('distl.res.outer='+index_hi_res+'\n')
+                  preferences.write('distl_highres_limit=%s\n'%self.preferences.get('index_hi_res'))
+              #Always specify the beam center.
+              #If Malcolm flips the beam center in the image header...
+              if self.preferences.get('beam_flip','False') == 'True':
+                  preferences.write('autoindex_override_beam=(%s,%s)\n' % (y_beam,x_beam))
+              else:
+                  preferences.write('autoindex_override_beam=(%s,%s)\n' % (x_beam,y_beam))
+              #If two-theta is being used, specify the angle and distance correctly.
+              if twotheta.startswith('0'):
+                  preferences.write('beam_search_scope=0.2\n')
+              else:
+                  self.twotheta = True
+                  preferences.write('beam_search_scope=0.5\n')
+                  preferences.write('autoindex_override_twotheta=%s\n'%twotheta)
+                  #preferences.write('autoindex_override_distance='+distance+'\n')
+              preferences.close()
 
       except:
-        self.logger.exception('**ERROR in RunLabelit.preprocessLabelit**')
+          self.logger.exception('**ERROR in RunLabelit.preprocessLabelit**')
 
     def processLabelit(self, iteration=0, inp=False):
         """
