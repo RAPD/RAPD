@@ -38,7 +38,7 @@ import time
 
 # RAPD imports
 # from rapd_utils import date_adsc_to_sql
-import monitors.redis_monitor
+# import monitors.redis_monitor
 
 """
 A relatively recent header from APS 24ID-E

@@ -113,6 +113,16 @@ def construct_command(image_headers, commandline_args):
     command["preferences"]["beam_flip"] = "False"
     command["preferences"]["multiprocessing"] = "True"
 
+    # Site parameters
+    command["preferences"]["site_parameters"] = {}
+    command["preferences"]["site_parameters"]["DETECTOR_DISTANCE_MAX"] = 1000
+    command["preferences"]["site_parameters"]["DETECTOR_DISTANCE_MIN"] = 150
+    command["preferences"]["site_parameters"]["DIFFRACTOMETER_OSC_MIN"] = 0.1
+    command["preferences"]["site_parameters"]["DETECTOR_TIME_MIN"] = 0.1
+
+    # Return address
+    command["return_address"] = None
+
     pprint.pprint(command)
     return command
 

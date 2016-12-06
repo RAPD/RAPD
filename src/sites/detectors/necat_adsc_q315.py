@@ -27,7 +27,50 @@ import math
 import os
 
 # RAPD imports
-import adsc_q315
+import detectors.adsc.adsc_q315 as adsc_q315
+
+# Source information
+# Flux of the beam
+BEAM_FLUX = 8E11
+# Size of the beam in microns
+BEAM_SIZE_X = 50
+BEAM_SIZE_Y = 20
+# Shape of the beam - ellipse, rectangle
+BEAM_SHAPE = "ellipse"
+# Shape of the attenuated beam - circle or rectangle
+BEAM_APERTURE_SHAPE = "circle"
+# Gaussian description of the beam for raddose
+BEAM_GAUSS_X = 0.03
+BEAM_GAUSS_Y = 0.01
+# Beam center calibration
+BEAM_CENTER_DATE = "2015-12-07"
+# Beamcenter equation coefficients (b, m1, m2, m3, m4, m5, m6)
+BEAM_CENTER_X = (153.94944895756946,
+                 -0.016434436106566495,
+                 3.5990848937868658e-05,
+                 -8.2987834172005917e-08,
+                 1.0732920112697317e-10,
+                 -7.339858946384788e-14,
+                 2.066312749407257e-17)
+BEAM_CENTER_Y = (158.56546190593907,
+                 0.0057578279496966192,
+                 -3.9726067083100419e-05,
+                 1.1458201832002297e-07,
+                 -1.7875879553926729e-10,
+                 1.4579198435694557e-13,
+                 -4.7910792416525411e-17)
+# Aggregator - be extra careful when modifying
+_BEAM_SETTINGS = {"BEAM_FLUX":BEAM_FLUX,
+                  "BEAM_SIZE_X":BEAM_SIZE_X,
+                  "BEAM_SIZE_Y":BEAM_SIZE_Y,
+                  "BEAM_SHAPE":BEAM_SHAPE,
+                  "BEAM_APERTURE_SHAPE":BEAM_APERTURE_SHAPE,
+                  "BEAM_GAUSS_X":BEAM_GAUSS_X,
+                  "BEAM_GAUSS_Y":BEAM_GAUSS_Y,
+                  "BEAM_CENTER_DATE":BEAM_CENTER_DATE,
+                  "BEAM_CENTER_X":BEAM_CENTER_X,
+                  "BEAM_CENTER_Y":BEAM_CENTER_Y}
+
 
 DETECTOR_SUFFIX = ".img"
 HEADER_VERSION = 1
@@ -61,7 +104,7 @@ def create_image_fullname(directory,
     return fullname
 
 # Calculate the flux of the beam
-def calculate_flux(header, beam_settings):
+def calculate_flux(header, beam_settings=_BEAM_SETTINGS):
     """Return the flux and size of the beam given parameters"""
 
     # Save some typing
@@ -106,7 +149,7 @@ def calculate_flux(header, beam_settings):
 
     return flux, beam_size_x/1000.0, beam_size_y/1000.0
 
-def calculate_beam_center(distance, beam_settings, v_offset=0):
+def calculate_beam_center(distance, beam_settings=_BEAM_SETTINGS, v_offset=0):
     """ Return a beam center, given a distance and vertical offset"""
 
     x_coeff = beam_settings["BEAM_CENTER_X"]
@@ -132,7 +175,7 @@ def calculate_beam_center(distance, beam_settings, v_offset=0):
     return x_beam, y_beam
 
 # Standard header reading
-def read_header(fullname, beam_settings, run_id=None, place_in_run=None):
+def read_header(fullname, beam_settings=_BEAM_SETTINGS, run_id=None, place_in_run=None):
     """Read the NE-CAT ADSC Q315 header and add some site-specific data"""
 
     # Perform the header read form the file

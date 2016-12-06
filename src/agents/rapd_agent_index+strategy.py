@@ -149,17 +149,18 @@ class RapdAgent(Process):
         site -- full site settings
         command -- dict of all information for this agent to run
         """
-	# Save the start time
-	self.st = time.time()
+        # Save the start time
+        self.st = time.time()
 
-	# If the logging instance is passed in...
+        # If the logging instance is passed in...
         if logger:
-	  self.logger = logger
-	else:
-          # Otherwise get the logger Instance
-          self.logger = logging.getLogger("RAPDLogger")
-          self.logger.debug("__init__")
-	self.logger.info(site)
+            self.logger = logger
+        else:
+            # Otherwise get the logger Instance
+            self.logger = logging.getLogger("RAPDLogger")
+            self.logger.debug("__init__")
+
+        self.logger.info(site)
         self.logger.info(command)
 
         # Store passed-in variables
@@ -171,31 +172,33 @@ class RapdAgent(Process):
         self.setup = self.command["directories"]
         self.header = self.command["header1"]
         self.header2 = self.command.get("header2", False)
-        self.site_parameters = self.command.get("site_parameters",False)
+        self.site_parameters = self.command.get("site_parameters", False)
         self.preferences = self.command.get("preferences", {})
         self.controller_address = self.reply_address
 
-	# Assumes that Core sent job if present. Overrides values for clean and test from top.
-	if self.site_parameters != False:
-	  self.gui = True
-	  self.test = False
-	  self.clean = False
-	  #self.verbose = False
-	else:
-	  # If running from command line, site_parameters is not in there. Needed for BEST.
-	  self.site_parameters = self.site.BEAM_INFO.get(Utils.get_site(self.header['fullname'],False)[1])
-	  #Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
-	  self.gui = False
+        # Assumes that Core sent job if present. Overrides values for clean and test from top.
+        if self.site_parameters != False:
+            self.gui = True
+            self.test = False
+            self.clean = False
+        else:
+            # If running from command line, site_parameters is not in there. Needed for BEST.
+            if self.site:
+                self.site_parameters = self.site.BEAM_INFO.get(Utils.get_site(self.header['fullname'], False)[1])
+            else:
+                self.site_parameters = self.preferences.get("site_parameters", False)
+            #Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
+            self.gui = False
 
-	# Load the appropriate cluster adapter or set to False
-	if self.cluster_use:
-	  self.cluster_adapter = Utils.load_cluster_adapter(self)
-	  self.cluster_queue = self.cluster_adapter.check_queue(self.command["command"])
-	else:
-	  self.cluster_adapter = False
-	  self.cluster_queue = False
+	    # Load the appropriate cluster adapter or set to False
+        if self.cluster_use:
+            self.cluster_adapter = Utils.load_cluster_adapter(self)
+            self.cluster_queue = self.cluster_adapter.check_queue(self.command["command"])
+        else:
+            self.cluster_adapter = False
+            self.cluster_queue = False
 
-	# Set timer for distl. "False" will disable.
+        # Set timer for distl. "False" will disable.
         if self.header2:
             self.distl_timer = 60
         else:
@@ -210,16 +213,16 @@ class RapdAgent(Process):
         # then continues...(much better!!)
         self.multiproc = self.preferences.get("multiprocessing", True)
 
-	# Set for Eisenberg peptide work.
+	    # Set for Eisenberg peptide work.
         self.sample_type = self.preferences.get("sample_type", "Protein")
         if self.sample_type == "Peptide":
             self.peptide     = True
         else:
             self.peptide     = False
 
-	# BEST is default and if it fails Mosflm results are shown as backup.
-	# Setting to 'mosflm' will force it to show Mosflm results regardless.
-	self.strategy = self.preferences.get("strategy_type", "best")
+        # BEST is default and if it fails Mosflm results are shown as backup.
+        # Setting to 'mosflm' will force it to show Mosflm results regardless.
+        self.strategy = self.preferences.get("strategy_type", "best")
 
         # Check to see if XOALign should run.
         if self.header.has_key("mk3_phi") and self.header.has_key("mk3_kappa"):
