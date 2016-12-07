@@ -257,7 +257,7 @@ def main():
 
     # Get site - commandline wins over the environmental variable
     site = False
-    detecttor = False
+    detector = False
     detector_module = False
     if commandline_args.site:
         site = commandline_args.site
@@ -271,6 +271,9 @@ def main():
     # If no site or detector, try to figure out the detector
     if not (site or detector):
         print "Have to figure out the detector"
+        print data_files
+        print detector_utils.get_detector_file(data_files["files"][0])
+        sys.exit()
 
     # Have a detector - read in file data
     if detector_module:
