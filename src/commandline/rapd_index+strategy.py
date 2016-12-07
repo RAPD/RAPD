@@ -48,7 +48,9 @@ def construct_command(image_headers, commandline_args, detector_module):
     command = { "command":"AUTOINDEX+STRATEGY" }
 
     # Where to do the work
-    command["directories"] = { "work": os.path.join(os.path.abspath(os.path.curdir), image_headers.keys()[0].replace(detector_module.DETECTOR_SUFFIX, "")) }
+    command["directories"] = { "work": os.path.join(os.path.abspath(os.path.curdir), os.path.basename(image_headers.keys()[0]).replace(detector_module.DETECTOR_SUFFIX, "")) }
+    if not os.path.exists(command["directories"]["work"]):
+        os.makedirs(command["directories"]["work"])
 
     # Image data
     images = image_headers.keys()
@@ -108,7 +110,7 @@ def construct_command(image_headers, commandline_args, detector_module):
 
     # Unknown
     command["preferences"]["beam_flip"] = "False"
-    command["preferences"]["multiprocessing"] = "True"
+    command["preferences"]["multiprocessing"] = "False"
 
     # Site parameters
     command["preferences"]["site_parameters"] = {}
@@ -326,7 +328,7 @@ def main():
                                directories=["agents"],
                                logger=logger)
 
-    # agent_module.RapdAgent(None, command, logger)
+    agent_module.RapdAgent(None, command, logger)
 
 if __name__ == "__main__":
 

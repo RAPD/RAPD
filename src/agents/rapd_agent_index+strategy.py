@@ -108,35 +108,35 @@ class RapdAgent(Process):
     best_anom_summary = False
     best1_anom_summary = False
     best_anom_summary_long = False
-    best_failed 		       = False
-    best_anom_failed		       = False
-    rerun_best  		       = False
-    mosflm_strat_log		       = []
-    mosflm_strat_anom_log	       = []
-    mosflm_strat_results	       = {}
-    mosflm_strat_anom_results	       = {}
-    mosflm_strat_summary	       = False
-    mosflm_strat1_summary	       = False
-    mosflm_strat_summary_long	       = False
-    mosflm_strat_anom_summary	       = False
-    mosflm_strat1_anom_summary         = False
-    mosflm_strat_anom_summary_long     = False
+    best_failed = False
+    best_anom_failed = False
+    rerun_best = False
+    mosflm_strat_log = []
+    mosflm_strat_anom_log = []
+    mosflm_strat_results = {}
+    mosflm_strat_anom_results = {}
+    mosflm_strat_summary = False
+    mosflm_strat1_summary = False
+    mosflm_strat_summary_long = False
+    mosflm_strat_anom_summary = False
+    mosflm_strat1_anom_summary = False
+    mosflm_strat_anom_summary_long = False
     # Labelit settings
-    index_number		       = False
-    ignore_user_SG		       = False
-    pseudotrans 		       = False
+    index_number = False
+    ignore_user_SG = False
+    pseudotrans = False
     # Raddose settings
-    volume			       = False
-    calc_num_residues  		       = False
+    volume = False
+    calc_num_residues = False
     # Mosflm settings
-    prev_sg			       = False
+    prev_sg = False
     # Extra features for BEST
-    high_dose			       = False
-    crystal_life		       = None
-    iso_B			       = False
+    high_dose = False
+    crystal_life = None
+    iso_B = False
     # Dicts for running the Queues
-    jobs			       = {}
-    vips_images 		       = {}
+    jobs = {}
+    vips_images = {}
 
     # The results of the agent
     results = {}
@@ -187,8 +187,8 @@ class RapdAgent(Process):
                 self.site_parameters = self.site.BEAM_INFO.get(Utils.get_site(self.header['fullname'], False)[1])
             else:
                 self.site_parameters = self.preferences.get("site_parameters", False)
-            #Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
-            self.gui = False
+                # Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
+                self.gui = False
 
 	    # Load the appropriate cluster adapter or set to False
         if self.cluster_use:
@@ -203,8 +203,10 @@ class RapdAgent(Process):
             self.distl_timer = 60
         else:
             self.distl_timer = 30
+
         # Set strategy timer. "False" disables.
         self.strategy_timer = 90
+
         # Set timer for XOAlign. "False" will disable.
         self.xoalign_timer = 30
 
@@ -350,7 +352,7 @@ class RapdAgent(Process):
 
         # Determine detector vendortype
         self.vendortype = Utils.getVendortype(self, self.header)
-	self.dest_dir = self.setup.get("work")
+        self.dest_dir = self.setup.get("work")
         if self.test or self.cluster_use:
             self.working_dir = self.dest_dir
         elif self.ram:
