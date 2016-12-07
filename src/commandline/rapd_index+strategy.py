@@ -272,8 +272,9 @@ def main():
     if not (site or detector):
         print "Have to figure out the detector"
         print data_files
-        print detector_utils.get_detector_file(data_files["files"][0])
-        sys.exit()
+        detector = detector_utils.get_detector_file(data_files["files"][0])
+        print detector
+        detector_module = detector_utils.load_detector(detector)
 
     # Have a detector - read in file data
     if detector_module:
