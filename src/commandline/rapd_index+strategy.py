@@ -29,7 +29,6 @@ __status__ = "Development"
 # Standard imports
 import argparse
 import os
-import pprint
 import sys
 
 # RAPD imports
@@ -219,6 +218,11 @@ def get_commandline():
                         type=float,
                         help="Minimum detector time in seconds")
 
+    # Directory or files
+    dp_parser.add_argument(action="store",
+                           dest="sources",
+                           nargs="*",
+                           help="Directory or files")
 
 
     return parser.parse_args()
@@ -296,18 +300,6 @@ def main():
     for key, val in environmental_vars.iteritems():
         logger.debug("  " + key + " : " + val)
 
-
-    # Get the data files
-    data_files = commandline_utils.analyze_data_sources(sources=commandline_args.sources, mode="index")
-
-    # Print out to terminal
-    tprint("\n" + text.info + "Data files" + text.stop, 99)
-    if len(data_files) == 0:
-        tprint("  None", 99)
-    else:
-        for data_file in data_files["files"]:
-            tprint("  " + data_file, 99)
-
     # List sites?
     if commandline_args.listsites:
         print "\n" + text.info + "Available sites:" + text.stop
@@ -320,6 +312,17 @@ def main():
         print "\n" + text.info + "Available detectors:" + text.stop
         commandline_utils.print_detectors(left_buffer="  ")
         sys.exit()
+
+    # Get the data files
+    data_files = commandline_utils.analyze_data_sources(sources=commandline_args.sources, mode="index")
+
+    # Print out to terminal
+    tprint("\n" + text.info + "Data files" + text.stop, 99)
+    if len(data_files) == 0:
+        tprint("  None", 99)
+    else:
+        for data_file in data_files["files"]:
+            tprint("  " + data_file, 99)    
 
     # Need data
     if len(data_files) == 0 and commandline_args.test == False:

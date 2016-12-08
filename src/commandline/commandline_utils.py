@@ -28,7 +28,9 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
+import glob
 import os
+import pprint
 import sys
 
 # RAPD imports
@@ -81,7 +83,7 @@ dp_parser.add_argument("-ld", "--listdetectors",
 dp_parser.add_argument("-b", "--beamcenter",
                        action="store",
                        dest="beamcenter",
-                       default=[0, 0],
+                       default=[False, False],
                        nargs=2,
                        type=float,
                        help="Define the beam center x,y")
@@ -90,7 +92,7 @@ dp_parser.add_argument("-b", "--beamcenter",
 dp_parser.add_argument("-sg", "--spacegroup",
                        action="store",
                        dest="spacegroup",
-                       default="None",
+                       default=False,
                        help="Input a spacegroup")
 
 # Sample type
@@ -123,21 +125,12 @@ dp_parser.add_argument("--hires",
                        type=float,
                        help="High resolution limit")
 
-# Directory or files
-dp_parser.add_argument(action="store",
-                       dest="sources",
-                       nargs="*",
-                       help="Directory or files")
-
 # Working directory
 dp_parser.add_argument("--work_dir",
                        action="store",
                        dest="work_dir",
                        default=False,
                        help="Working directory")
-
-# Frames
-# Override XDS file?
 
 def print_sites(left_buffer=""):
     """
@@ -170,32 +163,48 @@ def analyze_data_sources(sources, mode="index"):
 
     return_data = {}
 
-    for source in sources:
-        source_abspath = os.path.abspath(source)
+    if mode == "index":
 
-        # Does file/dir exist?
-        if os.path.exists(source_abspath):
-            if os.path.isdir(source_abspath):
-                pass
-            elif os.path.isfile(source_abspath):
-                if mode == "index":
-                    # 1st file of 1 or 2
-                    if not "files" in return_data:
-                        return_data["files"] = [source_abspath]
-                    # 3rd file - error
-                    elif len(return_data["files"]) > 1:
-                        raise Exception("Up to two images can be submitted for indexing")
-                    # 2nd file - presumably a pair
-                    else:
-                        # Same file twice
-                        if source_abspath == return_data["files"][0]:
-                            raise Exception("The same image has been submitted twice for indexing")
+        for source in sources:
+            source_abspath = os.path.abspath(source)
+
+            # Does file/dir exist?
+            if os.path.exists(source_abspath):
+                if os.path.isdir(source_abspath):
+                    pass
+                elif os.path.isfile(source_abspath):
+                    if mode == "index":
+                        # 1st file of 1 or 2
+                        if not "files" in return_data:
+                            return_data["files"] = [source_abspath]
+                        # 3rd file - error
+                        elif len(return_data["files"]) > 1:
+                            raise Exception("Up to two images can be submitted for indexing")
+                        # 2nd file - presumably a pair
                         else:
-                            return_data["files"].append(source_abspath)
-                            break
-        else:
-            raise Exception("%s does not exist" % source_abspath)
+                            # Same file twice
+                            if source_abspath == return_data["files"][0]:
+                                raise Exception("The same image has been submitted twice for indexing")
+                            else:
+                                return_data["files"].append(source_abspath)
+                                break
+            else:
+                raise Exception("%s does not exist" % source_abspath)
 
+    elif mode == "integrate":
+
+        template = sources
+
+        # Establish the abspath
+        full_path_template = os.path.abspath(template)
+
+        # Grab a list of files
+        return_data = glob.glob(full_path_template.replace("#", "[0-9]"))
+        return_data.sort()
+        pprint.pprint(return_data)
+
+        if len(return_data) == 0:
+            raise Exception("No files for %s found" % template)
 
     return return_data
 

@@ -81,7 +81,7 @@ class RapdAgent(Process):
     }
     """
 
-    def __init__(self, site, command): #input, logger):
+    def __init__(self, site, command, logger):
         """
         Initialize the agent
 
@@ -100,37 +100,41 @@ class RapdAgent(Process):
         self.results = {}
 
         # self.input = input[0:4]
-        self.controller_address = self.command["return_address"]# input[-1]
+        self.controller_address = self.command.get("return_address", False)
         # self.logger = logger
         self.spacegroup = None
 
 
         self.dirs = self.command["directories"]
-        if "image_data" in self.command:
-            self.data = self.command["image_data"]
-            self.process_id = self.command["image_data"]["agent_process_id"]
-            if "run_data" in self.command:
-                self.data.update(self.command["run_data"])
-        elif 'original' in self.command:
-            self.data = self.command['original']
-        else:
-            self.data = self.command
+        self.image_data = self.command.get("data").get("image_data")
+        self.run_data = self.command.get("data").get("run_data")
+        self.process_id = self.command["process_id"]
+        # if "image_data" in self.command:
+        #     self.image_data = self.command["image_data"]
+        #     self.process_id = self.command["image_data"]["agent_process_id"]
+        #     if "run_data" in self.command:
+        #         self.image_data.update(self.command["run_data"])
+        # elif 'original' in self.command:
+        #     self.image_data = self.command['original']
+        # else:
+        #     self.image_data = self.command
 
-        self.logger.debug("self.data = %s", self.data)
-        self.settings = self.command["preferences"]
+        self.logger.debug("self.image_data = %s", self.image_data)
+        self.settings = self.command.get("settings")
 
-        if 'x_beam' not in self.data.keys():
-            self.data['x_beam'] = self.data['beam_center_x']
-            self.data['y_beam'] = self.data['beam_center_y']
-        if 'start' not in self.data.keys():
-            self.data['start'] = self.data['start_image_number']
-            self.data['total'] = self.data['number_images']
-        if self.command == 'XDS':
-            self.data['start'] = self.settings['request']['frame_start']
-            self.data['total'] = str( int(self.settings['request']['frame_start'])
-                                    + int(self.settings['request']['frame_finish']) - 1)
-            if self.settings['request'].has_key('spacegroup'):
-                self.spacegroup = self.settings['request']['spacegroup']
+
+        # if 'x_beam' not in self.image_data.keys():
+        #     self.image_data['x_beam'] = self.image_data['x_beam'] or self.image_data['beam_center_x']
+        #     self.image_data['y_beam'] = self.image_data['y_beam'] or self.image_data['beam_center_y']
+        if 'start' not in self.image_data.keys():
+            self.image_data["start"] = self.run_data.get("start")
+            self.image_data["total"] = self.run_data.get("total")
+
+        # self.image_data['start'] = self.settings['request']['frame_start']
+        # self.image_data['total'] = str( int(self.settings['request']['frame_start'])
+        #                         + int(self.settings['request']['frame_finish']) - 1)
+        if self.settings.get('spacegroup', False):
+            self.spacegroup = self.settings['spacegroup']
 
         if 'multiprocessing' in self.settings:
             self.cluster_use = self.settings['multiprocessing']
@@ -176,8 +180,8 @@ class RapdAgent(Process):
         if 'beam_center_override' in self.settings:
             if (self.settings['beam_center_override'] == True or
                 self.settings['beam_center_override'] == 'True'):
-                self.data['x_beam'] = self.settings['x_beam']
-                self.data['y_beam'] = self.settings['y_beam']
+                self.image_data['x_beam'] = self.settings['x_beam']
+                self.image_data['y_beam'] = self.settings['y_beam']
         self.xds_default = []
 
         # Parameters likely to be changed based on beamline setup.
@@ -225,29 +229,29 @@ class RapdAgent(Process):
             os.makedirs(self.dirs['work'])
         os.chdir(self.dirs['work'])
 
-        if 'detector' in self.data:
-            if self.data['detector'] in ['PILATUS', 'HF4M', 'rayonix_mx300hs']:
-                self.xds_default = self.set_detector_data(self.data['detector'])
-            #elif self.data['detector'] == 'HF4M':
-            #    self.xds_default = self.set_detector_data(self.data['detector'])
-            #elif self.data['detector'] == 'rayonix_mx300hs':
-            #	self.xds_default = self.set_detector_data(self.data['detector'])
+        if 'detector' in self.image_data:
+            if self.image_data['detector'] in ['PILATUS', 'HF4M', 'rayonix_mx300hs']:
+                self.xds_default = self.set_detector_data(self.image_data['detector'])
+            #elif self.image_data['detector'] == 'HF4M':
+            #    self.xds_default = self.set_detector_data(self.image_data['detector'])
+            #elif self.image_data['detector'] == 'rayonix_mx300hs':
+            #	self.xds_default = self.set_detector_data(self.image_data['detector'])
             else:
-                if 'binning' in self.data.keys():
-                    if self.data['binning'] == '2x2':
-                        self.data['detector'] = 'ADSC_binned'
+                if 'binning' in self.image_data.keys():
+                    if self.image_data['binning'] == '2x2':
+                        self.image_data['detector'] = 'ADSC_binned'
                         self.xds_default = self.set_detector_data('ADSC_binned')
-                    elif self.data['binning'] == 'unbinned' or self.data['binning'] == 'none':
-                        self.data['detector'] = 'ADSC'
+                    elif self.image_data['binning'] == 'unbinned' or self.image_data['binning'] == 'none':
+                        self.image_data['detector'] = 'ADSC'
                         self.xds_default = self.set_detector_data('ADSC')
-                elif 'bin' in self.data.keys():
-                    if self.data['bin'] == '2x2':
-                        self.data['binning'] = '2x2'
-                        self.data['detector'] = 'ADSC_binned'
+                elif 'bin' in self.image_data.keys():
+                    if self.image_data['bin'] == '2x2':
+                        self.image_data['binning'] = '2x2'
+                        self.image_data['detector'] = 'ADSC_binned'
                         self.xds_default = self.set_detector_data('ADSC_binned')
-                    elif self.data['bin'] == 'unbinned' or self.data['bin'] == 'none':
-                        self.data['binning'] = 'unbinned'
-                        self.data['detector'] = 'ADSC'
+                    elif self.image_data['bin'] == 'unbinned' or self.image_data['bin'] == 'none':
+                        self.image_data['binning'] = 'unbinned'
+                        self.image_data['detector'] = 'ADSC'
                         self.xds_default = self.set_detector_data('ADSC')
 
     def process (self):
@@ -275,8 +279,8 @@ class RapdAgent(Process):
             else:
                 if self.ram_use == True:
                     integration_results = self.ram_integrate(input)
-                elif (self.data['detector'] == 'ADSC' or
-    #                  self.data['detector'] == 'PILATUS' or
+                elif (self.image_data['detector'] == 'ADSC' or
+    #                  self.image_data['detector'] == 'PILATUS' or
                       self.cluster_use == False):
                     integration_results = self.xds_split(input)
                 else:
@@ -307,7 +311,8 @@ class RapdAgent(Process):
             results[-1]['status'] = 'SUCCESS'
             self.logger.debug(results)
             # self.sendBack2(results)
-            rapd_send(self.controller_address, self.results)
+            if self.controller_address:
+                rapd_send(self.controller_address, self.results)
 
         return()
 
@@ -317,8 +322,8 @@ class RapdAgent(Process):
         is present and distributed to ramdisks on the cluster
         """
         self.logger.debug('Fastintegration::ram_total')
-        first = int(self.data['start'])
-        last = int(self.data['start']) + int(self.data['total']) -1
+        first = int(self.image_data['start'])
+        last = int(self.image_data['start']) + int(self.image_data['total']) -1
         data_range = '%s %s' %(first, last)
         dir = 'wedge_%s_%s' %(first, last)
         xdsdir = os.path.join(self.dirs['work'], dir)
@@ -347,7 +352,7 @@ class RapdAgent(Process):
         xdsinp.append('SPOT_RANGE=%s %s\n' %(self.ram_nodes[1][-1], spot_range))
         xdsinp.append('DATA_RANGE=%s\n' % data_range)
         self.write_file('XDS.INP', xdsinp)
-        self.write_forkscripts(self.ram_nodes, self.data['osc_range'])
+        self.write_forkscripts(self.ram_nodes, self.image_data['osc_range'])
 
         self.xds_ram(self.ram_nodes[0][0])
 
@@ -410,10 +415,10 @@ class RapdAgent(Process):
         set is already present on the computer system.
         """
         self.logger.debug('Fastintegration::xds_total')
-        first = int(self.data['start'])
-        last = int(self.data['start']) + int(self.data['total']) -1
+        first = int(self.image_data['start'])
+        last = int(self.image_data['start']) + int(self.image_data['total']) -1
         data_range = '%s %s' %(first, last)
-        self.logger.debug('start = %s, total = %s' %(self.data['start'], self.data['total']))
+        self.logger.debug('start = %s, total = %s' %(self.image_data['start'], self.image_data['total']))
         self.logger.debug('first - %s, last = %s' %(first,last))
         self.logger.debug('data_range = %s' % data_range)
         dir = 'wedge_%s_%s' %(first,last)
@@ -422,7 +427,7 @@ class RapdAgent(Process):
             os.mkdir(xdsdir)
 
         xdsinp = xdsinput[:]
-        #xdsinp= self.find_spot_range(first, last, self.data['osc_range'], xdsinput[:])
+        #xdsinp= self.find_spot_range(first, last, self.image_data['osc_range'], xdsinput[:])
         xdsinp.append('MAXIMUM_NUMBER_OF_PROCESSORS=%s\n' % self.procs)
         xdsinp.append('MAXIMUM_NUMBER_OF_JOBS=%s\n' % self.jobs)
         #xdsinp.append('MAXIMUM_NUMBER_OF_JOBS=1\n')
@@ -504,12 +509,12 @@ class RapdAgent(Process):
         the complete data set has been collected.
         """
         self.logger.debug('FastIntegration::xds_split')
-        first_frame = int(self.data['start'])
-        half_set = (int(self.data['total']) / 2) + first_frame - 1
-        last_frame = int(self.data['start']) + int(self.data['total']) - 1
+        first_frame = int(self.image_data['start'])
+        half_set = (int(self.image_data['total']) / 2) + first_frame - 1
+        last_frame = int(self.image_data['start']) + int(self.image_data['total']) - 1
         frame_count = first_frame + 1
 
-        file_template = os.path.join(self.data['directory'],self.image_template)
+        file_template = os.path.join(self.image_data['directory'],self.image_template)
         # Figure out how many digits needed to pad image number.
         # First split off the <image number>.<extension> portion of the file_template.
         numimg = self.image_template.split('_')[-1]
@@ -525,7 +530,7 @@ class RapdAgent(Process):
                                               '%0*d' %(pad, frame_count))
 
         # Maximum wait time for next image is exposure time + 30 seconds.
-        wait_time = int(math.ceil(float(self.data['time']))) + 30
+        wait_time = int(math.ceil(float(self.image_data['time']))) + 30
 
         timer = Process(target=time.sleep, args=(wait_time,))
         timer.start()
@@ -549,7 +554,7 @@ class RapdAgent(Process):
                                       % (look_for_file, wait_time))
                     self.logger.debug('     RAPD assumes the data collection has been aborted.')
                     self.logger.debug('         Launching a final xds job with last image detected.')
-                    self.data['last'] = frame_count - 1
+                    self.image_data['last'] = frame_count - 1
                     results = self.xds_total(xdsinput)
                     return(results)
 
@@ -568,7 +573,7 @@ class RapdAgent(Process):
         if os.path.isfile(self.last_image) == False:
             if xds_job.is_alive():
                 xds_job.terminate()
-            self.data['last'] = frame_count - 1
+            self.image_data['last'] = frame_count - 1
             results = self.xds_total(xdsinput)
 
         return(results)
@@ -596,25 +601,25 @@ class RapdAgent(Process):
 
         """
         self.logger.debug('FastIntegration::xds_processing')
-        first_frame = int(self.data['start'])
-        last_frame = int(self.data['start']) + int(self.data['total']) - 1
+        first_frame = int(self.image_data['start'])
+        last_frame = int(self.image_data['start']) + int(self.image_data['total']) - 1
 
         frame_count = first_frame
         # Maximum wait time for next image is exposure time + 15 seconds.
-        #wait_time = int(math.ceil(float(self.data['time']))) + 15
+        #wait_time = int(math.ceil(float(self.image_data['time']))) + 15
         # Maximum wait time for next image is exposure time + 60 seconds.
-        if self.data['detector'] == 'PILATUS' or self.data['detector'] == 'HF4M':
-            wait_time = int(math.ceil(float(self.data['time']))) + 15
+        if self.image_data['detector'] == 'PILATUS' or self.image_data['detector'] == 'HF4M':
+            wait_time = int(math.ceil(float(self.image_data['time']))) + 15
         else:
-            wait_time = int(math.ceil(float(self.data['time']))) + 60
+            wait_time = int(math.ceil(float(self.image_data['time']))) + 60
         try:
-            wedge_size=int(10 // float(self.data['osc_range']))
+            wedge_size=int(10 // float(self.image_data['osc_range']))
         except:
             self.logger.debug('xds_processing:: dynamic wedge size allocation failed!')
             self.logger.debug('                 Setting wedge size to 10.')
             wedge_size = 10
 
-        file_template = os.path.join(self.data['directory'],self.image_template)
+        file_template = os.path.join(self.image_data['directory'],self.image_template)
         # Figure out how many digits needed to pad image number.
         # First split off the <image number>.<extension> portion of the file_template.
         numimg = self.image_template.split('_')[-1]
@@ -696,7 +701,7 @@ class RapdAgent(Process):
                         else:
                             self.logger.debug('         RAPD did not find the next image either.')
                             self.logger.debug('         Launching a final xds job with last image detected.')
-                            self.data['total'] = frame_count - 2 - first_frame
+                            self.image_data['total'] = frame_count - 2 - first_frame
                             results = self.xds_total(xdsinput)
                             return(results)
 
@@ -715,7 +720,7 @@ class RapdAgent(Process):
         if os.path.isfile(self.last_image) == False:
             if xds_job.is_alive():
                 xds_job.terminate()
-            self.data['total'] = frame_count - first_frame
+            self.image_data['total'] = frame_count - first_frame
             results = self.xds_total(xdsinput)
 
         return(results)
@@ -725,14 +730,14 @@ class RapdAgent(Process):
         This function controls processing by XDS for an intermediate wedge
         """
         self.logger.debug('Fastintegration::xds_wedge')
-        first = int(self.data['start'])
+        first = int(self.image_data['start'])
         data_range = '%s %s' %(first, last)
         xdsdir = os.path.join(self.dirs['work'],dir)
         if os.path.isdir(xdsdir) == False:
             os.mkdir(xdsdir)
 
         xdsinp = xdsinput[:]
-        #xdsinp = self.find_spot_range(first, last, self.data['osc_range'],xdsinput[:])
+        #xdsinp = self.find_spot_range(first, last, self.image_data['osc_range'],xdsinput[:])
         xdsinp.append('MAXIMUM_NUMBER_OF_PROCESSORS=%s\n' % self.procs)
         xdsinp.append('MAXIMUM_NUMBER_OF_JOBS=%s\n' % self.jobs)
         #xdsinp.append('MAXIMUM_NUMBER_OF_JOBS=1\n')
@@ -787,72 +792,72 @@ class RapdAgent(Process):
         MX300hs - SER-CAT's Rayonix MX300hs
         """
         self.logger.debug('FastIntegration::set_detector_type')
-        last_frame = int(self.data['start']) + int(self.data['total']) -1
+        last_frame = int(self.image_data['start']) + int(self.image_data['total']) -1
         self.logger.debug('last_frame = %s' % last_frame)
         self.logger.debug('detector_type = %s' % detector_type)
-        background_range = '%s %s' %(int(self.data['start']), int(self.data['start']) + 4)
+        background_range = '%s %s' %(int(self.image_data['start']), int(self.image_data['start']) + 4)
 
         # Detector specific paramters.
         # ADSC unbinned.
         if detector_type == 'ADSC':
-            x_beam = float(self.data['y_beam']) / 0.0513
-            y_beam = float(self.data['x_beam']) / 0.0513
+            x_beam = float(self.image_data['y_beam']) / 0.0513
+            y_beam = float(self.image_data['x_beam']) / 0.0513
             if x_beam < 0 or x_beam > 6144:
                 raise RuntimeError, 'x beam coordinate outside detector'
             if y_beam < 0 or y_beam > 6144:
                 raise RuntimeError, 'y beam coordinate outside detector'
-            if 'image_template' in self.data:
-                self.image_template = self.data['image_template']
+            if 'image_template' in self.image_data:
+                self.image_template = self.image_data['image_template']
             else:
-                #self.image_template = '%s_%s_???.img' %(self.data['image_prefix'],FM
-                if 'prefix' in self.data:
-                    self.image_template = '%s_%s_???.img' %(self.data['prefix'],
-                                               self.data['run_number'])
+                #self.image_template = '%s_%s_???.img' %(self.image_data['image_prefix'],FM
+                if 'prefix' in self.image_data:
+                    self.image_template = '%s_%s_???.img' %(self.image_data['prefix'],
+                                               self.image_data['run_number'])
                 else:
-                    self.image_template = '%s_%s_???.img' %(self.data['image_prefix'], self.data['run_number'])
-            file_template = os.path.join(self.data['directory'], self.image_template)
+                    self.image_template = '%s_%s_???.img' %(self.image_data['image_prefix'], self.image_data['run_number'])
+            file_template = os.path.join(self.image_data['directory'], self.image_template)
             self.last_image = file_template.replace('???','%03d' %last_frame)
-            self.first_image = file_template.replace('???','%03d' %int(self.data['start']))
+            self.first_image = file_template.replace('???','%03d' %int(self.image_data['start']))
 
             if self.ram_use == True:
                 file_template = os.path.join('/dev/shm/',
-                                             self.data['prefix'],
+                                             self.image_data['prefix'],
                                              self.image_template)
-            if self.data.has_key('pixel_size'):
+            if self.image_data.has_key('pixel_size'):
             	pass
             else:
-            	self.data['pixel_size'] = '0.0513'
+            	self.image_data['pixel_size'] = '0.0513'
             # Set untrusted region for this detector on NE-CAT 24ID-E
             untrusted_region = 'UNTRUSTED_RECTANGLE= 0 1040 3080 4090\n\n'
 
         #ADSC binned.
         elif detector_type == 'ADSC_binned':
             detector_type = 'ADSC'
-            x_beam = float(self.data['y_beam']) / 0.10259
-            y_beam = float(self.data['x_beam']) / 0.10259
+            x_beam = float(self.image_data['y_beam']) / 0.10259
+            y_beam = float(self.image_data['x_beam']) / 0.10259
             if x_beam < 0 or x_beam > 3072:
                 raise RuntimeError, 'x beam coordinate outside detector'
             if y_beam < 0 or y_beam > 3072:
                 raise RuntimeError, 'y beam coordinate outside detector'
-            if 'image_template' in self.data:
-                self.image_template = self.data['image_template']
+            if 'image_template' in self.image_data:
+                self.image_template = self.image_data['image_template']
             else:
-                if 'prefix' in self.data:
-                    self.image_template = '%s_%s_???.img' %(self.data['prefix'],
-                                               self.data['run_number'])
+                if 'prefix' in self.image_data:
+                    self.image_template = '%s_%s_???.img' %(self.image_data['prefix'],
+                                               self.image_data['run_number'])
                 else:
-                    self.image_template = '%s_%s_???.img' %(self.data['image_prefix'], self.data['run_number'])
-            file_template = os.path.join(self.data['directory'],self.image_template)
+                    self.image_template = '%s_%s_???.img' %(self.image_data['image_prefix'], self.image_data['run_number'])
+            file_template = os.path.join(self.image_data['directory'],self.image_template)
             self.last_image = file_template.replace('???','%03d' %last_frame)
-            self.first_image = file_template.replace('???','%03d' %int(self.data['start']))
+            self.first_image = file_template.replace('???','%03d' %int(self.image_data['start']))
             if self.ram_use == True:
                 file_template = os.path.join('/dev/shm/',
-                                             self.data['prefix'],
+                                             self.image_data['prefix'],
                                              self.image_template)
-            if self.data.has_key('pixel_size'):
+            if self.image_data.has_key('pixel_size'):
             	pass
             else:
-            	self.data['pixel_size'] = '0.10259'
+            	self.image_data['pixel_size'] = '0.10259'
             # Set untrusted region for this detector at NE-CAT 24ID-E.
             untrusted_region = 'UNTRUSTED_RECTANGLE= 0 520 1540 2045\n\n'
         if detector_type == 'ADSC':
@@ -860,47 +865,47 @@ class RapdAgent(Process):
 
         # ADSC HF-4M
         elif detector_type == 'HF4M':
-            x_beam = float(self.data['y_beam']) / 0.150
-            y_beam = float(self.data['x_beam']) / 0.150
+            x_beam = float(self.image_data['y_beam']) / 0.150
+            y_beam = float(self.image_data['x_beam']) / 0.150
             if x_beam < 0 or x_beam > 2100:
                 raise RuntimeError, 'x beam coordinate outside of detector'
             if y_beam < 0 or y_beam > 2290:
                 raise RuntimeError, 'y beam coordinate outside of detector'
             detector_file = 'XDS-HF4M.INP'
-            if 'image_template' in self.data:
-                self.image_template = self.data['image_template']
+            if 'image_template' in self.image_data:
+                self.image_template = self.image_data['image_template']
             else:
-                self.image_template = '%s_%s_????.cbf' %(self.data['image_prefix'], self.data['run_number'])
-            file_template = os.path.join(self.data['directory'],self.image_template)
+                self.image_template = '%s_%s_????.cbf' %(self.image_data['image_prefix'], self.image_data['run_number'])
+            file_template = os.path.join(self.image_data['directory'],self.image_template)
             self.last_image = file_template.replace('????','%04d' %last_frame)
-            self.first_image = file_template.replace('????','%04d' %int(self.data['start']))
+            self.first_image = file_template.replace('????','%04d' %int(self.image_data['start']))
             if self.ram_use == True:
-                file_template = os.path.join('/dev/shm/', self.data['image_prefix'], self.image_template)
+                file_template = os.path.join('/dev/shm/', self.image_data['image_prefix'], self.image_template)
 
         # Pilatus 6M.
         elif detector_type == 'PILATUS':
-            x_beam = float(self.data['y_beam']) / 0.172
-            y_beam = float(self.data['x_beam']) / 0.172
+            x_beam = float(self.image_data['y_beam']) / 0.172
+            y_beam = float(self.image_data['x_beam']) / 0.172
             if x_beam < 0 or x_beam > 2463:
                 raise RuntimeError, 'x beam coordinate outside detector'
             if y_beam < 0 or y_beam > 2527:
                 raise RuntimeError, 'y beam coordinate outside detector'
-            if 'image_template' in self.data:
-                self.image_template = self.data['image_template']
+            if 'image_template' in self.image_data:
+                self.image_template = self.image_data['image_template']
             else:
-                self.image_template = '%s_%s_????.cbf' %(self.data['image_prefix'],
-                                                     self.data['run_number'])
-            file_template = os.path.join(self.data['directory'],self.image_template)
+                self.image_template = '%s_%s_????.cbf' %(self.image_data['image_prefix'],
+                                                     self.image_data['run_number'])
+            file_template = os.path.join(self.image_data['directory'],self.image_template)
             self.last_image = file_template.replace('????','%04d' %last_frame)
-            self.first_image = file_template.replace('????','%04d' %int(self.data['start']))
+            self.first_image = file_template.replace('????','%04d' %int(self.image_data['start']))
             if self.ram_use == True:
                 file_template = os.path.join('/dev/shm/',
-                                             self.data['image_prefix'],
+                                             self.image_data['image_prefix'],
                                              self.image_template)
-            if self.data.has_key('pixel_size'):
+            if self.image_data.has_key('pixel_size'):
             	pass
             else:
-            	self.data['pixel_size'] = '0.172'
+            	self.image_data['pixel_size'] = '0.172'
             # Set untrusted region for this detector on NE-CAT 24ID-C
             # The Pilatus has a lot of regions untrusted between modules.
             untrusted_region=''
@@ -931,20 +936,20 @@ class RapdAgent(Process):
         # Rayonix 300hs.
         elif detector_type == 'rayonix_mx300hs':
             detector_type = 'MAR345'
-            x_beam = float(self.data['x_beam']) / float(self.data['pixel_size'])
-            y_beam = float(self.data['y_beam']) / float(self.data['pixel_size'])
-            if x_beam < 0 or x_beam > int(self.data['size1']):
+            x_beam = float(self.image_data['x_beam']) / float(self.image_data['pixel_size'])
+            y_beam = float(self.image_data['y_beam']) / float(self.image_data['pixel_size'])
+            if x_beam < 0 or x_beam > int(self.image_data['size1']):
             	raise RuntimeError, 'x beam coordinate outside detector'
-            if y_beam < 0 or y_beam > int(self.data['size1']):
+            if y_beam < 0 or y_beam > int(self.image_data['size1']):
             	raise RuntimeError, 'y beam coordinate outside detector'
             detector_file = 'XDS-MX300HS.INP'
-            if 'image_template' in self.data:
-            	self.image_template = self.data['image_template']
+            if 'image_template' in self.image_data:
+            	self.image_template = self.image_data['image_template']
             else:
-            	self.image_template = '%s.????' %self.data['image_prefix']
-            file_template = os.path.join(self.data['directory'],self.image_template)
+            	self.image_template = '%s.????' %self.image_data['image_prefix']
+            file_template = os.path.join(self.image_data['directory'],self.image_template)
             self.last_image = file_template.replace('????', '%04d' %last_frame)
-            self.first_iamge = file_template.replace('????', '%04d' %int(self.data['start']))
+            self.first_iamge = file_template.replace('????', '%04d' %int(self.image_data['start']))
             # Set untrusted region for this detector on SER-CAT beamline
             untrusted_region = ''
             min_pixel_value = '0'
@@ -953,18 +958,18 @@ class RapdAgent(Process):
         # Begin xds input with parameters determined by data set.
         xds_input = ['!============ DATA SET DEPENDENT PARAMETERS====================\n',
                      'ORGX=%.2f ORGY=%.2f !Beam center (pixels)\n' %(x_beam, y_beam),
-                     'DETECTOR_DISTANCE=%.2f !(mm)\n' %float(self.data['distance']),
-                     'OSCILLATION_RANGE=%.2f !(degrees)\n' %float(self.data['osc_range']),
-                     'X-RAY_WAVELENGTH=%.5f !(Angstroems)\n' %float(self.data['wavelength']),
+                     'DETECTOR_DISTANCE=%.2f !(mm)\n' %float(self.image_data['distance']),
+                     'OSCILLATION_RANGE=%.2f !(degrees)\n' %float(self.image_data['osc_range']),
+                     'X-RAY_WAVELENGTH=%.5f !(Angstroems)\n' %float(self.image_data['wavelength']),
                      '\n',
                      'NAME_TEMPLATE_OF_DATA_FRAMES=%s\n' %file_template,
                      '\n',
                      'BACKGROUND_RANGE=%s\n\n' % background_range,
                      '!=============== DETECTOR PARAMETERS ========================\n',
                      'DETECTOR=%s MINIMUM_VALID_PIXEL_VALUE=%s OVERLOAD=%s\n' %(
-                     	     detector_type, min_pixel_value,self.data['count_cutoff']),
+                     	     detector_type, min_pixel_value,self.image_data['count_cutoff']),
                      'NX=%s NY=%s QX=%s QY=%s\n' %(
-                     	     self.data['size1'],self.data['size2'],self.data['pixel_size'],self.data['pixel_size']),
+                     	     self.image_data['size1'],self.image_data['size2'],self.image_data['pixel_size'],self.image_data['pixel_size']),
                      'TRUSTED_REGION=0.0 1.0 !Relative radii limiting trusted detector region\n\n',
                      'ROTATION_AXIS=1.0 0.0 0.0\n',
                      'INCIDENT_BEAM_DIRECTION=0.0 0.0 1.0\n',
@@ -978,14 +983,14 @@ class RapdAgent(Process):
                      'STRICT_ABSORPTION_CORRECTION=TRUE\n\n',
                      'DIRECTION_OF_DETECTOR_X-AXIS=1.0 0.0 0.0\n']
         # If detector is tilted in two-theta, adjust DIRECTION_OF_Y-AXIS
-        if self.data['twotheta'] == 0.0 or self.data['twotheta'] == None:
+        if self.image_data['twotheta'] == 0.0 or self.image_data['twotheta'] == None:
             xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS=0.0 1.0 0.0\n\n')
         else:
-            twotheta = math.radians(float(self.data['twotheta']))
+            twotheta = math.radians(float(self.image_data['twotheta']))
             tilty = math.cos(twotheta)
             tiltz = math.sin(twotheta)
             xds_input.append('!******  Detector is inclined ****\n')
-            xds_input.append('! TWO_THETA = %s\n' % self.data['twotheta'])
+            xds_input.append('! TWO_THETA = %s\n' % self.image_data['twotheta'])
             xds_input.append('!***   Reset DIRECTION_OF_DETECTOR_Y-AXIS ***')
             xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS=0.0 %.4f %.4f\n' %(tilty, tiltz))
             xds_input.append('!0.0 cos(2theta) sin(2theta)\n\n')
@@ -1044,8 +1049,8 @@ class RapdAgent(Process):
         """
         self.logger.debug('FastIntegration::xds_run')
         self.logger.debug('     directory = %s' % directory)
-        self.logger.debug('     detector = %s' %self.data['detector'])
-        if self.data['detector']=='rayonix_mx300hs':
+        self.logger.debug('     detector = %s' %self.image_data['detector'])
+        if self.image_data['detector']=='rayonix_mx300hs':
             xds_command = '/usr/local/XDS-INTEL64_Linux_x86_64/xds_par'
         else:
             xds_command = 'xds_par'
@@ -1157,7 +1162,7 @@ class RapdAgent(Process):
                     # Try to fix by extending the data range
                     tmp = input[-1].split('=')
                     first,last = tmp.split()
-                    if int(last) == (int(self.data('start')) + int(self.data('total')) -1):
+                    if int(last) == (int(self.image_data('start')) + int(self.image_data('total')) -1):
                         self.logger.debug('         FAILURE: Already using the full data range available.')
                         return(False)
                     else:
@@ -1333,7 +1338,8 @@ class RapdAgent(Process):
         self.logger.debug(self.results)
 
         # self.sendBack2(tmp)
-        rapd_send(self.controller_address, self.results)
+        if self.controller_address:
+            rapd_send(self.controller_address, self.results)
 
 
         return(results)
@@ -1455,10 +1461,10 @@ class RapdAgent(Process):
         displayed as the Summary of the data processing.
         """
         self.logger.debug('FastIntegration::make_short_results')
-        if 'ID' in self.data.keys():
+        if 'ID' in self.image_data.keys():
             pass
         else:
-            self.data['ID'] = self.data['image_prefix']
+            self.image_data['ID'] = self.image_data['image_prefix']
         parsed = ['<?php\n',
                   '//prevents caching\n',
                   'header("Expires: Sat, 01 Jan 2000 00:00:00 GMT");\n',
@@ -1486,7 +1492,7 @@ class RapdAgent(Process):
                   '--></style>\n</head>\n<body>\n<div id="container">\n',
                   '<div align="center">\n',
                   '<h3 class="green">Processing Results for %s</h3>\n'
-                  % self.data['ID'],
+                  % self.image_data['ID'],
                   '<h3 class="green">Images %s' % results['wedge'],
                   '<h2>Spacegroup: %s</h2>\n' % results['scaling_spacegroup'],
                   '<h2>Unit Cell: %s</h2>\n' % (' '.join(results['scaling_unit_cell'])),
@@ -1933,7 +1939,7 @@ class RapdAgent(Process):
         """
         self.logger.debug('FastIntegration::pointless')
         hklfile = 'XDS_ASCII.HKL'
-        mtzfile = '_'.join([self.data['image_prefix'], 'pointless.mtz'])
+        mtzfile = '_'.join([self.image_data['image_prefix'], 'pointless.mtz'])
         logfile = mtzfile.replace('mtz', 'log')
 
         cmd = ('pointless xdsin %s hklout %s << eof > %s\n SETTING C2 \n eof'
@@ -2105,12 +2111,12 @@ class RapdAgent(Process):
             os.mkdir('%s/xds_lp_files' % self.dirs['work'])
         os.system('cp %s/*.LP %s/xds_lp_files/' % (results['dir'], self.dirs['work']))
 
-        tar_name = '_'.join([self.data['image_prefix'], str(self.data['run_number'])])
+        tar_name = '_'.join([self.image_data['image_prefix'], str(self.image_data['run_number'])])
         results_dir = os.path.join(self.dirs['work'], tar_name)
         if os.path.isdir(results_dir) == False:
             os.mkdir(results_dir)
-        prefix = '%s/%s_%s' %(results_dir, self.data['image_prefix'],
-                              self.data['run_number'])
+        prefix = '%s/%s_%s' %(results_dir, self.image_data['image_prefix'],
+                              self.image_data['run_number'])
         os.system('cp freer.mtz %s_free.mtz' % prefix)
         os.system('cp NATIVE.sca %s_NATIVE.sca' % prefix)
         os.system('cp ANOM.sca %s_ANOM.sca' % prefix)
@@ -2141,7 +2147,7 @@ class RapdAgent(Process):
         os.system('rm -rf xds_lp_files')
         # If ramdisks were used, erase files from ram_disks.
         if self.ram_use == True and self.settings['ram_cleanup'] == True:
-            command = 'rm -rf /dev/shm/%s' %self.data['image_prefix']
+            command = 'rm -rf /dev/shm/%s' %self.image_data['image_prefix']
             for node in self.ram_nodes[0]:
                 command2 = 'ssh -x %s "%s"' %(node, command)
                 p = subprocess.Popen(command2, shell=True)
@@ -2191,14 +2197,14 @@ class RapdAgent(Process):
         analysis_dir = os.path.join(dir, 'analysis')
         if os.path.isdir(analysis_dir) == False:
             os.mkdir(analysis_dir)
-        run_dict = {'fullname'  : self.data['fullname'],
+        run_dict = {'fullname'  : self.image_data['fullname'],
         #           'fullname'  : self.first_image
-                    'total'     : self.data['total'],
-                    'osc_range' : self.data['osc_range'],
-                    'x_beam'    : self.data['x_beam'],
-                    'y_beam'    : self.data['y_beam'],
-                    'two_theta' : self.data['twotheta'],
-                    'distance'  : self.data['distance']
+                    'total'     : self.image_data['total'],
+                    'osc_range' : self.image_data['osc_range'],
+                    'x_beam'    : self.image_data['x_beam'],
+                    'y_beam'    : self.image_data['y_beam'],
+                    'two_theta' : self.image_data['twotheta'],
+                    'distance'  : self.image_data['distance']
                    }
         pdb_input = []
         pdb_dict = {}
@@ -2436,13 +2442,14 @@ class DataHandler(threading.Thread):
     instantiation.  That class will then send back results on the pipe
     which it is passed and Handler will send that up the clientsocket.
     """
-    def __init__(self,input,verbose=True):
+    def __init__(self, input, logger, verbose=True):
         if verbose:
             print 'DataHandler::__init__'
 
         threading.Thread.__init__(self)
 
         self.input = input
+        self.logger = logger
         self.verbose = verbose
 
         self.start()
@@ -2451,7 +2458,7 @@ class DataHandler(threading.Thread):
         # Create a pipe to allow interprocess communication.
         #parent_pipe,child_pipe = Pipe()
         # Instantiate the integration case
-        tmp = FastIntegration(self.input, logger)
+        tmp = RapdAgent(None, self.input, self.logger)
         # Print out what would be sent back to the RAPD caller via the pipe
         # self.logger.debug parent_pipe.recv()
 
