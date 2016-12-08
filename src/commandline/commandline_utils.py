@@ -129,6 +129,13 @@ dp_parser.add_argument(action="store",
                        nargs="*",
                        help="Directory or files")
 
+# Working directory
+dp_parser.add_argument("--work_dir",
+                       action="store",
+                       dest="work_dir",
+                       default=False,
+                       help="Working directory")
+
 # Frames
 # Override XDS file?
 

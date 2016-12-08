@@ -26,30 +26,30 @@ import functools
 import logging, logging.handlers
 import os
 
-def verbose_print(arg, level=1, verbosity=1):
+def verbose_print(arg, level=20, verbosity=20):
     """Print to terminal window screened by verbosity setting
 
     Keyword arguments:
     arg -- object to be printed (default None)
-    level -- the importance of the printing job (default 5)
-    verbosity -- the value level must be less than or equal to to print (default 1)
+    level -- the importance of the printing job (default 2)
+    verbosity -- the value level must be less than or equal to to print (default 2)
 
     levels:
-    0 - silent
-    1 - alert
-    2 - warning
-    3 - info
-    4 - verbose
-    5 - debug
+    100 - silent
+    50 - alert
+    40 - error
+    30 - warning
+    20 - info
+    10 - debug
     """
-    if level <= verbosity:
+    if level >= verbosity:
         print arg
 
-def get_terminal_printer(verbosity=1):
+def get_terminal_printer(verbosity=50):
     """Returns a terminal printer
 
     Keyword arguments:
-    verbosity -- threshold to print (default 1)
+    verbosity -- threshold to print (default 50)
     """
 
     terminal_print = functools.partial(verbose_print, verbosity=verbosity)
@@ -58,13 +58,15 @@ def get_terminal_printer(verbosity=1):
 
 def get_logger(logfile_dir="/var/log",
                logfile_id="rapd",
-               level=logging.DEBUG):
+               level=10,
+               console=False):
     """Returns a logger instance
 
     Keyword arguments:
     logfile_dir -- Directory in which log will be written (default "/var/log")
     logfile_id -- Tag for the logfile to be written (default "rapd" >> rapd.log)
     level -- Logging level CRITICAL=50, DEBUG=10 (default 10)
+    console -- If True, create a console printing too
     """
 
     # print "get_logger logfile_dir:%s logfile_id:%s level:%d" % (logfile_dir, logfile_id, level)
@@ -83,13 +85,15 @@ def get_logger(logfile_dir="/var/log",
                                                         backupCount=5)
 
     # create console handler and set level to debug
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG)
+    if console:
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(level)
 
-    #add a formatter
+    # add a formatter
     formatter = logging.Formatter("%(asctime)s %(filename)s.%(funcName)s %(lineno)s - %(levelname)s %(message)s")
     file_handler.setFormatter(formatter)
-    console_handler.setFormatter(formatter)
+    if console:
+        console_handler.setFormatter(formatter)
 
     # Set up a specific logger with our desired output level
     logger = logging.getLogger("RAPDLogger")
@@ -97,7 +101,8 @@ def get_logger(logfile_dir="/var/log",
 
     # Add the handlers to the logger
     logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
+    if console:
+        logger.addHandler(console_handler)
 
     logger.debug("Logging started to %s" % log_filename)
 

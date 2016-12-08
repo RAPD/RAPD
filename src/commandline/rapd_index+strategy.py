@@ -39,7 +39,7 @@ import utils.text as text
 import commandline_utils
 import detectors.detector_utils as detector_utils
 
-def construct_command(image_headers, commandline_args, detector_module):
+def construct_command(image_headers, commandline_args, detector_module, logger):
     """
     Put together the command for the agent
     """
@@ -114,15 +114,15 @@ def construct_command(image_headers, commandline_args, detector_module):
 
     # Site parameters
     command["preferences"]["site_parameters"] = {}
-    command["preferences"]["site_parameters"]["DETECTOR_DISTANCE_MAX"] = 1000
-    command["preferences"]["site_parameters"]["DETECTOR_DISTANCE_MIN"] = 150
-    command["preferences"]["site_parameters"]["DIFFRACTOMETER_OSC_MIN"] = 0.1
-    command["preferences"]["site_parameters"]["DETECTOR_TIME_MIN"] = 0.1
+    command["preferences"]["site_parameters"]["DETECTOR_DISTANCE_MAX"] = commandline_args.site_det_dist_max
+    command["preferences"]["site_parameters"]["DETECTOR_DISTANCE_MIN"] = commandline_args.site_det_dist_min
+    command["preferences"]["site_parameters"]["DIFFRACTOMETER_OSC_MIN"] = commandline_args.site_osc_min
+    command["preferences"]["site_parameters"]["DETECTOR_TIME_MIN"] = commandline_args.site_det_time_min
 
     # Return address
     command["return_address"] = None
 
-    pprint.pprint(command)
+    logger.debug("Command for index agent: %s", command)
     return command
 
 
@@ -190,8 +190,72 @@ def get_commandline():
                         type=float,
                         help="End of allowable rotation range for mosflm segments")
 
+    # Site parameters
+    parser.add_argument("--site_detector_max_dist",
+                        action="store",
+                        dest="site_det_dist_max",
+                        default=1000.0,
+                        type=float,
+                        help="Maximum detector distance in mm")
+
+    parser.add_argument("--site_detector_min_dist",
+                        action="store",
+                        dest="site_det_dist_min",
+                        default=150.0,
+                        type=float,
+                        help="Minimum detector distance in mm")
+
+    parser.add_argument("--site_oscillation_min",
+                        action="store",
+                        dest="site_osc_min",
+                        default=0.2,
+                        type=float,
+                        help="Minimum oscillation width in degrees")
+
+    parser.add_argument("--site_detector_min_time",
+                        action="store",
+                        dest="site_det_time_min",
+                        default=0.2,
+                        type=float,
+                        help="Minimum detector time in seconds")
+
+
 
     return parser.parse_args()
+
+# def get_work_directory(commandline_args, data_files):
+#     """
+#     Determine a working directory, make it if it does not exist, and return it
+#     """
+#
+#     print "get_work_directory"
+#     print commandline_args
+#     print data_files
+#
+#     work_dir = False
+#
+#     # Passed in by command line argument
+#     if commandline_args.work_dir:
+#         work_dir = os.path.abspath(commandline_args.work_dir)
+#     else:
+#         print "No work dir command line arg"
+#
+#     # Based on data files
+#     if not (work_dir and data_files == {}):
+#         print "Have data_files"
+#         work_dir = os.path.abspath("./" + )
+#         sys.exit()
+#
+#     # Default directory
+#     if not work_dir:
+#         print "No work dir"
+#         work_dir = os.path.abspath("./rapd_tmp")
+#
+#     # Make sure work_dir exists
+#     if not os.path.exists(work_dir):
+#         os.makedirs(work_dir)
+#
+#     return work_dir
 
 def main():
     """ The main process
@@ -199,40 +263,50 @@ def main():
 
     # Get the commandline args
     commandline_args = get_commandline()
-    # tprint(commandline_args)
 
-    # verbosity
+    # Verbosity
     if commandline_args.verbose:
         verbosity = 5
+        log_level = 10
     else:
         verbosity = 1
+        log_level = 50
+
+    # Set up logging
+    logger = utils.log.get_logger(logfile_dir="./",
+                                  logfile_id="rapd_index",
+                                  level=log_level,
+                                  console=commandline_args.test)
 
     # Set up terminal printer
-    tprint = utils.log.get_terminal_printer(verbosity=verbosity)
+    tprint = utils.log.get_terminal_printer(verbosity=log_level)
+
+    logger.debug("Commandline arguments:")
+    for pair in commandline_args._get_kwargs():
+        logger.debug("  arg:%s  val:%s", pair[0], pair[1])
 
     # Print out commandline args
-    if verbosity > 2:
-        tprint("\n" + text.info + "Commandline arguments" + text.stop, 3)
-        for key, val in vars(commandline_args).iteritems():
-            tprint("  %s : %s" % (key, val), 3)
+    # tprint("\n" + text.info + "Commandline arguments" + text.stop, level=10)
+    # for key, val in vars(commandline_args).iteritems():
+    #     tprint("  %s : %s" % (key, val), level=10)
 
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
-    if verbosity > 2:
-        tprint("\n" + text.info + "Environmental variables" + text.stop, 3)
-        for key, val in environmental_vars.iteritems():
-            tprint("  " + key + " : " + val, 3)
+    logger.debug("\n" + text.info + "Environmental variables" + text.stop)
+    for key, val in environmental_vars.iteritems():
+        logger.debug("  " + key + " : " + val)
 
-    # The data files to be processed
-    data_files = commandline_utils.analyze_data_sources(sources=commandline_args.sources,
-                                                        mode="index")
-    if verbosity > 2:
-        tprint("\n" + text.info + "Data files" + text.stop, 3)
-        if len(data_files) == 0:
-            tprint("  None", 3)
-        else:
-            for data_file in data_files["files"]:
-                tprint("  " + data_file, 3)
+
+    # Get the data files
+    data_files = commandline_utils.analyze_data_sources(sources=commandline_args.sources, mode="index")
+
+    # Print out to terminal
+    tprint("\n" + text.info + "Data files" + text.stop, 99)
+    if len(data_files) == 0:
+        tprint("  None", 99)
+    else:
+        for data_file in data_files["files"]:
+            tprint("  " + data_file, 99)
 
     # List sites?
     if commandline_args.listsites:
@@ -281,11 +355,12 @@ def main():
         image_headers = {}
         for data_file in data_files["files"]:
             image_headers[data_file] = detector_module.read_header(data_file)
-        pprint.pprint(image_headers)
+        logger.debug("Image headers: %s", image_headers)
 
     command = construct_command(image_headers=image_headers,
                                 commandline_args=commandline_args,
-                                detector_module=detector_module)
+                                detector_module=detector_module,
+                                logger=logger)
 
 
 
@@ -309,18 +384,7 @@ def main():
 	# Single process lock?
     # utils.lock.file_lock(SITE.CONTROL_LOCK_FILE)
 
-    # Set up logging
-    if commandline_args.verbose:
-        log_level = 10
-    else:
-        log_level = 5
-    logger = utils.log.get_logger(logfile_dir="./",
-                                  logfile_id="rapd_index",
-                                  level=log_level)
 
-    logger.debug("Commandline arguments:")
-    for pair in commandline_args._get_kwargs():
-        logger.debug("  arg:%s  val:%s" % pair)
 
     # Instantiate the agent
     # Load the agent from directories defined in site file
