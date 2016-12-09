@@ -121,7 +121,6 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module,
         "process_id": uuid.uuid1()
         }
 
-
     # Where to do the work
     command["directories"] = { "work": os.path.join(os.path.abspath(os.path.curdir), os.path.basename(image_0_data["fullname"]).replace(detector_module.DETECTOR_SUFFIX, "")) }
     if not os.path.exists(command["directories"]["work"]):

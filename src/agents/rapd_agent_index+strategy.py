@@ -39,6 +39,7 @@ ID = "3b3448aee4a811e59c0aac87a3333966"
 import logging
 from multiprocessing import Process, Queue, Event
 import os
+import pprint
 import shutil
 import subprocess
 import time
@@ -946,7 +947,7 @@ class RapdAgent(Process):
         Pass Mosflm log into parsing and save output dict.
 
         Keyword argument
-        inp --
+        inp -- name of log file to interrogate
         """
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::postprocessMosflm")
@@ -1023,6 +1024,8 @@ class RapdAgent(Process):
                         set_best_results(i,x)
                     else:
                         if i == 4:
+                            print ">>> i == 4"
+                            print log
                             self.postprocessMosflm(log)
                         else:
                             job1 = self.postprocessBest(log)
@@ -1457,6 +1460,7 @@ class RapdAgent(Process):
             # if self.gui:
             self.results["results"] = results
             self.logger.debug(self.results)
+            pprint.pprint(self.results)
             if self.controller_address:
                 rapd_send(self.controller_address, self.results)
         except:
