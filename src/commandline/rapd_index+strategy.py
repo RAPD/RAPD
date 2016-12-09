@@ -75,7 +75,7 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
 
     # Best & Labelit
     command["preferences"]["sample_type"] = commandline_args.sample_type
-    command["preferences"]["spacegroup"] = str(commandline_args.spacegroup)
+    command["preferences"]["spacegroup"] = commandline_args.spacegroup
 
     # Labelit
     command["preferences"]["a"] = 0.0
@@ -219,10 +219,10 @@ def get_commandline():
                         help="Minimum detector time in seconds")
 
     # Directory or files
-    dp_parser.add_argument(action="store",
-                           dest="sources",
-                           nargs="*",
-                           help="Directory or files")
+    parser.add_argument(action="store",
+                        dest="sources",
+                        nargs="*",
+                        help="Directory or files")
 
 
     return parser.parse_args()
@@ -322,7 +322,7 @@ def main():
         tprint("  None", 99)
     else:
         for data_file in data_files["files"]:
-            tprint("  " + data_file, 99)    
+            tprint("  " + data_file, 99)
 
     # Need data
     if len(data_files) == 0 and commandline_args.test == False:

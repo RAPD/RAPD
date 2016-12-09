@@ -298,7 +298,7 @@ class RapdAgent(Process):
         self.wavelength = str(self.header.get("wavelength"))
         self.transmission = float(self.header.get("transmission"))
         #self.aperture = str(self.header.get("md2_aperture"))
-        self.spacegroup = self.preferences.get("spacegroup", "None")
+        self.spacegroup = self.preferences.get("spacegroup", False)
         self.flux = str(self.header.get("flux",'3E10'))
         self.solvent_content = str(self.preferences.get("solvent_content", 0.55))
 
@@ -737,7 +737,7 @@ class RapdAgent(Process):
             #Save info from previous data collections.
             if self.multicrystalstrat:
                 ref_data = self.preferences.get("reference_data")
-                if self.spacegroup == "None":
+                if self.spacegroup == False:
                     self.spacegroup = ref_data[0][-1]
                     Utils.fixMosflmSG(self)
                     #For posting in summary
@@ -1123,7 +1123,7 @@ class RapdAgent(Process):
                 self.labelit_dir = os.path.join(self.working_dir, highest)
                 self.index_number = self.labelit_results.get("Labelit results").get("mosflm_index")
                 os.chdir(self.labelit_dir)
-                if self.spacegroup != "None":
+                if self.spacegroup != False:
                     check_lg = Utils.checkSG(self, sym)
                     user_sg  = Utils.convertSG(self, self.spacegroup)
                     if user_sg != sym:
@@ -1456,7 +1456,8 @@ class RapdAgent(Process):
             # if self.gui:
             self.results["results"] = results
             self.logger.debug(self.results)
-            rapd_send(self.controller_address, self.results)
+            if self.controller_address:
+                rapd_send(self.controller_address, self.results)
         except:
             self.logger.exception("**Could not send results to pipe**")
 
@@ -1954,7 +1955,7 @@ class RapdAgent(Process):
             if self.prev_sg:
                 jon_summary.write("%7s<h4 class='results'>Space group %s selected from previous dataset.</h4>\n" % ('', self.spacegroup))
             else:
-                if self.spacegroup != 'None':
+                if self.spacegroup != False:
                     jon_summary.write("%7s<h4 class='results'>User chose space group as %s</h4>\n" % ('', self.spacegroup))
                     if self.ignore_user_SG == True:
                         jon_summary.write("%7s<h4 class='results'>Unit cell not compatible with user chosen SG.</h4>\n" % '')
@@ -2193,7 +2194,7 @@ class RunLabelit(Process):
             if self.preferences.get("multiprocessing") == "False":
                 self.multiproc = False
         self.sample_type = self.preferences.get("sample_type", "Protein")
-        self.spacegroup = self.preferences.get("spacegroup", "None")
+        self.spacegroup = self.preferences.get("spacegroup", False)
 
         # This is where I place my overall folder settings.
         self.working_dir = self.setup.get("work")
@@ -2352,7 +2353,7 @@ class RunLabelit(Process):
                 if d:
                     command += 'known_cell=%s,%s,%s,%s,%s,%s ' % (d['a'], d['b'], d['c'], d['alpha'], d['beta'], d['gamma'])
             if self.ignore_user_SG == False:
-                if self.spacegroup != 'None':
+                if self.spacegroup != False:
                     command += 'known_symmetry=%s ' % self.spacegroup
             # For peptide crystals. Doesn't work that much.
             if self.sample_type == 'Peptide':
