@@ -147,9 +147,9 @@ def summaryRaddose(self):
   if self.verbose:
     self.logger.debug('Summary::summaryRaddose')
   try:
-    hen_lim       = self.raddose_results.get('Raddose results').get('henderson limit')
-    dose          = self.raddose_results.get('Raddose results').get('dose per image')
-    exp_dose_lim  = self.raddose_results.get('Raddose results').get('exp dose limit')
+    hen_lim       = self.raddose_results.get("raddose_results").get('henderson limit')
+    dose          = self.raddose_results.get("raddose_results").get('dose per image')
+    exp_dose_lim  = self.raddose_results.get("raddose_results").get('exp dose limit')
 
     raddose  ='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
     raddose +='%6s<h1 class="results">Raddose Results</h1>\n'%''

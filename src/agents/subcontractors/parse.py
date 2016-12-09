@@ -709,27 +709,31 @@ def ParseOutputDistl(self, inp):
     return(None)
 
 def ParseOutputRaddose(self, inp):
-  """
-  Looks for dose and cell volume. Passes info back to caller
-  """
-  if self.verbose:
-    self.logger.debug('Parse::ParseOutputRaddose')
-  try:
-    for line in inp:
-      if line.startswith('Total absorbed dose'):
-        dose_per_image = float(line.split()[4])
-      if line.startswith('** Time in sec'):
-        exp_dose_lim = line.split()[11]
-      if line.startswith('   Time in sec'):
-        hen_lim = line.split()[13]
-    raddose = { 'dose per image'       :  dose_per_image,
-                'exp dose limit'       :  exp_dose_lim,
-                'henderson limit'      :  hen_lim  }
-    return(raddose)
+    """
+    Looks for dose and cell volume. Passes info back to caller
+    """
 
-  except:
-    self.logger.exception('**Error in Parse.ParseOutputRaddose**')
-    return(None)
+    if self.verbose:
+        self.logger.debug('Parse::ParseOutputRaddose')
+
+    print inp
+
+    try:
+        for line in inp:
+            if line.startswith('Total absorbed dose'):
+                dose_per_image = float(line.split()[4])
+            if line.startswith('** Time in sec'):
+                exp_dose_lim = line.split()[11]
+            if line.startswith('   Time in sec'):
+                hen_lim = line.split()[13]
+        raddose = {"dose per image": dose_per_image,
+                   "exp dose limit": exp_dose_lim,
+                   "henderson limit": hen_lim  }
+        return(raddose)
+
+    except:
+        self.logger.exception('**Error in Parse.ParseOutputRaddose**')
+        return(None)
 
 def ParseOutputBest(self,inp,anom=False):
   """

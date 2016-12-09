@@ -337,7 +337,7 @@ class RapdAgent(Process):
                 self.processRaddose()
                 self.processStrategy()
                 self.run_queue()
-                #Get the distl results
+                #Get the distl_results
                 if self.multiproc:
                     self.postprocessDistl()
     	    # Make PHP files for GUI, passback results, and cleanup.
@@ -572,9 +572,9 @@ class RapdAgent(Process):
             self.logger.exception("**ERROR in processRaddose**")
 
         raddose = Parse.ParseOutputRaddose(self, self.raddose_log)
-        self.raddose_results = {"Raddose results":raddose}
-        if self.raddose_results["Raddose results"] == None:
-            self.raddose_results = {"Raddose results":"FAILED"}
+        self.raddose_results = {"raddose_results":raddose}
+        if self.raddose_results["raddose_results"] == None:
+            self.raddose_results = {"raddose_results":"FAILED"}
             if self.verbose:
                 self.logger.debug("Raddose failed")
 
@@ -602,9 +602,9 @@ class RapdAgent(Process):
             dose = 100000.0
             exp_dose_lim = 300
             if self.raddose_results:
-                if self.raddose_results.get('Raddose results') != 'FAILED':
-                    dose = self.raddose_results.get('Raddose results').get('dose per image')
-                    exp_dose_lim = self.raddose_results.get('Raddose results').get('exp dose limit')
+                if self.raddose_results.get("raddose_results") != 'FAILED':
+                    dose = self.raddose_results.get("raddose_results").get('dose per image')
+                    exp_dose_lim = self.raddose_results.get("raddose_results").get('exp dose limit')
             # Set how many frames a crystal will last at current exposure time.
             self.crystal_life = str(int(float(exp_dose_lim) / float(self.time)))
             if self.crystal_life == '0':
@@ -883,9 +883,9 @@ class RapdAgent(Process):
                 self.distl_log.extend(log)
                 distl = Parse.ParseOutputDistl(self, log)
                 if distl == None:
-                    self.distl_results = {"Distl results":"FAILED"}
+                    self.distl_results = {"distl_results":"FAILED"}
                 else:
-                    self.distl_results[str(x)] = {"Distl results": distl}
+                    self.distl_results[str(x)] = {"distl_results": distl}
             Utils.distlComb(self)
 
         except:
@@ -1316,14 +1316,14 @@ class RapdAgent(Process):
         self.results["preferences"] = self.preferences
 
         # Generate the proper summaries that go into the output HTML files
-        if self.labelit_failed == False:
-            if self.labelit_results:
-                Summary.summaryLabelit(self)
-                Summary.summaryAutoCell(self, True)
-        if self.distl_results:
-            Summary.summaryDistl(self)
-        if self.raddose_results:
-            Summary.summaryRaddose(self)
+        # if self.labelit_failed == False:
+        #     if self.labelit_results:
+        #         Summary.summaryLabelit(self)
+        #         Summary.summaryAutoCell(self, True)
+        # if self.distl_results:
+        #     Summary.summaryDistl(self)
+        # if self.raddose_results:
+        #     Summary.summaryRaddose(self)
         if self.labelit_failed == False:
             if self.strategy == "mosflm":
                 self.htmlBestPlotsFailed()
@@ -1332,16 +1332,17 @@ class RapdAgent(Process):
             else:
                 if self.best_failed:
                     if self.best_anom_failed:
-                        self.htmlBestPlotsFailed()
-                        Summary.summaryMosflm(self, False)
-                        Summary.summaryMosflm(self, True)
+                        pass
+                        # self.htmlBestPlotsFailed()
+                        # Summary.summaryMosflm(self, False)
+                        # Summary.summaryMosflm(self, True)
                     else:
-                        Summary.summaryMosflm(self, False)
-                        Summary.summaryBest(self, True)
+                        # Summary.summaryMosflm(self, False)
+                        # Summary.summaryBest(self, True)
                         self.htmlBestPlots()
                 elif self.best_anom_failed:
-                    Summary.summaryMosflm(self, True)
-                    Summary.summaryBest(self, False)
+                    # Summary.summaryMosflm(self, True)
+                    # Summary.summaryBest(self, False)
                     self.htmlBestPlots()
                 else:
                     Summary.summaryBest(self, False)
@@ -1506,6 +1507,7 @@ class RapdAgent(Process):
         """
         generate plots html/php file
         """
+
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::htmlBestPlots")
 
@@ -1521,15 +1523,15 @@ class RapdAgent(Process):
                 plot = Parse.ParseOutputBestPlots(self, open(os.path.join(dir1, "best.plt"), "r").readlines())
                 if dir2:
                     plotanom = Parse.ParseOutputBestPlots(self, open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
-                    plot.update({"companom":plotanom.get("comp")})
+                    plot.update({"companom": plotanom.get("comp")})
             elif dir2:
                 plot = Parse.ParseOutputBestPlots(self, open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
-                plot.update({"companom":plot.pop("comp")})
+                plot.update({"companom": plot.pop("comp")})
             else:
                 self.htmlBestPlotsFailed()
                 run = False
 
-            #Place holder for settings.
+            # Place holder for settings.
             l = [["Omega start", "Min osc range for different completenesses", "O m e g a &nbsp R a n g e", "Omega Start",
                   "comp",'"start at " + x + " for " + y + " degrees");'],
                  ["ANOM Omega start", "Min osc range for different completenesses", "O m e g a &nbsp R a n g e", "Omega Start",
@@ -1582,6 +1584,7 @@ class RapdAgent(Process):
                     # In case comp or companom are not present.
                     if plot.has_key(l[i][4]):
                         data = plot.get(l[i][4])
+                        print data
                         for x in range(len(data)):
                             var = "%s%s" % (l[i][4].upper(), x)
                             s1 += "%s=[]," % var
@@ -1740,7 +1743,7 @@ class RapdAgent(Process):
             if self.raddose_summary:
                 jon_summary.writelines(self.raddose_summary)
             if self.raddose_results:
-                if self.raddose_results.get("Raddose results") == "FAILED":
+                if self.raddose_results.get("raddose_results") == "FAILED":
                     jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n' % (3*("", )))
                     jon_summary.write('%7s<h4 class="results">Raddose failed. Using default dosage. Best results are still good.</h4>\n' % "")
                     jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n" % (3*("", )))
@@ -1760,7 +1763,7 @@ class RapdAgent(Process):
             if self.distl_summary:
                 jon_summary.writelines(self.distl_summary)
             if self.distl_results:
-                if self.distl_results.get("Distl results") == "FAILED":
+                if self.distl_results.get("distl_results") == "FAILED":
                     jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n' % (3*("", )))
                     jon_summary.write('%7s<h4 class="results">Distl failed. Could not parse peak search file. '\
                                       "If you see this, not an indexing problem. Best results are still good.</h4>\n" % "")

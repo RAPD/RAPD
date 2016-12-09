@@ -287,8 +287,8 @@ def calcTransmission(self,attenuation=1):
         self.logger.debug('Utilities::calcTransmission')
     try:
         if self.distl_results:
-            if self.distl_results['Distl results'] != 'FAILED':
-                mean_int_sig = float(max(self.distl_results.get('Distl results').get('mean int signal')))
+            if self.distl_results["distl_results"] != 'FAILED':
+                mean_int_sig = float(max(self.distl_results.get("distl_results").get('mean int signal')))
                 if mean_int_sig < 1:
                     mean_int_sig = -1
         else:
@@ -782,11 +782,11 @@ def distlComb(self):
       self.distl_results = self.distl_results['0']
     else:
       d = {}
-      for key in self.distl_results.get('0').get('Distl results').keys():
-        temp = self.distl_results.get('0').get('Distl results')[key]
-        temp.extend(self.distl_results.get('1').get('Distl results')[key])
+      for key in self.distl_results.get('0').get("distl_results").keys():
+        temp = self.distl_results.get('0').get("distl_results")[key]
+        temp.extend(self.distl_results.get('1').get("distl_results")[key])
         d[key] = temp
-      self.distl_results = {'Distl results' : d}
+      self.distl_results = {"distl_results" : d}
 
   except:
     self.logger.exception('**Error in Utils.distlComb**')
