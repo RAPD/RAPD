@@ -639,26 +639,26 @@ class RapdAgent(Process):
             if self.high_dose:
                 command += ' -t 1.0'
             else:
-                command += ' -t %s'%self.time
-            command += ' -e %s -sh %s -su %s' % (self.preferences.get('best_complexity','none'),\
-                                                 self.preferences.get('shape','2.0'),self.preferences.get('susceptibility','1.0'))
+                command += " -t %s" % self.time
+            command += ' -e %s -sh %s -su %s' % (self.preferences.get('best_complexity', 'none'),\
+                                                 self.preferences.get('shape', '2.0'), self.preferences.get('susceptibility', '1.0'))
             if self.preferences.get('aimed_res') != 0.0:
                 command += ' -r %s' % self.preferences.get('aimed_res')
-            command += ' -Trans %s' % self.transmission
-            #Set minimum rotation width per frame. Different for PAR and CCD detectors.
+            # command += ' -Trans %s' % self.transmission
+            # Set minimum rotation width per frame. Different for PAR and CCD detectors.
             command += ' -w %s' % min_d_o
-            #Set minimum exposure time per frame.
+            # Set minimum exposure time per frame.
             command += ' -M %s' % min_e_t
-            #Set min and max detector distance
-            command += ' -DIS_MAX %s -DIS_MIN %s' % (max_dis, min_dis)
-            #Fix bug in BEST for PAR detectors. Use the cumulative completeness of 99% instead of all bin.
+            # Set min and max detector distance
+            # command += ' -DIS_MAX %s -DIS_MIN %s' % (max_dis, min_dis)
+            # Fix bug in BEST for PAR detectors. Use the cumulative completeness of 99% instead of all bin.
             if self.vendortype in ('Pilatus-6M', 'ADSC-HF4M'):
                 command += ' -low never'
-            #set dose  and limit, else set time
-            if dose:
-                command += ' -GpS %s -DMAX 30000000'%dose
-            else:
-                command += ' -T 185'
+            # set dose  and limit, else set time
+            # if dose:
+            #     command += ' -GpS %s -DMAX 30000000'%dose
+            # else:
+            command += ' -T 185'
             if runbefore:
                 command += ' -p %s %s' % (runbefore[0], runbefore[1])
             command1 = command
@@ -683,16 +683,18 @@ class RapdAgent(Process):
                 st  = runbefore[2]
                 end1 = runbefore[3]
             for i in range(st,end1):
-                log = os.path.join(os.getcwd(), 'best%s.log' % l[i][1])
+                log = os.path.join(os.getcwd(), "best%s.log" % l[i][1])
                 if self.verbose:
                     self.logger.debug(l[i][0])
-                #Save the path of the log
+                # Save the path of the log
                 d.update({'log'+l[i][1]:log})
                 if self.test == False:
                     if self.cluster_use:
-                        jobs[str(i)] = Process(target=self.cluster_adapter.processCluster, args=(self, (l[i][0], log, self.cluster_queue)))
+                        jobs[str(i)] = Process(target=self.cluster_adapter.processCluster,
+                                               args=(self, (l[i][0], log, self.cluster_queue)))
                     else:
-                        jobs[str(i)] = Process(target=BestAction, args=((l[i][0], log), self.logger))
+                        jobs[str(i)] = Process(target=BestAction,
+                                               args=((l[i][0], log), self.logger))
                     jobs[str(i)].start()
             #Check if Best should rerun since original Best strategy is too long for Pilatis using correct start and end from plots. (Way around bug in BEST.)
             if self.test == False:
