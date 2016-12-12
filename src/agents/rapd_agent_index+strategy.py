@@ -42,6 +42,7 @@ import os
 import pprint
 import shutil
 import subprocess
+import sys
 import time
 
 # RAPD imports
@@ -579,12 +580,12 @@ class RapdAgent(Process):
             if self.verbose:
                 self.logger.debug("Raddose failed")
 
-    def processBest(self, iteration=0, runbefore=False):
+    def processBest(self, iteration=0, best_version="3.2.0", runbefore=False):
         """
         Construct the Best command and run. Passes back dict with PID:anom.
         """
         if self.verbose:
-            self.logger.debug("AutoindexingStrategy::processBest")
+            self.logger.debug("AutoindexingStrategy::processBest %s", best_version)
 
         try:
             max_dis = self.site_parameters.get("DETECTOR_DISTANCE_MAX")
@@ -696,7 +697,7 @@ class RapdAgent(Process):
                         jobs[str(i)] = Process(target=BestAction,
                                                args=((l[i][0], log), self.logger))
                     jobs[str(i)].start()
-            #Check if Best should rerun since original Best strategy is too long for Pilatis using correct start and end from plots. (Way around bug in BEST.)
+            # Check if Best should rerun since original Best strategy is too long for Pilatis using correct start and end from plots. (Way around bug in BEST.)
             if self.test == False:
                 if runbefore == False:
                     counter = 2
@@ -815,6 +816,10 @@ class RapdAgent(Process):
                     st = 4
                 if self.multiproc == False:
                     end = st+1
+
+            # Get the Best version for this machine
+            best_version = Utils.getBestVersion()
+
             for i in range(st, end):
                 if i == 4:
                     Utils.folders(self, self.labelit_dir)
@@ -822,7 +827,7 @@ class RapdAgent(Process):
                 else:
                     Utils.foldersStrategy(self, os.path.join(os.path.basename(self.labelit_dir), str(i)))
                     # Reduces resolution and reruns Mosflm to calc new files, then runs Best.
-                    job = Process(target=Utils.errorBest, name="best%s" % i, args=(self, i))
+                    job = Process(target=Utils.errorBest, name="best%s" % i, args=(self, i, best_version))
                 job.start()
                 self.jobs[str(i)] = job
 
@@ -1026,8 +1031,6 @@ class RapdAgent(Process):
                         set_best_results(i,x)
                     else:
                         if i == 4:
-                            print ">>> i == 4"
-                            print log
                             self.postprocessMosflm(log)
                         else:
                             job1 = self.postprocessBest(log)
@@ -1038,7 +1041,7 @@ class RapdAgent(Process):
                                 if self.multiproc == False:
                                     self.processStrategy(i+1)
                                 set_best_results(i, x)
-                        pass
+
             if self.test == False:
                 if self.multiproc:
                     if self.cluster_adapter:

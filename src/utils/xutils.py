@@ -29,6 +29,7 @@ __status__ = "Production"
 import os
 import shutil
 import subprocess
+import sys
 
 # RAPD imports
 import agents.subcontractors.parse as Parse
@@ -1036,56 +1037,76 @@ def errorLabelitGoodSpots(self,iteration):
     return(None)
 
 def errorLabelitMosflm(self,iteration):
-  """
-  Set Mosflm integration resolution lower. Seems to fix this error.
-  """
-  if self.verbose:
-    self.logger.debug('Utilities::errorLabelitMosflm')
-  try:
-    foldersLabelit(self,iteration)
-    #'index01' will always be present since it is P1
-    preferences = open('dataset_preferences.py','a')
-    for line in open('index01','r').readlines():
-      if line.startswith('RESOLUTION'):
-        new_res = float(line.split()[1])+1.00
-        preferences.write('\n#iteration %s\nmosflm_integration_reslimit_override = %s\n'%(iteration,new_res))
-        self.labelit_log[str(iteration)].extend('\nDecreasing integration resolution to %s and rerunning.\n'%new_res)
-    preferences.close()
-    return (self.processLabelit(iteration))
+    """
+    Set Mosflm integration resolution lower. Seems to fix this error.
+    """
+    if self.verbose:
+        self.logger.debug('Utilities::errorLabelitMosflm')
+    try:
+        foldersLabelit(self,iteration)
+        #'index01' will always be present since it is P1
+        preferences = open('dataset_preferences.py','a')
+        for line in open('index01','r').readlines():
+            if line.startswith('RESOLUTION'):
+                new_res = float(line.split()[1])+1.00
+                preferences.write('\n#iteration %s\nmosflm_integration_reslimit_override = %s\n'%(iteration,new_res))
+                self.labelit_log[str(iteration)].extend('\nDecreasing integration resolution to %s and rerunning.\n'%new_res)
+        preferences.close()
+        return (self.processLabelit(iteration))
 
-  except:
-    self.logger.exception('**ERROR in Utils.errorLabelitMosflm**')
-    self.labelit_log[str(iteration)].extend('\nCould not reset Mosflm resolution.\n')
-    return(None)
+    except:
+        self.logger.exception('**ERROR in Utils.errorLabelitMosflm**')
+        self.labelit_log[str(iteration)].extend('\nCould not reset Mosflm resolution.\n')
+        return None
 
-def errorBest(self,iteration=0):
-  """
-  Run all the Best runs at the same time.
-  Reduce resolution limit and rerun Mosflm to calculate new files.
-  """
-  if self.verbose:
-    self.logger.debug('Utilities::errorBest')
+def getBestVersion():
+    """
+    Returns the version of Best that is to be run
+    """
 
-  try:
-    if iteration != 0:
-      if self.test == False:
-        temp = []
-        f = '%s_res%s'%(self.index_number,iteration)
-        shutil.copy(self.index_number,f)
-        for line in open(f,'r').readlines():
-          temp.append(line)
-          if line.startswith('RESOLUTION'):
-            temp.remove(line)
-            temp.append('RESOLUTION %s\n'%str(float(line.split()[1])+iteration))
-        new = open(f,'w')
-        new.writelines(temp)
-        new.close()
-        subprocess.Popen('sh %s'%f,shell=True).wait()
-    self.processBest(iteration)
+    print "getBestVersion"
 
-  except:
-    self.logger.exception('**ERROR in Utils.errorBest**')
-    self.best_log.append('\nCould not reset Mosflm resolution for Best.\n')
+    p = subprocess.Popen(["best"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, __ = p.communicate()
+
+    # Parse for version information
+    version = False
+    for line in stdout.split("\n"):
+        if line.startswith(" Version"):
+            version = line.split()[1]
+            break
+
+    return version
+
+def errorBest(self, iteration=0, best_version="3.2.0"):
+    """
+    Run all the Best runs at the same time.
+    Reduce resolution limit and rerun Mosflm to calculate new files.
+    """
+
+    if self.verbose:
+        self.logger.debug("Utilities::errorBest")
+
+    try:
+        if iteration != 0:
+            if self.test == False:
+                temp = []
+                f = "%s_res%s"%(self.index_number, iteration)
+                shutil.copy(self.index_number, f)
+                for line in open(f, "r").readlines():
+                    temp.append(line)
+                    if line.startswith("RESOLUTION"):
+                        temp.remove(line)
+                        temp.append("RESOLUTION %s\n" % str(float(line.split()[1]) + iteration))
+                new = open(f, "w")
+                new.writelines(temp)
+                new.close()
+                subprocess.Popen("sh %s" % f, shell=True).wait()
+        self.processBest(iteration, best_version)
+
+    except:
+        self.logger.exception("**ERROR in Utils.errorBest**")
+        self.best_log.append("\nCould not reset Mosflm resolution for Best.\n")
 
 def errorBestPost(self,iteration,error,anom=False):
   """

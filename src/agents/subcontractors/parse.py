@@ -735,6 +735,16 @@ def ParseOutputRaddose(self, inp):
         self.logger.exception('**Error in Parse.ParseOutputRaddose**')
         return(None)
 
+
+def ParseOutputBestNone(self, inp):
+    """
+    Parse the output of a Best run to ascertain the version running
+    """
+
+    print "ParseOutputBestNone"
+    print inp
+
+
 def ParseOutputBest(self, inp, anom=False):
     """
     cleans up the output and looks for errors to pass back for fixing and rerunning.
