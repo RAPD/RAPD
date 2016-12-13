@@ -327,7 +327,10 @@ def calcVolume(self):
             cell = self.cell
         #Run Raddose to get the volume of the cell.
         command = 'raddose << EOF\nCELL %s\nEND\nEOF\n'%cell
-        output = subprocess.Popen(command,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+        output = subprocess.Popen(command,
+                                  shell=True,
+                                  stdout=subprocess.PIPE,
+                                  stderr=subprocess.STDOUT)
         for line in output.stdout:
             log.append(line)
             #self.logger.debug(line.rstrip())
@@ -412,7 +415,10 @@ def checkAnom(self):
           sca = os.path.basename(self.datafile)
           shutil.copy(self.datafile,sca)
           command  = 'shelxc junk <<EOF\nCELL %s\nSPAG %s\nSAD %s\nFIND 1\nSFAC Se\nEOF\n'%(self.cell,self.input_sg,sca)
-          output = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+          output = subprocess.Popen(command,
+                                    shell=True,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT)
           temp = []
           for line in output.stdout:
             temp.append(line)
@@ -1066,7 +1072,10 @@ def getBestVersion():
 
     print "getBestVersion"
 
-    p = subprocess.Popen(["best"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    p = subprocess.Popen(["best"],
+                         shell=True,
+                         stdout=subprocess.PIPE,
+                         stderr=subprocess.PIPE)
     stdout, __ = p.communicate()
 
     # Parse for version information

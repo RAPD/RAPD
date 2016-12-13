@@ -811,8 +811,8 @@ def ParseOutputBest(self, inp, anom=False):
             for i, line in enumerate(xml):
                 temp.append(line)
                 if line.count("program=") and line.count("version="):
-                    print ">>>>", line
                     version = line.split("'")[3].split(" ")[0]
+                    print ">>>>", line, version
                 if line.count('"resolution"'):
                     res = line[line.find('>')+1:line.rfind('<')]
                 if line.count('"distance"'):
@@ -827,7 +827,7 @@ def ParseOutputBest(self, inp, anom=False):
                     com.append(line[line.find('>')+1:line.rfind('<')])
                 if line.count('"redundancy"'):
                     red.append(line[line.find('>')+1:line.rfind('<')])
-                # Version 3.4
+                # Version 3.4.4 Linux
                 if line.count('"transmission"'):
                     trans = float(line[line.find('>')+1:line.rfind('<')])
                     attenuation = str(100 - trans).zfill(3)
@@ -924,6 +924,7 @@ def ParseOutputBest(self, inp, anom=False):
         else:
             j1 = " "
         data = {
+            'strategy'+j1+'best_version': version,
             'strategy'+j1+'run number': run_num,
             'strategy'+j1+'phi start': phi_start,
             'strategy'+j1+'num of images': num_images,

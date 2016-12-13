@@ -583,6 +583,8 @@ class RapdAgent(Process):
     def processBest(self, iteration=0, best_version="3.2.0", runbefore=False):
         """
         Construct the Best command and run. Passes back dict with PID:anom.
+
+        Best versions known 3.2.0, 3.4.4
         """
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::processBest %s", best_version)
@@ -597,9 +599,11 @@ class RapdAgent(Process):
             image_number.append(self.header.get('fullname')[self.header.get('fullname').rfind('_')+1:self.header.get('fullname').rfind('.')])
             if self.header2:
                 image_number.append(self.header2.get('fullname')[self.header2.get('fullname').rfind('_')+1:self.header2.get('fullname').rfind('.')])
+
             # Tell Best if two-theta is being used.
             if int(float(self.header.get("twotheta"))) != 0:
                 Utils.fixBestfile(self)
+
             # If Raddose failed, here are the defaults.
             dose = 100000.0
             exp_dose_lim = 300
@@ -645,21 +649,23 @@ class RapdAgent(Process):
                                                  self.preferences.get('shape', '2.0'), self.preferences.get('susceptibility', '1.0'))
             if self.preferences.get('aimed_res') != 0.0:
                 command += ' -r %s' % self.preferences.get('aimed_res')
-            # command += ' -Trans %s' % self.transmission
+            if best_version >= "3.4":
+                command += ' -Trans %s' % self.transmission
             # Set minimum rotation width per frame. Different for PAR and CCD detectors.
             command += ' -w %s' % min_d_o
             # Set minimum exposure time per frame.
             command += ' -M %s' % min_e_t
             # Set min and max detector distance
-            # command += ' -DIS_MAX %s -DIS_MIN %s' % (max_dis, min_dis)
+            if best_version >= "3.4":
+                command += ' -DIS_MAX %s -DIS_MIN %s' % (max_dis, min_dis)
             # Fix bug in BEST for PAR detectors. Use the cumulative completeness of 99% instead of all bin.
             if self.vendortype in ('Pilatus-6M', 'ADSC-HF4M'):
                 command += ' -low never'
             # set dose  and limit, else set time
-            # if dose:
-            #     command += ' -GpS %s -DMAX 30000000'%dose
-            # else:
-            command += ' -T 185'
+            if best_version >= "3.4" and dose:
+                command += ' -GpS %s -DMAX 30000000'%dose
+            else:
+                command += ' -T 185'
             if runbefore:
                 command += ' -p %s %s' % (runbefore[0], runbefore[1])
             command1 = command
@@ -683,7 +689,8 @@ class RapdAgent(Process):
             if runbefore:
                 st  = runbefore[2]
                 end1 = runbefore[3]
-            for i in range(st,end1):
+
+            for i in range(st, end1):
                 log = os.path.join(os.getcwd(), "best%s.log" % l[i][1])
                 if self.verbose:
                     self.logger.debug(l[i][0])
@@ -697,8 +704,8 @@ class RapdAgent(Process):
                         jobs[str(i)] = Process(target=BestAction,
                                                args=((l[i][0], log), self.logger))
                     jobs[str(i)].start()
-            # Check if Best should rerun since original Best strategy is too long for Pilatis using correct start and end from plots. (Way around bug in BEST.)
-            if self.test == False:
+            # Check if Best should rerun since original Best strategy is too long for Pilatus using correct start and end from plots. (Way around bug in BEST.)
+            if best_version > "3.4" and self.test == False:
                 if runbefore == False:
                     counter = 2
                     while counter > 0:
@@ -707,7 +714,8 @@ class RapdAgent(Process):
                                 del jobs[job]
                                 start, ran = self.findBestStrat(d['log'+l[int(job)][1]].replace('log', 'plt'))
                                 if start != False:
-                                    self.processBest(iteration, (start, ran, int(job), int(job)+1))
+                                    print ">>>>", start, ran
+                                    # self.processBest(iteration, (start, ran, int(job), int(job)+1))
                                 counter -= 1
                         time.sleep(0.1)
 
@@ -1162,13 +1170,15 @@ class RapdAgent(Process):
         except:
             self.logger.exception("**ERROR in labelitSort**")
 
-    def findBestStrat(self,inp):
+    def findBestStrat(self, inp):
         """
         Find the BEST strategy according to the plots.
         """
 
         if self.verbose:
             self.logger.debug('AutoindexingStrategy::findBestStrat')
+
+        print "###", inp
 
         def getBestRotRange(inp):
             """
@@ -1213,6 +1223,7 @@ class RapdAgent(Process):
                     # If xml exists, check if new strategy is at least 5 degrees less rotation range.
                     if os.path.exists(inp.replace('.plt', '.xml')):
                         orig_range = getBestRotRange(open(inp.replace('.plt', '.xml'), 'r').readlines())
+                        print orig_range
                         if orig_range != 'FAILED':
                             if orig_range - min1 >= 5:
                                 run = True
@@ -2620,19 +2631,19 @@ class RunLabelit(Process):
       except:
           self.logger.exception('**ERROR in RunLabelit.LabelitLog**')
 
-def BestAction(inp,logger,output=False):
+def BestAction(inp, logger, output=False):
   """
   Run Best.
   """
   logger.debug('BestAction')
   try:
-    command,log = inp
-    #Have to do this otherwise command is written to bottom of file??
-    f = open(log,'w')
-    f.write('\n\n'+command+'\n')
+    command, log = inp
+    # Have to do this otherwise command is written to bottom of file??
+    f = open(log, 'w')
+    f.write('\n\n' + command + '\n')
     f.close()
-    f = open(log,'a')
-    job = subprocess.Popen(command,shell=True,stdout=f,stderr=f)
+    f = open(log, 'a')
+    job = subprocess.Popen(command, shell=True, stdout=f, stderr=f)
     if output:
       output.put(job.pid)
     job.wait()
