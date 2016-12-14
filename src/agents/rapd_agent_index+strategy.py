@@ -1543,23 +1543,49 @@ class RapdAgent(Process):
                 plot = Parse.ParseOutputBestPlots(self, open(os.path.join(dir1, "best.plt"), "r").readlines())
                 if dir2:
                     plotanom = Parse.ParseOutputBestPlots(self, open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
-                    plot.update({"companom": plotanom.get("comp")})
+                    plot.update({"osc_range_anom": plotanom.get("osc_range")})
             elif dir2:
                 plot = Parse.ParseOutputBestPlots(self, open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
-                plot.update({"companom": plot.pop("comp")})
+                plot.update({"osc_range_anom": plot.pop("osc_range")})
             else:
                 self.htmlBestPlotsFailed()
                 run = False
 
+            # Best failed?
+            if self.best_failed:
+                best_plots = False
+
+            # Best success
+            else:
+
+                # Construct dict holding all the plots
+                best_plots = {
+                    "osc_range": {},
+                    "osc_range_anom": {},
+                    "max_delta_omega": {},
+                    "wilson": {},
+                    "rad_damage_int_decr": {},
+                    "rad_damage_rfactor_incr": {}
+                }
+
+                self.logger.debug(plot)
+
+                # Go through the plots and build best_plots
+                for plot_type in best_plots.keys():
+                    self.logger.debug(plot_type)
+                    
+
+
+
             # Place holder for settings.
             l = [["Omega start", "Min osc range for different completenesses", "O m e g a &nbsp R a n g e", "Omega Start",
-                  "comp",'"start at " + x + " for " + y + " degrees");'],
+                  "comp", '"start at " + x + " for " + y + " degrees");'],
                  ["ANOM Omega start", "Min osc range for different completenesses", "O m e g a &nbsp R a n g e", "Omega Start",
-                  "companom",'"start at " + x + " for " + y + " degrees");'],
+                  "companom", '"start at " + x + " for " + y + " degrees");'],
                  ["Max delta Omega", "Maximal Oscillation Width", "O m e g a &nbsp S t e p", "Omega",
-                  "width",'"max delta Omega of " + y + " at Omega=" + x);'],
+                  "width", '"max delta Omega of " + y + " at Omega=" + x);'],
                  ["Wilson Plot", "Wilson Plot", "I n t e n s i t y", "1/Resolution<sup>2</sup>",
-                  "wilson",'item.series.label + " of " + x + " = " + y);']]
+                  "wilson", 'item.series.label + " of " + x + " = " + y);']]
             if self.sample_type != "Ribosome":
                 temp = [["Rad damage1", "Intensity decrease due to radiation damage", "R e l a t i v e &nbsp I n t e n s i t y",
                          "Cumulative exposure time (sec)", "damage",'"at res=" + item.series.label + " after " + x + " seconds intensity drops to " + y);'],
@@ -1568,33 +1594,12 @@ class RapdAgent(Process):
                 l.extend(temp)
 
             if run:
-                if self.gui:
-                    f = "best_plots.php"
-                else:
-                    f = "best_plots.html"
-                best_plot = open(f, "w")
-                best_plot.write(Utils.getHTMLHeader(self, "plots"))
-                best_plot.write("%4s$(function() {\n%6s// Tabs\n" % ("", ""))
-                best_plot.write("%6s$('.tabs').tabs();\n%4s});\n" % ("", ""))
-                best_plot.write("%4s</script>\n%2s</head>\n%2s<body>\n%4s<table>\n%6s<tr>\n" % (5*("", )))
-                best_plot.write('%8s<td width="%s">\n%10s<div class="tabs">\n%12s<ul>\n' % ("", "100%", "", ""))
                 for i in range(len(l)):
-                    best_plot.write('%14s<li><a href="#tabs-22%s">%s</a></li>\n' % ("", i, l[i][0]))
-                best_plot.write("%12s</ul>\n" % "")
-                for i in range(len(l)):
-                    best_plot.write('%12s<div id="tabs-22%s">\n' % ("", i))
                     if i == 0 and self.best_failed:
-                        best_plot.write("%14s<div class=title><b>BEST strategy calculation failed</b></div>\n" % "")
+                        best_plots["osc_range"] = False
                     elif i == 1 and self.best_anom_failed:
-                        best_plot.write("%14s<div class=title><b>BEST ANOM strategy calculation failed</b></div>\n" % "")
-                    else:
-                        best_plot.write("%14s<div class=title><b>%s</b></div>\n" % ("", l[i][1]))
-                        best_plot.write('%14s<div id="chart%s_div" style="width:800px;height:600px"></div>\n' % ("", i))
-                        best_plot.write("%14s<div class=x-label>%s</div>\n%14s<span class=y-label>%s</span>\n" % ("", l[i][3], "", l[i][2]))
-                    best_plot.write("%12s</div>\n" % "")
-                best_plot.write("%10s</div>\n%8s</td>\n%6s</tr>\n%4s</table>\n" % (4*("", )))
-                best_plot.write('%4s<script id="source" language="javascript" type="text/javascript">\n' % "")
-                best_plot.write("%2s$(function () {\n\n" % "")
+                        best_plots["osc_range_anom"] = False
+
                 s = "    var "
                 for i in range(len(l)):
                     l1 = []
@@ -1604,7 +1609,6 @@ class RapdAgent(Process):
                     # In case comp or companom are not present.
                     if plot.has_key(l[i][4]):
                         data = plot.get(l[i][4])
-                        print data
                         for x in range(len(data)):
                             var = "%s%s" % (l[i][4].upper(), x)
                             s1 += "%s=[]," % var
@@ -1614,46 +1618,52 @@ class RapdAgent(Process):
                                 if l[i][4].startswith("comp") and x == 0:
                                     l2.append(data[x].get(data[x].keys()[0])[y][1])
                         if i == 0:
-                            best_plot.write("%s,mark=[];\n" % s1[:-1])
+                            # best_plot.write("%s,mark=[];\n" % s1[:-1])
                             label.append('%8s{ data: mark, label: "Best starting Omega", color: "black"},\n' % "")
                         elif i == 1:
-                            best_plot.write("%s,markanom=[];\n" % s1[:-1])
+                            # best_plot.write("%s,markanom=[];\n" % s1[:-1])
                             label.append('%8s{ data: markanom, label: "Best starting Omega", color: "black"},\n' % "")
                         else:
-                            best_plot.write("%s;\n" % s1[:-1])
+                            pass
+                            # best_plot.write("%s;\n" % s1[:-1])
                     label.append("%6s],\n" % "")
                     l[i].append(label)
                     for line in l1:
-                        best_plot.write(line)
+                        pass
+                        # best_plot.write(line)
                     if len(l2) > 0:
                         if i == 0:
-                            best_plot.write("%4sfor (var i = 0; i < %s; i += 5)\n" % ("", max(l2)))
-                            best_plot.write("%4smark.push([%s,i]);\n" % ("", self.best_results.get("Best results").get("strategy phi start")[0]))
+                            pass
+                            # best_plot.write("%4sfor (var i = 0; i < %s; i += 5)\n" % ("", max(l2)))
+                            # best_plot.write("%4smark.push([%s,i]);\n" % ("", self.best_results.get("Best results").get("strategy phi start")[0]))
                         if i == 1:
-                            best_plot.write("%4sfor (var i = 0; i < %s; i += 5)\n" % ("", max(l2)))
-                            best_plot.write("%4smarkanom.push([%s,i]);\n" % ("", self.best_anom_results.get("Best ANOM results").get("strategy anom phi start")[0]))
+                            pass
+                            # best_plot.write("%4sfor (var i = 0; i < %s; i += 5)\n" % ("", max(l2)))
+                            # best_plot.write("%4smarkanom.push([%s,i]);\n" % ("", self.best_anom_results.get("Best ANOM results").get("strategy anom phi start")[0]))
                 for i in range(len(l)):
-                    best_plot.write("%4svar plot%s = $.plot($('#chart%s_div'),\n" % ("", i, i))
+                    # best_plot.write("%4svar plot%s = $.plot($('#chart%s_div'),\n" % ("", i, i))
                     for line in l[i][-1]:
-                        best_plot.write(line)
-                    best_plot.write("%6s{ lines: { show: true},\n%8spoints: { show: false },\n" % ("", ""))
-                    best_plot.write("%8sselection: { mode: 'xy' },\n%8sgrid: { hoverable: true, clickable: true },\n%6s});\n" % (3*("", )))
-                best_plot.write( "%4sfunction showTooltip(x, y, contents) {\n" % "")
-                best_plot.write("%6s$('<div id=tooltip>' + contents + '</div>').css( {\n%8sposition: 'absolute',\n" % ("", ""))
-                best_plot.write("%8sdisplay: 'none',\n%8stop: y + 5,\n%8sleft: x + 5,\n%8sborder: '1px solid #fdd',\n" % (4*("", )))
-                best_plot.write("%8spadding: '2px',\n%8s'background-color': '#fee',\n%8s opacity: 0.80\n" % (3*("", )))
-                best_plot.write('%6s}).appendTo("body").fadeIn(200);\n%4s}\n%4svar previousPoint = null;\n' % (3*("", )))
+                        pass
+                    #     best_plot.write(line)
+                    # best_plot.write("%6s{ lines: { show: true},\n%8spoints: { show: false },\n" % ("", ""))
+                    # best_plot.write("%8sselection: { mode: 'xy' },\n%8sgrid: { hoverable: true, clickable: true },\n%6s});\n" % (3*("", )))
+                # best_plot.write( "%4sfunction showTooltip(x, y, contents) {\n" % "")
+                # best_plot.write("%6s$('<div id=tooltip>' + contents + '</div>').css( {\n%8sposition: 'absolute',\n" % ("", ""))
+                # best_plot.write("%8sdisplay: 'none',\n%8stop: y + 5,\n%8sleft: x + 5,\n%8sborder: '1px solid #fdd',\n" % (4*("", )))
+                # best_plot.write("%8spadding: '2px',\n%8s'background-color': '#fee',\n%8s opacity: 0.80\n" % (3*("", )))
+                # best_plot.write('%6s}).appendTo("body").fadeIn(200);\n%4s}\n%4svar previousPoint = null;\n' % (3*("", )))
                 for i in range(len(l)):
-                    best_plot.write('%4s$("#chart%s_div").bind("plothover", function (event, pos, item) {\n' % ("", i))
-                    best_plot.write('%6s$("#x").text(pos.x.toFixed(2));\n%6s$("#y").text(pos.y.toFixed(2));\n' % ("", ""))
-                    best_plot.write("%6sif (true) {\n%8sif (item) {\n%10sif (previousPoint != item.datapoint) {\n" % (3*("", )))
-                    best_plot.write('%14spreviousPoint = item.datapoint;\n%14s$("#tooltip").remove();\n' % ("", ""))
-                    best_plot.write("%14svar x = item.datapoint[0].toFixed(2),\n%18sy = item.datapoint[1].toFixed(2);\n" % ("", ""))
-                    best_plot.write("%14sshowTooltip(item.pageX, item.pageY,\n" % "")
-                    best_plot.write("%26s%s\n%10s}\n%8s}\n" % ("", l[i][5], "", ""))
-                    best_plot.write('%8selse {\n%10s$("#tooltip").remove();\n%10spreviousPoint = null;\n%8s}\n%6s}\n%4s});\n' % (6*("", )))
-                best_plot.write( "%2s});\n%4s</script>\n%2s</body>\n</html>\n" % (3*("", )))
-                best_plot.close()
+                    pass
+                #     best_plot.write('%4s$("#chart%s_div").bind("plothover", function (event, pos, item) {\n' % ("", i))
+                #     best_plot.write('%6s$("#x").text(pos.x.toFixed(2));\n%6s$("#y").text(pos.y.toFixed(2));\n' % ("", ""))
+                #     best_plot.write("%6sif (true) {\n%8sif (item) {\n%10sif (previousPoint != item.datapoint) {\n" % (3*("", )))
+                #     best_plot.write('%14spreviousPoint = item.datapoint;\n%14s$("#tooltip").remove();\n' % ("", ""))
+                #     best_plot.write("%14svar x = item.datapoint[0].toFixed(2),\n%18sy = item.datapoint[1].toFixed(2);\n" % ("", ""))
+                #     best_plot.write("%14sshowTooltip(item.pageX, item.pageY,\n" % "")
+                #     best_plot.write("%26s%s\n%10s}\n%8s}\n" % ("", l[i][5], "", ""))
+                #     best_plot.write('%8selse {\n%10s$("#tooltip").remove();\n%10spreviousPoint = null;\n%8s}\n%6s}\n%4s});\n' % (6*("", )))
+                # best_plot.write( "%2s});\n%4s</script>\n%2s</body>\n</html>\n" % (3*("", )))
+                # best_plot.close()
                 if os.path.exists(f):
                     shutil.copy(f,  self.working_dir)
 

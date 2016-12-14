@@ -953,93 +953,114 @@ def ParseOutputBest(self, inp, anom=False):
         self.logger.exception('**Error in Parse.ParseOutputBest**')
         return 'None'
 
-def ParseOutputBestPlots(self,inp):
-  """
-  Parse Best plots file for plots.
-  """
-  if self.verbose:
-      self.logger.debug('Parse::ParseOutputBestPlots')
-  #try:
-  res = []
-  com = []
-  ws = []
-  we = []
-  wilson = []
-  width = []
-  damage = []
-  rdamage = []
-  comp = []
-  #output = {}
-  for x,line in enumerate(inp):
-    if line.startswith("% linelabel  = 'Theory'"):
-      ws.append(x)
-    if line.startswith("% linelabel  = 'Pred.low errors'"):
-      we.append(x-4)
-      ws.append(x)
-    if line.startswith("% linelabel  = 'Pred.high errors'"):
-      we.append(x-4)
-      ws.append(x)
-    if line.startswith("% linelabel  = 'Experiment'"):
-      we.append(x-1)
-      #ws.append(x+5)
-      ws.append(x)
-    if line.startswith("% toplabel  = 'Maximal oscillation width'"):
-      we.append(x-1)
-    if line.startswith("% linelabel  = 'resol. "):
-      res.append(x)
-    if line.startswith("% linelabel  = 'compl"):
-      com.append(x)
-  for i in range(len(ws)):
-    d = {}
-    temp = []
-    k = inp[ws[i]][inp[ws[i]].find('=')+2:].strip()
-    for line in inp[ws[i]+1:we[i]]:
-      if len(line.split()) == 2:
-        temp.append(line.split())
-    d[k] = temp
-    wilson.append(d)
-  for i in range(len(res)):
-    temp = []
-    d = {}
-    k = inp[res[i]][inp[res[i]].find('=')+2:].strip()
-    if i == 4:
-      t = inp[res[i]+1:res[i]+182]
-    elif i == 14:
-      t = inp[res[i]+1:res[i]+102]
-    elif i == len(res)-1:
-      t = inp[res[i]+1:res[i]+502]
-    else:
-      t = inp[res[i]+1:res[i+1]-5]
-    for line in t:
-      if len(line.split()) == 2:
-        temp.append(line.split())
-    d[k] = temp
-    if i < 5:
-      width.append(d)
-    elif i > 14:
-      rdamage.append(d)
-    else:
-      damage.append(d)
-  for i in range(5):
-    temp = []
-    d = {}
-    k = inp[com[i]][inp[com[i]].find('=')+2:].strip()
-    if i == 0:
-      t = inp[com[i]+4:com[i+1]-4]
-    else:
-      t = inp[com[i]+1:com[i+1]-4]
-    for line in t:
-      if len(line.split()) == 2:
-        temp.append(line.split())
-    d[k] = temp
-    comp.append(d)
+def ParseOutputBestPlots(self, inp):
+    """
+    Parse Best plots file for plots.
+    """
 
-  output = {'wilson' : wilson,
-            'width'  : width,
-            'damage' : damage,
-            'rdamage': rdamage,
-            'comp'   : comp}
-  return(output)
+    if self.verbose:
+        self.logger.debug("Parse::ParseOutputBestPlots")
+
+    res = []
+    com = []
+    ws = []
+    we = []
+    wilson = []
+    max_delta_omega = []
+    rad_damage_int_decr = []
+    rad_damage_rfactor_incr = []
+    osc_range = []
+
+    for x, line in enumerate(inp):
+        if line.startswith("% linelabel  = 'Theory'"):
+            ws.append(x)
+        if line.startswith("% linelabel  = 'Pred.low errors'"):
+            we.append(x-4)
+            ws.append(x)
+        if line.startswith("% linelabel  = 'Pred.high errors'"):
+            we.append(x-4)
+            ws.append(x)
+        if line.startswith("% linelabel  = 'Experiment'"):
+            we.append(x-1)
+            #ws.append(x+5)
+            ws.append(x)
+        if line.startswith("% toplabel  = 'Maximal oscillation width'"):
+            we.append(x-1)
+        if line.startswith("% linelabel  = 'resol. "):
+            res.append(x)
+        if line.startswith("% linelabel  = 'compl"):
+            com.append(x)
+
+    # Assembling wilson
+    for i in range(len(ws)):
+        d = {}
+
+        temp = []
+        k = inp[ws[i]][inp[ws[i]].find("=")+2:].strip().replace("'", "")
+        d = {"name":k, "series":[]}
+
+        for line in inp[ws[i]+1:we[i]]:
+            if len(line.split()) == 2:
+                # temp.append(line.split())
+                sline = line.split()
+                d["series"].append({"name":float(sline[0]), "value":float(sline[1])})
+        # d[k] = temp
+        wilson.append(d)
+
+    # Assembling the max_delta_omega, rad_damage_int_decr, and rad_damage_rfactor_incr
+    self.logger.debug(res)
+    for i in range(len(res)):
+        temp = []
+        d = {}
+        k = inp[res[i]][inp[res[i]].find("=")+2:].strip().replace("resol. ", "").strip() + "A"
+        d = {"name":k, "series":[]}
+        print ">>>", k, "<<<"
+        if i == 4:
+            t = inp[res[i]+1:res[i]+182]
+        elif i == 14:
+            t = inp[res[i]+1:res[i]+102]
+        elif i == len(res)-1:
+            t = inp[res[i]+1:res[i]+502]
+        else:
+            t = inp[res[i]+1:res[i+1]-5]
+        for line in t:
+            sline = line.split()
+            if len(sline) == 2:
+                temp.append(line.split())
+                d["series"].append({"name":int(sline[0]), "value":float(sline[1])})
+        # d[k] = temp
+        if i < 5:
+            self.logger.debug("max_delta_omega")
+            max_delta_omega.append(d)
+        elif i > 14:
+            self.logger.debug("rad_damage_rfactor_incr")
+            rad_damage_rfactor_incr.append(d)
+        else:
+            self.logger.debug("rad_damage_int_decr")
+            rad_damage_int_decr.append(d)
+
+    # Assembling the osc_range
+    for i in range(5):
+        temp = []
+        k = inp[com[i]][inp[com[i]].find("=")+2:].strip().replace("compl -", "").replace(".%", "%")
+        d = {"name":k, "series":[]}
+        if i == 0:
+            t = inp[com[i]+4:com[i+1]-4]
+        else:
+            t = inp[com[i]+1:com[i+1]-4]
+        for line in t:
+            if len(line.split()) == 2:
+                # temp.append(line.split())
+                sline = line.split()
+                d["series"].append({"name":int(sline[0]), "value":int(sline[1])})
+        osc_range.append(d)
+
+    output = {"wilson": wilson,
+              "max_delta_omega": max_delta_omega,
+              "rad_damage_int_decr": rad_damage_int_decr,
+              "rad_damage_rfactor_incr": rad_damage_rfactor_incr,
+              "osc_range": osc_range}
+    return output
 
 def ParseOutputMosflm_strat(self, inp, anom=False):
     """
