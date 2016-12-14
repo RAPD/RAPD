@@ -971,15 +971,35 @@ def ParseOutputBestPlots(self, inp):
     rad_damage_rfactor_incr = []
     osc_range = []
 
+    # Definitions for the expected values
+    cast_vals = {
+        "Relative Error and Intensity Plot": {
+            "Rel.Error": {"x": float, "y": float}
+        }
+    }
+
     # Run through the plot file lines and separate raw plots
-    raw_plots = {}
+    parsed_plots = {}
+    in_data = False
+    plot = False
     for x, line in enumerate(inp):
         # New plot
         if line.startswith("$"):
+            if plot:
+                self.logger.debug(plot)
+                parsed_plots[plot["parameters"]["toplabel"]] = plot
             self.logger.debug("New plot")
-            plot = {"parameters": {}}
+            in_data = False
+            plot = {"parameters": {}, "data": []}
+            line_plot = {"parameters": {}, "data": {"series": []}}
         # Curve defs
         elif line.startswith("%"):
+            # New line
+            if in_data:
+                self.logger.debug(line_plot)
+                plot["data"].append(line_plot)
+                in_data = False
+                line_plot = {"parameters": {}, "data": {"series": []}}
             self.logger.debug(line)
             strip_line = line[1:].strip()
             self.logger.debug(strip_line)
@@ -987,12 +1007,16 @@ def ParseOutputBestPlots(self, inp):
             self.logger.debug(key)
             val = strip_line[strip_line.index("=")+1:].replace("'", "").strip()
             self.logger.debug(val)
-            plot["parameters"][key] = val
-            self.logger.debug(plot)
+            line_plot["parameters"][key] = val
+            self.logger.debug(line_plot)
         # Data point
         else:
-            x = line.split()[0].strip()
-            y = line.split()[1].strip()
+            in_data = True
+            self.logger.debug(plot["parameters"]["toplabel"])
+            x = cast_vals[plot["parameters"]["toplabel"]][line_plot["parameters"]["linelabel"]["x"]](line.split()[0].strip())
+            y = cast_vals[plot["parameters"]["toplabel"]][line_plot["parameters"]["linelabel"]["y"]](line.split()[1].strip())
+            line_plot["data"]["series"].append({"name": x, "value": y})
+
 
 
     for x, line in enumerate(inp):
