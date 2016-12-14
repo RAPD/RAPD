@@ -971,6 +971,30 @@ def ParseOutputBestPlots(self, inp):
     rad_damage_rfactor_incr = []
     osc_range = []
 
+    # Run through the plot file lines and separate raw plots
+    raw_plots = {}
+    for x, line in enumerate(inp):
+        # New plot
+        if line.startswith("$"):
+            self.logger.debug("New plot")
+            plot = {"parameters": {}}
+        # Curve defs
+        elif line.startswith("%"):
+            self.logger.debug(line)
+            strip_line = line[1:].strip()
+            self.logger.debug(strip_line)
+            key = strip_line[:strip_line.index("=")].strip()
+            self.logger.debug(key)
+            val = strip_line[strip_line.index("=")+1:].replace("'", "").strip()
+            self.logger.debug(val)
+            plot["parameters"][key] = val
+            self.logger.debug(plot)
+        # Data point
+        else:
+            x = line.split()[0].strip()
+            y = line.split()[1].strip()
+
+
     for x, line in enumerate(inp):
         if line.startswith("% linelabel  = 'Theory'"):
             ws.append(x)
