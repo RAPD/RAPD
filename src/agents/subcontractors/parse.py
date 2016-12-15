@@ -978,8 +978,29 @@ def ParseOutputBestPlots(self, inp):
     # Definitions for the expected values
     cast_vals = {
         "Relative Error and Intensity Plot": {
-            "Rel.Error": {"x": lambda x: return float(x), "y": lambda x: return float x}
-        }
+            "Rel.Error": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))},
+            "Rel.Intensity": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))}
+        },
+        "Wilson Plot": {
+            "Theory": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))},
+            "Experiment": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))},
+            "Pred.low errors": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))},
+            "Pred.high errors": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))}
+        },
+        "Maximal oscillation width": {
+            "resol": {"x": (lambda x:  int(x)), "y": (lambda x: float(x))}
+        },
+        "Minimal oscillation ranges for different completenesses": {
+            "compl": {"x": (lambda x:  int(x)), "y": (lambda x: int(x))}
+        },
+        "Total exposure time vs resolution": {
+            "Expon.trend": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))},
+            "Predictions": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))}
+        },
+        "Average background intensity per second": {
+            "Background": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))},
+            "Predictions": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))}
+        },
     }
 
     # Run through the plot file lines and separate raw plots
@@ -995,13 +1016,14 @@ def ParseOutputBestPlots(self, inp):
                 parsed_plots[plot["parameters"]["toplabel"]] = plot
             self.logger.debug("New plot")
             in_data = False
+            in_curve = False
             plot = {"parameters": {}, "data": []}
-            line_plot = {"parameters": {}, "data": {"series": []}}
 
         # Curve defs
         elif line.startswith("#"):
             in_curve = True
             in_data = False
+            line_plot = {"parameters": {}, "data": {"series": []}}
 
         # Parameters
         elif line.startswith("%"):
@@ -1023,17 +1045,21 @@ def ParseOutputBestPlots(self, inp):
             else:
                 plot["parameters"][key] = val
 
-            self.logger.debug(line_plot)
-            self.logger.debug(plot)
-
         # Data point
         else:
             in_data = True
             self.logger.debug(plot["parameters"]["toplabel"])
-            x = cast_vals[plot["parameters"]["toplabel"]][line_plot["parameters"]["linelabel"]["x"]](line.split()[0].strip())
-            y = cast_vals[plot["parameters"]["toplabel"]][line_plot["parameters"]["linelabel"]["y"]](line.split()[1].strip())
+            self.logger.debug(line_plot["parameters"]["linelabel"])
+            # self.logger.debug(cast_vals[plot["parameters"]["toplabel"]][line_plot["parameters"]["linelabel"]]["x"])
+            sline = line.split()
+            x = cast_vals[plot["parameters"]["toplabel"]][line_plot["parameters"]["linelabel"]]["x"](sline[0].strip())
+            y = cast_vals[plot["parameters"]["toplabel"]][line_plot["parameters"]["linelabel"]]["y"](sline[1].strip())
+            # self.logger.debug(x, y)
             line_plot["data"]["series"].append({"name": x, "value": y})
+    parsed_plots[plot["parameters"]["toplabel"]] = plot
 
+    self.logger.debug(parsed_plots.keys())
+    self.logger.debug(parsed_plots)
 
 
     for x, line in enumerate(inp):
