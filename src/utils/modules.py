@@ -60,7 +60,7 @@ def load_module(seek_module, directories=False, logger=False):
             try:
                 print directory
                 print glob.glob(directory+"/*")
-                "Attempting to load module %s" % directory+"."+seek_module
+                print "Attempting to load module %s" % directory+"."+seek_module
 
                 if logger:
                     logger.debug(glob.glob(directory+"/*"))
