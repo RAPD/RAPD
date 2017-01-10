@@ -28,6 +28,7 @@ THIS_FILE=$(basename $0)
 SRC_DIR=$THIS_DIR"/sources"
 PREFIX=`echo $THIS_DIR | sed -e "s%/install%%"`
 BATCH=0
+SKIP=0
 FORCE=0
 OVERWRITE=0
 PLATFORM=$(uname -s)
@@ -35,6 +36,54 @@ INSTALL_PHENIX=1
 # PHENIX_VERSION="1.10.1-2155"
 PHENIX_VERSION="1.11.1-2575"
 PHENIX_INSTALLER_DIR=""
+
+# Handle command line
+while getopts "bfhcvop:" x; do
+    case "$x" in
+        h)
+            echo "usage: $0 [options]
+
+Installs RAPD v$RAPD_VERSION
+
+    -f           no error if install prefix already exists
+    -s           skip module installation
+    -b           batch mode
+    -h           print this help message and exit
+    -p PREFIX    install prefix, defaults to $PREFIX
+    -o           overwrite phenix
+    -c           cleanup
+"
+            exit 2
+            ;;
+        b)
+            BATCH=1
+            ;;
+        s)
+            SKIP=1
+            ;;
+        f)
+            FORCE=1
+            ;;
+        p)
+            PREFIX="$OPTARG"
+            ;;
+        o)
+            OVERWRITE=1
+            ;;
+        # Clean up the source directories
+        c)
+            printf "Cleaning up!\n"
+            cd sources
+            rm -rf phenix/phenix*
+            printf "Finished.\n"
+            exit 0
+            ;;
+        ?)
+            printf "\033[91mError: did not recognize option, please try -h\033[0m\n"
+            exit 1
+            ;;
+    esac
+done
 
 # First test for installed modules
 if [[ $PLATFORM == "Linux" ]]; then
@@ -64,55 +113,14 @@ if [[ $PLATFORM == "Linux" ]]; then
   if [ $error == 1 ]; then
     printf "\033[91mERROR: missing package!\033[0m\n"
     printf "The following packages need to be installed: $missing_packages \n"
-    exit 1
+    if [ $SKIP == 0 ]; then
+      printf "Use the -s option to bypass this\n"
+      exit 1
+    fi
   fi
 elif [[ $PLATFORM == "Linux" ]]; then
   printf "\033[94mPerforming installation on Mac OS \033[0m\n"
 fi
-
-# Handle command line
-while getopts "bfhcvop:" x; do
-    case "$x" in
-        h)
-            echo "usage: $0 [options]
-
-Installs RAPD v$RAPD_VERSION
-
-    -f           no error if install prefix already exists
-    -b           batch mode
-    -h           print this help message and exit
-    -p PREFIX    install prefix, defaults to $PREFIX
-    -o           overwrite phenix
-    -c           cleanup
-"
-            exit 2
-            ;;
-        b)
-            BATCH=1
-            ;;
-        f)
-            FORCE=1
-            ;;
-        p)
-            PREFIX="$OPTARG"
-            ;;
-        o)
-            OVERWRITE=1
-            ;;
-        # Clean up the source directories
-        c)
-            printf "Cleaning up!\n"
-            cd sources
-            rm -rf phenix/phenix*
-            printf "Finished.\n"
-            exit 0
-            ;;
-        ?)
-            printf "\033[91mError: did not recognize option, please try -h\033[0m\n"
-            exit 1
-            ;;
-    esac
-done
 
 if [[ $BATCH == 0 ]] # interactive mode
 then
@@ -510,26 +518,6 @@ RAPD_HOME=$PREFIX
 export RAPD_HOME
 cd $THIS_DIR
 ./create_scripts.sh
-# echo "#! /bin/bash" > ./rapd.control
-# echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/src\/control\/rapd_control.py \"\$@\"" >>./rapd.control
-# chmod +x ./rapd.control
-#
-# echo "#! /bin/bash" > ./rapd.gather
-# echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/src\/sites\/gather\/rapd_gather.py \"\$@\"" >>./rapd.gather
-# chmod +x ./rapd.gather
-#
-# echo "#! /bin/bash" > ./rapd.launcher
-# echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launcher.py \"\$@\"" >>./rapd.launcher
-# chmod +x ./rapd.launcher
-#
-# echo "#! /bin/bash" > ./rapd.launch
-# echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launch.py \"\$@\"" >>./rapd.launch
-# chmod +x ./rapd.launch
-#
-# echo "#! /bin/bash" > ./rapd.overwatch
-# echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py \"\$@\"" >>./rapd.overwatch
-# chmod +x ./rapd.overwatch
-
 
 # Create the rapd.shrc script
 printf "Writing rapd.shrc\n"
