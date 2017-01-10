@@ -39,7 +39,7 @@ import os
 import threading
 
 from bson.objectid import ObjectId
-import numpy
+# import numpy
 import pymongo
 
 
