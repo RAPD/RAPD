@@ -33,7 +33,7 @@ import os
 import sys
 
 # RAPD imports
-import detectors.rayonix_mx300hs as detector
+import detectors.rayonix.rayonix_mx300hs as detector
 
 DETECTOR = "rayonix_mx300hs"
 VENDORTYPE = "MARCCD"
