@@ -30,7 +30,7 @@ __status__ = "Production"
 import sys
 
 # RAPD imports
-import mar
+import detectors.mar.mar as mar
 
 # RAPD information
 DETECTOR = "rayonix_mx300hs"
