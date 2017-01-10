@@ -39,6 +39,8 @@ def load_module(seek_module, directories=False, logger=False):
                    Should be in dot format relative to the src directory
                    (ex. launch.launcher_adapters)
     """
+    print "load_module", seek_module, directories
+
     if logger:
         logger.debug("seek_module %s", seek_module)
         logger.debug("directories %s", directories)
@@ -66,12 +68,12 @@ def load_module(seek_module, directories=False, logger=False):
                     logger.error("Error loading %s", directory+"."+seek_module)
     else:
         try:
-            #module = importlib.import_module(directory+"."+seek_module)
+            # module = importlib.import_module(directory+"."+seek_module)
             module = importlib.import_module(seek_module)
         except ImportError:
             pass
 
     if module == None:
-        raise Exception("No module found for %s", seek_module)
+        raise Exception("No module found for %s" % seek_module)
     else:
         return module
