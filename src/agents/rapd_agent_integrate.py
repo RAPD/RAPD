@@ -308,7 +308,7 @@ class RapdAgent(Process):
             pass
         elif analysis == 'Success':
             self.logger.debug(analysis)
-            results[-1]['status'] = 'SUCCESS'
+            self.results[-1]['status'] = 'SUCCESS'
             self.logger.debug(results)
             # self.sendBack2(results)
             if self.controller_address:
