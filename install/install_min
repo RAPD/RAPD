@@ -179,30 +179,36 @@ echo "  $PREFIX/share/python/bin/python2.7 -Qnew \"\$@\"" >> rapd.python
 echo "fi" >> rapd.python
 chmod +x ./rapd.python
 
-# Create a script for overwatch
-echo "#! /bin/bash" > ./rapd.overwatch
-echo "$PREFIX/bin/rapd.python $PREFIX/src/utils/overwatch.py \"\$@\"" >>./rapd.overwatch
-chmod +x ./rapd.overwatch
+# Create scripts
+RAPD_HOME=$PREFIX
+export RAPD_HOME
+cd $THIS_DIR
+./create_scripts.sh
 
-# Create script for gatherer - with overwatch
-echo "#! /bin/bash" > ./rapd.gather
-echo "$PREFIX/bin/rapd.python $PREFIX/src/utils/overwatch.py $PREFIX/src/sites/gatherers/gatherer_wrapper.py \"\$@\"" >>./rapd.gather
-chmod +x ./rapd.gather
-
-# Create script for control - with overwatch
-echo "#! /bin/bash" > ./rapd.control
-echo "$SAFE_PREFIX\/bin\/rapd.python $PREFIX/src/utils/overwatch.py $SAFE_PREFIX\/src\/control\/rapd_control.py \"\$@\"" >>./rapd.control
-chmod +x ./rapd.control
-
-# Create script for launcher - with overwatch
-echo "#! /bin/bash" > ./rapd.launcher
-echo "$SAFE_PREFIX\/bin\/rapd.python $PREFIX/src/utils/overwatch.py $SAFE_PREFIX\/src\/launch\/rapd_launcher.py \"\$@\"" >>./rapd.launcher
-chmod +x ./rapd.launcher
-
-# Create script for launch
-echo "#! /bin/bash" > ./rapd.launch
-echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launch.py \"\$@\"" >>./rapd.launch
-chmod +x ./rapd.launch
+# # Create a script for overwatch
+# echo "#! /bin/bash" > ./rapd.overwatch
+# echo "$PREFIX/bin/rapd.python $PREFIX/src/utils/overwatch.py \"\$@\"" >>./rapd.overwatch
+# chmod +x ./rapd.overwatch
+#
+# # Create script for gatherer - with overwatch
+# echo "#! /bin/bash" > ./rapd.gather
+# echo "$PREFIX/bin/rapd.python $PREFIX/src/utils/overwatch.py $PREFIX/src/sites/gatherers/gatherer_wrapper.py \"\$@\"" >>./rapd.gather
+# chmod +x ./rapd.gather
+#
+# # Create script for control - with overwatch
+# echo "#! /bin/bash" > ./rapd.control
+# echo "$SAFE_PREFIX\/bin\/rapd.python $PREFIX/src/utils/overwatch.py $SAFE_PREFIX\/src\/control\/rapd_control.py \"\$@\"" >>./rapd.control
+# chmod +x ./rapd.control
+#
+# # Create script for launcher - with overwatch
+# echo "#! /bin/bash" > ./rapd.launcher
+# echo "$SAFE_PREFIX\/bin\/rapd.python $PREFIX/src/utils/overwatch.py $SAFE_PREFIX\/src\/launch\/rapd_launcher.py \"\$@\"" >>./rapd.launcher
+# chmod +x ./rapd.launcher
+#
+# # Create script for launch
+# echo "#! /bin/bash" > ./rapd.launch
+# echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launch.py \"\$@\"" >>./rapd.launch
+# chmod +x ./rapd.launch
 
 # Create the rapd.shrc script
 printf "Writing rapd.shrc\n"
@@ -252,16 +258,42 @@ echo "echo ' at https://github.com/RAPD/rapd  Enjoy.'           " >> rapd.cshrc
 echo "echo '==================================================='" >> rapd.cshrc
 echo "echo''" >> rapd.cshrc
 
-# Install redis
-printf "\n\033[94mInstalling redis module\033[0m\n"
+printf "\n\033[94mInstalling Python modules\033[0m\n"
+echo $PYTHONPATH
+export PYTHONPATH=""
 source $PREFIX/rapd.shrc
 cd $SRC_DIR/python
-tar xvzf redis-2.10.5.tar.gz
-cd redis-2.10.5
-rapd.python setup.py install
-cd ../
-rm -rf redis-2.10.5
-printf "\033[92mPython redis module install complete.\033[0m\n\n"
+
+# Install pip
+rapd.python get-pip.py
+if [[ $PLATFORM == "Darwin" ]]; then
+
+  ln -s  $PREFIX/share/phenix/base/Python.framework/Versions/2.7/bin/pip $PREFIX/share/phenix/build/bin/phenix.pip
+  ln -s  $PREFIX/share/phenix/base/Python.framework/Versions/2.7/bin/pip $PREFIX/bin/rapd.pip
+
+elif [[ $PLATFORM == "Linux" ]]; then
+
+  ln -s  $PREFIX/share/phenix/base/bin/pip $PREFIX/share/phenix/build/bin/phenix.pip
+  ln -s  $PREFIX/share/phenix/base/bin/pip $PREFIX/bin/rapd.pip
+
+fi
+
+# Modules
+echo $PYTHONPATH
+
+rapd.pip install redis
+rapd.pip install pymongo
+
+# # Install redis
+# printf "\n\033[94mInstalling redis module\033[0m\n"
+# source $PREFIX/rapd.shrc
+# cd $SRC_DIR/python
+# tar xvzf redis-2.10.5.tar.gz
+# cd redis-2.10.5
+# rapd.python setup.py install
+# cd ../
+# rm -rf redis-2.10.5
+# printf "\033[92mPython redis module install complete.\033[0m\n\n"
 
 
 printf "\033[92mRAPD installation is complete\033[0m\n\n"
