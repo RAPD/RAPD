@@ -33,12 +33,11 @@ FORCE=0
 OVERWRITE=0
 PLATFORM=$(uname -s)
 INSTALL_PHENIX=1
-# PHENIX_VERSION="1.10.1-2155"
 PHENIX_VERSION="1.11.1-2575"
 PHENIX_INSTALLER_DIR=""
 
 # Handle command line
-while getopts "bfhcvop:" x; do
+while getopts "bfshcvop:" x; do
     case "$x" in
         h)
             echo "usage: $0 [options]
