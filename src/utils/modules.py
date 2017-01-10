@@ -25,7 +25,6 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
-
 # Standard imports
 import glob
 import importlib
@@ -60,7 +59,7 @@ def load_module(seek_module, directories=False, logger=False):
                 if logger:
                     logger.debug(glob.glob(directory+"/*"))
                     logger.debug("Attempting to load module %s", directory+"."+seek_module)
-		module = importlib.import_module(directory+"."+seek_module)
+                    module = importlib.import_module(directory+"."+seek_module)
                 break
             except ImportError:
                 if logger:
@@ -68,7 +67,7 @@ def load_module(seek_module, directories=False, logger=False):
     else:
         try:
             #module = importlib.import_module(directory+"."+seek_module)
-	    module = importlib.import_module(seek_module)
+            module = importlib.import_module(seek_module)
         except ImportError:
             pass
 
