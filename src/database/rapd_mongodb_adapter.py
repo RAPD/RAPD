@@ -6765,4 +6765,4 @@ class Database(object):
 
 if __name__ == "__main__":
 
-    print "rapd_mysql_adapter.py.__main__"
+    print "rapd_mongodb_adapter.py.__main__"
