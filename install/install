@@ -507,7 +507,6 @@ cd $BINDIR
 printf "rapd.python\n"
  sed -e 's/LIBTBX_DISPATCHER_NAME="cctbx.python"/LIBTBX_DISPATCHER_NAME="rapd.python"/' \
      -e "s/LIBTBX_BUILD=.*/LIBTBX_BUILD=$SAFE_PREFIX\/share\/phenix\/build/" \
-     # -e 's/:$LIBTBX_BUILD\/..\/base\/lib//' \
      -e "s%  PYTHONPATH\=\"\$LIBTBX_BUILD%  PYTHONPATH\=\"$SAFE_PREFIX\/src\:\$LIBTBX_BUILD%" \
      $PREFIX/share/phenix/build/bin/cctbx.python > ./rapd.python
 chmod +x ./rapd.python
