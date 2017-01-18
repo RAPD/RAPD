@@ -141,19 +141,46 @@ dp_parser.add_argument("--nproc",
                        help="Number of processors to use. Defaults to the number of processors available")
 
 # The rapd file generating parser - to be used by commandline RAPD processes
-g_parser = argparse.ArgumentParser(add_help=False)
+gf_parser = argparse.ArgumentParser(add_help=False)
 
 # Verbosity
-dp_parser.add_argument("-v", "--verbose",
+gf_parser.add_argument("-v", "--verbose",
                        action="store_true",
                        dest="verbose",
                        help="Enable verbose feedback")
 
 # Test mode?
-dp_parser.add_argument("-t", "--test",
+gf_parser.add_argument("-t", "--test",
                        action="store_true",
                        dest="test",
                        help="Run in test mode")
+
+# Test mode?
+gf_parser.add_argument("-f", "--force",
+                       action="store_true",
+                       dest="force",
+                       help="Allow overwriting of files")
+
+# Maintainer
+gf_parser.add_argument("-m", "--maintainer",
+                       action="store",
+                       dest="maintainer",
+                       default="Your name",
+                       help="Maintainer's name")
+
+# Maintainer's email
+gf_parser.add_argument("-e", "--email",
+                       action="store",
+                       dest="email",
+                       default="Your email",
+                       help="Maintainer's email")
+
+# Directory or files
+gf_parser.add_argument(action="store",
+                       dest="file",
+                       nargs="?",
+                       default=False,
+                       help="Name of file to be generated")
 
 def print_sites(left_buffer=""):
     """

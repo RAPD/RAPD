@@ -26,9 +26,12 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
+import os
+import sys
 import time
 
 # RAPD imports
+import commandline_utils
 
 _NOW = time.localtime()
 _LICENSE = """
@@ -51,70 +54,105 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """ % _NOW.tm_year
 
 
-def print_file_docstring(filename):
-    """Print the docstring for file"""
-    if filename:
-        pass
-    else:
-        print "\"\"\"This is a docstring for this file\"\"\"\n"
+class FileGenerator:
 
-def print_license(filename):
-    """Print the license"""
-    if filename:
-        pass
-    else:
-        print "\"\"\""+_LICENSE+"\"\"\"\n"
+    def __init__(self, args):
+        """Initialize the FileGenerator instance"""
 
-def print_docstrings(filename):
-    """Print file author docstrings"""
-    if filename:
-        pass
-    else:
-        print "__created__ = \"%d-%d-%d\"" % (_NOW.tm_year, _NOW.tm_mon, _NOW.tm_mday)
-        print "__maintainer__ = \"Your Name\""
-        print "__email__ = \"Your E-mail\""
-        print "__status__ = \"Development\"\n"
+        self.args = args
 
-def print_imports(filename):
-    """Print the import sections"""
-    if filename:
-        pass
-    else:
-        print "# Standard imports\n"
-        print "# RAPD imports\n"
+        if args.file:
+            def write_function(string):
+                """Function for writing strings to file"""
+                print string
+                out_file = open(args.file, "a+")
+                out_file.write(string)
+                out_file.close()
+                return True
 
-def print_main_func(filename):
-    """Print the main function"""
-    if filename:
-        pass
-    else:
-        print "def main():"
-        print "    \"\"\""
-        print "    The main process docstring"
-        print "    This function is called when this module is invoked from"
-        print "    the commandline"
-        print "    \"\"\"\n"
-        print "    print \"main\"\n"
+            self.output_function = write_function
+        else:
+            self.output_function = sys.stdout.write
 
-def print_main(filename):
-    """Print the main function"""
-    if filename:
-        pass
-    else:
-        print "if __name__ == \"__main__\":"
-        print "    main()\n"
+    def preprocess(self):
+        """Do pre-write checks"""
 
+        if self.args.file:
+            if os.path.exists(self.args.file):
+                if self.args.force:
+                    os.unlink(self.args.file)
+                else:
+                    raise Exception("%s already exists - exiting" % self.args.file)
+        else:
+            pass
+
+    def run(self):
+        """The main actions of the module"""
+
+        self.preprocess()
+
+        self.write_file_docstring()
+        self.write_license()
+        self.write_docstrings()
+        self.write_imports()
+        self.write_main_func()
+        self.write_main()
+
+    def write_file_docstring(self):
+        """Write the docstring for file"""
+        self.output_function("\"\"\"This is a docstring for this file\"\"\"\n\n")
+
+    def write_license(self):
+        """Write the license"""
+        self.output_function("\"\"\""+_LICENSE+"\"\"\"\n\n")
+
+    def write_docstrings(self):
+        """Write file author docstrings"""
+        self.output_function("""__created__ = \"%d-%d-%d\"
+__maintainer__ = \"Your Name\"
+__email__ = \"Your E-mail\"
+__status__ = \"Development\"\n\n""" % (_NOW.tm_year, _NOW.tm_mon, _NOW.tm_mday))
+
+    def write_imports(self):
+        """Write the import sections"""
+        self.output_function("# Standard imports\n\n# RAPD imports\n\n")
+
+    def write_main_func(self):
+        """Write the main function"""
+        self.output_function("""def main():
+    \"\"\"
+    The main process docstring
+    This function is called when this module is invoked from
+    the commandline
+    \"\"\"
+    print \"main\"\n\n""")
+
+    def write_main(self):
+        """Write the main function"""
+        self.output_function("""if __name__ == \"__main__\":
+    main()\n""")
+
+def get_commandline():
+    """Get the commandline variables and handle them"""
+
+    # Parse the commandline arguments
+    commandline_description = """Generate a generic RAPD file"""
+    parser = argparse.ArgumentParser(parents=[commandline_utils.gf_parser],
+                                     description=commandline_description)
+
+    return parser.parse_args()
 
 def main():
 
+    # Get the commandline args
+    commandline_args = get_commandline()
+
+    print commandline_args
+
     filename = False #"foo.py"
 
-    print_file_docstring(filename)
-    print_license(filename)
-    print_docstrings(filename)
-    print_imports(filename)
-    print_main_func(filename)
-    print_main(filename)
+    file_generator = FileGenerator(commandline_args)
+    file_generator.run()
 
 if __name__ == "__main__":
 
