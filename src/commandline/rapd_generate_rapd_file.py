@@ -75,6 +75,36 @@ def print_docstrings(filename):
         print "__email__ = \"Your E-mail\""
         print "__status__ = \"Development\"\n"
 
+def print_imports(filename):
+    """Print the import sections"""
+    if filename:
+        pass
+    else:
+        print "# Standard imports\n"
+        print "# RAPD imports\n"
+
+def print_main_func(filename):
+    """Print the main function"""
+    if filename:
+        pass
+    else:
+        print "def main():"
+        print "    \"\"\""
+        print "    The main process docstring"
+        print "    This function is called when this module is invoked from"
+        print "    the commandline"
+        print "    \"\"\"\n"
+        print "    print \"main\"\n"
+
+def print_main(filename):
+    """Print the main function"""
+    if filename:
+        pass
+    else:
+        print "if __name__ == \"__main__\":"
+        print "    main()\n"
+
+
 def main():
 
     filename = False #"foo.py"
@@ -82,6 +112,9 @@ def main():
     print_file_docstring(filename)
     print_license(filename)
     print_docstrings(filename)
+    print_imports(filename)
+    print_main_func(filename)
+    print_main(filename)
 
 if __name__ == "__main__":
 
