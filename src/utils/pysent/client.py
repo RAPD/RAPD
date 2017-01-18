@@ -1,7 +1,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2015-2016, Cornell University
+Copyright (C) 2015-2017, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify

@@ -5,7 +5,7 @@ Detector utilities
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2016, Cornell University
+Copyright (C) 2016-2017 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -139,14 +139,16 @@ def get_detector_file(image):
     Returns the RAPD detector file given an image file
     """
 
+    print "get_detector_file %s" % image
+
     from iotbx.detectors import ImageFactory
 
     try:
         i = ImageFactory(image)
-        # print i.vendortype
-        # print i.parameters["DETECTOR_SN"]
-    except: # (IOError, AttributeError, RuntimeError):
-        # print error
+        print i.vendortype
+        print i.parameters["DETECTOR_SN"]
+    except (IOError, AttributeError, RuntimeError):
+        print error
         return False
 
 

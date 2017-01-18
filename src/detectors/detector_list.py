@@ -5,7 +5,7 @@ List of detectors understood by RAPD
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2016, Cornell University
+Copyright (C) 2016-2017 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -30,6 +30,7 @@ DETECTORS = {
     ("ADSC", 413): "",                          # ESRF ID14-2
     ("ADSC", 430): "",                          #
     ("ADSC", 446): "adsc_q315",                 # NSLS X25 > X26C
+    ("PILATUS 6M-F", "S/N 60-0112-F"): "necat_dectris_pilatus6mf",
     ("ADSC", 911): "necat_adsc_q315",           # APS 24-ID-C
     ("ADSC", 916): "necat_adsc_q315", # "sites.detectors.necat_adsc_q315",  # APS 24-ID-E
     ("MARCCD", 0): ["lscat_mar_300",],          # APS 21-ID-F

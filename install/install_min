@@ -6,7 +6,7 @@
 
 # This file is part of RAPD
 #
-# Copyright (C) 2016, Cornell University
+# Copyright (C) 2016-2017, Cornell University
 # All rights reserved.
 #
 # RAPD is free software: you can redistribute it and/or modify
@@ -26,11 +26,11 @@ __maintainer__="Jon Schuermann"
 __email__="schuerjp@anl.gov"
 __status__="Development"
 
-RAPD_VERSION="2.0.0"
 THIS_DIR=$(cd $(dirname $0); pwd)
 THIS_FILE=$(basename $0)
 SRC_DIR=$THIS_DIR"/sources"
 PREFIX=`echo $THIS_DIR | sed -e "s%/install%%"`
+RAPD_VERSION=$(grep RAPD_VERSION $THIS_DIR/../src/version.py | cut -d'"' -f2)
 BATCH=0
 FORCE=0
 PLATFORM=$(uname -s)
@@ -215,7 +215,7 @@ printf "Writing rapd.shrc\n"
 cd $PREFIX
 echo "# $PREFIX/rapd.shrc -- bash initialization script for RAPD2" > rapd.shrc
 echo "#" >> rapd.shrc
-echo "# (c) Copyright 2009-2016, Cornell University" >> rapd.shrc
+echo "# (c) Copyright 2009-2017, Cornell University" >> rapd.shrc
 echo "" >> rapd.shrc
 echo "# THIS IS AN AUTOMATICALLY GENERATED FILE." > rapd.shrc
 echo "# DO NOT EDIT UNLESS YOU REALLY KNOW WHAT YOU ARE DOING." >> rapd.shrc
@@ -240,7 +240,7 @@ printf "Wrting rapd.cshrc\n"
 cd $PREFIX
 echo "# $PREFIX/rapd.cshrc -- bash initialization script for RAPD2" > rapd.cshrc
 echo "#" >> rapd.cshrc
-echo "# (c) Copyright 2009-2016, Cornell University" >> rapd.cshrc
+echo "# (c) Copyright 2009-2017, Cornell University" >> rapd.cshrc
 echo "" >> rapd.cshrc
 echo "# THIS IS AN AUTOMATICALLY GENERATED FILE." > rapd.cshrc
 echo "# DO NOT EDIT UNLESS YOU REALLY KNOW WHAT YOU ARE DOING." >> rapd.cshrc

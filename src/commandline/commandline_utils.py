@@ -5,7 +5,7 @@ Utilities for commandline running
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2016, Cornell University
+Copyright (C) 2016-2017 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -29,9 +29,9 @@ __status__ = "Development"
 # Standard imports
 import argparse
 import glob
+import multiprocessing
 import os
 import pprint
-import sys
 
 # RAPD imports
 import detectors.detector_utils as detector_utils
@@ -131,6 +131,29 @@ dp_parser.add_argument("--work_dir",
                        dest="work_dir",
                        default=False,
                        help="Working directory")
+
+# Number of processors to use
+dp_parser.add_argument("--nproc",
+                       action="store",
+                       dest="nproc",
+                       type=int,
+                       default=multiprocessing.cpu_count(),
+                       help="Number of processors to use. Defaults to the number of processors available")
+
+# The rapd file generating parser - to be used by commandline RAPD processes
+g_parser = argparse.ArgumentParser(add_help=False)
+
+# Verbosity
+dp_parser.add_argument("-v", "--verbose",
+                       action="store_true",
+                       dest="verbose",
+                       help="Enable verbose feedback")
+
+# Test mode?
+dp_parser.add_argument("-t", "--test",
+                       action="store_true",
+                       dest="test",
+                       help="Run in test mode")
 
 def print_sites(left_buffer=""):
     """

@@ -5,7 +5,7 @@ Helper for keeping processes singletons
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2016, Cornell University
+Copyright (C) 2016-2017 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify

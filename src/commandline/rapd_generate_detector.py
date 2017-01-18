@@ -1,8 +1,6 @@
-"""
-Wrapper for reporting the RAPD version
-"""
+"""Generate a scaffold for a new detector"""
 
-__license__ = """
+"""
 This file is part of RAPD
 
 Copyright (C) 2017, Cornell University
@@ -21,12 +19,16 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__created__ = "2017-01-17"
+__created__ = "2017-01-18"
 __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
+# Standard imports
+import argparse
+
+# RAPD imports
+
 if __name__ == "__main__":
 
-    import version
-    print version.RAPD_VERSION
+    print "rapd_generate_detector.py"

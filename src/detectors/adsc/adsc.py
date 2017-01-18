@@ -1,7 +1,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2009-2016, Cornell University
+Copyright (C) 2009-2017, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -73,196 +73,196 @@ def zerofillday(day_in):
     else:
         return('0'+strday)
 
-def date_adsc_to_sql(datetime_in):
-    #print datetime_in
-    spldate = datetime_in.split()
-    #print spldate
-    time  = spldate[3]
-    #print time
-    year  = spldate[4]
-    #print year
-    month = months[spldate[1]]
-    #print month
-    day   = zerofillday(spldate[2])
-    #print day
+# def date_adsc_to_sql(datetime_in):
+#     #print datetime_in
+#     spldate = datetime_in.split()
+#     #print spldate
+#     time  = spldate[3]
+#     #print time
+#     year  = spldate[4]
+#     #print year
+#     month = months[spldate[1]]
+#     #print month
+#     day   = zerofillday(spldate[2])
+#     #print day
+#
+#     date = '-'.join((year,month,day))
+#     #print date
+#     #print ' '.join((date,time))
+#     return('T'.join((date,time)))
 
-    date = '-'.join((year,month,day))
-    #print date
-    #print ' '.join((date,time))
-    return('T'.join((date,time)))
-
-class Q315_Monitor(threading.Thread):
-    """
-    Start a new thread which looks for changes via the server
-    Run from within Model
-    """
-    def __init__(self,beamline='C',notify=None,reconnect=None,logger=None):
-        logger.info('Q315_Monitor::__init__  beamline: %s' % beamline)
-
-        #initialize the thread
-        threading.Thread.__init__(self)
-
-        #passed-in variables
-        self.notify    = notify
-        self.reconnect = reconnect
-        self.beamline  = beamline
-        self.logger    = logger
-
-        #for stopping/starting
-        self.Go = True
-
-        #The modification times
-        self.xf_time  = 0
-        self.mar_time = 0
-
-        #set the adsc server
-        if beamline in secrets.keys():
-            self.logger.debug('Attmepting to conect to adsc monitor at %s' % secrets[beamline]['adsc_server'])
-            self.server = xmlrpclib.Server(secrets[beamline]['adsc_server'])
-            print self.server
-        #if the assigned beamline is not in the settings, use the localhost
-        else:
-            self.server = xmlrpclib.Server('http://127.0.0.1:8001')
-
-        #register for shutdown
-        atexit.register(self.Stop)
-
-        #start the thread
-        self.start()
-
-    def Stop(self):
-        self.logger.info('Q315_Monitor::Stop')
-        self.Go = False
-
-    def run(self):
-        self.logger.debug('Q315_Monitor::run')
-        #check xf_status 5 times per second, marcollect once
-        while (1):
-            #break out if stop is requested
-            if not self.Go:
-                self.logger.debug('Stopping ADSC Monitor')
-                break
-            try:
-                marcollect_dict = self.server.GetMarcollectData()
-                if (marcollect_dict):
-                    self.logger.debug("MARCOLLECT CHANGED")
-                    if self.notify:
-                        self.notify(("ADSC RUN STATUS CHANGED", marcollect_dict))
-            except:
-                self.logger.exception('Q315_Monitor:: ERROR! - most likely there is not rapd_adscserver running where you are pointed')
-                self.Go = False
-                if self.reconnect:
-                    self.reconnect()
-                break
-
-            for i in range(5):
-                try:
-                    status_dict = self.server.GetXFStatusData()
-                    if (status_dict):
-                        self.logger.debug("XF_STATUS CHANGED")
-                        if status_dict['status'] == 'SUCCESS':
-                            if self.notify:
-                                self.notify(("IMAGE STATUS CHANGED", status_dict))
-                except:
-                    self.logger.exception('Q315_Monitor:: ERROR! Error in GetXFStatusData')
-
-                #wait before checking again
-                time.sleep(0.2)
-
-        self.logger.debug('Q315_Monitor while loop exited')
-
-class Hf4m_Monitor(threading.Thread):
-    """
-    A new thread which watches a list in redis - mod of Hf4m_Monitor
-    Run from within Model
-    """
-    def __init__(self,beamline='E',notify=None,reconnect=None,logger=None):
-        if (logger):
-            logger.info('Hf4m_Monitor::__init__  beamline: %s' % beamline)
-        else:
-            print 'Hf4m_Monitor::__init__  beamline: %s' % beamline
-        #initialize the thread
-        threading.Thread.__init__(self)
-
-        #passed-in variables
-        self.notify    = notify
-        self.reconnect = reconnect
-        self.beamline  = beamline
-        self.logger    = logger
-
-        self.red = None
-
-        #for stopping/starting
-        self.Go = True
-
-        #register for shutdown
-        atexit.register(self.Stop)
-
-        #start the thread
-        self.start()
-
-    def Stop(self):
-        if (self.logger):
-            self.logger.info('Hf4m_Monitor::Stop')
-        else:
-            print 'Hf4m_Monitor::Stop'
-        self.Go = False
-
-    def run(self):
-        if (self.logger):
-            self.logger.debug('Hf4m_Monitor::run')
-        else:
-            print 'Hf4m_Monitor::run'
-        #try:
-        #set the adsc server
-        if self.beamline in secrets.keys():
-            if self.logger:
-                self.logger.debug('Attempting to connect to Redis database at at %s' % secrets[self.beamline]['remote_redis_ip'])
-            else:
-                print 'Attempting to connect to Redis database at at %s' % secrets[self.beamline]['remote_redis_ip']
-            self.red = pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
-									       sentinel_port=26379,
-									       master_name="remote_master")
-        #if the assigned beamline is not in the settings, use the localhost
-        else:
-            self.red = pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
-									       sentinel_port=26379,
-									       master_name="remote_master")
-
-        #except:
-        #    if (self.logger):
-        #        self.logger.debug('Exception in starting Hf4m_Monitor::run')
-        #    else:
-        #        print 'Exception in starting Hf4m_Monitor::run'
-            time.sleep(5)
-            self.run()
-
-        # Watch the imagelist
-        image_list = "images_collected_"+self.beamline
-        if self.logger:
-            self.logger.debug('Hf4m_Monitor::Start listening')
-        else:
-            print 'Hf4m_Monitor::Start listening'
-        while (self.Go):
-            try:
-                #try to pop the oldest image off the list
-                new_image = self.red.rpop(image_list)
-                if (new_image):
-                    if self.logger:
-                        self.logger.debug('Hf4m_Monitor::new image %s' % new_image)
-                    else:
-                        print 'Hf4m_Monitor::new image %s' % new_image
-                    if (new_image.endswith('.cbf')):
-                        self.notify(("NEW HF4M IMAGE", new_image))
-            except:
-                if self.logger:
-                    self.logger.exception('Exception in while loop')
-                else:
-                    print 'Exception in while loop'
-                time.sleep(5)
-
-            #slow it down a little
-            time.sleep(0.1)
+# class Q315_Monitor(threading.Thread):
+#     """
+#     Start a new thread which looks for changes via the server
+#     Run from within Model
+#     """
+#     def __init__(self,beamline='C',notify=None,reconnect=None,logger=None):
+#         logger.info('Q315_Monitor::__init__  beamline: %s' % beamline)
+#
+#         #initialize the thread
+#         threading.Thread.__init__(self)
+#
+#         #passed-in variables
+#         self.notify    = notify
+#         self.reconnect = reconnect
+#         self.beamline  = beamline
+#         self.logger    = logger
+#
+#         #for stopping/starting
+#         self.Go = True
+#
+#         #The modification times
+#         self.xf_time  = 0
+#         self.mar_time = 0
+#
+#         #set the adsc server
+#         if beamline in secrets.keys():
+#             self.logger.debug('Attmepting to conect to adsc monitor at %s' % secrets[beamline]['adsc_server'])
+#             self.server = xmlrpclib.Server(secrets[beamline]['adsc_server'])
+#             print self.server
+#         #if the assigned beamline is not in the settings, use the localhost
+#         else:
+#             self.server = xmlrpclib.Server('http://127.0.0.1:8001')
+#
+#         #register for shutdown
+#         atexit.register(self.Stop)
+#
+#         #start the thread
+#         self.start()
+#
+#     def Stop(self):
+#         self.logger.info('Q315_Monitor::Stop')
+#         self.Go = False
+#
+#     def run(self):
+#         self.logger.debug('Q315_Monitor::run')
+#         #check xf_status 5 times per second, marcollect once
+#         while (1):
+#             #break out if stop is requested
+#             if not self.Go:
+#                 self.logger.debug('Stopping ADSC Monitor')
+#                 break
+#             try:
+#                 marcollect_dict = self.server.GetMarcollectData()
+#                 if (marcollect_dict):
+#                     self.logger.debug("MARCOLLECT CHANGED")
+#                     if self.notify:
+#                         self.notify(("ADSC RUN STATUS CHANGED", marcollect_dict))
+#             except:
+#                 self.logger.exception('Q315_Monitor:: ERROR! - most likely there is not rapd_adscserver running where you are pointed')
+#                 self.Go = False
+#                 if self.reconnect:
+#                     self.reconnect()
+#                 break
+#
+#             for i in range(5):
+#                 try:
+#                     status_dict = self.server.GetXFStatusData()
+#                     if (status_dict):
+#                         self.logger.debug("XF_STATUS CHANGED")
+#                         if status_dict['status'] == 'SUCCESS':
+#                             if self.notify:
+#                                 self.notify(("IMAGE STATUS CHANGED", status_dict))
+#                 except:
+#                     self.logger.exception('Q315_Monitor:: ERROR! Error in GetXFStatusData')
+#
+#                 #wait before checking again
+#                 time.sleep(0.2)
+#
+#         self.logger.debug('Q315_Monitor while loop exited')
+#
+# class Hf4m_Monitor(threading.Thread):
+#     """
+#     A new thread which watches a list in redis - mod of Hf4m_Monitor
+#     Run from within Model
+#     """
+#     def __init__(self,beamline='E',notify=None,reconnect=None,logger=None):
+#         if (logger):
+#             logger.info('Hf4m_Monitor::__init__  beamline: %s' % beamline)
+#         else:
+#             print 'Hf4m_Monitor::__init__  beamline: %s' % beamline
+#         #initialize the thread
+#         threading.Thread.__init__(self)
+#
+#         #passed-in variables
+#         self.notify    = notify
+#         self.reconnect = reconnect
+#         self.beamline  = beamline
+#         self.logger    = logger
+#
+#         self.red = None
+#
+#         #for stopping/starting
+#         self.Go = True
+#
+#         #register for shutdown
+#         atexit.register(self.Stop)
+#
+#         #start the thread
+#         self.start()
+#
+#     def Stop(self):
+#         if (self.logger):
+#             self.logger.info('Hf4m_Monitor::Stop')
+#         else:
+#             print 'Hf4m_Monitor::Stop'
+#         self.Go = False
+#
+#     def run(self):
+#         if (self.logger):
+#             self.logger.debug('Hf4m_Monitor::run')
+#         else:
+#             print 'Hf4m_Monitor::run'
+#         #try:
+#         #set the adsc server
+#         if self.beamline in secrets.keys():
+#             if self.logger:
+#                 self.logger.debug('Attempting to connect to Redis database at at %s' % secrets[self.beamline]['remote_redis_ip'])
+#             else:
+#                 print 'Attempting to connect to Redis database at at %s' % secrets[self.beamline]['remote_redis_ip']
+#             self.red = pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
+# 									       sentinel_port=26379,
+# 									       master_name="remote_master")
+#         #if the assigned beamline is not in the settings, use the localhost
+#         else:
+#             self.red = pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
+# 									       sentinel_port=26379,
+# 									       master_name="remote_master")
+#
+#         #except:
+#         #    if (self.logger):
+#         #        self.logger.debug('Exception in starting Hf4m_Monitor::run')
+#         #    else:
+#         #        print 'Exception in starting Hf4m_Monitor::run'
+#             time.sleep(5)
+#             self.run()
+#
+#         # Watch the imagelist
+#         image_list = "images_collected_"+self.beamline
+#         if self.logger:
+#             self.logger.debug('Hf4m_Monitor::Start listening')
+#         else:
+#             print 'Hf4m_Monitor::Start listening'
+#         while (self.Go):
+#             try:
+#                 #try to pop the oldest image off the list
+#                 new_image = self.red.rpop(image_list)
+#                 if (new_image):
+#                     if self.logger:
+#                         self.logger.debug('Hf4m_Monitor::new image %s' % new_image)
+#                     else:
+#                         print 'Hf4m_Monitor::new image %s' % new_image
+#                     if (new_image.endswith('.cbf')):
+#                         self.notify(("NEW HF4M IMAGE", new_image))
+#             except:
+#                 if self.logger:
+#                     self.logger.exception('Exception in while loop')
+#                 else:
+#                     print 'Exception in while loop'
+#                 time.sleep(5)
+#
+#             #slow it down a little
+#             time.sleep(0.1)
 
 
 ###############################################################################

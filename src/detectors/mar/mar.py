@@ -1,24 +1,20 @@
 
 # Standard imports
 from __future__ import division
-import logging
 import os
 import re
 import struct
 import sys
-# import time
 
 from iotbx.detectors.detectorbase import DetectorImageBase
 
-
-
-
 class MARImage(DetectorImageBase):
+
     def __init__(self, filename):
         """Initialize the instance"""
 
         DetectorImageBase.__init__(self, filename)
-        #self.vendortype = "MARCCD"
+        # self.vendortype = "MARCCD"
 
         byte_order = str(open(self.filename, "rb").read(2))
         if byte_order == "II":
@@ -43,37 +39,37 @@ class MARImage(DetectorImageBase):
 
             # if ifd is 0 then there are no more Image File Directories
             while ifd:
-              f.seek(ifd)
+                f.seek(ifd)
 
-              rawdata = f.read(2)
-
-              # Get the number of directory entries in the IFD
-              numentries = struct.unpack(format+"h", rawdata)[0]
-
-
-                    # search for compression tag
-              for x in range(numentries):
-                f.seek(ifd+x*12+2)
                 rawdata = f.read(2)
-                tag = struct.unpack(format+'h', rawdata)[0]
-                if tag == 259: # value of compression tag
-                  f.seek(ifd+x*12+2+8) # seek to value offset
-                  # value is left justified in 4 byte field
-                  # read two bytes so can unpack as short
-                  rawdata = f.read(2)
-                  value = struct.unpack(format+'h', rawdata)[0]
-                  #print value
-                  if value == 1: # no compression
-                    return 0
-                  else:
-                    return 1
 
-              f.seek(ifd+numentries*12+2)
-              rawdata = f.read(4)
-              ifd = struct.unpack(format+'i', rawdata)[0]
+                # Get the number of directory entries in the IFD
+                numentries = struct.unpack(format+"h", rawdata)[0]
+
+
+                  # search for compression tag
+                for x in range(numentries):
+                    f.seek(ifd+x*12+2)
+                    rawdata = f.read(2)
+                    tag = struct.unpack(format+'h', rawdata)[0]
+                    if tag == 259: # value of compression tag
+                        f.seek(ifd+x*12+2+8) # seek to value offset
+                        # value is left justified in 4 byte field
+                        # read two bytes so can unpack as short
+                        rawdata = f.read(2)
+                        value = struct.unpack(format+'h', rawdata)[0]
+                        #print value
+                        if value == 1: # no compression
+                            return 0
+                        else:
+                            return 1
+
+                f.seek(ifd+numentries*12+2)
+                rawdata = f.read(4)
+                ifd = struct.unpack(format+'i', rawdata)[0]
 
         finally:
-          f.close()
+            f.close()
 
         # control should never reach this point
         assert 1==0
@@ -81,7 +77,7 @@ class MARImage(DetectorImageBase):
     # returns 0 for little endian 'II'
     # returns 1 for big endian 'MM'
     def getEndian(self):
-      return self.endian
+        return self.endian
 
     def readHeader(self,offset=1024):
       if not self.parameters:

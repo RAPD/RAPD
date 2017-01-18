@@ -14,12 +14,12 @@ RUN rpm --import https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-6 \
  && yum clean all
 
 # BASH!
-# RUN ln -snf /bin/bash /bin/sh
+RUN ln -snf /bin/bash /bin/sh
 
 # RAPD
-# WORKDIR /opt
-# RUN git clone -b sercat https://github.com/RAPD/RAPD.git rapd
-# WORKDIR /opt/rapd/install
+WORKDIR /opt
+RUN git clone -b sercat https://github.com/RAPD/RAPD.git rapd
+WORKDIR /opt/rapd/install
 # COPY phenix-installer-1.11.1-2575-intel-linux-2.6-x86_64-centos6.tar sources/phenix/
 # RUN /bin/bash -c "./install -b"
 # RUN /bin/bash -c "echo 'Finished with rapd install'"
