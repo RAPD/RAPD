@@ -27,10 +27,9 @@ __status__ = "Development"
 
 # Standard imports
 import logging
+import redis
 import threading
 import time
-
-import redis
 
 # RAPD imports
 from utils.overwatch import Registrar
