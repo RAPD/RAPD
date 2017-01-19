@@ -50,9 +50,17 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-""" % _NOW.tm_year
+along with this program.  If not, see <http://www.gnu.org/licenses/>.""" % _NOW.tm_year
 
+
+def split_text_blob(text):
+    """Split a multiline text blob into a list"""
+
+    lines = text.split("\n")
+    for i in range(len(lines)):
+        lines[i] += "\n"
+
+    return lines
 
 class FileGenerator:
 
@@ -62,21 +70,25 @@ class FileGenerator:
         self.args = args
 
         if args.file:
-            def write_function(string):
+            def write_function(lines):
                 """Function for writing strings to file"""
-                print string
                 out_file = open(args.file, "a+")
-                out_file.write(string)
+                for line in lines:
+                    out_file.write(line)
                 out_file.close()
-                return True
 
-            self.output_function = write_function
         else:
-            self.output_function = sys.stdout.write
+            def write_function(lines):
+                """Function for writing strings to file"""
+                for line in lines:
+                    sys.stdout.write(line)
+
+        self.output_function = write_function
 
     def preprocess(self):
         """Do pre-write checks"""
 
+        # If we are writing a file, check
         if self.args.file:
             if os.path.exists(self.args.file):
                 if self.args.force:
@@ -100,37 +112,40 @@ class FileGenerator:
 
     def write_file_docstring(self):
         """Write the docstring for file"""
-        self.output_function("\"\"\"This is a docstring for this file\"\"\"\n\n")
+        self.output_function(["\"\"\"This is a docstring for this file\"\"\"\n","\n"])
 
     def write_license(self):
         """Write the license"""
-        self.output_function("\"\"\""+_LICENSE+"\"\"\"\n\n")
+        self.output_function(["\"\"\"",] + split_text_blob(_LICENSE) + ["\"\"\"\n", "\n"])
 
     def write_docstrings(self):
         """Write file author docstrings"""
-        self.output_function("""__created__ = \"%d-%d-%d\"
-__maintainer__ = \"Your Name\"
-__email__ = \"Your E-mail\"
-__status__ = \"Development\"\n\n""" % (_NOW.tm_year, _NOW.tm_mon, _NOW.tm_mday))
+        self.output_function(["__created__ = \"%d-%d-%d\"\n" % (_NOW.tm_year, _NOW.tm_mon, _NOW.tm_mday),
+                              "_maintainer__ = \"%s\"\n" % self.args.maintainer,
+                              "__email__ = \"%s\"\n" % self.args.email,
+                              "__status__ = \"Development\"\n\n"])
 
     def write_imports(self):
         """Write the import sections"""
-        self.output_function("# Standard imports\n\n# RAPD imports\n\n")
+        self.output_function(["# Standard imports\n\n",
+                              "# RAPD imports\n\n"])
 
     def write_main_func(self):
         """Write the main function"""
-        self.output_function("""def main():
-    \"\"\"
-    The main process docstring
-    This function is called when this module is invoked from
-    the commandline
-    \"\"\"
-    print \"main\"\n\n""")
+        self.output_function(["def main():\n",
+                              "    \"\"\"\n",
+                              "    The main process docstring\n",
+                              "    This function is called when this module is invoked from\n",
+                              "    the commandline\n",
+                              "    \"\"\"\n",
+                              "    print \"main\"\n\n"])
 
     def write_main(self):
         """Write the main function"""
-        self.output_function("""if __name__ == \"__main__\":
-    main()\n""")
+        self.output_function(["if __name__ == \"__main__\":\n",
+                              "    main()\n"])
+
+
 
 def get_commandline():
     """Get the commandline variables and handle them"""
