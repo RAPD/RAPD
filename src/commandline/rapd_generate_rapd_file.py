@@ -127,8 +127,24 @@ class FileGenerator:
 
     def write_imports(self):
         """Write the import sections"""
-        self.output_function(["# Standard imports\n\n",
-                              "# RAPD imports\n\n"])
+        self.output_function(["# Standard imports\n",
+                              "# import argparse\n",
+                              "# import datetime\n",
+                              "# import glob\n",
+                              "# import logging\n",
+                              "# import multiprocessing\n",
+                              "# import os\n",
+                              "# import pprint\n",
+                              "# import pymongo\n",
+                              "# import redis\n",
+                              "# import shutil\n",
+                              "# import subprocess\n",
+                              "# import sys\n",
+                              "# import time\n\n",
+                              "# RAPD imports\n",
+                              "# import commandline_utils\n",
+                              "# import import detectors.detector_utils as detector_utils\n",
+                              "# import utils\n\n"])
 
     def write_main_func(self):
         """Write the main function"""

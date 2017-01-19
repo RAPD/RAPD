@@ -1573,7 +1573,7 @@ class RapdAgent(Process):
                 # Go through the plots and build best_plots
                 for plot_type in best_plots.keys():
                     self.logger.debug(plot_type)
-                    
+
 
 
 
