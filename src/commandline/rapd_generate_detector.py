@@ -1,4 +1,4 @@
-"""Generate a scaffold for a new detector"""
+"""Generate a RAPD detector scaffold file"""
 
 """
 This file is part of RAPD
@@ -19,16 +19,45 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__created__ = "2017-01-18"
-__maintainer__ = "Frank Murphy"
+__created__ = "2017-1-19"
+_maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 # Standard imports
-import argparse
+# import argparse
+# import datetime
+# import glob
+# import logging
+# import multiprocessing
+# import os
+# import pprint
+# import pymongo
+# import redis
+# import shutil
+# import subprocess
+# import sys
+# import time
 
 # RAPD imports
+from rapd_generate_basefile import BaseFileGenerator, split_text_blob
+# import commandline_utils
+# import import detectors.detector_utils as detector_utils
+# import utils
+
+class DetectorFileGenerator(BaseFileGenerator):
+    """File generator for detector wrapper"""
+    pass
+
+def main():
+    """
+    The main process docstring
+    This function is called when this module is invoked from
+    the commandline
+    """
+
+    file_generator = DetectorFileGenerator()
+    file_generator.run()
 
 if __name__ == "__main__":
-
-    print "rapd_generate_detector.py"
+    main()

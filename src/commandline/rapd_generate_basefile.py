@@ -62,22 +62,34 @@ def split_text_blob(text):
 
     return lines
 
-class FileGenerator:
+class BaseFileGenerator(object):
 
-    def __init__(self, args):
-        """Initialize the FileGenerator instance"""
+    def __init__(self, args=False):
+        """Initialize the BaseFileGenerator instance"""
 
         self.args = args
 
-        if args.file:
-            def write_function(lines):
-                """Function for writing strings to file"""
-                out_file = open(args.file, "a+")
-                for line in lines:
-                    out_file.write(line)
-                out_file.close()
+        if args:
+            if args.file:
+                def write_function(lines):
+                    """Function for writing strings to file"""
+                    out_file = open(args.file, "a+")
+                    for line in lines:
+                        out_file.write(line)
+                    out_file.close()
 
+            else:
+                def write_function(lines):
+                    """Function for writing strings to file"""
+                    for line in lines:
+                        sys.stdout.write(line)
         else:
+
+            self.args = type('args', (object,), {});
+            self.args.file = False
+            self.args.maintainer = "Your name"
+            self.args.email = "Your email"
+
             def write_function(lines):
                 """Function for writing strings to file"""
                 for line in lines:
@@ -182,7 +194,8 @@ def main():
 
     filename = False #"foo.py"
 
-    file_generator = FileGenerator(commandline_args)
+    file_generator = BaseFileGenerator(commandline_args)
+    print file_generator
     file_generator.run()
 
 if __name__ == "__main__":

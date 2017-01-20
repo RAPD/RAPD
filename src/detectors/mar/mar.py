@@ -230,7 +230,7 @@ class MARImage(DetectorImageBase):
     def integerdepth(self):
         return self.depth
 
-def MarReadHeader(image,
+def read_header(image,
                 #   mode=None,
                 #   run_id=None,
                 #   place_in_run=None,
@@ -242,7 +242,7 @@ def MarReadHeader(image,
   """
   # print "determine_flux %s" % image
   if logger:
-    logger.debug("MarReadHeader %s", image)
+    logger.debug("read_header %s", image)
 
   m = MARImage(image)
   m.read()
@@ -327,7 +327,7 @@ if __name__ == "__main__":
         test_image = sys.argv[1]
         print "Have image input from command line %s" % test_image
 
-    header = MarReadHeader(test_image)
+    header = read_header(test_image)
     import pprint
     P = pprint.PrettyPrinter()
     P.pprint(header)

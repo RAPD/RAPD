@@ -30,7 +30,7 @@ __status__ = "Production"
 import sys
 
 # RAPD imports
-import detectors.mar.mar as mar
+import detectors.mar.mar as detector
 
 # RAPD information
 DETECTOR = "rayonix_mx300hs"
@@ -38,7 +38,7 @@ VENDORTYPE = "MARCCD"
 
 def read_header(image):
     """Read header from rayonix mx300hs"""
-    return mar.MarReadHeader(image)
+    return detector.read_header(image)
 
 if __name__ == "__main__":
 
