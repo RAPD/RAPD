@@ -243,13 +243,11 @@ cd $SRC_DIR/python
 rapd.python get-pip.py
 if [[ $PLATFORM == "Darwin" ]]; then
 
-  ln -s  $PREFIX/share/phenix/base/Python.framework/Versions/2.7/bin/pip $PREFIX/share/phenix/build/bin/phenix.pip
-  ln -s  $PREFIX/share/phenix/base/Python.framework/Versions/2.7/bin/pip $PREFIX/bin/rapd.pip
+  ln -s  $PREFIX/share/python/bin/pip $PREFIX/bin/rapd.pip
 
 elif [[ $PLATFORM == "Linux" ]]; then
 
-  ln -s  $PREFIX/share/phenix/base/bin/pip $PREFIX/share/phenix/build/bin/phenix.pip
-  ln -s  $PREFIX/share/phenix/base/bin/pip $PREFIX/bin/rapd.pip
+  ln -s  $PREFIX/share/python/bin/pip $PREFIX/bin/rapd.pip
 
 fi
 
