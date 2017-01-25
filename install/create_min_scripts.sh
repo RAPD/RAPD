@@ -8,7 +8,7 @@ if [ "$RAPD_HOME" != "" ]; then
 
   # Print version
   echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.version
-  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/gather\/rapd_version.py \"\$@\"" >>$RAPD_HOME/bin/rapd.version
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/commandline\/rapd_version.py \"\$@\"" >>$RAPD_HOME/bin/rapd.version
   chmod +x $RAPD_HOME/bin/rapd.version
 
   # Gather
