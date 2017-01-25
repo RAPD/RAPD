@@ -185,31 +185,6 @@ export RAPD_HOME
 cd $THIS_DIR
 ./create_min_scripts.sh
 
-# # Create a script for overwatch
-# echo "#! /bin/bash" > ./rapd.overwatch
-# echo "$PREFIX/bin/rapd.python $PREFIX/src/utils/overwatch.py \"\$@\"" >>./rapd.overwatch
-# chmod +x ./rapd.overwatch
-#
-# # Create script for gatherer - with overwatch
-# echo "#! /bin/bash" > ./rapd.gather
-# echo "$PREFIX/bin/rapd.python $PREFIX/src/utils/overwatch.py $PREFIX/src/sites/gatherers/gatherer_wrapper.py \"\$@\"" >>./rapd.gather
-# chmod +x ./rapd.gather
-#
-# # Create script for control - with overwatch
-# echo "#! /bin/bash" > ./rapd.control
-# echo "$SAFE_PREFIX\/bin\/rapd.python $PREFIX/src/utils/overwatch.py $SAFE_PREFIX\/src\/control\/rapd_control.py \"\$@\"" >>./rapd.control
-# chmod +x ./rapd.control
-#
-# # Create script for launcher - with overwatch
-# echo "#! /bin/bash" > ./rapd.launcher
-# echo "$SAFE_PREFIX\/bin\/rapd.python $PREFIX/src/utils/overwatch.py $SAFE_PREFIX\/src\/launch\/rapd_launcher.py \"\$@\"" >>./rapd.launcher
-# chmod +x ./rapd.launcher
-#
-# # Create script for launch
-# echo "#! /bin/bash" > ./rapd.launch
-# echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launch.py \"\$@\"" >>./rapd.launch
-# chmod +x ./rapd.launch
-
 # Create the rapd.shrc script
 printf "Writing rapd.shrc\n"
 cd $PREFIX

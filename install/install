@@ -516,6 +516,7 @@ chmod +x ./rapd.python
 RAPD_HOME=$PREFIX
 export RAPD_HOME
 cd $THIS_DIR
+./create_min_scripts.sh
 ./create_scripts.sh
 
 # Create the rapd.shrc script
