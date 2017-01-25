@@ -1,22 +1,22 @@
 # Requirements
 
 ## Linux
-Modules that need to be installed before installing RAPD2 for CentOS:
-yum install epel-release
-yum install blas-devel lapack-devel atlas-sse3-devel atlas-devel openblas-devel libffi-devel ImageMagick-devel
+
+
+
+
+
 
 ## Mac OS
 
-## Docker
-
 ## Crystallographic Software
-Required software that should be installed prior to RAPD2 install:
-BEST (http://www.embl-hamburg.de/BEST/)
-CCP4 (http://www.ccp4.ac.uk/)
-RADDOSE
-MOSFLM (http://www.mrc-lmb.cam.ac.uk/harry/mosflm/)
-XOalign.py (xdsme, https://code.google.com/p/xdsme/)
-XDS (http://xds.mpimf-heidelberg.mpg.de/)
+Required software that should be installed prior to RAPD2 install:  
+- BEST (http://www.embl-hamburg.de/BEST/)  
+- CCP4 (http://www.ccp4.ac.uk/)  
+- RADDOSE  
+- MOSFLM (http://www.mrc-lmb.cam.ac.uk/harry/mosflm/)  
+- XOalign.py (xdsme, https://code.google.com/p/xdsme/)  
+- XDS (http://xds.mpimf-heidelberg.mpg.de/)  
 
 After installing BEST, you will have to go into the installation directory and inspect
 'detector-inf.dat' to see if parameters for your detector are present. If not, you will
@@ -29,6 +29,23 @@ correct, your strategies will not be very accurate.
 # Install Procedure
 
 ## Full Install
+The full install is built on top of a Phenix distribution, and is necessary for the Control and Launcher processes, but potentially is more than necessary for the Gatherer processes.
+
+### Scientific Linux
+These instructions are formulated for Scientific Linux 6.8, but apply for CentOS 6 as well.
+
+Modules that need to be installed before installing RAPD2 for CentOS:
+yum install epel-release
+yum install blas-devel lapack-devel atlas-sse3-devel atlas-devel openblas-devel libffi-devel ImageMagick-devel
+
+Installing the Control process and dependencies
+1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git`
+2.
+
+Installing databases
 
 ## Minimal Install
-The minimal install is useful for gatherer processes, not for data processing nodes.
+The minimal install is useful for gatherer processes, not for data processing.
+
+### Scientific Linux
+These instructions are formulated for Scientific Linux 6.8, but apply for CentOS 6 as well.

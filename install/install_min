@@ -183,7 +183,7 @@ chmod +x ./rapd.python
 RAPD_HOME=$PREFIX
 export RAPD_HOME
 cd $THIS_DIR
-./create_scripts.sh
+./create_min_scripts.sh
 
 # # Create a script for overwatch
 # echo "#! /bin/bash" > ./rapd.overwatch
