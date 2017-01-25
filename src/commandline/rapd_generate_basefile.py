@@ -62,10 +62,49 @@ def split_text_blob(text):
 
     return lines
 
+# The rapd file generating parser - to be used by commandline RAPD processes
+parser = argparse.ArgumentParser(add_help=False)
+
+# Verbosity
+parser.add_argument("-v", "--verbose",
+                    action="store_true",
+                    dest="verbose",
+                    help="Enable verbose feedback")
+
+# Test mode?
+parser.add_argument("-t", "--test",
+                    action="store_true",
+                    dest="test",
+                    help="Run in test mode")
+
+# Test mode?
+parser.add_argument("-f", "--force",
+                    action="store_true",
+                    dest="force",
+                    help="Allow overwriting of files")
+
+# Maintainer
+parser.add_argument("-m", "--maintainer",
+                    action="store",
+                    dest="maintainer",
+                    default="Your name",
+                    help="Maintainer's name")
+
+# Maintainer's email
+parser.add_argument("-e", "--email",
+                    action="store",
+                    dest="email",
+                    default="Your email",
+                    help="Maintainer's email")
+
+
+
 class BaseFileGenerator(object):
 
     def __init__(self, args=False):
         """Initialize the BaseFileGenerator instance"""
+
+        print args
 
         self.args = args
 
@@ -173,6 +212,14 @@ class BaseFileGenerator(object):
         self.output_function(["if __name__ == \"__main__\":\n",
                               "    main()\n"])
 
+class CommandlineFileGenerator(BaseFileGenerator):
+
+    def __init__(self, args=False):
+
+        BaseFileGenerator.__init__(self)
+
+
+
 
 
 def get_commandline():
@@ -180,10 +227,23 @@ def get_commandline():
 
     # Parse the commandline arguments
     commandline_description = """Generate a generic RAPD file"""
-    parser = argparse.ArgumentParser(parents=[commandline_utils.gf_parser],
-                                     description=commandline_description)
 
-    return parser.parse_args()
+    my_parser = argparse.ArgumentParser(parents=[parser],
+                                        description=commandline_description)
+
+    my_parser.add_argument("-c", "--commandline",
+                           action="store_true",
+                           dest="commandline",
+                           help="Generate commandline argument parsing")
+
+    # File name to be generated
+    my_parser.add_argument(action="store",
+                           dest="file",
+                           nargs="?",
+                           default=False,
+                           help="Name of file to be generated")
+
+    return my_parser.parse_args()
 
 def main():
 
@@ -194,7 +254,7 @@ def main():
 
     filename = False #"foo.py"
 
-    file_generator = BaseFileGenerator(commandline_args)
+    file_generator = CommandlineFileGenerator(commandline_args) #BaseFileGenerator(commandline_args)
     print file_generator
     file_generator.run()
 
