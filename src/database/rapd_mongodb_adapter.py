@@ -28,7 +28,7 @@ __status__ = "Production"
 
 """
 To run a MongoDB instance in docker:
-sudo docker run --name mongo -p 27017:27017 -d mongo --storageEngine wiredTiger
+sudo docker run --name mongodb -p 27017:27017 -d mongo:3.4
 """
 
 # Standard imports
