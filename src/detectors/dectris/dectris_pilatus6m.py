@@ -23,8 +23,6 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
 import threading
-#import redis
-# import pysent
 import time
 import os
 import re
@@ -35,100 +33,11 @@ import atexit
 from rapd_site import secret_settings as secrets
 from rapd_utils import print_dict, date_adsc_to_sql
 
-# class PilatusMonitor(threading.Thread):
-#     """
-#     A new thread which watches a list in redis - mod of PilatusMonitor
-#     Run from within Model
-#     """
-#     def __init__(self,beamline='C',notify=None,reconnect=None,logger=None):
-#         if (logger):
-#             logger.info('PilatusMonitor::__init__  beamline: %s' % beamline)
-#         else:
-#             print 'PilatusMonitor::__init__  beamline: %s' % beamline
-#         #initialize the thread
-#         threading.Thread.__init__(self)
-#
-#         #passed-in variables
-#         self.notify    = notify
-#         self.reconnect = reconnect
-#         self.beamline  = beamline
-#         self.logger    = logger
-#
-#         #for stopping/starting
-#         self.Go = True
-#
-#         #register for shutdown
-#         atexit.register(self.Stop)
-#
-#         #start the thread
-#         self.start()
-#
-#     def Stop(self):
-#         if (self.logger):
-#             self.logger.info('PilatusMonitor::Stop')
-#         else:
-#             print 'PilatusMonitor::Stop'
-#         self.Go = False
-#
-#     def run(self):
-#         if (self.logger):
-#             self.logger.debug('PilatusMonitor::run')
-#         else:
-#             print 'PilatusMonitor::run'
-#         try:
-#             #set the adsc server
-#             if self.beamline in secrets.keys():
-#                 if self.logger:
-#                     self.logger.debug('Attempting to connect to Redis database at at %s' % secrets[self.beamline]['remote_redis_ip'])
-#                 else:
-#                     print 'Attempting to connect to Redis database at at %s' % secrets[self.beamline]['remote_redis_ip']
-#                 #self.red = redis.Redis(secrets[self.beamline]['remote_redis_ip'])
-#                 # HARD-CODED
-#                 self.red = pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
-# 								               sentinel_port=26379,
-# 								               master_name="remote_master")
-#             #if the assigned beamline is not in the settings, use the localhost
-#             else:
-#                 #self.red = redis.Redis('remote.nec.aps.anl.gov')
-#                 # HARD-CODED
-#                 self.red = pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
-#             								    sentinel_port=26379,
-#             								    master_name="remote_master")
-#         except:
-#             if (self.logger):
-#                 self.logger.debug('Exception in starting PilatusMonitor::run')
-#             else:
-#                 print 'Exception in starting PilatusMonitor::run'
-#             time.sleep(5)
-#             self.run()
-#
-#         #Subscribe to images
-#         #self.pubsub = self.red.pubsub()
-#         #self.pubsub.subscribe('filecreate')
-#
-#         image_list = "images_collected_"+self.beamline
-#         self.logger.debug('PilatusMonitor::Start listening')
-#         while (self.Go):
-#             try:
-#                 #try to pop the oldest image off the list
-#                 new_image = self.red.rpop(image_list)
-#                 if (new_image):
-#                     self.logger.debug('PilatusMonitor::new image %s' % new_image)
-#                     if (new_image.endswith('.cbf')):
-#                         self.notify(("NEWIMAGE", new_image))
-#             except:
-#                 self.logger.exception('Exception in while loop')
-#                 time.sleep(5)
-#                 #self.run()
-#
-#             #slow it down a little
-#             time.sleep(0.1)
-
-def pilatus_read_header(image,
-                        mode=None,
-                        run_id=None,
-                        place_in_run=None,
-                        logger=False):
+def read_header(image,
+                mode=None,
+                run_id=None,
+                place_in_run=None,
+                logger=False):
     """
     Given a full file name for a Piltus image (as a string), read the header and
     return a dict with all the header info
@@ -207,17 +116,9 @@ def pilatus_read_header(image,
 
 if __name__ == "__main__":
 
-    """
-    #testing
-    #Test PilatusMonitor
-    def notify(input):
-        print input
-    P = PilatusMonitor(beamline='C',notify=notify,reconnect=None,logger=None)
-    """
-
     #Test the header reading
     test_image = "/gpfs7/users/mit/schwartz_C_535/images/schwartz/snaps/0_0/TgC1_4_7_0_0002.cbf"
-    header = pilatus_read_header(test_image)
+    header = read_header(test_image)
     import pprint
     P = pprint.PrettyPrinter()
     P.pprint(header)

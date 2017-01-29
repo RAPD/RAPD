@@ -176,26 +176,39 @@ class BaseFileGenerator(object):
                               "__email__ = \"%s\"\n" % self.args.email,
                               "__status__ = \"Development\"\n\n"])
 
-    def write_imports(self):
+    def write_imports(self, write_list=()):
         """Write the import sections"""
-        self.output_function(["# Standard imports\n",
-                              "# import argparse\n",
-                              "# import datetime\n",
-                              "# import glob\n",
-                              "# import logging\n",
-                              "# import multiprocessing\n",
-                              "# import os\n",
-                              "# import pprint\n",
-                              "# import pymongo\n",
-                              "# import redis\n",
-                              "# import shutil\n",
-                              "# import subprocess\n",
-                              "# import sys\n",
-                              "# import time\n\n",
-                              "# RAPD imports\n",
-                              "# import commandline_utils\n",
-                              "# import import detectors.detector_utils as detector_utils\n",
-                              "# import utils\n\n"])
+        standard_imports = ("argparse",
+                            "datetime",
+                            "glob",
+                            "json",
+                            "logging",
+                            "multiprocessing",
+                            "os",
+                            "pprint",
+                            "pymongo",
+                            "re",
+                            "redis",
+                            "shutil",
+                            "subprocess",
+                            "sys",
+                            "time")
+
+        rapd_imports = ("commandline_utils",
+                        "detectors.detector_utils as detector_utils",
+                        "utils")
+                        
+        self.output_function(["# Standard imports\n"])
+        for value in standard_imports:
+            if value not in write_list:
+                value = "# " + value
+            self.output_function([value + "\n"])
+
+        self.output_function(["# RAPD imports\n"])
+        for value in rapd_imports:
+            if value not in write_list:
+                value = "# " + value
+            self.output_function([value + "\n"])
 
     def write_main_func(self):
         """Write the main function"""
