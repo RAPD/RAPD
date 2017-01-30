@@ -267,7 +267,7 @@ def zerofillday(day_in):
 
 ###############################################################################
 
-def Q315ReadHeader(image,run_id=None,place_in_run=None,logger=False):
+def Q315ReadHeader(image, run_id=None, place_in_run=None, logger=False):
     """
     Given a full file name for an ADSC image (as a string), read the header and
     return a dict with all the header info

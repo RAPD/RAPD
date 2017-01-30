@@ -34,6 +34,7 @@ carefully
 import json
 import os
 import re
+import sys
 import time
 
 # RAPD imports
@@ -226,8 +227,11 @@ def read_header(image, run_id=None, place_in_run=None):
 
 if __name__ == "__main__":
 
-    #Test the header reading
-    test_image = "/Users/frankmurphy/workspace/rapd_github/src/test/necat_e_test/test_data/thaum10_PAIR_0_001.img"
+    # Test the header reading
+    if len(sys.argv) > 1:
+        test_image = sys.argv[1]
+    else:
+        test_image = "/Users/frankmurphy/workspace/rapd_github/src/test/necat_e_test/test_data/thaum10_PAIR_0_001.img"
     header = read_header(test_image)
     import pprint
     pp = pprint.PrettyPrinter()

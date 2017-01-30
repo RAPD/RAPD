@@ -22,9 +22,10 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
-# Standar imports
+# Standard imports
 import math
 import os
+import sys
 
 # RAPD imports
 import detectors.adsc.adsc_q315 as adsc_q315
@@ -251,8 +252,12 @@ def get_data_root_dir(fullname):
 
 if __name__ == "__main__":
 
-    # Test header reading
-    test_image = "/Users/frankmurphy/workspace/rapd_github/src/test/necat_e_test/test_data/thaum10_PAIR_0_001.img"
+    # Test the header reading
+    if len(sys.argv) > 1:
+        test_image = sys.argv[1]
+    else:
+        test_image = "/Users/frankmurphy/workspace/rapd_github/src/test/necat_e_test/test_data/thaum10_PAIR_0_001.img"
+
     # Flux of the beam
     BEAM_FLUX = 8E11
     # Size of the beam in microns
@@ -294,6 +299,7 @@ if __name__ == "__main__":
                      "BEAM_CENTER_Y":BEAM_CENTER_Y}
 
     header = read_header(test_image, BEAM_SETTINGS)
+
     import pprint
     pp = pprint.PrettyPrinter()
     pp.pprint(header)
