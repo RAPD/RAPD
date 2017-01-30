@@ -139,6 +139,8 @@ class BaseFileGenerator(object):
     def preprocess(self):
         """Do pre-write checks"""
 
+        print "BaseFileGenerator.preprocess"
+
         # If we are writing a file, check
         if self.args.file:
             if os.path.exists(self.args.file):
@@ -197,18 +199,19 @@ class BaseFileGenerator(object):
         rapd_imports = ("commandline_utils",
                         "detectors.detector_utils as detector_utils",
                         "utils")
-                        
+
         self.output_function(["# Standard imports\n"])
         for value in standard_imports:
             if value not in write_list:
                 value = "# " + value
             self.output_function([value + "\n"])
 
-        self.output_function(["# RAPD imports\n"])
+        self.output_function(["\n# RAPD imports\n"])
         for value in rapd_imports:
             if value not in write_list:
                 value = "# " + value
             self.output_function([value + "\n"])
+        self.output_function(["\n"])
 
     def write_main_func(self):
         """Write the main function"""
@@ -220,19 +223,72 @@ class BaseFileGenerator(object):
                               "    \"\"\"\n",
                               "    print \"main\"\n\n"])
 
-    def write_main(self):
+    def write_main(self, main_lines=False):
         """Write the main function"""
-        self.output_function(["if __name__ == \"__main__\":\n",
-                              "    main()\n"])
+        if not main_lines:
+            if self.args.commandline:
+                main_lines = ["if __name__ == \"__main__\":\n\n",
+                              "    # Get the commandline args\n",
+                              "    commandline_args = get_commandline()\n\n",
+                              "    # Execute code\n"
+                              "    main()\n\n",]
+            else:
+                main_lines = ["if __name__ == \"__main__\":\n\n",
+                              "    # Execute code\n",
+                              "    main()\n"]
+
+        self.output_function(main_lines)
 
 class CommandlineFileGenerator(BaseFileGenerator):
 
-    def __init__(self, args=False):
+    def run(self):
+        """The main actions of the module"""
 
-        BaseFileGenerator.__init__(self)
+        self.preprocess()
 
+        self.write_file_docstring()
+        self.write_license()
+        self.write_docstrings()
+        self.write_imports()
+        self.write_main_func()
+        self.write_commandline()
+        self.write_main()
 
+    def preprocess(self):
+        """Do pre-write checks"""
 
+        print "CommandlineFileGenerator.preprocess"
+
+        self.args.commandline = True
+
+        super(CommandlineFileGenerator, self).preprocess()
+
+    def write_commandline(self):
+        """Write commanling handling into the file"""
+
+        commandline_lines = ["def get_commandline():\n",
+                              "    \"\"\"\n",
+                              "    Grabs the commandline\n",
+                              "    \"\"\"\n",
+                              "    print \"get_commandline\"\n\n"
+                              "    # Parse the commandline arguments\n",
+                              "    commandline_description = \"Generate a generic RAPD file\"\n",
+                              "    my_parser = argparse.ArgumentParser(parents=[parser],\n",
+                              "                                        description=commandline_description)\n\n",
+                              "    # A True/False flag\n"
+                              "    my_parser.add_argument(\"-c\", \"--commandline\",\n",
+                              "                           action=\"store_true\",\n",
+                              "                           dest=\"commandline\",\n",
+                              "                           help=\"Generate commandline argument parsing\")\n\n",
+                              "    # File name to be generated\n",
+                              "    my_parser.add_argument(action=\"store\",\n",
+                              "                           dest=\"file\",\n",
+                              "                           nargs=\"?\",\n",
+                              "                           default=False,\n",
+                              "                           help=\"Name of file to be generated\")\n\n",
+                              "    return my_parser.parse_args()\n\n"]
+
+        self.output_function(commandline_lines)
 
 
 def get_commandline():
@@ -267,7 +323,11 @@ def main():
 
     filename = False #"foo.py"
 
-    file_generator = CommandlineFileGenerator(commandline_args) #BaseFileGenerator(commandline_args)
+    if commandline_args.commandline:
+        file_generator = CommandlineFileGenerator(commandline_args) #BaseFileGenerator(commandline_args)
+    else:
+        file_generator = BaseFileGenerator(commandline_args)
+
     print file_generator
     file_generator.run()
 

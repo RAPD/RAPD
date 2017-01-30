@@ -40,14 +40,40 @@ __status__ = "Development"
 # import time
 
 # RAPD imports
-from rapd_generate_basefile import BaseFileGenerator, split_text_blob
+from rapd_generate_basefile import CommandlineFileGenerator, split_text_blob
 # import commandline_utils
 # import import detectors.detector_utils as detector_utils
 # import utils
 
-class DetectorFileGenerator(BaseFileGenerator):
+class DetectorFileGenerator(CommandlineFileGenerator):
     """File generator for detector wrapper"""
-    pass
+
+    def run(self):
+        """The main actions of the module"""
+
+        self.preprocess()
+
+        self.write_file_docstring()
+        self.write_license()
+        self.write_docstrings()
+        self.write_imports(write_list=("json",
+                                       "os",
+                                       "re",
+                                       "time"))
+        self.write_commandline()
+        self.write_main_func()
+        self.write_main(main_lines=[
+            "    if len(sys.argv) > 1:\n",
+            "        test_image = sys.argv[1]\n",
+            "    else:\n",
+            "        raise Error(\"No test image input!\")\n"
+            "        # test_image = \"\"\n"])
+
+    #     """if len(sys.argv) > 1:
+    #         test_image = sys.argv[1]
+    #     else:
+    #         test_image = "/Users/frankmurphy/workspace/rapd_github/src/test/sercat_id/t\
+    # est_data/THAU10_r1_1.0001"""
 
 def main():
     """
