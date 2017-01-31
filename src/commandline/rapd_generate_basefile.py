@@ -34,8 +34,7 @@ import time
 import commandline_utils
 
 _NOW = time.localtime()
-_LICENSE = """
-This file is part of RAPD
+_LICENSE = """This file is part of RAPD
 
 Copyright (C) %d, Cornell University
 All rights reserved.
@@ -57,9 +56,6 @@ def split_text_blob(text):
     """Split a multiline text blob into a list"""
 
     lines = text.split("\n")
-    for i in range(len(lines)):
-        lines[i] += "\n"
-
     return lines
 
 # The rapd file generating parser - to be used by commandline RAPD processes
@@ -101,6 +97,8 @@ parser.add_argument("-e", "--email",
 
 class BaseFileGenerator(object):
 
+    args = False
+
     def __init__(self, args=False):
         """Initialize the BaseFileGenerator instance"""
 
@@ -114,17 +112,17 @@ class BaseFileGenerator(object):
                     """Function for writing strings to file"""
                     out_file = open(args.file, "a+")
                     for line in lines:
-                        out_file.write(line)
+                        out_file.write(line+"\n")
                     out_file.close()
 
             else:
                 def write_function(lines):
                     """Function for writing strings to file"""
                     for line in lines:
-                        sys.stdout.write(line)
+                        sys.stdout.write(line+"\n")
         else:
 
-            self.args = type('args', (object,), {});
+            self.args = type('args', (object,), {})
             self.args.file = False
             self.args.maintainer = "Your name"
             self.args.email = "Your email"
@@ -132,7 +130,7 @@ class BaseFileGenerator(object):
             def write_function(lines):
                 """Function for writing strings to file"""
                 for line in lines:
-                    sys.stdout.write(line)
+                    sys.stdout.write(line+"\n")
 
         self.output_function = write_function
 
@@ -165,18 +163,18 @@ class BaseFileGenerator(object):
 
     def write_file_docstring(self):
         """Write the docstring for file"""
-        self.output_function(["\"\"\"This is a docstring for this file\"\"\"\n","\n"])
+        self.output_function(["\"\"\"This is a docstring for this file\"\"\"\n"])
 
     def write_license(self):
         """Write the license"""
-        self.output_function(["\"\"\"",] + split_text_blob(_LICENSE) + ["\"\"\"\n", "\n"])
+        self.output_function(["\"\"\"",] + split_text_blob(_LICENSE) + ["\"\"\"\n"])
 
     def write_docstrings(self):
         """Write file author docstrings"""
-        self.output_function(["__created__ = \"%d-%d-%d\"\n" % (_NOW.tm_year, _NOW.tm_mon, _NOW.tm_mday),
-                              "_maintainer__ = \"%s\"\n" % self.args.maintainer,
-                              "__email__ = \"%s\"\n" % self.args.email,
-                              "__status__ = \"Development\"\n\n"])
+        self.output_function(["__created__ = \"%d-%d-%d\"" % (_NOW.tm_year, _NOW.tm_mon, _NOW.tm_mday),
+                              "_maintainer__ = \"%s\"" % self.args.maintainer,
+                              "__email__ = \"%s\"" % self.args.email,
+                              "__status__ = \"Development\"\n"])
 
     def write_imports(self, write_list=()):
         """Write the import sections"""
@@ -200,42 +198,51 @@ class BaseFileGenerator(object):
                         "detectors.detector_utils as detector_utils",
                         "utils")
 
-        self.output_function(["# Standard imports\n"])
+        self.output_function(["# Standard imports"])
         for value in standard_imports:
             if value not in write_list:
                 value = "# " + value
-            self.output_function([value + "\n"])
+            self.output_function([value + ""])
 
-        self.output_function(["\n# RAPD imports\n"])
+        self.output_function(["\n# RAPD imports"])
         for value in rapd_imports:
             if value not in write_list:
                 value = "# " + value
-            self.output_function([value + "\n"])
-        self.output_function(["\n"])
+            self.output_function([value + ""])
+        self.output_function([""])
 
-    def write_main_func(self):
+    def write_main_func(self, main_func_lines=False):
         """Write the main function"""
-        self.output_function(["def main():\n",
-                              "    \"\"\"\n",
-                              "    The main process docstring\n",
-                              "    This function is called when this module is invoked from\n",
-                              "    the commandline\n",
-                              "    \"\"\"\n",
-                              "    print \"main\"\n\n"])
+        if  not main_func_lines:
+            main_func_lines = ["def main():",
+                                  "    \"\"\"",
+                                  "    The main process docstring",
+                                  "    This function is called when this module is invoked from",
+                                  "    the commandline",
+                                  "    \"\"\"\n",
+                                  "    print \"main\"\n"]
+
+
+            if self.args.commandline:
+                main_func_lines.replace("def main():", "def main(args):")
+
+        # Output the lines
+        self.output_function(main_func_lines)
+
 
     def write_main(self, main_lines=False):
         """Write the main function"""
         if not main_lines:
             if self.args.commandline:
-                main_lines = ["if __name__ == \"__main__\":\n\n",
-                              "    # Get the commandline args\n",
-                              "    commandline_args = get_commandline()\n\n",
-                              "    # Execute code\n"
-                              "    main()\n\n",]
+                main_lines = ["if __name__ == \"__main__\":\n",
+                              "    # Get the commandline args",
+                              "    commandline_args = get_commandline()\n",
+                              "    # Execute code",
+                              "    main(args=commandline_args)\n",]
             else:
-                main_lines = ["if __name__ == \"__main__\":\n\n",
-                              "    # Execute code\n",
-                              "    main()\n"]
+                main_lines = ["if __name__ == \"__main__\":\n",
+                              "    # Execute code",
+                              "    main()"]
 
         self.output_function(main_lines)
 
@@ -266,27 +273,26 @@ class CommandlineFileGenerator(BaseFileGenerator):
     def write_commandline(self):
         """Write commanling handling into the file"""
 
-        commandline_lines = ["def get_commandline():\n",
+        commandline_lines = ["def get_commandline():",
+                              "    \"\"\"",
+                              "    Grabs the commandline",
                               "    \"\"\"\n",
-                              "    Grabs the commandline\n",
-                              "    \"\"\"\n",
-                              "    print \"get_commandline\"\n\n"
-                              "    # Parse the commandline arguments\n",
-                              "    commandline_description = \"Generate a generic RAPD file\"\n",
-                              "    my_parser = argparse.ArgumentParser(parents=[parser],\n",
-                              "                                        description=commandline_description)\n\n",
-                              "    # A True/False flag\n"
-                              "    my_parser.add_argument(\"-c\", \"--commandline\",\n",
-                              "                           action=\"store_true\",\n",
-                              "                           dest=\"commandline\",\n",
-                              "                           help=\"Generate commandline argument parsing\")\n\n",
-                              "    # File name to be generated\n",
-                              "    my_parser.add_argument(action=\"store\",\n",
-                              "                           dest=\"file\",\n",
-                              "                           nargs=\"?\",\n",
-                              "                           default=False,\n",
-                              "                           help=\"Name of file to be generated\")\n\n",
-                              "    return my_parser.parse_args()\n\n"]
+                              "    print \"get_commandline\"\n",
+                              "    # Parse the commandline arguments",
+                              "    commandline_description = \"Generate a generic RAPD file\"",
+                              "    parser = argparse.ArgumentParser(description=commandline_description)\n",
+                              "    # A True/False flag",
+                              "    parser.add_argument(\"-c\", \"--commandline\",",
+                              "                        action=\"store_true\",",
+                              "                        dest=\"commandline\",",
+                              "                        help=\"Generate commandline argument parsing\")\n",
+                              "    # File name to be generated",
+                              "    parser.add_argument(action=\"store\",",
+                              "                        dest=\"file\",",
+                              "                        nargs=\"?\",",
+                              "                        default=False,",
+                              "                        help=\"Name of file to be generated\")\n",
+                              "    return parser.parse_args()\n"]
 
         self.output_function(commandline_lines)
 

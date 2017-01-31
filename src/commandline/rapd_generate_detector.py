@@ -25,7 +25,7 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 # Standard imports
-# import argparse
+import argparse
 # import datetime
 # import glob
 # import logging
@@ -60,20 +60,176 @@ class DetectorFileGenerator(CommandlineFileGenerator):
                                        "os",
                                        "re",
                                        "time"))
+        self.write_detector()
         self.write_commandline()
         self.write_main_func()
-        self.write_main(main_lines=[
-            "    if len(sys.argv) > 1:\n",
-            "        test_image = sys.argv[1]\n",
-            "    else:\n",
-            "        raise Error(\"No test image input!\")\n"
-            "        # test_image = \"\"\n"])
+        self.write_main()
 
-    #     """if len(sys.argv) > 1:
-    #         test_image = sys.argv[1]
-    #     else:
-    #         test_image = "/Users/frankmurphy/workspace/rapd_github/src/test/sercat_id/t\
-    # est_data/THAU10_r1_1.0001"""
+    def write_main_func(self):
+        """Write the main function"""
+
+        main_func_lines = [
+            "def main(args):",
+            "    \"\"\"",
+            "    The main process docstring",
+            "    This function is called when this module is invoked from",
+            "    the commandline",
+            "    \"\"\"\n",
+            "    print \"main\"\n",
+            "    if len(sys.argv) > 1:",
+            "        test_image = sys.argv[1]",
+            "    else:",
+            "        raise Error(\"No test image input!\")",
+            "        # test_image = \"\"\n",
+            "    # Read the header",
+            "    header = read_header(test_image)\n",
+            "    # And print it out",
+            "    pprint.pprint(header)\n"]
+
+        super(DetectorFileGenerator, self).write_main_func(main_func_lines=main_func_lines)
+
+    def write_detector(self):
+        """Write the detector-specific functions"""
+
+        # Import generic detectors
+        detector_imports = [
+            "# ADSC Q315",
+            "# import detectors.adsc.adsc_q315 as detector",
+            "# Rayonix MX300",
+            "# import detectors.rayonix.rayonix_mx300 as detector",
+            "# Rayonix MX300HS",
+            "# import detectors.rayonix.rayonix_mx300hs as detector\n"
+        ]
+        self.output_function(detector_imports)
+
+        # Information for detector setup
+        detector_information = [
+            "# Detector information",
+            "# The RAPD detector type",
+            "DETECTOR = \"rayonix_mx300\"",
+            "# The detector vendor as it appears in the header",
+            "VENDORTYPE = \"MARCCD\"",
+            "# The detector serial number as it appears in the header",
+            "DETECTOR_SN = 7",
+            "# The detector suffix \"\" if there is no suffix"
+            "DETECTOR_SUFFIX = \"\"",
+            "# Template for image name generation ? for frame number places"
+            "IMAGE_TEMPLATE = \"%s.????\"",
+            "# Is there a run number in the template?",
+            "RUN_NUMBER_IN_TEMPLATE = False",
+            "# This is a version number for internal RAPD use",
+            "# If the header changes, increment this number",
+            "HEADER_VERSION = 1\n"
+        ]
+        self.output_function(detector_information)
+
+        # parse_file_name function
+        parse_file_name = [
+            "def parse_file_name(fullname):",
+            "    \"\"\"",
+            "    Parse the fullname of an image and return",
+            "    (directory, basename, prefix, run_number, image_number)",
+
+            "    Keyword arguments",
+            "    fullname -- the full path name of the image file",
+            "    \"\"\"",
+            "    # Directory of the file"
+            "    directory = os.path.dirname(fullname)\n",
+            "    # The basename of the file (i.e. basename - suffix)",
+            "    basename = os.path.basename(fullname).rstrip(DETECTOR_SUFFIX)\n",
+            "    # The prefix, image number, and run number"
+            "    sbase = basename.split(\".\")",
+            "    prefix = \".\".join(sbase[0:-1])",
+            "    image_number = int(sbase[-1])",
+            "    run_number = None",
+
+            "    return directory, basename, prefix, run_number, image_number\n",
+        ]
+        self.output_function(parse_file_name)
+
+        # get_data_root_dir function
+        get_data_root_dir = [
+            "def get_data_root_dir(fullname):",
+            "    \"\"\"",
+            "    Derive the data root directory from the user directory",
+            "    The logic will most likely be unique for each site\n",
+            "    Keyword arguments",
+            "    fullname -- the full path name of the image file",
+            "    \"\"\"\n",
+            "    # Isolate distinct properties of the images path",
+            "    path_split = fullname.split(os.path.sep)",
+            "    data_root_dir = os.path.join(\"/\", *path_split[1:3])\n",
+            "    # Return the determined directory",
+            "    return data_root_dir\n"
+        ]
+        self.output_function(get_data_root_dir)
+
+        # read_header function
+        read_header = [
+            "def read_header(fullname, beam_settings=False):",
+            "    \"\"\"",
+            "    Read header from image file and return dict\n",
+            "    Keyword variables",
+            "    fullname -- full path name of the image file to be read",
+            "    beam_settings -- source information from site file",
+            "    \"\"\"\n",
+            "    # Perform the header read from the file",
+            "    # If you are importing another detector, this should work",
+            "    header = detector.read_header(fullname)\n",
+            "    # Return the header",
+            "    return header\n"
+        ]
+
+        self.output_function(read_header)
+
+def get_commandline():
+    """Get the commandline variables and handle them"""
+
+    # Parse the commandline arguments
+    commandline_description = """Generate a RAPD detector file scaffold"""
+
+    parser = argparse.ArgumentParser(description=commandline_description)
+
+    # Verbosity
+    parser.add_argument("-v", "--verbose",
+                        action="store_true",
+                        dest="verbose",
+                        help="Enable verbose feedback")
+
+    # Test mode?
+    parser.add_argument("-t", "--test",
+                        action="store_true",
+                        dest="test",
+                        help="Run in test mode")
+
+    # Test mode?
+    parser.add_argument("-f", "--force",
+                        action="store_true",
+                        dest="force",
+                        help="Allow overwriting of files")
+
+    # Maintainer
+    parser.add_argument("-m", "--maintainer",
+                        action="store",
+                        dest="maintainer",
+                        default="Your name",
+                        help="Maintainer's name")
+
+    # Maintainer's email
+    parser.add_argument("-e", "--email",
+                        action="store",
+                        dest="email",
+                        default="Your email",
+                        help="Maintainer's email")
+
+    # File name to be generated
+    parser.add_argument(action="store",
+                        dest="file",
+                        nargs="?",
+                        default=False,
+                        help="Name of file to be generated")
+
+    return parser.parse_args()
 
 def main():
     """
@@ -82,7 +238,12 @@ def main():
     the commandline
     """
 
-    file_generator = DetectorFileGenerator()
+    # Get the commandline args
+    commandline_args = get_commandline()
+
+    print commandline_args
+
+    file_generator = DetectorFileGenerator(commandline_args)
     file_generator.run()
 
 if __name__ == "__main__":

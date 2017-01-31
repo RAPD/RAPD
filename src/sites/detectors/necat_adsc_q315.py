@@ -28,7 +28,7 @@ import os
 import sys
 
 # RAPD imports
-import detectors.adsc.adsc_q315 as adsc_q315
+import detectors.adsc.adsc_q315 as detector
 
 # Source information
 # Flux of the beam
@@ -74,6 +74,8 @@ _BEAM_SETTINGS = {"BEAM_FLUX":BEAM_FLUX,
 
 
 DETECTOR_SUFFIX = ".img"
+IMAGE_TEMPLATE = "%s_%d_???.img"
+RUN_NUMBER_IN_TEMPLATE = True
 HEADER_VERSION = 1
 
 def parse_file_name(fullname):
@@ -180,7 +182,7 @@ def read_header(fullname, beam_settings=_BEAM_SETTINGS, run_id=None, place_in_ru
     """Read the NE-CAT ADSC Q315 header and add some site-specific data"""
 
     # Perform the header read form the file
-    header = adsc_q315.read_header(fullname, run_id, place_in_run)
+    header = detector.read_header(fullname, run_id, place_in_run)
 
     # Massage header values
     header["aperture_x"] = header["aperture"]
