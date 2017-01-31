@@ -31,6 +31,11 @@ if [ "$RAPD_HOME" != "" ]; then
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py \"\$@\"" >>$RAPD_HOME/bin/rapd.overwatch
   chmod +x $RAPD_HOME/bin/rapd.overwatch
 
+  # Generate a basefile scaffold
+  echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.generate_basefile
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/commandline\/generate_basefile.py \"\$@\"" >>$RAPD_HOME/bin/rapd.generate_basefile
+  chmod +x $RAPD_HOME/bin/rapd.generate_basefile
+
   # Generate a new detector scaffold
   echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.generate_detector
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/commandline\/generate_detector.py \"\$@\"" >>$RAPD_HOME/bin/rapd.generate_detector

@@ -303,6 +303,7 @@ if [ $INSTALL_PHENIX == 1 ]; then
       else
         printf "  \033[91mInstaller needs the Phenix installer\033[0m\n"
         printf "  Please navigate to https://www.phenix-online.org/download/phenix/release/ \n"
+        printf "  You will need a password that can be obtained at https://www.phenix-online.org/download/ \n"
         printf "  click on $PHENIX_DOWNLOAD_REPR \n"
         printf "  to download $PHENIX_DOWNLOAD.tar.gz\n"
         printf "  and place it in the directory ~/Downloads or $PHENIX_PREFIX_SRC\n"

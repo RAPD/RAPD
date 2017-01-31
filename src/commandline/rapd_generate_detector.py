@@ -147,6 +147,32 @@ class DetectorFileGenerator(CommandlineFileGenerator):
         ]
         self.output_function(parse_file_name)
 
+        # create_image_fullname function
+        create_image_fullname = [
+            "def create_image_fullname(directory,",
+            "                          image_prefix,",
+            "                          run_number=None,",
+            "                          image_number=None):",
+            "    \"\"\"",
+            "    Create an image name from parts - the reverse of parse\n",
+            "    Keyword arguments",
+            "    directory -- in which the image file appears",
+            "    image_prefix -- the prefix before run number or image number",
+            "    run_number -- number for the run",
+            "    image_number -- number for the image",
+            "    \"\"\"\n",
+            "    if not run_number in (None, \"unknown\"):",
+            "        filename = \"%s.%s.%04d\" % (image_prefix,",
+            "                                   run_number,",
+            "                                   image_number)",
+            "    else:",
+            "        filename = \"%s.%04d\" % (image_prefix,",
+            "                                   image_number)\n",
+            "    fullname = os.path.join(directory, filename)\n",
+            "    return fullname\n",
+        ]
+        self.output_function(create_image_fullname)
+
         # get_data_root_dir function
         get_data_root_dir = [
             "def get_data_root_dir(fullname):",

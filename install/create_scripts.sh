@@ -12,11 +12,6 @@ if [ "$RAPD_HOME" != "" ]; then
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/src\/control\/rapd_control.py \"\$@\"" >>$RAPD_HOME/bin/rapd.control
   chmod +x $RAPD_HOME/bin/rapd.control
 
-  # Integrate
-  echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.integrate
-  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/commandline\/rapd_version.py \"\$@\"" >>$RAPD_HOME/bin/rapd.version
-  chmod +x $RAPD_HOME/bin/rapd.version
-
   # Index
   echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.index
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/commandline\/rapd_index+strategy.py \"\$@\"" >>$RAPD_HOME/bin/rapd.index
