@@ -102,7 +102,7 @@ def get_run_data(detector_module, image_0_data, image_n_data):
         "directory": image_0_data.get("directory"),
         "distance": image_0_data.get("distance"),
         "image_prefix": image_0_data.get("image_prefix"),
-        "image_template": detector_module.get_image_template(image_0_data.get("image_prefix"), image_0_data.get("run_number")),
+        "image_template": detector_module.create_image_template(image_0_data.get("image_prefix"), image_0_data.get("run_number")),
         "run_number": image_0_data.get("run_number"),
         "start": image_0_data.get("image_number"),
         "time": image_0_data.get("time"),

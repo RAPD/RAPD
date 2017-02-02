@@ -107,6 +107,7 @@ class RapdAgent(Process):
 
         self.dirs = self.command["directories"]
         self.image_data = self.command.get("data").get("image_data")
+        self.data = self.command.get("data").get("image_data")
         self.run_data = self.command.get("data").get("run_data")
         self.process_id = self.command["process_id"]
         # if "image_data" in self.command:
@@ -783,39 +784,39 @@ class RapdAgent(Process):
 	basis for writing out an XDS.INP file.
 	"""
 	self.logger.debug('FastIntegration::createXDSinp')
-	
+
         last_frame = int(self.image_data['start']) + int(self.image_data['total']) -1
         self.logger.debug('last_frame = %s' % last_frame)
-        self.logger.debug('detector_type = %s' % detector_type)
+        # self.logger.debug('detector_type = %s' % detector_type)
         background_range = '%s %s' %(int(self.image_data['start']), int(self.image_data['start']) + 4)
-	
+
 	x_beam = float(self.data['x_beam']) / float(xds_dict['QX'])
         y_beam = float(self.data['y_beam']) / float(xds_dict['QY'])
         if x_beam < 0 or x_beam > int(xds_dict['NX']):
             raise RuntimeError, 'x beam coordinate outside detector'
         if y_beam < 0 or y_beam > int(xds_dict['NY']):
             raise RuntimeError, 'y beam coordinate outside detector'
-	
+
 	if 'image_template' in self.data:
 	    self.image_template = self.data['image_template']
 	else:
 	    raise RuntimeError, '"image_template" not defined in input data.'
-	
+
 	file_template = os.path.join(self.data['directory'], self.image_template)
 	# Count the number of '?' that need to be padded in a image filename.
 	pad = file_template.count('?')
 	# Replace the first instance of '?' with the padded out image number
 	# of the last frame
 	self.last_image = file_template.replace('?','%d'.zfill(pad) %last_frame,1)
-	# Remove the remaining '?' 
+	# Remove the remaining '?'
 	self.last_image = self.last_image.replace('?','')
 	# Repeat the last two steps for the first image's filename.
 	self.first_image = file_template.replace('?',self.data['start'].zfill(pad),1)
 	self.first_image = self.first_image.replace('?','')
-	
+
 	# Begin constructing the list that will represent the XDS.INP file.
 	xds_input = ['!===== DATA SET DEPENDENT PARAMETERS =====\n',
-                  'ORGX=%.2f ORGY=%.2f ! Beam Center (pixels)\n' %(x_beam,y_beam)),
+                  'ORGX=%.2f ORGY=%.2f ! Beam Center (pixels)\n' %(x_beam,y_beam),
                   'DETECTOR_DISTANCE=%.2f ! (mm)\n' %(float(self.data['distance'])),
                   'OSCILLATION_RANGE=%.2f ! (degrees)\n' %(float(self.data['osc_range'])),
                   'X-RAY_WAVELENGTH=%.5f ! (Angstroems)\n' %(float(self.data['wavelength'])),
@@ -826,7 +827,7 @@ class RapdAgent(Process):
             # Regions that are excluded are defined with
             # various keyword containing the word UNTRUSTED.
             # Since multiple regions may be specified using
-            # the same keyword on XDS but a dict cannot 
+            # the same keyword on XDS but a dict cannot
             # have multiple values assigned to a key,
             # the following if statements work though any
             # of these regions and add them to xdsinput.
@@ -840,12 +841,12 @@ class RapdAgent(Process):
             else:
                 line = '%s=%s\n' %(key,value)
 	    xds_input.append(line)
-	
+
 	# If the detector is tilted in 2theta, adjust the value of
 	# DIRECTION_OF_DETECTOR_Y-AXIS.
 	# **** IMPORTANT ****
 	# This adjustment assumes that the 2theta tilt affects only
-	# the DIRECTION_OF_DETECTOR_Y-AXIS, and not the 
+	# the DIRECTION_OF_DETECTOR_Y-AXIS, and not the
 	# DIRECTION_OF_DETECTOR_X-AXIS.
 	#
 	# If 2theta is not inclined, self.data should not have the key
@@ -859,11 +860,11 @@ class RapdAgent(Process):
 	    tilty = math.cos(twotheta)
 	    tiltz = math.sin(twotheta)
 	    xds_input.append('!***** Detector is tilted in 2theta *****\n')
-	    xds_input.append('! 2THETA = %s degrees\n' self.data['twotheta'])
+	    xds_input.append('! 2THETA = %s degrees\n' % self.data['twotheta'])
 	    xds_input.append('!*** Resetting DIRECTION_OF_DETECTOR_Y-AXIS ***\n')
 	    xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS= 0.0 %.4f %.4f\n' %(tilty, tiltz))
 	    xds_input.append('! 0.0 cos(2theta) sin(2theta)\n\n')
-	
+
 	return(xds_input)
 
     def set_detector_data (self, detector_type):
