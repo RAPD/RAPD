@@ -34,7 +34,7 @@ The full install is built on top of a Phenix distribution, and is necessary for 
 ##### Scientific Linux
 These instructions are formulated for Scientific Linux 6.8, but apply for CentOS 6 as well.
 
-Installing the Control process and dependencies
+Installing the Control process and dependencies  
 1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git`  
 2. Navigate to the install directory and `./install`  
 3. The install script will list any modules that need to be installed. The list is: `epel-release
