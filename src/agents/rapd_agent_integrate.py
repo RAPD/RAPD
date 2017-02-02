@@ -793,14 +793,14 @@ class RapdAgent(Process):
         # self.logger.debug('detector_type = %s' % detector_type)
         background_range = '%s %s' %(int(self.image_data['start']), int(self.image_data['start']) + 4)
 
-	x_beam = float(self.data['x_beam']) / float(xds_dict['QX'])
-        y_beam = float(self.data['y_beam']) / float(xds_dict['QY'])
+	x_beam = float(self.image_data['x_beam']) / float(xds_dict['QX'])
+        y_beam = float(self.image_data['y_beam']) / float(xds_dict['QY'])
         if x_beam < 0 or x_beam > int(xds_dict['NX']):
             raise RuntimeError, 'x beam coordinate outside detector'
         if y_beam < 0 or y_beam > int(xds_dict['NY']):
             raise RuntimeError, 'y beam coordinate outside detector'
 
-	if 'image_template' in self.data:
+	if 'image_template' in self.image_data:
 	    self.image_template = self.image_data['image_template']
 	else:
 	    raise RuntimeError, '"image_template" not defined in input data.'
