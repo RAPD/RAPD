@@ -102,7 +102,7 @@ def get_run_data(detector_module, image_0_data, image_n_data):
         "directory": image_0_data.get("directory"),
         "distance": image_0_data.get("distance"),
         "image_prefix": image_0_data.get("image_prefix"),
-        "image_template": detector_module.get_image_template(image_0_data.get("image_prefix")),
+        "image_template": detector_module.get_image_template(image_0_data.get("image_prefix"), image_0_data.get("run_number")),
         "run_number": image_0_data.get("run_number"),
         "start": image_0_data.get("image_number"),
         "time": image_0_data.get("time"),
@@ -139,7 +139,8 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module,
         "start_frame": commandline_args.start_image,
         "end_frame": commandline_args.end_image,
         "x_beam": commandline_args.beamcenter[0],
-        "y_beam": commandline_args.beamcenter[1]
+        "y_beam": commandline_args.beamcenter[1],
+        "xdsinp": detector_module.XDSINP
     }
 
     pprint.pprint(command)
