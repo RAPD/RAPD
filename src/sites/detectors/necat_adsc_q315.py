@@ -77,6 +77,9 @@ DETECTOR_SUFFIX = ".img"
 IMAGE_TEMPLATE = "%s_%d_???.img"
 RUN_NUMBER_IN_TEMPLATE = True
 HEADER_VERSION = 1
+
+# XDS input information
+# XDS_INP = detector.XDS_INP
 XDSINP = {"DETECTOR": "ADSC ",
           "MINIMUM_VALID_PIXEL_VALUE": "1 ",
           "OVERLOAD": " 65000",

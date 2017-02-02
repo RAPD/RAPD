@@ -249,7 +249,10 @@ def analyze_data_sources(sources, mode="index"):
         full_path_template = os.path.abspath(template)
 
         # Grab a list of files
+        # "#" as numbers that increment
         return_data = glob.glob(full_path_template.replace("#", "[0-9]"))
+        # "?" as numbers that increment
+        return_data = glob.glob(full_path_template.replace("?", "[0-9]"))
         return_data.sort()
         pprint.pprint(return_data)
 

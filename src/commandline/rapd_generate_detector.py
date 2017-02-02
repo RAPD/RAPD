@@ -123,6 +123,18 @@ class DetectorFileGenerator(CommandlineFileGenerator):
         ]
         self.output_function(detector_information)
 
+        # XDS information
+        xds_info = [
+            "# XDS information for constructing the XDS.INP file",
+            "# Import from more generic detector"
+            "# XDS_INP = detector.XDS_INP",
+            "# Update the XDS information from the imported detector",
+            "# XDS_INP.update({})",
+            "# Overwrite XDS information with new data",
+            "# XDS_INP = {}\n"
+        ]
+        self.output_function(xds_info)
+
         # parse_file_name function
         parse_file_name = [
             "def parse_file_name(fullname):",
