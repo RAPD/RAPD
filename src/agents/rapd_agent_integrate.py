@@ -107,7 +107,6 @@ class RapdAgent(Process):
 
         self.dirs = self.command["directories"]
         self.image_data = self.command.get("data").get("image_data")
-        self.data = self.command.get("data").get("image_data")
         self.run_data = self.command.get("data").get("run_data")
         self.process_id = self.command["process_id"]
         # if "image_data" in self.command:
@@ -130,7 +129,11 @@ class RapdAgent(Process):
         if 'start' not in self.image_data.keys():
             self.image_data["start"] = self.run_data.get("start")
             self.image_data["total"] = self.run_data.get("total")
-
+        self.image_data['image_template'] = self.run_data['image_template']
+	
+	# Check for 2theta tilt:
+	if 'twotheta' in self.run_data:
+	    self.image_data['twotheta'] = self.run_data['twotheta']
         # self.image_data['start'] = self.settings['request']['frame_start']
         # self.image_data['total'] = str( int(self.settings['request']['frame_start'])
         #                         + int(self.settings['request']['frame_finish']) - 1)
@@ -798,11 +801,11 @@ class RapdAgent(Process):
             raise RuntimeError, 'y beam coordinate outside detector'
 
 	if 'image_template' in self.data:
-	    self.image_template = self.data['image_template']
+	    self.image_template = self.image_data['image_template']
 	else:
 	    raise RuntimeError, '"image_template" not defined in input data.'
 
-	file_template = os.path.join(self.data['directory'], self.image_template)
+	file_template = os.path.join(self.image_data['directory'], self.image_template)
 	# Count the number of '?' that need to be padded in a image filename.
 	pad = file_template.count('?')
 	# Replace the first instance of '?' with the padded out image number
@@ -811,15 +814,15 @@ class RapdAgent(Process):
 	# Remove the remaining '?'
 	self.last_image = self.last_image.replace('?','')
 	# Repeat the last two steps for the first image's filename.
-	self.first_image = file_template.replace('?',self.data['start'].zfill(pad),1)
+	self.first_image = file_template.replace('?',self.image_data['start'].zfill(pad),1)
 	self.first_image = self.first_image.replace('?','')
 
 	# Begin constructing the list that will represent the XDS.INP file.
 	xds_input = ['!===== DATA SET DEPENDENT PARAMETERS =====\n',
                   'ORGX=%.2f ORGY=%.2f ! Beam Center (pixels)\n' %(x_beam,y_beam),
-                  'DETECTOR_DISTANCE=%.2f ! (mm)\n' %(float(self.data['distance'])),
-                  'OSCILLATION_RANGE=%.2f ! (degrees)\n' %(float(self.data['osc_range'])),
-                  'X-RAY_WAVELENGTH=%.5f ! (Angstroems)\n' %(float(self.data['wavelength'])),
+                  'DETECTOR_DISTANCE=%.2f ! (mm)\n' %(float(self.image_data['distance'])),
+                  'OSCILLATION_RANGE=%.2f ! (degrees)\n' %(float(self.image_data['osc_range'])),
+                  'X-RAY_WAVELENGTH=%.5f ! (Angstroems)\n' %(float(self.image_data['wavelength'])),
                   'NAME_TEMPLATE_OF_DATA_FRAMES=%s\n\n' %file_template,
 		  'BACKGROUND_RANGE=%s\n\n' %background_range,
                   '!===== DETECTOR_PARAMETERS =====\n']
@@ -849,18 +852,18 @@ class RapdAgent(Process):
 	# the DIRECTION_OF_DETECTOR_Y-AXIS, and not the
 	# DIRECTION_OF_DETECTOR_X-AXIS.
 	#
-	# If 2theta is not inclined, self.data should not have the key
+	# If 2theta is not inclined, self.image_data should not have the key
 	# 'twotheta', or have that key set to a value of None.
 	#
-	# If 2theta is inclined, it should be give in self.data
-	# with the key 'twothetat' and a value in degrees.
+	# If 2theta is inclined, it should be give in self.image_data
+	# with the key 'twotheta' and a value in degrees.
 	#
-	if 'twotheta' in self.data and self.data['twotheta'] != None:
-	    twotheta = math.radians(float(self.data['twotheta']))
+	if 'twotheta' in self.image_data and self.image_data['twotheta'] != None:
+	    twotheta = math.radians(float(self.image_data['twotheta']))
 	    tilty = math.cos(twotheta)
 	    tiltz = math.sin(twotheta)
 	    xds_input.append('!***** Detector is tilted in 2theta *****\n')
-	    xds_input.append('! 2THETA = %s degrees\n' % self.data['twotheta'])
+	    xds_input.append('! 2THETA = %s degrees\n' % self.image_data['twotheta'])
 	    xds_input.append('!*** Resetting DIRECTION_OF_DETECTOR_Y-AXIS ***\n')
 	    xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS= 0.0 %.4f %.4f\n' %(tilty, tiltz))
 	    xds_input.append('! 0.0 cos(2theta) sin(2theta)\n\n')
