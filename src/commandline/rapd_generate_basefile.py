@@ -222,9 +222,18 @@ class BaseFileGenerator(object):
                                   "    \"\"\"\n",
                                   "    print \"main\"\n"]
 
-
             if self.args.commandline:
-                main_func_lines.replace("def main():", "def main(args):")
+                main_func_lines = ["def main(args):"]
+            else:
+                main_func_lines = ["def main():"]
+
+            main_func_lines += [
+                "    \"\"\"",
+                "    The main process docstring",
+                "    This function is called when this module is invoked from",
+                "    the commandline",
+                "    \"\"\"\n",
+                "    print \"main\"\n"]
 
         # Output the lines
         self.output_function(main_func_lines)
