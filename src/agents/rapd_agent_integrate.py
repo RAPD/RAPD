@@ -187,8 +187,8 @@ class RapdAgent(Process):
         # Parameters likely to be changed based on beamline setup.
 
         # Directory containing XDS.INP default files for detectors.
-        if os.path.isdir('/home/necat/DETECTOR_DEFAULTS'):
-            self.detector_directory = '/home/necat/DETECTOR_DEFAULTS/'
+        #if os.path.isdir('/home/necat/DETECTOR_DEFAULTS'):
+        #    self.detector_directory = '/home/necat/DETECTOR_DEFAULTS/'
             #Also check set_detector_data for other detector dependent values!
         # XDS parameters for number of JOBS and PROCESSORS.
         # Values are beamline specific, depending on computing resources.
@@ -229,30 +229,31 @@ class RapdAgent(Process):
             os.makedirs(self.dirs['work'])
         os.chdir(self.dirs['work'])
 
-        if 'detector' in self.image_data:
-            if self.image_data['detector'] in ['PILATUS', 'HF4M', 'rayonix_mx300hs']:
-                self.xds_default = self.set_detector_data(self.image_data['detector'])
-            #elif self.image_data['detector'] == 'HF4M':
+	self.xds_default = self.createXDSinp (self.settings['xdsinp'])
+        #if 'detector' in self.image_data:
+        #    if self.image_data['detector'] in ['PILATUS', 'HF4M', 'rayonix_mx300hs']:
+        #        self.xds_default = self.set_detector_data(self.image_data['detector'])
+        #    #elif self.image_data['detector'] == 'HF4M':
             #    self.xds_default = self.set_detector_data(self.image_data['detector'])
             #elif self.image_data['detector'] == 'rayonix_mx300hs':
             #	self.xds_default = self.set_detector_data(self.image_data['detector'])
-            else:
-                if 'binning' in self.image_data.keys():
-                    if self.image_data['binning'] == '2x2':
-                        self.image_data['detector'] = 'ADSC_binned'
-                        self.xds_default = self.set_detector_data('ADSC_binned')
-                    elif self.image_data['binning'] == 'unbinned' or self.image_data['binning'] == 'none':
-                        self.image_data['detector'] = 'ADSC'
-                        self.xds_default = self.set_detector_data('ADSC')
-                elif 'bin' in self.image_data.keys():
-                    if self.image_data['bin'] == '2x2':
-                        self.image_data['binning'] = '2x2'
-                        self.image_data['detector'] = 'ADSC_binned'
-                        self.xds_default = self.set_detector_data('ADSC_binned')
-                    elif self.image_data['bin'] == 'unbinned' or self.image_data['bin'] == 'none':
-                        self.image_data['binning'] = 'unbinned'
-                        self.image_data['detector'] = 'ADSC'
-                        self.xds_default = self.set_detector_data('ADSC')
+        #    else:
+        #        if 'binning' in self.image_data.keys():
+        #            if self.image_data['binning'] == '2x2':
+        #                self.image_data['detector'] = 'ADSC_binned'
+        #                self.xds_default = self.set_detector_data('ADSC_binned')
+        #            elif self.image_data['binning'] == 'unbinned' or self.image_data['binning'] == 'none':
+        #                self.image_data['detector'] = 'ADSC'
+        #                self.xds_default = self.set_detector_data('ADSC')
+        #        elif 'bin' in self.image_data.keys():
+        #            if self.image_data['bin'] == '2x2':
+        #                self.image_data['binning'] = '2x2'
+        #                self.image_data['detector'] = 'ADSC_binned'
+        #                self.xds_default = self.set_detector_data('ADSC_binned')
+        #            elif self.image_data['bin'] == 'unbinned' or self.image_data['bin'] == 'none':
+        #                self.image_data['binning'] = 'unbinned'
+        #                self.image_data['detector'] = 'ADSC'
+        #                self.xds_default = self.set_detector_data('ADSC')
 
     def process (self):
         """
@@ -775,11 +776,100 @@ class RapdAgent(Process):
             results = self.run_results(xdsdir)
         return(results)
 
+    def createXDSinp (self, xds_dict):
+	"""
+	This function takes the dict holding XDS keywords and values
+	and converts them into a list of strings that serves as the
+	basis for writing out an XDS.INP file.
+	"""
+	self.logger.debug('FastIntegration::createXDSinp')
+	
+        last_frame = int(self.image_data['start']) + int(self.image_data['total']) -1
+        self.logger.debug('last_frame = %s' % last_frame)
+        self.logger.debug('detector_type = %s' % detector_type)
+        background_range = '%s %s' %(int(self.image_data['start']), int(self.image_data['start']) + 4)
+	
+	x_beam = float(self.data['x_beam']) / float(xds_dict['QX'])
+        y_beam = float(self.data['y_beam']) / float(xds_dict['QY'])
+        if x_beam < 0 or x_beam > int(xds_dict['NX']):
+            raise RuntimeError, 'x beam coordinate outside detector'
+        if y_beam < 0 or y_beam > int(xds_dict['NY']):
+            raise RuntimeError, 'y beam coordinate outside detector'
+	
+	if 'image_template' in self.data:
+	    self.image_template = self.data['image_template']
+	else:
+	    raise RuntimeError, '"image_template" not defined in input data.'
+	
+	file_template = os.path.join(self.data['directory'], self.image_template)
+	# Count the number of '?' that need to be padded in a image filename.
+	pad = file_template.count('?')
+	# Replace the first instance of '?' with the padded out image number
+	# of the last frame
+	self.last_image = file_template.replace('?','%d'.zfill(pad) %last_frame,1)
+	# Remove the remaining '?' 
+	self.last_image = self.last_image.replace('?','')
+	# Repeat the last two steps for the first image's filename.
+	self.first_image = file_template.replace('?',self.data['start'].zfill(pad),1)
+	self.first_image = self.first_image.replace('?','')
+	
+	# Begin constructing the list that will represent the XDS.INP file.
+	xds_input = ['!===== DATA SET DEPENDENT PARAMETERS =====\n',
+                  'ORGX=%.2f ORGY=%.2f ! Beam Center (pixels)\n' %(x_beam,y_beam)),
+                  'DETECTOR_DISTANCE=%.2f ! (mm)\n' %(float(self.data['distance'])),
+                  'OSCILLATION_RANGE=%.2f ! (degrees)\n' %(float(self.data['osc_range'])),
+                  'X-RAY_WAVELENGTH=%.5f ! (Angstroems)\n' %(float(self.data['wavelength'])),
+                  'NAME_TEMPLATE_OF_DATA_FRAMES=%s\n\n' %file_template,
+		  'BACKGROUND_RANGE=%s\n\n' %background_range,
+                  '!===== DETECTOR_PARAMETERS =====\n']
+	for key,value in xds_dict.iteritems():
+            # Regions that are excluded are defined with
+            # various keyword containing the word UNTRUSTED.
+            # Since multiple regions may be specified using
+            # the same keyword on XDS but a dict cannot 
+            # have multiple values assigned to a key,
+            # the following if statements work though any
+            # of these regions and add them to xdsinput.
+            if 'UNTRUSTED' in key:
+                if 'RECTANGLE' in key:
+                    line = 'UNTRUSTED_RECTANGLE=%s\n' %value
+                elif 'ELLIPSE' in key:
+                    line = 'UNTRUSTED_ELLIPSE=%s\n' %value
+                elif 'QUADRILATERL' in key:
+                    line = 'UNTRUSTED_QUADRILATERAL=%s\n' %value
+            else:
+                line = '%s=%s\n' %(key,value)
+	    xds_input.append(line)
+	
+	# If the detector is tilted in 2theta, adjust the value of
+	# DIRECTION_OF_DETECTOR_Y-AXIS.
+	# **** IMPORTANT ****
+	# This adjustment assumes that the 2theta tilt affects only
+	# the DIRECTION_OF_DETECTOR_Y-AXIS, and not the 
+	# DIRECTION_OF_DETECTOR_X-AXIS.
+	#
+	# If 2theta is not inclined, self.data should not have the key
+	# 'twotheta', or have that key set to a value of None.
+	#
+	# If 2theta is inclined, it should be give in self.data
+	# with the key 'twothetat' and a value in degrees.
+	#
+	if 'twotheta' in self.data and self.data['twotheta'] != None:
+	    twotheta = math.radians(float(self.data['twotheta']))
+	    tilty = math.cos(twotheta)
+	    tiltz = math.sin(twotheta)
+	    xds_input.append('!***** Detector is tilted in 2theta *****\n')
+	    xds_input.append('! 2THETA = %s degrees\n' self.data['twotheta'])
+	    xds_input.append('!*** Resetting DIRECTION_OF_DETECTOR_Y-AXIS ***\n')
+	    xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS= 0.0 %.4f %.4f\n' %(tilty, tiltz))
+	    xds_input.append('! 0.0 cos(2theta) sin(2theta)\n\n')
+	
+	return(xds_input)
 
     def set_detector_data (self, detector_type):
         """
         This function returns a list of strings that constitute the default
-        parameters needed to create and XDS.INP file.
+        parameters needed to create an XDS.INP file.
 
         new detector types can be added by following the format of preexisting
         detector types.
