@@ -65,7 +65,7 @@ class DetectorFileGenerator(CommandlineFileGenerator):
         self.write_main_func()
         self.write_main()
 
-    def write_main_func(self):
+    def write_main_func(self, main_func_lines=False):
         """Write the main function"""
 
         main_func_lines = [
@@ -172,6 +172,17 @@ class DetectorFileGenerator(CommandlineFileGenerator):
             "    return fullname\n",
         ]
         self.output_function(create_image_fullname)
+
+        # create_image_template function
+        create_image_template = [
+            "def create_image_template(image_prefix):",
+            "    \"\"\"",
+            "    Create an image template for XDS",
+            "    \"\"\"\n",
+            "    image_template = IMAGE_TEMPLATE % image_prefix\n",
+            "    return image_template\n"
+        ]
+        self.output_function(create_image_template)
 
         # get_data_root_dir function
         get_data_root_dir = [

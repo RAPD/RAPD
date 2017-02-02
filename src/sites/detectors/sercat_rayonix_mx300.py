@@ -160,6 +160,15 @@ def get_group_and_session(data_root_dir):
 
     return rapd_group, rapd_session_name
 
+def create_image_template(image_prefix):
+    """
+    Create an image template for XDS
+    """
+
+    image_template = IMAGE_TEMPLATE % image_prefix
+
+    return image_template
+
 def create_image_fullname(directory,
                           image_prefix,
                           run_number=None,

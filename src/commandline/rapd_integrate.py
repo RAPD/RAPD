@@ -81,11 +81,12 @@ def get_image_data(data_file, detector_module):
 
     return detector_module.read_header(data_file)
 
-def get_run_data(image_0_data, image_n_data):
+def get_run_data(detector_module, image_0_data, image_n_data):
     """
     Create and return run data
     {'distance' : '380.0',
                 'image_prefix' : 'lysozym-1',
+                'image_template' : 'lysozym-1.????',
                 'run_number' : '1',
                 'start' : 1,
                 'time' : 1.0,
@@ -93,7 +94,7 @@ def get_run_data(image_0_data, image_n_data):
                 'total' : 500}
     """
 
-    print get_run_data
+    print "get_run_data"
     pprint.pprint(image_0_data)
     pprint.pprint(image_n_data)
 
@@ -101,6 +102,7 @@ def get_run_data(image_0_data, image_n_data):
         "directory": image_0_data.get("directory"),
         "distance": image_0_data.get("distance"),
         "image_prefix": image_0_data.get("image_prefix"),
+        "image_template": detector_module.get_image_template(image_0_data.get("image_prefix")),
         "run_number": image_0_data.get("run_number"),
         "start": image_0_data.get("image_number"),
         "time": image_0_data.get("time"),
@@ -228,7 +230,7 @@ def main():
         raise Exception("No detector identified")
 
     # Get the run data
-    run_data = get_run_data(image_0_data, image_n_data)
+    run_data = get_run_data(detector_module, image_0_data, image_n_data)
 
     # Construct the command for the agent
     command = construct_command(image_0_data,
