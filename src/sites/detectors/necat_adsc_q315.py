@@ -90,8 +90,8 @@ XDSINP = {"DETECTOR": "ADSC ",
           # If Adding untrusted regions, simply append an index number
           # so the end of the keyword.
           #"UNTRUSTED_RECTANGLE1": " 510 1022 2570 3070",
-          "NX" : "3072", "NY" : "3072",
-          "QX" : "0.10259", "QY" : "0.10259",
+          #"NX" : "2048", "NY" : "2048",
+          #"QX" : "0.05130", "QY" : "0.05130",
           "MAX_FAC_Rmeas": "2.0",
           "FRACTION_OF_POLARIZATION": "0.90",
           "POLARIZATION_PLANE_NORMAL": " 0.0 1.0 0.0",
