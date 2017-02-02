@@ -100,13 +100,13 @@ def get_run_data(detector_module, image_0_data, image_n_data):
 
     run_data = {
         "directory": image_0_data.get("directory"),
-        "distance": image_0_data.get("distance"),
+        "distance": str(image_0_data.get("distance")),
         "image_prefix": image_0_data.get("image_prefix"),
         "image_template": detector_module.create_image_template(image_0_data.get("image_prefix"), image_0_data.get("run_number")),
-        "run_number": image_0_data.get("run_number"),
-        "start": image_0_data.get("image_number"),
-        "time": image_0_data.get("time"),
-        "total": image_n_data.get("image_number") - image_0_data.get("image_number") + 1,
+        "run_number": str(image_0_data.get("run_number")),
+        "start": str(image_0_data.get("image_number")),
+        "time": str(image_0_data.get("time")),
+        "total": str(image_n_data.get("image_number") - image_0_data.get("image_number") + 1),
         }
 
     return run_data
