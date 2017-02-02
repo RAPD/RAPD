@@ -43,6 +43,33 @@ IMAGE_TEMPLATE = "%s.????"
 RUN_NUMBER_IN_TEMPLATE = False
 HEADER_VERSION = 1
 
+XDSINP = {"DETECTOR": "MARCCD",
+          "DIRECTION_OF_DETECTOR_X-AXIS": "1.0 0.0 0.0",
+          "DIRECTION_OF_DETECTOR_Y-AXIS": "0.0 1.0 0.0",
+          "FRACTION_OF_POLARIZATION": "0.99",
+          "INCIDENT_BEAM_DIRECTION": "0.0 0.0 1.0",
+          "INCLUDE_RESOLUTION_RANGE": "100.00 0.00",
+          "INDEX_ORIGIN": "0 0 0",
+          "MAX_CELL_ANGLE_ERROR": "2.0",
+          "MAX_CELL_AXIS_ERROR": "0.030",
+          "MAX_FAC_Rmeas": "2.00",
+          "MINIMUM_VALID_PIXEL_VALUE": "0",
+          "MIN_RFL_Rmeas": "50.0",
+          "NX": "3840",
+          "NY": "3840",
+          "OVERLOAD": "65535",
+          "POLARIZATION_PLANE_NORMAL": "0.0 1.0 0.0",
+          "QX": "0.078200",
+          "QY": "0.078200",
+          "ROTATION_AXIS": "1.0 0.0 0.0",
+          "SPACE_GROUP_NUMBER": "0",
+          "TEST_RESOLUTION_RANGE": "50.00 2.00",
+          "TRUSTED_REGION": "0.0 0.99",
+          "UNTRUSTED_RECTANGLE1": "1288 1475 3346 3835",
+          "UNTRUSTED_RECTANGLE2": "724 872 462 974",
+          "VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS": "6000 30000",
+          "WFAC1": "1.0"}
+
 def parse_file_name(fullname):
     """Parse the fullname of an image and return
     (directory, basename, prefix, run_number, image_number)
