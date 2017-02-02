@@ -252,7 +252,7 @@ def analyze_data_sources(sources, mode="index"):
         # "#" as numbers that increment
         return_data = glob.glob(full_path_template.replace("#", "[0-9]"))
         # "?" as numbers that increment
-        return_data = glob.glob(full_path_template.replace("?", "[0-9]"))
+        # return_data = glob.glob(full_path_template.replace("?", "[0-9]"))
         return_data.sort()
         pprint.pprint(return_data)
 

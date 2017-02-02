@@ -35,12 +35,12 @@ The full install is built on top of a Phenix distribution, and is necessary for 
 These instructions are formulated for Scientific Linux 6.8, but apply for CentOS 6 as well.
 
 Installing the Control process and dependencies
-1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git`
+1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git`  
 2. Navigate to the install directory and `./install`  
 3. The install script will list any modules that need to be installed. The list is: `epel-release
-blas-devel lapack-devel atlas-sse3-devel atlas-devel openblas-devel libffi-devel ImageMagick-devel`
+blas-devel lapack-devel atlas-sse3-devel atlas-devel openblas-devel libffi-devel ImageMagick-devel`  
 4. RAPD is built on top of the Phenix distribution, so you will need to obtain it. The install
-script will instruct you on which file to get, and where to put it. Once you have the file where it should be, hit return in the install script window.
+script will instruct you on which file to get, and where to put it. Once you have the file where it should be, hit return in the install script window.  
 
 ## Minimal Install
 The minimal install is useful for gatherer processes, not for data processing. It will fetch and install Python, add some modules to python, and then create scripts for RAPD to use.
@@ -57,11 +57,11 @@ These instructions are formulated for Scientific Linux 6.8, but apply for CentOS
 
 # Installing Databases
 ## Docker
-Using Docker to install the required databases is a workable approach. To install Docker and the databases on a CentOS 6.8:
-1. Install the EPEL repository `sudo yum install epel-release`
-2. Install Docker `sudo yum install docker-io`
-3. Start the Docker daemon `sudo service docker start`
-4. Configure Docker to start on boot `sudo chkconfig docker on`
-5. Check if Docker is working `sudo docker run hello-world`
-6. Start Redis server `sudo docker run --name redisdb -p 6379:6379 -d redis:3.2`
-7. Start MongoDB server `sudo docker run --name mongodb -p 27017:27107 -d mongo:3.4`
+Using Docker to install the required databases is a workable approach. To install Docker and the databases on a CentOS 6.8:  
+1. Install the EPEL repository `sudo yum install epel-release`  
+2. Install Docker `sudo yum install docker-io`  
+3. Start the Docker daemon `sudo service docker start`  
+4. Configure Docker to start on boot `sudo chkconfig docker on`  
+5. Check if Docker is working `sudo docker run hello-world`  
+6. Start Redis server `sudo docker run --name redisdb -p 6379:6379 -d redis:3.2`  
+7. Start MongoDB server `sudo docker run --name mongodb -p 27017:27107 -d mongo:3.4`  
