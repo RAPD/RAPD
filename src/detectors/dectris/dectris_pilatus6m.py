@@ -118,20 +118,20 @@ def read_header(image,
         "detector_sn": ("S\/N ([\w\d\-]*)\s*", lambda x: str(x)),
         "date": ("^# ([\d\-]+T[\d\.\:]+)\s*", lambda x: str(x)),
         "distance": ("^# Detector_distance\s*([\d\.]+) m",mmorm),
-        "excluded_pixels": None,
-        "flat_field": None,
-        "gain": None,
-        "n_excluded_pixels": None,
+        "excluded_pixels": ("^# Excluded_pixels\:\s*([\w\.]+)", lambda x: str(x)),
+        "flat_field": ("^# Flat_field\:\s*([\(\)\w\.]+)", lambda x: str(x)),
+        "gain": ("^# Gain_setting\:\s*([\s\(\)\w\.\-\=]+)", lambda x: str(x).rstrip()),
+        "n_excluded_pixels": ("^# N_excluded_pixels\s\=\s*(\d+)", lambda x: int(x)),
         "osc_range": ("^# Angle_increment\s*([\d\.]*)\s*deg", lambda x: float(x)),
         "osc_start": ("^# Start_angle\s*([\d\.]+)\s*deg", lambda x: float(x)),
         "period": ("^# Exposure_period\s*([\d\.]+) s", lambda x: float(x)),
         "pixel_size": ("^# Pixel_size\s*(\d+)e-6 m.*", lambda x: int(x)/1000),
-        "sensor_thickness": None,
-        "tau": None,
-        "threshold": None,
+        "sensor_thickness": ("^#\sSilicon\ssensor\,\sthickness\s*([\d\.]+)\sm", lambda x: float(x)*1000),
+        "tau": ("^#\sTau\s\=\s*([\d\.]+e\-09) s", lambda x: float(x)),
+        "threshold": ("^#\sThreshold_setting\:\s*(\d+)\seV", lambda x: int(x)),
         "time": ("^# Exposure_time\s*([\d\.]+) s", lambda x: float(x)),
         "transmission": ("^# Filter_transmission\s*([\d\.]+)", lambda x: float(x)),
-        "trim_file": None,
+        "trim_file": ("^#\sTrim_file\:\s*([\w\.]+)", lambda x:str(x).rstrip()),
         "twotheta": ("^# Detector_2theta\s*([\d\.]*)\s*deg", lambda x: float(x)),
         "wavelength": ("^# Wavelength\s*([\d\.]+) A", lambda x: float(x))
         }
@@ -150,42 +150,42 @@ def read_header(image,
                 logger.exception('Error opening %s' % image)
             time.sleep(0.1)
 
-    try:
-        #tease out the info from the file name
-        base = os.path.basename(image).rstrip(".cbf")
+    # try:
+    #tease out the info from the file name
+    base = os.path.basename(image).rstrip(".cbf")
 
-        parameters = {
-            "fullname": image,
-            "detector": "PILATUS",
-            "directory": os.path.dirname(image),
-            "image_prefix": "_".join(base.split("_")[0:-2]),
-            "run_number": int(base.split("_")[-2]),
-            "image_number": int(base.split("_")[-1]),
-            "axis": "omega",
-            "collect_mode": mode,
-            "run_id": run_id,
-            "place_in_run": place_in_run,
-            "size1": 2463,
-            "size2": 2527}
+    parameters = {
+        "fullname": image,
+        "detector": "PILATUS",
+        "directory": os.path.dirname(image),
+        "image_prefix": "_".join(base.split("_")[0:-2]),
+        "run_number": int(base.split("_")[-2]),
+        "image_number": int(base.split("_")[-1]),
+        "axis": "omega",
+        "collect_mode": mode,
+        "run_id": run_id,
+        "place_in_run": place_in_run,
+        "size1": 2463,
+        "size2": 2527}
 
-        for label, pat in header_items.iteritems():
-            # print label
-            pattern = re.compile(pat[0], re.MULTILINE)
-            matches = pattern.findall(header)
-            if len(matches) > 0:
-                parameters[label] = pat[1](matches[-1])
-            else:
-                parameters[label] = None
+    for label, pat in header_items.iteritems():
+        # print label
+        pattern = re.compile(pat[0], re.MULTILINE)
+        matches = pattern.findall(header)
+        if len(matches) > 0:
+            parameters[label] = pat[1](matches[-1])
+        else:
+            parameters[label] = None
 
-        # Put beam center into RAPD format
-        parameters["x_beam"] = parameters["beam_y"] * parameters["pixel_size"]
-        parameters["y_beam"] = parameters["beam_x"] * parameters["pixel_size"]
+    # Put beam center into RAPD format mm
+    parameters["x_beam"] = parameters["beam_y"] * parameters["pixel_size"]
+    parameters["y_beam"] = parameters["beam_x"] * parameters["pixel_size"]
 
-        return(parameters)
+    return(parameters)
 
-    except:
-        if logger:
-            logger.exception('Error reading the header for image %s' % image)
+    # except:
+    #     if logger:
+    #         logger.exception('Error reading the header for image %s' % image)
 
 def get_commandline():
     """
