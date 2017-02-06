@@ -160,7 +160,7 @@ def get_group_and_session(data_root_dir):
 
     return rapd_group, rapd_session_name
 
-def create_image_template(image_prefix):
+def create_image_template(image_prefix, run_number):
     """
     Create an image template for XDS
     """

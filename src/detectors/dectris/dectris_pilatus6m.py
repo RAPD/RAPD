@@ -22,19 +22,70 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
-import threading
-import time
+# import threading
+import argparse
 import os
+import pprint
 import re
 import sys
-import json
-import logging, logging.handlers
-import atexit
-from rapd_site import secret_settings as secrets
-from rapd_utils import print_dict, date_adsc_to_sql
+import time
+# import json
+# import logging, logging.handlers
+# import atexit
+# from rapd_site import secret_settings as secrets
+# from rapd_utils import print_dict, date_adsc_to_sql
 
 DETECTOR = "dectris_pilatus6m"
 VENDROTYPE = "DECTRIS"
+
+XDS_INP = {
+    "UNTRUSTED_RECTANGLE14": "   0 2463  2103 2121",
+    "UNTRUSTED_RECTANGLE15": "   0 2463  2315 2333",
+    "UNTRUSTED_RECTANGLE12": "   0 2463  1679 1697",
+    "UNTRUSTED_RECTANGLE13": "   0 2463  1891 1909",
+    "UNTRUSTED_RECTANGLE10": "   0 2463  1255 1273",
+    "UNTRUSTED_RECTANGLE11": "   0 2463  1467 1485",
+    "STRONG_PIXEL": "6",
+    "MAX_CELL_ANGLE_ERROR": "2.0",
+    "NUMBER_OF_PROFILE_GRID_POINTS_ALONG_ALPHA/BETA": "13",
+    "MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT": "4",
+    "REFINE(INTEGRATE)": "POSITION BEAM ORIENTATION CELL",
+    "REFINE(CORRECT)": "BEAM ORIENTATION CELL AXIS POSITION",
+    "INCLUDE_RESOLUTION_RANGE": "200.0 0.0",
+    "REFINE(IDXREF)": "BEAM AXIS ORIENTATION CELL",
+    "NX": "2463",
+    "NY": "2527",
+    "STRICT_ABSORPTION_CORRECTION": "TRUE",
+    "MINIMUM_ZETA": "0.05",
+    "OVERLOAD": "1048500",
+    "UNTRUSTED_RECTANGLE4": "1969 1977     0 2527",
+    "UNTRUSTED_RECTANGLE5": "   0 2463   195  213",
+    "UNTRUSTED_RECTANGLE6": "   0 2463   407  425",
+    "UNTRUSTED_RECTANGLE7": "   0 2463   619  637",
+    "UNTRUSTED_RECTANGLE1": " 487  495     0 2527",
+    "UNTRUSTED_RECTANGLE2": " 981  989     0 2527",
+    "UNTRUSTED_RECTANGLE3": "1475 1483     0 2527",
+    "NUMBER_OF_PROFILE_GRID_POINTS_ALONG_GAMMA": "9",
+    "UNTRUSTED_RECTANGLE8": "   0 2463   831  849",
+    "UNTRUSTED_RECTANGLE9": "   0 2463  1043 1061",
+    "FRACTION_OF_POLARIZATION": "0.99",
+    "MAX_CELL_AXIS_ERROR": "0.03",
+    "VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS": " 7000 30000",
+    "MIN_RFL_Rmeas": " 50",
+    "DIRECTION_OF_DETECTOR_X-AXIS": " 1.0 0.0 0.0",
+    "SENSOR_THICKNESS": "0.32",
+    "POLARIZATION_PLANE_NORMAL": " 0.0 1.0 0.0",
+    "MAX_FAC_Rmeas": "2.0",
+    "TRUSTED_REGION": "0.0 1.05",
+    "ROTATION_AXIS": " 1.0 0.0 0.0",
+    "MINIMUM_VALID_PIXEL_VALUE": "0 ",
+    "QY": "0.172",
+    "QX": "0.172 ",
+    "INCIDENT_BEAM_DIRECTION": "0.0 0.0 1.0",
+    "SEPMIN": "4",
+    "CLUSTER_RADIUS": "2",
+    "DETECTOR": "PILATUS"
+    }
 
 def read_header(image,
                 mode=None,
@@ -47,7 +98,10 @@ def read_header(image,
     """
     # print "determine_flux %s" % image
     if logger:
-        logger.debug('determine_flux %s' % image)
+        logger.debug("read_header %s" % image)
+
+    # Make sure the image is a full path image
+    image = os.path.abspath(image)
 
     def mmorm(x):
         d = float(x)
@@ -57,18 +111,19 @@ def read_header(image,
             return(d)
 
     #item:(pattern,transform)
-    header_items = { 'detector_sn'  : ("S\/N ([\w\d\-]*)\s*", lambda x: str(x)),
-                     'date'         : ("^# ([\d\-]+T[\d\.\:]+)\s*", lambda x: str(x)),
-                     'pixel_size'   : ("^# Pixel_size\s*(\d+)e-6 m.*", lambda x: int(x)),
-                     'time'         : ("^# Exposure_time\s*([\d\.]+) s", lambda x: float(x)),
-                     'period'       : ("^# Exposure_period\s*([\d\.]+) s", lambda x: float(x)),
-                     'count_cutoff' : ("^# Count_cutoff\s*(\d+) counts", lambda x: int(x)),
-                     'wavelength'   : ("^# Wavelength\s*([\d\.]+) A", lambda x: float(x)),
-                     'distance'     : ("^# Detector_distance\s*([\d\.]+) m",mmorm),
-	                 'transmission' : ("^# Filter_transmission\s*([\d\.]+)", lambda x: float(x)),
-                     'osc_start'    : ("^# Start_angle\s*([\d\.]+)\s*deg", lambda x: float(x)),
-                     'osc_range'    : ("^# Angle_increment\s*([\d\.]*)\s*deg", lambda x: float(x)),
-                     'twotheta'     : ("^# Detector_2theta\s*([\d\.]*)\s*deg", lambda x: float(x))}
+    header_items = {
+        "detector_sn":("S\/N ([\w\d\-]*)\s*", lambda x: str(x)),
+        "date":("^# ([\d\-]+T[\d\.\:]+)\s*", lambda x: str(x)),
+        "pixel_size": ("^# Pixel_size\s*(\d+)e-6 m.*", lambda x: int(x)),
+        "time": ("^# Exposure_time\s*([\d\.]+) s", lambda x: float(x)),
+        "period": ("^# Exposure_period\s*([\d\.]+) s", lambda x: float(x)),
+        "count_cutoff": ("^# Count_cutoff\s*(\d+) counts", lambda x: int(x)),
+        "wavelength": ("^# Wavelength\s*([\d\.]+) A", lambda x: float(x)),
+        "distance": ("^# Detector_distance\s*([\d\.]+) m",mmorm),
+	    "transmission": ("^# Filter_transmission\s*([\d\.]+)", lambda x: float(x)),
+        "osc_start": ("^# Start_angle\s*([\d\.]+)\s*deg", lambda x: float(x)),
+        "osc_range": ("^# Angle_increment\s*([\d\.]*)\s*deg", lambda x: float(x)),
+        "twotheta": ("^# Detector_2theta\s*([\d\.]*)\s*deg", lambda x: float(x))}
 
     count = 0
     while (count < 10):
@@ -88,20 +143,21 @@ def read_header(image,
         #tease out the info from the file name
         base = os.path.basename(image).rstrip(".cbf")
 
-        parameters = {'fullname'     : image,
-                      'detector'     : 'PILATUS',
-                      'directory'    : os.path.dirname(image),
-                      'image_prefix' : "_".join(base.split("_")[0:-2]),
-                      'run_number'   : int(base.split("_")[-2]),
-                      'image_number' : int(base.split("_")[-1]),
-                      'axis'         : 'omega',
-                      'collect_mode' : mode,
-                      'run_id'       : run_id,
-                      'place_in_run' : place_in_run,
-                      'size1'        : 2463,
-                      'size2'        : 2527}
+        parameters = {
+            "fullname": image,
+            "detector": "PILATUS",
+            "directory": os.path.dirname(image),
+            "image_prefix": "_".join(base.split("_")[0:-2]),
+            "run_number": int(base.split("_")[-2]),
+            "image_number": int(base.split("_")[-1]),
+            "axis": "omega",
+            "collect_mode": mode,
+            "run_id": run_id,
+            "place_in_run": place_in_run,
+            "size1": 2463,
+            "size2": 2527}
 
-        for label,pat in header_items.iteritems():
+        for label, pat in header_items.iteritems():
             # print label
             pattern = re.compile(pat[0], re.MULTILINE)
             matches = pattern.findall(header)
@@ -116,12 +172,55 @@ def read_header(image,
         if logger:
             logger.exception('Error reading the header for image %s' % image)
 
+def get_commandline():
+    """
+    Grabs the commandline
+    """
+
+    print "get_commandline"
+
+    # Parse the commandline arguments
+    commandline_description = "Parse Pilatus header"
+    parser = argparse.ArgumentParser(description=commandline_description)
+
+    # A True/False flag
+    parser.add_argument("-c", "--commandline",
+                        action="store_true",
+                        dest="commandline",
+                        help="Generate commandline argument parsing")
+
+    # File name to be generated
+    parser.add_argument(action="store",
+                        dest="file",
+                        nargs="?",
+                        default=False,
+                        help="Name of file to be generated")
+
+    return parser.parse_args()
+
+def main(args):
+    """
+    The main process docstring
+    This function is called when this module is invoked from
+    the commandline
+    """
+
+    if args.file:
+        test_image = args.file
+    else:
+        raise Error("No test image input!")
+
+    # Read the header
+    header = read_header(test_image)
+
+    # And print it out
+    pprint.pprint(header)
+
 
 if __name__ == "__main__":
 
-    #Test the header reading
-    test_image = "/gpfs7/users/mit/schwartz_C_535/images/schwartz/snaps/0_0/TgC1_4_7_0_0002.cbf"
-    header = read_header(test_image)
-    import pprint
-    P = pprint.PrettyPrinter()
-    P.pprint(header)
+    # Get the commandline args
+    commandline_args = get_commandline()
+
+    # Execute code
+    main(args=commandline_args)

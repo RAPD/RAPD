@@ -25,21 +25,21 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 # Standard imports
-# argparse
+import argparse
 # datetime
 # glob
-json
+# import json
 # logging
 # multiprocessing
-os
-# pprint
+import os
+import pprint
 # pymongo
-re
+# import re
 # redis
 # shutil
 # subprocess
 # sys
-time
+# import time
 
 # RAPD imports
 # commandline_utils
@@ -51,25 +51,73 @@ import detectors.dectris.dectris_pilatus6m as detector
 
 # Detector information
 # The RAPD detector type
-DETECTOR = "rayonix_mx300"
+DETECTOR = "dectris_pilatus6m"
 # The detector vendor as it appears in the header
-VENDORTYPE = "MARCCD"
+VENDORTYPE = "DECTRIS"
 # The detector serial number as it appears in the header
-DETECTOR_SN = 7
-# The detector suffix "" if there is no suffixDETECTOR_SUFFIX = ""
-# Template for image name generation ? for frame number placesIMAGE_TEMPLATE = "%s.????"
+DETECTOR_SN = "60-0112-F"
+# The detector suffix "" if there is no suffix
+DETECTOR_SUFFIX = ".cbf"
+# Template for image name generation ? for frame number places
+IMAGE_TEMPLATE = "%s_%s_????.cbf" # prefix & run number
 # Is there a run number in the template?
-RUN_NUMBER_IN_TEMPLATE = False
+RUN_NUMBER_IN_TEMPLATE = True
 # This is a version number for internal RAPD use
 # If the header changes, increment this number
 HEADER_VERSION = 1
 
 # XDS information for constructing the XDS.INP file
-# Import from more generic detector# XDS_INP = detector.XDS_INP
+# Import from more generic detector
+XDS_INP = detector.XDS_INP
 # Update the XDS information from the imported detector
-# XDS_INP.update({})
-# Overwrite XDS information with new data
-# XDS_INP = {}
+XDS_INP.update({
+    "UNTRUSTED_RECTANGLE14": "   0 2463  2103 2121",
+    "UNTRUSTED_RECTANGLE15": "   0 2463  2315 2333",
+    "UNTRUSTED_RECTANGLE12": "   0 2463  1679 1697",
+    "UNTRUSTED_RECTANGLE13": "   0 2463  1891 1909",
+    "UNTRUSTED_RECTANGLE10": "   0 2463  1255 1273",
+    "UNTRUSTED_RECTANGLE11": "   0 2463  1467 1485",
+    "STRONG_PIXEL": "6",
+    "MAX_CELL_ANGLE_ERROR": "2.0",
+    "NUMBER_OF_PROFILE_GRID_POINTS_ALONG_ALPHA/BETA": "13",
+    "MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT": "4",
+    "REFINE(INTEGRATE)": "POSITION BEAM ORIENTATION CELL",
+    "REFINE(CORRECT)": "BEAM ORIENTATION CELL AXIS POSITION",
+    "INCLUDE_RESOLUTION_RANGE": "200.0 0.0",
+    "REFINE(IDXREF)": "BEAM AXIS ORIENTATION CELL",
+    "NX": "2463",
+    "NY": "2527",
+    "STRICT_ABSORPTION_CORRECTION": "TRUE",
+    "MINIMUM_ZETA": "0.05",
+    "OVERLOAD": "1048500",
+    "UNTRUSTED_RECTANGLE4": "1969 1977     0 2527",
+    "UNTRUSTED_RECTANGLE5": "   0 2463   195  213",
+    "UNTRUSTED_RECTANGLE6": "   0 2463   407  425",
+    "UNTRUSTED_RECTANGLE7": "   0 2463   619  637",
+    "UNTRUSTED_RECTANGLE1": " 487  495     0 2527",
+    "UNTRUSTED_RECTANGLE2": " 981  989     0 2527",
+    "UNTRUSTED_RECTANGLE3": "1475 1483     0 2527",
+    "NUMBER_OF_PROFILE_GRID_POINTS_ALONG_GAMMA": "9",
+    "UNTRUSTED_RECTANGLE8": "   0 2463   831  849",
+    "UNTRUSTED_RECTANGLE9": "   0 2463  1043 1061",
+    "FRACTION_OF_POLARIZATION": "0.99",
+    "MAX_CELL_AXIS_ERROR": "0.03",
+    "VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS": " 7000 30000",
+    "MIN_RFL_Rmeas": " 50",
+    "DIRECTION_OF_DETECTOR_X-AXIS": " 1.0 0.0 0.0",
+    "SENSOR_THICKNESS": "0.32",
+    "POLARIZATION_PLANE_NORMAL": " 0.0 1.0 0.0",
+    "MAX_FAC_Rmeas": "2.0",
+    "TRUSTED_REGION": "0.0 1.05",
+    "ROTATION_AXIS": " 1.0 0.0 0.0",
+    "MINIMUM_VALID_PIXEL_VALUE": "0 ",
+    "QY": "0.172",
+    "QX": "0.172 ",
+    "INCIDENT_BEAM_DIRECTION": "0.0 0.0 1.0",
+    "SEPMIN": "4",
+    "CLUSTER_RADIUS": "2",
+    "DETECTOR": "PILATUS"
+    })
 
 def parse_file_name(fullname):
     """
@@ -78,15 +126,17 @@ def parse_file_name(fullname):
     Keyword arguments
     fullname -- the full path name of the image file
     """
-    # Directory of the file    directory = os.path.dirname(fullname)
+    # Directory of the file
+    directory = os.path.dirname(fullname)
 
     # The basename of the file (i.e. basename - suffix)
     basename = os.path.basename(fullname).rstrip(DETECTOR_SUFFIX)
 
-    # The prefix, image number, and run number    sbase = basename.split(".")
-    prefix = ".".join(sbase[0:-1])
+    # The prefix, image number, and run number
+    sbase = basename.split("_")
+    prefix = "_".join(sbase[0:-2])
     image_number = int(sbase[-1])
-    run_number = None
+    run_number = int(sbase[-2])
     return directory, basename, prefix, run_number, image_number
 
 def create_image_fullname(directory,
@@ -103,24 +153,18 @@ def create_image_fullname(directory,
     image_number -- number for the image
     """
 
-    if not run_number in (None, "unknown"):
-        filename = "%s.%s.%04d" % (image_prefix,
-                                   run_number,
-                                   image_number)
-    else:
-        filename = "%s.%04d" % (image_prefix,
-                                   image_number)
+    filename = IMAGE_TEMPLATE.replace("????", "%04d") % (image_prefix, run_number, image_number)
 
     fullname = os.path.join(directory, filename)
 
     return fullname
 
-def create_image_template(image_prefix):
+def create_image_template(image_prefix, run_number):
     """
     Create an image template for XDS
     """
 
-    image_template = IMAGE_TEMPLATE % image_prefix
+    image_template = IMAGE_TEMPLATE % (image_prefix, run_number)
 
     return image_template
 
@@ -191,11 +235,10 @@ def main(args):
 
     print "main"
 
-    if len(sys.argv) > 1:
-        test_image = sys.argv[1]
+    if args.file:
+        test_image = os.path.abspath(args.file)
     else:
         raise Error("No test image input!")
-        # test_image = ""
 
     # Read the header
     header = read_header(test_image)

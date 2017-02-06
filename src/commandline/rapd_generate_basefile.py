@@ -201,13 +201,13 @@ class BaseFileGenerator(object):
         self.output_function(["# Standard imports"])
         for value in standard_imports:
             if value not in write_list:
-                value = "# " + value
+                value = "# import " + value
             self.output_function([value + ""])
 
         self.output_function(["\n# RAPD imports"])
         for value in rapd_imports:
             if value not in write_list:
-                value = "# " + value
+                value = "# import " + value
             self.output_function([value + ""])
         self.output_function([""])
 

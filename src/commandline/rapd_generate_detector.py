@@ -76,8 +76,8 @@ class DetectorFileGenerator(CommandlineFileGenerator):
             "    the commandline",
             "    \"\"\"\n",
             "    print \"main\"\n",
-            "    if len(sys.argv) > 1:",
-            "        test_image = sys.argv[1]",
+            "    if args.file:",
+            "        test_image = os.path.abspath(args.file)",
             "    else:",
             "        raise Error(\"No test image input!\")",
             "        # test_image = \"\"\n",
@@ -113,9 +113,9 @@ class DetectorFileGenerator(CommandlineFileGenerator):
             "VENDORTYPE = \"MARCCD\"",
             "# The detector serial number as it appears in the header",
             "DETECTOR_SN = 7",
-            "# The detector suffix \"\" if there is no suffix"
+            "# The detector suffix \"\" if there is no suffix",
             "DETECTOR_SUFFIX = \"\"",
-            "# Template for image name generation ? for frame number places"
+            "# Template for image name generation ? for frame number places",
             "IMAGE_TEMPLATE = \"%s.????\"",
             "# Is there a run number in the template?",
             "RUN_NUMBER_IN_TEMPLATE = False",
@@ -128,7 +128,7 @@ class DetectorFileGenerator(CommandlineFileGenerator):
         # XDS information
         xds_info = [
             "# XDS information for constructing the XDS.INP file",
-            "# Import from more generic detector"
+            "# Import from more generic detector",
             "# XDS_INP = detector.XDS_INP",
             "# Update the XDS information from the imported detector",
             "# XDS_INP.update({})",
@@ -143,20 +143,18 @@ class DetectorFileGenerator(CommandlineFileGenerator):
             "    \"\"\"",
             "    Parse the fullname of an image and return",
             "    (directory, basename, prefix, run_number, image_number)",
-
             "    Keyword arguments",
             "    fullname -- the full path name of the image file",
             "    \"\"\"",
-            "    # Directory of the file"
+            "    # Directory of the file",
             "    directory = os.path.dirname(fullname)\n",
             "    # The basename of the file (i.e. basename - suffix)",
             "    basename = os.path.basename(fullname).rstrip(DETECTOR_SUFFIX)\n",
-            "    # The prefix, image number, and run number"
+            "    # The prefix, image number, and run number",
             "    sbase = basename.split(\".\")",
             "    prefix = \".\".join(sbase[0:-1])",
             "    image_number = int(sbase[-1])",
             "    run_number = None",
-
             "    return directory, basename, prefix, run_number, image_number\n",
         ]
         self.output_function(parse_file_name)
@@ -189,7 +187,7 @@ class DetectorFileGenerator(CommandlineFileGenerator):
 
         # create_image_template function
         create_image_template = [
-            "def create_image_template(image_prefix):",
+            "def create_image_template(image_prefix, run_number):",
             "    \"\"\"",
             "    Create an image template for XDS",
             "    \"\"\"\n",

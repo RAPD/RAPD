@@ -25,10 +25,10 @@ __email__ = "Your email"
 __status__ = "Development"
 
 # Standard imports
-argparse
+import argparse
 # datetime
 # glob
-json
+import json
 # logging
 # multiprocessing
 # os
@@ -38,7 +38,7 @@ json
 # redis
 # shutil
 # subprocess
-sys
+import sys
 # time
 
 # RAPD imports
@@ -113,10 +113,10 @@ def main(args):
     print "main"
 
     number_of_args = len(sys.argv) - 1
-      if number_of_args >= 2:
-          INP2DICT(xdsinp=sys.argv[1],xdsdict=sys.argv[2])
-      else:
-          INP2DICT(xdsinp=sys.argv[1], xdsdict='XDSDICT.json')
+    if number_of_args >= 2:
+        INP2DICT(xdsinp=sys.argv[1],xdsdict=sys.argv[2])
+    else:
+        INP2DICT(xdsinp=sys.argv[1], xdsdict='XDSDICT.json')
 
 def get_commandline():
     """
