@@ -33,6 +33,9 @@ import atexit
 from rapd_site import secret_settings as secrets
 from rapd_utils import print_dict, date_adsc_to_sql
 
+DETECTOR = "dectris_pilatus6m"
+VENDROTYPE = "DECTRIS"
+
 def read_header(image,
                 mode=None,
                 run_id=None,

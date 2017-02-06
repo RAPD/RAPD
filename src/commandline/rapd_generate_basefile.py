@@ -171,7 +171,7 @@ class BaseFileGenerator(object):
 
     def write_docstrings(self):
         """Write file author docstrings"""
-        self.output_function(["__created__ = \"%d-%d-%d\"" % (_NOW.tm_year, _NOW.tm_mon, _NOW.tm_mday),
+        self.output_function(["__created__ = \"%d-%02d-%02d\"" % (_NOW.tm_year, _NOW.tm_mon, _NOW.tm_mday),
                               "_maintainer__ = \"%s\"" % self.args.maintainer,
                               "__email__ = \"%s\"" % self.args.email,
                               "__status__ = \"Development\"\n"])
@@ -279,8 +279,11 @@ class CommandlineFileGenerator(BaseFileGenerator):
 
         super(CommandlineFileGenerator, self).preprocess()
 
-    def write_commandline(self):
+    def write_commandline(self, description=False):
         """Write commanling handling into the file"""
+
+        if not description:
+            description = "Generate a generic RAPD file"
 
         commandline_lines = ["def get_commandline():",
                               "    \"\"\"",
@@ -288,7 +291,7 @@ class CommandlineFileGenerator(BaseFileGenerator):
                               "    \"\"\"\n",
                               "    print \"get_commandline\"\n",
                               "    # Parse the commandline arguments",
-                              "    commandline_description = \"Generate a generic RAPD file\"",
+                              "    commandline_description = \"%s\"" % decription,
                               "    parser = argparse.ArgumentParser(description=commandline_description)\n",
                               "    # A True/False flag",
                               "    parser.add_argument(\"-c\", \"--commandline\",",

@@ -62,7 +62,7 @@ class DetectorFileGenerator(CommandlineFileGenerator):
                                        "time"))
         self.write_detector()
         self.write_commandline()
-        self.write_main_func()
+        self.write_main_func(description="Parse image file header")
         self.write_main()
 
     def write_main_func(self, main_func_lines=False):
@@ -95,6 +95,8 @@ class DetectorFileGenerator(CommandlineFileGenerator):
         detector_imports = [
             "# ADSC Q315",
             "# import detectors.adsc.adsc_q315 as detector",
+            "# Dectris Pilatus 6M",
+            "# import detectors.dectris.dectris_pilatus6m as detector"
             "# Rayonix MX300",
             "# import detectors.rayonix.rayonix_mx300 as detector",
             "# Rayonix MX300HS",
