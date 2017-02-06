@@ -38,7 +38,7 @@ import time
 DETECTOR = "dectris_pilatus6m"
 VENDROTYPE = "DECTRIS"
 
-XDS_INP = {
+XDSINP = {
     "UNTRUSTED_RECTANGLE14": "   0 2463  2103 2121",
     "UNTRUSTED_RECTANGLE15": "   0 2463  2315 2333",
     "UNTRUSTED_RECTANGLE12": "   0 2463  1679 1697",
@@ -112,18 +112,29 @@ def read_header(image,
 
     #item:(pattern,transform)
     header_items = {
-        "detector_sn":("S\/N ([\w\d\-]*)\s*", lambda x: str(x)),
-        "date":("^# ([\d\-]+T[\d\.\:]+)\s*", lambda x: str(x)),
-        "pixel_size": ("^# Pixel_size\s*(\d+)e-6 m.*", lambda x: int(x)),
-        "time": ("^# Exposure_time\s*([\d\.]+) s", lambda x: float(x)),
-        "period": ("^# Exposure_period\s*([\d\.]+) s", lambda x: float(x)),
+        "beam_x": ("^# Beam_xy\s*\(([\d\.]+)\,\s[\d\.]+\) pixels", lambda x: float(x)),
+        "beam_y": ("^# Beam_xy\s*\([\d\.]+\,\s([\d\.]+)\) pixels", lambda x: float(x)),
         "count_cutoff": ("^# Count_cutoff\s*(\d+) counts", lambda x: int(x)),
-        "wavelength": ("^# Wavelength\s*([\d\.]+) A", lambda x: float(x)),
+        "detector_sn": ("S\/N ([\w\d\-]*)\s*", lambda x: str(x)),
+        "date": ("^# ([\d\-]+T[\d\.\:]+)\s*", lambda x: str(x)),
         "distance": ("^# Detector_distance\s*([\d\.]+) m",mmorm),
-	    "transmission": ("^# Filter_transmission\s*([\d\.]+)", lambda x: float(x)),
-        "osc_start": ("^# Start_angle\s*([\d\.]+)\s*deg", lambda x: float(x)),
+        "excluded_pixels": None,
+        "flat_field": None,
+        "gain": None,
+        "n_excluded_pixels": None,
         "osc_range": ("^# Angle_increment\s*([\d\.]*)\s*deg", lambda x: float(x)),
-        "twotheta": ("^# Detector_2theta\s*([\d\.]*)\s*deg", lambda x: float(x))}
+        "osc_start": ("^# Start_angle\s*([\d\.]+)\s*deg", lambda x: float(x)),
+        "period": ("^# Exposure_period\s*([\d\.]+) s", lambda x: float(x)),
+        "pixel_size": ("^# Pixel_size\s*(\d+)e-6 m.*", lambda x: int(x)/1000),
+        "sensor_thickness": None,
+        "tau": None,
+        "threshold": None,
+        "time": ("^# Exposure_time\s*([\d\.]+) s", lambda x: float(x)),
+        "transmission": ("^# Filter_transmission\s*([\d\.]+)", lambda x: float(x)),
+        "trim_file": None,
+        "twotheta": ("^# Detector_2theta\s*([\d\.]*)\s*deg", lambda x: float(x)),
+        "wavelength": ("^# Wavelength\s*([\d\.]+) A", lambda x: float(x))
+        }
 
     count = 0
     while (count < 10):
@@ -165,6 +176,10 @@ def read_header(image,
                 parameters[label] = pat[1](matches[-1])
             else:
                 parameters[label] = None
+
+        # Put beam center into RAPD format
+        parameters["x_beam"] = parameters["beam_y"] * parameters["pixel_size"]
+        parameters["y_beam"] = parameters["beam_x"] * parameters["pixel_size"]
 
         return(parameters)
 

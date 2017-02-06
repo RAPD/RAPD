@@ -88,8 +88,8 @@ _BEAM_SETTINGS = {"BEAM_FLUX":BEAM_FLUX,
                  "BEAM_CENTER_Y":BEAM_CENTER_Y}
 
 # XDS information
-XDS_INP = detector.XDS_INP
-XDS_INP = {"test":"foo2"}
+XDSINP = detector.XDS_INP
+XDSINP = {"test":"foo2"}
 
 def parse_file_name(fullname):
     """

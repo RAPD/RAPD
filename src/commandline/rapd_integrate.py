@@ -220,7 +220,10 @@ def main():
     if not (site or detector):
         print "Have to figure out the detector"
         detector = detector_utils.get_detector_file(data_files[0])
-        detector_module = detector_utils.load_detector(detector)
+        if detector:
+            detector_module = detector_utils.load_detector(detector)
+        else:
+            raise Error("Not able to load detector module")
 
     # Get the image data
     # Have a detector - read in file data

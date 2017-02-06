@@ -37,7 +37,7 @@ DETECTOR = "rayonix_mx300"
 VENDORTYPE = "MARCCD"
 
 # XDS information
-XDS_INP = {"test":"foo"}
+XDSINP = {"test":"foo"}
 
 def read_header(image):
     """Read header from rayonix mx300"""

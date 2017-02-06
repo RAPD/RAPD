@@ -68,9 +68,9 @@ HEADER_VERSION = 1
 
 # XDS information for constructing the XDS.INP file
 # Import from more generic detector
-XDS_INP = detector.XDS_INP
+XDSINP = detector.XDSINP
 # Update the XDS information from the imported detector
-XDS_INP.update({
+XDSINP.update({
     "UNTRUSTED_RECTANGLE14": "   0 2463  2103 2121",
     "UNTRUSTED_RECTANGLE15": "   0 2463  2315 2333",
     "UNTRUSTED_RECTANGLE12": "   0 2463  1679 1697",

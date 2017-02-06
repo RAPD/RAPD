@@ -145,15 +145,17 @@ def get_detector_file(image):
 
     try:
         i = ImageFactory(image)
-        print i.vendortype
-        print i.parameters["DETECTOR_SN"]
+        # print i.vendortype
+        # print i.parameters["DETECTOR_SN"]
     except (IOError, AttributeError, RuntimeError):
         print error
         return False
 
+    # print i.vendortype
+    # print i.parameters["DETECTOR_SN"]
 
     if (i.vendortype, i.parameters["DETECTOR_SN"]) in detector_list.DETECTORS:
-        #print "%s: %s %s %s" % (image, detector_list.DETECTORS[(i.vendortype, i.parameters["DETECTOR_SN"])], i.vendortype, i.parameters["DETECTOR_SN"])
+        print "%s: %s %s %s" % (image, detector_list.DETECTORS[(i.vendortype, i.parameters["DETECTOR_SN"])], i.vendortype, i.parameters["DETECTOR_SN"])
         return detector_list.DETECTORS[(i.vendortype, i.parameters["DETECTOR_SN"])]
     else:
         return False
@@ -170,7 +172,7 @@ def load_detector(detector):
         Look for a detector file in the given directory
         """
 
-        # print "look_for_detector_file %s %s" % (file, directory)
+        print "look_for_detector_file %s %s" % (file, directory)
 
         if "sites" in directory:
             files = glob.glob(directory+"/"+file+".py")
