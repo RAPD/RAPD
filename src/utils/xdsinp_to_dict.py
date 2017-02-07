@@ -80,9 +80,14 @@ class INP2DICT(object):
                     if key not in exp_deps:
                         xds_dict[key] = value
 
+        print "XDSINP = {"
+        for key, val in xds_dict.iteritems():
+            print "    \"%s\": \"%s\"" % (key, str(val))
 
-        with open(self.xdsdict,'w') as file:
-            json.dump(xds_dict,file)
+        print "    }"
+        # with open(self.xdsdict, "w") as file:
+        #     json.dump(xds_dict, file)
+
 
         return()
 
@@ -92,8 +97,6 @@ def main(args):
     This function is called when this module is invoked from
     the commandline
     """
-
-    print "main"
 
     number_of_args = len(sys.argv) - 1
     if number_of_args >= 2:
@@ -105,8 +108,6 @@ def get_commandline():
     """
     Grabs the commandline
     """
-
-    print "get_commandline"
 
     # Parse the commandline arguments
     commandline_description = "Generate a generic RAPD file"
