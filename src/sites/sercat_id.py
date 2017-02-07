@@ -95,7 +95,7 @@ CONTROL_REDIS_CLUSTER = False
 
 # Detector settings
 # Must have a file in detectors that is all lowercase of this string
-DETECTOR = ("SERCAT_RAYONIX_MX300HS", "")
+DETECTOR = "SERCAT_RAYONIX_MX300HS"
 # DETECTOR_SUFFIX = ""
 
 # Launcher settings

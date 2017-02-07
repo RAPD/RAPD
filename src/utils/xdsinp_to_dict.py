@@ -19,32 +19,15 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__created__ = "2017-2-2"
-_maintainer__ = "Your name"
-__email__ = "Your email"
+__created__ = "2017-02-02"
+_maintainer__ = "David Neau"
+__email__ = "dneau@anl.gov"
 __status__ = "Development"
 
 # Standard imports
 import argparse
-# datetime
-# glob
 import json
-# logging
-# multiprocessing
-# os
-# pprint
-# pymongo
-# re
-# redis
-# shutil
-# subprocess
 import sys
-# time
-
-# RAPD imports
-# commandline_utils
-# detectors.detector_utils as detector_utils
-# utils
 
 class INP2DICT(object):
     def __init__(self, xdsinp, xdsdict):

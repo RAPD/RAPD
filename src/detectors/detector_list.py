@@ -35,5 +35,8 @@ DETECTORS = {
     ("ADSC", 916): "necat_adsc_q315", # "sites.detectors.necat_adsc_q315",  # APS 24-ID-E
     ("MARCCD", 0): ["lscat_mar_300",],          # APS 21-ID-F
     ("MARCCD", 7): "sercat_rayonix_mx300",      # APS 22BM
-    ("MARCCD", 101): "sercat_rayonix_mx300hs"   # APS 22ID
+    ("MARCCD", 101): {                          # APS 22ID
+        "detector": "sercat_rayonix_mx300hs",
+        "site": "sercat_id"
+        }
 }

@@ -167,6 +167,9 @@ def load_detector(detector):
 
     # print "load_detector %s" % detector
 
+    if isinstance(detector, dict):
+        detector = detector.get("detector")
+
     def look_for_detector_file(file, directory):
         """
         Look for a detector file in the given directory

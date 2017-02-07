@@ -46,6 +46,10 @@ IMAGE_TEMPLATE = "%s.????"
 RUN_NUMBER_IN_TEMPLATE = False
 HEADER_VERSION = 1
 
+XDSINP = {
+
+}
+
 # X-ray source characteristics
 # Flux of the beam
 BEAM_FLUX = 8E11

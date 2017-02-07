@@ -28,6 +28,7 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
+import importlib
 import os
 import pprint
 import sys
@@ -72,14 +73,19 @@ def get_commandline():
 
     return parser.parse_args()
 
-def get_image_data(data_file, detector_module):
+def get_image_data(data_file, detector_module, site):
     """
     Get the image data and return given a filename
     """
 
     print "get_image_data", data_file
 
-    return detector_module.read_header(data_file)
+    if site:
+        header = detector_module.read_header(data_file, site.BEAM_SETTINGS)
+    else:
+        header = detector_module.read_header(data_file)
+
+    return header
 
 def get_run_data(detector_module, image_0_data, image_n_data):
     """
@@ -205,6 +211,7 @@ def main():
 
     # Get site - commandline wins over the environmental variable
     site = False
+    SITE = False
     detector = False
     detector_module = False
     if commandline_args.site:
@@ -218,18 +225,31 @@ def main():
 
     # If no site or detector, try to figure out the detector
     if not (site or detector):
-        print "Have to figure out the detector"
+        # print "Have to figure out the detector"
+        # detector = detector_utils.get_detector_file(data_files[0])
+        # if detector:
+        #     detector_module = detector_utils.load_detector(detector)
+        # else:
+        #     raise Error("Not able to load detector module")
         detector = detector_utils.get_detector_file(data_files[0])
-        if detector:
-            detector_module = detector_utils.load_detector(detector)
-        else:
-            raise Error("Not able to load detector module")
+        print detector
+        if isinstance(detector, dict):
+            if detector.has_key("site"):
+                site_target = detector.get("site")
+                site_file = utils.site.determine_site(site_arg=site_target)
+                print site_file
+                SITE = importlib.import_module(site_file)
+                detector_target = SITE.DETECTOR.lower()
+                detector_module = detector_utils.load_detector(detector_target)
+            elif detector.has_key("detector"):
+                detector_target = detector.get("detector")
+                detector_module = detector_utils.load_detector(detector_target)
 
     # Get the image data
     # Have a detector - read in file data
     if detector_module:
-        image_0_data = get_image_data(data_files[0], detector_module)
-        image_n_data = get_image_data(data_files[-1], detector_module)
+        image_0_data = get_image_data(data_files[0], detector_module, SITE)
+        image_n_data = get_image_data(data_files[-1], detector_module, SITE)
     else:
         raise Exception("No detector identified")
 

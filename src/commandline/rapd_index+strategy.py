@@ -28,7 +28,9 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
+import importlib
 import os
+import pprint
 import sys
 
 # RAPD imports
@@ -347,18 +349,33 @@ def main():
 
     # If no site or detector, try to figure out the detector
     if not (site or detector):
-        print "Have to figure out the detector"
-        print data_files
+        # print "Have to figure out the detector"
+        # print data_files
         detector = detector_utils.get_detector_file(data_files["files"][0])
         print detector
-        detector_module = detector_utils.load_detector(detector)
+        if isinstance(detector, dict):
+            if detector.has_key("site"):
+                site_target = detector.get("site")
+                site_file = utils.site.determine_site(site_arg=site_target)
+                print site_file
+                SITE = importlib.import_module(site_file)
+                detector_target = SITE.DETECTOR.lower()
+                detector_module = detector_utils.load_detector(detector_target)
+            elif detector.has_key("detector"):
+                SITE = False
+                detector_target = detector.get("detector")
+                detector_module = detector_utils.load_detector(detector_target)
 
     # Have a detector - read in file data
     if detector_module:
         image_headers = {}
         for data_file in data_files["files"]:
-            image_headers[data_file] = detector_module.read_header(data_file)
+            if SITE:
+                image_headers[data_file] = detector_module.read_header(data_file, SITE.BEAM_SETTINGS)
+            else:
+                image_headers[data_file] = detector_module.read_header(data_file)
         logger.debug("Image headers: %s", image_headers)
+        pprint.pprint(image_headers)
 
     command = construct_command(image_headers=image_headers,
                                 commandline_args=commandline_args,

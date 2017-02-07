@@ -130,7 +130,7 @@ class RapdAgent(Process):
             self.image_data["start"] = self.run_data.get("start")
             self.image_data["total"] = self.run_data.get("total")
         self.image_data['image_template'] = self.run_data['image_template']
-	
+
 	# Check for 2theta tilt:
 	if 'twotheta' in self.run_data:
 	    self.image_data['twotheta'] = self.run_data['twotheta']
@@ -1144,10 +1144,10 @@ class RapdAgent(Process):
         self.logger.debug('FastIntegration::xds_run')
         self.logger.debug('     directory = %s' % directory)
         self.logger.debug('     detector = %s' %self.image_data['detector'])
-        if self.image_data['detector']=='rayonix_mx300hs':
-            xds_command = '/usr/local/XDS-INTEL64_Linux_x86_64/xds_par'
-        else:
-            xds_command = 'xds_par'
+        # if self.image_data['detector']=='rayonix_mx300hs':
+        #     xds_command = '/usr/local/XDS-INTEL64_Linux_x86_64/xds_par'
+        # else:
+        xds_command = 'xds_par'
 
         os.chdir(directory)
         if self.cluster_use == True:
