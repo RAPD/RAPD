@@ -41,6 +41,11 @@ if [ "$RAPD_HOME" != "" ]; then
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/commandline\/generate_detector.py \"\$@\"" >>$RAPD_HOME/bin/rapd.generate_detector
   chmod +x $RAPD_HOME/bin/rapd.generate_detector
 
+  # Read an XDS input file and make a RAPD XDSINP dict
+  echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.xds_to_dict
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/xdsinp_to_dict.py \"\$@\"" >>$RAPD_HOME/bin/rapd.xds_to_dict
+  chmod +x $RAPD_HOME/bin/rapd.xds_to_dict
+
 # Environmental var not set - don't run
 else
   echo "The RAPD_HOME environmental variable must be set. Exiting"
