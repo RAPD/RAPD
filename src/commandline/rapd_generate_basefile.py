@@ -291,7 +291,7 @@ class CommandlineFileGenerator(BaseFileGenerator):
                               "    \"\"\"\n",
                               "    print \"get_commandline\"\n",
                               "    # Parse the commandline arguments",
-                              "    commandline_description = \"%s\"" % decription,
+                              "    commandline_description = \"%s\"" % description,
                               "    parser = argparse.ArgumentParser(description=commandline_description)\n",
                               "    # A True/False flag",
                               "    parser.add_argument(\"-c\", \"--commandline\",",
