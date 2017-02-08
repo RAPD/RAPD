@@ -314,7 +314,7 @@ class RapdAgent(Process):
         """
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::run")
-        
+
         # Check if h5 file is input and convert to cbf's.
         if self.header['fullname'][-3:] == '.h5':
           if self.convert_images() == False:
@@ -1079,7 +1079,7 @@ class RapdAgent(Process):
         """
         if self.verbose:
           self.logger.debug('AutoindexingStrategy::convert_images')
-        
+
         try:
           def run_convert(img, imgn=False):
             header = Utils.convert_hdf5_cbf(inp=img, imgn=imgn)
@@ -1088,16 +1088,16 @@ class RapdAgent(Process):
               for x in range(len(l)):
                 del header[l[x]]
             return (header)
-          
+
           self.header.update(run_convert(self.header['fullname'], imgn=1))
           if self.header2:
             self.header2.update(run_convert(self.header2['fullname'], imgn=2))
           return(True)
-        
+
         except:
           self.logger.exception('**ERROR in convert_images**')
           return(False)
-    
+
     def labelitSort(self):
         """
         Sort out which iteration of Labelit has the highest symmetry and choose that solution. If
@@ -2348,14 +2348,16 @@ class RunLabelit(Process):
           self.logger.debug('RunLabelit::preprocessLabelit')
 
       try:
-          twotheta       = str(self.header.get('twotheta','0'))
+          twotheta       = str(self.header.get("twotheta", "0"))
           #distance       = str(self.header.get('distance'))
           #x_beam         = str(self.preferences.get('x_beam', self.header.get('beam_center_x'))) #OLD
           #Once we figure out the beam center issue, I can switch to this.
   	      #x_beam         = str(self.header.get('beam_center_calc_x', self.header.get('beam_center_x')))
           #y_beam         = str(self.header.get('beam_center_calc_y', self.header.get('beam_center_y')))
-          x_beam         = str(self.header.get('beam_center_x'))
-          y_beam         = str(self.header.get('beam_center_y'))
+          x_beam         = str(self.header.get("x_beam"))
+          y_beam         = str(self.header.get("y_beam"))
+        #   x_beam         = str(self.header.get('beam_center_x'))
+        #   y_beam         = str(self.header.get('beam_center_y'))
           binning = True
           if self.header.has_key('binning'):
   	           binning = self.header.get('binning')

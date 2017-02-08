@@ -546,6 +546,9 @@ def cleanPDB(self,inp):
   except:
     self.logger.exception('**Error in Utils.cleanPDB**')
 
+
+
+
 def convert_hdf5_cbf(inp,
                      odir=False,
                      prefix=False,
@@ -563,10 +566,10 @@ def convert_hdf5_cbf(inp,
   """
   import multiprocessing, time, sys
   from rapd_pilatus import pilatus_read_header as readHeader
-  
+
   if logger:
     logger.debug('Utilities::convert_hdf5_cbf')
-  
+
   try:
     #command0 = '/gpfs6/users/necat/Jon/Programs/CCTBX_x64/base_tmp/eiger2cbf/trunk/eiger2cbf %s'%inp
     command0 = 'eiger2cbf %s'%inp
@@ -595,7 +598,7 @@ def convert_hdf5_cbf(inp,
         split = int(round(total/8))
         cluster = True
       else:
-        # Least amount of splitting without running out of memory. 
+        # Least amount of splitting without running out of memory.
         split = 360
         cluster = False
       st = 1
@@ -616,7 +619,7 @@ def convert_hdf5_cbf(inp,
         else:
           pool.apply_async(processLocal, ((command,os.path.join(out,'eiger2cbf.log')),))
         time.sleep(0.1)
-        if stop: 
+        if stop:
           break
         st += split
         end += split
@@ -630,7 +633,7 @@ def convert_hdf5_cbf(inp,
           end = total
       pool.close()
       pool.join()
-      
+
       # Get the detector description from the h5 file
       with open('eiger2cbf.log','r') as f:
         for line in f:
@@ -649,6 +652,12 @@ def convert_hdf5_cbf(inp,
     if logger:
       logger.exception('**ERROR in Utils.convert_hdf5_cbf**')
     return('FAILED')
+
+
+
+
+
+
 
 def convertImage(self,inp,output):
   """

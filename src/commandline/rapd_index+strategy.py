@@ -377,10 +377,12 @@ def main():
         logger.debug("Image headers: %s", image_headers)
         pprint.pprint(image_headers)
 
-    command = construct_command(image_headers=image_headers,
-                                commandline_args=commandline_args,
-                                detector_module=detector_module,
-                                logger=logger)
+        command = construct_command(image_headers=image_headers,
+                                    commandline_args=commandline_args,
+                                    detector_module=detector_module,
+                                    logger=logger)
+    else:
+        raise Exception("No detector module found")
 
 
 
