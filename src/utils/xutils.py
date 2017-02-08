@@ -546,6 +546,110 @@ def cleanPDB(self,inp):
   except:
     self.logger.exception('**Error in Utils.cleanPDB**')
 
+def convert_hdf5_cbf(inp,
+                     odir=False,
+                     prefix=False,
+                     imgn=False,
+                     zfill=5,
+                     logger=False):
+  """
+  Run eiger2cbf on HDF5 dataset. Returns path of new CBF files.
+  Not sure I need multiprocessing.Pool, but used as saftety.
+  odir is output directory
+  prefix is new image prefix
+  imgn is the image number for the output frame.
+  zfill is the number digits for snap image numbers
+  returns header
+  """
+  import multiprocessing, time, sys
+  from rapd_pilatus import pilatus_read_header as readHeader
+  
+  if logger:
+    logger.debug('Utilities::convert_hdf5_cbf')
+  
+  try:
+    #command0 = '/gpfs6/users/necat/Jon/Programs/CCTBX_x64/base_tmp/eiger2cbf/trunk/eiger2cbf %s'%inp
+    command0 = 'eiger2cbf %s'%inp
+    if odir:
+      out = odir
+    else:
+      out = '/gpfs6/users/necat/Jon/RAPD_test/Output/Temp'
+    if prefix == False:
+      prefix = 'conv_1_'
+    # check if folder exists, if not make it and change to it.
+    #folders2(self,out)
+    if os.path.exists(out) == False:
+      os.makedirs(out)
+    os.chdir(out)
+    if inp.count('master'):
+      # Not really needed, unless someone collected a huge dataset.
+      ncpu = multiprocessing.cpu_count()
+      pool = multiprocessing.Pool(processes=ncpu)
+      # Check how many frames are in dataset
+      #nimages = processLocal((command0,'test.log'))
+      nimages = pool.apply_async(processLocal, ((command0,os.path.join(out,'test.log')),))
+      nimages.wait()
+      total = int(open('test.log','r').readlines()[-1])
+      if BLspec.checkCluster():
+        # Half the number of nodes in the queue.
+        split = int(round(total/8))
+        cluster = True
+      else:
+        # Least amount of splitting without running out of memory. 
+        split = 360
+        cluster = False
+      st = 1
+      end = split
+      stop = False
+      # For Autoindexing. Differentiate pairs from separate runs.
+      if total == 1:
+        # Set the image number defaut to 1.
+        if imgn == False: imgn = 1
+        img = '%s%s.cbf'%(os.path.join(out,prefix),str(imgn).zfill(zfill))
+        command = '%s 1 %s'%(command0, img)
+      else:
+        command = '%s %s:%s %s'%(command0,st, end, os.path.join(out,prefix))
+      while 1:
+        if cluster:
+          # No self required
+          pool.apply_async(BLspec.processCluster_NEW, ((command,os.path.join(out,'eiger2cbf.log')),))
+        else:
+          pool.apply_async(processLocal, ((command,os.path.join(out,'eiger2cbf.log')),))
+        time.sleep(0.1)
+        if stop: 
+          break
+        st += split
+        end += split
+        # Check to see if next round will be out of range
+        if st >= total:
+          break
+        if st + split >= total:
+          end = total
+          stop = True
+        if end > total:
+          end = total
+      pool.close()
+      pool.join()
+      
+      # Get the detector description from the h5 file
+      with open('eiger2cbf.log','r') as f:
+        for line in f:
+          if line.count('description'):
+            det = line[line.find('=')+2:].strip()
+            break
+      # Read header from first image and pass it back.
+      header = readHeader(img)
+      # change the detector
+      header['detector'] = det
+      return(header)
+    else:
+      return('Not master file!!!')
+
+  except:
+    if logger:
+      logger.exception('**ERROR in Utils.convert_hdf5_cbf**')
+    return('FAILED')
+
 def convertImage(self,inp,output):
   """
   Convert image to new type.

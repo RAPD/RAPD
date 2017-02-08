@@ -314,6 +314,12 @@ class RapdAgent(Process):
         """
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::run")
+        
+        # Check if h5 file is input and convert to cbf's.
+        if self.header['fullname'][-3:] == '.h5':
+          if self.convert_images() == False:
+            # If conversion fails, kill the job.
+            self.postprocess()
 
         self.preprocess()
 
@@ -1067,6 +1073,31 @@ class RapdAgent(Process):
         except:
             self.logger.exception("**Error in run_queue**")
 
+    def convert_images(self):
+        """
+        Convert H5 files to CBF's for strategies.
+        """
+        if self.verbose:
+          self.logger.debug('AutoindexingStrategy::convert_images')
+        
+        try:
+          def run_convert(img, imgn=False):
+            header = Utils.convert_hdf5_cbf(inp=img, imgn=imgn)
+            l = ['run_id', 'twotheta', 'place_in_run', 'date', 'transmission','collect_mode']
+            if type(header) == dict:
+              for x in range(len(l)):
+                del header[l[x]]
+            return (header)
+          
+          self.header.update(run_convert(self.header['fullname'], imgn=1))
+          if self.header2:
+            self.header2.update(run_convert(self.header2['fullname'], imgn=2))
+          return(True)
+        
+        except:
+          self.logger.exception('**ERROR in convert_images**')
+          return(False)
+    
     def labelitSort(self):
         """
         Sort out which iteration of Labelit has the highest symmetry and choose that solution. If
