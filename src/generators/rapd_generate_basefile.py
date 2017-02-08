@@ -31,7 +31,7 @@ import sys
 import time
 
 # RAPD imports
-import commandline_utils
+# import commandline.commandline_utils
 
 _NOW = time.localtime()
 _LICENSE = """This file is part of RAPD
