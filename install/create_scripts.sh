@@ -22,7 +22,7 @@ if [ "$RAPD_HOME" != "" ]; then
   echo "# Make sure we can run XDS" > $RAPD_HOME/bin/rapd.integrate
   echo "unamestr=`uname`" > $RAPD_HOME/bin/rapd.integrate
   echo "if [[ "$unamestr" == 'Darwin' ]]; then" > $RAPD_HOME/bin/rapd.integrate
-  echo "   `ulimit -s 65532`" > $RAPD_HOME/bin/rapd.integrate
+  echo "   ulimit -s 65532" > $RAPD_HOME/bin/rapd.integrate
   echo "fi" > $RAPD_HOME/bin/rapd.integrate
   echo "# Call rapd_integrate" > $RAPD_HOME/bin/rapd.integrate
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/commandline\/rapd_integrate.py \"\$@\"" >>$RAPD_HOME/bin/rapd.integrate
