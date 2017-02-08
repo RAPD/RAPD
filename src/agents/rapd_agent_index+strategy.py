@@ -1766,8 +1766,10 @@ class RapdAgent(Process):
                 jon_summary.write('%11s"bPaginate": false,\n%11s"bFilter": false,\n%11s"bInfo": false,\n%11s"bAutoWidth": false    });\n' % (4*("", )))
             jon_summary.write('%6s});\n%4s</script>\n%2s</head>\n%2s<body id="dt_example">\n' % (4*("", )))
             if self.best_summary:
+                # TODO
                 jon_summary.writelines(self.best_summary)
             if self.best_summary_long:
+                # TODO
                 jon_summary.writelines(self.best_summary_long)
             if self.best_results:
                 if self.best_results.get("Best results") == "FAILED":
@@ -1775,8 +1777,10 @@ class RapdAgent(Process):
                     jon_summary.write('%7s<h4 class="results">Best Failed. Trying Mosflm strategy.</h3>\n' % "")
                     jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n" % (3*("", )))
             if self.mosflm_strat_summary:
+                # TODO
                 jon_summary.writelines(self.mosflm_strat_summary)
             if self.mosflm_strat_summary_long:
+                # TODO
                 jon_summary.writelines(self.mosflm_strat_summary_long)
             if self.mosflm_strat_results:
                 if self.mosflm_strat_results.get("Mosflm strategy results") == "FAILED":
@@ -1784,8 +1788,10 @@ class RapdAgent(Process):
                     jon_summary.write('%7s<h3 class="results">Mosflm Strategy Failed. Could not calculate a strategy.</h3>\n' % "")
                     jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n" % (3*("", )))
             if self.best_anom_summary:
+                # TODO
                 jon_summary.writelines(self.best_anom_summary)
             if self.best_anom_summary_long:
+                # TODO
                 jon_summary.writelines(self.best_anom_summary_long)
             if self.best_anom_results:
                 if self.best_anom_results.get("Best ANOM results") == "FAILED":
@@ -1793,8 +1799,10 @@ class RapdAgent(Process):
                     jon_summary.write('%7s<br><h4 class="results">Best Failed. Trying Mosflm ANOMALOUS strategy.</h3>\n' % "")
                     jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n" % (3*("", )))
             if self.mosflm_strat_anom_summary:
+                # TODO
                 jon_summary.writelines(self.mosflm_strat_anom_summary)
             if self.mosflm_strat_anom_summary_long:
+                # TODO
                 jon_summary.writelines(self.mosflm_strat_anom_summary_long)
             if self.mosflm_strat_anom_results:
                 if self.mosflm_strat_anom_results.get("Mosflm ANOM strategy results") == "FAILED":

@@ -31,10 +31,17 @@ DETECTORS = {
     ("ADSC", 430): "",                          #
     ("ADSC", 446): "adsc_q315",                 # NSLS X25 > X26C
     ("Pilatus-6M", "PILATUS 6M-F S/N 60-0112-F"): "necat_dectris_pilatus6mf",
-    ("ADSC", 911): "necat_adsc_q315",           # APS 24-ID-C
-    ("ADSC", 916): "necat_adsc_q315", # "sites.detectors.necat_adsc_q315",  # APS 24-ID-E
+    ("ADSC", 911): {
+        "detector": "necat_adsc_q315"           # APS 24-ID-C
+        },
+    ("ADSC", 916): {
+        "detector": "necat_adsc_q315",           # APS 24-ID-E
+        # "site": "necat_e"
+        },
     ("MARCCD", 0): ["lscat_mar_300",],          # APS 21-ID-F
-    ("MARCCD", 7): "sercat_rayonix_mx300",      # APS 22BM
+    ("MARCCD", 7): {
+        "detector": "sercat_rayonix_mx225",
+        },      # APS 22BM
     ("MARCCD", 101): {                          # APS 22ID
         "detector": "sercat_rayonix_mx300hs",
         "site": "sercat_id"
