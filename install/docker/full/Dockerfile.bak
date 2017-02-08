@@ -6,23 +6,12 @@ FROM centos:6.7
 MAINTAINER Frank Murphy <fmurphy@anl.gov>
 
 # Needed to build Phenix
-RUN yum -y install wget \
-                   svn \
-                   git \
-                   make \
-                   bzip2 \
-                   openssl-devel \
-                   gcc-c++ \
-                   mesa-libGL-devel \
-                   mesa-libGLU-devel
-
-
-#RUN rpm --import https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-6 \
-# && rpm -Uvh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm \
-# && rpm --import http://rpms.remirepo.net/RPM-GPG-KEY-remi \
-# && rpm -Uvh http://rpms.famillecollet.com/enterprise/remi-release-6.rpm \
-# && yum -y install blas-devel lapack-devel atlas-sse3-devel atlas-devel openblas-devel libffi-devel ImageMagick-devel git \
-# && yum clean all
+RUN rpm --import https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-6 \
+ && rpm -Uvh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm \
+ && rpm --import http://rpms.remirepo.net/RPM-GPG-KEY-remi \
+ && rpm -Uvh http://rpms.famillecollet.com/enterprise/remi-release-6.rpm \
+ && yum -y install blas-devel lapack-devel atlas-sse3-devel atlas-devel openblas-devel libffi-devel ImageMagick-devel git \
+ && yum clean all
 
 # BASH!
 RUN ln -snf /bin/bash /bin/sh
