@@ -28,17 +28,18 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 # Standard imports
+import argparse
 import grp
 import math
-import pwd
 import os
-import sys
+import pprint
+import pwd
 
 # RAPD imports
-import detectors.rayonix.rayonix_mx300 as detector
+import detectors.rayonix.rayonix_mx225 as detector
 
 # Detector information
-DETECTOR = "rayonix_mx300"
+DETECTOR = "rayonix_mx225"
 VENDORTYPE = "MARCCD"
 DETECTOR_SN = 7
 DETECTOR_SUFFIX = ""
@@ -46,54 +47,33 @@ IMAGE_TEMPLATE = "%s.????"
 RUN_NUMBER_IN_TEMPLATE = False
 HEADER_VERSION = 1
 
-XDSINP = {
-
-}
-
-# X-ray source characteristics
-# Flux of the beam
-BEAM_FLUX = 8E11
-# Size of the beam in microns
-BEAM_SIZE_X = 50
-BEAM_SIZE_Y = 20
-# Shape of the beam - ellipse, rectangle
-BEAM_SHAPE = "ellipse"
-# Shape of the attenuated beam - circle or rectangle
-BEAM_APERTURE_SHAPE = "circle"
-# Gaussian description of the beam for raddose
-BEAM_GAUSS_X = 0.03
-BEAM_GAUSS_Y = 0.01
-# Beam center calibration
-BEAM_CENTER_DATE = "2015-12-07"
-# Beamcenter equation coefficients (b, m1, m2, m3, m4, m5, m6)
-BEAM_CENTER_X = (153.94944895756946,
-                 -0.016434436106566495,
-                 3.5990848937868658e-05,
-                 -8.2987834172005917e-08,
-                 1.0732920112697317e-10,
-                 -7.339858946384788e-14,
-                 2.066312749407257e-17)
-BEAM_CENTER_Y = (158.56546190593907,
-                 0.0057578279496966192,
-                 -3.9726067083100419e-05,
-                 1.1458201832002297e-07,
-                 -1.7875879553926729e-10,
-                 1.4579198435694557e-13,
-                 -4.7910792416525411e-17)
-_BEAM_SETTINGS = {"BEAM_FLUX":BEAM_FLUX,
-                 "BEAM_SIZE_X":BEAM_SIZE_X,
-                 "BEAM_SIZE_Y":BEAM_SIZE_Y,
-                 "BEAM_SHAPE":BEAM_SHAPE,
-                 "BEAM_APERTURE_SHAPE":BEAM_APERTURE_SHAPE,
-                 "BEAM_GAUSS_X":BEAM_GAUSS_X,
-                 "BEAM_GAUSS_Y":BEAM_GAUSS_Y,
-                 "BEAM_CENTER_DATE":BEAM_CENTER_DATE,
-                 "BEAM_CENTER_X":BEAM_CENTER_X,
-                 "BEAM_CENTER_Y":BEAM_CENTER_Y}
-
 # XDS information
-XDSINP = detector.XDS_INP
-XDSINP = {"test":"foo2"}
+XDSINP = {
+    "MAX_CELL_ANGLE_ERROR": "2.0",
+    "MIN_RFL_Rmeas": "50.0",
+    "INCLUDE_RESOLUTION_RANGE": "100.00 0.00",
+    "SPACE_GROUP_NUMBER": "0",
+    "NY": "3072",
+    "OVERLOAD": "65535",
+    "NX": "3072",
+    "VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS": "6000 30000",
+    "MAX_CELL_AXIS_ERROR": "0.030",
+    "ROTATION_AXIS": "-1.0 0.0 0.0",
+    "FRACTION_OF_POLARIZATION": "0.99",
+    "INDEX_ORIGIN": "0 0 0",
+    "DIRECTION_OF_DETECTOR_X-AXIS": "1.0 0.0 0.0",
+    "POLARIZATION_PLANE_NORMAL": "0.0 1.0 0.0",
+    "MAX_FAC_Rmeas": "2.00",
+    "TRUSTED_REGION": "0.0 0.99",
+    "WFAC1": "1.0",
+    "MINIMUM_VALID_PIXEL_VALUE": "0",
+    "QY": "0.07345",
+    "QX": "0.07345",
+    "INCIDENT_BEAM_DIRECTION": "0.0 0.0 1.0",
+    "DIRECTION_OF_DETECTOR_Y-AXIS": "0.0 1.0 0.0",
+    "TEST_RESOLUTION_RANGE": "50.00 2.00",
+    "DETECTOR": "MARCCD"
+    }
 
 def parse_file_name(fullname):
     """
@@ -200,7 +180,7 @@ def create_image_fullname(directory,
     return fullname
 
 # Calculate the flux of the beam
-def calculate_flux(header, beam_settings=_BEAM_SETTINGS):
+def calculate_flux(header, beam_settings={}):
     """
     Return the flux and size of the beam given parameters
 
@@ -210,43 +190,43 @@ def calculate_flux(header, beam_settings=_BEAM_SETTINGS):
     """
 
     # Save some typing
-    beam_size_raw_x = beam_settings.get("BEAM_SIZE_X")
-    beam_size_raw_y = beam_settings["BEAM_SIZE_Y"]
+    beam_size_raw_x = beam_settings.get("BEAM_SIZE_X", 100)
+    beam_size_raw_y = beam_settings.get("BEAM_SIZE_Y", 100)
     aperture_x = header["aperture_x"]
     aperture_y = header["aperture_y"]
-    raw_flux = beam_settings["BEAM_FLUX"] * header["transmission"] / 100.0
+    raw_flux = beam_settings.get("BEAM_FLUX", 1000000) * header["transmission"] / 100.0
 
     # Calculate the size of the beam incident on the sample in mm
     beam_size_x = min(beam_size_raw_x, aperture_x)
     beam_size_y = min(beam_size_raw_y, aperture_y)
 
     # Calculate the raw beam area
-    if beam_settings["BEAM_SHAPE"] == "ellipse":
+    if beam_settings.get("BEAM_SHAPE", "ellipse") == "ellipse":
         raw_beam_area = math.pi * beam_size_raw_x * beam_size_raw_y / 4
-    elif beam_settings["BEAM_SHAPE"] == "rectangle":
+    elif beam_settings.get("BEAM_SHAPE", "ellipse") == "rectangle":
         raw_beam_area = beam_size_raw_x * beam_size_raw_y
 
     # Calculate the incident beam area
     # Aperture is smaller than the beam in x & y
     if beam_size_x <= beam_size_raw_x and beam_size_y <= beam_size_raw_y:
-        if beam_settings["BEAM_APERTURE_SHAPE"] == "circle":
+        if beam_settings.get("BEAM_APERTURE_SHAPE", "circle") == "circle":
             beam_area = math.pi * (beam_size_x / 2)**2
-        elif beam_settings["BEAM_APERTURE_SHAPE"] == "rectangle":
+        elif beam_settings.get("BEAM_APERTURE_SHAPE", "circle") == "rectangle":
             beam_area = beam_size_x * beam_size_y
 
     # Getting the raw beam coming through
     elif beam_size_x > beam_size_raw_x and beam_size_y > beam_size_raw_y:
-        if beam_settings["BEAM_SHAPE"] == "ellipse":
+        if beam_settings.get("BEAM_SHAPE", "ellipse") == "ellipse":
             beam_area = math.pi * (beam_size_x / 2) * (beam_size_y / 2)
-        elif beam_settings["BEAM_SHAPE"] == "rectangle":
+        elif beam_settings.get("BEAM_SHAPE", "ellipse") == "rectangle":
             beam_area = beam_size_x * beam_size_y
 
     # Aperture is not smaller than beam in both directions
     else:
-        if beam_settings["BEAM_APERTURE_SHAPE"] == "circle":
+        if beam_settings.get("BEAM_APERTURE_SHAPE", "circle") == "circle":
             # Use an ellipse as an imperfect description of this case
             beam_area = math.pi * (beam_size_x / 2) * (beam_size_y / 2)
-        if beam_settings["BEAM_APERTURE_SHAPE"] == "rectangle":
+        if beam_settings.get("BEAM_APERTURE_SHAPE", "circle") == "rectangle":
             # Use a rectangle description of this case
             beam_area = beam_size_x * beam_size_y
 
@@ -288,7 +268,7 @@ def calculate_beam_center(distance, beam_settings, v_offset=0):
     return x_beam, y_beam
 
 # Standard header reading
-def read_header(fullname, beam_settings=_BEAM_SETTINGS):
+def read_header(fullname, beam_settings={}):
     """
     Read the header and add some site-specific data
 
@@ -307,7 +287,7 @@ def read_header(fullname, beam_settings=_BEAM_SETTINGS):
     header["header_version"] = HEADER_VERSION
 
     # Add tag for module to header
-    header["rapd_detector_id"] = "sercat_rayonix_mx300"
+    header["rapd_detector_id"] = "sercat_rayonix_mx225"
 
     # The image template for processing
     header["image_template"] = IMAGE_TEMPLATE % header["image_prefix"]
@@ -320,17 +300,17 @@ def read_header(fullname, beam_settings=_BEAM_SETTINGS):
 
     # Correct error wavelength >> energy
     header["energy"] = header["wavelength"]
-    del header["wavelength"]
+    # del header["wavelength"]
 
     # Translate from mar to RAPD
     header["osc_axis"] = header["axis"]
     header["omega"] = header["omega_start"]
 
     # Binning
-    if header["size1"] == 4096:
-        header["binning"] = False
-    else:
-        header["binning"] = True
+    # if header["size1"] == 4096:
+    #     header["binning"] = False
+    # else:
+    #     header["binning"] = True
 
     # Missing values
     header["kappa"] = None
@@ -351,77 +331,73 @@ def read_header(fullname, beam_settings=_BEAM_SETTINGS):
     header["beam_size_y"] = beam_size_y
 
     # Add source parameters
-    header["beam_gauss_x"] = beam_settings["BEAM_GAUSS_X"]
-    header["beam_gauss_y"] = beam_settings["BEAM_GAUSS_Y"]
+    header["gauss_x"] = beam_settings.get("BEAM_GAUSS_X", 0.05)
+    header["gauss_y"] = beam_settings.get("BEAM_GAUSS_Y", 0.05)
 
     # Calculate beam center - cannot be done with just header information!
-    calc_beam_center_x, calc_beam_center_y = calculate_beam_center(
-        distance=header["distance"],
-        beam_settings=beam_settings,
-        v_offset=0)
-    header["beam_center_calc_x"] = calc_beam_center_x
-    header["beam_center_calc_y"] = calc_beam_center_y
+    if beam_settings:
+        calc_beam_center_x, calc_beam_center_y = calculate_beam_center(
+            distance=header["distance"],
+            beam_settings=beam_settings,
+            v_offset=0)
+        header["beam_center_calc_x"] = calc_beam_center_x
+        header["beam_center_calc_y"] = calc_beam_center_y
+        header["x_beam"] = calc_beam_center_x
+        header["y_beam"] = calc_beam_center_y
+    else:
+        header["x_beam"] = header["beam_center_x"]
+        header["y_beam"] = header["beam_center_y"]
+
 
     # Get the data_root_dir
     header["data_root_dir"] = get_data_root_dir(fullname)
 
     # Group and session are interpreted from the image name
-    rapd_session_name, rapd_group = get_group_and_session(header["data_root_dir"])
-    header["rapd_session_name"] = rapd_session_name
-    header["rapd_group"] = rapd_group
+    # rapd_session_name, rapd_group = get_group_and_session(header["data_root_dir"])
+    # header["rapd_session_name"] = rapd_session_name
+    # header["rapd_group"] = rapd_group
 
     # Return the header
     return header
 
+def get_commandline():
+    """
+    Grabs the commandline
+    """
+
+    # Parse the commandline arguments
+    commandline_description = "Read header from Rayonix MX225"
+    parser = argparse.ArgumentParser(description=commandline_description)
+
+    # File name to be generated
+    parser.add_argument(action="store",
+                        dest="file",
+                        nargs="?",
+                        default=False,
+                        help="Name of file to be read")
+
+    return parser.parse_args()
+
+def main(args):
+    """
+    Read header for test image and print out retrieved data
+    """
+
+    if args.file:
+        test_image = os.path.abspath(args.file)
+    else:
+        raise Exception("No test image input!")
+
+    # Read the header
+    header = read_header(test_image)
+
+    # And print it out
+    pprint.pprint(header)
+
 if __name__ == "__main__":
 
-    if len(sys.argv) > 1:
-        test_image = sys.argv[1]
-    else:
-        test_image = "/Users/frankmurphy/workspace/rapd_github/src/test/sercat_id/t\
-est_data/THAU10_r1_1.0001"
+    # Get the commandline args
+    commandline_args = get_commandline()
 
-    # Flux of the beam
-    BEAM_FLUX = 8E11
-    # Size of the beam in microns
-    BEAM_SIZE_X = 50
-    BEAM_SIZE_Y = 20
-    # Shape of the beam - ellipse, rectangle
-    BEAM_SHAPE = "ellipse"
-    # Shape of the attenuated beam - circle or rectangle
-    BEAM_APERTURE_SHAPE = "rectangle"
-    # Gaussian description of the beam for raddose
-    BEAM_GAUSS_X = 0.03
-    BEAM_GAUSS_Y = 0.01
-    # Beam center calibration
-    BEAM_CENTER_DATE = "2015-12-07"
-    # Beamcenter equation coefficients (b, m1, m2, m3, m4, m5, m6)
-    BEAM_CENTER_X = (153.94944895756946,
-                     -0.016434436106566495,
-                     3.5990848937868658e-05,
-                     -8.2987834172005917e-08,
-                     1.0732920112697317e-10,
-                     -7.339858946384788e-14,
-                     2.066312749407257e-17)
-    BEAM_CENTER_Y = (158.56546190593907,
-                     0.0057578279496966192,
-                     -3.9726067083100419e-05,
-                     1.1458201832002297e-07,
-                     -1.7875879553926729e-10,
-                     1.4579198435694557e-13,
-                     -4.7910792416525411e-17)
-    BEAM_SETTINGS = {"BEAM_FLUX":BEAM_FLUX,
-                     "BEAM_SIZE_X":BEAM_SIZE_X,
-                     "BEAM_SIZE_Y":BEAM_SIZE_Y,
-                     "BEAM_SHAPE":BEAM_SHAPE,
-                     "BEAM_APERTURE_SHAPE":BEAM_APERTURE_SHAPE,
-                     "BEAM_GAUSS_X":BEAM_GAUSS_X,
-                     "BEAM_GAUSS_Y":BEAM_GAUSS_Y,
-                     "BEAM_CENTER_DATE":BEAM_CENTER_DATE,
-                     "BEAM_CENTER_X":BEAM_CENTER_X,
-                     "BEAM_CENTER_Y":BEAM_CENTER_Y}
-
-    header = read_header(test_image, BEAM_SETTINGS)
-    import pprint
-    pp = pprint.PrettyPrinter()
-    pp.pprint(header)
+    # Execute code
+    main(args=commandline_args)

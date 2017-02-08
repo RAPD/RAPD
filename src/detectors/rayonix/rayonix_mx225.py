@@ -33,15 +33,15 @@ import sys
 import detectors.mar.mar as mar
 
 # Detector information
-DETECTOR = "rayonix_mx300"
+DETECTOR = "rayonix_mx225"
 VENDORTYPE = "MARCCD"
 
 # XDS information
-XDSINP = {"test":"foo"}
+XDSINP = {}
 
 def read_header(image):
     """Read header from rayonix mx300"""
-    return mar.MarReadHeader(image)
+    return mar.read_header(image)
 
 if __name__ == "__main__":
 

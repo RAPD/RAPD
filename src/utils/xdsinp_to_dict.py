@@ -82,7 +82,7 @@ class INP2DICT(object):
 
         print "XDSINP = {"
         for key, val in xds_dict.iteritems():
-            print "    \"%s\": \"%s\"" % (key, str(val))
+            print "    \"%s\": \"%s\"," % (key, str(val))
 
         print "    }"
         # with open(self.xdsdict, "w") as file:

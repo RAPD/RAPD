@@ -28,9 +28,11 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 # Standard imports
+import argparse
 import grp
 import math
 import os
+import pprint
 import pwd
 import sys
 
@@ -353,64 +355,46 @@ def read_header(fullname, beam_settings={}):
     # Return the header
     return header
 
+def get_commandline():
+    """
+    Grabs the commandline
+    """
+
+    print "get_commandline"
+
+    # Parse the commandline arguments
+    commandline_description = "Read header from Rayonix MX300HS"
+    parser = argparse.ArgumentParser(description=commandline_description)
+
+    # File name to be generated
+    parser.add_argument(action="store",
+                        dest="file",
+                        nargs="?",
+                        default=False,
+                        help="Name of file to be read")
+
+    return parser.parse_args()
+
+def main(args):
+    """
+    Read header for test image and print out retrieved data
+    """
+
+    if args.file:
+        test_image = os.path.abspath(args.file)
+    else:
+        raise Exception("No test image input!")
+
+    # Read the header
+    header = read_header(test_image)
+
+    # And print it out
+    pprint.pprint(header)
+
 if __name__ == "__main__":
 
-    if sys.argv[1]:
-        test_image = sys.argv[1]
-    else:
-        test_image = "/Users/frankmurphy/workspace/rapd_github/src/test/sercat_id/t\
-est_data/THAU10_r1_1.0001"
+    # Get the commandline args
+    commandline_args = get_commandline()
 
-    # # Flux of the beam
-    # BEAM_FLUX = 8E11
-    # # Size of the beam in microns
-    # BEAM_SIZE_X = 50
-    # BEAM_SIZE_Y = 20
-    # # Shape of the beam - ellipse, rectangle
-    # BEAM_SHAPE = "ellipse"
-    # # Shape of the attenuated beam - circle or rectangle
-    # BEAM_APERTURE_SHAPE = "rectangle"
-    # # Gaussian description of the beam for raddose
-    # BEAM_GAUSS_X = 0.03
-    # BEAM_GAUSS_Y = 0.01
-    # # Beam center calibration
-    # BEAM_CENTER_DATE = "2015-12-07"
-    # # Beamcenter equation coefficients (b, m1, m2, m3, m4, m5, m6)
-    # BEAM_CENTER_X = (153.94944895756946,
-    #                  -0.016434436106566495,
-    #                  3.5990848937868658e-05,
-    #                  -8.2987834172005917e-08,
-    #                  1.0732920112697317e-10,
-    #                  -7.339858946384788e-14,
-    #                  2.066312749407257e-17)
-    # BEAM_CENTER_Y = (158.56546190593907,
-    #                  0.0057578279496966192,
-    #                  -3.9726067083100419e-05,
-    #                  1.1458201832002297e-07,
-    #                  -1.7875879553926729e-10,
-    #                  1.4579198435694557e-13,
-    #                  -4.7910792416525411e-17)
-    # BEAM_SETTINGS = {"BEAM_FLUX":BEAM_FLUX,
-    #                  "BEAM_SIZE_X":BEAM_SIZE_X,
-    #                  "BEAM_SIZE_Y":BEAM_SIZE_Y,
-    #                  "BEAM_SHAPE":BEAM_SHAPE,
-    #                  "BEAM_APERTURE_SHAPE":BEAM_APERTURE_SHAPE,
-    #                  "BEAM_GAUSS_X":BEAM_GAUSS_X,
-    #                  "BEAM_GAUSS_Y":BEAM_GAUSS_Y,
-    #                  "BEAM_CENTER_DATE":BEAM_CENTER_DATE,
-    #                  "BEAM_CENTER_X":BEAM_CENTER_X,
-    #                  "BEAM_CENTER_Y":BEAM_CENTER_Y}
-
-    header = read_header(test_image)
-    import pprint
-    pp = pprint.PrettyPrinter()
-    pp.pprint(header)
-
-"""
-    print "data root directory:", get_data_root_dir("/raw/ID_16_02_26_NIH_pkwon\
-g/Young/xtal2/t3.0179")
-
-    directory, basename, prefix, run_number, image_number = parse_file_name("/data/ID_NIH_pkwong.raw/Young/xtal2/t3.0179")
-    print directory, basename, prefix, run_number, image_number
-    print create_image_fullname(directory, prefix, run_number, image_number)
-"""
+    # Execute code
+    main(args=commandline_args)

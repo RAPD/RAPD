@@ -211,12 +211,6 @@ def get_commandline():
     commandline_description = "Generate a generic RAPD file"
     parser = argparse.ArgumentParser(description=commandline_description)
 
-    # A True/False flag
-    parser.add_argument("-c", "--commandline",
-                        action="store_true",
-                        dest="commandline",
-                        help="Generate commandline argument parsing")
-
     # File name to be generated
     parser.add_argument(action="store",
                         dest="file",
