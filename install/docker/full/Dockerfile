@@ -7,7 +7,7 @@ MAINTAINER Frank Murphy <fmurphy@anl.gov>
 
 # Needed to build Phenix
 RUN yum -y install wget \
-                   svn \
+                   subversion \
                    git \
                    make \
                    bzip2 \
@@ -17,14 +17,15 @@ RUN yum -y install wget \
                    mesa-libGLU-devel
 
 WORKDIR /opt
-RUN mkdir cctbx
-WORKDIR /opt/cctbx
-RUN wget https://raw.githubusercontent.com/cctbx/cctbx_project/master/libtbx/auto_build/bootstrap.py
-RUN python bootstrap.py --builder=cctbx
+# RUN mkdir cctbx
+# WORKDIR /opt/cctbx
+# RUN wget https://raw.githubusercontent.com/cctbx/cctbx_project/master/libtbx/auto_build/bootstrap.py
+# RUN python bootstrap.py --builder=cctbx
 
 WORKDIR /opt
 RUN git clone -b master https://github.com/RAPD/RAPD.git rapd
-
+WORKDIR /opt/rapd/install
+RUN ./install_cctbx
 
 #RUN rpm --import https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-6 \
 # && rpm -Uvh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm \
