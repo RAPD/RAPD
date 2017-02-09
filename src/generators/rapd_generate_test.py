@@ -1,4 +1,4 @@
-"""This is a docstring for this file"""
+"""Generate a unit testing file for the target python file"""
 
 """
 This file is part of RAPD
@@ -88,4 +88,3 @@ if __name__ == "__main__":
 
     # Execute code
     main(args=commandline_args)
-
