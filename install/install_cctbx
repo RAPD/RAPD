@@ -85,42 +85,42 @@ Installs RAPD v$RAPD_VERSION
     esac
 done
 
-# First test for installed modules
-# if [[ $PLATFORM == "Linux" ]]; then
-#
-#   printf "\033[94mChecking installed packages\033[0m\n"
-#
-#   function isinstalled {
-#     if yum list installed "$@" >/dev/null 2>&1; then
-#       true
-#     else
-#       false
-#     fi
-#   }
-#
-#   error=0
-#   missing_packages=""
-#   for package in epel-release blas-devel lapack-devel atlas-sse3-devel atlas-devel openblas-devel libffi-devel ImageMagick-devel
-#   do
-#     if isinstalled $package; then
-#       echo "  $package installed";
-#     else
-#       echo "  $package not installed";
-#       missing_packages="$missing_packages $package"
-#       error=1
-#     fi
-#   done
-#   if [ $error == 1 ]; then
-#     printf "\033[91mERROR: missing package!\033[0m\n"
-#     printf "The following packages need to be installed: $missing_packages \n"
-#     if [ $SKIP == 0 ]; then
-#       printf "Use the -s option to bypass this\n"
-#       exit 1
-#     fi
-#   fi
-# elif [[ $PLATFORM == "Linux" ]]; then
-#   printf "\033[94mPerforming installation on Mac OS \033[0m\n"
-# fi
+First test for installed modules
+if [[ $PLATFORM == "Linux" ]]; then
+
+  printf "\033[94mChecking installed packages\033[0m\n"
+
+  function isinstalled {
+    if yum list installed "$@" >/dev/null 2>&1; then
+      true
+    else
+      false
+    fi
+  }
+
+  error=0
+  missing_packages=""
+  for package in wget svn git make bzip2 openssl-devel gcc-c++ mesa-libGL-devel mesa-libGLU-devel
+  do
+    if isinstalled $package; then
+      echo "  $package installed";
+    else
+      echo "  $package not installed";
+      missing_packages="$missing_packages $package"
+      error=1
+    fi
+  done
+  if [ $error == 1 ]; then
+    printf "\033[91mERROR: missing package!\033[0m\n"
+    printf "The following packages need to be installed: $missing_packages \n"
+    if [ $SKIP == 0 ]; then
+      printf "Use the -s option to bypass this\n"
+      exit 1
+    fi
+  fi
+elif [[ $PLATFORM == "Darwin" ]]; then
+  printf "\033[94mPerforming installation on Mac OS \033[0m\n"
+fi
 
 if [[ $BATCH == 0 ]] # interactive mode
 then
@@ -146,9 +146,6 @@ $PREFIX
               ;;
       esac
   fi
-  CONDATAG="-c"
-else
-  CONDATAG="-yc"
 fi # ! BATCH
 
 # Check for directory already existing
@@ -183,7 +180,7 @@ if [ $INSTALL_CCTBX == 1 ]; then
 
     # CCTBX_PREFIX_SRC=$SRC_DIR"/cctbx"
     CCTBX_PREFIX_TGT=$PREFIX"/share/cctbx"
-    mkdir $CCTBX_PREFIX_TGT
+    mkdir -p $CCTBX_PREFIX_TGT
     cd $CCTBX_PREFIX_TGT
 
     # Get the bootstrap installer
