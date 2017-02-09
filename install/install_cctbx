@@ -191,6 +191,7 @@ if [ $INSTALL_CCTBX == 1 ]; then
 
     # Install CCTBX
     python bootstrap.py --builder=cctbx
+  fi
 
   #
   #   if [[ $PLATFORM == "Darwin" ]]; then
