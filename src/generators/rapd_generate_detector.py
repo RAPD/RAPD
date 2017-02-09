@@ -79,11 +79,9 @@ class DetectorFileGenerator(CommandlineFileGenerator):
             "    if args.file:",
             "        test_image = os.path.abspath(args.file)",
             "    else:",
-            "        raise Error(\"No test image input!\")",
+            "        raise Exception(\"No test image input!\")",
             "        # test_image = \"\"\n",
-            "    # Read the header",
             "    header = read_header(test_image)\n",
-            "    # And print it out",
             "    pprint.pprint(header)\n"]
 
         super(DetectorFileGenerator, self).write_main_func(main_func_lines=main_func_lines)
@@ -287,7 +285,6 @@ def main():
     the commandline
     """
 
-    # Get the commandline args
     commandline_args = get_commandline()
 
     print commandline_args
