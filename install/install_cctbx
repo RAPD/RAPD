@@ -17,9 +17,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-__created__="2016-01-10"
-__maintainer__="Jon Schuermann"
-__email__="schuerjp@anl.gov"
+__created__="2017-02-09"
+__maintainer__="Frank Murphy"
+__email__="fmurphy@anl.gov"
 __status__="Development"
 
 THIS_DIR=$(cd $(dirname $0); pwd)
@@ -32,6 +32,7 @@ BATCH=0
 SKIP=0
 FORCE=0
 OVERWRITE=0
+SCRIPTS=0
 PLATFORM=$(uname -s)
 INSTALL_CCTBX=1
 PHENIX_VERSION="1.11.1-2575"
@@ -46,19 +47,23 @@ while getopts "bfshcvop:" x; do
 Installs RAPD v$RAPD_VERSION
 
     -f           no error if install prefix already exists
-    -s           skip module installation
+    -m           skip module installation
     -b           batch mode
     -h           print this help message and exit
     -p PREFIX    install prefix, defaults to $PREFIX
     -o           overwrite cctbx
     -c           cleanup
+
+    Install or reinstall
+    -s           scripts in bin dir
+
 "
             exit 2
             ;;
         b)
             BATCH=1
             ;;
-        s)
+        m)
             SKIP=1
             ;;
         f)
@@ -77,6 +82,10 @@ Installs RAPD v$RAPD_VERSION
             rm -rf phenix/phenix*
             printf "Finished.\n"
             exit 0
+            ;;
+        s)
+            SCRIPTS=1
+            INSTALL_CCTBX=0
             ;;
         ?)
             printf "\033[91mError: did not recognize option, please try -h\033[0m\n"
@@ -149,11 +158,11 @@ $PREFIX
 fi # ! BATCH
 
 # Check for directory already existing
-if [[ ($FORCE == 0) && (-e $PREFIX/share ) ]]; then
-    printf "\033[91mERROR: It appears installation has already been performed in the directory: $PREFIX\n" >&2
-    printf "Use -f option to override\033[0m\n" >&2
-    exit 1
-fi
+# if [[ ($FORCE == 0) && (-e $PREFIX/share ) ]]; then
+#     printf "\033[91mERROR: It appears installation has already been performed in the directory: $PREFIX\n" >&2
+#     printf "Use -f option to override\033[0m\n" >&2
+#     exit 1
+# fi
 
 # Make the new directory
 mkdir -p $PREFIX
@@ -194,8 +203,10 @@ fi
 # Set up rapd
 # Create the bin directory
 BINDIR=$PREFIX"/bin"
-if [ ! -d $BINDIR ]
+if [ -d $BINDIR ]
 then
+  rm -f $BINDIR"/*"
+else
   mkdir $BINDIR
 fi
 

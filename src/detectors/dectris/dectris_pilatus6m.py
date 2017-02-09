@@ -1,3 +1,5 @@
+"""Detector description for Dectris Pilatus 6M"""
+
 """
 This file is part of RAPD
 
