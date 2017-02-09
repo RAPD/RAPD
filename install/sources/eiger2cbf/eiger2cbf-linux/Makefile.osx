@@ -1,0 +1,20 @@
+CBFLIB=/Users/harry/CBFlib/CBFlib-0.9.5/lib
+CBFINC=/Users/harry/CBFlib/CBFlib-0.9.5/include
+HDF5LIB=/Users/harry/CBFlib/CBFlib-0.9.5/lib
+CC=/usr/local/bin/gcc -O3
+# CC=/usr/bin/clang -O3
+all:	
+	${CC} -std=c99 -o minicbf -g \
+	-I${CBFINC} \
+	-L${CBFLIB} -Ilz4 \
+	eiger2cbf.c \
+	lz4/lz4.c lz4/h5zlz4.c \
+	bitshuffle/bshuf_h5filter.c \
+	bitshuffle/bshuf_h5plugin.c \
+	bitshuffle/bitshuffle.c \
+	${HDF5LIB}/libhdf5_hl.a \
+	${HDF5LIB}/libhdf5.a \
+	-lcbf -lm -lpthread -lz -ldl
+
+clean: 
+	rm -f *.o minicbf

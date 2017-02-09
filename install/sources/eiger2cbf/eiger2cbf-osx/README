@@ -1,0 +1,130 @@
+                         EIGER2CBF
+
+This is an utility to extract individual images out of an HDF5
+container as used by Dectris Eiger detectors. The images are written
+to individual mini-CBF files which are similar to those written by
+Dectris Pilatus. 
+Program written by Takanori Nakane
+
+The build on both Mac OSX and Linux requires a recent version of
+CBFlib (at least 0.9.5) to have been built; source can be obtained from 
+
+	http://www.bernstein-plus-sons.com/software/CBF/
+
+The build also requires gcc to be installed (clang will work on a Mac,
+and the Intel compilers also work, but both of these complain while
+building. As with most complaints, they can be safely ignored).
+
+The Makefile in this directory is for Linux; it references files in my
+workspace. A second file, Makefile.osx is provided for use on Macs and
+differs only in the locations of the C compiler and CBFlib files.
+
+On Linux:
+
+	make clean
+	make
+
+produces a statically linked executable called "eiger2cbf"
+
+On OSX:
+
+	make clean
+	make -f Makefile.osx
+
+produces a statically linked executable called "eiger2cbf"
+===========================================================================
+
+Running eiger2cbf
+=================
+You shouldn't need more documentation than you get from running the
+program (but a complete example is also below) e.g. - 
+
+> ./eiger2cbf
+EIGER HDF5 to CBF converter (version 160415)
+ Written by Takanori Nakane
+
+Usage:
+  ./eiger2cbf filename.h5           -- get number of frames
+  ./eiger2cbf filename.h5 N out.cbf -- write N-th frame to out.cbf
+  ./eiger2cbf filename.h5 N         -- write N-th frame to STDOUT
+  ./eiger2cbf filename.h5 N:M   out -- write N to M-th frames to outNNNNNN.cbf
+  N is 1-indexed. The file should be "master" h5.
+
+
+Example:
+========
+A data collection produces the following list of hdf5 files:
+
+thaumatin17_2_1_data_000001.h5
+thaumatin17_2_1_data_000001.h5
+thaumatin17_2_1_data_000001.h5
+thaumatin17_2_1_data_000001.h5
+thaumatin17_2_1_data_000001.h5
+thaumatin17_2_1_master.h5
+
+Running eiger2cbf on the master file will give the number of images (500):
+
+========================== Terminal window listing ========================
+>./eiger2cbf thaumatin17_2_1_master.h5
+EIGER HDF5 to CBF converter (version 160415)
+ written by Takanori Nakane
+ see https://github.com/biochem-fan/eiger2cbf for details.
+
+500
+========================== End of listing =================================
+
+Then run again specifying the images (all in this case) to be
+extracted.  The metadata will be listed and then every cbf file
+produced. 
+The cbf filenames will be thaumatin_000001.cbf, thaumatin_000002.cbf etc
+
+========================== Terminal window listing ========================
+>./eiger2cbf thaumatin17_2_1_master.h5 1:500 thaumatin_
+EIGER HDF5 to CBF converter (version 160415)
+ written by Takanori Nakane
+ see https://github.com/biochem-fan/eiger2cbf for details.
+
+Going to convert frame 1 to 500.
+Metadata in HDF5:
+ /entry/instrument/detector/description = Dectris Eiger 4M
+ /entry/instrument/detector/detector_number = E-08-0104
+ /entry/instrument/detector/detectorSpecific/software_version = 1.6.1
+ /entry/instrument/detector/bit_depth_image = 32
+  /entry/instrument/detector/detectorSpecific/saturation_value not present. Trying another place.
+ /entry/instrument/detector/detectorSpecific/countrate_correction_count_cutoff = 75532
+ /entry/instrument/detector/sensor_thickness = 449.999992 (um)
+ /entry/instrument/detector/detectorSpecific/{x,y}_pixels_in_detector = (2070, 2167) (px)
+ /entry/instrument/detector/beam_center_{x,y} = (1021, 1083) (px)
+ /entry/instrument/detector/count_time = 0.030000 (sec)
+ /entry/instrument/detector/frame_time = 0.030010 (sec)
+ /entry/instrument/detector/x_pixel_size = 0.000075 (m)
+  /entry/instrument/detector/distance not present. Trying another place.
+ /entry/instrument/detector/detector_distance = 0.108588 (m)
+  /entry/sample/beam/incident_wavelength not present. Trying another place.
+  /entry/instrument/beam/wavelength not present. Trying another place.
+  /entry/instrument/monochromator/wavelength not present. Trying another place.
+ /entry/instrument/beam/incident_wavelength = 0.967700 (A)
+ /entry/sample/goniometer/omega_range_average = 0.200000 (deg)
+
+This dataset starts from data_000001.
+The number of images per data block is 100.
+
+File analysis completed.
+
+Converting frame 1 (1 / 500)
+ /entry/sample/goniometer/omega[1] = 123.000 (1-indexed)
+Converting frame 2 (2 / 500)
+ /entry/sample/goniometer/omega[2] = 123.200 (1-indexed)
+etc
+etc
+========================== End of listing =================================
+
+
+Harry Powell 9th March 2016
+Updated Andrew Leslie 17th May 2016
+
+
+
+
+
+
