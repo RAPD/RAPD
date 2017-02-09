@@ -32,28 +32,33 @@ BATCH=0
 SKIP=0
 FORCE=0
 OVERWRITE=0
-SCRIPTS=0
-PLATFORM=$(uname -s)
 INSTALL_CCTBX=1
+INSTALL_SCRIPTS=1
+INSTALL_INIT=1
+INSTALL_PYTHON=1
+PLATFORM=$(uname -s)
 
 # Handle command line
-while getopts "bfshcvop:" x; do
+while getopts "bcfhiop:sty" x; do
     case "$x" in
         h)
             echo "usage: $0 [options]
 
 Installs RAPD v$RAPD_VERSION
 
-    -f           no error if install prefix already exists
-    -m           skip module installation
     -b           batch mode
-    -h           print this help message and exit
-    -p PREFIX    install prefix, defaults to $PREFIX
-    -o           overwrite cctbx
     -c           cleanup
+    -f           no error if install prefix already exists
+    -h           print this help message and exit
+    -m           skip installed modules query
+    -o           overwrite cctbx
+    -p PREFIX    install prefix, defaults to $PREFIX
 
     Install or reinstall
-    -s           scripts in bin dir
+    -t           cctbx
+    -i           initialization scripts
+    -y           RAPD python
+    -s           scripts
 
 "
             exit 2
@@ -81,9 +86,30 @@ Installs RAPD v$RAPD_VERSION
             printf "Finished.\n"
             exit 0
             ;;
-        s)
-            SCRIPTS=1
+
+        t)
+            INSTALL_CCTBX=1
+            INSTALL_INIT=0
+            INSTALL_PYTHON=0
+            INSTALL_SCRIPTS=0
+            ;;
+        i)
             INSTALL_CCTBX=0
+            INSTALL_INIT=1
+            INSTALL_PYTHON=0
+            INSTALL_SCRIPTS=0
+            ;;
+        y)
+            INSTALL_CCTBX=0
+            INSTALL_INIT=0
+            INSTALL_PYTHON=1
+            INSTALL_SCRIPTS=0
+            ;;
+        s)
+            INSTALL_CCTBX=0
+            INSTALL_INIT=0
+            INSTALL_PYTHON=0
+            INSTALL_SCRIPTS=1
             ;;
         ?)
             printf "\033[91mError: did not recognize option, please try -h\033[0m\n"
@@ -156,25 +182,21 @@ $PREFIX
 fi # ! BATCH
 
 # Check for directory already existing
-# if [[ ($FORCE == 0) && (-e $PREFIX/share ) ]]; then
-#     printf "\033[91mERROR: It appears installation has already been performed in the directory: $PREFIX\n" >&2
-#     printf "Use -f option to override\033[0m\n" >&2
-#     exit 1
-# fi
-
-# Make the new directory
-mkdir -p $PREFIX
-if (( $? )); then
-    echo "ERROR: Could not create directory: $PREFIX" >&2
+if [[ ($FORCE == 0) && (-e $PREFIX/share) ]]; then
+    printf "\033[91mERROR: It appears installation has already been performed in the directory: $PREFIX\n" >&2
+    printf "Use -f option to override\033[0m\n" >&2
     exit 1
 fi
-PREFIX=$(cd $PREFIX; pwd)
 
-# If installing in non-source directory, copy over src directory
-if [ $THIS_DIR != $PREFIX/install ]; then
-  printf "\n\033[94mCopying src files\033[0m\n"
-  rsync -a --exclude "*.tar*" ../src $PREFIX/.
+# Make the new directory
+if [ ! -e $PREFIX ]; then
+  mkdir -p $PREFIX
+  if (( $? )); then
+      echo "ERROR: Could not create directory: $PREFIX" >&2
+      exit 1
+  fi
 fi
+PREFIX=$(cd $PREFIX; pwd)
 
 if [ $INSTALL_CCTBX == 1 ]; then
 
@@ -191,151 +213,188 @@ if [ $INSTALL_CCTBX == 1 ]; then
     cd $CCTBX_PREFIX_TGT
 
     # Get the bootstrap installer
-    wget https://raw.githubusercontent.com/cctbx/cctbx_project/master/libtbx/auto_build/bootstrap.py
+    printf "  Downloading CCTBX bootstrap script"
+    # wget https://raw.githubusercontent.com/cctbx/cctbx_project/master/libtbx/auto_build/bootstrap.py
 
     # Install CCTBX
-    python bootstrap.py --builder=cctbx
+    printf "  Installing CCTBX"
+    # python bootstrap.py --builder=cctbx
   fi
+
+  printf "\033[92mCCTBX install complete.\033[0m\n"
 fi
 
-# Set up rapd
-# Create the bin directory
-BINDIR=$PREFIX"/bin"
-if [ -d $BINDIR ]
-then
-  rm -f $BINDIR"/*"
-else
-  mkdir $BINDIR
+if [ $INSTALL_INIT == 1 ]; then
+  printf "\n\033[94mInstalling initialization scripts \033[0m\n"
+
+  # Create the rapd.shrc script
+  printf "  Creating rapd.shrc\n"
+  cd $PREFIX
+  if [[ -e $PREFIX"/rapd.shrc" ]]; then
+    rm $PREFIX"/rapd.shrc"
+  fi
+  echo "# $PREFIX/rapd.shrc -- bash initialization script for RAPD2" > rapd.shrc
+  echo "#" >> rapd.shrc
+  echo "# (c) Copyright 2009-2017, Cornell University" >> rapd.shrc
+  echo "" >> rapd.shrc
+  echo "# THIS IS AN AUTOMATICALLY GENERATED FILE." > rapd.shrc
+  echo "# DO NOT EDIT UNLESS YOU REALLY KNOW WHAT YOU ARE DOING." >> rapd.shrc
+  echo "" >> rapd.shrc
+  echo "# Setup paths for cctbx" >> rapd.shrc
+  echo "source $PREFIX/share/cctbx/build/setpaths.sh" >> rapd.shrc
+  echo "" >> rapd.shrc
+  echo "# Add rapd bin to the path" >> rapd.shrc
+  echo "PATH=$BINDIR:\$PATH" >> rapd.shrc
+  echo "export PATH" >> rapd.shrc
+  echo "# Set environmental variable" >> rapd.shrc
+  echo "RAPD_HOME=$PREFIX" >> rapd.shrc
+  echo "export RAPD_HOME" >> rapd.shrc
+  echo "" >> rapd.shrc
+  echo "echo '==================================================='" >> rapd.shrc
+  echo "echo '                    RAPD v$RAPD_VERSION            '" >> rapd.shrc
+  echo "echo '==================================================='" >> rapd.shrc
+  echo "echo ' Thanks for using RAPD. Please visit RAPD on github'" >> rapd.shrc
+  echo "echo ' at https://github.com/RAPD/rapd  Enjoy.'           " >> rapd.shrc
+  echo "echo '==================================================='" >> rapd.shrc
+  echo "echo''" >> rapd.shrc
+
+  # Create the rapd.shrc script
+  printf "  Creating rapd.cshrc\n"
+  cd $PREFIX
+  if [[ -e $PREFIX"/rapd.cshrc" ]]; then
+    rm $PREFIX"/rapd.cshrc"
+  fi
+  echo "# $PREFIX/rapd.cshrc -- bash initialization script for RAPD2" > rapd.cshrc
+  echo "#" >> rapd.cshrc
+  echo "# (c) Copyright 2009-2017, Cornell University" >> rapd.cshrc
+  echo "" >> rapd.cshrc
+  echo "# THIS IS AN AUTOMATICALLY GENERATED FILE." > rapd.cshrc
+  echo "# DO NOT EDIT UNLESS YOU REALLY KNOW WHAT YOU ARE DOING." >> rapd.cshrc
+  echo "" >> rapd.cshrc
+  echo "# Setup paths for cctbx" >> rapd.cshrc
+  echo "source $PREFIX/share/cctbx/build/setpaths.csh" >> rapd.cshrc
+  echo "" >> rapd.cshrc
+  echo "# Add rapd bin to the path" >> rapd.cshrc
+  echo "setenv PATH $BINDIR:\$PATH" >> rapd.cshrc
+  echo "# Set environmental variable" >> rapd.cshrc
+  echo "setenv RAPD_HOME $PREFIX" >> rapd.cshrc
+  echo "" >> rapd.cshrc
+  echo "echo '==================================================='" >> rapd.cshrc
+  echo "echo '                    RAPD v$RAPD_VERSION            '" >> rapd.cshrc
+  echo "echo '==================================================='" >> rapd.cshrc
+  echo "echo ' Thanks for using RAPD. Please visit RAPD on github'" >> rapd.cshrc
+  echo "echo ' at https://github.com/RAPD/rapd  Enjoy.'           " >> rapd.cshrc
+  echo "echo '==================================================='" >> rapd.cshrc
+  echo "echo''" >> rapd.cshrc
+
+  printf "\033[92mRAPD initialization scripts install complete.\033[0m\n"
 fi
 
-printf "\n\033[94mInstalling rapd executables\033[0m\n"
+if [ $INSTALL_PYTHON == 1 ]; then
+  printf "\n\033[94mInstalling rapd.python \033[0m\n"
 
-# Create a script for calling rapd.python
-SAFE_PREFIX=$(echo "$PREFIX" | sed -e 's/\//\\\//g')
+  # Create the bin directory
+  BINDIR=$PREFIX"/bin"
+  if [ ! -d $BINDIR ]; then
+    mkdir $BINDIR
+  fi
 
-cd $BINDIR
-printf "rapd.python\n"
- sed -e 's/LIBTBX_DISPATCHER_NAME="cctbx.python"/LIBTBX_DISPATCHER_NAME="rapd.python"/' \
-     -e "s/LIBTBX_BUILD=.*/LIBTBX_BUILD=$SAFE_PREFIX\/share\/cctbx\/build/" \
-     -e "s%  PYTHONPATH\=\"\$LIBTBX_BUILD%  PYTHONPATH\=\"$SAFE_PREFIX\/src\:\$LIBTBX_BUILD%" \
-     $PREFIX/share/cctbx/build/bin/cctbx.python > ./rapd.python
-chmod +x ./rapd.python
+  # Create a script for calling rapd.python
+  SAFE_PREFIX=$(echo "$PREFIX" | sed -e 's/\//\\\//g')
 
-# Create scripts
-RAPD_HOME=$PREFIX
-export RAPD_HOME
-cd $THIS_DIR
-./create_min_scripts.sh
-./create_scripts.sh
+  cd $BINDIR
+  printf "  Creating rapd.python\n"
+   sed -e 's/LIBTBX_DISPATCHER_NAME="cctbx.python"/LIBTBX_DISPATCHER_NAME="rapd.python"/' \
+       -e "s/LIBTBX_BUILD=.*/LIBTBX_BUILD=$SAFE_PREFIX\/share\/cctbx\/build/" \
+       -e "s%  PYTHONPATH\=\"\$LIBTBX_BUILD%  PYTHONPATH\=\"$SAFE_PREFIX\/src\:\$LIBTBX_BUILD%" \
+       $PREFIX/share/cctbx/build/bin/cctbx.python > ./rapd.python
+  chmod +x ./rapd.python
 
-# Create the rapd.shrc script
-printf "Writing rapd.shrc\n"
-cd $PREFIX
-echo "# $PREFIX/rapd.shrc -- bash initialization script for RAPD2" > rapd.shrc
-echo "#" >> rapd.shrc
-echo "# (c) Copyright 2009-2017, Cornell University" >> rapd.shrc
-echo "" >> rapd.shrc
-echo "# THIS IS AN AUTOMATICALLY GENERATED FILE." > rapd.shrc
-echo "# DO NOT EDIT UNLESS YOU REALLY KNOW WHAT YOU ARE DOING." >> rapd.shrc
-echo "" >> rapd.shrc
-echo "# Setup paths for cctbx" >> rapd.shrc
-echo "source $PREFIX/share/cctbx/build/setpaths.sh" >> rapd.shrc
-echo "" >> rapd.shrc
-echo "# Add rapd bin to the path" >> rapd.shrc
-echo "PATH=$BINDIR:\$PATH" >> rapd.shrc
-echo "export PATH" >> rapd.shrc
-echo "# Set environmental variable"
-echo "RAPD_HOME=$PREFIX" >> rapd.shrc
-echo "export RAPD_HOME" >> rapd.shrc
-echo "" >> rapd.shrc
-echo "echo '==================================================='" >> rapd.shrc
-echo "echo '                    RAPD v$RAPD_VERSION            '" >> rapd.shrc
-echo "echo '==================================================='" >> rapd.shrc
-echo "echo ' Thanks for using RAPD. Please visit RAPD on github'" >> rapd.shrc
-echo "echo ' at https://github.com/RAPD/rapd  Enjoy.'           " >> rapd.shrc
-echo "echo '==================================================='" >> rapd.shrc
-echo "echo''" >> rapd.shrc
+  export PYTHONPATH=""
+  source $PREFIX/rapd.shrc > /dev/null
+  cd $SRC_DIR/python
 
-# Create the rapd.shrc script
-printf "Wrting rapd.cshrc\n"
-cd $PREFIX
-echo "# $PREFIX/rapd.cshrc -- bash initialization script for RAPD2" > rapd.cshrc
-echo "#" >> rapd.cshrc
-echo "# (c) Copyright 2009-2017, Cornell University" >> rapd.cshrc
-echo "" >> rapd.cshrc
-echo "# THIS IS AN AUTOMATICALLY GENERATED FILE." > rapd.cshrc
-echo "# DO NOT EDIT UNLESS YOU REALLY KNOW WHAT YOU ARE DOING." >> rapd.cshrc
-echo "" >> rapd.cshrc
-echo "# Setup paths for cctbx" >> rapd.cshrc
-echo "source $PREFIX/share/cctbx/build/setpaths.csh" >> rapd.cshrc
-echo "" >> rapd.cshrc
-echo "# Add rapd bin to the path" >> rapd.cshrc
-echo "setenv PATH $BINDIR:\$PATH" >> rapd.cshrc
-echo "# Set environmental variable"
-echo "setenv RAPD_HOME $PREFIX" >> rapd.cshrc
-echo "" >> rapd.cshrc
-echo "echo '==================================================='" >> rapd.cshrc
-echo "echo '                    RAPD v$RAPD_VERSION            '" >> rapd.cshrc
-echo "echo '==================================================='" >> rapd.cshrc
-echo "echo ' Thanks for using RAPD. Please visit RAPD on github'" >> rapd.cshrc
-echo "echo ' at https://github.com/RAPD/rapd  Enjoy.'           " >> rapd.cshrc
-echo "echo '==================================================='" >> rapd.cshrc
-echo "echo''" >> rapd.cshrc
+  printf "  Installing pip"
 
+  # Remove pip if there
+  if [[ $PLATFORM == "Darwin" ]]; then
+    rm $PREFIX/share/cctbx/build/bin/cctbx.pip
+    rm $PREFIX/bin/rapd.pip
+    rm $PREFIX/share/cctbx/base/Python.framework/Versions/2.7/bin/pip
+  elif [[ $PLATFORM == "Linux" ]]; then
+    rm $PREFIX/share/cctbx/build/bin/cctbx.pip
+    rm $PREFIX/bin/rapd.pip
+    rm $PREFIX/share/cctbx/base/bin/pip
+  fi
 
-printf "\n\033[94mInstalling Python modules\033[0m\n"
-echo $PYTHONPATH
-export PYTHONPATH=""
-source $PREFIX/rapd.shrc
-cd $SRC_DIR/python
+  # Install pip
+  rapd.python get-pip.py --force-reinstall
 
-# Install pip
-rapd.python get-pip.py
-if [[ $PLATFORM == "Darwin" ]]; then
+  # Make useful links
+  if [[ $PLATFORM == "Darwin" ]]; then
+    ln -s  $PREFIX/share/cctbx/base/Python.framework/Versions/2.7/bin/pip $PREFIX/share/cctbx/build/bin/cctbx.pip
+    ln -s  $PREFIX/share/cctbx/base/Python.framework/Versions/2.7/bin/pip $PREFIX/bin/rapd.pip
+  elif [[ $PLATFORM == "Linux" ]]; then
+    ln -s  $PREFIX/share/cctbx/base/bin/pip $PREFIX/share/cctbx/build/bin/cctbx.pip
+    ln -s  $PREFIX/share/cctbx/base/bin/pip $PREFIX/bin/rapd.pip
+  fi
 
-  ln -s  $PREFIX/share/cctbx/base/Python.framework/Versions/2.7/bin/pip $PREFIX/share/cctbx/build/bin/cctbx.pip
-  ln -s  $PREFIX/share/cctbx/base/Python.framework/Versions/2.7/bin/pip $PREFIX/bin/rapd.pip
+  # Modules
+  printf "  Installing python modules needed by RAPD"
+  rapd.pip install crypto
+  if [[ $PLATFORM == "Darwin" ]]; then
+    rapd.pip install pyopenssl
+  fi
+  rapd.pip install pycrypto
+  rapd.pip install ndg-httpsclient #includes pyopenssl, cffi, and cryptography
+  rapd.pip install pyasn1
+  rapd.pip install redis
+  rapd.pip install pymysql
+  rapd.pip install pymongo
+  rapd.pip install drmaa
+  rapd.pip install paramiko
+  rapd.pip install fabio
+  rapd.pip install hcluster
 
-elif [[ $PLATFORM == "Linux" ]]; then
+  printf "\033[92mRAPD python install complete.\033[0m\n"
+fi
 
-  ln -s  $PREFIX/share/cctbx/base/bin/pip $PREFIX/share/cctbx/build/bin/cctbx.pip
-  ln -s  $PREFIX/share/cctbx/base/bin/pip $PREFIX/bin/rapd.pip
+if [ $INSTALL_SCRIPTS == 1 ]; then
+  printf "\n\033[94mInstalling RAPD executable scripts\033[0m\n"
+
+  # Create the bin directory
+  BINDIR=$PREFIX"/bin"
+  if [ ! -d $BINDIR ]
+  then
+    mkdir $BINDIR
+  fi
+
+  # Create scripts
+  RAPD_HOME=$PREFIX
+  export RAPD_HOME
+  cd $THIS_DIR
+  ./create_min_scripts.sh
+  ./create_scripts.sh
+
+  printf "\033[92mRAPD executable scripts install complete.\033[0m\n"
+fi
+
+if [ $INSTALL_INIT == 1 ]; then
+
+  printf "\n=====================================================================\n"
+  printf "=  To initialize RAPD \n"
+  printf "= \n"
+  printf "=  sh and bash users: \n"
+  printf "=    source $PREFIX/rapd.shrc \n"
+  printf "=  You may want to add this line to your .profile or .bashrc file \n"
+  printf "= \n"
+  printf "=  csh and tcsh users: \n"
+  printf "=    source $PREFIX/rapd.cshrc \n"
+  printf "=  You may want to add this line to your .cshrc file. \n"
+  printf "=====================================================================\n"
 
 fi
 
-# Modules
-echo $PYTHONPATH
-rapd.pip install crypto
-if [[ $PLATFORM == "Darwin" ]]; then
-  rapd.pip install pyopenssl
-fi
-rapd.pip install pycrypto
-rapd.pip install ndg-httpsclient #includes pyopenssl, cffi, and cryptography
-rapd.pip install pyasn1
-rapd.pip install redis
-rapd.pip install pymysql
-rapd.pip install pymongo
-rapd.pip install drmaa
-rapd.pip install paramiko
-rapd.pip install fabio
-rapd.pip install hcluster
-
-printf "\033[92mPython modules install complete.\033[0m\n\n"
-
-
-
-printf "\033[92mRAPD installation is complete\033[0m\n\n"
-
-printf "=====================================================================\n"
-printf "=  INITIALIZING RAPD \n"
-printf "= \n"
-printf "=  sh and bash users: \n"
-printf "=    source $PREFIX/rapd.shrc \n"
-printf "=  You may want to add this line to your .profile or .bashrc file \n"
-printf "= \n"
-printf "=  csh and tcsh users: \n"
-printf "=    source $PREFIX/rapd.cshrc \n"
-printf "=  You may want to add this line to your .cshrc file. \n"
-printf "=====================================================================\n"
+printf "\n\033[92mRAPD installation is complete\033[0m\n\n"
 
 exit 0

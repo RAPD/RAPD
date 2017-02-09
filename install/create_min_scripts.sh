@@ -33,17 +33,17 @@ if [ "$RAPD_HOME" != "" ]; then
 
   # Generate a basefile scaffold
   echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.generate_basefile
-  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/generators\/generate_basefile.py \"\$@\"" >>$RAPD_HOME/bin/rapd.generate_basefile
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/generators\/rapd_generate_basefile.py \"\$@\"" >>$RAPD_HOME/bin/rapd.generate_basefile
   chmod +x $RAPD_HOME/bin/rapd.generate_basefile
 
   # Generate a new detector scaffold
   echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.generate_detector
-  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/generators\/generate_detector.py \"\$@\"" >>$RAPD_HOME/bin/rapd.generate_detector
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/generators\/rapd_generate_detector.py \"\$@\"" >>$RAPD_HOME/bin/rapd.generate_detector
   chmod +x $RAPD_HOME/bin/rapd.generate_detector
 
   # Generate a new test
   echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.generate_test
-  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/generators\/generate_test.py \"\$@\"" >>$RAPD_HOME/bin/rapd.generate_test
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/generators\/rapd_generate_test.py \"\$@\"" >>$RAPD_HOME/bin/rapd.generate_test
   chmod +x $RAPD_HOME/bin/rapd.generate_test
 
   # Read an XDS input file and make a RAPD XDSINP dict
