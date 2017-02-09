@@ -228,6 +228,7 @@ if [ $INSTALL_INIT == 1 ]; then
   printf "\n\033[94mInstalling initialization scripts \033[0m\n"
 
   # Create the rapd.shrc script
+  BINDIR=$PREFIX"/bin"
   printf "  Creating rapd.shrc\n"
   cd $PREFIX
   if [[ -e $PREFIX"/rapd.shrc" ]]; then
