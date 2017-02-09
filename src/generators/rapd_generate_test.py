@@ -108,7 +108,7 @@ class TestFileGenerator(CommandlineFileGenerator):
 
         test_lines = [
             "class ExampleTestCase(unittest.TestCase):",
-            "    \"\"\"Example test fixture\"\"\"\n",
+            "    \"\"\"Example test fixture with setUp and tearDown\"\"\"\n",
             "    def setUp(self):",
             "        \"\"\"Set up the test fixture\"\"\"\n",
             "        self.widget = Widget('The widget')",
@@ -126,7 +126,18 @@ class TestFileGenerator(CommandlineFileGenerator):
             "        self.widget.resize(100,150)",
             "        self.assertEqual(self.widget.size(), (100,150),",
             "                         'wrong size after resize')",
-            "        ",
+            "",
+            "class ExampleTestCaseLight(unittest.TestCase):",
+            "    \"\"\"Example test fixture WITHOUT setUp and tearDown\"\"\"\n",
+            "    def test_default_size(self):",
+            "        self.assertEqual(self.widget.size(), (50,50),",
+            "                         'incorrect default size')",
+            "",
+            "    def test_resize(self):",
+            "        self.widget.resize(100,150)",
+            "        self.assertEqual(self.widget.size(), (100,150),",
+            "                         'wrong size after resize')",
+            "",
         ]
 
         self.output_function(test_lines)
@@ -142,13 +153,7 @@ class TestFileGenerator(CommandlineFileGenerator):
             "    the commandline",
             "    \"\"\"\n",
             "    print \"main\"\n",
-            "    if args.file:",
-            "        test_image = os.path.abspath(args.file)",
-            "    else:",
-            "        raise Exception(\"No test image input!\")",
-            "        # test_image = \"\"\n",
-            "    header = read_header(test_image)\n",
-            "    pprint.pprint(header)\n"]
+            "    unittest.main()\n"]
 
         super(TestFileGenerator, self).write_main_func(main_func_lines=main_func_lines)
 

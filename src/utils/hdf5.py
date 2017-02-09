@@ -46,6 +46,10 @@ __status__ = "Development"
 # import detectors.detector_utils as detector_utils
 # import utils
 
+VERSIONS = {
+    "eiger2cbf": ("160415",)
+}
+
 def convert_hdf5_cbf(inp,
                      odir=False,
                      prefix=False,
