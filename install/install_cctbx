@@ -35,8 +35,6 @@ OVERWRITE=0
 SCRIPTS=0
 PLATFORM=$(uname -s)
 INSTALL_CCTBX=1
-PHENIX_VERSION="1.11.1-2575"
-PHENIX_INSTALLER_DIR=""
 
 # Handle command line
 while getopts "bfshcvop:" x; do
@@ -109,7 +107,7 @@ if [[ $PLATFORM == "Linux" ]]; then
 
   error=0
   missing_packages=""
-  for package in wget svn git make bzip2 openssl-devel gcc-c++ mesa-libGL-devel mesa-libGLU-devel
+  for package in wget subversion git make bzip2 openssl-devel gcc-c++ mesa-libGL-devel mesa-libGLU-devel
   do
     if isinstalled $package; then
       echo "  $package installed";
