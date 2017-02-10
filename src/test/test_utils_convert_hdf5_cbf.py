@@ -46,7 +46,7 @@ import unittest
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
-import utils.hdf5 as hdf5
+import utils.convert_hdf5_cbf as convert_hdf5_cbf
 
 # class ExampleTestCase(unittest.TestCase):
 #     """Example test fixture with setUp and tearDown"""
@@ -89,7 +89,7 @@ class ExampleTestCaseLight(unittest.TestCase):
         stdout, stderr = p.communicate()
 
         found = False
-        for version in hdf5.VERSIONS["eiger2cbf"]:
+        for version in convert_hdf5_cbf.VERSIONS["eiger2cbf"]:
             if version in stderr:
                 found = True
                 break

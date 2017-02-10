@@ -25,62 +25,53 @@ __email__ = "schuerjp@anl.gov"
 __status__ = "Development"
 
 # Standard imports
-# import argparse
-# import datetime
-# import glob
-# import json
-# import logging
-# import multiprocessing
-# import os
-# import pprint
-# import pymongo
-# import re
-# import redis
-# import shutil
-# import subprocess
-# import sys
-# import time
+import argparse
+import multiprocessing
+import os
+import sys
+import time
 
 # RAPD imports
-# import commandline_utils
-# import detectors.detector_utils as detector_utils
-# import utils
 
 VERSIONS = {
     "eiger2cbf": ("160415",)
 }
 
-def convert_hdf5_cbf(inp,
-                     odir=False,
-                     prefix=False,
-                     imgn=False,
-                     zfill=5,
-                     logger=False):
-    """
-    Run eiger2cbf on HDF5 dataset. Returns path of new CBF files.
-    Not sure I need multiprocessing.Pool, but used as saftety.
-    odir is output directory
-    prefix is new image prefix
-    imgn is the image number for the output frame.
-    zfill is the number digits for snap image numbers
-    returns header
-    """
-    import multiprocessing, time, sys
-    from rapd_pilatus import pilatus_read_header as readHeader
 
-    if logger:
-        logger.debug('Utilities::convert_hdf5_cbf')
+class convert_hdf5_cbf(object):
 
-    try:
-        #command0 = '/gpfs6/users/necat/Jon/Programs/CCTBX_x64/base_tmp/eiger2cbf/trunk/eiger2cbf %s'%inp
+    def __init__(self,
+                 inp,
+                 odir=False,
+                 prefix=False,
+                 imgn=False,
+                 zfill=5,
+                 logger=False):
+        """
+        Run eiger2cbf on HDF5 dataset. Returns path of new CBF files.
+        Not sure I need multiprocessing.Pool, but used as saftety.
+
+
+        odir is output directory
+        prefix is new image prefix
+        imgn is the image number for the output frame.
+        zfill is the number digits for snap image numbers
+        returns header
+        """
+
+        from rapd_pilatus import pilatus_read_header as readHeader
+
+        if logger:
+            logger.debug("Utilities::convert_hdf5_cbf")
+
+        # try:
         command0 = "eiger2cbf %s" % inp
 
         if odir:
             out = odir
-        else:
-            out = '/gpfs6/users/necat/Jon/RAPD_test/Output/Temp'
+
         if prefix == False:
-            prefix = 'conv_1_'
+            prefix = "conv_1_"
 
         # check if folder exists, if not make it and change to it.
         #folders2(self,out)
@@ -113,10 +104,10 @@ def convert_hdf5_cbf(inp,
             if total == 1:
                 # Set the image number defaut to 1.
                 if imgn == False: imgn = 1
-                img = '%s%s.cbf'%(os.path.join(out,prefix),str(imgn).zfill(zfill))
-                command = '%s 1 %s'%(command0, img)
+                img = "%s%s.cbf" % (os.path.join(out, prefix), str(imgn).zfill(zfill))
+                command = "%s 1 %s" % (command0, img)
             else:
-                command = '%s %s:%s %s'%(command0,st, end, os.path.join(out,prefix))
+                command = "%s %s:%s %s" % (command0, st, end, os.path.join(out, prefix))
             while 1:
                 if cluster:
                     # No self required
@@ -153,12 +144,27 @@ def convert_hdf5_cbf(inp,
             header['detector'] = det
             return(header)
         else:
-            return('Not master file!!!')
+            return("Not master file!!!")
 
-    except:
-        if logger:
-            logger.exception('**ERROR in Utils.convert_hdf5_cbf**')
-        return("FAILED")
+        # except:
+        #     if logger:
+        #         logger.exception('**ERROR in Utils.convert_hdf5_cbf**')
+        #     return("FAILED")
+
+    def run(self):
+        """Coordinates the running of the coonversion process"""
+
+        self.preprocess()
+        self.process()
+
+    def preprocess(self):
+        """Set up the conversion"""
+        pass
+
+    def process(self):
+        """Perform the conversion"""
+        pass
+
 
 
 def main(args):
@@ -169,6 +175,12 @@ def main(args):
     """
 
     print "main"
+
+    args = get_commandline()
+
+    print args
+
+    sys.exit()
 
 def get_commandline():
     """
@@ -181,18 +193,45 @@ def get_commandline():
     commandline_description = "Generate a generic RAPD file"
     parser = argparse.ArgumentParser(description=commandline_description)
 
-    # A True/False flag
-    # parser.add_argument("-c", "--commandline",
-    #                     action="store_true",
-    #                     dest="commandline",
-    #                     help="Generate commandline argument parsing")
+    # Verbose
+    parser.add_argument("-v", "--verbose",
+                        action="store_true",
+                        dest="verbose",
+                        help="Verbose")
 
-    # File name to be generated
+    # Starting image number
+    parser.add_argument("-n", "-s", "--start_image",
+                        action="store",
+                        dest="start_image",
+                        default=1,
+                        help="First (or only) image to be converted")
+
+    parser.add_argument("-m", "-e", "--end_image",
+                        action="store",
+                        dest="end_image",
+                        default=False,
+                        help="Final image to be converted.")
+
+    # Output directory
+    parser.add_argument("-o", "--output_dir",
+                        action="store",
+                        dest="output_directory",
+                        default=False,
+                        help="Output directory for cbf files")
+
+    # Output directory
+    parser.add_argument("-p", "--prefix",
+                        action="store",
+                        dest="prefix",
+                        default=False,
+                        help="Prefix for cbf files (including run number)")
+
+    # Input HDF5 file
     parser.add_argument(action="store",
-                        dest="file",
+                        dest="input_file",
                         nargs="?",
                         default=False,
-                        help="Name of file to be generated")
+                        help="Name of input HDF5 file")
 
     return parser.parse_args()
 

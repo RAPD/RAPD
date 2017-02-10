@@ -12,6 +12,13 @@ if [ "$RAPD_HOME" != "" ]; then
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/src\/control\/rapd_control.py \"\$@\"" >>$RAPD_HOME/bin/rapd.control
   chmod +x $RAPD_HOME/bin/rapd.control
 
+  # Convert Eiger HDF5 files to CBFs
+  echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.h5_to_cbf
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/convert_hdf5_cbf.py \"\$@\"" >>$RAPD_HOME/bin/rapd.h5_to_cbf
+  chmod +x $RAPD_HOME/bin/rapd.h5_to_cbf
+  ln -s $RAPD_HOME/bin/rapd.h5_to_cbf $RAPD_HOME/bin/rapd.hdf5_to_cbf
+  ln -s $RAPD_HOME/bin/rapd.h5_to_cbf $RAPD_HOME/bin/rapd.eiger_to_cbf
+
   # Index
   echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.index
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/commandline\/rapd_index+strategy.py \"\$@\"" >>$RAPD_HOME/bin/rapd.index

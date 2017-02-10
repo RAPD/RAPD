@@ -65,3 +65,33 @@ Using Docker to install the required databases is a workable approach. To instal
 5. Check if Docker is working `sudo docker run hello-world`  
 6. Start Redis server `sudo docker run --name redisdb -p 6379:6379 -d redis:3.2`  
 7. Start MongoDB server `sudo docker run --name mongodb -p 27017:27107 -d mongo:3.4`  
+
+
+
+
+# Common Errors
+### Mac OS X
+#### Missing zlib
+CCTBX will fail in building python if zlib is not installed for your system. The error looks like:  
+`Traceback (most recent call last):
+  File "modules/cctbx_project/libtbx/auto_build/install_base_packages.py", line 1457, in <module>
+    installer(args=sys.argv, log=sys.stdout)
+  File "modules/cctbx_project/libtbx/auto_build/install_base_packages.py", line 207, in __init__
+    self.build_dependencies(packages=packages)
+  File "modules/cctbx_project/libtbx/auto_build/install_base_packages.py", line 637, in build_dependencies
+    getattr(self, 'build_%s'%i)()
+  File "modules/cctbx_project/libtbx/auto_build/install_base_packages.py", line 729, in build_python
+    self.set_python(op.abspath(python_exe))
+  File "modules/cctbx_project/libtbx/auto_build/install_base_packages.py", line 402, in set_python
+    self.check_python_dependencies()
+  File "modules/cctbx_project/libtbx/auto_build/install_base_packages.py", line 394, in check_python_dependencies
+    raise e
+RuntimeError: Call to '/Users/frankmurphy/workspace/rapd_github/share/cctbx/base/bin/python -c 'import zlib'' failed with exit code 1
+Process failed with return code 1`
+
+CCTBX uses the Mac OS X system python to build, and if you want to check if zlib is indeed not importable, you may run python and try to import zlib:  
+`/System/Library/Frameworks/Python.framework/Versions/2.7/bin/python`  
+`>import zlib`  
+
+To remedy this problem, you can update your system's tools by:  
+`xcode-select --install`  
