@@ -183,6 +183,7 @@ class hdf5_to_cbf_converter(object):
                                                 shell=True,
                                                 stdout=subprocess.PIPE,
                                                 stderr=subprocess.STDOUT)
+                    myoutput.wait()
                     stdout, stderr = myoutput.communicate()
                     for i in stdout.split("\n"): print i
                     print stderr
