@@ -181,6 +181,7 @@ class hdf5_to_cbf_converter(object):
                 # Create function for running
                 def run_process(command):
                     """Run the command in a subprocess.Popen call"""
+                    print command
                     myoutput = subprocess.Popen(command,
                                                 shell=True,
                                                 stdout=subprocess.PIPE,
