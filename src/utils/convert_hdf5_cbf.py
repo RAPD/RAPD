@@ -125,7 +125,6 @@ class hdf5_to_cbf_converter(object):
         # for i in stdout.split("\n"): print i
         # print stderr
         number_of_images = int(stdout.split("\n")[-2])
-        number_of_images = 225
         print "Number of images: %d" % number_of_images
 
         # Work out end image
@@ -199,6 +198,7 @@ class hdf5_to_cbf_converter(object):
                         stop = self.end_image
                     print iter, start, stop
                     command = "%s %d:%d %s" % (command0, start, stop, os.path.join(self.output_dir, self.prefix))
+                    print command
                     pool.apply_async(run_process, (command,))
                     iter += 1
                     start = stop + 1
