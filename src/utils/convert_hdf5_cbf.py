@@ -300,8 +300,7 @@ def get_commandline():
     # Input HDF5 master file
     parser.add_argument(action="store",
                         dest="master_file",
-                        nargs="?",
-                        default=False,
+                        nargs=1,
                         help="Name of input HDF5 master file")
 
     return parser.parse_args()
