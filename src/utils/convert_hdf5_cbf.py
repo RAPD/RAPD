@@ -127,6 +127,9 @@ class hdf5_to_cbf_converter(object):
         number_of_images = int(stdout.split("\n")[-2])
         print "Number of images: %d" % number_of_images
 
+
+        sys.exit()
+        
         # Single image
         if number_of_images == 1:
             img = "%s%s.cbf" % (os.path.join(self.output_dir, self.prefix), str(self.start_image).zfill(self.zfill))
