@@ -103,8 +103,8 @@ class hdf5_to_cbf_converter(object):
             self.start_image = 1
 
         # Check end_image - default to start_image
-        if not self.end_image:
-            self.end_image = self.start_image
+        # if not self.end_image:
+        #     self.end_image = self.start_image
 
         # Multiprocessing
         if not self.nproc:
@@ -125,16 +125,21 @@ class hdf5_to_cbf_converter(object):
         # for i in stdout.split("\n"): print i
         # print stderr
         number_of_images = int(stdout.split("\n")[-2])
+        number_of_images = 225
         print "Number of images: %d" % number_of_images
 
+        # Work out end image
+        if not self.end_image:
+            self.end_image = number_of_images + self.start_image - 1
+        print "Converting images %d - %d" % (self.start_image, self.end_image)
 
-        sys.exit()
-        
+        # Check that the number of images encompasses the end_image
+
         # Single image
         if number_of_images == 1:
             img = "%s%s.cbf" % (os.path.join(self.output_dir, self.prefix), str(self.start_image).zfill(self.zfill))
             command = "%s 1 %s" % (command0, img)
-
+            print "Executing command `%s`" % command
             # Now convert
             myoutput = subprocess.Popen(command,
                                         shell=True,
@@ -169,15 +174,38 @@ class hdf5_to_cbf_converter(object):
             # Multiple processors
             else:
 
+                print "Employing multiple threads"
+
                 # Create a pool to speed things along
                 pool = multiprocessing.Pool(processes=self.nproc)
 
-                start = self.start_image
+                # Create function for running
+                def run_process(command):
+                    """Run the command in a subprocess.Popen call"""
+                    myoutput = subprocess.Popen(command,
+                                                shell=True,
+                                                stdout=subprocess.PIPE,
+                                                stderr=subprocess.STDOUT)
+                    stdout, stderr = myoutput.communicate()
+                    return True
+
                 batch = int(number_of_images / self.nproc)
-                total = 0
-                while number_of_images > total:
-                    print start+1, start + batch
-                    start = start + batch - 1
+                iter = 1
+                start = self.start_image
+                stop = 0
+                while number_of_images > stop:
+                    stop = start + batch -1
+                    if (stop + batch) > self.end_image:
+                        stop = self.end_image
+                    print iter, start, stop
+                    command = "%s %d:%d %s" % (command0, start, stop, os.path.join(self.output_dir, self.prefix))
+                    pool.apply_async(run_process, (command,))
+                    iter += 1
+                    start = stop + 1
+
+                # Done with the pool
+                pool.close()
+                pool.join()
 
         return True
 
@@ -247,7 +275,8 @@ def main(args):
                                       output_dir=args.output_dir,
                                       prefix=args.prefix,
                                       start_image=args.start_image,
-                                      end_image=args.end_image)
+                                      end_image=args.end_image,
+                                      nproc=args.nproc)
     converter.run()
 
 def get_commandline():
@@ -268,7 +297,8 @@ def get_commandline():
     # Multiprocessing capabilities
     parser.add_argument("--nproc",
                         action="store",
-                        dest="start_image",
+                        dest="nproc",
+                        type=int,
                         default=multiprocessing.cpu_count() - 1,
                         help="Number of processors to be used")
 
