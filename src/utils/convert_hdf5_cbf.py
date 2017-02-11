@@ -238,7 +238,7 @@ def main(args):
 
     args = get_commandline()
 
-    # print args
+    print args
 
     converter = hdf5_to_cbf_converter(master_file=args.master_file,
                                       output_dir=args.output_dir,
