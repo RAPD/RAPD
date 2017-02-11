@@ -204,13 +204,15 @@ class hdf5_to_cbf_converter(object):
                     print iter, start, stop
                     command = "%s %d:%d %s" % (command0, start, stop, os.path.join(self.output_dir, self.prefix))
                     print command
-                    results.append(pool.apply_async(run_process, (command,)))
+                    # results.append(pool.apply_async(run_process, (command,)))
+                    run_process(command)
                     iter += 1
                     start = stop + 1
 
                 # Done with the pool
                 pool.close()
                 pool.join()
+                print results
 
         return True
 
