@@ -179,7 +179,7 @@ class hdf5_to_cbf_converter(object):
                 def run_process(command):
                     """Run the command in a subprocess.Popen call"""
                     print command
-                    myoutput = subprocess.call(command, shell=True),
+                    return subprocess.call(command, shell=True)
                                                 # shell=True,
                                                 # stdout=subprocess.PIPE,
                                                 # stderr=subprocess.STDOUT)
@@ -187,7 +187,7 @@ class hdf5_to_cbf_converter(object):
                     # stdout, stderr = myoutput.communicate()
                     # for i in stdout.split("\n"): print i
                     # print stderr
-                    return True
+                    # return True
 
                 # Create a pool to speed things along
                 pool = multiprocessing.Pool(processes=self.nproc)
@@ -196,7 +196,7 @@ class hdf5_to_cbf_converter(object):
                 iter = 1
                 start = self.start_image
                 stop = 0
-                # results = []
+                results = []
                 commands = []
                 while number_of_images > stop:
                     stop = start + batch -1
@@ -206,8 +206,8 @@ class hdf5_to_cbf_converter(object):
                     command = "%s %d:%d %s" % (command0, start, stop, os.path.join(self.output_dir, self.prefix))
                     print command
                     # commands.append(command)
-                    # results.append(pool.apply_async(run_process, (command,)))
-                    run_process(command)
+                    results.append(pool.apply_async(run_process, (command,)))
+                    # run_process(command)
                     iter += 1
                     start = stop + 1
 
