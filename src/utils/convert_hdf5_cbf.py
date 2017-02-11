@@ -240,7 +240,7 @@ def main(args):
 
     print args
 
-    converter = hdf5_to_cbf_converter(master_file=args.master_file,
+    converter = hdf5_to_cbf_converter(master_file=args.master_file[0],
                                       output_dir=args.output_dir,
                                       prefix=args.prefix,
                                       start_image=args.start_image,
