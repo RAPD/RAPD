@@ -175,9 +175,6 @@ class hdf5_to_cbf_converter(object):
 
                 print "Employing multiple threads"
 
-                # Create a pool to speed things along
-                pool = multiprocessing.Pool(processes=self.nproc)
-
                 # Create function for running
                 def run_process(command):
                     """Run the command in a subprocess.Popen call"""
@@ -189,7 +186,10 @@ class hdf5_to_cbf_converter(object):
                     stdout, stderr = myoutput.communicate()
                     for i in stdout.split("\n"): print i
                     print stderr
-                    return True
+                    return (stdout, stderr)
+
+                # Create a pool to speed things along
+                pool = multiprocessing.Pool(processes=self.nproc)
 
                 batch = int(number_of_images / self.nproc)
                 iter = 1
