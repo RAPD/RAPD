@@ -196,7 +196,8 @@ class hdf5_to_cbf_converter(object):
                 iter = 1
                 start = self.start_image
                 stop = 0
-                results = []
+                # results = []
+                commands = []
                 while number_of_images > stop:
                     stop = start + batch -1
                     if (stop + batch) > self.end_image:
@@ -204,10 +205,15 @@ class hdf5_to_cbf_converter(object):
                     print iter, start, stop
                     command = "%s %d:%d %s" % (command0, start, stop, os.path.join(self.output_dir, self.prefix))
                     print command
+                    commands.append(command)
                     # results.append(pool.apply_async(run_process, (command,)))
-                    run_process(command)
+                    # run_process(command)
                     iter += 1
                     start = stop + 1
+
+                # Run in pool
+                print commands
+                results = pool.map_async(run_process, commands)
 
                 # Done with the pool
                 pool.close()
