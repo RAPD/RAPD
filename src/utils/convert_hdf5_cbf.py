@@ -38,6 +38,24 @@ VERSIONS = {
     "eiger2cbf": ("160415",)
 }
 
+# Create function for running
+def run_process(input_args):
+    """Run the command in a subprocess.Popen call"""
+
+    command, verbose = input_args
+
+    if verbose:
+        print command
+        result =  subprocess.Popen(command,
+                                   shell=True)
+    else:
+        result =  subprocess.Popen(command,
+                                   shell=True,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+    result.wait()
+    return result
+
 class hdf5_to_cbf_converter(object):
 
     def __init__(self,
@@ -48,6 +66,7 @@ class hdf5_to_cbf_converter(object):
                  end_image=False,
                  zfill=5,
                  nproc=False,
+                 verbose=False,
                  logger=False):
         """
         Run eiger2cbf on HDF5 dataset. Returns path of new CBF files.
@@ -73,6 +92,8 @@ class hdf5_to_cbf_converter(object):
         self.end_image = end_image
         self.zfill = zfill
         self.nproc = nproc
+        self.verbose = verbose
+        self.logger = logger
 
     def run(self):
         """Coordinates the running of the coonversion process"""
@@ -102,10 +123,6 @@ class hdf5_to_cbf_converter(object):
         if not self.start_image:
             self.start_image = 1
 
-        # Check end_image - default to start_image
-        # if not self.end_image:
-        #     self.end_image = self.start_image
-
         # Multiprocessing
         if not self.nproc:
             self.nproc = multiprocessing.cpu_count()
@@ -120,10 +137,8 @@ class hdf5_to_cbf_converter(object):
         myoutput = subprocess.Popen([command0, self.master_file],
                                     shell=True,
                                     stdout=subprocess.PIPE,
-                                    stderr=subprocess.STDOUT)
+                                    stderr=subprocess.PIPE)
         stdout, stderr = myoutput.communicate()
-        # for i in stdout.split("\n"): print i
-        # print stderr
         number_of_images = int(stdout.split("\n")[-2])
         print "Number of images: %d" % number_of_images
 
@@ -132,146 +147,94 @@ class hdf5_to_cbf_converter(object):
             self.end_image = number_of_images + self.start_image - 1
         print "Converting images %d - %d" % (self.start_image, self.end_image)
 
-        # Check that the number of images encompasses the end_image
-
-        # Single image
+        # Single image in master file
         if number_of_images == 1:
             img = "%s%s.cbf" % (os.path.join(self.output_dir, self.prefix), str(self.start_image).zfill(self.zfill))
             command = "%s 1 %s" % (command0, img)
-            print "Executing command `%s`" % command
+
             # Now convert
-            myoutput = subprocess.Popen(command,
-                                        shell=True,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.STDOUT)
-            stdout, stderr = myoutput.communicate()
+            if self.verbose:
+                print "Executing command `%s`" % command
+                myoutput = subprocess.Popen(command,
+                                            shell=True)
+            else:
+                myoutput = subprocess.Popen(command,
+                                            shell=True,
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE)
+            myoutput.wait()
 
         # Single image from a run of images
         elif self.start_image == self.end_image:
-            command = "%s %d:%d %s" % (command0, self.start_image, end, os.path.join(self.output_dir, self.prefix))
+            command = "%s %d:%d %s" % (command0,
+                                       self.start_image,
+                                       self.start_image,
+                                       os.path.join(self.output_dir, self.prefix))
 
             # Now convert
-            myoutput = subprocess.Popen(command,
-                                        shell=True,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.STDOUT)
-            stdout, stderr = myoutput.communicate()
+            if self.verbose:
+                print "Executing command `%s`" % command
+                myoutput = subprocess.Popen(command,
+                                            shell=True)
+            else:
+                myoutput = subprocess.Popen(command,
+                                            shell=True,
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE)
+            myoutput.wait()
+
 
         # Multiple images from a run of images
         else:
             # One processor
             if self.nproc == 1:
-                command = "%s %d:%d %s" % (command0, self.start_image, end, os.path.join(self.output_dir, self.prefix))
+                command = "%s %d:%d %s" % (command0, self.start_image, self.end_image, os.path.join(self.output_dir, self.prefix))
 
                 # Now convert
-                myoutput = subprocess.Popen(command,
-                                            shell=True,
-                                            stdout=subprocess.PIPE,
-                                            stderr=subprocess.STDOUT)
-                stdout, stderr = myoutput.communicate()
+                if self.verbose:
+                    print "Executing command `%s`" % command
+                    myoutput = subprocess.Popen(command,
+                                                shell=True)
+                else:
+                    myoutput = subprocess.Popen(command,
+                                                shell=True,
+                                                stdout=subprocess.PIPE,
+                                                stderr=subprocess.PIPE)
+                myoutput.wait()
 
             # Multiple processors
             else:
 
                 print "Employing multiple threads"
 
-                # Create function for running
-                def run_process(command):
-                    """Run the command in a subprocess.Popen call"""
-                    print command
-                    return subprocess.call(command, shell=True)
-                                                # shell=True,
-                                                # stdout=subprocess.PIPE,
-                                                # stderr=subprocess.STDOUT)
-                    # myoutput.wait()
-                    # stdout, stderr = myoutput.communicate()
-                    # for i in stdout.split("\n"): print i
-                    # print stderr
-                    # return True
-
-                # Create a pool to speed things along
-                pool = multiprocessing.Pool(processes=self.nproc)
-
+                # Construct commands to run in parallel
+                number_of_images = self.end_image - self.start_image + 1
                 batch = int(number_of_images / self.nproc)
-                iter = 1
+                final_batch = batch + (number_of_images % self.nproc)
+                print "batch: %d" % batch
+                print "final_batch %d" % final_batch
+                iteration = 0
                 start = self.start_image
                 stop = 0
-                results = []
                 commands = []
-                while number_of_images > stop:
+                while iteration < self.nproc:
+
+                    if iteration == (self.nproc - 1):
+                        batch = final_batch
+
                     stop = start + batch -1
-                    if (stop + batch) > self.end_image:
-                        stop = self.end_image
-                    print iter, start, stop
-                    command = "%s %d:%d %s" % (command0, start, stop, os.path.join(self.output_dir, self.prefix))
-                    print command
-                    # commands.append(command)
-                    results.append(pool.apply_async(run_process, (command,)))
-                    # run_process(command)
-                    iter += 1
+                    commands.append(("%s %d:%d %s" % (command0, start, stop, os.path.join(self.output_dir, self.prefix)), self.verbose))
+
+                    iteration += 1
                     start = stop + 1
 
                 # Run in pool
-                print commands
-                # results = pool.map_async(run_process, commands)
-
-                # Done with the pool
+                pool = multiprocessing.Pool(processes=self.nproc)
+                results = pool.map_async(run_process, commands)
                 pool.close()
                 pool.join()
-                print results
 
         return True
-
-        # if BLspec.checkCluster():
-        #     # Half the number of nodes in the queue.
-        #     split = int(round(number_of_images/8))
-        #     cluster = True
-        # else:
-        #     # Least amount of splitting without running out of memory.
-        #     split = 360
-        #     cluster = False
-        # st = 1
-        # end = split
-        # stop = False
-
-        # while 1:
-        #     if cluster:
-        #         # No self required
-        #         pool.apply_async(BLspec.processCluster_NEW, ((command,os.path.join(out,'eiger2cbf.log')),))
-        #     else:
-        #         pool.apply_async(processLocal, ((command,os.path.join(out,'eiger2cbf.log')),))
-        #     time.sleep(0.1)
-        #     if stop:
-        #         break
-        #     st += split
-        #     end += split
-        #     # Check to see if next round will be out of range
-        #     if st >= number_of_images:
-        #         break
-        #     if st + split >= number_of_images:
-        #         end = number_of_images
-        #         stop = True
-        #     if end > number_of_images:
-        #         end = number_of_images
-        # pool.close()
-        # pool.join()
-
-        # # Get the detector description from the h5 file
-        # with open('eiger2cbf.log','r') as f:
-        #     for line in f:
-        #         if line.count('description'):
-        #             det = line[line.find('=')+2:].strip()
-        #             break
-        #
-        # # Read header from first image and pass it back.
-        # header = readHeader(img)
-        #
-        # # change the detector
-        # header['detector'] = det
-        # return(header)
-
-
-
 
 def main(args):
     """
@@ -282,14 +245,13 @@ def main(args):
 
     args = get_commandline()
 
-    print args
-
     converter = hdf5_to_cbf_converter(master_file=args.master_file[0],
                                       output_dir=args.output_dir,
                                       prefix=args.prefix,
                                       start_image=args.start_image,
                                       end_image=args.end_image,
-                                      nproc=args.nproc)
+                                      nproc=args.nproc,
+                                      verbose=args.verbose)
     converter.run()
 
 def get_commandline():
@@ -320,6 +282,7 @@ def get_commandline():
                         action="store",
                         dest="start_image",
                         default=1,
+                        type=int,
                         help="First (or only) image to be converted")
 
     # Last image number
@@ -327,6 +290,7 @@ def get_commandline():
                         action="store",
                         dest="end_image",
                         default=False,
+                        type=int,
                         help="Final image to be converted.")
 
     # Output directory
