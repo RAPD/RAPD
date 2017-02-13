@@ -166,10 +166,11 @@ class hdf5_to_cbf_converter(object):
 
         # Single image from a run of images
         elif self.start_image == self.end_image:
+            img = "%s%s.cbf" % (os.path.join(self.output_dir, self.prefix), str(self.start_image).zfill(self.zfill))
             command = "%s %d:%d %s" % (command0,
                                        self.start_image,
                                        self.start_image,
-                                       os.path.join(self.output_dir, self.prefix))
+                                       img)
 
             # Now convert
             if self.verbose:
