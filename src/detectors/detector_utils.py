@@ -30,14 +30,19 @@ __status__ = "Development"
 import glob
 import importlib
 import os
+import shutil
 import sys
+import tempfile
 
 # Phenix imports
 from dxtbx.format.Registry import Registry
+from iotbx.detectors import ImageFactory
 
 # RAPD imports
+import utils.convert_hdf5_cbf as convert_hdf5_cbf
 import utils.text as text
 import detector_list
+
 
 def print_detector_info(image):
     """
@@ -66,7 +71,8 @@ def print_detector_info(image):
             return False
 
 
-    print "\n%20s::%s" % ("image", image_basename)
+    print "\nInformation from iotbx ImageFactory"
+    print "%20s::%s" % ("image", image_basename)
     print "%20s::%s" % ("vendortype", str(i.vendortype))
     # print "%20s" % "Parameters"
     for key, val in i.parameters.iteritems():
@@ -81,7 +87,10 @@ def print_detector_info2(image):
     instance = format_instance(image)
     # adds parameters (iotbx)
     temp = instance.get_detectorbase()
-    print temp.parameters
+
+    print "\nInformation from dxtbx Registry"
+    for key, val in temp.parameters.iteritems():
+        print "%20s::%s" % (key, val)
 
 def get_detector_files():
     """
@@ -140,8 +149,6 @@ def get_detector_file(image):
     """
 
     print "get_detector_file %s" % image
-
-    from iotbx.detectors import ImageFactory
 
     try:
         i = ImageFactory(image)
@@ -220,26 +227,53 @@ def load_detector(detector):
         module = importlib.import_module(detector_file)
         return module
 
+def main(test_images):
+    """Print out some detector information"""
+
+    for test_image in test_images:
+
+        tmp_dir = False
+
+        if test_image.endswith(".h5"):
+            print "HDF5 file  - converting"
+
+            tmp_dir = tempfile.mkdtemp()
+
+            converter = convert_hdf5_cbf.hdf5_to_cbf_converter(master_file=test_image,
+                                                               output_dir=tmp_dir,
+                                                               prefix="tmp",
+                                                               start_image=1,
+                                                               end_image=1)
+            converter.run()
+
+            test_image = "%s/tmp00001.cbf" % tmp_dir
+
+        # try:
+        print_detector_info(test_image)
+        print_detector_info2(test_image)
+
+        print "\nRAPD detector registry"
+        detector = get_detector_file(test_image)
+        if detector:
+            print "%20s::%s" % ("detector", detector)
+        else:
+            print "%20s::%s" % ("detector", "unknown")
+        # except:
+        #     print "%20s::%s" % ("error", "Severe error reading %s" % os.path.basename(test_image))
+
+        print "====="
+
+        if tmp_dir:
+            shutil.rmtree(tmp_dir)
+
+
+
 if __name__ == "__main__":
 
     # Get image name from the commandline
     if len(sys.argv) > 1:
         test_images = sys.argv[1:]
+        main(test_images)
     else:
         print text.red + "No input image" + text.stop
         sys.exit(9)
-
-
-    for test_image in test_images:
-        try:
-            print_detector_info(test_image)
-            print_detector_info2(test_image)
-            detector = get_detector_file(test_image)
-            if detector:
-                print "%20s::%s" % ("detector", detector)
-            else:
-                print "%20s::%s" % ("detector", "unknown")
-        except:
-            print "%20s::%s" % ("error", "Severe error reading %s" % os.path.basename(test_image))
-
-        print "====="

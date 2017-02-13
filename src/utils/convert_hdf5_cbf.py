@@ -96,7 +96,7 @@ class hdf5_to_cbf_converter(object):
         self.logger = logger
 
     def run(self):
-        """Coordinates the running of the coonversion process"""
+        """Coordinates the running of the conversion process"""
 
         self.preprocess()
         self.process()
