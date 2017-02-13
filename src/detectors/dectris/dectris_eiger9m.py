@@ -29,13 +29,13 @@ import argparse
 import os
 import pprint
 import re
+import shutil
 import sys
-import time
-# import json
-# import logging, logging.handlers
-# import atexit
-# from rapd_site import secret_settings as secrets
-# from rapd_utils import print_dict, date_adsc_to_sql
+import tempfile
+
+# RAPD imports
+import utils.convert_hdf5_cbf as convert_hdf5_cbf
+
 
 DETECTOR = "dectris_eiger9m"
 VENDROTYPE = "DECTRIS"
@@ -208,12 +208,30 @@ def main(args):
     else:
         raise Error("No test image input!")
 
+    tmp_dir = False
+
+    if test_image.endswith(".h5"):
+        print "HDF5 file  - converting"
+
+        tmp_dir = tempfile.mkdtemp()
+
+        converter = convert_hdf5_cbf.hdf5_to_cbf_converter(master_file=test_image,
+                                                           output_dir=tmp_dir,
+                                                           prefix="tmp",
+                                                           start_image=1,
+                                                           end_image=1)
+        converter.run()
+
+        test_image = "%s/tmp00001.cbf" % tmp_dir
+
     # Read the header
     header = read_header(test_image)
 
     # And print it out
     pprint.pprint(header)
 
+    if tmp_dir:
+        shutil.rmtree(tmp_dir)
 
 if __name__ == "__main__":
 

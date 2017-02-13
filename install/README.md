@@ -29,18 +29,16 @@ correct, your strategies will not be very accurate.
 # Install Procedure
 
 ## Full Install
-The full install is built on top of a Phenix distribution, and is necessary for the Control and Launcher processes, but potentially is more than necessary for the Gatherer processes.
+The full install is built on top of a CCTBX distribution, and is necessary for the Control and Launcher processes, but potentially is more than necessary for the Gatherer processes.
 
 ##### Scientific Linux
 These instructions are formulated for Scientific Linux 6.8, but apply for CentOS 6 as well.
 
 Installing the Control process and dependencies  
-1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git`  
-2. Navigate to the install directory and `./install`  
-3. The install script will list any modules that need to be installed. The list is: `epel-release
-blas-devel lapack-devel atlas-sse3-devel atlas-devel openblas-devel libffi-devel ImageMagick-devel`  
-4. RAPD is built on top of the Phenix distribution, so you will need to obtain it. The install
-script will instruct you on which file to get, and where to put it. Once you have the file where it should be, hit return in the install script window.  
+1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git rapd`  
+2. Navigate to the install directory and `./install_cctbx`  
+3. The install script will list any software that needs to be installed via yum. The list is: `wget subversion git make bzip2 openssl-devel gcc-c+ mesa-libGL-devel mesa-libGLU-devel`  
+
 
 ## Minimal Install
 The minimal install is useful for gatherer processes, not for data processing. It will fetch and install Python, add some modules to python, and then create scripts for RAPD to use.
@@ -49,8 +47,7 @@ The minimal install is useful for gatherer processes, not for data processing. I
 3.
 
 
-### Scientific Linux
-These instructions are formulated for Scientific Linux 6.8, but apply for CentOS 6 as well.
+
 
 
 

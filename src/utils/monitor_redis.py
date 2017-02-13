@@ -25,7 +25,7 @@ class Monitor():
     def monitor(self):
         if self.connection is None:
             self.connection = self.connection_pool.get_connection(
-                'monitor', None)
+                "monitor", None)
         self.connection.send_command("monitor")
         return self.listen()
 
