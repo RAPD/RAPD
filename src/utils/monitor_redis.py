@@ -90,8 +90,12 @@ def main(args):
     monitor = Monitor(pool)
     commands = monitor.monitor()
 
-    for c in commands :
-        print(c)
+    for c in commands:
+        if args.ignore:
+            if not "\" \"OW:" in c:
+                print c
+        else:
+            print c
 
 def get_commandline():
     """
@@ -101,6 +105,12 @@ def get_commandline():
     # Parse the commandline arguments
     commandline_description = "Monitor redis instrance activity"
     parser = argparse.ArgumentParser(description=commandline_description)
+
+    # Ignore overwatch traffic
+    parser.add_argument("-i", "--ignore",
+                        action="store_true",
+                        dest="ignore",
+                        help="Ignore overwatch ")
 
     # Host
     parser.add_argument("-o", "--host",
