@@ -118,7 +118,7 @@ Installs RAPD v$RAPD_VERSION
     esac
 done
 
-First test for installed modules
+# First test for installed modules
 if [[ $PLATFORM == "Linux" ]]; then
 
   printf "\033[94mChecking installed packages\033[0m\n"
