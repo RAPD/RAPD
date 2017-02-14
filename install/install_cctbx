@@ -214,7 +214,7 @@ if [ $INSTALL_CCTBX == 1 ]; then
 
     # Get the bootstrap installer
     printf "  Downloading CCTBX bootstrap script"
-    wget https://raw.githubusercontent.com/cctbx/cctbx_project/master/libtbx/auto_build/bootstrap.py
+    wget --no-check-certificate https://raw.githubusercontent.com/cctbx/cctbx_project/master/libtbx/auto_build/bootstrap.py
 
     # Install CCTBX
     printf "  Installing CCTBX"
