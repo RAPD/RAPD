@@ -86,13 +86,16 @@ def main(args):
     Coordinate monitoring from the commandline
     """
 
+    print args
+
     pool = redis.ConnectionPool(host=args.host, port=args.port, db=args.db)
     monitor = Monitor(pool)
     commands = monitor.monitor()
 
     for c in commands:
         if args.ignore:
-            if not "\" \"OW:" in c:
+            if not "OW:" in c:
+            # if not "PING" in c:
                 print c
         else:
             print c
