@@ -37,8 +37,10 @@ import pprint
 import detectors.detector_utils as detector_utils
 # import utils.log
 # import utils.lock
+import utils.convert_hdf5_cbf as convert_hdf5_cbf
 import utils.site
 # import utils.text as text
+
 
 # The data processing parser - to be used by commandline RAPD processes
 dp_parser = argparse.ArgumentParser(add_help=False)
@@ -223,21 +225,32 @@ def analyze_data_sources(sources, mode="index"):
                 if os.path.isdir(source_abspath):
                     pass
                 elif os.path.isfile(source_abspath):
-                    if mode == "index":
-                        # 1st file of 1 or 2
-                        if not "files" in return_data:
-                            return_data["files"] = [source_abspath]
-                        # 3rd file - error
-                        elif len(return_data["files"]) > 1:
-                            raise Exception("Up to two images can be submitted for indexing")
-                        # 2nd file - presumably a pair
+
+                    # Are we dealing with hdf5 images
+                    if source_abspath.endswith(".h5"):
+                        print "Converting hdf5 file to cbfs"
+
+                        converter = convert_hdf5_cbf.hdf5_to_cbf_converter(
+                            master_file=source_abspath,
+                            output_dir="cbf_files",
+                            prefix="tmp",
+                            start_image=1,
+                            end_image=1)
+
+                    # 1st file of 1 or 2
+                    if not "files" in return_data:
+                        return_data["files"] = [source_abspath]
+                    # 3rd file - error
+                    elif len(return_data["files"]) > 1:
+                        raise Exception("Up to two images can be submitted for indexing")
+                    # 2nd file - presumably a pair
+                    else:
+                        # Same file twice
+                        if source_abspath == return_data["files"][0]:
+                            raise Exception("The same image has been submitted twice for indexing")
                         else:
-                            # Same file twice
-                            if source_abspath == return_data["files"][0]:
-                                raise Exception("The same image has been submitted twice for indexing")
-                            else:
-                                return_data["files"].append(source_abspath)
-                                break
+                            return_data["files"].append(source_abspath)
+                            break
             else:
                 raise Exception("%s does not exist" % source_abspath)
 
