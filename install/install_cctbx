@@ -362,6 +362,8 @@ if [ $INSTALL_PYTHON == 1 ]; then
   rapd.pip install paramiko
   rapd.pip install fabio
   rapd.pip install hcluster
+  # Get the up arrow working in the CLI
+  rapd.pip install readline
 
   printf "\033[92mRAPD python install complete.\033[0m\n"
 fi
