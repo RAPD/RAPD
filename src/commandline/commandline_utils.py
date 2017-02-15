@@ -32,6 +32,7 @@ import glob
 import multiprocessing
 import os
 import pprint
+import sys
 
 # RAPD imports
 import detectors.detector_utils as detector_utils
@@ -207,7 +208,10 @@ def print_detectors(left_buffer="", show_py=False):
 
         print left_buffer + detector_name
 
-def analyze_data_sources(sources, mode="index"):
+def analyze_data_sources(sources,
+                         mode="index",
+                         start_image=False,
+                         end_image=False):
     """
     Return information on files or directory from input
     """
@@ -274,6 +278,8 @@ def analyze_data_sources(sources, mode="index"):
         # return_data = glob.glob(full_path_template.replace("?", "[0-9]"))
         return_data.sort()
         pprint.pprint(return_data)
+
+        sys.exit()
 
         if len(return_data) == 0:
             raise Exception("No files for %s found" % template)

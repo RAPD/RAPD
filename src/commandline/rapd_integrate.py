@@ -203,7 +203,11 @@ def main():
         sys.exit()
 
     # Look for data based on the input template
-    data_files = commandline_utils.analyze_data_sources(commandline_args.template, mode="integrate")
+    data_files = commandline_utils.analyze_data_sources(
+        commandline_args.template,
+        mode="integrate",
+        start_image=start_image,
+        end_image=end_image)
 
     # Need data
     if len(data_files) == 0 and commandline_args.test == False:
