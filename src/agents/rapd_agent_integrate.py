@@ -1385,7 +1385,8 @@ class RapdAgent(Process):
             orig_rescut = resline
             # rerun aimless
             aimless_log = self.aimless(mtzfile, res_cut)
-        graphs, tables, summary = self.parse_aimless(aimless_log)
+        #graphs, tables, summary = self.parse_aimless(aimless_log)
+	graphs, summary =self.parse_aimless2(aimless_log)
 
         wedge = directory.split('_')[-2:]
         summary['wedge'] = '-'.join(wedge)
@@ -1404,7 +1405,7 @@ class RapdAgent(Process):
         scalamtz = mtzfile.replace('pointless', 'aimless')
         scalalog = scalamtz.replace('mtz', 'log')
         # generate web files for results display in the UI
-        plotsHTML = self.make_plots(graphs, tables)
+        #plotsHTML = self.make_plots(graphs, tables)
         shortHTML = self.make_short_results(directory, summary, orig_rescut)
         longHTML = self.make_long_results(scalalog)
 
@@ -1415,7 +1416,7 @@ class RapdAgent(Process):
 
 
         results = {'status'   : 'WORKING',
-                   'plots'    : plotsHTML,
+                   'plots'    : graphs,
                    'short'    : shortHTML,
                    'long'     : longHTML,
                    'summary'  : summary,
@@ -1999,6 +2000,504 @@ class RapdAgent(Process):
                   ]
         return(graphs, tables, int_results)
 
+    def parse_aimless2 (self, logfile):
+	"""
+	Parses the aimless logfile in order to pull out data for 
+	graphing and the results summary table.
+	Relevant values for the summary table are stored in a dict.
+	Relevant information for creating plots are stored in a dict,
+	with the following format for each entry (i.e. each plot):
+	
+	{"<*plot label*>":{
+	                   "data":{
+	                          "parameters":{<*line parameters*>},
+	                           "series":[
+	                                     {xs : [],
+	                                      ys : []
+	                                     }
+	                                    ]
+	                          }
+	                   "parameters" : {<*plot parameters*>}
+	                  }
+	 ...
+	 ...
+	}
+	"""
+		
+	log = smartie.parselog(logfile)
+		
+	# Pull out information for the results summary table.
+	flag = True
+	summary = log.keytext(0).message().split("\n")
+		
+	# For some reason "Anomalous flag switched ON" is not always
+	# found, so the line below creates a blank entry for the
+	# the variable that should be created when that phrase is
+	# found, eliminating the problem where the program reports that
+	# the variable anomalous_report is referenced before assignment.
+	anomalous_report = ""
+	
+	for line in summary:
+		if "Space group" in line:
+			space_group = line.strip().split(": ")[-1]
+		elif "Average unit cell" in line:
+			unit_cell = line.split()[3:]
+		elif "Anomalous flag switched ON" in line:
+			anomalous_report = linecol
+	
+	int_results = {
+	               "bins_low"     : summary[3].split()[-3:],
+                       "bins_high"    : summary[4].split()[-3:],
+                       "rmerge_anom"  : summary[6].split()[-3:],
+                       "rmerge_norm"  : summary[7].split()[-3:],
+                       "rmeas_anom"   : summary[8].split()[-3:],
+                       "rmeas_norm"   : summary[9].split()[-3:],
+                       "rpim_anom"    : summary[10].split()[-3:],
+                       "rpim_norm"    : summary[11].split()[-3:],
+                       "rmerge_top"   : summary[12].split()[-3],
+                       "total_obs"    : summary[13].split()[-3:],
+                       "unique_obs"   : summary[14].split()[-3:],
+                       "isigi"        : summary[15].split()[-3:],
+                       "cc-half"      : summary[16].split()[-3:],
+                       "completeness" : summary[17].split()[-3:],
+                       "multiplicity" : summary[18].split()[-3:],
+                       "anom_completeness" : summary[20].split()[-3:],
+                       "anom_multiplicity" : summary[21].split()[-3:],
+                       "anom_correlation"  : summary[22].split()[-3:],
+                       "anom_slope"   : [summary[23].split()[-3]],
+                       "scaling_spacegroup" : space_group,
+                       "scaling_unit_cell" : unit_cell,
+                       "text2"              : anomalous_report
+                      }
+        # Smartie can pull table information based on a regular
+        # expression pattern that matches the table title from
+        # the aimless log file.
+        # NOTE : the regular expression must match the beginning
+        # of the table's title, but does not need to be the entire
+        # title.
+        #
+        # We will use this to pull out the data from tables we are
+        # interested in.
+        # 
+        # The beginning of the titles for all common tables in the 
+        # aimless log file are given below, but not all of them
+        # are currently used to generate a plot.
+        
+        scales = "=== Scales v rotation"
+        rfactor = "Analysis against all Batches"
+        cchalf = "Correlations CC(1/2)"
+        anisotropy = "Anisotropy analysis"
+        vresolution = "Analysis against resolution, XDSdataset"
+        anomalous = "Analysis against resolution, with & without"
+        intensity = "Analysis against intensity"
+        completeness = "Completeness & multiplicity"
+        deviation = "Run 1, standard deviation"
+        rcp = "Radiation damage"
+        
+        plots = [
+            "Rmerge vs Frame" :
+		{
+                "data" :
+		    [ {
+                    "parameters" :
+		        {
+                         "linecolor" : "3",
+                         "linelabel" : "Rmerge",
+                         "linetype"  : "11",
+                         "linewidth" : "3" 
+		        },
+                    "series" :
+			[ {
+                           "xs" : log.tables(rfactor)[0].col("N"),
+                           "ys" : log.tables(rfactor)[0].col("Rmerge")
+                        } ]
+                    },
+                    {
+                     "parameters" :
+		     	{
+                         "linecolor" : "4".
+                         "linelabel" : "SmRmerge",
+                         "linetype"  : "11",
+                         "linewidth" : "3" 
+			 },
+                     "series" :
+			[ {
+                         "xs" : log.tables(rfactor)[0].col("N"),
+                         "ys" : log.tables(rfactor)[0].col("SmRmerge")
+                        } ]
+                    } ],
+                "parameters" :
+		    { 
+                    "toplabel" : "Rmerge vs Batch for all Runs",
+                    "xlabel"   : "Image Number"
+                    }
+                },
+            "Imean/RMS scatter" :
+		{
+                "data" :
+		    [ {
+		    "parameters" :
+		        {
+			"linecolor" : "3",
+			"linelabel" : "I/rms",
+			"linetype"  : "11",
+			"linewidth" : "3"
+			},
+		    "series" :
+		        [ {
+			"xs" : log.tables(rfactor)[0].col("N"),
+			"ys" : log.tables(rfactor)[0].col("I/rms")
+			} ]
+		    } ],
+		"parameters" :
+		    {
+		    "toplabel" : "Imean / RMS scatter",
+		    "xlabel"   : "Image Number"
+		    }
+		},
+	    "Anomalous & Imean CCs vs Resolution" :
+		{
+		"data" :
+		    [ {
+		    "parameters" :
+		        {
+			"linecolor" : "3",
+			"linelabel" : "CCanom",
+			"linetype"  : "11",
+			"linewidth" : "3"
+			},
+		    "series" :
+		        [ {
+			"xs" : log.tables(cchalf)[0].col("1\d^2"),
+			"ys" : log.tables(cchalf)[0].col("CCanom")
+			} ]
+		    },
+		    {
+		    "parameters" :
+		        {
+			"linecolor" : "4",
+			"linelabel" : "CC1/2",
+			"linetype"  : "11",
+			"linewidth" : "3"
+			},
+		    "series" :
+		        [ {
+			"xs" : log.tables(cchalf)[0].col("1/d^2"),
+			"ys" : log.tables(cchalf)[0].col("CC1/2")
+			} ]
+		    } ],
+		"parameters" :
+		    {
+		    "toplabel" : "Anomalous & Imean CCs vs. Resolution",
+		    "xlabel"   : "Dmid (Angstroms)"
+		    }
+		},
+	    "RMS correlation ration" :
+		{
+		"data" :
+		    [ {
+		    "parameters" :
+		        {
+			"linecolor" : "3",
+			"linelabel" : "RCRanom",
+			"linetype"  : "11",
+			"linewidth" : "3"
+			},
+		    "series" :
+		       	[ {
+			"xs" : log.tables(cchalf)[0].col("1/d^2"),
+			"ys" : log.tables(cchalf)[0].col("RCRanom")
+			} ]
+		    } ],
+		"parameters" :
+		    {
+		    "toplabel" : "RMS correlation ratio",
+		    "xlabel"   : "Dmid (Angstroms)"
+		    }
+		},
+	    "I/sigma, Mean Mn(I)/sd(Mn(I))" :
+		{
+		"data" :
+		    [ {
+		    "parameters" :
+		        {
+			"linecolor" : "3",
+			"linelabel" : "I/RMS",
+			"linetype"  : "11",
+			"linewidth" : "3"
+			},
+		    "series" :
+		        [ {
+			"xs" : log.tables(vresolution)[0].col("1/d^2"),
+			"ys" : log.tables(vresolution)[0].col("I/RMS")
+			} ]
+		    },
+		    {
+		    "parameters" :
+		        {
+			"linecolor" : "4",
+			"linelabel" : "Mn(I/sd)",
+			"linetype"  : "11",
+			"linewidth" : "3"
+			},
+		    "series" :
+		        [ {
+			"xs" : log.tables(i_over_sigma)[0].col("1/d^2"),
+			"ys" : log.tables(i_over_sigma)[0].col("Mn(I/sd")
+			} ]
+		    } ]
+		"parameters" :
+		    {
+		    "toplabel" : "I/sigma, Mean Mn(I)/sd(Mn(I))",
+		    "xlabel"   : "Dmid (Angstroms)"
+		    }
+		},
+	   "Rmerge, Rfull, Rmeas, Rpim vs. Resolution" :
+	        {
+	        "data" :
+	            [ {
+		    "parameters" :
+		        {
+			"linecolor" : "3",
+			"linelabel" : "Remerge",
+			"linetype"  : "11",
+			"linewidth" : "3"
+			},
+		    "series" :
+			[ {
+			"xs" : log.tables(vresolution)[0].col("1/d^2"),
+			"ys" : log.tables(vresolution)[0].col("Rmrg")
+			} ]
+		    },
+		    {
+		    "parameters" :
+			{
+			"linecolor" : "4",
+			"linelabel" : "Rfull",
+			"linetype"  : "11",
+			"linewidth" : "3"
+			},
+		    "series" :
+			[ {
+			"xs" : log.tables(vresolution)[0].col("1/d^2"),
+			"ys" : log.tables(vresolution)[0].col("Rfull")
+			} ]
+		    },
+		    {
+		    "parameters" :
+			{
+			"linecolor" : "5",
+			"linelabel" : "Rmeas",
+			"linetype"  : "11",
+			"linewidth" : "3"
+			},
+		    "series" :
+			[ {
+			"xs" : log.tables(vresolution)[0].col("1/d^2"),
+			"ys" : log.tables(vresolution)[0].col("Rmeas")
+			} ]
+		    },
+		    {
+		    "parameters" :
+			{
+			"linecolor" : "6",
+			"linelabel" : "Rpim",
+			"linetype"  : "11",
+			"linewidth" : "3"
+			},
+		    "series" :
+			[ {
+			"xs" : log.tables(vresolution)[0].col("1/d^2"),
+			"ys" : log.tables(vresolution)[0].col("Rpim")
+			} ]
+		    } ]
+		"parameters" :
+		    {
+		    "toplabel" : "Rmerge, Rfull, Rmeas, Rpim vs. Resolution",
+		    "xlabel"   : "Dmid (Angstroms)"
+		    }
+		},
+	    "Average I, RMS deviation, and Sd" :
+		{
+		"data" :
+		    [ {
+		    "parameters" :
+			{
+			"linecolor" : "3",
+			"linelabel" : "Average I",
+			"linetype"  : "11",
+			"linewidth" : "3"
+			},
+		    "series" :
+			[ {
+			"xs" : log.tables(vresolution)[0].col("1/d^2"),
+			"ys" : log.tables(vresolution)[0].col("AvI")
+			} ]
+		    },
+		    {
+		    "parameters" :
+		    	{
+		    	"linecolor" : "4",
+		    	"linelabel" : "RMS deviation",
+		    	"linetype"  : "11",
+		    	"linewidth" : "3"
+		    	},
+		    "series" :
+			[ {
+			"xs" : log.tables(vresolution)[0].col("1/d^2"),
+			"ys" : log.tables(vresolution)[0].col("RMSdev")
+			} ]
+		    },
+		    {
+		    "parameters" :
+			{
+			"linecolor" : "5",
+			"linelabel" : "std. dev.",
+			"linetype"  : "11",
+			"linewidth" : "3"
+			},
+		    "series" :
+			[ {
+			"xs" : log.tables(vresolution)[0].col("1/d^2"),
+			"ys" : log.tables(vresolution)[0].col("sd")
+			} ]
+		    } ]
+		"parameters" :
+		    {
+		    "toplabel" : "Average I, RMS dev., and std. dev.",
+		    "xlabel"   : "Dmid (Ansgstroms)"
+		    }
+		},
+	    "Completeness" :
+		{
+		"data" :
+		    [ {
+		    "parameters" :
+			{
+			"linecolor" : "3",
+			"linelabel" : "%poss",
+			"linetype"  : "11",
+			"linewidth" : "3"
+			},
+		    "series" :
+			[ {
+			"xs" : log.tables(completeness)[0].col("1/d^2"),
+			"ys" : log.tables(completeness)[0].col("%poss")
+			} ]
+		    },
+		    {
+		    "parameters" :
+			{
+			"linecolor" : "4",
+			"linelabel" : "C%poss",
+			"linetype"  : "11",
+			"linewidth" : "3"
+			},
+		    "series" :
+			[ {
+			"xs" : log.tables(completeness)[0].col("1/d^2"),
+			"ys" : log.tables(completeness)[0].col("C%poss")
+			} ]
+		    },
+		    {
+		    "parameters" :
+			{
+			"linecolor" : "5",
+			"linelabel" : "AnoCmp",
+			"linetype"  : "11",
+			"linewidth" : "3"
+			},
+		    "series" :
+			[ {
+			"xs" : log.tables(completeness)[0].col("1/d^2"),
+			"ys" : log.tables(completeness)[0].col("AnoCmp")
+			} ]
+		    },
+		    {
+		    "parameters" :
+			{
+			"linecolor" : "6",
+			"linelabel" : "AnoFrc",
+			"linetype"  : "11",
+			"linewidth" : "3"
+			},
+		    "series" :
+			[ {
+			"xs" : log.tables(completeness)[0].col("1/d^2"),
+			"ys" : log.tables(completeness)[0].col("AnoFrc")
+			} ]
+		    } ]
+		"parameters" :
+		    {
+		    "toplabel" : "Completeness vs. Resolution",
+		    "xlabel"   : "Dmid (Angstroms)"
+		    }
+		},
+	    "Redundancy" :
+		{
+		"data" :
+		    [ {
+		    "parameters" :
+			{
+			"linecolor" : "3",
+			"linelabel" : "multiplicity",
+			"linetype"  : "11",
+			"linewidth" : "3"
+			},
+		    "series" :
+			[ {
+			"xs" : log.tables(completeness)[0].col("1/d^2"),
+			"ys" : log.tables(completeness)[0].col("Mlpct")
+			} ]
+		    },
+		    {
+		    "parameters" :
+			{
+			"linecolor" : "4",
+			"linelabel" : "anomalous multiplicity",
+			"linetype"  : "11",
+			"linewidth" : "3"
+			},
+		    "series" :
+			[ {
+			"xs" : log.tables(completeness)[0].col("1/d^2"),
+			"ys" : log.tables(completeness)[0].col("AnoMlt")
+			} ]
+		    } ]
+		"parameters" :
+		    {
+		    "toplabel" : "Redundancy",
+		    "xlabel"   : "Dmid (Angstroms)"
+		    }
+		},
+	    "Radiation Damage" :
+		{
+		"data" :
+		    [ {
+		    "parameters" :
+			{
+			"linecolor" : "3",
+			"linelabel" : "Rcp",
+			"linetype"  : "11",
+			"linewidth" : "3"
+			},
+		    "series" :
+			[ {
+			"xs" : log.tables(rcp)[0].col("Batch"),
+			"ys" : log.tables(rcp)[0].col("Rcp")
+			} ]
+		    } ]
+		"parameters" :
+		    {
+		    "toplabel" : "Rcp vs. Batch",
+		    "xlabel"   : "Relative frame difference"
+		    }
+		} 
+		]
+		
+		# Return to the main program.
+	return (plots, int_results)			
+	
     def aimless (self, mtzin, resolution=False):
         """
         Runs aimless on the data, including the scaling step.
