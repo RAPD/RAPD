@@ -326,8 +326,6 @@ class RapdAgent(Process):
         if self.minikappa:
             self.processXOalign()
         else:
-    	    # Make the labelit.png image
-            # self.makeImages(0)
 
             # Run Labelit
             self.processLabelit()
@@ -337,6 +335,7 @@ class RapdAgent(Process):
 
             # If there is a solution, then calculate a strategy.
             if self.labelit_failed == False:
+
                 # Start distl.signal_strength for the correct labelit iteration
                 self.processDistl()
                 if self.multiproc == False:
@@ -345,10 +344,12 @@ class RapdAgent(Process):
                 self.processRaddose()
                 self.processStrategy()
                 self.run_queue()
-                #Get the distl_results
+
+                # Get the distl_results
                 if self.multiproc:
                     self.postprocessDistl()
-    	    # Make PHP files for GUI, passback results, and cleanup.
+
+            # Pass back results, and cleanup.
             self.postprocess()
 
     def preprocess(self):
@@ -463,7 +464,7 @@ class RapdAgent(Process):
             self.labelitQueue = Queue()
             params = {}
             params["test"] = self.test
-	    params["cluster"] = self.cluster_adapter
+            params["cluster"] = self.cluster_adapter
             params["verbose"] = self.verbose
             params["cluster_queue"] = self.cluster_queue
             params["vendortype"] = self.vendortype
@@ -1309,44 +1310,6 @@ class RapdAgent(Process):
         except:
             self.logger.exception('**Error in PrintInfo**')
 
-    # def makeImages(self,predictions):
-    #   """
-    #   Create images for iipimage server in an alternate process
-    #   """
-    #   if self.verbose:
-    #     self.logger.debug('AutoindexingStrategy::makeImages')
-    #   try:
-    #     l = [('raw','labelit.png'),('overlay','labelit.overlay_index -large'),
-    #          ('overlay','labelit.overlay_distl -large')]
-    #     l1 = []
-    #     #aggregate the source images
-    #     src_images = []
-    #     #1st image
-    #     src_images.append(self.header.get('fullname'))
-    #     #if we have a pair
-    #     if self.header2:
-    #       src_images.append(self.header2.get('fullname'))
-    #     for image in src_images:
-    #       if predictions == 0:
-    #         png = '%s.png'%os.path.basename(image)[:-4]
-    #       else:
-    #         png = '%s_overlay.png'%os.path.basename(image)[:-4]
-    #       tif = png.replace('.png','.tif')
-    #       if self.test:
-    #         command = 'ls'
-    #       else:
-    #         command = '%s %s %s; vips im_vips2tiff %s %s:jpeg:100,tile:192x192,pyramid; rm -rf %s' % (l[predictions][1],image,png,png,tif,png)
-    #         #command = '%s %s %s; vips im_vips2tiff %s %s:jpeg:100,tile:192x192,pyramid' % (l[predictions][1],image,png,png,tif)
-    #       job = Process(target=Utils.processLocal,args=(command,self.logger))
-    #       #job = Process(target=Utils.processLocal,args=((command,'junk.log'),self.logger))
-    #       job.start()
-    #       l1.append((tif,job))
-    #
-    #     self.vips_images[l[predictions][0]] = l1
-    #
-    #   except:
-    #     self.logger.exception('**Error in makeImages.**')
-
     def postprocess(self):
         """
         Make all the HTML files, pass results back, and cleanup.
@@ -1355,7 +1318,6 @@ class RapdAgent(Process):
             self.logger.debug("AutoindexingStrategy::postprocess")
 
         output = {}
-        # output_files = False
 
         # Set up the results for return
         self.results["process"] = {
@@ -1376,14 +1338,12 @@ class RapdAgent(Process):
         #     Summary.summaryRaddose(self)
         if self.labelit_failed == False:
             if self.strategy == "mosflm":
-                self.htmlBestPlotsFailed()
                 Summary.summaryMosflm(self, False)
                 Summary.summaryMosflm(self, True)
             else:
                 if self.best_failed:
                     if self.best_anom_failed:
                         pass
-                        # self.htmlBestPlotsFailed()
                         # Summary.summaryMosflm(self, False)
                         # Summary.summaryMosflm(self, True)
                     else:
@@ -1398,8 +1358,6 @@ class RapdAgent(Process):
                     Summary.summaryBest(self, False)
                     Summary.summaryBest(self, True)
                     self.htmlBestPlots()
-        else:
-            self.htmlBestPlotsFailed()
 
         # Generate the long and short summary HTML files
         self.htmlSummaryShort()
@@ -1502,7 +1460,7 @@ class RapdAgent(Process):
                 results.update(self.mosflm_strat_results)
             if self.mosflm_strat_anom_results:
                 results.update(self.mosflm_strat_anom_results)
-            results.update(output_files)
+            # results.update(output_files)
             # self.results.append(results)
             # if self.gui:
             self.results["results"] = results
@@ -1579,7 +1537,6 @@ class RapdAgent(Process):
                 plot = Parse.ParseOutputBestPlots(self, open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
                 plot.update({"osc_range_anom": plot.pop("osc_range")})
             else:
-                self.htmlBestPlotsFailed()
                 run = False
 
             # Best failed?
@@ -1604,9 +1561,6 @@ class RapdAgent(Process):
                 # Go through the plots and build best_plots
                 for plot_type in best_plots.keys():
                     self.logger.debug(plot_type)
-
-
-
 
             # Place holder for settings.
             l = [["Omega start", "Min osc range for different completenesses", "O m e g a &nbsp R a n g e", "Omega Start",
@@ -1659,71 +1613,9 @@ class RapdAgent(Process):
                             # best_plot.write("%s;\n" % s1[:-1])
                     label.append("%6s],\n" % "")
                     l[i].append(label)
-                    for line in l1:
-                        pass
-                        # best_plot.write(line)
-                    if len(l2) > 0:
-                        if i == 0:
-                            pass
-                            # best_plot.write("%4sfor (var i = 0; i < %s; i += 5)\n" % ("", max(l2)))
-                            # best_plot.write("%4smark.push([%s,i]);\n" % ("", self.best_results.get("Best results").get("strategy phi start")[0]))
-                        if i == 1:
-                            pass
-                            # best_plot.write("%4sfor (var i = 0; i < %s; i += 5)\n" % ("", max(l2)))
-                            # best_plot.write("%4smarkanom.push([%s,i]);\n" % ("", self.best_anom_results.get("Best ANOM results").get("strategy anom phi start")[0]))
-                for i in range(len(l)):
-                    # best_plot.write("%4svar plot%s = $.plot($('#chart%s_div'),\n" % ("", i, i))
-                    for line in l[i][-1]:
-                        pass
-                    #     best_plot.write(line)
-                    # best_plot.write("%6s{ lines: { show: true},\n%8spoints: { show: false },\n" % ("", ""))
-                    # best_plot.write("%8sselection: { mode: 'xy' },\n%8sgrid: { hoverable: true, clickable: true },\n%6s});\n" % (3*("", )))
-                # best_plot.write( "%4sfunction showTooltip(x, y, contents) {\n" % "")
-                # best_plot.write("%6s$('<div id=tooltip>' + contents + '</div>').css( {\n%8sposition: 'absolute',\n" % ("", ""))
-                # best_plot.write("%8sdisplay: 'none',\n%8stop: y + 5,\n%8sleft: x + 5,\n%8sborder: '1px solid #fdd',\n" % (4*("", )))
-                # best_plot.write("%8spadding: '2px',\n%8s'background-color': '#fee',\n%8s opacity: 0.80\n" % (3*("", )))
-                # best_plot.write('%6s}).appendTo("body").fadeIn(200);\n%4s}\n%4svar previousPoint = null;\n' % (3*("", )))
-                for i in range(len(l)):
-                    pass
-                #     best_plot.write('%4s$("#chart%s_div").bind("plothover", function (event, pos, item) {\n' % ("", i))
-                #     best_plot.write('%6s$("#x").text(pos.x.toFixed(2));\n%6s$("#y").text(pos.y.toFixed(2));\n' % ("", ""))
-                #     best_plot.write("%6sif (true) {\n%8sif (item) {\n%10sif (previousPoint != item.datapoint) {\n" % (3*("", )))
-                #     best_plot.write('%14spreviousPoint = item.datapoint;\n%14s$("#tooltip").remove();\n' % ("", ""))
-                #     best_plot.write("%14svar x = item.datapoint[0].toFixed(2),\n%18sy = item.datapoint[1].toFixed(2);\n" % ("", ""))
-                #     best_plot.write("%14sshowTooltip(item.pageX, item.pageY,\n" % "")
-                #     best_plot.write("%26s%s\n%10s}\n%8s}\n" % ("", l[i][5], "", ""))
-                #     best_plot.write('%8selse {\n%10s$("#tooltip").remove();\n%10spreviousPoint = null;\n%8s}\n%6s}\n%4s});\n' % (6*("", )))
-                # best_plot.write( "%2s});\n%4s</script>\n%2s</body>\n</html>\n" % (3*("", )))
-                # best_plot.close()
-                if os.path.exists(f):
-                    shutil.copy(f,  self.working_dir)
 
         except:
             self.logger.exception("**ERROR in htmlBestPlots**")
-            self.htmlBestPlotsFailed()
-
-    def htmlBestPlotsFailed(self):
-        """
-        If Best failed or was not run, this is the resultant html/php file.
-        """
-        if self.verbose:
-            self.logger.debug("AutoindexingStrategy::htmlBestPlotsFailed")
-
-        try:
-            if self.strategy == "mosflm":
-                error = "Mosflm strategy was chosen so no plots are calculated."
-            else:
-                error = "Best Failed. Could not calculate plots."
-            Utils.failedHTML(self, ("best_plots", error))
-            if self.gui:
-                f = "best_plots.php"
-            else:
-                f = "best_plots.html"
-            if os.path.exists(f):
-                shutil.copy(f, self.working_dir)
-
-        except:
-            self.logger.exception("**ERROR in htmlBestPlotsFailed**")
 
     def htmlSummaryLong(self):
         """
@@ -2212,40 +2104,33 @@ class RunLabelit(Process):
         self.header = command["header1"]
         self.header2 = command.get("header2", False)
         self.preferences = command["preferences"]
-	self.site_parameters = command.get("site_parameters", {})
+        self.site_parameters = command.get("site_parameters", {})
         self.controller_address = command["return_address"]
-	"""
-	# Read site file is available
-	if self.site_parameters.has_key('cluster_site'):
-	  self.site = load_module(seek_module=self.site_parameters.get('cluster_site'),
-	                          directories='sites')
-	else:
-	  self.site = False
-        """
-        #params
-        self.test = params.get("test", False)
-        #Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Adds 1-3s to total run time.
-        #self.cluster_use = params.get("cluster",True)
 
-	#If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
+        # params
+        self.test = params.get("test", False)
+        # Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Adds 1-3s to total run time.
+        # self.cluster_use = params.get("cluster",True)
+
+        # If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
         self.cluster_queue = params.get("cluster_queue", False)
-        #Get detector vendortype for settings. Defaults to ADSC.
+        # Get detector vendortype for settings. Defaults to ADSC.
         self.vendortype = params.get("vendortype", "ADSC")
         # Turn on verbose output
         self.verbose = params.get("verbose", False)
         # Number of Labelit iteration to run.
         self.iterations = params.get("iterations", 6)
         # If limiting number of LABELIT run on cluster.
-        #self.red = params.get("redis", False)
+        # self.red = params.get("redis", False)
         self.short = False
 
-	#If using the cluster, get the correct module (already loaded)
-	if params.get("cluster",False):
-	  self.cluster_adapter = params.get("cluster",False)
+	# If using the cluster, get the correct module (already loaded)
+	if params.get("cluster", False):
+        self.cluster_adapter = params.get("cluster",False)
 
 	# Make decisions based on input params
 	if self.iterations != 6:
-            self.short = True
+        self.short = True
 	# Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
         #******BEAMLINE SPECIFIC*****
         # if self.header.has_key("acc_time"):
@@ -2254,7 +2139,7 @@ class RunLabelit(Process):
         # else:
         #     self.gui = True
         #******BEAMLINE SPECIFIC*****
-        #Set times for processes. "False" to disable.
+        # Set times for processes. "False" to disable.
         if self.header2:
             self.labelit_timer = 180
         else:
@@ -2325,18 +2210,18 @@ class RunLabelit(Process):
         self.postprocess()
 
     def preprocess(self):
-      """
-      Setup the working dir in the RAM and save the dir where the results will go at the end.
-      """
-      if self.verbose:
-        self.logger.debug('RunLabelit::preprocess')
-      if os.path.exists(self.working_dir) == False:
-        os.makedirs(self.working_dir)
-      os.chdir(self.working_dir)
-      if self.test:
-        if self.short == False:
-          self.logger.debug('TEST IS ON')
-          print 'TEST IS ON'
+        """
+        Setup the working dir in the RAM and save the dir where the results will go at the end.
+        """
+        if self.verbose:
+            self.logger.debug("RunLabelit::preprocess")
+        if os.path.exists(self.working_dir) == False:
+            os.makedirs(self.working_dir)
+        os.chdir(self.working_dir)
+        if self.test:
+            if self.short == False:
+                self.logger.debug("TEST IS ON")
+                print "TEST IS ON"
 
     def preprocessLabelit(self):
       """
@@ -2356,16 +2241,11 @@ class RunLabelit(Process):
           #y_beam         = str(self.header.get('beam_center_calc_y', self.header.get('beam_center_y')))
           x_beam         = str(self.header.get("x_beam"))
           y_beam         = str(self.header.get("y_beam"))
-        #   x_beam         = str(self.header.get('beam_center_x'))
-        #   y_beam         = str(self.header.get('beam_center_y'))
+          # x_beam         = str(self.header.get('beam_center_x'))
+          # y_beam         = str(self.header.get('beam_center_y'))
           binning = True
           if self.header.has_key('binning'):
   	           binning = self.header.get('binning')
-          """
-          if self.vendortype == 'ADSC':
-            if self.header.get('binning') == 'none':
-              binning = False
-          """
           if self.test == False:
               preferences    = open('dataset_preferences.py','w')
               preferences.write('#####Base Labelit settings#####\n')

@@ -59,7 +59,7 @@ DETECTOR_SN = "Dectris Eiger 9M S/N E-18-0101"
 # The detector suffix "" if there is no suffix
 DETECTOR_SUFFIX = ".cbf"
 # Template for image name generation ? for frame number places
-IMAGE_TEMPLATE = "%s.%s_??????.cbf" # prefix & run number
+IMAGE_TEMPLATE = "%s.%03d_??????.cbf" # prefix & run number
 # Is there a run number in the template?
 RUN_NUMBER_IN_TEMPLATE = True
 # This is a version number for internal RAPD use
@@ -148,7 +148,7 @@ def create_image_fullname(directory,
     image_number -- number for the image
     """
 
-    filename = IMAGE_TEMPLATE.replace("????", "%04d") % (image_prefix, run_number, image_number)
+    filename = IMAGE_TEMPLATE.replace("??????", "%06d") % (image_prefix, run_number, image_number)
 
     fullname = os.path.join(directory, filename)
 
@@ -159,7 +159,11 @@ def create_image_template(image_prefix, run_number):
     Create an image template for XDS
     """
 
+    print "create_image_template %s %d" % (image_prefix, run_number)
+
     image_template = IMAGE_TEMPLATE % (image_prefix, run_number)
+
+    print "image_template: %s" % image_template
 
     return image_template
 
@@ -191,6 +195,10 @@ def read_header(fullname, beam_settings=False):
     # Perform the header read from the file
     # If you are importing another detector, this should work
     header = detector.read_header(fullname)
+
+    basename = os.path.basename(fullname)
+    header["image_prefix"] = ".".join(basename.replace(".cbf", "").split(".")[:-1])
+    header["run_number"] = int(basename.replace(".cbf", "").split("_")[-1])
 
     # Return the header
     return header
