@@ -1409,7 +1409,7 @@ class RapdAgent(Process):
         shortHTML = self.make_short_results(directory, summary, orig_rescut)
         longHTML = self.make_long_results(scalalog)
 
-        shutil.copyfile(plotsHTML, os.path.join(self.dirs['work'], plotsHTML))
+        # shutil.copyfile(plotsHTML, os.path.join(self.dirs['work'], plotsHTML))
         shutil.copyfile(shortHTML, os.path.join(self.dirs['work'], shortHTML))
         shutil.copyfile(longHTML, os.path.join(self.dirs['work'], longHTML))
 
@@ -2002,12 +2002,12 @@ class RapdAgent(Process):
 
     def parse_aimless2 (self, logfile):
 	"""
-	Parses the aimless logfile in order to pull out data for 
+	Parses the aimless logfile in order to pull out data for
 	graphing and the results summary table.
 	Relevant values for the summary table are stored in a dict.
 	Relevant information for creating plots are stored in a dict,
 	with the following format for each entry (i.e. each plot):
-	
+
 	{"<*plot label*>":{
 	                   "data":{
 	                          "parameters":{<*line parameters*>},
@@ -2023,28 +2023,28 @@ class RapdAgent(Process):
 	 ...
 	}
 	"""
-		
+
 	log = smartie.parselog(logfile)
-		
+
 	# Pull out information for the results summary table.
 	flag = True
 	summary = log.keytext(0).message().split("\n")
-		
+
 	# For some reason "Anomalous flag switched ON" is not always
 	# found, so the line below creates a blank entry for the
 	# the variable that should be created when that phrase is
 	# found, eliminating the problem where the program reports that
 	# the variable anomalous_report is referenced before assignment.
 	anomalous_report = ""
-	
+
 	for line in summary:
 		if "Space group" in line:
 			space_group = line.strip().split(": ")[-1]
 		elif "Average unit cell" in line:
 			unit_cell = line.split()[3:]
 		elif "Anomalous flag switched ON" in line:
-			anomalous_report = linecol
-	
+			anomalous_report = line
+
 	int_results = {
 	               "bins_low"     : summary[3].split()[-3:],
                        "bins_high"    : summary[4].split()[-3:],
@@ -2078,11 +2078,11 @@ class RapdAgent(Process):
         #
         # We will use this to pull out the data from tables we are
         # interested in.
-        # 
-        # The beginning of the titles for all common tables in the 
+        #
+        # The beginning of the titles for all common tables in the
         # aimless log file are given below, but not all of them
         # are currently used to generate a plot.
-        
+
         scales = "=== Scales v rotation"
         rfactor = "Analysis against all Batches"
         cchalf = "Correlations CC(1/2)"
@@ -2093,8 +2093,8 @@ class RapdAgent(Process):
         completeness = "Completeness & multiplicity"
         deviation = "Run 1, standard deviation"
         rcp = "Radiation damage"
-        
-        plots = [
+
+        plots = {
             "Rmerge vs Frame" :
 		{
                 "data" :
@@ -2104,7 +2104,7 @@ class RapdAgent(Process):
                          "linecolor" : "3",
                          "linelabel" : "Rmerge",
                          "linetype"  : "11",
-                         "linewidth" : "3" 
+                         "linewidth" : "3"
 		        },
                     "series" :
 			[ {
@@ -2115,10 +2115,10 @@ class RapdAgent(Process):
                     {
                      "parameters" :
 		     	{
-                         "linecolor" : "4".
+                         "linecolor" : "4",
                          "linelabel" : "SmRmerge",
                          "linetype"  : "11",
-                         "linewidth" : "3" 
+                         "linewidth" : "3"
 			 },
                      "series" :
 			[ {
@@ -2127,7 +2127,7 @@ class RapdAgent(Process):
                         } ]
                     } ],
                 "parameters" :
-		    { 
+		    {
                     "toplabel" : "Rmerge vs Batch for all Runs",
                     "xlabel"   : "Image Number"
                     }
@@ -2168,7 +2168,7 @@ class RapdAgent(Process):
 			},
 		    "series" :
 		        [ {
-			"xs" : log.tables(cchalf)[0].col("1\d^2"),
+			"xs" : log.tables(cchalf)[0].col("1/d^2"),
 			"ys" : log.tables(cchalf)[0].col("CCanom")
 			} ]
 		    },
@@ -2242,10 +2242,10 @@ class RapdAgent(Process):
 			},
 		    "series" :
 		        [ {
-			"xs" : log.tables(i_over_sigma)[0].col("1/d^2"),
-			"ys" : log.tables(i_over_sigma)[0].col("Mn(I/sd")
+			"xs" : log.tables(vresolution)[0].col("1/d^2"),
+			"ys" : log.tables(vresolution)[0].col("Mn(I/sd)")
 			} ]
-		    } ]
+		    } ],
 		"parameters" :
 		    {
 		    "toplabel" : "I/sigma, Mean Mn(I)/sd(Mn(I))",
@@ -2310,7 +2310,7 @@ class RapdAgent(Process):
 			"xs" : log.tables(vresolution)[0].col("1/d^2"),
 			"ys" : log.tables(vresolution)[0].col("Rpim")
 			} ]
-		    } ]
+		    } ],
 		"parameters" :
 		    {
 		    "toplabel" : "Rmerge, Rfull, Rmeas, Rpim vs. Resolution",
@@ -2361,7 +2361,7 @@ class RapdAgent(Process):
 			"xs" : log.tables(vresolution)[0].col("1/d^2"),
 			"ys" : log.tables(vresolution)[0].col("sd")
 			} ]
-		    } ]
+		    } ],
 		"parameters" :
 		    {
 		    "toplabel" : "Average I, RMS dev., and std. dev.",
@@ -2426,7 +2426,7 @@ class RapdAgent(Process):
 			"xs" : log.tables(completeness)[0].col("1/d^2"),
 			"ys" : log.tables(completeness)[0].col("AnoFrc")
 			} ]
-		    } ]
+		    } ],
 		"parameters" :
 		    {
 		    "toplabel" : "Completeness vs. Resolution",
@@ -2447,7 +2447,7 @@ class RapdAgent(Process):
 		    "series" :
 			[ {
 			"xs" : log.tables(completeness)[0].col("1/d^2"),
-			"ys" : log.tables(completeness)[0].col("Mlpct")
+			"ys" : log.tables(completeness)[0].col("Mlplct")
 			} ]
 		    },
 		    {
@@ -2463,7 +2463,7 @@ class RapdAgent(Process):
 			"xs" : log.tables(completeness)[0].col("1/d^2"),
 			"ys" : log.tables(completeness)[0].col("AnoMlt")
 			} ]
-		    } ]
+		    } ],
 		"parameters" :
 		    {
 		    "toplabel" : "Redundancy",
@@ -2486,18 +2486,18 @@ class RapdAgent(Process):
 			"xs" : log.tables(rcp)[0].col("Batch"),
 			"ys" : log.tables(rcp)[0].col("Rcp")
 			} ]
-		    } ]
+		    } ],
 		"parameters" :
 		    {
 		    "toplabel" : "Rcp vs. Batch",
 		    "xlabel"   : "Relative frame difference"
 		    }
-		} 
-		]
-		
+		}
+		}
+
 		# Return to the main program.
-	return (plots, int_results)			
-	
+	return (plots, int_results)
+
     def aimless (self, mtzin, resolution=False):
         """
         Runs aimless on the data, including the scaling step.
