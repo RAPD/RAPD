@@ -264,6 +264,8 @@ def analyze_data_sources(sources,
             else:
                 raise Exception("%s does not exist" % source_abspath)
 
+        return return_data
+
     elif mode == "integrate":
 
         # HDF5 file

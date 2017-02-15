@@ -298,8 +298,7 @@ class RapdAgent(Process):
         #self.beamline = self.header.get("beamline")
         self.time = str(self.header.get("time", "1.0"))
         self.wavelength = str(self.header.get("wavelength"))
-        # TODO Handle None or False coming in on header
-        self.transmission = float(self.header.get("transmission"))
+        self.transmission = str(self.header.get("transmission", 0))
         # self.aperture = str(self.header.get("md2_aperture"))
         self.spacegroup = self.preferences.get("spacegroup", False)
         self.flux = str(self.header.get("flux",'3E10'))
@@ -318,9 +317,9 @@ class RapdAgent(Process):
 
         # Check if h5 file is input and convert to cbf's.
         if self.header['fullname'][-3:] == '.h5':
-          if self.convert_images() == False:
-            # If conversion fails, kill the job.
-            self.postprocess()
+            if self.convert_images() == False:
+                # If conversion fails, kill the job.
+                self.postprocess()
 
         self.preprocess()
 

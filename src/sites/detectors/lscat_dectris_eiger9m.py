@@ -59,7 +59,7 @@ DETECTOR_SN = "Dectris Eiger 9M S/N E-18-0101"
 # The detector suffix "" if there is no suffix
 DETECTOR_SUFFIX = ".cbf"
 # Template for image name generation ? for frame number places
-IMAGE_TEMPLATE = "%s.%s.?????.cbf" # prefix & run number
+IMAGE_TEMPLATE = "%s.%s_??????.cbf" # prefix & run number
 # Is there a run number in the template?
 RUN_NUMBER_IN_TEMPLATE = True
 # This is a version number for internal RAPD use

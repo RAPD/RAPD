@@ -66,7 +66,7 @@ class hdf5_to_cbf_converter(object):
                  prefix=False,
                  start_image=False,
                  end_image=False,
-                 zfill=5,
+                 zfill=6,
                  nproc=False,
                  verbose=False,
                  logger=False):
@@ -209,7 +209,7 @@ class hdf5_to_cbf_converter(object):
                 myoutput.wait()
 
                 for i in range(self.start_image, self.end_image+1):
-                    self.output_images.append(os.path.join(self.output_dir, self.prefix) + "_%05d" % i)
+                    self.output_images.append(os.path.join(self.output_dir, self.prefix) + "_%06d" % i)
 
 
             # Multiple processors
@@ -221,7 +221,7 @@ class hdf5_to_cbf_converter(object):
                 number_of_images = self.end_image - self.start_image + 1
                 batch = int(number_of_images / self.nproc)
                 final_batch = batch + (number_of_images % self.nproc)
-                
+
                 iteration = 0
                 start = self.start_image
                 stop = 0
@@ -244,7 +244,7 @@ class hdf5_to_cbf_converter(object):
                 pool.join()
 
             for i in range(self.start_image, self.end_image+1):
-                self.output_images.append(os.path.join(self.output_dir, self.prefix) + "_%05d.cbf" % i)
+                self.output_images.append(os.path.join(self.output_dir, self.prefix) + "_%06d.cbf" % i)
 
         return True
 
