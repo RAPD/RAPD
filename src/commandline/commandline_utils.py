@@ -232,7 +232,7 @@ def analyze_data_sources(sources,
 
                     # Are we dealing with hdf5 images
                     if source_abspath.endswith(".h5"):
-                        print "Converting hdf5 file to cbfs"
+                        print "Converting HDF5 file to CBF"
 
                         prefix = os.path.basename(source).replace("_master.h5", "")
 
@@ -266,7 +266,10 @@ def analyze_data_sources(sources,
 
     elif mode == "integrate":
 
+        # HDF5 file
         if sources.endswith(".h5"):
+
+            print "Converting HDF5 file to CBFs"
 
             source_abspath = os.path.abspath(sources)
             prefix = os.path.basename(sources).replace("_master.h5", "")
@@ -282,34 +285,29 @@ def analyze_data_sources(sources,
                 end_image=end_image)
 
             converter.run()
-            print converter.output_images
-            sys.exit()
 
             return converter.output_images
 
-        template = sources
+        # NOT HDF5
+        else:
 
-        # Establish the abspath
-        full_path_template = os.path.abspath(template)
+            template = sources
 
-        print full_path_template
+            # Establish the abspath
+            full_path_template = os.path.abspath(template)
 
-        sys.exit()
+            # Grab a list of files
+            # "?" as numbers that increment
+            # "#" as numbers that increment
+            full_path_template = full_path_template.replace("?", "[0-9]").replace("#", "[0-9]")
+            return_data = glob.glob(full_path_template)
 
-        # Grab a list of files
-        # "#" as numbers that increment
-        return_data = glob.glob(full_path_template.replace("#", "[0-9]"))
-        # "?" as numbers that increment
-        # return_data = glob.glob(full_path_template.replace("?", "[0-9]"))
-        return_data.sort()
-        pprint.pprint(return_data)
+            return_data.sort()
 
-        sys.exit()
+            if len(return_data) == 0:
+                raise Exception("No files for %s found" % template)
 
-        if len(return_data) == 0:
-            raise Exception("No files for %s found" % template)
-
-    return return_data
+            return return_data
 
 
 if __name__ == "__main__":

@@ -119,7 +119,7 @@ class hdf5_to_cbf_converter(object):
 
         # Check prefix
         if not self.prefix:
-            self.prefix = self.master_file.replace("master.h5", "")
+            self.prefix = self.master_file.replace("master.h5", "").rstrip("_")
 
         # Check start_image - default to 1
         if not self.start_image:
@@ -194,7 +194,7 @@ class hdf5_to_cbf_converter(object):
         else:
             # One processor
             if self.nproc == 1:
-                command = "%s %d:%d %s" % (command0, self.start_image, self.end_image, os.path.join(self.output_dir, self.prefix))
+                command = "%s %d:%d %s_" % (command0, self.start_image, self.end_image, os.path.join(self.output_dir, self.prefix))
 
                 # Now convert
                 if self.verbose:
@@ -221,8 +221,7 @@ class hdf5_to_cbf_converter(object):
                 number_of_images = self.end_image - self.start_image + 1
                 batch = int(number_of_images / self.nproc)
                 final_batch = batch + (number_of_images % self.nproc)
-                print "batch: %d" % batch
-                print "final_batch %d" % final_batch
+                
                 iteration = 0
                 start = self.start_image
                 stop = 0
@@ -233,7 +232,7 @@ class hdf5_to_cbf_converter(object):
                         batch = final_batch
 
                     stop = start + batch -1
-                    commands.append(("%s %d:%d %s" % (command0, start, stop, os.path.join(self.output_dir, self.prefix)), self.verbose))
+                    commands.append(("%s %d:%d %s_" % (command0, start, stop, os.path.join(self.output_dir, self.prefix)), self.verbose))
 
                     iteration += 1
                     start = stop + 1
