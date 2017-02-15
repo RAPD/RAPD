@@ -298,8 +298,9 @@ class RapdAgent(Process):
         #self.beamline = self.header.get("beamline")
         self.time = str(self.header.get("time", "1.0"))
         self.wavelength = str(self.header.get("wavelength"))
+        # TODO Handle None or False coming in on header
         self.transmission = float(self.header.get("transmission"))
-        #self.aperture = str(self.header.get("md2_aperture"))
+        # self.aperture = str(self.header.get("md2_aperture"))
         self.spacegroup = self.preferences.get("spacegroup", False)
         self.flux = str(self.header.get("flux",'3E10'))
         self.solvent_content = str(self.preferences.get("solvent_content", 0.55))

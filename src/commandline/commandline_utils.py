@@ -230,12 +230,18 @@ def analyze_data_sources(sources, mode="index"):
                     if source_abspath.endswith(".h5"):
                         print "Converting hdf5 file to cbfs"
 
+                        prefix = os.path.basename(source).replace("_master.h5", "")
+
                         converter = convert_hdf5_cbf.hdf5_to_cbf_converter(
                             master_file=source_abspath,
                             output_dir="cbf_files",
-                            prefix="tmp",
+                            prefix=prefix,
                             start_image=1,
                             end_image=1)
+
+                        converter.run()
+
+                        source_abspath = os.path.abspath(converter.output_images[0])
 
                     # 1st file of 1 or 2
                     if not "files" in return_data:

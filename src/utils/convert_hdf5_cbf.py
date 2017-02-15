@@ -58,6 +58,8 @@ def run_process(input_args):
 
 class hdf5_to_cbf_converter(object):
 
+    output_images = []
+
     def __init__(self,
                  master_file,
                  output_dir=False,
@@ -149,7 +151,7 @@ class hdf5_to_cbf_converter(object):
 
         # Single image in master file
         if number_of_images == 1:
-            img = "%s%s.cbf" % (os.path.join(self.output_dir, self.prefix), str(self.start_image).zfill(self.zfill))
+            img = "%s_%s.cbf" % (os.path.join(self.output_dir, self.prefix), str(self.start_image).zfill(self.zfill))
             command = "%s 1 %s" % (command0, img)
 
             # Now convert
@@ -164,9 +166,11 @@ class hdf5_to_cbf_converter(object):
                                             stderr=subprocess.PIPE)
             myoutput.wait()
 
+            self.output_images.append(img)
+
         # Single image from a run of images
         elif self.start_image == self.end_image:
-            img = "%s%s.cbf" % (os.path.join(self.output_dir, self.prefix), str(self.start_image).zfill(self.zfill))
+            img = "%s_%s.cbf" % (os.path.join(self.output_dir, self.prefix), str(self.start_image).zfill(self.zfill))
             command = "%s %d:%d %s" % (command0,
                                        self.start_image,
                                        self.start_image,
@@ -184,6 +188,7 @@ class hdf5_to_cbf_converter(object):
                                             stderr=subprocess.PIPE)
             myoutput.wait()
 
+            self.output_images.append(img)
 
         # Multiple images from a run of images
         else:
@@ -202,6 +207,10 @@ class hdf5_to_cbf_converter(object):
                                                 stdout=subprocess.PIPE,
                                                 stderr=subprocess.PIPE)
                 myoutput.wait()
+
+                for i in range(self.start_image, self.end_image+1):
+                    self.output_images.append(os.path.join(self.output_dir, self.prefix) + "_%05d" % i)
+
 
             # Multiple processors
             else:
@@ -234,6 +243,9 @@ class hdf5_to_cbf_converter(object):
                 results = pool.map_async(run_process, commands)
                 pool.close()
                 pool.join()
+
+            for i in range(self.start_image, self.end_image+1):
+                self.output_images.append(os.path.join(self.output_dir, self.prefix) + "_%05d.cbf" % i)
 
         return True
 
