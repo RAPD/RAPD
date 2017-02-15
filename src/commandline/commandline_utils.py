@@ -266,10 +266,35 @@ def analyze_data_sources(sources,
 
     elif mode == "integrate":
 
+        if sources.endswith(".h5"):
+
+            source_abspath = os.path.abspath(sources)
+            prefix = os.path.basename(sources).replace("_master.h5", "")
+
+            if not start_image:
+                start_image = 1
+
+            converter = convert_hdf5_cbf.hdf5_to_cbf_converter(
+                master_file=source_abspath,
+                output_dir="cbf_files",
+                prefix=prefix,
+                start_image=start_image,
+                end_image=end_image)
+
+            converter.run()
+            print converter.output_images
+            sys.exit()
+
+            return converter.output_images
+
         template = sources
 
         # Establish the abspath
         full_path_template = os.path.abspath(template)
+
+        print full_path_template
+
+        sys.exit()
 
         # Grab a list of files
         # "#" as numbers that increment

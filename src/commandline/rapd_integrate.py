@@ -206,8 +206,8 @@ def main():
     data_files = commandline_utils.analyze_data_sources(
         commandline_args.template,
         mode="integrate",
-        start_image=start_image,
-        end_image=end_image)
+        start_image=commandline_args.start_image,
+        end_image=commandline_args.end_image)
 
     # Need data
     if len(data_files) == 0 and commandline_args.test == False:
