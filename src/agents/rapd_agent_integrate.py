@@ -313,8 +313,8 @@ class RapdAgent(Process):
             pass
         elif analysis == 'Success':
             self.logger.debug(analysis)
-            self.results[-1]['status'] = 'SUCCESS'
-            self.logger.debug(results)
+            self.results["status"] = "SUCCESS"
+            self.logger.debug(self.results)
             # self.sendBack2(results)
             if self.controller_address:
                 rapd_send(self.controller_address, self.results)
@@ -2796,7 +2796,7 @@ class RapdAgent(Process):
                     'osc_range' : self.image_data['osc_range'],
                     'x_beam'    : self.image_data['x_beam'],
                     'y_beam'    : self.image_data['y_beam'],
-                    'two_theta' : self.image_data['twotheta'],
+                    'two_theta' : self.image_data.get("twotheta", 0),
                     'distance'  : self.image_data['distance']
                    }
         pdb_input = []

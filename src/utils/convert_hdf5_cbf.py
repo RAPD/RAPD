@@ -58,6 +58,7 @@ def run_process(input_args):
 
 class hdf5_to_cbf_converter(object):
 
+    expected_images = []
     output_images = []
 
     def __init__(self,
@@ -129,6 +130,15 @@ class hdf5_to_cbf_converter(object):
         if not self.nproc:
             self.nproc = multiprocessing.cpu_count()
 
+        # Grab the number of images
+        self.number_of_images = self.get_number_of_images()
+
+        # Create list of expected files to be generated
+        self.calculate_expected_files()
+
+        # Check for already present files
+        self.check_for_output_images()
+
     def process(self):
         """Perform the conversion"""
 
@@ -136,21 +146,21 @@ class hdf5_to_cbf_converter(object):
         command0 = "eiger2cbf %s" % self.master_file
 
         # Check how many frames are in dataset
-        myoutput = subprocess.Popen([command0, self.master_file],
-                                    shell=True,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-        stdout, stderr = myoutput.communicate()
-        number_of_images = int(stdout.split("\n")[-2])
-        print "Number of images: %d" % number_of_images
+        # myoutput = subprocess.Popen([command0, self.master_file],
+        #                             shell=True,
+        #                             stdout=subprocess.PIPE,
+        #                             stderr=subprocess.PIPE)
+        # stdout, stderr = myoutput.communicate()
+        # number_of_images = int(stdout.split("\n")[-2])
+        # print "Number of images: %d" % number_of_images
 
         # Work out end image
         if not self.end_image:
-            self.end_image = number_of_images + self.start_image - 1
+            self.end_image = self.number_of_images + self.start_image - 1
         print "Converting images %d - %d" % (self.start_image, self.end_image)
 
         # Single image in master file
-        if number_of_images == 1:
+        if self.number_of_images == 1:
             img = "%s_%s.cbf" % (os.path.join(self.output_dir, self.prefix), str(self.start_image).zfill(self.zfill))
             command = "%s 1 %s" % (command0, img)
 
@@ -209,7 +219,7 @@ class hdf5_to_cbf_converter(object):
                 myoutput.wait()
 
                 for i in range(self.start_image, self.end_image+1):
-                    self.output_images.append(os.path.join(self.output_dir, self.prefix) + "_%06d" % i)
+                    self.output_images.append(os.path.join(self.output_dir, self.prefix) + "_%06d.cbf" % i)
 
 
             # Multiple processors
@@ -248,6 +258,45 @@ class hdf5_to_cbf_converter(object):
 
         return True
 
+    def get_number_of_images(self):
+        """Query the master file for the number of images in the data set"""
+
+        # Check how many frames are in dataset
+        myoutput = subprocess.Popen(["eiger2cbf %s" % self.master_file],
+                                    shell=True,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+        stdout, stderr = myoutput.communicate()
+        number_of_images = int(stdout.split("\n")[-2])
+        if self.verbose:
+            print "Number of images: %d" % number_of_images
+
+        return number_of_images
+
+    def calculate_expected_files(self):
+        """Take inputs and create a list of files to be made"""
+
+        if self.number_of_images == 1:
+            self.expected_images.append("%s_%s.cbf" % (os.path.join(self.output_dir, self.prefix), str(self.start_image).zfill(self.zfill)))
+
+        elif self.start_image == self.end_image:
+            self.expected_images.append("%s_%s.cbf" % (os.path.join(self.output_dir, self.prefix), str(self.start_image).zfill(self.zfill)))
+
+        else:
+            for i in range(self.start_image, self.end_image+1):
+                self.expected_images.append(os.path.join(self.output_dir, self.prefix) + "_%06d.cbf" % i)
+
+    def check_for_output_images(self):
+        """Perform a check for output images that already exist"""
+
+        images_exist = []
+        for image in self.expected_images:
+            if os.path.exists(image):
+                print "%s exists" % image
+                images_exist.append(int(image.split(".")[-2].split("_")[-1]))
+        print images_exist
+
+
 def main(args):
     """
     The main process docstring
@@ -264,7 +313,9 @@ def main(args):
                                       end_image=args.end_image,
                                       nproc=args.nproc,
                                       verbose=args.verbose)
-    converter.run()
+    converter.preprocess()
+
+    # converter.run()
 
 def get_commandline():
     """
