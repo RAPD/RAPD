@@ -67,6 +67,7 @@ detector2scanner = {
    "CCDD2AM":           "ESRF",
    "SATURN":            "RIGAKU SATURN",
    "PILATUS":           "PILATUS",
+   "EIGER":             "EIGER",
    "CCDBRANDEIS":       "B4"}
                     
 
