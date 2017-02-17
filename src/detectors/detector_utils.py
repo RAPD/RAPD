@@ -34,8 +34,9 @@ import shutil
 import sys
 import tempfile
 
-# Phenix imports
+# CCTBX imports
 from dxtbx.format.Registry import Registry
+import h5py
 from iotbx.detectors import ImageFactory
 
 # RAPD imports
@@ -227,6 +228,27 @@ def load_detector(detector):
         module = importlib.import_module(detector_file)
         return module
 
+def read_hdf5_header(image):
+    """Explore and return information from an hdf5 file"""
+
+    f = h5py.File(image, "r")
+
+    entry = f.get("entry")
+
+    instrument = entry.get("instrument")
+    beam = instrument.get("beam")
+    detector = instrument.get("detector")
+
+    for k, v in beam.iteritems():
+        print k, v
+
+    for k, v in detector.iteritems():
+        print k, v.keys()
+
+
+    sys.exit()
+
+
 def main(test_images):
     """Print out some detector information"""
 
@@ -235,7 +257,10 @@ def main(test_images):
         tmp_dir = False
 
         if test_image.endswith(".h5"):
-            print "HDF5 file  - converting"
+
+            print "HDF5 file"
+
+            hdf5_header = read_hdf5_header(test_image)
 
             tmp_dir = tempfile.mkdtemp()
 
@@ -243,7 +268,8 @@ def main(test_images):
                                                                output_dir=tmp_dir,
                                                                prefix="tmp",
                                                                start_image=1,
-                                                               end_image=1)
+                                                               end_image=1,
+                                                               overwrite=True)
             converter.run()
 
             test_image = "%s/tmp00001.cbf" % tmp_dir
