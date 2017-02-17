@@ -126,11 +126,15 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module,
     # The task to be carried out
     command = {
         "command": "INTEGRATE",
-        "process_id": uuid.uuid1()
+        "process_id": uuid.uuid1().get_hex()
         }
 
     # Where to do the work
-    command["directories"] = { "work": os.path.join(os.path.abspath(os.path.curdir), os.path.basename(image_0_data["fullname"]).replace(detector_module.DETECTOR_SUFFIX, "")) }
+    command["directories"] = {
+        "work": os.path.join(
+            os.path.abspath(os.path.curdir),
+            "rapd_integrate_" + run_data["image_template"].replace("?", "#"))
+        }
     if not os.path.exists(command["directories"]["work"]):
         os.makedirs(command["directories"]["work"])
 

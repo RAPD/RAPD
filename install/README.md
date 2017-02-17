@@ -36,7 +36,7 @@ These instructions are formulated for Scientific Linux 6.8, but apply for CentOS
 
 Installing the Control process and dependencies  
 1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git rapd`  
-2. Navigate to the install directory and `./install_cctbx`  
+2. Navigate to the install directory `cd rapd/install` and `./install_cctbx`  
 3. The install script will list any software that needs to be installed via yum. The list is: `wget subversion git make bzip2 openssl-devel gcc-c+ mesa-libGL-devel mesa-libGLU-devel`  
 
 

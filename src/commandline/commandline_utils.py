@@ -241,7 +241,8 @@ def analyze_data_sources(sources,
                             output_dir="cbf_files",
                             prefix=prefix,
                             start_image=1,
-                            end_image=1)
+                            end_image=1,
+                            overwrite=True)
 
                         converter.run()
 
@@ -284,7 +285,8 @@ def analyze_data_sources(sources,
                 output_dir="cbf_files",
                 prefix=prefix,
                 start_image=start_image,
-                end_image=end_image)
+                end_image=end_image,
+                overwrite=False)
 
             converter.run()
 

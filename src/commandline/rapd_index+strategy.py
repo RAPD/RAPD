@@ -32,6 +32,7 @@ import importlib
 import os
 import pprint
 import sys
+import uuid
 
 # RAPD imports
 import utils.log
@@ -46,10 +47,18 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     """
 
     # The task to be carried out
-    command = { "command":"AUTOINDEX+STRATEGY" }
+    command = {
+        "command":"AUTOINDEX+STRATEGY",
+        "process_id": uuid.uuid1().get_hex()
+        }
 
     # Where to do the work
-    command["directories"] = { "work": os.path.join(os.path.abspath(os.path.curdir), os.path.basename(image_headers.keys()[0]).replace(detector_module.DETECTOR_SUFFIX, "")) }
+    command["directories"] = {
+        "work": os.path.join(
+            os.path.abspath(os.path.curdir),
+            "rapd_index_" + os.path.basename(image_headers.keys()[0]).replace(
+                detector_module.DETECTOR_SUFFIX,
+                ""))}
     if not os.path.exists(command["directories"]["work"]):
         os.makedirs(command["directories"]["work"])
 

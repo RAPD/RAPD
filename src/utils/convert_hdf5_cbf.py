@@ -64,6 +64,7 @@ class hdf5_to_cbf_converter(object):
     expected_images = []
     output_images = []
     ranges_to_make = []
+    ranges_not_to_make = []
 
     def __init__(self,
                  master_file,
@@ -153,6 +154,12 @@ class hdf5_to_cbf_converter(object):
         # Check for already present files
         self.check_for_output_images()
 
+    def run(self):
+        """Convenience function"""
+
+        self.preprocess()
+        self.process()
+
     def process(self):
         """Coordinates the conversion"""
 
@@ -164,13 +171,24 @@ class hdf5_to_cbf_converter(object):
 
             if len(self.ranges_to_make) == 0:
                 print "No images to make"
+                self.convert_images(start_image=self.start_image,
+                                    end_image=self.end_image,
+                                    active=False)
                 return True
 
-            for range_to_make in self.ranges_to_make:
-                # print "Have to make range from %d to %d" % (range_to_make[0], range_to_make[-1])
-                self.convert_images(start_image=range_to_make[0], end_image=range_to_make[-1])
+            else:
+                for range_to_make in self.ranges_to_make:
+                    # print "Have to make range from %d to %d" % (range_to_make[0], range_to_make[-1])
+                    self.convert_images(start_image=range_to_make[0],
+                                        end_image=range_to_make[-1])
 
-    def convert_images(self, start_image, end_image):
+                for range_not_to_make in self.ranges_not_to_make:
+                    # print "Have to make range from %d to %d" % (range_to_make[0], range_to_make[-1])
+                    self.convert_images(start_image=range_not_to_make[0],
+                                        end_image=range_not_to_make[-1],
+                                        active=False)
+
+    def convert_images(self, start_image, end_image, active=True):
         """Actually convert the images"""
 
         if self.verbose:
@@ -185,16 +203,17 @@ class hdf5_to_cbf_converter(object):
             command = "%s 1 %s" % (command0, img)
 
             # Now convert
-            if self.verbose:
-                print "Executing command `%s`" % command
-                myoutput = subprocess.Popen(command,
-                                            shell=True)
-            else:
-                myoutput = subprocess.Popen(command,
-                                            shell=True,
-                                            stdout=subprocess.PIPE,
-                                            stderr=subprocess.PIPE)
-            myoutput.wait()
+            if active:
+                if self.verbose:
+                    print "Executing command `%s`" % command
+                    myoutput = subprocess.Popen(command,
+                                                shell=True)
+                else:
+                    myoutput = subprocess.Popen(command,
+                                                shell=True,
+                                                stdout=subprocess.PIPE,
+                                                stderr=subprocess.PIPE)
+                myoutput.wait()
 
             self.output_images.append(img)
 
@@ -207,26 +226,7 @@ class hdf5_to_cbf_converter(object):
                                        img)
 
             # Now convert
-            if self.verbose:
-                print "Executing command `%s`" % command
-                myoutput = subprocess.Popen(command,
-                                            shell=True)
-            else:
-                myoutput = subprocess.Popen(command,
-                                            shell=True,
-                                            stdout=subprocess.PIPE,
-                                            stderr=subprocess.PIPE)
-            myoutput.wait()
-
-            self.output_images.append(img)
-
-        # Multiple images from a run of images
-        else:
-            # One processor
-            if self.nproc == 1:
-                command = "%s %d:%d %s_" % (command0, start_image, end_image, os.path.join(self.output_dir, self.prefix))
-
-                # Now convert
+            if active:
                 if self.verbose:
                     print "Executing command `%s`" % command
                     myoutput = subprocess.Popen(command,
@@ -238,45 +238,66 @@ class hdf5_to_cbf_converter(object):
                                                 stderr=subprocess.PIPE)
                 myoutput.wait()
 
+            self.output_images.append(img)
+
+        # Multiple images from a run of images
+        else:
+            # One processor
+            if self.nproc == 1:
+                command = "%s %d:%d %s_" % (command0, start_image, end_image, os.path.join(self.output_dir, self.prefix))
+
+                # Now convert
+                if active:
+                    if self.verbose:
+                        print "Executing command `%s`" % command
+                        myoutput = subprocess.Popen(command,
+                                                    shell=True)
+                    else:
+                        myoutput = subprocess.Popen(command,
+                                                    shell=True,
+                                                    stdout=subprocess.PIPE,
+                                                    stderr=subprocess.PIPE)
+                    myoutput.wait()
+
                 for i in range(start_image, end_image+1):
                     self.output_images.append(os.path.join(self.output_dir, self.prefix) + "_%06d.cbf" % i)
 
 
             # Multiple processors
             else:
+                if active:
+                    print "Employing multiple threads"
 
-                print "Employing multiple threads"
+                    # Construct commands to run in parallel
+                    number_of_images = self.end_image - start_image + 1
+                    batch = int(number_of_images / self.nproc)
+                    final_batch = batch + (number_of_images % self.nproc)
 
-                # Construct commands to run in parallel
-                number_of_images = self.end_image - start_image + 1
-                batch = int(number_of_images / self.nproc)
-                final_batch = batch + (number_of_images % self.nproc)
+                    iteration = 0
+                    start = start_image
+                    stop = 0
+                    commands = []
+                    while iteration < self.nproc:
 
-                iteration = 0
-                start = start_image
-                stop = 0
-                commands = []
-                while iteration < self.nproc:
+                        if iteration == (self.nproc - 1):
+                            batch = final_batch
 
-                    if iteration == (self.nproc - 1):
-                        batch = final_batch
+                        stop = start + batch -1
+                        commands.append(("%s %d:%d %s_" % (command0, start, stop, os.path.join(self.output_dir, self.prefix)), self.verbose))
 
-                    stop = start + batch -1
-                    commands.append(("%s %d:%d %s_" % (command0, start, stop, os.path.join(self.output_dir, self.prefix)), self.verbose))
+                        iteration += 1
+                        start = stop + 1
 
-                    iteration += 1
-                    start = stop + 1
-
-                # Run in pool
-                pool = multiprocessing.Pool(processes=self.nproc)
-                results = pool.map_async(run_process, commands)
-                pool.close()
-                pool.join()
+                    # Run in pool
+                    pool = multiprocessing.Pool(processes=self.nproc)
+                    results = pool.map_async(run_process, commands)
+                    pool.close()
+                    pool.join()
 
             for i in range(start_image, end_image+1):
                 self.output_images.append(os.path.join(self.output_dir, self.prefix) + "_%06d.cbf" % i)
 
-        return True
+        self.output_images.sort()
 
     def get_number_of_images(self):
         """Query the master file for the number of images in the data set"""
@@ -328,6 +349,9 @@ class hdf5_to_cbf_converter(object):
         to_make_list = list(to_make_set)
         to_make_list.sort()
 
+        not_to_make_list = list(expected_set - to_make_set)
+        not_to_make_list.sort()
+
         # print expected_set, exists_set
         # print expected_set - exists_set
 
@@ -341,9 +365,11 @@ class hdf5_to_cbf_converter(object):
 
             for k, g in groupby(enumerate(to_make_list), lambda (i, x):i - x):
                 self.ranges_to_make.append(map(itemgetter(1), g))
-            # print ranges_to_make
-            # for range_to_make in self.ranges_to_make:
-            #     print "Have to make range from %d to %d" % (range_to_make[0], range_to_make[-1])
+
+        if len(not_to_make_list) > 0:
+            for k, g in groupby(enumerate(not_to_make_list), lambda (i, x):i - x):
+                self.ranges_not_to_make.append(map(itemgetter(1), g))
+
 
 
 def main(args):
