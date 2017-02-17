@@ -26,13 +26,16 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
+from itertools import groupby
 import multiprocessing
+from operator import itemgetter
 import os
 import subprocess
 import sys
-import time
+# import time
 
 # RAPD imports
+
 
 VERSIONS = {
     "eiger2cbf": ("160415",)
@@ -60,6 +63,7 @@ class hdf5_to_cbf_converter(object):
 
     expected_images = []
     output_images = []
+    ranges_to_make = []
 
     def __init__(self,
                  master_file,
@@ -69,21 +73,25 @@ class hdf5_to_cbf_converter(object):
                  end_image=False,
                  zfill=6,
                  nproc=False,
+                 overwrite=False,
+                 batch_mode=False,
                  verbose=False,
                  logger=False):
         """
         Run eiger2cbf on HDF5 dataset. Returns path of new CBF files.
         Not sure I need multiprocessing.Pool, but used as saftety.
 
-        master_file - master file of data to be converted to cbf
-        output_dir is output directory
-        prefix is new image prefix
-        imgn is the image number for the output frame.
-        zfill is the number digits for snap image numbers
+        master_file -- master file of data to be converted to cbf
+        output_dir -- output directory
+        prefix -- new image prefix
+        start_image -- first image number
+        end_image -- final image number
+        zfill -- number digits for snap image numbers
+        nproc -- number of processors to use
+        overwrite -- overwrite files already present
+        batch_mode -- run non-interactively
         returns header
         """
-
-        # from rapd_pilatus import pilatus_read_header as readHeader
 
         if logger:
             logger.debug("Utilities::convert_hdf5_cbf")
@@ -95,6 +103,8 @@ class hdf5_to_cbf_converter(object):
         self.end_image = end_image
         self.zfill = zfill
         self.nproc = nproc
+        self.overwrite = overwrite
+        self.batch_mode = batch_mode
         self.verbose = verbose
         self.logger = logger
 
@@ -133,6 +143,10 @@ class hdf5_to_cbf_converter(object):
         # Grab the number of images
         self.number_of_images = self.get_number_of_images()
 
+        # Work out end image
+        if not self.end_image:
+            self.end_image = self.number_of_images + self.start_image - 1
+
         # Create list of expected files to be generated
         self.calculate_expected_files()
 
@@ -140,28 +154,34 @@ class hdf5_to_cbf_converter(object):
         self.check_for_output_images()
 
     def process(self):
-        """Perform the conversion"""
+        """Coordinates the conversion"""
+
+        if self.overwrite == True:
+
+            self.convert_images(start_image=self.start_image, end_image=self.end_image)
+
+        else:
+
+            if len(self.ranges_to_make) == 0:
+                print "No images to make"
+                return True
+
+            for range_to_make in self.ranges_to_make:
+                # print "Have to make range from %d to %d" % (range_to_make[0], range_to_make[-1])
+                self.convert_images(start_image=range_to_make[0], end_image=range_to_make[-1])
+
+    def convert_images(self, start_image, end_image):
+        """Actually convert the images"""
+
+        if self.verbose:
+            print "Converting images %d - %d" % (start_image, end_image)
 
         # The base eiger2cbf command
         command0 = "eiger2cbf %s" % self.master_file
 
-        # Check how many frames are in dataset
-        # myoutput = subprocess.Popen([command0, self.master_file],
-        #                             shell=True,
-        #                             stdout=subprocess.PIPE,
-        #                             stderr=subprocess.PIPE)
-        # stdout, stderr = myoutput.communicate()
-        # number_of_images = int(stdout.split("\n")[-2])
-        # print "Number of images: %d" % number_of_images
-
-        # Work out end image
-        if not self.end_image:
-            self.end_image = self.number_of_images + self.start_image - 1
-        print "Converting images %d - %d" % (self.start_image, self.end_image)
-
         # Single image in master file
         if self.number_of_images == 1:
-            img = "%s_%s.cbf" % (os.path.join(self.output_dir, self.prefix), str(self.start_image).zfill(self.zfill))
+            img = "%s_%s.cbf" % (os.path.join(self.output_dir, self.prefix), str(start_image).zfill(self.zfill))
             command = "%s 1 %s" % (command0, img)
 
             # Now convert
@@ -179,11 +199,11 @@ class hdf5_to_cbf_converter(object):
             self.output_images.append(img)
 
         # Single image from a run of images
-        elif self.start_image == self.end_image:
-            img = "%s_%s.cbf" % (os.path.join(self.output_dir, self.prefix), str(self.start_image).zfill(self.zfill))
+        elif start_image == end_image:
+            img = "%s_%s.cbf" % (os.path.join(self.output_dir, self.prefix), str(start_image).zfill(self.zfill))
             command = "%s %d:%d %s" % (command0,
-                                       self.start_image,
-                                       self.start_image,
+                                       start_image,
+                                       start_image,
                                        img)
 
             # Now convert
@@ -204,7 +224,7 @@ class hdf5_to_cbf_converter(object):
         else:
             # One processor
             if self.nproc == 1:
-                command = "%s %d:%d %s_" % (command0, self.start_image, self.end_image, os.path.join(self.output_dir, self.prefix))
+                command = "%s %d:%d %s_" % (command0, start_image, end_image, os.path.join(self.output_dir, self.prefix))
 
                 # Now convert
                 if self.verbose:
@@ -218,7 +238,7 @@ class hdf5_to_cbf_converter(object):
                                                 stderr=subprocess.PIPE)
                 myoutput.wait()
 
-                for i in range(self.start_image, self.end_image+1):
+                for i in range(start_image, end_image+1):
                     self.output_images.append(os.path.join(self.output_dir, self.prefix) + "_%06d.cbf" % i)
 
 
@@ -228,12 +248,12 @@ class hdf5_to_cbf_converter(object):
                 print "Employing multiple threads"
 
                 # Construct commands to run in parallel
-                number_of_images = self.end_image - self.start_image + 1
+                number_of_images = self.end_image - start_image + 1
                 batch = int(number_of_images / self.nproc)
                 final_batch = batch + (number_of_images % self.nproc)
 
                 iteration = 0
-                start = self.start_image
+                start = start_image
                 stop = 0
                 commands = []
                 while iteration < self.nproc:
@@ -253,7 +273,7 @@ class hdf5_to_cbf_converter(object):
                 pool.close()
                 pool.join()
 
-            for i in range(self.start_image, self.end_image+1):
+            for i in range(start_image, end_image+1):
                 self.output_images.append(os.path.join(self.output_dir, self.prefix) + "_%06d.cbf" % i)
 
         return True
@@ -289,12 +309,41 @@ class hdf5_to_cbf_converter(object):
     def check_for_output_images(self):
         """Perform a check for output images that already exist"""
 
+        images_expected = []
         images_exist = []
+
+        # Compare expected to what is already there
         for image in self.expected_images:
+            image_number = int(image.split(".")[-2].split("_")[-1])
+            images_expected.append(image_number)
             if os.path.exists(image):
-                print "%s exists" % image
-                images_exist.append(int(image.split(".")[-2].split("_")[-1]))
-        print images_exist
+                images_exist.append(image_number)
+
+        # print images_exist, self.start_image, self.end_image
+
+        expected_set = set(images_expected)
+        exists_set = set(images_exist)
+
+        to_make_set = expected_set - exists_set
+        to_make_list = list(to_make_set)
+        to_make_list.sort()
+
+        # print expected_set, exists_set
+        # print expected_set - exists_set
+
+        if len(to_make_set) == 0:
+
+            print "Requested files already present"
+
+        elif len(to_make_set) > 0:
+
+            print "Still have files to make"
+
+            for k, g in groupby(enumerate(to_make_list), lambda (i, x):i - x):
+                self.ranges_to_make.append(map(itemgetter(1), g))
+            # print ranges_to_make
+            # for range_to_make in self.ranges_to_make:
+            #     print "Have to make range from %d to %d" % (range_to_make[0], range_to_make[-1])
 
 
 def main(args):
@@ -305,6 +354,7 @@ def main(args):
     """
 
     args = get_commandline()
+    print args
 
     converter = hdf5_to_cbf_converter(master_file=args.master_file[0],
                                       output_dir=args.output_dir,
@@ -312,10 +362,10 @@ def main(args):
                                       start_image=args.start_image,
                                       end_image=args.end_image,
                                       nproc=args.nproc,
+                                      overwrite=args.overwrite,
                                       verbose=args.verbose)
     converter.preprocess()
-
-    # converter.run()
+    converter.process()
 
 def get_commandline():
     """
@@ -327,10 +377,23 @@ def get_commandline():
     parser = argparse.ArgumentParser(description=commandline_description)
 
     # Verbose
-    parser.add_argument("-v", "--verbose",
-                        action="store_true",
+    parser.add_argument("-q", "--quiet",
+                        action="store_false",
                         dest="verbose",
                         help="Verbose")
+
+    # Batch mode (i.e. non-interactive)
+    parser.add_argument("-b", "--batch",
+                        action="store_true",
+                        dest="batch",
+                        help="Batch mode - i.e. not interactive")
+
+    # Overwrite
+    parser.add_argument("--overwrite",
+                        action="store_true",
+                        dest="overwrite",
+                        help="""Overwrite -- default to overwriting cbf files that already exist.
+                        Default bahavior is to only convert files which do not already exist""")
 
     # Multiprocessing capabilities
     parser.add_argument("--nproc",
