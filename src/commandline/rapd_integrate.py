@@ -100,19 +100,20 @@ def get_run_data(detector_module, image_0_data, image_n_data):
                 'total' : 500}
     """
 
-    print "get_run_data"
-    pprint.pprint(image_0_data)
-    pprint.pprint(image_n_data)
+    # print "get_run_data"
+    # pprint.pprint(image_0_data)
+    # pprint.pprint(image_n_data)
 
     run_data = {
         "directory": image_0_data.get("directory"),
-        "distance": str(image_0_data.get("distance")),
+        "distance": image_0_data.get("distance"),
         "image_prefix": image_0_data.get("image_prefix"),
         "image_template": detector_module.create_image_template(image_0_data.get("image_prefix"), image_0_data.get("run_number")),
-        "run_number": str(image_0_data.get("run_number")),
-        "start": str(image_0_data.get("image_number")),
-        "time": str(image_0_data.get("time")),
-        "total": str(image_n_data.get("image_number") - image_0_data.get("image_number") + 1),
+        "repr": detector_module.create_image_template(image_0_data.get("image_prefix"), image_0_data.get("run_number")).rstrip(detector_module.DETECTOR_SUFFIX).replace("?", "") + ("%d-%d" % (image_0_data.get("image_number"), image_n_data.get("image_number"))),
+        "run_number": image_0_data.get("run_number"),
+        "start": image_0_data.get("image_number"),
+        "time": image_0_data.get("time"),
+        "total": image_n_data.get("image_number") - image_0_data.get("image_number") + 1,
         }
 
     return run_data
@@ -133,7 +134,7 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module,
     command["directories"] = {
         "work": os.path.join(
             os.path.abspath(os.path.curdir),
-            "rapd_integrate_" + run_data["image_template"].replace("?", "#"))
+            "rapd_integrate_" + run_data["repr"] )
         }
     if not os.path.exists(command["directories"]["work"]):
         os.makedirs(command["directories"]["work"])

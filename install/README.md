@@ -2,11 +2,6 @@
 
 ## Linux
 
-
-
-
-
-
 ## Mac OS
 
 ## Crystallographic Software
@@ -36,7 +31,7 @@ These instructions are formulated for Scientific Linux 6.8, but apply for CentOS
 
 Installing the Control process and dependencies  
 1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git rapd`  
-2. Navigate to the install directory `cd rapd/install` and `./install_cctbx`  
+2. Navigate to the install directory `cd rapd/install` and run the install `./install_cctbx`  
 3. The install script will list any software that needs to be installed via yum. The list is: `wget subversion git make bzip2 openssl-devel gcc-c+ mesa-libGL-devel mesa-libGLU-devel`  
 
 
@@ -44,13 +39,6 @@ Installing the Control process and dependencies
 The minimal install is useful for gatherer processes, not for data processing. It will fetch and install Python, add some modules to python, and then create scripts for RAPD to use.
 1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git`
 2. Navigate to the install directory and `./install_min`
-3.
-
-
-
-
-
-
 
 # Installing Databases
 ## Docker
@@ -67,6 +55,35 @@ Using Docker to install the required databases is a workable approach. To instal
 
 
 # Common Errors
+
+### CentOS 6
+#### Problem building Cython
+CCTBX can fail in building python at the cython step
+`Installing cython...
+  log file is /home/necat/rapd/share/cctbx/base_tmp/cython_install_log
+  getting package cython-0.22.tar.gz...
+    downloading from https://pypi.python.org/packages/source/C/Cython : 1.5 MB
+    [0%.........20%.........40%.........60%.........80%.........100%]
+  installing cython-0.22.tar.gz...
+Traceback (most recent call last):
+  File "modules/cctbx_project/libtbx/auto_build/install_base_packages.py", line 1457, in <module>
+    installer(args=sys.argv, log=sys.stdout)
+  File "modules/cctbx_project/libtbx/auto_build/install_base_packages.py", line 207, in __init__
+    self.build_dependencies(packages=packages)
+  File "modules/cctbx_project/libtbx/auto_build/install_base_packages.py", line 637, in build_dependencies
+    getattr(self, 'build_%s'%i)()
+  File "modules/cctbx_project/libtbx/auto_build/install_base_packages.py", line 981, in build_cython
+    confirm_import_module="Cython")
+  File "modules/cctbx_project/libtbx/auto_build/install_base_packages.py", line 543, in build_python_module_simple
+    log=pkg_log)
+  File "modules/cctbx_project/libtbx/auto_build/install_base_packages.py", line 302, in call
+    return call(args, log=log, verbose=self.verbose, **kwargs)
+  File "/home/necat/rapd/share/cctbx/modules/cctbx_project/libtbx/auto_build/installer_utils.py", line 81, in call
+    raise RuntimeError("Call to '%s' failed with exit code %d" % (args, rc))
+RuntimeError: Call to '/home/necat/rapd/share/cctbx/base/bin/python setup.py build ' failed with exit code 1`
+
+This is due to interference from installed software with the installation. One solution is to change the startup sourcing (in my case I moved the .tcshrc to a temporary file and re-logged in) so that the interfering software is not initialized when you are installing.
+
 ### Mac OS X
 #### Missing zlib
 CCTBX will fail in building python if zlib is not installed for your system. The error looks like:  

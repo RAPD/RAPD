@@ -36,6 +36,7 @@ AGENT_SUBTYPE = "CORE"
 ID = "bd11f4401eaa11e697c3ac87a3333966"
 
 # Standard imports
+import json
 import logging
 import logging.handlers
 import math
@@ -305,6 +306,11 @@ class RapdAgent(Process):
         self.logger.debug(self.results)
         #self.sendBack2(results)
 
+        self.write_json(self.results)
+
+        # Skip this for now
+        return()
+
         analysis = self.run_analysis(final_results['files']['mtzfile'], self.dirs['work'])
         analysis = 'Success'
         if analysis == 'Failed':
@@ -320,6 +326,13 @@ class RapdAgent(Process):
                 rapd_send(self.controller_address, self.results)
 
         return()
+
+    def write_json(self, results):
+        """Write a file with the JSON version of the results"""
+
+        with open ("result.json", 'w') as outfile:
+            outfile.writelines(json.dumps(results))
+
 
     def ram_total (self, xdsinput):
         """
@@ -814,7 +827,7 @@ class RapdAgent(Process):
 	# Remove the remaining '?'
 	self.last_image = self.last_image.replace('?','')
 	# Repeat the last two steps for the first image's filename.
-	self.first_image = file_template.replace('?',self.image_data['start'].zfill(pad),1)
+	self.first_image = file_template.replace('?', str(self.image_data['start']).zfill(pad),1)
 	self.first_image = self.first_image.replace('?','')
 
 	# Begin constructing the list that will represent the XDS.INP file.
