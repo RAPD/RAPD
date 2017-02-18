@@ -228,6 +228,43 @@ def load_detector(detector):
         module = importlib.import_module(detector_file)
         return module
 
+def print_hdf5_file_structure(file_name) :
+    """
+    Prints the HDF5 file structure
+    Taken from https://confluence.slac.stanford.edu/display/PSDM/How+to+access+HDF5+data+from+Python#HowtoaccessHDF5datafromPython-Example1:Basicoperations
+    """
+    file = h5py.File(file_name, 'r') # open read-only
+    item = file #["/Configure:0000/Run:0000"]
+    print_hdf5_item_structure(item)
+    file.close()
+
+def print_hdf5_item_structure(g, offset='    ') :
+    """
+    Prints the input file/group/dataset (g) name and begin iterations on its content
+    Taken from https://confluence.slac.stanford.edu/display/PSDM/How+to+access+HDF5+data+from+Python#HowtoaccessHDF5datafromPython-Example1:Basicoperations
+    """
+    if   isinstance(g,h5py.File) :
+        print g.file, '(File)', g.name
+
+    elif isinstance(g,h5py.Dataset) :
+        if g.parent.name == "/entry/sample/goniometer":
+            print '(Dataset)', g.name, '    len =', g.shape, '    value =', g.value #, g.dtype
+        else:
+            print '(Dataset)', g.name, '    len =', g.shape #, g.dtype
+
+    elif isinstance(g,h5py.Group) :
+        print '(Group)', g.name
+
+    else :
+        print 'WORNING: UNKNOWN ITEM IN HDF5 FILE', g.name
+        sys.exit ( "EXECUTION IS TERMINATED" )
+
+    if isinstance(g, h5py.File) or isinstance(g, h5py.Group) :
+        for key,val in dict(g).iteritems() :
+            subg = val
+            print offset, key, #,"   ", subg.name #, val, subg.len(), type(subg),
+            print_hdf5_item_structure(subg, offset + '    ')
+
 def read_hdf5_header(image):
     """Explore and return information from an hdf5 file"""
 
@@ -235,16 +272,14 @@ def read_hdf5_header(image):
 
     entry = f.get("entry")
 
-    instrument = entry.get("instrument")
-    beam = instrument.get("beam")
-    detector = instrument.get("detector")
+    print [(x,y) for x, y in entry.iteritems()]
 
-    for k, v in beam.iteritems():
-        print k, v
-
-    for k, v in detector.iteritems():
-        print k, v.keys()
-
+    for key, group in entry.iteritems():
+        if key == "data":
+            print key, group
+            print dir(group[key])
+            # for key2, group2 in group.iteritems():
+            #     print "", key2, group2
 
     sys.exit()
 
