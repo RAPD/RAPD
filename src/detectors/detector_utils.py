@@ -30,6 +30,7 @@ __status__ = "Development"
 import glob
 import importlib
 import os
+import pprint
 import shutil
 import sys
 import tempfile
@@ -44,6 +45,62 @@ import utils.convert_hdf5_cbf as convert_hdf5_cbf
 import utils.text as text
 import detector_list
 
+
+parameters_to_get = (
+    "beam_center_x",
+    "beam_center_y",
+    ####
+    "chi",
+    "chi_end",
+    "chi_increment",
+    "chi_range_average",
+    "chi_range_total",
+    "chi_start",
+    "kappa",
+    "kappa_end",
+    "kappa_increment",
+    "kappa_range_average",
+    "kappa_range_total",
+    "kappa_start",
+    "omega",
+    "omega_end",
+    "omega_increment",
+    "omega_range_average",
+    "omega_range_total",
+    "omega_start",
+    "phi",
+    "phi_end",
+    "phi_increment",
+    "phi_range_average",
+    "phi_range_total",
+    "phi_start",
+    ####
+    "incident_wavelength",
+    ####
+    "bit_depth_image",
+    "bit_depth_readout",
+    "count_time",
+    "detector_distance",
+    "detector_number",
+    "detector_readout_time",
+    "frame_count_time",
+    "frame_period",
+    "frame_time",
+    "number_of_excluded_pixels",
+    # "pixel_mask",
+    "sensor_thickness",
+    "threshold_energy",
+    "two_theta",
+    "two_theta_end",
+    "two_theta_increment",
+    "two_theta_range_average",
+    "two_theta_range_total",
+    "two_theta_start",
+    "x_pixel_size",
+    "x_pixels_in_detector",
+    "y_pixel_size",
+    "y_pixels_in_detector",
+)
 
 def print_detector_info(image):
     """
@@ -283,6 +340,32 @@ def read_hdf5_header(image):
 
     sys.exit()
 
+def read_hdf5_header(file_name) :
+    """Searched the HDF5 file header for information and returns a dict"""
+    file = h5py.File(file_name, 'r') # open read-only
+    item = file #["/Configure:0000/Run:0000"]
+    header = {}
+    interrogate_hdf5_item_structure("root", item, header)
+    file.close()
+    return header
+
+def interrogate_hdf5_item_structure(key, g, header) :
+    """Prints the input file/group/dataset (g) name and begin iterations on its content"""
+
+
+    if isinstance(g, h5py.Dataset) :
+
+        if key in parameters_to_get:
+            header[key] = g.value
+
+    if isinstance(g, h5py.File) or isinstance(g, h5py.Group) :
+        for new_key,val in dict(g).iteritems() :
+            subg = val
+            #print offset, key, #,"   ", subg.name #, val, subg.len(), type(subg),
+            interrogate_hdf5_item_structure(new_key, subg, header)
+
+    return header
+
 
 def main(test_images):
     """Print out some detector information"""
@@ -293,9 +376,14 @@ def main(test_images):
 
         if test_image.endswith(".h5"):
 
-            print "HDF5 file"
-
+            print "\nHDF5 parameters"
             hdf5_header = read_hdf5_header(test_image)
+            keys = hdf5_header.keys()
+            keys.sort()
+            for key in keys:
+                print "%20s::%s" % (key, hdf5_header[key])
+
+
 
             tmp_dir = tempfile.mkdtemp()
 
