@@ -50,7 +50,13 @@ dp_parser = argparse.ArgumentParser(add_help=False)
 dp_parser.add_argument("-v", "--verbose",
                        action="store_true",
                        dest="verbose",
-                       help="Enable verbose feedback")
+                       help="Enable verbose feedback in the terminal")
+
+# Output JSON?
+dp_parser.add_argument("--nolog",
+                       action="store_false",
+                       dest="logging",
+                       help="Do not create log file")
 
 # Test mode?
 dp_parser.add_argument("-t", "--test",

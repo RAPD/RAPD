@@ -238,6 +238,16 @@ def get_commandline():
 
     return parser.parse_args()
 
+def print_welcome_message(printer):
+    """Print a welcome message to the terminal"""
+
+    message = """
+---------------------
+RAPD Index & Strategy
+---------------------
+"""
+    printer(message, 50)
+
 def main():
     """ The main process
     Setup logging and instantiate the model"""
@@ -245,26 +255,36 @@ def main():
     # Get the commandline args
     commandline_args = get_commandline()
 
-    # Verbosity
-    if commandline_args.verbose:
-        verbosity = 5
-        log_level = 10
-    else:
-        verbosity = 1
-        log_level = 50
+    # Output log file is always verbose
+    log_level = 10
 
     # Set up logging
-    logger = utils.log.get_logger(logfile_dir="./",
-                                  logfile_id="rapd_index",
-                                  level=log_level,
-                                  console=commandline_args.test)
+    if commandline_args.logging:
+        logger = utils.log.get_logger(logfile_dir="./",
+                                      logfile_id="rapd_index",
+                                      level=log_level,
+                                      console=commandline_args.test)
 
     # Set up terminal printer
-    tprint = utils.log.get_terminal_printer(verbosity=log_level)
+    # Verbosity
+    if commandline_args.verbose:
+        terminal_log_level = 10
+    elif commandline_args.json:
+        terminal_log_level = 100
+    else:
+        terminal_log_level = 50
+
+    tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level)
+
+    print_welcome_message(tprint)
 
     logger.debug("Commandline arguments:")
+    tprint("Commandline arguments:", 10)
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s", pair[0], pair[1])
+        tprint("  arg:%s  val:%s" % (pair[0], pair[1]), 10)
+
+    sys.exit()
 
     # Print out commandline args
     # tprint("\n" + text.info + "Commandline arguments" + text.stop, level=10)
