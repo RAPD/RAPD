@@ -58,6 +58,12 @@ dp_parser.add_argument("-t", "--test",
                        dest="test",
                        help="Run in test mode")
 
+# Output JSON?
+dp_parser.add_argument("--json",
+                       action="store_true",
+                       dest="json",
+                       help="Output only final and full JSON")
+
 # The site
 dp_parser.add_argument("-s", "--site",
                        action="store",

@@ -238,40 +238,6 @@ def get_commandline():
 
     return parser.parse_args()
 
-# def get_work_directory(commandline_args, data_files):
-#     """
-#     Determine a working directory, make it if it does not exist, and return it
-#     """
-#
-#     print "get_work_directory"
-#     print commandline_args
-#     print data_files
-#
-#     work_dir = False
-#
-#     # Passed in by command line argument
-#     if commandline_args.work_dir:
-#         work_dir = os.path.abspath(commandline_args.work_dir)
-#     else:
-#         print "No work dir command line arg"
-#
-#     # Based on data files
-#     if not (work_dir and data_files == {}):
-#         print "Have data_files"
-#         work_dir = os.path.abspath("./" + )
-#         sys.exit()
-#
-#     # Default directory
-#     if not work_dir:
-#         print "No work dir"
-#         work_dir = os.path.abspath("./rapd_tmp")
-#
-#     # Make sure work_dir exists
-#     if not os.path.exists(work_dir):
-#         os.makedirs(work_dir)
-#
-#     return work_dir
-
 def main():
     """ The main process
     Setup logging and instantiate the model"""
@@ -393,8 +359,6 @@ def main():
     else:
         raise Exception("No detector module found")
 
-
-
     # If no site, error
     # if site == False:
     #     print text.error+"Could not determine a site. Exiting."+text.stop
@@ -414,8 +378,6 @@ def main():
 
 	# Single process lock?
     # utils.lock.file_lock(SITE.CONTROL_LOCK_FILE)
-
-
 
     # Instantiate the agent
     # Load the agent from directories defined in site file
