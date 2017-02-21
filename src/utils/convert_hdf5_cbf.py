@@ -361,8 +361,6 @@ class hdf5_to_cbf_converter(object):
 
         elif len(to_make_set) > 0:
 
-            print "Still have files to make"
-
             for k, g in groupby(enumerate(to_make_list), lambda (i, x):i - x):
                 self.ranges_to_make.append(map(itemgetter(1), g))
 

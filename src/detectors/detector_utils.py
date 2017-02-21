@@ -130,6 +130,7 @@ def print_detector_info(image):
 
 
     print "\nInformation from iotbx ImageFactory"
+    print "====================================="
     print "%20s::%s" % ("image", image_basename)
     print "%20s::%s" % ("vendortype", str(i.vendortype))
     # print "%20s" % "Parameters"
@@ -147,6 +148,7 @@ def print_detector_info2(image):
     temp = instance.get_detectorbase()
 
     print "\nInformation from dxtbx Registry"
+    print "================================="
     for key, val in temp.parameters.iteritems():
         print "%20s::%s" % (key, val)
 
@@ -322,23 +324,18 @@ def print_hdf5_item_structure(g, offset='    ') :
             print offset, key, #,"   ", subg.name #, val, subg.len(), type(subg),
             print_hdf5_item_structure(subg, offset + '    ')
 
-def read_hdf5_header(image):
-    """Explore and return information from an hdf5 file"""
+def print_hdf5_header_info(file_name):
+    """Prints out information from an hdf5 file"""
 
-    f = h5py.File(image, "r")
+    header = read_hdf5_header(file_name)
 
-    entry = f.get("entry")
-
-    print [(x,y) for x, y in entry.iteritems()]
-
-    for key, group in entry.iteritems():
-        if key == "data":
-            print key, group
-            print dir(group[key])
-            # for key2, group2 in group.iteritems():
-            #     print "", key2, group2
-
-    sys.exit()
+    print "\n Information from HDF5 file"
+    print "============================"
+    keys = header.keys()
+    keys.sort()
+    for key in keys:
+        print "%20s::%s" % (key, header[key])
+    print ""
 
 def read_hdf5_header(file_name) :
     """Searched the HDF5 file header for information and returns a dict"""
@@ -376,14 +373,7 @@ def main(test_images):
 
         if test_image.endswith(".h5"):
 
-            print "\nHDF5 parameters"
-            hdf5_header = read_hdf5_header(test_image)
-            keys = hdf5_header.keys()
-            keys.sort()
-            for key in keys:
-                print "%20s::%s" % (key, hdf5_header[key])
-
-
+            print_hdf5_header_info(test_image)
 
             tmp_dir = tempfile.mkdtemp()
 
@@ -395,7 +385,7 @@ def main(test_images):
                                                                overwrite=True)
             converter.run()
 
-            test_image = "%s/tmp00001.cbf" % tmp_dir
+            test_image = "%s/tmp_000001.cbf" % tmp_dir
 
         # try:
         print_detector_info(test_image)

@@ -2070,26 +2070,26 @@ class RunLabelit(Process):
     def __init__(self, command, output, params, logger=None):
         """
         input >> command
-	#New minimum input
-	{   'command': 'INDEX+STRATEGY',
-        'directories': {   'work': '/home/schuerjp/temp/beamcenter/800.0'},
-        'header1': {   'beam_center_x': 149.871,
-  		 'beam_center_y': 145.16,
-  		 'distance': 800.0,
-  		 'fullname': '/home/schuerjp/temp/beamcenter/SER-9_Pn0.0020',
-  		 'spacegroup': 'None',
-  		 'vendortype': 'MARCCD'},
-        'preferences': {   'a': 0.0,
-  		     'alpha': 0.0,
-  		     'b': 0.0,
-  		     'beam_flip': 'False',
-  		     'beta': 0.0,
-  		     'c': 0.0,
-  		     'gamma': 0.0,
-  		     'multiprocessing': 'True',
-  		     'sample_type': 'Protein'},
-        'return_address': ('127.0.0.1', 50000)}
-	"""
+    	#New minimum input
+    	{   'command': 'INDEX+STRATEGY',
+            'directories': {   'work': '/home/schuerjp/temp/beamcenter/800.0'},
+            'header1': {   'beam_center_x': 149.871,
+      		 'beam_center_y': 145.16,
+      		 'distance': 800.0,
+      		 'fullname': '/home/schuerjp/temp/beamcenter/SER-9_Pn0.0020',
+      		 'spacegroup': 'None',
+      		 'vendortype': 'MARCCD'},
+            'preferences': {   'a': 0.0,
+      		     'alpha': 0.0,
+      		     'b': 0.0,
+      		     'beam_flip': 'False',
+      		     'beta': 0.0,
+      		     'c': 0.0,
+      		     'gamma': 0.0,
+      		     'multiprocessing': 'True',
+      		     'sample_type': 'Protein'},
+            'return_address': ('127.0.0.1', 50000)}
+    	"""
         self.cluster_adapter = False
         self.st = time.time()
 
@@ -2124,56 +2124,56 @@ class RunLabelit(Process):
         # self.red = params.get("redis", False)
         self.short = False
 
-	# If using the cluster, get the correct module (already loaded)
-	if params.get("cluster", False):
-        self.cluster_adapter = params.get("cluster",False)
+    	# If using the cluster, get the correct module (already loaded)
+        if params.get("cluster", False):
+            self.cluster_adapter = params.get("cluster", False)
 
-	# Make decisions based on input params
-	if self.iterations != 6:
-        self.short = True
-	# Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
-        #******BEAMLINE SPECIFIC*****
-        # if self.header.has_key("acc_time"):
-        self.gui = True
-        #     self.test = False
-        # else:
-        #     self.gui = True
-        #******BEAMLINE SPECIFIC*****
-        # Set times for processes. "False" to disable.
-        if self.header2:
-            self.labelit_timer = 180
-        else:
-            self.labelit_timer = 120
-        # Turns on multiprocessing for everything
-        # Turns on all iterations of Labelit running at once, sorts out highest symmetry solution, then continues...(much better!!)
-        self.multiproc = True
-        if self.preferences.has_key("multiprocessing"):
-            if self.preferences.get("multiprocessing") == "False":
-                self.multiproc = False
-        self.sample_type = self.preferences.get("sample_type", "Protein")
-        self.spacegroup = self.preferences.get("spacegroup", False)
+    	# Make decisions based on input params
+        if self.iterations != 6:
+            self.short = True
+    	# Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
+            #******BEAMLINE SPECIFIC*****
+            # if self.header.has_key("acc_time"):
+            self.gui = True
+            #     self.test = False
+            # else:
+            #     self.gui = True
+            #******BEAMLINE SPECIFIC*****
+            # Set times for processes. "False" to disable.
+            if self.header2:
+                self.labelit_timer = 180
+            else:
+                self.labelit_timer = 120
+            # Turns on multiprocessing for everything
+            # Turns on all iterations of Labelit running at once, sorts out highest symmetry solution, then continues...(much better!!)
+            self.multiproc = True
+            if self.preferences.has_key("multiprocessing"):
+                if self.preferences.get("multiprocessing") == "False":
+                    self.multiproc = False
+            self.sample_type = self.preferences.get("sample_type", "Protein")
+            self.spacegroup = self.preferences.get("spacegroup", False)
 
-        # This is where I place my overall folder settings.
-        self.working_dir = self.setup.get("work")
-        # This is where I have chosen to place my results
-        self.auto_summary = False
-        self.labelit_input = False
-        self.labelit_log = {}
-        self.labelit_results = {}
-        self.labelit_summary = False
-        self.labelit_failed = False
-        # Labelit settings
-        self.index_number = False
-        self.ignore_user_cell = False
-        self.ignore_user_SG = False
-        self.min_good_spots = False
-        self.twotheta = False
-        # dicts for running the Queues
-        self.labelit_jobs = {}
-        self.pids = {}
+            # This is where I place my overall folder settings.
+            self.working_dir = self.setup.get("work")
+            # This is where I have chosen to place my results
+            self.auto_summary = False
+            self.labelit_input = False
+            self.labelit_log = {}
+            self.labelit_results = {}
+            self.labelit_summary = False
+            self.labelit_failed = False
+            # Labelit settings
+            self.index_number = False
+            self.ignore_user_cell = False
+            self.ignore_user_SG = False
+            self.min_good_spots = False
+            self.twotheta = False
+            # dicts for running the Queues
+            self.labelit_jobs = {}
+            self.pids = {}
 
-        Process.__init__(self, name="RunLabelit")
-        self.start()
+            Process.__init__(self, name="RunLabelit")
+            self.start()
 
     def run(self):
         """

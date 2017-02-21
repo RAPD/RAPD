@@ -40,6 +40,7 @@ The minimal install is useful for gatherer processes, not for data processing. I
 1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git`
 2. Navigate to the install directory and `./install_min`
 
+
 # Installing Databases
 ## Docker
 Using Docker to install the required databases is a workable approach. To install Docker and the databases on a CentOS 6.8:  
