@@ -312,6 +312,7 @@ class RapdAgent(Process):
         """
         Convoluted path of modules to run.
         """
+
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::run")
 
@@ -456,6 +457,9 @@ class RapdAgent(Process):
         """
         Initiate Labelit runs.
         """
+
+        print "processLabelit"
+
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::runLabelit")
 
@@ -818,6 +822,9 @@ class RapdAgent(Process):
         Keyword arguments
         iteration -- (default False)
         """
+
+        print "processStrategy"
+
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::processStrategy")
         try:
@@ -2074,11 +2081,11 @@ class RunLabelit(Process):
     	{   'command': 'INDEX+STRATEGY',
             'directories': {   'work': '/home/schuerjp/temp/beamcenter/800.0'},
             'header1': {   'beam_center_x': 149.871,
-      		 'beam_center_y': 145.16,
-      		 'distance': 800.0,
-      		 'fullname': '/home/schuerjp/temp/beamcenter/SER-9_Pn0.0020',
-      		 'spacegroup': 'None',
-      		 'vendortype': 'MARCCD'},
+      		'beam_center_y': 145.16,
+      		'distance': 800.0,
+      		'fullname': '/home/schuerjp/temp/beamcenter/SER-9_Pn0.0020',
+      		'spacegroup': 'None',
+      		'vendortype': 'MARCCD'},
             'preferences': {   'a': 0.0,
       		     'alpha': 0.0,
       		     'b': 0.0,
@@ -2090,6 +2097,9 @@ class RunLabelit(Process):
       		     'sample_type': 'Protein'},
             'return_address': ('127.0.0.1', 50000)}
     	"""
+
+        print "RunLabelit", params
+
         self.cluster_adapter = False
         self.st = time.time()
 
@@ -2129,64 +2139,69 @@ class RunLabelit(Process):
             self.cluster_adapter = params.get("cluster", False)
 
     	# Make decisions based on input params
+        print self.iterations
         if self.iterations != 6:
             self.short = True
-    	# Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
-            #******BEAMLINE SPECIFIC*****
-            # if self.header.has_key("acc_time"):
-            self.gui = True
-            #     self.test = False
-            # else:
-            #     self.gui = True
-            #******BEAMLINE SPECIFIC*****
-            # Set times for processes. "False" to disable.
-            if self.header2:
-                self.labelit_timer = 180
-            else:
-                self.labelit_timer = 120
-            # Turns on multiprocessing for everything
-            # Turns on all iterations of Labelit running at once, sorts out highest symmetry solution, then continues...(much better!!)
-            self.multiproc = True
-            if self.preferences.has_key("multiprocessing"):
-                if self.preferences.get("multiprocessing") == "False":
-                    self.multiproc = False
-            self.sample_type = self.preferences.get("sample_type", "Protein")
-            self.spacegroup = self.preferences.get("spacegroup", False)
+        # Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
+        #******BEAMLINE SPECIFIC*****
+        # if self.header.has_key("acc_time"):
+        self.gui = True
+        #     self.test = False
+        # else:
+        #     self.gui = True
+        #******BEAMLINE SPECIFIC*****
+        # Set times for processes. "False" to disable.
+        if self.header2:
+            self.labelit_timer = 180
+        else:
+            self.labelit_timer = 120
+        # Turns on multiprocessing for everything
+        # Turns on all iterations of Labelit running at once, sorts out highest symmetry solution, then continues...(much better!!)
+        self.multiproc = True
+        if self.preferences.has_key("multiprocessing"):
+            if self.preferences.get("multiprocessing") == "False":
+                self.multiproc = False
+        self.sample_type = self.preferences.get("sample_type", "Protein")
+        self.spacegroup = self.preferences.get("spacegroup", False)
 
-            # This is where I place my overall folder settings.
-            self.working_dir = self.setup.get("work")
-            # This is where I have chosen to place my results
-            self.auto_summary = False
-            self.labelit_input = False
-            self.labelit_log = {}
-            self.labelit_results = {}
-            self.labelit_summary = False
-            self.labelit_failed = False
-            # Labelit settings
-            self.index_number = False
-            self.ignore_user_cell = False
-            self.ignore_user_SG = False
-            self.min_good_spots = False
-            self.twotheta = False
-            # dicts for running the Queues
-            self.labelit_jobs = {}
-            self.pids = {}
+        # This is where I place my overall folder settings.
+        self.working_dir = self.setup.get("work")
+        # This is where I have chosen to place my results
+        self.auto_summary = False
+        self.labelit_input = False
+        self.labelit_log = {}
+        self.labelit_results = {}
+        self.labelit_summary = False
+        self.labelit_failed = False
+        # Labelit settings
+        self.index_number = False
+        self.ignore_user_cell = False
+        self.ignore_user_SG = False
+        self.min_good_spots = False
+        self.twotheta = False
+        # dicts for running the Queues
+        self.labelit_jobs = {}
+        self.pids = {}
 
-            Process.__init__(self, name="RunLabelit")
-            self.start()
+        Process.__init__(self, name="RunLabelit")
+        self.start()
 
     def run(self):
         """
         Convoluted path of modules to run.
         """
+
+        print "RunLabelit.run"
+
         if self.verbose:
-            self.logger.debug('RunLabelit::run')
+            self.logger.debug("RunLabelit::run")
 
         self.preprocess()
 
         # Make the initial dataset_prefernces.py file
         self.preprocessLabelit()
         if self.short:
+            print "short"
             self.labelit_timer = 300
             Utils.foldersLabelit(self, self.iterations)
             # if a specific iteration is sent in then it only runs that one
@@ -2201,12 +2216,12 @@ class RunLabelit(Process):
             self.labelit_jobs[self.processLabelit().keys()[0]] = 0
             # If self.multiproc==True runs all labelits at the same time.
             if self.multiproc:
-                for i in range(1,self.iterations):
+                for i in range(1, self.iterations):
                     self.labelit_jobs[Utils.errorLabelit(self,i).keys()[0]] = i
         self.run_queue()
         if self.short == False:
-          #Put the logs together
-          self.labelitLog()
+            # Put the logs together
+            self.labelitLog()
         self.postprocess()
 
     def preprocess(self):
@@ -2332,7 +2347,7 @@ class RunLabelit(Process):
                 labelit_jobs["junk%s" % iteration] = iteration
             else:
                 print command
-		log = os.path.join(os.getcwd(), "labelit.log")
+                log = os.path.join(os.getcwd(), "labelit.log")
                 #queue to retrieve the PID or JobIB once submitted.
                 pid_queue = Queue()
                 if self.cluster_adapter:
@@ -2356,83 +2371,78 @@ class RunLabelit(Process):
             self.logger.exception('**Error in RunLabelit.processLabelit**')
 
     def postprocessLabelit(self,iteration=0,run_before=False,blank=False):
-      """
-      Sends Labelit log for parsing and error checking for rerunning Labelit. Save output dicts.
-      """
-      if self.verbose:
-        self.logger.debug('RunLabelit::postprocessLabelit')
-      try:
-        Utils.foldersLabelit(self,iteration)
-	#labelit_failed = False
-        if blank:
-          error = 'Not enough spots for autoindexing.'
-          if self.verbose:
-            self.logger.debug(error)
-          self.labelit_log[str(iteration)].extend(error+'\n')
-          return(None)
-        else:
-	  import glob
-	  #time.sleep(5)
-	  #print os.getcwd()
-	  #print os.path.join(os.getcwd(),'*.log')
-	  #print glob.glob(os.path.join(os.getcwd(),'*.log'))
-	  #print os.stat(os.getcwd()+'/labelit.log')
-          log = open('labelit.log','r').readlines()
-          self.labelit_log[str(iteration)].extend('\n\n')
-          self.labelit_log[str(iteration)].extend(log)
-          data = Parse.ParseOutputLabelit(self,log,iteration)
-          if self.short:
-            #data = Parse.ParseOutputLabelitNoMosflm(self,log,iteration)
-            self.labelit_results = { 'Labelit results' : data }
-          else:
-            #data = Parse.ParseOutputLabelit(self,log,iteration)
-            self.labelit_results[str(iteration)] = { 'Labelit results' : data }
-      except:
-        self.logger.exception('**ERROR in RunLabelit.postprocessLabelit**')
+        """
+        Sends Labelit log for parsing and error checking for rerunning Labelit. Save output dicts.
+        """
+        if self.verbose:
+            self.logger.debug('RunLabelit::postprocessLabelit')
+        try:
+            Utils.foldersLabelit(self, iteration)
+    	    #labelit_failed = False
+            if blank:
+                error = 'Not enough spots for autoindexing.'
+                if self.verbose:
+                    self.logger.debug(error)
+                self.labelit_log[str(iteration)].extend(error+'\n')
+                return(None)
+            else:
+                import glob
+                log = open('labelit.log', 'r').readlines()
+                self.labelit_log[str(iteration)].extend('\n\n')
+                self.labelit_log[str(iteration)].extend(log)
+                data = Parse.ParseOutputLabelit(self,log,iteration)
+                if self.short:
+                    #data = Parse.ParseOutputLabelitNoMosflm(self,log,iteration)
+                    self.labelit_results = { 'Labelit results' : data }
+                else:
+                    #data = Parse.ParseOutputLabelit(self,log,iteration)
+                    self.labelit_results[str(iteration)] = { 'Labelit results' : data }
+        except:
+            self.logger.exception('**ERROR in RunLabelit.postprocessLabelit**')
 
-      #Do error checking and send to correct place according to iteration.
-      out = {'bad input': {'error':'Labelit did not like your input unit cell dimensions or SG.','run':'Utils.errorLabelitCellSG(self,iteration)'},
-             'bumpiness': {'error':'Labelit settings need to be adjusted.','run':'Utils.errorLabelitBump(self,iteration)'},
-             'mosflm error': {'error':'Mosflm could not integrate your image.','run':'Utils.errorLabelitMosflm(self,iteration)'},
-             'min good spots': {'error':'Labelit did not have enough spots to find a solution','run':'Utils.errorLabelitGoodSpots(self,iteration)'},
-             'no index': {'error':'No solutions found in Labelit.','run':'Utils.errorLabelit(self,iteration)'},
-             'fix labelit': {'error':'Distance is not getting read correctly from the image header.','kill':True},
-             'no pair': {'error':'Images are not a pair.','kill':True},
-             'failed': {'error':'Autoindexing Failed to find a solution','kill':True},
-             'min spots': {'error':'Labelit did not have enough spots to find a solution.','run1':'Utils.errorLabelitMin(self,iteration,data[1])',
-                           'run2':'Utils.errorLabelit(self,iteration)'},
-             'fix_cell': {'error':'Labelit had multiple choices for user SG and failed.','run1':'Utils.errorLabelitFixCell(self,iteration,data[1],data[2])',
-                          'run2':'Utils.errorLabelitCellSG(self,iteration)'},
-             }
-      #If Labelit results are OK, then...
-      if type(data) == dict:
-        d = False
-      #Otherwise deal with fixing and rerunning Labelit
-      elif type(data) == tuple:
-        d = data[0]
-      else:
-        d = data
-      if d:
-        if out.has_key(d):
-          if out[d].has_key('kill'):
-            if self.multiproc:
-              Utils.errorLabelitPost(self,iteration,out[d].get('error'),True)
-            else:
-              Utils.errorLabelitPost(self,self.iterations,out[d].get('error'))
-          else:
-            Utils.errorLabelitPost(self,iteration,out[d].get('error'),run_before)
-            if self.multiproc:
-              if run_before == False:
-                return(eval(out[d].get('run',out[d].get('run1'))))
-            else:
-              if iteration <= self.iterations:
-                return(eval(out[d].get('run',out[d].get('run2'))))
+        #Do error checking and send to correct place according to iteration.
+        out = {'bad input': {'error':'Labelit did not like your input unit cell dimensions or SG.','run':'Utils.errorLabelitCellSG(self,iteration)'},
+               'bumpiness': {'error':'Labelit settings need to be adjusted.','run':'Utils.errorLabelitBump(self,iteration)'},
+               'mosflm error': {'error':'Mosflm could not integrate your image.','run':'Utils.errorLabelitMosflm(self,iteration)'},
+               'min good spots': {'error':'Labelit did not have enough spots to find a solution','run':'Utils.errorLabelitGoodSpots(self,iteration)'},
+               'no index': {'error':'No solutions found in Labelit.','run':'Utils.errorLabelit(self,iteration)'},
+               'fix labelit': {'error':'Distance is not getting read correctly from the image header.','kill':True},
+               'no pair': {'error':'Images are not a pair.','kill':True},
+               'failed': {'error':'Autoindexing Failed to find a solution','kill':True},
+               'min spots': {'error':'Labelit did not have enough spots to find a solution.','run1':'Utils.errorLabelitMin(self,iteration,data[1])',
+                             'run2':'Utils.errorLabelit(self,iteration)'},
+               'fix_cell': {'error':'Labelit had multiple choices for user SG and failed.','run1':'Utils.errorLabelitFixCell(self,iteration,data[1],data[2])',
+                            'run2':'Utils.errorLabelitCellSG(self,iteration)'},
+               }
+        # If Labelit results are OK, then...
+        if type(data) == dict:
+            d = False
+        # Otherwise deal with fixing and rerunning Labelit
+        elif type(data) == tuple:
+            d = data[0]
         else:
-          error = 'Labelit failed to find solution.'
-          Utils.errorLabelitPost(self,iteration,error,run_before)
-          if self.multiproc == False:
-            if iteration <= self.iterations:
-              return (Utils.errorLabelit(self,iteration))
+            d = data
+        if d:
+            if out.has_key(d):
+                if out[d].has_key('kill'):
+                    if self.multiproc:
+                        Utils.errorLabelitPost(self,iteration,out[d].get('error'),True)
+                    else:
+                        Utils.errorLabelitPost(self,self.iterations,out[d].get('error'))
+                else:
+                    Utils.errorLabelitPost(self,iteration,out[d].get('error'),run_before)
+                    if self.multiproc:
+                        if run_before == False:
+                            return(eval(out[d].get('run',out[d].get('run1'))))
+                    else:
+                        if iteration <= self.iterations:
+                            return(eval(out[d].get('run',out[d].get('run2'))))
+            else:
+                error = 'Labelit failed to find solution.'
+                Utils.errorLabelitPost(self,iteration,error,run_before)
+                if self.multiproc == False:
+                    if iteration <= self.iterations:
+                        return (Utils.errorLabelit(self,iteration))
 
     def postprocess(self):
         """
@@ -2488,9 +2498,9 @@ class RunLabelit(Process):
                 #Check if job had been rerun, fix the iteration.
                 if iteration >= 10:
                   iteration -=10
-                  job = self.postprocessLabelit(iteration,True)
+                  job = self.postprocessLabelit(iteration, True)
                 else:
-                  job = self.postprocessLabelit(iteration,False)
+                  job = self.postprocessLabelit(iteration, False)
                 #If job is rerun, then save the iteration and pid.
                 if job != None:
                   if self.multiproc:
