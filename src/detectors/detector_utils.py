@@ -242,8 +242,6 @@ def load_detector(detector):
         Look for a detector file in the given directory
         """
 
-        print "look_for_detector_file %s %s" % (file, directory)
-
         if "sites" in directory:
             files = glob.glob(directory+"/"+file+".py")
         else:

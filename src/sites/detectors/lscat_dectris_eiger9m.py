@@ -1,4 +1,7 @@
-"""Detector description for LS-CAT Eiger 9M"""
+"""
+Detector description for LS-CAT Eiger 9M
+Designed to read the CBF version of the Eiger file
+"""
 
 """
 This file is part of RAPD
@@ -48,6 +51,7 @@ import pprint
 
 # Dectris Pilatus 6M
 import detectors.dectris.dectris_eiger9m as detector
+import detectors.detector_utils as utils
 
 # Detector information
 # The RAPD detector type
@@ -183,7 +187,7 @@ def get_data_root_dir(fullname):
     # Return the determined directory
     return data_root_dir
 
-def read_header(fullname, beam_settings=False):
+def read_header(input_file=False, beam_settings=False):
     """
     Read header from image file and return dict
 
@@ -194,11 +198,15 @@ def read_header(fullname, beam_settings=False):
 
     # Perform the header read from the file
     # If you are importing another detector, this should work
-    header = detector.read_header(fullname)
+    if input_file.endswith(".h5"):
+        header = utils.read_hdf5_header(input_file)
 
-    basename = os.path.basename(fullname)
-    header["image_prefix"] = ".".join(basename.replace(".cbf", "").split(".")[:-1])
-    header["run_number"] = int(basename.replace(".cbf", "").split("_")[-1])
+    elif input_file.endswith(".cbf"):
+        header = detector.read_header(input_file)
+
+        basename = os.path.basename(input_file)
+        header["image_prefix"] = ".".join(basename.replace(".cbf", "").split(".")[:-1])
+        header["run_number"] = int(basename.replace(".cbf", "").split("_")[-1])
 
     # Return the header
     return header
@@ -238,7 +246,10 @@ def main(args):
         raise Error("No test image input!")
 
     # Read the header
-    header = read_header(test_image)
+    if test_image.endswith(".h5"):
+        header = read_header(hdf5_file=test_image)
+    elif test_image.endswith(".cbf"):
+        header = read_header(cbf_file=test_image)
 
     # And print it out
     pprint.pprint(header)

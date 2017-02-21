@@ -362,10 +362,7 @@ def main():
 
     # If no site or detector, try to figure out the detector
     if not (site or detector):
-        # print "Have to figure out the detector"
-        # print data_files
         detector = detector_utils.get_detector_file(data_files["files"][0])
-        tprint(arg=detector, level=10)
         if isinstance(detector, dict):
             if detector.has_key("site"):
                 site_target = detector.get("site")
@@ -382,13 +379,34 @@ def main():
     # Have a detector - read in file data
     if detector_module:
         image_headers = {}
+        # For now we only convert hdf5 to cbf to run
+        # if "hdf5_files" in data_files:
+        #     for i in range(len(data_files["hdf5_files"])):
+        #         hdf5_files = data_files["hdf5_files"][i]
+        #         data_file = data_files["files"][i]
+        #         if SITE:
+        #             image_headers[data_file] = detector_module.read_header(data_file, hdf5_file, SITE.BEAM_SETTINGS)
+        #         else:
+        #             image_headers[data_file] = detector_module.read_header(data_file)
+        #
+        #
+        #     sys.exit()
+        # else:
         for data_file in data_files["files"]:
             if SITE:
                 image_headers[data_file] = detector_module.read_header(data_file, SITE.BEAM_SETTINGS)
             else:
                 image_headers[data_file] = detector_module.read_header(data_file)
+
         logger.debug("Image headers: %s", image_headers)
-        pprint.pprint(image_headers)
+        tprint(arg="Image headers", level=10, color="blue")
+        for fullname, header in image_headers.iteritems():
+            keys = header.keys()
+            keys.sort()
+            tprint(arg="  %s" % fullname, level=10)
+            for key in keys:
+                tprint(arg="  arg:%-20s  val:%s" % (key, header[key]), level=10)
+            tprint(arg="" , level=10)
 
         command = construct_command(image_headers=image_headers,
                                     commandline_args=commandline_args,
@@ -396,6 +414,8 @@ def main():
                                     logger=logger)
     else:
         raise Exception("No detector module found")
+
+    sys.exit()
 
     # If no site, error
     # if site == False:
