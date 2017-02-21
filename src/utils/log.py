@@ -26,7 +26,11 @@ import functools
 import logging, logging.handlers
 import os
 
-def verbose_print(arg, level=20, verbosity=20):
+# RAPD imports
+import utils.text as text
+
+
+def verbose_print(arg, level=20, verbosity=20, color="default"):
     """Print to terminal window screened by verbosity setting
 
     Keyword arguments:
@@ -42,8 +46,14 @@ def verbose_print(arg, level=20, verbosity=20):
     20 - info
     10 - debug
     """
+    if not isinstance(arg, str):
+        arg = str(arg)
+
     if level >= verbosity:
-        print arg
+        if color:
+            print text.color(color) + arg + text.stop
+        else:
+            print arg
 
 def get_terminal_printer(verbosity=50):
     """Returns a terminal printer

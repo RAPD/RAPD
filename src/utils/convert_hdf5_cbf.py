@@ -357,7 +357,8 @@ class hdf5_to_cbf_converter(object):
 
         if len(to_make_set) == 0:
 
-            print "Requested files already present"
+            if self.verbose:
+                print "Requested files already present"
 
         elif len(to_make_set) > 0:
 

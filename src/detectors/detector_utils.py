@@ -208,7 +208,7 @@ def get_detector_file(image):
     Returns the RAPD detector file given an image file
     """
 
-    print "get_detector_file %s" % image
+    # print "get_detector_file %s" % image
 
     try:
         i = ImageFactory(image)
@@ -222,7 +222,7 @@ def get_detector_file(image):
     # print i.parameters["DETECTOR_SN"]
 
     if (i.vendortype, i.parameters["DETECTOR_SN"]) in detector_list.DETECTORS:
-        print "%s: %s %s %s" % (image, detector_list.DETECTORS[(i.vendortype, i.parameters["DETECTOR_SN"])], i.vendortype, i.parameters["DETECTOR_SN"])
+        # print "%s: %s %s %s" % (image, detector_list.DETECTORS[(i.vendortype, i.parameters["DETECTOR_SN"])], i.vendortype, i.parameters["DETECTOR_SN"])
         return detector_list.DETECTORS[(i.vendortype, i.parameters["DETECTOR_SN"])]
     else:
         return False

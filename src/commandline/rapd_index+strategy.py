@@ -235,6 +235,9 @@ def get_commandline():
                         nargs="*",
                         help="Directory or files")
 
+    if len(sys.argv[1:])==0:
+        parser.print_help()
+        parser.exit()
 
     return parser.parse_args()
 
@@ -246,7 +249,7 @@ def print_welcome_message(printer):
 RAPD Index & Strategy
 ---------------------
 """
-    printer(message, 50)
+    printer(message, 50, color="blue")
 
 def main():
     """ The main process
@@ -279,55 +282,70 @@ def main():
     print_welcome_message(tprint)
 
     logger.debug("Commandline arguments:")
-    tprint("Commandline arguments:", 10)
+    tprint(arg="Commandline arguments:", level=10, color="blue")
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s", pair[0], pair[1])
-        tprint("  arg:%s  val:%s" % (pair[0], pair[1]), 10)
-
-    sys.exit()
-
-    # Print out commandline args
-    # tprint("\n" + text.info + "Commandline arguments" + text.stop, level=10)
-    # for key, val in vars(commandline_args).iteritems():
-    #     tprint("  %s : %s" % (key, val), level=10)
+        tprint(arg="  arg:%s  val:%s" % (pair[0], pair[1]), level=10)
+    tprint(arg="", level=10)
 
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
     logger.debug("\n" + text.info + "Environmental variables" + text.stop)
+    tprint("Environmental variables", level=10, color="blue")
     for key, val in environmental_vars.iteritems():
         logger.debug("  " + key + " : " + val)
+        tprint(arg="  arg:%s  val:%s" % (key, val), level=10)
+    tprint(arg="", level=10)
 
     # List sites?
     if commandline_args.listsites:
-        print "\n" + text.info + "Available sites:" + text.stop
+        # print "\n" + text.info + "Available sites:" + text.stop
+        tprint(arg="Available sites", level=99, color="blue")
         commandline_utils.print_sites(left_buffer="  ")
+        tprint(arg="", level=99)
         if not commandline_args.listdetectors:
             sys.exit()
 
     # List detectors?
     if commandline_args.listdetectors:
-        print "\n" + text.info + "Available detectors:" + text.stop
+        tprint(arg="Available detectors", level=99, color="blue")
         commandline_utils.print_detectors(left_buffer="  ")
+        tprint(arg="", level=99)
         sys.exit()
 
     # Get the data files
     data_files = commandline_utils.analyze_data_sources(sources=commandline_args.sources, mode="index")
 
-    # Print out to terminal
-    tprint("\n" + text.info + "Data files" + text.stop, 99)
-    if len(data_files) == 0:
-        tprint("  None", 99)
+    if "hdf5_files" in data_files:
+        logger.debug("HDF5 source file(s)")
+        tprint(arg="HDF5 source file(s)", level=99, color="blue")
+        logger.debug(data_files["hdf5_files"])
+        for data_file in data_files["hdf5_files"]:
+            tprint(arg="  " + data_file, level=99)
+        tprint(arg="", level=99)
+        logger.debug("CBF file(s) from HDF5 file(s)")
+        tprint(arg="Data files", level=99, color="blue")
     else:
+        logger.debug("Data file(s)")
+        tprint(arg="Data file(s)", level=99, color="blue")
+
+    if len(data_files) == 0:
+        tprint(arg="  None", level=99)
+    else:
+        logger.debug(data_files["files"])
         for data_file in data_files["files"]:
-            tprint("  " + data_file, 99)
+            tprint(arg="  " + data_file, level=99)
+    tprint(arg="", level=99)
 
     # Need data
     if len(data_files) == 0 and commandline_args.test == False:
+        if logger: logger.exception("No files input for indexing.")
         raise Exception, "No files input for indexing."
 
     # Too much data?
     if len(data_files) > 2:
-        raise Exception, "Too many files for indexing. 1 or 2 images accepted."
+        if logger: logger.exception("Too many files for indexing. 1 or 2 images accepted")
+        raise Exception, "Too many files for indexing. 1 or 2 images accepted"
 
     # Get site - commandline wins over the environmental variable
     site = False
@@ -347,7 +365,7 @@ def main():
         # print "Have to figure out the detector"
         # print data_files
         detector = detector_utils.get_detector_file(data_files["files"][0])
-        print detector
+        tprint(arg=detector, level=10)
         if isinstance(detector, dict):
             if detector.has_key("site"):
                 site_target = detector.get("site")
@@ -408,6 +426,8 @@ def main():
     agent_module = load_module(seek_module="rapd_agent_index+strategy",
                                directories=["agents"],
                                logger=logger)
+
+    sys.exit()
 
     agent_module.RapdAgent(None, command, logger)
 

@@ -244,7 +244,11 @@ def analyze_data_sources(sources,
 
                     # Are we dealing with hdf5 images
                     if source_abspath.endswith(".h5"):
-                        print "Converting HDF5 file to CBF"
+
+                        if not "hdf5_files" in return_data:
+                            return_data["hdf5_files"] = [source_abspath]
+                        else:
+                            return_data["hdf5_files"].append(source_abspath)
 
                         prefix = os.path.basename(source).replace("_master.h5", "")
 
@@ -254,7 +258,8 @@ def analyze_data_sources(sources,
                             prefix=prefix,
                             start_image=1,
                             end_image=1,
-                            overwrite=True)
+                            overwrite=True,
+                            verbose=False)
 
                         converter.run()
 
