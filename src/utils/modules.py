@@ -39,7 +39,7 @@ def load_module(seek_module, directories=False, logger=False):
                    Should be in dot format relative to the src directory
                    (ex. launch.launcher_adapters)
     """
-    print "load_module", seek_module, directories
+    # print "load_module", seek_module, directories
 
     if logger:
         logger.debug("seek_module %s", seek_module)
@@ -58,9 +58,9 @@ def load_module(seek_module, directories=False, logger=False):
     if directories:
         for directory in directories:
             try:
-                print directory
-                print glob.glob(directory.replace(".", "/")+"/*")
-                print "Attempting to load module %s" % directory+"."+seek_module
+                # print directory
+                # print glob.glob(directory.replace(".", "/")+"/*")
+                # print "Attempting to load module %s" % directory+"."+seek_module
 
                 if logger:
                     logger.debug(glob.glob(directory.replace(".", "/")+"/*"))

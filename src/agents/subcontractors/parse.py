@@ -78,7 +78,8 @@ def setXtriageFailed(self):
   Set output dict if Xtraige fails.
   """
   if self.verbose:
-    self.logger.debug('Parse::setXtriageFailed')
+      self.logger.debug('Parse::setXtriageFailed')
+
   xtriage = {'Xtriage anom'         : 'None',
              'Xtriage anom plot'    : 'None',
              'Xtriage int plot'     : 'None',
@@ -652,79 +653,91 @@ def ParseOutputLabelitPP(self,inp):
     #return((None))
 
 def ParseOutputDistl(self, inp):
-  """
-  parse distl.signal_strength
-  """
-  if self.verbose:
-    self.logger.debug('Parse::ParseOutputDistl')
-  try:
-    spot_total   = []
-    spot_inres   = []
-    good_spots   = []
-    labelit_res  = []
-    distl_res    = []
-    max_cell     = []
-    ice_rings    = []
-    overloads    = []
-    min1         = []
-    max1         = []
-    mean1        = []
-    signal_strength = False
-    for line in inp:
-      if line.count('Spot Total'):
-        spot_total.append(line.split()[3])
-      if line.count('In-Resolution Total'):
-        spot_inres.append(line.split()[3])
-      if line.count('Good Bragg'):
-        good_spots.append(line.split()[4])
-      if line.count('Method 1'):
-        labelit_res.append(line.split()[4])
-      if line.count('Method 2'):
-        distl_res.append(line.split()[4])
-      if line.count('Maximum unit cell'):
-        max_cell.append(line.split()[4])
-      if line.count('Ice Rings'):
-        ice_rings.append(line.split()[3])
-      if line.count('In-Resolution Ovrld Spots'):
-        overloads.append(line.split()[4])
-      if line.count('Signals range'):
-        signal_strength = True
-        min1.append(str(int(float(line.split()[3]))))
-        max1.append(str(int(float(line.split()[5]))))
-        mean1.append(str(int(float(line.split()[10]))))
-    if signal_strength == False:
-      min1.append('0')
-      max1.append('0')
-      mean1.append('0')
-    distl = { 'total spots'             : spot_total,
-              'spots in res'            : spot_inres,
-              'good Bragg spots'        : good_spots,
-              'distl res'               : distl_res,
-              'labelit res'             : labelit_res,
-              'max cell'                : max_cell,
-              'ice rings'               : ice_rings,
-              'overloads'               : overloads,
-              'min signal strength'     : min1,
-              'max signal strength'     : max1,
-              'mean int signal'         : mean1      }
-    return(distl)
+    """
+    parse distl.signal_strength
+    """
+    if self.verbose:
+        self.logger.debug('Parse::ParseOutputDistl')
 
-  except:
-    self.logger.exception('**Error in Parse.ParseOutputDistl**')
-    return(None)
+    print "ParseOutputDistl"
+    print inp
+
+    try:
+        spot_total   = []
+        spot_inres   = []
+        good_spots   = []
+        labelit_res  = []
+        distl_res    = []
+        max_cell     = []
+        ice_rings    = []
+        overloads    = []
+        min1         = []
+        max1         = []
+        mean1        = []
+        signal_strength = False
+        for line in inp:
+            if line.count('Spot Total'):
+                spot_total.append(line.split()[3])
+            if line.count('In-Resolution Total'):
+                spot_inres.append(line.split()[3])
+            if line.count('Good Bragg'):
+                good_spots.append(line.split()[4])
+            if line.count('Method 1'):
+                labelit_res.append(line.split()[4])
+            if line.count('Method 2'):
+                distl_res.append(line.split()[4])
+            if line.count('Maximum unit cell'):
+                max_cell.append(line.split()[4])
+            if line.count('Ice Rings'):
+                ice_rings.append(line.split()[3])
+            if line.count('In-Resolution Ovrld Spots'):
+                overloads.append(line.split()[4])
+            if line.count('Signals range'):
+                signal_strength = True
+                min1.append(str(int(float(line.split()[3]))))
+                max1.append(str(int(float(line.split()[5]))))
+                mean1.append(str(int(float(line.split()[10]))))
+        if signal_strength == False:
+            min1.append('0')
+            max1.append('0')
+            mean1.append('0')
+        distl = {
+            'total spots': spot_total,
+            'spots in res': spot_inres,
+            'good Bragg spots': good_spots,
+            'distl res': distl_res,
+            'labelit res': labelit_res,
+            'max cell': max_cell,
+            'ice rings': ice_rings,
+            'overloads': overloads,
+            'min signal strength': min1,
+            'max signal strength': max1,
+            'mean int signal': mean1,
+            }
+
+        pprint.pprint(distl)
+        return distl
+
+    except:
+        self.logger.exception('**Error in Parse.ParseOutputDistl**')
+        return None
 
 def ParseOutputRaddose(self, inp):
     """
     Looks for dose and cell volume. Passes info back to caller
     """
 
-    if self.verbose:
-        self.logger.debug('Parse::ParseOutputRaddose')
+    # print "ParseOutputRaddose"
+    # print inp
 
-    print inp
+    if self.verbose:
+        self.logger.debug("Parse.ParseOutputRaddose")
+        self.logger.debug(inp)
 
     try:
         for line in inp:
+            if "Command not found" in line:
+                raise Exception("No raddose command available")
             if line.startswith('Total absorbed dose'):
                 dose_per_image = float(line.split()[4])
             if line.startswith('** Time in sec'):

@@ -413,9 +413,8 @@ def main():
                                     detector_module=detector_module,
                                     logger=logger)
     else:
+        if logger: logger.exception("No detector module found")
         raise Exception("No detector module found")
-
-    sys.exit()
 
     # If no site, error
     # if site == False:
@@ -447,9 +446,7 @@ def main():
                                directories=["agents"],
                                logger=logger)
 
-    sys.exit()
-
-    agent_module.RapdAgent(None, command, logger)
+    agent_module.RapdAgent(None, command, tprint, logger)
 
 if __name__ == "__main__":
 

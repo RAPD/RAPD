@@ -588,7 +588,7 @@ def convert_hdf5_cbf(inp,
         os.chdir(out)
 
         if inp.count("master"):
-    
+
             # Not really needed, unless someone collected a huge dataset.
             ncpu = multiprocessing.cpu_count()
             pool = multiprocessing.Pool(processes=ncpu)
@@ -1188,8 +1188,6 @@ def getBestVersion():
     """
     Returns the version of Best that is to be run
     """
-
-    print "getBestVersion"
 
     p = subprocess.Popen(["best"],
                          shell=True,

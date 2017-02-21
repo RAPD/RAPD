@@ -143,7 +143,7 @@ class RapdAgent(Process):
     # The results of the agent
     results = {}
 
-    def __init__(self, site, command, logger=False):
+    def __init__(self, site, command, tprint=False, logger=False):
         """
         Initialize the agent
 
@@ -162,6 +162,16 @@ class RapdAgent(Process):
             self.logger = logging.getLogger("RAPDLogger")
             self.logger.debug("__init__")
 
+        # Store tprint for use throughout
+        if tprint:
+            self.tprint = tprint
+        # Dead end if no tprint passed
+        else:
+            def func(arg=False, level=False, verbosity=False, color=False):
+                pass
+            self.tprint = func
+
+        # Some logging
         self.logger.info(site)
         self.logger.info(command)
 
@@ -372,9 +382,7 @@ class RapdAgent(Process):
         if os.path.exists(self.working_dir) == False:
             os.makedirs(self.working_dir)
         os.chdir(self.working_dir)
-        if self.verbose:
-            # Print out recognition of the program being used
-            self.PrintInfo()
+
         # Setup event for job control on cluster (Only works at NE-CAT using DRMAA for job submission)
         if self.cluster_adapter:
             self.running = Event()
@@ -388,77 +396,81 @@ class RapdAgent(Process):
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::preprocessRaddose")
 
-        try:
-            # Get unit cell
-            cell = Utils.getLabelitCell(self)
-            nres = Utils.calcTotResNumber(self,self.volume)
-            # Adding these typically does not change the Best strategy much, if it at all.
-            patm = False
-            satm = False
-            if self.sample_type == "Ribosome":
-                crystal_size_x = "1"
-                crystal_size_y = "0.5"
-                crystal_size_z = "0.5"
-            else:
-                # crystal dimensions (default 0.1 x 0.1 x 0.1 from rapd_site.py)
-                crystal_size_x = str(float(self.preferences.get("crystal_size_x", 100))/1000.0)
-                crystal_size_y = str(float(self.preferences.get("crystal_size_y", 100))/1000.0)
-                crystal_size_z = str(float(self.preferences.get("crystal_size_z", 100))/1000.0)
-            if self.header.has_key("flux"):
-                beam_size_x = str(self.header.get("beam_size_x"))
-                beam_size_y = str(self.header.get("beam_size_y"))
-                gauss_x     = str(self.header.get("gauss_x"))
-                gauss_y     = str(self.header.get("gauss_y"))
-            raddose = open("raddose.com", "w+")
-            setup = "raddose << EOF\n"
-            if beam_size_x and beam_size_y:
-                setup += "BEAM %s %s\n" % (beam_size_x, beam_size_y)
-            # Full-width-half-max of the beam
+        # try:
+        beam_size_x = False
+        beam_size_y = False
+        gauss_x = False
+        gauss_y = False
+
+        # Get unit cell
+        cell = Utils.getLabelitCell(self)
+        nres = Utils.calcTotResNumber(self,self.volume)
+        # Adding these typically does not change the Best strategy much, if it at all.
+        patm = False
+        satm = False
+        if self.sample_type == "Ribosome":
+            crystal_size_x = "1"
+            crystal_size_y = "0.5"
+            crystal_size_z = "0.5"
+        else:
+            # crystal dimensions (default 0.1 x 0.1 x 0.1 from rapd_site.py)
+            crystal_size_x = str(float(self.preferences.get("crystal_size_x", 100))/1000.0)
+            crystal_size_y = str(float(self.preferences.get("crystal_size_y", 100))/1000.0)
+            crystal_size_z = str(float(self.preferences.get("crystal_size_z", 100))/1000.0)
+        if self.header.has_key("flux"):
+            beam_size_x = str(self.header.get("beam_size_x"))
+            beam_size_y = str(self.header.get("beam_size_y"))
+            gauss_x     = str(self.header.get("gauss_x"))
+            gauss_y     = str(self.header.get("gauss_y"))
+        raddose = open("raddose.com", "w+")
+        setup = "raddose << EOF\n"
+        if beam_size_x and beam_size_y:
+            setup += "BEAM %s %s\n" % (beam_size_x, beam_size_y)
+        # Full-width-half-max of the beam
+        if gauss_x and gauss_y:
             setup += "GAUSS %s %s\nIMAGES 1\n" % (gauss_x, gauss_y)
-            setup += "PHOSEC %s\n" % self.flux
-            setup += "EXPOSURE %s\n" % self.time
-	    if cell:
-                setup += "CELL %s %s %s %s %s %s\n" % (cell[0], cell[1], cell[2], cell[3], cell[4], cell[5])
-            else:
-                self.logger.debug("Could not get unit cell from bestfile.par")
+        setup += "PHOSEC %s\n" % self.flux
+        setup += "EXPOSURE %s\n" % self.time
+        if cell:
+            setup += "CELL %s %s %s %s %s %s\n" % (cell[0], cell[1], cell[2], cell[3], cell[4], cell[5])
+        else:
+            self.logger.debug("Could not get unit cell from bestfile.par")
 
-            # Set default solvent content based on sample type. User can override.
-            if self.solvent_content == "0.55":
-                if self.sample_type == "Protein":
-                    setup += "SOLVENT 0.55\n"
-                else:
-                    setup += "SOLVENT 0.64\n"
-            else:
-                setup += "SOLVENT %s\n"%self.solvent_content
-            # Sets crystal dimensions. Input from dict (0.1 x 0.1 x 0.1 mm), but user can override.
-            if crystal_size_x and crystal_size_y and crystal_size_z:
-                setup += "CRYSTAL %s %s %s\n" % (crystal_size_x, crystal_size_y, crystal_size_z)
-            if self.wavelength:
-                setup += "WAVELENGTH %s\n" % self.wavelength
-            setup += "NMON 1\n"
+        # Set default solvent content based on sample type. User can override.
+        if self.solvent_content == "0.55":
             if self.sample_type == "Protein":
-                setup += "NRES %s\n" % nres
-            elif self.sample_type == "DNA":
-                setup += "NDNA %s\n" % nres
+                setup += "SOLVENT 0.55\n"
             else:
-                setup += "NRNA %s\n" % nres
-            if patm:
-                setup += "PATM %s\n" % patm
-            if satm:
-                setup += "SATM %s\n" % satm
-            setup += "END\nEOF\n"
-            raddose.writelines(setup)
-            raddose.close()
+                setup += "SOLVENT 0.64\n"
+        else:
+            setup += "SOLVENT %s\n"%self.solvent_content
+        # Sets crystal dimensions. Input from dict (0.1 x 0.1 x 0.1 mm), but user can override.
+        if crystal_size_x and crystal_size_y and crystal_size_z:
+            setup += "CRYSTAL %s %s %s\n" % (crystal_size_x, crystal_size_y, crystal_size_z)
+        if self.wavelength:
+            setup += "WAVELENGTH %s\n" % self.wavelength
+        setup += "NMON 1\n"
+        if self.sample_type == "Protein":
+            setup += "NRES %s\n" % nres
+        elif self.sample_type == "DNA":
+            setup += "NDNA %s\n" % nres
+        else:
+            setup += "NRNA %s\n" % nres
+        if patm:
+            setup += "PATM %s\n" % patm
+        if satm:
+            setup += "SATM %s\n" % satm
+        setup += "END\nEOF\n"
+        raddose.writelines(setup)
+        raddose.close()
 
-        except:
-            self.logger.exception("**ERROR in preprocessRaddose**")
+        # except:
+            # self.logger.exception("**ERROR in preprocessRaddose**")
 
     def processLabelit(self):
         """
         Initiate Labelit runs.
         """
-
-        print "processLabelit"
 
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::runLabelit")
@@ -479,7 +491,7 @@ class RapdAgent(Process):
                 command["directories"]["work"] = self.working_dir
 
             # Launch labelit
-            Process(target=RunLabelit, args=(command, self.labelitQueue, params, self.logger)).start()
+            Process(target=RunLabelit, args=(command, self.labelitQueue, params, self.tprint, self.logger)).start()
 
         except:
             self.logger.exception("**Error in processLabelit**")
@@ -612,7 +624,7 @@ class RapdAgent(Process):
                 image_number.append(self.header2.get('fullname')[self.header2.get('fullname').rfind('_')+1:self.header2.get('fullname').rfind('.')])
 
             # Tell Best if two-theta is being used.
-            if int(float(self.header.get("twotheta"))) != 0:
+            if int(float(self.header.get("twotheta", 0))) != 0:
                 Utils.fixBestfile(self)
 
             # If Raddose failed, here are the defaults.
@@ -725,7 +737,7 @@ class RapdAgent(Process):
                                 del jobs[job]
                                 start, ran = self.findBestStrat(d['log'+l[int(job)][1]].replace('log', 'plt'))
                                 if start != False:
-                                    print ">>>>", start, ran
+                                    pass
                                     # self.processBest(iteration, (start, ran, int(job), int(job)+1))
                                 counter -= 1
                         time.sleep(0.1)
@@ -823,8 +835,6 @@ class RapdAgent(Process):
         iteration -- (default False)
         """
 
-        print "processStrategy"
-
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::processStrategy")
         try:
@@ -894,15 +904,16 @@ class RapdAgent(Process):
                 if self.verbose:
                     number = round(timer % 1, 1)
                     if number in (0.0, 1.0):
-                        print "Waiting for Distl to finish %s seconds"%timer
+                        pass
+                        # print "Waiting for Distl to finish %s seconds" % timer
                 if self.distl_timer:
                     if timer >= self.distl_timer:
                         job.terminate()
                         self.distl_output.remove(job)
                         self.distl_log.append("Distl timed out\n")
                         if self.verbose:
-                            print "Distl timed out."
-                            self.logger.debug("Distl timed out.")
+                            pprint(arg="Distl timed out", level=30, color="red")
+                            self.logger.error("Distl timed out.")
 
             os.chdir(self.labelit_dir)
             f = 1
@@ -1044,7 +1055,7 @@ class RapdAgent(Process):
                         if self.verbose:
                             number = round(timer%1,1)
                             if number in (0.0,1.0):
-                                print "Waiting for strategy to finish %s seconds"%timer
+                                self.tprint(arg="Waiting for strategy to finish %s seconds" % timer, level=10)
                         if self.strategy_timer:
                             if timer >= self.strategy_timer:
                                 timed_out = True
@@ -1217,8 +1228,6 @@ class RapdAgent(Process):
         if self.verbose:
             self.logger.debug('AutoindexingStrategy::findBestStrat')
 
-        print "###", inp
-
         def getBestRotRange(inp):
             """
             Parse lines from XML file.
@@ -1262,7 +1271,6 @@ class RapdAgent(Process):
                     # If xml exists, check if new strategy is at least 5 degrees less rotation range.
                     if os.path.exists(inp.replace('.plt', '.xml')):
                         orig_range = getBestRotRange(open(inp.replace('.plt', '.xml'), 'r').readlines())
-                        print orig_range
                         if orig_range != 'FAILED':
                             if orig_range - min1 >= 5:
                                 run = True
@@ -1277,45 +1285,32 @@ class RapdAgent(Process):
             self.logger.exception('**Error in findBestStrat**')
             return((False, False))
 
-    def PrintInfo(self):
+    def print_info(self):
         """
         Print information regarding programs utilized by RAPD
         """
         if self.verbose:
-            self.logger.debug('AutoindexingStrategy::PrintInfo')
+            self.logger.debug('AutoindexingStrategy::print_info')
 
-        try:
-            print '======================='
-            print 'RAPD developed using Labelit'
-            print 'Reference:  J. Appl. Cryst. 37, 399-409 (2004)'
-            print 'Website:    http://adder.lbl.gov/labelit/ \n'
-            print 'RAPD developed using Mosflm'
-            print 'Reference: Leslie, A.G.W., (1992), Joint CCP4 + ESF-EAMCB Newsletter on Protein Crystallography, No. 26'
-            print 'Website:   http://www.mrc-lmb.cam.ac.uk/harry/mosflm/ \n'
-            print 'RAPD developed using RADDOSE'
-            print 'Reference: Paithankar et. al. (2009)J. Synch. Rad. 16, 152-162.'
-            print 'Website: http://biop.ox.ac.uk/www/garman/lab_tools.html/ \n'
-            print 'RAPD developed using Best'
-            print 'Reference: G.P. Bourenkov and A.N. Popov,  Acta Cryst. (2006). D62, 58-64'
-            print 'Website:   http://www.embl-hamburg.de/BEST/ \n'
-            print '======================='
-            self.logger.debug('=======================')
-            self.logger.debug('RAPD developed using Labelit')
-            self.logger.debug('Reference:  J. Appl. Cryst. 37, 399-409 (2004)')
-            self.logger.debug('Website:    http://adder.lbl.gov/labelit/ \n')
-            self.logger.debug('RAPD developed using Mosflm')
-            self.logger.debug('Reference: Leslie, A.G.W., (1992), Joint CCP4 + ESF-EAMCB Newsletter on Protein Crystallography, No. 26')
-            self.logger.debug('Website:   http://www.mrc-lmb.cam.ac.uk/harry/mosflm/ \n')
-            self.logger.debug('RAPD developed using RADDOSE')
-            self.logger.debug('Reference: Paithankar et. al. (2009)J. Synch. Rad. 16, 152-162.')
-            self.logger.debug('Website: http://biop.ox.ac.uk/www/garman/lab_tools.html/ \n')
-            self.logger.debug('RAPD developed using Best')
-            self.logger.debug('Reference: G.P. Bourenkov and A.N. Popov,  Acta Cryst. (2006). D62, 58-64')
-            self.logger.debug('Website:   http://www.embl-hamburg.de/BEST/ \n')
-            self.logger.debug('=======================')
+        # try:
+        self.tprint(arg="RAPD indexing & strategy uses:", level=99, color="blue")
 
-        except:
-            self.logger.exception('**Error in PrintInfo**')
+        info_string = """    Phenix
+    Reference:  J. Appl. Cryst. 37, 399-409 (2004)
+    Website:    http://adder.lbl.gov/labelit/ \n
+    Mosflm
+    Reference: Leslie, A.G.W., (1992), Joint CCP4 + ESF-EAMCB Newsletter on Protein Crystallography, No. 26
+    Website:   http://www.mrc-lmb.cam.ac.uk/harry/mosflm/ \n
+    RADDOSE
+    Reference: Paithankar et. al. (2009) J. Synch. Rad. 16, 152-162.
+    Website: http://biop.ox.ac.uk/www/garman/lab_tools.html/ \n
+    Best
+    Reference: G.P. Bourenkov and A.N. Popov,  Acta Cryst. (2006). D62, 58-64
+    Website: http://www.embl-hamburg.de/BEST/ \n
+    """
+        self.tprint(arg=info_string, level=99)
+
+        self.logger.debug(info_string)
 
     def postprocess(self):
         """
@@ -1328,8 +1323,8 @@ class RapdAgent(Process):
 
         # Set up the results for return
         self.results["process"] = {
-            "agent_process_id":self.header.get("agent_process_id"),
-            "status":100}
+            "process_id": self.command.get("process_id"),
+            "status": 100}
         self.results["directories"] = self.setup
         self.results["information"] = self.header
         self.results["preferences"] = self.preferences
@@ -1472,7 +1467,8 @@ class RapdAgent(Process):
             # if self.gui:
             self.results["results"] = results
             self.logger.debug(self.results)
-            pprint.pprint(self.results)
+            # TODO
+            self.tprint(arg=self.results, level=10)
             if self.controller_address:
                 rapd_send(self.controller_address, self.results)
         except:
@@ -1506,23 +1502,24 @@ class RapdAgent(Process):
         except:
             self.logger.exception("**Could not move files from RAM to destination dir.**")
 
+        # Print out recognition of the programs being used
+        self.print_info()
+
         # Say job is complete.
         t = round(time.time() - self.st)
         self.logger.debug("-------------------------------------")
         self.logger.debug("RAPD autoindexing/strategy complete.")
         self.logger.debug("Total elapsed time: %s seconds", t)
         self.logger.debug("-------------------------------------")
-        print "\n-------------------------------------"
-        print "RAPD autoindexing/strategy complete."
-        print "Total elapsed time: %s seconds" % t
-        print "-------------------------------------"
-        # sys.exit(0) #did not appear to end script with some programs continuing on for some reason.
-        # os._exit(0)
+        self.tprint(arg="RAPD autoindexing & strategy complete", level=99, color="green")
+        self.tprint(arg="Total elapsed time: %s seconds" % t, level=10)
 
     def htmlBestPlots(self):
         """
         generate plots html/php file
         """
+
+        self.tprint(arg="Generating plots from Best", level=10)
 
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::htmlBestPlots")
@@ -2074,7 +2071,7 @@ class RapdAgent(Process):
 
 class RunLabelit(Process):
 
-    def __init__(self, command, output, params, logger=None):
+    def __init__(self, command, output, params, tprint=False, logger=None):
         """
         input >> command
     	#New minimum input
@@ -2098,8 +2095,6 @@ class RunLabelit(Process):
             'return_address': ('127.0.0.1', 50000)}
     	"""
 
-        print "RunLabelit", params
-
         self.cluster_adapter = False
         self.st = time.time()
 
@@ -2108,6 +2103,15 @@ class RunLabelit(Process):
         #self.input = command
         self.output = output
         self.logger = logger
+
+        # Store tprint for use throughout
+        if tprint:
+            self.tprint = tprint
+        # Dead end if no tprint passed
+        else:
+            def func(arg=False, level=False, verbosity=False, color=False):
+                pass
+            self.tprint = func
 
         # Setting up data input
         self.setup = command["directories"]
@@ -2139,7 +2143,6 @@ class RunLabelit(Process):
             self.cluster_adapter = params.get("cluster", False)
 
     	# Make decisions based on input params
-        print self.iterations
         if self.iterations != 6:
             self.short = True
         # Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
@@ -2191,8 +2194,6 @@ class RunLabelit(Process):
         Convoluted path of modules to run.
         """
 
-        print "RunLabelit.run"
-
         if self.verbose:
             self.logger.debug("RunLabelit::run")
 
@@ -2201,7 +2202,6 @@ class RunLabelit(Process):
         # Make the initial dataset_prefernces.py file
         self.preprocessLabelit()
         if self.short:
-            print "short"
             self.labelit_timer = 300
             Utils.foldersLabelit(self, self.iterations)
             # if a specific iteration is sent in then it only runs that one
@@ -2236,65 +2236,65 @@ class RunLabelit(Process):
         if self.test:
             if self.short == False:
                 self.logger.debug("TEST IS ON")
-                print "TEST IS ON"
+                self.tprint(arg="TEST IS ON", level=10)
 
     def preprocessLabelit(self):
-      """
-      Setup extra parameters for Labelit if turned on. Will always set beam center from image header.
-      Creates dataset_preferences.py file for editing later in the Labelit error iterations if needed.
-      """
+        """
+        Setup extra parameters for Labelit if turned on. Will always set beam center from image header.
+        Creates dataset_preferences.py file for editing later in the Labelit error iterations if needed.
+        """
 
-      if self.verbose:
-          self.logger.debug('RunLabelit::preprocessLabelit')
+        if self.verbose:
+            self.logger.debug('RunLabelit::preprocessLabelit')
 
-      try:
-          twotheta       = str(self.header.get("twotheta", "0"))
-          #distance       = str(self.header.get('distance'))
-          #x_beam         = str(self.preferences.get('x_beam', self.header.get('beam_center_x'))) #OLD
-          #Once we figure out the beam center issue, I can switch to this.
-  	      #x_beam         = str(self.header.get('beam_center_calc_x', self.header.get('beam_center_x')))
-          #y_beam         = str(self.header.get('beam_center_calc_y', self.header.get('beam_center_y')))
-          x_beam         = str(self.header.get("x_beam"))
-          y_beam         = str(self.header.get("y_beam"))
-          # x_beam         = str(self.header.get('beam_center_x'))
-          # y_beam         = str(self.header.get('beam_center_y'))
-          binning = True
-          if self.header.has_key('binning'):
-  	           binning = self.header.get('binning')
-          if self.test == False:
-              preferences    = open('dataset_preferences.py','w')
-              preferences.write('#####Base Labelit settings#####\n')
-              preferences.write('best_support=True\n')
-              #Set Mosflm RMSD tolerance larger
-              preferences.write('mosflm_rmsd_tolerance=4.0\n')
+        try:
+            twotheta       = str(self.header.get("twotheta", "0"))
+            #distance       = str(self.header.get('distance'))
+            #x_beam         = str(self.preferences.get('x_beam', self.header.get('beam_center_x'))) #OLD
+            #Once we figure out the beam center issue, I can switch to this.
+    	      #x_beam         = str(self.header.get('beam_center_calc_x', self.header.get('beam_center_x')))
+            #y_beam         = str(self.header.get('beam_center_calc_y', self.header.get('beam_center_y')))
+            x_beam         = str(self.header.get("x_beam"))
+            y_beam         = str(self.header.get("y_beam"))
+            # x_beam         = str(self.header.get('beam_center_x'))
+            # y_beam         = str(self.header.get('beam_center_y'))
+            binning = True
+            if self.header.has_key('binning'):
+    	        binning = self.header.get('binning')
+            if self.test == False:
+                preferences    = open('dataset_preferences.py','w')
+                preferences.write('#####Base Labelit settings#####\n')
+                preferences.write('best_support=True\n')
+                # Set Mosflm RMSD tolerance larger
+                preferences.write('mosflm_rmsd_tolerance=4.0\n')
 
-                #If binning is off. Force Labelit to use all pixels(MAKES THINGS WORSE). Increase number of spots to use for indexing.
-              if binning == False:
-                  preferences.write('distl_permit_binning=False\n')
-                  preferences.write('distl_maximum_number_spots_for_indexing=600\n')
+                # If binning is off. Force Labelit to use all pixels(MAKES THINGS WORSE). Increase number of spots to use for indexing.
+                if binning == False:
+                    preferences.write('distl_permit_binning=False\n')
+                    preferences.write('distl_maximum_number_spots_for_indexing=600\n')
 
-                #If user wants to change the res limit for autoindexing.
-              if str(self.preferences.get('index_hi_res','0.0')) != '0.0':
-                  #preferences.write('distl.res.outer='+index_hi_res+'\n')
-                  preferences.write('distl_highres_limit=%s\n'%self.preferences.get('index_hi_res'))
-              #Always specify the beam center.
-              #If Malcolm flips the beam center in the image header...
-              if self.preferences.get('beam_flip','False') == 'True':
-                  preferences.write('autoindex_override_beam=(%s,%s)\n' % (y_beam,x_beam))
-              else:
-                  preferences.write('autoindex_override_beam=(%s,%s)\n' % (x_beam,y_beam))
-              #If two-theta is being used, specify the angle and distance correctly.
-              if twotheta.startswith('0'):
-                  preferences.write('beam_search_scope=0.2\n')
-              else:
-                  self.twotheta = True
-                  preferences.write('beam_search_scope=0.5\n')
-                  preferences.write('autoindex_override_twotheta=%s\n'%twotheta)
-                  #preferences.write('autoindex_override_distance='+distance+'\n')
-              preferences.close()
+                # If user wants to change the res limit for autoindexing.
+                if str(self.preferences.get('index_hi_res','0.0')) != '0.0':
+                    #preferences.write('distl.res.outer='+index_hi_res+'\n')
+                    preferences.write('distl_highres_limit=%s\n'%self.preferences.get('index_hi_res'))
+                # Always specify the beam center.
+                # If Malcolm flips the beam center in the image header...
+                if self.preferences.get('beam_flip','False') == 'True':
+                    preferences.write('autoindex_override_beam=(%s,%s)\n' % (y_beam,x_beam))
+                else:
+                    preferences.write('autoindex_override_beam=(%s,%s)\n' % (x_beam,y_beam))
+                # If two-theta is being used, specify the angle and distance correctly.
+                if twotheta.startswith('0'):
+                    preferences.write('beam_search_scope=0.2\n')
+                else:
+                    self.twotheta = True
+                    preferences.write('beam_search_scope=0.5\n')
+                    preferences.write('autoindex_override_twotheta=%s\n'%twotheta)
+                    # preferences.write('autoindex_override_distance='+distance+'\n')
+                preferences.close()
 
-      except:
-          self.logger.exception('**ERROR in RunLabelit.preprocessLabelit**')
+        except:
+            self.logger.exception('**ERROR in RunLabelit.preprocessLabelit**')
 
     def processLabelit(self, iteration=0, inp=False):
         """
@@ -2346,7 +2346,7 @@ class RunLabelit(Process):
             if self.test:
                 labelit_jobs["junk%s" % iteration] = iteration
             else:
-                print command
+                # print command
                 log = os.path.join(os.getcwd(), "labelit.log")
                 #queue to retrieve the PID or JobIB once submitted.
                 pid_queue = Queue()
@@ -2466,89 +2466,89 @@ class RunLabelit(Process):
             self.logger.exception("**ERROR in RunLabelit.postprocess**")
 
     def run_queue(self):
-      """
-      Run Queue for Labelit.
-      """
-      if self.verbose:
-          self.logger.debug('RunLabelit::run_queue')
-      try:
-        timed_out = False
-        timer = 0
-        #labelit = False
-        jobs = self.labelit_jobs.keys()
-        #Set wait time longer to lower the load on the node running the job.
-        if self.short:
-          wait = 1
-        else:
-          wait = 0.1
-        if jobs != ['None']:
-          counter = len(jobs)
-          while counter != 0:
-            for job in jobs:
-              if self.test:
-                running = False
-              else:
-                running = job.is_alive()
-              if running == False:
-                jobs.remove(job)
-                iteration = self.labelit_jobs[job]
-                if self.verbose:
-                  self.logger.debug('Finished Labelit%s'%iteration)
-                  print 'Finished Labelit%s'%iteration
-                #Check if job had been rerun, fix the iteration.
-                if iteration >= 10:
-                  iteration -=10
-                  job = self.postprocessLabelit(iteration, True)
-                else:
-                  job = self.postprocessLabelit(iteration, False)
-                #If job is rerun, then save the iteration and pid.
-                if job != None:
-                  if self.multiproc:
-                      iteration +=10
-                  else:
-                      iteration +=1
-                  self.labelit_jobs[job.keys()[0]] = iteration
-                  jobs.extend(job.keys())
-                else:
-                  counter -= 1
-            time.sleep(wait)
-            timer += wait
-            """
-            if self.verbose:
-                number = round(timer%1,1)
-                if number in (0.0,1.0):
-                    print 'Waiting for Labelit to finish '+str(timer)+' seconds'
-            """
-            if self.labelit_timer:
-              if timer >= self.labelit_timer:
-                if self.multiproc:
-                  timed_out = True
-                  break
-                else:
-                  iteration += 1
-                  if iteration <= self.iterations:
-                    Utils.errorLabelit(self,iteration)
-                  else:
-                    timed_out = True
-                    break
-          if timed_out:
-            self.logger.debug('Labelit timed out.')
-            for job in jobs:
-              i = self.labelit_jobs[job]
-              if i >= 10:
-                i -=10
-              self.labelit_results[str(i)] = {'Labelit results': 'FAILED'}
-              if self.cluster_use:
-                #Utils.killChildrenCluster(self,self.pids[str(i)])
-                self.cluster_adapter.killChildrenCluster(self,self.pids[str(i)])
-              else:
-                Utils.killChildren(self,self.pids[str(i)])
+        """
+        Run Queue for Labelit.
+        """
+        if self.verbose:
+            self.logger.debug('RunLabelit::run_queue')
+        try:
+            timed_out = False
+            timer = 0
+            # labelit = False
+            jobs = self.labelit_jobs.keys()
+            # Set wait time longer to lower the load on the node running the job.
+            if self.short:
+                wait = 1
+            else:
+                wait = 0.1
+            if jobs != ['None']:
+                counter = len(jobs)
+                while counter != 0:
+                    for job in jobs:
+                        if self.test:
+                            running = False
+                        else:
+                            running = job.is_alive()
+                        if running == False:
+                            jobs.remove(job)
+                            iteration = self.labelit_jobs[job]
+                            if self.verbose:
+                                self.logger.debug('Finished Labelit%s'%iteration)
+                                # self.tprint(arg="Finished Labelit%s" % iteration, level=10)
+                            # Check if job had been rerun, fix the iteration.
+                            if iteration >= 10:
+                                iteration -=10
+                                job = self.postprocessLabelit(iteration, True)
+                            else:
+                                job = self.postprocessLabelit(iteration, False)
+                            # If job is rerun, then save the iteration and pid.
+                            if job != None:
+                                if self.multiproc:
+                                    iteration +=10
+                                else:
+                                    iteration +=1
+                                self.labelit_jobs[job.keys()[0]] = iteration
+                                jobs.extend(job.keys())
+                            else:
+                                counter -= 1
+                    time.sleep(wait)
+                    timer += wait
+                    """
+                    if self.verbose:
+                        number = round(timer%1,1)
+                        if number in (0.0,1.0):
+                            print 'Waiting for Labelit to finish '+str(timer)+' seconds'
+                    """
+                    if self.labelit_timer:
+                        if timer >= self.labelit_timer:
+                            if self.multiproc:
+                                timed_out = True
+                                break
+                            else:
+                                iteration += 1
+                                if iteration <= self.iterations:
+                                    Utils.errorLabelit(self,iteration)
+                                else:
+                                    timed_out = True
+                                    break
+                if timed_out:
+                    self.logger.debug('Labelit timed out.')
+                    for job in jobs:
+                        i = self.labelit_jobs[job]
+                        if i >= 10:
+                            i -=10
+                        self.labelit_results[str(i)] = {'Labelit results': 'FAILED'}
+                        if self.cluster_use:
+                            # Utils.killChildrenCluster(self,self.pids[str(i)])
+                            self.cluster_adapter.killChildrenCluster(self,self.pids[str(i)])
+                        else:
+                            Utils.killChildren(self,self.pids[str(i)])
 
-        if self.short == False:
-          self.logger.debug('Labelit finished.')
+            if self.short == False:
+                self.logger.debug('Labelit finished.')
 
-      except:
-        self.logger.exception('**Error in RunLabelit.run_queue**')
+        except:
+            self.logger.exception('**Error in RunLabelit.run_queue**')
 
     def labelitLog(self):
       """
