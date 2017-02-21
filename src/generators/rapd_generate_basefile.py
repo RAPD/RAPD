@@ -288,7 +288,7 @@ class CommandlineFileGenerator(BaseFileGenerator):
         self.write_file_docstring()
         self.write_license()
         self.write_docstrings()
-        self.write_imports()
+        self.write_imports(("argparse", "sys"))
         self.write_main_func()
         self.write_commandline()
         self.write_main()
@@ -327,6 +327,10 @@ class CommandlineFileGenerator(BaseFileGenerator):
                               "                        nargs=\"?\",",
                               "                        default=False,",
                               "                        help=\"Name of file to be generated\")\n",
+                              "    # Print help message is no arguments",
+                              "    if len(sys.argv[1:])==0:",
+                              "        parser.print_help()",
+                              "        parser.exit()\n",
                               "    return parser.parse_args()\n"]
 
         self.output_function(commandline_lines)
