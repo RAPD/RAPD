@@ -58,6 +58,7 @@ from utils.modules import load_module
 import utils.xutils as Utils
 
 DETECTOR_TO_BEST = {
+    "ADSC-Q315": "q315",
     "Dectris Eiger 9M": "eiger9m"
 }
 
@@ -1425,8 +1426,7 @@ class RapdAgent(Process):
     Website: http://biop.ox.ac.uk/www/garman/lab_tools.html/ \n
     Best
     Reference: G.P. Bourenkov and A.N. Popov,  Acta Cryst. (2006). D62, 58-64
-    Website: http://www.embl-hamburg.de/BEST/ \n
-    """
+    Website: http://www.embl-hamburg.de/BEST/"""
         self.tprint(arg=info_string, level=99)
 
         self.logger.debug(info_string)
