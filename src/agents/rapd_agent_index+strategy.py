@@ -33,7 +33,9 @@ AGENT_TYPE = "AUTOINDEX+STRATEGY"
 AGENT_SUBTYPE = "CORE"
 
 # A unique UUID for this handler (uuid.uuid1().hex)
+VERSION = "2.0beta"
 ID = "3b3448aee4a811e59c0aac87a3333966"
+
 
 # Standard imports
 # import glob
@@ -878,7 +880,7 @@ class RapdAgent(Process):
                 if i == 1:
                     self.tprint(arg="  Starting BEST runs", level=99, color="white")
                 if i == 4:
-                    self.tprint(arg="  Starting Mosflm runs\n", level=99, color="white")
+                    self.tprint(arg="  Starting Mosflm runs", level=99, color="white")
                     Utils.folders(self, self.labelit_dir)
                     job = Process(target=self.processMosflm, name="mosflm%s" % i)
                 else:
@@ -970,7 +972,7 @@ class RapdAgent(Process):
                         "mean int signal": "Mean Intensity Signal",
                     }
                     for key, val in distl_labels.iteritems():
-                        self.tprint(arg="  %20s: %s" % (val, distl[key][0]), level=10, color="white")
+                        self.tprint(arg="  %21s: %s" % (val, distl[key][0]), level=10, color="white")
 
             Utils.distlComb(self)
 
@@ -1161,7 +1163,7 @@ class RapdAgent(Process):
                         if self.verbose:
                             number = round(timer%1,1)
                             if number in (0.0, 1.0):
-                                self.tprint(arg="Waiting for strategy to finish %s seconds" % timer, level=10)
+                                self.tprint(arg="    Waiting for strategy to finish %s seconds" % timer, level=10)
                         if self.strategy_timer:
                             if timer >= self.strategy_timer:
                                 timed_out = True
@@ -1312,15 +1314,12 @@ class RapdAgent(Process):
                         Utils.fixBestSG(self)
                     else:
                         self.ignore_user_SG = True
-            # Make an overlay jpeg
-            # self.makeImages(1)
 
             # Print Labelit results to commandline
             self.tprint(arg="Highest symmetry Labelit result", level=99, color="blue")
             for line in self.labelit_results["Labelit results"]["output"][5:]:
                 self.tprint(arg="  %s" % line.rstrip(), level=99, color="white")
             # pprint.pprint(self.labelit_results["Labelit results"]["output"])
-            self.tprint(arg="", level=99, color="white")
 
         # No Labelit solution
         else:

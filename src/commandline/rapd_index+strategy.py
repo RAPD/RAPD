@@ -261,8 +261,7 @@ def print_welcome_message(printer):
     message = """
 ---------------------
 RAPD Index & Strategy
----------------------
-"""
+---------------------"""
     printer(message, 50, color="blue")
 
 def main():
@@ -296,27 +295,24 @@ def main():
     print_welcome_message(tprint)
 
     logger.debug("Commandline arguments:")
-    tprint(arg="Commandline arguments:", level=10, color="blue")
+    tprint(arg="\nCommandline arguments:", level=10, color="blue")
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s", pair[0], pair[1])
         tprint(arg="  arg:%s  val:%s" % (pair[0], pair[1]), level=10)
-    tprint(arg="", level=10)
 
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
     logger.debug("\n" + text.info + "Environmental variables" + text.stop)
-    tprint("Environmental variables", level=10, color="blue")
+    tprint("\nEnvironmental variables", level=10, color="blue")
     for key, val in environmental_vars.iteritems():
         logger.debug("  " + key + " : " + val)
         tprint(arg="  arg:%s  val:%s" % (key, val), level=10)
-    tprint(arg="", level=10)
 
     # List sites?
     if commandline_args.listsites:
         # print "\n" + text.info + "Available sites:" + text.stop
-        tprint(arg="Available sites", level=99, color="blue")
+        tprint(arg="\nAvailable sites", level=99, color="blue")
         commandline_utils.print_sites(left_buffer="  ")
-        tprint(arg="", level=99)
         if not commandline_args.listdetectors:
             sys.exit()
 
@@ -324,7 +320,6 @@ def main():
     if commandline_args.listdetectors:
         tprint(arg="Available detectors", level=99, color="blue")
         commandline_utils.print_detectors(left_buffer="  ")
-        tprint(arg="", level=99)
         sys.exit()
 
     # Get the data files
@@ -332,16 +327,15 @@ def main():
 
     if "hdf5_files" in data_files:
         logger.debug("HDF5 source file(s)")
-        tprint(arg="HDF5 source file(s)", level=99, color="blue")
+        tprint(arg="\nHDF5 source file(s)", level=99, color="blue")
         logger.debug(data_files["hdf5_files"])
         for data_file in data_files["hdf5_files"]:
             tprint(arg="  " + data_file, level=99)
-        tprint(arg="", level=99)
         logger.debug("CBF file(s) from HDF5 file(s)")
-        tprint(arg="Data files", level=99, color="blue")
+        tprint(arg="\nData files", level=99, color="blue")
     else:
         logger.debug("Data file(s)")
-        tprint(arg="Data file(s)", level=99, color="blue")
+        tprint(arg="\nData file(s)", level=99, color="blue")
 
     if len(data_files) == 0:
         tprint(arg="  None", level=99)
@@ -349,7 +343,6 @@ def main():
         logger.debug(data_files["files"])
         for data_file in data_files["files"]:
             tprint(arg="  " + data_file, level=99)
-    tprint(arg="", level=99)
 
     # Need data
     if len(data_files) == 0 and commandline_args.test == False:
@@ -413,14 +406,13 @@ def main():
                 image_headers[data_file] = detector_module.read_header(data_file)
 
         logger.debug("Image headers: %s", image_headers)
-        tprint(arg="Image headers", level=10, color="blue")
+        tprint(arg="\nImage headers", level=10, color="blue")
         for fullname, header in image_headers.iteritems():
             keys = header.keys()
             keys.sort()
             tprint(arg="  %s" % fullname, level=10)
             for key in keys:
                 tprint(arg="  arg:%-20s  val:%s" % (key, header[key]), level=10)
-            tprint(arg="" , level=10)
 
         command = construct_command(image_headers=image_headers,
                                     commandline_args=commandline_args,
@@ -456,11 +448,17 @@ def main():
         if d.endswith("src"):
             toplevel_dir = d+".agents"
 
-    agent_module = load_module(seek_module="rapd_agent_index+strategy",
-                               directories=["agents"],
-                               logger=logger)
+    plugin = load_module(seek_module="rapd_agent_index+strategy",
+                         directories=["agents"],
+                         logger=logger)
 
-    agent_module.RapdAgent(None, command, tprint, logger)
+    tprint(arg="\nPlugin information", level=10, color="blue")
+    tprint(arg="  Plugin type:    %s" % plugin.AGENT_TYPE, level=10, color="white")
+    tprint(arg="  Plugin subtype: %s" % plugin.AGENT_SUBTYPE, level=10, color="white")
+    tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
+    tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
+
+    plugin.RapdAgent(None, command, tprint, logger)
 
 if __name__ == "__main__":
 
