@@ -659,8 +659,8 @@ def ParseOutputDistl(self, inp):
     if self.verbose:
         self.logger.debug('Parse::ParseOutputDistl')
 
-    print "ParseOutputDistl"
-    print inp
+    # print "ParseOutputDistl"
+    # print inp
 
     try:
         spot_total   = []
@@ -715,7 +715,7 @@ def ParseOutputDistl(self, inp):
             'mean int signal': mean1,
             }
 
-        pprint.pprint(distl)
+        # pprint.pprint(distl)
         return distl
 
     except:
@@ -759,9 +759,9 @@ def ParseOutputBestNone(self, inp):
     Parse the output of a Best run to ascertain the version running
     """
 
-    print "ParseOutputBestNone"
-    print inp
-
+    # print "ParseOutputBestNone"
+    # print inp
+    pass
 
 def ParseOutputBest(self, inp, anom=False):
     """
@@ -830,7 +830,7 @@ def ParseOutputBest(self, inp, anom=False):
                 temp.append(line)
                 if line.count("program=") and line.count("version="):
                     version = line.split("'")[3].split(" ")[0]
-                    print ">>>>", line, version
+                    # print ">>>>", line, version
                 if line.count('"resolution"'):
                     res = line[line.find('>')+1:line.rfind('<')]
                 if line.count('"distance"'):
@@ -1042,7 +1042,7 @@ def ParseOutputBestPlots(self, inp):
             # print line
             curve = {"parameters": {}, "series": []}
         elif line.startswith("%"):
-            print in_curve, line
+            # print in_curve, line
             strip_line = line[1:].strip()
             key = strip_line[:strip_line.index("=")].strip()
             val = strip_line[strip_line.index("=")+1:].replace("'", "").strip()
@@ -1071,7 +1071,7 @@ def ParseOutputBestPlots(self, inp):
 
     plot["data"].append(curve)
     parsed_plots[plot["parameters"]["toplabel"]] = plot
-    pprint.pprint(parsed_plots)
+    # pprint.pprint(parsed_plots)
 
     # cast_vals = {
     #     "Relative Error and Intensity Plot": {
@@ -1275,96 +1275,97 @@ def ParseOutputMosflm_strat(self, inp, anom=False):
     if self.verbose:
         self.logger.debug('Parse::ParseOutputMosflm_strat')
 
-    try:
-        temp  = []
-        strat = []
-        res   = []
-        start = []
-        end   = []
-        ni    = []
-        rn    = []
-        seg = False
-        #osc_range  = str(self.header.get('osc_range'))
-        if self.vendortype in ('Pilatus-6M','ADSC-HF4M'):
-            osc_range = '0.2'
+    # try:
+    temp  = []
+    strat = []
+    res   = []
+    start = []
+    end   = []
+    ni    = []
+    rn    = []
+    seg = False
+    # osc_range  = str(self.header.get('osc_range'))
+    if self.vendortype in ('Pilatus-6M', 'ADSC-HF4M'):
+        osc_range = '0.2'
+    else:
+        if float(self.header.get('osc_range')) < 0.5:
+            osc_range = '0.5'
         else:
-            if float(self.header.get('osc_range')) < 0.5:
-                osc_range = '0.5'
-            else:
-                osc_range  = str(self.header.get('osc_range'))
-        distance   = str(self.header.get('distance'))
-        mosflm_seg = str(self.preferences.get("mosflm_seg", "1"))
+            osc_range  = str(self.header.get('osc_range'))
+    distance   = str(self.header.get('distance'))
+    mosflm_seg = str(self.preferences.get("mosflm_seg", "1"))
 
-        index = False
-        index_res = False
-        for x, line in enumerate(inp):
-            print mosflm_seg, seg, x, line
-            temp.append(line)
-            if mosflm_seg != '1':
-                if line.startswith(' This may take some time......'):
-                    index = x
-                    seg = True
-                if line.startswith(' Testing to find the best combination'):
-                    index = x
-                    seg = True
-            else:
-                if line.startswith(' Checking completeness of data'):
-                    index = x
-            if line.startswith(' Breakdown as a Function of Resolution'):
-                index_res = temp.index(line)
-            if line.startswith(' Mean multiplicity'):
-                index_mult = temp.index(line)
-                mult2 = ((temp[index_mult]).split()[-1])
-            if line.count('** ERROR ** The matrix Umat is not a simple rotation matrix'):
-                if self.multicrystalstrat:
-                    return "sym"
-        if seg:
-            strat.append(temp[index:index + 10 + 2*int(mosflm_seg)])
-        elif index:
-            strat.append(temp[index:index + 12])
-        counter = 0
-        for line in strat:
-            comp = line[3].split()[3]
-            while counter < int(mosflm_seg):
-                s1 = float(line[5 + counter].split()[1])
-                e1 = float(line[5 + counter].split()[3])
-                images1 = int((e1 - s1) / float(osc_range))
-                ni.append(images1)
-                if s1 < 0:
-                    s1 += 360
-                if s1 > 360:
-                    s1 -= 360
-                start.append(s1)
-                if e1 < 0:
-                    e1 += 360
-                if e1 > 360:
-                    e1 -= 360
-                end.append(e1)
-                counter += 1
-                rn.append(counter)
-        if index_res:
-            res.append(temp[index_res:index_res + 17])
-        for line in res:
-            resolution = line[15].split()[0]
-        if anom:
-            j1 = ' anom '
+    index = False
+    index_res = False
+    for x, line in enumerate(inp):
+        # print mosflm_seg, seg, x, line.rstrip()
+        temp.append(line)
+        if mosflm_seg != '1':
+            if line.startswith(' This may take some time......'):
+                index = x
+                seg = True
+            if line.startswith(' Testing to find the best combination'):
+                index = x
+                seg = True
         else:
-            j1 = ' '
-        data = {'strategy'+j1+'run number': rn,
-                'strategy'+j1+'phi start': start,
-                'strategy'+j1+'phi end': end,
-                'strategy'+j1+'num of images': ni,
-                'strategy'+j1+'resolution': resolution,
-                'strategy'+j1+'completeness': comp,
-                'strategy'+j1+'redundancy': mult2,
-                'strategy'+j1+'distance': distance,
-                'strategy'+j1+'image exp time': self.time,
-                'strategy'+j1+'delta phi': osc_range}
-        return data
+            if line.startswith(' Checking completeness of data'):
+                index = x
+        if line.startswith(' Breakdown as a Function of Resolution'):
+            index_res = temp.index(line)
+        if line.startswith(' Mean multiplicity'):
+            index_mult = temp.index(line)
+            mult2 = ((temp[index_mult]).split()[-1])
+        if line.count('** ERROR ** The matrix Umat is not a simple rotation matrix'):
+            if self.multicrystalstrat:
+                return "sym"
+    if seg:
+        strat.append(temp[index:index + 10 + 2*int(mosflm_seg)])
+    elif index:
+        strat.append(temp[index:index + 12])
+    counter = 0
+    for line in strat:
+        # print "strat", line
+        comp = line[3].split()[3]
+        while counter < int(mosflm_seg):
+            s1 = float(line[5 + counter].split()[1])
+            e1 = float(line[5 + counter].split()[3])
+            images1 = int((e1 - s1) / float(osc_range))
+            ni.append(images1)
+            if s1 < 0:
+                s1 += 360
+            if s1 > 360:
+                s1 -= 360
+            start.append(s1)
+            if e1 < 0:
+                e1 += 360
+            if e1 > 360:
+                e1 -= 360
+            end.append(e1)
+            counter += 1
+            rn.append(counter)
+    if index_res:
+        res.append(temp[index_res:index_res + 17])
+    for line in res:
+        resolution = line[15].split()[0]
+    if anom:
+        j1 = ' anom '
+    else:
+        j1 = ' '
+    data = {'strategy'+j1+'run number': rn,
+            'strategy'+j1+'phi start': start,
+            'strategy'+j1+'phi end': end,
+            'strategy'+j1+'num of images': ni,
+            'strategy'+j1+'resolution': resolution,
+            'strategy'+j1+'completeness': comp,
+            'strategy'+j1+'redundancy': mult2,
+            'strategy'+j1+'distance': distance,
+            'strategy'+j1+'image exp time': self.time,
+            'strategy'+j1+'delta phi': osc_range}
+    return data
 
-    except:
-        self.logger.exception('**Error in Parse.ParseOutputMosflm_strat**')
-        return(None)
+    # except:
+    #     self.logger.exception('**Error in Parse.ParseOutputMosflm_strat**')
+    #     return(None)
 
 def ParseOutputStacAlign(self, inp):
   """
@@ -2217,7 +2218,7 @@ def ParseOutputXtriage_NEW(self,inp):
          'p-val' : pat_p,
          'dist'  : pat_dist  }
     pat['1'] = d
-  print pat
+  # print pat
   """
   if pat_dist:
     data2 = {'frac x': pat_x,
@@ -2756,7 +2757,7 @@ def ParseOutputScala(self,inp):
 
   except:
     self.logger.exception('**ERROR in Parse.ParseOutputScala**')
-    print '**ERROR in Parse.ParseOutputScala**'
+    # print '**ERROR in Parse.ParseOutputScala**'
 
 def ParseOutputAimless(self,inp):
   """
@@ -2860,7 +2861,7 @@ def ParseOutputAimless(self,inp):
 
   except:
     self.logger.exception('**ERROR in Parse.ParseOutputScala**')
-    print '**ERROR in Parse.ParseOutputScala**'
+    # print '**ERROR in Parse.ParseOutputScala**'
 
 def ParseOutputGxparm(self,inp,l=False):
   """

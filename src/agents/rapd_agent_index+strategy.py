@@ -36,8 +36,10 @@ AGENT_SUBTYPE = "CORE"
 ID = "3b3448aee4a811e59c0aac87a3333966"
 
 # Standard imports
+# import glob
 import logging
 from multiprocessing import Process, Queue, Event
+import numpy
 import os
 import pprint
 import shutil
@@ -52,6 +54,10 @@ from subcontractors.xoalign import RunXOalign
 from utils.communicate import rapd_send
 from utils.modules import load_module
 import utils.xutils as Utils
+
+DETECTOR_TO_BEST = {
+    "Dectris Eiger 9M": "eiger9m"
+}
 
 class RapdAgent(Process):
     """
@@ -217,7 +223,7 @@ class RapdAgent(Process):
             self.distl_timer = 30
 
         # Set strategy timer. "False" disables.
-        self.strategy_timer = 90
+        self.strategy_timer = False
 
         # Set timer for XOAlign. "False" will disable.
         self.xoalign_timer = 30
@@ -325,6 +331,8 @@ class RapdAgent(Process):
 
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::run")
+
+        self.tprint(arg="\nStarting indexing procedures", level=99, color="blue")
 
         # Check if h5 file is input and convert to cbf's.
         if self.header['fullname'][-3:] == '.h5':
@@ -474,6 +482,8 @@ class RapdAgent(Process):
 
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::runLabelit")
+
+        self.tprint(arg="  Starting Labelit runs\n", level=99)
 
         try:
             # Setup queue for getting labelit log and results in labelitSort.
@@ -634,6 +644,7 @@ class RapdAgent(Process):
                 if self.raddose_results.get("raddose_results") != 'FAILED':
                     dose = self.raddose_results.get("raddose_results").get('dose per image')
                     exp_dose_lim = self.raddose_results.get("raddose_results").get('exp dose limit')
+
             # Set how many frames a crystal will last at current exposure time.
             self.crystal_life = str(int(float(exp_dose_lim) / float(self.time)))
             if self.crystal_life == '0':
@@ -655,15 +666,13 @@ class RapdAgent(Process):
                 if iteration == 3:
                     dose = False
                     exp_dose_lim = False
+
             # Put together the command for labelit.index
-            if self.vendortype == 'Pilatus-6M':
-                command = 'best -f pilatus6m'
-            elif self.vendortype == 'ADSC-HF4M':
-                command = 'best -f hf4m'
-            else:
-                command = 'best -f q315'
-                if str(self.header.get('binning')) == '2x2':
-                    command += '-2x'
+            command = "best -f %s" % DETECTOR_TO_BEST.get(self.header.get("detector"), "q315")
+
+            # Binning
+            if str(self.header.get('binning')) == '2x2':
+                command += '-2x'
             if self.high_dose:
                 command += ' -t 1.0'
             else:
@@ -727,7 +736,9 @@ class RapdAgent(Process):
                         jobs[str(i)] = Process(target=BestAction,
                                                args=((l[i][0], log), self.logger))
                     jobs[str(i)].start()
-            # Check if Best should rerun since original Best strategy is too long for Pilatus using correct start and end from plots. (Way around bug in BEST.)
+
+            # Check if Best should rerun since original Best strategy is too long for Pilatus using
+            # correct start and end from plots. (Way around bug in BEST.)
             if best_version > "3.4" and self.test == False:
                 if runbefore == False:
                     counter = 2
@@ -754,36 +765,38 @@ class RapdAgent(Process):
 
         try:
             l = [("mosflm_strat", "", ""), ("mosflm_strat_anom", "_anom", "ANOMALOUS")]
-            #Opens file from Labelit/Mosflm autoindexing and edit it to run a strategy.
-            mosflm_rot = str(self.preferences.get("mosflm_rot","0.0"))
-            mosflm_seg = str(self.preferences.get("mosflm_seg","1"))
-            mosflm_st = str(self.preferences.get("mosflm_start","0.0"))
-            mosflm_end = str(self.preferences.get("mosflm_end","360.0"))
-            #Does the user request a start or end range?
+            # Opens file from Labelit/Mosflm autoindexing and edit it to run a strategy.
+            mosflm_rot = str(self.preferences.get("mosflm_rot", "0.0"))
+            mosflm_seg = str(self.preferences.get("mosflm_seg", "1"))
+            mosflm_st = str(self.preferences.get("mosflm_start", "0.0"))
+            mosflm_end = str(self.preferences.get("mosflm_end", "360.0"))
+
+            # Does the user request a start or end range?
             range1 = False
-	    if mosflm_st != "0.0":
+            if mosflm_st != "0.0":
                 range1 = True
             if mosflm_end != "360.0":
                 range1 = True
-	    if range1:
+            if range1:
                 if mosflm_rot == "0.0":
                     # mosflm_rot = str(360/float(Utils.symopsSG(self,Utils.getMosflmSG(self))))
                     mosflm_rot = str(360/float(Utils.symopsSG(self, Utils.getLabelitCell(self, "sym"))))
-            #Save info from previous data collections.
+            # Save info from previous data collections.
             if self.multicrystalstrat:
                 ref_data = self.preferences.get("reference_data")
                 if self.spacegroup == False:
                     self.spacegroup = ref_data[0][-1]
                     Utils.fixMosflmSG(self)
-                    #For posting in summary
+                    # For posting in summary
                     self.prev_sg = True
             else:
                 ref_data = False
-            #Run twice for regular and anomalous strategies.
+
+            # Run twice for regular and anomalous strategies.
             for i in range(0, 2):
                 shutil.copy(self.index_number, l[i][0])
                 temp = []
-                #Read the Mosflm input file from Labelit and use only the top part.
+                # Read the Mosflm input file from Labelit and use only the top part.
                 for x, line in enumerate(open(l[i][0], "r").readlines()):
                     temp.append(line)
                     if line.count("ipmosflm"):
@@ -794,9 +807,11 @@ class RapdAgent(Process):
                         im = line.split()[-1]
                     if line.startswith("MATRIX"):
                         fi = x
-                #Load the image as per Andrew Leslie for Mosflm bug.
+
+                # Load the image as per Andrew Leslie for Mosflm bug.
                 new_line = "IMAGE %s\nLOAD\nGO\n" % im
-                #New lines for strategy calculation
+
+                # New lines for strategy calculation
                 if ref_data:
                     for x in range(len(ref_data)):
                         new_line += "MATRIX %s\nSTRATEGY start %s end %s PARTS %s\nGO\n" %  d(ref_data[x][0], ref_data[x][1], ref_data[x][2], len(ref_data)+1)
@@ -820,7 +835,11 @@ class RapdAgent(Process):
                     log = os.path.join(os.getcwd(), l[i][0]+".out")
                     inp = "tcsh %s" % l[i][0]
                     if self.cluster_adapter:
-                        Process(target=self.cluster_adapter.processCluster, args=(self, (inp, log, self.cluster_queue))).start()
+                        Process(target=self.cluster_adapter.processCluster,
+                                args=(self,
+                                      (inp, log, self.cluster_queue)
+                                      )
+                                ).start()
                     else:
                         Process(target=Utils.processLocal, args=(inp, self.logger)).start()
 
@@ -837,6 +856,9 @@ class RapdAgent(Process):
 
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::processStrategy")
+
+        self.tprint(arg="\nStarting strategy calculations", level=99, color="blue")
+
         try:
             if iteration:
                 st = iteration
@@ -853,7 +875,10 @@ class RapdAgent(Process):
             best_version = Utils.getBestVersion()
 
             for i in range(st, end):
+                if i == 1:
+                    self.tprint(arg="  Starting BEST runs", level=99, color="white")
                 if i == 4:
+                    self.tprint(arg="  Starting Mosflm runs\n", level=99, color="white")
                     Utils.folders(self, self.labelit_dir)
                     job = Process(target=self.processMosflm, name="mosflm%s" % i)
                 else:
@@ -925,8 +950,28 @@ class RapdAgent(Process):
                 distl = Parse.ParseOutputDistl(self, log)
                 if distl == None:
                     self.distl_results = {"distl_results":"FAILED"}
+                    self.tprint(arg="  DISTL analysis failed", level=30, color="red")
                 else:
                     self.distl_results[str(x)] = {"distl_results": distl}
+
+                    # Print DISTL results to commandline - verbose only
+                    self.tprint(arg="\nDISTL analysis results", level=10, color="blue")
+                    distl_labels = {
+                        "total spots": "Total Spots",
+                        "spots in res": "Spots in Resolution",
+                        "good Bragg spots": "Good Bragg Spots",
+                        "overloads": "Overloaded Spots",
+                        "distl res": "DISTL Resolution",
+                        "labelit res": "Labelit Resolution",
+                        "max cell": "Max Cell",
+                        "ice rings": "Ice Rings",
+                        "min signal strength": "Min Signal Strength",
+                        "max signal strength": "Max Signal Strength",
+                        "mean int signal": "Mean Intensity Signal",
+                    }
+                    for key, val in distl_labels.iteritems():
+                        self.tprint(arg="  %20s: %s" % (val, distl[key][0]), level=10, color="white")
+
             Utils.distlComb(self)
 
         except:
@@ -941,6 +986,7 @@ class RapdAgent(Process):
         inp --
         runbefore -- (default False)
         """
+
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::postprocessBest")
 
@@ -963,6 +1009,7 @@ class RapdAgent(Process):
 
         data = Parse.ParseOutputBest(self, (log, xml), anom)
         # print data.get("strategy res limit")
+
         if self.labelit_results["Labelit results"] != "FAILED":
             # Best error checking. Most errors caused by B-factor calculation problem.
             # If no errors...
@@ -972,6 +1019,35 @@ class RapdAgent(Process):
                     self.best_anom_results = {"Best ANOM results":data}
                 else:
                     self.best_results = {"Best results":data}
+
+                # Print to terminal
+                # pprint.pprint(data)
+                if "strategy anom flag" in data:
+                    flag = "strategy "
+                    self.tprint(arg="\nBEST strategy standard", level=99, color="blue")
+                else:
+                    flag = "strategy anom "
+                    self.tprint(arg="\nBEST strategy ANOMALOUS", level=99, color="blue")
+                # Header lines
+                self.tprint(arg="  " + "-" * 85, level=99, color="white")
+                self.tprint(arg="  " + " N |  Omega_start |  N.of.images | Rot.width |  Exposure | Distance | % Transmission", level=99, color="white")
+                self.tprint(arg="  " + "-" * 85, level=99, color="white")
+                for i in range(len(data[flag+"run number"])):
+                    self.tprint(
+                        arg="  %2d |    %6.2f    |   %6d     |   %5.2f   |   %5.2f   | %7s  |     %3.2f      |" %
+                            (
+                                int(data[flag+"run number"][i]),
+                                float(data[flag+"phi start"][i]),
+                                int(data[flag+"num of images"][i]),
+                                float(data[flag+"delta phi"][i]),
+                                float(data[flag+"image exp time"][i]),
+                                str(data[flag+"distance"][i]),
+                                float(data[flag+"new transmission"][i])
+                            ),
+                        level=99,
+                        color="white")
+                self.tprint(arg="  " + "-" * 85, level=99, color="white")
+
                 return("OK")
             else:
                 if self.multiproc == False:
@@ -980,6 +1056,7 @@ class RapdAgent(Process):
                            "isotropic B":"Isotropic B detected"}
                     if out.has_key(data):
                         Utils.errorBestPost(self, iteration, out[data],anom)
+                self.tprint(arg="BEST unable to calculate a strategy", level=30, color="red")
                 return("FAILED")
 
     def postprocessMosflm(self, inp):
@@ -990,7 +1067,7 @@ class RapdAgent(Process):
         inp -- name of log file to interrogate
         """
         if self.verbose:
-            self.logger.debug("AutoindexingStrategy::postprocessMosflm")
+            self.logger.debug("AutoindexingStrategy::postprocessMosflm %s" % inp)
 
         try:
             if inp.count("anom"):
@@ -1002,7 +1079,35 @@ class RapdAgent(Process):
         except:
             self.logger.exception("**ERROR in postprocessMosflm**")
 
-        data = Parse.ParseOutputMosflm_strat(self,out,inp.count("anom"))
+        data = Parse.ParseOutputMosflm_strat(self, out, inp.count("anom"))
+
+        # Print to terminal
+        # pprint.pprint(data)
+        if "strategy run number" in data:
+            flag = "strategy "
+            self.tprint(arg="\nMosflm strategy standard", level=99, color="blue")
+        else:
+            flag = "strategy anom "
+            self.tprint(arg="\nMosflm strategy ANOMALOUS", level=99, color="blue")
+        # Header lines
+        self.tprint(arg="  " + "-" * 69, level=99, color="white")
+        self.tprint(arg="  " + " N |  Omega_start |  N.of.images | Rot.width |  Exposure | Distance ", level=99, color="white")
+        self.tprint(arg="  " + "-" * 69, level=99, color="white")
+        for i in range(len(data[flag+"run number"])):
+            self.tprint(
+                arg="  %2d |    %6.2f    |   %6d     |   %5s   |   %5.2f   | %7s  " %
+                    (
+                        int(data[flag+"run number"][i]),
+                        float(data[flag+"phi start"][i]),
+                        int(data[flag+"num of images"][i]),
+                        data[flag+"delta phi"],
+                        float(data[flag+"image exp time"]),
+                        str(data[flag+"distance"])
+                    ),
+                level=99,
+                color="white")
+        self.tprint(arg="  " + "-" * 69, level=99, color="white")
+
         if data == None:
             if self.verbose:
                 self.logger.debug("No Mosflm %s strategy.", l[0])
@@ -1010,6 +1115,7 @@ class RapdAgent(Process):
         elif data == "sym":
             if self.verbose:
                 self.logger.debug("dataset symmetry not compatible with autoindex symmetry")
+            self.tprint(arg="Dataset symmetry not compatible with autoindex symmetry", level=30, color="red")
             eval("%s_results"%l[1]).update({l[2]:"SYM"})
         else:
             eval("%s_results" % l[1]).update({l[2]:data})
@@ -1023,7 +1129,7 @@ class RapdAgent(Process):
 
         try:
             def set_best_results(i,x):
-                #Set Best output if it failed after 3 tries
+                # Set Best output if it failed after 3 tries
                 if i == 3:
                     if x == 0:
                         self.best_results = {"Best results":"FAILED"}
@@ -1054,14 +1160,15 @@ class RapdAgent(Process):
                         timer += 0.1
                         if self.verbose:
                             number = round(timer%1,1)
-                            if number in (0.0,1.0):
+                            if number in (0.0, 1.0):
                                 self.tprint(arg="Waiting for strategy to finish %s seconds" % timer, level=10)
                         if self.strategy_timer:
                             if timer >= self.strategy_timer:
                                 timed_out = True
                                 break
                     if timed_out:
-                        set_best_results(i,x)
+                        self.tprint(arg="Strategy calculation timed out", level=30, color="red")
+                        set_best_results(i, x)
                     else:
                         if i == 4:
                             self.postprocessMosflm(log)
@@ -1111,20 +1218,20 @@ class RapdAgent(Process):
           self.header.update(run_convert(self.header['fullname'], imgn=1))
           if self.header2:
             self.header2.update(run_convert(self.header2['fullname'], imgn=2))
-          return(True)
+          return True
 
         except:
-          self.logger.exception('**ERROR in convert_images**')
-          return(False)
+            self.logger.exception('**ERROR in convert_images**')
+            return False
 
     def labelitSort(self):
         """
         Sort out which iteration of Labelit has the highest symmetry and choose that solution. If
         Labelit does not find a solution, finish up the pipeline.
         """
+
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::labelitSort")
-        import numpy
 
         rms_list1 = []
         sg_list1 = []
@@ -1134,91 +1241,104 @@ class RapdAgent(Process):
         sol_dict = {}
         sym = "0"
 
-        try:
-            # Get the results and logs
-            self.labelit_results = self.labelitQueue.get()
-            self.labelit_log = self.labelitQueue.get()
+        # try:
+        # Get the results and logs
+        self.labelit_results = self.labelitQueue.get()
+        self.labelit_log = self.labelitQueue.get()
 
-            for run in self.labelit_results.keys():
-                if type(self.labelit_results[run].get("Labelit results")) == dict:
-                    #Check for pseudotranslation in any Labelit run
-                    if self.labelit_results[run].get("Labelit results").get("pseudotrans") == True:
-                        self.pseudotrans = True
-                    s, r, m, v = Utils.getLabelitStats(self, inp=run, simple=True)
-                    sg = Utils.convertSG(self, s)
-                    sg_dict[run] = sg
-                    sg_list1.append(float(sg))
-                    rms_list1.append(float(r))
-                    metric_list1.append(float(m))
-                    vol.append(v)
-                else:
-                    #If Labelit failed, set dummy params
-                    sg_dict[run] = "0"
-                    sg_list1.append(0)
-                    rms_list1.append(100)
-                    metric_list1.append(100)
-                    vol.append("0")
-            for x in range(len(sg_list1)):
-                if sg_list1[x] == numpy.amax(sg_list1):
-                    # If its P1 look at the Mosflm RMS, else look at the Labelit metric.
-                    if str(sg_list1[x]) == "1.0":
-                        sol_dict[rms_list1[x]]    = self.labelit_results.keys()[x]
-                    else:
-                        sol_dict[metric_list1[x]] = self.labelit_results.keys()[x]
-            l = sol_dict.keys()
-            l.sort()
-            # Best Labelit_results key
-            highest = sol_dict[l[0]]
-            # Since iter 5 cuts res, it is often the best. Only choose if its the only solution.
-            if len(l) > 1:
-                if highest == "5":
-                    highest = sol_dict[l[1]]
-            #symmetry of best solution
-            sym = sg_dict[highest]
-            # If there is a solution...
-            if sym != "0":
-                self.logger.debug("The sorted labelit solution was #%s", highest)
-
-                # Save best results in corect place.
-                self.labelit_results = self.labelit_results[highest]
-
-                # Set self.volume for best solution
-                self.volume = vol[int(highest)]
-
-                # Set self.labelit_dir and go to it.
-                self.labelit_dir = os.path.join(self.working_dir, highest)
-                self.index_number = self.labelit_results.get("Labelit results").get("mosflm_index")
-                os.chdir(self.labelit_dir)
-                if self.spacegroup != False:
-                    check_lg = Utils.checkSG(self, sym)
-                    user_sg  = Utils.convertSG(self, self.spacegroup)
-                    if user_sg != sym:
-                        fixSG = False
-                        for line in check_lg:
-                            if line == user_sg:
-                                fixSG = True
-                        if fixSG:
-                            Utils.fixMosflmSG(self)
-                            Utils.fixBestSG(self)
-                        else:
-                            self.ignore_user_SG = True
-                # Make an overlay jpeg
-                # self.makeImages(1)
+        for run in self.labelit_results.keys():
+            if type(self.labelit_results[run].get("Labelit results")) == dict:
+                #Check for pseudotranslation in any Labelit run
+                if self.labelit_results[run].get("Labelit results").get("pseudotrans") == True:
+                    self.pseudotrans = True
+                s, r, m, v = Utils.getLabelitStats(self, inp=run, simple=True)
+                sg = Utils.convertSG(self, s)
+                sg_dict[run] = sg
+                sg_list1.append(float(sg))
+                rms_list1.append(float(r))
+                metric_list1.append(float(m))
+                vol.append(v)
             else:
-                self.logger.debug("No solution was found when sorting Labelit results.")
-                self.labelit_failed = True
-                self.labelit_results = {"Labelit results":"FAILED"}
-                self.labelit_dir = os.path.join(self.working_dir, "0")
-                os.chdir(self.labelit_dir)
-                self.processDistl()
-                self.postprocessDistl()
-                #   if os.path.exists("DISTL_pickle"):
-                  #   self.makeImages(2)
-                self.best_failed = True
-                self.best_anom_failed = True
+                #If Labelit failed, set dummy params
+                sg_dict[run] = "0"
+                sg_list1.append(0)
+                rms_list1.append(100)
+                metric_list1.append(100)
+                vol.append("0")
+        for x in range(len(sg_list1)):
+            if sg_list1[x] == numpy.amax(sg_list1):
+                # If its P1 look at the Mosflm RMS, else look at the Labelit metric.
+                if str(sg_list1[x]) == "1.0":
+                    sol_dict[rms_list1[x]]    = self.labelit_results.keys()[x]
+                else:
+                    sol_dict[metric_list1[x]] = self.labelit_results.keys()[x]
+        l = sol_dict.keys()
+        l.sort()
+        # Best Labelit_results key
+        highest = sol_dict[l[0]]
+        # Since iter 5 cuts res, it is often the best. Only choose if its the only solution.
+        if len(l) > 1:
+            if highest == "5":
+                highest = sol_dict[l[1]]
 
-        except:
-            self.logger.exception("**ERROR in labelitSort**")
+        # symmetry of best solution
+        sym = sg_dict[highest]
+
+        # If there is a solution...
+        if sym != "0":
+            self.logger.debug("The sorted labelit solution was #%s", highest)
+
+            # Save best results in corect place.
+            self.labelit_results = self.labelit_results[highest]
+            # pprint.pprint(self.labelit_results)
+
+            # Set self.volume for best solution
+            self.volume = vol[int(highest)]
+
+            # Set self.labelit_dir and go to it.
+            self.labelit_dir = os.path.join(self.working_dir, highest)
+            self.index_number = self.labelit_results.get("Labelit results").get("mosflm_index")
+            os.chdir(self.labelit_dir)
+            if self.spacegroup != False:
+                check_lg = Utils.checkSG(self, sym)
+                user_sg  = Utils.convertSG(self, self.spacegroup)
+                if user_sg != sym:
+                    fixSG = False
+                    for line in check_lg:
+                        if line == user_sg:
+                            fixSG = True
+                    if fixSG:
+                        Utils.fixMosflmSG(self)
+                        Utils.fixBestSG(self)
+                    else:
+                        self.ignore_user_SG = True
+            # Make an overlay jpeg
+            # self.makeImages(1)
+
+            # Print Labelit results to commandline
+            self.tprint(arg="Highest symmetry Labelit result", level=99, color="blue")
+            for line in self.labelit_results["Labelit results"]["output"][5:]:
+                self.tprint(arg="  %s" % line.rstrip(), level=99, color="white")
+            # pprint.pprint(self.labelit_results["Labelit results"]["output"])
+            self.tprint(arg="", level=99, color="white")
+
+        # No Labelit solution
+        else:
+            self.logger.debug("No solution was found when sorting Labelit results.")
+            self.tprint(arg="Labelit failed to index", level=30, color="red")
+            self.labelit_failed = True
+            self.labelit_results = {"Labelit results":"FAILED"}
+            self.labelit_dir = os.path.join(self.working_dir, "0")
+            os.chdir(self.labelit_dir)
+            self.processDistl()
+            self.postprocessDistl()
+            #   if os.path.exists("DISTL_pickle"):
+              #   self.makeImages(2)
+            self.best_failed = True
+            self.best_anom_failed = True
+
+        # except:
+        #     self.logger.exception("**ERROR in labelitSort**")
 
     def findBestStrat(self, inp):
         """
@@ -1293,7 +1413,7 @@ class RapdAgent(Process):
             self.logger.debug('AutoindexingStrategy::print_info')
 
         # try:
-        self.tprint(arg="RAPD indexing & strategy uses:", level=99, color="blue")
+        self.tprint(arg="\nRAPD index & strategy uses:", level=99, color="blue")
 
         info_string = """    Phenix
     Reference:  J. Appl. Cryst. 37, 399-409 (2004)
@@ -1340,8 +1460,9 @@ class RapdAgent(Process):
         #     Summary.summaryRaddose(self)
         if self.labelit_failed == False:
             if self.strategy == "mosflm":
-                Summary.summaryMosflm(self, False)
-                Summary.summaryMosflm(self, True)
+                pass
+                # Summary.summaryMosflm(self, False)
+                # Summary.summaryMosflm(self, True)
             else:
                 if self.best_failed:
                     if self.best_anom_failed:
@@ -1357,13 +1478,13 @@ class RapdAgent(Process):
                     # Summary.summaryBest(self, False)
                     self.htmlBestPlots()
                 else:
-                    Summary.summaryBest(self, False)
-                    Summary.summaryBest(self, True)
+                    # Summary.summaryBest(self, False)
+                    # Summary.summaryBest(self, True)
                     self.htmlBestPlots()
 
         # Generate the long and short summary HTML files
-        self.htmlSummaryShort()
-        self.htmlSummaryLong()
+        # self.htmlSummaryShort()
+        # self.htmlSummaryLong()
 
         # Set STAC output to send back as None since it did not run.
         output["Stac summary html"]  = "None"
@@ -1467,8 +1588,8 @@ class RapdAgent(Process):
             # if self.gui:
             self.results["results"] = results
             self.logger.debug(self.results)
-            # TODO
-            self.tprint(arg=self.results, level=10)
+            # Print results to screen
+            # self.tprint(arg=self.results, level=10)
             if self.controller_address:
                 rapd_send(self.controller_address, self.results)
         except:
@@ -1511,7 +1632,7 @@ class RapdAgent(Process):
         self.logger.debug("RAPD autoindexing/strategy complete.")
         self.logger.debug("Total elapsed time: %s seconds", t)
         self.logger.debug("-------------------------------------")
-        self.tprint(arg="RAPD autoindexing & strategy complete", level=99, color="green")
+        self.tprint(arg="\nRAPD autoindexing & strategy complete", level=99, color="green")
         self.tprint(arg="Total elapsed time: %s seconds" % t, level=10)
 
     def htmlBestPlots(self):
@@ -2069,6 +2190,9 @@ class RapdAgent(Process):
         except:
             self.logger.exception('**ERROR in htmlSummaryShort**')
 
+
+
+
 class RunLabelit(Process):
 
     def __init__(self, command, output, params, tprint=False, logger=None):
@@ -2260,9 +2384,9 @@ class RunLabelit(Process):
             # y_beam         = str(self.header.get('beam_center_y'))
             binning = True
             if self.header.has_key('binning'):
-    	        binning = self.header.get('binning')
+                binning = self.header.get('binning')
             if self.test == False:
-                preferences    = open('dataset_preferences.py','w')
+                preferences    = open('dataset_preferences.py', 'w')
                 preferences.write('#####Base Labelit settings#####\n')
                 preferences.write('best_support=True\n')
                 # Set Mosflm RMSD tolerance larger
@@ -2357,7 +2481,10 @@ class RunLabelit(Process):
 		    #run = Process(target=self.cluster_adapter.process_cluster,
 		    #               args=({ 'command': command, 'log': log, 'queue': self.cluster_queue, 'pid': pid_queue},))
 		    run = Process(target=self.cluster_adapter.process_cluster_beorun,
-		                  args=({ 'command': command, 'log': log, 'queue': self.cluster_queue, 'pid': pid_queue},) )
+		                  args=({ 'command': command,
+                                  'log': log,
+                                  'queue': self.cluster_queue,
+                                  'pid': pid_queue},) )
                 else:
                     run = Process(target=Utils.processLocal, args=((command, log), self.logger, pid_queue))
                 run.start()
@@ -2386,7 +2513,6 @@ class RunLabelit(Process):
                 self.labelit_log[str(iteration)].extend(error+'\n')
                 return(None)
             else:
-                import glob
                 log = open('labelit.log', 'r').readlines()
                 self.labelit_log[str(iteration)].extend('\n\n')
                 self.labelit_log[str(iteration)].extend(log)
@@ -2400,7 +2526,7 @@ class RunLabelit(Process):
         except:
             self.logger.exception('**ERROR in RunLabelit.postprocessLabelit**')
 
-        #Do error checking and send to correct place according to iteration.
+        # Do error checking and send to correct place according to iteration.
         out = {'bad input': {'error':'Labelit did not like your input unit cell dimensions or SG.','run':'Utils.errorLabelitCellSG(self,iteration)'},
                'bumpiness': {'error':'Labelit settings need to be adjusted.','run':'Utils.errorLabelitBump(self,iteration)'},
                'mosflm error': {'error':'Mosflm could not integrate your image.','run':'Utils.errorLabelitMosflm(self,iteration)'},
@@ -2451,19 +2577,19 @@ class RunLabelit(Process):
         if self.verbose:
             self.logger.debug("RunLabelit::postprocess")
 
-        try:
-            """
-	    #Free up spot on cluster.
-            if self.short and self.red:
-                self.red.lpush("bc_throttler", 1)
-            """
-            #Pass back output
-            self.output.put(self.labelit_results)
-            if self.short == False:
-                self.output.put(self.labelit_log)
+        # try:
 
-        except:
-            self.logger.exception("**ERROR in RunLabelit.postprocess**")
+        # Free up spot on cluster.
+        # if self.short and self.red:
+        # self.red.lpush("bc_throttler", 1)
+
+        # Pass back output
+        self.output.put(self.labelit_results)
+        if self.short == False:
+            self.output.put(self.labelit_log)
+
+        # except:
+        #     self.logger.exception("**ERROR in RunLabelit.postprocess**")
 
     def run_queue(self):
         """
@@ -2551,33 +2677,34 @@ class RunLabelit(Process):
             self.logger.exception('**Error in RunLabelit.run_queue**')
 
     def labelitLog(self):
-      """
-      Put the Labelit logs together.
-      """
-      if self.verbose:
-        self.logger.debug('RunLabelit::LabelitLog')
-      try:
+        """Put the Labelit logs together"""
+
+        if self.verbose:
+            self.logger.debug("RunLabelit::LabelitLog")
+
+        # try:
         for i in range(0,self.iterations):
-          if self.labelit_log.has_key(str(i)):
-            junk = []
-            junk.append('-------------------------\nLABELIT ITERATION %s\n-------------------------\n'%i)
-            if i == 0:
-              self.labelit_log['run1'] = ['\nRun 1\n']
-            self.labelit_log['run1'].extend(junk)
-            self.labelit_log['run1'].extend(self.labelit_log[str(i)])
-            self.labelit_log['run1'].extend('\n')
-          else:
-            self.labelit_log['run1'].extend('\nLabelit iteration %s FAILED\n'%i)
+            if self.labelit_log.has_key(str(i)):
+                junk = ["-------------------------\nLABELIT ITERATION %s\n-------------------------\n" % i]
+                if i == 0:
+                    self.labelit_log["run1"] = ["\nRun 1\n"]
+                self.labelit_log["run1"].extend(junk)
+                self.labelit_log["run1"].extend(self.labelit_log[str(i)])
+                self.labelit_log["run1"].extend("\n")
+            else:
+                self.labelit_log["run1"].extend("\nLabelit iteration %s FAILED\n"%i)
 
-      except:
-          self.logger.exception('**ERROR in RunLabelit.LabelitLog**')
+        # except:
+        #     self.logger.exception("**ERROR in RunLabelit.LabelitLog**")
 
-def BestAction(inp, logger, output=False):
-  """
-  Run Best.
-  """
-  logger.debug('BestAction')
-  try:
+def BestAction(inp, logger=False, output=False):
+    """
+    Run Best.
+    """
+    if logger:
+        logger.debug('BestAction')
+        logger.debug(inp)
+    # try:
     command, log = inp
     # Have to do this otherwise command is written to bottom of file??
     f = open(log, 'w')
@@ -2586,11 +2713,12 @@ def BestAction(inp, logger, output=False):
     f = open(log, 'a')
     job = subprocess.Popen(command, shell=True, stdout=f, stderr=f)
     if output:
-      output.put(job.pid)
+        output.put(job.pid)
     job.wait()
     f.close()
-  except:
-    logger.exception('**Error in BestAction**')
+    # except:
+    #     if logger:
+    #         logger.exception('**Error in BestAction**')
 
 if __name__ == '__main__':
   #construct test input for Autoindexing/strategy

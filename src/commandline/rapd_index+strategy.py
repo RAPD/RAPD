@@ -103,7 +103,7 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     command["preferences"]["mosflm_rot"] = float(commandline_args.mosflm_range)
     command["preferences"]["mosflm_seg"] = int(commandline_args.mosflm_segments)
     command["preferences"]["mosflm_start"] = float(commandline_args.mosflm_start)
-    command["preferences"]["mosflm_end"] = float(commandline_args.mosflm_start)
+    command["preferences"]["mosflm_end"] = float(commandline_args.mosflm_end)
     command["preferences"]["reference_data"] = None
     command["preferences"]["reference_data_id"] = None
     # Change these if user wants to continue dataset with other crystal(s).
@@ -173,7 +173,7 @@ def get_commandline():
                         action="store",
                         dest="mosflm_segments",
                         default=1,
-                        choices=[1, 2, 3, 4, 5],
+                        type=int,
                         help="Number of mosflm segments")
 
     # Rotation range for mosflm segments
@@ -235,11 +235,25 @@ def get_commandline():
                         nargs="*",
                         help="Directory or files")
 
+    # No args? print help
     if len(sys.argv[1:])==0:
         parser.print_help()
         parser.exit()
 
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    # Checking input
+    # mosflm segments
+    if args.mosflm_segments < 1 or args.mosflm_segments > 5:
+        raise Exception("mosflm_segments must have a value between 1 and 5")
+
+    if args.mosflm_start >= args.mosflm_end:
+        raise Exception("mosflm_end must be greater than mosflm_start")
+
+    if args.mosflm_segments > 1 and args.mosflm_range == 0.0:
+        raise Exception("mosflm_range must be set to greater than 0 if mosflm_segments is greater than 1")
+
+    return args
 
 def print_welcome_message(printer):
     """Print a welcome message to the terminal"""

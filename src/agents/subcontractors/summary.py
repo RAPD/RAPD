@@ -172,147 +172,151 @@ def summaryRaddose(self):
   except:
     self.logger.exception('**ERROR in Summary.summaryRaddose.**')
 
-def summaryBest(self,anom=False):
-  """
-  print BEST results to screen and creates variable for php file.
-  """
-  if self.verbose:
-    self.logger.debug('Summary::summaryBest')
-  try:
+def summaryBest(self, anom=False):
+    """
+    print BEST results to screen and creates variable for php file.
+    """
+    if self.verbose:
+        self.logger.debug('Summary::summaryBest')
+
+    # try:
     if anom:
-      j  = 'self.best_anom_results'
-      j1 = 'Best ANOM results'
-      j2 = ' anom '
+        j  = self.best_anom_results.get("Best ANOM results")
+        j1 = 'Best ANOM results'
+        j2 = ' anom '
     else:
-      j  = 'self.best_results'
-      j1 = 'Best results'
-      j2 = ' '
-    run_number      = eval("%s.get('%s').get('strategy%srun number')" % (j,j1,j2))
-    phi_start       = eval("%s.get('%s').get('strategy%sphi start')" % (j,j1,j2))
-    num_images      = eval("%s.get('%s').get('strategy%snum of images')" % (j,j1,j2))
-    delta_phi       = eval("%s.get('%s').get('strategy%sdelta phi')" % (j,j1,j2))
-    time            = eval("%s.get('%s').get('strategy%simage exp time')" % (j,j1,j2))
-    distance        = eval("%s.get('%s').get('strategy%sdistance')" % (j,j1,j2))
-    phi_end         = eval("%s.get('%s').get('strategy%sphi end')" % (j,j1,j2))
-    res             = eval("%s.get('%s').get('strategy%sres limit')" % (j,j1,j2))
-    completeness    = eval("%s.get('%s').get('strategy%scompleteness')" % (j,j1,j2))
-    redundancy      = eval("%s.get('%s').get('strategy%sredundancy')" % (j,j1,j2))
-    rot_range       = eval("%s.get('%s').get('strategy%srot range')" % (j,j1,j2))
-    r_factor        = eval("%s.get('%s').get('strategy%sR-factor')" % (j,j1,j2))
-    i_sig           = eval("%s.get('%s').get('strategy%sI/sig')" % (j,j1,j2))
-    tot_time        = eval("%s.get('%s').get('strategy%stotal exposure time')" % (j,j1,j2))
-    data_col_time   = eval("%s.get('%s').get('strategy%sdata collection time')" % (j,j1,j2))
-    blind           = eval("%s.get('%s').get('strategy%sfrac of unique in blind region')" % (j,j1,j2))
-    #attenuation     = float(eval("%s.get('%s').get('strategy%sattenuation')" % (j,j1,j2)))
-    best_trans      = eval("%s.get('%s').get('strategy%snew transmission')" % (j,j1,j2))
+        j  = self.best_results.get("Best results")
+        j1 = 'Best results'
+        j2 = ' '
+
+    run_number = j.get("strategy%srun number" % j2)
+    phi_start = j.get("strategy%sphi start" % j2)
+    num_images = j.get("strategy%snum of images" % j2)
+    delta_phi = j.get("strategy%sdelta phi" % j2)
+    time = j.get("strategy%simage exp time" % j2)
+    distance = j.get("strategy%sdistance" % j2)
+    phi_end = j.get("strategy%sphi end" % j2)
+    res = j.get("strategy%sres limit" % j2)
+    completeness = j.get("strategy%scompleteness" % j2)
+    redundancy = j.get("strategy%sredundancy" % j2)
+    rot_range = j.get("strategy%srot range" % j2)
+    r_factor = j.get("strategy%sR-factor" % j2)
+    i_sig = j.get("strategy%sI/sig" % j2)
+    tot_time = j.get("strategy%stotal exposure time" % j2)
+    data_col_time = j.get("strategy%sdata collection time" % j2)
+    blind = j.get("strategy%sfrac of unique in blind region" % j2)
+    #attenuation     = float(j.get("strategy%sattenuation" % j2))
+    best_trans      = j.get("strategy%snew transmission" % j2)
     #best_trans = Utils.calcTransmission(self,attenuation)
     if self.sample_type != 'Ribosome':
-      if self.high_dose:
-        if float(max(time)) > 3.0:
-          time = len(time)*['3.0',]
-      if self.iso_B:
-        if float(max(time)) > 2.0:
-          time = len(time)*['1.0',]
+        if self.high_dose:
+            if float(max(time)) > 3.0:
+                time = len(time)*['3.0',]
+        if self.iso_B:
+            if float(max(time)) > 2.0:
+                time = len(time)*['1.0',]
 
-    if self.verbose:
-      if anom:
-        print '\n\tOptimal Plan of ANOMALOUS data collection'
-      else:
-        print '\n\t\tOptimal Plan of data collection'
-      print '\t\t================================'
-      print '\tResolution limit is set by the radiation damage\n'
-      print '-----------------------------------------------------------------------------------'
-      print ' N |  Omega_start |  N.of.images | Rot.width |  Exposure | Distance | % Transmission |'
-      print '-----------------------------------------------------------------------------------'
-      for x in range(len(run_number)):
-        print '%2s | %8s   | %7s      |%9s  | %9s | %7s  |     %3s      |' \
-          % (run_number[x],phi_start[x],num_images[x],delta_phi[x],
-             time[x],distance[x],best_trans[x])
-  except:
-    self.logger.exception('**summaryBest. Could not display Best results to screen.**')
-  #Create Best variable for php files.
-  try:
-    best ='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
-    if anom:
-      best +='%7s<h1 class="results">ANOMALOUS data collection strategy from BEST</h1>\n'%''
-    else:
-      best +='%7s<h1 class="results">Data collection strategy from BEST</h1>\n'%''
-    if self.high_dose:
-      best +='%7s<h4 class="results">Dosage is too high! Crystal will last for %s images. '\
-              'Strategy calculated from realistic dosage.</h4>\n'%('',self.crystal_life)
-    if anom:
-      line = '%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="bestanom">\n'%''
-      best += line
-      best0 = line
-      best1 ='%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="bestanom1">\n'%''
-    else:
-      line = '%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="best">\n'%''
-      best += line
-      best0 = line
-      best1 ='%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="best1">\n'%''
-    best +='%9s<thead align="center">\n%11s<tr>\n'%('','')
-    l = ['N','Omega Start','Omega End','Rot Range','N of Images',
-         'Delta Omega','Exposure time','Distance','% Transmission']
-    for p in l:
-      best +='%13s<th>%s</th>\n'%('',p)
-    best +='%11s</tr>\n%9s</thead>\n%9s<tbody align="center">\n'%(3*('',))
-    for x in range(len(run_number)):
-      ss = int(num_images[x])*(float(delta_phi[x]))
-      se = float(phi_start[x])+ss
-      if se > 360:
-        se -= 360
-      if anom:
-        best +='%11s<tr class="gradeD">\n'%''
-      else:
-        best +='%11s<tr class="gradeC">\n'%''
-      l = [run_number[x],phi_start[x],se,ss,num_images[x],delta_phi[x],time[x],distance[x],best_trans[x]]
-      for i in xrange(len(l)):
-        if i in (1,2,3):
-          best +="%13s<td><b>%s</b></td>\n" % ('',l[i])
-        else:
-          best +="%13s<td>%s</td>\n" % ('',l[i])
-      best +="%11s</tr>\n"%''
-    best +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
-    if anom:
-      self.best_anom_summary = best
-      self.best1_anom_summary = best.replace(best0,best1)
-    else:
-      self.best_summary = best
-      self.best1_summary = best.replace(best0,best1)
-    best_long ='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
-    """
-    best_long +="%7s<h2 class='results'>Image: %s</h2>\n" % ('',self.header.get('fullname'))
-    if self.header2:
-      best_long +="%7s<h2 class='results'>Image: %s</h2>\n" % ('',self.header2.get('fullname'))
-    """
-    if anom:
-      best_long +='%7s<table cellpadding="2" cellspacing="2" border="0" class="display" id="bestanomdata">\n'%''
-    else:
-      best_long +='%7s<table cellpadding="2" cellspacing="2" border="0" class="display" id="bestdata">\n'%''
-    best_long +='%9s<thead>\n%11s<tr>\n'%('','')
-    for i in range(5):
-      best_long +='%13s<th></th>\n'%''
-    best_long +='%11s</tr>\n%9s</thead>\n%9s<tbody align="left">\n'%(3*('',))
-    l = [('Resolution Limit','%s Angstroms'%res),('Anomalous data',anom),
-         ('Omega_start - Omega_finish','%s-%s'%(phi_start[0],phi_end)),
-         ('Total rotation range','%s Degrees'%rot_range),
-         ('Total N.of images',sum(int(i) for i in num_images)),
-         ('Overall Completeness',completeness),('Redundancy',redundancy),
-         ('R-factor (outer shell)',r_factor),('I/Sigma (outer shell)',i_sig),
-         ('Total Exposure time','%s sec'%tot_time),
-         ('Total Data Collection time','%s sec'%data_col_time),
-         ('Frac of unique ref in blind region',blind)]
-    for p in l:
-      best_long +='%11s<tr>\n%13s<th>%s</th>\n'%('','',p[0])
-      best_long +='%13s<td>%s</td>\n%11s</tr>\n'%('',p[1],'')
-    best_long +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
-    if anom:
-      self.best_anom_summary_long = best_long
-    else:
-      self.best_summary_long = best_long
+    # if self.verbose:
+    # if anom:
+    #     print '\n\tOptimal Plan of ANOMALOUS data collection'
+    # else:
+    #     print '\n\t\tOptimal Plan of data collection'
+    # print '\t\t================================'
+    # print '\tResolution limit is set by the radiation damage\n'
+    # print '-----------------------------------------------------------------------------------'
+    # print ' N |  Omega_start |  N.of.images | Rot.width |  Exposure | Distance | % Transmission |'
+    # print '-----------------------------------------------------------------------------------'
+    # for x in range(len(run_number)):
+    #     print '%2s | %8s   | %7s      |%9s  | %9s | %7s  |     %3s      |' \
+    #       % (run_number[x],phi_start[x],num_images[x],delta_phi[x],
+    #        time[x],distance[x],best_trans[x])
+    # except:
+    #   self.logger.exception('**summaryBest. Could not display Best results to screen.**')
 
-  except:
-    self.logger.exception('**Summary.summaryBest. Could not create Best html variable.**')
+
+    # Create Best variable for php files.
+    # try:
+    #   best ='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
+    #   if anom:
+    #     best +='%7s<h1 class="results">ANOMALOUS data collection strategy from BEST</h1>\n'%''
+    #   else:
+    #     best +='%7s<h1 class="results">Data collection strategy from BEST</h1>\n'%''
+    #   if self.high_dose:
+    #     best +='%7s<h4 class="results">Dosage is too high! Crystal will last for %s images. '\
+    #             'Strategy calculated from realistic dosage.</h4>\n'%('',self.crystal_life)
+    #   if anom:
+    #     line = '%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="bestanom">\n'%''
+    #     best += line
+    #     best0 = line
+    #     best1 ='%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="bestanom1">\n'%''
+    #   else:
+    #     line = '%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="best">\n'%''
+    #     best += line
+    #     best0 = line
+    #     best1 ='%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="best1">\n'%''
+    #   best +='%9s<thead align="center">\n%11s<tr>\n'%('','')
+    #   l = ['N','Omega Start','Omega End','Rot Range','N of Images',
+    #        'Delta Omega','Exposure time','Distance','% Transmission']
+    #   for p in l:
+    #     best +='%13s<th>%s</th>\n'%('',p)
+    #   best +='%11s</tr>\n%9s</thead>\n%9s<tbody align="center">\n'%(3*('',))
+    #   for x in range(len(run_number)):
+    #     ss = int(num_images[x])*(float(delta_phi[x]))
+    #     se = float(phi_start[x])+ss
+    #     if se > 360:
+    #       se -= 360
+    #     if anom:
+    #       best +='%11s<tr class="gradeD">\n'%''
+    #     else:
+    #       best +='%11s<tr class="gradeC">\n'%''
+    #     l = [run_number[x],phi_start[x],se,ss,num_images[x],delta_phi[x],time[x],distance[x],best_trans[x]]
+    #     for i in xrange(len(l)):
+    #       if i in (1,2,3):
+    #         best +="%13s<td><b>%s</b></td>\n" % ('',l[i])
+    #       else:
+    #         best +="%13s<td>%s</td>\n" % ('',l[i])
+    #     best +="%11s</tr>\n"%''
+    #   best +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
+    #   if anom:
+    #     self.best_anom_summary = best
+    #     self.best1_anom_summary = best.replace(best0,best1)
+    #   else:
+    #     self.best_summary = best
+    #     self.best1_summary = best.replace(best0,best1)
+    #   best_long ='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
+    #   """
+    #   best_long +="%7s<h2 class='results'>Image: %s</h2>\n" % ('',self.header.get('fullname'))
+    #   if self.header2:
+    #     best_long +="%7s<h2 class='results'>Image: %s</h2>\n" % ('',self.header2.get('fullname'))
+    #   """
+    #   if anom:
+    #     best_long +='%7s<table cellpadding="2" cellspacing="2" border="0" class="display" id="bestanomdata">\n'%''
+    #   else:
+    #     best_long +='%7s<table cellpadding="2" cellspacing="2" border="0" class="display" id="bestdata">\n'%''
+    #   best_long +='%9s<thead>\n%11s<tr>\n'%('','')
+    #   for i in range(5):
+    #     best_long +='%13s<th></th>\n'%''
+    #   best_long +='%11s</tr>\n%9s</thead>\n%9s<tbody align="left">\n'%(3*('',))
+    #   l = [('Resolution Limit','%s Angstroms'%res),('Anomalous data',anom),
+    #        ('Omega_start - Omega_finish','%s-%s'%(phi_start[0],phi_end)),
+    #        ('Total rotation range','%s Degrees'%rot_range),
+    #        ('Total N.of images',sum(int(i) for i in num_images)),
+    #        ('Overall Completeness',completeness),('Redundancy',redundancy),
+    #        ('R-factor (outer shell)',r_factor),('I/Sigma (outer shell)',i_sig),
+    #        ('Total Exposure time','%s sec'%tot_time),
+    #        ('Total Data Collection time','%s sec'%data_col_time),
+    #        ('Frac of unique ref in blind region',blind)]
+    #   for p in l:
+    #     best_long +='%11s<tr>\n%13s<th>%s</th>\n'%('','',p[0])
+    #     best_long +='%13s<td>%s</td>\n%11s</tr>\n'%('',p[1],'')
+    #   best_long +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
+    #   if anom:
+    #     self.best_anom_summary_long = best_long
+    #   else:
+    #     self.best_summary_long = best_long
+    #
+    # except:
+    #   self.logger.exception('**Summary.summaryBest. Could not create Best html variable.**')
 
 def summaryMosflm(self, anom=False):
     """
@@ -345,102 +349,102 @@ def summaryMosflm(self, anom=False):
         time = eval("%s.get('%s').get('strategy%simage exp time')" % (j, j1, j2))
         delta_phi = eval("%s.get('%s').get('strategy%sdelta phi')" % (j, j1, j2))
         mosflm_trans = Utils.calcTransmission(self)
-        if self.verbose:
-            if anom:
-                print '\n\n\t\tOptimal Plan of ANOMALOUS data collection according to Mosflm'
-            else:
-                print '\n\n\t\tOptimal Plan of data collection according to Mosflm'
-            print '\t\t================================\n'
-            print '-----------------------------------------------------------------------------------'
-            print ' N |  Omega_start |  N.of.images | Rot.width |  Exposure | Distance | % Transmission |'
-            print '-----------------------------------------------------------------------------------'
-            for x in range(len(run_number)):
-                print '%2s | %8s   | %7s      |%9s  | %9s | %7s  |     %3.0f      |' \
-                    % (run_number[x], phi_start[x], num_images[x], delta_phi, time, distance, mosflm_trans)
+        # if self.verbose:
+        #     if anom:
+        #         print '\n\n\t\tOptimal Plan of ANOMALOUS data collection according to Mosflm'
+        #     else:
+        #         print '\n\n\t\tOptimal Plan of data collection according to Mosflm'
+        #     print '\t\t================================\n'
+        #     print '-----------------------------------------------------------------------------------'
+        #     print ' N |  Omega_start |  N.of.images | Rot.width |  Exposure | Distance | % Transmission |'
+        #     print '-----------------------------------------------------------------------------------'
+        #     for x in range(len(run_number)):
+        #         print '%2s | %8s   | %7s      |%9s  | %9s | %7s  |     %3.0f      |' \
+        #             % (run_number[x], phi_start[x], num_images[x], delta_phi, time, distance, mosflm_trans)
     except:
         self.logger.exception('**summaryMosflm_strat Could not print Mosflm strategy to screen.**')
 
-    # Create Mosflm variable for php files.
-    try:
-        mosflm ='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%('','','')
-        if anom:
-          mosflm +='%7s<h1 class="results">ANOMALOUS data collection strategy from Mosflm</h1>\n'%''
-        else:
-          mosflm +='%7s<h1 class="results">Data collection strategy from Mosflm</h1>\n'%''
-        if self.high_dose:
-          mosflm +='%7s<h4 class="results">Dosage is too high! Crystal will last for %s images. '\
-                    'Strategy calculated from realistic dosage.</h4>\n'%('',self.crystal_life)
-        if self.multicrystalstrat:
-          for line in self.preferences.get('reference_data'):
-            mosflm +='%7s<h2 class="results">Data collected from %s taken into account for strategy.</h2>\n'%('',line[3])
-        if anom:
-          line    ='%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="stratanom">\n'%''
-          mosflm += line
-          mosflm0 = line
-          mosflm1 = '%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="stratanom1">\n'%''
-        else:
-          line    ='%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="strat">\n'%''
-          mosflm += line
-          mosflm0 = line
-          mosflm1 = '%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="strat1">\n'%''
-        mosflm +='%9s<thead align="center">\n%11s<tr>\n'%('','')
-        l = ['N','Omega Start','Omega End','Rot Range','N of Images',
-             'Delta Omega','Exposure time','Distance','% Transmission']
-        for p in l:
-          mosflm +='%13s<th>%s</th>\n'%('',p)
-        mosflm +='%11s</tr>\n%9s</thead>\n%9s<tbody align="center">\n'%(3*('',))
-        tot_sweep = []
-        for x in range(len(run_number)):
-            ss = int(num_images[x])*(float(delta_phi))
-            se = float(phi_start[x])+ss
-            if se > 360:
-                se -= 360
-            tot_sweep.append(ss)
-            if anom:
-                mosflm +='%11s<tr class="gradeD">\n'%''
-            else:
-                mosflm +='%11s<tr class="gradeC">\n'%''
-            if self.high_dose:
-                time = '1.00'
-            l = [run_number[x], phi_start[x], se, ss, num_images[x],
-                 delta_phi, time, distance, mosflm_trans]
-            for p in l:
-                mosflm +="%13s<td>%s</td>\n" % ('',p)
-            mosflm +="%11s</tr>\n"%''
-        mosflm +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
-        if anom:
-            self.mosflm_strat_anom_summary = mosflm
-            self.mosflm_strat1_anom_summary = mosflm.replace(mosflm0,mosflm1)
-        else:
-            self.mosflm_strat_summary = mosflm
-            self.mosflm_strat1_summary = mosflm.replace(mosflm0,mosflm1)
-        mosflm_long ='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
-        mosflm_long +="%7s<h2 class='results'>Image: %s</h2>\n" % ('',self.header.get('fullname'))
-        if self.header2:
-            mosflm_long +="%7s<h2 class='results'>Image: %s</h2>\n" % ('',self.header2.get('fullname'))
-        if anom:
-            mosflm_long +='%7s<table cellpadding="2" cellspacing="2" border="0" class="display" id="mosflmanomdata">\n'%''
-        else:
-            mosflm_long +='%7s<table cellpadding="2" cellspacing="2" border="0" class="display" id="mosflmdata">\n'%''
-        mosflm_long +='%9s<thead>\n%11s<tr>\n'%('','')
-        for i in range(5):
-            mosflm_long +='%13s<th></th>\n'%''
-        mosflm_long +='%11s</tr>\n%9s</thead>\n%9s<tbody align="left">\n'%(3*('',))
-        l = [('Resolution Limit','%s Angstroms'%res),('Anomalous data',anom),
-             ('Omega_start - Omega_finish','%s-%s'%(phi_start[0],phi_end[-1])),
-             ('Total rotation range','%s Degrees'%sum(tot_sweep)),
-             ('Total N.of images',sum(int(i) for i in num_images)),
-             ('Overall Completeness',completeness),('Redundancy',redundancy)]
-        for p in l:
-            mosflm_long +='%11s<tr>\n%13s<th>%s</th>\n'%('','',p[0])
-            mosflm_long +='%13s<td>%s</td>\n%11s</tr>\n'%('',p[1],'')
-        mosflm_long +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
-        if anom:
-            self.mosflm_strat_anom_summary_long = mosflm_long
-        else:
-            self.mosflm_strat_summary_long = mosflm_long
-    except:
-        self.logger.exception('**Summary.summaryMosflm Could not Mosflm strategy html.**')
+    # # Create Mosflm variable for php files.
+    # try:
+    #     mosflm ='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%('','','')
+    #     if anom:
+    #       mosflm +='%7s<h1 class="results">ANOMALOUS data collection strategy from Mosflm</h1>\n'%''
+    #     else:
+    #       mosflm +='%7s<h1 class="results">Data collection strategy from Mosflm</h1>\n'%''
+    #     if self.high_dose:
+    #       mosflm +='%7s<h4 class="results">Dosage is too high! Crystal will last for %s images. '\
+    #                 'Strategy calculated from realistic dosage.</h4>\n'%('',self.crystal_life)
+    #     if self.multicrystalstrat:
+    #       for line in self.preferences.get('reference_data'):
+    #         mosflm +='%7s<h2 class="results">Data collected from %s taken into account for strategy.</h2>\n'%('',line[3])
+    #     if anom:
+    #       line    ='%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="stratanom">\n'%''
+    #       mosflm += line
+    #       mosflm0 = line
+    #       mosflm1 = '%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="stratanom1">\n'%''
+    #     else:
+    #       line    ='%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="strat">\n'%''
+    #       mosflm += line
+    #       mosflm0 = line
+    #       mosflm1 = '%7s<table cellpadding="0" cellspacing="0" border="10" class="display" id="strat1">\n'%''
+    #     mosflm +='%9s<thead align="center">\n%11s<tr>\n'%('','')
+    #     l = ['N','Omega Start','Omega End','Rot Range','N of Images',
+    #          'Delta Omega','Exposure time','Distance','% Transmission']
+    #     for p in l:
+    #       mosflm +='%13s<th>%s</th>\n'%('',p)
+    #     mosflm +='%11s</tr>\n%9s</thead>\n%9s<tbody align="center">\n'%(3*('',))
+    #     tot_sweep = []
+    #     for x in range(len(run_number)):
+    #         ss = int(num_images[x])*(float(delta_phi))
+    #         se = float(phi_start[x])+ss
+    #         if se > 360:
+    #             se -= 360
+    #         tot_sweep.append(ss)
+    #         if anom:
+    #             mosflm +='%11s<tr class="gradeD">\n'%''
+    #         else:
+    #             mosflm +='%11s<tr class="gradeC">\n'%''
+    #         if self.high_dose:
+    #             time = '1.00'
+    #         l = [run_number[x], phi_start[x], se, ss, num_images[x],
+    #              delta_phi, time, distance, mosflm_trans]
+    #         for p in l:
+    #             mosflm +="%13s<td>%s</td>\n" % ('',p)
+    #         mosflm +="%11s</tr>\n"%''
+    #     mosflm +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
+    #     if anom:
+    #         self.mosflm_strat_anom_summary = mosflm
+    #         self.mosflm_strat1_anom_summary = mosflm.replace(mosflm0,mosflm1)
+    #     else:
+    #         self.mosflm_strat_summary = mosflm
+    #         self.mosflm_strat1_summary = mosflm.replace(mosflm0,mosflm1)
+    #     mosflm_long ='%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',))
+    #     mosflm_long +="%7s<h2 class='results'>Image: %s</h2>\n" % ('',self.header.get('fullname'))
+    #     if self.header2:
+    #         mosflm_long +="%7s<h2 class='results'>Image: %s</h2>\n" % ('',self.header2.get('fullname'))
+    #     if anom:
+    #         mosflm_long +='%7s<table cellpadding="2" cellspacing="2" border="0" class="display" id="mosflmanomdata">\n'%''
+    #     else:
+    #         mosflm_long +='%7s<table cellpadding="2" cellspacing="2" border="0" class="display" id="mosflmdata">\n'%''
+    #     mosflm_long +='%9s<thead>\n%11s<tr>\n'%('','')
+    #     for i in range(5):
+    #         mosflm_long +='%13s<th></th>\n'%''
+    #     mosflm_long +='%11s</tr>\n%9s</thead>\n%9s<tbody align="left">\n'%(3*('',))
+    #     l = [('Resolution Limit','%s Angstroms'%res),('Anomalous data',anom),
+    #          ('Omega_start - Omega_finish','%s-%s'%(phi_start[0],phi_end[-1])),
+    #          ('Total rotation range','%s Degrees'%sum(tot_sweep)),
+    #          ('Total N.of images',sum(int(i) for i in num_images)),
+    #          ('Overall Completeness',completeness),('Redundancy',redundancy)]
+    #     for p in l:
+    #         mosflm_long +='%11s<tr>\n%13s<th>%s</th>\n'%('','',p[0])
+    #         mosflm_long +='%13s<td>%s</td>\n%11s</tr>\n'%('',p[1],'')
+    #     mosflm_long +='%9s</tbody>\n%7s</table>\n%6s</div>\n%5s</div>\n%4s</div>\n'%(5*('',))
+    #     if anom:
+    #         self.mosflm_strat_anom_summary_long = mosflm_long
+    #     else:
+    #         self.mosflm_strat_summary_long = mosflm_long
+    # except:
+    #     self.logger.exception('**Summary.summaryMosflm Could not Mosflm strategy html.**')
 
 def summaryShelx(self):
   """
