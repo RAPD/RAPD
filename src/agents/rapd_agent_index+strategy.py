@@ -63,7 +63,7 @@ DETECTOR_TO_BEST = {
     "ADSC-HF4M": "hf4m",
     "Pilatus-6M": "pilatus6m",
     "PILATUS": "pilatus6m",
-    "rayonix_mx300hs": "mar300"
+    "rayonix_mx300hs": "mar300",
     "mar300": "mar300",
     "ray300": "ray300",
     "Dectris Eiger 9M": "eiger9m",
