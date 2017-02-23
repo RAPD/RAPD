@@ -1472,12 +1472,17 @@ class RapdAgent(Process):
             # Determine the open terminal size
             term_size = os.popen('stty size', 'r').read().split()
 
+            titled = False
             for plot_type in ("osc_range", "osc_range_anom"):
 
                 if plot_type in self.plots:
 
+                    if not titled:
+                        self.tprint(arg="\nPlots from BEST", level=99, color="blue")
+                        titled = True
+
                     tag = {"osc_range":"standard", "osc_range_anom":"ANOMALOUS"}[plot_type]
-                    self.tprint(arg="\nPlot of minimal oscillation range for different completenesses %s" % tag, level=99, color="blue")
+
 
                     plot_data = self.plots[plot_type]
 
@@ -1485,12 +1490,16 @@ class RapdAgent(Process):
                     y_max = numpy.array(plot_data["data"][0]["series"][0]["ys"]).max() + 10
 
                     gnuplot = subprocess.Popen(["gnuplot"], stdin=subprocess.PIPE)
-                    gnuplot.stdin.write("set term dumb %s,%s aspect 3\n" % (term_size[1],int(term_size[0])/3))
+                    gnuplot.stdin.write("""set term dumb  %s,%s
+                                           set key outside
+                                           set title 'Minimal Oscillation Ranges %s'
+                                           set xlabel 'Starting Angle'
+                                           set ylabel 'Rotation Range' rotate by 90 \n""" % (min(term_size[1], 120), int(int(term_size[0])/4), tag))
 
                     # Create the plot string
                     plot_string = "plot [0:360] [0:%d] " % y_max
                     for i in range(len(plot_data["data"])):
-                        plot_string += "'-' using 1:2 title '%s' with lines," % plot_data["data"][i]["parameters"]["linelabel"]
+                        plot_string += "'-' using 1:2 title '%s' with lines," % plot_data["data"][i]["parameters"]["linelabel"].replace("compl -", "")
                     plot_string = plot_string.rstrip(",") + "\n"
                     gnuplot.stdin.write(plot_string)
 
@@ -1694,14 +1703,14 @@ class RapdAgent(Process):
 
         # Get the parsed results for reg and anom results and put them into a single dict.
         if dir1:
-            print ">>>", os.path.join(dir1, "best.plt")
+            # print ">>>", os.path.join(dir1, "best.plt")
             plot = Parse.ParseOutputBestPlots(self, open(os.path.join(dir1, "best.plt"), "r").readlines())
             if dir2:
-                print ">>>", os.path.join(dir2, "best_anom.plt")
+                # print ">>>", os.path.join(dir2, "best_anom.plt")
                 plotanom = Parse.ParseOutputBestPlots(self, open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
                 plot.update({"osc_range_anom": plotanom.get("osc_range")})
         elif dir2:
-            print ">>>", os.path.join(dir2, "best_anom.plt")
+            # print ">>>", os.path.join(dir2, "best_anom.plt")
             plot = Parse.ParseOutputBestPlots(self, open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
             plot.update({"osc_range_anom": plot.pop("osc_range")})
         else:
