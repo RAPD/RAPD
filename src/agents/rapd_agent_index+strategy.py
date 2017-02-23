@@ -1084,6 +1084,7 @@ class RapdAgent(Process):
                 self.tprint(arg="  " + "-" * 85, level=99, color="white")
 
                 return("OK")
+            # BEST has failed
             else:
                 if self.multiproc == False:
                     out = {"None":"No Best Strategy.",
@@ -1092,6 +1093,7 @@ class RapdAgent(Process):
                     if out.has_key(data):
                         Utils.errorBestPost(self, iteration, out[data],anom)
                 self.tprint(arg="BEST unable to calculate a strategy", level=30, color="red")
+                print data
                 return("FAILED")
 
     def postprocessMosflm(self, inp):
@@ -2686,6 +2688,8 @@ def BestAction(inp, logger=False, output=False):
     if logger:
         logger.debug('BestAction')
         logger.debug(inp)
+
+    print inp
     # try:
     command, log = inp
     # Have to do this otherwise command is written to bottom of file??
