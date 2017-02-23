@@ -1685,104 +1685,35 @@ class RapdAgent(Process):
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::htmlBestPlots")
 
-        try:
-            run = True
-            plot = False
-            plotanom = False
-            dir1 = self.best_results.get("Best results").get("directory", False)
-            dir2 = self.best_anom_results.get("Best ANOM results").get("directory", False)
+        # try:
+        run = True
+        plot = False
+        plotanom = False
+        dir1 = self.best_results.get("Best results").get("directory", False)
+        dir2 = self.best_anom_results.get("Best ANOM results").get("directory", False)
 
-            # Get the parsed results for reg and anom results and put them into a single dict.
-            if dir1:
-                plot = Parse.ParseOutputBestPlots(self, open(os.path.join(dir1, "best.plt"), "r").readlines())
-                if dir2:
-                    plotanom = Parse.ParseOutputBestPlots(self, open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
-                    plot.update({"osc_range_anom": plotanom.get("osc_range")})
-            elif dir2:
-                plot = Parse.ParseOutputBestPlots(self, open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
-                plot.update({"osc_range_anom": plot.pop("osc_range")})
-            else:
-                run = False
+        # Get the parsed results for reg and anom results and put them into a single dict.
+        if dir1:
+            plot = Parse.ParseOutputBestPlots(self, open(os.path.join(dir1, "best.plt"), "r").readlines())
+            if dir2:
+                plotanom = Parse.ParseOutputBestPlots(self, open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
+                plot.update({"osc_range_anom": plotanom.get("osc_range")})
+        elif dir2:
+            plot = Parse.ParseOutputBestPlots(self, open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
+            plot.update({"osc_range_anom": plot.pop("osc_range")})
+        else:
+            run = False
 
-            # Best failed?
-            if self.best_failed:
-                best_plots = False
+        # Best failed?
+        if self.best_failed:
+            best_plots = False
 
-            # Best success
-            else:
-                self.plots = plot
+        # Best success
+        else:
+            self.plots = plot
 
-
-            #     # Construct dict holding all the plots
-            #     best_plots = {
-            #         "osc_range": {},
-            #         "osc_range_anom": {},
-            #         "max_delta_omega": {},
-            #         "wilson": {},
-            #         "rad_damage_int_decr": {},
-            #         "rad_damage_rfactor_incr": {}
-            #     }
-            #
-            #     # self.logger.debug(plot)
-            #
-            #     # Go through the plots and build best_plots
-            #     for plot_type in best_plots.keys():
-            #         self.logger.debug(plot_type)
-            #
-            # # Place holder for settings.
-            # l = [["Omega start", "Min osc range for different completenesses", "O m e g a &nbsp R a n g e", "Omega Start",
-            #       "comp", '"start at " + x + " for " + y + " degrees");'],
-            #      ["ANOM Omega start", "Min osc range for different completenesses", "O m e g a &nbsp R a n g e", "Omega Start",
-            #       "companom", '"start at " + x + " for " + y + " degrees");'],
-            #      ["Max delta Omega", "Maximal Oscillation Width", "O m e g a &nbsp S t e p", "Omega",
-            #       "width", '"max delta Omega of " + y + " at Omega=" + x);'],
-            #      ["Wilson Plot", "Wilson Plot", "I n t e n s i t y", "1/Resolution<sup>2</sup>",
-            #       "wilson", 'item.series.label + " of " + x + " = " + y);']]
-            # if self.sample_type != "Ribosome":
-            #     temp = [["Rad damage1", "Intensity decrease due to radiation damage", "R e l a t i v e &nbsp I n t e n s i t y",
-            #              "Cumulative exposure time (sec)", "damage",'"at res=" + item.series.label + " after " + x + " seconds intensity drops to " + y);'],
-            #             ["Rad damage2", "Rdamage vs. Cumulative Exposure time", "R f a c t o r", "Cumulative exposure time (sec)",
-            #              "rdamage",'"at res=" + item.series.label + " after " + x + " seconds Rdamage increases to " + y);']]
-            #     l.extend(temp)
-            #
-            # if run:
-            #     for i in range(len(l)):
-            #         if i == 0 and self.best_failed:
-            #             best_plots["osc_range"] = False
-            #         elif i == 1 and self.best_anom_failed:
-            #             best_plots["osc_range_anom"] = False
-            #
-            #     s = "    var "
-            #     for i in range(len(l)):
-            #         l1 = []
-            #         l2 = []
-            #         label = ["%6s[\n" % ""]
-            #         s1 = s
-            #         # In case comp or companom are not present.
-            #         if plot.has_key(l[i][4]):
-            #             data = plot.get(l[i][4])
-            #             for x in range(len(data)):
-            #                 var = "%s%s" % (l[i][4].upper(), x)
-            #                 s1 += "%s=[]," % var
-            #                 label.append("%8s{ data: %s, label:%s },\n" % ("", var, data[x].keys()[0]))
-            #                 for y in range(len(data[x].get(data[x].keys()[0]))):
-            #                     l1.append("%4s%s.push([%s,%s]);\n" % ("", var, data[x].get(data[x].keys()[0])[y][0], data[x].get(data[x].keys()[0])[y][1]))
-            #                     if l[i][4].startswith("comp") and x == 0:
-            #                         l2.append(data[x].get(data[x].keys()[0])[y][1])
-            #             if i == 0:
-            #                 # best_plot.write("%s,mark=[];\n" % s1[:-1])
-            #                 label.append('%8s{ data: mark, label: "Best starting Omega", color: "black"},\n' % "")
-            #             elif i == 1:
-            #                 # best_plot.write("%s,markanom=[];\n" % s1[:-1])
-            #                 label.append('%8s{ data: markanom, label: "Best starting Omega", color: "black"},\n' % "")
-            #             else:
-            #                 pass
-            #                 # best_plot.write("%s;\n" % s1[:-1])
-            #         label.append("%6s],\n" % "")
-            #         l[i].append(label)
-
-        except:
-            self.logger.exception("**ERROR in htmlBestPlots**")
+        # except:
+        #     self.logger.exception("**ERROR in htmlBestPlots**")
 
     # def htmlSummaryLong(self):
     #     """
