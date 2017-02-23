@@ -33,12 +33,12 @@ AGENT_TYPE = "AUTOINDEX+STRATEGY"
 AGENT_SUBTYPE = "CORE"
 
 # A unique UUID for this handler (uuid.uuid1().hex)
-VERSION = "2.0beta"
+VERSION = "2.0.0"
 ID = "3b3448aee4a811e59c0aac87a3333966"
 
-
 # Standard imports
-# import glob
+from collections import OrderedDict
+import json
 import logging
 from multiprocessing import Process, Queue, Event
 import numpy
@@ -486,7 +486,7 @@ class RapdAgent(Process):
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::runLabelit")
 
-        self.tprint(arg="  Starting Labelit runs\n", level=99)
+        self.tprint(arg="  Starting Labelit runs\n", level=99, color="white")
 
         try:
             # Setup queue for getting labelit log and results in labelitSort.
@@ -947,7 +947,7 @@ class RapdAgent(Process):
             f = 1
             if self.header2:
                 f = 2
-            for x in range(0,f):
+            for x in range(0, f):
                 log = open("distl%s.log" % x, "r").readlines()
                 self.distl_log.extend(log)
                 distl = Parse.ParseOutputDistl(self, log)
@@ -957,25 +957,50 @@ class RapdAgent(Process):
                 else:
                     self.distl_results[str(x)] = {"distl_results": distl}
 
-                    # Print DISTL results to commandline - verbose only
-                    self.tprint(arg="\nDISTL analysis results", level=10, color="blue")
-                    distl_labels = {
-                        "total spots": "Total Spots",
-                        "spots in res": "Spots in Resolution",
-                        "good Bragg spots": "Good Bragg Spots",
-                        "overloads": "Overloaded Spots",
-                        "distl res": "DISTL Resolution",
-                        "labelit res": "Labelit Resolution",
-                        "max cell": "Max Cell",
-                        "ice rings": "Ice Rings",
-                        "min signal strength": "Min Signal Strength",
-                        "max signal strength": "Max Signal Strength",
-                        "mean int signal": "Mean Intensity Signal",
-                    }
-                    for key, val in distl_labels.iteritems():
-                        self.tprint(arg="  %21s: %s" % (val, distl[key][0]), level=10, color="white")
-
             Utils.distlComb(self)
+
+            # pprint.pprint(self.distl_results)
+
+            # Print DISTL results to commandline - verbose only
+            self.tprint(arg="\nDISTL analysis results", level=10, color="blue")
+            distl_results = self.distl_results["distl_results"]
+            if len(distl_results["distl res"]) == 2:
+                self.tprint(arg="  %21s  %6s %6s" % ("", "image 1", "image 2"), level=10, color="white")
+                format_string = "  %21s: %6s  %6s"
+            else:
+                format_string = "  %21s: %s"
+
+            distl_labels = {
+                "total spots": "Total Spots",
+                "spots in res": "Spots in Resolution",
+                "good Bragg spots": "Good Bragg Spots",
+                "overloads": "Overloaded Spots",
+                "distl res": "DISTL Resolution",
+                "labelit res": "Labelit Resolution",
+                "max cell": "Max Cell",
+                "ice rings": "Ice Rings",
+                "min signal strength": "Min Signal Strength",
+                "max signal strength": "Max Signal Strength",
+                "mean int signal": "Mean Intensity Signal",
+            }
+            distl_labels = OrderedDict([
+                ("total spots", "Total Spots"),
+                ("spots in res", "Spots in Resolution"),
+                ("good Bragg spots", "Good Bragg Spots"),
+                ("overloads", "Overloaded Spots"),
+                ("distl res", "DISTL Resolution"),
+                ("labelit res", "Labelit Resolution"),
+                ("max cell", "Max Cell"),
+                ("ice rings", "Ice Rings"),
+                ("min signal strength", "Min Signal Strength"),
+                ("max signal strength", "Max Signal Strength"),
+                ("mean int signal", "Mean Intensity Signal"),
+                ])
+
+            for key, val in distl_labels.iteritems():
+                vals = tuple([val] + distl_results[key])
+                # print format_string % vals
+                self.tprint(arg=format_string % vals, level=10, color="white")
 
         except:
             self.logger.exception("**Error in postprocessDistl**")
@@ -1164,7 +1189,7 @@ class RapdAgent(Process):
                         if self.verbose:
                             number = round(timer%1,1)
                             if number in (0.0, 1.0):
-                                self.tprint(arg="    Waiting for strategy to finish %s seconds" % timer, level=10)
+                                self.tprint(arg="    Waiting for strategy to finish %s seconds" % timer, level=10, color="white")
                         if self.strategy_timer:
                             if timer >= self.strategy_timer:
                                 timed_out = True
@@ -1416,18 +1441,18 @@ class RapdAgent(Process):
         self.tprint(arg="\nRAPD index & strategy uses:", level=99, color="blue")
 
         info_string = """    Phenix
-    Reference:  J. Appl. Cryst. 37, 399-409 (2004)
-    Website:    http://adder.lbl.gov/labelit/ \n
+    Reference: J. Appl. Cryst. 37, 399-409 (2004)
+    Website:   http://adder.lbl.gov/labelit/ \n
     Mosflm
     Reference: Leslie, A.G.W., (1992), Joint CCP4 + ESF-EAMCB Newsletter on Protein Crystallography, No. 26
     Website:   http://www.mrc-lmb.cam.ac.uk/harry/mosflm/ \n
     RADDOSE
     Reference: Paithankar et. al. (2009) J. Synch. Rad. 16, 152-162.
-    Website: http://biop.ox.ac.uk/www/garman/lab_tools.html/ \n
+    Website:   http://biop.ox.ac.uk/www/garman/lab_tools.html/ \n
     Best
     Reference: G.P. Bourenkov and A.N. Popov,  Acta Cryst. (2006). D62, 58-64
-    Website: http://www.embl-hamburg.de/BEST/"""
-        self.tprint(arg=info_string, level=99)
+    Website:   http://www.embl-hamburg.de/BEST/"""
+        self.tprint(arg=info_string, level=99, color="white")
 
         self.logger.debug(info_string)
 
@@ -1587,8 +1612,10 @@ class RapdAgent(Process):
             # if self.gui:
             self.results["results"] = results
             self.logger.debug(self.results)
-            # Print results to screen
-            # self.tprint(arg=self.results, level=10)
+            # Print results to screen in JSON format
+            if self.preferences.get("json_output", False):
+                json_output = json.dumps(self.results).replace("\\n", "")
+                print json_output
             if self.controller_address:
                 rapd_send(self.controller_address, self.results)
         except:
@@ -1632,14 +1659,14 @@ class RapdAgent(Process):
         self.logger.debug("Total elapsed time: %s seconds", t)
         self.logger.debug("-------------------------------------")
         self.tprint(arg="\nRAPD autoindexing & strategy complete", level=99, color="green")
-        self.tprint(arg="Total elapsed time: %s seconds" % t, level=10)
+        self.tprint(arg="Total elapsed time: %s seconds" % t, level=10, color="white")
 
     def htmlBestPlots(self):
         """
         generate plots html/php file
         """
 
-        self.tprint(arg="Generating plots from Best", level=10)
+        # self.tprint(arg="Generating plots from Best", level=10, color="white")
 
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::htmlBestPlots")
@@ -2359,7 +2386,7 @@ class RunLabelit(Process):
         if self.test:
             if self.short == False:
                 self.logger.debug("TEST IS ON")
-                self.tprint(arg="TEST IS ON", level=10)
+                self.tprint(arg="TEST IS ON", level=10, color="white")
 
     def preprocessLabelit(self):
         """

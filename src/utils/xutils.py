@@ -27,6 +27,7 @@ __status__ = "Production"
 
 # Standard imports
 import os
+import pprint
 import shutil
 import subprocess
 import sys
@@ -913,6 +914,7 @@ def distlComb(self):
         temp.extend(self.distl_results.get('1').get("distl_results")[key])
         d[key] = temp
       self.distl_results = {"distl_results" : d}
+      # pprint.pprint(self.distl_results)
 
   except:
     self.logger.exception('**Error in Utils.distlComb**')

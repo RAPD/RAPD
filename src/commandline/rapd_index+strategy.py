@@ -75,6 +75,9 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     # Agent settings
     command["preferences"] = {}
 
+    # JSON output?
+    command["preferences"]["json_output"] = commandline_args.json
+
     # Strategy type
     command["preferences"]["strategy_type"] = commandline_args.strategy_type
 
@@ -298,7 +301,7 @@ def main():
     tprint(arg="\nCommandline arguments:", level=10, color="blue")
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s", pair[0], pair[1])
-        tprint(arg="  arg:%s  val:%s" % (pair[0], pair[1]), level=10)
+        tprint(arg="  arg:%-20s  val:%s" % (pair[0], pair[1]), level=10, color="white")
 
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
@@ -306,7 +309,7 @@ def main():
     tprint("\nEnvironmental variables", level=10, color="blue")
     for key, val in environmental_vars.iteritems():
         logger.debug("  " + key + " : " + val)
-        tprint(arg="  arg:%s  val:%s" % (key, val), level=10)
+        tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
 
     # List sites?
     if commandline_args.listsites:
@@ -330,7 +333,7 @@ def main():
         tprint(arg="\nHDF5 source file(s)", level=99, color="blue")
         logger.debug(data_files["hdf5_files"])
         for data_file in data_files["hdf5_files"]:
-            tprint(arg="  " + data_file, level=99)
+            tprint(arg="  " + data_file, level=99, color="white")
         logger.debug("CBF file(s) from HDF5 file(s)")
         tprint(arg="\nData files", level=99, color="blue")
     else:
@@ -338,11 +341,11 @@ def main():
         tprint(arg="\nData file(s)", level=99, color="blue")
 
     if len(data_files) == 0:
-        tprint(arg="  None", level=99)
+        tprint(arg="  None", level=99, color="white")
     else:
         logger.debug(data_files["files"])
         for data_file in data_files["files"]:
-            tprint(arg="  " + data_file, level=99)
+            tprint(arg="  " + data_file, level=99, color="white")
 
     # Need data
     if len(data_files) == 0 and commandline_args.test == False:
@@ -407,12 +410,16 @@ def main():
 
         logger.debug("Image headers: %s", image_headers)
         tprint(arg="\nImage headers", level=10, color="blue")
+        count = 0
         for fullname, header in image_headers.iteritems():
             keys = header.keys()
             keys.sort()
-            tprint(arg="  %s" % fullname, level=10)
+            if count > 0:
+                tprint(arg="", level=10, color="white")
+            tprint(arg="  %s" % fullname, level=10, color="white")
             for key in keys:
-                tprint(arg="  arg:%-20s  val:%s" % (key, header[key]), level=10)
+                tprint(arg="    arg:%-20s  val:%s" % (key, header[key]), level=10, color="white")
+            count += 1
 
         command = construct_command(image_headers=image_headers,
                                     commandline_args=commandline_args,
