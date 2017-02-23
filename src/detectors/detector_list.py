@@ -41,7 +41,9 @@ DETECTORS = {
         "detector": "lscat_dectris_eiger9m",
         # "site": 'lscat_21idd'
         },
-    ("MARCCD", 0): ["lscat_mar_300",],          # APS 21-ID-F
+    ("MARCCD", 0): {
+        "detector": "lscat_mar_300"
+        },          # APS 21-ID-F
     ("MARCCD", 3): {
         "detector": "sercat_rayonix_mx225",
         },      # APS 22BM

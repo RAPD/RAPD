@@ -36,9 +36,9 @@ class PilatusImage(DetectorImageBase):
     try:
       from cbflib_adaptbx import cbf_binary_adaptor # optional package
       self.adaptor = cbf_binary_adaptor(self.filename)
-  
+
       # assert algorithm in ["cbflib","cbflib_optimized","buffer_based"]
-  
+
       data = self.adaptor.uncompress_implementation( algorithm
              ).uncompress_data(self.size1,self.size2)
       self.bin_safe_set_data( data )
@@ -96,7 +96,6 @@ class PilatusImage(DetectorImageBase):
               self.parameters[tag] = datatype(line.split(" ")[idx])
               break
       #unit fixes
-      print self.parameters
       self.parameters['DISTANCE']*={
                   'mm':1,'m':1000}[self.parameters['DISTANCE_UNITS']]
       self.parameters['PIXEL_SIZE']*={
@@ -146,7 +145,7 @@ class PilatusImage(DetectorImageBase):
         self.vendortype="Eiger-9M"
       elif self.size1==4371 and self.size2==4150:
         self.vendortype="Eiger-16M"
-      
+
 
 if __name__=='__main__':
   import sys

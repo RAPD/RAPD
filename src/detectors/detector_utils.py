@@ -209,15 +209,13 @@ def get_detector_file(image):
     """
 
     # print "get_detector_file %s" % image
-
     try:
         i = ImageFactory(image)
         # print i.vendortype
         # print i.parameters["DETECTOR_SN"]
     except (IOError, AttributeError, RuntimeError):
-        print error
+        # print error
         return False
-
     # print i.vendortype
     # print i.parameters["DETECTOR_SN"]
 
