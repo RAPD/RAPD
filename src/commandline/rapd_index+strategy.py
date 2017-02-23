@@ -418,7 +418,7 @@ def main():
                 tprint(arg="", level=10, color="white")
             tprint(arg="  %s" % fullname, level=10, color="white")
             for key in keys:
-                tprint(arg="    arg:%-20s  val:%s" % (key, header[key]), level=10, color="white")
+                tprint(arg="    arg:%-22s  val:%s" % (key, header[key]), level=10, color="white")
             count += 1
 
         command = construct_command(image_headers=image_headers,
