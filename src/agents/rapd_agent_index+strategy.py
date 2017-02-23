@@ -1694,11 +1694,14 @@ class RapdAgent(Process):
 
         # Get the parsed results for reg and anom results and put them into a single dict.
         if dir1:
+            print ">>>", os.path.join(dir1, "best.plt")
             plot = Parse.ParseOutputBestPlots(self, open(os.path.join(dir1, "best.plt"), "r").readlines())
             if dir2:
+                print ">>>", os.path.join(dir2, "best_anom.plt")
                 plotanom = Parse.ParseOutputBestPlots(self, open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
                 plot.update({"osc_range_anom": plotanom.get("osc_range")})
         elif dir2:
+            print ">>>", os.path.join(dir2, "best_anom.plt")
             plot = Parse.ParseOutputBestPlots(self, open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
             plot.update({"osc_range_anom": plot.pop("osc_range")})
         else:
