@@ -58,15 +58,16 @@ from utils.modules import load_module
 import utils.xutils as Utils
 
 DETECTOR_TO_BEST = {
-    'ADSC': 'q315',
-    'ADSC-Q315': 'q315',
-    'ADSC-HF4M': 'hf4m',
-    'Pilatus-6M': 'pilatus6m',
-    'PILATUS': 'pilatus6m',
-    'mar300': 'mar300',
-    'ray300': 'ray300',
-    'Dectris Eiger 9M': 'eiger9m',
-    'Eiger-9M': 'eiger9m',
+    "ADSC": "q315",
+    "ADSC-Q315": "q315",
+    "ADSC-HF4M": "hf4m",
+    "Pilatus-6M": "pilatus6m",
+    "PILATUS": "pilatus6m",
+    "rayonix_mx300hs": "mar300"
+    "mar300": "mar300",
+    "ray300": "ray300",
+    "Dectris Eiger 9M": "eiger9m",
+    "Eiger-9M": "eiger9m",
     }
 
 class RapdAgent(Process):
