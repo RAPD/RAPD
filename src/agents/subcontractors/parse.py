@@ -972,9 +972,7 @@ def ParseOutputBest(self, inp, anom=False):
         return 'None'
 
 def ParseOutputBestPlots(self, inp):
-    """
-    Parse Best plots file for plots.
-    """
+    """Parse Best plots file for plots"""
 
     if self.verbose:
         self.logger.debug("Parse::ParseOutputBestPlots")
@@ -992,8 +990,8 @@ def ParseOutputBestPlots(self, inp):
     # Definitions for the expected values
     cast_vals = {
         "Relative Error and Intensity Plot": {
-            "Rel.Error": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))},
-            "Rel.Intensity": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))}
+            "Rel.Error": {"x": (lambda x: float(x)), "y": (lambda x: float(x))},
+            "Rel.Intensity": {"x": (lambda x: float(x)), "y": (lambda x: float(x))}
         },
         "Wilson Plot": {
             "Theory": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))},
@@ -1040,7 +1038,7 @@ def ParseOutputBestPlots(self, inp):
                 plot["data"].append(curve)
             in_curve = True
             # print line
-            curve = {"parameters": {}, "series": []}
+            curve = {"parameters": {}, "series": [{"xs": [], "ys": []}]}
         elif line.startswith("%"):
             # print in_curve, line
             strip_line = line[1:].strip()
@@ -1067,196 +1065,13 @@ def ParseOutputBestPlots(self, inp):
                 y = cast_vals[plot["parameters"]["toplabel"]][curve["parameters"]["linelabel"]]["y"](split_line[1].strip())
 
             # print x, y
-            curve["series"].append({"name":x, "value":y})
+            # curve["series"].append({"name":x, "value":y})
+            curve["series"][0]["xs"].append(x)
+            curve["series"][0]["ys"].append(y)
 
     plot["data"].append(curve)
     parsed_plots[plot["parameters"]["toplabel"]] = plot
     # pprint.pprint(parsed_plots)
-
-    # cast_vals = {
-    #     "Relative Error and Intensity Plot": {
-    #         "Rel.Error": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))},
-    #         "Rel.Intensity": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))}
-    #     },
-    #     "Wilson Plot": {
-    #         "Theory": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))},
-    #         "Experiment": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))},
-    #         "Pred.low errors": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))},
-    #         "Pred.high errors": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))}
-    #     },
-    #     "Maximal oscillation width": {
-    #         "resol": {"x": (lambda x:  int(x)), "y": (lambda x: float(x))}
-    #     },
-    #     "Minimal oscillation ranges for different completenesses": {
-    #         "compl": {"x": (lambda x:  int(x)), "y": (lambda x: int(x))}
-    #     },
-    #     "Total exposure time vs resolution": {
-    #         "Expon.trend": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))},
-    #         "Predictions": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))}
-    #     },
-    #     "Average background intensity per second": {
-    #         "Background": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))},
-    #         "Predictions": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))}
-    #     },
-    # }
-    #
-    # # Run through the plot file lines and separate raw plots
-    # parsed_plots = {}
-    # in_curve = False
-    # in_data = False
-    # plot = False
-    # for x, line in enumerate(inp):
-    #     self.logger.debug(line)
-    #     self.logger.debug(in_curve)
-    #
-    #     # New plot
-    #     if line.startswith("$"):
-    #         if plot:
-    #             self.logger.debug(plot)
-    #             parsed_plots[plot["parameters"]["toplabel"]] = plot
-    #         self.logger.debug("New plot")
-    #         in_data = False
-    #         in_curve = False
-    #         plot = {"parameters": {}, "data": []}
-    #         line_plot = {"parameters": {}, "data": {"series": []}}
-    #
-    #     # Curve defs
-    #     elif line.startswith("#"):
-    #         in_curve = True
-    #         in_data = False
-    #         self.logger.debug(line_plot)
-    #         plot["data"].append(line_plot)
-    #         line_plot = {"parameters": {}, "data": {"series": []}}
-    #
-    #     # Parameters
-    #     elif line.startswith("%"):
-    #         # if in_data:
-    #         #     self.logger.debug(line_plot)
-    #         #     plot["data"].append(line_plot)
-    #         #     in_data = False
-    #         #     line_plot = {"parameters": {}, "data": {"series": []}}
-    #         self.logger.debug(line_plot["parameters"])
-    #         self.logger.debug(line)
-    #         strip_line = line[1:].strip()
-    #         self.logger.debug(strip_line)
-    #         key = strip_line[:strip_line.index("=")].strip()
-    #         self.logger.debug(key)
-    #         val = strip_line[strip_line.index("=")+1:].replace("'", "").strip()
-    #         self.logger.debug(val)
-    #
-    #
-    #         if in_curve:
-    #             self.logger.debug("in_curve")
-    #             line_plot["parameters"][key] = val
-    #         else:
-    #             self.logger.debug("not in_curve")
-    #             plot["parameters"][key] = val
-    #
-    #     # Data point
-    #     elif len(line) > 0:
-    #         in_data = True
-    #         self.logger.debug(plot["parameters"]) #["toplabel"])
-    #         self.logger.debug(line_plot["parameters"]) #["linelabel"])
-    #         # self.logger.debug(cast_vals[plot["parameters"]["toplabel"]][line_plot["parameters"]["linelabel"]]["x"])
-    #         sline = line.split()
-    #         if line_plot["parameters"]["linelabel"].startswith("resol"):
-    #             x = cast_vals[plot["parameters"]["toplabel"]]["resol"]["x"](sline[0].strip())
-    #             y = cast_vals[plot["parameters"]["toplabel"]]["resol"]["y"](sline[1].strip())
-    #         else:
-    #             x = cast_vals[plot["parameters"]["toplabel"]][line_plot["parameters"]["linelabel"]]["x"](sline[0].strip())
-    #             y = cast_vals[plot["parameters"]["toplabel"]][line_plot["parameters"]["linelabel"]]["y"](sline[1].strip())
-    #         # self.logger.debug(x, y)
-    #         line_plot["data"]["series"].append({"name": x, "value": y})
-    #
-    # parsed_plots[plot["parameters"]["toplabel"]] = plot
-    #
-    # self.logger.debug(parsed_plots.keys())
-    # self.logger.debug(parsed_plots)
-    #
-    #
-    # for x, line in enumerate(inp):
-    #     if line.startswith("% linelabel  = 'Theory'"):
-    #         ws.append(x)
-    #     if line.startswith("% linelabel  = 'Pred.low errors'"):
-    #         we.append(x-4)
-    #         ws.append(x)
-    #     if line.startswith("% linelabel  = 'Pred.high errors'"):
-    #         we.append(x-4)
-    #         ws.append(x)
-    #     if line.startswith("% linelabel  = 'Experiment'"):
-    #         we.append(x-1)
-    #         #ws.append(x+5)
-    #         ws.append(x)
-    #     if line.startswith("% toplabel  = 'Maximal oscillation width'"):
-    #         we.append(x-1)
-    #     if line.startswith("% linelabel  = 'resol. "):
-    #         res.append(x)
-    #     if line.startswith("% linelabel  = 'compl"):
-    #         com.append(x)
-    #
-    # # Assembling wilson
-    # for i in range(len(ws)):
-    #     d = {}
-    #
-    #     temp = []
-    #     k = inp[ws[i]][inp[ws[i]].find("=")+2:].strip().replace("'", "")
-    #     d = {"name":k, "series":[]}
-    #
-    #     for line in inp[ws[i]+1:we[i]]:
-    #         if len(line.split()) == 2:
-    #             # temp.append(line.split())
-    #             sline = line.split()
-    #             d["series"].append({"name":float(sline[0]), "value":float(sline[1])})
-    #     # d[k] = temp
-    #     wilson.append(d)
-    #
-    # # Assembling the max_delta_omega, rad_damage_int_decr, and rad_damage_rfactor_incr
-    # self.logger.debug(res)
-    # for i in range(len(res)):
-    #     temp = []
-    #     d = {}
-    #     k = inp[res[i]][inp[res[i]].find("=")+2:].strip().replace("resol. ", "").strip() + "A"
-    #     d = {"name":k, "series":[]}
-    #     print ">>>", k, "<<<"
-    #     if i == 4:
-    #         t = inp[res[i]+1:res[i]+182]
-    #     elif i == 14:
-    #         t = inp[res[i]+1:res[i]+102]
-    #     elif i == len(res)-1:
-    #         t = inp[res[i]+1:res[i]+502]
-    #     else:
-    #         t = inp[res[i]+1:res[i+1]-5]
-    #     for line in t:
-    #         sline = line.split()
-    #         if len(sline) == 2:
-    #             temp.append(line.split())
-    #             d["series"].append({"name":int(sline[0]), "value":float(sline[1])})
-    #     # d[k] = temp
-    #     if i < 5:
-    #         self.logger.debug("max_delta_omega")
-    #         max_delta_omega.append(d)
-    #     elif i > 14:
-    #         self.logger.debug("rad_damage_rfactor_incr")
-    #         rad_damage_rfactor_incr.append(d)
-    #     else:
-    #         self.logger.debug("rad_damage_int_decr")
-    #         rad_damage_int_decr.append(d)
-    #
-    # # Assembling the osc_range
-    # for i in range(5):
-    #     temp = []
-    #     k = inp[com[i]][inp[com[i]].find("=")+2:].strip().replace("compl -", "").replace(".%", "%")
-    #     d = {"name":k, "series":[]}
-    #     if i == 0:
-    #         t = inp[com[i]+4:com[i+1]-4]
-    #     else:
-    #         t = inp[com[i]+1:com[i+1]-4]
-    #     for line in t:
-    #         if len(line.split()) == 2:
-    #             # temp.append(line.split())
-    #             sline = line.split()
-    #             d["series"].append({"name":int(sline[0]), "value":int(sline[1])})
-    #     osc_range.append(d)
 
     output = {"wilson": parsed_plots["Wilson Plot"],
               "max_delta_omega": parsed_plots.get("Maximal oscillation width", False),
@@ -1284,6 +1099,7 @@ def ParseOutputMosflm_strat(self, inp, anom=False):
     ni    = []
     rn    = []
     seg = False
+
     # osc_range  = str(self.header.get('osc_range'))
     if self.vendortype in ('Pilatus-6M', 'ADSC-HF4M'):
         osc_range = '0.2'

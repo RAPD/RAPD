@@ -1463,6 +1463,51 @@ class RapdAgent(Process):
 
         self.logger.debug(info_string)
 
+    def display_plots(self):
+        """Display plots on the commandline"""
+
+        # Plot as long as JSON output is not selected
+        if not self.preferences.get("json_output", False):
+
+            # Determine the open terminal size
+            term_size = os.popen('stty size', 'r').read().split()
+
+            for plot_type in ("osc_range", "osc_range_anom"):
+
+                if plot_type in self.plots:
+
+                    tag = {"osc_range":"standard", "osc_range_anom":"ANOMALOUS"}[plot_type]
+                    self.tprint(arg="\nPlot of minimal oscillation range for different completenesses %s" % tag, level=99, color="blue")
+
+                    plot_data = self.plots[plot_type]
+
+                    # Determine y max
+                    y_max = numpy.array(plot_data["data"][0]["series"][0]["ys"]).max() + 10
+
+                    gnuplot = subprocess.Popen(["gnuplot"], stdin=subprocess.PIPE)
+                    gnuplot.stdin.write("set term dumb %s,%s aspect 3\n" % (term_size[1],int(term_size[0])/3))
+
+                    # Create the plot string
+                    plot_string = "plot [0:360] [0:%d] " % y_max
+                    for i in range(len(plot_data["data"])):
+                        plot_string += "'-' using 1:2 title '%s' with lines," % plot_data["data"][i]["parameters"]["linelabel"]
+                    plot_string = plot_string.rstrip(",") + "\n"
+                    gnuplot.stdin.write(plot_string)
+
+                    # Run through the data and add to gnuplot
+                    for i in range(len(plot_data["data"])):
+                        plot = plot_data["data"][i]
+                        xs = plot["series"][0]["xs"]
+                        ys = plot["series"][0]["ys"]
+                        for i, j in zip(xs, ys):
+                            gnuplot.stdin.write("%f %f\n" % (i,j))
+                        gnuplot.stdin.write("e\n")
+
+                    # Now plot!
+                    gnuplot.stdin.flush()
+                    time.sleep(3)
+                    gnuplot.terminate()
+
     def postprocess(self):
         """
         Make all the HTML files, pass results back, and cleanup.
@@ -1512,46 +1557,7 @@ class RapdAgent(Process):
                     # Summary.summaryBest(self, False)
                     # Summary.summaryBest(self, True)
                     self.htmlBestPlots()
-
-        # Generate the long and short summary HTML files
-        # self.htmlSummaryShort()
-        # self.htmlSummaryLong()
-
-        # Set STAC output to send back as None since it did not run.
-        output["Stac summary html"]  = "None"
-
-        # Get the raw tiff, autoindex_overlay, or distl_overlay of the diff pattern.
-        # l = [("raw", "image_path_raw"), ("overlay", "image_path_pred")]
-        # for x in range(len(l)):
-        #     # Set output files defaults
-        #     for i in range(2):
-        #         output["%s_%s" % (l[x][1], i+1)] = "None"
-        #     run = True
-        #     if x == 0:
-        #         dir1 = self.working_dir
-        #     else:
-        #         dir1 = self.labelit_dir
-        #         if os.path.exists(os.path.join(self.labelit_dir,"DISTL_pickle")) == False:
-        #             run = False
-        #     if run:
-        #         for i in range(len(self.vips_images[l[x][0]])):
-        #             try:
-        #                 f1 = os.path.join(dir1, self.vips_images[l[x][0]][i][0])
-        #                 job  = self.vips_images[l[x][0]][i][1]
-        #                 timer = 0
-        #                 while job.is_alive():
-        #                     time.sleep(0.2)
-        #                     timer += 0.2
-        #                     if self.verbose:
-        #                         number = round(timer % 1, 1)
-        #                         if number in (0.0, 1.0):
-        #                             print "Waiting for %s %s seconds" % (f1, timer)
-        #                 if x != 0:
-        #                     if os.path.exists(f1):
-        #                         shutil.copy(f1, os.path.join(self.working_dir,os.path.basename(f1)))
-        #                 output["%s_%s" % (l[x][1], i+1)] = os.path.join(self.dest_dir, os.path.basename(f1))
-        #             except:
-        #                 output["%s_%s" % (l[x][1], i+1)] = False
+                    self.display_plots()
 
         # Save path for files required for future STAC runs.
         try:
@@ -1674,7 +1680,7 @@ class RapdAgent(Process):
         generate plots html/php file
         """
 
-        # self.tprint(arg="Generating plots from Best", level=10, color="white")
+        self.tprint(arg="Generating plots from Best", level=10, color="white")
 
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::htmlBestPlots")
@@ -1704,76 +1710,76 @@ class RapdAgent(Process):
 
             # Best success
             else:
+                self.plots = plot
 
-                # Construct dict holding all the plots
-                best_plots = {
-                    "osc_range": {},
-                    "osc_range_anom": {},
-                    "max_delta_omega": {},
-                    "wilson": {},
-                    "rad_damage_int_decr": {},
-                    "rad_damage_rfactor_incr": {}
-                }
 
-                self.logger.debug(plot)
-
-                # Go through the plots and build best_plots
-                for plot_type in best_plots.keys():
-                    self.logger.debug(plot_type)
-
-            # Place holder for settings.
-            l = [["Omega start", "Min osc range for different completenesses", "O m e g a &nbsp R a n g e", "Omega Start",
-                  "comp", '"start at " + x + " for " + y + " degrees");'],
-                 ["ANOM Omega start", "Min osc range for different completenesses", "O m e g a &nbsp R a n g e", "Omega Start",
-                  "companom", '"start at " + x + " for " + y + " degrees");'],
-                 ["Max delta Omega", "Maximal Oscillation Width", "O m e g a &nbsp S t e p", "Omega",
-                  "width", '"max delta Omega of " + y + " at Omega=" + x);'],
-                 ["Wilson Plot", "Wilson Plot", "I n t e n s i t y", "1/Resolution<sup>2</sup>",
-                  "wilson", 'item.series.label + " of " + x + " = " + y);']]
-            if self.sample_type != "Ribosome":
-                temp = [["Rad damage1", "Intensity decrease due to radiation damage", "R e l a t i v e &nbsp I n t e n s i t y",
-                         "Cumulative exposure time (sec)", "damage",'"at res=" + item.series.label + " after " + x + " seconds intensity drops to " + y);'],
-                        ["Rad damage2", "Rdamage vs. Cumulative Exposure time", "R f a c t o r", "Cumulative exposure time (sec)",
-                         "rdamage",'"at res=" + item.series.label + " after " + x + " seconds Rdamage increases to " + y);']]
-                l.extend(temp)
-
-            if run:
-                for i in range(len(l)):
-                    if i == 0 and self.best_failed:
-                        best_plots["osc_range"] = False
-                    elif i == 1 and self.best_anom_failed:
-                        best_plots["osc_range_anom"] = False
-
-                s = "    var "
-                for i in range(len(l)):
-                    l1 = []
-                    l2 = []
-                    label = ["%6s[\n" % ""]
-                    s1 = s
-                    # In case comp or companom are not present.
-                    if plot.has_key(l[i][4]):
-                        data = plot.get(l[i][4])
-                        for x in range(len(data)):
-                            var = "%s%s" % (l[i][4].upper(), x)
-                            s1 += "%s=[]," % var
-                            label.append("%8s{ data: %s, label:%s },\n" % ("", var, data[x].keys()[0]))
-                            for y in range(len(data[x].get(data[x].keys()[0]))):
-                                l1.append("%4s%s.push([%s,%s]);\n" % ("", var, data[x].get(data[x].keys()[0])[y][0], data[x].get(data[x].keys()[0])[y][1]))
-                                if l[i][4].startswith("comp") and x == 0:
-                                    l2.append(data[x].get(data[x].keys()[0])[y][1])
-                        if i == 0:
-                            # best_plot.write("%s,mark=[];\n" % s1[:-1])
-                            label.append('%8s{ data: mark, label: "Best starting Omega", color: "black"},\n' % "")
-                        elif i == 1:
-                            # best_plot.write("%s,markanom=[];\n" % s1[:-1])
-                            label.append('%8s{ data: markanom, label: "Best starting Omega", color: "black"},\n' % "")
-                        else:
-                            pass
-                            # best_plot.write("%s;\n" % s1[:-1])
-                    label.append("%6s],\n" % "")
-                    l[i].append(label)
-
-            self.plots = best_plots
+            #     # Construct dict holding all the plots
+            #     best_plots = {
+            #         "osc_range": {},
+            #         "osc_range_anom": {},
+            #         "max_delta_omega": {},
+            #         "wilson": {},
+            #         "rad_damage_int_decr": {},
+            #         "rad_damage_rfactor_incr": {}
+            #     }
+            #
+            #     # self.logger.debug(plot)
+            #
+            #     # Go through the plots and build best_plots
+            #     for plot_type in best_plots.keys():
+            #         self.logger.debug(plot_type)
+            #
+            # # Place holder for settings.
+            # l = [["Omega start", "Min osc range for different completenesses", "O m e g a &nbsp R a n g e", "Omega Start",
+            #       "comp", '"start at " + x + " for " + y + " degrees");'],
+            #      ["ANOM Omega start", "Min osc range for different completenesses", "O m e g a &nbsp R a n g e", "Omega Start",
+            #       "companom", '"start at " + x + " for " + y + " degrees");'],
+            #      ["Max delta Omega", "Maximal Oscillation Width", "O m e g a &nbsp S t e p", "Omega",
+            #       "width", '"max delta Omega of " + y + " at Omega=" + x);'],
+            #      ["Wilson Plot", "Wilson Plot", "I n t e n s i t y", "1/Resolution<sup>2</sup>",
+            #       "wilson", 'item.series.label + " of " + x + " = " + y);']]
+            # if self.sample_type != "Ribosome":
+            #     temp = [["Rad damage1", "Intensity decrease due to radiation damage", "R e l a t i v e &nbsp I n t e n s i t y",
+            #              "Cumulative exposure time (sec)", "damage",'"at res=" + item.series.label + " after " + x + " seconds intensity drops to " + y);'],
+            #             ["Rad damage2", "Rdamage vs. Cumulative Exposure time", "R f a c t o r", "Cumulative exposure time (sec)",
+            #              "rdamage",'"at res=" + item.series.label + " after " + x + " seconds Rdamage increases to " + y);']]
+            #     l.extend(temp)
+            #
+            # if run:
+            #     for i in range(len(l)):
+            #         if i == 0 and self.best_failed:
+            #             best_plots["osc_range"] = False
+            #         elif i == 1 and self.best_anom_failed:
+            #             best_plots["osc_range_anom"] = False
+            #
+            #     s = "    var "
+            #     for i in range(len(l)):
+            #         l1 = []
+            #         l2 = []
+            #         label = ["%6s[\n" % ""]
+            #         s1 = s
+            #         # In case comp or companom are not present.
+            #         if plot.has_key(l[i][4]):
+            #             data = plot.get(l[i][4])
+            #             for x in range(len(data)):
+            #                 var = "%s%s" % (l[i][4].upper(), x)
+            #                 s1 += "%s=[]," % var
+            #                 label.append("%8s{ data: %s, label:%s },\n" % ("", var, data[x].keys()[0]))
+            #                 for y in range(len(data[x].get(data[x].keys()[0]))):
+            #                     l1.append("%4s%s.push([%s,%s]);\n" % ("", var, data[x].get(data[x].keys()[0])[y][0], data[x].get(data[x].keys()[0])[y][1]))
+            #                     if l[i][4].startswith("comp") and x == 0:
+            #                         l2.append(data[x].get(data[x].keys()[0])[y][1])
+            #             if i == 0:
+            #                 # best_plot.write("%s,mark=[];\n" % s1[:-1])
+            #                 label.append('%8s{ data: mark, label: "Best starting Omega", color: "black"},\n' % "")
+            #             elif i == 1:
+            #                 # best_plot.write("%s,markanom=[];\n" % s1[:-1])
+            #                 label.append('%8s{ data: markanom, label: "Best starting Omega", color: "black"},\n' % "")
+            #             else:
+            #                 pass
+            #                 # best_plot.write("%s;\n" % s1[:-1])
+            #         label.append("%6s],\n" % "")
+            #         l[i].append(label)
 
         except:
             self.logger.exception("**ERROR in htmlBestPlots**")

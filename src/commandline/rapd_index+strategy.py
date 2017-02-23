@@ -377,7 +377,7 @@ def main():
             if detector.has_key("site"):
                 site_target = detector.get("site")
                 site_file = utils.site.determine_site(site_arg=site_target)
-                print site_file
+                # print site_file
                 SITE = importlib.import_module(site_file)
                 detector_target = SITE.DETECTOR.lower()
                 detector_module = detector_utils.load_detector(detector_target)
