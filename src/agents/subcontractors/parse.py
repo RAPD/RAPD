@@ -1013,6 +1013,14 @@ def ParseOutputBestPlots(self, inp):
             "Background": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))},
             "Predictions": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))}
         },
+        "Intensity decrease due to radiation damage": {
+            "Rel.Intensity": {"x": (lambda x: float(x)), "y": (lambda x: float(x))},
+            "resol": {"x": (lambda x:  int(x)), "y": (lambda x: float(x))}
+        },
+        "Rdamage vs.cumulative exposure time": {
+            "R-factor": {"x": (lambda x: float(x)), "y": (lambda x: float(x))},
+            "resol": {"x": (lambda x:  int(x)), "y": (lambda x: float(x))}
+        }
     }
 
     parsed_plots = {}
