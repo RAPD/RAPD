@@ -52,10 +52,16 @@ dp_parser.add_argument("-v", "--verbose",
                        dest="verbose",
                        help="Enable verbose feedback in the terminal")
 
-# Output JSON?
+# No log file
 dp_parser.add_argument("--nolog",
                        action="store_false",
                        dest="logging",
+                       help="Do not create log file")
+
+# No plotting in commandline
+dp_parser.add_argument("--noplot",
+                       action="store_false",
+                       dest="plotting",
                        help="Do not create log file")
 
 # Test mode?

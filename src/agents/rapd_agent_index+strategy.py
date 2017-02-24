@@ -63,6 +63,7 @@ DETECTOR_TO_BEST = {
     "ADSC-HF4M": "hf4m",
     "Pilatus-6M": "pilatus6m",
     "PILATUS": "pilatus6m",
+    "rayonix_mx225": "mar225",
     "rayonix_mx300hs": "mx300hs",
     "mar300": "mar300",
     "ray300": "ray300",
@@ -1478,7 +1479,7 @@ class RapdAgent(Process):
         """Display plots on the commandline"""
 
         # Plot as long as JSON output is not selected
-        if not self.preferences.get("json_output", False):
+        if self.preferences.get("show_plots", True) and (not self.preferences.get("json_output", False)):
 
             # Determine the open terminal size
             term_size = os.popen('stty size', 'r').read().split()

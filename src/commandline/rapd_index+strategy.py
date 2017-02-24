@@ -78,6 +78,9 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     # JSON output?
     command["preferences"]["json_output"] = commandline_args.json
 
+    # Show plots
+    command["preferences"]["show_plots"] = commandline_args.plotting
+
     # Strategy type
     command["preferences"]["strategy_type"] = commandline_args.strategy_type
 
