@@ -49,7 +49,7 @@ DETECTORS = {
         },      # APS 22BM
     ("MARCCD", 101): {                          # APS 22ID
         "detector": "sercat_rayonix_mx300hs",
-        "site": "sercat_id"
+        # "site": "sercat_id"
         },
     ("Pilatus-6M", "PILATUS 6M-F S/N 60-0112-F"): {
         "detector": "necat_dectris_pilatus6mf",

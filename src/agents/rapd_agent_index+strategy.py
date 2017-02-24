@@ -639,10 +639,14 @@ class RapdAgent(Process):
             min_d_o = self.site_parameters.get("DIFFRACTOMETER_OSC_MIN")
             min_e_t = self.site_parameters.get("DETECTOR_TIME_MIN")
 
-            image_number = []
-            image_number.append(self.header.get('fullname')[self.header.get('fullname').rfind('_')+1:self.header.get('fullname').rfind('.')])
+            # Get image numbers
+            counter_depth = self.header["image_template"].count("?")
+            image_number_format = "%0"+str(counter_depth)+"d"
+            image_number = [image_number_format % self.header["image_number"],]
+            # image_number.append(self.header.get('fullname')[self.header.get('fullname').rfind('_')+1:self.header.get('fullname').rfind('.')])
             if self.header2:
-                image_number.append(self.header2.get('fullname')[self.header2.get('fullname').rfind('_')+1:self.header2.get('fullname').rfind('.')])
+                image_number.append(image_number_format % self.header2["image_number"])
+                # image_number.append(self.header2.get('fullname')[self.header2.get('fullname').rfind('_')+1:self.header2.get('fullname').rfind('.')])
 
             # Tell Best if two-theta is being used.
             if int(float(self.header.get("twotheta", 0))) != 0:
@@ -1492,12 +1496,12 @@ class RapdAgent(Process):
                     # Determine y max
                     y_max = numpy.array(plot_data["data"][0]["series"][0]["ys"]).max() + 10
 
-                    gnuplot = subprocess.Popen(["gnuplot"], stdin=subprocess.PIPE)
-                    gnuplot.stdin.write("""set term dumb  %s,%s
+                    gnuplot = subprocess.Popen(["gnuplot"], stdin=subprocess.PIPE) # %s,%s  (term_size[1], int(int(term_size[0])/3),
+                    gnuplot.stdin.write("""set term dumb %s,%s
                                            set key outside
                                            set title 'Minimal Oscillation Ranges %s'
                                            set xlabel 'Starting Angle'
-                                           set ylabel 'Rotation Range' rotate by 90 \n""" % (min(term_size[1], 120), int(int(term_size[0])/4), tag))
+                                           set ylabel 'Rotation Range' rotate by 90 \n""" %  (term_size[1], int(int(term_size[0])/3), tag))
 
                     # Create the plot string
                     plot_string = "plot [0:360] [0:%d] " % y_max
@@ -2690,7 +2694,7 @@ def BestAction(inp, logger=False, output=False):
         logger.debug('BestAction')
         logger.debug(inp)
 
-    print inp
+    # print inp
     # try:
     command, log = inp
     # Have to do this otherwise command is written to bottom of file??
