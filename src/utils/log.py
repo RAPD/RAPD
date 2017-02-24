@@ -30,7 +30,7 @@ import os
 import utils.text as text
 
 
-def verbose_print(arg, level=20, verbosity=20, color="default"):
+def verbose_print(arg, level=20, verbosity=20, color="default", no_color=False):
     """Print to terminal window screened by verbosity setting
 
     Keyword arguments:
@@ -50,19 +50,24 @@ def verbose_print(arg, level=20, verbosity=20, color="default"):
         arg = str(arg)
 
     if level >= verbosity:
+        if no_color:
+            color = False
+
         if color:
             print text.color(color) + arg + text.stop
         else:
             print arg
 
-def get_terminal_printer(verbosity=50):
+def get_terminal_printer(verbosity=50, no_color=False):
     """Returns a terminal printer
 
     Keyword arguments:
     verbosity -- threshold to print (default 50)
     """
 
-    terminal_print = functools.partial(verbose_print, verbosity=verbosity)
+    terminal_print = functools.partial(verbose_print,
+                                       verbosity=verbosity,
+                                       no_color=no_color)
     return terminal_print
 
 

@@ -1510,13 +1510,13 @@ class RapdAgent(Process):
 
                     # Create the plot string
                     plot_string = "plot [0:360] [0:%d] " % y_max
-                    for i in range(len(plot_data["data"])):
+                    for i in range(min(5, len(plot_data["data"]))):
                         plot_string += "'-' using 1:2 title '%s' with lines," % plot_data["data"][i]["parameters"]["linelabel"].replace("compl -", "")
                     plot_string = plot_string.rstrip(",") + "\n"
                     gnuplot.stdin.write(plot_string)
 
                     # Run through the data and add to gnuplot
-                    for i in range(len(plot_data["data"])):
+                    for i in range(min(5, len(plot_data["data"]))):
                         plot = plot_data["data"][i]
                         xs = plot["series"][0]["xs"]
                         ys = plot["series"][0]["ys"]

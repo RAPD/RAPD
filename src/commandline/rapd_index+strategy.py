@@ -296,7 +296,8 @@ def main():
     else:
         terminal_log_level = 50
 
-    tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level)
+    tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level,
+                                            no_color=commandline_args.no_color)
 
     print_welcome_message(tprint)
 
@@ -316,7 +317,6 @@ def main():
 
     # List sites?
     if commandline_args.listsites:
-        # print "\n" + text.info + "Available sites:" + text.stop
         tprint(arg="\nAvailable sites", level=99, color="blue")
         commandline_utils.print_sites(left_buffer="  ")
         if not commandline_args.listdetectors:

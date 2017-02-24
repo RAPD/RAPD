@@ -158,6 +158,16 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module,
 
     return command
 
+def print_welcome_message(printer):
+    """Print a welcome message to the terminal"""
+
+    message = """
+---------------
+RAPD Intgration
+---------------"""
+    printer(message, 50, color="blue")
+
+
 def main():
     """
     The main process
@@ -167,13 +177,8 @@ def main():
     # Get the commandline args
     commandline_args = get_commandline()
 
-    # Verbosity
-    if commandline_args.verbose:
-        verbosity = 5
-        log_level = 10
-    else:
-        verbosity = 1
-        log_level = 50
+    # Output log file is always verbose
+    log_level = 10
 
     # Set up logging
     logger = utils.log.get_logger(logfile_dir="./",
@@ -182,21 +187,36 @@ def main():
                                   console=commandline_args.test)
 
     # Set up terminal printer
+    # Verbosity
+    if commandline_args.verbose:
+        terminal_log_level = 10
+    elif commandline_args.json:
+        terminal_log_level = 100
+    else:
+        terminal_log_level = 50
+
     tprint = utils.log.get_terminal_printer(verbosity=log_level)
 
+    print_welcome_message(tprint)
+
+    # Print out commandline arguments
     logger.debug("Commandline arguments:")
+    tprint(arg="\nCommandline arguments:", level=10, color="blue")
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s", pair[0], pair[1])
+        tprint(arg="  arg:%-20s  val:%s" % (pair[0], pair[1]), level=10, color="white")
 
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
     logger.debug("\n" + text.info + "Environmental variables" + text.stop)
+    tprint("\nEnvironmental variables", level=10, color="blue")
     for key, val in environmental_vars.iteritems():
         logger.debug("  " + key + " : " + val)
+        tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
 
     # List sites?
     if commandline_args.listsites:
-        print "\n" + text.info + "Available sites:" + text.stop
+        tprint(arg="\nAvailable sites", level=99, color="blue")
         commandline_utils.print_sites(left_buffer="  ")
         if not commandline_args.listdetectors:
             sys.exit()
@@ -206,6 +226,8 @@ def main():
         print "\n" + text.info + "Available detectors:" + text.stop
         commandline_utils.print_detectors(left_buffer="  ")
         sys.exit()
+
+    sys.exit()
 
     # Look for data based on the input template
     data_files = commandline_utils.analyze_data_sources(

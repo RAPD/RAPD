@@ -64,6 +64,12 @@ dp_parser.add_argument("--noplot",
                        dest="plotting",
                        help="Do not create log file")
 
+# No color in terminal printing
+dp_parser.add_argument("--nocolor",
+                       action="store_true",
+                       dest="no_color",
+                       help="Do not create log file")
+
 # Test mode?
 dp_parser.add_argument("-t", "--test",
                        action="store_true",
