@@ -33,8 +33,8 @@ AGENT_TYPE = "AUTOINDEX+STRATEGY"
 AGENT_SUBTYPE = "CORE"
 
 # A unique UUID for this handler (uuid.uuid1().hex)
-VERSION = "2.0.0"
 ID = "3b3448aee4a811e59c0aac87a3333966"
+VERSION = "2.0.0"
 
 # Standard imports
 from collections import OrderedDict
@@ -1495,21 +1495,22 @@ class RapdAgent(Process):
 
                     tag = {"osc_range":"standard", "osc_range_anom":"ANOMALOUS"}[plot_type]
 
-
                     plot_data = self.plots[plot_type]
 
                     # Determine y max
-                    y_max = numpy.array(plot_data["data"][0]["series"][0]["ys"]).max() + 10
+                    y_array = numpy.array(plot_data["data"][0]["series"][0]["ys"])
+                    y_max = y_array.max() + 10
+                    y_min = 0 #max(0, (y_array.min() - 10))
 
                     gnuplot = subprocess.Popen(["gnuplot"], stdin=subprocess.PIPE) # %s,%s  (term_size[1], int(int(term_size[0])/3),
                     gnuplot.stdin.write("""set term dumb %s,%s
                                            set key outside
                                            set title 'Minimal Oscillation Ranges %s'
                                            set xlabel 'Starting Angle'
-                                           set ylabel 'Rotation Range' rotate by 90 \n""" %  (min(180, term_size[1]), int(int(term_size[0])/3), tag))
+                                           set ylabel 'Rotation Range' rotate by 90 \n""" %  (min(180, term_size[1]), max(30, int(int(term_size[0])/3)), tag))
 
                     # Create the plot string
-                    plot_string = "plot [0:180] [0:%d] " % y_max
+                    plot_string = "plot [0:180] [%d:%d] " % (y_min, y_max)
                     for i in range(min(5, len(plot_data["data"]))):
                         plot_string += "'-' using 1:2 title '%s' with lines," % plot_data["data"][i]["parameters"]["linelabel"].replace("compl -", "")
                     plot_string = plot_string.rstrip(",") + "\n"
