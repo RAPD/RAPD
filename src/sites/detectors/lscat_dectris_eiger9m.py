@@ -208,6 +208,13 @@ def read_header(input_file=False, beam_settings=False):
         header["image_prefix"] = ".".join(basename.replace(".cbf", "").split(".")[:-1])
         header["run_number"] = int(basename.replace(".cbf", "").split("_")[-1])
 
+        # Add tag for module to header
+        header["rapd_detector_id"] = "lscat_dectris_eiger9m"
+
+        # The image template for processing
+        header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])
+        header["run_number_in_template"] = RUN_NUMBER_IN_TEMPLATE
+
     # Return the header
     return header
 

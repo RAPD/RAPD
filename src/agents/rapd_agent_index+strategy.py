@@ -630,146 +630,150 @@ class RapdAgent(Process):
 
         Best versions known 3.2.0, 3.4.4
         """
+
+        # print "processBest"
+
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::processBest %s", best_version)
 
-        try:
-            max_dis = self.site_parameters.get("DETECTOR_DISTANCE_MAX")
-            min_dis = self.site_parameters.get("DETECTOR_DISTANCE_MIN")
-            min_d_o = self.site_parameters.get("DIFFRACTOMETER_OSC_MIN")
-            min_e_t = self.site_parameters.get("DETECTOR_TIME_MIN")
+        # try:
+        max_dis = self.site_parameters.get("DETECTOR_DISTANCE_MAX")
+        min_dis = self.site_parameters.get("DETECTOR_DISTANCE_MIN")
+        min_d_o = self.site_parameters.get("DIFFRACTOMETER_OSC_MIN")
+        min_e_t = self.site_parameters.get("DETECTOR_TIME_MIN")
 
-            # Get image numbers
-            counter_depth = self.header["image_template"].count("?")
-            image_number_format = "%0"+str(counter_depth)+"d"
-            image_number = [image_number_format % self.header["image_number"],]
-            # image_number.append(self.header.get('fullname')[self.header.get('fullname').rfind('_')+1:self.header.get('fullname').rfind('.')])
-            if self.header2:
-                image_number.append(image_number_format % self.header2["image_number"])
-                # image_number.append(self.header2.get('fullname')[self.header2.get('fullname').rfind('_')+1:self.header2.get('fullname').rfind('.')])
+        # Get image numbers
+        counter_depth = self.header["image_template"].count("?")
+        image_number_format = "%0"+str(counter_depth)+"d"
+        image_number = [image_number_format % self.header["image_number"],]
+        # image_number.append(self.header.get('fullname')[self.header.get('fullname').rfind('_')+1:self.header.get('fullname').rfind('.')])
+        if self.header2:
+            image_number.append(image_number_format % self.header2["image_number"])
+            # image_number.append(self.header2.get('fullname')[self.header2.get('fullname').rfind('_')+1:self.header2.get('fullname').rfind('.')])
 
-            # Tell Best if two-theta is being used.
-            if int(float(self.header.get("twotheta", 0))) != 0:
-                Utils.fixBestfile(self)
+        # Tell Best if two-theta is being used.
+        if int(float(self.header.get("twotheta", 0))) != 0:
+            Utils.fixBestfile(self)
 
-            # If Raddose failed, here are the defaults.
-            dose = 100000.0
-            exp_dose_lim = 300
-            if self.raddose_results:
-                if self.raddose_results.get("raddose_results") != 'FAILED':
-                    dose = self.raddose_results.get("raddose_results").get('dose per image')
-                    exp_dose_lim = self.raddose_results.get("raddose_results").get('exp dose limit')
+        # If Raddose failed, here are the defaults.
+        dose = 100000.0
+        exp_dose_lim = 300
+        if self.raddose_results:
+            if self.raddose_results.get("raddose_results") != 'FAILED':
+                dose = self.raddose_results.get("raddose_results").get('dose per image')
+                exp_dose_lim = self.raddose_results.get("raddose_results").get('exp dose limit')
 
-            # Set how many frames a crystal will last at current exposure time.
-            self.crystal_life = str(int(float(exp_dose_lim) / float(self.time)))
-            if self.crystal_life == '0':
-                self.crystal_life = '1'
-            # Adjust dose for ribosome crystals.
-            if self.sample_type == 'Ribosome':
-                dose = 500001
-            # If dose is too high, warns user and sets to reasonable amount and reruns Best but give warning.
-            if dose > 500000:
-                dose = 500000
-                exp_dose_lim = 100
-                self.high_dose = True
-                if iteration == 1:
-                    dose = 100000.0
-                    exp_dose_lim = 300
-                if iteration == 2:
-                    dose = 100000.0
-                    exp_dose_lim = False
-                if iteration == 3:
-                    dose = False
-                    exp_dose_lim = False
+        # Set how many frames a crystal will last at current exposure time.
+        self.crystal_life = str(int(float(exp_dose_lim) / float(self.time)))
+        if self.crystal_life == '0':
+            self.crystal_life = '1'
+        # Adjust dose for ribosome crystals.
+        if self.sample_type == 'Ribosome':
+            dose = 500001
+        # If dose is too high, warns user and sets to reasonable amount and reruns Best but give warning.
+        if dose > 500000:
+            dose = 500000
+            exp_dose_lim = 100
+            self.high_dose = True
+            if iteration == 1:
+                dose = 100000.0
+                exp_dose_lim = 300
+            if iteration == 2:
+                dose = 100000.0
+                exp_dose_lim = False
+            if iteration == 3:
+                dose = False
+                exp_dose_lim = False
 
-            # Put together the command for labelit.index
-            command = "best -f %s" % DETECTOR_TO_BEST.get(self.header.get("detector"), "q315")
+        # Put together the command for labelit.index
+        command = "best -f %s" % DETECTOR_TO_BEST.get(self.header.get("detector"), "q315")
 
-            # Binning
-            if str(self.header.get('binning')) == '2x2':
-                command += '-2x'
-            if self.high_dose:
-                command += ' -t 1.0'
-            else:
-                command += " -t %s" % self.time
-            command += ' -e %s -sh %s -su %s' % (self.preferences.get('best_complexity', 'none'),\
-                                                 self.preferences.get('shape', '2.0'), self.preferences.get('susceptibility', '1.0'))
-            if self.preferences.get('aimed_res') != 0.0:
-                command += ' -r %s' % self.preferences.get('aimed_res')
-            if best_version >= "3.4":
-                command += ' -Trans %s' % self.transmission
-            # Set minimum rotation width per frame. Different for PAR and CCD detectors.
-            command += ' -w %s' % min_d_o
-            # Set minimum exposure time per frame.
-            command += ' -M %s' % min_e_t
-            # Set min and max detector distance
-            if best_version >= "3.4":
-                command += ' -DIS_MAX %s -DIS_MIN %s' % (max_dis, min_dis)
-            # Fix bug in BEST for PAR detectors. Use the cumulative completeness of 99% instead of all bin.
-            if self.vendortype in ('Pilatus-6M', 'ADSC-HF4M'):
-                command += ' -low never'
-            # set dose  and limit, else set time
-            if best_version >= "3.4" and dose:
-                command += ' -GpS %s -DMAX 30000000'%dose
-            else:
-                command += ' -T 185'
-            if runbefore:
-                command += ' -p %s %s' % (runbefore[0], runbefore[1])
-            command1 = command
-            command1 += ' -a -o best_anom.plt -dna best_anom.xml'
-            command += ' -o best.plt -dna best.xml'
-            end = ' -mos bestfile.dat bestfile.par %s_%s.hkl ' % (self.index_number, image_number[0])
-            """
-            if self.pilatus:
-              if os.path.exists(os.path.join(self.working_dir,'BKGINIT.cbf')):
-                end = ' -MXDS bestfile.par BKGINIT.cbf %s_%s.hkl ' % (self.index_number,image_number[0])
-            """
-            if self.header2:
-                end += '%s_%s.hkl' % (self.index_number, image_number[1])
-            command  += end
-            command1 += end
-            d = {}
-            jobs = {}
-            l = [(command, ''), (command1, '_anom')]
-            st  = 0
-            end1 = 2
-            if runbefore:
-                st  = runbefore[2]
-                end1 = runbefore[3]
+        # Binning
+        if str(self.header.get('binning')) == '2x2':
+            command += '-2x'
+        if self.high_dose:
+            command += ' -t 1.0'
+        else:
+            command += " -t %s" % self.time
+        command += ' -e %s -sh %s -su %s' % (self.preferences.get('best_complexity', 'none'),\
+                                             self.preferences.get('shape', '2.0'), self.preferences.get('susceptibility', '1.0'))
+        if self.preferences.get('aimed_res') != 0.0:
+            command += ' -r %s' % self.preferences.get('aimed_res')
+        if best_version >= "3.4":
+            command += ' -Trans %s' % self.transmission
+        # Set minimum rotation width per frame. Different for PAR and CCD detectors.
+        command += ' -w %s' % min_d_o
+        # Set minimum exposure time per frame.
+        command += ' -M %s' % min_e_t
+        # Set min and max detector distance
+        if best_version >= "3.4":
+            command += ' -DIS_MAX %s -DIS_MIN %s' % (max_dis, min_dis)
+        # Fix bug in BEST for PAR detectors. Use the cumulative completeness of 99% instead of all bin.
+        if self.vendortype in ('Pilatus-6M', 'ADSC-HF4M'):
+            command += ' -low never'
+        # set dose  and limit, else set time
+        if best_version >= "3.4" and dose:
+            command += ' -GpS %s -DMAX 30000000'%dose
+        else:
+            command += ' -T 185'
+        if runbefore:
+            command += ' -p %s %s' % (runbefore[0], runbefore[1])
+        command1 = command
+        command1 += ' -a -o best_anom.plt -dna best_anom.xml'
+        command += ' -o best.plt -dna best.xml'
+        end = ' -mos bestfile.dat bestfile.par %s_%s.hkl ' % (self.index_number, image_number[0])
+        """
+        if self.pilatus:
+          if os.path.exists(os.path.join(self.working_dir,'BKGINIT.cbf')):
+            end = ' -MXDS bestfile.par BKGINIT.cbf %s_%s.hkl ' % (self.index_number,image_number[0])
+        """
+        if self.header2:
+            end += '%s_%s.hkl' % (self.index_number, image_number[1])
+        command  += end
+        command1 += end
+        d = {}
+        jobs = {}
+        l = [(command, ''), (command1, '_anom')]
+        st  = 0
+        end1 = 2
+        if runbefore:
+            st  = runbefore[2]
+            end1 = runbefore[3]
 
-            for i in range(st, end1):
-                log = os.path.join(os.getcwd(), "best%s.log" % l[i][1])
-                if self.verbose:
-                    self.logger.debug(l[i][0])
-                # Save the path of the log
-                d.update({'log'+l[i][1]:log})
-                if self.test == False:
-                    if self.cluster_use:
-                        jobs[str(i)] = Process(target=self.cluster_adapter.processCluster,
-                                               args=(self, (l[i][0], log, self.cluster_queue)))
-                    else:
-                        jobs[str(i)] = Process(target=BestAction,
-                                               args=((l[i][0], log), self.logger))
-                    jobs[str(i)].start()
+        # print l
+        for i in range(st, end1):
+            log = os.path.join(os.getcwd(), "best%s.log" % l[i][1])
+            if self.verbose:
+                self.logger.debug(l[i][0])
+            # Save the path of the log
+            d.update({'log'+l[i][1]:log})
+            if self.test == False:
+                if self.cluster_use:
+                    jobs[str(i)] = Process(target=self.cluster_adapter.processCluster,
+                                           args=(self, (l[i][0], log, self.cluster_queue)))
+                else:
+                    jobs[str(i)] = Process(target=BestAction,
+                                           args=((l[i][0], log), self.logger))
+                jobs[str(i)].start()
 
-            # Check if Best should rerun since original Best strategy is too long for Pilatus using
-            # correct start and end from plots. (Way around bug in BEST.)
-            if best_version > "3.4" and self.test == False:
-                if runbefore == False:
-                    counter = 2
-                    while counter > 0:
-                        for job in jobs.keys():
-                            if jobs[job].is_alive() == False:
-                                del jobs[job]
-                                start, ran = self.findBestStrat(d['log'+l[int(job)][1]].replace('log', 'plt'))
-                                if start != False:
-                                    pass
-                                    # self.processBest(iteration, (start, ran, int(job), int(job)+1))
-                                counter -= 1
-                        time.sleep(0.1)
+        # Check if Best should rerun since original Best strategy is too long for Pilatus using
+        # correct start and end from plots. (Way around bug in BEST.)
+        if best_version > "3.4" and self.test == False:
+            if runbefore == False:
+                counter = 2
+                while counter > 0:
+                    for job in jobs.keys():
+                        if jobs[job].is_alive() == False:
+                            del jobs[job]
+                            start, ran = self.findBestStrat(d['log'+l[int(job)][1]].replace('log', 'plt'))
+                            if start != False:
+                                pass
+                                # self.processBest(iteration, (start, ran, int(job), int(job)+1))
+                            counter -= 1
+                    time.sleep(0.1)
 
-        except:
-            self.logger.exception('**Error in processBest**')
+        # except:
+        #     self.logger.exception('**Error in processBest**')
 
     def processMosflm(self):
         """
@@ -1098,7 +1102,7 @@ class RapdAgent(Process):
                     if out.has_key(data):
                         Utils.errorBestPost(self, iteration, out[data],anom)
                 self.tprint(arg="BEST unable to calculate a strategy", level=30, color="red")
-                print data
+                # print data
                 return("FAILED")
 
     def postprocessMosflm(self, inp):
