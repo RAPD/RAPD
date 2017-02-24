@@ -301,9 +301,13 @@ def analyze_data_sources(sources,
         # HDF5 file
         if sources.endswith(".h5"):
 
-            print "Converting HDF5 file to CBFs"
-
             source_abspath = os.path.abspath(sources)
+
+            if not "hdf5_files" in return_data:
+                return_data["hdf5_files"] = [source_abspath]
+            else:
+                return_data["hdf5_files"].append(source_abspath)
+
             prefix = os.path.basename(sources).replace("_master.h5", "")
 
             if not start_image:
@@ -315,7 +319,8 @@ def analyze_data_sources(sources,
                 prefix=prefix,
                 start_image=start_image,
                 end_image=end_image,
-                overwrite=False)
+                overwrite=False,
+                verbose=False)
 
             converter.run()
 
@@ -333,11 +338,11 @@ def analyze_data_sources(sources,
             # "?" as numbers that increment
             # "#" as numbers that increment
             full_path_template = full_path_template.replace("?", "[0-9]").replace("#", "[0-9]")
-            return_data = glob.glob(full_path_template)
+            return_data["data_files"] = glob.glob(full_path_template)
 
-            return_data.sort()
+            return_data["data_files"].sort()
 
-            if len(return_data) == 0:
+            if len(return_data["data_files"]) == 0:
                 raise Exception("No files for %s found" % template)
 
             return return_data

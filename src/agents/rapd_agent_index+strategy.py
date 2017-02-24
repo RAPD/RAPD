@@ -1506,10 +1506,10 @@ class RapdAgent(Process):
                                            set key outside
                                            set title 'Minimal Oscillation Ranges %s'
                                            set xlabel 'Starting Angle'
-                                           set ylabel 'Rotation Range' rotate by 90 \n""" %  (term_size[1], int(int(term_size[0])/3), tag))
+                                           set ylabel 'Rotation Range' rotate by 90 \n""" %  (min(180, term_size[1]), int(int(term_size[0])/3), tag))
 
                     # Create the plot string
-                    plot_string = "plot [0:360] [0:%d] " % y_max
+                    plot_string = "plot [0:180] [0:%d] " % y_max
                     for i in range(min(5, len(plot_data["data"]))):
                         plot_string += "'-' using 1:2 title '%s' with lines," % plot_data["data"][i]["parameters"]["linelabel"].replace("compl -", "")
                     plot_string = plot_string.rstrip(",") + "\n"

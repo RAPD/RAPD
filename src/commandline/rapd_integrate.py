@@ -78,7 +78,7 @@ def get_image_data(data_file, detector_module, site):
     Get the image data and return given a filename
     """
 
-    print "get_image_data", data_file
+    # print "get_image_data", data_file
 
     if site:
         header = detector_module.read_header(data_file, site.BEAM_SETTINGS)
@@ -227,8 +227,6 @@ def main():
         commandline_utils.print_detectors(left_buffer="  ")
         sys.exit()
 
-    sys.exit()
-
     # Look for data based on the input template
     data_files = commandline_utils.analyze_data_sources(
         commandline_args.template,
@@ -236,9 +234,23 @@ def main():
         start_image=commandline_args.start_image,
         end_image=commandline_args.end_image)
 
+    if "hdf5_files" in data_files:
+        logger.debug("HDF5 source file(s)")
+        tprint(arg="\nHDF5 source file(s)", level=99, color="blue")
+        logger.debug(data_files["hdf5_files"])
+        for data_file in data_files["hdf5_files"]:
+            tprint(arg="  " + data_file, level=99, color="white")
+        logger.debug("CBF file(s) from HDF5 file(s)")
+        tprint(arg="\nData files", level=99, color="blue")
+    else:
+        logger.debug("Data to be integrated")
+        tprint(arg="\nData to be integrated", level=99, color="blue")
+        tprint(arg="  From %s" % data_files["data_files"][0], level=99, color="white")
+        tprint(arg="    To %s" % data_files["data_files"][-1], level=99, color="white")
+
     # Need data
     if len(data_files) == 0 and commandline_args.test == False:
-        raise Exception, "No files input for indexing."
+        raise Exception("No files input for indexing.")
 
     # Get site - commandline wins over the environmental variable
     site = False
@@ -262,27 +274,50 @@ def main():
         #     detector_module = detector_utils.load_detector(detector)
         # else:
         #     raise Error("Not able to load detector module")
-        detector = detector_utils.get_detector_file(data_files[0])
-        print detector
+        detector = detector_utils.get_detector_file(data_files["data_files"][0])
         if isinstance(detector, dict):
             if detector.has_key("site"):
                 site_target = detector.get("site")
                 site_file = utils.site.determine_site(site_arg=site_target)
-                print site_file
+                # print site_file
                 SITE = importlib.import_module(site_file)
                 detector_target = SITE.DETECTOR.lower()
                 detector_module = detector_utils.load_detector(detector_target)
             elif detector.has_key("detector"):
+                SITE = False
                 detector_target = detector.get("detector")
                 detector_module = detector_utils.load_detector(detector_target)
 
-    # Get the image data
     # Have a detector - read in file data
-    if detector_module:
-        image_0_data = get_image_data(data_files[0], detector_module, SITE)
-        image_n_data = get_image_data(data_files[-1], detector_module, SITE)
-    else:
+    if not detector_module:
         raise Exception("No detector identified")
+
+
+    image_0_data = get_image_data(data_files["data_files"][0], detector_module, SITE)
+    image_n_data = get_image_data(data_files["data_files"][-1], detector_module, SITE)
+
+    logger.debug("Image header: %s, %s", image_0_data, image_n_data)
+    tprint(arg="\nImage headers", level=10, color="blue")
+
+    count = 0
+    for header in (image_0_data, image_n_data):
+        keys = header.keys()
+        keys.sort()
+        if count > 0:
+            tprint(arg="", level=10, color="white")
+        tprint(arg="  %s" % header["fullname"], level=10, color="white")
+        for key in keys:
+            tprint(arg="    arg:%-22s  val:%s" % (key, header[key]), level=10, color="white")
+        count += 1
+
+    command = construct_command(image_headers=image_headers,
+                                commandline_args=commandline_args,
+                                detector_module=detector_module,
+                                logger=logger)
+
+    print command
+
+    sys.exit()
 
     # Get the run data
     run_data = get_run_data(detector_module, image_0_data, image_n_data)
