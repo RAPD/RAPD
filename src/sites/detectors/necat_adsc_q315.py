@@ -250,6 +250,13 @@ def read_header(fullname, beam_settings=BEAM_SETTINGS, run_id=None, place_in_run
     # Set the header version value - future flexibility
     header["header_version"] = HEADER_VERSION
 
+    # Add tag for module to header
+    header["rapd_detector_id"] = "necat_adsc_q315"
+
+    # The image template for processing
+    header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])
+    header["run_number_in_template"] = RUN_NUMBER_IN_TEMPLATE
+
     # Return the header
     return header
 

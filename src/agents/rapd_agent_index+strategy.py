@@ -644,7 +644,11 @@ class RapdAgent(Process):
         min_e_t = self.site_parameters.get("DETECTOR_TIME_MIN")
 
         # Get image numbers
-        counter_depth = self.header["image_template"].count("?")
+        try:
+            counter_depth = self.header["image_template"].count("?")
+        except KeyError:
+            raise Exception("Header information missing image_template")
+
         image_number_format = "%0"+str(counter_depth)+"d"
         image_number = [image_number_format % self.header["image_number"],]
         # image_number.append(self.header.get('fullname')[self.header.get('fullname').rfind('_')+1:self.header.get('fullname').rfind('.')])
@@ -1706,6 +1710,8 @@ class RapdAgent(Process):
 
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::htmlBestPlots")
+
+        # pprint.pprint(self.best_results)
 
         # try:
         run = True
