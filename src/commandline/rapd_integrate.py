@@ -30,7 +30,7 @@ __status__ = "Development"
 import argparse
 import importlib
 import os
-import pprint
+from pprint import pprint
 import sys
 import uuid
 
@@ -87,7 +87,7 @@ def get_image_data(data_file, detector_module, site):
 
     return header
 
-def get_run_data(detector_module, image_0_data, image_n_data):
+def get_run_data(detector_module, image_0_data, image_n_data, commandline_args):
     """
     Create and return run data
     {'distance' : '380.0',
@@ -101,20 +101,38 @@ def get_run_data(detector_module, image_0_data, image_n_data):
     """
 
     # print "get_run_data"
-    # pprint.pprint(image_0_data)
-    # pprint.pprint(image_n_data)
+    # pprint(image_0_data)
+    # pprint(image_n_data)
 
     run_data = {
         "directory": image_0_data.get("directory"),
         "distance": image_0_data.get("distance"),
         "image_prefix": image_0_data.get("image_prefix"),
         "image_template": detector_module.create_image_template(image_0_data.get("image_prefix"), image_0_data.get("run_number")),
-        "repr": detector_module.create_image_template(image_0_data.get("image_prefix"), image_0_data.get("run_number")).rstrip(detector_module.DETECTOR_SUFFIX).replace("?", "") + ("%d-%d" % (image_0_data.get("image_number"), image_n_data.get("image_number"))),
+        # "repr": detector_module.create_image_template(image_0_data.get("image_prefix"), image_0_data.get("run_number")).rstrip(detector_module.DETECTOR_SUFFIX).replace("?", "") + ("%d-%d" % (image_0_data.get("image_number"), image_n_data.get("image_number"))),
         "run_number": image_0_data.get("run_number"),
-        "start": image_0_data.get("image_number"),
+        # "start": image_0_data.get("image_number"),
         "time": image_0_data.get("time"),
-        "total": image_n_data.get("image_number") - image_0_data.get("image_number") + 1,
+        # "total": image_n_data.get("image_number") - image_0_data.get("image_number") + 1,
         }
+
+    # Set starting image
+    if commandline_args.start_image:
+        run_data["start"] = commandline_args.start_image
+    else:
+        run_data["start"] = image_0_data.get("image_number")
+
+    # Set end image and total number of images
+    if commandline_args.end_image:
+        run_data["end"] = commandline_args.end_image
+        run_data["total"] = commandline_args.end_image - run_data["start"] + 1
+
+    else:
+        run_data["end"] =  image_n_data.get("image_number")
+        run_data["total"] = image_n_data.get("image_number") - run_data["start"] +1
+
+    # The repr for the run
+    run_data["repr"] = detector_module.create_image_template(image_0_data.get("image_prefix"), image_0_data.get("run_number")).rstrip(detector_module.DETECTOR_SUFFIX).replace("?", "") + ("%d-%d" % (run_data.get("start"), run_data.get("end")))
 
     return run_data
 
@@ -153,7 +171,7 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module,
         "xdsinp": detector_module.XDSINP
     }
 
-    # pprint.pprint(command)
+    # pprint(command)
 
     return command
 
@@ -310,7 +328,7 @@ def main():
         count += 1
 
     # Get the run data
-    run_data = get_run_data(detector_module, image_0_data, image_n_data)
+    run_data = get_run_data(detector_module, image_0_data, image_n_data, commandline_args)
 
     logger.debug("Run data: %s", run_data)
     tprint(arg="\nRun data", level=10, color="blue")

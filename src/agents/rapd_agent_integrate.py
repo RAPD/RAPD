@@ -1,3 +1,4 @@
+
 """
 RAPD agent for fast integration with XDS
 """
@@ -95,8 +96,6 @@ class RapdAgent(Process):
         command -- dict of all information for this agent to run
         """
 
-        # pprint(command)
-
         # Store tprint for use throughout
         if tprint:
             self.tprint = tprint
@@ -113,10 +112,13 @@ class RapdAgent(Process):
             self.logger = logging.getLogger("RAPDLogger")
             self.logger.debug("__init__")
 
+        self.print_info()
+        sys.exit()
+
         # Store passed-in variables
         self.site = site
         self.command = command
-        pprint(self.command)
+        # pprint(self.command)
         self.settings = self.command.get("settings")
 
         # self.input = input[0:4]
@@ -354,7 +356,58 @@ class RapdAgent(Process):
             if self.controller_address:
                 rapd_send(self.controller_address, self.results)
 
+        self.print_info()
+
         return()
+
+    def print_info(self):
+        """
+        Print information regarding programs utilized by RAPD
+        """
+        self.logger.debug('AutoindexingStrategy::print_info')
+
+        # try:
+        self.tprint(arg="\nRAPD integration uses:", level=99, color="blue")
+        """
+'\n\nRAPD used the following programs for integrating and scaling the dataset:\n',
+               '  XDS - \n',
+               '       "XDS", W. Kabsch (2010) Acta Cryst. D66, 125-132.\n',
+               '       "Integration, scaling, space-group assignment and post-refinement",',
+               ' W. Kabsch (2010) Acta Cryst. D66, 133-144.\n',
+               '  pointless and aimless - \n',
+               '      "Scaling and assessment of data quality", P.R.',
+               ' Evans (2006) Acta Cryst. D62, 72-82.\n',
+               '      "An introduction to data reduction: space-group',
+               ' determination and intensity statistics,',
+               ' P.R. Evans (2011) Acta Cryst. D67, 282-292\n',
+               '      "How good are my data and what is the resolution?"',
+               ' P.R. Evans and G.N. Murshudov (2013) Acta Cryst. D66,',
+               ' 1204-1214.\n',
+               '  truncate, freerflag, and mtz2various  - \n',
+               '       "The CCP4 Suite: Programs for Protein ',
+               'Crystallography". Acta Cryst. D50, 760-763 \n',
+               '  xdsstat - \n      http://strucbio.biologie.',
+               'uni-konstanz.de/xdswiki/index.php/Xdsstat\n',
+               '\n</pre></div></div></body>'
+               ]
+        """
+        info_string = """    XDS
+    "XDS", W. Kabsch (2010) Acta Cryst. D66, 125-132.
+    "Integration, scaling, space-group assignment and post-refinement",
+    W. Kabsch (2010) Acta Cryst. D66, 133-144.
+
+    Pointless & Aimless
+    "Scaling and assessment of data quality", P.R. Evans (2006) Acta Cryst.
+    D62, 72-82.
+    "An introduction to data reduction: space-group determination and
+    intensity statistics", P.R. Evans (2011) Acta Cryst. D67, 282-292.
+    "How good are my data and what is the resolution?", P.R. Evans and
+    G.N. Murshudov (2013) Acta Cryst. D66, 1204-1214.
+    """
+
+        self.tprint(arg=info_string, level=99, color="white")
+
+        self.logger.debug(info_string)
 
     def write_json(self, results):
         """Write a file with the JSON version of the results"""
@@ -406,7 +459,11 @@ class RapdAgent(Process):
         newinp = self.check_for_xds_errors(xdsdir,xdsinp)
         if newinp == False:
             self.logger.debug('  Unknown xds error occurred. Please check for cause!')
-            return(False)
+            self.tprint(arg="Unknown xds error occurred. Please check for cause!",
+                        level=10,
+                        color="red")
+            raise Exception("Unknown XDS error")
+            return False
         else:
             # Find a suitable cutoff for resolution
             # Returns False if no new cutoff, otherwise returns the value of
@@ -485,20 +542,28 @@ class RapdAgent(Process):
         self.write_file(xdsfile, xdsinp)
 
         # Run XDS
-        self.tprint(arg="  Searching for peaks (total)", level=99, color="white", newline=False)
+        self.tprint(arg="  Searching for peaks ",
+                    level=99,
+                    color="white",
+                    newline=False)
         self.xds_run(xdsdir)
 
         #xdsinp[-3] =('MAXIMUM_NUMBER_OF_JOBS=%s\n' % self.jobs)
-        xdsinp[-2] =('JOB=IDXREF DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n')
+        xdsinp[-2] =("JOB=IDXREF DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n")
         self.write_file(xdsfile, xdsinp)
-        self.tprint(arg="  Indexing and integrating ", level=99, color="white", newline=False)
+        self.tprint(arg="  Indexing and integrating ",
+                    level=99,
+                    color="white",
+                    newline=False)
         self.xds_run(xdsdir)
 
         # If known xds_errors occur, catch them and take corrective action
         newinp = self.check_for_xds_errors(xdsdir, xdsinp)
         if newinp == False:
             self.logger.exception('Unknown xds error occurred. Please check for cause!')
-            self.tprint(arg="\nXDS error unknown to RAPD has occurred. Please check for cause!", level=30, color="red")
+            self.tprint(arg="\nXDS error unknown to RAPD has occurred. Please check for cause!",
+                        level=30,
+                        color="red")
             # TODO  put out failing JSON
             raise Exception("XDS error unknown to RAPD has occurred.")
 
@@ -531,7 +596,10 @@ class RapdAgent(Process):
             os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.old' %xdsdir)
             #newinp[-2] = 'JOB=INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
             self.write_file(xdsfile, newinp)
-            self.tprint(arg="  Intgrating with low resolution settings", level=99, color="white", newline=False)
+            self.tprint(arg="  Intgrating with low resolution settings",
+                        level=99,
+                        color="white",
+                        newline=False)
             self.xds_run(xdsdir)
             final_results = self.run_results(xdsdir)
         else:
@@ -564,7 +632,8 @@ class RapdAgent(Process):
         Launches XDS when half the data set has been collected and again once
         the complete data set has been collected.
         """
-        self.logger.debug('FastIntegration::xds_split')
+        self.logger.debug("FastIntegration::xds_split")
+
         first_frame = int(self.image_data['start'])
         half_set = (int(self.image_data['total']) / 2) + first_frame - 1
         last_frame = int(self.image_data['start']) + int(self.image_data['total']) - 1
@@ -843,9 +912,7 @@ class RapdAgent(Process):
     	basis for writing out an XDS.INP file.
     	"""
 
-        print "createXDSinp"
-
-    	self.logger.debug('FastIntegration::createXDSinp')
+    	self.logger.debug("FastIntegration::createXDSinp")
 
         # print self.image_data["start"]
         # print self.image_data["total"]
@@ -1311,6 +1378,9 @@ class RapdAgent(Process):
         Examines results of an XDS run and searches for known problems.
         """
         self.logger.debug('FastIntegration::check_for_xds_errors')
+        self.tprint(arg="  Checking XDS output for errors",
+                    level=99,
+                    color="white")
 
         os.chdir(dir)
         # Enter a loop that looks for an error, then tries to correct it
@@ -1320,9 +1390,13 @@ class RapdAgent(Process):
         xdslog = open('XDS.LOG','r').readlines()
         for line in xdslog:
             if '! ERROR !' in line:
-                #An error was found in XDS.LOG, now figure out what it was.
+                # An error was found in XDS.LOG, now figure out what it was.
                 if 'CANNOT CONTINUE WITH A TWO DIMENSION' in line:
-                    self.logger.debug('    Found indexing error in XDS.LOG')
+                    self.logger.debug('    Found an indexing error')
+                    self.tprint(arg="\n  Found an indexing error",
+                                level=10,
+                                color="red")
+
                     # Try to fix by extending the data range
                     tmp = input[-1].split('=')
                     first,last = tmp.split()
@@ -1333,35 +1407,55 @@ class RapdAgent(Process):
                         input[-1] = 'SPOT_RANGE=%s %s' %(first, (int(last) + 1))
                         self.write_file('XDS.INP', input)
                         os.system('mv XDS.LOG initialXDS.LOG')
-                        self.tprint(arg="\n  Extending spot range ", level=10, color="white", newline=False)
+                        self.tprint(arg="\n  Extending spot range ",
+                                    level=10,
+                                    color="white",
+                                    newline=False)
                         self.xds_run(dir)
                         return(input)
                 elif 'SOLUTION IS INACCURATE' in line or 'INSUFFICIENT PERCENTAGE' in line:
                     self.logger.debug('    Found inaccurate indexing solution error')
                     self.logger.debug('    Will try to continue anyway')
+                    self.tprint(arg="  Found inaccurate indexing solution error - trying to continue anyway",
+                                level=30,
+                                color="red")
+
                     # Inaccurate indexing solution, can try to continue with DEFPIX,
                     # INTEGRATE, and CORRECT anyway
                     self.logger.debug(' The length of input is %s' % len(input))
                     if 'JOB=DEFPIX' in input[-2]:
                         self.logger.debug('Error = %s' %line)
                         self.logger.debug('XDS failed to run with inaccurate indexing solution error.')
+                        self.tprint(arg="\n  XDS failed to run with inaccurate indexing solution error.",
+                                    level=30,
+                                    color="red")
                         return(False)
                     else:
                         input[-2] = ('JOB=DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT'
                                  + ' IDXREF DEFPIX INTEGRATE CORRECT\n')
                         self.write_file('XDS.INP', input)
                         os.system('mv XDS.LOG initialXDS.LOG')
-                        self.tprint(arg="  Integrating with suboptimal indexing solution ", level=99, color="white", newline=False)
+                        self.tprint(arg="  Integrating with suboptimal indexing solution ",
+                                    level=99,
+                                    color="white",
+                                    newline=False)
                         self.xds_run(dir)
                         return(input)
                 elif 'SPOT SIZE PARAMETERS HAS FAILED' in line:
                     self.logger.debug('	Found failure in determining spot size parameters.')
                     self.logger.debug('	Will use default values for REFLECTING_RANGE and BEAM_DIVERGENCE.')
+                    self.tprint(arg="\n  Found failure in determining spot size parameters.",
+                                level=99,
+                                color="red")
+
                     input.append('\nREFLECTING_RANGE=1.0 REFLECTING_RANGE_E.S.D.=0.10\n')
                     input.append('BEAM_DIVERGENCE=0.9 BEAM_DIVERGENCE_E.S.D.=0.09\n')
                     self.write_file('XDS.INP', input)
                     os.system('mv XDS.LOG initialXDS.LOG')
-                    self.tprint(arg="  Integrating after failure in determining spot size parameters ", level=99, color="white", newline=False)
+                    self.tprint(arg="  Integrating after failure in determining spot size parameters ",
+                                level=99,
+                                color="white",
+                                newline=False)
                     self.xds_run(dir)
                     return(input)
                 else:
@@ -1424,10 +1518,13 @@ class RapdAgent(Process):
         os.chdir(directory)
 
         orig_rescut = False
+
         # Run xdsstat on XDS_ASCII.HKL.
         xdsstat_log = self.xdsstat()
+
         # Run pointless to convert XDS_ASCII.HKL to mtz format.
         mtzfile = self.pointless()
+
         # Run dummy run of aimless to generate various stats and plots.
         # i.e. We don't use aimless for actual scaling, it's already done by XDS.
         if mtzfile != 'Failed':
@@ -1436,6 +1533,7 @@ class RapdAgent(Process):
             self.logger.debug('    Pointless did not run properly!')
             self.logger.debug('    Please check logs and files in %s' %self.dirs['work'])
             return('Failed')
+
         # Parse the aimless logfile to look for resolution cutoff.
         aimlog = open(aimless_log, "r").readlines()
         for line in aimlog:
@@ -1458,8 +1556,9 @@ class RapdAgent(Process):
             orig_rescut = resline
             # rerun aimless
             aimless_log = self.aimless(mtzfile, res_cut)
+
         #graphs, tables, summary = self.parse_aimless(aimless_log)
-	graphs, summary =self.parse_aimless2(aimless_log)
+        graphs, summary =self.parse_aimless2(aimless_log)
 
         wedge = directory.split('_')[-2:]
         summary['wedge'] = '-'.join(wedge)
@@ -1479,29 +1578,29 @@ class RapdAgent(Process):
         scalalog = scalamtz.replace('mtz', 'log')
         # generate web files for results display in the UI
         #plotsHTML = self.make_plots(graphs, tables)
-        shortHTML = self.make_short_results(directory, summary, orig_rescut)
-        longHTML = self.make_long_results(scalalog)
+        # shortHTML = self.make_short_results(directory, summary, orig_rescut)
+        # longHTML = self.make_long_results(scalalog)
 
         # shutil.copyfile(plotsHTML, os.path.join(self.dirs['work'], plotsHTML))
-        shutil.copyfile(shortHTML, os.path.join(self.dirs['work'], shortHTML))
-        shutil.copyfile(longHTML, os.path.join(self.dirs['work'], longHTML))
-
-
+        # shutil.copyfile(shortHTML, os.path.join(self.dirs['work'], shortHTML))
+        # shutil.copyfile(longHTML, os.path.join(self.dirs['work'], longHTML))
 
         results = {'status'   : 'WORKING',
                    'plots'    : graphs,
-                   'short'    : shortHTML,
-                   'long'     : longHTML,
+                #    'short'    : shortHTML,
+                #    'long'     : longHTML,
                    'summary'  : summary,
                    'mtzfile'  : scalamtz,
                    'dir'      : directory
                    }
-        self.logger.debug('    Returning results!')
+        self.logger.debug("Returning results!")
         self.logger.debug(results)
+
          # Set up the results for return
         self.results['process'] = {
         	'agent_process_id':self.process_id,
-        	'status':50 }
+        	'status':50
+            }
         self.results['results'] = results
         self.logger.debug(self.results)
 
@@ -1509,8 +1608,7 @@ class RapdAgent(Process):
         if self.controller_address:
             rapd_send(self.controller_address, self.results)
 
-
-        return(results)
+        return results
 
     def make_long_results(self, logfile):
         """
@@ -1765,6 +1863,8 @@ class RapdAgent(Process):
                        ])
         self.write_file('results.php', parsed)
         return('results.php')
+
+
 
 
     def make_plots(self, graphs, tables):
@@ -2603,7 +2703,9 @@ class RapdAgent(Process):
         Runs pointless on the default reflection file, XDS_ASCII.HKl
         to produce an mtz file suitable for input to aimless.
         """
-        self.logger.debug('FastIntegration::pointless')
+        self.logger.debug("FastIntegration::pointless")
+        self.tprint(arg="  Running pointless", level=10, color="white")
+
         hklfile = 'XDS_ASCII.HKL'
         mtzfile = '_'.join([self.image_data['image_prefix'], 'pointless.mtz'])
         logfile = mtzfile.replace('mtz', 'log')
@@ -2649,7 +2751,7 @@ class RapdAgent(Process):
 
         return(rd_graph, rd_table)
 
-    def xdsstat (self):
+    def xdsstat(self):
         """
         Runs xdsstat, a program that extracts some extra statistics
         from the results of XDS CORRECT.
@@ -2671,6 +2773,7 @@ class RapdAgent(Process):
         output to the file XDSSTAT.LP
         """
         self.logger.debug('FastIntegration::xdsstat')
+        self.tprint(arg="  Running xdsstat", level=10, color="white")
 
         # Check to see if xdsstat exists in the path
         test = os.system('which xdsstat.sh')
@@ -2685,8 +2788,6 @@ class RapdAgent(Process):
             os.chmod('xdsstat.sh', stat.S_IRWXU)
 
         try:
-            print "running xdsstat.sh"
-            print os.getcwd()
             job = Process(target=Utils.processLocal, args=(('xdsstat.sh'), self.logger))
             job.start()
             while job.is_alive():
@@ -2807,8 +2908,10 @@ class RapdAgent(Process):
 
         # Remove any integration directories.
         os.system('rm -rf wedge_*')
+
         # Remove extra files in working directory.
         os.system('rm -f *.mtz *.sca *.sh *.log junk_*')
+
         # Create a downloadable tar file.
         tar_dir = tar_name
         tar_name += '.tar.bz2'
@@ -2818,10 +2921,11 @@ class RapdAgent(Process):
         os.chdir(self.dirs['work'])
         print os.getcwd()
         os.system('tar -cjf %s %s' %(tar_name, tar_dir))
+
         # Tarball the XDS log files
         lp_name = 'xds_lp_files.tar.bz2'
-        print 'tar -cjf %s xds_lp_files/'
-        os.system('tar -cjf %s xds_lp_files/' % lp_name)
+        print "tar -cjf %s xds_lp_files/" % lp_name
+        os.system("tar -cjf %s xds_lp_files/" % lp_name)
         # Remove xds_lp_files directory
         os.system('rm -rf xds_lp_files')
         # If ramdisks were used, erase files from ram_disks.
