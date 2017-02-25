@@ -34,6 +34,7 @@ AGENT_SUBTYPE = "CORE"
 
 # A unique UUID for this handler (uuid.uuid1().hex)
 ID = "bd11f4401eaa11e697c3ac87a3333966"
+VERSION = "2.0.0"
 
 # Standard imports
 import json
@@ -43,6 +44,7 @@ import math
 from multiprocessing import Process
 import os
 import os.path
+import pprint
 import shutil
 import stat
 import subprocess
@@ -82,7 +84,9 @@ class RapdAgent(Process):
     }
     """
 
-    def __init__(self, site, command, logger):
+    results = {}
+
+    def __init__(self, site, command, tprint=False, logger=False):
         """
         Initialize the agent
 
@@ -91,20 +95,33 @@ class RapdAgent(Process):
         command -- dict of all information for this agent to run
         """
 
+        pprint.pprint(command)
+
+        # Store tprint for use throughout
+        if tprint:
+            self.tprint = tprint
+        # Dead end if no tprint passed
+        else:
+            def func(arg=False, level=False, verbosity=False, color=False):
+                pass
+            self.tprint = func
+
         # Get the logger Instance
-        self.logger = logging.getLogger("RAPDLogger")
-        self.logger.debug("__init__")
+        if logger:
+            self.logger = logger
+        else:
+            self.logger = logging.getLogger("RAPDLogger")
+            self.logger.debug("__init__")
 
         # Store passed-in variables
         self.site = site
         self.command = command
-        self.results = {}
+        self.settings = self.command.get("settings")
 
         # self.input = input[0:4]
         self.controller_address = self.command.get("return_address", False)
         # self.logger = logger
         self.spacegroup = None
-
 
         self.dirs = self.command["directories"]
         self.image_data = self.command.get("data").get("image_data")
@@ -121,23 +138,29 @@ class RapdAgent(Process):
         #     self.image_data = self.command
 
         self.logger.debug("self.image_data = %s", self.image_data)
-        self.settings = self.command.get("settings")
-
 
         # if 'x_beam' not in self.image_data.keys():
         #     self.image_data['x_beam'] = self.image_data['x_beam'] or self.image_data['beam_center_x']
         #     self.image_data['y_beam'] = self.image_data['y_beam'] or self.image_data['beam_center_y']
-        if 'start' not in self.image_data.keys():
+        # if 'start' not in self.image_data.keys():
+        if self.settings.get("start_frame", False):
+            self.image_data["start"] = self.settings.get("start_frame")
+        else:
             self.image_data["start"] = self.run_data.get("start")
+
+        if self.settings.get("end_frame", False):
+            self.image_data["total"] = self.settings.get("end_frame") - self.settings.get("start_frame") + 1
+        else:
             self.image_data["total"] = self.run_data.get("total")
+
         self.image_data['image_template'] = self.run_data['image_template']
 
-	# Check for 2theta tilt:
-	if 'twotheta' in self.run_data:
-	    self.image_data['twotheta'] = self.run_data['twotheta']
-        # self.image_data['start'] = self.settings['request']['frame_start']
-        # self.image_data['total'] = str( int(self.settings['request']['frame_start'])
-        #                         + int(self.settings['request']['frame_finish']) - 1)
+        # Check for 2theta tilt:
+        if 'twotheta' in self.run_data:
+            self.image_data['twotheta'] = self.run_data['twotheta']
+            # self.image_data['start'] = self.settings['request']['frame_start']
+            # self.image_data['total'] = str( int(self.settings['request']['frame_start'])
+            #                         + int(self.settings['request']['frame_finish']) - 1)
         if self.settings.get('spacegroup', False):
             self.spacegroup = self.settings['spacegroup']
 
@@ -170,6 +193,7 @@ class RapdAgent(Process):
         else:
             self.ram_use = False
             self.ram_nodes = None
+
         if 'standalone' in self.settings:
             self.standalone = self.settings['standalone']
             if self.standalone == 'True':
@@ -178,6 +202,7 @@ class RapdAgent(Process):
                 self.standalone = False
         else:
             self.standalone = False
+
         if 'work_dir_override' in self.settings:
             if (self.settings['work_dir_override'] == True or
                 self.settings['work_dir_override'] == 'True'):
@@ -234,7 +259,7 @@ class RapdAgent(Process):
             os.makedirs(self.dirs['work'])
         os.chdir(self.dirs['work'])
 
-	self.xds_default = self.createXDSinp (self.settings['xdsinp'])
+        self.xds_default = self.createXDSinp (self.settings['xdsinp'])
         #if 'detector' in self.image_data:
         #    if self.image_data['detector'] in ['PILATUS', 'HF4M', 'rayonix_mx300hs']:
         #        self.xds_default = self.set_detector_data(self.image_data['detector'])
@@ -433,6 +458,7 @@ class RapdAgent(Process):
         set is already present on the computer system.
         """
         self.logger.debug('Fastintegration::xds_total')
+        self.tprint(arg="\nXDS processing", level=99, color="blue")
         first = int(self.image_data['start'])
         last = int(self.image_data['start']) + int(self.image_data['total']) -1
         data_range = '%s %s' %(first, last)
@@ -453,19 +479,25 @@ class RapdAgent(Process):
         xdsinp.append('DATA_RANGE=%s\n' % data_range)
         xdsfile = os.path.join(xdsdir,'XDS.INP')
         self.write_file(xdsfile, xdsinp)
+
+        # Run XDS
+        self.tprint(arg="  Searching for peaks (total)", level=99, color="white", newline=False)
         self.xds_run(xdsdir)
-        self.logger.debug ("HELLO!")
 
         #xdsinp[-3] =('MAXIMUM_NUMBER_OF_JOBS=%s\n' % self.jobs)
         xdsinp[-2] =('JOB=IDXREF DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n')
         self.write_file(xdsfile, xdsinp)
+        self.tprint(arg="  Indexing and integrating", level=99, color="white", newline=False)
         self.xds_run(xdsdir)
 
         # If known xds_errors occur, catch them and take corrective action
         newinp = self.check_for_xds_errors(xdsdir, xdsinp)
         if newinp == False:
-            self.logger.debug('  Unknown xds error occurred. Please check for cause!')
-            return('Failed')
+            self.logger.exception('Unknown xds error occurred. Please check for cause!')
+            self.tprint(arg="\nXDS error unknown to RAPD has occurred. Please check for cause!", level=30, color="red")
+            # TODO  put out failing JSON
+            raise Exception("XDS error unknown to RAPD has occurred.")
+
         elif self.spacegroup != None:
             # Check consistency of spacegroup, and modify if necessary.
             xdsinp = self.find_xds_symm(xdsdir, xdsinp)
@@ -481,6 +513,7 @@ class RapdAgent(Process):
             #newinp[-2] = 'JOB= INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
             newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
             self.write_file(xdsfile, newinp)
+            self.tprint(arg="  Reintegrating", level=99, color="white", newline=False)
             self.xds_run(xdsdir)
         # Prepare the display of results.
         final_results = self.run_results(xdsdir)
@@ -488,13 +521,14 @@ class RapdAgent(Process):
         # and rerunning xds.
         #
         # If low resolution, don't try to polish the data, as this tends to blow up.
-
+        sys.exit()
         if new_rescut <= 4.5:
             os.rename('%s/GXPARM.XDS' %xdsdir, '%s/XPARM.XDS' %xdsdir)
             os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.old' %xdsdir)
             os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.old' %xdsdir)
             #newinp[-2] = 'JOB=INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
             self.write_file(xdsfile, newinp)
+            self.tprint(arg="  Low resolution settings", level=99, color="white", newline=False)
             self.xds_run(xdsdir)
             final_results = self.run_results(xdsdir)
         else:
@@ -506,6 +540,7 @@ class RapdAgent(Process):
                 #newinp[-2] = 'JOB=INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
                 newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
                 self.write_file(xdsfile, newinp)
+                self.tprint(arg="  New resolution cutoff", level=99, color="white", newline=False)
                 self.xds_run(xdsdir)
         #        old_rescut = new_rescut
         #        new_rescut = self.find_correct_res(xdsdir, 1.0)
@@ -561,20 +596,20 @@ class RapdAgent(Process):
                 timer.start()
                 if frame_count == half_set:
                     proc_dir = 'wedge_%s_%s' % (first_frame, frame_count)
-                    xds_job = Process(target = self.xds_wedge,
-                            args = (proc_dir, frame_count, xdsinput))
+                    xds_job = Process(target= self.xds_wedge,
+                                      args= (proc_dir, frame_count, xdsinput))
                     xds_job.start()
                 frame_count += 1
                 look_for_file = file_template.replace(replace_string,
                                               '%0*d' %(pad, frame_count))
             elif timer.is_alive() == False:
-                    self.logger.debug('     Image %s not found after waiting %s seconds.'
-                                      % (look_for_file, wait_time))
-                    self.logger.debug('     RAPD assumes the data collection has been aborted.')
-                    self.logger.debug('         Launching a final xds job with last image detected.')
-                    self.image_data['last'] = frame_count - 1
-                    results = self.xds_total(xdsinput)
-                    return(results)
+                self.logger.debug('     Image %s not found after waiting %s seconds.'
+                                  % (look_for_file, wait_time))
+                self.logger.debug('     RAPD assumes the data collection has been aborted.')
+                self.logger.debug('         Launching a final xds job with last image detected.')
+                self.image_data['last'] = frame_count - 1
+                results = self.xds_total(xdsinput)
+                return(results)
 
         # If you reach here, frame_count equals the last frame, so look for the
         # last frame and then launch xds_total.
@@ -748,6 +783,8 @@ class RapdAgent(Process):
         This function controls processing by XDS for an intermediate wedge
         """
         self.logger.debug('Fastintegration::xds_wedge')
+        self.tprint(arg="\nXDS processing", level=99, color="blue")
+
         first = int(self.image_data['start'])
         data_range = '%s %s' %(first, last)
         xdsdir = os.path.join(self.dirs['work'],dir)
@@ -763,11 +800,13 @@ class RapdAgent(Process):
         xdsinp.append('DATA_RANGE=%s\n' % data_range)
         xdsfile = os.path.join(xdsdir,'XDS.INP')
         self.write_file(xdsfile, xdsinp)
+        self.tprint(arg="  Searching for peaks wedge ", level=99, color="white", newline=False)
         self.xds_run(xdsdir)
 
         #xdsinp[-3]=('MAXIMUM_NUMBER_OF_JOBS=%s\n'  % self.jobs)
         xdsinp[-2]=('JOB=IDXREF DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n')
         self.write_file(xdsfile, xdsinp)
+        self.tprint(arg="  Indexing and integrating ", level=99, color="white", newline=False)
         self.xds_run(xdsdir)
 
         # If known xds_errors occur, catch them and take corrective action
@@ -789,6 +828,7 @@ class RapdAgent(Process):
                 newinp[-2] = 'JOB=INTEGRATE CORRECT\n'
                 newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
                 self.write_file(xdsfile, newinp)
+                self.tprint(arg="  Reintegrating ", level=99, color="white", newline=False)
                 self.xds_run(xdsdir)
             results = self.run_results(xdsdir)
         return(results)
@@ -1155,8 +1195,9 @@ class RapdAgent(Process):
         Launches the running of xds.
         """
         self.logger.debug('FastIntegration::xds_run')
-        self.logger.debug('     directory = %s' % directory)
-        self.logger.debug('     detector = %s' %self.image_data['detector'])
+        self.logger.debug('     directory = %s', directory)
+        self.logger.debug('     detector = %s', self.image_data['detector'])
+
         # if self.image_data['detector']=='rayonix_mx300hs':
         #     xds_command = '/usr/local/XDS-INTEL64_Linux_x86_64/xds_par'
         # else:
@@ -1166,11 +1207,16 @@ class RapdAgent(Process):
         if self.cluster_use == True:
             job = Process(target=BLspec.processCluster,args=(self,(xds_command,'XDS.LOG','8','phase2.q')))
         else:
-            job = Process(target=Utils.processLocal,args=((xds_command,'XDS.LOG'),self.logger))
+            job = Process(target=Utils.processLocal,
+                          args=((xds_command, "XDS.LOG"),
+                          self.logger))
         job.start()
         while job.is_alive():
-	    time.sleep(1)
+            time.sleep(1)
+            self.tprint(arg=".", level=99, color="white", newline=False)
+        self.tprint(arg="Done", level=99, color="white")
         os.chdir(self.dirs['work'])
+
         return()
 
     def xds_ram (self, first_node):
@@ -1276,6 +1322,7 @@ class RapdAgent(Process):
                         input[-1] = 'SPOT_RANGE=%s %s' %(first, (int(last) + 1))
                         self.write_file('XDS.INP', input)
                         os.system('mv XDS.LOG initialXDS.LOG')
+                        self.tprint(arg="\n  Extending spot range ", level=10, color="white", newline=False)
                         self.xds_run(dir)
                         return(input)
                 elif 'SOLUTION IS INACCURATE' in line or 'INSUFFICIENT PERCENTAGE' in line:
@@ -1293,6 +1340,7 @@ class RapdAgent(Process):
                                  + ' IDXREF DEFPIX INTEGRATE CORRECT\n')
                         self.write_file('XDS.INP', input)
                         os.system('mv XDS.LOG initialXDS.LOG')
+                        self.tprint(arg="  Integrating with suboptimal indexing solution ", level=99, color="white", newline=False)
                         self.xds_run(dir)
                         return(input)
                 elif 'SPOT SIZE PARAMETERS HAS FAILED' in line:
@@ -1302,6 +1350,7 @@ class RapdAgent(Process):
                     input.append('BEAM_DIVERGENCE=0.9 BEAM_DIVERGENCE_E.S.D.=0.09\n')
                     self.write_file('XDS.INP', input)
                     os.system('mv XDS.LOG initialXDS.LOG')
+                    self.tprint(arg="  Integrating after failure in determining spot size parameters ", level=99, color="white", newline=False)
                     self.xds_run(dir)
                     return(input)
                 else:
@@ -2638,7 +2687,7 @@ class RapdAgent(Process):
         Final creation of various files (e.g. an mtz file with R-flag added,
         .sca files with native or anomalous data treatment)
         """
-        in_file = os.path.join(results['dir'],results['mtzfile'])
+        in_file = os.path.join(results['dir'], results['mtzfile'])
         self.logger.debug('FastIntegration::finish_data - in_file = %s'
                           % in_file)
 
@@ -2983,6 +3032,7 @@ class RapdAgent(Process):
                 break
         if sg_num != int(line[-1]):
             self.modify_xdsinput_for_symm(xdsinp, sg_num, 'IDXREF.LP')
+            self.tprint(arg="  Integrating with user-input spacegroup forced", level=99, color="white", newline=False)
             self.xds_run(xdsdir)
             newinp = self.check_for_xds_errors(xdsdir, xdsinp)
             if newinp == False:
@@ -3048,15 +3098,29 @@ class DataHandler(threading.Thread):
     instantiation.  That class will then send back results on the pipe
     which it is passed and Handler will send that up the clientsocket.
     """
-    def __init__(self, input, logger, verbose=True):
-        if verbose:
-            print 'DataHandler::__init__'
+    def __init__(self, input, tprint=False, logger=False, verbose=True):
 
         threading.Thread.__init__(self)
 
         self.input = input
-        self.logger = logger
         self.verbose = verbose
+
+        # If the logging instance is passed in...
+        if logger:
+            self.logger = logger
+        else:
+            # Otherwise get the logger Instance
+            self.logger = logging.getLogger("RAPDLogger")
+            self.logger.debug("DataHandler.__init__")
+
+        # Store tprint for use throughout
+        if tprint:
+            self.tprint = tprint
+        # Dead end if no tprint passed
+        else:
+            def func(arg=False, level=False, verbosity=False, color=False):
+                pass
+            self.tprint = func
 
         self.start()
 
@@ -3064,7 +3128,7 @@ class DataHandler(threading.Thread):
         # Create a pipe to allow interprocess communication.
         #parent_pipe,child_pipe = Pipe()
         # Instantiate the integration case
-        tmp = RapdAgent(None, self.input, self.logger)
+        tmp = RapdAgent(None, self.input, self.tprint, self.logger)
         # Print out what would be sent back to the RAPD caller via the pipe
         # self.logger.debug parent_pipe.recv()
 

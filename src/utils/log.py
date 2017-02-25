@@ -25,12 +25,13 @@ __status__ = "Development"
 import functools
 import logging, logging.handlers
 import os
+import sys
 
 # RAPD imports
 import utils.text as text
 
 
-def verbose_print(arg, level=20, verbosity=20, color="default", no_color=False):
+def verbose_print(arg, level=20, verbosity=20, color="default", no_color=False, newline=True):
     """Print to terminal window screened by verbosity setting
 
     Keyword arguments:
@@ -52,11 +53,17 @@ def verbose_print(arg, level=20, verbosity=20, color="default", no_color=False):
     if level >= verbosity:
         if no_color:
             color = False
-
-        if color:
-            print text.color(color) + arg + text.stop
+        if newline:
+            if color:
+                print text.color(color) + arg + text.stop
+            else:
+                print arg
         else:
-            print arg
+            if color:
+                sys.stdout.write(text.color(color) + arg + text.stop)
+            else:
+                sys.stdout.write(arg)
+            sys.stdout.flush()
 
 def get_terminal_printer(verbosity=50, no_color=False):
     """Returns a terminal printer

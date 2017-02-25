@@ -122,7 +122,6 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module,
     """
     Put together the command for the agent
     """
-    print "construct_command"
 
     # The task to be carried out
     command = {
@@ -154,7 +153,7 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module,
         "xdsinp": detector_module.XDSINP
     }
 
-    pprint.pprint(command)
+    # pprint.pprint(command)
 
     return command
 
@@ -293,12 +292,12 @@ def main():
         raise Exception("No detector identified")
 
 
+    # Get header information
     image_0_data = get_image_data(data_files["data_files"][0], detector_module, SITE)
     image_n_data = get_image_data(data_files["data_files"][-1], detector_module, SITE)
 
     logger.debug("Image header: %s, %s", image_0_data, image_n_data)
     tprint(arg="\nImage headers", level=10, color="blue")
-
     count = 0
     for header in (image_0_data, image_n_data):
         keys = header.keys()
@@ -310,17 +309,15 @@ def main():
             tprint(arg="    arg:%-22s  val:%s" % (key, header[key]), level=10, color="white")
         count += 1
 
-    command = construct_command(image_headers=image_headers,
-                                commandline_args=commandline_args,
-                                detector_module=detector_module,
-                                logger=logger)
-
-    print command
-
-    sys.exit()
-
     # Get the run data
     run_data = get_run_data(detector_module, image_0_data, image_n_data)
+
+    logger.debug("Run data: %s", run_data)
+    tprint(arg="\nRun data", level=10, color="blue")
+    keys = run_data.keys()
+    keys.sort()
+    for key in keys:
+        tprint(arg="    arg:%-22s  val:%s" % (key, run_data[key]), level=10, color="white")
 
     # Construct the command for the agent
     command = construct_command(image_0_data,
@@ -329,13 +326,23 @@ def main():
                                 detector_module,
                                 logger)
 
-    # Load the agent
-    agent_module = load_module(seek_module="rapd_agent_integrate",
-                               directories=["agents"],
-                               logger=logger)
+    # Load the plugin
+    plugin = load_module(seek_module="rapd_agent_integrate",
+                         directories=["agents"],
+                         logger=logger)
+
+    tprint(arg="\nPlugin information", level=10, color="blue")
+    tprint(arg="  Plugin type:    %s" % plugin.AGENT_TYPE, level=10, color="white")
+    tprint(arg="  Plugin subtype: %s" % plugin.AGENT_SUBTYPE, level=10, color="white")
+    tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
+    tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
     # Instantiate the agent
-    agent_module.DataHandler(command, logger)
+    plugin.RapdAgent(site=None,
+                     command=command,
+                     tprint=tprint,
+                     logger=logger) #,
+                     # verbose=commandline_args.verbose)
 
 if __name__ == "__main__":
 
