@@ -44,7 +44,7 @@ import math
 from multiprocessing import Process
 import os
 import os.path
-import pprint
+from pprint import pprint
 import shutil
 import stat
 import subprocess
@@ -95,7 +95,7 @@ class RapdAgent(Process):
         command -- dict of all information for this agent to run
         """
 
-        # pprint.pprint(command)
+        # pprint(command)
 
         # Store tprint for use throughout
         if tprint:
@@ -116,6 +116,7 @@ class RapdAgent(Process):
         # Store passed-in variables
         self.site = site
         self.command = command
+        pprint(self.command)
         self.settings = self.command.get("settings")
 
         # self.input = input[0:4]
@@ -1163,6 +1164,7 @@ class RapdAgent(Process):
         """
         self.logger.debug('FastIntegration::write_file')
         self.logger.debug('    Filename = %s' % filename )
+        # pprint(file_input)
         with open (filename, 'w') as file:
             file.writelines(file_input)
         return()
@@ -1423,7 +1425,7 @@ class RapdAgent(Process):
 
         orig_rescut = False
         # Run xdsstat on XDS_ASCII.HKL.
-        #xdsstat_log = self.xdsstat()
+        xdsstat_log = self.xdsstat()
         # Run pointless to convert XDS_ASCII.HKL to mtz format.
         mtzfile = self.pointless()
         # Run dummy run of aimless to generate various stats and plots.
@@ -2674,10 +2676,18 @@ class RapdAgent(Process):
         test = os.system('which xdsstat.sh')
         if test:
             self.logger.debug('    xdsstat.sh is not in the defined PATH')
-            return('Failed')
+            # Write xdsstat.sh
+            xdsststsh = ["#!/bin/bash\n",
+                         "xdsstat << eof > XDSSTAT.LP\n",
+                         "XDS_ASCII.HKL\n",
+                         "eof\n"]
+            self.write_file("xdsstat.sh", xdsststsh)
+            os.chmod('xdsstat.sh', stat.S_IRWXU)
 
         try:
-            job = Process(target=Utils.processLocal,args=(('xdsstat.sh'),self.logger))
+            print "running xdsstat.sh"
+            print os.getcwd()
+            job = Process(target=Utils.processLocal, args=(('xdsstat.sh'), self.logger))
             job.start()
             while job.is_alive():
                 time.sleep(1)
@@ -2803,9 +2813,14 @@ class RapdAgent(Process):
         tar_dir = tar_name
         tar_name += '.tar.bz2'
         tarname = os.path.join(self.dirs['work'], tar_name)
+        print 'tar -cjf %s %s' %(tar_name, tar_dir)
+        print os.getcwd()
+        os.chdir(self.dirs['work'])
+        print os.getcwd()
         os.system('tar -cjf %s %s' %(tar_name, tar_dir))
         # Tarball the XDS log files
         lp_name = 'xds_lp_files.tar.bz2'
+        print 'tar -cjf %s xds_lp_files/'
         os.system('tar -cjf %s xds_lp_files/' % lp_name)
         # Remove xds_lp_files directory
         os.system('rm -rf xds_lp_files')
