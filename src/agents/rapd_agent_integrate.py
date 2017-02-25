@@ -95,7 +95,7 @@ class RapdAgent(Process):
         command -- dict of all information for this agent to run
         """
 
-        pprint.pprint(command)
+        # pprint.pprint(command)
 
         # Store tprint for use throughout
         if tprint:
@@ -147,11 +147,13 @@ class RapdAgent(Process):
             self.image_data["start"] = self.settings.get("start_frame")
         else:
             self.image_data["start"] = self.run_data.get("start")
+        # print "self.image_data[\"start\"]", self.image_data["start"]
 
         if self.settings.get("end_frame", False):
-            self.image_data["total"] = self.settings.get("end_frame") - self.settings.get("start_frame") + 1
+            self.image_data["total"] = self.settings.get("end_frame") - self.image_data["start"] + 1
         else:
             self.image_data["total"] = self.run_data.get("total")
+        # print "self.image_data[\"total\"]", self.image_data["total"]
 
         self.image_data['image_template'] = self.run_data['image_template']
 
@@ -259,7 +261,8 @@ class RapdAgent(Process):
             os.makedirs(self.dirs['work'])
         os.chdir(self.dirs['work'])
 
-        self.xds_default = self.createXDSinp (self.settings['xdsinp'])
+        self.xds_default = self.createXDSinp(self.settings['xdsinp'])
+
         #if 'detector' in self.image_data:
         #    if self.image_data['detector'] in ['PILATUS', 'HF4M', 'rayonix_mx300hs']:
         #        self.xds_default = self.set_detector_data(self.image_data['detector'])
@@ -487,7 +490,7 @@ class RapdAgent(Process):
         #xdsinp[-3] =('MAXIMUM_NUMBER_OF_JOBS=%s\n' % self.jobs)
         xdsinp[-2] =('JOB=IDXREF DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n')
         self.write_file(xdsfile, xdsinp)
-        self.tprint(arg="  Indexing and integrating", level=99, color="white", newline=False)
+        self.tprint(arg="  Indexing and integrating ", level=99, color="white", newline=False)
         self.xds_run(xdsdir)
 
         # If known xds_errors occur, catch them and take corrective action
@@ -513,7 +516,7 @@ class RapdAgent(Process):
             #newinp[-2] = 'JOB= INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
             newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
             self.write_file(xdsfile, newinp)
-            self.tprint(arg="  Reintegrating", level=99, color="white", newline=False)
+            self.tprint(arg="  Reintegrating ", level=99, color="white", newline=False)
             self.xds_run(xdsdir)
         # Prepare the display of results.
         final_results = self.run_results(xdsdir)
@@ -521,14 +524,13 @@ class RapdAgent(Process):
         # and rerunning xds.
         #
         # If low resolution, don't try to polish the data, as this tends to blow up.
-        sys.exit()
         if new_rescut <= 4.5:
             os.rename('%s/GXPARM.XDS' %xdsdir, '%s/XPARM.XDS' %xdsdir)
             os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.old' %xdsdir)
             os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.old' %xdsdir)
             #newinp[-2] = 'JOB=INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
             self.write_file(xdsfile, newinp)
-            self.tprint(arg="  Low resolution settings", level=99, color="white", newline=False)
+            self.tprint(arg="  Intgrating with low resolution settings", level=99, color="white", newline=False)
             self.xds_run(xdsdir)
             final_results = self.run_results(xdsdir)
         else:
@@ -655,7 +657,7 @@ class RapdAgent(Process):
         """
         self.logger.debug('FastIntegration::xds_processing')
         first_frame = int(self.image_data['start'])
-        last_frame = int(self.image_data['start']) + int(self.image_data['total']) - 1
+        last_frame =  + int(self.image_data['total']) - int(self.image_data['start']) + 1
 
         frame_count = first_frame
         # Maximum wait time for next image is exposure time + 15 seconds.
@@ -834,52 +836,59 @@ class RapdAgent(Process):
         return(results)
 
     def createXDSinp (self, xds_dict):
-	"""
-	This function takes the dict holding XDS keywords and values
-	and converts them into a list of strings that serves as the
-	basis for writing out an XDS.INP file.
-	"""
-	self.logger.debug('FastIntegration::createXDSinp')
+    	"""
+    	This function takes the dict holding XDS keywords and values
+    	and converts them into a list of strings that serves as the
+    	basis for writing out an XDS.INP file.
+    	"""
 
-        last_frame = int(self.image_data['start']) + int(self.image_data['total']) -1
+        print "createXDSinp"
+
+    	self.logger.debug('FastIntegration::createXDSinp')
+
+        # print self.image_data["start"]
+        # print self.image_data["total"]
+
+        last_frame = self.image_data['start'] + self.image_data["total"] - 1
         self.logger.debug('last_frame = %s' % last_frame)
+        # print last_frame
         # self.logger.debug('detector_type = %s' % detector_type)
         background_range = '%s %s' %(int(self.image_data['start']), int(self.image_data['start']) + 4)
 
-	x_beam = float(self.image_data['x_beam']) / float(self.image_data['pixel_size'])
+    	x_beam = float(self.image_data['x_beam']) / float(self.image_data['pixel_size'])
         y_beam = float(self.image_data['y_beam']) / float(self.image_data['pixel_size'])
         #if x_beam < 0 or x_beam > int(xds_dict['NX']):
         #    raise RuntimeError, 'x beam coordinate outside detector'
         #if y_beam < 0 or y_beam > int(xds_dict['NY']):
         #    raise RuntimeError, 'y beam coordinate outside detector'
 
-	if 'image_template' in self.image_data:
-	    self.image_template = self.image_data['image_template']
-	else:
-	    raise RuntimeError, '"image_template" not defined in input data.'
+    	if 'image_template' in self.image_data:
+    	    self.image_template = self.image_data['image_template']
+    	else:
+    	    raise RuntimeError, '"image_template" not defined in input data.'
 
-	file_template = os.path.join(self.image_data['directory'], self.image_template)
-	# Count the number of '?' that need to be padded in a image filename.
-	pad = file_template.count('?')
-	# Replace the first instance of '?' with the padded out image number
-	# of the last frame
-	self.last_image = file_template.replace('?','%d'.zfill(pad) %last_frame,1)
-	# Remove the remaining '?'
-	self.last_image = self.last_image.replace('?','')
-	# Repeat the last two steps for the first image's filename.
-	self.first_image = file_template.replace('?', str(self.image_data['start']).zfill(pad),1)
-	self.first_image = self.first_image.replace('?','')
+    	file_template = os.path.join(self.image_data['directory'], self.image_template)
+    	# Count the number of '?' that need to be padded in a image filename.
+    	pad = file_template.count('?')
+    	# Replace the first instance of '?' with the padded out image number
+    	# of the last frame
+    	self.last_image = file_template.replace('?','%d'.zfill(pad) %last_frame,1)
+    	# Remove the remaining '?'
+    	self.last_image = self.last_image.replace('?','')
+    	# Repeat the last two steps for the first image's filename.
+    	self.first_image = file_template.replace('?', str(self.image_data['start']).zfill(pad),1)
+    	self.first_image = self.first_image.replace('?','')
 
-	# Begin constructing the list that will represent the XDS.INP file.
-	xds_input = ['!===== DATA SET DEPENDENT PARAMETERS =====\n',
-                  'ORGX=%.2f ORGY=%.2f ! Beam Center (pixels)\n' %(x_beam,y_beam),
-                  'DETECTOR_DISTANCE=%.2f ! (mm)\n' %(float(self.image_data['distance'])),
-                  'OSCILLATION_RANGE=%.2f ! (degrees)\n' %(float(self.image_data['osc_range'])),
-                  'X-RAY_WAVELENGTH=%.5f ! (Angstroems)\n' %(float(self.image_data['wavelength'])),
-                  'NAME_TEMPLATE_OF_DATA_FRAMES=%s\n\n' %file_template,
-		  'BACKGROUND_RANGE=%s\n\n' %background_range,
-                  '!===== DETECTOR_PARAMETERS =====\n']
-	for key,value in xds_dict.iteritems():
+    	# Begin constructing the list that will represent the XDS.INP file.
+    	xds_input = ['!===== DATA SET DEPENDENT PARAMETERS =====\n',
+                      'ORGX=%.2f ORGY=%.2f ! Beam Center (pixels)\n' %(x_beam,y_beam),
+                      'DETECTOR_DISTANCE=%.2f ! (mm)\n' %(float(self.image_data['distance'])),
+                      'OSCILLATION_RANGE=%.2f ! (degrees)\n' %(float(self.image_data['osc_range'])),
+                      'X-RAY_WAVELENGTH=%.5f ! (Angstroems)\n' %(float(self.image_data['wavelength'])),
+                      'NAME_TEMPLATE_OF_DATA_FRAMES=%s\n\n' %file_template,
+    		          'BACKGROUND_RANGE=%s\n\n' %background_range,
+                      '!===== DETECTOR_PARAMETERS =====\n']
+    	for key, value in xds_dict.iteritems():
             # Regions that are excluded are defined with
             # various keyword containing the word UNTRUSTED.
             # Since multiple regions may be specified using
@@ -895,33 +904,33 @@ class RapdAgent(Process):
                 elif 'QUADRILATERL' in key:
                     line = 'UNTRUSTED_QUADRILATERAL=%s\n' %value
             else:
-                line = '%s=%s\n' %(key,value)
-	    xds_input.append(line)
+                line = "%s=%s\n" % (key, value)
+            xds_input.append(line)
 
-	# If the detector is tilted in 2theta, adjust the value of
-	# DIRECTION_OF_DETECTOR_Y-AXIS.
-	# **** IMPORTANT ****
-	# This adjustment assumes that the 2theta tilt affects only
-	# the DIRECTION_OF_DETECTOR_Y-AXIS, and not the
-	# DIRECTION_OF_DETECTOR_X-AXIS.
-	#
-	# If 2theta is not inclined, self.image_data should not have the key
-	# 'twotheta', or have that key set to a value of None.
-	#
-	# If 2theta is inclined, it should be give in self.image_data
-	# with the key 'twotheta' and a value in degrees.
-	#
-	if 'twotheta' in self.image_data and self.image_data['twotheta'] != None:
-	    twotheta = math.radians(float(self.image_data['twotheta']))
-	    tilty = math.cos(twotheta)
-	    tiltz = math.sin(twotheta)
-	    xds_input.append('!***** Detector is tilted in 2theta *****\n')
-	    xds_input.append('! 2THETA = %s degrees\n' % self.image_data['twotheta'])
-	    xds_input.append('!*** Resetting DIRECTION_OF_DETECTOR_Y-AXIS ***\n')
-	    xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS= 0.0 %.4f %.4f\n' %(tilty, tiltz))
-	    xds_input.append('! 0.0 cos(2theta) sin(2theta)\n\n')
+    	# If the detector is tilted in 2theta, adjust the value of
+    	# DIRECTION_OF_DETECTOR_Y-AXIS.
+    	# **** IMPORTANT ****
+    	# This adjustment assumes that the 2theta tilt affects only
+    	# the DIRECTION_OF_DETECTOR_Y-AXIS, and not the
+    	# DIRECTION_OF_DETECTOR_X-AXIS.
+    	#
+    	# If 2theta is not inclined, self.image_data should not have the key
+    	# 'twotheta', or have that key set to a value of None.
+    	#
+    	# If 2theta is inclined, it should be give in self.image_data
+    	# with the key 'twotheta' and a value in degrees.
+    	#
+    	if 'twotheta' in self.image_data and self.image_data['twotheta'] != None:
+    	    twotheta = math.radians(float(self.image_data['twotheta']))
+    	    tilty = math.cos(twotheta)
+    	    tiltz = math.sin(twotheta)
+    	    xds_input.append('!***** Detector is tilted in 2theta *****\n')
+    	    xds_input.append('! 2THETA = %s degrees\n' % self.image_data['twotheta'])
+    	    xds_input.append('!*** Resetting DIRECTION_OF_DETECTOR_Y-AXIS ***\n')
+    	    xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS= 0.0 %.4f %.4f\n' %(tilty, tiltz))
+    	    xds_input.append('! 0.0 cos(2theta) sin(2theta)\n\n')
 
-	return(xds_input)
+    	return(xds_input)
 
     def set_detector_data (self, detector_type):
         """
@@ -1214,7 +1223,7 @@ class RapdAgent(Process):
         while job.is_alive():
             time.sleep(1)
             self.tprint(arg=".", level=99, color="white", newline=False)
-        self.tprint(arg="Done", level=99, color="white")
+        self.tprint(arg=" done", level=99, color="white")
         os.chdir(self.dirs['work'])
 
         return()
