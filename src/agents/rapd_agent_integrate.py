@@ -112,9 +112,6 @@ class RapdAgent(Process):
             self.logger = logging.getLogger("RAPDLogger")
             self.logger.debug("__init__")
 
-        self.print_info()
-        sys.exit()
-
         # Store passed-in variables
         self.site = site
         self.command = command
@@ -340,6 +337,7 @@ class RapdAgent(Process):
         self.write_json(self.results)
 
         # Skip this for now
+        self.print_info()
         return()
 
         analysis = self.run_analysis(final_results['files']['mtzfile'], self.dirs['work'])
@@ -356,9 +354,40 @@ class RapdAgent(Process):
             if self.controller_address:
                 rapd_send(self.controller_address, self.results)
 
-        self.print_info()
-
         return()
+
+    def print_results(self, results):
+        """Print out results to the terminal"""
+
+        if isinstance(results, dict):
+
+            # Print summary
+            summary = results["summary"]
+            # pprint(summary)
+            self.tprint("\nResults summary", 99, "blue")
+            self.tprint("  Spacegroup: %s" % summary["scaling_spacegroup"], 99, "white")
+            self.tprint("  Unit cell: %5.1f %5.1f %5.1f %5.2f %5.2f %5.2f" % tuple(summary["scaling_unit_cell"]), 99, "white")
+            self.tprint("  Mosaicity: %5.3f\n" % summary["mosaicity"], 99, "white")
+            self.tprint("                        overall   inner shell   outer shell", 99, "white")
+            self.tprint("  High res limit         %5.2f       %5.2f         %5.2f" % tuple(summary["bins_high"]), 99, "white")
+            self.tprint("  Low res limit          %5.2f       %5.2f         %5.2f" % tuple(summary["bins_low"]), 99, "white")
+            self.tprint("  Completeness           %5.1f       %5.1f         %5.1f" % tuple(summary["completeness"]), 99, "white")
+            self.tprint("  Multiplicity            %4.1f        %4.1f          %4.1f" % tuple(summary["multiplicity"]), 99, "white")
+            self.tprint("  I/sigma(I)              %4.1f        %4.1f          %4.1f" % tuple(summary["isigi"]), 99, "white")
+            self.tprint("  CC(1/2)                %5.3f       %5.3f         %5.3f" % tuple(summary["cc-half"]), 99, "white")
+            self.tprint("  Rmerge                 %5.3f       %5.3f         %5.3f" % tuple(summary["rmerge_norm"]), 99, "white")
+            self.tprint("  Anom Rmerge            %5.3f       %5.3f         %5.3f" % tuple(summary["rmerge_anom"]), 99, "white")
+            self.tprint("  Rmeas                  %5.3f       %5.3f         %5.3f" % tuple(summary["rmeas_norm"]), 99, "white")
+            self.tprint("  Anom Rmeas             %5.3f       %5.3f         %5.3f" % tuple(summary["rmeas_anom"]), 99, "white")
+            self.tprint("  Rpim                   %5.3f       %5.3f         %5.3f" % tuple(summary["rpim_norm"]), 99, "white")
+            self.tprint("  Anom Rpim              %5.3f       %5.3f         %5.3f" % tuple(summary["rpim_anom"]), 99, "white")
+            self.tprint("  Anom Completeness      %5.1f       %5.1f         %5.1f" % tuple(summary["anom_completeness"]), 99, "white")
+            self.tprint("  Anom Multiplicity       %4.1f        %4.1f          %4.1f" % tuple(summary["anom_multiplicity"]), 99, "white")
+            self.tprint("  Anom Correlation       %5.3f       %5.3f         %5.3f" % tuple(summary["anom_correlation"]), 99, "white")
+            self.tprint("  Anom Slope             %5.3f" % summary["anom_slope"][0], 99, "white")
+            self.tprint("  Observations         %7d     %7d       %7d" % tuple(summary["total_obs"]), 99, "white")
+            self.tprint("  Unique Observations  %7d     %7d       %7d" % tuple(summary["unique_obs"]), 99, "white")
+
 
     def print_info(self):
         """
@@ -520,6 +549,7 @@ class RapdAgent(Process):
         """
         self.logger.debug('Fastintegration::xds_total')
         self.tprint(arg="\nXDS processing", level=99, color="blue")
+
         first = int(self.image_data['start'])
         last = int(self.image_data['start']) + int(self.image_data['total']) -1
         data_range = '%s %s' %(first, last)
@@ -582,10 +612,17 @@ class RapdAgent(Process):
             #newinp[-2] = 'JOB= INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
             newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
             self.write_file(xdsfile, newinp)
-            self.tprint(arg="  Reintegrating ", level=99, color="white", newline=False)
+            self.tprint(arg="  Reintegrating with new resolution cutoff",
+                        level=99,
+                        color="white",
+                        newline=False)
             self.xds_run(xdsdir)
+
         # Prepare the display of results.
         final_results = self.run_results(xdsdir)
+
+        self.print_results(final_results)
+
         # Polish up xds processing by moving GXPARM.XDS to XPARM.XDS
         # and rerunning xds.
         #
@@ -622,6 +659,8 @@ class RapdAgent(Process):
         #            self.write_file(xdsfile, newinp)
         #            self.xds_run(xdsdir)
             final_results = self.run_results(xdsdir)
+
+        self.print_results(final_results)
 
         final_results['status'] = 'ANALYSIS'
         return(final_results)
@@ -1318,6 +1357,11 @@ class RapdAgent(Process):
         """
         self.logger.debug('     directory = %s' % directory)
         self.logger.debug('     isigi = %s' % isigi)
+        self.tprint(arg="  Determining resolution cutoff, ",
+                    level=99,
+                    color="white",
+                    newline=False)
+
         new_hi_res = False
         correctlp = os.path.join(directory,'CORRECT.LP')
         try:
@@ -1371,7 +1415,12 @@ class RapdAgent(Process):
         self.logger.debug('     hires = %s          IsigI = %s' %(hires, IsigI))
         self.logger.debug('	New cutoff = %s' %new_hi_res)
         hi_res = float(new_hi_res)
-        return(hi_res)
+
+        self.tprint(arg="new cutoff = %4.2f" % hi_res,
+                    level=99,
+                    color="white")
+
+        return hi_res
 
     def check_for_xds_errors(self, dir, input):
         """
@@ -1564,7 +1613,7 @@ class RapdAgent(Process):
         summary['wedge'] = '-'.join(wedge)
 
         # Parse INTEGRATE.LP and add information about mosaicity to summary.
-        summary['mosaicity'] = self.parse_integrateLP()
+        summary['mosaicity'] = float(self.parse_integrateLP())
 
         # Parse CORRECT.LP and add information from that to summary.
         summary['ISa'] = self.parse_correctLP()
@@ -2104,7 +2153,8 @@ class RapdAgent(Process):
             if 'Space group' in line:
                 space_group = line.strip().split(': ')[-1]
             elif 'Average unit cell' in line:
-                unit_cell = line.split()[3:]
+                unit_cell = map(float, line.split()[3:])
+
             elif 'Anomalous flag switched ON' in line:
                 anomalous_report = line
             #elif flag == True and 'from half-dataset correlation' in line:
@@ -2112,29 +2162,29 @@ class RapdAgent(Process):
             #    res_cut = line
 
         int_results={
-                     'bins_low'     : summary[3].split()[-3:],
-                     'bins_high'    : summary[4].split()[-3:],
-                     'rmerge_anom'  : summary[6].split()[-3:],
-                     'rmerge_norm'  : summary[7].split()[-3:],
-                     'rmeas_anom'   : summary[8].split()[-3:],
-                     'rmeas_norm'   : summary[9].split()[-3:],
-                     'rpim_anom'    : summary[10].split()[-3:],
-                     'rpim_norm'    : summary[11].split()[-3:],
-                     'rmerge_top'   : summary[12].split()[-3],
-                     'total_obs'    : summary[13].split()[-3:],
-                     'unique_obs'   : summary[14].split()[-3:],
-                     'isigi'        : summary[15].split()[-3:],
-                     'cc-half'      : summary[16].split()[-3:],
-                     'completeness' : summary[17].split()[-3:],
-                     'multiplicity' : summary[18].split()[-3:],
-                     'anom_completeness' : summary[20].split()[-3:],
-                     'anom_multiplicity' : summary[21].split()[-3:],
-                     'anom_correlation'  : summary[22].split()[-3:],
-                     'anom_slope'   : [summary[23].split()[-3]],
-                     'scaling_spacegroup' : space_group,
-                     'scaling_unit_cell' : unit_cell,
-                     #'text'         : res_cut,
-                     'text2'        : anomalous_report
+                     'bins_low': map(float, summary[3].split()[-3:]),
+                     'bins_high': map(float, summary[4].split()[-3:]),
+                     'rmerge_anom': map(float, summary[6].split()[-3:]),
+                     'rmerge_norm': map(float, summary[7].split()[-3:]),
+                     'rmeas_anom': map(float, summary[8].split()[-3:]),
+                     'rmeas_norm': map(float, summary[9].split()[-3:]),
+                     'rpim_anom': map(float, summary[10].split()[-3:]),
+                     'rpim_norm': map(float, summary[11].split()[-3:]),
+                     'rmerge_top': float(summary[12].split()[-3]),
+                     'total_obs': map(int, summary[13].split()[-3:]),
+                     'unique_obs': map(int, summary[14].split()[-3:]),
+                     'isigi': map(float, summary[15].split()[-3:]),
+                     'cc-half': map(float, summary[16].split()[-3:]),
+                     'completeness': map(float, summary[17].split()[-3:]),
+                     'multiplicity': map(float, summary[18].split()[-3:]),
+                     'anom_completeness': map(float, summary[20].split()[-3:]),
+                     'anom_multiplicity': map(float, summary[21].split()[-3:]),
+                     'anom_correlation': map(float, summary[22].split()[-3:]),
+                     'anom_slope': [float(summary[23].split()[-3])],
+                     'scaling_spacegroup': space_group,
+                     'scaling_unit_cell': unit_cell,
+                     #'text': res_cut,
+                     'text2': anomalous_report
                      }
 
         # Now create a list for each graph to be plotted.
@@ -2214,34 +2264,34 @@ class RapdAgent(Process):
 		if "Space group" in line:
 			space_group = line.strip().split(": ")[-1]
 		elif "Average unit cell" in line:
-			unit_cell = line.split()[3:]
+			unit_cell = map(float, line.split()[3:])
 		elif "Anomalous flag switched ON" in line:
 			anomalous_report = line
 
 	int_results = {
-	               "bins_low"     : summary[3].split()[-3:],
-                       "bins_high"    : summary[4].split()[-3:],
-                       "rmerge_anom"  : summary[6].split()[-3:],
-                       "rmerge_norm"  : summary[7].split()[-3:],
-                       "rmeas_anom"   : summary[8].split()[-3:],
-                       "rmeas_norm"   : summary[9].split()[-3:],
-                       "rpim_anom"    : summary[10].split()[-3:],
-                       "rpim_norm"    : summary[11].split()[-3:],
-                       "rmerge_top"   : summary[12].split()[-3],
-                       "total_obs"    : summary[13].split()[-3:],
-                       "unique_obs"   : summary[14].split()[-3:],
-                       "isigi"        : summary[15].split()[-3:],
-                       "cc-half"      : summary[16].split()[-3:],
-                       "completeness" : summary[17].split()[-3:],
-                       "multiplicity" : summary[18].split()[-3:],
-                       "anom_completeness" : summary[20].split()[-3:],
-                       "anom_multiplicity" : summary[21].split()[-3:],
-                       "anom_correlation"  : summary[22].split()[-3:],
-                       "anom_slope"   : [summary[23].split()[-3]],
-                       "scaling_spacegroup" : space_group,
-                       "scaling_unit_cell" : unit_cell,
-                       "text2"              : anomalous_report
-                      }
+	               "bins_low": map(float, summary[3].split()[-3:]),
+                   "bins_high": map(float, summary[4].split()[-3:]),
+                   "rmerge_anom": map(float, summary[6].split()[-3:]),
+                   "rmerge_norm": map(float, summary[7].split()[-3:]),
+                   "rmeas_anom": map(float, summary[8].split()[-3:]),
+                   "rmeas_norm": map(float, summary[9].split()[-3:]),
+                   "rpim_anom": map(float, summary[10].split()[-3:]),
+                   "rpim_norm": map(float, summary[11].split()[-3:]),
+                   "rmerge_top": float(summary[12].split()[-3]),
+                   "total_obs": map(int, summary[13].split()[-3:]),
+                   "unique_obs": map(int, summary[14].split()[-3:]),
+                   "isigi": map(float, summary[15].split()[-3:]),
+                   "cc-half": map(float, summary[16].split()[-3:]),
+                   "completeness": map(float, summary[17].split()[-3:]),
+                   "multiplicity": map(float, summary[18].split()[-3:]),
+                   "anom_completeness": map(float, summary[20].split()[-3:]),
+                   "anom_multiplicity": map(float, summary[21].split()[-3:]),
+                   "anom_correlation": map(float, summary[22].split()[-3:]),
+                   "anom_slope": [float(summary[23].split()[-3])],
+                   "scaling_spacegroup": space_group,
+                   "scaling_unit_cell": unit_cell,
+                   "text2": anomalous_report
+                  }
         # Smartie can pull table information based on a regular
         # expression pattern that matches the table title from
         # the aimless log file.
@@ -2671,11 +2721,14 @@ class RapdAgent(Process):
 		# Return to the main program.
 	return (plots, int_results)
 
-    def aimless (self, mtzin, resolution=False):
+    def aimless(self, mtzin, resolution=False):
         """
         Runs aimless on the data, including the scaling step.
         """
         self.logger.debug('FastIntegration::aimless')
+        self.tprint(arg="  Running Aimless",
+                    level=99,
+                    color="white")
 
         mtzout = mtzin.replace('pointless','aimless')
         logfile = mtzout.replace('mtz','log')

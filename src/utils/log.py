@@ -31,7 +31,7 @@ import sys
 import utils.text as text
 
 
-def verbose_print(arg, level=20, verbosity=20, color="default", no_color=False, newline=True):
+def verbose_print(arg, level=20, color="default", verbosity=20, no_color=False, newline=True):
     """Print to terminal window screened by verbosity setting
 
     Keyword arguments:
