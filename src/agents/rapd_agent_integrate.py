@@ -117,6 +117,9 @@ class RapdAgent(Process):
         self.command = command
         # pprint(self.command)
         self.settings = self.command.get("settings")
+        # pprint(self.settings)
+        # sys.exit()
+
 
         # self.input = input[0:4]
         self.controller_address = self.command.get("return_address", False)
@@ -209,11 +212,20 @@ class RapdAgent(Process):
             if (self.settings['work_dir_override'] == True or
                 self.settings['work_dir_override'] == 'True'):
                 self.dirs['work'] = self.settings['work_directory']
+
         if 'beam_center_override' in self.settings:
             if (self.settings['beam_center_override'] == True or
                 self.settings['beam_center_override'] == 'True'):
+                print ">>> Using beam center override <<<"
                 self.image_data['x_beam'] = self.settings['x_beam']
                 self.image_data['y_beam'] = self.settings['y_beam']
+
+        # Some detectord need flipped for XDS
+        if self.settings.get('flip_beam', False):
+            x = self.image_data['y_beam']
+            self.image_data['y_beam'] = self.image_data['x_beam']
+            self.image_data['x_beam'] = x
+
         self.xds_default = []
 
         # Parameters likely to be changed based on beamline setup.
@@ -386,7 +398,7 @@ class RapdAgent(Process):
             self.tprint("  Anom Correlation       %5.3f       %5.3f         %5.3f" % tuple(summary["anom_correlation"]), 99, "white")
             self.tprint("  Anom Slope             %5.3f" % summary["anom_slope"][0], 99, "white")
             self.tprint("  Observations         %7d     %7d       %7d" % tuple(summary["total_obs"]), 99, "white")
-            self.tprint("  Unique Observations  %7d     %7d       %7d" % tuple(summary["unique_obs"]), 99, "white")
+            self.tprint("  Unique Observations  %7d     %7d       %7d\n" % tuple(summary["unique_obs"]), 99, "white")
 
 
     def print_info(self):
@@ -633,7 +645,7 @@ class RapdAgent(Process):
             os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.old' %xdsdir)
             #newinp[-2] = 'JOB=INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
             self.write_file(xdsfile, newinp)
-            self.tprint(arg="  Intgrating with low resolution settings",
+            self.tprint(arg="  Polishing ",
                         level=99,
                         color="white",
                         newline=False)
@@ -988,12 +1000,12 @@ class RapdAgent(Process):
 
     	# Begin constructing the list that will represent the XDS.INP file.
     	xds_input = ['!===== DATA SET DEPENDENT PARAMETERS =====\n',
-                      'ORGX=%.2f ORGY=%.2f ! Beam Center (pixels)\n' %(x_beam,y_beam),
-                      'DETECTOR_DISTANCE=%.2f ! (mm)\n' %(float(self.image_data['distance'])),
-                      'OSCILLATION_RANGE=%.2f ! (degrees)\n' %(float(self.image_data['osc_range'])),
-                      'X-RAY_WAVELENGTH=%.5f ! (Angstroems)\n' %(float(self.image_data['wavelength'])),
-                      'NAME_TEMPLATE_OF_DATA_FRAMES=%s\n\n' %file_template,
-    		          'BACKGROUND_RANGE=%s\n\n' %background_range,
+                      'ORGX=%.2f ORGY=%.2f ! Beam Center (pixels)\n' % (x_beam, y_beam),
+                      'DETECTOR_DISTANCE=%.2f ! (mm)\n' % (float(self.image_data['distance'])),
+                      'OSCILLATION_RANGE=%.2f ! (degrees)\n' % (float(self.image_data['osc_range'])),
+                      'X-RAY_WAVELENGTH=%.5f ! (Angstroems)\n' % (float(self.image_data['wavelength'])),
+                      'NAME_TEMPLATE_OF_DATA_FRAMES=%s\n\n' % file_template,
+    		          'BACKGROUND_RANGE=%s\n\n' % background_range,
                       '!===== DETECTOR_PARAMETERS =====\n']
     	for key, value in xds_dict.iteritems():
             # Regions that are excluded are defined with
@@ -1036,6 +1048,9 @@ class RapdAgent(Process):
     	    xds_input.append('!*** Resetting DIRECTION_OF_DETECTOR_Y-AXIS ***\n')
     	    xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS= 0.0 %.4f %.4f\n' %(tilty, tiltz))
     	    xds_input.append('! 0.0 cos(2theta) sin(2theta)\n\n')
+
+        pprint(xds_input)
+        # sys.exit()
 
     	return(xds_input)
 
@@ -1350,7 +1365,7 @@ class RapdAgent(Process):
 
         return()
 
-    def find_correct_res (self, directory, isigi):
+    def find_correct_res(self, directory, isigi):
         """
         Looks at CORRECT.LP to find a resolution cutoff, where I/sigma is
         approximately 1.5
@@ -1404,8 +1419,13 @@ class RapdAgent(Process):
                         if prev_IsigI == 0:
                             break
                         else:
-                            new_hi_res = '%0.2f' %interp([isigi],[prev_IsigI, IsigI],
-                                                [prev_hires, hires])
+                            new_hi_res = '%0.2f' % interp([isigi],
+                                                          [prev_IsigI, IsigI],
+                                                          [prev_hires, hires])
+                            # print [isigi]
+                            # print [prev_IsigI, IsigI]
+                            # print [prev_hires, hires]
+                            # print interp([isigi], [prev_IsigI, IsigI], [prev_hires, hires])
                             break
                 else: # If first character in line is not a digit, you;ve
                     # read through the entire table, so break.
@@ -1484,7 +1504,7 @@ class RapdAgent(Process):
                                  + ' IDXREF DEFPIX INTEGRATE CORRECT\n')
                         self.write_file('XDS.INP', input)
                         os.system('mv XDS.LOG initialXDS.LOG')
-                        self.tprint(arg="  Integrating with suboptimal indexing solution ",
+                        self.tprint(arg="\n  Integrating with suboptimal indexing solution ",
                                     level=99,
                                     color="white",
                                     newline=False)
@@ -2830,7 +2850,7 @@ class RapdAgent(Process):
 
         # Check to see if xdsstat exists in the path
         test = os.system('which xdsstat.sh')
-        if test:
+        if not test:
             self.logger.debug('    xdsstat.sh is not in the defined PATH')
             # Write xdsstat.sh
             xdsststsh = ["#!/bin/bash\n",
@@ -3213,7 +3233,7 @@ class RapdAgent(Process):
                 break
         if sg_num != int(line[-1]):
             self.modify_xdsinput_for_symm(xdsinp, sg_num, 'IDXREF.LP')
-            self.tprint(arg="  Integrating with user-input spacegroup forced", level=99, color="white", newline=False)
+            self.tprint(arg="\n  Integrating with user-input spacegroup forced", level=99, color="white", newline=False)
             self.xds_run(xdsdir)
             newinp = self.check_for_xds_errors(xdsdir, xdsinp)
             if newinp == False:

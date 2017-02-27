@@ -168,8 +168,12 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module,
         "end_frame": commandline_args.end_image,
         "x_beam": commandline_args.beamcenter[0],
         "y_beam": commandline_args.beamcenter[1],
-        "xdsinp": detector_module.XDSINP
+        "xdsinp": detector_module.XDSINP,
+        "flip_beam": detector_module.XDS_FLIP_BEAM,
     }
+
+    if commandline_args.beamcenter[0]:
+        command["settings"]["beam_center_override"] = True
 
     # pprint(command)
 

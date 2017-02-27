@@ -91,6 +91,8 @@ CCD_IMAGE_SATURATION=65535;
 }
 """
 
+XDS_FLIP_BEAM = True
+
 MONTHS = {'Jan' : '01',
           'Feb' : '02',
           'Mar' : '03',
