@@ -175,6 +175,8 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module,
     if commandline_args.beamcenter[0]:
         command["settings"]["beam_center_override"] = True
 
+    command["settings"]["show_plots"] = commandline_args.plotting
+    command["settings"]["json_output"] = commandline_args.json
     # pprint(command)
 
     return command

@@ -53,7 +53,7 @@ import sys
 import threading
 import time
 
-from numpy import interp
+import numpy
 
 # RAPD imports
 from subcontractors.xdsme.xds2mos import Xds2Mosflm
@@ -216,7 +216,6 @@ class RapdAgent(Process):
         if 'beam_center_override' in self.settings:
             if (self.settings['beam_center_override'] == True or
                 self.settings['beam_center_override'] == 'True'):
-                print ">>> Using beam center override <<<"
                 self.image_data['x_beam'] = self.settings['x_beam']
                 self.image_data['y_beam'] = self.settings['y_beam']
 
@@ -376,10 +375,9 @@ class RapdAgent(Process):
             # Print summary
             summary = results["summary"]
             # pprint(summary)
-            self.tprint("\nResults summary", 99, "blue")
             self.tprint("  Spacegroup: %s" % summary["scaling_spacegroup"], 99, "white")
             self.tprint("  Unit cell: %5.1f %5.1f %5.1f %5.2f %5.2f %5.2f" % tuple(summary["scaling_unit_cell"]), 99, "white")
-            self.tprint("  Mosaicity: %5.3f\n" % summary["mosaicity"], 99, "white")
+            self.tprint("  Mosaicity: %5.3f" % summary["mosaicity"], 99, "white")
             self.tprint("                        overall   inner shell   outer shell", 99, "white")
             self.tprint("  High res limit         %5.2f       %5.2f         %5.2f" % tuple(summary["bins_high"]), 99, "white")
             self.tprint("  Low res limit          %5.2f       %5.2f         %5.2f" % tuple(summary["bins_low"]), 99, "white")
@@ -399,6 +397,94 @@ class RapdAgent(Process):
             self.tprint("  Anom Slope             %5.3f" % summary["anom_slope"][0], 99, "white")
             self.tprint("  Observations         %7d     %7d       %7d" % tuple(summary["total_obs"]), 99, "white")
             self.tprint("  Unique Observations  %7d     %7d       %7d\n" % tuple(summary["unique_obs"]), 99, "white")
+
+    def print_plots(self, results):
+        """Display plots on the commandline"""
+
+        # Plot as long as JSON output is not selected
+        if self.settings.get("show_plots", True) and (not self.settings.get("json_output", False)):
+
+            # Possible titles - more for documentation
+            plot_titles = [
+                'I/sigma, Mean Mn(I)/sd(Mn(I))',
+                'Average I, RMS deviation, and Sd',
+                'Completeness',
+                'RMS correlation ration',
+                'Imean/RMS scatter',
+                'Rmerge, Rfull, Rmeas, Rpim vs. Resolution',
+                'Radiation Damage',
+                'Rmerge vs Frame',
+                'Redundancy',
+                'Anomalous & Imean CCs vs Resolution'
+                ]
+
+            plots = results["plots"]
+
+            # Determine the open terminal size
+            term_size = os.popen('stty size', 'r').read().split()
+
+            titled = False
+
+            plot_type = "Rmerge vs Frame"
+            if plot_type in plots:
+
+                if not titled:
+                    self.tprint(arg="\nPlots from integration", level=99, color="blue")
+                    titled = True
+
+                #             tag = {"osc_range":"standard", "osc_range_anom":"ANOMALOUS"}[plot_type]
+
+                plot_data = plots[plot_type]["data"]
+                plot_params = plots[plot_type]["parameters"]
+                # pprint(plot_data)
+
+                # Get each subplot
+                raw = False
+                smoothed = False
+                for subplot in plot_data:
+                    # pprint(subplot)
+                    if subplot["parameters"]["linelabel"] == "SmRmerge":
+                        smoothed = subplot
+                    elif subplot["parameters"]["linelabel"] == "Rmerge":
+                        raw = subplot
+
+                # Determine plot extent
+                y_array = numpy.array(raw["series"][0]["ys"])
+                y_max = y_array.max() * 1.1
+                y_min = 0 # max(0, (y_array.min() - 10))
+                x_array = numpy.array(raw["series"][0]["xs"])
+                x_max = x_array.max()
+                x_min = x_array.min()
+
+                # print y_min, y_max, x_min, x_max
+
+                gnuplot = subprocess.Popen(["gnuplot"], stdin=subprocess.PIPE) # %s,%s  (term_size[1], int(int(term_size[0])/3),
+                gnuplot.stdin.write("""set term dumb %s,%s
+                                       set title 'Rmerge vs. Batch'
+                                       set xlabel 'Image #'
+                                       set ylabel 'Rmerge' rotate by 90 \n""" %  (min(180, term_size[1]), max(30, int(int(term_size[0])/3))))
+
+                # Create the plot string
+                plot_string = "plot [%d:%d] [%f:%f] " % (x_min, x_max, y_min, y_max)
+                plot_string += "'-' using 1:2 with lines\n"
+                # plot_string += "'-' using 1:2 title 'Smooth' with points\n"
+                gnuplot.stdin.write(plot_string)
+
+                # Run through the data and add to gnuplot
+                for plot in (raw, ): #smoothed):
+                    # plot = plot_data["data"][i]
+                    xs = plot["series"][0]["xs"]
+                    ys = plot["series"][0]["ys"]
+                    # print xs
+                    # print ys
+                    for i, j in zip(xs, ys):
+                        gnuplot.stdin.write("%f %f\n" % (i,j))
+                    gnuplot.stdin.write("e\n")
+
+                # Now plot!
+                gnuplot.stdin.flush()
+                time.sleep(3)
+                gnuplot.terminate()
 
 
     def print_info(self):
@@ -584,7 +670,7 @@ class RapdAgent(Process):
         self.write_file(xdsfile, xdsinp)
 
         # Run XDS
-        self.tprint(arg="  Searching for peaks ",
+        self.tprint(arg="  Searching for peaks",
                     level=99,
                     color="white",
                     newline=False)
@@ -593,7 +679,7 @@ class RapdAgent(Process):
         #xdsinp[-3] =('MAXIMUM_NUMBER_OF_JOBS=%s\n' % self.jobs)
         xdsinp[-2] =("JOB=IDXREF DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n")
         self.write_file(xdsfile, xdsinp)
-        self.tprint(arg="  Indexing and integrating ",
+        self.tprint(arg="  Indexing and integrating",
                     level=99,
                     color="white",
                     newline=False)
@@ -613,6 +699,11 @@ class RapdAgent(Process):
             # Check consistency of spacegroup, and modify if necessary.
             xdsinp = self.find_xds_symm(xdsdir, xdsinp)
 
+        # Prepare the display of results.
+        prelim_results = self.run_results(xdsdir)
+        self.tprint("\nPreliminary results summary", 99, "blue")
+        self.print_results(prelim_results)
+
         # Find a suitable cutoff for resolution
         # Returns False if no new cutoff, otherwise returns the value of
         # the high resolution cutoff as a float value.
@@ -631,9 +722,9 @@ class RapdAgent(Process):
             self.xds_run(xdsdir)
 
         # Prepare the display of results.
-        final_results = self.run_results(xdsdir)
-
-        self.print_results(final_results)
+        prelim_results_2 = self.run_results(xdsdir)
+        self.tprint("\nIntermediate results summary", 99, "blue")
+        self.print_results(prelim_results_2)
 
         # Polish up xds processing by moving GXPARM.XDS to XPARM.XDS
         # and rerunning xds.
@@ -645,7 +736,7 @@ class RapdAgent(Process):
             os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.old' %xdsdir)
             #newinp[-2] = 'JOB=INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
             self.write_file(xdsfile, newinp)
-            self.tprint(arg="  Polishing ",
+            self.tprint(arg="  Polishing",
                         level=99,
                         color="white",
                         newline=False)
@@ -672,7 +763,10 @@ class RapdAgent(Process):
         #            self.xds_run(xdsdir)
             final_results = self.run_results(xdsdir)
 
+        # Put data into the commanline
+        self.tprint("\nFinal results summary", 99, "blue")
         self.print_results(final_results)
+        self.print_plots(final_results)
 
         final_results['status'] = 'ANALYSIS'
         return(final_results)
@@ -753,8 +847,6 @@ class RapdAgent(Process):
             results = self.xds_total(xdsinput)
 
         return(results)
-
-
 
     def xds_processing (self, xdsinput):
         """
@@ -923,13 +1015,13 @@ class RapdAgent(Process):
         xdsinp.append('DATA_RANGE=%s\n' % data_range)
         xdsfile = os.path.join(xdsdir,'XDS.INP')
         self.write_file(xdsfile, xdsinp)
-        self.tprint(arg="  Searching for peaks wedge ", level=99, color="white", newline=False)
+        self.tprint(arg="  Searching for peaks wedge", level=99, color="white", newline=False)
         self.xds_run(xdsdir)
 
         #xdsinp[-3]=('MAXIMUM_NUMBER_OF_JOBS=%s\n'  % self.jobs)
         xdsinp[-2]=('JOB=IDXREF DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n')
         self.write_file(xdsfile, xdsinp)
-        self.tprint(arg="  Indexing and integrating ", level=99, color="white", newline=False)
+        self.tprint(arg="  Indexing and integrating", level=99, color="white", newline=False)
         self.xds_run(xdsdir)
 
         # If known xds_errors occur, catch them and take corrective action
@@ -951,7 +1043,7 @@ class RapdAgent(Process):
                 newinp[-2] = 'JOB=INTEGRATE CORRECT\n'
                 newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
                 self.write_file(xdsfile, newinp)
-                self.tprint(arg="  Reintegrating ", level=99, color="white", newline=False)
+                self.tprint(arg="  Reintegrating", level=99, color="white", newline=False)
                 self.xds_run(xdsdir)
             results = self.run_results(xdsdir)
         return(results)
@@ -1049,7 +1141,7 @@ class RapdAgent(Process):
     	    xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS= 0.0 %.4f %.4f\n' %(tilty, tiltz))
     	    xds_input.append('! 0.0 cos(2theta) sin(2theta)\n\n')
 
-        pprint(xds_input)
+        # pprint(xds_input)
         # sys.exit()
 
     	return(xds_input)
@@ -1336,6 +1428,7 @@ class RapdAgent(Process):
         xds_command = 'xds_par'
 
         os.chdir(directory)
+        # TODO skip processing for now
         if self.cluster_use == True:
             job = Process(target=BLspec.processCluster,args=(self,(xds_command,'XDS.LOG','8','phase2.q')))
         else:
@@ -1372,7 +1465,7 @@ class RapdAgent(Process):
         """
         self.logger.debug('     directory = %s' % directory)
         self.logger.debug('     isigi = %s' % isigi)
-        self.tprint(arg="  Determining resolution cutoff, ",
+        self.tprint(arg="  Determining resolution cutoff ",
                     level=99,
                     color="white",
                     newline=False)
@@ -1419,9 +1512,9 @@ class RapdAgent(Process):
                         if prev_IsigI == 0:
                             break
                         else:
-                            new_hi_res = '%0.2f' % interp([isigi],
-                                                          [prev_IsigI, IsigI],
-                                                          [prev_hires, hires])
+                            new_hi_res = '%0.2f' % numpy.interp([isigi],
+                                                                [prev_IsigI, IsigI],
+                                                                [prev_hires, hires])
                             # print [isigi]
                             # print [prev_IsigI, IsigI]
                             # print [prev_hires, hires]
@@ -1476,7 +1569,7 @@ class RapdAgent(Process):
                         input[-1] = 'SPOT_RANGE=%s %s' %(first, (int(last) + 1))
                         self.write_file('XDS.INP', input)
                         os.system('mv XDS.LOG initialXDS.LOG')
-                        self.tprint(arg="\n  Extending spot range ",
+                        self.tprint(arg="\n  Extending spot range",
                                     level=10,
                                     color="white",
                                     newline=False)
@@ -1504,7 +1597,7 @@ class RapdAgent(Process):
                                  + ' IDXREF DEFPIX INTEGRATE CORRECT\n')
                         self.write_file('XDS.INP', input)
                         os.system('mv XDS.LOG initialXDS.LOG')
-                        self.tprint(arg="\n  Integrating with suboptimal indexing solution ",
+                        self.tprint(arg="\n  Integrating with suboptimal indexing solution",
                                     level=99,
                                     color="white",
                                     newline=False)
@@ -1521,7 +1614,7 @@ class RapdAgent(Process):
                     input.append('BEAM_DIVERGENCE=0.9 BEAM_DIVERGENCE_E.S.D.=0.09\n')
                     self.write_file('XDS.INP', input)
                     os.system('mv XDS.LOG initialXDS.LOG')
-                    self.tprint(arg="  Integrating after failure in determining spot size parameters ",
+                    self.tprint(arg="  Integrating after failure in determining spot size parameters",
                                 level=99,
                                 color="white",
                                 newline=False)
@@ -2351,8 +2444,8 @@ class RapdAgent(Process):
 		        },
                     "series" :
 			[ {
-                           "xs" : log.tables(rfactor)[0].col("N"),
-                           "ys" : log.tables(rfactor)[0].col("Rmerge")
+                           "xs" : map(int, log.tables(rfactor)[0].col("N")),
+                           "ys" : map(float, log.tables(rfactor)[0].col("Rmerge"))
                         } ]
                     },
                     {
@@ -2365,8 +2458,8 @@ class RapdAgent(Process):
 			 },
                      "series" :
 			[ {
-                         "xs" : log.tables(rfactor)[0].col("N"),
-                         "ys" : log.tables(rfactor)[0].col("SmRmerge")
+                         "xs" : map(int, log.tables(rfactor)[0].col("N")),
+                         "ys" : map(float, log.tables(rfactor)[0].col("SmRmerge"))
                         } ]
                     } ],
                 "parameters" :
@@ -2777,7 +2870,7 @@ class RapdAgent(Process):
         to produce an mtz file suitable for input to aimless.
         """
         self.logger.debug("FastIntegration::pointless")
-        self.tprint(arg="  Running pointless", level=10, color="white")
+        self.tprint(arg="  Running Pointless", level=10, color="white")
 
         hklfile = 'XDS_ASCII.HKL'
         mtzfile = '_'.join([self.image_data['image_prefix'], 'pointless.mtz'])
@@ -2937,9 +3030,8 @@ class RapdAgent(Process):
 
         # Create a mosflm matrix file
         correct_file = os.path.join(results['dir'], 'CORRECT.LP')
-        Xds2Mosflm(xds_file = correct_file, mat_file='reference.mat')
+        Xds2Mosflm(xds_file=correct_file, mat_file="reference.mat")
 
-        self.logger.debug('I AM HERE')
         # Run Shelxc for anomalous signal information
         #if float(results['summary']['bins_high'][-1]) > 4.5:
         #    shelxc_results = None
