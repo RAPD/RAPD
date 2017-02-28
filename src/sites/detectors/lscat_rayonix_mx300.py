@@ -297,8 +297,9 @@ def read_header(fullname, beam_settings={}):
     print basename
     print basename.split(".")
     print basename.split(".")[-2].split("_")
-    print "_".join(basename.split(".")[-2].split("_")[:-1])
+    # print "_".join(basename.split(".")[-2].split("_")[:-1])
     header["image_prefix"] ="_".join(basename.split(".")[-2].split("_")[:-1])
+    print basename.split(".")[-2].split("_")[-1]
     header["run_number"] = int(basename.split(".")[-2].split("_")[-1])
 
     # The image template for processing
@@ -326,7 +327,7 @@ def read_header(fullname, beam_settings={}):
     header["kappa"] = None
     header["phi"] = None
     header["robot_position"] = None
-    header["run_number"] = None
+    # header["run_number"] = None
     header["sample_id"] = None
     header["sample_pos_x"] = None
     header["sample_pos_y"] = None
