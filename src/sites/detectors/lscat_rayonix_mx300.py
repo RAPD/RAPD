@@ -296,9 +296,9 @@ def read_header(fullname, beam_settings={}):
 
     print basename
     print basename.split(".")
-    print basename.split(".")[-1].split("_")
-    print "_".join(basename.split(".")[-1].split("_")[:-1])
-    header["image_prefix"] ="_".join(basename.split(".")[-1].split("_")[:-1])
+    print basename.split(".")[-2].split("_")
+    print "_".join(basename.split(".")[-2].split("_")[:-1])
+    header["image_prefix"] ="_".join(basename.split(".")[-2].split("_")[:-1])
     header["run_number"] = int(basename.split(".")[-2].split("_")[-1])
 
     # The image template for processing
