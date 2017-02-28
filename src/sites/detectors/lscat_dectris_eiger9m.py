@@ -72,6 +72,7 @@ HEADER_VERSION = 1
 
 # XDS information for constructing the XDS.INP file
 # Import from more generic detector
+XDS_FLIP_BEAM = detector.XDS_FLIP_BEAM
 XDSINP = detector.XDSINP
 # Update the XDS information from the imported detector
 # This is from LS-CAT supplied XDS.INP

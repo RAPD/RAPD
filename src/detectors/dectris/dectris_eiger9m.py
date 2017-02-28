@@ -41,6 +41,7 @@ DETECTOR = "dectris_eiger9m"
 VENDROTYPE = "DECTRIS"
 
 # Taken from Dectris data
+XDS_FLIP_BEAM = True
 XDSINP = {
     "MAX_CELL_ANGLE_ERROR": " 2.0",
     "MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT": "3",
