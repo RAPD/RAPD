@@ -394,7 +394,7 @@ class RapdAgent(Process):
             self.tprint("  Anom Rpim              %5.3f       %5.3f         %5.3f" % tuple(summary["rpim_anom"]), 99, "white")
             self.tprint("  Anom Completeness      %5.1f       %5.1f         %5.1f" % tuple(summary["anom_completeness"]), 99, "white")
             self.tprint("  Anom Multiplicity       %4.1f        %4.1f          %4.1f" % tuple(summary["anom_multiplicity"]), 99, "white")
-            self.tprint("  Anom Correlation      %5.3f      %5.3f        %5.3f" % tuple(summary["anom_correlation"]), 99, "white")
+            self.tprint("  Anom Correlation       %5.3f      %5.3f        %5.3f" % tuple(summary["anom_correlation"]), 99, "white")
             self.tprint("  Anom Slope             %5.3f" % summary["anom_slope"][0], 99, "white")
             self.tprint("  Observations         %7d     %7d       %7d" % tuple(summary["total_obs"]), 99, "white")
             self.tprint("  Unique Observations  %7d     %7d       %7d\n" % tuple(summary["unique_obs"]), 99, "white")
