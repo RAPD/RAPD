@@ -42,7 +42,7 @@ DETECTORS = {
         # "site": 'lscat_21idd'
         },
     ("MARCCD", 0): {
-        "detector": "lscat_mar_300"
+        "detector": "lscat_rayonix_mx300"
         },          # APS 21-ID-F
     ("MARCCD", 3): {
         "detector": "sercat_rayonix_mx225",

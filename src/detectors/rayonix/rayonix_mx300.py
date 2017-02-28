@@ -33,7 +33,7 @@ import sys
 import detectors.mar.mar as mar
 
 # Detector information
-DETECTOR = "rayonix_mx225"
+DETECTOR = "rayonix_mx300"
 VENDORTYPE = "MARCCD"
 
 # XDS information
