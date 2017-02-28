@@ -38,6 +38,7 @@ ID = "bd11f4401eaa11e697c3ac87a3333966"
 VERSION = "2.0.0"
 
 # Standard imports
+from distutils.spawn import find_executable
 import json
 import logging
 import logging.handlers
@@ -466,7 +467,7 @@ class RapdAgent(Process):
 
                 # Create the plot string
                 plot_string = "plot [%d:%d] [%f:%f] " % (x_min, x_max, y_min, y_max)
-                plot_string += "'-' using 1:2 with lines\n"
+                plot_string += "'-' using 1:2 title 'Rmerge' with lines\n"
                 # plot_string += "'-' using 1:2 title 'Smooth' with points\n"
                 gnuplot.stdin.write(plot_string)
 
@@ -2942,8 +2943,8 @@ class RapdAgent(Process):
         self.tprint(arg="  Running xdsstat", level=10, color="white")
 
         # Check to see if xdsstat exists in the path
-        test = os.system('which xdsstat.sh')
-        if not test:
+        test = find_executable("xdsstat.sh")
+        if test == None:
             self.logger.debug('    xdsstat.sh is not in the defined PATH')
             # Write xdsstat.sh
             xdsststsh = ["#!/bin/bash\n",
@@ -2951,7 +2952,7 @@ class RapdAgent(Process):
                          "XDS_ASCII.HKL\n",
                          "eof\n"]
             self.write_file("xdsstat.sh", xdsststsh)
-            os.chmod('xdsstat.sh', stat.S_IRWXU)
+            os.chmod("./xdsstat.sh", stat.S_IRWXU)
 
         try:
             job = Process(target=Utils.processLocal, args=(('xdsstat.sh'), self.logger))
