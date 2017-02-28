@@ -294,11 +294,8 @@ def read_header(fullname, beam_settings={}):
     # Add tag for module to header
     header["rapd_detector_id"] = "lscat_rayonix_mx300"
 
-    header["image_prefix"] = ".".join(basename.split(".")[:-2])
-    print basename.split(".")
+    header["image_prefix"] = ".".join(basename.split(".")[:-1])
     header["run_number"] = int(basename.split(".")[-2].split("_")[-1])
-    print int(basename.split(".")[-2].split("_")[-1])
-    sys.exit()
 
     # The image template for processing
     header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])
