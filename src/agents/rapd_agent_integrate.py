@@ -769,6 +769,8 @@ class RapdAgent(Process):
         self.print_results(final_results)
         self.print_plots(final_results)
 
+        sys.exit()
+
         final_results['status'] = 'ANALYSIS'
         return(final_results)
 
