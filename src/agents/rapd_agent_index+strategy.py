@@ -700,7 +700,7 @@ class RapdAgent(Process):
                         level=30,
                         color="red")
             return
-        command = "best -f %s" %
+        command = "best -f %s" % best_detector
 
         # Binning
         if str(self.header.get('binning')) == '2x2':
