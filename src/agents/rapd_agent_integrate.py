@@ -2862,8 +2862,9 @@ class RapdAgent(Process):
         self.write_file(comfile, aimless_file)
         os.chmod(comfile, stat.S_IRWXU)
         cmd = './%s' % comfile
-        os.system(cmd)
-        return(logfile)
+        # os.system(cmd)
+        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return logfile
 
     def pointless(self):
         """
@@ -2881,7 +2882,7 @@ class RapdAgent(Process):
         #cmd = ('/home/necat/programs/ccp4-6.4.0/ccp4-6.4.0/bin/pointless xdsin %s hklout %s << eof > %s\n SETTING C2 \n eof'
         #cmd = ('pointless-1.10.13.linux64 xdsin %s hklout %s << eof > %s\n SETTING C2 \n eof'
                % (hklfile, mtzfile, logfile))
-        self.logger.debug('cmd = %s' %cmd)
+        self.logger.debug("cmd = %s", cmd)
         p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         sts = os.waitpid(p.pid, 0)[1]
         tmp = open(logfile, "r").readlines()
