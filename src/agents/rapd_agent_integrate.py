@@ -2882,11 +2882,11 @@ class RapdAgent(Process):
         #cmd = ('pointless-1.10.13.linux64 xdsin %s hklout %s << eof > %s\n SETTING C2 \n eof'
                % (hklfile, mtzfile, logfile))
         self.logger.debug('cmd = %s' %cmd)
-        p = subprocess.Popen(cmd, shell=True)
+        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         sts = os.waitpid(p.pid, 0)[1]
-        tmp = open(logfile, 'r').readlines()
-        return_value='Failed'
-        for i in range(-10,-1):
+        tmp = open(logfile, "r").readlines()
+        return_value="Failed"
+        for i in range(-10, -1):
             if tmp[i].startswith('P.R.Evans'):
                 return_value=mtzfile
                 break
