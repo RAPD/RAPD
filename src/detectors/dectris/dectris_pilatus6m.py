@@ -40,6 +40,8 @@ import time
 DETECTOR = "dectris_pilatus6m"
 VENDROTYPE = "DECTRIS"
 
+# XDS input information
+XDS_FLIP_BEAM = True
 XDSINP = {
     "UNTRUSTED_RECTANGLE14": "   0 2463  2103 2121",
     "UNTRUSTED_RECTANGLE15": "   0 2463  2315 2333",

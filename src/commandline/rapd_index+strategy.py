@@ -30,7 +30,7 @@ __status__ = "Development"
 import argparse
 import importlib
 import os
-import pprint
+from pprint import pprint
 import sys
 import uuid
 
@@ -102,8 +102,8 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     command["preferences"]["beta"] = 0.0
     command["preferences"]["gamma"] = 0.0
     command["preferences"]["index_hi_res"] = str(commandline_args.hires)
-    command["preferences"]["x_beam"] = str(commandline_args.beamcenter[0])
-    command["preferences"]["y_beam"] = str(commandline_args.beamcenter[1])
+    command["preferences"]["x_beam"] = commandline_args.beamcenter[0]
+    command["preferences"]["y_beam"] = commandline_args.beamcenter[1]
 
     # Mosflm
     command["preferences"]["mosflm_rot"] = float(commandline_args.mosflm_range)
@@ -125,8 +125,8 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     command["preferences"]["solvent_content"] = 0.55
 
     # Unknown
-    command["preferences"]["beam_flip"] = "False"
-    command["preferences"]["multiprocessing"] = "False"
+    command["preferences"]["beam_flip"] = False
+    command["preferences"]["multiprocessing"] = False
 
     # Site parameters
     command["preferences"]["site_parameters"] = {}
@@ -290,7 +290,7 @@ def main():
     # Set up terminal printer
     # Verbosity
     if commandline_args.verbose:
-        terminal_log_level = 10
+        terminal_log_level = 30
     elif commandline_args.json:
         terminal_log_level = 100
     else:

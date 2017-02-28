@@ -67,6 +67,7 @@ RUN_NUMBER_IN_TEMPLATE = True
 HEADER_VERSION = 1
 
 # XDS information for constructing the XDS.INP file
+XDS_FLIP_BEAM = detector.XDS_FLIP_BEAM
 # Import from more generic detector
 XDSINP = detector.XDSINP
 # Update the XDS information from the imported detector
@@ -196,6 +197,10 @@ def read_header(fullname, beam_settings=False):
     # Perform the header read from the file
     # If you are importing another detector, this should work
     header = detector.read_header(fullname)
+
+    # The image template for processing
+    header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])
+    header["run_number_in_template"] = RUN_NUMBER_IN_TEMPLATE
 
     # Return the header
     return header

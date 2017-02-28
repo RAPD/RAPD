@@ -43,7 +43,7 @@ import logging
 from multiprocessing import Process, Queue, Event
 import numpy
 import os
-import pprint
+from pprint import pprint
 import shutil
 import subprocess
 import sys
@@ -205,6 +205,8 @@ class RapdAgent(Process):
         self.site_parameters = self.command.get("site_parameters", False)
         self.preferences = self.command.get("preferences", {})
         self.controller_address = self.reply_address
+
+        pprint(self.preferences)
 
         # Assumes that Core sent job if present. Overrides values for clean and test from top.
         if self.site_parameters != False:
@@ -870,6 +872,29 @@ class RapdAgent(Process):
         except:
             self.logger.exception("**Error in processMosflm**")
 
+    def check_best_detector(self, detector):
+        """Check that the detector we need is in the BEST configuration file"""
+
+        best_executable = subprocess.check_output(["which", "best"])
+        detector_info = os.path.join(os.path.dirname(best_executable),
+                                     "detector-inf.dat")
+
+        # Read the detector info file to see if the detector is in it
+        lines = open(detector_info, "r").readlines()
+        found = False
+        for line in lines:
+            # print line.rstrip()
+            if line.startswith(detector):
+                found = True
+                break
+            elif line.startswith("end"):
+                break
+
+        if not found:
+            self.tprint(arg="Detector %s missing from the BEST detector information file %s" % (detector, detector_info),
+                        level=30,
+                        color="red")
+
     def processStrategy(self, iteration=False):
         """
         Initiate all the strategy runs using multiprocessing.
@@ -883,37 +908,40 @@ class RapdAgent(Process):
 
         self.tprint(arg="\nStarting strategy calculations", level=99, color="blue")
 
-        try:
-            if iteration:
-                st = iteration
-                end = iteration+1
+        # try:
+        if iteration:
+            st = iteration
+            end = iteration+1
+        else:
+            st = 0
+            end = 5
+            if self.strategy == "mosflm":
+                st = 4
+            if self.multiproc == False:
+                end = st+1
+
+        # Get the Best version for this machine
+        best_version = Utils.getBestVersion()
+
+        # Make sure that the BEST install has the detector
+        self.check_best_detector(DETECTOR_TO_BEST.get(self.header.get("detector"), "q315"))
+
+        for i in range(st, end):
+            if i == 1:
+                self.tprint(arg="  Starting BEST runs", level=99, color="white")
+            if i == 4:
+                self.tprint(arg="  Starting Mosflm runs", level=99, color="white")
+                Utils.folders(self, self.labelit_dir)
+                job = Process(target=self.processMosflm, name="mosflm%s" % i)
             else:
-                st = 0
-                end = 5
-                if self.strategy == "mosflm":
-                    st = 4
-                if self.multiproc == False:
-                    end = st+1
+                Utils.foldersStrategy(self, os.path.join(os.path.basename(self.labelit_dir), str(i)))
+                # Reduces resolution and reruns Mosflm to calc new files, then runs Best.
+                job = Process(target=Utils.errorBest, name="best%s" % i, args=(self, i, best_version))
+            job.start()
+            self.jobs[str(i)] = job
 
-            # Get the Best version for this machine
-            best_version = Utils.getBestVersion()
-
-            for i in range(st, end):
-                if i == 1:
-                    self.tprint(arg="  Starting BEST runs", level=99, color="white")
-                if i == 4:
-                    self.tprint(arg="  Starting Mosflm runs", level=99, color="white")
-                    Utils.folders(self, self.labelit_dir)
-                    job = Process(target=self.processMosflm, name="mosflm%s" % i)
-                else:
-                    Utils.foldersStrategy(self, os.path.join(os.path.basename(self.labelit_dir), str(i)))
-                    # Reduces resolution and reruns Mosflm to calc new files, then runs Best.
-                    job = Process(target=Utils.errorBest, name="best%s" % i, args=(self, i, best_version))
-                job.start()
-                self.jobs[str(i)] = job
-
-        except:
-            self.logger.exception("**Error in processStrategy**")
+        # except:
+        #     self.logger.exception("**Error in processStrategy**")
 
     def processXOalign(self):
         """
@@ -1479,7 +1507,7 @@ class RapdAgent(Process):
 
         self.logger.debug(info_string)
 
-    def display_plots(self):
+    def print_plots(self):
         """Display plots on the commandline"""
 
         # Plot as long as JSON output is not selected
@@ -1583,7 +1611,7 @@ class RapdAgent(Process):
                     # Summary.summaryBest(self, False)
                     # Summary.summaryBest(self, True)
                     self.htmlBestPlots()
-                    self.display_plots()
+                    self.print_plots()
 
         # Save path for files required for future STAC runs.
         try:
@@ -2410,12 +2438,15 @@ class RunLabelit(Process):
             if str(self.preferences.get('index_hi_res','0.0')) != '0.0':
                 #preferences.write('distl.res.outer='+index_hi_res+'\n')
                 preferences.write('distl_highres_limit=%s\n'%self.preferences.get('index_hi_res'))
+
             # Always specify the beam center.
             # If Malcolm flips the beam center in the image header...
-            if self.preferences.get('beam_flip', 'False') == 'True':
+            if self.preferences.get("beam_flip", False) == True:
                 preferences.write("autoindex_override_beam=(%s,%s)\n" % (y_beam, x_beam))
             else:
-                preferences.write("autoindex_override_beam=(%s,%s)\n" % (x_beam, y_beam))
+                # print x_beam, y_beam
+                preferences.write("autoindex_override_beam=(%s, %s)\n" % (x_beam, y_beam))
+
             # If two-theta is being used, specify the angle and distance correctly.
             if twotheta.startswith('0'):
                 preferences.write('beam_search_scope=0.2\n')
@@ -2711,7 +2742,7 @@ def BestAction(inp, logger=False, output=False):
     Run Best.
     """
     if logger:
-        logger.debug('BestAction')
+        logger.debug("BestAction")
         logger.debug(inp)
 
     # print inp

@@ -27,7 +27,7 @@ __status__ = "Production"
 
 # Standard imports
 import os
-import pprint
+from pprint import pprint
 import shutil
 import subprocess
 import sys
@@ -920,10 +920,13 @@ def distlComb(self):
     self.logger.exception('**Error in Utils.distlComb**')
 
 #Moved Labelit stuff here because it is used by rapd_agent_strategy.py and rapd_agent_beamcenter.py
-def errorLabelitPost(self,iteration,error,run_before=False):
+def errorLabelitPost(self, iteration, error, run_before=False):
   """
   Do the logging for the error correction in Labelit.
   """
+
+  # pprint(self.labelit_log)
+
   if self.verbose:
     self.logger.debug('Utilities::errorLabelitPost')
   try:
@@ -938,12 +941,12 @@ def errorLabelitPost(self,iteration,error,run_before=False):
     else:
       if iteration >= self.iterations:
         if self.verbose:
-          self.logger.debug('After 3 tries, %s'%error)
-        self.labelit_log[str(iteration)].extend('\nAfter 3 tries, %s\n'%error)
+          self.logger.debug("After 3 tries, %s" % error)
+        self.labelit_log[str(iteration)].extend("\nAfter 3 tries, %s\n" % error)
       else:
         back_counter = self.iterations-iteration
         if self.verbose:
-          self.logger.debug('%s Retrying Labelit %s more time(s)'%(error,back_counter))
+          self.logger.debug('%s Retrying Labelit %s more time(s)'%(error, back_counter))
         self.labelit_log[str(iteration)].extend('\n%s Retrying Labelit %s more time(s)\n'%(error,back_counter))
 
   except:
