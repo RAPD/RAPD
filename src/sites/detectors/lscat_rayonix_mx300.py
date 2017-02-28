@@ -295,7 +295,7 @@ def read_header(fullname, beam_settings={}):
     header["rapd_detector_id"] = "lscat_rayonix_mx300"
 
     header["image_prefix"] = ".".join(basename.split(".")[:-2])
-    print ".".join(basename.split(".")[:-2])
+    print basename.split(".")
     header["run_number"] = int(basename.split(".")[-2].split("_")[-1])
     print int(basename.split(".")[-2].split("_")[-1])
     sys.exit()
