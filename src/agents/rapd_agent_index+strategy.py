@@ -64,6 +64,7 @@ DETECTOR_TO_BEST = {
     "Pilatus-6M": "pilatus6m",
     "PILATUS": "pilatus6m",
     "rayonix_mx225": "mar225",
+    "rayonix_mx300": "mx300",
     "rayonix_mx300hs": "mx300hs",
     "mar300": "mar300",
     "ray300": "ray300",
