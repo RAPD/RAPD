@@ -279,6 +279,9 @@ def read_header(fullname, beam_settings={}):
     beam_settings -- source information from site file
     """
 
+    # File information
+    basename = os.path.basename(fullname)
+
     # Perform the header read form the file
     header = detector.read_header(fullname)
 
@@ -290,6 +293,9 @@ def read_header(fullname, beam_settings={}):
 
     # Add tag for module to header
     header["rapd_detector_id"] = "lscat_rayonix_mx300"
+
+    # run number
+    header["run_number"] = int(basename.split(".")[-2].split("_")[-1])
 
     # The image template for processing
     header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])
@@ -309,6 +315,8 @@ def read_header(fullname, beam_settings={}):
         header["binning"] = False
     else:
         header["binning"] = True
+
+
 
     # Missing values
     header["kappa"] = None
