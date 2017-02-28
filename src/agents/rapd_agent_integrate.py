@@ -116,7 +116,7 @@ class RapdAgent(Process):
         self.site = site
         self.command = command
         # pprint(self.command)
-        self.settings = self.command.get("settings")
+        self.settings = self.command.get("preferences")
         # pprint(self.settings)
         # sys.exit()
 

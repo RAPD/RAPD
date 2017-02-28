@@ -52,13 +52,21 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
         "process_id": uuid.uuid1().get_hex()
         }
 
-    # Where to do the work
+    # Working directory
+    image_numbers = []
+    image_template = False
+    for fullname, header in image_headers.iteritems():
+        image_numbers.append(str(header["image_number"]))
+        image_template = header["image_template"]
+    image_numbers.sort()
+    run_repr = "rapd_index_" + image_template.replace(detector_module.DETECTOR_SUFFIX, "").replace("?", "")
+    run_repr += "+".join(image_numbers)
+
     command["directories"] = {
-        "work": os.path.join(
-            os.path.abspath(os.path.curdir),
-            "rapd_index_" + os.path.basename(image_headers.keys()[0]).replace(
-                detector_module.DETECTOR_SUFFIX,
-                ""))}
+        "work": os.path.join(os.path.abspath(os.path.curdir), run_repr)
+        }
+    pprint(command)
+
     if not os.path.exists(command["directories"]["work"]):
         os.makedirs(command["directories"]["work"])
 

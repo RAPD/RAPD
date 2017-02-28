@@ -162,21 +162,21 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module,
         "run_data": run_data
         }
 
-    command["settings"] = {
-        "spacegroup": commandline_args.spacegroup,
+    command["preferences"] = {
         "start_frame": commandline_args.start_image,
         "end_frame": commandline_args.end_image,
+        "flip_beam": detector_module.XDS_FLIP_BEAM,
         "x_beam": commandline_args.beamcenter[0],
         "y_beam": commandline_args.beamcenter[1],
+        "spacegroup": commandline_args.spacegroup,
+        "json_output": commandline_args.json
+        "show_plots": commandline_args.plotting,
         "xdsinp": detector_module.XDSINP,
-        "flip_beam": detector_module.XDS_FLIP_BEAM,
     }
 
     if commandline_args.beamcenter[0]:
         command["settings"]["beam_center_override"] = True
 
-    command["settings"]["show_plots"] = commandline_args.plotting
-    command["settings"]["json_output"] = commandline_args.json
     # pprint(command)
 
     return command
