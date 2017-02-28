@@ -292,7 +292,7 @@ def read_header(fullname, beam_settings={}):
     header["rapd_detector_id"] = "lscat_rayonix_mx300"
 
     # The image template for processing
-    header["image_template"] = IMAGE_TEMPLATE % header["image_prefix"]
+    header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])
     header["run_number_in_template"] = RUN_NUMBER_IN_TEMPLATE
 
     # Add some values HACK
