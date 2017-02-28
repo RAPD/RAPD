@@ -169,7 +169,7 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module,
         "x_beam": commandline_args.beamcenter[0],
         "y_beam": commandline_args.beamcenter[1],
         "spacegroup": commandline_args.spacegroup,
-        "json_output": commandline_args.json
+        "json_output": commandline_args.json,
         "show_plots": commandline_args.plotting,
         "xdsinp": detector_module.XDSINP,
     }

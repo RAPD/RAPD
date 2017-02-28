@@ -63,7 +63,8 @@ DETECTOR_TO_BEST = {
     "ADSC-HF4M": "hf4m",
     "Pilatus-6M": "pilatus6m",
     "PILATUS": "pilatus6m",
-    "rayonix_mx225": "mar225",
+    "rayonix_mx225": "mx225",
+    "rayonix_mx300": "mx300",
     "rayonix_mx300hs": "mx300hs",
     "mar300": "mar300",
     "ray300": "ray300",
@@ -693,7 +694,13 @@ class RapdAgent(Process):
                 exp_dose_lim = False
 
         # Put together the command for labelit.index
-        command = "best -f %s" % DETECTOR_TO_BEST.get(self.header.get("detector"), "q315")
+        best_detector = DETECTOR_TO_BEST.get(self.header.get("detector"), False)
+        if not best_detector:
+            self.tprint(arg="RAPD does not have a BEST definition for your detector type",
+                        level=30,
+                        color="red")
+            return
+        command = "best -f %s" % best_detector
 
         # Binning
         if str(self.header.get('binning')) == '2x2':

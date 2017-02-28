@@ -38,6 +38,7 @@ ID = "bd11f4401eaa11e697c3ac87a3333966"
 VERSION = "2.0.0"
 
 # Standard imports
+from distutils.spawn import find_executable
 import json
 import logging
 import logging.handlers
@@ -393,7 +394,7 @@ class RapdAgent(Process):
             self.tprint("  Anom Rpim              %5.3f       %5.3f         %5.3f" % tuple(summary["rpim_anom"]), 99, "white")
             self.tprint("  Anom Completeness      %5.1f       %5.1f         %5.1f" % tuple(summary["anom_completeness"]), 99, "white")
             self.tprint("  Anom Multiplicity       %4.1f        %4.1f          %4.1f" % tuple(summary["anom_multiplicity"]), 99, "white")
-            self.tprint("  Anom Correlation      %5.3f      %5.3f        %5.3f" % tuple(summary["anom_correlation"]), 99, "white")
+            self.tprint("  Anom Correlation       %5.3f      %5.3f        %5.3f" % tuple(summary["anom_correlation"]), 99, "white")
             self.tprint("  Anom Slope             %5.3f" % summary["anom_slope"][0], 99, "white")
             self.tprint("  Observations         %7d     %7d       %7d" % tuple(summary["total_obs"]), 99, "white")
             self.tprint("  Unique Observations  %7d     %7d       %7d\n" % tuple(summary["unique_obs"]), 99, "white")
@@ -466,7 +467,7 @@ class RapdAgent(Process):
 
                 # Create the plot string
                 plot_string = "plot [%d:%d] [%f:%f] " % (x_min, x_max, y_min, y_max)
-                plot_string += "'-' using 1:2 with lines\n"
+                plot_string += "'-' using 1:2 title 'Rmerge' with lines\n"
                 # plot_string += "'-' using 1:2 title 'Smooth' with points\n"
                 gnuplot.stdin.write(plot_string)
 
@@ -767,6 +768,8 @@ class RapdAgent(Process):
         self.tprint("\nFinal results summary", 99, "blue")
         self.print_results(final_results)
         self.print_plots(final_results)
+
+        sys.exit()
 
         final_results['status'] = 'ANALYSIS'
         return(final_results)
@@ -2861,8 +2864,9 @@ class RapdAgent(Process):
         self.write_file(comfile, aimless_file)
         os.chmod(comfile, stat.S_IRWXU)
         cmd = './%s' % comfile
-        os.system(cmd)
-        return(logfile)
+        # os.system(cmd)
+        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return logfile
 
     def pointless(self):
         """
@@ -2880,12 +2884,12 @@ class RapdAgent(Process):
         #cmd = ('/home/necat/programs/ccp4-6.4.0/ccp4-6.4.0/bin/pointless xdsin %s hklout %s << eof > %s\n SETTING C2 \n eof'
         #cmd = ('pointless-1.10.13.linux64 xdsin %s hklout %s << eof > %s\n SETTING C2 \n eof'
                % (hklfile, mtzfile, logfile))
-        self.logger.debug('cmd = %s' %cmd)
-        p = subprocess.Popen(cmd, shell=True)
+        self.logger.debug("cmd = %s", cmd)
+        p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         sts = os.waitpid(p.pid, 0)[1]
-        tmp = open(logfile, 'r').readlines()
-        return_value='Failed'
-        for i in range(-10,-1):
+        tmp = open(logfile, "r").readlines()
+        return_value="Failed"
+        for i in range(-10, -1):
             if tmp[i].startswith('P.R.Evans'):
                 return_value=mtzfile
                 break
@@ -2942,8 +2946,8 @@ class RapdAgent(Process):
         self.tprint(arg="  Running xdsstat", level=10, color="white")
 
         # Check to see if xdsstat exists in the path
-        test = os.system('which xdsstat.sh')
-        if not test:
+        test = find_executable("xdsstat.sh")
+        if test == None:
             self.logger.debug('    xdsstat.sh is not in the defined PATH')
             # Write xdsstat.sh
             xdsststsh = ["#!/bin/bash\n",
@@ -2951,7 +2955,7 @@ class RapdAgent(Process):
                          "XDS_ASCII.HKL\n",
                          "eof\n"]
             self.write_file("xdsstat.sh", xdsststsh)
-            os.chmod('xdsstat.sh', stat.S_IRWXU)
+            os.chmod("./xdsstat.sh", stat.S_IRWXU)
 
         try:
             job = Process(target=Utils.processLocal, args=(('xdsstat.sh'), self.logger))
