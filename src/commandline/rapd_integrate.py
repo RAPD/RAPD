@@ -275,8 +275,6 @@ def main():
     if len(data_files) == 0 and commandline_args.test == False:
         raise Exception("No files input for integration.")
 
-    sys.exit()
-
     # Get site - commandline wins over the environmental variable
     site = False
     SITE = False
