@@ -30,7 +30,8 @@ __status__ = "Development"
 # Standard imports
 import argparse
 import os
-import pprint
+from pprint import pprint
+import re
 
 # RAPD imports
 # commandline_utils
@@ -134,6 +135,97 @@ def get_data_root_dir(fullname):
     # Return the determined directory
     return data_root_dir
 
+def base_read_header(image,
+                     logger=False):
+    """
+    Given a full file name for a Piltus image (as a string), read the header and
+    return a dict with all the header info
+    """
+    # print "determine_flux %s" % image
+    if logger:
+        logger.debug("read_header %s" % image)
+
+    # Make sure the image is a full path image
+    image = os.path.abspath(image)
+
+    def mmorm(x):
+        d = float(x)
+        if (d < 2):
+            return(d*1000)
+        else:
+            return(d)
+
+    #item:(pattern,transform)
+    header_items = header_items = {
+        "beam_x": ("^# Beam_xy\s*\(([\d\.]+)\,\s[\d\.]+\) pixels", lambda x: float(x)),
+        "beam_y": ("^# Beam_xy\s*\([\d\.]+\,\s([\d\.]+)\) pixels", lambda x: float(x)),
+        "count_cutoff": ("^# Count_cutoff\s*(\d+) counts", lambda x: int(x)),
+        "detector_sn": ("S\/N ([\w\d\-]*)\s*", lambda x: str(x)),
+        "date": ("^# ([\d\-]+T[\d\.\:]+)\s*", lambda x: str(x)),
+        "distance": ("^# Detector_distance\s*([\d\.]+) m", mmorm),
+        "excluded_pixels": ("^# Excluded_pixels\:\s*([\w\.]+)", lambda x: str(x)),
+        "flat_field": ("^# Flat_field\:\s*([\(\)\w\.]+)", lambda x: str(x)),
+        "gain": ("^# Gain_setting\:\s*([\s\(\)\w\.\-\=]+)", lambda x: str(x).rstrip()),
+        "n_excluded_pixels": ("^# N_excluded_pixels\s\=\s*(\d+)", lambda x: int(x)),
+        "osc_range": ("^# Angle_increment\s*([\d\.]*)\s*deg", lambda x: float(x)),
+        "osc_start": ("^# Start_angle\s*([\d\.]+)\s*deg", lambda x: float(x)),
+        "period": ("^# Exposure_period\s*([\d\.]+) s", lambda x: float(x)),
+        "pixel_size": ("^# Pixel_size\s*([\.\d]+)e-05 m.*", lambda x: float(x)),
+        "sensor_thickness": ("^#\sSilicon\ssensor\,\sthickness\s*([\d\.]+)\sm", lambda x: float(x)*1000),
+        "tau": ("^#\sTau\s\=\s*([\d\.]+e\-09) s", lambda x: float(x)),
+        "threshold": ("^#\sThreshold_setting\:\s*([\d\.]+)\seV", lambda x: float(x)),
+        "time": ("^# Exposure_time\s*([\d\.]+) s", lambda x: float(x)),
+        "transmission": ("^# Filter_transmission\s*([\d\.]+)", lambda x: float(x)),
+        "trim_file": ("^#\sTrim_file\:\s*([\w\.]+)", lambda x:str(x).rstrip()),
+        "twotheta": ("^# Detector_2theta\s*([\d\.]*)\s*deg", lambda x: float(x)),
+        "wavelength": ("^# Wavelength\s*([\d\.]+) A", lambda x: float(x))
+        }
+
+    rawdata = open(image,"rb").read(2048)
+    headeropen = 0
+    headerclose= rawdata.index("--CIF-BINARY-FORMAT-SECTION--")
+    header = rawdata[headeropen:headerclose]
+
+    # try:
+    #tease out the info from the file name
+    base = os.path.basename(image).rstrip(".cbf")
+
+    parameters = {
+        "fullname": image,
+        "detector": "EIGER",
+        "directory": os.path.dirname(image),
+        "image_prefix": "_".join(base.split("_")[0:-2]),
+        # "run_number": int(base.split("_")[-2]),
+        "image_number": int(base.split("_")[-1]),
+        "axis": "omega",
+        # "collect_mode": mode,
+        # "run_id": run_id,
+        # "place_in_run": place_in_run,
+        # "size1": 2463,
+        # "size2": 2527}
+        }
+
+    for label, pat in header_items.iteritems():
+        # print label
+        pattern = re.compile(pat[0], re.MULTILINE)
+        matches = pattern.findall(header)
+        if len(matches) > 0:
+            parameters[label] = pat[1](matches[-1])
+        else:
+            parameters[label] = None
+
+    pprint(parameters)
+
+    # Put beam center into RAPD format mm
+    parameters["x_beam"] = parameters["beam_y"] # * parameters["pixel_size"]
+    parameters["y_beam"] = parameters["beam_x"] # * parameters["pixel_size"]
+
+    return(parameters)
+
+    # except:
+    #     if logger:
+    #         logger.exception('Error reading the header for image %s' % image)
+
 def read_header(input_file=False, beam_settings=False):
     """
     Read header from image file and return dict
@@ -149,14 +241,15 @@ def read_header(input_file=False, beam_settings=False):
         header = utils.read_hdf5_header(input_file)
 
     elif input_file.endswith(".cbf"):
-        header = detector.read_header(input_file)
+        header = base_read_header(input_file)
+        # header = detector.read_header(input_file)
 
     basename = os.path.basename(input_file)
-    header["image_prefix"] = ".".join(basename.replace(".cbf", "").split(".")[:-1])
+    header["image_prefix"] = "_".join(basename.replace(".cbf", "").split("_")[:-2])
     header["run_number"] = int(basename.replace(".cbf", "").split("_")[-1])
 
     # Add tag for module to header
-    header["rapd_detector_id"] = "lscat_dectris_eiger9m"
+    header["rapd_detector_id"] = "necat_dectris_eiger16m"
 
     # The image template for processing
     header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])
@@ -206,7 +299,7 @@ def main(args):
         header = read_header(cbf_file=test_image)
 
     # And print it out
-    pprint.pprint(header)
+    pprint(header)
 
 if __name__ == "__main__":
 

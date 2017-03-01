@@ -27,10 +27,10 @@ __status__ = "Production"
 # import threading
 import argparse
 import os
-import pprint
+from pprint import pprint
 import re
 import shutil
-import sys
+# import sys
 import tempfile
 
 # RAPD imports
@@ -41,6 +41,7 @@ DETECTOR = "dectris_eiger9m"
 VENDROTYPE = "DECTRIS"
 
 # Taken from Dectris data
+XDS_FLIP_BEAM = True
 XDSINP = {
     "MAX_CELL_ANGLE_ERROR": " 2.0",
     "MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT": "6",
@@ -125,7 +126,7 @@ def read_header(image,
         "osc_range": ("^# Angle_increment\s*([\d\.]*)\s*deg", lambda x: float(x)),
         }
 
-    rawdata = open(image,"rb").read(1024)
+    rawdata = open(image,"rb").read(2048)
     headeropen = 0
     headerclose= rawdata.index("--CIF-BINARY-FORMAT-SECTION--")
     header = rawdata[headeropen:headerclose]
@@ -157,6 +158,8 @@ def read_header(image,
             parameters[label] = pat[1](matches[-1])
         else:
             parameters[label] = None
+
+    pprint(parameters)
 
     # Put beam center into RAPD format mm
     parameters["x_beam"] = parameters["beam_y"] * parameters["pixel_size"]
