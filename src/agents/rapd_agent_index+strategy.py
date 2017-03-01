@@ -70,6 +70,7 @@ DETECTOR_TO_BEST = {
     "ray300": "ray300",
     "Dectris Eiger 9M": "eiger9m",
     "Eiger-9M": "eiger9m",
+    "Eiger-16M": "eiger16m",
     }
 
 class RapdAgent(Process):
