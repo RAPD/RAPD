@@ -140,6 +140,11 @@ def read_header(image,
         "wavelength": ("^# Wavelength\s*([\d\.]+) A", lambda x: float(x))
         }
 
+    rawdata = open(image,"rb").read(2048)
+    headeropen = 0
+    headerclose= rawdata.index("--CIF-BINARY-FORMAT-SECTION--")
+    header = rawdata[headeropen:headerclose]
+
     count = 0
     while (count < 10):
     	try:
