@@ -220,9 +220,9 @@ def main():
 
     print terminal_log_level
     tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level)
-    sys.exit()
 
     print_welcome_message(tprint)
+    sys.exit()
 
     # Print out commandline arguments
     logger.debug("Commandline arguments:")
