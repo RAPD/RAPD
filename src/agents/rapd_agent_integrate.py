@@ -484,7 +484,7 @@ class RapdAgent(Process):
 
                 # Now plot!
                 gnuplot.stdin.flush()
-                time.sleep(3)
+                time.sleep(2)
                 gnuplot.terminate()
 
 
@@ -1456,7 +1456,7 @@ class RapdAgent(Process):
         self.logger.debug('FastIntegration::xds_ram')
         command = ('ssh -x %s "cd $PWD && xds_par > XDS.LOG"' % first_node)
         self.logger.debug('		%s' % command)
-        p = subprocess.Popen(command, shell=True)
+        p = subprocess.Popen(command, shell=True, )
         sts = os.waitpid(p.pid, 0)[1]
 
         return()
@@ -2846,9 +2846,9 @@ class RapdAgent(Process):
                     level=99,
                     color="white")
 
-        mtzout = mtzin.replace('pointless','aimless')
-        logfile = mtzout.replace('mtz','log')
-        comfile = mtzout.replace('mtz','com')
+        mtzout = mtzin.replace('pointless', 'aimless')
+        logfile = mtzout.replace('mtz', 'log')
+        comfile = mtzout.replace('mtz', 'com')
 
         aimless_file = ['#!/bin/tcsh\n',
                         #'/share/apps/necat/programs/ccp4-6.3.0/ccp4-6.3.0/bin/aimless hklin %s hklout %s << eof > %s\n' % (mtzin, mtzout, logfile),
@@ -2866,6 +2866,7 @@ class RapdAgent(Process):
         cmd = './%s' % comfile
         # os.system(cmd)
         p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p.wait()
         return logfile
 
     def pointless(self):
@@ -2886,7 +2887,8 @@ class RapdAgent(Process):
                % (hklfile, mtzfile, logfile))
         self.logger.debug("cmd = %s", cmd)
         p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        sts = os.waitpid(p.pid, 0)[1]
+        p.wait()
+        # sts = os.waitpid(p.pid, 0)[1]
         tmp = open(logfile, "r").readlines()
         return_value="Failed"
         for i in range(-10, -1):
@@ -2990,7 +2992,8 @@ class RapdAgent(Process):
         self.write_file('truncate.sh', comfile)
         os.chmod('truncate.sh', stat.S_IRWXU)
         p = subprocess.Popen('./truncate.sh', shell=True)
-        sts = os.waitpid(p.pid,0)[1]
+        p.wait()
+        # sts = os.waitpid(p.pid,0)[1]
 
         # Set the free R flag.
         comfile = ['#!/bin/csh\n',
@@ -3000,7 +3003,8 @@ class RapdAgent(Process):
         self.write_file('freer.sh', comfile)
         os.chmod('freer.sh', stat.S_IRWXU)
         p = subprocess.Popen('./freer.sh', shell=True)
-        sts = os.waitpid(p.pid,0)[1]
+        p.wait()
+        # sts = os.waitpid(p.pid,0)[1]
 
         # Create the merged scalepack format file.
         comfile = ['#!/bin/csh\n',
@@ -3013,7 +3017,8 @@ class RapdAgent(Process):
         self.write_file('mtz2scaNAT.sh', comfile)
         os.chmod('mtz2scaNAT.sh', stat.S_IRWXU)
         p = subprocess.Popen('./mtz2scaNAT.sh', shell=True)
-        sts = os.waitpid(p.pid, 0)[1]
+        p.wait()
+        # sts = os.waitpid(p.pid, 0)[1]
         self.fixMtz2Sca('NATIVE.sca')
         Utils.fixSCA(self, 'NATIVE.sca')
 
@@ -3027,8 +3032,9 @@ class RapdAgent(Process):
                    'eof']
         self.write_file('mtz2scaANOM.sh', comfile)
         os.chmod('mtz2scaANOM.sh', stat.S_IRWXU)
-        p = subprocess.Popen('./mtz2scaANOM.sh', shell=True)
-        sts = os.waitpid(p.pid, 0)[1]
+        p = subprocess.Popen('./mtz2scaANOM.sh', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p.wait()
+        # sts = os.waitpid(p.pid, 0)[1]
         self.fixMtz2Sca('ANOM.sca')
         Utils.fixSCA(self, 'ANOM.sca')
 
@@ -3102,8 +3108,9 @@ class RapdAgent(Process):
             command = 'rm -rf /dev/shm/%s' %self.image_data['image_prefix']
             for node in self.ram_nodes[0]:
                 command2 = 'ssh -x %s "%s"' %(node, command)
-                p = subprocess.Popen(command2, shell=True)
-                sts = os.waitpid(p.pid,0)[1]
+                p = subprocess.Popen(command2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p.wait()
+                # sts = os.waitpid(p.pid,0)[1]
 
         tmp = results
         #if shelxc_results != None:
@@ -3187,6 +3194,7 @@ class RapdAgent(Process):
         shelx_log = []
         output0 = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT)
+        output0.wait()
         for line in output0.stdout:
             shelx_log.append(line.strip())
             self.logger.debug(line)
