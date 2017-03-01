@@ -1534,7 +1534,7 @@ class RapdAgent(Process):
         self.logger.debug('	New cutoff = %s' %new_hi_res)
         hi_res = float(new_hi_res)
 
-        self.tprint(arg="new cutoff = %4.2f%s" % (hi_res, text.deg),
+        self.tprint(arg="new cutoff = %4.2f%s" % (hi_res, text.aring),
                     level=99,
                     color="white")
 
