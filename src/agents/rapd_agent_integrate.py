@@ -339,15 +339,17 @@ class RapdAgent(Process):
             pass
         else:
             final_results = self.finish_data(integration_results)
-
+        print "here1"
         # Set up the results for return
         self.results['process'] = {
         	'agent_process_id':self.process_id,
         	'status':100 }
         self.results['results'] = final_results
+        print "here2"
         self.logger.debug(self.results)
         #self.sendBack2(results)
 
+        print "here3"
         self.write_json(self.results)
 
         self.print_info()
