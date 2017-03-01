@@ -26,3 +26,7 @@ main_module = sys.modules[__name__]
 
 def color(requested_color="default"):
     return getattr(main_module, requested_color)
+
+
+aring = unichr(197).encode('utf-8')
+deg = unichr(176).encode('utf-8')
