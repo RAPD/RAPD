@@ -41,6 +41,9 @@ DETECTORS = {
         "detector": "lscat_dectris_eiger9m",
         # "site": 'lscat_21idd'
         },
+    ("Eiger-16M", "Dectris Eiger 16M S/N E-32-0108"): {
+        "detector": "necat_dectris_eiger16m",
+    },
     ("MARCCD", 0): {
         "detector": "lscat_rayonix_mx300"
         },          # APS 21-ID-F
