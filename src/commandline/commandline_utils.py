@@ -324,7 +324,9 @@ def analyze_data_sources(sources,
 
             converter.run()
 
-            return converter.output_images
+            return_data["data_files"] = converter.output_images
+
+            return return_data
 
         # NOT HDF5
         else:
