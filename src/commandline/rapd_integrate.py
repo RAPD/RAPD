@@ -218,7 +218,9 @@ def main():
     else:
         terminal_log_level = 50
 
-    tprint = utils.log.get_terminal_printer(verbosity=log_level)
+    print terminal_log_level
+    tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level)
+    sys.exit()
 
     print_welcome_message(tprint)
 

@@ -350,10 +350,11 @@ class RapdAgent(Process):
 
         self.write_json(self.results)
 
-        # Skip this for now
+
         self.print_info()
         return()
 
+        # Skip this for now
         analysis = self.run_analysis(final_results['files']['mtzfile'], self.dirs['work'])
         analysis = 'Success'
         if analysis == 'Failed':
@@ -542,8 +543,15 @@ class RapdAgent(Process):
     def write_json(self, results):
         """Write a file with the JSON version of the results"""
 
-        with open ("result.json", 'w') as outfile:
-            outfile.writelines(json.dumps(results))
+        json_string = json.dumps(results)
+
+        # Output to terminal?
+        if self.settings["json_output"]:
+            print json_string
+
+        # Write a file
+        with open("result.json", 'w') as outfile:
+            outfile.writelines(json_string)
 
 
     def ram_total (self, xdsinput):

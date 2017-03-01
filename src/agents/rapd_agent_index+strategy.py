@@ -1542,11 +1542,11 @@ class RapdAgent(Process):
                     y_min = 0 #max(0, (y_array.min() - 10))
 
                     gnuplot = subprocess.Popen(["gnuplot"], stdin=subprocess.PIPE) # %s,%s  (term_size[1], int(int(term_size[0])/3),
-                    gnuplot.stdin.write("""set term dumb %s,%s
+                    gnuplot.stdin.write("""set term dumb %d,%d
                                            set key outside
                                            set title 'Minimal Oscillation Ranges %s'
                                            set xlabel 'Starting Angle'
-                                           set ylabel 'Rotation Range' rotate by 90 \n""" %  (min(180, term_size[1]), max(30, int(int(term_size[0])/3)), tag))
+                                           set ylabel 'Rotation Range' rotate by 90 \n""" %  (min(180, int(term_size[1])), max(30, int(int(term_size[0])/3)), tag))
 
                     # Create the plot string
                     plot_string = "plot [0:180] [%d:%d] " % (y_min, y_max)
