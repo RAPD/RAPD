@@ -218,11 +218,9 @@ def main():
     else:
         terminal_log_level = 50
 
-    print terminal_log_level
     tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level)
 
     print_welcome_message(tprint)
-    sys.exit()
 
     # Print out commandline arguments
     logger.debug("Commandline arguments:")
