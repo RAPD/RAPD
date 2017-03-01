@@ -65,7 +65,7 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     command["directories"] = {
         "work": os.path.join(os.path.abspath(os.path.curdir), run_repr)
         }
-    pprint(command)
+    # pprint(command)
 
     if not os.path.exists(command["directories"]["work"]):
         os.makedirs(command["directories"]["work"])

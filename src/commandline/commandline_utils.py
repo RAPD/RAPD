@@ -239,7 +239,7 @@ def analyze_data_sources(sources,
     """
     Return information on files or directory from input
     """
-    # print "analyze_data_sources", sources
+    print "analyze_data_sources", sources
 
     return_data = {}
 

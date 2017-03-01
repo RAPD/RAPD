@@ -29,20 +29,8 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
-# datetime
-# glob
-# import json
-# logging
-# multiprocessing
 import os
 import pprint
-# pymongo
-# import re
-# redis
-# shutil
-# subprocess
-# sys
-# import time
 
 # RAPD imports
 # commandline_utils

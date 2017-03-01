@@ -257,6 +257,9 @@ def main():
         start_image=commandline_args.start_image,
         end_image=commandline_args.end_image)
 
+    pprint(data_files)
+    sys.exit()
+
     if "hdf5_files" in data_files:
         logger.debug("HDF5 source file(s)")
         tprint(arg="\nHDF5 source file(s)", level=99, color="blue")
