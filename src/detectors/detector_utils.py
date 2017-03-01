@@ -107,8 +107,6 @@ def print_detector_info(image):
     Print out information on the detector given an image
     """
 
-    from iotbx.detectors import ImageFactory
-
     image_basename = os.path.basename(image)
 
     try:
@@ -388,15 +386,28 @@ def main(test_images):
         print_detector_info2(test_image)
 
         print "\nRAPD detector registry"
+        print "========================"
         detector = get_detector_file(test_image)
         if detector:
             print "%20s::%s" % ("detector", detector)
+
         else:
             print "%20s::%s" % ("detector", "unknown")
         # except:
         #     print "%20s::%s" % ("error", "Severe error reading %s" % os.path.basename(test_image))
 
-        print "====="
+        print "\nHeader information"
+        print "===================="
+        if detector.has_key("detector"):
+            SITE = False
+            detector_target = detector.get("detector")
+            detector_module = load_detector(detector_target)
+        header = detector_module.read_header(test_image)
+        keys = header.keys()
+        keys.sort()
+        for key in keys:
+            print "%20s::%s" % (key, header[key])
+
 
         if tmp_dir:
             shutil.rmtree(tmp_dir)
