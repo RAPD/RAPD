@@ -60,7 +60,9 @@ import numpy
 from subcontractors.xdsme.xds2mos import Xds2Mosflm
 from utils.communicate import rapd_send
 from subcontractors.stats import AutoStats
+import utils.text as text
 import utils.xutils as Utils
+
 
 # Import smartie.py from the installed CCP4 package
 # smartie.py is a python script for parsing log files from CCP4
@@ -1532,7 +1534,7 @@ class RapdAgent(Process):
         self.logger.debug('	New cutoff = %s' %new_hi_res)
         hi_res = float(new_hi_res)
 
-        self.tprint(arg="new cutoff = %4.2f" % hi_res,
+        self.tprint(arg="new cutoff = %4.2f%s" % (hi_res, text.deg),
                     level=99,
                     color="white")
 
@@ -1552,7 +1554,7 @@ class RapdAgent(Process):
         # and the reruns xds.
         # Loop should continue until all errors are corrected, or only
         # an unknown error is detected.
-        xdslog = open('XDS.LOG','r').readlines()
+        xdslog = open('XDS.LOG', 'r').readlines()
         for line in xdslog:
             if '! ERROR !' in line:
                 # An error was found in XDS.LOG, now figure out what it was.
