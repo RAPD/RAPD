@@ -1734,7 +1734,7 @@ class RapdAgent(Process):
         summary['mosaicity'] = float(self.parse_integrateLP())
 
         # Parse CORRECT.LP and add information from that to summary.
-        summary['ISa'] = self.parse_correctLP()
+        summary['ISa'] = float(self.parse_correctLP())
 
         # Parse CORRECT.LP and pull out per wedge statistics
         #self.parse_correct()
@@ -2947,7 +2947,7 @@ class RapdAgent(Process):
         output to the file XDSSTAT.LP
         """
         self.logger.debug('FastIntegration::xdsstat')
-        self.tprint(arg="  Running xdsstat", level=10, color="white")
+        self.tprint(arg="  Running XDSSTAT", level=10, color="white")
 
         # Check to see if xdsstat exists in the path
         test = find_executable("xdsstat.sh")
