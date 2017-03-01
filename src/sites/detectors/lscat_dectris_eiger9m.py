@@ -152,11 +152,11 @@ def create_image_template(image_prefix, run_number):
     Create an image template for XDS
     """
 
-    print "create_image_template %s %d" % (image_prefix, run_number)
+    # print "create_image_template %s %d" % (image_prefix, run_number)
 
     image_template = IMAGE_TEMPLATE % (image_prefix, run_number)
 
-    print "image_template: %s" % image_template
+    # print "image_template: %s" % image_template
 
     return image_template
 

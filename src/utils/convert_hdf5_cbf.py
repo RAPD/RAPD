@@ -170,7 +170,7 @@ class hdf5_to_cbf_converter(object):
         else:
 
             if len(self.ranges_to_make) == 0:
-                print "No images to make"
+                # print "No images to make"
                 self.convert_images(start_image=self.start_image,
                                     end_image=self.end_image,
                                     active=False)
