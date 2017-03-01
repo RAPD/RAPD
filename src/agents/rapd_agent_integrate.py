@@ -465,7 +465,7 @@ class RapdAgent(Process):
                 gnuplot.stdin.write("""set term dumb %d,%d
                                        set title 'Rmerge vs. Batch'
                                        set xlabel 'Image #'
-                                       set ylabel 'Rmerge' rotate by 90 \n""" %  (term_size[1]-20, 30)) # (min(180, term_size[1]), max(30, int(int(term_size[0])/3))))
+                                       set ylabel 'Rmerge' rotate by 90 \n""" %  (int(term_size[1])-20, 30)) # (min(180, term_size[1]), max(30, int(int(term_size[0])/3))))
 
                 # Create the plot string
                 plot_string = "plot [%d:%d] [%f:%f] " % (x_min, x_max, y_min, y_max)
