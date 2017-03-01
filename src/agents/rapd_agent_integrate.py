@@ -121,8 +121,6 @@ class RapdAgent(Process):
         # pprint(self.command)
         self.settings = self.command.get("preferences")
         # pprint(self.settings)
-        # sys.exit()
-
 
         # self.input = input[0:4]
         self.controller_address = self.command.get("return_address", False)
@@ -782,8 +780,6 @@ class RapdAgent(Process):
         self.print_results(final_results)
         self.print_plots(final_results)
 
-        sys.exit()
-
         final_results['status'] = 'ANALYSIS'
         return(final_results)
 
@@ -1158,7 +1154,6 @@ class RapdAgent(Process):
     	    xds_input.append('! 0.0 cos(2theta) sin(2theta)\n\n')
 
         # pprint(xds_input)
-        # sys.exit()
 
     	return(xds_input)
 
