@@ -207,7 +207,7 @@ class RapdAgent(Process):
         self.preferences = self.command.get("preferences", {})
         self.controller_address = self.reply_address
 
-        pprint(self.preferences)
+        # pprint(self.preferences)
 
         # Assumes that Core sent job if present. Overrides values for clean and test from top.
         if self.site_parameters != False:
@@ -996,7 +996,7 @@ class RapdAgent(Process):
                         self.distl_output.remove(job)
                         self.distl_log.append("Distl timed out\n")
                         if self.verbose:
-                            pprint(arg="Distl timed out", level=30, color="red")
+                            self.tprint(arg="Distl timed out", level=30, color="red")
                             self.logger.error("Distl timed out.")
 
             os.chdir(self.labelit_dir)
