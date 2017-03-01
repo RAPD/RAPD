@@ -350,7 +350,6 @@ class RapdAgent(Process):
 
         self.write_json(self.results)
 
-
         self.print_info()
         return()
 
@@ -542,6 +541,8 @@ class RapdAgent(Process):
 
     def write_json(self, results):
         """Write a file with the JSON version of the results"""
+
+        print "write_json"
 
         json_string = json.dumps(results)
 
