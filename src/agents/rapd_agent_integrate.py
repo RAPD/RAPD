@@ -426,14 +426,14 @@ class RapdAgent(Process):
             # Determine the open terminal size
             term_size = os.popen('stty size', 'r').read().split()
 
-            titled = False
+            # titled = False
 
             plot_type = "Rmerge vs Frame"
             if plot_type in plots:
 
-                if not titled:
-                    self.tprint(arg="\nPlots from integration", level=99, color="blue")
-                    titled = True
+                # if not titled:
+                #     self.tprint(arg="\nPlots from integration", level=99, color="blue")
+                #     titled = True
 
                 #             tag = {"osc_range":"standard", "osc_range_anom":"ANOMALOUS"}[plot_type]
 
@@ -462,10 +462,10 @@ class RapdAgent(Process):
                 # print y_min, y_max, x_min, x_max
 
                 gnuplot = subprocess.Popen(["gnuplot"], stdin=subprocess.PIPE) # %s,%s  (term_size[1], int(int(term_size[0])/3),
-                gnuplot.stdin.write("""set term dumb %s,%s
+                gnuplot.stdin.write("""set term dumb %d,%d
                                        set title 'Rmerge vs. Batch'
                                        set xlabel 'Image #'
-                                       set ylabel 'Rmerge' rotate by 90 \n""" %  (min(180, term_size[1]), max(30, int(int(term_size[0])/3))))
+                                       set ylabel 'Rmerge' rotate by 90 \n""" %  (term_size[1]-20, 30)) # (min(180, term_size[1]), max(30, int(int(term_size[0])/3))))
 
                 # Create the plot string
                 plot_string = "plot [%d:%d] [%f:%f] " % (x_min, x_max, y_min, y_max)
@@ -1534,7 +1534,7 @@ class RapdAgent(Process):
         self.logger.debug('	New cutoff = %s' %new_hi_res)
         hi_res = float(new_hi_res)
 
-        self.tprint(arg="new cutoff = %4.2f%s" % (hi_res, text.aring),
+        self.tprint(arg="new cutoff = %4.2f %s" % (hi_res, text.aring),
                     level=99,
                     color="white")
 
