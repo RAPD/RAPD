@@ -370,16 +370,17 @@ def main(test_images):
             print_hdf5_header_info(test_image)
 
             tmp_dir = tempfile.mkdtemp()
+            prefix = os.path.basename(test_image).replace("_master.h5", "")
 
             converter = convert_hdf5_cbf.hdf5_to_cbf_converter(master_file=test_image,
                                                                output_dir=tmp_dir,
-                                                               prefix="tmp",
+                                                               prefix=prefix,
                                                                start_image=1,
                                                                end_image=1,
                                                                overwrite=True)
             converter.run()
 
-            test_image = "%s/tmp_000001.cbf" % tmp_dir
+            test_image = "%s/%s_000001.cbf" % (tmp_dir, prefix)
 
         # try:
         print_detector_info(test_image)
