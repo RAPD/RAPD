@@ -2779,7 +2779,7 @@ class RapdAgent(Process):
 		    "series" :
 			[ {
 			"xs" : [try_float(x, 0.0) for x in log.tables(completeness)[0].col("1/d^2")],
-			"ys" : [try_float(x, 0.0) for x in log.tables(completeness)[0].col("AnoFrc")][try_float(x, 0.0) for x in
+			"ys" : [try_float(x, 0.0) for x in log.tables(completeness)[0].col("AnoFrc")]
 			} ]
 		    } ],
 		"parameters" :
