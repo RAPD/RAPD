@@ -253,7 +253,7 @@ def base_read_header(image,
 
     parameters = {
         "fullname": image,
-        "detector": "PILATUS",
+        "detector": "Pilatus-6M",
         "directory": os.path.dirname(image),
         "image_prefix": "_".join(base.split("_")[0:-2]),
         "run_number": int(base.split("_")[-2]),
