@@ -2524,7 +2524,7 @@ class RapdAgent(Process):
 		    "series" :
 		        [ {
 			"xs" : [try_float(x, 0.0) for x in log.tables(cchalf)[0].col("1/d^2")],
-			"ys" : [try_float(x, 0.0) for x inlog.tables(cchalf)[0].col("CCanom")]
+			"ys" : [try_float(x, 0.0) for x in log.tables(cchalf)[0].col("CCanom")]
 			} ]
 		    },
 		    {
