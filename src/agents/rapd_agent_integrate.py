@@ -153,10 +153,6 @@ class RapdAgent(Process):
 
         self.logger.debug("self.image_data = %s", self.image_data)
 
-        # if 'x_beam' not in self.image_data.keys():
-        #     self.image_data['x_beam'] = self.image_data['x_beam'] or self.image_data['beam_center_x']
-        #     self.image_data['y_beam'] = self.image_data['y_beam'] or self.image_data['beam_center_y']
-        # if 'start' not in self.image_data.keys():
         if self.settings.get("start_frame", False):
             self.image_data["start"] = self.settings.get("start_frame")
         else:
@@ -2802,7 +2798,7 @@ class RapdAgent(Process):
 		    "series" :
 			[ {
 			"xs" : [try_float(x, 0.0) for x in log.tables(completeness)[0].col("1/d^2")],
-			"ys" : [try_float(x, 0.0) for x in log.tables(completeness)[0].col("Mlplct")][try_float(x, 0.0) for x in
+			"ys" : [try_float(x, 0.0) for x in log.tables(completeness)[0].col("Mlplct")]
 			} ]
 		    },
 		    {
