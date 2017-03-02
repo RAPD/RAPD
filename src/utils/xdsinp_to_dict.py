@@ -49,12 +49,12 @@ class INP2DICT(object):
         # A list of experiment dependent keywords that should not make up a
         # minimal description of an XDS.INP file or values that you would
         # want to possibly change based on conditions.
-        exp_deps = ['ORGX', 'ORGY', 'DETECTOR_DISTANCE', 'OSCILLATION_RANGE', 'X-RAY_WAVELENGTH',
+        exp_deps = ['ORGX', 'ORGY', 'DETECTOR_DISTANCE', 'OSCILLATION_RANGE', 'X-RAY_WAVELENGTH', "BEAM_DIVERGENCE",
             'NAME_TEMPLATE_OF_DATA_FRAMES', 'MAXIMUM_NUMBER_OF_PROCESSORS',
             'MAXIMUM_NUMBER_OF_JOBS', 'JOB', 'UNIT_CELL_CONSTANTS', 'SPACEGROUP_NUMBER',
             'REFERENCE_DATA_SET', 'FIT_B-FACTOR_TO_REFERENCE_DATA_SET', 'EXCLUDE_DATA_RANGE',
-            'DATA_RANGE', 'SPOT_RANGE', "FRIEDEL'S_LAW", 'BACKGROUND_RANGE',
-            'EXCLUDE_RESOLUTION_RANGE', 'NUMBER_OF_IMAGES_IN_CACHE']
+            'DATA_RANGE', 'SPOT_RANGE', "FRIEDEL'S_LAW", 'BACKGROUND_RANGE', "REFLECTING_RANGE_E.S.D.",
+            'EXCLUDE_RESOLUTION_RANGE', 'NUMBER_OF_IMAGES_IN_CACHE', "REFLECTING_RANGE", "INCLUDE_RESOLUTION_RANGE"]
 
         for line in inp:
             # Skip if line begins with "!" or has a length too short to contain

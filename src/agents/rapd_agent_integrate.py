@@ -69,6 +69,16 @@ import utils.xutils as Utils
 sys.path.append(os.path.join(os.environ["CCP4"], "share", "smartie"))
 import smartie
 
+def try_float(number, default=None):
+    """Attempt to cast to a float, but return string if not"""
+    try:
+        return float(number)
+    except ValueError:
+        if default:
+            return default
+        else:
+            return number
+
 class RapdAgent(Process):
     """
     classdocs
@@ -2439,13 +2449,6 @@ class RapdAgent(Process):
         deviation = "Run 1, standard deviation"
         rcp = "Radiation damage"
 
-        def try_float(number):
-            """Attempt to cast to a float, but return string if not"""
-            try:
-                return float(number)
-            except ValueError:
-                return number
-
         plots = {
             "Rmerge vs Frame" :
 		{
@@ -2461,7 +2464,7 @@ class RapdAgent(Process):
                     "series" :
 			[ {
                            "xs" : map(int, log.tables(rfactor)[0].col("N")),
-                           "ys" : map(try_float, log.tables(rfactor)[0].col("Rmerge"))
+                           "ys" : [try_float(x, 0.0) for x in log.tables(rfactor)[0].col("Rmerge")] #map(try_float, log.tables(rfactor)[0].col("Rmerge"))
                         } ]
                     },
                     {
@@ -2475,7 +2478,7 @@ class RapdAgent(Process):
                      "series" :
 			[ {
                          "xs" : map(int, log.tables(rfactor)[0].col("N")),
-                         "ys" : map(try_float, log.tables(rfactor)[0].col("SmRmerge"))
+                         "ys" : [try_float(x, 0.0) for x in log.tables(rfactor)[0].col("SmRmerge")]
                         } ]
                     } ],
                 "parameters" :
@@ -2497,8 +2500,8 @@ class RapdAgent(Process):
 			},
 		    "series" :
 		        [ {
-			"xs" : log.tables(rfactor)[0].col("N"),
-			"ys" : log.tables(rfactor)[0].col("I/rms")
+			"xs" : [int(x) for x in log.tables(rfactor)[0].col("N")],
+			"ys" : [try_float(x, 0.0) for x in log.tables(rfactor)[0].col("I/rms")]
 			} ]
 		    } ],
 		"parameters" :
@@ -2520,8 +2523,8 @@ class RapdAgent(Process):
 			},
 		    "series" :
 		        [ {
-			"xs" : log.tables(cchalf)[0].col("1/d^2"),
-			"ys" : log.tables(cchalf)[0].col("CCanom")
+			"xs" : [try_float(x, 0.0) for x in log.tables(cchalf)[0].col("1/d^2")],
+			"ys" : [try_float(x, 0.0) for x inlog.tables(cchalf)[0].col("CCanom")]
 			} ]
 		    },
 		    {
@@ -2534,8 +2537,8 @@ class RapdAgent(Process):
 			},
 		    "series" :
 		        [ {
-			"xs" : log.tables(cchalf)[0].col("1/d^2"),
-			"ys" : log.tables(cchalf)[0].col("CC1/2")
+			"xs" : [try_float(x, 0.0) for x in log.tables(cchalf)[0].col("1/d^2")],
+			"ys" : [try_float(x, 0.0) for x in log.tables(cchalf)[0].col("CC1/2")]
 			} ]
 		    } ],
 		"parameters" :
@@ -2557,8 +2560,8 @@ class RapdAgent(Process):
 			},
 		    "series" :
 		       	[ {
-			"xs" : log.tables(cchalf)[0].col("1/d^2"),
-			"ys" : log.tables(cchalf)[0].col("RCRanom")
+			"xs" : [try_float(x, 0.0) for x in log.tables(cchalf)[0].col("1/d^2")],
+			"ys" : [try_float(x, 0.0) for x in log.tables(cchalf)[0].col("RCRanom")]
 			} ]
 		    } ],
 		"parameters" :
@@ -2580,8 +2583,8 @@ class RapdAgent(Process):
 			},
 		    "series" :
 		        [ {
-			"xs" : log.tables(vresolution)[0].col("1/d^2"),
-			"ys" : log.tables(vresolution)[0].col("I/RMS")
+			"xs" : [try_float(x, 0.0) for x in log.tables(vresolution)[0].col("1/d^2")],
+			"ys" : [try_float(x, 0.0) for x in log.tables(vresolution)[0].col("I/RMS")]
 			} ]
 		    },
 		    {
@@ -2594,8 +2597,8 @@ class RapdAgent(Process):
 			},
 		    "series" :
 		        [ {
-			"xs" : log.tables(vresolution)[0].col("1/d^2"),
-			"ys" : log.tables(vresolution)[0].col("Mn(I/sd)")
+			"xs" : [try_float(x, 0.0) for x in log.tables(vresolution)[0].col("1/d^2")],
+			"ys" : [try_float(x, 0.0) for x in log.tables(vresolution)[0].col("Mn(I/sd)")]
 			} ]
 		    } ],
 		"parameters" :
@@ -2617,8 +2620,8 @@ class RapdAgent(Process):
 			},
 		    "series" :
 			[ {
-			"xs" : log.tables(vresolution)[0].col("1/d^2"),
-			"ys" : log.tables(vresolution)[0].col("Rmrg")
+			"xs" : [try_float(x, 0.0) for x in log.tables(vresolution)[0].col("1/d^2")],
+			"ys" : [try_float(x, 0.0) for x in log.tables(vresolution)[0].col("Rmrg")]
 			} ]
 		    },
 		    {
@@ -2631,8 +2634,8 @@ class RapdAgent(Process):
 			},
 		    "series" :
 			[ {
-			"xs" : log.tables(vresolution)[0].col("1/d^2"),
-			"ys" : log.tables(vresolution)[0].col("Rfull")
+			"xs" : [try_float(x, 0.0) for x in log.tables(vresolution)[0].col("1/d^2")],
+			"ys" : [try_float(x, 0.0) for x in log.tables(vresolution)[0].col("Rfull")]
 			} ]
 		    },
 		    {
@@ -2645,8 +2648,8 @@ class RapdAgent(Process):
 			},
 		    "series" :
 			[ {
-			"xs" : log.tables(vresolution)[0].col("1/d^2"),
-			"ys" : log.tables(vresolution)[0].col("Rmeas")
+			"xs" : [try_float(x, 0.0) for x in log.tables(vresolution)[0].col("1/d^2")],
+			"ys" : [try_float(x, 0.0) for x in log.tables(vresolution)[0].col("Rmeas")]
 			} ]
 		    },
 		    {
@@ -2659,8 +2662,8 @@ class RapdAgent(Process):
 			},
 		    "series" :
 			[ {
-			"xs" : log.tables(vresolution)[0].col("1/d^2"),
-			"ys" : log.tables(vresolution)[0].col("Rpim")
+			"xs" : [try_float(x, 0.0) for x in log.tables(vresolution)[0].col("1/d^2")],
+			"ys" : [try_float(x, 0.0) for x in log.tables(vresolution)[0].col("Rpim")]
 			} ]
 		    } ],
 		"parameters" :
@@ -2682,8 +2685,8 @@ class RapdAgent(Process):
 			},
 		    "series" :
 			[ {
-			"xs" : log.tables(vresolution)[0].col("1/d^2"),
-			"ys" : log.tables(vresolution)[0].col("AvI")
+			"xs" : [try_float(x, 0.0) for x in log.tables(vresolution)[0].col("1/d^2")],
+			"ys" : [int(x) for x in log.tables(vresolution)[0].col("AvI")]
 			} ]
 		    },
 		    {
@@ -2696,8 +2699,8 @@ class RapdAgent(Process):
 		    	},
 		    "series" :
 			[ {
-			"xs" : log.tables(vresolution)[0].col("1/d^2"),
-			"ys" : log.tables(vresolution)[0].col("RMSdev")
+			"xs" : [try_float(x, 0.0) for x in log.tables(vresolution)[0].col("1/d^2")],
+			"ys" : [try_float(x, 0.0) for x in log.tables(vresolution)[0].col("RMSdev")]
 			} ]
 		    },
 		    {
@@ -2710,8 +2713,8 @@ class RapdAgent(Process):
 			},
 		    "series" :
 			[ {
-			"xs" : log.tables(vresolution)[0].col("1/d^2"),
-			"ys" : log.tables(vresolution)[0].col("sd")
+			"xs" : [try_float(x, 0.0) for x in log.tables(vresolution)[0].col("1/d^2")],
+			"ys" : [try_float(x, 0.0) for x in log.tables(vresolution)[0].col("sd")]
 			} ]
 		    } ],
 		"parameters" :
@@ -2733,8 +2736,8 @@ class RapdAgent(Process):
 			},
 		    "series" :
 			[ {
-			"xs" : log.tables(completeness)[0].col("1/d^2"),
-			"ys" : log.tables(completeness)[0].col("%poss")
+			"xs" : [try_float(x, 0.0) for x in log.tables(completeness)[0].col("1/d^2")],
+			"ys" : [try_float(x, 0.0) for x in log.tables(completeness)[0].col("%poss")]
 			} ]
 		    },
 		    {
@@ -2747,8 +2750,8 @@ class RapdAgent(Process):
 			},
 		    "series" :
 			[ {
-			"xs" : log.tables(completeness)[0].col("1/d^2"),
-			"ys" : log.tables(completeness)[0].col("C%poss")
+			"xs" : [try_float(x, 0.0) for x in log.tables(completeness)[0].col("1/d^2")],
+			"ys" : [try_float(x, 0.0) for x in log.tables(completeness)[0].col("C%poss")]
 			} ]
 		    },
 		    {
@@ -2761,8 +2764,8 @@ class RapdAgent(Process):
 			},
 		    "series" :
 			[ {
-			"xs" : log.tables(completeness)[0].col("1/d^2"),
-			"ys" : log.tables(completeness)[0].col("AnoCmp")
+			"xs" : [try_float(x, 0.0) for x in log.tables(completeness)[0].col("1/d^2")],
+			"ys" : [try_float(x, 0.0) for x in log.tables(completeness)[0].col("AnoCmp")]
 			} ]
 		    },
 		    {
@@ -2775,8 +2778,8 @@ class RapdAgent(Process):
 			},
 		    "series" :
 			[ {
-			"xs" : log.tables(completeness)[0].col("1/d^2"),
-			"ys" : log.tables(completeness)[0].col("AnoFrc")
+			"xs" : [try_float(x, 0.0) for x in log.tables(completeness)[0].col("1/d^2")],
+			"ys" : [try_float(x, 0.0) for x in log.tables(completeness)[0].col("AnoFrc")][try_float(x, 0.0) for x in
 			} ]
 		    } ],
 		"parameters" :
@@ -2798,8 +2801,8 @@ class RapdAgent(Process):
 			},
 		    "series" :
 			[ {
-			"xs" : log.tables(completeness)[0].col("1/d^2"),
-			"ys" : log.tables(completeness)[0].col("Mlplct")
+			"xs" : [try_float(x, 0.0) for x in log.tables(completeness)[0].col("1/d^2")],
+			"ys" : [try_float(x, 0.0) for x in log.tables(completeness)[0].col("Mlplct")][try_float(x, 0.0) for x in
 			} ]
 		    },
 		    {
@@ -2812,8 +2815,8 @@ class RapdAgent(Process):
 			},
 		    "series" :
 			[ {
-			"xs" : log.tables(completeness)[0].col("1/d^2"),
-			"ys" : log.tables(completeness)[0].col("AnoMlt")
+			"xs" : [try_float(x, 0.0) for x in log.tables(completeness)[0].col("1/d^2")],
+			"ys" : [try_float(x, 0.0) for x in log.tables(completeness)[0].col("AnoMlt")]
 			} ]
 		    } ],
 		"parameters" :
@@ -2835,8 +2838,8 @@ class RapdAgent(Process):
 			},
 		    "series" :
 			[ {
-			"xs" : log.tables(rcp)[0].col("Batch"),
-			"ys" : log.tables(rcp)[0].col("Rcp")
+			"xs" : [ int(x) for x in log.tables(rcp)[0].col("Batch")],
+			"ys" : [try_float(x, 0.0) for x in log.tables(rcp)[0].col("Rcp")]
 			} ]
 		    } ],
 		"parameters" :
