@@ -79,6 +79,16 @@ def try_float(number, default=None):
         else:
             return number
 
+def try_int(number, default=None):
+    """Attempt to cast to an int, but return string if not"""
+    try:
+        return float(number)
+    except ValueError:
+        if default:
+            return default
+        else:
+            return number
+
 class RapdAgent(Process):
     """
     classdocs
@@ -1408,9 +1418,9 @@ class RapdAgent(Process):
         5 degrees of data.
         """
         self.logger.debug('FastIntegration::find_spot_range')
-        self.logger.debug('     first_frame = %s' % first)
-        self.logger.debug('     last_frame = %s' % last)
-        self.logger.debug('     frame_width = %s' % osc)
+        self.logger.debug('     first_frame = %s', first)
+        self.logger.debug('     last_frame = %s', last)
+        self.logger.debug('     frame_width = %s', osc)
 
         # Determine full oscillation range of the data set.
         fullrange = (float(last) - float(first) + 1) * float(osc)
@@ -2682,7 +2692,7 @@ class RapdAgent(Process):
 		    "series" :
 			[ {
 			"xs" : [try_float(x, 0.0) for x in log.tables(vresolution)[0].col("1/d^2")],
-			"ys" : [int(x) for x in log.tables(vresolution)[0].col("AvI")]
+			"ys" : [try_int(x, 0) for x in log.tables(vresolution)[0].col("AvI")]
 			} ]
 		    },
 		    {
