@@ -226,13 +226,13 @@ class RapdAgent(Process):
             self.standalone = False
 
         if 'work_dir_override' in self.settings:
-            if (self.settings['work_dir_override'] == True or
-                self.settings['work_dir_override'] == 'True'):
+            if (self.settings['work_dir_override'] == True
+                    or self.settings['work_dir_override'] == 'True'):
                 self.dirs['work'] = self.settings['work_directory']
 
         if 'beam_center_override' in self.settings:
-            if (self.settings['beam_center_override'] == True or
-                self.settings['beam_center_override'] == 'True'):
+            if (self.settings['beam_center_override'] == True
+                    or self.settings['beam_center_override'] == 'True'):
                 self.image_data['x_beam'] = self.settings['x_beam']
                 self.image_data['y_beam'] = self.settings['y_beam']
 
@@ -290,31 +290,6 @@ class RapdAgent(Process):
         os.chdir(self.dirs['work'])
 
         self.xds_default = self.createXDSinp(self.settings['xdsinp'])
-
-        #if 'detector' in self.image_data:
-        #    if self.image_data['detector'] in ['PILATUS', 'HF4M', 'rayonix_mx300hs']:
-        #        self.xds_default = self.set_detector_data(self.image_data['detector'])
-        #    #elif self.image_data['detector'] == 'HF4M':
-            #    self.xds_default = self.set_detector_data(self.image_data['detector'])
-            #elif self.image_data['detector'] == 'rayonix_mx300hs':
-            #	self.xds_default = self.set_detector_data(self.image_data['detector'])
-        #    else:
-        #        if 'binning' in self.image_data.keys():
-        #            if self.image_data['binning'] == '2x2':
-        #                self.image_data['detector'] = 'ADSC_binned'
-        #                self.xds_default = self.set_detector_data('ADSC_binned')
-        #            elif self.image_data['binning'] == 'unbinned' or self.image_data['binning'] == 'none':
-        #                self.image_data['detector'] = 'ADSC'
-        #                self.xds_default = self.set_detector_data('ADSC')
-        #        elif 'bin' in self.image_data.keys():
-        #            if self.image_data['bin'] == '2x2':
-        #                self.image_data['binning'] = '2x2'
-        #                self.image_data['detector'] = 'ADSC_binned'
-        #                self.xds_default = self.set_detector_data('ADSC_binned')
-        #            elif self.image_data['bin'] == 'unbinned' or self.image_data['bin'] == 'none':
-        #                self.image_data['binning'] = 'unbinned'
-        #                self.image_data['detector'] = 'ADSC'
-        #                self.xds_default = self.set_detector_data('ADSC')
 
     def process (self):
         """
@@ -395,7 +370,8 @@ class RapdAgent(Process):
             summary = results["summary"]
             # pprint(summary)
             self.tprint("  Spacegroup: %s" % summary["scaling_spacegroup"], 99, "white")
-            self.tprint("  Unit cell: %5.1f %5.1f %5.1f %5.2f %5.2f %5.2f" % tuple(summary["scaling_unit_cell"]), 99, "white")
+            self.tprint("  Unit cell: %5.1f %5.1f %5.1f %5.2f %5.2f %5.2f" %
+                        tuple(summary["scaling_unit_cell"]), 99, "white")
             self.tprint("  Mosaicity: %5.3f" % summary["mosaicity"], 99, "white")
             self.tprint("                        overall   inner shell   outer shell", 99, "white")
             self.tprint("  High res limit         %5.2f       %5.2f         %5.2f" % tuple(summary["bins_high"]), 99, "white")
@@ -1476,10 +1452,10 @@ class RapdAgent(Process):
         data distributed to the cluster's ramdisks
         """
         self.logger.debug('FastIntegration::xds_ram')
-        command = ('ssh -x %s "cd $PWD && xds_par > XDS.LOG"' % first_node)
-        self.logger.debug('		%s' % command)
-        p = subprocess.Popen(command, shell=True, )
-        sts = os.waitpid(p.pid, 0)[1]
+        my_command = ('ssh -x %s "cd $PWD && xds_par > XDS.LOG"' % first_node)
+        self.logger.debug('		%s', command)
+        p = subprocess.Popen(my_command, shell=True, )
+        p.wait()
 
         return()
 
@@ -1488,8 +1464,8 @@ class RapdAgent(Process):
         Looks at CORRECT.LP to find a resolution cutoff, where I/sigma is
         approximately 1.5
         """
-        self.logger.debug('     directory = %s' % directory)
-        self.logger.debug('     isigi = %s' % isigi)
+        self.logger.debug('     directory = %s', directory)
+        self.logger.debug('     isigi = %s', isigi)
         self.tprint(arg="  Determining resolution cutoff ",
                     level=99,
                     color="white",
