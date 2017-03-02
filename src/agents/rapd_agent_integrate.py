@@ -2439,6 +2439,13 @@ class RapdAgent(Process):
         deviation = "Run 1, standard deviation"
         rcp = "Radiation damage"
 
+        def try_float(number):
+            """Attempt to cast to a float, but return string if not"""
+            try:
+                return float(number)
+            except ValueError:
+                return number
+
         plots = {
             "Rmerge vs Frame" :
 		{
@@ -2454,7 +2461,7 @@ class RapdAgent(Process):
                     "series" :
 			[ {
                            "xs" : map(int, log.tables(rfactor)[0].col("N")),
-                           "ys" : map(float, log.tables(rfactor)[0].col("Rmerge"))
+                           "ys" : map(try_float, log.tables(rfactor)[0].col("Rmerge"))
                         } ]
                     },
                     {
@@ -2468,7 +2475,7 @@ class RapdAgent(Process):
                      "series" :
 			[ {
                          "xs" : map(int, log.tables(rfactor)[0].col("N")),
-                         "ys" : map(float, log.tables(rfactor)[0].col("SmRmerge"))
+                         "ys" : map(try_float, log.tables(rfactor)[0].col("SmRmerge"))
                         } ]
                     } ],
                 "parameters" :
