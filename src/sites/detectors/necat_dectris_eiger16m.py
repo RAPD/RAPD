@@ -65,7 +65,6 @@ HEADER_VERSION = 1
 XDS_FLIP_BEAM = detector.XDS_FLIP_BEAM
 # XDSINP = detector.XDSINP
 # Update the XDS information from the imported detector
-XDSINP = {
 XDS_INP = OrderedDict([
     ("MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT": "3"),
     ("STRICT_ABSORPTION_CORRECTION": "FALSE"),
