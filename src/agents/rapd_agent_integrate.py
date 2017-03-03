@@ -74,7 +74,7 @@ def try_float(number, default=None):
     try:
         return float(number)
     except ValueError:
-        if default:
+        if default != None:
             return default
         else:
             return number
@@ -84,7 +84,7 @@ def try_int(number, default=None):
     try:
         return float(number)
     except ValueError:
-        if default:
+        if default != None:
             return default
         else:
             return number
@@ -2433,11 +2433,10 @@ class RapdAgent(Process):
         rcp = "Radiation damage"
 
         plots = {
-            "Rmerge vs Frame" :
-		{
-                "data" :
-		    [ {
-                    "parameters" :
+            "Rmerge vs Frame": {
+                "data" :[
+                    {
+                        "parameters" :
 		        {
                          "linecolor" : "3",
                          "linelabel" : "Rmerge",
