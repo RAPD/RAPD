@@ -295,7 +295,7 @@ def read_header(input_file=False, beam_settings=False):
 
     basename = os.path.basename(input_file)
     header["image_prefix"] = "_".join(basename.replace(".cbf", "").split("_")[:-2])
-    header["run_number"] = int(basename.replace(".cbf", "").split("_")[-1])
+    header["run_number"] = int(basename.replace(".cbf", "").split("_")[-2)
 
     # Add tag for module to header
     header["rapd_detector_id"] = "necat_dectris_eiger16m"
