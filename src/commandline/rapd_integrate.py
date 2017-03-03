@@ -344,6 +344,8 @@ def main():
     for key in keys:
         tprint(arg="    arg:%-22s  val:%s" % (key, run_data[key]), level=10, color="white")
 
+    sys.exit()
+
     # Construct the command for the agent
     command = construct_command(image_0_data,
                                 run_data,
