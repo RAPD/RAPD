@@ -651,7 +651,7 @@ class RapdAgent(Process):
         data_range = '%s %s' %(first, last)
         self.logger.debug('start = %s, total = %s' %
             (self.image_data['start'], self.image_data['total']))
-        self.logger.debug('first - %s, last = %s', (first,last))
+        self.logger.debug('first - %s, last = %s', first, last)
         self.logger.debug('data_range = %s', data_range)
         dir = 'wedge_%s_%s' % (first, last)
         xdsdir = os.path.join(self.dirs['work'],dir)
