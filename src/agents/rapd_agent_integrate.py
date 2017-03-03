@@ -652,7 +652,7 @@ class RapdAgent(Process):
         first = int(self.image_data['start'])
         last = int(self.image_data['start']) + int(self.image_data['total']) -1
         data_range = '%s %s' %(first, last)
-        self.logger.debug('start = %s, total = %s',
+        self.logger.debug('start = %s, total = %s' %
             (self.image_data['start'], self.image_data['total']))
         self.logger.debug('first - %s, last = %s', (first,last))
         self.logger.debug('data_range = %s', data_range)
