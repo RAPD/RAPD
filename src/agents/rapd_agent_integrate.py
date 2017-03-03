@@ -291,7 +291,7 @@ class RapdAgent(Process):
 
         self.xds_default = self.createXDSinp(self.settings['xdsinp'])
 
-    def process (self):
+    def process(self):
         """
         Things to do in main process:
         1. Run integration and scaling.
@@ -544,7 +544,7 @@ class RapdAgent(Process):
             outfile.writelines(json_string)
 
 
-    def ram_total (self, xdsinput):
+    def ram_total(self, xdsinput):
         """
         This function controls processing by XDS when the complete data
         is present and distributed to ramdisks on the cluster
@@ -641,7 +641,7 @@ class RapdAgent(Process):
             return(final_results)
 
 
-    def xds_total (self, xdsinput):
+    def xds_total(self, xdsinput):
         """
         This function controls processing by XDS when the complete data
         set is already present on the computer system.
@@ -773,7 +773,7 @@ class RapdAgent(Process):
         final_results['status'] = 'ANALYSIS'
         return(final_results)
 
-    def xds_split (self, xdsinput):
+    def xds_split(self, xdsinput):
         """
         Controls xds processing for unibinned ADSC data
         Launches XDS when half the data set has been collected and again once
@@ -795,7 +795,7 @@ class RapdAgent(Process):
         # Then find the length of the number portion
         pad = len(num)
         replace_string = ''
-        for i in range (0, pad, 1):
+        for i in range(0, pad, 1):
             replace_string += '?'
 
         look_for_file = file_template.replace(replace_string,
@@ -828,7 +828,7 @@ class RapdAgent(Process):
                 self.logger.debug('         Launching a final xds job with last image detected.')
                 self.image_data['last'] = frame_count - 1
                 results = self.xds_total(xdsinput)
-                return(results)
+                return results
 
         # If you reach here, frame_count equals the last frame, so look for the
         # last frame and then launch xds_total.
@@ -848,9 +848,9 @@ class RapdAgent(Process):
             self.image_data['last'] = frame_count - 1
             results = self.xds_total(xdsinput)
 
-        return(results)
+        return results
 
-    def xds_processing (self, xdsinput):
+    def xds_processing(self, xdsinput):
         """
         Controls processing of data on disks (i.e. not stored in RAM)
         by xds.  Attempts to process every 10 images up to 100 and then
@@ -872,7 +872,7 @@ class RapdAgent(Process):
         """
         self.logger.debug('FastIntegration::xds_processing')
         first_frame = int(self.image_data['start'])
-        last_frame =  + int(self.image_data['total']) - int(self.image_data['start']) + 1
+        last_frame = + int(self.image_data['total']) - int(self.image_data['start']) + 1
 
         frame_count = first_frame
         # Maximum wait time for next image is exposure time + 15 seconds.
@@ -889,7 +889,7 @@ class RapdAgent(Process):
             self.logger.debug('                 Setting wedge size to 10.')
             wedge_size = 10
 
-        file_template = os.path.join(self.image_data['directory'],self.image_template)
+        file_template = os.path.join(self.image_data['directory'], self.image_template)
         # Figure out how many digits needed to pad image number.
         # First split off the <image number>.<extension> portion of the file_template.
         numimg = self.image_template.split('_')[-1]
@@ -898,18 +898,18 @@ class RapdAgent(Process):
         # Then find the length of the number portion
         pad = len(num)
         replace_string = ''
-        for i in range (0, pad, 1):
+        for i in range(0, pad, 1):
             replace_string += '?'
 
         look_for_file = file_template.replace(replace_string,
-                                              '%0*d' %(pad, frame_count))
+                                              '%0*d' % (pad, frame_count))
 
-        timer = Process(target = time.sleep, args = (wait_time,))
+        timer = Process(target=time.sleep, args=(wait_time,))
         timer.start()
         # Create the process xds_job (runs a timer with no delay).
         # This is so xds_job exists when it is checked for later on.
         # Eventually xds_job is replaced by the actual integration jobs.
-        xds_job = Process(target=time.sleep, args = (0,))
+        xds_job = Process(target=time.sleep, args=(0,))
         xds_job.start()
 
         while frame_count < last_frame:
@@ -922,18 +922,18 @@ class RapdAgent(Process):
                 # Reset the timer process
                 if timer.is_alive():
                     timer.terminate()
-                timer = Process(target = time.sleep, args = (wait_time,))
+                timer = Process(target=time.sleep, args=(wait_time,))
                 timer.start()
                 # If frame_count is a tenth image, launch and xds job
                 remainder = ((frame_count + 1) - first_frame) % wedge_size
-                #self.logger.debug('	remainder = %s' % remainder)
+                # self.logger.debug('	remainder = %s' % remainder)
                 if xds_job.is_alive == True:
                     self.logger.debug('		xds_job.is_alive = True')
                 if ( ((frame_count + 1) -first_frame) % wedge_size == 0 and
                      xds_job.is_alive() == False):
                     proc_dir = 'wedge_%s_%s' %(first_frame, frame_count)
-                    xds_job = Process(target = self.xds_wedge,
-                            args = (proc_dir, frame_count, xdsinput))
+                    xds_job = Process(target= self.xds_wedge,
+                                      args=(proc_dir, frame_count, xdsinput))
                     xds_job.start()
                 # Increment the frame count to look for next image
                 frame_count += 1
@@ -951,9 +951,9 @@ class RapdAgent(Process):
                 self.logger.debug('     RAPD assumes the data collection has been aborted.')
                 self.logger.debug('     RAPD checking for next two subsequent images to be sure.')
                 frame_count += 1
-                look_for_file = file_template.replace(replace_string,'%0*d' %(pad, frame_count))
+                look_for_file = file_template.replace(replace_string, '%0*d' % (pad, frame_count))
                 if os.path.isfile(look_for_file) == True:
-                    timer = Process(target = time.sleep, args = (wait_time,))
+                    timer = Process(target= time.sleep, args=(wait_time,))
                     timer.start()
                     # Increment the frame count to look for next image
                     frame_count += 1
@@ -964,7 +964,7 @@ class RapdAgent(Process):
                     frame_count += 1
                     look_for_file = file_template.replace(replace_string, '%0*d' %(pad, frame_count))
                     if os.path.isfile(look_for_file) == True:
-                        timer = Process(target = time.sleep, args = (wait_time,))
+                        timer = Process(target= time.sleep, args=(wait_time,))
                         timer.start()
                         frame_count += 1
                         look_for_file = file_template.replace(replace_string, '%0*d' %(pad, frame_count))
@@ -973,7 +973,7 @@ class RapdAgent(Process):
                         self.logger.debug('         Launching a final xds job with last image detected.')
                         self.image_data['total'] = frame_count - 2 - first_frame
                         results = self.xds_total(xdsinput)
-                        return(results)
+                        return results
 
         # If you reach here, frame_count equals the last frame, so look for the
         # last frame and then launch xds_total.
@@ -993,9 +993,9 @@ class RapdAgent(Process):
             self.image_data['total'] = frame_count - first_frame
             results = self.xds_total(xdsinput)
 
-        return(results)
+        return results
 
-    def xds_wedge (self, dir, last, xdsinput):
+    def xds_wedge(self, dir, last, xdsinput):
         """
         This function controls processing by XDS for an intermediate wedge
         """
@@ -1048,9 +1048,9 @@ class RapdAgent(Process):
                 self.tprint(arg="  Reintegrating", level=99, color="white", newline=False)
                 self.xds_run(xdsdir)
             results = self.run_results(xdsdir)
-        return(results)
+        return results
 
-    def createXDSinp (self, xds_dict):
+    def createXDSinp(self, xds_dict):
     	"""
     	This function takes the dict holding XDS keywords and values
     	and converts them into a list of strings that serves as the
@@ -1147,7 +1147,7 @@ class RapdAgent(Process):
 
     	return(xds_input)
 
-    def set_detector_data (self, detector_type):
+    def set_detector_data(self, detector_type):
         """
         This function returns a list of strings that constitute the default
         parameters needed to create an XDS.INP file.
@@ -1370,7 +1370,7 @@ class RapdAgent(Process):
         return(xds_input)
 
 
-    def write_file (self, filename, file_input):
+    def write_file(self, filename, file_input):
         """
         Writes out file_input as filename.
         file_input should be a list containing the desired contents
@@ -1383,7 +1383,7 @@ class RapdAgent(Process):
             file.writelines(file_input)
         return()
 
-    def find_spot_range (self, first, last, osc, input):
+    def find_spot_range(self, first, last, osc, input):
         """
         Finds up to two spot ranges for peak picking.
         Ideally the two ranges each cover 5 degrees of data and
@@ -1415,7 +1415,7 @@ class RapdAgent(Process):
             input.append('SPOT_RANGE=%s %s\n\n' %(spot2_start, spot2_end))
         return(input)
 
-    def xds_run (self, directory):
+    def xds_run(self, directory):
         """
         Launches the running of xds.
         """
@@ -1445,7 +1445,7 @@ class RapdAgent(Process):
 
         return()
 
-    def xds_ram (self, first_node):
+    def xds_ram(self, first_node):
         """
         Launches xds_par via ssh on the first_node.
         This ensures that xds runs properly when trying to use
@@ -1487,7 +1487,7 @@ class RapdAgent(Process):
         # Read from the bottom of CORRECT.LP up, looking for the first
         # occurence of "total", which signals that you've found the
         # last statistic table given giving I/sigma values in the file.
-        for i in range (len(correct_log)-1, 0, -1):
+        for i in range(len(correct_log)-1, 0, -1):
             if correct_log[i].strip().startswith('total'):
                 flag = 1
             elif flag == 1:
@@ -1627,7 +1627,7 @@ class RapdAgent(Process):
                     return(False)
         return(input)
 
-    def write_forkscripts (self, node_list, osc):
+    def write_forkscripts(self, node_list, osc):
         """
         Creates two small script files that are run in place of
         XDS's forkcolspot and forkintegrate scripts to allow
@@ -1654,7 +1654,7 @@ class RapdAgent(Process):
         forkc.append('rm -f mcolspot.tmp')
 
         forki = ['#!/bin/bash\n']
-        for x in range (0, ntask, 1):
+        for x in range(0, ntask, 1):
             itask = x + 1
             nitask = lframes[x] - fframes[x] + 1
             if nitask < niba0:
@@ -1672,7 +1672,7 @@ class RapdAgent(Process):
         os.chmod('forki', stat.S_IRWXU)
         return()
 
-    def run_results (self, directory):
+    def run_results(self, directory):
         """
         Takes the results from xds integration/scaling and prepares
         tables and plots for the user interface.
@@ -2221,7 +2221,7 @@ class RapdAgent(Process):
         self.write_file('plot.html', plotfile)
         return('plot.html')
 
-    def parse_aimless (self, logfile):
+    def parse_aimless(self, logfile):
         """
         Parses the aimless logfile in order to pull out data for graphing
         and the results table.
@@ -2337,7 +2337,7 @@ class RapdAgent(Process):
                   ]
         return(graphs, tables, int_results)
 
-    def parse_aimless2 (self, logfile):
+    def parse_aimless2(self, logfile):
 	"""
 	Parses the aimless logfile in order to pull out data for
 	graphing and the results summary table.
@@ -2894,7 +2894,7 @@ class RapdAgent(Process):
                 break
         return(return_value)
 
-    def parse_xdsstat (self, log, tables_length):
+    def parse_xdsstat(self, log, tables_length):
         """
         Parses the output of xdsstat (XDSSTAT.LP) to pull out the Rd
         information
@@ -2971,7 +2971,7 @@ class RapdAgent(Process):
             self.logger.debug('    XDSSTAT.LP does not exist')
         return('Failed')
 
-    def finish_data (self, results):
+    def finish_data(self, results):
         """
         Final creation of various files (e.g. an mtz file with R-flag added,
         .sca files with native or anomalous data treatment)
@@ -3123,7 +3123,7 @@ class RapdAgent(Process):
 
         return(tmp)
 
-    def fixMtz2Sca (self, scafile):
+    def fixMtz2Sca(self, scafile):
         """
         Corrects the scalepack file generated by mtz2various by removing
         whitespace in the spacegroup name.
@@ -3137,7 +3137,7 @@ class RapdAgent(Process):
         self.write_file(scafile, inlines)
         return()
 
-    def run_analysis (self, data, dir):
+    def run_analysis(self, data, dir):
         """
         Runs "pdbquery" and xtriage on the integrated data.
         data = the integrated mtzfile
@@ -3176,7 +3176,7 @@ class RapdAgent(Process):
             return('Failed')
         return('Success')
 
-    def process_shelxC (self, unitcell, spacegroup, scafile):
+    def process_shelxC(self, unitcell, spacegroup, scafile):
         """
         Runs shelxC.  Determines an appropriate cutoff for anomalous signal.
         Inserts table of shelxC results into the results summary page.
@@ -3199,7 +3199,7 @@ class RapdAgent(Process):
                 res =results['shelx_res'][i]
         results['shelx_rescut'] = res
         #self.insert_shelx_results(results)
-        return(results)
+        return results
 
     def parse_shelxC(self, logfile):
         """
@@ -3225,7 +3225,7 @@ class RapdAgent(Process):
                 shelxc_results['shelx_dsig'] = line.split()[1:]
         return(shelxc_results)
 
-    def insert_shelx_results (self, results):
+    def insert_shelx_results(self, results):
         """
         Inserts shelxC results into the results summary webpage.
         """
@@ -3264,7 +3264,7 @@ class RapdAgent(Process):
         self.write_file('results.php', htmlfile)
         return()
 
-    def parse_integrateLP (self):
+    def parse_integrateLP(self):
         """
         Parse the INTEGRATE.LP file and extract information
         about the mosaicity.
@@ -3279,7 +3279,7 @@ class RapdAgent(Process):
         avg_mosaicity = avg_mosaicity_line.strip().split(' ')[-1]
         return(avg_mosaicity)
 
-    def parse_correctLP (self):
+    def parse_correctLP(self):
         """
         Parses the CORRECT.LP file to extract information
         """
@@ -3293,7 +3293,7 @@ class RapdAgent(Process):
         ISa = isa_line.strip().split()[-1]
         return(ISa)
 
-    def find_xds_symm (self, xdsdir, xdsinp):
+    def find_xds_symm(self, xdsdir, xdsinp):
         """
         Checks xds results for consistency with user input spacegroup.
         If inconsistent, tries to force user input spacegroup on data.
