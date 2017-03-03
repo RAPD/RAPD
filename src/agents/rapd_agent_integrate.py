@@ -330,9 +330,8 @@ class RapdAgent(Process):
             final_results = self.finish_data(integration_results)
 
         # Set up the results for return
-        self.results['process'] = {
-        	'agent_process_id':self.process_id,
-        	'status':100 }
+        self.results['process'] = {'agent_process_id': self.process_id,
+                                   'status': 100}
         self.results['results'] = final_results
 
         self.logger.debug(self.results)
@@ -449,8 +448,6 @@ class RapdAgent(Process):
                 x_array = numpy.array(raw["series"][0]["xs"])
                 x_max = x_array.max()
                 x_min = x_array.min()
-
-                # print y_min, y_max, x_min, x_max
 
                 gnuplot = subprocess.Popen(["gnuplot"], stdin=subprocess.PIPE) # %s,%s  (term_size[1], int(int(term_size[0])/3),
                 gnuplot.stdin.write("""set term dumb %d,%d
