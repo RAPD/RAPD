@@ -443,11 +443,9 @@ class RapdAgent(Process):
                         raw = subplot
 
                 # Determine plot extent
-                pprint(raw["series"][0]["ys"])
                 y_array = numpy.array(raw["series"][0]["ys"])
                 y_max = y_array.max() * 1.1
                 y_min = 0 # max(0, (y_array.min() - 10))
-                pprint(raw["series"][0]["xs"])
                 x_array = numpy.array(raw["series"][0]["xs"])
                 x_max = x_array.max()
                 x_min = x_array.min()
@@ -654,10 +652,11 @@ class RapdAgent(Process):
         first = int(self.image_data['start'])
         last = int(self.image_data['start']) + int(self.image_data['total']) -1
         data_range = '%s %s' %(first, last)
-        self.logger.debug('start = %s, total = %s' %(self.image_data['start'], self.image_data['total']))
-        self.logger.debug('first - %s, last = %s' %(first,last))
-        self.logger.debug('data_range = %s' % data_range)
-        dir = 'wedge_%s_%s' %(first,last)
+        self.logger.debug('start = %s, total = %s',
+            (self.image_data['start'], self.image_data['total']))
+        self.logger.debug('first - %s, last = %s', (first,last))
+        self.logger.debug('data_range = %s', data_range)
+        dir = 'wedge_%s_%s' % (first, last)
         xdsdir = os.path.join(self.dirs['work'],dir)
         if os.path.isdir(xdsdir) == False:
             os.mkdir(xdsdir)
