@@ -69,22 +69,22 @@ import utils.xutils as Utils
 sys.path.append(os.path.join(os.environ["CCP4"], "share", "smartie"))
 import smartie
 
-def try_float(number, default=None):
+def try_float(number, default="NO DEFAULT"):
     """Attempt to cast to a float, but return string if not"""
     try:
         return float(number)
     except ValueError:
-        if default != None:
+        if default != "NO DEFAULT":
             return default
         else:
             return number
 
-def try_int(number, default=None):
+def try_int(number, default="NO DEFAULT"):
     """Attempt to cast to an int, but return string if not"""
     try:
         return float(number)
     except ValueError:
-        if default != None:
+        if default != "NO DEFAULT":
             return default
         else:
             return number
