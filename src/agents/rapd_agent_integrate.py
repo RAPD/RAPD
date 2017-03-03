@@ -430,23 +430,23 @@ class RapdAgent(Process):
                 #             tag = {"osc_range":"standard", "osc_range_anom":"ANOMALOUS"}[plot_type]
 
                 plot_data = plots[plot_type]["data"]
-                plot_params = plots[plot_type]["parameters"]
-                # pprint(plot_data)
+                # plot_params = plots[plot_type]["parameters"]
 
                 # Get each subplot
                 raw = False
-                smoothed = False
+                # smoothed = False
                 for subplot in plot_data:
                     # pprint(subplot)
-                    if subplot["parameters"]["linelabel"] == "SmRmerge":
-                        smoothed = subplot
-                    elif subplot["parameters"]["linelabel"] == "Rmerge":
+                    # if subplot["parameters"]["linelabel"] == "SmRmerge":
+                    #     smoothed = subplot
+                    if subplot["parameters"]["linelabel"] == "Rmerge":
                         raw = subplot
 
                 # Determine plot extent
                 y_array = numpy.array(raw["series"][0]["ys"])
                 y_max = y_array.max() * 1.1
                 y_min = 0 # max(0, (y_array.min() - 10))
+                pprint(raw["series"][0]["xs"])
                 x_array = numpy.array(raw["series"][0]["xs"])
                 x_max = x_array.max()
                 x_min = x_array.min()
