@@ -218,7 +218,8 @@ def main():
     else:
         terminal_log_level = 50
 
-    tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level)
+    tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level,
+                                            no_color=commandline_args.no_color)
 
     print_welcome_message(tprint)
 
