@@ -443,6 +443,7 @@ class RapdAgent(Process):
                         raw = subplot
 
                 # Determine plot extent
+                pprint(raw["series"][0]["ys"])
                 y_array = numpy.array(raw["series"][0]["ys"])
                 y_max = y_array.max() * 1.1
                 y_min = 0 # max(0, (y_array.min() - 10))
