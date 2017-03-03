@@ -304,25 +304,27 @@ class RapdAgent(Process):
             self.logger.debug('Now Exiting!')
             return()
 
-        input = self.xds_default
+        xds_input = self.xds_default
         if self.command["command"] == 'XDS':
-            integration_results = self.xds_total(input)
+            integration_results = self.xds_total(xds_input)
         else:
             if os.path.isfile(self.last_image) == True:
                 if self.ram_use == True:
-                    integration_results = self.ram_total(input)
+                    integration_results = self.ram_total(xds_input)
                 else:
-                    integration_results = self.xds_total(input)
+                    integration_results = self.xds_total(xds_input)
             else:
                 if self.ram_use == True:
-                    integration_results = self.ram_integrate(input)
+                    integration_results = self.ram_integrate(xds_input)
                 elif (self.image_data['detector'] == 'ADSC' or
     #                  self.image_data['detector'] == 'PILATUS' or
                       self.cluster_use == False):
-                    integration_results = self.xds_split(input)
+                    integration_results = self.xds_split(xds_input)
                 else:
-                    integration_results = self.xds_processing(input)
+                    integration_results = self.xds_processing(xds_input)
             os.chdir(self.dirs['work'])
+
+
         if integration_results == 'False':
             # Do a quick clean up?
             pass
@@ -341,6 +343,7 @@ class RapdAgent(Process):
         self.write_json(self.results)
 
         self.print_info()
+
         return()
 
         # Skip this for now
@@ -939,38 +942,38 @@ class RapdAgent(Process):
             # If next frame does not exist, check to see if timer has expired.
             # If timer has expired, assume an abort has occurred.
             elif timer.is_alive() == False:
-                    self.logger.debug('     Image %s not found after waiting %s seconds.'
-                                      % (look_for_file, wait_time))
-                    # There have been a few cases, particularly with Pilatus's
-                    # Furka file transfer has failed to copy an image to disk.
-                    # So check for the next two files before assuming there has
-                    # been an abort.
-                    self.logger.debug('     RAPD assumes the data collection has been aborted.')
-                    self.logger.debug('     RAPD checking for next two subsequent images to be sure.')
+                self.logger.debug('     Image %s not found after waiting %s seconds.'
+                                  % (look_for_file, wait_time))
+                # There have been a few cases, particularly with Pilatus's
+                # Furka file transfer has failed to copy an image to disk.
+                # So check for the next two files before assuming there has
+                # been an abort.
+                self.logger.debug('     RAPD assumes the data collection has been aborted.')
+                self.logger.debug('     RAPD checking for next two subsequent images to be sure.')
+                frame_count += 1
+                look_for_file = file_template.replace(replace_string,'%0*d' %(pad, frame_count))
+                if os.path.isfile(look_for_file) == True:
+                    timer = Process(target = time.sleep, args = (wait_time,))
+                    timer.start()
+                    # Increment the frame count to look for next image
                     frame_count += 1
-                    look_for_file = file_template.replace(replace_string,'%0*d' %(pad, frame_count))
+                    look_for_file = file_template.replace(replace_string,
+                                                  '%0*d' %(pad, frame_count))
+                else:
+                    self.logger.debug('    RAPD did not fine the next image, checking for one more.')
+                    frame_count += 1
+                    look_for_file = file_template.replace(replace_string, '%0*d' %(pad, frame_count))
                     if os.path.isfile(look_for_file) == True:
                         timer = Process(target = time.sleep, args = (wait_time,))
                         timer.start()
-                        # Increment the frame count to look for next image
-                        frame_count += 1
-                        look_for_file = file_template.replace(replace_string,
-                                                      '%0*d' %(pad, frame_count))
-                    else:
-                        self.logger.debug('    RAPD did not fine the next image, checking for one more.')
                         frame_count += 1
                         look_for_file = file_template.replace(replace_string, '%0*d' %(pad, frame_count))
-                        if os.path.isfile(look_for_file) == True:
-                            timer = Process(target = time.sleep, args = (wait_time,))
-                            timer.start()
-                            frame_count += 1
-                            look_for_file = file_template.replace(replace_string, '%0*d' %(pad, frame_count))
-                        else:
-                            self.logger.debug('         RAPD did not find the next image either.')
-                            self.logger.debug('         Launching a final xds job with last image detected.')
-                            self.image_data['total'] = frame_count - 2 - first_frame
-                            results = self.xds_total(xdsinput)
-                            return(results)
+                    else:
+                        self.logger.debug('         RAPD did not find the next image either.')
+                        self.logger.debug('         Launching a final xds job with last image detected.')
+                        self.image_data['total'] = frame_count - 2 - first_frame
+                        results = self.xds_total(xdsinput)
+                        return(results)
 
         # If you reach here, frame_count equals the last frame, so look for the
         # last frame and then launch xds_total.
@@ -2974,8 +2977,7 @@ class RapdAgent(Process):
         .sca files with native or anomalous data treatment)
         """
         in_file = os.path.join(results['dir'], results['mtzfile'])
-        self.logger.debug('FastIntegration::finish_data - in_file = %s'
-                          % in_file)
+        self.logger.debug('FastIntegration::finish_data - in_file = %s', in_file)
 
         # Truncate the data.
         comfile = ['#!/bin/csh\n',
@@ -2985,9 +2987,11 @@ class RapdAgent(Process):
                    'eof\n']
         self.write_file('truncate.sh', comfile)
         os.chmod('truncate.sh', stat.S_IRWXU)
-        p = subprocess.Popen('./truncate.sh', shell=True)
+        p = subprocess.Popen('./truncate.sh',
+                             shell=True,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
         p.wait()
-        # sts = os.waitpid(p.pid,0)[1]
 
         # Set the free R flag.
         comfile = ['#!/bin/csh\n',
@@ -2996,9 +3000,11 @@ class RapdAgent(Process):
                    'eof']
         self.write_file('freer.sh', comfile)
         os.chmod('freer.sh', stat.S_IRWXU)
-        p = subprocess.Popen('./freer.sh', shell=True)
+        p = subprocess.Popen('./freer.sh',
+                             shell=True,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
         p.wait()
-        # sts = os.waitpid(p.pid,0)[1]
 
         # Create the merged scalepack format file.
         comfile = ['#!/bin/csh\n',
@@ -3010,9 +3016,11 @@ class RapdAgent(Process):
                    'eof']
         self.write_file('mtz2scaNAT.sh', comfile)
         os.chmod('mtz2scaNAT.sh', stat.S_IRWXU)
-        p = subprocess.Popen('./mtz2scaNAT.sh', shell=True)
+        p = subprocess.Popen('./mtz2scaNAT.sh',
+                             shell=True,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
         p.wait()
-        # sts = os.waitpid(p.pid, 0)[1]
         self.fixMtz2Sca('NATIVE.sca')
         Utils.fixSCA(self, 'NATIVE.sca')
 
@@ -3026,9 +3034,11 @@ class RapdAgent(Process):
                    'eof']
         self.write_file('mtz2scaANOM.sh', comfile)
         os.chmod('mtz2scaANOM.sh', stat.S_IRWXU)
-        p = subprocess.Popen('./mtz2scaANOM.sh', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p = subprocess.Popen('./mtz2scaANOM.sh',
+                             shell=True,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
         p.wait()
-        # sts = os.waitpid(p.pid, 0)[1]
         self.fixMtz2Sca('ANOM.sca')
         Utils.fixSCA(self, 'ANOM.sca')
 
@@ -3036,19 +3046,6 @@ class RapdAgent(Process):
         correct_file = os.path.join(results['dir'], 'CORRECT.LP')
         Xds2Mosflm(xds_file=correct_file, mat_file="reference.mat")
 
-        # Run Shelxc for anomalous signal information
-        #if float(results['summary']['bins_high'][-1]) > 4.5:
-        #    shelxc_results = None
-        #else:
-        #    sg = results['summary']['scaling_spacegroup']
-        #    cell = ' '.join(results['summary']['scaling_unit_cell'])
-        #    sca = 'ANOM.sca'
-        #    shelxc_results = self.process_shelxC(cell, sg, sca)
-        #    if shelxc_results != None:
-        #        try:
-        #            self.insert_shelx_results(shelxc_results)
-        #        except:
-        #            pass
         # Clean up the filesystem.
         # Move some files around
         if os.path.isdir('%s/xds_lp_files' % self.dirs['work']) == False:
@@ -3085,15 +3082,15 @@ class RapdAgent(Process):
         tar_dir = tar_name
         tar_name += '.tar.bz2'
         tarname = os.path.join(self.dirs['work'], tar_name)
-        print 'tar -cjf %s %s' %(tar_name, tar_dir)
-        print os.getcwd()
+        # print 'tar -cjf %s %s' %(tar_name, tar_dir)
+        # print os.getcwd()
         os.chdir(self.dirs['work'])
-        print os.getcwd()
+        # print os.getcwd()
         os.system('tar -cjf %s %s' %(tar_name, tar_dir))
 
         # Tarball the XDS log files
         lp_name = 'xds_lp_files.tar.bz2'
-        print "tar -cjf %s xds_lp_files/" % lp_name
+        # print "tar -cjf %s xds_lp_files/" % lp_name
         os.system("tar -cjf %s xds_lp_files/" % lp_name)
         # Remove xds_lp_files directory
         os.system('rm -rf xds_lp_files')
@@ -3102,9 +3099,11 @@ class RapdAgent(Process):
             command = 'rm -rf /dev/shm/%s' %self.image_data['image_prefix']
             for node in self.ram_nodes[0]:
                 command2 = 'ssh -x %s "%s"' %(node, command)
-                p = subprocess.Popen(command2, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p = subprocess.Popen(command2,
+                                     shell=True,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE)
                 p.wait()
-                # sts = os.waitpid(p.pid,0)[1]
 
         tmp = results
         #if shelxc_results != None:
