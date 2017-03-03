@@ -266,8 +266,8 @@ def base_read_header(image,
     pprint(parameters)
 
     # Put beam center into RAPD format mm
-    parameters["x_beam"] = parameters["beam_y"] # * parameters["pixel_size"]
-    parameters["y_beam"] = parameters["beam_x"] # * parameters["pixel_size"]
+    parameters["x_beam"] = parameters["beam_y"] * parameters["pixel_size"]
+    parameters["y_beam"] = parameters["beam_x"] * parameters["pixel_size"]
 
     return(parameters)
 
