@@ -278,6 +278,21 @@ RAPD Index & Strategy
 ---------------------"""
     printer(message, 50, color="blue")
 
+def print_headers(tprint, image_headers):
+    """Convenience function"""
+
+    tprint(arg="\nImage headers", level=30, color="blue")
+    count = 0
+    for fullname, header in image_headers.iteritems():
+        keys = header.keys()
+        keys.sort()
+        if count > 0:
+            tprint(arg="", level=10, color="white")
+        tprint(arg="  %s" % fullname, level=10, color="white")
+        for key in keys:
+            tprint(arg="    arg:%-22s  val:%s" % (key, header[key]), level=10, color="white")
+        count += 1
+
 def main():
     """ The main process
     Setup logging and instantiate the model"""
@@ -370,7 +385,7 @@ def main():
 
     # Get site - commandline wins over the environmental variable
     site = False
-    detector = False
+    detector = {}
     detector_module = False
     if commandline_args.site:
         site = commandline_args.site
@@ -400,19 +415,6 @@ def main():
     # Have a detector - read in file data
     if detector_module:
         image_headers = {}
-        # For now we only convert hdf5 to cbf to run
-        # if "hdf5_files" in data_files:
-        #     for i in range(len(data_files["hdf5_files"])):
-        #         hdf5_files = data_files["hdf5_files"][i]
-        #         data_file = data_files["files"][i]
-        #         if SITE:
-        #             image_headers[data_file] = detector_module.read_header(data_file, hdf5_file, SITE.BEAM_SETTINGS)
-        #         else:
-        #             image_headers[data_file] = detector_module.read_header(data_file)
-        #
-        #
-        #     sys.exit()
-        # else:
         for data_file in data_files["files"]:
             if SITE:
                 image_headers[data_file] = detector_module.read_header(data_file, SITE.BEAM_SETTINGS)
@@ -420,17 +422,7 @@ def main():
                 image_headers[data_file] = detector_module.read_header(data_file)
 
         logger.debug("Image headers: %s", image_headers)
-        tprint(arg="\nImage headers", level=10, color="blue")
-        count = 0
-        for fullname, header in image_headers.iteritems():
-            keys = header.keys()
-            keys.sort()
-            if count > 0:
-                tprint(arg="", level=10, color="white")
-            tprint(arg="  %s" % fullname, level=10, color="white")
-            for key in keys:
-                tprint(arg="    arg:%-22s  val:%s" % (key, header[key]), level=10, color="white")
-            count += 1
+        print_headers(tprint, image_headers)
 
         command = construct_command(image_headers=image_headers,
                                     commandline_args=commandline_args,
