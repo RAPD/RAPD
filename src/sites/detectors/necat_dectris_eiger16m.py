@@ -200,9 +200,9 @@ def base_read_header(image,
     def mmorm(x):
         d = float(x)
         if (d < 2):
-            return(d*1000)
+            return (d*1000)
         else:
-            return(d)
+            return d
 
     #item:(pattern,transform)
     header_items = header_items = {
@@ -263,13 +263,13 @@ def base_read_header(image,
         else:
             parameters[label] = None
 
-    pprint(parameters)
+    # pprint(parameters)
 
     # Put beam center into RAPD format mm
     parameters["x_beam"] = parameters["beam_y"] * parameters["pixel_size"]
     parameters["y_beam"] = parameters["beam_x"] * parameters["pixel_size"]
 
-    return(parameters)
+    return parameters
 
     # except:
     #     if logger:

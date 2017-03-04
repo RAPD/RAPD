@@ -30,7 +30,7 @@ __status__ = "Development"
 import argparse
 import importlib
 import os
-from pprint import pprint
+# from pprint import pprint
 import sys
 import uuid
 
@@ -73,15 +73,15 @@ def get_commandline():
 
     return parser.parse_args()
 
-def get_image_data(data_file, detector_module, site):
+def get_image_data(data_file, detector_module, site_module):
     """
     Get the image data and return given a filename
     """
 
     # print "get_image_data", data_file
 
-    if site:
-        header = detector_module.read_header(data_file, site.BEAM_SETTINGS)
+    if site_module:
+        header = detector_module.read_header(data_file, site_module.BEAM_SETTINGS)
     else:
         header = detector_module.read_header(data_file)
 
@@ -108,12 +108,11 @@ def get_run_data(detector_module, image_0_data, image_n_data, commandline_args):
         "directory": image_0_data.get("directory"),
         "distance": image_0_data.get("distance"),
         "image_prefix": image_0_data.get("image_prefix"),
-        "image_template": detector_module.create_image_template(image_0_data.get("image_prefix"), image_0_data.get("run_number")),
-        # "repr": detector_module.create_image_template(image_0_data.get("image_prefix"), image_0_data.get("run_number")).rstrip(detector_module.DETECTOR_SUFFIX).replace("?", "") + ("%d-%d" % (image_0_data.get("image_number"), image_n_data.get("image_number"))),
+        "image_template": detector_module.create_image_template(
+            image_0_data.get("image_prefix"),
+            image_0_data.get("run_number")),
         "run_number": image_0_data.get("run_number"),
-        # "start": image_0_data.get("image_number"),
         "time": image_0_data.get("time"),
-        # "total": image_n_data.get("image_number") - image_0_data.get("image_number") + 1,
         }
 
     # Set starting image
@@ -128,15 +127,15 @@ def get_run_data(detector_module, image_0_data, image_n_data, commandline_args):
         run_data["total"] = commandline_args.end_image - run_data["start"] + 1
 
     else:
-        run_data["end"] =  image_n_data.get("image_number")
-        run_data["total"] = image_n_data.get("image_number") - run_data["start"] +1
+        run_data["end"] = image_n_data.get("image_number")
+        run_data["total"] = image_n_data.get("image_number") - run_data["start"] + 1
 
     # The repr for the run
     run_data["repr"] = detector_module.create_image_template(image_0_data.get("image_prefix"), image_0_data.get("run_number")).rstrip(detector_module.DETECTOR_SUFFIX).replace("?", "") + ("%d-%d" % (run_data.get("start"), run_data.get("end")))
 
     return run_data
 
-def construct_command(image_0_data, run_data, commandline_args, detector_module, logger):
+def construct_command(image_0_data, run_data, commandline_args, detector_module):
     """
     Put together the command for the agent
     """
@@ -151,7 +150,7 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module,
     command["directories"] = {
         "work": os.path.join(
             os.path.abspath(os.path.curdir),
-            "rapd_integrate_" + run_data["repr"] )
+            "rapd_integrate_" + run_data["repr"])
         }
     if not os.path.exists(command["directories"]["work"]):
         os.makedirs(command["directories"]["work"])
@@ -176,8 +175,6 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module,
 
     if commandline_args.beamcenter[0]:
         command["preferences"]["beam_center_override"] = True
-
-    # pprint(command)
 
     return command
 
@@ -278,8 +275,8 @@ def main():
 
     # Get site - commandline wins over the environmental variable
     site = False
-    SITE = False
-    detector = False
+    site_module = False
+    detector = {}
     detector_module = False
     if commandline_args.site:
         site = commandline_args.site
@@ -292,23 +289,17 @@ def main():
 
     # If no site or detector, try to figure out the detector
     if not (site or detector):
-        # print "Have to figure out the detector"
-        # detector = detector_utils.get_detector_file(data_files[0])
-        # if detector:
-        #     detector_module = detector_utils.load_detector(detector)
-        # else:
-        #     raise Error("Not able to load detector module")
         detector = detector_utils.get_detector_file(data_files["data_files"][0])
         if isinstance(detector, dict):
             if detector.has_key("site"):
                 site_target = detector.get("site")
                 site_file = utils.site.determine_site(site_arg=site_target)
                 # print site_file
-                SITE = importlib.import_module(site_file)
-                detector_target = SITE.DETECTOR.lower()
+                site_module = importlib.import_module(site_file)
+                detector_target = site_module.DETECTOR.lower()
                 detector_module = detector_utils.load_detector(detector_target)
             elif detector.has_key("detector"):
-                SITE = False
+                site_module = False
                 detector_target = detector.get("detector")
                 detector_module = detector_utils.load_detector(detector_target)
 
@@ -316,10 +307,13 @@ def main():
     if not detector_module:
         raise Exception("No detector identified")
 
-
     # Get header information
-    image_0_data = get_image_data(data_files["data_files"][0], detector_module, SITE)
-    image_n_data = get_image_data(data_files["data_files"][-1], detector_module, SITE)
+    image_0_data = get_image_data(data_file=data_files["data_files"][0],
+                                  detector_module=detector_module,
+                                  site_module=site_module)
+    image_n_data = get_image_data(data_file=data_files["data_files"][-1],
+                                  detector_module=detector_module,
+                                  site_module=site_module)
 
     logger.debug("Image header: %s, %s", image_0_data, image_n_data)
     tprint(arg="\nImage headers", level=10, color="blue")
@@ -348,8 +342,7 @@ def main():
     command = construct_command(image_0_data,
                                 run_data,
                                 commandline_args,
-                                detector_module,
-                                logger)
+                                detector_module)
 
     # Load the plugin
     plugin = load_module(seek_module="rapd_agent_integrate",

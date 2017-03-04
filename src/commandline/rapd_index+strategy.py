@@ -30,7 +30,7 @@ __status__ = "Development"
 import argparse
 import importlib
 import os
-from pprint import pprint
+# from pprint import pprint
 import sys
 import uuid
 
@@ -54,8 +54,8 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
 
     # Working directory
     image_numbers = []
-    image_template = False
-    for fullname, header in image_headers.iteritems():
+    image_template = ""
+    for _, header in image_headers.iteritems():
         image_numbers.append(str(header["image_number"]))
         image_template = header["image_template"]
     image_numbers.sort()
@@ -124,7 +124,17 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     # "reference_data_id": None, #MOSFLM
     # #"reference_data_id": 1,#MOSFLM
     # #"reference_data": [['/gpfs6/users/necat/Jon/RAPD_test/index09.mat', 0.0, 30.0, 'junk_1_1-30','P41212']],#MOSFLM
-    # 'reference_data': [['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',0.0,20.0,'junk','P3'],['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',40.0,50.0,'junk2','P3']],#MOSFLM
+    # 'reference_data': [['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',
+    #                     0.0,
+    #                     20.0,
+    #                     'junk',
+    #                     'P3'],
+    #                    ['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',
+    #                     40.0,
+    #                     50.0,
+    #                     'junk2',
+    #                     'P3']
+    #                   ],#MOSFLM
 
     # Raddose
     command["preferences"]["crystal_size_x"] = "100"
@@ -138,10 +148,14 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
 
     # Site parameters
     command["preferences"]["site_parameters"] = {}
-    command["preferences"]["site_parameters"]["DETECTOR_DISTANCE_MAX"] = commandline_args.site_det_dist_max
-    command["preferences"]["site_parameters"]["DETECTOR_DISTANCE_MIN"] = commandline_args.site_det_dist_min
-    command["preferences"]["site_parameters"]["DIFFRACTOMETER_OSC_MIN"] = commandline_args.site_osc_min
-    command["preferences"]["site_parameters"]["DETECTOR_TIME_MIN"] = commandline_args.site_det_time_min
+    command["preferences"]["site_parameters"]["DETECTOR_DISTANCE_MAX"] = \
+        commandline_args.site_det_dist_max
+    command["preferences"]["site_parameters"]["DETECTOR_DISTANCE_MIN"] = \
+        commandline_args.site_det_dist_min
+    command["preferences"]["site_parameters"]["DIFFRACTOMETER_OSC_MIN"] = \
+        commandline_args.site_osc_min
+    command["preferences"]["site_parameters"]["DETECTOR_TIME_MIN"] = \
+        commandline_args.site_det_time_min
 
     # Return address
     command["return_address"] = None
@@ -250,7 +264,7 @@ def get_commandline():
                         help="Directory or files")
 
     # No args? print help
-    if len(sys.argv[1:])==0:
+    if len(sys.argv[1:]) == 0:
         parser.print_help()
         parser.exit()
 
@@ -277,6 +291,21 @@ def print_welcome_message(printer):
 RAPD Index & Strategy
 ---------------------"""
     printer(message, 50, color="blue")
+
+def print_headers(tprint, image_headers):
+    """Convenience function"""
+
+    tprint(arg="\nImage headers", level=30, color="blue")
+    count = 0
+    for fullname, header in image_headers.iteritems():
+        keys = header.keys()
+        keys.sort()
+        if count > 0:
+            tprint(arg="", level=30, color="white")
+        tprint(arg="  %s" % fullname, level=30, color="white")
+        for key in keys:
+            tprint(arg="    arg:%-22s  val:%s" % (key, header[key]), level=30, color="white")
+        count += 1
 
 def main():
     """ The main process
@@ -360,17 +389,19 @@ def main():
 
     # Need data
     if len(data_files) == 0 and commandline_args.test == False:
-        if logger: logger.exception("No files input for indexing.")
+        if logger:
+            logger.exception("No files input for indexing.")
         raise Exception, "No files input for indexing."
 
     # Too much data?
     if len(data_files) > 2:
-        if logger: logger.exception("Too many files for indexing. 1 or 2 images accepted")
+        if logger:
+            logger.exception("Too many files for indexing. 1 or 2 images accepted")
         raise Exception, "Too many files for indexing. 1 or 2 images accepted"
 
     # Get site - commandline wins over the environmental variable
     site = False
-    detector = False
+    detector = {}
     detector_module = False
     if commandline_args.site:
         site = commandline_args.site
@@ -389,55 +420,33 @@ def main():
                 site_target = detector.get("site")
                 site_file = utils.site.determine_site(site_arg=site_target)
                 # print site_file
-                SITE = importlib.import_module(site_file)
-                detector_target = SITE.DETECTOR.lower()
+                site_module = importlib.import_module(site_file)
+                detector_target = site_module.DETECTOR.lower()
                 detector_module = detector_utils.load_detector(detector_target)
             elif detector.has_key("detector"):
-                SITE = False
+                site_module = False
                 detector_target = detector.get("detector")
                 detector_module = detector_utils.load_detector(detector_target)
 
     # Have a detector - read in file data
     if detector_module:
         image_headers = {}
-        # For now we only convert hdf5 to cbf to run
-        # if "hdf5_files" in data_files:
-        #     for i in range(len(data_files["hdf5_files"])):
-        #         hdf5_files = data_files["hdf5_files"][i]
-        #         data_file = data_files["files"][i]
-        #         if SITE:
-        #             image_headers[data_file] = detector_module.read_header(data_file, hdf5_file, SITE.BEAM_SETTINGS)
-        #         else:
-        #             image_headers[data_file] = detector_module.read_header(data_file)
-        #
-        #
-        #     sys.exit()
-        # else:
         for data_file in data_files["files"]:
-            if SITE:
-                image_headers[data_file] = detector_module.read_header(data_file, SITE.BEAM_SETTINGS)
+            if site_module:
+                image_headers[data_file] = detector_module.read_header(data_file, site_module.BEAM_SETTINGS)
             else:
                 image_headers[data_file] = detector_module.read_header(data_file)
 
         logger.debug("Image headers: %s", image_headers)
-        tprint(arg="\nImage headers", level=10, color="blue")
-        count = 0
-        for fullname, header in image_headers.iteritems():
-            keys = header.keys()
-            keys.sort()
-            if count > 0:
-                tprint(arg="", level=10, color="white")
-            tprint(arg="  %s" % fullname, level=10, color="white")
-            for key in keys:
-                tprint(arg="    arg:%-22s  val:%s" % (key, header[key]), level=10, color="white")
-            count += 1
+        print_headers(tprint, image_headers)
 
         command = construct_command(image_headers=image_headers,
                                     commandline_args=commandline_args,
                                     detector_module=detector_module,
                                     logger=logger)
     else:
-        if logger: logger.exception("No detector module found")
+        if logger:
+            logger.exception("No detector module found")
         raise Exception("No detector module found")
 
     # If no site, error
@@ -455,16 +464,17 @@ def main():
 
     # Import the site settings
     # print "Importing %s" % site_file
-    # SITE = importlib.import_module(site_file)
+    # site_module = importlib.import_module(site_file)
 
 	# Single process lock?
-    # utils.lock.file_lock(SITE.CONTROL_LOCK_FILE)
+    # utils.lock.file_lock(site_module.CONTROL_LOCK_FILE)
 
     # Instantiate the agent
     # Load the agent from directories defined in site file
-    for d in sys.path:
-        if d.endswith("src"):
-            toplevel_dir = d+".agents"
+
+    # for d in sys.path:
+    #     if d.endswith("src"):
+    #         toplevel_dir = d+".agents"
 
     plugin = load_module(seek_module="rapd_agent_index+strategy",
                          directories=["agents"],

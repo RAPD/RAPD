@@ -47,7 +47,7 @@ from multiprocessing import Process
 import os
 import os.path
 from pprint import pprint
-import shutil
+# import shutil
 import stat
 import subprocess
 import sys
@@ -302,7 +302,7 @@ class RapdAgent(Process):
         if not self.command["command"] in ("INTEGRATE", "XDS"):
             self.logger.debug('Program did not request an integration')
             self.logger.debug('Now Exiting!')
-            return()
+            return
 
         xds_input = self.xds_default
         if self.command["command"] == 'XDS':
@@ -343,7 +343,7 @@ class RapdAgent(Process):
 
         self.print_info()
 
-        return()
+        return
 
         # Skip this for now
         analysis = self.run_analysis(final_results['files']['mtzfile'], self.dirs['work'])
@@ -360,7 +360,7 @@ class RapdAgent(Process):
             if self.controller_address:
                 rapd_send(self.controller_address, self.results)
 
-        return()
+        return
 
     def print_results(self, results):
         """Print out results to the terminal"""
@@ -412,31 +412,31 @@ class RapdAgent(Process):
                 tuple(summary["unique_obs"]), 99, "white")
 
     def print_plots(self, results):
-        """Display plots on the commandline"""
+        """
+        Display plots on the commandline
+
+        Possible titles
+        plot_titles = [
+            'I/sigma, Mean Mn(I)/sd(Mn(I))',
+            'Average I, RMS deviation, and Sd',
+            'Completeness',
+            'RMS correlation ration',
+            'Imean/RMS scatter',
+            'Rmerge, Rfull, Rmeas, Rpim vs. Resolution',
+            'Radiation Damage',
+            'Rmerge vs Frame',
+            'Redundancy',
+            'Anomalous & Imean CCs vs Resolution'
+            ]
+        """
 
         # Plot as long as JSON output is not selected
         if self.settings.get("show_plots", True) and (not self.settings.get("json_output", False)):
-
-            # Possible titles - more for documentation
-            plot_titles = [
-                'I/sigma, Mean Mn(I)/sd(Mn(I))',
-                'Average I, RMS deviation, and Sd',
-                'Completeness',
-                'RMS correlation ration',
-                'Imean/RMS scatter',
-                'Rmerge, Rfull, Rmeas, Rpim vs. Resolution',
-                'Radiation Damage',
-                'Rmerge vs Frame',
-                'Redundancy',
-                'Anomalous & Imean CCs vs Resolution'
-                ]
 
             plots = results["plots"]
 
             # Determine the open terminal size
             term_size = os.popen('stty size', 'r').read().split()
-
-            # titled = False
 
             plot_type = "Rmerge vs Frame"
             if plot_type in plots:
@@ -448,9 +448,6 @@ class RapdAgent(Process):
                 raw = False
                 # smoothed = False
                 for subplot in plot_data:
-                    # pprint(subplot)
-                    # if subplot["parameters"]["linelabel"] == "SmRmerge":
-                    #     smoothed = subplot
                     if subplot["parameters"]["linelabel"] == "Rmerge":
                         raw = subplot
 
@@ -462,11 +459,12 @@ class RapdAgent(Process):
                 x_max = x_array.max()
                 x_min = x_array.min()
 
-                gnuplot = subprocess.Popen(["gnuplot"], stdin=subprocess.PIPE) # %s,%s  (term_size[1], int(int(term_size[0])/3),
+                gnuplot = subprocess.Popen(["gnuplot"], stdin=subprocess.PIPE)
                 gnuplot.stdin.write("""set term dumb %d,%d
                                        set title 'Rmerge vs. Batch'
                                        set xlabel 'Image #'
-                                       set ylabel 'Rmerge' rotate by 90 \n""" %  (int(term_size[1])-20, 30)) # (min(180, term_size[1]), max(30, int(int(term_size[0])/3))))
+                                       set ylabel 'Rmerge' rotate by 90 \n""" %
+                                    (int(term_size[1])-20, 30))
 
                 # Create the plot string
                 plot_string = "plot [%d:%d] [%f:%f] " % (x_min, x_max, y_min, y_max)
@@ -482,7 +480,7 @@ class RapdAgent(Process):
                     # print xs
                     # print ys
                     for i, j in zip(xs, ys):
-                        gnuplot.stdin.write("%f %f\n" % (i,j))
+                        gnuplot.stdin.write("%f %f\n" % (i, j))
                     gnuplot.stdin.write("e\n")
 
                 # Now plot!
@@ -575,7 +573,7 @@ class RapdAgent(Process):
         # If less than self.procs, reduce self.procs and set up spot ranges
         # with all of the images on the first and last ram nodes.
         Num_images = self.ram_nodes[2][0] - self.ram_nodes[1][0] + 1
-        if Num_images  < self.procs:
+        if Num_images < self.procs:
             self.procs = Num_images
         spot_range = self.ram_nodes[1][0] + self.procs - 1
 
@@ -594,7 +592,7 @@ class RapdAgent(Process):
 
         self.xds_ram(self.ram_nodes[0][0])
 
-        newinp = self.check_for_xds_errors(xdsdir,xdsinp)
+        newinp = self.check_for_xds_errors(xdsdir, xdsinp)
         if newinp == False:
             self.logger.debug('  Unknown xds error occurred. Please check for cause!')
             self.tprint(arg="Unknown xds error occurred. Please check for cause!",
@@ -678,7 +676,7 @@ class RapdAgent(Process):
         #xdsinp.append('MAXIMUM_NUMBER_OF_JOBS=1\n')
         xdsinp.append('JOB=XYCORR INIT COLSPOT !IDXREF DEFPIX INTEGRATE CORRECT\n\n')
         xdsinp.append('DATA_RANGE=%s\n' % data_range)
-        xdsfile = os.path.join(xdsdir,'XDS.INP')
+        xdsfile = os.path.join(xdsdir, 'XDS.INP')
         self.write_file(xdsfile, xdsinp)
 
         # Run XDS
@@ -689,7 +687,7 @@ class RapdAgent(Process):
         self.xds_run(xdsdir)
 
         #xdsinp[-3] =('MAXIMUM_NUMBER_OF_JOBS=%s\n' % self.jobs)
-        xdsinp[-2] =("JOB=IDXREF DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n")
+        xdsinp[-2] = ("JOB=IDXREF DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n")
         self.write_file(xdsfile, xdsinp)
         self.tprint(arg="  Indexing and integrating",
                     level=99,
@@ -724,7 +722,6 @@ class RapdAgent(Process):
         if new_rescut != False:
             os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.nocutoff' %xdsdir)
             os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.nocutoff' %xdsdir)
-            #newinp[-2] = 'JOB= INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
             newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
             self.write_file(xdsfile, newinp)
             self.tprint(arg="  Reintegrating with new resolution cutoff",
@@ -825,8 +822,8 @@ class RapdAgent(Process):
                 timer.start()
                 if frame_count == half_set:
                     proc_dir = 'wedge_%s_%s' % (first_frame, frame_count)
-                    xds_job = Process(target= self.xds_wedge,
-                                      args= (proc_dir, frame_count, xdsinput))
+                    xds_job = Process(target=self.xds_wedge,
+                                      args=(proc_dir, frame_count, xdsinput))
                     xds_job.start()
                 frame_count += 1
                 look_for_file = file_template.replace(replace_string,
@@ -893,7 +890,7 @@ class RapdAgent(Process):
         else:
             wait_time = int(math.ceil(float(self.image_data['time']))) + 60
         try:
-            wedge_size=int(10 // float(self.image_data['osc_range']))
+            wedge_size = int(10 // float(self.image_data['osc_range']))
         except:
             self.logger.debug('xds_processing:: dynamic wedge size allocation failed!')
             self.logger.debug('                 Setting wedge size to 10.')
@@ -908,7 +905,7 @@ class RapdAgent(Process):
         # Then find the length of the number portion
         pad = len(num)
         replace_string = ''
-        for i in range(0, pad, 1):
+        for _ in range(0, pad, 1):
             replace_string += '?'
 
         look_for_file = file_template.replace(replace_string,
@@ -935,12 +932,12 @@ class RapdAgent(Process):
                 timer = Process(target=time.sleep, args=(wait_time,))
                 timer.start()
                 # If frame_count is a tenth image, launch and xds job
-                remainder = ((frame_count + 1) - first_frame) % wedge_size
+                # remainder = ((frame_count + 1) - first_frame) % wedge_size
                 # self.logger.debug('	remainder = %s' % remainder)
                 if xds_job.is_alive == True:
                     self.logger.debug('		xds_job.is_alive = True')
-                if ( ((frame_count + 1) -first_frame) % wedge_size == 0 and
-                     xds_job.is_alive() == False):
+                if (((frame_count + 1) - first_frame) % wedge_size == 0 and
+                        xds_job.is_alive() == False):
                     proc_dir = 'wedge_%s_%s' %(first_frame, frame_count)
                     xds_job = Process(target= self.xds_wedge,
                                       args=(proc_dir, frame_count, xdsinput))
@@ -952,8 +949,8 @@ class RapdAgent(Process):
             # If next frame does not exist, check to see if timer has expired.
             # If timer has expired, assume an abort has occurred.
             elif timer.is_alive() == False:
-                self.logger.debug('     Image %s not found after waiting %s seconds.'
-                                  % (look_for_file, wait_time))
+                self.logger.debug('     Image %s not found after waiting %s seconds.',
+                    look_for_file, wait_time)
                 # There have been a few cases, particularly with Pilatus's
                 # Furka file transfer has failed to copy an image to disk.
                 # So check for the next two files before assuming there has
@@ -974,7 +971,7 @@ class RapdAgent(Process):
                     frame_count += 1
                     look_for_file = file_template.replace(replace_string, '%0*d' %(pad, frame_count))
                     if os.path.isfile(look_for_file) == True:
-                        timer = Process(target= time.sleep, args=(wait_time,))
+                        timer = Process(target=time.sleep, args=(wait_time,))
                         timer.start()
                         frame_count += 1
                         look_for_file = file_template.replace(replace_string, '%0*d' %(pad, frame_count))
@@ -1013,8 +1010,8 @@ class RapdAgent(Process):
         self.tprint(arg="\nXDS processing", level=99, color="blue")
 
         first = int(self.image_data['start'])
-        data_range = '%s %s' %(first, last)
-        xdsdir = os.path.join(self.dirs['work'],dir)
+        data_range = '%s %s' % (first, last)
+        xdsdir = os.path.join(self.dirs['work'], dir)
         if os.path.isdir(xdsdir) == False:
             os.mkdir(xdsdir)
 
@@ -1025,7 +1022,7 @@ class RapdAgent(Process):
         #xdsinp.append('MAXIMUM_NUMBER_OF_JOBS=1\n')
         xdsinp.append('JOB=XYCORR INIT COLSPOT !IDXREF DEFPIX INTEGRATE CORRECT\n\n')
         xdsinp.append('DATA_RANGE=%s\n' % data_range)
-        xdsfile = os.path.join(xdsdir,'XDS.INP')
+        xdsfile = os.path.join(xdsdir, 'XDS.INP')
         self.write_file(xdsfile, xdsinp)
         self.tprint(arg="  Searching for peaks wedge", level=99, color="white", newline=False)
         self.xds_run(xdsdir)
@@ -1041,9 +1038,9 @@ class RapdAgent(Process):
         while newinp == 'check_again':
             newinp = self.check_for_xds_errors(xdsdir, xdsinp)
         if newinp == False:
-            self.logger.debug('  Unknown xds error occurred for %s.' %dir)
+            self.logger.debug('  Unknown xds error occurred for %s.', dir)
             self.logger.debug('  Please check for cause!')
-            return()
+            return
         else:
             # Find a suitable cutoff for resolution
             # Returns False if no new cutoff, otherwise returns the value of
@@ -1061,49 +1058,49 @@ class RapdAgent(Process):
         return results
 
     def createXDSinp(self, xds_dict):
-    	"""
+        """
     	This function takes the dict holding XDS keywords and values
     	and converts them into a list of strings that serves as the
     	basis for writing out an XDS.INP file.
     	"""
 
-    	self.logger.debug("FastIntegration::createXDSinp")
+        self.logger.debug("FastIntegration::createXDSinp")
 
         # print self.image_data["start"]
         # print self.image_data["total"]
 
         last_frame = self.image_data['start'] + self.image_data["total"] - 1
-        self.logger.debug('last_frame = %s' % last_frame)
+        self.logger.debug('last_frame = %s', last_frame)
         # print last_frame
         # self.logger.debug('detector_type = %s' % detector_type)
         background_range = '%s %s' %(int(self.image_data['start']), int(self.image_data['start']) + 4)
 
-    	x_beam = float(self.image_data['x_beam']) / float(self.image_data['pixel_size'])
+        x_beam = float(self.image_data['x_beam']) / float(self.image_data['pixel_size'])
         y_beam = float(self.image_data['y_beam']) / float(self.image_data['pixel_size'])
         #if x_beam < 0 or x_beam > int(xds_dict['NX']):
         #    raise RuntimeError, 'x beam coordinate outside detector'
         #if y_beam < 0 or y_beam > int(xds_dict['NY']):
         #    raise RuntimeError, 'y beam coordinate outside detector'
 
-    	if 'image_template' in self.image_data:
-    	    self.image_template = self.image_data['image_template']
-    	else:
-    	    raise RuntimeError, '"image_template" not defined in input data.'
+        if 'image_template' in self.image_data:
+            self.image_template = self.image_data['image_template']
+        else:
+            raise RuntimeError, '"image_template" not defined in input data.'
 
     	file_template = os.path.join(self.image_data['directory'], self.image_template)
     	# Count the number of '?' that need to be padded in a image filename.
-    	pad = file_template.count('?')
+        pad = file_template.count('?')
     	# Replace the first instance of '?' with the padded out image number
     	# of the last frame
-    	self.last_image = file_template.replace('?','%d'.zfill(pad) %last_frame,1)
+        self.last_image = file_template.replace('?', '%d'.zfill(pad) % last_frame, 1)
     	# Remove the remaining '?'
-    	self.last_image = self.last_image.replace('?','')
+        self.last_image = self.last_image.replace('?', '')
     	# Repeat the last two steps for the first image's filename.
-    	self.first_image = file_template.replace('?', str(self.image_data['start']).zfill(pad),1)
-    	self.first_image = self.first_image.replace('?','')
+        self.first_image = file_template.replace('?', str(self.image_data['start']).zfill(pad), 1)
+        self.first_image = self.first_image.replace('?','')
 
     	# Begin constructing the list that will represent the XDS.INP file.
-    	xds_input = ['!===== DATA SET DEPENDENT PARAMETERS =====\n',
+        xds_input = ['!===== DATA SET DEPENDENT PARAMETERS =====\n',
                       'ORGX=%.2f ORGY=%.2f ! Beam Center (pixels)\n' % (x_beam, y_beam),
                       'DETECTOR_DISTANCE=%.2f ! (mm)\n' %
                         (float(self.image_data['distance'])),
@@ -1114,7 +1111,7 @@ class RapdAgent(Process):
                       'NAME_TEMPLATE_OF_DATA_FRAMES=%s\n\n' % file_template,
     		          'BACKGROUND_RANGE=%s\n\n' % background_range,
                       '!===== DETECTOR_PARAMETERS =====\n']
-    	for key, value in xds_dict.iteritems():
+        for key, value in xds_dict.iteritems():
             # Regions that are excluded are defined with
             # various keyword containing the word UNTRUSTED.
             # Since multiple regions may be specified using
@@ -1146,19 +1143,19 @@ class RapdAgent(Process):
     	# If 2theta is inclined, it should be give in self.image_data
     	# with the key 'twotheta' and a value in degrees.
     	#
-    	if 'twotheta' in self.image_data and self.image_data['twotheta'] != None:
-    	    twotheta = math.radians(float(self.image_data['twotheta']))
-    	    tilty = math.cos(twotheta)
-    	    tiltz = math.sin(twotheta)
-    	    xds_input.append('!***** Detector is tilted in 2theta *****\n')
-    	    xds_input.append('! 2THETA = %s degrees\n' % self.image_data['twotheta'])
-    	    xds_input.append('!*** Resetting DIRECTION_OF_DETECTOR_Y-AXIS ***\n')
-    	    xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS= 0.0 %.4f %.4f\n' %(tilty, tiltz))
-    	    xds_input.append('! 0.0 cos(2theta) sin(2theta)\n\n')
+        if 'twotheta' in self.image_data and self.image_data['twotheta'] != None:
+            twotheta = math.radians(float(self.image_data['twotheta']))
+            tilty = math.cos(twotheta)
+            tiltz = math.sin(twotheta)
+            xds_input.append('!***** Detector is tilted in 2theta *****\n')
+            xds_input.append('! 2THETA = %s degrees\n' % self.image_data['twotheta'])
+            xds_input.append('!*** Resetting DIRECTION_OF_DETECTOR_Y-AXIS ***\n')
+            xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS= 0.0 %.4f %.4f\n' %(tilty, tiltz))
+            xds_input.append('! 0.0 cos(2theta) sin(2theta)\n\n')
 
         # pprint(xds_input)
 
-    	return(xds_input)
+        return xds_input
 
     def set_detector_data(self, detector_type):
         """
@@ -1208,9 +1205,9 @@ class RapdAgent(Process):
                                              self.image_data['prefix'],
                                              self.image_template)
             if self.image_data.has_key('pixel_size'):
-            	pass
+                pass
             else:
-            	self.image_data['pixel_size'] = '0.0513'
+                self.image_data['pixel_size'] = '0.0513'
             # Set untrusted region for this detector on NE-CAT 24ID-E
             untrusted_region = 'UNTRUSTED_RECTANGLE= 0 1040 3080 4090\n\n'
 
@@ -1230,22 +1227,23 @@ class RapdAgent(Process):
                     self.image_template = '%s_%s_???.img' %(self.image_data['prefix'],
                                                self.image_data['run_number'])
                 else:
-                    self.image_template = '%s_%s_???.img' %(self.image_data['image_prefix'], self.image_data['run_number'])
-            file_template = os.path.join(self.image_data['directory'],self.image_template)
-            self.last_image = file_template.replace('???','%03d' %last_frame)
-            self.first_image = file_template.replace('???','%03d' %int(self.image_data['start']))
+                    self.image_template = '%s_%s_???.img' % (self.image_data['image_prefix'],
+                                                             self.image_data['run_number'])
+            file_template = os.path.join(self.image_data['directory'], self.image_template)
+            self.last_image = file_template.replace('???', '%03d' % last_frame)
+            self.first_image = file_template.replace('???', '%03d' % int(self.image_data['start']))
             if self.ram_use == True:
                 file_template = os.path.join('/dev/shm/',
                                              self.image_data['prefix'],
                                              self.image_template)
             if self.image_data.has_key('pixel_size'):
-            	pass
+                pass
             else:
-            	self.image_data['pixel_size'] = '0.10259'
+                self.image_data['pixel_size'] = '0.10259'
             # Set untrusted region for this detector at NE-CAT 24ID-E.
             untrusted_region = 'UNTRUSTED_RECTANGLE= 0 520 1540 2045\n\n'
         if detector_type == 'ADSC':
-         	min_pixel_value = '1'
+            min_pixel_value = '1'
 
         # ADSC HF-4M
         elif detector_type == 'HF4M':
@@ -1255,14 +1253,15 @@ class RapdAgent(Process):
                 raise RuntimeError, 'x beam coordinate outside of detector'
             if y_beam < 0 or y_beam > 2290:
                 raise RuntimeError, 'y beam coordinate outside of detector'
-            detector_file = 'XDS-HF4M.INP'
+            # detector_file = 'XDS-HF4M.INP'
             if 'image_template' in self.image_data:
                 self.image_template = self.image_data['image_template']
             else:
-                self.image_template = '%s_%s_????.cbf' %(self.image_data['image_prefix'], self.image_data['run_number'])
+                self.image_template = '%s_%s_????.cbf' % (self.image_data['image_prefix'],
+                                                          self.image_data['run_number'])
             file_template = os.path.join(self.image_data['directory'],self.image_template)
-            self.last_image = file_template.replace('????','%04d' %last_frame)
-            self.first_image = file_template.replace('????','%04d' %int(self.image_data['start']))
+            self.last_image = file_template.replace('????', '%04d' % last_frame)
+            self.first_image = file_template.replace('????', '%04d' % int(self.image_data['start']))
             if self.ram_use == True:
                 file_template = os.path.join('/dev/shm/', self.image_data['image_prefix'], self.image_template)
 
@@ -1280,8 +1279,8 @@ class RapdAgent(Process):
                 self.image_template = '%s_%s_????.cbf' %(self.image_data['image_prefix'],
                                                      self.image_data['run_number'])
             file_template = os.path.join(self.image_data['directory'],self.image_template)
-            self.last_image = file_template.replace('????','%04d' %last_frame)
-            self.first_image = file_template.replace('????','%04d' %int(self.image_data['start']))
+            self.last_image = file_template.replace('????', '%04d' % last_frame)
+            self.first_image = file_template.replace('????', '%04d' % int(self.image_data['start']))
             if self.ram_use == True:
                 file_template = os.path.join('/dev/shm/',
                                              self.image_data['image_prefix'],
@@ -1323,14 +1322,14 @@ class RapdAgent(Process):
             x_beam = float(self.image_data['x_beam']) / float(self.image_data['pixel_size'])
             y_beam = float(self.image_data['y_beam']) / float(self.image_data['pixel_size'])
             if x_beam < 0 or x_beam > int(self.image_data['size1']):
-            	raise RuntimeError, 'x beam coordinate outside detector'
+                raise RuntimeError, 'x beam coordinate outside detector'
             if y_beam < 0 or y_beam > int(self.image_data['size1']):
-            	raise RuntimeError, 'y beam coordinate outside detector'
+                raise RuntimeError, 'y beam coordinate outside detector'
             detector_file = 'XDS-MX300HS.INP'
             if 'image_template' in self.image_data:
-            	self.image_template = self.image_data['image_template']
+                self.image_template = self.image_data['image_template']
             else:
-            	self.image_template = '%s.????' %self.image_data['image_prefix']
+                self.image_template = '%s.????' %self.image_data['image_prefix']
             file_template = os.path.join(self.image_data['directory'],self.image_template)
             self.last_image = file_template.replace('????', '%04d' %last_frame)
             self.first_iamge = file_template.replace('????', '%04d' %int(self.image_data['start']))
@@ -1380,7 +1379,7 @@ class RapdAgent(Process):
             xds_input.append('!0.0 cos(2theta) sin(2theta)\n\n')
         xds_input.append(untrusted_region)
 
-        return(xds_input)
+        return xds_input
 
 
     def write_file(self, filename, file_input):
@@ -1394,7 +1393,7 @@ class RapdAgent(Process):
         # pprint(file_input)
         with open (filename, 'w') as file:
             file.writelines(file_input)
-        return()
+        return
 
     def find_spot_range(self, first, last, osc, input):
         """
@@ -1426,7 +1425,7 @@ class RapdAgent(Process):
                 spot2_start = int(90 / float(osc))
             spot2_end = spot2_start + int(5 / float(osc)) - 1
             input.append('SPOT_RANGE=%s %s\n\n' %(spot2_start, spot2_end))
-        return(input)
+        return input
 
     def xds_run(self, directory):
         """
@@ -1456,7 +1455,7 @@ class RapdAgent(Process):
         self.tprint(arg=" done", level=99, color="white")
         os.chdir(self.dirs['work'])
 
-        return()
+        return
 
     def xds_ram(self, first_node):
         """
@@ -1470,7 +1469,7 @@ class RapdAgent(Process):
         p = subprocess.Popen(my_command, shell=True, )
         p.wait()
 
-        return()
+        return
 
     def find_correct_res(self, directory, isigi):
         """
@@ -1491,7 +1490,7 @@ class RapdAgent(Process):
         except IOError as e:
             self.logger.debug('Could not open CORRECT.LP')
             self.logger.debug(e)
-            return(new_hi_res)
+            return new_hi_res
 
         flag = 0
         IsigI = 0
@@ -1511,7 +1510,7 @@ class RapdAgent(Process):
                 if line[0][0].isdigit():
                     #if line[8] == '-99.00':
                     #    self.logger.debug('    IsigI = -99.00')
-                    #    return(False)
+                    #    return False
                     prev_hires = hires
                     prev_IsigI = IsigI
                     hires = float(line[0])
@@ -1578,7 +1577,7 @@ class RapdAgent(Process):
                     first,last = tmp.split()
                     if int(last) == (int(self.image_data('start')) + int(self.image_data('total')) -1):
                         self.logger.debug('         FAILURE: Already using the full data range available.')
-                        return(False)
+                        return False
                     else:
                         input[-1] = 'SPOT_RANGE=%s %s' %(first, (int(last) + 1))
                         self.write_file('XDS.INP', input)
@@ -1588,7 +1587,7 @@ class RapdAgent(Process):
                                     color="white",
                                     newline=False)
                         self.xds_run(dir)
-                        return(input)
+                        return input
                 elif 'SOLUTION IS INACCURATE' in line or 'INSUFFICIENT PERCENTAGE' in line:
                     self.logger.debug('    Found inaccurate indexing solution error')
                     self.logger.debug('    Will try to continue anyway')
@@ -1605,7 +1604,7 @@ class RapdAgent(Process):
                         self.tprint(arg="\n  XDS failed to run with inaccurate indexing solution error.",
                                     level=30,
                                     color="red")
-                        return(False)
+                        return False
                     else:
                         input[-2] = ('JOB=DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT'
                                  + ' IDXREF DEFPIX INTEGRATE CORRECT\n')
@@ -1616,7 +1615,7 @@ class RapdAgent(Process):
                                     color="white",
                                     newline=False)
                         self.xds_run(dir)
-                        return(input)
+                        return input
                 elif 'SPOT SIZE PARAMETERS HAS FAILED' in line:
                     self.logger.debug('	Found failure in determining spot size parameters.')
                     self.logger.debug('	Will use default values for REFLECTING_RANGE and BEAM_DIVERGENCE.')
@@ -1633,12 +1632,12 @@ class RapdAgent(Process):
                                 color="white",
                                 newline=False)
                     self.xds_run(dir)
-                    return(input)
+                    return input
                 else:
                     # Unanticipated Error, fail the error check by returning False.
                     self.logger.debug('Error = %s' %line)
-                    return(False)
-        return(input)
+                    return False
+        return input
 
     def write_forkscripts(self, node_list, osc):
         """
@@ -1683,7 +1682,7 @@ class RapdAgent(Process):
         self.write_file('forki', forki)
         os.chmod('forkc', stat.S_IRWXU)
         os.chmod('forki', stat.S_IRWXU)
-        return()
+        return
 
     def run_results(self, directory):
         """
@@ -3148,16 +3147,16 @@ class RapdAgent(Process):
                    + ''.join(symline.split()[6:]) + '\n')
         inlines[2] = newline
         self.write_file(scafile, inlines)
-        return()
+        return
 
-    def run_analysis(self, data, dir):
+    def run_analysis(self, data_to_analyze, dir):
         """
         Runs "pdbquery" and xtriage on the integrated data.
-        data = the integrated mtzfile
+        data_to_analyze = the integrated mtzfile
         dir = the working integration directory
         """
         self.logger.debug('FastIntegration::run_analysis')
-        self.logger.debug('                 data = %s' % data)
+        self.logger.debug('                 data = %s' % data_to_analyze)
         self.logger.debug('                 dir = %s' % dir)
         analysis_dir = os.path.join(dir, 'analysis')
         if os.path.isdir(analysis_dir) == False:
@@ -3175,19 +3174,19 @@ class RapdAgent(Process):
         pdb_dict = {}
         pdb_dict['run'] = run_dict
         pdb_dict['dir'] = analysis_dir
-        pdb_dict['data'] = data
+        pdb_dict['data'] = data_to_analyze
         pdb_dict["agent_directories"] = self.dirs.get("agent_directories", False)
         pdb_dict['control'] = self.controller_address
         pdb_dict['process_id'] = self.process_id
         pdb_input.append(pdb_dict)
         self.logger.debug('    Sending pdb_input to Autostats')
-        try:
-            T = AutoStats(pdb_input, self.logger)
-            self.logger.debug('I KNOW WHO YOU ARE')
-        except:
-            self.logger.debug('    Execution of AutoStats failed')
-            return('Failed')
-        return('Success')
+        # try:
+        T = AutoStats(pdb_input, self.logger)
+        self.logger.debug('I KNOW WHO YOU ARE')
+        # except:
+        #     self.logger.debug('    Execution of AutoStats failed')
+        #     return('Failed')
+        return "Success"
 
     def process_shelxC(self, unitcell, spacegroup, scafile):
         """
@@ -3275,7 +3274,7 @@ class RapdAgent(Process):
                           + 'about 0.80</caption>\n</table></div><br>\n')
             htmlfile.insert(-9, shelxc)
         self.write_file('results.php', htmlfile)
-        return()
+        return
 
     def parse_integrateLP(self):
         """
@@ -3395,7 +3394,7 @@ class RapdAgent(Process):
         xdsinp.append('SPACE_GROUP_NUMBER=%s' % sg_num)
         xdsinp.append('UNIT_CELL_CONSTANTS=%s' % cell)
         self.write_file('XDS.INP', xdsinp)
-        return()
+        return
 
 
 
