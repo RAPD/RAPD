@@ -124,7 +124,17 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     # "reference_data_id": None, #MOSFLM
     # #"reference_data_id": 1,#MOSFLM
     # #"reference_data": [['/gpfs6/users/necat/Jon/RAPD_test/index09.mat', 0.0, 30.0, 'junk_1_1-30','P41212']],#MOSFLM
-    # 'reference_data': [['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',0.0,20.0,'junk','P3'],['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',40.0,50.0,'junk2','P3']],#MOSFLM
+    # 'reference_data': [['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',
+    #                     0.0,
+    #                     20.0,
+    #                     'junk',
+    #                     'P3'],
+    #                    ['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',
+    #                     40.0,
+    #                     50.0,
+    #                     'junk2',
+    #                     'P3']
+    #                   ],#MOSFLM
 
     # Raddose
     command["preferences"]["crystal_size_x"] = "100"
@@ -138,10 +148,14 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
 
     # Site parameters
     command["preferences"]["site_parameters"] = {}
-    command["preferences"]["site_parameters"]["DETECTOR_DISTANCE_MAX"] = commandline_args.site_det_dist_max
-    command["preferences"]["site_parameters"]["DETECTOR_DISTANCE_MIN"] = commandline_args.site_det_dist_min
-    command["preferences"]["site_parameters"]["DIFFRACTOMETER_OSC_MIN"] = commandline_args.site_osc_min
-    command["preferences"]["site_parameters"]["DETECTOR_TIME_MIN"] = commandline_args.site_det_time_min
+    command["preferences"]["site_parameters"]["DETECTOR_DISTANCE_MAX"] = \
+        commandline_args.site_det_dist_max
+    command["preferences"]["site_parameters"]["DETECTOR_DISTANCE_MIN"] = \
+        commandline_args.site_det_dist_min
+    command["preferences"]["site_parameters"]["DIFFRACTOMETER_OSC_MIN"] = \
+        commandline_args.site_osc_min
+    command["preferences"]["site_parameters"]["DETECTOR_TIME_MIN"] = \
+        commandline_args.site_det_time_min
 
     # Return address
     command["return_address"] = None
@@ -250,7 +264,7 @@ def get_commandline():
                         help="Directory or files")
 
     # No args? print help
-    if len(sys.argv[1:])==0:
+    if len(sys.argv[1:]) == 0:
         parser.print_help()
         parser.exit()
 
@@ -375,12 +389,14 @@ def main():
 
     # Need data
     if len(data_files) == 0 and commandline_args.test == False:
-        if logger: logger.exception("No files input for indexing.")
+        if logger:
+            logger.exception("No files input for indexing.")
         raise Exception, "No files input for indexing."
 
     # Too much data?
     if len(data_files) > 2:
-        if logger: logger.exception("Too many files for indexing. 1 or 2 images accepted")
+        if logger:
+            logger.exception("Too many files for indexing. 1 or 2 images accepted")
         raise Exception, "Too many files for indexing. 1 or 2 images accepted"
 
     # Get site - commandline wins over the environmental variable
