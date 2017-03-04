@@ -317,7 +317,6 @@ class RapdAgent(Process):
                 if self.ram_use == True:
                     integration_results = self.ram_integrate(xds_input)
                 elif (self.image_data['detector'] == 'ADSC' or
-    #                  self.image_data['detector'] == 'PILATUS' or
                       self.cluster_use == False):
                     integration_results = self.xds_split(xds_input)
                 else:
@@ -376,24 +375,41 @@ class RapdAgent(Process):
                         tuple(summary["scaling_unit_cell"]), 99, "white")
             self.tprint("  Mosaicity: %5.3f" % summary["mosaicity"], 99, "white")
             self.tprint("                        overall   inner shell   outer shell", 99, "white")
-            self.tprint("  High res limit         %5.2f       %5.2f         %5.2f" % tuple(summary["bins_high"]), 99, "white")
-            self.tprint("  Low res limit          %5.2f       %5.2f         %5.2f" % tuple(summary["bins_low"]), 99, "white")
-            self.tprint("  Completeness           %5.1f       %5.1f         %5.1f" % tuple(summary["completeness"]), 99, "white")
-            self.tprint("  Multiplicity            %4.1f        %4.1f          %4.1f" % tuple(summary["multiplicity"]), 99, "white")
-            self.tprint("  I/sigma(I)              %4.1f        %4.1f          %4.1f" % tuple(summary["isigi"]), 99, "white")
-            self.tprint("  CC(1/2)                %5.3f       %5.3f         %5.3f" % tuple(summary["cc-half"]), 99, "white")
-            self.tprint("  Rmerge                 %5.3f       %5.3f         %5.3f" % tuple(summary["rmerge_norm"]), 99, "white")
-            self.tprint("  Anom Rmerge            %5.3f       %5.3f         %5.3f" % tuple(summary["rmerge_anom"]), 99, "white")
-            self.tprint("  Rmeas                  %5.3f       %5.3f         %5.3f" % tuple(summary["rmeas_norm"]), 99, "white")
-            self.tprint("  Anom Rmeas             %5.3f       %5.3f         %5.3f" % tuple(summary["rmeas_anom"]), 99, "white")
-            self.tprint("  Rpim                   %5.3f       %5.3f         %5.3f" % tuple(summary["rpim_norm"]), 99, "white")
-            self.tprint("  Anom Rpim              %5.3f       %5.3f         %5.3f" % tuple(summary["rpim_anom"]), 99, "white")
-            self.tprint("  Anom Completeness      %5.1f       %5.1f         %5.1f" % tuple(summary["anom_completeness"]), 99, "white")
-            self.tprint("  Anom Multiplicity       %4.1f        %4.1f          %4.1f" % tuple(summary["anom_multiplicity"]), 99, "white")
-            self.tprint("  Anom Correlation       %5.3f       %5.3f         %5.3f" % tuple(summary["anom_correlation"]), 99, "white")
+            self.tprint("  High res limit         %5.2f       %5.2f         %5.2f" %
+                tuple(summary["bins_high"]), 99, "white")
+            self.tprint("  Low res limit          %5.2f       %5.2f         %5.2f" %
+                tuple(summary["bins_low"]), 99, "white")
+            self.tprint("  Completeness           %5.1f       %5.1f         %5.1f" %
+                tuple(summary["completeness"]), 99, "white")
+            self.tprint("  Multiplicity            %4.1f        %4.1f          %4.1f" %
+                tuple(summary["multiplicity"]), 99, "white")
+            self.tprint("  I/sigma(I)              %4.1f        %4.1f          %4.1f" %
+                tuple(summary["isigi"]), 99, "white")
+            self.tprint("  CC(1/2)                %5.3f       %5.3f         %5.3f" %
+                tuple(summary["cc-half"]), 99, "white")
+            self.tprint("  Rmerge                 %5.3f       %5.3f         %5.3f" %
+                tuple(summary["rmerge_norm"]), 99, "white")
+            self.tprint("  Anom Rmerge            %5.3f       %5.3f         %5.3f" %
+                tuple(summary["rmerge_anom"]), 99, "white")
+            self.tprint("  Rmeas                  %5.3f       %5.3f         %5.3f" %
+                tuple(summary["rmeas_norm"]), 99, "white")
+            self.tprint("  Anom Rmeas             %5.3f       %5.3f         %5.3f" %
+                tuple(summary["rmeas_anom"]), 99, "white")
+            self.tprint("  Rpim                   %5.3f       %5.3f         %5.3f" %
+                tuple(summary["rpim_norm"]), 99, "white")
+            self.tprint("  Anom Rpim              %5.3f       %5.3f         %5.3f" %
+                tuple(summary["rpim_anom"]), 99, "white")
+            self.tprint("  Anom Completeness      %5.1f       %5.1f         %5.1f" %
+                tuple(summary["anom_completeness"]), 99, "white")
+            self.tprint("  Anom Multiplicity       %4.1f        %4.1f          %4.1f" %
+                tuple(summary["anom_multiplicity"]), 99, "white")
+            self.tprint("  Anom Correlation       %5.3f       %5.3f         %5.3f" %
+                tuple(summary["anom_correlation"]), 99, "white")
             self.tprint("  Anom Slope             %5.3f" % summary["anom_slope"][0], 99, "white")
-            self.tprint("  Observations         %7d     %7d       %7d" % tuple(summary["total_obs"]), 99, "white")
-            self.tprint("  Unique Observations  %7d     %7d       %7d\n" % tuple(summary["unique_obs"]), 99, "white")
+            self.tprint("  Observations         %7d     %7d       %7d" %
+                tuple(summary["total_obs"]), 99, "white")
+            self.tprint("  Unique Observations  %7d     %7d       %7d\n" %
+                tuple(summary["unique_obs"]), 99, "white")
 
     def print_plots(self, results):
         """Display plots on the commandline"""
@@ -424,12 +440,6 @@ class RapdAgent(Process):
 
             plot_type = "Rmerge vs Frame"
             if plot_type in plots:
-
-                # if not titled:
-                #     self.tprint(arg="\nPlots from integration", level=99, color="blue")
-                #     titled = True
-
-                #             tag = {"osc_range":"standard", "osc_range_anom":"ANOMALOUS"}[plot_type]
 
                 plot_data = plots[plot_type]["data"]
                 # plot_params = plots[plot_type]["parameters"]
@@ -1095,9 +1105,12 @@ class RapdAgent(Process):
     	# Begin constructing the list that will represent the XDS.INP file.
     	xds_input = ['!===== DATA SET DEPENDENT PARAMETERS =====\n',
                       'ORGX=%.2f ORGY=%.2f ! Beam Center (pixels)\n' % (x_beam, y_beam),
-                      'DETECTOR_DISTANCE=%.2f ! (mm)\n' % (float(self.image_data['distance'])),
-                      'OSCILLATION_RANGE=%.2f ! (degrees)\n' % (float(self.image_data['osc_range'])),
-                      'X-RAY_WAVELENGTH=%.5f ! (Angstroems)\n' % (float(self.image_data['wavelength'])),
+                      'DETECTOR_DISTANCE=%.2f ! (mm)\n' %
+                        (float(self.image_data['distance'])),
+                      'OSCILLATION_RANGE=%.2f ! (degrees)\n' %
+                        (float(self.image_data['osc_range'])),
+                      'X-RAY_WAVELENGTH=%.5f ! (Angstroems)\n' %
+                        (float(self.image_data['wavelength'])),
                       'NAME_TEMPLATE_OF_DATA_FRAMES=%s\n\n' % file_template,
     		          'BACKGROUND_RANGE=%s\n\n' % background_range,
                       '!===== DETECTOR_PARAMETERS =====\n']
