@@ -30,7 +30,7 @@ __status__ = "Development"
 import argparse
 import importlib
 import os
-from pprint import pprint
+# from pprint import pprint
 import sys
 import uuid
 
@@ -54,8 +54,8 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
 
     # Working directory
     image_numbers = []
-    image_template = False
-    for fullname, header in image_headers.iteritems():
+    image_template = ""
+    for _, header in image_headers.iteritems():
         image_numbers.append(str(header["image_number"]))
         image_template = header["image_template"]
     image_numbers.sort()
@@ -420,11 +420,11 @@ def main():
                 site_target = detector.get("site")
                 site_file = utils.site.determine_site(site_arg=site_target)
                 # print site_file
-                SITE = importlib.import_module(site_file)
-                detector_target = SITE.DETECTOR.lower()
+                site_module = importlib.import_module(site_file)
+                detector_target = site_module.DETECTOR.lower()
                 detector_module = detector_utils.load_detector(detector_target)
             elif detector.has_key("detector"):
-                SITE = False
+                site_module = False
                 detector_target = detector.get("detector")
                 detector_module = detector_utils.load_detector(detector_target)
 
@@ -432,8 +432,8 @@ def main():
     if detector_module:
         image_headers = {}
         for data_file in data_files["files"]:
-            if SITE:
-                image_headers[data_file] = detector_module.read_header(data_file, SITE.BEAM_SETTINGS)
+            if site_module:
+                image_headers[data_file] = detector_module.read_header(data_file, site_module.BEAM_SETTINGS)
             else:
                 image_headers[data_file] = detector_module.read_header(data_file)
 
@@ -445,7 +445,8 @@ def main():
                                     detector_module=detector_module,
                                     logger=logger)
     else:
-        if logger: logger.exception("No detector module found")
+        if logger:
+            logger.exception("No detector module found")
         raise Exception("No detector module found")
 
     # If no site, error
@@ -463,16 +464,17 @@ def main():
 
     # Import the site settings
     # print "Importing %s" % site_file
-    # SITE = importlib.import_module(site_file)
+    # site_module = importlib.import_module(site_file)
 
 	# Single process lock?
-    # utils.lock.file_lock(SITE.CONTROL_LOCK_FILE)
+    # utils.lock.file_lock(site_module.CONTROL_LOCK_FILE)
 
     # Instantiate the agent
     # Load the agent from directories defined in site file
-    for d in sys.path:
-        if d.endswith("src"):
-            toplevel_dir = d+".agents"
+
+    # for d in sys.path:
+    #     if d.endswith("src"):
+    #         toplevel_dir = d+".agents"
 
     plugin = load_module(seek_module="rapd_agent_index+strategy",
                          directories=["agents"],
