@@ -288,9 +288,9 @@ def print_headers(tprint, image_headers):
         keys.sort()
         if count > 0:
             tprint(arg="", level=10, color="white")
-        tprint(arg="  %s" % fullname, level=10, color="white")
+        tprint(arg="  %s" % fullname, level=30, color="white")
         for key in keys:
-            tprint(arg="    arg:%-22s  val:%s" % (key, header[key]), level=10, color="white")
+            tprint(arg="    arg:%-22s  val:%s" % (key, header[key]), level=30, color="white")
         count += 1
 
 def main():
