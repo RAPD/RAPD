@@ -137,6 +137,35 @@ if [[ $PLATFORM == "Linux" ]]; then
 
       printf "UBUNTU\n"
 
+      function isinstalled {
+        dpkg -l "$@" > /dev/null 2>&1
+        INSTALLED=$?
+        if [ $INSTALLED == '0']; then
+          true
+        else
+          false
+        fi
+      }
+
+      for package in wget subversion git make bzip2 openssl-devel build-essential libgl1-mesa-dev libglu1-mesa-dev
+      do
+        if isinstalled $package; then
+          echo "  $package installed";
+        else
+          echo "  $package not installed";
+          missing_packages="$missing_packages $package"
+          error=1
+        fi
+      done
+      if [ $error == 1 ]; then
+        printf "\033[91mERROR: missing package!\033[0m\n"
+        printf "The following packages need to be installed: $missing_packages \n"
+        if [ $SKIP == 0 ]; then
+          printf "Use the -s option to bypass this\n"
+          exit 1
+        fi
+      fi
+
     fi
 
   fi
