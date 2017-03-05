@@ -140,7 +140,7 @@ if [[ $PLATFORM == "Linux" ]]; then
       function isinstalled {
         dpkg -l "$@" > /dev/null 2>&1
         INSTALLED=$?
-        if [ $INSTALLED == '0']; then
+        if [ $INSTALLED == '0' ]; then
           true
         else
           false
