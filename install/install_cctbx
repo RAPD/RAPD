@@ -131,7 +131,7 @@ if [[ $PLATFORM == "Linux" ]]; then
   # Ubuntu
   if [ -f /etc/lsb-release ]; then
 
-    OS = $(awk '/DISTRIB_ID=/' /etc/*-release | sed 's/DISTRIB_ID=//' | tr '[:upper:]' '[:lower:]')
+    OS=$(awk '/DISTRIB_ID=/' /etc/*-release | sed 's/DISTRIB_ID=//' | tr '[:upper:]' '[:lower:]')
     printf "$OS\n"
   fi
 
