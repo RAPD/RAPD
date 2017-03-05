@@ -133,7 +133,7 @@ if [[ $PLATFORM == "Linux" ]]; then
 
     OS=$(awk '/DISTRIB_ID=/' /etc/*-release | sed 's/DISTRIB_ID=//' | tr '[:upper:]' '[:lower:]')
 
-    if [ OS == "ubuntu" ]; then
+    if [ $OS == "ubuntu" ]; then
 
       printf "UBUNTU\n"
 
