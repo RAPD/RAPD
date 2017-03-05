@@ -121,6 +121,22 @@ done
 # First test for installed modules
 if [[ $PLATFORM == "Linux" ]]; then
 
+  # Cent OS
+  if [ -f /etc/centos-release ]; then
+
+    printf "CentOS"
+
+  fi
+
+  # Ubuntu
+  if [ -f /etc/lsb-release ]; then
+
+    printf "Ubuntu"
+
+  fi
+
+  exit()
+
   printf "\033[94mChecking installed packages\033[0m\n"
 
   function isinstalled {
