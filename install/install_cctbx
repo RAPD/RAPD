@@ -223,24 +223,24 @@ if [ $INSTALL_CCTBX == 1 ]; then
   else
     printf "\n\033[94mInstalling cctbx \033[0m\n"
 
-    # CCTBX_PREFIX_TGT=$PREFIX"/share/cctbx"
-    # rm -rf $CCTBX_PREFIX_TGT
-    # mkdir -p $CCTBX_PREFIX_TGT
-    # cd $CCTBX_PREFIX_TGT
-    #
-    # # Get the bootstrap installer
-    # printf "  Downloading CCTBX bootstrap script"
-    # wget --no-check-certificate https://raw.githubusercontent.com/cctbx/cctbx_project/master/libtbx/auto_build/bootstrap.py
-    #
-    # # Install CCTBX
-    # printf "  Installing CCTBX"
-    # python bootstrap.py --builder=cctbx
-    #
-    # if [ ! $? -eq 0 ]
-    # then
-    #   echo "Could not install cctbx" >&2
-    #   exit 1
-    # fi
+    CCTBX_PREFIX_TGT=$PREFIX"/share/cctbx"
+    rm -rf $CCTBX_PREFIX_TGT
+    mkdir -p $CCTBX_PREFIX_TGT
+    cd $CCTBX_PREFIX_TGT
+
+    # Get the bootstrap installer
+    printf "  Downloading CCTBX bootstrap script"
+    wget --no-check-certificate https://raw.githubusercontent.com/cctbx/cctbx_project/master/libtbx/auto_build/bootstrap.py
+
+    # Install CCTBX
+    printf "  Installing CCTBX"
+    python bootstrap.py --builder=cctbx
+
+    if [ ! $? -eq 0 ]
+    then
+      echo "Could not install cctbx" >&2
+      exit 1
+    fi
 
     # Correct CCTBX to handle Eiger CBFs
     printf "  Adding Eiger CBFs to CCTBX"
