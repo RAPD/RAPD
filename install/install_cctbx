@@ -135,7 +135,7 @@ if [[ $PLATFORM == "Linux" ]]; then
 
   fi
 
-  exit()
+  exit 0
 
   printf "\033[94mChecking installed packages\033[0m\n"
 
