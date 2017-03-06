@@ -9,23 +9,24 @@ MAINTAINER Frank Murphy <fmurphy@anl.gov>
 RUN yum -y install wget \
                    subversion \
                    git \
-                   make \
+                   build-essential \
                    bzip2 \
                    openssl-devel \
-                   gcc-c++ \
-                   mesa-libGL-devel \
-                   mesa-libGLU-devel
-
-WORKDIR /opt
-# RUN mkdir cctbx
-# WORKDIR /opt/cctbx
-# RUN wget https://raw.githubusercontent.com/cctbx/cctbx_project/master/libtbx/auto_build/bootstrap.py
-# RUN python bootstrap.py --builder=cctbx
+#                   gcc-c++ \
+                   libgl1-lib-dev \
+                   libglu1-mesa-dev \
+                   python
 
 WORKDIR /opt
 RUN git clone -b master https://github.com/RAPD/RAPD.git rapd
 WORKDIR /opt/rapd/install
-RUN ./install_cctbx
+RUN ./install_cctbx -b
+
+# WORKDIR /opt
+# RUN mkdir cctbx
+# WORKDIR /opt/cctbx
+# RUN wget https://raw.githubusercontent.com/cctbx/cctbx_project/master/libtbx/auto_build/bootstrap.py
+# RUN python bootstrap.py --builder=cctbx
 
 #RUN rpm --import https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-6 \
 # && rpm -Uvh http://dl.fedoraproject.org/pub/epel/6/x86_64/epel-release-6-8.noarch.rpm \
