@@ -39,7 +39,7 @@ import argparse
 # import shutil
 import subprocess
 import sys
-# import time
+import time
 import unittest
 
 # RAPD imports
@@ -51,20 +51,72 @@ import agents.rapd_agent_integrate as rapd_agent_integrate
 class TestDependencies(unittest.TestCase):
     """Example test fixture WITHOUT setUp and tearDown"""
 
+    def test_aimless(self):
+        """Make sure the aimless executable is present"""
+
+        p = subprocess.Popen(["aimless"],
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+        time.sleep(2.0)
+        p.terminate()
+        stdout, _ = p.communicate()
+        # print stderr
+        # assert stderr.startswith("EIGER HDF5 to CBF converter")
+        assert stdout.startswith(" \n ###############################################################")
+
+    def test_aimless_version(self):
+        """Make sure the aimless executable is an acceptable version"""
+
+        p = subprocess.Popen(["aimless"],
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+
+        time.sleep(2.0)
+        p.terminate()
+        stdout, _ = p.communicate()
+        found = False
+        for version in rapd_agent_integrate.VERSIONS["aimless"]:
+            if version in stdout:
+                found = True
+                break
+
+        assert found == True
+
+    def test_pointless(self):
+        """Make sure the pointless executable is present"""
+
+        p = subprocess.Popen(["pointless"],
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+        time.sleep(2.0)
+        p.terminate()
+        stdout, _ = p.communicate()
+        # print stderr
+        # assert stderr.startswith("EIGER HDF5 to CBF converter")
+        assert stdout.startswith(" \n ###############################################################")
+
+    def test_pointless_version(self):
+        """Make sure the pointless executable is an acceptable version"""
+
+        p = subprocess.Popen(["pointless"],
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+
+        time.sleep(2.0)
+        p.terminate()
+        stdout, _ = p.communicate()
+        found = False
+        for version in rapd_agent_integrate.VERSIONS["pointless"]:
+            if version in stdout:
+                found = True
+                break
+
+        assert found == True
+
     def test_xds(self):
         """Make sure the xds executable is present"""
 
         p = subprocess.Popen(["xds"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, _ = p.communicate()
-        # print stdout
-        # print stderr
-        # assert stderr.startswith("EIGER HDF5 to CBF converter")
-        assert stdout.startswith("\n ***** XDS ***** (VERSION")
-
-    def test_xds_par(self):
-        """Make sure the xds_par executable is present"""
-
-        p = subprocess.Popen(["xds_par"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, _ = p.communicate()
         # print stdout
         # print stderr
@@ -85,6 +137,16 @@ class TestDependencies(unittest.TestCase):
 
         assert found == True
 
+    def test_xds_par(self):
+        """Make sure the xds_par executable is present"""
+
+        p = subprocess.Popen(["xds_par"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, _ = p.communicate()
+        # print stdout
+        # print stderr
+        # assert stderr.startswith("EIGER HDF5 to CBF converter")
+        assert stdout.startswith("\n ***** XDS ***** (VERSION")
+
     def test_xds_par_version(self):
         """Make sure the xds executable is an acceptable version"""
 
@@ -98,6 +160,8 @@ class TestDependencies(unittest.TestCase):
                 break
 
         assert found == True
+
+
 
 
 
@@ -141,8 +205,6 @@ def get_commandline():
     Grabs the commandline
     """
 
-    print "get_commandline"
-
     # Parse the commandline arguments
     commandline_description = "Test rapd_agent_integrate"
     parser = argparse.ArgumentParser(description=commandline_description)
@@ -173,8 +235,6 @@ def main(args):
     This function is called when this module is invoked from
     the commandline
     """
-
-    print "main"
 
     unittest.main()
 

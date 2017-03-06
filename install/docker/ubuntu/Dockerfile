@@ -13,6 +13,7 @@ RUN  apt-get update \
   && apt-get install -y git \
   && apt-get install -y bzip2 \
   && apt-get install -y  zlib1g-dev \
+  && apt-get install -y  libssl-dev \
   && apt-get install -y python \
   && apt-get install -y build-essential \
   && apt-get install -y libgl1-mesa-dev \

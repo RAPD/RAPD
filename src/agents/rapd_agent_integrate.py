@@ -70,6 +70,21 @@ import smartie
 
 # Software dependencies
 VERSIONS = {
+    "aimless": (
+        "0.5.23",
+        "0.5.29",
+        ),
+    "gnuplot": (
+        "5.0",
+    ),
+    "pointless": (
+        "1.10.19",
+        "1.10.28",
+        ),
+    "truncate": (
+        "7.0.004",
+        "7.0.024",
+    ),
     "xds": ("Nov 1, 2016",),
     "xds_par": ("Nov 1, 2016",),
 }
