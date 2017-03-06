@@ -157,7 +157,7 @@ if [[ $PLATFORM == "Linux" ]]; then
           error=1
         fi
       done
-      if [ $error == 1 ]; then
+      if [[ $error == 1 ]]; then
         printf "\033[91mERROR: missing package!\033[0m\n"
         printf "The following packages need to be installed: $missing_packages \n"
         if [ $SKIP == 0 ]; then
