@@ -126,7 +126,7 @@ if [[ $PLATFORM == "Linux" ]]; then
   # Cent OS
   if [ -f /etc/centos-release ]; then
 
-    printf "CentOS\n"
+    printf "  CentOS\n"
 
     function isinstalled {
       if yum list installed "$@" >/dev/null 2>&1; then
@@ -149,7 +149,7 @@ if [[ $PLATFORM == "Linux" ]]; then
       fi
     done
     if [ $error == 1 ]; then
-      printf "\033[91mERROR: missing package!\033[0m\n"
+      printf "\033[91mERROR: missing package[s]!\033[0m\n"
       printf "The following packages need to be installed: $missing_packages \n"
       if [ $SKIP == 0 ]; then
         printf "Use the -s option to bypass this\n"
@@ -164,7 +164,7 @@ if [[ $PLATFORM == "Linux" ]]; then
 
     if [ $OS == "ubuntu" ]; then
 
-      printf "UBUNTU\n"
+      printf "  Ubuntu\n"
 
       function isinstalled {
         dpkg -l "$@" > /dev/null 2>&1
@@ -187,7 +187,7 @@ if [[ $PLATFORM == "Linux" ]]; then
         fi
       done
       if [[ $error == 1 ]]; then
-        printf "\033[91mERROR: missing package!\033[0m\n"
+        printf "\033[91mERROR: missing package[s]!\033[0m\n"
         printf "The following packages need to be installed: $missing_packages \n"
         if [ $SKIP == 0 ]; then
           printf "Use the -s option to bypass this\n"
@@ -196,9 +196,6 @@ if [[ $PLATFORM == "Linux" ]]; then
       fi
     fi
   fi
-
-  exit 0
-
 
 elif [[ $PLATFORM == "Darwin" ]]; then
   printf "\033[94mPerforming installation on Mac OS \033[0m\n"
