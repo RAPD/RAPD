@@ -147,7 +147,7 @@ if [[ $PLATFORM == "Linux" ]]; then
         fi
       }
 
-      for package in wget subversion git make bzip2 openssl-devel build-essential libgl1-mesa-dev libglu1-mesa-dev
+      for package in wget subversion git make bzip2 build-essential libgl1-mesa-dev libglu1-mesa-dev
       do
         if isinstalled $package; then
           echo "  $package installed";
