@@ -101,12 +101,36 @@ class TestFileGenerator(CommandlineFileGenerator):
         else:
             # Run the inherited version
             super(TestFileGenerator, self).write_imports(
-                write_list=("argparse", "unittest"))
+                write_list=("argparse", "subprocess", "sys", "unittest"))
 
     def write_example_test(self):
         """Write some example tests"""
 
         test_lines = [
+            "class TestDependencies(unittest.TestCase):",
+            "    \"\"\"Example test fixture WITHOUT setUp and tearDown\"\"\"",
+            "",
+            "   def test_executable(self):",
+            "        \"\"\"Make sure the eiger2cbf executable is present\"\"\"",
+            "",
+            "        p = subprocess.Popen([\"eiger2cbf\"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)",
+            "        stdout, stderr = p.communicate()",
+            "        assert stderr.startswith(\"EIGER HDF5 to CBF converter\")",
+            "        assert stdout.startswith(\"Usage:\")",
+            "",
+            "    def test_version(self):",
+            "        \"\"\"Make sure the eiger2cbf executable is an acceptable version\"\"\"",
+            "",
+            "        p = subprocess.Popen([\"eiger2cbf\"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)",
+            "        stdout, stderr = p.communicate()",
+            "",
+            "        found = False",
+            "        for version in convert_hdf5_cbf.VERSIONS[\"eiger2cbf\"]:",
+            "            if version in stderr:",
+            "                found = True",
+            "                break",
+            "",
+            "        assert found == True",
             "class ExampleTestCase(unittest.TestCase):",
             "    \"\"\"Example test fixture with setUp and tearDown\"\"\"\n",
             "    def setUp(self):",

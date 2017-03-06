@@ -114,6 +114,7 @@ class BaseFileGenerator(object):
         self.write_license()
         self.write_docstrings()
         self.write_imports()
+        self.write_versions()
         self.write_main_func()
         self.write_main()
 
@@ -170,6 +171,7 @@ class BaseFileGenerator(object):
         self.write_license()
         self.write_docstrings()
         self.write_imports()
+        self.write_versions()
         self.write_main_func()
         self.write_main()
 
@@ -236,16 +238,26 @@ class BaseFileGenerator(object):
         # Blank line to keep it readable
         self.output_function([""])
 
+    def write_versions(self):
+        """Write ther VERSIONS object for dependency management"""
+        self.output_function([
+            "# Software dependencies",
+            "VERSIONS = {",
+            "# \"eiger2cbf\": (\"160415\",)",
+            "}\n"
+        ])
+
     def write_main_func(self, main_func_lines=False):
         """Write the main function"""
         if  not main_func_lines:
-            main_func_lines = ["def main():",
-                                  "    \"\"\"",
-                                  "    The main process docstring",
-                                  "    This function is called when this module is invoked from",
-                                  "    the commandline",
-                                  "    \"\"\"\n",
-                                  "    print \"main\"\n"]
+            main_func_lines = [
+                "def main():",
+                "    \"\"\"",
+                "    The main process docstring",
+                "    This function is called when this module is invoked from",
+                "    the commandline",
+                "    \"\"\"\n",
+                "    print \"main\"\n"]
 
             if self.args.commandline:
                 main_func_lines = ["def main(args):"]
@@ -289,6 +301,7 @@ class CommandlineFileGenerator(BaseFileGenerator):
         self.write_license()
         self.write_docstrings()
         self.write_imports(("argparse", "sys"))
+        self.write_versions()
         self.write_main_func()
         self.write_commandline()
         self.write_main()
@@ -308,30 +321,32 @@ class CommandlineFileGenerator(BaseFileGenerator):
         if not description:
             description = "Generate a generic RAPD file"
 
-        commandline_lines = ["def get_commandline():",
-                              "    \"\"\"",
-                              "    Grabs the commandline",
-                              "    \"\"\"\n",
-                              "    print \"get_commandline\"\n",
-                              "    # Parse the commandline arguments",
-                              "    commandline_description = \"%s\"" % description,
-                              "    parser = argparse.ArgumentParser(description=commandline_description)\n",
-                              "    # A True/False flag",
-                              "    parser.add_argument(\"-c\", \"--commandline\",",
-                              "                        action=\"store_true\",",
-                              "                        dest=\"commandline\",",
-                              "                        help=\"Generate commandline argument parsing\")\n",
-                              "    # File name to be generated",
-                              "    parser.add_argument(action=\"store\",",
-                              "                        dest=\"file\",",
-                              "                        nargs=\"?\",",
-                              "                        default=False,",
-                              "                        help=\"Name of file to be generated\")\n",
-                              "    # Print help message is no arguments",
-                              "    if len(sys.argv[1:])==0:",
-                              "        parser.print_help()",
-                              "        parser.exit()\n",
-                              "    return parser.parse_args()\n"]
+        commandline_lines = [
+            "def get_commandline():",
+            "    \"\"\"",
+            "    Grabs the commandline",
+            "    \"\"\"\n",
+            "    print \"get_commandline\"\n",
+            "    # Parse the commandline arguments",
+            "    commandline_description = \"%s\"" % description,
+            "    parser = argparse.ArgumentParser(description=commandline_description)\n",
+            "    # A True/False flag",
+            "    parser.add_argument(\"-c\", \"--commandline\",",
+            "                        action=\"store_true\",",
+            "                        dest=\"commandline\",",
+            "                        help=\"Generate commandline argument parsing\")\n",
+            "    # File name to be generated",
+            "    parser.add_argument(action=\"store\",",
+            "                        dest=\"file\",",
+            "                        nargs=\"?\",",
+            "                        default=False,",
+            "                        help=\"Name of file to be generated\")\n",
+            "    # Print help message is no arguments",
+            "    if len(sys.argv[1:])==0:",
+            "        parser.print_help()",
+            "        parser.exit()\n",
+            "    return parser.parse_args()\n",
+            ]
 
         self.output_function(commandline_lines)
 

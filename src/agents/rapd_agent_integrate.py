@@ -63,11 +63,16 @@ from subcontractors.stats import AutoStats
 import utils.text as text
 import utils.xutils as Utils
 
-
 # Import smartie.py from the installed CCP4 package
 # smartie.py is a python script for parsing log files from CCP4
 sys.path.append(os.path.join(os.environ["CCP4"], "share", "smartie"))
 import smartie
+
+# Software dependencies
+VERSIONS = {
+    "xds": ("Nov 1, 2016",),
+    "xds_par": ("Nov 1, 2016",),
+}
 
 def try_float(number, default="NO DEFAULT"):
     """Attempt to cast to a float, but return string if not"""

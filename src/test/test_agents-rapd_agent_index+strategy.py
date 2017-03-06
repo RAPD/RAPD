@@ -19,7 +19,7 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__created__ = "2017-02-09"
+__created__ = "2017-03-06"
 _maintainer__ = "Your name"
 __email__ = "Your email"
 __status__ = "Development"
@@ -37,7 +37,7 @@ import argparse
 # import re
 # import redis
 # import shutil
-import subprocess
+# import subprocess
 # import sys
 # import time
 import unittest
@@ -46,55 +46,41 @@ import unittest
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
-import utils.convert_hdf5_cbf as convert_hdf5_cbf
 
-# class ExampleTestCase(unittest.TestCase):
-#     """Example test fixture with setUp and tearDown"""
-#
-#     def setUp(self):
-#         """Set up the test fixture"""
-#
-#         self.widget = Widget('The widget')
-#
-#     def tearDown(self):
-#         """Tear down the test fixture"""
-#
-#         self.widget.dispose()
-#         self.widget = None
-#
-#     def test_default_size(self):
-#         self.assertEqual(self.widget.size(), (50,50),
-#                          'incorrect default size')
-#
-#     def test_resize(self):
-#         self.widget.resize(100,150)
-#         self.assertEqual(self.widget.size(), (100,150),
-#                          'wrong size after resize')
+class ExampleTestCase(unittest.TestCase):
+    """Example test fixture with setUp and tearDown"""
 
-class TestDependencies(unittest.TestCase):
+    def setUp(self):
+        """Set up the test fixture"""
+
+        self.widget = Widget('The widget')
+
+    def tearDown(self):
+        """Tear down the test fixture"""
+
+        self.widget.dispose()
+        self.widget = None
+
+    def test_default_size(self):
+        self.assertEqual(self.widget.size(), (50,50),
+                         'incorrect default size')
+
+    def test_resize(self):
+        self.widget.resize(100,150)
+        self.assertEqual(self.widget.size(), (100,150),
+                         'wrong size after resize')
+
+class ExampleTestCaseLight(unittest.TestCase):
     """Example test fixture WITHOUT setUp and tearDown"""
 
-    def test_executable(self):
-        """Make sure the eiger2cbf executable is present"""
+    def test_default_size(self):
+        self.assertEqual(self.widget.size(), (50,50),
+                         'incorrect default size')
 
-        p = subprocess.Popen(["eiger2cbf"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate()
-        assert stderr.startswith("EIGER HDF5 to CBF converter")
-        assert stdout.startswith("Usage:")
-
-    def test_version(self):
-        """Make sure the eiger2cbf executable is an acceptable version"""
-
-        p = subprocess.Popen(["eiger2cbf"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate()
-
-        found = False
-        for version in convert_hdf5_cbf.VERSIONS["eiger2cbf"]:
-            if version in stderr:
-                found = True
-                break
-
-        assert found == True
+    def test_resize(self):
+        self.widget.resize(100,150)
+        self.assertEqual(self.widget.size(), (100,150),
+                         'wrong size after resize')
 
 def get_commandline():
     """
@@ -120,6 +106,11 @@ def get_commandline():
                         default=False,
                         help="Name of file to be generated")
 
+    # Print help message is no arguments
+    if len(sys.argv[1:])==0:
+        parser.print_help()
+        parser.exit()
+
     return parser.parse_args()
 
 def main(args):
@@ -131,10 +122,11 @@ def main(args):
 
     print "main"
 
-    unittest.main(verbosity=2)
+    unittest.main()
 
 if __name__ == "__main__":
 
     commandline_args = get_commandline()
 
     main(args=commandline_args)
+
