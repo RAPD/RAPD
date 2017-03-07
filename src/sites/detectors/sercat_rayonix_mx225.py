@@ -394,7 +394,7 @@ def main(args):
     header = read_header(test_image)
 
     # And print it out
-    pprint.pprint(header)
+    pprint(header)
 
 if __name__ == "__main__":
 
