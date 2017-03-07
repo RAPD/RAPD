@@ -27,6 +27,7 @@ __status__ = "Development"
 # Standard imports
 import argparse
 # import datetime
+from distutils.spawn import find_executable
 # import glob
 # import json
 # import logging
@@ -54,15 +55,8 @@ class TestDependencies(unittest.TestCase):
     def test_aimless(self):
         """Make sure the aimless executable is present"""
 
-        p = subprocess.Popen(["aimless"],
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
-        time.sleep(2.0)
-        p.terminate()
-        stdout, _ = p.communicate()
-        # print stderr
-        # assert stderr.startswith("EIGER HDF5 to CBF converter")
-        assert stdout.startswith(" \n ###############################################################")
+        test = find_executable("aimless")
+        self.assertNotEqual(test, None)
 
     def test_aimless_version(self):
         """Make sure the aimless executable is an acceptable version"""
@@ -85,15 +79,17 @@ class TestDependencies(unittest.TestCase):
     def test_pointless(self):
         """Make sure the pointless executable is present"""
 
-        p = subprocess.Popen(["pointless"],
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
-        time.sleep(2.0)
-        p.terminate()
-        stdout, _ = p.communicate()
-        # print stderr
-        # assert stderr.startswith("EIGER HDF5 to CBF converter")
-        assert stdout.startswith(" \n ###############################################################")
+        test = find_executable("pointless")
+        self.assertNotEqual(test, None)
+        # p = subprocess.Popen(["pointless"],
+        #                      stdout=subprocess.PIPE,
+        #                      stderr=subprocess.PIPE)
+        # time.sleep(2.0)
+        # p.terminate()
+        # stdout, _ = p.communicate()
+        # # print stderr
+        # # assert stderr.startswith("EIGER HDF5 to CBF converter")
+        # assert stdout.startswith(" \n ###############################################################")
 
     def test_pointless_version(self):
         """Make sure the pointless executable is an acceptable version"""
