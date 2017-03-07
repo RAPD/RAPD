@@ -217,7 +217,11 @@ class TestFileGenerator(CommandlineFileGenerator):
             "    the commandline",
             "    \"\"\"\n",
             "    print \"main\"\n",
-            "    unittest.main()\n"]
+            "    if args.verbose:",
+            "        verbosity = 2",
+            "    else:",
+            "        verbosity = 1\n",
+            "    unittest.main(verbosity=verbosity)\n"]
 
         super(TestFileGenerator, self).write_main_func(main_func_lines=main_func_lines)
 
