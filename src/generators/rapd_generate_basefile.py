@@ -190,7 +190,7 @@ class BaseFileGenerator(object):
                               "__email__ = \"%s\"" % self.args.email,
                               "__status__ = \"Development\"\n"])
 
-    def write_imports(self, write_list=(), added_rapd_imports=()):
+    def write_imports(self, write_list=(), added_normal_imports=(), added_rapd_imports=()):
         """Write the import sections"""
         standard_imports = ("argparse",
                             "datetime",
@@ -220,6 +220,10 @@ class BaseFileGenerator(object):
             else:
                 value = "import " + value
             self.output_function([value])
+
+        for value in added_normal_imports:
+            if (value not in write_list) or (value not in added_rapd_imports):
+                self.output_function([value])
 
         self.output_function(["\n# RAPD imports"])
         for value in rapd_imports:

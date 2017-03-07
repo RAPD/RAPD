@@ -87,6 +87,9 @@ class TestFileGenerator(CommandlineFileGenerator):
     def write_imports(self):
         """Manage the import statements"""
 
+        # Enable looking for executable files
+        added_normal_imports = ("from distutils.spawn import find_executable",)
+
         # The file to be tested
         if self.args.target:
             full_path = os.path.abspath(self.args.target).split("/")
@@ -97,11 +100,14 @@ class TestFileGenerator(CommandlineFileGenerator):
             # Run the inherited version
             super(TestFileGenerator, self).write_imports(
                 write_list=("argparse", "unittest"),
-                added_rapd_imports=((import_statement,)))
+                added_normal_imports=added_normal_imports,
+                added_rapd_imports=(import_statement,))
         else:
             # Run the inherited version
             super(TestFileGenerator, self).write_imports(
-                write_list=("argparse", "subprocess", "sys", "unittest"))
+                write_list=("argparse", "subprocess", "sys", "unittest"),
+                added_normal_imports=added_normal_imports,
+                added_rapd_imports=added_rapd_imports)
 
     def write_example_test(self):
         """Write some example tests"""

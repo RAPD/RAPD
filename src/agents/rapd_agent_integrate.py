@@ -73,7 +73,7 @@ VERSIONS = {
     "aimless": (
         "version 0.5.23",
         "version 0.5.29",
-        "version0.5.31",
+        "version 0.5.31",
         ),
     "freerflag": (
         "version 2.2",
@@ -91,6 +91,7 @@ VERSIONS = {
     "truncate": (
         "version 7.0.004",
         "version 7.0.024",
+        "version 7.0.028",
     ),
     "xds": ("VERSION Nov 1, 2016",),
     "xds_par": ("VERSION Nov 1, 2016",),

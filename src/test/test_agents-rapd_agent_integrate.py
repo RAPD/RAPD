@@ -283,11 +283,11 @@ def get_commandline():
     commandline_description = "Test rapd_agent_integrate"
     parser = argparse.ArgumentParser(description=commandline_description)
 
-    # # A True/False flag
-    # parser.add_argument("-c", "--commandline",
-    #                     action="store_true",
-    #                     dest="commandline",
-    #                     help="Generate commandline argument parsing")
+    # Verbosity
+    parser.add_argument("-v", "--verbose",
+                        action="store_true",
+                        dest="verbose",
+                        help="Verbose output")
     #
     # # File name to be generated
     # parser.add_argument(action="store",
@@ -310,7 +310,12 @@ def main(args):
     the commandline
     """
 
-    unittest.main()
+    if args.verbose:
+        verbosity = 2
+    else:
+        verbosity = 1
+
+    unittest.main(verbosity=verbosity)
 
 if __name__ == "__main__":
 
