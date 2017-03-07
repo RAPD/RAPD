@@ -63,7 +63,7 @@ DETECTOR_TO_BEST = {
     "ADSC-HF4M": "hf4m",
     "Pilatus-6M": "pilatus6m",
     "PILATUS": "pilatus6m",
-    "rayonix_mx225": "mx225",
+    "rayonix_mx225": "mar225", #"mx225",
     "rayonix_mx300": "mx300",
     "rayonix_mx300hs": "mx300hs",
     "mar300": "mar300",
@@ -72,6 +72,10 @@ DETECTOR_TO_BEST = {
     "Eiger-9M": "eiger9m",
     "Eiger-16M": "eiger16m",
     }
+
+BEST_LINES = {
+
+}
 
 class RapdAgent(Process):
     """
@@ -902,6 +906,12 @@ class RapdAgent(Process):
             self.tprint(arg="Detector %s missing from the BEST detector information file %s" % (detector, detector_info),
                         level=30,
                         color="red")
+            self.print_best_detector_line(detector)
+
+    def print_best_detector_line(detector):
+        """Print the line that needs to be added to the best detector inf file"""
+
+        pass
 
     def processStrategy(self, iteration=False):
         """
