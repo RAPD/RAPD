@@ -166,6 +166,46 @@ class TestFileGenerator(CommandlineFileGenerator):
 
         self.output_function(test_lines)
 
+    def write_commandline(self, description=False):
+        """Write commanling handling into the file"""
+
+        if not description:
+            description = "Generate a generic RAPD file"
+
+        commandline_lines = [
+            "def get_commandline():",
+            "    \"\"\"",
+            "    Grabs the commandline",
+            "    \"\"\"\n",
+            "    print \"get_commandline\"\n",
+            "    # Parse the commandline arguments",
+            "    commandline_description = \"%s\"" % description,
+            "    parser = argparse.ArgumentParser(description=commandline_description)\n",
+            "    # Verbosity",
+            "    parser.add_argument(\"-v\", \"--verbose\",",
+            "                        action=\"store_true\",",
+            "                        dest=\"verbose\",",
+            "                        help=\"Enable verbose output\")\n",
+            "    # A True/False flag",
+            "    # parser.add_argument(\"-c\", \"--commandline\",",
+            "    #                     action=\"store_true\",",
+            "    #                     dest=\"commandline\",",
+            "    #                     help=\"Generate commandline argument parsing\")\n",
+            "    # File name to be generated",
+            "    # parser.add_argument(action=\"store\",",
+            "    #                     dest=\"file\",",
+            "    #                     nargs=\"?\",",
+            "    #                     default=False,",
+            "    #                     help=\"Name of file to be generated\")\n",
+            "    # Print help message is no arguments",
+            "    # if len(sys.argv[1:])==0:",
+            "    #     parser.print_help()",
+            "    #     parser.exit()\n",
+            "    return parser.parse_args()\n",
+            ]
+
+        self.output_function(commandline_lines)
+
     def write_main_func(self, main_func_lines=False):
         """Write the main function"""
 
