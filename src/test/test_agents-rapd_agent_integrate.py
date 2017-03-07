@@ -76,20 +76,81 @@ class TestDependencies(unittest.TestCase):
 
         assert found == True
 
+    def test_freerflag(self):
+        """Make sure the freerflag executable is present"""
+
+        test = find_executable("freerflag")
+        self.assertNotEqual(test, None)
+
+    def test_freerflag_version(self):
+        """Make sure the freerflag executable is an acceptable version"""
+
+        p = subprocess.Popen(["freerflag"],
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+
+        time.sleep(2.0)
+        p.terminate()
+        stdout, _ = p.communicate()
+        found = False
+        for version in rapd_agent_integrate.VERSIONS["freerflag"]:
+            if version in stdout:
+                found = True
+                break
+
+        assert found == True
+
+    def test_gnuplot(self):
+        """Make sure the gnuplot executable is present"""
+
+        test = find_executable("gnuplot")
+        self.assertNotEqual(test, None)
+
+    def test_gnuplot_version(self):
+        """Make sure the aimless executable is an acceptable version"""
+
+        p = subprocess.Popen(["gnuplot", "--version"],
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+        p.wait()
+        stdout, _ = p.communicate()
+        found = False
+        for version in rapd_agent_integrate.VERSIONS["gnuplot"]:
+            if version in stdout:
+                found = True
+                break
+
+        assert found == True
+
+    def test_mtz2various(self):
+        """Make sure the mtz2various executable is present"""
+
+        test = find_executable("mtz2various")
+        self.assertNotEqual(test, None)
+
+    def test_mtz2various_version(self):
+        """Make sure the mtz2various executable is an acceptable version"""
+
+        p = subprocess.Popen(["mtz2various"],
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+
+        time.sleep(2.0)
+        p.terminate()
+        stdout, _ = p.communicate()
+        found = False
+        for version in rapd_agent_integrate.VERSIONS["mtz2various"]:
+            if version in stdout:
+                found = True
+                break
+
+        assert found == True
+
     def test_pointless(self):
         """Make sure the pointless executable is present"""
 
         test = find_executable("pointless")
         self.assertNotEqual(test, None)
-        # p = subprocess.Popen(["pointless"],
-        #                      stdout=subprocess.PIPE,
-        #                      stderr=subprocess.PIPE)
-        # time.sleep(2.0)
-        # p.terminate()
-        # stdout, _ = p.communicate()
-        # # print stderr
-        # # assert stderr.startswith("EIGER HDF5 to CBF converter")
-        # assert stdout.startswith(" \n ###############################################################")
 
     def test_pointless_version(self):
         """Make sure the pointless executable is an acceptable version"""
@@ -103,6 +164,30 @@ class TestDependencies(unittest.TestCase):
         stdout, _ = p.communicate()
         found = False
         for version in rapd_agent_integrate.VERSIONS["pointless"]:
+            if version in stdout:
+                found = True
+                break
+
+        assert found == True
+
+    def test_truncate(self):
+        """Make sure the truncate executable is present"""
+
+        test = find_executable("truncate")
+        self.assertNotEqual(test, None)
+
+    def test_truncate_version(self):
+        """Make sure the truncate executable is an acceptable version"""
+
+        p = subprocess.Popen(["truncate"],
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+
+        time.sleep(2.0)
+        p.terminate()
+        stdout, _ = p.communicate()
+        found = False
+        for version in rapd_agent_integrate.VERSIONS["truncate"]:
             if version in stdout:
                 found = True
                 break

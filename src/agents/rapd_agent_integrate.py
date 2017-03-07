@@ -71,23 +71,29 @@ import smartie
 # Software dependencies
 VERSIONS = {
     "aimless": (
-        "0.5.23",
-        "0.5.29",
-        "0.5.31",
+        "version 0.5.23",
+        "version 0.5.29",
+        "version0.5.31",
         ),
+    "freerflag": (
+        "version 2.2",
+    ),
     "gnuplot": (
-        "5.0",
+        " 5.0 ",
+    ),
+    "mtz2various": (
+        "version 1.1",
     ),
     "pointless": (
-        "1.10.19",
-        "1.10.28",
+        "version 1.10.19",
+        "version 1.10.28",
         ),
     "truncate": (
-        "7.0.004",
-        "7.0.024",
+        "version 7.0.004",
+        "version 7.0.024",
     ),
-    "xds": ("Nov 1, 2016",),
-    "xds_par": ("Nov 1, 2016",),
+    "xds": ("VERSION Nov 1, 2016",),
+    "xds_par": ("VERSION Nov 1, 2016",),
 }
 
 def try_float(number, default="NO DEFAULT"):
@@ -3129,9 +3135,9 @@ class RapdAgent(Process):
         os.system('rm -rf xds_lp_files')
         # If ramdisks were used, erase files from ram_disks.
         if self.ram_use == True and self.settings['ram_cleanup'] == True:
-            command = 'rm -rf /dev/shm/%s' %self.image_data['image_prefix']
+            remove_command = 'rm -rf /dev/shm/%s' % self.image_data['image_prefix']
             for node in self.ram_nodes[0]:
-                command2 = 'ssh -x %s "%s"' %(node, command)
+                command2 = 'ssh -x %s "%s"' % (node, remove_command)
                 p = subprocess.Popen(command2,
                                      shell=True,
                                      stdout=subprocess.PIPE,
