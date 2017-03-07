@@ -222,10 +222,13 @@ class RapdAgent(Process):
         else:
             # If running from command line, site_parameters is not in there. Needed for BEST.
             if self.site:
-                self.site_parameters = self.site.BEAM_INFO.get(Utils.get_site(self.header['fullname'], False)[1])
+                self.site_parameters = self.site.BEAM_INFO.get(
+                    Utils.get_site(self.header['fullname'],
+                    False)[1])
             else:
                 self.site_parameters = self.preferences.get("site_parameters", False)
-                # Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
+                # Sets settings so I can view the HTML output on my machine (not in the RAPD GUI),
+                # and does not send results to database.
                 self.gui = False
 
 	    # Load the appropriate cluster adapter or set to False
@@ -411,7 +414,8 @@ class RapdAgent(Process):
             os.makedirs(self.working_dir)
         os.chdir(self.working_dir)
 
-        # Setup event for job control on cluster (Only works at NE-CAT using DRMAA for job submission)
+        # Setup event for job control on cluster (Only works at NE-CAT using DRMAA for
+        # job submission)
         if self.cluster_adapter:
             self.running = Event()
             self.running.set()

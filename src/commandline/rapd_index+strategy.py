@@ -59,7 +59,8 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
         image_numbers.append(str(header["image_number"]))
         image_template = header["image_template"]
     image_numbers.sort()
-    run_repr = "rapd_index_" + image_template.replace(detector_module.DETECTOR_SUFFIX, "").replace("?", "")
+    run_repr = "rapd_index_"
+               + image_template.replace(detector_module.DETECTOR_SUFFIX, "").replace("?", "")
     run_repr += "+".join(image_numbers)
 
     command["directories"] = {
@@ -123,7 +124,8 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     # Change these if user wants to continue dataset with other crystal(s).
     # "reference_data_id": None, #MOSFLM
     # #"reference_data_id": 1,#MOSFLM
-    # #"reference_data": [['/gpfs6/users/necat/Jon/RAPD_test/index09.mat', 0.0, 30.0, 'junk_1_1-30','P41212']],#MOSFLM
+    # #"reference_data": [['/gpfs6/users/necat/Jon/RAPD_test/index09.mat', 0.0, 30.0, 'junk_1_1-30',
+    #                      'P41212']],#MOSFLM
     # 'reference_data': [['/gpfs6/users/necat/Jon/RAPD_test/Output/junk/5/index12.mat',
     #                     0.0,
     #                     20.0,
@@ -279,7 +281,7 @@ def get_commandline():
         raise Exception("mosflm_end must be greater than mosflm_start")
 
     if args.mosflm_segments > 1 and args.mosflm_range == 0.0:
-        raise Exception("mosflm_range must be set to greater than 0 if mosflm_segments is greater than 1")
+        raise Exception("mosflm_range must be set to > 0 if mosflm_segments > 1")
 
     return args
 
@@ -366,7 +368,8 @@ def main():
         sys.exit()
 
     # Get the data files
-    data_files = commandline_utils.analyze_data_sources(sources=commandline_args.sources, mode="index")
+    data_files = commandline_utils.analyze_data_sources(sources=commandline_args.sources,
+                                                        mode="index")
 
     if "hdf5_files" in data_files:
         logger.debug("HDF5 source file(s)")
@@ -433,7 +436,8 @@ def main():
         image_headers = {}
         for data_file in data_files["files"]:
             if site_module:
-                image_headers[data_file] = detector_module.read_header(data_file, site_module.BEAM_SETTINGS)
+                image_headers[data_file] = detector_module.read_header(data_file,
+                                                                       site_module.BEAM_SETTINGS)
             else:
                 image_headers[data_file] = detector_module.read_header(data_file)
 

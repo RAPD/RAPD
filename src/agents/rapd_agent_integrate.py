@@ -403,40 +403,40 @@ class RapdAgent(Process):
             self.tprint("  Mosaicity: %5.3f" % summary["mosaicity"], 99, "white")
             self.tprint("                        overall   inner shell   outer shell", 99, "white")
             self.tprint("  High res limit         %5.2f       %5.2f         %5.2f" %
-                tuple(summary["bins_high"]), 99, "white")
+                        tuple(summary["bins_high"]), 99, "white")
             self.tprint("  Low res limit          %5.2f       %5.2f         %5.2f" %
-                tuple(summary["bins_low"]), 99, "white")
+                        tuple(summary["bins_low"]), 99, "white")
             self.tprint("  Completeness           %5.1f       %5.1f         %5.1f" %
-                tuple(summary["completeness"]), 99, "white")
+                        tuple(summary["completeness"]), 99, "white")
             self.tprint("  Multiplicity            %4.1f        %4.1f          %4.1f" %
-                tuple(summary["multiplicity"]), 99, "white")
+                        tuple(summary["multiplicity"]), 99, "white")
             self.tprint("  I/sigma(I)              %4.1f        %4.1f          %4.1f" %
-                tuple(summary["isigi"]), 99, "white")
+                        tuple(summary["isigi"]), 99, "white")
             self.tprint("  CC(1/2)                %5.3f       %5.3f         %5.3f" %
-                tuple(summary["cc-half"]), 99, "white")
+                        tuple(summary["cc-half"]), 99, "white")
             self.tprint("  Rmerge                 %5.3f       %5.3f         %5.3f" %
-                tuple(summary["rmerge_norm"]), 99, "white")
+                        tuple(summary["rmerge_norm"]), 99, "white")
             self.tprint("  Anom Rmerge            %5.3f       %5.3f         %5.3f" %
-                tuple(summary["rmerge_anom"]), 99, "white")
+                        tuple(summary["rmerge_anom"]), 99, "white")
             self.tprint("  Rmeas                  %5.3f       %5.3f         %5.3f" %
-                tuple(summary["rmeas_norm"]), 99, "white")
+                        tuple(summary["rmeas_norm"]), 99, "white")
             self.tprint("  Anom Rmeas             %5.3f       %5.3f         %5.3f" %
-                tuple(summary["rmeas_anom"]), 99, "white")
+                        tuple(summary["rmeas_anom"]), 99, "white")
             self.tprint("  Rpim                   %5.3f       %5.3f         %5.3f" %
-                tuple(summary["rpim_norm"]), 99, "white")
+                        tuple(summary["rpim_norm"]), 99, "white")
             self.tprint("  Anom Rpim              %5.3f       %5.3f         %5.3f" %
-                tuple(summary["rpim_anom"]), 99, "white")
+                        tuple(summary["rpim_anom"]), 99, "white")
             self.tprint("  Anom Completeness      %5.1f       %5.1f         %5.1f" %
-                tuple(summary["anom_completeness"]), 99, "white")
+                        tuple(summary["anom_completeness"]), 99, "white")
             self.tprint("  Anom Multiplicity       %4.1f        %4.1f          %4.1f" %
-                tuple(summary["anom_multiplicity"]), 99, "white")
+                        tuple(summary["anom_multiplicity"]), 99, "white")
             self.tprint("  Anom Correlation       %5.3f       %5.3f         %5.3f" %
-                tuple(summary["anom_correlation"]), 99, "white")
+                        tuple(summary["anom_correlation"]), 99, "white")
             self.tprint("  Anom Slope             %5.3f" % summary["anom_slope"][0], 99, "white")
             self.tprint("  Observations         %7d     %7d       %7d" %
-                tuple(summary["total_obs"]), 99, "white")
+                        tuple(summary["total_obs"]), 99, "white")
             self.tprint("  Unique Observations  %7d     %7d       %7d\n" %
-                tuple(summary["unique_obs"]), 99, "white")
+                        tuple(summary["unique_obs"]), 99, "white")
 
     def print_plots(self, results):
         """
@@ -673,7 +673,7 @@ class RapdAgent(Process):
                 final_results = self.run_results(xdsdir)
 
             final_results['status'] = 'SUCCESS'
-            return(final_results)
+            return final_results
 
 
     def xds_total(self, xdsinput):
@@ -687,12 +687,13 @@ class RapdAgent(Process):
         first = int(self.image_data['start'])
         last = int(self.image_data['start']) + int(self.image_data['total']) -1
         data_range = '%s %s' %(first, last)
-        self.logger.debug('start = %s, total = %s' %
-            (self.image_data['start'], self.image_data['total']))
+        self.logger.debug('start = %s, total = %s',
+                          self.image_data['start'],
+                          self.image_data['total'])
         self.logger.debug('first - %s, last = %s', first, last)
         self.logger.debug('data_range = %s', data_range)
         dir = 'wedge_%s_%s' % (first, last)
-        xdsdir = os.path.join(self.dirs['work'],dir)
+        xdsdir = os.path.join(self.dirs['work'], dir)
         if os.path.isdir(xdsdir) == False:
             os.mkdir(xdsdir)
 
@@ -805,7 +806,7 @@ class RapdAgent(Process):
         self.print_plots(final_results)
 
         final_results['status'] = 'ANALYSIS'
-        return(final_results)
+        return final_results
 
     def xds_split(self, xdsinput):
         """
@@ -820,7 +821,7 @@ class RapdAgent(Process):
         last_frame = int(self.image_data['start']) + int(self.image_data['total']) - 1
         frame_count = first_frame + 1
 
-        file_template = os.path.join(self.image_data['directory'],self.image_template)
+        file_template = os.path.join(self.image_data['directory'], self.image_template)
         # Figure out how many digits needed to pad image number.
         # First split off the <image number>.<extension> portion of the file_template.
         numimg = self.image_template.split('_')[-1]
@@ -854,10 +855,11 @@ class RapdAgent(Process):
                     xds_job.start()
                 frame_count += 1
                 look_for_file = file_template.replace(replace_string,
-                                              '%0*d' %(pad, frame_count))
+                                                      '%0*d' %(pad, frame_count))
             elif timer.is_alive() == False:
-                self.logger.debug('     Image %s not found after waiting %s seconds.'
-                                  % (look_for_file, wait_time))
+                self.logger.debug('     Image %s not found after waiting %s seconds.',
+                                  look_for_file,
+                                  wait_time)
                 self.logger.debug('     RAPD assumes the data collection has been aborted.')
                 self.logger.debug('         Launching a final xds job with last image detected.')
                 self.image_data['last'] = frame_count - 1
@@ -966,18 +968,19 @@ class RapdAgent(Process):
                 if (((frame_count + 1) - first_frame) % wedge_size == 0 and
                         xds_job.is_alive() == False):
                     proc_dir = 'wedge_%s_%s' %(first_frame, frame_count)
-                    xds_job = Process(target= self.xds_wedge,
+                    xds_job = Process(target=self.xds_wedge,
                                       args=(proc_dir, frame_count, xdsinput))
                     xds_job.start()
                 # Increment the frame count to look for next image
                 frame_count += 1
                 look_for_file = file_template.replace(replace_string,
-                                              '%0*d' %(pad, frame_count))
+                                                      '%0*d' % (pad, frame_count))
             # If next frame does not exist, check to see if timer has expired.
             # If timer has expired, assume an abort has occurred.
             elif timer.is_alive() == False:
                 self.logger.debug('     Image %s not found after waiting %s seconds.',
-                    look_for_file, wait_time)
+                                  look_for_file,
+                                  wait_time)
                 # There have been a few cases, particularly with Pilatus's
                 # Furka file transfer has failed to copy an image to disk.
                 # So check for the next two files before assuming there has
@@ -987,12 +990,12 @@ class RapdAgent(Process):
                 frame_count += 1
                 look_for_file = file_template.replace(replace_string, '%0*d' % (pad, frame_count))
                 if os.path.isfile(look_for_file) == True:
-                    timer = Process(target= time.sleep, args=(wait_time,))
+                    timer = Process(target=time.sleep, args=(wait_time,))
                     timer.start()
                     # Increment the frame count to look for next image
                     frame_count += 1
                     look_for_file = file_template.replace(replace_string,
-                                                  '%0*d' %(pad, frame_count))
+                                                          '%0*d' %(pad, frame_count))
                 else:
                     self.logger.debug('    RAPD did not fine the next image, checking for one more.')
                     frame_count += 1
@@ -1001,10 +1004,13 @@ class RapdAgent(Process):
                         timer = Process(target=time.sleep, args=(wait_time,))
                         timer.start()
                         frame_count += 1
-                        look_for_file = file_template.replace(replace_string, '%0*d' %(pad, frame_count))
+                        look_for_file = file_template.replace(
+                            replace_string,
+                            '%0*d' % (pad, frame_count))
                     else:
                         self.logger.debug('         RAPD did not find the next image either.')
-                        self.logger.debug('         Launching a final xds job with last image detected.')
+                        self.logger.debug(
+                            '         Launching a final xds job with last image detected.')
                         self.image_data['total'] = frame_count - 2 - first_frame
                         results = self.xds_total(xdsinput)
                         return results
@@ -1055,7 +1061,7 @@ class RapdAgent(Process):
         self.xds_run(xdsdir)
 
         #xdsinp[-3]=('MAXIMUM_NUMBER_OF_JOBS=%s\n'  % self.jobs)
-        xdsinp[-2]=('JOB=IDXREF DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n')
+        xdsinp[-2] = ('JOB=IDXREF DEFPIX INTEGRATE CORRECT\n\n')
         self.write_file(xdsfile, xdsinp)
         self.tprint(arg="  Indexing and integrating", level=99, color="white", newline=False)
         self.xds_run(xdsdir)
@@ -1114,7 +1120,7 @@ class RapdAgent(Process):
         else:
             raise RuntimeError, '"image_template" not defined in input data.'
 
-    	file_template = os.path.join(self.image_data['directory'], self.image_template)
+        file_template = os.path.join(self.image_data['directory'], self.image_template)
     	# Count the number of '?' that need to be padded in a image filename.
         pad = file_template.count('?')
     	# Replace the first instance of '?' with the padded out image number

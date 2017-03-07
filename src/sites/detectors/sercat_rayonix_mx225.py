@@ -280,7 +280,7 @@ def read_header(fullname, beam_settings={}):
     # Perform the header read form the file
     header = detector.read_header(fullname)
 
-    pprint(header)
+    # pprint(header)
 
     # Label with detector
     header["detector"] = DETECTOR

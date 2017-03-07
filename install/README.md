@@ -1,10 +1,32 @@
-# Requirements
+## Install Types
+There are two install types available:
+1. Full Install (`install`) -  built on top of a CCTBX distribution, and is necessary for commandline functionality, development and for the Control and Launcher processes at data collection facilities. The full install could potentially be more than necessary for the Gatherer processes.
+2. Minimal Install(`install_min`) - useful for gatherer processes, not for data processing or commandline functionality. It will fetch and install Python, add some modules to python, and then create scripts for RAPD to use.
 
-## Linux
+## Full Install
+#### Requirements
+A number of packages are required for the full install to function properly. The install script searches and notifies if packages are Missing
+- CentOS and derivatives: `wget subversion git make bzip2 openssl-devel gcc-c+ mesa-libGL-devel mesa-libGLU-devel`
+- Ubuntu: `wget subversion git bzip2 libncurses5-dev zlib1g-dev libssl-dev pkg-config python build-essential libgl1-mesa-dev libglu1-mesa-dev`
 
-## Mac OS
+#### Installing
+1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git rapd`  
+2. Navigate to the install directory `cd rapd/install` and run the install `./install`  
 
-## Crystallographic Software
+## Minimal Install
+#### Requirements
+#### Installing
+1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git`
+2. Navigate to the install directory and `./install_min`
+
+# Databases
+## Docker
+Using Docker to install the required databases is a workable approach. To the databases using Docker:  
+1. Check if Docker is working `sudo docker run hello-world`  
+2. Start Redis server `sudo docker run --name redisdb -p 6379:6379 -d redis:3.2`  
+3. Start MongoDB server `sudo docker run --name mongodb -p 27017:27107 -d mongo:3.4`  
+
+# Crystallographic Software
 Required software that should be installed prior to RAPD2 install:  
 - BEST (http://www.embl-hamburg.de/BEST/)  
 - CCP4 (http://www.ccp4.ac.uk/)  
@@ -21,36 +43,21 @@ in command to specify the name of the detector (ie. 'best -f pilatus6m').If this
 correct, your strategies will not be very accurate.
 
 
-# Install Procedure
-
-## Full Install
-The full install is built on top of a CCTBX distribution, and is necessary for the Control and Launcher processes, but potentially is more than necessary for the Gatherer processes.
-
-##### Scientific Linux
-These instructions are formulated for Scientific Linux 6.8, but apply for CentOS 6 as well.
-
-Installing the Control process and dependencies  
-1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git rapd`  
-2. Navigate to the install directory `cd rapd/install` and run the install `./install_cctbx`  
-3. The install script will list any software that needs to be installed via yum. The list is: `wget subversion git make bzip2 openssl-devel gcc-c+ mesa-libGL-devel mesa-libGLU-devel`  
 
 
-## Minimal Install
-The minimal install is useful for gatherer processes, not for data processing. It will fetch and install Python, add some modules to python, and then create scripts for RAPD to use.
-1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git`
-2. Navigate to the install directory and `./install_min`
 
 
-# Installing Databases
-## Docker
-Using Docker to install the required databases is a workable approach. To install Docker and the databases on a CentOS 6.8:  
+
+
+
+
+
+
 1. Install the EPEL repository `sudo yum install epel-release`  
 2. Install Docker `sudo yum install docker-io`  
 3. Start the Docker daemon `sudo service docker start`  
-4. Configure Docker to start on boot `sudo chkconfig docker on`  
-5. Check if Docker is working `sudo docker run hello-world`  
-6. Start Redis server `sudo docker run --name redisdb -p 6379:6379 -d redis:3.2`  
-7. Start MongoDB server `sudo docker run --name mongodb -p 27017:27107 -d mongo:3.4`  
+4. Configure Docker to start on boot `sudo chkconfig docker on`
+
 
 
 

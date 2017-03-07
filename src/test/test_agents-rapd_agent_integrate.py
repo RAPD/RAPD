@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 __created__ = "2017-03-06"
-_maintainer__ = "Your name"
+__maintainer__ = "Your name"
 __email__ = "Your email"
 __status__ = "Development"
 
@@ -39,7 +39,7 @@ from distutils.spawn import find_executable
 # import redis
 # import shutil
 import subprocess
-import sys
+# import sys
 import time
 import unittest
 
@@ -61,13 +61,12 @@ class TestDependencies(unittest.TestCase):
     def test_aimless_version(self):
         """Make sure the aimless executable is an acceptable version"""
 
-        p = subprocess.Popen(["aimless"],
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
-
+        subproc = subprocess.Popen(["aimless"],
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
         time.sleep(2.0)
-        p.terminate()
-        stdout, _ = p.communicate()
+        subproc.terminate()
+        stdout, _ = subproc.communicate()
         found = False
         for version in rapd_agent_integrate.VERSIONS["aimless"]:
             if version in stdout:
@@ -85,13 +84,13 @@ class TestDependencies(unittest.TestCase):
     def test_freerflag_version(self):
         """Make sure the freerflag executable is an acceptable version"""
 
-        p = subprocess.Popen(["freerflag"],
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+        subproc = subprocess.Popen(["freerflag"],
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
 
         time.sleep(2.0)
-        p.terminate()
-        stdout, _ = p.communicate()
+        subproc.terminate()
+        stdout, _ = subproc.communicate()
         found = False
         for version in rapd_agent_integrate.VERSIONS["freerflag"]:
             if version in stdout:
@@ -109,11 +108,11 @@ class TestDependencies(unittest.TestCase):
     def test_gnuplot_version(self):
         """Make sure the aimless executable is an acceptable version"""
 
-        p = subprocess.Popen(["gnuplot", "--version"],
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
-        p.wait()
-        stdout, _ = p.communicate()
+        subproc = subprocess.Popen(["gnuplot", "--version"],
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+        subproc.wait()
+        stdout, _ = subproc.communicate()
         found = False
         for version in rapd_agent_integrate.VERSIONS["gnuplot"]:
             if version in stdout:
@@ -131,13 +130,13 @@ class TestDependencies(unittest.TestCase):
     def test_mtz2various_version(self):
         """Make sure the mtz2various executable is an acceptable version"""
 
-        p = subprocess.Popen(["mtz2various"],
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+        subproc = subprocess.Popen(["mtz2various"],
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
 
         time.sleep(2.0)
-        p.terminate()
-        stdout, _ = p.communicate()
+        subproc.terminate()
+        stdout, _ = subproc.communicate()
         found = False
         for version in rapd_agent_integrate.VERSIONS["mtz2various"]:
             if version in stdout:
@@ -155,13 +154,13 @@ class TestDependencies(unittest.TestCase):
     def test_pointless_version(self):
         """Make sure the pointless executable is an acceptable version"""
 
-        p = subprocess.Popen(["pointless"],
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+        subproc = subprocess.Popen(["pointless"],
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
 
         time.sleep(2.0)
-        p.terminate()
-        stdout, _ = p.communicate()
+        subproc.terminate()
+        stdout, _ = subproc.communicate()
         found = False
         for version in rapd_agent_integrate.VERSIONS["pointless"]:
             if version in stdout:
@@ -179,13 +178,13 @@ class TestDependencies(unittest.TestCase):
     def test_truncate_version(self):
         """Make sure the truncate executable is an acceptable version"""
 
-        p = subprocess.Popen(["truncate"],
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+        subproc = subprocess.Popen(["truncate"],
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
 
         time.sleep(2.0)
-        p.terminate()
-        stdout, _ = p.communicate()
+        subproc.terminate()
+        stdout, _ = subproc.communicate()
         found = False
         for version in rapd_agent_integrate.VERSIONS["truncate"]:
             if version in stdout:
@@ -197,18 +196,15 @@ class TestDependencies(unittest.TestCase):
     def test_xds(self):
         """Make sure the xds executable is present"""
 
-        p = subprocess.Popen(["xds"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, _ = p.communicate()
-        # print stdout
-        # print stderr
-        # assert stderr.startswith("EIGER HDF5 to CBF converter")
-        assert stdout.startswith("\n ***** XDS ***** (VERSION")
+        test = find_executable("xds")
+        self.assertNotEqual(test, None)
 
     def test_xds_version(self):
         """Make sure the xds executable is an acceptable version"""
 
-        p = subprocess.Popen(["xds"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, _ = p.communicate()
+        subproc = subprocess.Popen(["xds"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subproc.wait()
+        stdout, _ = subproc.communicate()
 
         found = False
         for version in rapd_agent_integrate.VERSIONS["xds"]:
@@ -221,18 +217,15 @@ class TestDependencies(unittest.TestCase):
     def test_xds_par(self):
         """Make sure the xds_par executable is present"""
 
-        p = subprocess.Popen(["xds_par"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, _ = p.communicate()
-        # print stdout
-        # print stderr
-        # assert stderr.startswith("EIGER HDF5 to CBF converter")
-        assert stdout.startswith("\n ***** XDS ***** (VERSION")
+        test = find_executable("xds_par")
+        self.assertNotEqual(test, None)
 
     def test_xds_par_version(self):
         """Make sure the xds executable is an acceptable version"""
 
-        p = subprocess.Popen(["xds_par"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, _ = p.communicate()
+        subproc = subprocess.Popen(["xds_par"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subproc.wait()
+        stdout, _ = subproc.communicate()
 
         found = False
         for version in rapd_agent_integrate.VERSIONS["xds_par"]:
@@ -321,6 +314,6 @@ def main(args):
 
 if __name__ == "__main__":
 
-    commandline_args = get_commandline()
+    COMMANDLINE_ARGS = get_commandline()
 
-    main(args=commandline_args)
+    main(args=COMMANDLINE_ARGS)
