@@ -20,8 +20,10 @@ A number of packages are required for the full install to function properly. The
 2. Navigate to the install directory and `./install_min`
 
 # Databases
+Running a full site installation requires both Redis and MongoDB. To understand why these are necessary and how to set them up, please see the documentation.
 ## Docker
-Using Docker to install the required databases is a workable approach. To the databases using Docker:  
+Using Docker to install the required databases is a workable approach.
+To install and run the databases using Docker:  
 1. Check if Docker is working `sudo docker run hello-world`  
 2. Start Redis server `sudo docker run --name redisdb -p 6379:6379 -d redis:3.2`  
 3. Start MongoDB server `sudo docker run --name mongodb -p 27017:27107 -d mongo:3.4`  
@@ -41,17 +43,6 @@ have to input the parameters for your detector and give it a unique name. Then u
 first column ('Name') and edit rapd_agent_strategy.py 'processBest' for the first line
 in command to specify the name of the detector (ie. 'best -f pilatus6m').If this is not
 correct, your strategies will not be very accurate.
-
-
-
-
-
-
-
-
-
-
-
 
 1. Install the EPEL repository `sudo yum install epel-release`  
 2. Install Docker `sudo yum install docker-io`  

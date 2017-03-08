@@ -93,8 +93,12 @@ VERSIONS = {
         "version 7.0.024",
         "version 7.0.028",
     ),
-    "xds": ("VERSION Nov 1, 2016",),
-    "xds_par": ("VERSION Nov 1, 2016",),
+    "xds": (
+        "VERSION Nov 1, 2016",
+        ),
+    "xds_par": (
+        "VERSION Nov 1, 2016",
+        ),
 }
 
 def try_float(number, default="NO DEFAULT"):
