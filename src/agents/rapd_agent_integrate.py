@@ -491,7 +491,7 @@ class RapdAgent(Process):
                 x_max = x_array.max()
                 x_min = x_array.min()
 
-                gnuplot = subprocess.Popen(["gnuplot"], stdin=subprocess.PIPE)
+                gnuplot = subprocess.Popen(["gnuplot"], stdin=subprocess.PIPE, stderr=subprocess.PIPE)
                 gnuplot.stdin.write("""set term dumb %d,%d
                                        set title 'Rmerge vs. Batch'
                                        set xlabel 'Image #'
