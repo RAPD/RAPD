@@ -912,7 +912,7 @@ class RapdAgent(Process):
                         color="red")
             self.print_best_detector_line(detector)
 
-    def print_best_detector_line(detector):
+    def print_best_detector_line(self, detector):
         """Print the line that needs to be added to the best detector inf file"""
 
         pass
