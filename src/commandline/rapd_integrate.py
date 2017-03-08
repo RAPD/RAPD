@@ -168,6 +168,8 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
         "x_beam": commandline_args.beamcenter[0],
         "y_beam": commandline_args.beamcenter[1],
         "spacegroup": commandline_args.spacegroup,
+        "low_res": commandline_args.lowres,
+        "hi_res": commandline_args.hires,
         "json_output": commandline_args.json,
         "show_plots": commandline_args.plotting,
         "xdsinp": detector_module.XDSINP,
@@ -226,8 +228,6 @@ def main():
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s", pair[0], pair[1])
         tprint(arg="  arg:%-20s  val:%s" % (pair[0], pair[1]), level=10, color="white")
-
-    sys.exit()
 
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()

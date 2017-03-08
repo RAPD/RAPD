@@ -141,6 +141,7 @@ dp_parser.add_argument("--solvent",
 dp_parser.add_argument("--lowres",
                        action="store",
                        dest="lowres",
+                       default=0.0,
                        type=float,
                        help="Low resolution limit")
 

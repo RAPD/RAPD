@@ -139,6 +139,10 @@ class RapdAgent(Process):
     }
     """
 
+    spacegroup = False
+    low_res = False
+    hi_res = False
+
     results = {}
 
     def __init__(self, site, command, tprint=False, logger=False):
@@ -169,28 +173,13 @@ class RapdAgent(Process):
         # Store passed-in variables
         self.site = site
         self.command = command
-        # pprint(self.command)
         self.settings = self.command.get("preferences")
-        # pprint(self.settings)
-
-        # self.input = input[0:4]
         self.controller_address = self.command.get("return_address", False)
-        # self.logger = logger
-        self.spacegroup = False
 
         self.dirs = self.command["directories"]
         self.image_data = self.command.get("data").get("image_data")
         self.run_data = self.command.get("data").get("run_data")
         self.process_id = self.command["process_id"]
-        # if "image_data" in self.command:
-        #     self.image_data = self.command["image_data"]
-        #     self.process_id = self.command["image_data"]["agent_process_id"]
-        #     if "run_data" in self.command:
-        #         self.image_data.update(self.command["run_data"])
-        # elif 'original' in self.command:
-        #     self.image_data = self.command['original']
-        # else:
-        #     self.image_data = self.command
 
         self.logger.debug("self.image_data = %s", self.image_data)
 
@@ -216,6 +205,12 @@ class RapdAgent(Process):
             #                         + int(self.settings['request']['frame_finish']) - 1)
         if self.settings.get('spacegroup', False):
             self.spacegroup = self.settings['spacegroup']
+
+        if self.settings.get("hi_res", False):
+            self.hi_res = self.settings.get("hi_res")
+
+        if self.settings.get("low_res", False):
+            self.low_res = self.settings.get("low_res")
 
         if 'multiprocessing' in self.settings:
             self.cluster_use = self.settings['multiprocessing']
@@ -395,198 +390,6 @@ class RapdAgent(Process):
 
         return
 
-    def print_results(self, results):
-        """Print out results to the terminal"""
-
-        if isinstance(results, dict):
-
-            # Print summary
-            summary = results["summary"]
-            # pprint(summary)
-            self.tprint("  Spacegroup: %s" % summary["scaling_spacegroup"], 99, "white")
-            self.tprint("  Unit cell: %5.1f %5.1f %5.1f %5.2f %5.2f %5.2f" %
-                        tuple(summary["scaling_unit_cell"]), 99, "white")
-            self.tprint("  Mosaicity: %5.3f" % summary["mosaicity"], 99, "white")
-            self.tprint("                        overall   inner shell   outer shell", 99, "white")
-            self.tprint("  High res limit         %5.2f       %5.2f         %5.2f" %
-                        tuple(summary["bins_high"]), 99, "white")
-            self.tprint("  Low res limit          %5.2f       %5.2f         %5.2f" %
-                        tuple(summary["bins_low"]), 99, "white")
-            self.tprint("  Completeness           %5.1f       %5.1f         %5.1f" %
-                        tuple(summary["completeness"]), 99, "white")
-            self.tprint("  Multiplicity            %4.1f        %4.1f          %4.1f" %
-                        tuple(summary["multiplicity"]), 99, "white")
-            self.tprint("  I/sigma(I)              %4.1f        %4.1f          %4.1f" %
-                        tuple(summary["isigi"]), 99, "white")
-            self.tprint("  CC(1/2)                %5.3f       %5.3f         %5.3f" %
-                        tuple(summary["cc-half"]), 99, "white")
-            self.tprint("  Rmerge                 %5.3f       %5.3f         %5.3f" %
-                        tuple(summary["rmerge_norm"]), 99, "white")
-            self.tprint("  Anom Rmerge            %5.3f       %5.3f         %5.3f" %
-                        tuple(summary["rmerge_anom"]), 99, "white")
-            self.tprint("  Rmeas                  %5.3f       %5.3f         %5.3f" %
-                        tuple(summary["rmeas_norm"]), 99, "white")
-            self.tprint("  Anom Rmeas             %5.3f       %5.3f         %5.3f" %
-                        tuple(summary["rmeas_anom"]), 99, "white")
-            self.tprint("  Rpim                   %5.3f       %5.3f         %5.3f" %
-                        tuple(summary["rpim_norm"]), 99, "white")
-            self.tprint("  Anom Rpim              %5.3f       %5.3f         %5.3f" %
-                        tuple(summary["rpim_anom"]), 99, "white")
-            self.tprint("  Anom Completeness      %5.1f       %5.1f         %5.1f" %
-                        tuple(summary["anom_completeness"]), 99, "white")
-            self.tprint("  Anom Multiplicity       %4.1f        %4.1f          %4.1f" %
-                        tuple(summary["anom_multiplicity"]), 99, "white")
-            self.tprint("  Anom Correlation       %5.3f       %5.3f         %5.3f" %
-                        tuple(summary["anom_correlation"]), 99, "white")
-            self.tprint("  Anom Slope             %5.3f" % summary["anom_slope"][0], 99, "white")
-            self.tprint("  Observations         %7d     %7d       %7d" %
-                        tuple(summary["total_obs"]), 99, "white")
-            self.tprint("  Unique Observations  %7d     %7d       %7d\n" %
-                        tuple(summary["unique_obs"]), 99, "white")
-
-    def print_plots(self, results):
-        """
-        Display plots on the commandline
-
-        Possible titles
-        plot_titles = [
-            'I/sigma, Mean Mn(I)/sd(Mn(I))',
-            'Average I, RMS deviation, and Sd',
-            'Completeness',
-            'RMS correlation ration',
-            'Imean/RMS scatter',
-            'Rmerge, Rfull, Rmeas, Rpim vs. Resolution',
-            'Radiation Damage',
-            'Rmerge vs Frame',
-            'Redundancy',
-            'Anomalous & Imean CCs vs Resolution'
-            ]
-        """
-
-        # Plot as long as JSON output is not selected
-        if self.settings.get("show_plots", True) and (not self.settings.get("json_output", False)):
-
-            plots = results["plots"]
-
-            # Determine the open terminal size
-            term_size = os.popen('stty size', 'r').read().split()
-
-            plot_type = "Rmerge vs Frame"
-            if plot_type in plots:
-
-                plot_data = plots[plot_type]["data"]
-                # plot_params = plots[plot_type]["parameters"]
-
-                # Get each subplot
-                raw = False
-                # smoothed = False
-                for subplot in plot_data:
-                    if subplot["parameters"]["linelabel"] == "Rmerge":
-                        raw = subplot
-
-                # Determine plot extent
-                y_array = numpy.array(raw["series"][0]["ys"])
-                y_max = y_array.max() * 1.1
-                y_min = 0 # max(0, (y_array.min() - 10))
-                x_array = numpy.array(raw["series"][0]["xs"])
-                x_max = x_array.max()
-                x_min = x_array.min()
-
-                gnuplot = subprocess.Popen(["gnuplot"],
-                                           stdin=subprocess.PIPE,
-                                           stderr=subprocess.PIPE)
-                gnuplot.stdin.write("""set term dumb %d,%d
-                                       set title 'Rmerge vs. Batch'
-                                       set xlabel 'Image #'
-                                       set ylabel 'Rmerge' rotate by 90 \n""" %
-                                    (int(term_size[1])-20, 30))
-
-                # Create the plot string
-                plot_string = "plot [%d:%d] [%f:%f] " % (x_min, x_max, y_min, y_max)
-                plot_string += "'-' using 1:2 title 'Rmerge' with lines\n"
-                # plot_string += "'-' using 1:2 title 'Smooth' with points\n"
-                gnuplot.stdin.write(plot_string)
-
-                # Run through the data and add to gnuplot
-                for plot in (raw, ): #smoothed):
-                    # plot = plot_data["data"][i]
-                    xs = plot["series"][0]["xs"]
-                    ys = plot["series"][0]["ys"]
-                    # print xs
-                    # print ys
-                    for i, j in zip(xs, ys):
-                        gnuplot.stdin.write("%f %f\n" % (i, j))
-                    gnuplot.stdin.write("e\n")
-
-                # Now plot!
-                gnuplot.stdin.flush()
-                time.sleep(2)
-                gnuplot.terminate()
-
-
-    def print_info(self):
-        """
-        Print information regarding programs utilized by RAPD
-        """
-        self.logger.debug('AutoindexingStrategy::print_info')
-
-        # try:
-        self.tprint(arg="\nRAPD integration uses:", level=99, color="blue")
-        """
-'\n\nRAPD used the following programs for integrating and scaling the dataset:\n',
-               '  XDS - \n',
-               '       "XDS", W. Kabsch (2010) Acta Cryst. D66, 125-132.\n',
-               '       "Integration, scaling, space-group assignment and post-refinement",',
-               ' W. Kabsch (2010) Acta Cryst. D66, 133-144.\n',
-               '  pointless and aimless - \n',
-               '      "Scaling and assessment of data quality", P.R.',
-               ' Evans (2006) Acta Cryst. D62, 72-82.\n',
-               '      "An introduction to data reduction: space-group',
-               ' determination and intensity statistics,',
-               ' P.R. Evans (2011) Acta Cryst. D67, 282-292\n',
-               '      "How good are my data and what is the resolution?"',
-               ' P.R. Evans and G.N. Murshudov (2013) Acta Cryst. D66,',
-               ' 1204-1214.\n',
-               '  truncate, freerflag, and mtz2various  - \n',
-               '       "The CCP4 Suite: Programs for Protein ',
-               'Crystallography". Acta Cryst. D50, 760-763 \n',
-               '  xdsstat - \n      http://strucbio.biologie.',
-               'uni-konstanz.de/xdswiki/index.php/Xdsstat\n',
-               '\n</pre></div></div></body>'
-               ]
-        """
-        info_string = """    XDS
-    "XDS", W. Kabsch (2010) Acta Cryst. D66, 125-132.
-    "Integration, scaling, space-group assignment and post-refinement",
-    W. Kabsch (2010) Acta Cryst. D66, 133-144.
-
-    Pointless & Aimless
-    "Scaling and assessment of data quality", P.R. Evans (2006) Acta Cryst.
-    D62, 72-82.
-    "An introduction to data reduction: space-group determination and
-    intensity statistics", P.R. Evans (2011) Acta Cryst. D67, 282-292.
-    "How good are my data and what is the resolution?", P.R. Evans and
-    G.N. Murshudov (2013) Acta Cryst. D66, 1204-1214.
-    """
-
-        self.tprint(arg=info_string, level=99, color="white")
-
-        self.logger.debug(info_string)
-
-    def write_json(self, results):
-        """Write a file with the JSON version of the results"""
-
-        json_string = json.dumps(results)
-
-        # Output to terminal?
-        if self.settings["json_output"]:
-            print json_string
-
-        # Write a file
-        with open("result.json", 'w') as outfile:
-            outfile.writelines(json_string)
-
-
     def ram_total(self, xdsinput):
         """
         This function controls processing by XDS when the complete data
@@ -724,12 +527,21 @@ class RapdAgent(Process):
             os.mkdir(xdsdir)
 
         xdsinp = xdsinput[:]
-        #xdsinp= self.find_spot_range(first, last, self.image_data['osc_range'], xdsinput[:])
-        xdsinp.append('MAXIMUM_NUMBER_OF_PROCESSORS=%s\n' % self.procs)
-        xdsinp.append('MAXIMUM_NUMBER_OF_JOBS=%s\n' % self.jobs)
-        #xdsinp.append('MAXIMUM_NUMBER_OF_JOBS=1\n')
-        xdsinp.append('JOB=XYCORR INIT COLSPOT !IDXREF DEFPIX INTEGRATE CORRECT\n\n')
-        xdsinp.append('DATA_RANGE=%s\n' % data_range)
+        if self.low_res or self.hi_res:
+            if not self.low_res:
+                low_res = 200.0
+            else:
+                low_res = self.low_res
+            if not self.hi_res:
+                hi_res = 0.9
+            else:
+                hi_res = self.hi_res
+            xdsinp = self.change_xds_inp(xdsinp,
+                                         "INCLUDE_RESOLUTION_RANGE=%.2f %.2f\n" % (low_res, hi_res))
+        xdsinp = self.change_xds_inp(xdsinp, "MAXIMUM_NUMBER_OF_PROCESSORS=%s\n" % self.procs)
+        xdsinp = self.change_xds_inp(xdsinp, "MAXIMUM_NUMBER_OF_JOBS=%s\n" % self.jobs)
+        xdsinp = self.change_xds_inp(xdsinp, "JOB=XYCORR INIT COLSPOT \n\n")
+        xdsinp = self.change_xds_inp(xdsinp, "DATA_RANGE=%s\n" % data_range)
         xdsfile = os.path.join(xdsdir, 'XDS.INP')
         self.write_file(xdsfile, xdsinp)
         self.tprint(arg="  Searching for peaks",
@@ -754,7 +566,6 @@ class RapdAgent(Process):
             xdsinp = self.find_xds_symm(xdsdir, xdsinp)
         else:
             xdsinp = self.change_xds_inp(xdsinp, "JOB=DEFPIX INTEGRATE CORRECT \n\n")
-            # xdsinp[-2] = ("JOB=DEFPIX INTEGRATE CORRECT \n\n")
 
         self.write_file(xdsfile, xdsinp)
         self.tprint(arg="  Integrating",
@@ -778,30 +589,38 @@ class RapdAgent(Process):
         self.tprint("\nPreliminary results summary", 99, "blue")
         self.print_results(prelim_results)
 
+        # Already have hi res cutoff
+        if self.hi_res:
+            new_rescut = self.hi_res
         # Find a suitable cutoff for resolution
-        # Returns False if no new cutoff, otherwise returns the value of
-        # the high resolution cutoff as a float value.
-        new_rescut = self.find_correct_res(xdsdir, 1.0)
-        newinp = self.change_xds_inp(newinp, "JOB= INTEGRATE CORRECT \n\n")
-        # newinp[-2] = 'JOB= INTEGRATE CORRECT \n\n'
-        if new_rescut != False:
-            os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.nocutoff' %xdsdir)
-            os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.nocutoff' %xdsdir)
-            newinp = self.change_xds_inp(
-                newinp,
-                "%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n" % (newinp[-2], new_rescut))
-            # newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
-            self.write_file(xdsfile, newinp)
-            self.tprint(arg="  Reintegrating with new resolution cutoff",
-                        level=99,
-                        color="white",
-                        newline=False)
-            self.xds_run(xdsdir)
+        else:
+            if self.low_res:
+                low_res = self.low_res
+            else:
+                low_res = 200.0
+            # Returns False if no new cutoff, otherwise returns the value of
+            # the high resolution cutoff as a float value.
+            new_rescut = self.find_correct_res(xdsdir, 1.0)
+            newinp = self.change_xds_inp(newinp, "JOB= INTEGRATE CORRECT \n\n")
+            # newinp[-2] = 'JOB= INTEGRATE CORRECT \n\n'
+            if new_rescut != False:
+                os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.nocutoff' %xdsdir)
+                os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.nocutoff' %xdsdir)
+                newinp = self.change_xds_inp(
+                    newinp,
+                    "%sINCLUDE_RESOLUTION_RANGE=%.2f %.2f\n" % (newinp[-2], low_res, new_rescut))
+                # newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
+                self.write_file(xdsfile, newinp)
+                self.tprint(arg="  Reintegrating with new resolution cutoff",
+                            level=99,
+                            color="white",
+                            newline=False)
+                self.xds_run(xdsdir)
 
-            # Prepare the display of results.
-            prelim_results_2 = self.run_results(xdsdir)
-            self.tprint("\nIntermediate results summary", 99, "blue")
-            self.print_results(prelim_results_2)
+                # Prepare the display of results.
+                prelim_results_2 = self.run_results(xdsdir)
+                self.tprint("\nIntermediate results summary", 99, "blue")
+                self.print_results(prelim_results_2)
 
         # Polish up xds processing by moving GXPARM.XDS to XPARM.XDS
         # and rerunning xds.
@@ -2944,6 +2763,197 @@ class RapdAgent(Process):
         xdsinp.append('UNIT_CELL_CONSTANTS=%s\n' % cell)
         # self.write_file('XDS.INP', xdsinp)
         return xdsinp
+
+    def print_results(self, results):
+        """Print out results to the terminal"""
+
+        if isinstance(results, dict):
+
+            # Print summary
+            summary = results["summary"]
+            # pprint(summary)
+            self.tprint("  Spacegroup: %s" % summary["scaling_spacegroup"], 99, "white")
+            self.tprint("  Unit cell: %5.1f %5.1f %5.1f %5.2f %5.2f %5.2f" %
+                        tuple(summary["scaling_unit_cell"]), 99, "white")
+            self.tprint("  Mosaicity: %5.3f" % summary["mosaicity"], 99, "white")
+            self.tprint("                        overall   inner shell   outer shell", 99, "white")
+            self.tprint("  High res limit         %5.2f       %5.2f         %5.2f" %
+                        tuple(summary["bins_high"]), 99, "white")
+            self.tprint("  Low res limit          %5.2f       %5.2f         %5.2f" %
+                        tuple(summary["bins_low"]), 99, "white")
+            self.tprint("  Completeness           %5.1f       %5.1f         %5.1f" %
+                        tuple(summary["completeness"]), 99, "white")
+            self.tprint("  Multiplicity            %4.1f        %4.1f          %4.1f" %
+                        tuple(summary["multiplicity"]), 99, "white")
+            self.tprint("  I/sigma(I)              %4.1f        %4.1f          %4.1f" %
+                        tuple(summary["isigi"]), 99, "white")
+            self.tprint("  CC(1/2)                %5.3f       %5.3f         %5.3f" %
+                        tuple(summary["cc-half"]), 99, "white")
+            self.tprint("  Rmerge                 %5.3f       %5.3f         %5.3f" %
+                        tuple(summary["rmerge_norm"]), 99, "white")
+            self.tprint("  Anom Rmerge            %5.3f       %5.3f         %5.3f" %
+                        tuple(summary["rmerge_anom"]), 99, "white")
+            self.tprint("  Rmeas                  %5.3f       %5.3f         %5.3f" %
+                        tuple(summary["rmeas_norm"]), 99, "white")
+            self.tprint("  Anom Rmeas             %5.3f       %5.3f         %5.3f" %
+                        tuple(summary["rmeas_anom"]), 99, "white")
+            self.tprint("  Rpim                   %5.3f       %5.3f         %5.3f" %
+                        tuple(summary["rpim_norm"]), 99, "white")
+            self.tprint("  Anom Rpim              %5.3f       %5.3f         %5.3f" %
+                        tuple(summary["rpim_anom"]), 99, "white")
+            self.tprint("  Anom Completeness      %5.1f       %5.1f         %5.1f" %
+                        tuple(summary["anom_completeness"]), 99, "white")
+            self.tprint("  Anom Multiplicity       %4.1f        %4.1f          %4.1f" %
+                        tuple(summary["anom_multiplicity"]), 99, "white")
+            self.tprint("  Anom Correlation       %5.3f       %5.3f         %5.3f" %
+                        tuple(summary["anom_correlation"]), 99, "white")
+            self.tprint("  Anom Slope             %5.3f" % summary["anom_slope"][0], 99, "white")
+            self.tprint("  Observations         %7d     %7d       %7d" %
+                        tuple(summary["total_obs"]), 99, "white")
+            self.tprint("  Unique Observations  %7d     %7d       %7d\n" %
+                        tuple(summary["unique_obs"]), 99, "white")
+
+    def print_plots(self, results):
+        """
+        Display plots on the commandline
+
+        Possible titles
+        plot_titles = [
+            'I/sigma, Mean Mn(I)/sd(Mn(I))',
+            'Average I, RMS deviation, and Sd',
+            'Completeness',
+            'RMS correlation ration',
+            'Imean/RMS scatter',
+            'Rmerge, Rfull, Rmeas, Rpim vs. Resolution',
+            'Radiation Damage',
+            'Rmerge vs Frame',
+            'Redundancy',
+            'Anomalous & Imean CCs vs Resolution'
+            ]
+        """
+
+        # Plot as long as JSON output is not selected
+        if self.settings.get("show_plots", True) and (not self.settings.get("json_output", False)):
+
+            plots = results["plots"]
+
+            # Determine the open terminal size
+            term_size = os.popen('stty size', 'r').read().split()
+
+            plot_type = "Rmerge vs Frame"
+            if plot_type in plots:
+
+                plot_data = plots[plot_type]["data"]
+                # plot_params = plots[plot_type]["parameters"]
+
+                # Get each subplot
+                raw = False
+                # smoothed = False
+                for subplot in plot_data:
+                    if subplot["parameters"]["linelabel"] == "Rmerge":
+                        raw = subplot
+
+                # Determine plot extent
+                y_array = numpy.array(raw["series"][0]["ys"])
+                y_max = y_array.max() * 1.1
+                y_min = 0 # max(0, (y_array.min() - 10))
+                x_array = numpy.array(raw["series"][0]["xs"])
+                x_max = x_array.max()
+                x_min = x_array.min()
+
+                gnuplot = subprocess.Popen(["gnuplot"],
+                                           stdin=subprocess.PIPE,
+                                           stderr=subprocess.PIPE)
+                gnuplot.stdin.write("""set term dumb %d,%d
+                                       set title 'Rmerge vs. Batch'
+                                       set xlabel 'Image #'
+                                       set ylabel 'Rmerge' rotate by 90 \n""" %
+                                    (int(term_size[1])-20, 30))
+
+                # Create the plot string
+                plot_string = "plot [%d:%d] [%f:%f] " % (x_min, x_max, y_min, y_max)
+                plot_string += "'-' using 1:2 title 'Rmerge' with lines\n"
+                # plot_string += "'-' using 1:2 title 'Smooth' with points\n"
+                gnuplot.stdin.write(plot_string)
+
+                # Run through the data and add to gnuplot
+                for plot in (raw, ): #smoothed):
+                    # plot = plot_data["data"][i]
+                    xs = plot["series"][0]["xs"]
+                    ys = plot["series"][0]["ys"]
+                    # print xs
+                    # print ys
+                    for i, j in zip(xs, ys):
+                        gnuplot.stdin.write("%f %f\n" % (i, j))
+                    gnuplot.stdin.write("e\n")
+
+                # Now plot!
+                gnuplot.stdin.flush()
+                time.sleep(2)
+                gnuplot.terminate()
+
+
+    def print_info(self):
+        """
+        Print information regarding programs utilized by RAPD
+        """
+        self.logger.debug('AutoindexingStrategy::print_info')
+
+        # try:
+        self.tprint(arg="\nRAPD integration uses:", level=99, color="blue")
+        """
+    '\n\nRAPD used the following programs for integrating and scaling the dataset:\n',
+               '  XDS - \n',
+               '       "XDS", W. Kabsch (2010) Acta Cryst. D66, 125-132.\n',
+               '       "Integration, scaling, space-group assignment and post-refinement",',
+               ' W. Kabsch (2010) Acta Cryst. D66, 133-144.\n',
+               '  pointless and aimless - \n',
+               '      "Scaling and assessment of data quality", P.R.',
+               ' Evans (2006) Acta Cryst. D62, 72-82.\n',
+               '      "An introduction to data reduction: space-group',
+               ' determination and intensity statistics,',
+               ' P.R. Evans (2011) Acta Cryst. D67, 282-292\n',
+               '      "How good are my data and what is the resolution?"',
+               ' P.R. Evans and G.N. Murshudov (2013) Acta Cryst. D66,',
+               ' 1204-1214.\n',
+               '  truncate, freerflag, and mtz2various  - \n',
+               '       "The CCP4 Suite: Programs for Protein ',
+               'Crystallography". Acta Cryst. D50, 760-763 \n',
+               '  xdsstat - \n      http://strucbio.biologie.',
+               'uni-konstanz.de/xdswiki/index.php/Xdsstat\n',
+               '\n</pre></div></div></body>'
+               ]
+        """
+        info_string = """    XDS
+    "XDS", W. Kabsch (2010) Acta Cryst. D66, 125-132.
+    "Integration, scaling, space-group assignment and post-refinement",
+    W. Kabsch (2010) Acta Cryst. D66, 133-144.
+
+    Pointless & Aimless
+    "Scaling and assessment of data quality", P.R. Evans (2006) Acta Cryst.
+    D62, 72-82.
+    "An introduction to data reduction: space-group determination and
+    intensity statistics", P.R. Evans (2011) Acta Cryst. D67, 282-292.
+    "How good are my data and what is the resolution?", P.R. Evans and
+    G.N. Murshudov (2013) Acta Cryst. D66, 1204-1214.
+    """
+
+        self.tprint(arg=info_string, level=99, color="white")
+
+        self.logger.debug(info_string)
+
+    def write_json(self, results):
+        """Write a file with the JSON version of the results"""
+
+        json_string = json.dumps(results)
+
+        # Output to terminal?
+        if self.settings["json_output"]:
+            print json_string
+
+        # Write a file
+        with open("result.json", 'w') as outfile:
+            outfile.writelines(json_string)
 
 
 class DataHandler(threading.Thread):
