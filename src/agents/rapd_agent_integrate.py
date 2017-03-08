@@ -1,4 +1,3 @@
-
 """
 RAPD agent for fast integration with XDS
 """
@@ -45,7 +44,7 @@ import logging.handlers
 import math
 from multiprocessing import Process
 import os
-import os.path
+# import os.path
 from pprint import pprint
 # import shutil
 import stat
@@ -177,7 +176,7 @@ class RapdAgent(Process):
         # self.input = input[0:4]
         self.controller_address = self.command.get("return_address", False)
         # self.logger = logger
-        self.spacegroup = None
+        self.spacegroup = False
 
         self.dirs = self.command["directories"]
         self.image_data = self.command.get("data").get("image_data")
@@ -331,12 +330,14 @@ class RapdAgent(Process):
         3. Run analysis of data set.
         """
         self.logger.debug('FastIntegration::process')
+
         if not self.command["command"] in ("INTEGRATE", "XDS"):
             self.logger.debug('Program did not request an integration')
             self.logger.debug('Now Exiting!')
             return
 
         xds_input = self.xds_default
+
         if self.command["command"] == 'XDS':
             integration_results = self.xds_total(xds_input)
         else:
@@ -491,7 +492,9 @@ class RapdAgent(Process):
                 x_max = x_array.max()
                 x_min = x_array.min()
 
-                gnuplot = subprocess.Popen(["gnuplot"], stdin=subprocess.PIPE, stderr=subprocess.PIPE)
+                gnuplot = subprocess.Popen(["gnuplot"],
+                                           stdin=subprocess.PIPE,
+                                           stderr=subprocess.PIPE)
                 gnuplot.stdin.write("""set term dumb %d,%d
                                        set title 'Rmerge vs. Batch'
                                        set xlabel 'Image #'
@@ -640,7 +643,7 @@ class RapdAgent(Process):
             if new_rescut != False:
                 os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.nocutoff' %xdsdir)
                 os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.nocutoff' %xdsdir)
-                newinp[-2] = 'JOB=CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
+                newinp[-2] = 'JOB=CORRECT\n\n'
                 newinp[-3] = 'INCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % new_rescut
                 self.write_file('XDS.INP', newinp)
                 self.xds_ram(self.ram_nodes[0][0])
@@ -655,7 +658,7 @@ class RapdAgent(Process):
                 os.rename('%s/GXPARM.XDS' %xdsdir, '%s/XPARM.XDS' %xdsdir)
                 os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.old' %xdsdir)
                 os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.old' %xdsdir)
-                newinp[-2] = 'JOB=INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
+                newinp[-2] = 'JOB=INTEGRATE CORRECT\n\n'
                 newinp[-3] = '\n'
                 self.write_file('XDS.INP', newinp)
                 self.xds_ram(self.ram_nodes[0][0])
@@ -680,6 +683,24 @@ class RapdAgent(Process):
             final_results['status'] = 'SUCCESS'
             return final_results
 
+
+    def change_xds_inp(self, xds_input, new_line):
+        """Modify the XDS.INP lines with the input line"""
+
+        param = new_line.split("=")[0].strip()
+        xds_output = []
+        found = False
+        for line in xds_input:
+            if param+"=" in line:
+                xds_output.append(new_line)
+            else:
+                xds_output.append(line)
+
+        # Append the line if it is new
+        if not found:
+            xds_output.append(new_line)
+
+        return xds_output
 
     def xds_total(self, xdsinput):
         """
@@ -711,18 +732,32 @@ class RapdAgent(Process):
         xdsinp.append('DATA_RANGE=%s\n' % data_range)
         xdsfile = os.path.join(xdsdir, 'XDS.INP')
         self.write_file(xdsfile, xdsinp)
-
-        # Run XDS
         self.tprint(arg="  Searching for peaks",
                     level=99,
                     color="white",
                     newline=False)
         self.xds_run(xdsdir)
 
-        #xdsinp[-3] =('MAXIMUM_NUMBER_OF_JOBS=%s\n' % self.jobs)
-        xdsinp[-2] = ("JOB=IDXREF DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n")
+        # Index
+        xdsinp[-2] = ("JOB=IDXREF \n\n")
         self.write_file(xdsfile, xdsinp)
-        self.tprint(arg="  Indexing and integrating",
+        self.tprint(arg="  Indexing",
+                    level=99,
+                    color="white",
+                    newline=False)
+        self.xds_run(xdsdir)
+
+        # Integrate
+        # Override spacegroup?
+        if self.spacegroup != False:
+            # Check consistency of spacegroup, and modify if necessary.
+            xdsinp = self.find_xds_symm(xdsdir, xdsinp)
+        else:
+            xdsinp = self.change_xds_inp(xdsinp, "JOB=DEFPIX INTEGRATE CORRECT \n\n")
+            # xdsinp[-2] = ("JOB=DEFPIX INTEGRATE CORRECT \n\n")
+
+        self.write_file(xdsfile, xdsinp)
+        self.tprint(arg="  Integrating",
                     level=99,
                     color="white",
                     newline=False)
@@ -738,10 +773,6 @@ class RapdAgent(Process):
             # TODO  put out failing JSON
             raise Exception("XDS error unknown to RAPD has occurred.")
 
-        elif self.spacegroup != None:
-            # Check consistency of spacegroup, and modify if necessary.
-            xdsinp = self.find_xds_symm(xdsdir, xdsinp)
-
         # Prepare the display of results.
         prelim_results = self.run_results(xdsdir)
         self.tprint("\nPreliminary results summary", 99, "blue")
@@ -751,11 +782,15 @@ class RapdAgent(Process):
         # Returns False if no new cutoff, otherwise returns the value of
         # the high resolution cutoff as a float value.
         new_rescut = self.find_correct_res(xdsdir, 1.0)
-        newinp[-2] = 'JOB= INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
+        newinp = self.change_xds_inp(newinp, "JOB= INTEGRATE CORRECT \n\n")
+        # newinp[-2] = 'JOB= INTEGRATE CORRECT \n\n'
         if new_rescut != False:
             os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.nocutoff' %xdsdir)
             os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.nocutoff' %xdsdir)
-            newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
+            newinp = self.change_xds_inp(
+                newinp,
+                "%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n" % (newinp[-2], new_rescut))
+            # newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
             self.write_file(xdsfile, newinp)
             self.tprint(arg="  Reintegrating with new resolution cutoff",
                         level=99,
@@ -763,10 +798,10 @@ class RapdAgent(Process):
                         newline=False)
             self.xds_run(xdsdir)
 
-        # Prepare the display of results.
-        prelim_results_2 = self.run_results(xdsdir)
-        self.tprint("\nIntermediate results summary", 99, "blue")
-        self.print_results(prelim_results_2)
+            # Prepare the display of results.
+            prelim_results_2 = self.run_results(xdsdir)
+            self.tprint("\nIntermediate results summary", 99, "blue")
+            self.print_results(prelim_results_2)
 
         # Polish up xds processing by moving GXPARM.XDS to XPARM.XDS
         # and rerunning xds.
@@ -790,19 +825,10 @@ class RapdAgent(Process):
             if new_rescut != False:
                 os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.oldcutoff' %xdsdir)
                 os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.oldcutoff' %xdsdir)
-                #newinp[-2] = 'JOB=INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
                 newinp[-2] = '%sINCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % (newinp[-2], new_rescut)
                 self.write_file(xdsfile, newinp)
                 self.tprint(arg="  New resolution cutoff", level=99, color="white", newline=False)
                 self.xds_run(xdsdir)
-        #        old_rescut = new_rescut
-        #        new_rescut = self.find_correct_res(xdsdir, 1.0)
-        #        if new_rescut != False:
-        #            os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.oldcutoff' %xdsdir)
-        #            os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.oldcutoff' %xdsdir)
-        #            newinp[-5] = 'INCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % new_rescut
-        #            self.write_file(xdsfile, newinp)
-        #            self.xds_run(xdsdir)
             final_results = self.run_results(xdsdir)
 
         # Put data into the commanline
@@ -1068,7 +1094,7 @@ class RapdAgent(Process):
         #xdsinp[-3]=('MAXIMUM_NUMBER_OF_JOBS=%s\n'  % self.jobs)
         xdsinp[-2] = ('JOB=IDXREF DEFPIX INTEGRATE CORRECT\n\n')
         self.write_file(xdsfile, xdsinp)
-        self.tprint(arg="  Indexing and integrating", level=99, color="white", newline=False)
+        self.tprint(arg="  Integrating", level=99, color="white", newline=False)
         self.xds_run(xdsdir)
 
         # If known xds_errors occur, catch them and take corrective action
@@ -1135,20 +1161,20 @@ class RapdAgent(Process):
         self.last_image = self.last_image.replace('?', '')
     	# Repeat the last two steps for the first image's filename.
         self.first_image = file_template.replace('?', str(self.image_data['start']).zfill(pad), 1)
-        self.first_image = self.first_image.replace('?','')
+        self.first_image = self.first_image.replace('?', '')
 
     	# Begin constructing the list that will represent the XDS.INP file.
         xds_input = ['!===== DATA SET DEPENDENT PARAMETERS =====\n',
-                      'ORGX=%.2f ORGY=%.2f ! Beam Center (pixels)\n' % (x_beam, y_beam),
-                      'DETECTOR_DISTANCE=%.2f ! (mm)\n' %
-                        (float(self.image_data['distance'])),
-                      'OSCILLATION_RANGE=%.2f ! (degrees)\n' %
-                        (float(self.image_data['osc_range'])),
-                      'X-RAY_WAVELENGTH=%.5f ! (Angstroems)\n' %
-                        (float(self.image_data['wavelength'])),
-                      'NAME_TEMPLATE_OF_DATA_FRAMES=%s\n\n' % file_template,
-    		          'BACKGROUND_RANGE=%s\n\n' % background_range,
-                      '!===== DETECTOR_PARAMETERS =====\n']
+                     'ORGX=%.2f ORGY=%.2f ! Beam Center (pixels)\n' % (x_beam, y_beam),
+                     'DETECTOR_DISTANCE=%.2f ! (mm)\n' %
+                     (float(self.image_data['distance'])),
+                     'OSCILLATION_RANGE=%.2f ! (degrees)\n' %
+                     (float(self.image_data['osc_range'])),
+                     'X-RAY_WAVELENGTH=%.5f ! (Angstroems)\n' %
+                     (float(self.image_data['wavelength'])),
+                     'NAME_TEMPLATE_OF_DATA_FRAMES=%s\n\n' % file_template,
+                     'BACKGROUND_RANGE=%s\n\n' % background_range,
+                     '!===== DETECTOR_PARAMETERS =====\n']
         for key, value in xds_dict.iteritems():
             # Regions that are excluded are defined with
             # various keyword containing the word UNTRUSTED.
@@ -1195,231 +1221,6 @@ class RapdAgent(Process):
 
         return xds_input
 
-    def set_detector_data(self, detector_type):
-        """
-        This function returns a list of strings that constitute the default
-        parameters needed to create an XDS.INP file.
-
-        new detector types can be added by following the format of preexisting
-        detector types.
-
-        Current detector types are:
-        ADSC - unbinned ADSC Q315 as at NE-CAT
-        ADSC_binned - binned ADSC Q315 as at NE-CAT
-        PILATUS - Pilatus 6M
-        HF4M - ADSC HF4M
-        MX300hs - SER-CAT's Rayonix MX300hs
-        """
-        self.logger.debug('FastIntegration::set_detector_type')
-        last_frame = int(self.image_data['start']) + int(self.image_data['total']) -1
-        self.logger.debug('last_frame = %s' % last_frame)
-        self.logger.debug('detector_type = %s' % detector_type)
-        background_range = '%s %s' %(int(self.image_data['start']), int(self.image_data['start']) + 4)
-
-        # Detector specific paramters.
-        # ADSC unbinned.
-        if detector_type == 'ADSC':
-            x_beam = float(self.image_data['y_beam']) / 0.0513
-            y_beam = float(self.image_data['x_beam']) / 0.0513
-            if x_beam < 0 or x_beam > 6144:
-                raise RuntimeError, 'x beam coordinate outside detector'
-            if y_beam < 0 or y_beam > 6144:
-                raise RuntimeError, 'y beam coordinate outside detector'
-            if 'image_template' in self.image_data:
-                self.image_template = self.image_data['image_template']
-            else:
-                #self.image_template = '%s_%s_???.img' %(self.image_data['image_prefix'],FM
-                if 'prefix' in self.image_data:
-                    self.image_template = '%s_%s_???.img' %(self.image_data['prefix'],
-                                               self.image_data['run_number'])
-                else:
-                    self.image_template = '%s_%s_???.img' %(self.image_data['image_prefix'], self.image_data['run_number'])
-            file_template = os.path.join(self.image_data['directory'], self.image_template)
-            self.last_image = file_template.replace('???','%03d' %last_frame)
-            self.first_image = file_template.replace('???','%03d' %int(self.image_data['start']))
-
-            if self.ram_use == True:
-                file_template = os.path.join('/dev/shm/',
-                                             self.image_data['prefix'],
-                                             self.image_template)
-            if self.image_data.has_key('pixel_size'):
-                pass
-            else:
-                self.image_data['pixel_size'] = '0.0513'
-            # Set untrusted region for this detector on NE-CAT 24ID-E
-            untrusted_region = 'UNTRUSTED_RECTANGLE= 0 1040 3080 4090\n\n'
-
-        #ADSC binned.
-        elif detector_type == 'ADSC_binned':
-            detector_type = 'ADSC'
-            x_beam = float(self.image_data['y_beam']) / 0.10259
-            y_beam = float(self.image_data['x_beam']) / 0.10259
-            if x_beam < 0 or x_beam > 3072:
-                raise RuntimeError, 'x beam coordinate outside detector'
-            if y_beam < 0 or y_beam > 3072:
-                raise RuntimeError, 'y beam coordinate outside detector'
-            if 'image_template' in self.image_data:
-                self.image_template = self.image_data['image_template']
-            else:
-                if 'prefix' in self.image_data:
-                    self.image_template = '%s_%s_???.img' %(self.image_data['prefix'],
-                                               self.image_data['run_number'])
-                else:
-                    self.image_template = '%s_%s_???.img' % (self.image_data['image_prefix'],
-                                                             self.image_data['run_number'])
-            file_template = os.path.join(self.image_data['directory'], self.image_template)
-            self.last_image = file_template.replace('???', '%03d' % last_frame)
-            self.first_image = file_template.replace('???', '%03d' % int(self.image_data['start']))
-            if self.ram_use == True:
-                file_template = os.path.join('/dev/shm/',
-                                             self.image_data['prefix'],
-                                             self.image_template)
-            if self.image_data.has_key('pixel_size'):
-                pass
-            else:
-                self.image_data['pixel_size'] = '0.10259'
-            # Set untrusted region for this detector at NE-CAT 24ID-E.
-            untrusted_region = 'UNTRUSTED_RECTANGLE= 0 520 1540 2045\n\n'
-        if detector_type == 'ADSC':
-            min_pixel_value = '1'
-
-        # ADSC HF-4M
-        elif detector_type == 'HF4M':
-            x_beam = float(self.image_data['y_beam']) / 0.150
-            y_beam = float(self.image_data['x_beam']) / 0.150
-            if x_beam < 0 or x_beam > 2100:
-                raise RuntimeError, 'x beam coordinate outside of detector'
-            if y_beam < 0 or y_beam > 2290:
-                raise RuntimeError, 'y beam coordinate outside of detector'
-            # detector_file = 'XDS-HF4M.INP'
-            if 'image_template' in self.image_data:
-                self.image_template = self.image_data['image_template']
-            else:
-                self.image_template = '%s_%s_????.cbf' % (self.image_data['image_prefix'],
-                                                          self.image_data['run_number'])
-            file_template = os.path.join(self.image_data['directory'],self.image_template)
-            self.last_image = file_template.replace('????', '%04d' % last_frame)
-            self.first_image = file_template.replace('????', '%04d' % int(self.image_data['start']))
-            if self.ram_use == True:
-                file_template = os.path.join('/dev/shm/', self.image_data['image_prefix'], self.image_template)
-
-        # Pilatus 6M.
-        elif detector_type == 'PILATUS':
-            x_beam = float(self.image_data['y_beam']) / 0.172
-            y_beam = float(self.image_data['x_beam']) / 0.172
-            if x_beam < 0 or x_beam > 2463:
-                raise RuntimeError, 'x beam coordinate outside detector'
-            if y_beam < 0 or y_beam > 2527:
-                raise RuntimeError, 'y beam coordinate outside detector'
-            if 'image_template' in self.image_data:
-                self.image_template = self.image_data['image_template']
-            else:
-                self.image_template = '%s_%s_????.cbf' %(self.image_data['image_prefix'],
-                                                     self.image_data['run_number'])
-            file_template = os.path.join(self.image_data['directory'],self.image_template)
-            self.last_image = file_template.replace('????', '%04d' % last_frame)
-            self.first_image = file_template.replace('????', '%04d' % int(self.image_data['start']))
-            if self.ram_use == True:
-                file_template = os.path.join('/dev/shm/',
-                                             self.image_data['image_prefix'],
-                                             self.image_template)
-            if self.image_data.has_key('pixel_size'):
-            	pass
-            else:
-            	self.image_data['pixel_size'] = '0.172'
-            # Set untrusted region for this detector on NE-CAT 24ID-C
-            # The Pilatus has a lot of regions untrusted between modules.
-            untrusted_region=''
-            rectangles = ['487 495 0 2527']
-            rectangles.extend('981 989 0 2527')
-            rectangles.extend('1475 1483 0 2527')
-            rectangles.extend('1969 1977 0 2527')
-            rectangles.extend('0 2463 195 213')
-            rectangles.extend('0 2463 407 425')
-            rectangles.extend('0 2463 619 637')
-            rectangles.extend('0 2463 831 849')
-            rectangles.extend('0 2463 1043 1061')
-            rectangles.extend('0 2463 1255 1273')
-            rectangles.extend('0 2463 1467 1485')
-            rectangles.extend('0 2463 1679 1697')
-            rectangles.extend('0 2463 1891 1909')
-            rectangles.extend('0 2463 2103 2121')
-            rectangles.extend('0 2463 2315 2333')
-            for rectangle in rectangles:
-            	untrusted_region += 'UNTRUSTED_RECTANGLE= %s\n' %rectangle
-            untrusted_region +='\n'
-            # We also use non-default values for SEPMIN and CLUSTER_RADIUS for the Pilatus, so add those.
-            untrusted_region +='SEPMIN=4 ! Default is 6 for other detectors.\n'
-            untrusted_region +='CLUSTER_RADIUS=2 ! Defaults is 3 for other detectors.\n'
-            untrusted_region +='SENSOR_THICKNESS=0.32\n\n'
-            min_pixel_value = '0'
-
-        # Rayonix 300hs.
-        elif detector_type == 'rayonix_mx300hs':
-            detector_type = 'MAR345'
-            x_beam = float(self.image_data['x_beam']) / float(self.image_data['pixel_size'])
-            y_beam = float(self.image_data['y_beam']) / float(self.image_data['pixel_size'])
-            if x_beam < 0 or x_beam > int(self.image_data['size1']):
-                raise RuntimeError, 'x beam coordinate outside detector'
-            if y_beam < 0 or y_beam > int(self.image_data['size1']):
-                raise RuntimeError, 'y beam coordinate outside detector'
-            detector_file = 'XDS-MX300HS.INP'
-            if 'image_template' in self.image_data:
-                self.image_template = self.image_data['image_template']
-            else:
-                self.image_template = '%s.????' %self.image_data['image_prefix']
-            file_template = os.path.join(self.image_data['directory'],self.image_template)
-            self.last_image = file_template.replace('????', '%04d' %last_frame)
-            self.first_iamge = file_template.replace('????', '%04d' %int(self.image_data['start']))
-            # Set untrusted region for this detector on SER-CAT beamline
-            untrusted_region = ''
-            min_pixel_value = '0'
-
-        self.logger.debug('	Last Image = %s' % self.last_image)
-        # Begin xds input with parameters determined by data set.
-        xds_input = ['!============ DATA SET DEPENDENT PARAMETERS====================\n',
-                     'ORGX=%.2f ORGY=%.2f !Beam center (pixels)\n' %(x_beam, y_beam),
-                     'DETECTOR_DISTANCE=%.2f !(mm)\n' %float(self.image_data['distance']),
-                     'OSCILLATION_RANGE=%.2f !(degrees)\n' %float(self.image_data['osc_range']),
-                     'X-RAY_WAVELENGTH=%.5f !(Angstroems)\n' %float(self.image_data['wavelength']),
-                     '\n',
-                     'NAME_TEMPLATE_OF_DATA_FRAMES=%s\n' %file_template,
-                     '\n',
-                     'BACKGROUND_RANGE=%s\n\n' % background_range,
-                     '!=============== DETECTOR PARAMETERS ========================\n',
-                     'DETECTOR=%s MINIMUM_VALID_PIXEL_VALUE=%s OVERLOAD=%s\n' %(
-                     	     detector_type, min_pixel_value,self.image_data['count_cutoff']),
-                     'NX=%s NY=%s QX=%s QY=%s\n' %(
-                     	     self.image_data['size1'],self.image_data['size2'],self.image_data['pixel_size'],self.image_data['pixel_size']),
-                     'TRUSTED_REGION=0.0 1.0 !Relative radii limiting trusted detector region\n\n',
-                     'ROTATION_AXIS=1.0 0.0 0.0\n',
-                     'INCIDENT_BEAM_DIRECTION=0.0 0.0 1.0\n',
-                     'FRACTION_OF_POLARIZATION=0.90 !default =0.5 for unpolarized beam\n',
-                     'POLARIZATION_PLANE_NORMAL= 0.0 1.0 0.0\n',
-                     "FRIEDEL'S_LAW=FALSE !Defaults is TRUE\n\n",
-                     'INCLUDE_RESOLUTION_RANGE=200.0 0.0 !Angstroems\n',
-                     'REFINE(IDXREF)=BEAM AXIS ORIENTATION CELL POSITION\n',
-                     'REFINE(INTEGRATE)=BEAM CELL ORIENTATION POSITION\n',
-                     'REFINE(CORRECT)=BEAM AXIS CELL ORIENTATION POSITION\n',
-                     'STRICT_ABSORPTION_CORRECTION=TRUE\n\n',
-                     'DIRECTION_OF_DETECTOR_X-AXIS=1.0 0.0 0.0\n']
-        # If detector is tilted in two-theta, adjust DIRECTION_OF_Y-AXIS
-        if self.image_data['twotheta'] == 0.0 or self.image_data['twotheta'] == None:
-            xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS=0.0 1.0 0.0\n\n')
-        else:
-            twotheta = math.radians(float(self.image_data['twotheta']))
-            tilty = math.cos(twotheta)
-            tiltz = math.sin(twotheta)
-            xds_input.append('!******  Detector is inclined ****\n')
-            xds_input.append('! TWO_THETA = %s\n' % self.image_data['twotheta'])
-            xds_input.append('!***   Reset DIRECTION_OF_DETECTOR_Y-AXIS ***')
-            xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS=0.0 %.4f %.4f\n' %(tilty, tiltz))
-            xds_input.append('!0.0 cos(2theta) sin(2theta)\n\n')
-        xds_input.append(untrusted_region)
-
-        return xds_input
-
-
     def write_file(self, filename, file_input):
         """
         Writes out file_input as filename.
@@ -1458,7 +1259,7 @@ class RapdAgent(Process):
             endspot1 = int(first) + int(5 / float(osc)) - 1
             input.append('SPOT_RANGE=%s %s\n\n' %(first, endspot1))
             if fullrange < 95:
-                spot2_start = int( (int(last) - int(first) + 1) / 2)
+                spot2_start = int((int(last) - int(first) + 1) / 2)
             else:
                 spot2_start = int(90 / float(osc))
             spot2_end = spot2_start + int(5 / float(osc)) - 1
@@ -1473,19 +1274,17 @@ class RapdAgent(Process):
         self.logger.debug('     directory = %s', directory)
         self.logger.debug('     detector = %s', self.image_data['detector'])
 
-        # if self.image_data['detector']=='rayonix_mx300hs':
-        #     xds_command = '/usr/local/XDS-INTEL64_Linux_x86_64/xds_par'
-        # else:
         xds_command = 'xds_par'
 
         os.chdir(directory)
         # TODO skip processing for now
         if self.cluster_use == True:
-            job = Process(target=BLspec.processCluster,args=(self,(xds_command,'XDS.LOG','8','phase2.q')))
+            job = Process(target=BLspec.processCluster,
+                          args=(self, (xds_command, 'XDS.LOG', '8', 'phase2.q')))
         else:
             job = Process(target=Utils.processLocal,
                           args=((xds_command, "XDS.LOG"),
-                          self.logger))
+                                 self.logger))
         job.start()
         while job.is_alive():
             time.sleep(1)
@@ -1522,7 +1321,7 @@ class RapdAgent(Process):
                     newline=False)
 
         new_hi_res = False
-        correctlp = os.path.join(directory,'CORRECT.LP')
+        correctlp = os.path.join(directory, 'CORRECT.LP')
         try:
             correct_log = open(correctlp, 'r').readlines()
         except IOError as e:
@@ -1612,12 +1411,12 @@ class RapdAgent(Process):
 
                     # Try to fix by extending the data range
                     tmp = input[-1].split('=')
-                    first,last = tmp.split()
+                    first, last = tmp.split()
                     if int(last) == (int(self.image_data('start')) + int(self.image_data('total')) -1):
                         self.logger.debug('         FAILURE: Already using the full data range available.')
                         return False
                     else:
-                        input[-1] = 'SPOT_RANGE=%s %s' %(first, (int(last) + 1))
+                        input[-1] = 'SPOT_RANGE=%s %s' % (first, (int(last) + 1))
                         self.write_file('XDS.INP', input)
                         os.system('mv XDS.LOG initialXDS.LOG')
                         self.tprint(arg="\n  Extending spot range",
@@ -1645,7 +1444,7 @@ class RapdAgent(Process):
                         return False
                     else:
                         input[-2] = ('JOB=DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT'
-                                 + ' IDXREF DEFPIX INTEGRATE CORRECT\n')
+                                     + ' IDXREF DEFPIX INTEGRATE CORRECT\n')
                         self.write_file('XDS.INP', input)
                         os.system('mv XDS.LOG initialXDS.LOG')
                         self.tprint(arg="\n  Integrating with suboptimal indexing solution",
@@ -1771,7 +1570,7 @@ class RapdAgent(Process):
             aimless_log = self.aimless(mtzfile, res_cut)
 
         #graphs, tables, summary = self.parse_aimless(aimless_log)
-        graphs, summary =self.parse_aimless2(aimless_log)
+        graphs, summary = self.parse_aimless2(aimless_log)
 
         wedge = directory.split('_')[-2:]
         summary['wedge'] = '-'.join(wedge)
@@ -1789,30 +1588,20 @@ class RapdAgent(Process):
         #scalalog = scalamtz.replace('mtz','log')
         scalamtz = mtzfile.replace('pointless', 'aimless')
         scalalog = scalamtz.replace('mtz', 'log')
-        # generate web files for results display in the UI
-        #plotsHTML = self.make_plots(graphs, tables)
-        # shortHTML = self.make_short_results(directory, summary, orig_rescut)
-        # longHTML = self.make_long_results(scalalog)
 
-        # shutil.copyfile(plotsHTML, os.path.join(self.dirs['work'], plotsHTML))
-        # shutil.copyfile(shortHTML, os.path.join(self.dirs['work'], shortHTML))
-        # shutil.copyfile(longHTML, os.path.join(self.dirs['work'], longHTML))
-
-        results = {'status'   : 'WORKING',
-                   'plots'    : graphs,
-                #    'short'    : shortHTML,
-                #    'long'     : longHTML,
-                   'summary'  : summary,
-                   'mtzfile'  : scalamtz,
-                   'dir'      : directory
+        results = {'status': 'WORKING',
+                   'plots': graphs,
+                   'summary': summary,
+                   'mtzfile': scalamtz,
+                   'dir': directory
                    }
         self.logger.debug("Returning results!")
         self.logger.debug(results)
 
          # Set up the results for return
         self.results['process'] = {
-        	'agent_process_id':self.process_id,
-        	'status':50
+            'agent_process_id':self.process_id,
+            'status':50
             }
         self.results['results'] = results
         self.logger.debug(self.results)
@@ -1822,263 +1611,6 @@ class RapdAgent(Process):
             rapd_send(self.controller_address, self.results)
 
         return results
-
-    def make_long_results(self, logfile):
-        """
-        Grab the contents of various logfiles generated by data processing,
-        and put them in a php file.
-        """
-        self.logger.debug('FastIntegration:make_long_results')
-
-        file = ['<?php\n//prevents caching\n',
-                'header("Expires: Sat, 01 Jan 2000 00:00:00 GMT");\n',
-                'header("Last-Modified: ".gmdate("D, d M Y H:i:s")." GMT");\n',
-                'header("Cache-Control: post-check=0, pre-check=0",false);\n\n',
-                'session_cache_limiter();\n',
-                'session_start();\n\n',
-                "require('/var/www/html/rapd/login/config.php');\n",
-                "require('/var/www/html/rapd/login/functions.php');\n\n",
-                'if(allow_user() != "yes")\n{\n',
-                '    if(allow_local_data($_SESSION[data]) != "yes")\n    {\n',
-                "        include ('/login/no_access.html');\n",
-                '        exit();\n\n    }\n} else {\n    $local = 0;\n}\n?>\n',
-                '<head>\n    <!-- Inline Stylesheet -->\n',
-                '    <style type="text/css" media="screen"><!--\n',
-                '    body {\n        background-image: none;\n        font-size: 17px;\n',
-                '        }\n    table.display td {padding: 1px 7px;}\n',
-                '    tr.GradeD {font-weight: bold;}\n',
-                '    table.integrate td, th {border-style: solid;\n',
-                '        border-width: 2px;\n',
-                '        border-spacing: 0;\n',
-                '        border-color: gray;\n',
-                '        padding: 5px;\n',
-                '        text-align: center;\n',
-                '        height: 2r10px;\n',
-                '        font-size: 15px; }\n',
-                '    table.integrate tr.alt {background-color: #EAF2D3; }\n',
-                '--></style>\n',
-                '<!--<script type="text/javascript" language="javascript"',
-                ' src="../js/dataTables-1.5/media/js/jquery.js"></script>-->\n',
-                '    <script type="text/javascript" charset="utf-8">\n',
-                '    $(document).ready(function(){\n',
-                "    $('.accordion').accordion({\n",
-                '    collapsible: true,\n',
-                '    autoHeight: false,\n',
-                '    active: 0          });\n',
-                "    $('#cell').dataTable({\n",
-                '    "bPaginate": false,\n',
-                '    "bFilter": false,\n',
-                '    "bInfo": false,\n',
-                '    "bSort": false,\n',
-                '    "bAutoWidth": false    });\n',
-                "    $('#pdb1').dataTable({\n",
-                '    "bPaginate": false,\n',
-                '    "bFilter": false,\n',
-                '    "bInfo": false,\n',
-                '    "bSort": false,\n',
-                '    "bAutoWidth": false    });;\n',
-                '        } );\n    </script>\n</head>\n<body>\n',
-                '<div class="accordion">\n',
-                '<h3><a href="#">Click to view Pointless log file.</a></h3>\n',
-                '<div>\n<pre>\n==========    pointless    ==========\n'
-                ]
-        pointless_log = logfile.replace('aimless','pointless')
-        in_lines = open(pointless_log, 'r').readlines()
-        for in_line in in_lines:
-            if '&' in in_line:
-                in_line = in_line.replace('&',"&amp")
-            if '<I' in in_line:
-                in_line = in_line.replace('<','&lt')
-                in_line = in_line.replace('>','&gt')
-            file.append(in_line)
-        file.extend(['</pre>\n</div>\n',
-                     '<h3><a href="#">Click to view Aimless log file.</a></h3>\n',
-                     '<div>\n<pre>\n==========    aimless    ==========\n'
-                     ])
-        in_lines = open(logfile, 'r').readlines()
-        for in_line in in_lines:
-            if 'applet' in in_line or in_line.startswith('codebase'):
-                pass
-            else:
-                if '&' in in_line:
-                    in_line = in_line.replace('&','&amp')
-                if '<I' in in_line:
-                    in_line = in_line.replace('<','&lt')
-                    in_line = in_line.replace('>','&gt')
-                file.append(in_line)
-        file.extend(['</pre>\n</div>\n',
-                     '<h3><a href="#">Click to view INTEGRATE.LP.</a></h3>\n',
-                     '<div>\n<pre>\n==========    INTEGRATE.LP    ==========\n'
-                     ])
-        in_lines = open('INTEGRATE.LP', 'r').readlines()
-        for in_line in in_lines:
-            if '<I' in in_line:
-                in_line = in_line.replace('<','&lt')
-                in_line = in_line.replace('>','&gt')
-            file.append(in_line)
-        file.extend(['</pre>\n</div>\n',
-                     '<h3><a href="#">Click to view CORRECT.LP.</a></h3>\n',
-                     '<div>\n<pre>\n==========   CORRECT.LP    ==========\n'
-                     ])
-        in_lines = open('CORRECT.LP', 'r').readlines()
-        for in_line in in_lines:
-            #if '&' in in_line:
-            #    in_line.replace('&','&amp')
-            if '<I' in in_line:
-                in_line = in_line.replace('<','&lt')
-                in_line = in_line.replace('>','&gt')
-            file.append(in_line)
-        file.append('</pre>\n</div>\n</div>\n</body>')
-
-        self.write_file('long_results.php',file)
-        return('long_results.php')
-
-    def make_short_results(self, directory, results, orig_rescut=False):
-        """
-        Parses the aimless logfile and extracts the summary table
-        at the end of the file.  Then writes an html file to be
-        displayed as the Summary of the data processing.
-        """
-        self.logger.debug('FastIntegration::make_short_results')
-        if 'ID' in self.image_data.keys():
-            pass
-        else:
-            self.image_data['ID'] = self.image_data['image_prefix']
-        parsed = ['<?php\n',
-                  '//prevents caching\n',
-                  'header("Expires: Sat, 01 Jan 2000 00:00:00 GMT");\n',
-                  'header("Last-Modified: ".gmdate("D, d M Y H:i:s")." GMT");\n',
-                  'header("Cache-Control: post-check=0, pre-check=0",false);\n\n',
-                  'session_cache_limiter();\n',
-                  'session_start();\n\n',
-                  "require('/var/www/html/rapd/login/config.php');\n",
-                  "require('/var/www/html/rapd/login/functions.php');\n\n",
-                  'if(allow_user() != "yes")\n{\n',
-                  '    if(allow_local_data($_SESSION[data]) != "yes")\n    {\n',
-                  "        include ('/login/no_access.html');\n",
-                  '        exit();\n    }\n} else {\n    $local = 0;\n}\n?>\n',
-                  '<head>\n<!-- Inline Stylesheet -->\n<style type="text/css"><!--\n',
-                  '    body {font-size: 17px; }\n',
-                  '    table.integrate td, th {border-style: solid;\n',
-                  '            border-width: 2px;\n',
-                  '            border-spacing: 0;\n',
-                  '            border-color: gray;\n',
-                  '            padding: 5px;\n',
-                  '            text-align: center;\n',
-                  '            height: 2r10px;\n',
-                  '            font-size: 15px; }\n',
-                  '    table.integrate tr.alt {background-color: #EAF2D3; }\n',
-                  '--></style>\n</head>\n<body>\n<div id="container">\n',
-                  '<div align="center">\n',
-                  '<h3 class="green">Processing Results for %s</h3>\n'
-                  % self.image_data['ID'],
-                  '<h3 class="green">Images %s' % results['wedge'],
-                  '<h2>Spacegroup: %s</h2>\n' % results['scaling_spacegroup'],
-                  '<h2>Unit Cell: %s</h2>\n' % (' '.join(results['scaling_unit_cell'])),
-                  '<h2>SIGMAR (Mosaicity): %s&deg</h2>\n' % results['mosaicity'],
-                  '<h2>Asymptotic limit of I/sigma (ISa) = %s</h2>\n' % results['ISa'],
-                  '<table class="integrate">\n',
-                  '<tr><th></th><td>Overall</td><td>Inner Shell</td><td>Outer Shell</td></tr>\n'
-                  ]
-        pairs1 = [('High resolution limit','bins_high'),
-                      ('Low resolution limit','bins_low'),
-                      ('Completeness','completeness'),
-                      ('Multiplicity','multiplicity'),
-                      ('I/sigma','isigi'),
-                      ('CC(1/2)', 'cc-half'),
-                      ('Rmerge','rmerge_norm'),
-                      ('Rmerge (anomalous)', 'rmerge_anom'),
-                      ('Rmeas','rmeas_norm'),
-                      ('Rmeas (anomalous)','rmeas_anom'),
-                      ('Rpim','rpim_norm'),
-                      ('Rpim (anomalous)','rpim_anom'),
-                      #('Partial bias','bias'),
-                      ('Anomalous completeness','anom_completeness'),
-                      ('Anomalous multiplicity','anom_multiplicity'),
-                      ('Anomalous correlation','anom_correlation'),
-                      ('Anomalous slope','anom_slope'),
-                      ('Total observations','total_obs'),
-                      ('Total unique','unique_obs')]
-        count = 0
-        for l,k in pairs1:
-            if (count % 2 == 0):
-                line = '<tr><th>%s</th>' % l
-            else:
-                line = '<tr class="alt"><th>%s</th>' % l
-            for v in results[k]:
-                line += '<td>%s</td>' % v.strip()
-            if l == 'Anomalous slope':
-                line += '<td>--</td><td>--</td>'
-            line += '</tr>\n'
-            parsed.append(line)
-            count += 1
-        parsed.append('</table>\n</div><br>\n')
-
-        #slope = float(results['anom_slope'][0])
-        #flag = False
-        #parsed.extend(['<div align="left>\n',
-        #               '<h3 class ="green">Analysis for anomalous signal.</h3>\n',
-        #               '<pre>An anomalous slope > 1 may indicate the presence of anomalous signal.\n',
-        #               'This data set has an anomalous slope of %s.\n' % results['anom_slope'][0],
-        #               ])
-        #if slope > 1.1:
-        #    parsed.append('Analysis of this data set by anomalous slope indicates the presence of a significant anomalous signal.\n')
-        #    flag = True
-        #elif slope > 1.0:
-        #    parsed.append('Analysis of this data set by anomalous slope indicates either weak or no anomalous signal.\n')
-        #    flag = True
-        #else:
-        #    parsed.append('Analysis of this data set by anomalous slope indicates no detectable anomalous signal.\n')
-        #if flag == True:
-        #    if results['CC_cut'] != False:
-        #        parsed.append('\nThe anomalous correlation coefficient suggests the anomalous signal')
-        #        parsed.append(' extends to %s Angstroms.\n(cutoff determined where CC_anom is above 0.3)\n'
-        #                      % results['CC_cut'][0])
-        #    if results['RCR_cut'] != False:
-        #        parsed.append('\nThe r.m.s. correlation ratio suggests the anomalous signal')
-        #        parsed.append(' extends to %s Angstroms.\n(cutoff determined where RCR_anom is above 1.5)\n\n'
-        #                      % results['RCR_cut'][0])
-        #    if results['CC_cut'] == False and results['RCR_cut'] == False:
-        #        parsed.append('\nA cutoff for the anomalous signal could not be determined')
-        #        parsed.append(' based on either the\n anomalous correlation coefficient or')
-        #        parsed.append(' by the r.m.s. correlation ratio.\n\n</pre></div><br>\n')
-
-        parsed.append('<p><div align="center"><b>%s</b></p>' % results['text2'])
-        parsed.append('<div align="left"><pre>\n\n')
-        #parsed.append('At currently defined resolution...\n')
-        #for line in results['text']:
-        #    parsed.append('    %s' % line)
-        #if orig_rescut != False:
-        #    parsed.append ('At full detector resolution...\n')
-        #    for text in orig_rescut:
-        #        parsed.append('    %s' % text)
-        #    parsed.append('\n\n')
-        parsed.extend(['\n\nRAPD used the following programs for integrating and scaling the dataset:\n',
-                       '  XDS - \n',
-                       '       "XDS", W. Kabsch (2010) Acta Cryst. D66, 125-132.\n',
-                       '       "Integration, scaling, space-group assignment and post-refinement",',
-                       ' W. Kabsch (2010) Acta Cryst. D66, 133-144.\n',
-                       '  pointless and aimless - \n',
-                       '      "Scaling and assessment of data quality", P.R.',
-                       ' Evans (2006) Acta Cryst. D62, 72-82.\n',
-                       '      "An introduction to data reduction: space-group',
-                       ' determination and intensity statistics,',
-                       ' P.R. Evans (2011) Acta Cryst. D67, 282-292\n',
-                       '      "How good are my data and what is the resolution?"',
-                       ' P.R. Evans and G.N. Murshudov (2013) Acta Cryst. D66,',
-                       ' 1204-1214.\n',
-                       '  truncate, freerflag, and mtz2various  - \n',
-                       '       "The CCP4 Suite: Programs for Protein ',
-                       'Crystallography". Acta Cryst. D50, 760-763 \n',
-                       '  xdsstat - \n      http://strucbio.biologie.',
-                       'uni-konstanz.de/xdswiki/index.php/Xdsstat\n',
-                       '\n</pre></div></div></body>'
-                       ])
-        self.write_file('results.php', parsed)
-        return('results.php')
-
-
-
 
     def make_plots(self, graphs, tables):
         """
@@ -2388,74 +1920,74 @@ class RapdAgent(Process):
         return(graphs, tables, int_results)
 
     def parse_aimless2(self, logfile):
-	"""
-	Parses the aimless logfile in order to pull out data for
-	graphing and the results summary table.
-	Relevant values for the summary table are stored in a dict.
-	Relevant information for creating plots are stored in a dict,
-	with the following format for each entry (i.e. each plot):
+    	"""
+    	Parses the aimless logfile in order to pull out data for
+    	graphing and the results summary table.
+    	Relevant values for the summary table are stored in a dict.
+    	Relevant information for creating plots are stored in a dict,
+    	with the following format for each entry (i.e. each plot):
 
-	{"<*plot label*>":{
-	                   "data":{
-	                          "parameters":{<*line parameters*>},
-	                           "series":[
-	                                     {xs : [],
-	                                      ys : []
-	                                     }
-	                                    ]
-	                          }
-	                   "parameters" : {<*plot parameters*>}
-	                  }
-	 ...
-	 ...
-	}
-	"""
+    	{"<*plot label*>":{
+    	                   "data":{
+    	                          "parameters":{<*line parameters*>},
+    	                           "series":[
+    	                                     {xs : [],
+    	                                      ys : []
+    	                                     }
+    	                                    ]
+    	                          }
+    	                   "parameters" : {<*plot parameters*>}
+    	                  }
+    	 ...
+    	 ...
+    	}
+    	"""
 
-	log = smartie.parselog(logfile)
+    	log = smartie.parselog(logfile)
 
-	# Pull out information for the results summary table.
-	flag = True
-	summary = log.keytext(0).message().split("\n")
+    	# Pull out information for the results summary table.
+    	flag = True
+    	summary = log.keytext(0).message().split("\n")
 
-	# For some reason "Anomalous flag switched ON" is not always
-	# found, so the line below creates a blank entry for the
-	# the variable that should be created when that phrase is
-	# found, eliminating the problem where the program reports that
-	# the variable anomalous_report is referenced before assignment.
-	anomalous_report = ""
+    	# For some reason "Anomalous flag switched ON" is not always
+    	# found, so the line below creates a blank entry for the
+    	# the variable that should be created when that phrase is
+    	# found, eliminating the problem where the program reports that
+    	# the variable anomalous_report is referenced before assignment.
+    	anomalous_report = ""
 
-	for line in summary:
-		if "Space group" in line:
-			space_group = line.strip().split(": ")[-1]
-		elif "Average unit cell" in line:
-			unit_cell = map(float, line.split()[3:])
-		elif "Anomalous flag switched ON" in line:
-			anomalous_report = line
+    	for line in summary:
+    		if "Space group" in line:
+    			space_group = line.strip().split(": ")[-1]
+    		elif "Average unit cell" in line:
+    			unit_cell = map(float, line.split()[3:])
+    		elif "Anomalous flag switched ON" in line:
+    			anomalous_report = line
 
-	int_results = {
-	               "bins_low": map(float, summary[3].split()[-3:]),
-                   "bins_high": map(float, summary[4].split()[-3:]),
-                   "rmerge_anom": map(float, summary[6].split()[-3:]),
-                   "rmerge_norm": map(float, summary[7].split()[-3:]),
-                   "rmeas_anom": map(float, summary[8].split()[-3:]),
-                   "rmeas_norm": map(float, summary[9].split()[-3:]),
-                   "rpim_anom": map(float, summary[10].split()[-3:]),
-                   "rpim_norm": map(float, summary[11].split()[-3:]),
-                   "rmerge_top": float(summary[12].split()[-3]),
-                   "total_obs": map(int, summary[13].split()[-3:]),
-                   "unique_obs": map(int, summary[14].split()[-3:]),
-                   "isigi": map(float, summary[15].split()[-3:]),
-                   "cc-half": map(float, summary[16].split()[-3:]),
-                   "completeness": map(float, summary[17].split()[-3:]),
-                   "multiplicity": map(float, summary[18].split()[-3:]),
-                   "anom_completeness": map(float, summary[20].split()[-3:]),
-                   "anom_multiplicity": map(float, summary[21].split()[-3:]),
-                   "anom_correlation": map(float, summary[22].split()[-3:]),
-                   "anom_slope": [float(summary[23].split()[-3])],
-                   "scaling_spacegroup": space_group,
-                   "scaling_unit_cell": unit_cell,
-                   "text2": anomalous_report
-                  }
+    	int_results = {
+    	               "bins_low": map(float, summary[3].split()[-3:]),
+                       "bins_high": map(float, summary[4].split()[-3:]),
+                       "rmerge_anom": map(float, summary[6].split()[-3:]),
+                       "rmerge_norm": map(float, summary[7].split()[-3:]),
+                       "rmeas_anom": map(float, summary[8].split()[-3:]),
+                       "rmeas_norm": map(float, summary[9].split()[-3:]),
+                       "rpim_anom": map(float, summary[10].split()[-3:]),
+                       "rpim_norm": map(float, summary[11].split()[-3:]),
+                       "rmerge_top": float(summary[12].split()[-3]),
+                       "total_obs": map(int, summary[13].split()[-3:]),
+                       "unique_obs": map(int, summary[14].split()[-3:]),
+                       "isigi": map(float, summary[15].split()[-3:]),
+                       "cc-half": map(float, summary[16].split()[-3:]),
+                       "completeness": map(float, summary[17].split()[-3:]),
+                       "multiplicity": map(float, summary[18].split()[-3:]),
+                       "anom_completeness": map(float, summary[20].split()[-3:]),
+                       "anom_multiplicity": map(float, summary[21].split()[-3:]),
+                       "anom_correlation": map(float, summary[22].split()[-3:]),
+                       "anom_slope": [float(summary[23].split()[-3])],
+                       "scaling_spacegroup": space_group,
+                       "scaling_unit_cell": unit_cell,
+                       "text2": anomalous_report
+                      }
         # Smartie can pull table information based on a regular
         # expression pattern that matches the table title from
         # the aimless log file.
@@ -2494,8 +2026,8 @@ class RapdAgent(Process):
 		        },
                     "series" :
 			[ {
-                           "xs" : map(int, log.tables(rfactor)[0].col("N")),
-                           "ys" : [try_float(x, 0.0) for x in log.tables(rfactor)[0].col("Rmerge")] #map(try_float, log.tables(rfactor)[0].col("Rmerge"))
+                           "xs" : [int(x) for x in log.tables(rfactor)[0].col("N")],
+                           "ys" : [try_float(x, 0.0) for x in log.tables(rfactor)[0].col("Rmerge")]
                         } ]
                     },
                     {
@@ -2508,7 +2040,7 @@ class RapdAgent(Process):
 			 },
                      "series" :
 			[ {
-                         "xs" : map(int, log.tables(rfactor)[0].col("N")),
+                         "xs" : [try_int(x) for x in log.tables(rfactor)[0].col("N")],
                          "ys" : [try_float(x, 0.0) for x in log.tables(rfactor)[0].col("SmRmerge")]
                         } ]
                     } ],
@@ -2882,7 +2414,7 @@ class RapdAgent(Process):
 		}
 
 		# Return to the main program.
-	return (plots, int_results)
+        return (plots, int_results)
 
     def aimless(self, mtzin, resolution=False):
         """
@@ -2927,11 +2459,12 @@ class RapdAgent(Process):
         hklfile = 'XDS_ASCII.HKL'
         mtzfile = '_'.join([self.image_data['image_prefix'], 'pointless.mtz'])
         logfile = mtzfile.replace('mtz', 'log')
-
-        cmd = ('pointless xdsin %s hklout %s << eof > %s\n SETTING C2 \n eof'
-        #cmd = ('/home/necat/programs/ccp4-6.4.0/ccp4-6.4.0/bin/pointless xdsin %s hklout %s << eof > %s\n SETTING C2 \n eof'
-        #cmd = ('pointless-1.10.13.linux64 xdsin %s hklout %s << eof > %s\n SETTING C2 \n eof'
-               % (hklfile, mtzfile, logfile))
+        if self.spacegroup:
+            cmd = ('pointless xdsin %s hklout %s << eof > %s\nSETTING C2\nSPACEGROUP HKLIN\n eof'
+                   % (hklfile, mtzfile, logfile))
+        else:
+            cmd = ('pointless xdsin %s hklout %s << eof > %s\n SETTING C2 \n eof'
+                   % (hklfile, mtzfile, logfile))
         self.logger.debug("cmd = %s", cmd)
         p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.wait()
@@ -3226,93 +2759,93 @@ class RapdAgent(Process):
         #     return('Failed')
         return "Success"
 
-    def process_shelxC(self, unitcell, spacegroup, scafile):
-        """
-        Runs shelxC.  Determines an appropriate cutoff for anomalous signal.
-        Inserts table of shelxC results into the results summary page.
-        """
-        self.logger.debug('FastIntegration::process_shelxC')
-        command = ('shelxc junk << EOF\nCELL %s\nSPAG %s\nSAD %s\nEOF'
-                   % (unitcell, spacegroup, scafile) )
-        shelx_log = []
-        output0 = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT)
-        output0.wait()
-        for line in output0.stdout:
-            shelx_log.append(line.strip())
-            self.logger.debug(line)
-        results = self.parse_shelxC(shelx_log)
-        res = False
-        for i,v in enumerate(results['shelx_dsig']):
-            dsig = float(v)
-            if dsig > 1.0:
-                res =results['shelx_res'][i]
-        results['shelx_rescut'] = res
-        #self.insert_shelx_results(results)
-        return results
+    # def process_shelxC(self, unitcell, spacegroup, scafile):
+    #     """
+    #     Runs shelxC.  Determines an appropriate cutoff for anomalous signal.
+    #     Inserts table of shelxC results into the results summary page.
+    #     """
+    #     self.logger.debug('FastIntegration::process_shelxC')
+    #     command = ('shelxc junk << EOF\nCELL %s\nSPAG %s\nSAD %s\nEOF'
+    #                % (unitcell, spacegroup, scafile) )
+    #     shelx_log = []
+    #     output0 = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE,
+    #                                stderr=subprocess.STDOUT)
+    #     output0.wait()
+    #     for line in output0.stdout:
+    #         shelx_log.append(line.strip())
+    #         self.logger.debug(line)
+    #     results = self.parse_shelxC(shelx_log)
+    #     res = False
+    #     for i,v in enumerate(results['shelx_dsig']):
+    #         dsig = float(v)
+    #         if dsig > 1.0:
+    #             res =results['shelx_res'][i]
+    #     results['shelx_rescut'] = res
+    #     #self.insert_shelx_results(results)
+    #     return results
 
-    def parse_shelxC(self, logfile):
-        """
-        Parses the shelxc output.
-        """
-        self.logger.debug('FastIntegration::parse_shelxC')
-        shelxc_results={}
-        for line in logfile:
-            if line.startswith('Resl'):
-                if line.split()[2] == '-':
-                    shelxc_results['shelx_res'] = line.split()[3::2]
-                else:
-                    shelxc_results['shelx_res'] = line.split()[2:]
-                #shelxc_results['shelx_res'] = line.split()[3::2]
-                shelxc_results['shelx_res'] = line.split()[2:]
-            elif line.startswith('N(data)'):
-                shelxc_results['shelx_data'] = line.split()[1:]
-            elif line.startswith('<I/sig>'):
-                shelxc_results['shelx_isig'] = line.split()[1:]
-            elif line.startswith('%Complete'):
-                shelxc_results['shelx_comp'] = line.split()[1:]
-            elif line.startswith('<d"/sig>'):
-                shelxc_results['shelx_dsig'] = line.split()[1:]
-        return(shelxc_results)
+    # def parse_shelxC(self, logfile):
+    #     """
+    #     Parses the shelxc output.
+    #     """
+    #     self.logger.debug('FastIntegration::parse_shelxC')
+    #     shelxc_results={}
+    #     for line in logfile:
+    #         if line.startswith('Resl'):
+    #             if line.split()[2] == '-':
+    #                 shelxc_results['shelx_res'] = line.split()[3::2]
+    #             else:
+    #                 shelxc_results['shelx_res'] = line.split()[2:]
+    #             #shelxc_results['shelx_res'] = line.split()[3::2]
+    #             shelxc_results['shelx_res'] = line.split()[2:]
+    #         elif line.startswith('N(data)'):
+    #             shelxc_results['shelx_data'] = line.split()[1:]
+    #         elif line.startswith('<I/sig>'):
+    #             shelxc_results['shelx_isig'] = line.split()[1:]
+    #         elif line.startswith('%Complete'):
+    #             shelxc_results['shelx_comp'] = line.split()[1:]
+    #         elif line.startswith('<d"/sig>'):
+    #             shelxc_results['shelx_dsig'] = line.split()[1:]
+    #     return(shelxc_results)
 
-    def insert_shelx_results(self, results):
-        """
-        Inserts shelxC results into the results summary webpage.
-        """
-        self.logger.debug('FastIntegration::insert_shelx_results')
-
-        htmlfile = open('results.php', 'r').readlines()
-        if results['shelx_rescut'] == False:
-            text = ('\nAnalysis of ShelxC results finds no resolution shell '
-                    + 'where d"/sig is greater than 1.0.\n')
-            htmlfile.insert(-10, text)
-        else:
-            text = ('\nAnalsysis of ShelxC results finds d"/sig greater than '
-                    + '1.0 for at least one resolution shell.\n')
-            htmlfile.insert(-10, text)
-            shelxc = ('<div align ="center">\n' +
-                      '<h3 class="green">ShelxC analysis of data</h3>\n' +
-                      '<table class="integrate">\n' +
-                      '<tr><th>Resl.</th>')
-            for item in results['shelx_res']:
-                shelxc += ('<td>%s</td>' % item)
-            shelxc += ('</tr>\n<tr class="alt"><th>N(data)</th>')
-            for item in results['shelx_data']:
-                shelxc += ('<td>%s</td>' % item)
-            shelxc +=('</tr>\n<tr><th>IsigI</th>')
-            for item in results['shelx_isig']:
-                shelxc += ('<td>%s</td>' % item)
-            shelxc += ('</tr>\n<tr class="alt"><th>%Complete</th>')
-            for item in results['shelx_comp']:
-                shelxc += ('<td>%s</td>' % item)
-            shelxc += ('</tr>\n<tr><th>d"/sig</th>')
-            for item in results['shelx_dsig']:
-                shelxc += ('<td>%s</td>' % item)
-            shelxc += ('</tr>\n<caption>For zero signal d"/sig should be '
-                          + 'about 0.80</caption>\n</table></div><br>\n')
-            htmlfile.insert(-9, shelxc)
-        self.write_file('results.php', htmlfile)
-        return
+    # def insert_shelx_results(self, results):
+    #     """
+    #     Inserts shelxC results into the results summary webpage.
+    #     """
+    #     self.logger.debug('FastIntegration::insert_shelx_results')
+    #
+    #     htmlfile = open('results.php', 'r').readlines()
+    #     if results['shelx_rescut'] == False:
+    #         text = ('\nAnalysis of ShelxC results finds no resolution shell '
+    #                 + 'where d"/sig is greater than 1.0.\n')
+    #         htmlfile.insert(-10, text)
+    #     else:
+    #         text = ('\nAnalsysis of ShelxC results finds d"/sig greater than '
+    #                 + '1.0 for at least one resolution shell.\n')
+    #         htmlfile.insert(-10, text)
+    #         shelxc = ('<div align ="center">\n' +
+    #                   '<h3 class="green">ShelxC analysis of data</h3>\n' +
+    #                   '<table class="integrate">\n' +
+    #                   '<tr><th>Resl.</th>')
+    #         for item in results['shelx_res']:
+    #             shelxc += ('<td>%s</td>' % item)
+    #         shelxc += ('</tr>\n<tr class="alt"><th>N(data)</th>')
+    #         for item in results['shelx_data']:
+    #             shelxc += ('<td>%s</td>' % item)
+    #         shelxc +=('</tr>\n<tr><th>IsigI</th>')
+    #         for item in results['shelx_isig']:
+    #             shelxc += ('<td>%s</td>' % item)
+    #         shelxc += ('</tr>\n<tr class="alt"><th>%Complete</th>')
+    #         for item in results['shelx_comp']:
+    #             shelxc += ('<td>%s</td>' % item)
+    #         shelxc += ('</tr>\n<tr><th>d"/sig</th>')
+    #         for item in results['shelx_dsig']:
+    #             shelxc += ('<td>%s</td>' % item)
+    #         shelxc += ('</tr>\n<caption>For zero signal d"/sig should be '
+    #                       + 'about 0.80</caption>\n</table></div><br>\n')
+    #         htmlfile.insert(-9, shelxc)
+    #     self.write_file('results.php', htmlfile)
+    #     return
 
     def parse_integrateLP(self):
         """
@@ -3347,46 +2880,21 @@ class RapdAgent(Process):
         """
         Checks xds results for consistency with user input spacegroup.
         If inconsistent, tries to force user input spacegroup on data.
+
+        Returns new input file for intgration
         """
-        sym_dict = {'P1' : 1,
-                    'P2' : 3, 'P21' : 4,
-                    'C2' : 5,
-                    'P222' : 16, 'P2221' : 17, 'P21212' : 18, 'P212121' : 19,
-                    'C222' : 21, 'C2221' : 20,
-                    'F222' : 22,
-                    'I222' : 23, 'I212121' : 24,
-                    'P4' : 75, 'P41' : 76, 'P42' : 77, 'P43' : 78,
-                    'P422' : 89, 'P4212' : 90,
-                    'P4122' : 91, 'P41212' : 92, 'P4222' : 93, 'P42212' : 94,
-                    'P4322' : 95, 'P43212' : 96,
-                    'I4' : 79, 'I41' : 80, 'I422' : 97, 'I4122' : 98,
-                    'P3' : 143, 'P31' : 144, 'P32' : 145, 'P312' : 149,
-                    'P321' : 150, 'P3112' : 151, 'P3121' : 152, 'P3212' : 153,
-                    'P3221' : 154, 'P6' : 168, 'P61' : 169, 'P65' : 170,
-                    'P62' : 171, 'P64' : 172, 'P63' : 173, 'P622' : 177,
-                    'P6122' : 178, 'P6522' : 179, 'P6222' : 180, 'P6422' : 181,
-                    'P6322' : 182,
-                    'R3' : 146, 'R32' : 155,
-                    'P23' : 195, 'P213' : 198, 'P432' : 207, 'P4232' : 208,
-                    'P4332' : 212, 'P4132' : 213,
-                    'F23' : 196, 'F432' : 209, 'F4132' : 210,
-                    'I23' : 197, 'I213' : 199, 'I432' : 211, 'I4132' : 214
-                    }
-        sg_num = sym_dict[self.spacegroup]
-        logfile = open('XDS.LOG', 'r').readlines()
-        for num in (len(logfile),0,-1):
-            if 'SPACE_GROUP_NUMBER=' in logfile(num):
-                line = logfile(num).split('=')
-                break
-        if sg_num != int(line[-1]):
-            self.modify_xdsinput_for_symm(xdsinp, sg_num, 'IDXREF.LP')
-            self.tprint(arg="\n  Integrating with user-input spacegroup forced", level=99, color="white", newline=False)
-            self.xds_run(xdsdir)
-            newinp = self.check_for_xds_errors(xdsdir, xdsinp)
-            if newinp == False:
-                self.logger.debug('  Unknown xds error occurred. Please check for cause!')
-                return('Failed')
-        return(newinp)
+
+        sg_num = int(Utils.std2intl[self.spacegroup])
+
+        # Change to directory
+        os.chdir(xdsdir)
+
+        new_inp = self.modify_xdsinput_for_symm(xdsinp, sg_num, "IDXREF.LP")
+
+        # Make sure we end in the right place
+        os.chdir(self.dirs['work'])
+
+        return new_inp
 
     def modify_xdsinput_for_symm(self, xdsinp, sg_num, logfile):
         """
@@ -3424,17 +2932,18 @@ class RapdAgent(Process):
         # Now search IDXREF.LP for matching cell information.
         idxref = open(logfile, 'r').readlines()
         for line in idxref:
+            # print line
             if bravais in line and '*' in line:
                 splitline = line.split()
+                # print splitline
+                # print splitline[4:]
                 break
-        cell = ('%s %s %s %s %s %s' %(splitline[4:]))
-        xdsinp[-2] = 'JOB=INTEGRATE CORRECT\n\n'
-        xdsinp.append('SPACE_GROUP_NUMBER=%s' % sg_num)
-        xdsinp.append('UNIT_CELL_CONSTANTS=%s' % cell)
-        self.write_file('XDS.INP', xdsinp)
-        return
-
-
+        cell = ('%s %s %s %s %s %s' % tuple(splitline[4:]))
+        xdsinp[-2] = 'JOB=DEFPIX INTEGRATE CORRECT\n\n'
+        xdsinp.append('SPACE_GROUP_NUMBER=%d\n' % sg_num)
+        xdsinp.append('UNIT_CELL_CONSTANTS=%s\n' % cell)
+        # self.write_file('XDS.INP', xdsinp)
+        return xdsinp
 
 
 class DataHandler(threading.Thread):

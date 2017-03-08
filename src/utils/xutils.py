@@ -37,6 +37,56 @@ import agents.subcontractors.parse as Parse
 
 bravais   = ['1', '5', '3', '22', '23', '21', '16', '79', '75', '143', '146', '196', '197', '195']
 
+xds_bravais_types = {
+    "aP": (1,),
+    "mP": (3, 4),
+    "mC": (5,),
+    "mI": (5,),
+    "oP": (16, 17, 18, 19),
+    "oC": (20, 21),
+    "oF": (22,),
+    "oI": (23, 24),
+    "tP": (75, 76, 77, 78, 89, 90, 91, 92, 93, 94, 95, 96),
+    "tI": (79, 80, 97, 98),
+    "hP": (
+        143,
+        144,
+        145,
+        149,
+        150,
+        151,
+        152,
+        153,
+        154,
+        168,
+        169,
+        170,
+        171,
+        172,
+        173,
+        177,
+        178,
+        179,
+        180,
+        181,
+        182,
+        ),
+    "hR": (146, 155),
+    "cP": (195, 198, 207, 208, 212, 213),
+    "cF": (196, 209, 210),
+    "cI": (197, 199, 211, 214)
+}
+
+# Reverse lookup for
+intl_to_xds_bravais_type = {}
+for key, val in xds_bravais_types.iteritems():
+    for sg in val:
+        if not sg in intl_to_xds_bravais_type:
+            intl_to_xds_bravais_type[sg] = ()
+        intl_to_xds_bravais_type[sg] += (key,)
+
+
+
 subgroups = {  'None' : [],
                '1'    : [],
                '5'    : [],

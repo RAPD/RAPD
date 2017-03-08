@@ -227,6 +227,8 @@ def main():
         logger.debug("  arg:%s  val:%s", pair[0], pair[1])
         tprint(arg="  arg:%-20s  val:%s" % (pair[0], pair[1]), level=10, color="white")
 
+    sys.exit()
+
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
     logger.debug("\n" + text.info + "Environmental variables" + text.stop)

@@ -65,10 +65,10 @@ dp_parser.add_argument("--noplot",
                        help="Do not display plots in CLI")
 
 # No color in terminal printing
-dp_parser.add_argument("--nocolor",
-                       action="store_true",
+dp_parser.add_argument("--color",
+                       action="store_false",
                        dest="no_color",
-                       help="Do not use colors in CLI")
+                       help="Use colors in CLI")
 
 # Test mode?
 dp_parser.add_argument("-t", "--test",
@@ -116,7 +116,7 @@ dp_parser.add_argument("-b", "--beamcenter",
                        help="Define the beam center x,y")
 
 # Spacegroup
-dp_parser.add_argument("-sg", "--spacegroup",
+dp_parser.add_argument("-sg", "--sg", "--spacegroup",
                        action="store",
                        dest="spacegroup",
                        default=False,
@@ -165,7 +165,8 @@ dp_parser.add_argument("--nproc",
                        dest="nproc",
                        type=int,
                        default=multiprocessing.cpu_count(),
-                       help="Number of processors to use. Defaults to the number of processors available")
+                       help="Number of processors to use. Defaults to the number of \
+                             processors available")
 
 # The rapd file generating parser - to be used by commandline RAPD processes
 gf_parser = argparse.ArgumentParser(add_help=False)
