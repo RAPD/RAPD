@@ -21,7 +21,7 @@ A number of packages are required for the full install to function properly. The
 
 # Databases
 Running a full site installation requires both Redis and MongoDB. To understand why these are necessary and how to set them up, please see the documentation.
-## Docker
+### Docker
 Using Docker to install the required databases is a workable approach.
 To install and run the databases using Docker:  
 1. Check if Docker is working `sudo docker run hello-world`  
