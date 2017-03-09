@@ -56,13 +56,14 @@ class DetectorFileGenerator(CommandlineFileGenerator):
         self.write_file_docstring()
         self.write_license()
         self.write_docstrings()
-        self.write_imports(write_list=("json",
+        self.write_imports(write_list=("argparse",
+                                       "json",
                                        "os",
                                        "re",
                                        "time"))
         self.write_detector()
-        self.write_commandline()
-        self.write_main_func(description="Parse image file header")
+        self.write_commandline(description="Parse image file header")
+        self.write_main_func()
         self.write_main()
 
     def write_main_func(self, main_func_lines=False):

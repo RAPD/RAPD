@@ -397,17 +397,18 @@ def main(test_images):
         # except:
         #     print "%20s::%s" % ("error", "Severe error reading %s" % os.path.basename(test_image))
 
-        print "\nHeader information"
-        print "===================="
-        if detector.has_key("detector"):
-            SITE = False
-            detector_target = detector.get("detector")
-            detector_module = load_detector(detector_target)
-        header = detector_module.read_header(test_image)
-        keys = header.keys()
-        keys.sort()
-        for key in keys:
-            print "%20s::%s" % (key, header[key])
+        if isinstance(detector, dict):
+            print "\nHeader information"
+            print "===================="
+            if detector.has_key("detector"):
+                SITE = False
+                detector_target = detector.get("detector")
+                detector_module = load_detector(detector_target)
+            header = detector_module.read_header(test_image)
+            keys = header.keys()
+            keys.sort()
+            for key in keys:
+                print "%20s::%s" % (key, header[key])
 
 
         if tmp_dir:

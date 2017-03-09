@@ -60,6 +60,8 @@ DETECTORS = {
         },
     ("Pilatus-6M", "PILATUS3 6M S/N 60-0131"): {
         "detector": "bcsb502_dectris_pilatus36m"
-    }
-
+    },
+    ("RAXIS", "Dr. R-AXIS VII"): {
+        # "detector": "bcsb502_dectris_pilatus36m"
+    },
 }
