@@ -214,12 +214,16 @@ def get_detector_file(image):
     except (IOError, AttributeError, RuntimeError):
         # print error
         return False
-    # print i.vendortype
-    # print i.parameters["DETECTOR_SN"]
 
-    if (i.vendortype, i.parameters["DETECTOR_SN"]) in detector_list.DETECTORS:
+    # print ">>>%s<<<" % i.vendortype
+    # print ">>>%s<<<" % i.parameters["DETECTOR_SN"]
+
+    v_type = i.vendortype.strip()
+    sn = i.parameters["DETECTOR_SN"].strip()
+
+    if (v_type, sn) in detector_list.DETECTORS:
         # print "%s: %s %s %s" % (image, detector_list.DETECTORS[(i.vendortype, i.parameters["DETECTOR_SN"])], i.vendortype, i.parameters["DETECTOR_SN"])
-        return detector_list.DETECTORS[(i.vendortype, i.parameters["DETECTOR_SN"])]
+        return detector_list.DETECTORS[(v_type, sn)]
     else:
         return False
 

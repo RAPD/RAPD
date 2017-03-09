@@ -177,7 +177,7 @@ def read_header(fullname, beam_settings=False):
         "beam_y": image.head.get("beampixels_y", None),
         "chi": image.head.get("chi", None),
         "date": image.head.get("date", None),
-        "detector": "RAXIS",
+        "detector": DETECTOR,
         "detector_sn": image.head.get("operatorname", None),
         "distance": image.head.get("distance", None),
         "filter": image.head.get("filter", None),

@@ -59,8 +59,7 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
         image_numbers.append(str(header["image_number"]))
         image_template = header["image_template"]
     image_numbers.sort()
-    run_repr = "rapd_index_"
-               + image_template.replace(detector_module.DETECTOR_SUFFIX, "").replace("?", "")
+    run_repr = "rapd_index_" + image_template.replace(detector_module.DETECTOR_SUFFIX, "").replace("?", "")
     run_repr += "+".join(image_numbers)
 
     command["directories"] = {

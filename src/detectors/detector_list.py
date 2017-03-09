@@ -27,14 +27,14 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 DETECTORS = {
-    ("ADSC", 413): "",                          # ESRF ID14-2
-    ("ADSC", 430): "",                          #
-    ("ADSC", 446): "adsc_q315",                 # NSLS X25 > X26C
+    ("ADSC", 413): "",                              # ESRF ID14-2
+    ("ADSC", 430): "",                              #
+    ("ADSC", 446): "adsc_q315",                     # NSLS X25 > X26C
     ("ADSC", 911): {
-        "detector": "necat_adsc_q315"           # APS 24-ID-C
+        "detector": "necat_adsc_q315"               # APS 24-ID-C
         },
     ("ADSC", 916): {
-        "detector": "necat_adsc_q315",           # APS 24-ID-E
+        "detector": "necat_adsc_q315",              # APS 24-ID-E
         # "site": "necat_e"
         },
     ("Eiger-9M", "Dectris Eiger 9M S/N E-18-0101"): {
@@ -50,7 +50,7 @@ DETECTORS = {
     ("MARCCD", 3): {
         "detector": "sercat_rayonix_mx225",
         },      # APS 22BM
-    ("MARCCD", 101): {                          # APS 22ID
+    ("MARCCD", 101): {                              # APS 22ID
         "detector": "sercat_rayonix_mx300hs",
         # "site": "sercat_id"
         },
@@ -61,7 +61,7 @@ DETECTORS = {
     ("Pilatus-6M", "PILATUS3 6M S/N 60-0131"): {
         "detector": "bcsb502_dectris_pilatus36m"
     },
-    ("RAXIS", "Dr. R-AXIS VII"): {
-        # "detector": "bcsb502_dectris_pilatus36m"
+    ("RAXIS", "Dr. R-AXIS VII"): {                  # UCLA
+        "detector": "ucla_rigaku_raxisivpp"
     },
 }
