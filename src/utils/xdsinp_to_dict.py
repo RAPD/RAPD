@@ -110,7 +110,7 @@ class INP2DICT(object):
         # The OrderedDict
         print "XDSINP =  OrderedDict(["
         for key, val in xds_dict.iteritems():
-            print "    (\"%s\", \"%s\")" % (key, str(val))
+            print "    (\"%s\", \"%s\")," % (key, str(val))
 
         print "    ])"
         # with open(self.xdsdict, "w") as file:
