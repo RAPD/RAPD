@@ -57,6 +57,7 @@ class DetectorFileGenerator(CommandlineFileGenerator):
         self.write_license()
         self.write_docstrings()
         self.write_imports(write_list=("argparse",
+                                       "from collections import OrderedDict",
                                        "json",
                                        "os",
                                        "re",

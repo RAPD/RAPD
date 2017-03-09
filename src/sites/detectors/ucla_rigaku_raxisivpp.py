@@ -26,6 +26,7 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
+from collections import OrderedDict
 # import datetime
 # import glob
 import json
@@ -75,6 +76,23 @@ XDS_FLIP_BEAM = detector.XDS_FLIP_BEAM
 # XDSINP.update({})
 # Overwrite XDS information with new data
 # XDSINP = {}
+XDSINP =  OrderedDict([
+    ("NX", "3000")
+    ("MINIMUM_VALID_PIXEL_VALUE", "0 ")
+    ("VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS", " 6000 30000")
+    ("QY", "0.100")
+    ("QX", "0.1000")
+    ("DELPHI", " 5.0")
+    ("INCIDENT_BEAM_DIRECTION", "0.0 0.0 1.0")
+    ("OVERLOAD", "1000000")
+    ("DIRECTION_OF_DETECTOR_Y-AXIS", " 0.0 -1.0 0.0")
+    ("NY", "3000")
+    ("DIRECTION_OF_DETECTOR_X-AXIS", " 1.0  0.0 0.0")
+    ("DETECTOR", "RAXIS  ")
+    ("POLARIZATION_PLANE_NORMAL", " 1.0 0.0 0.0")
+    ("TRUSTED_REGION", "0.0 1.35")
+    ("ROTATION_AXIS", " 0.0 1.0 0.0")
+    ])
 
 def parse_file_name(fullname):
     """

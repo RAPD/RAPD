@@ -193,6 +193,7 @@ class BaseFileGenerator(object):
     def write_imports(self, write_list=(), added_normal_imports=(), added_rapd_imports=()):
         """Write the import sections"""
         standard_imports = ("argparse",
+                            "from collections import OrderedDict",
                             "datetime",
                             "glob",
                             "json",
