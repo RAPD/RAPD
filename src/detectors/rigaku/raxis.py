@@ -75,6 +75,7 @@ RUN_NUMBER_IN_TEMPLATE = False
 HEADER_VERSION = 1
 
 # XDS information for constructing the XDS.INP file
+XDS_FLIP_BEAM = True
 # Import from more generic detector
 # XDSINP = detector.XDSINP
 # Update the XDS information from the imported detector

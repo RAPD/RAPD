@@ -128,6 +128,7 @@ class DetectorFileGenerator(CommandlineFileGenerator):
         # XDS information
         xds_info = [
             "# XDS information for constructing the XDS.INP file",
+            "# XDS_FLIP_BEAM = detector.XDS_FLIP_BEAM",
             "# Import from more generic detector",
             "# XDSINP = detector.XDSINP",
             "# Update the XDS information from the imported detector",
