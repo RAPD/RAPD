@@ -46,6 +46,7 @@ def load_module(seek_module, directories=False, logger=False):
         logger.debug("directories %s", directories)
 
     # # Agent we are looking for
+    # seek_module = "rapd_agent_%s" % command.lower()
     module = None
 
     # Wrap the directories as a string into an iterable
@@ -53,12 +54,16 @@ def load_module(seek_module, directories=False, logger=False):
         if isinstance(directories, str):
             directories = (directories,)
 
-    # Look for rapd plugins in the specified directories
+    # Look for rapd agents in the specified directories
     if directories:
         for directory in directories:
             try:
+                # print directory
+                # print glob.glob(directory.replace(".", "/")+"/*")
                 # print "Attempting to load module %s" % directory+"."+seek_module
+
                 if logger:
+                    logger.debug(glob.glob(directory.replace(".", "/")+"/*"))
                     logger.debug("Attempting to load module %s", directory+"."+seek_module)
                 module = importlib.import_module(directory+"."+seek_module)
                 break

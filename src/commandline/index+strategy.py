@@ -43,7 +43,7 @@ import detectors.detector_utils as detector_utils
 
 def construct_command(image_headers, commandline_args, detector_module, logger):
     """
-    Put together the command for the agent
+    Put together the command for the plugin
     """
 
     # The task to be carried out
@@ -80,7 +80,7 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     if counter == 1:
         command["header2"] = None
 
-    # Agent settings
+    # Plugin settings
     command["preferences"] = {}
 
     # JSON output?
@@ -161,7 +161,7 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     # Return address
     command["return_address"] = None
 
-    logger.debug("Command for index agent: %s", command)
+    logger.debug("Command for index plugin: %s", command)
     return command
 
 
@@ -472,24 +472,24 @@ def main():
 	# Single process lock?
     # utils.lock.file_lock(site_module.CONTROL_LOCK_FILE)
 
-    # Instantiate the agent
-    # Load the agent from directories defined in site file
+    # Instantiate the plugin
+    # Load the plugin from directories defined in site file
 
     # for d in sys.path:
     #     if d.endswith("src"):
-    #         toplevel_dir = d+".agents"
+    #         toplevel_dir = d+".plugins"
 
-    plugin = load_module(seek_module="rapd_agent_index+strategy",
-                         directories=["agents"],
+    plugin = load_module(seek_module="index+strategy",
+                         directories=["plugins"],
                          logger=logger)
 
     tprint(arg="\nPlugin information", level=10, color="blue")
-    tprint(arg="  Plugin type:    %s" % plugin.AGENT_TYPE, level=10, color="white")
-    tprint(arg="  Plugin subtype: %s" % plugin.AGENT_SUBTYPE, level=10, color="white")
+    tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10, color="white")
+    tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10, color="white")
     tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
-    plugin.RapdAgent(None, command, tprint, logger)
+    plugin.RapdPlugin(None, command, tprint, logger)
 
 if __name__ == "__main__":
 

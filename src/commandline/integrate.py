@@ -137,7 +137,7 @@ def get_run_data(detector_module, image_0_data, image_n_data, commandline_args):
 
 def construct_command(image_0_data, run_data, commandline_args, detector_module):
     """
-    Put together the command for the agent
+    Put together the command for the plugin
     """
 
     # The task to be carried out
@@ -193,7 +193,7 @@ RAPD Intgration
 def main():
     """
     The main process
-    Setup logging, gather information, and run the agent
+    Setup logging, gather information, and run the plugin
     """
 
     # Get the commandline args
@@ -340,29 +340,28 @@ def main():
     for key in keys:
         tprint(arg="    arg:%-22s  val:%s" % (key, run_data[key]), level=10, color="white")
 
-    # Construct the command for the agent
+    # Construct the command for the plugin
     command = construct_command(image_0_data,
                                 run_data,
                                 commandline_args,
                                 detector_module)
 
     # Load the plugin
-    plugin = load_module(seek_module="rapd_agent_integrate",
-                         directories=["agents"],
+    plugin = load_module(seek_module="integrate",
+                         directories=["plugins"],
                          logger=logger)
 
     tprint(arg="\nPlugin information", level=10, color="blue")
-    tprint(arg="  Plugin type:    %s" % plugin.AGENT_TYPE, level=10, color="white")
-    tprint(arg="  Plugin subtype: %s" % plugin.AGENT_SUBTYPE, level=10, color="white")
+    tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10, color="white")
+    tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10, color="white")
     tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
-    # Instantiate the agent
-    plugin.RapdAgent(site=None,
+    # Instantiate the plugin
+    plugin.RapdPlugin(site=None,
                      command=command,
                      tprint=tprint,
-                     logger=logger) #,
-                     # verbose=commandline_args.verbose)
+                     logger=logger)
 
 if __name__ == "__main__":
 
