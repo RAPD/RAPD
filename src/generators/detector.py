@@ -40,7 +40,7 @@ import argparse
 # import time
 
 # RAPD imports
-from rapd_generate_basefile import CommandlineFileGenerator, split_text_blob
+from basefile import CommandlineFileGenerator, split_text_blob
 # import commandline_utils
 # import import detectors.detector_utils as detector_utils
 # import utils
