@@ -219,7 +219,7 @@ def get_detector_file(image):
     # print ">>>%s<<<" % i.parameters["DETECTOR_SN"]
 
     v_type = i.vendortype.strip()
-    sn = i.parameters["DETECTOR_SN"].strip()
+    sn = str(i.parameters["DETECTOR_SN"]).strip()
 
     if (v_type, sn) in detector_list.DETECTORS:
         # print "%s: %s %s %s" % (image, detector_list.DETECTORS[(i.vendortype, i.parameters["DETECTOR_SN"])], i.vendortype, i.parameters["DETECTOR_SN"])

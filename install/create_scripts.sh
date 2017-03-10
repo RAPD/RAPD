@@ -33,7 +33,7 @@ if [ "$RAPD_HOME" != "" ]; then
   echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.integrate
   echo "# Make sure we can run XDS" >> $RAPD_HOME/bin/rapd.integrate
   echo "unamestr=\`uname\`" >> $RAPD_HOME/bin/rapd.integrate
-  echo "if [[ $unamestr == 'Darwin' ]]; then" >> $RAPD_HOME/bin/rapd.integrate
+  echo "if [[ \$unamestr == \"Darwin\" ]]; then" >> $RAPD_HOME/bin/rapd.integrate
   echo "   ulimit -s 65532" >> $RAPD_HOME/bin/rapd.integrate
   echo "fi" >> $RAPD_HOME/bin/rapd.integrate
   echo "# Call integrate" >> $RAPD_HOME/bin/rapd.integrate

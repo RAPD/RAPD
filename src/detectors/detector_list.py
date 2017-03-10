@@ -27,13 +27,13 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 DETECTORS = {
-    ("ADSC", 413): "",                              # ESRF ID14-2
-    ("ADSC", 430): "",                              #
-    ("ADSC", 446): "adsc_q315",                     # NSLS X25 > X26C
-    ("ADSC", 911): {
+    ("ADSC", "413"): "",                              # ESRF ID14-2
+    ("ADSC", "430"): "",                              #
+    ("ADSC", "446"): "adsc_q315",                     # NSLS X25 > X26C
+    ("ADSC", "911"): {
         "detector": "necat_adsc_q315"               # APS 24-ID-C
         },
-    ("ADSC", 916): {
+    ("ADSC", "916"): {
         "detector": "necat_adsc_q315",              # APS 24-ID-E
         # "site": "necat_e"
         },
@@ -44,13 +44,13 @@ DETECTORS = {
     ("Eiger-16M", "Dectris Eiger 16M S/N E-32-0108"): {
         "detector": "necat_dectris_eiger16m",
     },
-    ("MARCCD", 0): {
+    ("MARCCD", "0"): {
         "detector": "lscat_rayonix_mx300"
         },          # APS 21-ID-F
-    ("MARCCD", 3): {
+    ("MARCCD", "3"): {
         "detector": "sercat_rayonix_mx225",
         },      # APS 22BM
-    ("MARCCD", 101): {                              # APS 22ID
+    ("MARCCD", "101"): {                              # APS 22ID
         "detector": "sercat_rayonix_mx300hs",
         # "site": "sercat_id"
         },
