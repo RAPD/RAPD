@@ -46,6 +46,11 @@ if [ "$RAPD_HOME" != "" ]; then
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/generators\/test.py \"\$@\"" >>$RAPD_HOME/bin/rapd.generate_test
   chmod +x $RAPD_HOME/bin/rapd.generate_test
 
+  # Generic generate script
+  echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.generate
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/generators\/generate.py \"\$@\"" >>$RAPD_HOME/bin/rapd.generate
+  chmod +x $RAPD_HOME/bin/rapd.generate
+
   # Read an XDS input file and make a RAPD XDSINP dict
   echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.xds_to_dict
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/xdsinp_to_dict.py \"\$@\"" >>$RAPD_HOME/bin/rapd.xds_to_dict

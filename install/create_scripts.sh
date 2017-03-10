@@ -26,7 +26,7 @@ if [ "$RAPD_HOME" != "" ]; then
 
   # Index
   echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.index
-  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/commandline\/rapd_index+strategy.py \"\$@\"" >>$RAPD_HOME/bin/rapd.index
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/commandline\/index+strategy.py \"\$@\"" >>$RAPD_HOME/bin/rapd.index
   chmod +x $RAPD_HOME/bin/rapd.index
 
   # Integrate
