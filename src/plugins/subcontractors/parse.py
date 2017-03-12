@@ -29,6 +29,9 @@ __status__ = "Production"
 import os
 import pprint
 
+# RAPD imports
+from utils.numbers import try_int, try_float
+
 def setShelxResults(self, inp=False):
   """
   Output dict for SHelx results.
@@ -990,36 +993,36 @@ def ParseOutputBestPlots(self, inp):
     # Definitions for the expected values
     cast_vals = {
         "Relative Error and Intensity Plot": {
-            "Rel.Error": {"x": (lambda x: float(x)), "y": (lambda x: float(x))},
-            "Rel.Intensity": {"x": (lambda x: float(x)), "y": (lambda x: float(x))}
+            "Rel.Error": {"x": (lambda x: try_float(x)), "y": (lambda x: try_float(x))},
+            "Rel.Intensity": {"x": (lambda x: try_float(x)), "y": (lambda x: try_float(x))}
         },
         "Wilson Plot": {
-            "Theory": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))},
-            "Experiment": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))},
-            "Pred.low errors": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))},
-            "Pred.high errors": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))}
+            "Theory": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))},
+            "Experiment": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))},
+            "Pred.low errors": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))},
+            "Pred.high errors": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))}
         },
         "Maximal oscillation width": {
-            "resol": {"x": (lambda x:  int(x)), "y": (lambda x: float(x))}
+            "resol": {"x": (lambda x:  try_int(x)), "y": (lambda x: try_float(x))}
         },
         "Minimal oscillation ranges for different completenesses": {
-            "compl": {"x": (lambda x:  int(x)), "y": (lambda x: int(x))}
+            "compl": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_int(x))}
         },
         "Total exposure time vs resolution": {
-            "Expon.trend": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))},
-            "Predictions": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))}
+            "Expon.trend": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))},
+            "Predictions": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))}
         },
         "Average background intensity per second": {
-            "Background": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))},
-            "Predictions": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))}
+            "Background": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))},
+            "Predictions": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))}
         },
         "Intensity decrease due to radiation damage": {
-            "Rel.Intensity": {"x": (lambda x: float(x)), "y": (lambda x: float(x))},
-            "resol": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))}
+            "Rel.Intensity": {"x": (lambda x: try_float(x)), "y": (lambda x: try_float(x))},
+            "resol": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))}
         },
         "Rdamage vs.cumulative exposure time": {
-            "R-factor": {"x": (lambda x: float(x)), "y": (lambda x: float(x))},
-            "resol": {"x": (lambda x:  float(x)), "y": (lambda x: float(x))}
+            "R-factor": {"x": (lambda x: try_float(x)), "y": (lambda x: try_float(x))},
+            "resol": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))}
         }
     }
 

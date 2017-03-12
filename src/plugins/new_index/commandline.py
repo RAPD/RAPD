@@ -48,7 +48,7 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
 
     # The task to be carried out
     command = {
-        "command":"INDEX",
+        "command":"AUTOINDEX+STRATEGY",
         "process_id": uuid.uuid1().get_hex()
         }
 
@@ -479,7 +479,7 @@ def main():
     #     if d.endswith("src"):
     #         toplevel_dir = d+".plugins"
 
-    plugin = load_module(seek_module="index",
+    plugin = load_module(seek_module="index+strategy",
                          directories=["plugins"],
                          logger=logger)
 

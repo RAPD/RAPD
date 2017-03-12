@@ -29,7 +29,7 @@ __status__ = "Production"
 RAPD_PLUGIN = True
 
 # This handler's request type
-PLUGIN_TYPE = "INDEX"
+PLUGIN_TYPE = "AUTOINDEX+STRATEGY"
 PLUGIN_SUBTYPE = "CORE"
 
 # A unique UUID for this handler (uuid.uuid1().hex)
@@ -38,7 +38,6 @@ VERSION = "2.0.0"
 
 # Standard imports
 from collections import OrderedDict
-import glob
 import json
 import logging
 from multiprocessing import Process, Queue, Event
@@ -639,36 +638,6 @@ class RapdPlugin(Process):
             if self.verbose:
                 self.logger.debug("Raddose failed")
 
-    def errorBest(self, iteration=0, best_version="3.2.0"):
-        """
-        Run all the Best runs at the same time.
-        Reduce resolution limit and rerun Mosflm to calculate new files.
-        """
-
-        if self.verbose:
-            self.logger.debug("errorBest")
-
-        try:
-            if iteration != 0:
-                if self.test == False:
-                    temp = []
-                    f = "%s_res%s"%(self.index_number, iteration)
-                    shutil.copy(self.index_number, f)
-                    for line in open(f, "r").readlines():
-                        temp.append(line)
-                        if line.startswith("RESOLUTION"):
-                            temp.remove(line)
-                            temp.append("RESOLUTION %s\n" % str(float(line.split()[1]) + iteration))
-                    new = open(f, "w")
-                    new.writelines(temp)
-                    new.close()
-                    subprocess.Popen("sh %s" % f, shell=True).wait()
-            self.processBest(iteration, best_version)
-
-        except:
-            self.logger.exception("**ERROR in errorBest**")
-            self.best_log.append("\nCould not reset Mosflm resolution for Best.\n")
-
     def processBest(self, iteration=0, best_version="3.2.0", runbefore=False):
         """
         Construct the Best command and run. Passes back dict with PID:anom.
@@ -693,17 +662,15 @@ class RapdPlugin(Process):
         except KeyError:
             raise Exception("Header information missing image_template")
 
-        # Look for the correct hkl file
-        for test_depth in (3, 4, 5, 6):
-            test_file = "%s_%s.hkl" % (self.index_number, ("%0"+str(test_depth)+"d") % self.header["image_number"])
-            if os.path.exists(test_file):
-                counter_depth = test_depth
-                break
-
         image_number_format = "%0"+str(counter_depth)+"d"
         image_number = [image_number_format % self.header["image_number"],]
+        # image_number.append(self.header.get('fullname')[self.header.get('fullname').rfind('_')+1:self.header.get('fullname').rfind('.')])
         if self.header2:
             image_number.append(image_number_format % self.header2["image_number"])
+            # image_number.append(self.header2.get('fullname')[self.header2.get('fullname').rfind('_')+1:self.header2.get('fullname').rfind('.')])
+
+        print self.header["image_template"], counter_depth
+        print image_number_format, image_number
 
         # Tell Best if two-theta is being used.
         if int(float(self.header.get("twotheta", 0))) != 0:
@@ -782,9 +749,9 @@ class RapdPlugin(Process):
         command1 = command
         command1 += ' -a -o best_anom.plt -dna best_anom.xml'
         command += ' -o best.plt -dna best.xml'
-        # print image_number, image_number[0]
+        print image_number, image_number[0]
         end = ' -mos bestfile.dat bestfile.par %s_%s.hkl ' % (self.index_number, image_number[0])
-        # print end
+        print end
         """
         if self.pilatus:
           if os.path.exists(os.path.join(self.working_dir,'BKGINIT.cbf')):
@@ -968,6 +935,8 @@ class RapdPlugin(Process):
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::processStrategy")
 
+        self.tprint(arg="\nStarting strategy calculations", level=99, color="blue")
+
         # try:
         if iteration:
             st = iteration
@@ -987,19 +956,16 @@ class RapdPlugin(Process):
         self.check_best_detector(DETECTOR_TO_BEST.get(self.header.get("detector"), None))
 
         for i in range(st, end):
-            # Print for 1st BEST run
             if i == 1:
                 self.tprint(arg="  Starting BEST runs", level=99, color="white")
-            # Run Mosflm for strategy
             if i == 4:
                 self.tprint(arg="  Starting Mosflm runs", level=99, color="white")
                 Utils.folders(self, self.labelit_dir)
                 job = Process(target=self.processMosflm, name="mosflm%s" % i)
-            # Run BEST
             else:
                 Utils.foldersStrategy(self, os.path.join(os.path.basename(self.labelit_dir), str(i)))
                 # Reduces resolution and reruns Mosflm to calc new files, then runs Best.
-                job = Process(target=self.errorBest, name="best%s" % i, args=(i, best_version))
+                job = Process(target=Utils.errorBest, name="best%s" % i, args=(self, i, best_version))
             job.start()
             self.jobs[str(i)] = job
 
@@ -1117,34 +1083,6 @@ class RapdPlugin(Process):
         except:
             self.logger.exception("**Error in postprocessDistl**")
 
-    def error_best_post(self, iteration, error, anom=False):
-        """
-        Post error to proper log in postprocessBest.
-        """
-        if self.verbose:
-            self.logger.debug('error_best_post')
-        # try:
-        if anom:
-            j = ['ANOM','_anom']
-        else:
-            j = ['','']
-        if self.verbose:
-            self.logger.debug(error)
-        if iteration >= 3:
-            line = 'After 3 tries, Best %s failed. Will run Mosflm %s strategy'%(j[0],j[0])
-            if self.verbose:
-                self.logger.debug(line)
-        else:
-            iteration += 1
-            back_counter = 4 - iteration
-            line = 'Error in Best %s strategy. Retrying Best %s more time(s)'%(j[0],back_counter)
-            if self.verbose:
-                self.logger.debug(line)
-        eval('self.best%s_log'%j[1]).append('\n%s'%line)
-
-        # except:
-        #     self.logger.exception('**Error in error_best_post**')
-
     def postprocessBest(self, inp, runbefore=False):
         """
         Send Best log to parsing and save output dict. Error check the results and
@@ -1224,7 +1162,7 @@ class RapdPlugin(Process):
                            "neg B":"Adjusting resolution",
                            "isotropic B":"Isotropic B detected"}
                     if out.has_key(data):
-                        self.error_best_post(iteration, out[data],anom)
+                        Utils.errorBestPost(self, iteration, out[data],anom)
                 self.tprint(arg="BEST unable to calculate a strategy", level=30, color="red")
                 # print data
                 return("FAILED")
@@ -1296,8 +1234,6 @@ class RapdPlugin(Process):
         """
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::run_queue")
-
-        self.tprint(arg="\nStarting strategy calculations", level=99, color="blue")
 
         try:
             def set_best_results(i,x):

@@ -58,6 +58,7 @@ import numpy
 # RAPD imports
 from subcontractors.xdsme.xds2mos import Xds2Mosflm
 from utils.communicate import rapd_send
+from utils.numbers import try_int, try_float
 from subcontractors.stats import AutoStats
 import utils.text as text
 import utils.xutils as Utils
@@ -100,25 +101,25 @@ VERSIONS = {
         ),
 }
 
-def try_float(number, default="NO DEFAULT"):
-    """Attempt to cast to a float, but return string if not"""
-    try:
-        return float(number)
-    except ValueError:
-        if default != "NO DEFAULT":
-            return default
-        else:
-            return number
-
-def try_int(number, default="NO DEFAULT"):
-    """Attempt to cast to an int, but return string if not"""
-    try:
-        return float(number)
-    except ValueError:
-        if default != "NO DEFAULT":
-            return default
-        else:
-            return number
+# def try_float(number, default="NO DEFAULT"):
+#     """Attempt to cast to a float, but return string if not"""
+#     try:
+#         return float(number)
+#     except ValueError:
+#         if default != "NO DEFAULT":
+#             return default
+#         else:
+#             return number
+#
+# def try_int(number, default="NO DEFAULT"):
+#     """Attempt to cast to an int, but return string if not"""
+#     try:
+#         return float(number)
+#     except ValueError:
+#         if default != "NO DEFAULT":
+#             return default
+#         else:
+#             return number
 
 class RapdPlugin(Process):
     """
