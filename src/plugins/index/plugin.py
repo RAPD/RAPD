@@ -51,11 +51,11 @@ import sys
 import time
 
 # RAPD imports
-import subcontractors.parse as Parse
-import subcontractors.summary as Summary
-from subcontractors.xoalign import RunXOalign
+import plugins.subcontractors.parse as Parse
+# import plugins.subcontractors.summary as Summary
+from plugins.subcontractors.xoalign import RunXOalign
 from utils.communicate import rapd_send
-from utils.modules import load_module
+# from utils.modules import load_module
 import utils.xutils as Utils
 
 DETECTOR_TO_BEST = {

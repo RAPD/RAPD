@@ -347,8 +347,8 @@ def main():
                                 detector_module)
 
     # Load the plugin
-    plugin = load_module(seek_module="integrate",
-                         directories=["plugins"],
+    plugin = load_module(seek_module="plugin",
+                         directories=["plugins.integrate"],
                          logger=logger)
 
     tprint(arg="\nPlugin information", level=10, color="blue")

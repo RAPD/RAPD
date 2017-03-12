@@ -479,8 +479,8 @@ def main():
     #     if d.endswith("src"):
     #         toplevel_dir = d+".plugins"
 
-    plugin = load_module(seek_module="index",
-                         directories=["plugins"],
+    plugin = load_module(seek_module="plugin",
+                         directories=["plugins.index"],
                          logger=logger)
 
     tprint(arg="\nPlugin information", level=10, color="blue")
