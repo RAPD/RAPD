@@ -479,7 +479,7 @@ def main():
     #     if d.endswith("src"):
     #         toplevel_dir = d+".plugins"
 
-    plugin = load_module(seek_module="index+strategy",
+    plugin = load_module(seek_module="index",
                          directories=["plugins"],
                          logger=logger)
 

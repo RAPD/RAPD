@@ -662,6 +662,16 @@ class RapdAgent(Process):
         except KeyError:
             raise Exception("Header information missing image_template")
 
+        # Make sure that the file from labelit is properly named
+        print "Checking for hkl files"
+        if not os.path.exists("%s_%s.hkl" % (self.index_number, (("%0"+str(counter_depth)+"d") % image_number))):
+            print "Missing hkl file for counter_depth %d" % counter_depth
+            for attempted_counter_depth in (3, 4, 5, 6):
+                if os.path.exists("%s_%s.hkl" % (self.index_number, (("%0"+str(attempted_counter_depth)+"d") % image_number))):
+                    print "Found hkl file at counter depth of %d" % attempted_counter_depth
+                    counter_depth = attempted_counter_depth
+                    break
+
         image_number_format = "%0"+str(counter_depth)+"d"
         image_number = [image_number_format % self.header["image_number"],]
         # image_number.append(self.header.get('fullname')[self.header.get('fullname').rfind('_')+1:self.header.get('fullname').rfind('.')])
