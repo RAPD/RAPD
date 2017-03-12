@@ -38,7 +38,7 @@ import uuid
 import utils.log
 from utils.modules import load_module
 import utils.text as text
-import commandline_utils
+import utils.commandline_utils as commandline_utils
 import detectors.detector_utils as detector_utils
 
 def construct_command(image_headers, commandline_args, detector_module, logger):
@@ -48,7 +48,7 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
 
     # The task to be carried out
     command = {
-        "command":"AUTOINDEX+STRATEGY",
+        "command":"INDEX",
         "process_id": uuid.uuid1().get_hex()
         }
 
@@ -479,8 +479,8 @@ def main():
     #     if d.endswith("src"):
     #         toplevel_dir = d+".plugins"
 
-    plugin = load_module(seek_module="index+strategy",
-                         directories=["plugins"],
+    plugin = load_module(seek_module="plugin",
+                         directories=["plugins.index"],
                          logger=logger)
 
     tprint(arg="\nPlugin information", level=10, color="blue")

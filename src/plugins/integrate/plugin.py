@@ -56,10 +56,10 @@ import time
 import numpy
 
 # RAPD imports
-from subcontractors.xdsme.xds2mos import Xds2Mosflm
+from plugins.subcontractors.xdsme.xds2mos import Xds2Mosflm
 from utils.communicate import rapd_send
 from utils.numbers import try_int, try_float
-from subcontractors.stats import AutoStats
+from plugins.subcontractors.stats import AutoStats
 import utils.text as text
 import utils.xutils as Utils
 

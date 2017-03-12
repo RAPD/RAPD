@@ -38,7 +38,7 @@ import uuid
 import utils.log
 from utils.modules import load_module
 import utils.text as text
-import commandline_utils
+import utils.commandline_utils as commandline_utils
 import detectors.detector_utils as detector_utils
 
 def get_commandline():
@@ -347,8 +347,8 @@ def main():
                                 detector_module)
 
     # Load the plugin
-    plugin = load_module(seek_module="integrate",
-                         directories=["plugins"],
+    plugin = load_module(seek_module="plugin",
+                         directories=["plugins.integrate"],
                          logger=logger)
 
     tprint(arg="\nPlugin information", level=10, color="blue")
