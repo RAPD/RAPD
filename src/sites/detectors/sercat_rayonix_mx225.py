@@ -48,6 +48,7 @@ RUN_NUMBER_IN_TEMPLATE = False
 HEADER_VERSION = 1
 
 # XDS information
+XDS_FLIP_BEAM = True
 XDSINP = {
     "MAX_CELL_ANGLE_ERROR": "2.0",
     "MIN_RFL_Rmeas": "50.0",
