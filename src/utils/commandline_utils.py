@@ -224,7 +224,7 @@ def regularize_spacegroup(sg_in):
         sg_up = sg_in.upper()
         sg_num = spacegroup.std2intl[sg_up]
 
-    # print sg_num
+    print sg_num
     sys.exit()
     return sg_num
 
