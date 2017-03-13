@@ -97,16 +97,19 @@ class RapdPlugin(Process):
     }
     """
 
-    # For testing individual modules (Will not run in Test mode on cluster!! Can be set at end of __init__.)
+    # For testing individual modules (Will not run in Test mode on cluster!! Can be set at end of
+    # __init__.)
     test = False
 
-    # Removes junk files and directories at end. (Will still clean on cluster!! Can be set at end of __init__.)
+    # Removes junk files and directories at end. (Will still clean on cluster!! Can be set at end of
+    #  __init__.)
     clean = False
 
     # Runs in RAM (slightly faster), but difficult to debug.
     ram = False
 
-    # Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Slower (>10%).
+    # Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Slower
+    # (>10%).
     cluster_use = False
 
     # Switch for verbose
@@ -262,9 +265,9 @@ class RapdPlugin(Process):
 	    # Set for Eisenberg peptide work.
         self.sample_type = self.preferences.get("sample_type", "Protein")
         if self.sample_type == "Peptide":
-            self.peptide     = True
+            self.peptide = True
         else:
-            self.peptide     = False
+            self.peptide = False
 
         # BEST is default and if it fails Mosflm results are shown as backup.
         # Setting to 'mosflm' will force it to show Mosflm results regardless.
@@ -343,7 +346,7 @@ class RapdPlugin(Process):
         self.transmission = str(self.header.get("transmission", 10))
         # self.aperture = str(self.header.get("md2_aperture"))
         self.spacegroup = self.preferences.get("spacegroup", False)
-        self.flux = str(self.header.get("flux",'3E10'))
+        self.flux = str(self.header.get("flux", '3E10'))
         self.solvent_content = str(self.preferences.get("solvent_content", 0.55))
 
         Process.__init__(self, name="AutoindexingStrategy")
@@ -439,7 +442,7 @@ class RapdPlugin(Process):
 
         # Get unit cell
         cell = Utils.getLabelitCell(self)
-        nres = Utils.calcTotResNumber(self,self.volume)
+        nres = Utils.calcTotResNumber(self, self.volume)
         # Adding these typically does not change the Best strategy much, if it at all.
         patm = False
         satm = False
@@ -455,8 +458,8 @@ class RapdPlugin(Process):
         if self.header.has_key("flux"):
             beam_size_x = str(self.header.get("beam_size_x"))
             beam_size_y = str(self.header.get("beam_size_y"))
-            gauss_x     = str(self.header.get("gauss_x"))
-            gauss_y     = str(self.header.get("gauss_y"))
+            gauss_x = str(self.header.get("gauss_x"))
+            gauss_y = str(self.header.get("gauss_y"))
         raddose = open("raddose.com", "w+")
         setup = "raddose << EOF\n"
         if beam_size_x and beam_size_y:
@@ -545,9 +548,9 @@ class RapdPlugin(Process):
         try:
             name = str(self.header.get("fullname"))
             temp = name[name.rfind("_")+1:name.rfind(".")]
-            new_name = name.replace(name[name.rfind("_")+1:name.rfind(".")],len(temp)*"?")
+            new_name = name.replace(name[name.rfind("_")+1:name.rfind(".")], len(temp)*"?")
             #range = str(int(temp))+" "+str(int(temp))
-            command  = "JOB=XYCORR INIT\n"
+            command = "JOB=XYCORR INIT\n"
             command += Utils.calcXDSbc(self)
             command += "DETECTOR_DISTANCE=%s\n" % self.header.get("distance")
             command += "OSCILLATION_RANGE=%s\n" % self.header.get("osc_range")
@@ -608,7 +611,8 @@ class RapdPlugin(Process):
                     job = Process(target=Utils.processLocal, args=(inp, self.logger))
                 else:
                     inp = "distl.signal_strength %s" % eval("self.header%s" % l[i]).get("fullname")
-                    job = Process(target=Utils.processLocal,args=((inp, "distl%s.log" % i), self.logger))
+                    job = Process(target=Utils.processLocal,
+                                  args=((inp, "distl%s.log" % i), self.logger))
                 job.start()
                 self.distl_output.append(job)
 
@@ -744,7 +748,7 @@ class RapdPlugin(Process):
         best_detector = DETECTOR_TO_BEST.get(self.header.get("detector"), False)
         if not best_detector:
             self.tprint(arg="RAPD does not have a BEST definition for your detector type %s"
-                            % self.header.get("detector"),
+                        % self.header.get("detector"),
                         level=30,
                         color="red")
             return
@@ -793,15 +797,15 @@ class RapdPlugin(Process):
         """
         if self.header2:
             end += '%s_%s.hkl' % (self.index_number, image_number[1])
-        command  += end
+        command += end
         command1 += end
         d = {}
         jobs = {}
         l = [(command, ''), (command1, '_anom')]
-        st  = 0
+        st = 0
         end1 = 2
         if runbefore:
-            st  = runbefore[2]
+            st = runbefore[2]
             end1 = runbefore[3]
 
         # print l
@@ -829,7 +833,7 @@ class RapdPlugin(Process):
                     for job in jobs.keys():
                         if jobs[job].is_alive() == False:
                             del jobs[job]
-                            start, ran = self.findBestStrat(d['log'+l[int(job)][1]].replace('log', 'plt'))
+                            start, _ = self.findBestStrat(d['log'+l[int(job)][1]].replace('log', 'plt'))
                             if start != False:
                                 pass
                                 # self.processBest(iteration, (start, ran, int(job), int(job)+1))
@@ -1126,22 +1130,22 @@ class RapdPlugin(Process):
             self.logger.debug('error_best_post')
         # try:
         if anom:
-            j = ['ANOM','_anom']
+            j = ['ANOM', '_anom']
         else:
-            j = ['','']
+            j = ['', '']
         if self.verbose:
             self.logger.debug(error)
         if iteration >= 3:
-            line = 'After 3 tries, Best %s failed. Will run Mosflm %s strategy'%(j[0],j[0])
+            line = 'After 3 tries, Best %s failed. Will run Mosflm %s strategy'%(j[0], j[0])
             if self.verbose:
                 self.logger.debug(line)
         else:
             iteration += 1
             back_counter = 4 - iteration
-            line = 'Error in Best %s strategy. Retrying Best %s more time(s)'%(j[0],back_counter)
+            line = 'Error in Best %s strategy. Retrying Best %s more time(s)'%(j[0], back_counter)
             if self.verbose:
                 self.logger.debug(line)
-        eval('self.best%s_log'%j[1]).append('\n%s'%line)
+        eval('self.best%s_log'%j[1]).append('\n%s' % line)
 
         # except:
         #     self.logger.exception('**Error in error_best_post**')
@@ -1377,21 +1381,22 @@ class RapdPlugin(Process):
         Convert H5 files to CBF's for strategies.
         """
         if self.verbose:
-          self.logger.debug('AutoindexingStrategy::convert_images')
+            self.logger.debug('AutoindexingStrategy::convert_images')
 
         try:
-          def run_convert(img, imgn=False):
-            header = Utils.convert_hdf5_cbf(inp=img, imgn=imgn)
-            l = ['run_id', 'twotheta', 'place_in_run', 'date', 'transmission','collect_mode']
-            if type(header) == dict:
-              for x in range(len(l)):
-                del header[l[x]]
-            return (header)
+            def run_convert(img, imgn=False):
+                header = Utils.convert_hdf5_cbf(inp=img, imgn=imgn)
+                l = ['run_id', 'twotheta', 'place_in_run', 'date', 'transmission','collect_mode']
+                if type(header) == dict:
+                    for x in range(len(l)):
+                        del header[l[x]]
+                return (header)
 
-          self.header.update(run_convert(self.header['fullname'], imgn=1))
-          if self.header2:
-            self.header2.update(run_convert(self.header2['fullname'], imgn=2))
-          return True
+            self.header.update(run_convert(self.header['fullname'], imgn=1))
+
+            if self.header2:
+                self.header2.update(run_convert(self.header2['fullname'], imgn=2))
+            return True
 
         except:
             self.logger.exception('**ERROR in convert_images**')
@@ -1474,11 +1479,11 @@ class RapdPlugin(Process):
             os.chdir(self.labelit_dir)
             if self.spacegroup != False:
                 check_lg = Utils.checkSG(self, sym)
-                print check_lg
+                # print check_lg
                 # Input as number now.
                 # user_sg  = Utils.convertSG(self, self.spacegroup, reverse=True)
                 user_sg  = self.spacegroup
-                print user_sg
+                # print user_sg
                 # sys.exit()
                 if user_sg != sym:
                     fixSG = False
@@ -1537,17 +1542,17 @@ class RapdPlugin(Process):
                         p_e = line[line.find('>')+1:line.rfind('<')]
                 # If BEST failed...
                 if p_e == False:
-                    return('FAILED')
+                    return 'FAILED'
                 else:
                     return(int(round(float(p_e)-float(p_s[0]))))
             except:
                 self.logger.exception('**Error in getBestRotRange**')
-                return('FAILED')
+                return 'FAILED'
 
         try:
             phi_st = []
             phi_rn = []
-            st  = False
+            st = False
             end = False
             run = False
             if os.path.exists(inp):
@@ -1572,13 +1577,13 @@ class RapdPlugin(Process):
                     else:
                         run = True
             if run:
-                return((str(phi_st[phi_rn.index(min1)]), str(min1)))
+                return (str(phi_st[phi_rn.index(min1)]), str(min1))
             else:
-                return((False, False))
+                return (False, False)
 
         except:
             self.logger.exception('**Error in findBestStrat**')
-            return((False, False))
+            return (False, False)
 
     def print_info(self):
         """
@@ -1633,12 +1638,14 @@ class RapdPlugin(Process):
                     y_max = y_array.max() + 10
                     y_min = 0 #max(0, (y_array.min() - 10))
 
-                    gnuplot = subprocess.Popen(["gnuplot"], stdin=subprocess.PIPE) # %s,%s  (term_size[1], int(int(term_size[0])/3),
-                    gnuplot.stdin.write("""set term dumb %d,%d
-                                           set key outside
-                                           set title 'Minimal Oscillation Ranges %s'
-                                           set xlabel 'Starting Angle'
-                                           set ylabel 'Rotation Range' rotate by 90 \n""" %  (min(180, int(term_size[1])), max(30, int(int(term_size[0])/3)), tag))
+                    gnuplot = subprocess.Popen(["gnuplot"], stdin=subprocess.PIPE)
+                    gnuplot.stdin.write(
+                        """set term dumb %d,%d
+                           set key outside
+                           set title 'Minimal Oscillation Ranges %s'
+                           set xlabel 'Starting Angle'
+                           set ylabel 'Rotation Range' rotate by 90 \n""" %
+                           (min(180, int(term_size[1])), max(30, int(int(term_size[0])/3)), tag))
 
                     # Create the plot string
                     plot_string = "plot [0:180] [%d:%d] " % (y_min, y_max)
@@ -1653,7 +1660,7 @@ class RapdPlugin(Process):
                         xs = plot["series"][0]["xs"]
                         ys = plot["series"][0]["ys"]
                         for i, j in zip(xs, ys):
-                            gnuplot.stdin.write("%f %f\n" % (i,j))
+                            gnuplot.stdin.write("%f %f\n" % (i, j))
                         gnuplot.stdin.write("e\n")
 
                     # Now plot!
@@ -1719,8 +1726,8 @@ class RapdPlugin(Process):
                 # files = ["DNA_mosflm.inp", "bestfile.par"]
                 # files = ["mosflm.inp", "%s.mat"%self.index_number]
                 files = ["%s.mat" % self.index_number, "bestfile.par"]
-                for x,f in enumerate(files):
-                    shutil.copy(f,self.working_dir)
+                for x, f in enumerate(files):
+                    shutil.copy(f, self.working_dir)
                     if os.path.exists(os.path.join(self.working_dir, f)):
                         output["STAC file%s"%str(x+1)] = os.path.join(self.dest_dir, f)
                     else:
@@ -1850,14 +1857,19 @@ class RapdPlugin(Process):
         # Get the parsed results for reg and anom results and put them into a single dict.
         if dir1:
             # print ">>>", os.path.join(dir1, "best.plt")
-            plot = Parse.ParseOutputBestPlots(self, open(os.path.join(dir1, "best.plt"), "r").readlines())
+            plot = Parse.ParseOutputBestPlots(self,
+                                              open(os.path.join(dir1, "best.plt"), "r").readlines())
             if dir2:
                 # print ">>>", os.path.join(dir2, "best_anom.plt")
-                plotanom = Parse.ParseOutputBestPlots(self, open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
+                plotanom = Parse.ParseOutputBestPlots(
+                    self,
+                    open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
                 plot.update({"osc_range_anom": plotanom.get("osc_range")})
         elif dir2:
             # print ">>>", os.path.join(dir2, "best_anom.plt")
-            plot = Parse.ParseOutputBestPlots(self, open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
+            plot = Parse.ParseOutputBestPlots(
+                self,
+                open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
             plot.update({"osc_range_anom": plot.pop("osc_range")})
         else:
             run = False
@@ -1928,10 +1940,12 @@ class RunLabelit(Process):
 
         # params
         self.test = params.get("test", False)
-        # Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Adds 1-3s to total run time.
+        # Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Adds
+        # 1-3s to total run time.
         # self.cluster_use = params.get("cluster",True)
 
-        # If self.cluster_use == True, you can specify a batch queue on your cluster. False to not specify.
+        # If self.cluster_use == True, you can specify a batch queue on your cluster. False to not
+        # specify.
         self.cluster_queue = params.get("cluster_queue", False)
         # Get detector vendortype for settings. Defaults to ADSC.
         self.vendortype = params.get("vendortype", "ADSC")
@@ -1950,7 +1964,8 @@ class RunLabelit(Process):
     	# Make decisions based on input params
         if self.iterations != 6:
             self.short = True
-        # Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does not send results to database.
+        # Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does
+        # not send results to database.
         #******BEAMLINE SPECIFIC*****
         # if self.header.has_key("acc_time"):
         self.gui = True
@@ -1964,13 +1979,18 @@ class RunLabelit(Process):
         else:
             self.labelit_timer = 120
         # Turns on multiprocessing for everything
-        # Turns on all iterations of Labelit running at once, sorts out highest symmetry solution, then continues...(much better!!)
+        # Turns on all iterations of Labelit running at once, sorts out highest symmetry solution,
+        # then continues...(much better!!)
         self.multiproc = True
         if self.preferences.has_key("multiprocessing"):
             if self.preferences.get("multiprocessing") == "False":
                 self.multiproc = False
         self.sample_type = self.preferences.get("sample_type", "Protein")
+
         self.spacegroup = self.preferences.get("spacegroup", False)
+        if self.spacegroup != False:
+            self.tprint(arg="Spacegroup is set to %s" % self.spacegroup, level=10, color="white")
+
 
         # This is where I place my overall folder settings.
         self.working_dir = self.setup.get("work")
@@ -2053,14 +2073,14 @@ class RunLabelit(Process):
             self.logger.debug('RunLabelit::preprocessLabelit')
 
         # try:
-        twotheta       = str(self.header.get("twotheta", "0"))
+        twotheta = str(self.header.get("twotheta", "0"))
         #distance       = str(self.header.get('distance'))
         #x_beam         = str(self.preferences.get('x_beam', self.header.get('beam_center_x'))) #OLD
         #Once we figure out the beam center issue, I can switch to this.
 	      #x_beam         = str(self.header.get('beam_center_calc_x', self.header.get('beam_center_x')))
         #y_beam         = str(self.header.get('beam_center_calc_y', self.header.get('beam_center_y')))
-        x_beam         = str(self.header.get("x_beam"))
-        y_beam         = str(self.header.get("y_beam"))
+        x_beam = str(self.header.get("x_beam"))
+        y_beam = str(self.header.get("y_beam"))
         # x_beam         = str(self.header.get('beam_center_x'))
         # y_beam         = str(self.header.get('beam_center_y'))
 

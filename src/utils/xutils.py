@@ -736,7 +736,7 @@ def convertSG(self, inp, reverse=False):
     Convert SG to SG#.
     """
 
-    print "convertSG %s %s" % (inp, reverse)
+    # print "convertSG %s %s" % (inp, reverse)
 
     if self.verbose:
         self.logger.debug('Utilities::convertSG')
