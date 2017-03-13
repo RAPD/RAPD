@@ -517,10 +517,14 @@ def checkInverse(self, inp):
     else:
         return([inp])
 
-def checkSG(self,inp):
+def checkSG(self, inp):
   """
   Check SG subgroups.
   """
+
+  print "checkSG"
+  print inp
+
   if self.verbose:
     self.logger.debug('Utilities::checkSG')
 
@@ -716,7 +720,7 @@ def convert_hdf5_cbf(inp,
 
 
 
-def convertImage(self,inp,output):
+def convertImage(self, inp, output):
   """
   Convert image to new type.
   """
@@ -727,15 +731,19 @@ def convertImage(self,inp,output):
   except:
     self.logger.exception('**ERROR in Utils.convertImage**')
 
-def convertSG(self,inp,reverse=False):
-  """
-  Convert SG to SG#.
-  """
-  if self.verbose:
-    self.logger.debug('Utilities::convertSG')
-  #CCP4 conversion file /programs/i386-linux/ccp4/6.2.0/ccp4-6.2.0/lib/data/syminfo.lib
-  try:
-    intl2std =   {'P1'       : '1'  ,
+def convertSG(self, inp, reverse=False):
+    """
+    Convert SG to SG#.
+    """
+
+    print "convertSG %s %s" % (inp, reverse)
+
+    if self.verbose:
+        self.logger.debug('Utilities::convertSG')
+
+    #CCP4 conversion file /programs/i386-linux/ccp4/6.2.0/ccp4-6.2.0/lib/data/syminfo.lib
+    # try:
+    std2intl =   {'P1'       : '1'  ,
                   'C121'     : '5'  ,
                   'C2'       : '5'  ,
                   'I121'     : '5.1',
@@ -820,18 +828,19 @@ def convertSG(self,inp,reverse=False):
                   'P1211'    : 'P21'}
 
     if reverse:
-      for s,n in intl2std.items():
-        if n == inp:
-          if mono.has_key(s):
-            sg = mono[s]
-          else:
-            sg = s
+        for letters, number in std2intl.items():
+            if number == inp:
+                if mono.has_key(letters):
+                    sg = mono[letters]
+                else:
+                    sg = letters
     else:
-      sg = intl2std[inp]
-    return(sg)
+        sg = std2intl[inp]
 
-  except:
-    self.logger.exception('**ERROR in Utils.convertSG**')
+    return sg
+
+    # except:
+    #     self.logger.exception('**ERROR in Utils.convertSG**')
 
 def convertShelxFiles(self,inp):
   """

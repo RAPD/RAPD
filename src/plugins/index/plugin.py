@@ -56,6 +56,7 @@ import plugins.subcontractors.parse as Parse
 from plugins.subcontractors.xoalign import RunXOalign
 from utils.communicate import rapd_send
 # from utils.modules import load_module
+import utils.spacegroup as spacegroup
 import utils.xutils as Utils
 
 DETECTOR_TO_BEST = {
@@ -1473,7 +1474,12 @@ class RapdPlugin(Process):
             os.chdir(self.labelit_dir)
             if self.spacegroup != False:
                 check_lg = Utils.checkSG(self, sym)
-                user_sg  = Utils.convertSG(self, self.spacegroup)
+                print check_lg
+                # Input as number now.
+                # user_sg  = Utils.convertSG(self, self.spacegroup, reverse=True)
+                user_sg  = self.spacegroup
+                print user_sg
+                # sys.exit()
                 if user_sg != sym:
                     fixSG = False
                     for line in check_lg:

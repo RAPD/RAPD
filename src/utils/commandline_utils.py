@@ -222,7 +222,7 @@ def regularize_spacegroup(sg_in):
         sg_num = int(sg_in)
     except ValueError:
         sg_up = sg_in.upper()
-        sg_num = int(spacegroup.std2intl[sg_up])
+        sg_num = spacegroup.std2intl[sg_up]
 
     print sg_num
 
