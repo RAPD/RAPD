@@ -215,7 +215,7 @@ gf_parser.add_argument(action="store",
 def regularize_spacegroup(sg_in):
     """Standardize the input spacegroup to numeric form"""
 
-    # print sg_in
+    print "regularize_spacegroup %s" % sg_in
 
     # An integer has been input
     try:
@@ -225,7 +225,7 @@ def regularize_spacegroup(sg_in):
         sg_num = spacegroup.std2intl[sg_up]
 
     # print sg_num
-
+    sys.exit()
     return sg_num
 
 
