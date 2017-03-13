@@ -32,6 +32,7 @@ import glob
 import multiprocessing
 import os
 import pprint
+import shutil
 import sys
 
 # RAPD imports
@@ -228,6 +229,38 @@ def regularize_spacegroup(sg_in):
     # sys.exit()
     return sg_num
 
+def check_work_dir(target_dir, active=True):
+    """
+    Check if a directory exists, increment old versions if present and create an
+    empty instance
+    """
+
+    # print "check_work_dir %s %s" % (target_dir, active)
+
+    if os.path.exists(target_dir):
+        # print "  Directory exists"
+        # Look for the highest incremented directory
+        i = 1
+        while True:
+            if os.path.exists(target_dir+"_%d" % i):
+                i += 1
+            else:
+                break
+
+        # Move the present directories around
+        for j in range(i, 0, -1):
+            k = j - 1
+            # Add a 1 to current target
+            if k == 0:
+                # print "Move %s to %s_1" % (target_dir, target_dir)
+                shutil.move(target_dir, target_dir+"_1")
+            # Move an already incremented directory higher
+            else:
+                # print "Move %s_%d to %s_%d" % (target_dir, j, target_dir, k)
+                shutil.move(target_dir+"_%d" % j, target_dir+"_%d" % k)
+
+    # Now make the target directory
+    os.makedirs(target_dir)
 
 def print_sites(left_buffer=""):
     """
