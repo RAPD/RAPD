@@ -19,7 +19,6 @@ __copyright__ = "Copyright (c) 2007  Pierre Legrand"
 __license__ = "New BSD License"
 __version__ = "0.4.9"
 
-
 import sys
 import os
 import math
@@ -57,18 +56,20 @@ _usage = """
 """ % _progname
 
 detector2scanner = {
-   "ADSC":              "ADSC",
-   "CCDCHESS":          "MARCCD",
-   "RAXIS":             "RAXIS",
-   "MAR":               "SMALLMAR",
-   "MAR345":            "MAR",
-   "MAC":               "DIP2020",
-   "SMARTCCD":          "SMART",
-   "CCDD2AM":           "ESRF",
-   "SATURN":            "RIGAKU SATURN",
-   "PILATUS":           "PILATUS",
-   "EIGER":             "EIGER",
-   "CCDBRANDEIS":       "B4"}
+   "ADSC": "ADSC",
+   "CCDBRANDEIS": "B4",
+   "CCDCHESS": "MARCCD",
+   "EIGER": "EIGER",
+   "MAC": "DIP2020",
+   "MAR": "SMALLMAR",
+   "MAR345": "MAR",
+   "MARCCD": "MAR",
+   "PILATUS": "PILATUS",
+   "RAXIS": "RAXIS",
+   "SATURN": "RIGAKU SATURN",
+   "SMARTCCD": "SMART",
+   "CCDD2AM": "ESRF",
+   }
 
 
 # Depending on the XDS output read, different mosflm input can be generated.

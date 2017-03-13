@@ -272,6 +272,11 @@ def get_commandline():
     args = parser.parse_args()
 
     # Checking input
+
+    # Regularize spacegroup
+    if args.spacegroup:
+        args.spacegroup = commandline_utils.regularize_spacegroup(args.spacegroup)
+
     # mosflm segments
     if args.mosflm_segments < 1 or args.mosflm_segments > 5:
         raise Exception("mosflm_segments must have a value between 1 and 5")

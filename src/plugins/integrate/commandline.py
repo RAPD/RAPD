@@ -71,7 +71,19 @@ def get_commandline():
                         default=False,
                         help="Template for image files")
 
-    return parser.parse_args()
+    # No args? print help
+    if len(sys.argv[1:]) == 0:
+        parser.print_help()
+        parser.exit()
+
+    # Custom check input here
+    args = parser.parse_args()
+
+    # Regularize spacegroup
+    if args.spacegroup:
+        args.spacegroup = commandline_utils.regularize_spacegroup(args.spacegroup)
+
+    return args
 
 def get_image_data(data_file, detector_module, site_module):
     """

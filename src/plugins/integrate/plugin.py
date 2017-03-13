@@ -62,6 +62,7 @@ from utils.numbers import try_int, try_float
 from plugins.subcontractors.stats import AutoStats
 import utils.text as text
 import utils.xutils as Utils
+import utils.spacegroup as spacegroup
 
 # Import smartie.py from the installed CCP4 package
 # smartie.py is a python script for parsing log files from CCP4
@@ -154,6 +155,9 @@ class RapdPlugin(Process):
         site -- full site settings
         command -- dict of all information for this plugin to run
         """
+
+        # pprint(command)
+        # sys.exit()
 
         # Store tprint for use throughout
         if tprint:
@@ -2704,12 +2708,10 @@ class RapdPlugin(Process):
         Returns new input file for intgration
         """
 
-        sg_num = int(Utils.std2intl[self.spacegroup])
-
         # Change to directory
         os.chdir(xdsdir)
 
-        new_inp = self.modify_xdsinput_for_symm(xdsinp, sg_num, "IDXREF.LP")
+        new_inp = self.modify_xdsinput_for_symm(xdsinp, self.spacegroup, "IDXREF.LP")
 
         # Make sure we end in the right place
         os.chdir(self.dirs['work'])

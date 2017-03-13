@@ -40,6 +40,7 @@ import detectors.detector_utils as detector_utils
 # import utils.lock
 import utils.convert_hdf5_cbf as convert_hdf5_cbf
 import utils.site
+import utils.spacegroup as spacegroup
 # import utils.text as text
 
 
@@ -210,6 +211,23 @@ gf_parser.add_argument(action="store",
                        nargs="?",
                        default=False,
                        help="Name of file to be generated")
+
+def regularize_spacegroup(sg_in):
+    """Standardize the input spacegroup to numeric form"""
+
+    print sg_in
+
+    # An integer has been input
+    try:
+        sg_num = int(sg_in)
+    except ValueError:
+        sg_up = sg_in.upper()
+        sg_num = int(spacegroup.std2intl[sg_up])
+
+    print sg_num
+
+    return sg_num
+
 
 def print_sites(left_buffer=""):
     """
