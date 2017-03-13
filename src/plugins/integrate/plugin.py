@@ -2722,6 +2722,8 @@ class RapdPlugin(Process):
         """
         Modifys the XDS input to rerun integration in user input spacegroup
         """
+        sg_num = int(sg_num)
+        
         if sg_num == 1:
             bravais = 'aP'
         elif sg_num >= 3 <= 4:
