@@ -26,7 +26,7 @@ if [ "$RAPD_HOME" != "" ]; then
 
   # Index
   echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.index
-  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/commandline\/index+strategy.py \"\$@\"" >>$RAPD_HOME/bin/rapd.index
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/plugins\/index\/commandline.py \"\$@\"" >>$RAPD_HOME/bin/rapd.index
   chmod +x $RAPD_HOME/bin/rapd.index
 
   # Integrate
@@ -37,7 +37,7 @@ if [ "$RAPD_HOME" != "" ]; then
   echo "   ulimit -s 65532" >> $RAPD_HOME/bin/rapd.integrate
   echo "fi" >> $RAPD_HOME/bin/rapd.integrate
   echo "# Call integrate" >> $RAPD_HOME/bin/rapd.integrate
-  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/commandline\/integrate.py \"\$@\"" >>$RAPD_HOME/bin/rapd.integrate
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/plugins\/integrate\/commandline.py \"\$@\"" >>$RAPD_HOME/bin/rapd.integrate
   chmod +x $RAPD_HOME/bin/rapd.integrate
 
 # Environmental var not set - don't run
