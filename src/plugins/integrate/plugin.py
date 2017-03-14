@@ -607,8 +607,6 @@ class RapdPlugin(Process):
             # Returns False if no new cutoff, otherwise returns the value of
             # the high resolution cutoff as a float value.
             new_rescut = self.find_correct_res(xdsdir, 1.0)
-            print new_rescut
-            sys.exit()
             newinp = self.change_xds_inp(newinp, "JOB= INTEGRATE CORRECT \n\n")
             # newinp[-2] = 'JOB= INTEGRATE CORRECT \n\n'
             if new_rescut != False:
@@ -635,6 +633,8 @@ class RapdPlugin(Process):
         #
         # If low resolution, don't try to polish the data, as this tends to blow up.
         if new_rescut <= 4.5:
+            pprint(newinp)
+            sys.exit()
             os.rename('%s/GXPARM.XDS' % xdsdir, '%s/XPARM.XDS' % xdsdir)
             os.rename('%s/CORRECT.LP' % xdsdir, '%s/CORRECT.LP.old' % xdsdir)
             os.rename('%s/XDS.LOG' % xdsdir, '%s/XDS.LOG.old' % xdsdir)
