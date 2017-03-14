@@ -635,7 +635,6 @@ class RapdPlugin(Process):
         # If low resolution, don't try to polish the data, as this tends to blow up.
         if new_rescut <= 4.5:
             pprint(newinp)
-            sys.exit()
             os.rename('%s/GXPARM.XDS' % xdsdir, '%s/XPARM.XDS' % xdsdir)
             os.rename('%s/CORRECT.LP' % xdsdir, '%s/CORRECT.LP.old' % xdsdir)
             os.rename('%s/XDS.LOG' % xdsdir, '%s/XDS.LOG.old' % xdsdir)
