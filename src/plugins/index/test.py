@@ -27,6 +27,7 @@ __status__ = "Development"
 # Standard imports
 import argparse
 # import datetime
+from distutils.spawn import find_executable
 # import glob
 # import json
 # import logging
@@ -37,7 +38,7 @@ import argparse
 # import re
 # import redis
 # import shutil
-# import subprocess
+import subprocess
 # import sys
 # import time
 import unittest
@@ -49,64 +50,77 @@ from distutils.spawn import find_executable
 # import utils
 import plugin
 
+TEST_DATA = {
+
+}
+
+
 class TestDependencies(unittest.TestCase):
     """Example test fixture WITHOUT setUp and tearDown"""
 
-    def test_executable(self):
-        """Make sure the eiger2cbf executable is present"""
+    def test_best(self):
+        """Make sure the best executable is present"""
 
-        p = subprocess.Popen(["eiger2cbf"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate()
-        assert stderr.startswith("EIGER HDF5 to CBF converter")
-        assert stdout.startswith("Usage:")
+        test = find_executable("best")
+        self.assertNotEqual(test, None)
 
-    def test_version(self):
-        """Make sure the eiger2cbf executable is an acceptable version"""
+    def test_best_version(self):
+        """Make sure the best executable is an acceptable version"""
 
-        p = subprocess.Popen(["eiger2cbf"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = p.communicate()
-
+        subproc = subprocess.Popen(["best"],
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+        subproc.wait()
+        stdout, _ = subproc.communicate()
         found = False
-        for version in convert_hdf5_cbf.VERSIONS["eiger2cbf"]:
-            if version in stderr:
+        for version in plugin.VERSIONS["best"]:
+            if version in stdout:
                 found = True
                 break
 
         assert found == True
-class ExampleTestCase(unittest.TestCase):
-    """Example test fixture with setUp and tearDown"""
 
-    def setUp(self):
-        """Set up the test fixture"""
+    def test_gnuplot(self):
+        """Make sure the gnuplot executable is present"""
 
-        self.widget = Widget('The widget')
+        test = find_executable("gnuplot")
+        self.assertNotEqual(test, None)
 
-    def tearDown(self):
-        """Tear down the test fixture"""
+    def test_gnuplot_version(self):
+        """Make sure the aimless executable is an acceptable version"""
 
-        self.widget.dispose()
-        self.widget = None
+        subproc = subprocess.Popen(["gnuplot", "--version"],
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+        subproc.wait()
+        stdout, _ = subproc.communicate()
+        found = False
+        for version in plugin.VERSIONS["gnuplot"]:
+            if version in stdout:
+                found = True
+                break
 
-    def test_default_size(self):
-        self.assertEqual(self.widget.size(), (50,50),
-                         'incorrect default size')
+        assert found == True
 
-    def test_resize(self):
-        self.widget.resize(100,150)
-        self.assertEqual(self.widget.size(), (100,150),
-                         'wrong size after resize')
+    def test_labelit(self):
+        """
+        Make sure the labelit executable is present
 
-class ExampleTestCaseLight(unittest.TestCase):
-    """Example test fixture WITHOUT setUp and tearDown"""
+        It is not yet figured out how to test the version of labelit yet.
+        """
 
-    def test_default_size(self):
-        self.assertEqual(self.widget.size(), (50,50),
-                         'incorrect default size')
+        test = find_executable("labelit.index")
+        self.assertNotEqual(test, None)
 
-    def test_resize(self):
-        self.widget.resize(100,150)
-        self.assertEqual(self.widget.size(), (100,150),
-                         'wrong size after resize')
+    def test_raddose(self):
+        """
+        Make sure the raddose executable is present
+
+        It is not yet figured out how to test the version of raddose yet.
+        """
+
+        test = find_executable("raddose")
+        self.assertNotEqual(test, None)
 
 def get_commandline():
     """

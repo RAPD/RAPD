@@ -76,8 +76,18 @@ DETECTOR_TO_BEST = {
     "Eiger-16M": "eiger16m",
     }
 
-BEST_LINES = {
-
+VERSIONS = {
+    "best": (
+        "Version 3.2.0",
+    ),
+    "gnuplot": (
+        " 5.0 ",
+    ),
+    "ipmosflm": (
+        "version 7.2.1",
+    ),
+    "labelit": (),
+    "raddose": (),
 }
 
 class RapdPlugin(Process):
@@ -634,7 +644,10 @@ class RapdPlugin(Process):
         self.raddose_log = []
         try:
             self.raddose_log.append("tcsh raddose.com\n")
-            output = subprocess.Popen("tcsh raddose.com", shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            output = subprocess.Popen("tcsh raddose.com",
+                                       shell=True,
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.STDOUT)
             output.wait()
             for line in output.stdout:
                 self.raddose_log.append(line)
