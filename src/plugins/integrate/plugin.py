@@ -639,7 +639,6 @@ class RapdPlugin(Process):
             os.rename('%s/GXPARM.XDS' % xdsdir, '%s/XPARM.XDS' % xdsdir)
             os.rename('%s/CORRECT.LP' % xdsdir, '%s/CORRECT.LP.old' % xdsdir)
             os.rename('%s/XDS.LOG' % xdsdir, '%s/XDS.LOG.old' % xdsdir)
-            #newinp[-2] = 'JOB=INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
             self.write_file(xdsfile, newinp)
             self.tprint(arg="  Polishing",
                         level=99,
