@@ -590,8 +590,6 @@ class RapdPlugin(Process):
             # TODO  put out failing JSON
             raise Exception("XDS error unknown to RAPD has occurred.")
 
-
-        sys.exit()
         # Prepare the display of results.
         prelim_results = self.run_results(xdsdir)
         self.tprint("\nPreliminary results summary", 99, "blue")
@@ -609,6 +607,8 @@ class RapdPlugin(Process):
             # Returns False if no new cutoff, otherwise returns the value of
             # the high resolution cutoff as a float value.
             new_rescut = self.find_correct_res(xdsdir, 1.0)
+            print new_rescut
+            sys.exit()
             newinp = self.change_xds_inp(newinp, "JOB= INTEGRATE CORRECT \n\n")
             # newinp[-2] = 'JOB= INTEGRATE CORRECT \n\n'
             if new_rescut != False:
