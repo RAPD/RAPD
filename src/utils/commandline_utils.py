@@ -415,7 +415,7 @@ def analyze_data_sources(sources,
             for data_file in data_files:
                 # print in_range
                 if in_range:
-                    print data_file
+                    # print data_file
                     return_data["data_files"].append(data_file)
                     if end_image:
                         if last_file == data_file:
@@ -423,7 +423,7 @@ def analyze_data_sources(sources,
                 else:
                     if first_file == data_file:
                         in_range = True
-                        print data_file
+                        # print data_file
                         return_data["data_files"].append(data_file)
 
             return_data["data_files"].sort()
