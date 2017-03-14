@@ -84,6 +84,7 @@ XDSINP =  OrderedDict([
     ("QX", "0.1000"),
     ("DELPHI", " 5.0"),
     ("INCIDENT_BEAM_DIRECTION", "0.0 0.0 1.0"),
+    ("BEAM_DIVERGENCE_E.S.D.", "0.136"),
     ("OVERLOAD", "1000000"),
     ("DIRECTION_OF_DETECTOR_Y-AXIS", " 0.0 -1.0 0.0"),
     ("NY", "3000"),
