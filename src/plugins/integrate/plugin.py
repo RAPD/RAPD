@@ -500,6 +500,7 @@ class RapdPlugin(Process):
         found = False
         for line in xds_input:
             if param+"=" in line:
+                found = True
                 xds_output.append(new_line)
             else:
                 xds_output.append(line)
