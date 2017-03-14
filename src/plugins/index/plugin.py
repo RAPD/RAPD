@@ -531,7 +531,12 @@ class RapdPlugin(Process):
                 command["directories"]["work"] = self.working_dir
 
             # Launch labelit
-            Process(target=RunLabelit, args=(command, self.labelitQueue, params, self.tprint, self.logger)).start()
+            Process(target=RunLabelit,
+                    args=(command,
+                          self.labelitQueue,
+                          params,
+                          self.tprint,
+                          self.logger)).start()
 
         except:
             self.logger.exception("**Error in processLabelit**")
@@ -2018,6 +2023,7 @@ class RunLabelit(Process):
         """
         Convoluted path of modules to run.
         """
+        # print "run"
 
         if self.verbose:
             self.logger.debug("RunLabelit::run")

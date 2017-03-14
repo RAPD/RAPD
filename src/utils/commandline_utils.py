@@ -256,8 +256,8 @@ def check_work_dir(target_dir, active=True):
                 shutil.move(target_dir, target_dir+"_1")
             # Move an already incremented directory higher
             else:
-                # print "Move %s_%d to %s_%d" % (target_dir, j, target_dir, k)
-                shutil.move(target_dir+"_%d" % j, target_dir+"_%d" % k)
+                print "Move %s_%d to %s_%d" % (target_dir, k, target_dir, j)
+                shutil.move(target_dir+"_%d" % k, target_dir+"_%d" % j)
 
     # Now make the target directory
     os.makedirs(target_dir)

@@ -165,8 +165,6 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
             "rapd_integrate_" + run_data["repr"])
         }
     commandline_utils.check_work_dir(command["directories"]["work"], True)
-    # if not os.path.exists(command["directories"]["work"]):
-    #     os.makedirs(command["directories"]["work"])
 
     # Data data
     command["data"] = {
