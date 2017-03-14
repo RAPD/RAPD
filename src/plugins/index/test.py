@@ -47,12 +47,12 @@ from distutils.spawn import find_executable
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
-import agents.rapd_agent_index+strategy as rapd_agent_index+strategy
+import plugin
 
 class TestDependencies(unittest.TestCase):
     """Example test fixture WITHOUT setUp and tearDown"""
 
-   def test_executable(self):
+    def test_executable(self):
         """Make sure the eiger2cbf executable is present"""
 
         p = subprocess.Popen(["eiger2cbf"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -166,4 +166,3 @@ if __name__ == "__main__":
     commandline_args = get_commandline()
 
     main(args=commandline_args)
-

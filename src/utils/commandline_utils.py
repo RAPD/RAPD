@@ -387,13 +387,44 @@ def analyze_data_sources(sources,
             template = sources
 
             # Establish the abspath
-            full_path_template = os.path.abspath(template)
+            full_path_template = os.path.abspath(template).replace("?", "#")
 
             # Grab a list of files
             # "?" as numbers that increment
             # "#" as numbers that increment
+            depth = full_path_template.count("#")
+            number_format = "%0"+str(depth)+"d"
+            # print number_format
+
+            if start_image:
+                first_file = full_path_template.replace("#"*depth, number_format % start_image, 1)
+                in_range = False
+            else:
+                in_range = True
+
+            if end_image:
+                last_file = full_path_template.replace("#"*depth, number_format % end_image, 1)
+
+
             full_path_template = full_path_template.replace("?", "[0-9]").replace("#", "[0-9]")
-            return_data["data_files"] = glob.glob(full_path_template)
+            data_files = glob.glob(full_path_template)
+            data_files.sort()
+
+            return_data["data_files"] = []
+
+            for data_file in data_files:
+                # print in_range
+                if in_range:
+                    print data_file
+                    return_data["data_files"].append(data_file)
+                    if end_image:
+                        if last_file == data_file:
+                            break
+                else:
+                    if first_file == data_file:
+                        in_range = True
+                        print data_file
+                        return_data["data_files"].append(data_file)
 
             return_data["data_files"].sort()
 

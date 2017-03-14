@@ -120,6 +120,14 @@ XDSINP.update({
     "DETECTOR": "PILATUS"
     })
 
+# Testing information
+TEST_DATA_DIR = "APS/NECAT/24-ID-C"
+TEST_INDEX_COMMANDS = [
+    "rapd.index --json images/run_1_0001.cbf",
+    "rapd.index --json images/run_1_0001.cbf  images/run_1_0091.cbf"
+    ]
+TEST_INTEGRATE_COMMAND = "rapd.integrate --json images/run_1_####.cbf"
+
 def parse_file_name(fullname):
     """
     Parse the fullname of an image and return
