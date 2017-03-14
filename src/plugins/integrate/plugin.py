@@ -632,9 +632,9 @@ class RapdPlugin(Process):
         #
         # If low resolution, don't try to polish the data, as this tends to blow up.
         if new_rescut <= 4.5:
-            os.rename('%s/GXPARM.XDS' %xdsdir, '%s/XPARM.XDS' %xdsdir)
-            os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.old' %xdsdir)
-            os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.old' %xdsdir)
+            os.rename('%s/GXPARM.XDS' % xdsdir, '%s/XPARM.XDS' % xdsdir)
+            os.rename('%s/CORRECT.LP' % xdsdir, '%s/CORRECT.LP.old' % xdsdir)
+            os.rename('%s/XDS.LOG' % xdsdir, '%s/XDS.LOG.old' % xdsdir)
             #newinp[-2] = 'JOB=INTEGRATE CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
             self.write_file(xdsfile, newinp)
             self.tprint(arg="  Polishing",
@@ -1053,7 +1053,7 @@ class RapdPlugin(Process):
         """
         self.logger.debug('FastIntegration::write_file')
         self.logger.debug('    Filename = %s' % filename )
-        # pprint(file_input)
+        pprint(file_input)
         with open (filename, 'w') as file:
             file.writelines(file_input)
         return
