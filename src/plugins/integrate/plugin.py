@@ -581,6 +581,7 @@ class RapdPlugin(Process):
 
         # If known xds_errors occur, catch them and take corrective action
         newinp = self.check_for_xds_errors(xdsdir, xdsinp)
+        pprint(newinp)
         if newinp == False:
             self.logger.exception('Unknown xds error occurred. Please check for cause!')
             self.tprint(arg="\nXDS error unknown to RAPD has occurred. Please check for cause!",
@@ -589,6 +590,8 @@ class RapdPlugin(Process):
             # TODO  put out failing JSON
             raise Exception("XDS error unknown to RAPD has occurred.")
 
+
+        sys.exit()
         # Prepare the display of results.
         prelim_results = self.run_results(xdsdir)
         self.tprint("\nPreliminary results summary", 99, "blue")
@@ -1053,7 +1056,6 @@ class RapdPlugin(Process):
         """
         self.logger.debug('FastIntegration::write_file')
         self.logger.debug('    Filename = %s' % filename )
-        pprint(file_input)
         with open (filename, 'w') as file:
             file.writelines(file_input)
         return
