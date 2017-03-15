@@ -906,7 +906,7 @@ class RapdPlugin(Process):
             os.mkdir(xdsdir)
 
         xdsinp = xdsinput[:]
-        #xdsinp = self.find_spot_range(first, last, self.image_data['osc_range'],xdsinput[:])
+        #xdsinp = self.find_spot_range(first, last, self.image_data['osc_range'], xdsinput[:])
         xdsinp.append('MAXIMUM_NUMBER_OF_PROCESSORS=%s\n' % self.procs)
         xdsinp.append('MAXIMUM_NUMBER_OF_JOBS=%s\n' % self.jobs)
         #xdsinp.append('MAXIMUM_NUMBER_OF_JOBS=1\n')
@@ -1054,8 +1054,8 @@ class RapdPlugin(Process):
         of the file to be written.
         """
         self.logger.debug('FastIntegration::write_file')
-        self.logger.debug('    Filename = %s' % filename )
-        with open (filename, 'w') as file:
+        self.logger.debug('    Filename = %s', filename )
+        with open(filename, 'w') as file:
             file.writelines(file_input)
         return
 
@@ -1109,7 +1109,7 @@ class RapdPlugin(Process):
         else:
             job = Process(target=Utils.processLocal,
                           args=((xds_command, "XDS.LOG"),
-                                 self.logger))
+                                self.logger))
         job.start()
         while job.is_alive():
             time.sleep(1)
@@ -1369,7 +1369,7 @@ class RapdPlugin(Process):
         else:
             self.logger.debug('    Pointless did not run properly!')
             self.logger.debug('    Please check logs and files in %s' %self.dirs['work'])
-            return('Failed')
+            return 'Failed'
 
         # Parse the aimless logfile to look for resolution cutoff.
         aimlog = open(aimless_log, "r").readlines()
@@ -1451,26 +1451,26 @@ class RapdPlugin(Process):
         # leading and trailing whitespace) to plotThese.
         # The plot titles also serve as keys for the tab titles.
         plotThese = {
-                     #'Mn(k) & 0k (theta=0) v. batch'    : 'Scale vs frame',
-                     #'Relative Bfactor v. batch'        : 'Bfactor vs frame',
-                     'Rmerge v Batch for all runs'      : 'R vs frame',
-                     #'Imean & RMS Scatter'              : 'I vs frame',
-                     'Imean/RMS scatter'                : 'I/sd vs frame',
-                     'I/sigma, Mean Mn(I)/sd(Mn(I))'    : 'I/sigma',
-                     'Rmerge v Resolution'              : 'R vs Res',
-                     'Rmerge, Rfull, Rmeas, Rpim v Resolution' : 'R vs Res',
-                     'Average I,sd and Sigma'           : 'I vs Res',
-                     'Average I, RMSdeviation and Sd'   : 'I vs Res',
-                     'Completeness v Resolution'        : 'Completeness',
-                     'Multiplicity v Resolution'        : 'Redundancy',
-                     'Rmeas, Rsym & PCV v Resolution'   : 'Rmeas',
-                     'Rpim (precision R) v Resolution'  : 'Rpim',
-                     #'Rd vs frame_difference'           : 'Rd',
-                     'Anom & Imean CCs v resolution -'  : 'Anom Corr',
-                     'Anom & Imean CCs v resolution'    : 'CCanom and CC1/2',
-                     'RMS correlation ratio'            : 'RCR',
-                     'Rcp v. batch'                     : 'Rcp v batch'
-                     }
+            # 'Mn(k) & 0k (theta=0) v. batch': 'Scale vs frame',
+            #'Relative Bfactor v. batch': 'Bfactor vs frame',
+            'Rmerge v Batch for all runs': 'R vs frame',
+            #'Imean & RMS Scatter': 'I vs frame',
+            'Imean/RMS scatter': 'I/sd vs frame',
+            'I/sigma, Mean Mn(I)/sd(Mn(I))': 'I/sigma',
+            'Rmerge v Resolution': 'R vs Res',
+            'Rmerge, Rfull, Rmeas, Rpim v Resolution': 'R vs Res',
+            'Average I,sd and Sigma': 'I vs Res',
+            'Average I, RMSdeviation and Sd': 'I vs Res',
+            'Completeness v Resolution': 'Completeness',
+            'Multiplicity v Resolution': 'Redundancy',
+            'Rmeas, Rsym & PCV v Resolution': 'Rmeas',
+            'Rpim (precision R) v Resolution': 'Rpim',
+            #'Rd vs frame_difference': 'Rd',
+            'Anom & Imean CCs v resolution -': 'Anom Corr',
+            'Anom & Imean CCs v resolution': 'CCanom and CC1/2',
+            'RMS correlation ratio': 'RCR',
+            'Rcp v. batch': 'Rcp v batch'
+            }
 
         plotfile = ['<html>\n',
                     '<head>\n',
@@ -1504,7 +1504,7 @@ class RapdPlugin(Process):
         plotfile.append('                </ul>\n')
 
         # Define title and x-axis labels for each graph.
-        for i,graph in enumerate(graphs):
+        for i, graph in enumerate(graphs):
             if graph[0] in plotThese:
                 plotfile.extend(['                <div id="tabs-22%s">\n' % i,
                     '                    <div class="title"><b>%s</b></div>\n'
@@ -1528,7 +1528,7 @@ class RapdPlugin(Process):
         # actual labels are stored transiently in varLabel, and added
         # as comments next to the variable when it is initialized
         varNum = 0
-        for i,graph in enumerate(graphs):
+        for i, graph in enumerate(graphs):
             title, xlabel, ylabels, xcol, ycols, tableNum = graph
             if title in plotThese:
                 varLabel = []
@@ -1551,13 +1551,12 @@ class RapdPlugin(Process):
                 #tableNum = graph[5]
                 self.logger.debug('table # %s' %tableNum)
                 for line in tables[tableNum]:
-                    #self.logger.debug('tableNum = %s   line=%s    line[0]=%s' %(tableNum,line, line[0]))
                     if line[0] == '$$':
                         #self.logger.debug("line == '$$' is TRUE")
                         break
                     for y, ycol in enumerate(ycols):
                         #self.logger.debug("ycols == %s" %ycols)
-                        if line[ycol] !='-':
+                        if line[ycol] != '-':
                             plotfile.append('        %s.push([%s,%s]);\n'
                                             %(data[y], line[xcol], line[ycol]))
                 plotfile.extend(['               var plot%s' % i,
@@ -1566,12 +1565,13 @@ class RapdPlugin(Process):
                 for x in range(0, len(data), 1):
                     plotfile.append('               {data:%s, label:"%s" },\n'
                                     % (data[x], varLabel[x]))
-                plotfile.extend(['               ],\n',
-                                 '               { lines: {show: true},\n',
-                                 '                 points: {show: false},\n',
-                                 "                 selection: {mode: 'xy' },\n",
-                                 '                 grid: {hoverable: true, clickable: true },\n'
-                                 ]               )
+                plotfile.extend([
+                    '               ],\n',
+                    '               { lines: {show: true},\n',
+                    '                 points: {show: false},\n',
+                    "                 selection: {mode: 'xy' },\n",
+                    '                 grid: {hoverable: true, clickable: true },\n'
+                    ])
                 if xlabel == 'Dmin (A)':
                     plotfile.append('               xaxis: {ticks: [\n')
                     for line in tables[tableNum]:
@@ -1599,7 +1599,7 @@ class RapdPlugin(Process):
             title = graph[0]
             xlabel = graph[1]
             if title in plotThese:
-                plotfile.append('    $("#chart%s_div").bind' %str(i) )
+                plotfile.append('    $("#chart%s_div").bind' % str(i))
                 plotfile.extend(['("plothover", function (event, pos, item) {\n',
                                  '    $("#x").text(pos.x.toFixed(2));\n',
                                  '    $("#y").text(pos.y.toFixed(2));\n\n',
@@ -1649,7 +1649,7 @@ class RapdPlugin(Process):
             self.logger.debug('%s tables found in aimless output, program exepected 10.' %ntables)
 
         tables = []
-        for i in range(0,ntables):
+        for i in range(0, ntables):
             data = []
             # Ignore the Anisotropy analysis table (it's not always present
             # and if you don't ignore it, it causes problems when it is not
@@ -1716,30 +1716,30 @@ class RapdPlugin(Process):
         # the table where the x-values are , ycols are the position of the y-vaules,
         # and tableNum is the position of the table within the list tables.
         graphs = [
-                  ['Mn(k) & 0k (theta=0) v. batch', 'image_number', ['Mn(k)', '0k'], 0, [5,6], 0],
+                  ['Mn(k) & 0k (theta=0) v. batch', 'image_number', ['Mn(k)', '0k'], 0, [5, 6], 0],
                   ['Relative Bfactor v. batch', 'image_number', ['Bfactor'], 0, [4], 0],
-                  ['Rmerge v Batch for all runs', 'image_number', ['Rmerge', 'SmRmerge'], 0, [5,12], 1],
-                  ['Maximum resolution limit, I/sigma > 1.0', 'image_number', ['MaxRes','SmMaxRes'], 0, [10,13], 1],
+                  ['Rmerge v Batch for all runs', 'image_number', ['Rmerge', 'SmRmerge'], 0, [5, 12], 1],
+                  ['Maximum resolution limit, I/sigma > 1.0', 'image_number', ['MaxRes','SmMaxRes'], 0, [10, 13], 1],
                   ['Cumulative multiplicity', 'image_number', ['CMlplc'], 0, [11], 1],
-                  ['Imean & RMS Scatter', 'image_number', ['Mn(I)','RMSdev'], 0, [2,3], 1],
+                  ['Imean & RMS Scatter', 'image_number', ['Mn(I)','RMSdev'], 0, [2, 3], 1],
                   ['Imean/RMS scatter', 'image_number', ['I/rms'], 0, [4], 1],
                   ['Number of rejects', 'image_number', ['Nrej'], 0, [7], 1],
-                  ['Anom & Imean CCs v resolution', 'Dmin (A)', ['CCanom', 'CC1/2'], 1, [3,6], 2],
+                  ['Anom & Imean CCs v resolution', 'Dmin (A)', ['CCanom', 'CC1/2'], 1, [3, 6], 2],
                   ['RMS correlation ratio', 'Dmin (A)', ['RCRanom'], 1, [5], 2],
-                  #['Imean CCs v resolution', 'Dmin (A)', ['CC_d12', 'CC_d3'], 1, [3,4], 3],
-                  #['Mn(I/sd) v resolution', 'Dmin (A)', ['(I/sd)d12', '(I/sd)d3'], 1, [5,6], 3],
-                  #['Projected Imean CCs v resolution', 'Dmin (A)', ['CCp1', 'CCp3'], 1, [7,8], 3],
-                  ['I/sigma, Mean Mn(I)/sd(Mn(I))', 'Dmin (A)', ['I/RMS','Mn(I/sd)'], 1, [12,13], 3],
-                  ['Rmerge, Rfull, Rmeas, Rpim v Resolution', 'Dmin (A)', ['Rmerge', 'Rfull', 'Rmeas', 'Rpim'], 1, [3,4,6,7], 3],
-                  ['Average I, RMSdeviation and Sd', 'Dmin (A)', ['AvI', 'RMSdev', 'sd'], 1, [9,10,11], 3],
+                  #['Imean CCs v resolution', 'Dmin (A)', ['CC_d12', 'CC_d3'], 1, [3, 4], 3],
+                  #['Mn(I/sd) v resolution', 'Dmin (A)', ['(I/sd)d12', '(I/sd)d3'], 1, [5, 6], 3],
+                  #['Projected Imean CCs v resolution', 'Dmin (A)', ['CCp1', 'CCp3'], 1, [7, 8], 3],
+                  ['I/sigma, Mean Mn(I)/sd(Mn(I))', 'Dmin (A)', ['I/RMS','Mn(I/sd)'], 1, [12, 13], 3],
+                  ['Rmerge, Rfull, Rmeas, Rpim v Resolution', 'Dmin (A)', ['Rmerge', 'Rfull', 'Rmeas', 'Rpim'], 1, [3, 4, 6, 7], 3],
+                  ['Average I, RMSdeviation and Sd', 'Dmin (A)', ['AvI', 'RMSdev', 'sd'], 1, [9, 10, 11], 3],
                   ['Fractional bias', 'Dmin (A)', ['FrcBias'], 1, [14], 3],
                   ['Rmerge, Rmeas, Rpim v Resolution', 'Dmin (A)',
-                      ['Rmerge', 'RmergeOv', 'Rmeas', 'RmeasOv', 'Rpim', 'RpimOv'], 1, [3,4,7,8,9,10], 4],
-                  ['Rmerge v Intensity', 'Imax', ['Rmerge', 'Rmeas', 'Rpim'], 0, [1,3,4], 5],
-                  ['Completeness v Resolution', 'Dmin (A)', ['%poss', 'C%poss', 'AnoCmp', 'AnoFrc'], 1, [6,7,9,10], 6],
-                  ['Multiplicity v Resolution', 'Dmin (A)', ['Mlpclct', 'AnoMlt'], 1, [8,11], 6],
+                      ['Rmerge', 'RmergeOv', 'Rmeas', 'RmeasOv', 'Rpim', 'RpimOv'], 1, [3, 4, 7, 8, 9, 10], 4],
+                  ['Rmerge v Intensity', 'Imax', ['Rmerge', 'Rmeas', 'Rpim'], 0, [1, 3, 4], 5],
+                  ['Completeness v Resolution', 'Dmin (A)', ['%poss', 'C%poss', 'AnoCmp', 'AnoFrc'], 1, [6, 7, 9, 10], 6],
+                  ['Multiplicity v Resolution', 'Dmin (A)', ['Mlpclct', 'AnoMlt'], 1, [8, 11], 6],
                   ['Sigma(scatter/SD), within 5 sd', '<I>', ['SdFc'], 1, [7], 7],
-                  ['Sigma(scatter/SD, within 5 SD, all and within', '<I>', ['SdF', 'SdFc'], 1, [4,7], 7],
+                  ['Sigma(scatter/SD, within 5 SD, all and within', '<I>', ['SdF', 'SdFc'], 1, [4, 7], 7],
                   ['Rcp v. batch', 'relative frame difference', ['Rcp'], 1, [-1], 8]
                   ]
         return(graphs, tables, int_results)
@@ -2322,7 +2322,7 @@ class RapdPlugin(Process):
         xlabel = 'Frame Difference'
         ylabels = ['Rd', 'Rd_notfriedel', 'Rd_friedel']
         xcol = 0
-        ycols = [1,2,3]
+        ycols = [1, 2, 3]
         tableNum = tables_length
         rd_graph = (title, xlabel, ylabels, xcol, ycols, tableNum)
 
@@ -2601,7 +2601,7 @@ class RapdPlugin(Process):
     #         self.logger.debug(line)
     #     results = self.parse_shelxC(shelx_log)
     #     res = False
-    #     for i,v in enumerate(results['shelx_dsig']):
+    #     for i, v in enumerate(results['shelx_dsig']):
     #         dsig = float(v)
     #         if dsig > 1.0:
     #             res =results['shelx_res'][i]
@@ -2999,7 +2999,7 @@ class DataHandler(threading.Thread):
 
     def run(self):
         # Create a pipe to allow interprocess communication.
-        #parent_pipe,child_pipe = Pipe()
+        #parent_pipe, child_pipe = Pipe()
         # Instantiate the integration case
         tmp = RapdPlugin(None, self.input, self.tprint, self.logger)
         # Print out what would be sent back to the RAPD caller via the pipe
