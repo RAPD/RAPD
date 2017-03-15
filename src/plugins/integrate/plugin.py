@@ -579,7 +579,8 @@ class RapdPlugin(Process):
         prelim_results = self.run_results(xdsdir)
         self.tprint("\nPreliminary results summary", 99, "blue")
         self.print_results(prelim_results)
-
+        pprint(prelim_results)
+        sys.exit()
         # Already have hi res cutoff
         if self.hi_res:
             new_rescut = self.hi_res
@@ -1381,7 +1382,7 @@ class RapdPlugin(Process):
 
         # Run aimless with a higher resolution cutoff if the suggested resolution
         # is greater than the initial resolution + 0.05.
-        if (float(res_cut) > float(current_resolution) + 0.05):
+        if float(res_cut) > float(current_resolution) + 0.05:
             # Save information on original resolution suggestions
             orig_rescut = resline
             # rerun aimless
