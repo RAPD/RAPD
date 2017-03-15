@@ -470,22 +470,6 @@ class RapdPlugin(Process):
                 newinp[-3] = '\n'
                 self.write_file('XDS.INP', newinp)
                 self.xds_ram(self.ram_nodes[0][0])
-                #Check to see if a new resolution cutoff should be applied
-                #new_rescut = self.find_correct_res(xdsdir, 1.0)
-                #if new_rescut != False:
-                #    os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.nocutoff' %xdsdir)
-                #    os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.nocutoff' %xdsdir)
-                #    newinp[-2] = 'JOB=CORRECT !XYCORR INIT COLSPOT IDXREF DEFPIX INTEGRATE CORRECT\n\n'
-                #    newinp[-5] = 'INCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % new_rescut
-                #    self.write_file('XDS.INP', newinp)
-                #    self.xds_ram(self.ram_nodes[0][0])
-                #    new_rescut = self.find_correct_res(xdsdir, 1.0)
-                #    if new_rescut != False:
-                #        os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.oldcutoff' %xdsdir)
-                #        os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.oldcutoff' %xdsdir)
-                #        newinp[-5] = 'INCLUDE_RESOLUTION_RANGE=200.0 %.2f\n' % new_rescut
-                #        self.write_file('XDS.INP', newinp)
-                #        self.xds_ram(self.ram_nodes[0][0])
                 final_results = self.run_results(xdsdir)
 
             final_results['status'] = 'SUCCESS'
@@ -854,9 +838,11 @@ class RapdPlugin(Process):
                     look_for_file = file_template.replace(replace_string,
                                                           '%0*d' %(pad, frame_count))
                 else:
-                    self.logger.debug('    RAPD did not fine the next image, checking for one more.')
+                    self.logger.debug(
+                        '    RAPD did not fine the next image, checking for one more.')
                     frame_count += 1
-                    look_for_file = file_template.replace(replace_string, '%0*d' %(pad, frame_count))
+                    look_for_file = file_template.replace(replace_string,
+                                                          '%0*d' % (pad, frame_count))
                     if os.path.isfile(look_for_file) == True:
                         timer = Process(target=time.sleep, args=(wait_time,))
                         timer.start()
@@ -963,7 +949,7 @@ class RapdPlugin(Process):
         self.logger.debug('last_frame = %s', last_frame)
         # print last_frame
         # self.logger.debug('detector_type = %s' % detector_type)
-        background_range = '%s %s' %(int(self.image_data['start']), int(self.image_data['start']) + 4)
+        background_range = '%s %s' % (int(self.image_data['start']), int(self.image_data['start']) + 4)
 
         x_beam = float(self.image_data['x_beam']) / float(self.image_data['pixel_size'])
         y_beam = float(self.image_data['y_beam']) / float(self.image_data['pixel_size'])
@@ -1237,8 +1223,10 @@ class RapdPlugin(Process):
                     # Try to fix by extending the data range
                     tmp = input[-1].split('=')
                     first, last = tmp.split()
-                    if int(last) == (int(self.image_data('start')) + int(self.image_data('total')) -1):
-                        self.logger.debug('         FAILURE: Already using the full data range available.')
+                    if int(last) == (int(self.image_data('start'))
+                                     + int(self.image_data('total')) - 1):
+                        self.logger.debug(
+                            '         FAILURE: Already using the full data range available.')
                         return False
                     else:
                         input[-1] = 'SPOT_RANGE=%s %s' % (first, (int(last) + 1))
@@ -1253,19 +1241,22 @@ class RapdPlugin(Process):
                 elif 'SOLUTION IS INACCURATE' in line or 'INSUFFICIENT PERCENTAGE' in line:
                     self.logger.debug('    Found inaccurate indexing solution error')
                     self.logger.debug('    Will try to continue anyway')
-                    self.tprint(arg="  Found inaccurate indexing solution error - trying to continue anyway",
-                                level=30,
-                                color="red")
+                    self.tprint(
+                        arg="  Found inaccurate indexing solution error - try to continue anyway",
+                        level=30,
+                        color="red")
 
                     # Inaccurate indexing solution, can try to continue with DEFPIX,
                     # INTEGRATE, and CORRECT anyway
                     self.logger.debug(' The length of input is %s' % len(input))
                     if 'JOB=DEFPIX' in input[-2]:
                         self.logger.debug('Error = %s' %line)
-                        self.logger.debug('XDS failed to run with inaccurate indexing solution error.')
-                        self.tprint(arg="\n  XDS failed to run with inaccurate indexing solution error.",
-                                    level=30,
-                                    color="red")
+                        self.logger.debug(
+                            'XDS failed to run with inaccurate indexing solution error.')
+                        self.tprint(
+                            arg="\n  XDS failed to run with inaccurate indexing solution error.",
+                            level=30,
+                            color="red")
                         return False
                     else:
                         input[-2] = ('JOB=DEFPIX INTEGRATE CORRECT !XYCORR INIT COLSPOT'
@@ -1280,7 +1271,8 @@ class RapdPlugin(Process):
                         return input
                 elif 'SPOT SIZE PARAMETERS HAS FAILED' in line:
                     self.logger.debug('	Found failure in determining spot size parameters.')
-                    self.logger.debug('	Will use default values for REFLECTING_RANGE and BEAM_DIVERGENCE.')
+                    self.logger.debug(
+                        '	Will use default values for REFLECTING_RANGE and BEAM_DIVERGENCE.')
                     self.tprint(arg="\n  Found failure in determining spot size parameters.",
                                 level=99,
                                 color="red")
@@ -1289,10 +1281,11 @@ class RapdPlugin(Process):
                     input.append('BEAM_DIVERGENCE=0.9 BEAM_DIVERGENCE_E.S.D.=0.09\n')
                     self.write_file('XDS.INP', input)
                     os.system('mv XDS.LOG initialXDS.LOG')
-                    self.tprint(arg="  Integrating after failure in determining spot size parameters",
-                                level=99,
-                                color="white",
-                                newline=False)
+                    self.tprint(
+                        arg="  Integrating after failure in determining spot size parameters",
+                        level=99,
+                        color="white",
+                        newline=False)
                     self.xds_run(dir)
                     return input
                 else:
@@ -1610,20 +1603,22 @@ class RapdPlugin(Process):
                                  '          $("#tooltip").remove();\n',
                                  ])
                 if xlabel == 'Dmin (A)':
-                    plotfile.append('            var x = (Math.sqrt(1/item.datapoint[0])).toFixed(2),\n')
+                    plotfile.append(
+                        '            var x = (Math.sqrt(1/item.datapoint[0])).toFixed(2),\n')
                 else:
                     plotfile.append('            var x = item.datapoint[0].toFixed(2),\n')
-                plotfile.extend(['                y = item.datapoint[1].toFixed(2);\n',
-                                 '                showTooltip(item.pageX, item.pageY,\n',
-                                 '                            item.series.label + " at " + x + " = " + y);\n',
-                                 '            }\n',
-                                 '        }\n',
-                                 '        else {\n',
-                                 '               $("#tooltip").remove();\n',
-                                 '                 previousPoint = null;\n',
-                                 '              }\n',
-                                 '    }\n    });\n\n'
-                                 ])
+                plotfile.extend([
+                    '                y = item.datapoint[1].toFixed(2);\n',
+                    '                showTooltip(item.pageX, item.pageY,\n',
+                    '                            item.series.label + " at " + x + " = " + y);\n',
+                    '            }\n',
+                    '        }\n',
+                    '        else {\n',
+                    '               $("#tooltip").remove();\n',
+                    '                 previousPoint = null;\n',
+                    '              }\n',
+                    '    }\n    });\n\n'
+                    ])
         plotfile.append('});\n</script>\n</body>\n</html>\n')
         self.write_file('plot.html', plotfile)
         return('plot.html')
@@ -1716,36 +1711,61 @@ class RapdPlugin(Process):
         # the table where the x-values are , ycols are the position of the y-vaules,
         # and tableNum is the position of the table within the list tables.
         graphs = [
-                  ['Mn(k) & 0k (theta=0) v. batch', 'image_number', ['Mn(k)', '0k'], 0, [5, 6], 0],
-                  ['Relative Bfactor v. batch', 'image_number', ['Bfactor'], 0, [4], 0],
-                  ['Rmerge v Batch for all runs', 'image_number', ['Rmerge', 'SmRmerge'], 0, [5, 12], 1],
-                  ['Maximum resolution limit, I/sigma > 1.0', 'image_number', ['MaxRes','SmMaxRes'], 0, [10, 13], 1],
-                  ['Cumulative multiplicity', 'image_number', ['CMlplc'], 0, [11], 1],
-                  ['Imean & RMS Scatter', 'image_number', ['Mn(I)','RMSdev'], 0, [2, 3], 1],
-                  ['Imean/RMS scatter', 'image_number', ['I/rms'], 0, [4], 1],
-                  ['Number of rejects', 'image_number', ['Nrej'], 0, [7], 1],
-                  ['Anom & Imean CCs v resolution', 'Dmin (A)', ['CCanom', 'CC1/2'], 1, [3, 6], 2],
-                  ['RMS correlation ratio', 'Dmin (A)', ['RCRanom'], 1, [5], 2],
-                  #['Imean CCs v resolution', 'Dmin (A)', ['CC_d12', 'CC_d3'], 1, [3, 4], 3],
-                  #['Mn(I/sd) v resolution', 'Dmin (A)', ['(I/sd)d12', '(I/sd)d3'], 1, [5, 6], 3],
-                  #['Projected Imean CCs v resolution', 'Dmin (A)', ['CCp1', 'CCp3'], 1, [7, 8], 3],
-                  ['I/sigma, Mean Mn(I)/sd(Mn(I))', 'Dmin (A)', ['I/RMS','Mn(I/sd)'], 1, [12, 13], 3],
-                  ['Rmerge, Rfull, Rmeas, Rpim v Resolution', 'Dmin (A)', ['Rmerge', 'Rfull', 'Rmeas', 'Rpim'], 1, [3, 4, 6, 7], 3],
-                  ['Average I, RMSdeviation and Sd', 'Dmin (A)', ['AvI', 'RMSdev', 'sd'], 1, [9, 10, 11], 3],
-                  ['Fractional bias', 'Dmin (A)', ['FrcBias'], 1, [14], 3],
-                  ['Rmerge, Rmeas, Rpim v Resolution', 'Dmin (A)',
-                      ['Rmerge', 'RmergeOv', 'Rmeas', 'RmeasOv', 'Rpim', 'RpimOv'], 1, [3, 4, 7, 8, 9, 10], 4],
-                  ['Rmerge v Intensity', 'Imax', ['Rmerge', 'Rmeas', 'Rpim'], 0, [1, 3, 4], 5],
-                  ['Completeness v Resolution', 'Dmin (A)', ['%poss', 'C%poss', 'AnoCmp', 'AnoFrc'], 1, [6, 7, 9, 10], 6],
-                  ['Multiplicity v Resolution', 'Dmin (A)', ['Mlpclct', 'AnoMlt'], 1, [8, 11], 6],
-                  ['Sigma(scatter/SD), within 5 sd', '<I>', ['SdFc'], 1, [7], 7],
-                  ['Sigma(scatter/SD, within 5 SD, all and within', '<I>', ['SdF', 'SdFc'], 1, [4, 7], 7],
-                  ['Rcp v. batch', 'relative frame difference', ['Rcp'], 1, [-1], 8]
-                  ]
-        return(graphs, tables, int_results)
+            ['Mn(k) & 0k (theta=0) v. batch', 'image_number', ['Mn(k)', '0k'], 0, [5, 6], 0],
+            ['Relative Bfactor v. batch', 'image_number', ['Bfactor'], 0, [4], 0],
+            ['Rmerge v Batch for all runs', 'image_number', ['Rmerge', 'SmRmerge'], 0, [5, 12], 1],
+            ['Maximum resolution limit, I/sigma > 1.0',
+             'image_number',
+             ['MaxRes','SmMaxRes'],
+             0,
+             [10, 13],
+             1],
+            ['Cumulative multiplicity', 'image_number', ['CMlplc'], 0, [11], 1],
+            ['Imean & RMS Scatter', 'image_number', ['Mn(I)','RMSdev'], 0, [2, 3], 1],
+            ['Imean/RMS scatter', 'image_number', ['I/rms'], 0, [4], 1],
+            ['Number of rejects', 'image_number', ['Nrej'], 0, [7], 1],
+            ['Anom & Imean CCs v resolution', 'Dmin (A)', ['CCanom', 'CC1/2'], 1, [3, 6], 2],
+            ['RMS correlation ratio', 'Dmin (A)', ['RCRanom'], 1, [5], 2],
+            #['Imean CCs v resolution', 'Dmin (A)', ['CC_d12', 'CC_d3'], 1, [3, 4], 3],
+            #['Mn(I/sd) v resolution', 'Dmin (A)', ['(I/sd)d12', '(I/sd)d3'], 1, [5, 6], 3],
+            #['Projected Imean CCs v resolution', 'Dmin (A)', ['CCp1', 'CCp3'], 1, [7, 8], 3],
+            ['I/sigma, Mean Mn(I)/sd(Mn(I))', 'Dmin (A)', ['I/RMS','Mn(I/sd)'], 1, [12, 13], 3],
+            ['Rmerge, Rfull, Rmeas, Rpim v Resolution', 'Dmin (A)',
+             ['Rmerge',
+             'Rfull',
+             'Rmeas',
+             'Rpim'],
+             1,
+             [3, 4, 6, 7],
+             3],
+            ['Average I, RMSdeviation and Sd',
+             'Dmin (A)',
+             ['AvI', 'RMSdev', 'sd'],
+             1,
+             [9, 10, 11],
+             3],
+            ['Fractional bias', 'Dmin (A)', ['FrcBias'], 1, [14], 3],
+            ['Rmerge, Rmeas, Rpim v Resolution', 'Dmin (A)',
+             ['Rmerge', 'RmergeOv', 'Rmeas', 'RmeasOv', 'Rpim', 'RpimOv'],
+             1,
+             [3, 4, 7, 8, 9, 10],
+             4],
+            ['Rmerge v Intensity', 'Imax', ['Rmerge', 'Rmeas', 'Rpim'], 0, [1, 3, 4], 5],
+            ['Completeness v Resolution', 'Dmin (A)',
+             ['%poss', 'C%poss', 'AnoCmp', 'AnoFrc'],
+             1,
+             [6, 7, 9, 10],
+             6],
+            ['Multiplicity v Resolution', 'Dmin (A)', ['Mlpclct', 'AnoMlt'], 1, [8, 11], 6],
+            ['Sigma(scatter/SD), within 5 sd', '<I>', ['SdFc'], 1, [7], 7],
+            ['Sigma(scatter/SD, within 5 SD, all and within', '<I>', ['SdF', 'SdFc'], 1, [4, 7], 7],
+            ['Rcp v. batch', 'relative frame difference', ['Rcp'], 1, [-1], 8]
+            ]
+
+        return (graphs, tables, int_results)
 
     def parse_aimless2(self, logfile):
-    	"""
+        """
     	Parses the aimless logfile in order to pull out data for
     	graphing and the results summary table.
     	Relevant values for the summary table are stored in a dict.
@@ -1768,51 +1788,51 @@ class RapdPlugin(Process):
     	}
     	"""
 
-    	log = smartie.parselog(logfile)
+        log = smartie.parselog(logfile)
 
     	# Pull out information for the results summary table.
-    	flag = True
-    	summary = log.keytext(0).message().split("\n")
+        flag = True
+        summary = log.keytext(0).message().split("\n")
 
     	# For some reason "Anomalous flag switched ON" is not always
     	# found, so the line below creates a blank entry for the
     	# the variable that should be created when that phrase is
     	# found, eliminating the problem where the program reports that
     	# the variable anomalous_report is referenced before assignment.
-    	anomalous_report = ""
+        anomalous_report = ""
 
-    	for line in summary:
-    		if "Space group" in line:
-    			space_group = line.strip().split(": ")[-1]
-    		elif "Average unit cell" in line:
-    			unit_cell = map(float, line.split()[3:])
-    		elif "Anomalous flag switched ON" in line:
-    			anomalous_report = line
+        for line in summary:
+            if "Space group" in line:
+                space_group = line.strip().split(": ")[-1]
+            elif "Average unit cell" in line:
+                unit_cell = map(float, line.split()[3:])
+            elif "Anomalous flag switched ON" in line:
+                anomalous_report = line
 
-    	int_results = {
-    	               "bins_low": map(float, summary[3].split()[-3:]),
-                       "bins_high": map(float, summary[4].split()[-3:]),
-                       "rmerge_anom": map(float, summary[6].split()[-3:]),
-                       "rmerge_norm": map(float, summary[7].split()[-3:]),
-                       "rmeas_anom": map(float, summary[8].split()[-3:]),
-                       "rmeas_norm": map(float, summary[9].split()[-3:]),
-                       "rpim_anom": map(float, summary[10].split()[-3:]),
-                       "rpim_norm": map(float, summary[11].split()[-3:]),
-                       "rmerge_top": float(summary[12].split()[-3]),
-                       "total_obs": map(int, summary[13].split()[-3:]),
-                       "unique_obs": map(int, summary[14].split()[-3:]),
-                       "isigi": map(float, summary[15].split()[-3:]),
-                       "cc-half": map(float, summary[16].split()[-3:]),
-                       "completeness": map(float, summary[17].split()[-3:]),
-                       "multiplicity": map(float, summary[18].split()[-3:]),
-                       "anom_completeness": map(float, summary[20].split()[-3:]),
-                       "anom_multiplicity": map(float, summary[21].split()[-3:]),
-                       "anom_correlation": map(float, summary[22].split()[-3:]),
-                       "anom_slope": [float(summary[23].split()[-3])],
-                       "scaling_spacegroup": space_group,
-                       "scaling_unit_cell": unit_cell,
-                       "text2": anomalous_report
-                      }
+        int_results = {
+    	    "bins_low": map(float, summary[3].split()[-3:]),
+            "bins_high": map(float, summary[4].split()[-3:]),
+            "rmerge_anom": map(float, summary[6].split()[-3:]),
+            "rmerge_norm": map(float, summary[7].split()[-3:]),
+            "rmeas_anom": map(float, summary[8].split()[-3:]),
+            "rmeas_norm": map(float, summary[9].split()[-3:]),
+            "rpim_anom": map(float, summary[10].split()[-3:]),
+            "rpim_norm": map(float, summary[11].split()[-3:]),
+            "rmerge_top": float(summary[12].split()[-3]),
+            "total_obs": map(int, summary[13].split()[-3:]),
+            "unique_obs": map(int, summary[14].split()[-3:]),
+            "isigi": map(float, summary[15].split()[-3:]),
+            "cc-half": map(float, summary[16].split()[-3:]),
+            "completeness": map(float, summary[17].split()[-3:]),
+            "multiplicity": map(float, summary[18].split()[-3:]),
+            "anom_completeness": map(float, summary[20].split()[-3:]),
+            "anom_multiplicity": map(float, summary[21].split()[-3:]),
+            "anom_correlation": map(float, summary[22].split()[-3:]),
+            "anom_slope": [float(summary[23].split()[-3])],
+            "scaling_spacegroup": space_group,
+            "scaling_unit_cell": unit_cell,
+            "text2": anomalous_report,
+            }
         # Smartie can pull table information based on a regular
         # expression pattern that matches the table title from
         # the aimless log file.
@@ -2255,7 +2275,6 @@ class RapdPlugin(Process):
         comfile = mtzout.replace('mtz', 'com')
 
         aimless_file = ['#!/bin/tcsh\n',
-                        #'/share/apps/necat/programs/ccp4-6.3.0/ccp4-6.3.0/bin/aimless hklin %s hklout %s << eof > %s\n' % (mtzin, mtzout, logfile),
                         'aimless hklin %s hklout %s << eof > %s\n' % (mtzin, mtzout, logfile),
                         'anomalous on\n',
                         'scales constant\n',
@@ -3061,12 +3080,51 @@ if __name__ == '__main__':
                 'anomalous' : 'False',
                 'multiprocessing' : 'True',
                 'ram_integrate' : False,
-                'ram_nodes' : [['compute-0-15', 'compute-0-1', 'compute-0-2', 'compute-0-3', 'compute-0-4',
-                                'compute-0-5','compute-0-6', 'compute-0-7', 'compute-0-8', 'compute-0-9',
-                                'compute-0-10', 'compute-0-11', 'compute-0-12', 'compute-0-13',
+                'ram_nodes' : [['compute-0-15',
+                                'compute-0-1',
+                                'compute-0-2',
+                                'compute-0-3',
+                                'compute-0-4',
+                                'compute-0-5',
+                                'compute-0-6',
+                                'compute-0-7',
+                                'compute-0-8',
+                                'compute-0-9',
+                                'compute-0-10',
+                                'compute-0-11',
+                                'compute-0-12',
+                                'compute-0-13',
                                 'compute-0-14'],
-                                [1, 61, 121, 181, 241, 301, 361, 421, 481, 541, 601, 661, 721, 781, 841],
-                                [60, 120, 180, 240, 300, 360, 420, 480, 540, 600, 660, 720, 780, 840, 900]
+                                [1,
+                                 61,
+                                 121,
+                                 181,
+                                 241,
+                                 301,
+                                 361,
+                                 421,
+                                 481,
+                                 541,
+                                 601,
+                                 661,
+                                 721,
+                                 781,
+                                 841],
+                                [60,
+                                 120,
+                                 180,
+                                 240,
+                                 300,
+                                 360,
+                                 420,
+                                 480,
+                                 540,
+                                 600,
+                                 660,
+                                 720,
+                                 780,
+                                 840,
+                                 900]
                                 ],
                 'ram_cleanup' : False
                 }
