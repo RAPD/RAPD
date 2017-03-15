@@ -950,7 +950,8 @@ class RapdPlugin(Process):
         self.logger.debug('last_frame = %s', last_frame)
         # print last_frame
         # self.logger.debug('detector_type = %s' % detector_type)
-        background_range = '%s %s' % (int(self.image_data['start']), int(self.image_data['start']) + 4)
+        background_range = '%s %s' % (int(self.image_data['start']),
+                                      int(self.image_data['start']) + 4)
 
         x_beam = float(self.image_data['x_beam']) / float(self.image_data['pixel_size'])
         y_beam = float(self.image_data['y_beam']) / float(self.image_data['pixel_size'])
@@ -1671,38 +1672,34 @@ class RapdPlugin(Process):
                 space_group = line.strip().split(': ')[-1]
             elif 'Average unit cell' in line:
                 unit_cell = map(float, line.split()[3:])
-
             elif 'Anomalous flag switched ON' in line:
                 anomalous_report = line
-            #elif flag == True and 'from half-dataset correlation' in line:
-            #    flag = False
-            #    res_cut = line
 
         int_results={
-                     'bins_low': map(float, summary[3].split()[-3:]),
-                     'bins_high': map(float, summary[4].split()[-3:]),
-                     'rmerge_anom': map(float, summary[6].split()[-3:]),
-                     'rmerge_norm': map(float, summary[7].split()[-3:]),
-                     'rmeas_anom': map(float, summary[8].split()[-3:]),
-                     'rmeas_norm': map(float, summary[9].split()[-3:]),
-                     'rpim_anom': map(float, summary[10].split()[-3:]),
-                     'rpim_norm': map(float, summary[11].split()[-3:]),
-                     'rmerge_top': float(summary[12].split()[-3]),
-                     'total_obs': map(int, summary[13].split()[-3:]),
-                     'unique_obs': map(int, summary[14].split()[-3:]),
-                     'isigi': map(float, summary[15].split()[-3:]),
-                     'cc-half': map(float, summary[16].split()[-3:]),
-                     'completeness': map(float, summary[17].split()[-3:]),
-                     'multiplicity': map(float, summary[18].split()[-3:]),
-                     'anom_completeness': map(float, summary[20].split()[-3:]),
-                     'anom_multiplicity': map(float, summary[21].split()[-3:]),
-                     'anom_correlation': map(float, summary[22].split()[-3:]),
-                     'anom_slope': [float(summary[23].split()[-3])],
-                     'scaling_spacegroup': space_group,
-                     'scaling_unit_cell': unit_cell,
-                     #'text': res_cut,
-                     'text2': anomalous_report
-                     }
+            'bins_low': map(float, summary[3].split()[-3:]),
+            'bins_high': map(float, summary[4].split()[-3:]),
+            'rmerge_anom': map(float, summary[6].split()[-3:]),
+            'rmerge_norm': map(float, summary[7].split()[-3:]),
+            'rmeas_anom': map(float, summary[8].split()[-3:]),
+            'rmeas_norm': map(float, summary[9].split()[-3:]),
+            'rpim_anom': map(float, summary[10].split()[-3:]),
+            'rpim_norm': map(float, summary[11].split()[-3:]),
+            'rmerge_top': float(summary[12].split()[-3]),
+            'total_obs': map(int, summary[13].split()[-3:]),
+            'unique_obs': map(int, summary[14].split()[-3:]),
+            'isigi': map(float, summary[15].split()[-3:]),
+            'cc-half': map(float, summary[16].split()[-3:]),
+            'completeness': map(float, summary[17].split()[-3:]),
+            'multiplicity': map(float, summary[18].split()[-3:]),
+            'anom_completeness': map(float, summary[20].split()[-3:]),
+            'anom_multiplicity': map(float, summary[21].split()[-3:]),
+            'anom_correlation': map(float, summary[22].split()[-3:]),
+            'anom_slope': [float(summary[23].split()[-3])],
+            'scaling_spacegroup': space_group,
+            'scaling_unit_cell': unit_cell,
+            #'text': res_cut,
+            'text2': anomalous_report
+            }
 
         # Now create a list for each graph to be plotted.
         # This list should have [title, xlabel, ylabels, xcol, ycols, tableNum]
