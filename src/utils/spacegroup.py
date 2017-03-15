@@ -27,7 +27,7 @@ __status__ = "Production"
 
 # Standard imports
 # import os
-# from pprint import pprint
+from pprint import pprint
 # import shutil
 # import subprocess
 # import sys
@@ -243,49 +243,62 @@ except ImportError:
   ccp4io_adaptbx = None
 
 def build_ccp4_symmetry_table():
+
+    symbol_to_number = {}
+    ccp4_to_number = {}
+
+    # Open file
     file_iter = open(op.join(
-      extract_from_symmetry_lib.ccp4io_lib_data, "symop.lib"))
+        extract_from_symmetry_lib.ccp4io_lib_data, "symop.lib"))
     ccp4_id_counts = libtbx.dict_with_default_0()
     ccp4_symbol_counts = libtbx.dict_with_default_0()
+
+    # Run through the file
     for line in file_iter:
-      print line
-      flds = line.split(None, 4)
-      ccp4_id = flds[0]
-      ccp4_id_counts[ccp4_id] += 1
-      space_group_number = int(ccp4_id[-3:])
-      order_z = int(flds[1])
-      given_ccp4_symbol = flds[3]
-      ccp4_symbol_counts[given_ccp4_symbol] += 1
-      group = extract_from_symmetry_lib.collect_symops(
-        file_iter=file_iter, order_z=order_z)
-      assert group.order_z() == order_z
-      space_group_info = sgtbx.space_group_info(group=group)
-      retrieved_ccp4_symbol = extract_from_symmetry_lib.ccp4_symbol(
-        space_group_info=space_group_info,
-        lib_name="symop.lib")
-      assert retrieved_ccp4_symbol == given_ccp4_symbol
-      assert space_group_info.type().number() == space_group_number
-      if (1):
-        from iotbx.pdb import format_cryst1_sgroup
-        sgroup = format_cryst1_sgroup(space_group_info=space_group_info)
-        if (len(sgroup) > 11):
-          print "ccp4 symop.lib setting leads to pdb CRYST1 overflow:",\
-            ccp4_id, given_ccp4_symbol, sgroup
-    for ccp4_id,count in ccp4_id_counts.items():
-      if (count != 1):
-        raise RuntimeError(
-          'ccp4 id "%s" appears %d times (should be unique).'
-            % (ccp4_id, count))
-    ccp4_symbol_counts = libtbx.dict_with_default_0()
-    for ccp4_symbol,count in ccp4_symbol_counts.items():
-      if (count != 1):
-        raise RuntimeError(
-          'ccp4 symbol "%s" appears %d times (should be unique).'
-            % (ccp4_symbol, count))
+        # print "\n", line.rstrip()
+        flds = line.split(None, 4)
+        ccp4_id = flds[0]
+        ccp4_id_counts[ccp4_id] += 1
+        space_group_number = int(ccp4_id[-3:])
+        order_z = int(flds[1])
+        given_ccp4_symbol = flds[3]
 
 
+        symbol_to_number[given_ccp4_symbol] = space_group_number
 
+        ccp4_symbol_counts[given_ccp4_symbol] += 1
+        group = extract_from_symmetry_lib.collect_symops(
+          file_iter=file_iter, order_z=order_z)
+        assert group.order_z() == order_z
+        space_group_info = sgtbx.space_group_info(group=group)
+        retrieved_ccp4_symbol = extract_from_symmetry_lib.ccp4_symbol(
+          space_group_info=space_group_info,
+          lib_name="symop.lib")
+        # print "retrieved_ccp4_symbol", retrieved_ccp4_symbol
+        assert retrieved_ccp4_symbol == given_ccp4_symbol
+        assert space_group_info.type().number() == space_group_number
+        if (1):
+            from iotbx.pdb import format_cryst1_sgroup
+            sgroup = format_cryst1_sgroup(space_group_info=space_group_info)
+            # if (len(sgroup) > 11):
+            #     print "ccp4 symop.lib setting leads to pdb CRYST1 overflow:",\
+            #       ccp4_id, given_ccp4_symbol, sgroup
+            # print "sgroup", sgroup
+            ccp4_to_number[sgroup] = space_group_number
+    # for ccp4_id,count in ccp4_id_counts.items():
+    #     if (count != 1):
+    #         raise RuntimeError(
+    #             'ccp4 id "%s" appears %d times (should be unique).'
+    #               % (ccp4_id, count))
+    # ccp4_symbol_counts = libtbx.dict_with_default_0()
+    # for ccp4_symbol,count in ccp4_symbol_counts.items():
+    #     if (count != 1):
+    #         raise RuntimeError(
+    #             'ccp4 symbol "%s" appears %d times (should be unique).'
+    #               % (ccp4_symbol, count))
+    return (symbol_to_number, ccp4_to_number)
 
+symbol_to_number, ccp4_to_number = build_ccp4_symmetry_table()
 
 def get_subgroups(inp):
     """Returns a list of subgroups for a given input Bravais lattice"""
@@ -295,4 +308,5 @@ def get_subgroups(inp):
 
 
 if __name__ == "__main__":
-    build_ccp4_symmetry_table()
+    symbol_to_number, ccp4_to_number = build_ccp4_symmetry_table()
+    pprint(ccp4_to_number)

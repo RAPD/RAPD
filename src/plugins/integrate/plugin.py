@@ -526,10 +526,15 @@ class RapdPlugin(Process):
                 hi_res = 0.9
             else:
                 hi_res = self.hi_res
-            xdsinp = self.change_xds_inp(xdsinp,
-                                         "INCLUDE_RESOLUTION_RANGE=%.2f %.2f\n" % (low_res, hi_res))
-        xdsinp = self.change_xds_inp(xdsinp, "MAXIMUM_NUMBER_OF_PROCESSORS=%s\n" % self.procs)
-        xdsinp = self.change_xds_inp(xdsinp, "MAXIMUM_NUMBER_OF_JOBS=%s\n" % self.jobs)
+            xdsinp = self.change_xds_inp(
+                xdsinp,
+                "INCLUDE_RESOLUTION_RANGE=%.2f %.2f\n" % (low_res, hi_res))
+        xdsinp = self.change_xds_inp(
+            xdsinp,
+            "MAXIMUM_NUMBER_OF_PROCESSORS=%s\n" % self.procs)
+        xdsinp = self.change_xds_inp(
+            xdsinp,
+            "MAXIMUM_NUMBER_OF_JOBS=%s\n" % self.jobs)
         xdsinp = self.change_xds_inp(xdsinp, "JOB=XYCORR INIT COLSPOT \n\n")
         xdsinp = self.change_xds_inp(xdsinp, "DATA_RANGE=%s\n" % data_range)
         xdsfile = os.path.join(xdsdir, 'XDS.INP')
@@ -555,7 +560,9 @@ class RapdPlugin(Process):
             # Check consistency of spacegroup, and modify if necessary.
             xdsinp = self.find_xds_symm(xdsdir, xdsinp)
         else:
-            xdsinp = self.change_xds_inp(xdsinp, "JOB=DEFPIX INTEGRATE CORRECT \n\n")
+            xdsinp = self.change_xds_inp(
+                xdsinp,
+                "JOB=DEFPIX INTEGRATE CORRECT \n\n")
 
         self.write_file(xdsfile, xdsinp)
         self.tprint(arg="  Integrating",
@@ -579,8 +586,18 @@ class RapdPlugin(Process):
         prelim_results = self.run_results(xdsdir)
         self.tprint("\nPreliminary results summary", 99, "blue")
         self.print_results(prelim_results)
-        pprint(prelim_results)
-        sys.exit()
+        # pprint(prelim_results)
+        sg_ccp4 = prelim_results["summary"]["scaling_spacegroup"]
+        sg_num = spacegroup.ccp4_to_number[sg_ccp4]
+        print sg_ccp4, sg_num
+        newinp = self.change_xds_inp(
+            newinp,
+            "UNIT_CELL_CONSTANTS=%.2f %.2f %.2f %.2f %.2f %.2f\n" %
+            tuple(prelim_results["summary"]["scaling_unit_cell"]))
+        newinp = self.change_xds_inp(
+            newinp,
+            "SPACE_GROUP_NUMBER=%d\n" % sg_num)
+
         # Already have hi res cutoff
         if self.hi_res:
             new_rescut = self.hi_res
