@@ -65,6 +65,14 @@ def get_commandline():
                         type=int,
                         help="Last image")
 
+    # Number of rounds of polishing
+    parser.add_argument("--rounds",
+                        action="store",
+                        dest="rounds_polishing",
+                        default=1,
+                        type=int,
+                        help="Rounds of polishing to perform")
+
     # Directory or files
     parser.add_argument(action="store",
                         dest="template",
