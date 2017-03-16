@@ -102,26 +102,6 @@ VERSIONS = {
         ),
 }
 
-# def try_float(number, default="NO DEFAULT"):
-#     """Attempt to cast to a float, but return string if not"""
-#     try:
-#         return float(number)
-#     except ValueError:
-#         if default != "NO DEFAULT":
-#             return default
-#         else:
-#             return number
-#
-# def try_int(number, default="NO DEFAULT"):
-#     """Attempt to cast to an int, but return string if not"""
-#     try:
-#         return float(number)
-#     except ValueError:
-#         if default != "NO DEFAULT":
-#             return default
-#         else:
-#             return number
-
 class RapdPlugin(Process):
     """
     classdocs
@@ -594,18 +574,19 @@ class RapdPlugin(Process):
         print ">>", sg_ccp4, sg_num, "<<"
 
         # Do Pointless and XDS agree on spacegroup?
+        spacegoup_agree = True
         if sg_num != prelim_results["xparm"]["sg_num"]:
             self.tprint("Pointless and XDS disagree on spacegroup", 99, "red")
+            spacegoup_agree = False
 
-        sys.exit()
-
-        newinp = self.change_xds_inp(
-            newinp,
-            "UNIT_CELL_CONSTANTS=%.2f %.2f %.2f %.2f %.2f %.2f\n" %
-            tuple(prelim_results["summary"]["scaling_unit_cell"]))
-        newinp = self.change_xds_inp(
-            newinp,
-            "SPACE_GROUP_NUMBER=%d\n" % sg_num)
+        if self.settings["spacegroup_decider"] in ("auto", "pointless"):
+            newinp = self.change_xds_inp(
+                newinp,
+                "UNIT_CELL_CONSTANTS=%.2f %.2f %.2f %.2f %.2f %.2f\n" %
+                tuple(prelim_results["summary"]["scaling_unit_cell"]))
+            newinp = self.change_xds_inp(
+                newinp,
+                "SPACE_GROUP_NUMBER=%d\n" % sg_num)
 
         # Already have hi res cutoff
         if self.hi_res:
@@ -644,9 +625,13 @@ class RapdPlugin(Process):
         # and rerunning xds.
         #
         # If low resolution, don't try to polish the data, as this tends to blow up.
+        polishing_rounds = 0
         if new_rescut <= 4.5:
             pprint(newinp)
-            # os.rename('%s/GXPARM.XDS' % xdsdir, '%s/XPARM.XDS' % xdsdir)
+            # Don't use the GXPARM if changing the spacegroup on the first polishing round
+            if spacegoup_agree or self.settings["spacegroup_decider"] == "xds" or polishing_rounds > 0:
+                print ">>> Copying GXPARM <<<"
+                os.rename('%s/GXPARM.XDS' % xdsdir, '%s/XPARM.XDS' % xdsdir)
             os.rename('%s/CORRECT.LP' % xdsdir, '%s/CORRECT.LP.old' % xdsdir)
             os.rename('%s/XDS.LOG' % xdsdir, '%s/XDS.LOG.old' % xdsdir)
             self.write_file(xdsfile, newinp)
@@ -655,7 +640,7 @@ class RapdPlugin(Process):
                         color="white",
                         newline=False)
             self.xds_run(xdsdir)
-            final_results = self.run_results(xdsdir)
+            # final_results = self.run_results(xdsdir)
         else:
             # Check to see if a new resolution cutoff should be applied
             new_rescut = self.find_correct_res(xdsdir, 1.0)
@@ -666,7 +651,8 @@ class RapdPlugin(Process):
                 self.write_file(xdsfile, newinp)
                 self.tprint(arg="  New resolution cutoff", level=99, color="white", newline=False)
                 self.xds_run(xdsdir)
-            final_results = self.run_results(xdsdir)
+        polishing_rounds += 1
+        final_results = self.run_results(xdsdir)
 
         # Put data into the commanline
         self.tprint("\nFinal results summary", 99, "blue")
