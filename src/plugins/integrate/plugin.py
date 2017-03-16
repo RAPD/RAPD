@@ -591,7 +591,11 @@ class RapdPlugin(Process):
         # Grab the spacegroup from the Pointless output and convert to number for XDS
         sg_ccp4 = prelim_results["summary"]["scaling_spacegroup"]
         sg_num = spacegroup.ccp4_to_number[sg_ccp4]
-        print sg_ccp4, sg_num
+        print ">>", sg_ccp4, sg_num, "<<"
+
+        # Do Pointless and XDS agree on spacegroup?
+        if sg_num != prelim_results["xparm"]["sg_num"]:
+            self.tprint("Pointless and XDS disagree on spacegroup", 99, "red")
 
         sys.exit()
 
@@ -1363,6 +1367,72 @@ class RapdPlugin(Process):
         os.chmod('forki', stat.S_IRWXU)
         return
 
+    def parse_xparm(self, infile="GXPARM.XDS"):
+        """Parse out the XPARM file for information"""
+
+        if not os.path.exists(infile):
+            return False
+
+        in_lines = open(infile, "r").readlines()
+        results = {}
+        line_counter = 1
+        for line in in_lines:
+            # print line_counter, line.rstrip()
+            sline = line.strip().split()
+
+            if line_counter == 2:
+                results["starting_frame"] = int(sline[0])
+                results["starting_angle"], results["osc_range"] = [float(x) for x in sline[1:3]]
+                results["rotation_axis_direction"] = [float(x) for x in sline[3:]]
+
+            elif line_counter == 3:
+                results["wavelength"] = float(sline[0])
+                results["incident_beam_direction"] = [float(x) for x in sline[1:]]
+
+            elif line_counter == 4:
+                sg_num = int(sline[0])
+                a, b, c, alpha, beta, gamma = [float(x) for x in sline[1:]]
+                print ">>", sg_num, a, b, c, alpha, beta, gamma, "<<"
+                results["sg_num"] = sg_num
+                results["a"] = a
+                results["b"] = b
+                results["c"] = c
+                results["alpha"] = alpha
+                results["beta"] = beta
+                results["gamma"] = gamma
+
+            elif line_counter == 5:
+                results["a_axis_unrotated_coords"] = [float(x) for x in sline]
+
+            elif line_counter == 6:
+                results["b_axis_unrotated_coords"] = [float(x) for x in sline]
+
+            elif line_counter == 7:
+                results["c_axis_unrotated_coords"] = [float(x) for x in sline]
+
+            elif line_counter == 8:
+                results["number_detector_segments"] = int(sline[0])
+                results["number_fast_pixels"] = int(sline[1])
+                results["number_slow_pixels"] = int(sline[2])
+                results["pixel_size_fast"] = float(sline[3])
+                results["pixel_size_slow"] = float(sline[4])
+
+            elif line_counter == 9:
+                results["orgx"], results["orgx"], results["f"] = [float(x) for x in sline]
+
+            elif line_counter == 10:
+                results["detector_x_axis"] =  [float(x) for x in sline]
+
+            elif line_counter == 11:
+                results["detector_y_axis"] =  [float(x) for x in sline]
+
+            elif line_counter == 12:
+                results["detector_z_axis"] =  [float(x) for x in sline]
+
+            line_counter += 1
+
+        return results
+
     def run_results(self, directory):
         """
         Takes the results from xds integration/scaling and prepares
@@ -1373,8 +1443,9 @@ class RapdPlugin(Process):
 
         orig_rescut = False
 
-        # Run xdsstat on XDS_ASCII.HKL.
-        xdsstat_log = self.xdsstat()
+        # Open up the GXPARM for info
+        xparm = self.parse_xparm()
+        pprint(xparm)
 
         # Run pointless to convert XDS_ASCII.HKL to mtz format.
         mtzfile = self.pointless()
@@ -1435,6 +1506,7 @@ class RapdPlugin(Process):
                    'plots': graphs,
                    'summary': summary,
                    'mtzfile': scalamtz,
+                   'xparm': xparm,
                    'dir': directory
                    }
         self.logger.debug("Returning results!")
@@ -1880,53 +1952,46 @@ class RapdPlugin(Process):
 
         plots = {
             "Rmerge vs Frame": {
-                "data" :[
+                "data": [
                     {
-                        "parameters" :
-		        {
-                         "linecolor" : "3",
-                         "linelabel" : "Rmerge",
-                         "linetype"  : "11",
-                         "linewidth" : "3"
-		        },
-                    "series" :
-			[ {
-                           "xs" : [int(x) for x in log.tables(rfactor)[0].col("N")],
-                           "ys" : [try_float(x, 0.0) for x in log.tables(rfactor)[0].col("Rmerge")]
-                        } ]
-                    },
-                    {
-                     "parameters" :
-		     	{
-                         "linecolor" : "4",
-                         "linelabel" : "SmRmerge",
-                         "linetype"  : "11",
-                         "linewidth" : "3"
-			 },
-                     "series" :
-			[ {
-                         "xs" : [try_int(x) for x in log.tables(rfactor)[0].col("N")],
+                        "parameters": {
+                            "linecolor": "3",
+                            "linelabel": "Rmerge",
+                            "linetype": "11",
+                            "linewidth": "3"
+	                        },
+                        "series": [
+                            {
+                                "xs": [int(x) for x in log.tables(rfactor)[0].col("N")],
+                                "ys": [try_float(x, 0.0) for x in log.tables(rfactor)[0].col("Rmerge")]
+                                }
+                            ]},
+                    {"parameters": {
+                        "linecolor": "4",
+                        "linelabel": "SmRmerge",
+                        "linetype": "11",
+                        "linewidth": "3"
+			            },
+                    "series": [
+                        {"xs" : [try_int(x) for x in log.tables(rfactor)[0].col("N")],
                          "ys" : [try_float(x, 0.0) for x in log.tables(rfactor)[0].col("SmRmerge")]
-                        } ]
-                    } ],
-                "parameters" :
-		    {
-                    "toplabel" : "Rmerge vs Batch for all Runs",
-                    "xlabel"   : "Image Number"
-                    }
+                        }
+                    ]},
+                ],
+                "parameters": {
+                    "toplabel": "Rmerge vs Batch for all Runs",
+                    "xlabel": "Image Number",
+                    },
                 },
-            "Imean/RMS scatter" :
-		{
-                "data" :
-		    [ {
-		    "parameters" :
-		        {
-			"linecolor" : "3",
-			"linelabel" : "I/rms",
-			"linetype"  : "11",
-			"linewidth" : "3"
-			},
-		    "series" :
+            "Imean/RMS scatter": {
+                "data": [
+                    {"parameters": {
+            			"linecolor" : "3",
+            			"linelabel" : "I/rms",
+            			"linetype"  : "11",
+            			"linewidth" : "3"
+            			},
+		             "series" :
 		        [ {
 			"xs" : [int(x) for x in log.tables(rfactor)[0].col("N")],
 			"ys" : [try_float(x, 0.0) for x in log.tables(rfactor)[0].col("I/rms")]
@@ -2340,83 +2405,6 @@ class RapdPlugin(Process):
                 return_value=mtzfile
                 break
         return(return_value)
-
-    def parse_xdsstat(self, log, tables_length):
-        """
-        Parses the output of xdsstat (XDSSTAT.LP) to pull out the Rd
-        information
-
-        """
-        self.logger.debug('FastIntegration::parsse_xdsstat')
-
-        rd_table = []
-        xdsstat = open(log,'r').readlines()
-        for line in xdsstat:
-            if 'DIFFERENCE' in line:
-                split_line = line.split()
-                # extract Framediff, R_d, Rd_notfriedel, Rd_friedel.
-                table_line = [split_line[0], split_line[2], split_line[4], split_line[6] ]
-                rd_table.append(table_line)
-        title = 'Rd vs frame_difference'
-        xlabel = 'Frame Difference'
-        ylabels = ['Rd', 'Rd_notfriedel', 'Rd_friedel']
-        xcol = 0
-        ycols = [1, 2, 3]
-        tableNum = tables_length
-        rd_graph = (title, xlabel, ylabels, xcol, ycols, tableNum)
-
-        return(rd_graph, rd_table)
-
-    def xdsstat(self):
-        """
-        Runs xdsstat, a program that extracts some extra statistics
-        from the results of XDS CORRECT.
-
-        In order for this to run, xdsstat should be installed in the user's path.
-        And a script called xdsstat.sh should also be created and available in the path.
-
-        Information about the availability of xdssstat can be obtained at the xdswiki:
-        http://strucbio.biologie.uni-konstanz.de/xdswiki/index.php/Xdsstat#Availability
-
-        xdsstat.sh is a simple three line shell script:
-
-        #!/bin/tcsh
-        xdsstat << eof > XDSSTAT.LP
-        XDS_ASCII.HKL
-        eof
-
-        It runs xdsstat on the default reflection file XDS_ASCII.HKL and sends the
-        output to the file XDSSTAT.LP
-        """
-        self.logger.debug('FastIntegration::xdsstat')
-        self.tprint(arg="  Running XDSSTAT", level=10, color="white")
-
-        # Check to see if xdsstat exists in the path
-        test = find_executable("xdsstat.sh")
-        if test == None:
-            self.logger.debug('    xdsstat.sh is not in the defined PATH')
-            # Write xdsstat.sh
-            xdsststsh = ["#!/bin/bash\n",
-                         "xdsstat << eof > XDSSTAT.LP\n",
-                         "XDS_ASCII.HKL\n",
-                         "eof\n"]
-            self.write_file("xdsstat.sh", xdsststsh)
-            os.chmod("./xdsstat.sh", stat.S_IRWXU)
-
-        try:
-            job = Process(target=Utils.processLocal, args=(('xdsstat.sh'), self.logger))
-            job.start()
-            while job.is_alive():
-                time.sleep(1)
-        except IOError as e:
-            self.logger.debug('    xdsstat.sh failed to run properly')
-            self.logger.debug(e)
-            return('Failed')
-        if os.path.isfile('XDSSTAT.LP'):
-            return('XDSSTAT.LP')
-        else:
-            self.logger.debug('    XDSSTAT.LP does not exist')
-        return('Failed')
 
     def finish_data(self, results):
         """

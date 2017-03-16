@@ -73,6 +73,14 @@ def get_commandline():
                         type=int,
                         help="Rounds of polishing to perform")
 
+    # Who decides spacegroup
+    parser.add_argument("--decider",
+                        action="store",
+                        dest="spacegroup_decider",
+                        default="auto",
+                        choices=["auto", "pointless", "xds"],
+                        help="Rounds of polishing to perform")
+
     # Directory or files
     parser.add_argument(action="store",
                         dest="template",
@@ -192,6 +200,8 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
         "json_output": commandline_args.json,
         "show_plots": commandline_args.plotting,
         "xdsinp": detector_module.XDSINP,
+        "spacegroup_decider": commandline_args.spacegroup_decider,
+        "rounds_polishing": commandline_args.rounds_polishing
     }
 
     if commandline_args.beamcenter[0]:
