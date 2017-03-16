@@ -586,10 +586,15 @@ class RapdPlugin(Process):
         prelim_results = self.run_results(xdsdir)
         self.tprint("\nPreliminary results summary", 99, "blue")
         self.print_results(prelim_results)
-        # pprint(prelim_results)
+        pprint(prelim_results)
+
+        # Grab the spacegroup from the Pointless output and convert to number for XDS
         sg_ccp4 = prelim_results["summary"]["scaling_spacegroup"]
         sg_num = spacegroup.ccp4_to_number[sg_ccp4]
         print sg_ccp4, sg_num
+
+        sys.exit()
+
         newinp = self.change_xds_inp(
             newinp,
             "UNIT_CELL_CONSTANTS=%.2f %.2f %.2f %.2f %.2f %.2f\n" %
