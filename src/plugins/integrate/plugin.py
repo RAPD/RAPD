@@ -576,7 +576,11 @@ class RapdPlugin(Process):
         # Do Pointless and XDS agree on spacegroup?
         spacegoup_agree = True
         if sg_num != prelim_results["xparm"]["sg_num"]:
-            self.tprint("Pointless and XDS disagree on spacegroup", 99, "red")
+            self.tprint("Pointless and XDS disagree on spacegroup", 99, "red", False)
+            if self.settings["spacegroup_decider"] in ("auto", "pointless"):
+                self.tprint(" Using the pointless spacegroup %s" % sg_ccp4, 99, "red")
+            else:
+                self.tprint(" Using the XDS spacegroup %d" % prelim_results["xparm"]["sg_num"], 99, "red")
             spacegoup_agree = False
 
         if self.settings["spacegroup_decider"] in ("auto", "pointless"):
