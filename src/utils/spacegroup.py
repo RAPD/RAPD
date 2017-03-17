@@ -300,6 +300,11 @@ def build_ccp4_symmetry_table():
 
 symbol_to_number, ccp4_to_number = build_ccp4_symmetry_table()
 
+# Reverse lookup for
+number_to_ccp4 = {}
+for key, val in ccp4_to_number.iteritems():
+    number_to_ccp4[val] = key
+
 def get_subgroups(inp):
     """Returns a list of subgroups for a given input Bravais lattice"""
 
