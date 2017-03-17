@@ -553,7 +553,7 @@ class RapdPlugin(Process):
 
         # If known xds_errors occur, catch them and take corrective action
         newinp = self.check_for_xds_errors(xdsdir, xdsinp)
-        # pprint(newinp)
+        pprint(newinp)
         if newinp == False:
             self.logger.exception('Unknown xds error occurred. Please check for cause!')
             self.tprint(arg="\nXDS error unknown to RAPD has occurred. Please check for cause!",
@@ -566,32 +566,23 @@ class RapdPlugin(Process):
         prelim_results = self.run_results(xdsdir)
         self.tprint("\nPreliminary results summary", 99, "blue")
         self.print_results(prelim_results)
-        # pprint(prelim_results["summary"])
+        pprint(prelim_results["summary"])
 
         # Grab the spacegroup from the Pointless output and convert to number for XDS
-        sg_pointless = prelim_results["summary"]["scaling_spacegroup"]
-        sg_num_pointless = spacegroup.ccp4_to_number[sg_pointless]
-
-        sg_num_xds = prelim_results["xparm"]["sg_num"]
-        sg_xds = spacegroup.number_to_ccp4[sg_num_xds]
+        sg_ccp4 = prelim_results["summary"]["scaling_spacegroup"]
+        sg_num = spacegroup.ccp4_to_number[sg_ccp4]
+        print ">>", sg_ccp4, sg_num, "<<"
 
         # Do Pointless and XDS agree on spacegroup?
         spacegoup_agree = True
-        if sg_num_pointless != sg_num_xds:
-            spacegoup_agree = False
-            self.tprint("Pointless and XDS disagree on spacegroup %s vs %s" %
-                        (sg_pointless, sg_xds),
-                        99,
-                        "red")
-            # Use pointless
+        if sg_num != prelim_results["xparm"]["sg_num"]:
+            self.tprint("Pointless and XDS disagree on spacegroup", 99, "red", False)
             if self.settings["spacegroup_decider"] in ("auto", "pointless"):
-                self.tprint(" Using the pointless spacegroup %s" % sg_pointless, 99, "red")
-            # Use XDS
+                self.tprint(" Using the pointless spacegroup %s" % sg_ccp4, 99, "red")
             else:
-                self.tprint(
-                    " Using the XDS spacegroup %s" % sg_xds, 99, "red")
+                self.tprint(" Using the XDS spacegroup %d" % prelim_results["xparm"]["sg_num"], 99, "red")
+            spacegoup_agree = False
 
-        # Use pointless spacegroup info
         if self.settings["spacegroup_decider"] in ("auto", "pointless"):
             newinp = self.change_xds_inp(
                 newinp,
@@ -599,7 +590,7 @@ class RapdPlugin(Process):
                 tuple(prelim_results["summary"]["scaling_unit_cell"]))
             newinp = self.change_xds_inp(
                 newinp,
-                "SPACE_GROUP_NUMBER=%d\n" % sg_num_pointless)
+                "SPACE_GROUP_NUMBER=%d\n" % sg_num)
 
         # Already have hi res cutoff
         if self.hi_res:
@@ -638,36 +629,22 @@ class RapdPlugin(Process):
         # and rerunning xds.
         #
         # If low resolution, don't try to polish the data, as this tends to blow up.
+        polishing_rounds = 0
         if new_rescut <= 4.5:
-            polishing_rounds = 0
-            results = False
-            while polishing_rounds < self.settings["rounds_polishing"]:
-                # pprint(newinp)
-
-                if results:
-                    self.tprint("\nIntermediate results summary", 99, "blue")
-                    self.print_results(results)
-                # Don't use the GXPARM if changing the spacegroup on the first polishing round
-                if spacegoup_agree or self.settings["spacegroup_decider"] == "xds" or polishing_rounds > 0:
-                    # print ">>> Copying GXPARM <<<"
-                    os.rename('%s/GXPARM.XDS' % xdsdir, '%s/XPARM.XDS' % xdsdir)
-                    polishing_rounds += 1
-                    self.tprint(arg="  Polishing round %d" % polishing_rounds,
-                                level=99,
-                                color="white",
-                                newline=False)
-                else:
-                    spacegoup_agree = True
-                    self.tprint(arg="  Integrating with new spacegroup",
-                                level=99,
-                                color="white",
-                                newline=False)
-                os.rename('%s/CORRECT.LP' % xdsdir, '%s/CORRECT.LP.old' % xdsdir)
-                os.rename('%s/XDS.LOG' % xdsdir, '%s/XDS.LOG.old' % xdsdir)
-                self.write_file(xdsfile, newinp)
-                self.xds_run(xdsdir)
-                results = self.run_results(xdsdir)
-
+            pprint(newinp)
+            # Don't use the GXPARM if changing the spacegroup on the first polishing round
+            if spacegoup_agree or self.settings["spacegroup_decider"] == "xds" or polishing_rounds > 0:
+                print ">>> Copying GXPARM <<<"
+                os.rename('%s/GXPARM.XDS' % xdsdir, '%s/XPARM.XDS' % xdsdir)
+            os.rename('%s/CORRECT.LP' % xdsdir, '%s/CORRECT.LP.old' % xdsdir)
+            os.rename('%s/XDS.LOG' % xdsdir, '%s/XDS.LOG.old' % xdsdir)
+            self.write_file(xdsfile, newinp)
+            self.tprint(arg="  Polishing",
+                        level=99,
+                        color="white",
+                        newline=False)
+            self.xds_run(xdsdir)
+            # final_results = self.run_results(xdsdir)
         else:
             # Check to see if a new resolution cutoff should be applied
             new_rescut = self.find_correct_res(xdsdir, 1.0)
@@ -678,6 +655,7 @@ class RapdPlugin(Process):
                 self.write_file(xdsfile, newinp)
                 self.tprint(arg="  New resolution cutoff", level=99, color="white", newline=False)
                 self.xds_run(xdsdir)
+        polishing_rounds += 1
         final_results = self.run_results(xdsdir)
 
         # Put data into the commanline
@@ -1433,13 +1411,13 @@ class RapdPlugin(Process):
                 results["orgx"], results["orgx"], results["f"] = [float(x) for x in sline]
 
             elif line_counter == 10:
-                results["detector_x_axis"] =  [float(x) for x in sline]
+                results["detector_x_axis"] = [float(x) for x in sline]
 
             elif line_counter == 11:
-                results["detector_y_axis"] =  [float(x) for x in sline]
+                results["detector_y_axis"] = [float(x) for x in sline]
 
             elif line_counter == 12:
-                results["detector_z_axis"] =  [float(x) for x in sline]
+                results["detector_z_axis"] = [float(x) for x in sline]
 
             line_counter += 1
 
@@ -1457,7 +1435,7 @@ class RapdPlugin(Process):
 
         # Open up the GXPARM for info
         xparm = self.parse_xparm()
-        # pprint(xparm)
+        pprint(xparm)
 
         # Run pointless to convert XDS_ASCII.HKL to mtz format.
         mtzfile = self.pointless()
@@ -2516,7 +2494,7 @@ class RapdPlugin(Process):
         os.system('cp %s/XDS.INP %s_XDS.INP' %(results['dir'], prefix))
         os.system('cp %s/CORRECT.LP %s_CORRECT.LP' %(results['dir'], prefix))
         os.system('cp %s/INTEGRATE.LP %s_INTEGRATE.LP' %(results['dir'], prefix))
-        # os.system('cp %s/XDSSTAT.LP %s_XDSSTAT.LP' %(results['dir'], prefix))
+        os.system('cp %s/XDSSTAT.LP %s_XDSSTAT.LP' %(results['dir'], prefix))
         os.system('cp %s/XDS_ASCII.HKL %s_XDS.HKL' %(results['dir'], prefix))
 
         # Remove any integration directories.
