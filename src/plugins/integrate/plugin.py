@@ -645,6 +645,7 @@ class RapdPlugin(Process):
                 # pprint(newinp)
 
                 if results:
+                    self.tprint("\nIntermediate results summary", 99, "blue")
                     self.print_results(results)
                 # Don't use the GXPARM if changing the spacegroup on the first polishing round
                 if spacegoup_agree or self.settings["spacegroup_decider"] == "xds" or polishing_rounds > 0:
