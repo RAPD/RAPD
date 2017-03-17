@@ -167,7 +167,6 @@ class Xds2Mosflm:
             #print _usage
             sys.exit(2)
 
-
         if "template" not in XDSi.dict:
             infilelocation, infilename = os.path.split(xds_file)
 
@@ -184,11 +183,9 @@ class Xds2Mosflm:
             _template = ("%s%0"+str(nDigit)+"d") % (_template.split('#')[0],1)
 
         matf_name = mat_file
-
         XDSi.debut()
         MOSi.UB = XDSi.UBxds_to_mos()
         MOSi.cell = XDSi.dict["cell"]
-
         B = MOSi.get_B(reciprocal(MOSi.cell))
         #MOSi.U = MOSi.UB * B.inverse() / XDSi.dict["wavelength"]
         MOSi.U = MOSi.UB * B.inverse().__div__(XDSi.dict["wavelength"])

@@ -351,7 +351,6 @@ class RapdPlugin(Process):
         self.logger.debug(self.results)
         #self.sendBack2(results)
 
-
         self.write_json(self.results)
 
         self.print_info()
@@ -569,18 +568,22 @@ class RapdPlugin(Process):
         # pprint(prelim_results["summary"])
 
         # Grab the spacegroup from the Pointless output and convert to number for XDS
-        sg_ccp4 = prelim_results["summary"]["scaling_spacegroup"]
-        sg_num = spacegroup.ccp4_to_number[sg_ccp4]
-        # print ">>", sg_ccp4, sg_num, "<<"
+        sg_let_pointless = prelim_results["summary"]["scaling_spacegroup"]
+        sg_num_pointless = spacegroup.ccp4_to_number[sg_let_pointless]
+
+        # XDS-determined spacegroup
+        sg_num_xds = prelim_results["xparm"]["sg_num"]
+        sg_let_xds = spacegroup.number_to_ccp4[sg_num_xds]
+
 
         # Do Pointless and XDS agree on spacegroup?
         spacegoup_agree = True
-        if sg_num != prelim_results["xparm"]["sg_num"]:
-            self.tprint("Pointless and XDS disagree on spacegroup", 99, "red")
+        if sg_num_pointless != sg_num_xds:
+            self.tprint("Pointless and XDS disagree on spacegroup %s vs %s" % (sg_let_pointless, sg_let_xds), 99, "red")
             if self.settings["spacegroup_decider"] in ("auto", "pointless"):
-                self.tprint(" Using the pointless spacegroup %s" % sg_ccp4, 99, "red")
+                self.tprint(" Using the pointless spacegroup %s" % sg_let_pointless, 99, "red")
             else:
-                self.tprint(" Using the XDS spacegroup %d" % prelim_results["xparm"]["sg_num"], 99, "red")
+                self.tprint(" Using the XDS spacegroup %s" % sg_let_xds, 99, "red")
             spacegoup_agree = False
 
         if self.settings["spacegroup_decider"] in ("auto", "pointless"):
@@ -590,7 +593,7 @@ class RapdPlugin(Process):
                 tuple(prelim_results["summary"]["scaling_unit_cell"]))
             newinp = self.change_xds_inp(
                 newinp,
-                "SPACE_GROUP_NUMBER=%d\n" % sg_num)
+                "SPACE_GROUP_NUMBER=%d\n" % sg_num_pointless)
 
         # Already have hi res cutoff
         if self.hi_res:
@@ -634,7 +637,7 @@ class RapdPlugin(Process):
             # pprint(newinp)
             # Don't use the GXPARM if changing the spacegroup on the first polishing round
             if spacegoup_agree or self.settings["spacegroup_decider"] == "xds" or polishing_rounds > 0:
-                print ">>> Copying GXPARM <<<"
+                # print ">>> Copying GXPARM <<<"
                 os.rename('%s/GXPARM.XDS' % xdsdir, '%s/XPARM.XDS' % xdsdir)
             os.rename('%s/CORRECT.LP' % xdsdir, '%s/CORRECT.LP.old' % xdsdir)
             os.rename('%s/XDS.LOG' % xdsdir, '%s/XDS.LOG.old' % xdsdir)

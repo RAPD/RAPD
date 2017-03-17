@@ -24,7 +24,7 @@
     module by Matthias Baas (see http://cgkit.sourceforge.net).
 
     TODO:
-      - 
+      -
 """
 
 __author__ = "Pierre Legrand (pierre legrand \at synchrotron-soleil fr)"
@@ -158,7 +158,7 @@ class DenzoParser:
                        abs(self.cell2[2] - self.cell[2]) < 1e-2 and \
                        abs(self.cell2[3] - self.cell[3]) < 2e-2 and \
                        abs(self.cell2[4] - self.cell[4]) < 2e-2 and \
-                       abs(self.cell2[5] - self.cell[5]) < 2e-2 
+                       abs(self.cell2[5] - self.cell[5]) < 2e-2
 
         # Verify that the calculation method for UB_to_Rotxyz works correctly
         _rotx, _roty, _rotz = self.UB_to_Rotxyz()
@@ -208,21 +208,21 @@ class DenzoParser:
         B[0,2] = rcell[2] * B13
         B[1,2] = rcell[2] * cr[0]
         B[2,2] = rcell[2] * (sr[0]**2 - B13**2)**0.5
-        
+
         return B
 
     def UB_to_Rotxyz(self, UB=None, U0=None, vertical=None,
                                     spindle=None, motorAxis=None):
-        
+
         if not UB: UB = self.UB
         if not vertical: vertical = self.verticalAxis
         if not spindle: spindle = self.spindleAxis
         if not motorAxis: motorAxis = self.motorAxis
-        
+
         rcell = UB_to_cellParam(UB)
         if not U0: U0 = self.get_U0(rcell, vertical, spindle)
         B = self.get_B(rcell)
-                
+
         U0B = U0 * B
         # U = UB.B**-1
         U = UB * U0B.inverse()
@@ -233,10 +233,10 @@ class DenzoParser:
 
         if  motorAxis == [0., -1., 0.]:  self.DNZAxes =  -ey,  ex, -ez
         elif motorAxis == [0., 1., 0.]:  self.DNZAxes =   ey, -ex, -ez
-            
+
         angles_pair = ThreeAxisRotation2(U.mlist, self.DNZAxes).getAngles()
         return map_r2d(angles_pair[0])
-         
+
     def Adnz_to_Udnz(self, Adnz=None):
         """!!!! Not well that Adnz and Udnz are permutated!!!
         This function only tries to follow dot.x header internal rules...
@@ -248,7 +248,7 @@ class DenzoParser:
             cell_r = UB_to_cellParam(Adnz)
         BL = BusingLevy(cell_r)
         return Qdnz2mos * (Adnz * BL.inverse())
-         
+
     def Adnz_to_rotxyz(self, Adnz, Bdnz, vertical, spindle):
         U2a = (Bdnz * spindle).normalize()
         U1a = Bdnz * vertical
@@ -259,20 +259,20 @@ class DenzoParser:
         dnzrmat = ThreeAxisRotation2(RMAT.mlist, self.DNZAxes)
         rotxyz = dnzrmat.getAngles()
         return rotxyz, Udnz0
-        
+
 #    def RotXYZ2UB(self):
-#         
+#
 #        return self.get_U0(self.cell_r)
 
 class XDSParser:
 
     def __init__(self, filename=None):
-        
+
         # XDS Dictionary
         self.dict = {}
         self.info = "XDS Parser"
         self.fileType = "XDS"
-        
+
         if filename:
             self.parse(filename)
             if self.dict.has_key("symmetry"):
@@ -281,7 +281,7 @@ class XDSParser:
             if self.dict.has_key("cell"):
                 self.cell = self.dict["cell"]
                 self.cell_r = reciprocal(self.dict["cell"])
-    
+
     def parse(self, filename):
         if filename.count("XDS.INP"): self.parse_xdsinp(filename)
         elif filename.count("INIT.LP"): self.parse_init(filename)
@@ -290,7 +290,7 @@ class XDSParser:
         elif filename.count("XPARM.XDS"): self.parse_xparm(filename)
         else:
             raise ParserError, "Error, Can't parse file: %s" % filename
-        
+
     def get_par(self, _str,match,limit=70,func=float):
         start = _str.index(match)+len(match)
         tmp = _str[start:start+limit].splitlines()[0].split()
@@ -393,15 +393,16 @@ class XDSParser:
 
     def debut(self):
         "Do simple cristallographic calculations from XDS initial parameters"
-        
+
         A = vec3(self.dict["A"])
         B = vec3(self.dict["B"])
         C = vec3(self.dict["C"])
-        
+
         volum = A.cross(B)*C
         Ar = B.cross(C).__div__(volum)
         Br = C.cross(A).__div__(volum)
         Cr = A.cross(B).__div__(volum)
+
         """
         Ar = B.cross(C)/volum
         Br = C.cross(A)/volum
@@ -411,14 +412,14 @@ class XDSParser:
 
         BEAM = vec3(self.dict["beam"])
         wavelength = 1/BEAM.length()
-        
+
         self.dict["cell_volum"] = volum
         self.dict["wavelength"] = wavelength
         self.dict["Ar"] = Ar
         self.dict["Br"] = Br
         self.dict["Cr"] = Cr
         self.dict["UB"] = UBxds
-        
+
 
     def getOmega(self):
         """Calculate an Omega value (in radian) wich defines how the fast (X) and
@@ -443,19 +444,19 @@ class XDSParser:
         Yd =  vec3(self.dict["rot"]).normalize()
         CAMERA_x = Xd.cross(Yd)
         CAMERA = mat3(CAMERA_x, Xd, Yd).transpose()
-            
+
         # This is the definition of the fast:X and slow:Y axis for the detector files.
         XDSdetector_X = vec3(self.dict["detector_X"])
         XDSdetector_Y = vec3(self.dict["detector_Y"])
-                
+
         # Now this axes are translated in the mosflm Camera frame
         Xs = XDSdetector_X*CAMERA
         Ys = XDSdetector_Y*CAMERA
-        
+
         # Both angles should be identical.
         omegaX = Xd.angle(Xs)
         omegaY = Yd.angle(Ys)
-        
+
         if _debug:
             print "DEBUG: X xds: fast =",XDSdetector_X
             print "DEBUG: Y xds: slow =",XDSdetector_Y
@@ -465,7 +466,7 @@ class XDSParser:
             print "DEBUG: Yd: ", Yd
             print "DEBUG: OmegaX:   %8.2f" % (omegaX*r2d)
             print "DEBUG: OmegaY:   %8.2f" % (omegaY*r2d)
-            
+
         return omegaX
 
     def getTwoTheta(self):
@@ -490,8 +491,8 @@ class XDSParser:
             detecorVector = XDSdetector_X
             #print 2
         else:
-            raise Exception, "Can't calculate TwoTheta angle"    
-        return camY.angle(detecorVector)    
+            raise Exception, "Can't calculate TwoTheta angle"
+        return camY.angle(detecorVector)
 
     def getBeamOrigin(self):
         """Calculate the direct beam coordinates on the detector from beamOrigin."""
@@ -512,7 +513,7 @@ class XDSParser:
         beamY = beamOy + beam*XDSdetector_Y*distance/beamOz
         beamXp = beamX/self.dict["pixel_size"][0]
         beamYp = beamY/self.dict["pixel_size"][1]
-        
+
         if _debug:
             if "origin" in self.dict.keys():
                 print "\nDEBUG: BEAM center read from XDS in pixel:",
@@ -591,57 +592,57 @@ class XDSParser:
 
     def UBxds_to_mos(self):
         """ Convert the XDS direct space Orientation Matrix to a mosflm OM
-        
+
         Mosflm CAMERA coordinate frame has orthonormal axes with:
-        
+
           z // rotation axis
           y perpendicular to z and to the beam
           x perpendicular to y and z (along the beam)
-        
+
         For more details see the mosflm documentation:
         http://www.ccp4.ac.uk/dist/x-windows/Mosflm/doc/mosflm_user_guide.html#a3
         """
-        
+
         if "UB" not in self.dict.keys():
             self.debut()
-            
+
         BEAM = vec3(self.dict["beam"])
         ROT = vec3(self.dict["rot"])
         UBxds = self.dict["UB"]
-        
+
         CAMERA_z = ROT.normalize()
         CAMERA_y = CAMERA_z.cross(BEAM).normalize()
         CAMERA_x = CAMERA_y.cross(CAMERA_z)
         CAMERA = mat3(CAMERA_x,CAMERA_y,CAMERA_z).transpose()
-        
+
         return  CAMERA * UBxds * self.dict["wavelength"]
-         
+
 
     def UBxds_to_dnz(self):
         """ Convert the XDS direct space Orientation Matrix to a mosflm OM
-        
+
         Denzo CAMERA coordinate frame has orthonormal axes with:
 
           y // to the rotation (spindel) axis
           z // to the beam
           x perpendicular to z and to the beam
-        
+
         For more details see the denzo documentation:
         http://www.ccp4.ac.uk/dist/x-windows/Mosflm/doc/mosflm_user_guide.html#a3
         """
-            
+
         if "UB" not in self.dict.keys():
             self.debut()
-            
+
         BEAM = vec3(self.dict["beam"])
         ROT = vec3(self.dict["rot"])
         UBxds = self.dict["UB"]
-                
+
         CAMERA_y = ROT.normalize()
         CAMERA_x = CAMERA_y.cross(BEAM).normalize()
         CAMERA_z = CAMERA_x.cross(CAMERA_y)
         CAMERA = mat3(CAMERA_x,CAMERA_y,CAMERA_z).transpose()
-                    
+
         return  CAMERA * UBxds
 
 class MosflmParser:
@@ -662,22 +663,22 @@ class MosflmParser:
             mosFile = map(float,open(infname).read().split())
         except:
             raise Exception, "Error! Can't parse Mosflm matrices file."
-        
+
         self.UB = mat3(mosFile[:9])
         self.Ur = mat3(mosFile[12:21])
         # Ur = reference orientation matrix (corresponding to setting
         # angles "missetingAngles" given below)
-        
+
         self.cell = mosFile[21:27]
         self.missetingAngles = mosFile[27:30]
         self.dummy = mosFile[9:12]
-        
+
         MatXYZ = ThreeAxisRotation2(map_d2r(self.missetingAngles)).tensor
         self.U = MatXYZ * self.Ur
 
     def write_umat(self, filename):
         "Writes a mosflm formated crystal oritentation matrice file"
-        
+
         matf = open(filename,"w")
         fmt_cell = 6 * "%12.4f" + "\n"
         fmt_angles = 3 * "%12.3f" + "\n"
@@ -687,14 +688,14 @@ class MosflmParser:
         matf.write(fmt_cell % tuple(self.cell))
         matf.write(fmt_angles % tuple(self.missetingAngles))
         matf.close()
-    
+
     def UB_to_wavelength(self, UB=None, cell=None):
         """Extracting the wavelength from UBmos and the cell parameters
            UBmos = U * B * wavelength"""
-        
-        if not UB: UB = self.UB 
+
+        if not UB: UB = self.UB
         if not cell: cell = self.cell
-        
+
         wcell = reciprocal(UB_to_cellParam(UB))
         w3 = map(lambda t: t[0]/t[1], zip(cell[:3], wcell[:3]))
         if (abs(w3[0] - w3[1]) < 1e-4) and (abs(w3[0] - w3[2]) < 1e-4):
@@ -758,14 +759,14 @@ def volum(cell):
         return A*B.cross(C)
     else:
         print "error in volum()"
-        return "Can't parse input arguments."  
+        return "Can't parse input arguments."
 
 def reciprocal(cell):
     "Calculate the 6 reciprocal cell parameters: a*, b*, c*, alpha*, beta*..."
     sa, sb, sg = map(sind, cell[3:6])
     ca, cb, cg = map(cosd, cell[3:6])
     v = volum(cell)
-    rc = (cell[1]*cell[2]*sa/v, 
+    rc = (cell[1]*cell[2]*sa/v,
           cell[2]*cell[0]*sb/v,
           cell[0]*cell[1]*sg/v,
           math.acos((cb*cg-ca)/(sb*sg)) * r2d,
@@ -845,7 +846,7 @@ def getPermutUB(PGoperators, UB, _epsilonCell=1e-2):
                    abs(new_cell[2] - cell[2]) < _epsilonCell and \
                    abs(new_cell[3] - cell[3]) < _epsilonCell and \
                    abs(new_cell[4] - cell[4]) < _epsilonCell and \
-                   abs(new_cell[5] - cell[5]) < _epsilonCell 
+                   abs(new_cell[5] - cell[5]) < _epsilonCell
 
         permutedList.append(new_UB)
     return permutedList

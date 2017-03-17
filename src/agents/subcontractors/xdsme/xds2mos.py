@@ -152,7 +152,7 @@ def PARS_xds2mos(xdsPar):
     return mosPar
 
 class Xds2Mosflm:
-    def __init__(self,xds_file,mat_file):
+    def __init__(self, xds_file, mat_file):
         #Frank converted this to class from original script.
         #print "\n   xds2mos version: %s\n" % (__version__)
         #print "   Extracting data from:\t\t%s" % xds_file
@@ -167,7 +167,6 @@ class Xds2Mosflm:
             #print "\nERROR! Can't parse input file: %s\n" % xds_file
             #print _usage
             sys.exit(2)
-
 
         if "template" not in XDSi.dict:
             infilelocation, infilename = os.path.split(xds_file)
