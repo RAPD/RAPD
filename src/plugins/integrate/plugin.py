@@ -648,7 +648,7 @@ class RapdPlugin(Process):
                     self.print_results(results)
                 # Don't use the GXPARM if changing the spacegroup on the first polishing round
                 if spacegoup_agree or self.settings["spacegroup_decider"] == "xds" or polishing_rounds > 0:
-                    print ">>> Copying GXPARM <<<"
+                    # print ">>> Copying GXPARM <<<"
                     os.rename('%s/GXPARM.XDS' % xdsdir, '%s/XPARM.XDS' % xdsdir)
                     polishing_rounds += 1
                     self.tprint(arg="  Polishing round %d" % polishing_rounds,
@@ -1403,7 +1403,7 @@ class RapdPlugin(Process):
             elif line_counter == 4:
                 sg_num = int(sline[0])
                 a, b, c, alpha, beta, gamma = [float(x) for x in sline[1:]]
-                print ">>", sg_num, a, b, c, alpha, beta, gamma, "<<"
+                # print ">>", sg_num, a, b, c, alpha, beta, gamma, "<<"
                 results["sg_num"] = sg_num
                 results["a"] = a
                 results["b"] = b
@@ -1456,7 +1456,7 @@ class RapdPlugin(Process):
 
         # Open up the GXPARM for info
         xparm = self.parse_xparm()
-        pprint(xparm)
+        # pprint(xparm)
 
         # Run pointless to convert XDS_ASCII.HKL to mtz format.
         mtzfile = self.pointless()
@@ -2515,7 +2515,7 @@ class RapdPlugin(Process):
         os.system('cp %s/XDS.INP %s_XDS.INP' %(results['dir'], prefix))
         os.system('cp %s/CORRECT.LP %s_CORRECT.LP' %(results['dir'], prefix))
         os.system('cp %s/INTEGRATE.LP %s_INTEGRATE.LP' %(results['dir'], prefix))
-        os.system('cp %s/XDSSTAT.LP %s_XDSSTAT.LP' %(results['dir'], prefix))
+        # os.system('cp %s/XDSSTAT.LP %s_XDSSTAT.LP' %(results['dir'], prefix))
         os.system('cp %s/XDS_ASCII.HKL %s_XDS.HKL' %(results['dir'], prefix))
 
         # Remove any integration directories.
