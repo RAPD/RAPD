@@ -31,21 +31,6 @@ if [ "$RAPD_HOME" != "" ]; then
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py \"\$@\"" >>$RAPD_HOME/bin/rapd.overwatch
   chmod +x $RAPD_HOME/bin/rapd.overwatch
 
-  # Generate a basefile scaffold
-  echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.generate_basefile
-  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/generators\/basefile.py \"\$@\"" >>$RAPD_HOME/bin/rapd.generate_basefile
-  chmod +x $RAPD_HOME/bin/rapd.generate_basefile
-
-  # Generate a new detector scaffold
-  echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.generate_detector
-  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/generators\/detector.py \"\$@\"" >>$RAPD_HOME/bin/rapd.generate_detector
-  chmod +x $RAPD_HOME/bin/rapd.generate_detector
-
-  # Generate a new test
-  echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.generate_test
-  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/generators\/test.py \"\$@\"" >>$RAPD_HOME/bin/rapd.generate_test
-  chmod +x $RAPD_HOME/bin/rapd.generate_test
-
   # Generic generate script
   echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.generate
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/generators\/generate.py \"\$@\"" >>$RAPD_HOME/bin/rapd.generate
@@ -55,6 +40,11 @@ if [ "$RAPD_HOME" != "" ]; then
   echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.xds_to_dict
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/xdsinp_to_dict.py \"\$@\"" >>$RAPD_HOME/bin/rapd.xds_to_dict
   chmod +x $RAPD_HOME/bin/rapd.xds_to_dict
+
+  # Run tests
+  echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.test
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/test\/test.py \"\$@\"" >>$RAPD_HOME/bin/rapd.test
+  chmod +x $RAPD_HOME/bin/rapd.test
 
 # Environmental var not set - don't run
 else
