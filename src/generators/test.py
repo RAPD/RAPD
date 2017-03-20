@@ -40,16 +40,17 @@ import sys
 # import time
 
 # RAPD imports
-from basefile import CommandlineFileGenerator, split_text_blob
+from generators.base import FileGenerator as CommandlineFileGenerator
+from generators.base import split_text_blob
 # import commandline_utils
 # import import detectors.detector_utils as detector_utils
 # import utils
 
-class TestFileGenerator(CommandlineFileGenerator):
+class FileGenerator(CommandlineFileGenerator):
     """File generator for detector wrapper"""
 
     def __init__(self, args=False):
-        """Initialize the TestFileGenerator"""
+        """Initialize the FileGenerator"""
 
         # Store args
         self.args = args
@@ -82,13 +83,14 @@ class TestFileGenerator(CommandlineFileGenerator):
                     self.args.file = "test_" + "_".join(full_path[full_path.index("src")+1:])
 
         # Run the inherited version
-        super(TestFileGenerator, self).preprocess()
+        super(FileGenerator, self).preprocess()
 
     def write_imports(self):
         """Manage the import statements"""
 
         # Enable looking for executable files
         added_normal_imports = ("from distutils.spawn import find_executable",)
+        added_rapd_imports = ()
 
         # The file to be tested
         if self.args.target:
@@ -98,13 +100,13 @@ class TestFileGenerator(CommandlineFileGenerator):
             self.args.import_name = import_name
             import_statement = import_path + " as " + import_name
             # Run the inherited version
-            super(TestFileGenerator, self).write_imports(
+            super(FileGenerator, self).write_imports(
                 write_list=("argparse", "unittest"),
                 added_normal_imports=added_normal_imports,
                 added_rapd_imports=(import_statement,))
         else:
             # Run the inherited version
-            super(TestFileGenerator, self).write_imports(
+            super(FileGenerator, self).write_imports(
                 write_list=("argparse", "subprocess", "sys", "unittest"),
                 added_normal_imports=added_normal_imports,
                 added_rapd_imports=added_rapd_imports)
@@ -229,65 +231,70 @@ class TestFileGenerator(CommandlineFileGenerator):
             "        verbosity = 1\n",
             "    unittest.main(verbosity=verbosity)\n"]
 
-        super(TestFileGenerator, self).write_main_func(main_func_lines=main_func_lines)
+        super(FileGenerator, self).write_main_func(main_func_lines=main_func_lines)
 
 
 
-def get_commandline():
+def get_commandline(args=None):
     """Get the commandline variables and handle them"""
 
     # Parse the commandline arguments
     commandline_description = """Generate a RAPD detector file scaffold"""
 
-    parser = argparse.ArgumentParser(description=commandline_description)
+    my_parser = argparse.ArgumentParser(description=commandline_description)
 
     # Verbosity
-    parser.add_argument("-v", "--verbose",
+    my_parser.add_argument("-v", "--verbose",
                         action="store_true",
                         dest="verbose",
                         help="Enable verbose feedback")
 
     # Test mode?
-    parser.add_argument("--test",
+    my_parser.add_argument("--test",
                         action="store_true",
                         dest="test",
                         help="Run in test mode")
 
     # Test mode?
-    parser.add_argument("-f", "--force",
+    my_parser.add_argument("-f", "--force",
                         action="store_true",
                         dest="force",
                         help="Allow overwriting of files")
 
     # Maintainer
-    parser.add_argument("-m", "--maintainer",
+    my_parser.add_argument("-m", "--maintainer",
                         action="store",
                         dest="maintainer",
                         default="Your name",
                         help="Maintainer's name")
 
     # Maintainer's email
-    parser.add_argument("-e", "--email",
+    my_parser.add_argument("-e", "--email",
                         action="store",
                         dest="email",
                         default="Your email",
                         help="Maintainer's email")
 
     # File name to be generated
-    parser.add_argument("-t", "--target",
+    my_parser.add_argument("-t", "--target",
                         action="store",
                         dest="target",
                         default=False,
                         help="File to be tested")
 
     # File to be generated
-    parser.add_argument(action="store",
+    my_parser.add_argument(action="store",
                         dest="file",
                         nargs="?",
                         default=False,
                         help="Name of file to be generated")
 
-    return parser.parse_args()
+    # Pull from the input list
+    if isinstance(args, list):
+        return my_parser.parse_args(args)
+    # Grab straight from the commandline
+    else:
+        return my_parser.parse_args()
 
 def main():
     """
@@ -301,7 +308,7 @@ def main():
 
     print commandline_args
 
-    file_generator = TestFileGenerator(commandline_args)
+    file_generator = FileGenerator(commandline_args)
     file_generator.run()
 
 if __name__ == "__main__":

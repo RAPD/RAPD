@@ -377,8 +377,10 @@ def get_commandline(args=None):
                            default=False,
                            help="Name of file to be generated")
 
+    # Pull from the input list
     if isinstance(args, list):
         return my_parser.parse_args(args)
+    # Grab straight from the commandline
     else:
         return my_parser.parse_args()
 

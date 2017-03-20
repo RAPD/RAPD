@@ -232,54 +232,59 @@ class FileGenerator(CommandlineFileGenerator):
 
         self.output_function(read_header)
 
-def get_commandline():
+def get_commandline(args=None):
     """Get the commandline variables and handle them"""
 
     # Parse the commandline arguments
     commandline_description = """Generate a RAPD detector file scaffold"""
 
-    parser = argparse.ArgumentParser(description=commandline_description)
+    my_parser = argparse.ArgumentParser(description=commandline_description)
 
     # Verbosity
-    parser.add_argument("-v", "--verbose",
+    my_parser.add_argument("-v", "--verbose",
                         action="store_true",
                         dest="verbose",
                         help="Enable verbose feedback")
 
     # Test mode?
-    parser.add_argument("-t", "--test",
+    my_parser.add_argument("-t", "--test",
                         action="store_true",
                         dest="test",
                         help="Run in test mode")
 
     # Test mode?
-    parser.add_argument("-f", "--force",
+    my_parser.add_argument("-f", "--force",
                         action="store_true",
                         dest="force",
                         help="Allow overwriting of files")
 
     # Maintainer
-    parser.add_argument("-m", "--maintainer",
+    my_parser.add_argument("-m", "--maintainer",
                         action="store",
                         dest="maintainer",
                         default="Your name",
                         help="Maintainer's name")
 
     # Maintainer's email
-    parser.add_argument("-e", "--email",
+    my_parser.add_argument("-e", "--email",
                         action="store",
                         dest="email",
                         default="Your email",
                         help="Maintainer's email")
 
     # File name to be generated
-    parser.add_argument(action="store",
+    my_parser.add_argument(action="store",
                         dest="file",
                         nargs="?",
                         default=False,
                         help="Name of file to be generated")
 
-    return parser.parse_args()
+    # Pull from the input list
+    if isinstance(args, list):
+        return my_parser.parse_args(args)
+    # Grab straight from the commandline
+    else:
+        return my_parser.parse_args()
 
 def main():
     """
