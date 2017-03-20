@@ -29,6 +29,7 @@ import argparse
 # import from collections import OrderedDict
 # import datetime
 # import glob
+import importlib
 # import json
 # import logging
 # import multiprocessing
@@ -49,12 +50,12 @@ import sys
 import utils.log
 
 # Possible types of files to generate
-TYPES = [
+MODES = [
     "base",
     "detector",
     "plugin",
-    "test"
-]
+    "test",
+    ]
 
 def main(args):
     """
@@ -63,61 +64,82 @@ def main(args):
     the commandline
     """
 
-    print "main"
+    # print "main"
 
-    # Set up terminal printer
-    # Verbosity
-    if commandline_args.verbose:
-        terminal_log_level = 10
+    mode = args.pop(0)
+
+    print mode, args
+
+    # Allowed mode?
+    if mode not in MODES:
+        print "%s is not an understood type. Your choices:" % mode
+        for allowed_mode in MODES:
+            print "  %s" % allowed_mode
+        sys.exit(9)
+
     else:
-        terminal_log_level = 50
+        # Load the module
+        module = importlib.import_module("generators."+mode)
 
-    tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level,
-                                            no_color=True)
+        # Get the commandline args
+        commandline_args = module.get_commandline(args)
 
-    # Print out commandline arguments
-    tprint(arg="\nCommandline arguments:", level=10)
-    for pair in commandline_args._get_kwargs():
-        tprint(arg="  arg:%-20s  val:%s" % (pair[0], pair[1]), level=10)
+        # Instantiate the FileGenerator
+        file_generator = module.FileGenerator(commandline_args)
+
+        # Run
+        file_generator.run()
 
 def get_commandline():
     """
-    Grabs the commandline
+    Grabs the commandline. This is a little different from the normal RAPD
+    commandline handling - made to pass through to called methods
     """
 
     print "get_commandline"
 
-    # Parse the commandline arguments
-    commandline_description = "Generate RAPD files"
-    parser = argparse.ArgumentParser(description=commandline_description)
+    args = sys.argv[:]
+    print args
+    if len(args) < 2:
+        print "ERROR"
+        sys.exit(9)
 
-    # A True/False flag
-    parser.add_argument("-v", "--verbise",
-                        action="store_true",
-                        dest="verbose",
-                        help="Control verbosity")
+    else:
+        args = args[1:]
 
-    # File name to be generated
-    parser.add_argument(action="store",
-                        dest="type",
-                        nargs=1,
-                        default="base",
-                        choices=TYPES,
-                        help="Type of file to be generated")
+    return args
 
-    # File name to be generated
-    parser.add_argument(action="store",
-                        dest="file",
-                        nargs="?",
-                        default=False,
-                        help="Name of file to be generated")
-
-    # Print help message is no arguments
-    if len(sys.argv[1:])==0:
-        parser.print_help()
-        parser.exit()
-
-    return parser.parse_args()
+    # # Parse the commandline arguments
+    # commandline_description = "Generate RAPD files"
+    # parser = argparse.ArgumentParser(description=commandline_description)
+    #
+    # # A True/False flag
+    # parser.add_argument("-v", "--verbise",
+    #                     action="store_true",
+    #                     dest="verbose",
+    #                     help="Control verbosity")
+    #
+    # # File name to be generated
+    # parser.add_argument(action="store",
+    #                     dest="type",
+    #                     nargs=1,
+    #                     default="base",
+    #                     choices=TYPES,
+    #                     help="Type of file to be generated")
+    #
+    # # File name to be generated
+    # parser.add_argument(action="store",
+    #                     dest="file",
+    #                     nargs="?",
+    #                     default=False,
+    #                     help="Name of file to be generated")
+    #
+    # # Print help message is no arguments
+    # if len(sys.argv[1:])==0:
+    #     parser.print_help()
+    #     parser.exit()
+    #
+    # return parser.parse_args()
 
 if __name__ == "__main__":
 

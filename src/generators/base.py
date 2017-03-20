@@ -295,7 +295,7 @@ class BaseFileGenerator(object):
 
         self.output_function(main_lines)
 
-class CommandlineFileGenerator(BaseFileGenerator):
+class FileGenerator(BaseFileGenerator):
 
     def run(self):
         """The main actions of the module"""
@@ -314,11 +314,11 @@ class CommandlineFileGenerator(BaseFileGenerator):
     def preprocess(self):
         """Do pre-write checks"""
 
-        print "CommandlineFileGenerator.preprocess"
+        # print "FileGenerator.preprocess"
 
         self.args.commandline = True
 
-        super(CommandlineFileGenerator, self).preprocess()
+        super(FileGenerator, self).preprocess()
 
     def write_commandline(self, description=False):
         """Write commanling handling into the file"""
@@ -356,7 +356,7 @@ class CommandlineFileGenerator(BaseFileGenerator):
         self.output_function(commandline_lines)
 
 
-def get_commandline():
+def get_commandline(args=None):
     """Get the commandline variables and handle them"""
 
     # Parse the commandline arguments
@@ -377,7 +377,10 @@ def get_commandline():
                            default=False,
                            help="Name of file to be generated")
 
-    return my_parser.parse_args()
+    if isinstance(args, list):
+        return my_parser.parse_args(args)
+    else:
+        return my_parser.parse_args()
 
 def main():
 
@@ -389,7 +392,7 @@ def main():
     filename = False #"foo.py"
 
     if commandline_args.commandline:
-        file_generator = CommandlineFileGenerator(commandline_args) #BaseFileGenerator(commandline_args)
+        file_generator = FileGenerator(commandline_args) #BaseFileGenerator(commandline_args)
     else:
         file_generator = BaseFileGenerator(commandline_args)
 

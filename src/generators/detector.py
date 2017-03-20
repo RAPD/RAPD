@@ -45,7 +45,7 @@ from basefile import CommandlineFileGenerator, split_text_blob
 # import import detectors.detector_utils as detector_utils
 # import utils
 
-class DetectorFileGenerator(CommandlineFileGenerator):
+class FileGenerator(CommandlineFileGenerator):
     """File generator for detector wrapper"""
 
     def run(self):
@@ -86,7 +86,7 @@ class DetectorFileGenerator(CommandlineFileGenerator):
             "    header = read_header(test_image)\n",
             "    pprint.pprint(header)\n"]
 
-        super(DetectorFileGenerator, self).write_main_func(main_func_lines=main_func_lines)
+        super(FileGenerator, self).write_main_func(main_func_lines=main_func_lines)
 
     def write_detector(self):
         """Write the detector-specific functions"""
@@ -292,7 +292,7 @@ def main():
 
     print commandline_args
 
-    file_generator = DetectorFileGenerator(commandline_args)
+    file_generator = FileGenerator(commandline_args)
     file_generator.run()
 
 if __name__ == "__main__":
