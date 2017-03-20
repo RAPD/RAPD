@@ -30,6 +30,9 @@ DETECTORS = {
     ("ADSC", "413"): "",                                # ESRF ID14-2
     ("ADSC", "430"): "",                                #
     ("ADSC", "446"): "adsc_q315",                       # NSLS X25 > X26C
+    ("ADSC", "905"): {
+        "detector": "als821_adsc_q315"                   # APS 24-ID-C
+    },
     ("ADSC", "911"): {
         "detector": "necat_adsc_q315"                   # APS 24-ID-C
         },
