@@ -31,7 +31,7 @@ import sys
 import time
 
 # RAPD imports
-# import commandline.commandline_utils
+import utils.text as text
 
 _NOW = time.localtime()
 _LICENSE = """This file is part of RAPD
@@ -57,6 +57,18 @@ def split_text_blob(text):
 
     lines = text.split("\n")
     return lines
+
+HELP_TEXT = text.light_cyan + " <options> " + text.stop \
+            + text.yellow + " <output file name>\n" + text.stop \
+            + "  Generate a basic RAPD file\n" \
+            + text.light_cyan + "  --force (Boolean) (Default: False)\n" + text.stop \
+            + text.light_gray + "    aliases: -f\n" + text.stop \
+            + text.light_cyan + "  --help (Boolean) (Default: False)\n" + text.stop \
+            + text.light_gray + "    aliases: -h\n" + text.stop \
+            + text.light_cyan + "  --test (Boolean) (Default: False)\n" + text.stop \
+            + text.light_gray + "    aliases: -t\n" + text.stop \
+            + text.light_cyan + "  --verbose (Boolean) (Default: False)\n" + text.stop \
+            + text.light_gray + "    aliases: -v\n" + text.stop \
 
 # The rapd file generating parser - to be used by commandline RAPD processes
 parser = argparse.ArgumentParser(add_help=False)

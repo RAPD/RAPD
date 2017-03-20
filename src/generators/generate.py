@@ -48,6 +48,7 @@ import sys
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 import utils.log
+import utils.text as text
 
 # Possible types of files to generate
 MODES = [
@@ -68,13 +69,20 @@ def main(args):
 
     mode = args.pop(0)
 
-    print mode, args
-
     # Allowed mode?
     if mode not in MODES:
-        print "%s is not an understood type. Your choices:" % mode
+        print "rapd.generate helps make rapd files"
+        if mode in ("--help", "help", "-h"):
+            print "  For help with a particular command use `rapd.generate <command> -h`"
+            print "  Availabe commands:"
+        else:
+            print "%s is not an understood type. Your choices:" % mode
         for allowed_mode in MODES:
-            print "  %s" % allowed_mode
+            print "      %s" % allowed_mode
+
+
+
+
         sys.exit(9)
 
     else:
@@ -96,12 +104,12 @@ def get_commandline():
     commandline handling - made to pass through to called methods
     """
 
-    print "get_commandline"
+    # print "get_commandline"
 
     args = sys.argv[:]
-    print args
+
     if len(args) < 2:
-        print "ERROR"
+        print text.red + "The specified command is invalid. For available options, see `rapd.generate help`." + text.stop
         sys.exit(9)
 
     else:
