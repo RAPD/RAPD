@@ -31,7 +31,7 @@ DETECTORS = {
     ("ADSC", "430"): "",                                #
     ("ADSC", "446"): "adsc_q315",                       # NSLS X25 > X26C
     ("ADSC", "905"): {
-        "detector": "als821_adsc_q315"                   # APS 24-ID-C
+        "detector": "als821_adsc_q315"                  # ALS 8.2.1
     },
     ("ADSC", "911"): {
         "detector": "necat_adsc_q315"                   # APS 24-ID-C

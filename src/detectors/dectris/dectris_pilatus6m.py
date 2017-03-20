@@ -24,16 +24,16 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
-# import threading
+# Standard imports
 import argparse
+from collections import OrderedDict
 import os
 import pprint
 import re
 import sys
 import time
-# import json
-# import logging, logging.handlers
-# import atexit
+
+# RAPD imports
 # from rapd_site import secret_settings as secrets
 # from rapd_utils import print_dict, date_adsc_to_sql
 
@@ -42,54 +42,54 @@ VENDROTYPE = "DECTRIS"
 
 # XDS input information
 XDS_FLIP_BEAM = True
-XDSINP = {
-    "UNTRUSTED_RECTANGLE14": "   0 2463  2103 2121",
-    "UNTRUSTED_RECTANGLE15": "   0 2463  2315 2333",
-    "UNTRUSTED_RECTANGLE12": "   0 2463  1679 1697",
-    "UNTRUSTED_RECTANGLE13": "   0 2463  1891 1909",
-    "UNTRUSTED_RECTANGLE10": "   0 2463  1255 1273",
-    "UNTRUSTED_RECTANGLE11": "   0 2463  1467 1485",
-    "STRONG_PIXEL": "6",
-    "MAX_CELL_ANGLE_ERROR": "2.0",
-    "NUMBER_OF_PROFILE_GRID_POINTS_ALONG_ALPHA/BETA": "13",
-    "MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT": "4",
-    "REFINE(INTEGRATE)": "POSITION BEAM ORIENTATION CELL",
-    "REFINE(CORRECT)": "BEAM ORIENTATION CELL AXIS POSITION",
-    "INCLUDE_RESOLUTION_RANGE": "200.0 0.0",
-    "REFINE(IDXREF)": "BEAM AXIS ORIENTATION CELL",
-    "NX": "2463",
-    "NY": "2527",
-    "STRICT_ABSORPTION_CORRECTION": "TRUE",
-    "MINIMUM_ZETA": "0.05",
-    "OVERLOAD": "1048500",
-    "UNTRUSTED_RECTANGLE4": "1969 1977     0 2527",
-    "UNTRUSTED_RECTANGLE5": "   0 2463   195  213",
-    "UNTRUSTED_RECTANGLE6": "   0 2463   407  425",
-    "UNTRUSTED_RECTANGLE7": "   0 2463   619  637",
-    "UNTRUSTED_RECTANGLE1": " 487  495     0 2527",
-    "UNTRUSTED_RECTANGLE2": " 981  989     0 2527",
-    "UNTRUSTED_RECTANGLE3": "1475 1483     0 2527",
-    "NUMBER_OF_PROFILE_GRID_POINTS_ALONG_GAMMA": "9",
-    "UNTRUSTED_RECTANGLE8": "   0 2463   831  849",
-    "UNTRUSTED_RECTANGLE9": "   0 2463  1043 1061",
-    "FRACTION_OF_POLARIZATION": "0.99",
-    "MAX_CELL_AXIS_ERROR": "0.03",
-    "VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS": " 7000 30000",
-    "MIN_RFL_Rmeas": " 50",
-    "DIRECTION_OF_DETECTOR_X-AXIS": " 1.0 0.0 0.0",
-    "SENSOR_THICKNESS": "0.32",
-    "POLARIZATION_PLANE_NORMAL": " 0.0 1.0 0.0",
-    "MAX_FAC_Rmeas": "2.0",
-    "TRUSTED_REGION": "0.0 1.05",
-    "ROTATION_AXIS": " 1.0 0.0 0.0",
-    "MINIMUM_VALID_PIXEL_VALUE": "0 ",
-    "QY": "0.172",
-    "QX": "0.172 ",
-    "INCIDENT_BEAM_DIRECTION": "0.0 0.0 1.0",
-    "SEPMIN": "4",
-    "CLUSTER_RADIUS": "2",
-    "DETECTOR": "PILATUS"
-    }
+XDSINP = OrderedDict([
+    ("UNTRUSTED_RECTANGLE14", "   0 2463  2103 2121"),
+    ("UNTRUSTED_RECTANGLE15", "   0 2463  2315 2333"),
+    ("UNTRUSTED_RECTANGLE12", "   0 2463  1679 1697"),
+    ("UNTRUSTED_RECTANGLE13", "   0 2463  1891 1909"),
+    ("UNTRUSTED_RECTANGLE10", "   0 2463  1255 1273"),
+    ("UNTRUSTED_RECTANGLE11", "   0 2463  1467 1485"),
+    ("STRONG_PIXEL", "6"),
+    ("MAX_CELL_ANGLE_ERROR", "2.0"),
+    ("NUMBER_OF_PROFILE_GRID_POINTS_ALONG_ALPHA/BETA", "13"),
+    ("MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT", "4"),
+    ("REFINE(INTEGRATE)", "POSITION BEAM ORIENTATION CELL"),
+    ("REFINE(CORRECT)", "BEAM ORIENTATION CELL AXIS POSITION"),
+    ("INCLUDE_RESOLUTION_RANGE", "200.0 0.0"),
+    ("REFINE(IDXREF)", "BEAM AXIS ORIENTATION CELL"),
+    ("NX", "2463"),
+    ("NY", "2527"),
+    ("STRICT_ABSORPTION_CORRECTION", "TRUE"),
+    ("MINIMUM_ZETA", "0.05"),
+    ("OVERLOAD", "1048500"),
+    ("UNTRUSTED_RECTANGLE4", "1969 1977     0 2527"),
+    ("UNTRUSTED_RECTANGLE5", "   0 2463   195  213"),
+    ("UNTRUSTED_RECTANGLE6", "   0 2463   407  425"),
+    ("UNTRUSTED_RECTANGLE7", "   0 2463   619  637"),
+    ("UNTRUSTED_RECTANGLE1", " 487  495     0 2527"),
+    ("UNTRUSTED_RECTANGLE2", " 981  989     0 2527"),
+    ("UNTRUSTED_RECTANGLE3", "1475 1483     0 2527"),
+    ("NUMBER_OF_PROFILE_GRID_POINTS_ALONG_GAMMA", "9"),
+    ("UNTRUSTED_RECTANGLE8", "   0 2463   831  849"),
+    ("UNTRUSTED_RECTANGLE9", "   0 2463  1043 1061"),
+    ("FRACTION_OF_POLARIZATION", "0.99"),
+    ("MAX_CELL_AXIS_ERROR", "0.03"),
+    ("VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS", " 7000 30000"),
+    ("MIN_RFL_Rmeas", " 50"),
+    ("DIRECTION_OF_DETECTOR_X-AXIS", " 1.0 0.0 0.0"),
+    ("SENSOR_THICKNESS", "0.32"),
+    ("POLARIZATION_PLANE_NORMAL", " 0.0 1.0 0.0"),
+    ("MAX_FAC_Rmeas", "2.0"),
+    ("TRUSTED_REGION", "0.0 1.05"),
+    ("ROTATION_AXIS", " 1.0 0.0 0.0"),
+    ("MINIMUM_VALID_PIXEL_VALUE", "0 "),
+    ("QY", "0.172"),
+    ("QX", "0.172 "),
+    ("INCIDENT_BEAM_DIRECTION", "0.0 0.0 1.0"),
+    ("SEPMIN", "4"),
+    ("CLUSTER_RADIUS", "2"),
+    ("DETECTOR", "PILATUS"),
+    ])
 
 def read_header(image,
                 mode=None,
