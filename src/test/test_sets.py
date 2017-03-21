@@ -27,8 +27,13 @@ __status__ = "Development"
 DATA_SERVER = "https://rapd.nec.aps.anl.gov/rapd/test_data/"
 
 DATA_SETS = {
-    "APS_NECAT_24-ID-E": {
+    "APS_NECAT_24-ID-C": {
         "description": "NE-CAT Pilatus 6M data",
+        "integrate_template": "thaum1_01s-01d_1_####.cbf",
+        "location": "APS_NECAT_24-ID-C.tar.bz2"
+    },
+    "APS_NECAT_24-ID-E": {
+        "description": "NE-CAT EigerX 18M data",
         "location": "APS_NECAT_24-ID-E.tar.bz2"
     },
     "MINIMAL": {
