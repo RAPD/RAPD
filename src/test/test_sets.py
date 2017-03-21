@@ -28,9 +28,24 @@ DATA_SERVER = "https://rapd.nec.aps.anl.gov/rapd/test_data/"
 
 DATA_SETS = {
     "APS_NECAT_24-ID-E": {
-        "location": None
+        "description": "NE-CAT Pilatus 6M data",
+        "location": "APS_NECAT_24-ID-E.tar.bz2"
+    },
+    "MINIMAL": {
+        "description": "Minimal dataset from NE-CAT 24-ID-E to test system quickly",
+        "location": "MINIMAL.tar.bz2"
     },
     "UCLA": {
+        "location": "UCLA",
+        "integrate_template": "prok_pcmbs_margot####.osc"
+    },
+    "ALL":{
         "location": None
-    }
+    },
 }
+
+PLUGINS = (
+    "all",
+    "index",
+    "integrate"
+)

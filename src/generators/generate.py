@@ -78,7 +78,7 @@ def main(args):
         else:
             print "%s is not an understood type. Your choices:" % mode
         for allowed_mode in MODES:
-            print "      %s" % allowed_mode
+        print "      %s" % allowed_mode
 
 
 
