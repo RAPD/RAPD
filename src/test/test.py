@@ -32,7 +32,7 @@ from argparse import RawTextHelpFormatter
 import glob
 import hashlib
 import importlib
-# import json
+import json
 # import logging
 # import multiprocessing
 import os
@@ -60,7 +60,7 @@ VERSIONS = {
 
 def run_unit(plugin, tprint, mode="DEPENDENCIES", verbose=True):
     """Run unit testing for plugin"""
-
+    return True
     tprint("Running unit testing for %s" % plugin,
            10,
            "white")
@@ -83,6 +83,32 @@ def run_unit(plugin, tprint, mode="DEPENDENCIES", verbose=True):
 
     elif mode == "ALL":
         runner.run(test_module.get_all_tests())
+
+def run_processing(target, plugin, rapd_home, tprint):
+    """Run a processing test"""
+
+    tprint("Testing processing", 10, "white")
+
+    target_def = test_sets.DATA_SETS[target]
+    plugin_def = test_sets.PLUGINS[plugin]
+    command = target_def[plugin+"_command"]
+
+    # Change to working directory
+    work_dir = os.path.join(rapd_home, "test_data", target)
+    os.chdir(work_dir)
+
+    # Run the process
+    tprint("  Running test with command `%s`" % command, 10, "white")
+    proc = subprocess.Popen(command, shell=True)
+    proc.wait()
+
+    # Read in the results
+    result_standard = json.loads(open(plugin+".json", "r").readlines()[0])
+    result_test = json.loads(open(target_def[plugin+"_result"], "r").readlines()[0])
+
+    pprint(result_test)
+    return True
+
 
 def check_for_data(target, rapd_home, tprint):
     """Look to where test data should be to see if it is there"""
@@ -186,7 +212,8 @@ def main(args):
     the commandline
     """
 
-    # pprint(args)
+    pprint(args)
+    # sys.exit()
 
     # Get the environmental variables
     environmental_vars = site.get_environmental_variables()
@@ -220,17 +247,30 @@ def main(args):
     else:
         targets = args.targets
 
+    # Handle the all setting for plugins
+    if "all" in args.plugins:
+        plugins = []
+        for plugin in test_sets.PLUGINS.keys():
+            if not plugin == "all":
+                plugins.append(plugin)
+    else:
+        plugins = args.plugins
+
+
+
     for target in targets:
 
         if target == "DEPENDENCIES":
 
-            for plugin in args.plugins:
+            for plugin in plugins:
                 # Run normal unit testing
                 run_unit(plugin, tprint, "DEPENDENCIES", args.verbose)
 
         else:
             # Check that data exists
-            data_present = check_for_data(target, environmental_vars["RAPD_HOME"], tprint)
+            data_present = check_for_data(target,
+                                          environmental_vars["RAPD_HOME"],
+                                          tprint)
 
             # Download data
             if not data_present:
@@ -240,16 +280,23 @@ def main(args):
                               tprint)
 
                 # Check that data exists again
-                data_present = check_for_data(target, environmental_vars["RAPD_HOME"], tprint)
+                data_present = check_for_data(target,
+                                              environmental_vars["RAPD_HOME"],
+                                              tprint)
 
                 # We have a problem
                 if not data_present:
                     raise Exception("There is a problem getting valid test data")
 
-            for plugin in args.plugins:
+            for plugin in plugins:
 
                 # Run unit testing
                 run_unit(plugin, tprint, "ALL", args.verbose)
+
+                run_processing(target,
+                               plugin,
+                               environmental_vars["RAPD_HOME"],
+                               tprint)
 
 
 def get_commandline():
@@ -298,7 +345,9 @@ def get_commandline():
                         help="Target tests available: \n-----------------------\n" + targets + "\n")
 
     # Plugins to test
-    plugins = "\n".join(test_sets.PLUGINS)
+    plugins = test_sets.PLUGINS.keys()
+    plugins.sort()
+    plugins = "\n".join(plugins)
     parser.add_argument("-p", "--plugins",
                         action="store",
                         dest="plugins",

@@ -42,10 +42,12 @@ DATA_SETS = {
     },
     "UCLA": {
         "location": "UCLA",
-        "integrate_template": "prok_pcmbs_margot####.osc"
+        "integrate_template": "prok_pcmbs_margot####.osc",
+        "index_command": "rapd.index -v data/prok_pcmbs_margot0001.osc",
+        "index_result": "rapd_index_prok_pcmbs_margot1/result.json"
     },
     "ALL":{
-        "location": None
+        "location": None,
     },
     "DEPENDENCIES": {
         "location": None

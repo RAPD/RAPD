@@ -50,11 +50,6 @@ from distutils.spawn import find_executable
 # import utils
 import plugin
 
-TEST_DATA = {
-
-}
-
-
 class TestDependencies(unittest.TestCase):
     """Example test fixture WITHOUT setUp and tearDown"""
 
@@ -131,6 +126,28 @@ def get_all_tests():
     """Return a suite with all tests"""
 
     return unittest.TestLoader().loadTestsFromTestCase(TestDependencies)
+
+def compare_results(result1, result2):
+    """Result comparison logic for unit testing"""
+
+    """
+    results
+        distl_results
+            good Bragg spots []
+        Labelit results
+            labelit_cell [[],[]]
+            mosflm_sg []
+        Best ANOM results
+            strategy anom phi start [0]
+            strategy anom rot range
+        Best results
+            strategy phi start
+            strategy rot range
+    """
+
+    assert result1["results"]["distl_results"]["good Bragg spots"] == \
+           result2["results"]["distl_results"]["good Bragg spots"]
+
 
 def get_commandline():
     """
