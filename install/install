@@ -422,6 +422,8 @@ if [ $INSTALL_PYTHON == 1 ]; then
   printf "\033[92mRAPD python install complete.\033[0m\n"
 fi
 
+
+
 if [ $INSTALL_SCRIPTS == 1 ]; then
   printf "\n\033[94mInstalling RAPD executable scripts\033[0m\n"
 
@@ -441,6 +443,8 @@ if [ $INSTALL_SCRIPTS == 1 ]; then
 
   printf "\033[92mRAPD executable scripts install complete.\033[0m\n"
 fi
+
+
 
 if [ $INSTALL_INIT == 1 ]; then
 

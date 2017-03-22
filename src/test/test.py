@@ -36,7 +36,7 @@ import importlib
 # import logging
 # import multiprocessing
 import os
-# import pprint
+from pprint import pprint
 # import pymongo
 # import re
 # import redis
@@ -58,7 +58,7 @@ VERSIONS = {
 # "eiger2cbf": ("160415",)
 }
 
-def run_unit(plugin, tprint):
+def run_unit(plugin, tprint, mode="DEPENDENCIES", verbose=True):
     """Run unit testing for plugin"""
 
     tprint("Running unit testing for %s" % plugin,
@@ -66,15 +66,23 @@ def run_unit(plugin, tprint):
            "white")
 
     # Run unit testing
+    if verbose:
+        verbosity = 10
+    else:
+        verbosity = 1
+
     test_module = importlib.import_module(test_sets.PLUGINS[plugin]+".test")
 
     # loader = unittest.defaultTestLoader
     # suite = unittest.TestSuite()
-    runner = unittest.TextTestRunner()
+    runner = unittest.TextTestRunner(verbosity=verbosity)
 
     # suite.addTest(unittest.makeSuite(test_module))
+    if mode == "DEPENDENCIES":
+        runner.run(test_module.get_dependencies_tests())
 
-    runner.run(test_module.get_all_tests())
+    elif mode == "ALL":
+        runner.run(test_module.get_all_tests())
 
 def check_for_data(target, rapd_home, tprint):
     """Look to where test data should be to see if it is there"""
@@ -177,6 +185,9 @@ def main(args):
     This function is called when this module is invoked from
     the commandline
     """
+
+    # pprint(args)
+
     # Get the environmental variables
     environmental_vars = site.get_environmental_variables()
 
@@ -211,28 +222,34 @@ def main(args):
 
     for target in targets:
 
-        # Check that data exists
-        data_present = check_for_data(target, environmental_vars["RAPD_HOME"], tprint)
+        if target == "DEPENDENCIES":
 
-        # Download data
-        if not data_present:
-            download_data(target,
-                          environmental_vars["RAPD_HOME"],
-                          args.force,
-                          tprint)
+            for plugin in args.plugins:
+                # Run normal unit testing
+                run_unit(plugin, tprint, "DEPENDENCIES", args.verbose)
 
-            # Check that data exists again
+        else:
+            # Check that data exists
             data_present = check_for_data(target, environmental_vars["RAPD_HOME"], tprint)
 
-            # We have a problem
+            # Download data
             if not data_present:
-                raise Exception("There is a problem getting valid test data")
+                download_data(target,
+                              environmental_vars["RAPD_HOME"],
+                              args.force,
+                              tprint)
 
-        for plugin in args.plugins:
-            # Run normal unit testing
-            run_unit(plugin, tprint)
+                # Check that data exists again
+                data_present = check_for_data(target, environmental_vars["RAPD_HOME"], tprint)
 
-        # Test plugin(s) on data
+                # We have a problem
+                if not data_present:
+                    raise Exception("There is a problem getting valid test data")
+
+            for plugin in args.plugins:
+
+                # Run unit testing
+                run_unit(plugin, tprint, "ALL", args.verbose)
 
 
 def get_commandline():
@@ -265,9 +282,9 @@ def get_commandline():
 
     # No color in terminal printing
     parser.add_argument("--color",
-                           action="store_false",
-                           dest="no_color",
-                           help="Use colors in CLI")
+                        action="store_false",
+                        dest="no_color",
+                        help="Use colors in CLI")
 
     # Test data sets
     keys = test_sets.DATA_SETS.keys()
@@ -276,7 +293,8 @@ def get_commandline():
     parser.add_argument("-t", "--targets",
                         action="store",
                         dest="targets",
-                        required=True,
+                        nargs="+",
+                        default=["DEPENDENCIES"],
                         help="Target tests available: \n-----------------------\n" + targets + "\n")
 
     # Plugins to test
@@ -285,14 +303,17 @@ def get_commandline():
                         action="store",
                         dest="plugins",
                         nargs="+",
-                        default=["index"],
+                        default=["integrate"],
                         help="Plugin(s) to test:\n-----------------\n" + plugins)
 
     # Print help message is no arguments
-    if len(sys.argv[1:])==0:
-        parser.print_help()
+    # if len(sys.argv[1:])==0:
+    #     parser.print_help()
+    #     sys.exit()
 
-    return parser.parse_args()
+    args = parser.parse_args()
+
+    return args
 
 if __name__ == "__main__":
 

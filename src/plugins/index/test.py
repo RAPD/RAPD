@@ -122,6 +122,16 @@ class TestDependencies(unittest.TestCase):
         test = find_executable("raddose")
         self.assertNotEqual(test, None)
 
+def get_dependencies_tests():
+    """Return a suite with dependencies tests"""
+
+    return unittest.TestLoader().loadTestsFromTestCase(TestDependencies)
+
+def get_all_tests():
+    """Return a suite with all tests"""
+
+    return unittest.TestLoader().loadTestsFromTestCase(TestDependencies)
+
 def get_commandline():
     """
     Grabs the commandline

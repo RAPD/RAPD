@@ -47,6 +47,9 @@ DATA_SETS = {
     "ALL":{
         "location": None
     },
+    "DEPENDENCIES": {
+        "location": None
+    },
 }
 
 PLUGINS = {

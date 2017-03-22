@@ -235,6 +235,11 @@ class TestDependencies(unittest.TestCase):
 
         assert found == True
 
+def get_dependencies_tests():
+    """Return a suite with dependencies tests"""
+
+    return unittest.TestLoader().loadTestsFromTestCase(TestDependencies)
+
 def get_all_tests():
     """Return a suite with all tests"""
 
