@@ -8,6 +8,7 @@
 *.pyc
 bin
 share
+install/test
 rapd.cshrc
 rapd.shrc
 phenix-installer-*
