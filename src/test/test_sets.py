@@ -49,8 +49,8 @@ DATA_SETS = {
     },
 }
 
-PLUGINS = (
-    "all",
-    "index",
-    "integrate"
-)
+PLUGINS = {
+    "all": True,
+    "index": "plugins.index",
+    "integrate": "plugins.integrate",
+    }

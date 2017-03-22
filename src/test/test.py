@@ -31,6 +31,7 @@ from argparse import RawTextHelpFormatter
 # import datetime
 import glob
 import hashlib
+import importlib
 # import json
 # import logging
 # import multiprocessing
@@ -43,7 +44,7 @@ import os
 import subprocess
 import sys
 # import time
-# import unittest
+import unittest
 
 # RAPD imports
 # import commandline_utils
@@ -56,6 +57,24 @@ import utils.site as site
 VERSIONS = {
 # "eiger2cbf": ("160415",)
 }
+
+def run_unit(plugin, tprint):
+    """Run unit testing for plugin"""
+
+    tprint("Running unit testing for %s" % plugin,
+           10,
+           "white")
+
+    # Run unit testing
+    test_module = importlib.import_module(test_sets.PLUGINS[plugin]+".test")
+
+    # loader = unittest.defaultTestLoader
+    # suite = unittest.TestSuite()
+    runner = unittest.TextTestRunner()
+
+    # suite.addTest(unittest.makeSuite(test_module))
+
+    runner.run(test_module.get_all_tests())
 
 def check_for_data(target, rapd_home, tprint):
     """Look to where test data should be to see if it is there"""
@@ -85,10 +104,14 @@ def check_for_data(target, rapd_home, tprint):
         else:
 
             return False
+    else:
+        tprint("  Data directory present", level=10, color="white")
 
     # Check the sha digest
+    tprint("  Checking data integrity", level=10, color="white")
     data_dir_glob = os.path.join(target_dir, "data/*")
     files = glob.glob(data_dir_glob)
+    files.sort()
     final_hash = hashlib.sha1()
     for file in files:
         final_hash.update(open(file).read())
@@ -100,11 +123,13 @@ def check_for_data(target, rapd_home, tprint):
 
     if local_sha != remote_sha:
         tprint("  Data shasum not equal", level=40, color="red")
-        return False
+        raise Exception("Data integrity compromised. Reccomend erase and redownload")
+    else:
+        tprint("  Data integrity OK", level=10, color="green")
 
     return True
 
-def download_data(target, rapd_home, tprint):
+def download_data(target, rapd_home, force, tprint):
     """Fetch data from NE-CAT server"""
 
     tprint("Downloading test data", level=10, color="white")
@@ -116,6 +141,18 @@ def download_data(target, rapd_home, tprint):
 
     # Move to where the data goes
     os.chdir(target_dir)
+
+    # Check for data already present
+    if os.path.exists(target_def["location"]):
+        if force:
+            tprint("  Erasing old test data", level=10, color="white")
+            os.unlink(target_def["location"])
+            os.unlink(target_def["location"].replace(".tar.bz2", ""))
+        else:
+            tprint("**Data already present. use --force option to allow overwriting**",
+                   10,
+                   "red")
+            sys.exit(9)
 
     # Download the data
     wget = subprocess.Popen(["wget", download_path])
@@ -179,7 +216,10 @@ def main(args):
 
         # Download data
         if not data_present:
-            download_data(target, environmental_vars["RAPD_HOME"], tprint)
+            download_data(target,
+                          environmental_vars["RAPD_HOME"],
+                          args.force,
+                          tprint)
 
             # Check that data exists again
             data_present = check_for_data(target, environmental_vars["RAPD_HOME"], tprint)
@@ -188,8 +228,11 @@ def main(args):
             if not data_present:
                 raise Exception("There is a problem getting valid test data")
 
+        for plugin in args.plugins:
+            # Run normal unit testing
+            run_unit(plugin, tprint)
 
-    # Test plugin(s) on data
+        # Test plugin(s) on data
 
 
 def get_commandline():
@@ -214,6 +257,12 @@ def get_commandline():
                         dest="test",
                         help="Run in test mode")
 
+    # Force
+    parser.add_argument("-f", "--force",
+                        action="store_true",
+                        dest="force",
+                        help="Allow overwrite of test data")
+
     # No color in terminal printing
     parser.add_argument("--color",
                            action="store_false",
@@ -221,11 +270,13 @@ def get_commandline():
                            help="Use colors in CLI")
 
     # Test data sets
-    targets = "\n".join(test_sets.DATA_SETS.keys())
+    keys = test_sets.DATA_SETS.keys()
+    keys.sort()
+    targets = "\n".join(keys)
     parser.add_argument("-t", "--targets",
                         action="store",
                         dest="targets",
-                        default=["MINIMAL"],
+                        required=True,
                         help="Target tests available: \n-----------------------\n" + targets + "\n")
 
     # Plugins to test
@@ -233,13 +284,13 @@ def get_commandline():
     parser.add_argument("-p", "--plugins",
                         action="store",
                         dest="plugins",
-                        # nargs="",
+                        nargs="+",
                         default=["index"],
                         help="Plugin(s) to test:\n-----------------\n" + plugins)
 
-    # # Print help message is no arguments
-    # if len(sys.argv[1:])==0:
-    #     parser.print_help()
+    # Print help message is no arguments
+    if len(sys.argv[1:])==0:
+        parser.print_help()
 
     return parser.parse_args()
 
