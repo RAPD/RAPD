@@ -64,7 +64,7 @@ class TestDependencies(unittest.TestCase):
         subproc = subprocess.Popen(["aimless"],
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
-        time.sleep(2.0)
+        time.sleep(4.0)
         subproc.terminate()
         stdout, _ = subproc.communicate()
         found = False

@@ -2,7 +2,7 @@
 #
 # VERSION 2.0.0
 
-FROM centos:7  
+FROM centos:7
 MAINTAINER Frank Murphy <fmurphy@anl.gov>
 
 # Needed to build Phenix
@@ -12,9 +12,10 @@ RUN yum -y install wget \
                    build-essential \
                    bzip2 \
                    openssl-devel \
-#                   gcc-c++ \
-                   libgl1-lib-dev \
-                   libglu1-mesa-dev \
+                   gcc-c++ \
+                   make \
+                   mesa-libGL-devel \
+                   mesa-libGLU-devel \
                    python
 
 WORKDIR /opt
