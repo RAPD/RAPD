@@ -73,7 +73,7 @@ def run_unit(plugin, tprint, mode="DEPENDENCIES", verbose=True):
 
     test_module = importlib.import_module(test_sets.PLUGINS[plugin]+".test")
 
-    runner = unittest.TextTestRunner(verbosity=verbosity)
+    runner = unittest.TextTestRunner(verbosity=1)
 
     if mode == "DEPENDENCIES":
         runner.run(test_module.get_dependencies_tests())
@@ -266,11 +266,9 @@ def main(args):
 
     targets.insert(0, "DEPENDENCIES")
 
-
-
     for target in targets:
 
-        print target
+        # print target
 
         if target == "DEPENDENCIES":
 
