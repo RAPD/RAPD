@@ -60,7 +60,7 @@ VERSIONS = {
 
 def run_unit(plugin, tprint, mode="DEPENDENCIES", verbose=True):
     """Run unit testing for plugin"""
-    return True
+
     tprint("Running unit testing for %s" % plugin,
            10,
            "white")
@@ -269,6 +269,8 @@ def main(args):
 
 
     for target in targets:
+
+        print target
 
         if target == "DEPENDENCIES":
 
