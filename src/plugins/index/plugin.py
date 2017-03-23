@@ -1606,7 +1606,9 @@ class RapdPlugin(Process):
     def write_json(self, results):
         """Write a file with the JSON version of the results"""
 
-        json_string = json.dumps(results).replace("\\n", "")
+        print "write_json"
+
+        json_string = json.dumps(results) #.replace("\\n", "")
 
         # json_output = json.dumps(self.results).replace("\\n", "")
         # if self.preferences.get("json_output", False):
