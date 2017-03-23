@@ -81,7 +81,9 @@ VERSIONS = {
         "Version 3.2.0",
     ),
     "gnuplot": (
-        " 5.0 ",
+        "Version 4.2 patchlevel 6",
+        #" 5.0 ",
+        "Version 5.0 patchlevel 3",
     ),
     "ipmosflm": (
         "version 7.2.1",
