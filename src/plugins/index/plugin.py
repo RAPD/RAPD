@@ -163,6 +163,7 @@ class RapdPlugin(Process):
     mosflm_strat_anom_summary = False
     mosflm_strat1_anom_summary = False
     mosflm_strat_anom_summary_long = False
+    plots = {}
     # Labelit settings
     index_number = False
     ignore_user_SG = False
@@ -178,7 +179,6 @@ class RapdPlugin(Process):
     iso_B = False
     # Dicts for running the Queues
     jobs = {}
-    vips_images = {}
 
     # The results of the plugin
     results = {}
