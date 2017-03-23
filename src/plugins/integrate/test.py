@@ -297,8 +297,26 @@ def compare_results(result1, result2, tprint):
     """
 
     tprint("    DISTL", 10, "white")
-    assert result1["results"]["summary"] == \
-           result2["results"]["summary"]
+    assert result1["results"]["summary"]["ISa"] == \
+           result2["results"]["summary"]["ISa"]
+
+    assert result1["results"]["summary"]["completeness"][0] == \
+           result2["results"]["summary"]["completeness"][0]
+
+    assert result1["results"]["summary"]["mosaicity"] == \
+           result2["results"]["summary"]["mosaicity"]
+
+    assert result1["results"]["summary"]["scaling_spacegroup"] == \
+           result2["results"]["summary"]["scaling_spacegroup"]
+
+    assert result1["results"]["summary"]["mosaicity"] == \
+           result2["results"]["summary"]["mosaicity"]
+
+    assert result1["results"]["summary"]["total_obs"][0] == \
+           result2["results"]["summary"]["total_obs"][0]
+
+    assert result1["results"]["summary"]["unique_obs"][0] == \
+           result2["results"]["summary"]["unique_obs"][0]
 
     return True
 
