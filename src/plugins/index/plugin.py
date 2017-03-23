@@ -79,10 +79,11 @@ DETECTOR_TO_BEST = {
 VERSIONS = {
     "best": (
         "Version 3.2.0",
+        "Version 3.4.4"
     ),
     "gnuplot": (
-        "Version 4.2",
-        "Version 5.0",
+        "gnuplot 4.2",
+        "gnuplot 5.0",
     ),
     "ipmosflm": (
         "version 7.2.1",
