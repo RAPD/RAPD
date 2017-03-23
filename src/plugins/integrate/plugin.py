@@ -95,9 +95,11 @@ VERSIONS = {
         "version 7.0.028",
     ),
     "xds": (
+        "VERSION May 1, 2016",
         "VERSION Nov 1, 2016",
         ),
     "xds_par": (
+        "VERSION May 1, 2016",
         "VERSION Nov 1, 2016",
         ),
 }
