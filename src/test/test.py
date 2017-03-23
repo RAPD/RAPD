@@ -73,11 +73,8 @@ def run_unit(plugin, tprint, mode="DEPENDENCIES", verbose=True):
 
     test_module = importlib.import_module(test_sets.PLUGINS[plugin]+".test")
 
-    # loader = unittest.defaultTestLoader
-    # suite = unittest.TestSuite()
     runner = unittest.TextTestRunner(verbosity=verbosity)
 
-    # suite.addTest(unittest.makeSuite(test_module))
     if mode == "DEPENDENCIES":
         runner.run(test_module.get_dependencies_tests())
 
@@ -100,8 +97,8 @@ def run_processing(target, plugin, rapd_home, tprint):
 
     # Run the process
     tprint("  Running test with command `%s`" % command, 10, "white")
-    # proc = subprocess.Popen(command, shell=True)
-    # proc.wait()
+    proc = subprocess.Popen(command, shell=True)
+    proc.wait()
 
     # Read in the results
     tprint("  Comparing results", 10, "white")
