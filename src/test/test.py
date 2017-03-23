@@ -61,7 +61,7 @@ VERSIONS = {
 def run_unit(plugin, tprint, mode="DEPENDENCIES", verbose=True):
     """Run unit testing for plugin"""
 
-    tprint("Running unit testing for %s" % plugin,
+    tprint("  Running unit testing for %s" % plugin,
            10,
            "white")
 
@@ -80,6 +80,10 @@ def run_unit(plugin, tprint, mode="DEPENDENCIES", verbose=True):
 
     elif mode == "ALL":
         runner.run(test_module.get_all_tests())
+
+    tprint("  Finished running unit testing for %s" % plugin,
+           10,
+           "white")
 
 def run_processing(target, plugin, rapd_home, tprint):
     """Run a processing test"""
