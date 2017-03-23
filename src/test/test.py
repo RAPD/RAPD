@@ -262,7 +262,7 @@ def main(args):
 
 
     if "DEPENDENCIES" in targets:
-        targets.pop("DEPENDENCIES")
+        targets.pop(targets.index("DEPENDENCIES"))
 
     targets.insert(0, "DEPENDENCIES")
 
