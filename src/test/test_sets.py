@@ -40,7 +40,9 @@ DATA_SETS = {
         "description": "Minimal dataset from NE-CAT 24-ID-E to test system quickly",
         "location": "MINIMAL.tar.bz2",
         "index_command": "rapd.index -v data/thaum1_PAIR_0_0001.cbf data/thaum1_PAIR_0_0002.cbf",
-        "index_result": "rapd_index_thaum1_PAIR_0_1+2/result.json"
+        "index_result": "rapd_index_thaum1_PAIR_0_1+2/result.json",
+        "integrate_command": "rapd.integrate -v data/thaum1_01s-01d_1_####.cbf",
+        "integrate_result": "rapd_integrate_thaum1_01s-01d_1_1-20/result.json"
     },
     "UCLA": {
         "location": "UCLA",

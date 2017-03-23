@@ -245,7 +245,62 @@ def get_all_tests():
 
     return unittest.TestLoader().loadTestsFromTestCase(TestDependencies)
 
+"""
+              u'summary': {u'ISa': 38.15,
+                           u'anom_completeness': [0.1, 0.0, 0.0],
+                           u'anom_correlation': [0.0, 0.0, 0.0],
+                           u'anom_multiplicity': [1.0, 0.0, 0.0],
+                           u'anom_slope': [0.985],
+                           u'bins_high': [1.17, 6.43, 1.17],
+                           u'bins_low': [54.0, 54.0, 1.19],
+                           u'cc-half': [0.999, 0.0, 0.0],
+                           u'completeness': [12.6, 12.7, 3.8],
+                           u'isigi': [9.9, 30.1, 2.8],
+                           u'mosaicity': 0.04346,
+                           u'multiplicity': [1.0, 1.0, 1.0],
+                           u'rmeas_anom': [0.041, 0.023, 0.0],
+                           u'rmeas_norm': [0.043, 0.023, 0.0],
+                           u'rmerge_anom': [0.029, 0.016, 0.0],
+                           u'rmerge_norm': [0.03, 0.016, 0.0],
+                           u'rmerge_top': 0.018,
+                           u'rpim_anom': [0.029, 0.016, 0.0],
+                           u'rpim_norm': [0.03, 0.016, 0.0],
+                           u'scaling_spacegroup': u'P 4 2 2',
+                           u'scaling_unit_cell': [57.86,
+                                                  57.86,
+                                                  150.34,
+                                                  90.0,
+                                                  90.0,
+                                                  90.0],
+                           u'text2': u'Anomalous flag switched ON in input but the anomalous signal is weak',
+                           u'total_obs': [10876.0, 74.0, 161.0],
+                           u'unique_obs': [10486.0, 71.0, 161.0],
+                           u'wedge': u'1-20'},
+"""
 
+def compare_results(result1, result2, tprint):
+    """Result comparison logic for unit testing"""
+
+    """
+    results
+        distl_results
+            good Bragg spots []
+        Labelit results
+            labelit_cell [[],[]]
+            mosflm_sg []
+        Best ANOM results
+            strategy anom phi start [0]
+            strategy anom rot range
+        Best results
+            strategy phi start
+            strategy rot range
+    """
+
+    tprint("    DISTL", 10, "white")
+    assert result1["results"]["summary"] == \
+           result2["results"]["summary"]
+
+    return True
 
 # class ExampleTestCase(unittest.TestCase):
 #     """Example test fixture with setUp and tearDown"""
