@@ -106,7 +106,7 @@ class TestDependencies(unittest.TestCase):
         self.assertNotEqual(test, None)
 
     def test_gnuplot_version(self):
-        """Make sure the aimless executable is an acceptable version"""
+        """Make sure the gnuplot executable is an acceptable version"""
 
         subproc = subprocess.Popen(["gnuplot", "--version"],
                                    stdout=subprocess.PIPE,

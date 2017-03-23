@@ -80,7 +80,9 @@ VERSIONS = {
         "version 2.2",
     ),
     "gnuplot": (
-        " 5.0 ",
+        "Version 4.2 patchlevel 6",
+        #" 5.0 ",
+        "Version 5.0 patchlevel 3",
     ),
     "mtz2various": (
         "version 1.1",
