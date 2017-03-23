@@ -9,13 +9,14 @@ MAINTAINER Frank Murphy <fmurphy@anl.gov>
 RUN yum -y install wget \
                    subversion \
                    git \
-                   build-essential \
                    bzip2 \
                    openssl-devel \
                    gcc-c++ \
                    make \
                    mesa-libGL-devel \
                    mesa-libGLU-devel \
+                   readline \
+                   patch \
                    python
 
 WORKDIR /opt
