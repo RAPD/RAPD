@@ -32,3 +32,6 @@ ui
 
 # Temporary workspaces
 tmp
+
+# System files
+.DS_Store
