@@ -47,7 +47,7 @@ import unittest
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
-import agents.rapd_agent_integrate as rapd_agent_integrate
+import plugin
 
 class TestDependencies(unittest.TestCase):
     """Example test fixture WITHOUT setUp and tearDown"""
@@ -68,7 +68,7 @@ class TestDependencies(unittest.TestCase):
         subproc.terminate()
         stdout, _ = subproc.communicate()
         found = False
-        for version in rapd_agent_integrate.VERSIONS["aimless"]:
+        for version in plugin.VERSIONS["aimless"]:
             if version in stdout:
                 found = True
                 break
@@ -92,7 +92,7 @@ class TestDependencies(unittest.TestCase):
         subproc.terminate()
         stdout, _ = subproc.communicate()
         found = False
-        for version in rapd_agent_integrate.VERSIONS["freerflag"]:
+        for version in plugin.VERSIONS["freerflag"]:
             if version in stdout:
                 found = True
                 break
@@ -114,9 +114,7 @@ class TestDependencies(unittest.TestCase):
         subproc.wait()
         stdout, _ = subproc.communicate()
         found = False
-        print ">>>", stdout
-        print "<<<", _
-        for version in rapd_agent_integrate.VERSIONS["gnuplot"]:
+        for version in plugin.VERSIONS["gnuplot"]:
             if version in stdout:
                 found = True
                 break
@@ -140,7 +138,7 @@ class TestDependencies(unittest.TestCase):
         subproc.terminate()
         stdout, _ = subproc.communicate()
         found = False
-        for version in rapd_agent_integrate.VERSIONS["mtz2various"]:
+        for version in plugin.VERSIONS["mtz2various"]:
             if version in stdout:
                 found = True
                 break
@@ -164,7 +162,7 @@ class TestDependencies(unittest.TestCase):
         subproc.terminate()
         stdout, _ = subproc.communicate()
         found = False
-        for version in rapd_agent_integrate.VERSIONS["pointless"]:
+        for version in plugin.VERSIONS["pointless"]:
             if version in stdout:
                 found = True
                 break
@@ -188,7 +186,7 @@ class TestDependencies(unittest.TestCase):
         subproc.terminate()
         stdout, _ = subproc.communicate()
         found = False
-        for version in rapd_agent_integrate.VERSIONS["truncate"]:
+        for version in plugin.VERSIONS["truncate"]:
             if version in stdout:
                 found = True
                 break
@@ -209,7 +207,7 @@ class TestDependencies(unittest.TestCase):
         stdout, _ = subproc.communicate()
 
         found = False
-        for version in rapd_agent_integrate.VERSIONS["xds"]:
+        for version in plugin.VERSIONS["xds"]:
             if version in stdout:
                 found = True
                 break
@@ -230,7 +228,7 @@ class TestDependencies(unittest.TestCase):
         stdout, _ = subproc.communicate()
 
         found = False
-        for version in rapd_agent_integrate.VERSIONS["xds_par"]:
+        for version in plugin.VERSIONS["xds_par"]:
             if version in stdout:
                 found = True
                 break
@@ -363,7 +361,7 @@ def get_commandline():
     """
 
     # Parse the commandline arguments
-    commandline_description = "Test rapd_agent_integrate"
+    commandline_description = "Test integrate plugin"
     parser = argparse.ArgumentParser(description=commandline_description)
 
     # Verbosity
