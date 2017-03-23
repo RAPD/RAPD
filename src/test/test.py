@@ -261,6 +261,12 @@ def main(args):
         plugins = args.plugins
 
 
+    if "DEPENDENCIES" in targets:
+        targets.pop("DEPENDENCIES")
+
+    targets.insert(0, "DEPENDENCIES")
+
+
 
     for target in targets:
 
