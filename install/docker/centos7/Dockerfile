@@ -20,4 +20,4 @@ RUN yum -y install wget \
 WORKDIR /opt
 RUN git clone -b master https://github.com/RAPD/RAPD.git rapd
 WORKDIR /opt/rapd/install
-RUN ./install -b
+RUN ./install -mb
