@@ -127,7 +127,7 @@ def get_all_tests():
 
     return unittest.TestLoader().loadTestsFromTestCase(TestDependencies)
 
-def compare_results(result1, result2):
+def compare_results(result1, result2, tprint):
     """Result comparison logic for unit testing"""
 
     """
@@ -145,8 +145,32 @@ def compare_results(result1, result2):
             strategy rot range
     """
 
+    tprint("    DISTL", 10, "white")
     assert result1["results"]["distl_results"]["good Bragg spots"] == \
            result2["results"]["distl_results"]["good Bragg spots"]
+
+    tprint("    Labelit", 10, "white")
+    assert result1["results"]["Labelit results"]["labelit_cell"] == \
+           result2["results"]["Labelit results"]["labelit_cell"]
+
+    assert result1["results"]["Labelit results"]["mosflm_sg"] == \
+           result2["results"]["Labelit results"]["mosflm_sg"]
+
+    tprint("    Best standard strategy", 10, "white")
+    assert result1["results"]["Best results"]["strategy phi start"] == \
+           result2["results"]["Best results"]["strategy phi start"]
+
+    assert result1["results"]["Best results"]["strategy rot range"] == \
+           result2["results"]["Best results"]["strategy rot range"]
+
+    tprint("    Best anomalous strategy", 10, "white")
+    assert result1["results"]["Best ANOM results"]["strategy anom phi start"] == \
+           result2["results"]["Best ANOM results"]["strategy anom phi start"]
+
+    assert result1["results"]["Best ANOM results"]["strategy anom rot range"] == \
+           result2["results"]["Best ANOM results"]["strategy anom rot range"]
+
+    return True
 
 
 def get_commandline():

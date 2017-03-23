@@ -92,6 +92,7 @@ def run_processing(target, plugin, rapd_home, tprint):
     target_def = test_sets.DATA_SETS[target]
     plugin_def = test_sets.PLUGINS[plugin]
     command = target_def[plugin+"_command"]
+    test_module = importlib.import_module(test_sets.PLUGINS[plugin]+".test")
 
     # Change to working directory
     work_dir = os.path.join(rapd_home, "test_data", target)
@@ -99,16 +100,22 @@ def run_processing(target, plugin, rapd_home, tprint):
 
     # Run the process
     tprint("  Running test with command `%s`" % command, 10, "white")
-    proc = subprocess.Popen(command, shell=True)
-    proc.wait()
+    # proc = subprocess.Popen(command, shell=True)
+    # proc.wait()
 
     # Read in the results
+    tprint("  Comparing results", 10, "white")
     result_standard = json.loads(open(plugin+".json", "r").readlines()[0])
     result_test = json.loads(open(target_def[plugin+"_result"], "r").readlines()[0])
 
-    pprint(result_test)
-    return True
+    test_successful = test_module.compare_results(result_standard, result_test, tprint)
 
+    if test_successful:
+        tprint("  Tests sucessful", 10, "green")
+    else:
+        tprint("  Tests fail", 10, "red")
+
+    return test_successful
 
 def check_for_data(target, rapd_home, tprint):
     """Look to where test data should be to see if it is there"""
