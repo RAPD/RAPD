@@ -114,6 +114,8 @@ class TestDependencies(unittest.TestCase):
         subproc.wait()
         stdout, _ = subproc.communicate()
         found = False
+        print ">>>", stdout
+        print "<<<", _
         for version in rapd_agent_integrate.VERSIONS["gnuplot"]:
             if version in stdout:
                 found = True
