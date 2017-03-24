@@ -60,8 +60,8 @@ VERSIONS = {
 
 def run_unit(plugin, tprint, mode="DEPENDENCIES", verbose=True):
     """Run unit testing for plugin"""
-    return True
-    tprint("Running unit testing for %s" % plugin,
+
+    tprint("  Running unit testing for %s" % plugin,
            10,
            "white")
 
@@ -73,16 +73,17 @@ def run_unit(plugin, tprint, mode="DEPENDENCIES", verbose=True):
 
     test_module = importlib.import_module(test_sets.PLUGINS[plugin]+".test")
 
-    # loader = unittest.defaultTestLoader
-    # suite = unittest.TestSuite()
-    runner = unittest.TextTestRunner(verbosity=verbosity)
+    runner = unittest.TextTestRunner(verbosity=1)
 
-    # suite.addTest(unittest.makeSuite(test_module))
     if mode == "DEPENDENCIES":
         runner.run(test_module.get_dependencies_tests())
 
     elif mode == "ALL":
         runner.run(test_module.get_all_tests())
+
+    tprint("  Finished running unit testing for %s" % plugin,
+           10,
+           "white")
 
 def run_processing(target, plugin, rapd_home, tprint):
     """Run a processing test"""
@@ -100,8 +101,8 @@ def run_processing(target, plugin, rapd_home, tprint):
 
     # Run the process
     tprint("  Running test with command `%s`" % command, 10, "white")
-    # proc = subprocess.Popen(command, shell=True)
-    # proc.wait()
+    proc = subprocess.Popen(command, shell=True)
+    proc.wait()
 
     # Read in the results
     tprint("  Comparing results", 10, "white")
@@ -264,8 +265,14 @@ def main(args):
         plugins = args.plugins
 
 
+    if "DEPENDENCIES" in targets:
+        targets.pop(targets.index("DEPENDENCIES"))
+
+    targets.insert(0, "DEPENDENCIES")
 
     for target in targets:
+
+        # print target
 
         if target == "DEPENDENCIES":
 

@@ -39,7 +39,7 @@ INSTALL_PYTHON=1
 PLATFORM=$(uname -s)
 
 # Handle command line
-while getopts "bcfhiop:sty" x; do
+while getopts "bcfhimop:sty" x; do
     case "$x" in
         h)
             echo "usage: $0 [options]

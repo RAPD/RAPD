@@ -79,9 +79,11 @@ DETECTOR_TO_BEST = {
 VERSIONS = {
     "best": (
         "Version 3.2.0",
+        "Version 3.4.4"
     ),
     "gnuplot": (
-        " 5.0 ",
+        "gnuplot 4.2",
+        "gnuplot 5.0",
     ),
     "ipmosflm": (
         "version 7.2.1",
@@ -163,6 +165,7 @@ class RapdPlugin(Process):
     mosflm_strat_anom_summary = False
     mosflm_strat1_anom_summary = False
     mosflm_strat_anom_summary_long = False
+    plots = {}
     # Labelit settings
     index_number = False
     ignore_user_SG = False
@@ -178,7 +181,6 @@ class RapdPlugin(Process):
     iso_B = False
     # Dicts for running the Queues
     jobs = {}
-    vips_images = {}
 
     # The results of the plugin
     results = {}
@@ -1606,7 +1608,7 @@ class RapdPlugin(Process):
     def write_json(self, results):
         """Write a file with the JSON version of the results"""
 
-        json_string = json.dumps(results).replace("\\n", "")
+        json_string = json.dumps(results) #.replace("\\n", "")
 
         # json_output = json.dumps(self.results).replace("\\n", "")
         # if self.preferences.get("json_output", False):

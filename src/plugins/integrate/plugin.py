@@ -80,7 +80,8 @@ VERSIONS = {
         "version 2.2",
     ),
     "gnuplot": (
-        " 5.0 ",
+        "gnuplot 4.2",
+        "gnuplot 5.0",
     ),
     "mtz2various": (
         "version 1.1",
@@ -98,6 +99,7 @@ VERSIONS = {
         "VERSION Nov 1, 2016",
         ),
     "xds_par": (
+        "VERSION May 1, 2016",
         "VERSION Nov 1, 2016",
         ),
 }
@@ -1197,10 +1199,10 @@ class RapdPlugin(Process):
                             new_hi_res = '%0.2f' % numpy.interp([isigi],
                                                                 [prev_IsigI, IsigI],
                                                                 [prev_hires, hires])
-                            # print [isigi]
-                            # print [prev_IsigI, IsigI]
-                            # print [prev_hires, hires]
-                            # print interp([isigi], [prev_IsigI, IsigI], [prev_hires, hires])
+                            print [isigi]
+                            print [prev_IsigI, IsigI]
+                            print [prev_hires, hires]
+                            print interp([isigi], [prev_IsigI, IsigI], [prev_hires, hires])
                             break
                 else: # If first character in line is not a digit, you;ve
                     # read through the entire table, so break.
