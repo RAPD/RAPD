@@ -45,7 +45,7 @@ def get_commandline():
     """Get the commandline variables and handle them"""
 
     # Parse the commandline arguments
-    commandline_description = """Launch an index & strategy on input image(s)"""
+    commandline_description = """Launch an integration on input image(s)"""
     parser = argparse.ArgumentParser(parents=[commandline_utils.dp_parser],
                                      description=commandline_description)
 
