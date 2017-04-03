@@ -276,6 +276,7 @@ def main(args):
 
         if target == "DEPENDENCIES":
 
+            tprint("Dependency testing", 10, "white")
             for plugin in plugins:
                 # Run normal unit testing
                 run_unit(plugin, tprint, "DEPENDENCIES", args.verbose)
