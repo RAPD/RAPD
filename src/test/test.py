@@ -1,4 +1,4 @@
-"""This is a docstring for this file"""
+"""Test running for RAPD project"""
 
 """
 This file is part of RAPD
@@ -20,8 +20,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 __created__ = "2017-03-20"
-_maintainer__ = "Your name"
-__email__ = "Your email"
+_maintainer__ = "Frank Murphy"
+__email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 # Standard imports
@@ -73,7 +73,7 @@ def run_unit(plugin, tprint, mode="DEPENDENCIES", verbose=True):
 
     test_module = importlib.import_module(test_sets.PLUGINS[plugin]+".test")
 
-    runner = unittest.TextTestRunner(verbosity=1)
+    runner = unittest.TextTestRunner(verbosity=verbosity)
 
     if mode == "DEPENDENCIES":
         runner.run(test_module.get_dependencies_tests())
@@ -85,13 +85,12 @@ def run_unit(plugin, tprint, mode="DEPENDENCIES", verbose=True):
            10,
            "white")
 
-def run_processing(target, plugin, rapd_home, tprint):
+def run_processing(target, plugin, rapd_home, tprint, verbose=True):
     """Run a processing test"""
 
     tprint("Testing processing", 10, "white")
 
     target_def = test_sets.DATA_SETS[target]
-    plugin_def = test_sets.PLUGINS[plugin]
     command = target_def[plugin+"_command"]
     test_module = importlib.import_module(test_sets.PLUGINS[plugin]+".test")
 
@@ -101,7 +100,10 @@ def run_processing(target, plugin, rapd_home, tprint):
 
     # Run the process
     tprint("  Running test with command `%s`" % command, 10, "white")
-    proc = subprocess.Popen(command, shell=True)
+    if verbose:
+        proc = subprocess.Popen(command, shell=True)
+    else:
+        proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     proc.wait()
 
     # Read in the results
@@ -174,7 +176,7 @@ def check_for_data(target, rapd_home, tprint):
 def download_data(target, rapd_home, force, tprint):
     """Fetch data from NE-CAT server"""
 
-    tprint("Downloading test data", level=10, color="white")
+    tprint("Downloading test data", level=50, color="white")
 
     # Establish targets
     target_def = test_sets.DATA_SETS[target]
@@ -239,8 +241,6 @@ def main(args):
     # Verbosity
     if commandline_args.verbose:
         terminal_log_level = 10
-    # elif commandline_args.json:
-    #     terminal_log_level = 100
     else:
         terminal_log_level = 50
 
@@ -264,11 +264,10 @@ def main(args):
     else:
         plugins = args.plugins
 
-
+    # Check dependencies first
     if "DEPENDENCIES" in targets:
         targets.pop(targets.index("DEPENDENCIES"))
-
-    targets.insert(0, "DEPENDENCIES")
+        targets.insert(0, "DEPENDENCIES")
 
     for target in targets:
 
@@ -303,6 +302,7 @@ def main(args):
                 if not data_present:
                     raise Exception("There is a problem getting valid test data")
 
+            tprint("Plugin testing", 50, "white")
             for plugin in plugins:
 
                 # Run unit testing
@@ -311,7 +311,8 @@ def main(args):
                 run_processing(target,
                                plugin,
                                environmental_vars["RAPD_HOME"],
-                               tprint)
+                               tprint,
+                               args.verbose)
 
 
 def get_commandline():
@@ -320,7 +321,7 @@ def get_commandline():
     """
 
     # Parse the commandline arguments
-    commandline_description = "Generate a generic RAPD file"
+    commandline_description = "RAPD project testing"
     parser = argparse.ArgumentParser(description=commandline_description,
                                      formatter_class=RawTextHelpFormatter)
 

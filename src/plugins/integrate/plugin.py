@@ -429,6 +429,7 @@ class RapdPlugin(Process):
             # Returns False if no new cutoff, otherwise returns the value of
             # the high resolution cutoff as a float value.
             new_rescut = self.find_correct_res(xdsdir, 1.0)
+            sys.exit()
             if new_rescut != False:
                 os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.nocutoff' %xdsdir)
                 os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.nocutoff' %xdsdir)
@@ -1171,6 +1172,7 @@ class RapdPlugin(Process):
         # occurence of "total", which signals that you've found the
         # last statistic table given giving I/sigma values in the file.
         for i in range(len(correct_log)-1, 0, -1):
+            print correct_log[i].strip()
             if correct_log[i].strip().startswith('total'):
                 flag = 1
             elif flag == 1:
@@ -1199,10 +1201,10 @@ class RapdPlugin(Process):
                             new_hi_res = '%0.2f' % numpy.interp([isigi],
                                                                 [prev_IsigI, IsigI],
                                                                 [prev_hires, hires])
-                            print [isigi]
-                            print [prev_IsigI, IsigI]
-                            print [prev_hires, hires]
-                            print interp([isigi], [prev_IsigI, IsigI], [prev_hires, hires])
+                            # print [isigi]
+                            # print [prev_IsigI, IsigI]
+                            # print [prev_hires, hires]
+                            # print numpy.interp([isigi], [prev_IsigI, IsigI], [prev_hires, hires])
                             break
                 else: # If first character in line is not a digit, you;ve
                     # read through the entire table, so break.
@@ -2803,6 +2805,7 @@ class RapdPlugin(Process):
             self.tprint("  Unit cell: %5.1f %5.1f %5.1f %5.2f %5.2f %5.2f" %
                         tuple(summary["scaling_unit_cell"]), 99, "white")
             self.tprint("  Mosaicity: %5.3f" % summary["mosaicity"], 99, "white")
+            self.tprint("  ISa: %5.2f" % summary["ISa"], 99, "white")
             self.tprint("                        overall   inner shell   outer shell", 99, "white")
             self.tprint("  High res limit         %5.2f       %5.2f         %5.2f" %
                         tuple(summary["bins_high"]), 99, "white")
