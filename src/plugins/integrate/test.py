@@ -58,7 +58,8 @@ class TestDependencies(unittest.TestCase):
         test = find_executable("aimless")
         self.assertNotEqual(test, None)
 
-    def test_aimless_version(self):
+    @classmethod
+    def test_aimless_version(cls):
         """Make sure the aimless executable is an acceptable version"""
 
         subproc = subprocess.Popen(["aimless"],
@@ -81,7 +82,8 @@ class TestDependencies(unittest.TestCase):
         test = find_executable("freerflag")
         self.assertNotEqual(test, None)
 
-    def test_freerflag_version(self):
+    @classmethod
+    def test_freerflag_version(cls):
         """Make sure the freerflag executable is an acceptable version"""
 
         subproc = subprocess.Popen(["freerflag"],
@@ -105,7 +107,8 @@ class TestDependencies(unittest.TestCase):
         test = find_executable("gnuplot")
         self.assertNotEqual(test, None)
 
-    def test_gnuplot_version(self):
+    @classmethod
+    def test_gnuplot_version(cls):
         """Make sure the gnuplot executable is an acceptable version"""
 
         subproc = subprocess.Popen(["gnuplot", "--version"],
@@ -127,7 +130,8 @@ class TestDependencies(unittest.TestCase):
         test = find_executable("mtz2various")
         self.assertNotEqual(test, None)
 
-    def test_mtz2various_version(self):
+    @classmethod
+    def test_mtz2various_version(cls):
         """Make sure the mtz2various executable is an acceptable version"""
 
         subproc = subprocess.Popen(["mtz2various"],
@@ -151,7 +155,8 @@ class TestDependencies(unittest.TestCase):
         test = find_executable("pointless")
         self.assertNotEqual(test, None)
 
-    def test_pointless_version(self):
+    @classmethod
+    def test_pointless_version(cls):
         """Make sure the pointless executable is an acceptable version"""
 
         subproc = subprocess.Popen(["pointless"],
@@ -175,7 +180,8 @@ class TestDependencies(unittest.TestCase):
         test = find_executable("truncate")
         self.assertNotEqual(test, None)
 
-    def test_truncate_version(self):
+    @classmethod
+    def test_truncate_version(cls):
         """Make sure the truncate executable is an acceptable version"""
 
         subproc = subprocess.Popen(["truncate"],
@@ -199,7 +205,8 @@ class TestDependencies(unittest.TestCase):
         test = find_executable("xds")
         self.assertNotEqual(test, None)
 
-    def test_xds_version(self):
+    @classmethod
+    def test_xds_version(cls):
         """Make sure the xds executable is an acceptable version"""
 
         subproc = subprocess.Popen(["xds"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -220,7 +227,8 @@ class TestDependencies(unittest.TestCase):
         test = find_executable("xds_par")
         self.assertNotEqual(test, None)
 
-    def test_xds_par_version(self):
+    @classmethod
+    def test_xds_par_version(cls):
         """Make sure the xds executable is an acceptable version"""
 
         subproc = subprocess.Popen(["xds_par"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -296,27 +304,29 @@ def compare_results(result1, result2, tprint):
             strategy rot range
     """
 
-    tprint("    DISTL", 10, "white")
-    assert result1["results"]["summary"]["ISa"] == \
-           result2["results"]["summary"]["ISa"]
+    tprint("    Testing integration results", 10, "white")
 
-    assert result1["results"]["summary"]["completeness"][0] == \
-           result2["results"]["summary"]["completeness"][0]
+    # Small variance in ISa is acceptable
+    assert abs(result1["results"]["summary"]["ISa"] - result2["results"]["summary"]["ISa"]) < 0.1
 
-    assert result1["results"]["summary"]["mosaicity"] == \
-           result2["results"]["summary"]["mosaicity"]
+    # Small variance in completeness is acceptable
+    assert abs(result1["results"]["summary"]["completeness"][0] -
+               result2["results"]["summary"]["completeness"][0]) < 0.5
 
+    # Small variance in mosaicity is acceptable
+    assert abs(result1["results"]["summary"]["mosaicity"] -
+               result2["results"]["summary"]["mosaicity"]) < 0.02
+
+    # No variance in spacegroup
     assert result1["results"]["summary"]["scaling_spacegroup"] == \
            result2["results"]["summary"]["scaling_spacegroup"]
 
-    assert result1["results"]["summary"]["mosaicity"] == \
-           result2["results"]["summary"]["mosaicity"]
+    # Small variance in observations is acceptable
+    assert abs(result1["results"]["summary"]["total_obs"][0] -
+               result2["results"]["summary"]["total_obs"][0]) < 10
 
-    assert result1["results"]["summary"]["total_obs"][0] == \
-           result2["results"]["summary"]["total_obs"][0]
-
-    assert result1["results"]["summary"]["unique_obs"][0] == \
-           result2["results"]["summary"]["unique_obs"][0]
+    assert abs(result1["results"]["summary"]["unique_obs"][0] -
+               result2["results"]["summary"]["unique_obs"][0]) < 10
 
     return True
 

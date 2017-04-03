@@ -140,8 +140,12 @@ def check_for_data(target, rapd_home, tprint):
 
             os.chdir(os.path.join(rapd_home, "test_data"))
 
+            # Unpack archive
             tar = subprocess.Popen(["tar", "xvjf", target_def["location"]])
             tar.wait()
+
+            # Remove archive
+            os.unlink(target_def["location"])
 
             tprint("  Unpacking complete", level=10, color="green")
 
