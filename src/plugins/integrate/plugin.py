@@ -429,7 +429,7 @@ class RapdPlugin(Process):
             # Returns False if no new cutoff, otherwise returns the value of
             # the high resolution cutoff as a float value.
             new_rescut = self.find_correct_res(xdsdir, 1.0)
-            sys.exit()
+            # sys.exit()
             if new_rescut != False:
                 os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.nocutoff' %xdsdir)
                 os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.nocutoff' %xdsdir)
@@ -610,7 +610,7 @@ class RapdPlugin(Process):
             # Returns False if no new cutoff, otherwise returns the value of
             # the high resolution cutoff as a float value.
             new_rescut = self.find_correct_res(xdsdir, 1.0)
-            sys.exit()
+            # sys.exit()
             newinp = self.change_xds_inp(newinp, "JOB= INTEGRATE CORRECT \n\n")
             # newinp[-2] = 'JOB= INTEGRATE CORRECT \n\n'
             if new_rescut != False:
@@ -655,7 +655,7 @@ class RapdPlugin(Process):
         else:
             # Check to see if a new resolution cutoff should be applied
             new_rescut = self.find_correct_res(xdsdir, 1.0)
-            sys.exit()
+            # sys.exit()
             if new_rescut != False:
                 os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.oldcutoff' %xdsdir)
                 os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.oldcutoff' %xdsdir)
@@ -947,7 +947,7 @@ class RapdPlugin(Process):
             # Returns False if no new cutoff, otherwise returns the value of
             # the high resolution cutoff as a float value.
             new_rescut = self.find_correct_res(xdsdir, 1.0)
-            sys.exit()
+            # sys.exit()
             if new_rescut != False:
                 os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.nocutoff' %xdsdir)
                 os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.nocutoff' %xdsdir)
@@ -1215,7 +1215,7 @@ class RapdPlugin(Process):
                     break
         self.logger.debug('     prev_hires = %s     prev_IsigI = %s' % (prev_hires, prev_IsigI))
         self.logger.debug('     hires = %s          IsigI = %s' %(hires, IsigI))
-        self.logger.debug('	New cutoff = %s' %new_hi_res)
+        self.logger.debug('	New cutoff = %s' % new_hi_res)
         hi_res = float(new_hi_res)
 
         self.tprint(arg="new cutoff = %4.2f %s" % (hi_res, text.aring),
