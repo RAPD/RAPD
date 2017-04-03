@@ -647,9 +647,9 @@ class RapdPlugin(Process):
         try:
             self.raddose_log.append("tcsh raddose.com\n")
             output = subprocess.Popen("tcsh raddose.com",
-                                       shell=True,
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.STDOUT)
+                                      shell=True,
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.STDOUT)
             output.wait()
             for line in output.stdout:
                 self.raddose_log.append(line)
