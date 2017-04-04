@@ -1175,7 +1175,7 @@ class RapdPlugin(Process):
         # occurence of "total", which signals that you've found the
         # last statistic table given giving I/sigma values in the file.
         for i in range(len(correct_log)-1, 0, -1):
-            print hires, correct_log[i].strip()
+            # print hires, correct_log[i].strip()
             if correct_log[i].strip().startswith('total'):
                 flag = 1
             elif flag == 1:
