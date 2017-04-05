@@ -58,15 +58,15 @@ DATA_SETS = {
         "integrate_result": "rapd_integrate_thaum1_01s-01d_1_1-20/result.json",
         "valid_from": "2017-04-05"
     },
-    "UCLA": {
-        "location": "UCLA",
-        "integrate_template": "prok_pcmbs_margot####.osc",
-        "index_command": "rapd.index -v data/prok_pcmbs_margot0001.osc",
-        "index_result": "rapd_index_prok_pcmbs_margot1/result.json",
-        "integrate_command": "rapd.integrate -v data/prok_pcmbs_margot####.osc",
-        "integrate_result": "rapd_integrate_prok_pcmbs_margot1-213/result.json",
-        "valid_from": "2017-04-05"
-    },
+    # "UCLA": {
+    #     "location": "UCLA",
+    #     "integrate_template": "prok_pcmbs_margot####.osc",
+    #     "index_command": "rapd.index -v data/prok_pcmbs_margot0001.osc",
+    #     "index_result": "rapd_index_prok_pcmbs_margot1/result.json",
+    #     "integrate_command": "rapd.integrate -v data/prok_pcmbs_margot####.osc",
+    #     "integrate_result": "rapd_integrate_prok_pcmbs_margot1-213/result.json",
+    #     "valid_from": "2017-04-05"
+    # },
     "ALL":{
         "location": None,
     },

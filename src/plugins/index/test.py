@@ -150,8 +150,8 @@ def compare_results(result1, result2, tprint):
            result2["results"]["distl_results"]["good Bragg spots"]
 
     tprint("    Labelit", 10, "white")
-    assert result1["results"]["Labelit results"]["labelit_cell"] == \
-           result2["results"]["Labelit results"]["labelit_cell"]
+    assert result1["results"]["Labelit results"]["labelit_cell"][0] == \
+           result2["results"]["Labelit results"]["labelit_cell"][0]
 
     assert result1["results"]["Labelit results"]["mosflm_sg"] == \
            result2["results"]["Labelit results"]["mosflm_sg"]
