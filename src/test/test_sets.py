@@ -42,7 +42,7 @@ DATA_SETS = {
         "index_command": "rapd.index -v data/SER4-TRYPSIN_Pn2.0001 data/SER4-TRYPSIN_Pn2.0090",
         "index_result": "rapd_index_SER4-TRYPSIN_Pn2.1+90/result.json",
         "integrate_command": "rapd.integrate -v --hires 1.5 data/SER4-TRYPSIN_Pn2.####",
-        "integrate_result": "rapd_integrate_thaum1_01s-01d_1_1-20/result.json"
+        "integrate_result": "rapd_integrate_SER4-TRYPSIN_Pn2.1-100/result.json"
     },
     "MINIMAL": {
         "description": "Minimal dataset from NE-CAT 24-ID-E to test system quickly",

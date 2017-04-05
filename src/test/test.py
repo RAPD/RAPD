@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 __created__ = "2017-03-20"
-_maintainer__ = "Frank Murphy"
+__maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
@@ -145,12 +145,12 @@ def check_for_data(target, rapd_home, tprint):
             tar.wait()
 
             # Remove archive
+            print "UNLINKING"
             os.unlink(target_def["location"])
 
             tprint("  Unpacking complete", level=10, color="green")
 
         else:
-
             return False
     else:
         tprint("  Data directory present", level=10, color="white")
