@@ -88,7 +88,7 @@ def run_unit(plugin, tprint, mode="DEPENDENCIES", verbose=True):
 def run_processing(target, plugin, rapd_home, tprint, verbose=True):
     """Run a processing test"""
 
-    tprint("Testing processing", 10, "white")
+    tprint("Testing %s" % plugin, 99, "white")
 
     target_def = test_sets.DATA_SETS[target]
     command = target_def[plugin+"_command"]
