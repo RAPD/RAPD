@@ -328,10 +328,10 @@ def get_commandline():
                                      formatter_class=RawTextHelpFormatter)
 
     # A True/False flag
-    parser.add_argument("-v", "--verbose",
-                        action="store_true",
+    parser.add_argument("-q", "--quiet",
+                        action="store_false",
                         dest="verbose",
-                        help="Request more verbose output")
+                        help="Request less output")
 
     # Test mode
     parser.add_argument("--test",
