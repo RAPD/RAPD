@@ -198,7 +198,7 @@ class BaseFileGenerator(object):
     def write_docstrings(self):
         """Write file author docstrings"""
         self.output_function(["__created__ = \"%d-%02d-%02d\"" % (_NOW.tm_year, _NOW.tm_mon, _NOW.tm_mday),
-                              "_maintainer__ = \"%s\"" % self.args.maintainer,
+                              "__maintainer__ = \"%s\"" % self.args.maintainer,
                               "__email__ = \"%s\"" % self.args.email,
                               "__status__ = \"Development\"\n"])
 
