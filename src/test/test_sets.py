@@ -29,8 +29,11 @@ DATA_SERVER = "https://rapd.nec.aps.anl.gov/rapd/test_data/"
 DATA_SETS = {
     "APS_NECAT_24-ID-C": {
         "description": "NE-CAT Pilatus 6M data",
-        "integrate_template": "thaum1_01s-01d_1_####.cbf",
-        "location": "APS_NECAT_24-ID-C.tar.bz2"
+        "location": "APS_NECAT_24-ID-C.tar.bz2",
+        "index_command": "rapd.index -v data/thaum1_PAIR_0_0001.cbf data/thaum1_PAIR_0_0002.cbf",
+        "index_result": "rapd_index_thaum1_PAIR_0_1+2/result.json",
+        "integrate_command": "rapd.integrate -v --hires 1.5 data/thaum1_01s-01d_1_####.cbf",
+        "integrate_result": "rapd_integrate_thaum1_01s-01d_1_1-360/result.json"
     },
     "APS_NECAT_24-ID-E": {
         "description": "NE-CAT EigerX 18M data",
