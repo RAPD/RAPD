@@ -19,7 +19,6 @@ __copyright__ = "Copyright (c) 2007  Pierre Legrand"
 __license__ = "New BSD License"
 __version__ = "0.4.9"
 
-
 import sys
 import os
 import math
@@ -57,18 +56,20 @@ _usage = """
 """ % _progname
 
 detector2scanner = {
-   "ADSC":              "ADSC",
-   "CCDCHESS":          "MARCCD",
-   "RAXIS":             "RAXIS",
-   "MAR":               "SMALLMAR",
-   "MAR345":            "MAR",
-   "MAC":               "DIP2020",
-   "SMARTCCD":          "SMART",
-   "CCDD2AM":           "ESRF",
-   "SATURN":            "RIGAKU SATURN",
-   "PILATUS":           "PILATUS",
-   "EIGER":             "EIGER",
-   "CCDBRANDEIS":       "B4"}
+   "ADSC": "ADSC",
+   "CCDBRANDEIS": "B4",
+   "CCDCHESS": "MARCCD",
+   "EIGER": "EIGER",
+   "MAC": "DIP2020",
+   "MAR": "SMALLMAR",
+   "MAR345": "MAR",
+   "MARCCD": "MAR",
+   "PILATUS": "PILATUS",
+   "RAXIS": "RAXIS",
+   "SATURN": "RIGAKU SATURN",
+   "SMARTCCD": "SMART",
+   "CCDD2AM": "ESRF",
+   }
 
 
 # Depending on the XDS output read, different mosflm input can be generated.
@@ -151,7 +152,7 @@ def PARS_xds2mos(xdsPar):
     return mosPar
 
 class Xds2Mosflm:
-    def __init__(self,xds_file,mat_file):
+    def __init__(self, xds_file, mat_file):
         #Frank converted this to class from original script.
         #print "\n   xds2mos version: %s\n" % (__version__)
         #print "   Extracting data from:\t\t%s" % xds_file
@@ -183,9 +184,11 @@ class Xds2Mosflm:
             _template = ("%s%0"+str(nDigit)+"d") % (_template.split('#')[0],1)
 
         matf_name = mat_file
+
         XDSi.debut()
         MOSi.UB = XDSi.UBxds_to_mos()
         MOSi.cell = XDSi.dict["cell"]
+
         B = MOSi.get_B(reciprocal(MOSi.cell))
         #MOSi.U = MOSi.UB * B.inverse() / XDSi.dict["wavelength"]
         MOSi.U = MOSi.UB * B.inverse().__div__(XDSi.dict["wavelength"])
