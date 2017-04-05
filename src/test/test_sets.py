@@ -33,19 +33,21 @@ DATA_SETS = {
         "index_command": "rapd.index -v data/thaum1_PAIR_0_0001.cbf data/thaum1_PAIR_0_0002.cbf",
         "index_result": "rapd_index_thaum1_PAIR_0_1+2/result.json",
         "integrate_command": "rapd.integrate -v --hires 1.5 data/thaum1_01s-01d_1_####.cbf",
-        "integrate_result": "rapd_integrate_thaum1_01s-01d_1_1-360/result.json"
+        "integrate_result": "rapd_integrate_thaum1_01s-01d_1_1-360/result.json",
+        "valid_from": "2017-04-05"
     },
-    "APS_NECAT_24-ID-E": {
-        "description": "NE-CAT EigerX 18M data",
-        "location": "APS_NECAT_24-ID-E.tar.bz2"
-    },
+    # "APS_NECAT_24-ID-E": {
+    #     "description": "NE-CAT EigerX 18M data",
+    #     "location": "APS_NECAT_24-ID-E.tar.bz2"
+    # },
     "APS_SERCAT_23-ID": {
         "description": "SERCAT  data",
         "location": "APS_SERCAT_23-ID.tar.bz2",
         "index_command": "rapd.index -v data/SER4-TRYPSIN_Pn2.0001 data/SER4-TRYPSIN_Pn2.0090",
         "index_result": "rapd_index_SER4-TRYPSIN_Pn2.1+90/result.json",
         "integrate_command": "rapd.integrate -v --hires 1.5 data/SER4-TRYPSIN_Pn2.####",
-        "integrate_result": "rapd_integrate_SER4-TRYPSIN_Pn2.1-100/result.json"
+        "integrate_result": "rapd_integrate_SER4-TRYPSIN_Pn2.1-100/result.json",
+        "valid_from": "2017-04-05"
     },
     "MINIMAL": {
         "description": "Minimal dataset from NE-CAT 24-ID-E to test system quickly",
@@ -53,7 +55,8 @@ DATA_SETS = {
         "index_command": "rapd.index -v data/thaum1_PAIR_0_0001.cbf data/thaum1_PAIR_0_0002.cbf",
         "index_result": "rapd_index_thaum1_PAIR_0_1+2/result.json",
         "integrate_command": "rapd.integrate -v --hires 1.5 data/thaum1_01s-01d_1_####.cbf",
-        "integrate_result": "rapd_integrate_thaum1_01s-01d_1_1-20/result.json"
+        "integrate_result": "rapd_integrate_thaum1_01s-01d_1_1-20/result.json",
+        "valid_from": "2017-04-05"
     },
     "UCLA": {
         "location": "UCLA",
@@ -61,7 +64,8 @@ DATA_SETS = {
         "index_command": "rapd.index -v data/prok_pcmbs_margot0001.osc",
         "index_result": "rapd_index_prok_pcmbs_margot1/result.json",
         "integrate_command": "rapd.integrate -v data/prok_pcmbs_margot####.osc",
-        "integrate_result": "rapd_integrate_prok_pcmbs_margot1-213/result.json"
+        "integrate_result": "rapd_integrate_prok_pcmbs_margot1-213/result.json",
+        "valid_from": "2017-04-05"
     },
     "ALL":{
         "location": None,
