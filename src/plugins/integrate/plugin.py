@@ -72,9 +72,7 @@ import smartie
 # Software dependencies
 VERSIONS = {
     "aimless": (
-        "version 0.5.23",
-        "version 0.5.29",
-        "version 0.5.31",
+        "version 0.5",
         ),
     "freerflag": (
         "version 2.2",
@@ -87,19 +85,16 @@ VERSIONS = {
         "version 1.1",
     ),
     "pointless": (
-        "version 1.10.19",
-        "version 1.10.28",
+        "version 1.10",
         ),
     "truncate": (
-        "version 7.0.004",
-        "version 7.0.024",
-        "version 7.0.028",
+        "version 7.0",
     ),
     "xds": (
         "VERSION Nov 1, 2016",
         ),
     "xds_par": (
-        "VERSION May 1, 2016",
+        # "VERSION May 1, 2016",
         "VERSION Nov 1, 2016",
         ),
 }
