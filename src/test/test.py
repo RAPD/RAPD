@@ -145,7 +145,6 @@ def check_for_data(target, rapd_home, tprint):
             tar.wait()
 
             # Remove archive
-            print "UNLINKING"
             os.unlink(target_def["location"])
 
             tprint("  Unpacking complete", level=10, color="green")
@@ -161,8 +160,8 @@ def check_for_data(target, rapd_home, tprint):
     files = glob.glob(data_dir_glob)
     files.sort()
     final_hash = hashlib.sha1()
-    for file in files:
-        final_hash.update(open(file).read())
+    for my_file in files:
+        final_hash.update(open(my_file).read())
     local_sha = final_hash.hexdigest()
 
     # Read the known digest
@@ -236,10 +235,10 @@ def main(args):
     log_level = 10
 
     # Set up logging
-    logger = utils.log.get_logger(logfile_dir="./",
-                                  logfile_id="rapd_test",
-                                  level=log_level,
-                                  console=commandline_args.test)
+    # logger = utils.log.get_logger(logfile_dir="./",
+    #                               logfile_id="rapd_test",
+    #                               level=log_level,
+    #                               console=commandline_args.test)
 
     # Set up terminal printer
     # Verbosity
