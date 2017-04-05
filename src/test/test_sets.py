@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 __created__ = "2017-03-20"
-_maintainer__ = "Frank Murphy"
+__maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
@@ -35,6 +35,14 @@ DATA_SETS = {
     "APS_NECAT_24-ID-E": {
         "description": "NE-CAT EigerX 18M data",
         "location": "APS_NECAT_24-ID-E.tar.bz2"
+    },
+    "APS_SECAT_23-ID": {
+        "description": "SERCAT  data",
+        "location": "APS_SERCAT_23-ID.tar.bz2",
+        "index_command": "rapd.index -v data/SER4-TRYPSIN_Pn2.0001.cbf data/SER4-TRYPSIN_Pn2.0090",
+        "index_result": "rapd_index_SER4-TRYPSIN_Pn2_1+90/result.json",
+        "integrate_command": "rapd.integrate -v --hires 1.5 data/SER4-TRYPSIN_Pn2.####",
+        "integrate_result": "rapd_integrate_thaum1_01s-01d_1_1-20/result.json"
     },
     "MINIMAL": {
         "description": "Minimal dataset from NE-CAT 24-ID-E to test system quickly",

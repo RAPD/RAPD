@@ -51,6 +51,7 @@ import sys
 import time
 
 # RAPD imports
+import info
 import plugins.subcontractors.parse as Parse
 # import plugins.subcontractors.summary as Summary
 from plugins.subcontractors.xoalign import RunXOalign
@@ -972,15 +973,14 @@ class RapdPlugin(Process):
                 break
 
         if not found:
-            self.tprint(arg="Detector %s missing from the BEST detector information file %s" % (detector, detector_info),
+            self.tprint(arg="Detector %s missing from the BEST detector information file" %
+                        detector,
                         level=30,
                         color="red")
-            self.print_best_detector_line(detector)
-
-    def print_best_detector_line(self, detector):
-        """Print the line that needs to be added to the best detector inf file"""
-
-        pass
+            self.tprint(arg="Add \"%s\" \n to file %s \n to get BEST running" %
+                        (info.BEST_INFO[detector], detector_info),
+                        level=30,
+                        color="red")
 
     def processStrategy(self, iteration=False):
         """
