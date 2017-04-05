@@ -88,7 +88,7 @@ def run_unit(plugin, tprint, mode="DEPENDENCIES", verbose=True):
 def run_processing(target, plugin, rapd_home, tprint, verbose=True):
     """Run a processing test"""
 
-    tprint("Testing %s" % plugin, 99, "white")
+    tprint("  Testing %s" % plugin, 99, "white")
 
     target_def = test_sets.DATA_SETS[target]
     command = target_def[plugin+"_command"]
@@ -99,7 +99,7 @@ def run_processing(target, plugin, rapd_home, tprint, verbose=True):
     os.chdir(work_dir)
 
     # Run the process
-    tprint("  Running test with command `%s`" % command, 10, "white")
+    tprint("    Running test with command `%s`" % command, 10, "white")
     if verbose:
         proc = subprocess.Popen(command, shell=True)
     else:
@@ -107,16 +107,16 @@ def run_processing(target, plugin, rapd_home, tprint, verbose=True):
     proc.wait()
 
     # Read in the results
-    tprint("  Comparing results", 10, "white")
+    tprint("    Comparing results", 10, "white")
     result_standard = json.loads(open(plugin+".json", "r").readlines()[0])
     result_test = json.loads(open(target_def[plugin+"_result"], "r").readlines()[0])
 
     test_successful = test_module.compare_results(result_standard, result_test, tprint)
 
     if test_successful:
-        tprint("  Tests sucessful", 10, "green")
+        tprint("  %s tests sucessful" % plugin, 99, "green")
     else:
-        tprint("  Tests fail", 10, "red")
+        tprint("  %s tests fail" % plugin, 10, "red")
 
     return test_successful
 
@@ -226,7 +226,7 @@ def main(args):
     the commandline
     """
 
-    pprint(args)
+    # pprint(args)
     # sys.exit()
 
     # Get the environmental variables
@@ -275,8 +275,6 @@ def main(args):
 
     for target in targets:
 
-        # print target
-
         if target == "DEPENDENCIES":
 
             tprint("Dependency testing", 10, "white")
@@ -306,7 +304,7 @@ def main(args):
                 if not data_present:
                     raise Exception("There is a problem getting valid test data")
 
-            tprint("Plugin testing", 50, "white")
+            tprint("Plugin testing", 99, "white")
             for plugin in plugins:
 
                 # Run unit testing
