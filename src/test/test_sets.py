@@ -36,7 +36,7 @@ DATA_SETS = {
         "description": "NE-CAT EigerX 18M data",
         "location": "APS_NECAT_24-ID-E.tar.bz2"
     },
-    "APS_SECAT_23-ID": {
+    "APS_SERCAT_23-ID": {
         "description": "SERCAT  data",
         "location": "APS_SERCAT_23-ID.tar.bz2",
         "index_command": "rapd.index -v data/SER4-TRYPSIN_Pn2.0001 data/SER4-TRYPSIN_Pn2.0090",
@@ -56,7 +56,9 @@ DATA_SETS = {
         "location": "UCLA",
         "integrate_template": "prok_pcmbs_margot####.osc",
         "index_command": "rapd.index -v data/prok_pcmbs_margot0001.osc",
-        "index_result": "rapd_index_prok_pcmbs_margot1/result.json"
+        "index_result": "rapd_index_prok_pcmbs_margot1/result.json",
+        "integrate_command": "rapd.integrate -v --hires 1.5 data/prok_pcmbs_margot####.osc",
+        "integrate_result": "rapd_integrate_prok_pcmbs_margot1-213/result.json"
     },
     "ALL":{
         "location": None,
