@@ -407,6 +407,7 @@ def main():
 
     # Get site - commandline wins over the environmental variable
     site = False
+    site_module = False
     detector = {}
     detector_module = False
     if commandline_args.site:
@@ -414,6 +415,7 @@ def main():
     elif environmental_vars.has_key("RAPD_SITE"):
         site = environmental_vars["RAPD_SITE"]
 
+    # Detector is defined by the user
     if commandline_args.detector:
         detector = commandline_args.detector
         detector_module = detector_utils.load_detector(detector)
