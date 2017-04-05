@@ -47,8 +47,10 @@ import sys
 # RAPD imports
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
-import utils.log
+# import utils.log
+import utils.site as site_utils
 import utils.text as text
+
 
 # Possible types of files to generate
 MODES = [
@@ -80,9 +82,6 @@ def main(args):
         for allowed_mode in MODES:
             print "      %s" % allowed_mode
 
-
-
-
         sys.exit(9)
 
     else:
@@ -91,6 +90,20 @@ def main(args):
 
         # Get the commandline args
         commandline_args = module.get_commandline(args)
+
+        # Get the environmental variables
+        environmental_vars = site_utils.get_environmental_variables()
+
+        # Look to use environmental_vars to set args
+        if commandline_args.maintainer == "Your name":
+            if "RAPD_AUTHOR_NAME" in environmental_vars:
+                commandline_args.maintainer = environmental_vars["RAPD_AUTHOR_NAME"]
+
+        if commandline_args.email == "Your email":
+            if "RAPD_AUTHOR_EMAIL" in environmental_vars:
+                commandline_args.email = environmental_vars["RAPD_AUTHOR_EMAIL"]
+
+        print commandline_args
 
         # Instantiate the FileGenerator
         file_generator = module.FileGenerator(commandline_args)
@@ -151,6 +164,6 @@ def get_commandline():
 
 if __name__ == "__main__":
 
-    commandline_args = get_commandline()
+    main_commandline_args = get_commandline()
 
-    main(args=commandline_args)
+    main(args=main_commandline_args)
