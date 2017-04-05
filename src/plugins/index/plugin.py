@@ -2135,21 +2135,22 @@ class RunLabelit(Process):
             binning = self.header.get('binning')
 
         if self.test == False:
-            preferences= open('dataset_preferences.py', 'w')
+            preferences = open('dataset_preferences.py', 'w')
             preferences.write('#####Base Labelit settings#####\n')
             preferences.write('best_support=True\n')
             # Set Mosflm RMSD tolerance larger
             preferences.write('mosflm_rmsd_tolerance=4.0\n')
 
-            # If binning is off. Force Labelit to use all pixels(MAKES THINGS WORSE). Increase number of spots to use for indexing.
+            # If binning is off. Force Labelit to use all pixels(MAKES THINGS WORSE).
+            # Increase number of spots to use for indexing.
             if binning == False:
                 preferences.write('distl_permit_binning=False\n')
                 preferences.write('distl_maximum_number_spots_for_indexing=600\n')
 
             # If user wants to change the res limit for autoindexing.
-            if str(self.preferences.get('index_hi_res','0.0')) != '0.0':
+            if str(self.preferences.get('index_hi_res', '0.0')) != '0.0':
                 #preferences.write('distl.res.outer='+index_hi_res+'\n')
-                preferences.write('distl_highres_limit=%s\n'%self.preferences.get('index_hi_res'))
+                preferences.write('distl_highres_limit=%s\n' % self.preferences.get('index_hi_res'))
 
             # Always specify the beam center.
             # If Malcolm flips the beam center in the image header...
@@ -2161,10 +2162,12 @@ class RunLabelit(Process):
 
             # If two-theta is being used, specify the angle and distance correctly.
             if twotheta.startswith('0'):
-                preferences.write('beam_search_scope=0.2\n')
+                preferences.write('beam_search_scope=%f\n' %
+                                  self.preferences.get("beam_search", 0.2))
             else:
                 self.twotheta = True
-                preferences.write('beam_search_scope=0.5\n')
+                preferences.write('beam_search_scope=%f\n' %
+                                  self.preferences.get("beam_search", 0.2))
                 preferences.write('autoindex_override_twotheta=%s\n'%twotheta)
                 # preferences.write('autoindex_override_distance='+distance+'\n')
             preferences.close()
@@ -2185,7 +2188,7 @@ class RunLabelit(Process):
             d = {'a': False, 'c': False, 'b': False, 'beta': False, 'alpha': False, 'gamma': False}
             counter = 0
             for l in d.keys():
-                temp = str(self.preferences.get(l,0.0))
+                temp = str(self.preferences.get(l, 0.0))
                 if temp != '0.0':
                     d[l] = temp
                     counter += 1
@@ -2193,7 +2196,8 @@ class RunLabelit(Process):
                 d = False
             # Put together the command for labelit.index
             command = 'labelit.index '
-            # If first labelit run errors because not happy with user specified cell or SG then ignore user input in the rerun.
+            # If first labelit run errors because not happy with user specified cell or SG then
+            # ignore user input in the rerun.
             if self.ignore_user_cell == False:
                 if d:
                     command += 'known_cell=%s,%s,%s,%s,%s,%s ' % (d['a'], d['b'], d['c'], d['alpha'], d['beta'], d['gamma'])

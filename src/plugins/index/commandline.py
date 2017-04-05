@@ -111,6 +111,7 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     command["preferences"]["index_hi_res"] = str(commandline_args.hires)
     command["preferences"]["x_beam"] = commandline_args.beamcenter[0]
     command["preferences"]["y_beam"] = commandline_args.beamcenter[1]
+    command["preferences"]["beam_search"] = commandline_args.beam_search
 
     # Mosflm
     command["preferences"]["mosflm_rot"] = float(commandline_args.mosflm_range)
@@ -177,6 +178,14 @@ def get_commandline():
                         action="store",
                         dest="index_only",
                         help="Specify only indexing, no strategy calculation")
+
+    # Number of mosflm segments
+    parser.add_argument("--beam_search",
+                        action="store",
+                        dest="beam_search",
+                        default=0.2,
+                        type=float,
+                        help="Beam search scope")
 
     # Strategy type
     parser.add_argument("--strategy_type",
