@@ -244,7 +244,7 @@ class FileGenerator(CommandlineFileGenerator):
             "    # run_repr = \"rapd_index_\" + image_template.replace(detector_module.DETECTOR_SUFFIX, \"\").replace(\"?\", \"\")",
             "    # run_repr += \"+\".join(image_numbers)\n",
             "    command[\"directories\"] = {",
-            "        \"work\": os.path.join(os.path.abspath(os.path.curdir), %s)# run_repr)" % self.args.plugin_name,
+            "        \"work\": os.path.join(os.path.abspath(os.path.curdir), \"%s\")# run_repr)" % self.args.plugin_name,
             "        }\n",
             "    # Handle work directory",
             "    commandline_utils.check_work_dir(command[\"directories\"][\"work\"], True)\n",

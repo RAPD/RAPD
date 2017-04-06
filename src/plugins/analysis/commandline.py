@@ -64,7 +64,7 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
 
     # Working directory
     # image_numbers = []
-    # image_template = 
+    # image_template =
     # for _, header in image_headers.iteritems():
     #     image_numbers.append(str(header["image_number"]))
     #     image_template = header["image_template"]
@@ -73,7 +73,7 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     # run_repr += "+".join(image_numbers)
 
     command["directories"] = {
-        "work": os.path.join(os.path.abspath(os.path.curdir), analysis)# run_repr)
+        "work": os.path.join(os.path.abspath(os.path.curdir), "analysis")# run_repr)
         }
 
     # Handle work directory
@@ -307,4 +307,3 @@ if __name__ == "__main__":
     commandline_args = get_commandline()
 
     main(args=commandline_args)
-
