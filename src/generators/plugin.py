@@ -28,6 +28,7 @@ __status__ = "Development"
 import argparse
 # import datetime
 # import glob
+import importlib
 # import logging
 # import multiprocessing
 import os
@@ -40,6 +41,7 @@ import sys
 # import time
 
 # RAPD imports
+import info
 from base import FileGenerator as CommandlineFileGenerator
 from base import split_text_blob
 # import commandline_utils
@@ -56,6 +58,8 @@ class FileGenerator(CommandlineFileGenerator):
         self.create_directory()
         self.create_init()
         self.create_readme()
+        self.create_info()
+        self.create_commandline()
         sys.exit()
         self.write_file_docstring()
         self.write_license()
@@ -97,15 +101,48 @@ class FileGenerator(CommandlineFileGenerator):
     def create_readme(self):
         """Create the README.md"""
 
-        with open("__init__.py", "a"):
-            os.utime("__init__.py", None)
+        self.write_file("README.md", info.README_TEXT)
 
-    def write_file(fname, lines):
+    def create_info(self):
+        """Create the info.py"""
+
+        # Load the module
+        module = importlib.import_module("generators.container")
+
+        # Add the filename to the args
+        self.args.file = "info.py"
+
+        # Instantiate the FileGenerator
+        file_generator = module.FileGenerator(self.args)
+
+        # Run
+        file_generator.run()
+
+    def create_commandline(self):
+        """Create the commandline.py"""
+
+        # Load the module
+        module = importlib.import_module("generators.base")
+
+        # Add the filename to the args
+        self.args.file = "commandline.py"
+
+        # Instantiate the FileGenerator
+        file_generator = module.FileGenerator(self.args)
+
+        # Go through the steps of writing the file
+        file_generator.preprocess()
+        file_generator.write_file_docstring("Wrapper for launching %s" % self.args.plugin_name)
+        file_generator.write_license()
+        file_generator.write_docstrings()
+
+    @classmethod
+    def write_file(cls, fname, lines):
         """Write lines into a file fname"""
 
         with open(fname, "a") as the_file:
             for line in lines:
-                the_file.write(line+"\n")
+                the_file.write(line)
 
     def write_main_func(self, main_func_lines=False):
         """Write the main function"""

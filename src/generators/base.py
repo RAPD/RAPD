@@ -174,22 +174,12 @@ class BaseFileGenerator(object):
         else:
             pass
 
-    def run(self):
-        """The main actions of the module"""
-
-        self.preprocess()
-
-        self.write_file_docstring()
-        self.write_license()
-        self.write_docstrings()
-        self.write_imports()
-        self.write_versions()
-        self.write_main_func()
-        self.write_main()
-
-    def write_file_docstring(self):
+    def write_file_docstring(self, docstring=False):
         """Write the docstring for file"""
-        self.output_function(["\"\"\"This is a docstring for this file\"\"\"\n"])
+        if docstring:
+            self.output_function(["\"\"\"%s\"\"\"\n" % docstring])
+        else:
+            self.output_function(["\"\"\"This is a docstring for this file\"\"\"\n"])
 
     def write_license(self):
         """Write the license"""

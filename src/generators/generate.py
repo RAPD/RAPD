@@ -104,7 +104,7 @@ def main(args):
             if "RAPD_AUTHOR_EMAIL" in environmental_vars:
                 commandline_args.email = environmental_vars["RAPD_AUTHOR_EMAIL"]
 
-        print commandline_args
+        # print commandline_args
 
         # Instantiate the FileGenerator
         file_generator = module.FileGenerator(commandline_args)
