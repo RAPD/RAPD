@@ -88,6 +88,9 @@ class RapdPlugin(multiprocessing.Process):
     def __init__(self, command, tprint=False, logger=False):
         """Initialize the plugin"""
 
+        # Keep track of start time
+        self.start_time = time.time()
+
         # If the logging instance is passed in...
         if logger:
             self.logger = logger

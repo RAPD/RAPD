@@ -586,7 +586,8 @@ class FileGenerator(CommandlineFileGenerator):
             "            # Otherwise get the logger Instance",
             "            self.logger = logging.getLogger(\"RAPDLogger\")",
             "            self.logger.debug(\"__init__\")\n",
-
+            "        # Keep track of start time",
+            "        self.start_time = time.time()",
             "        # Store tprint for use throughout",
             "        if tprint:",
             "            self.tprint = tprint",
