@@ -55,6 +55,7 @@ import utils.text as text
 # Possible types of files to generate
 MODES = [
     "base",
+    "container",
     "detector",
     "plugin",
     "test",

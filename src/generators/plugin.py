@@ -30,29 +30,33 @@ import argparse
 # import glob
 # import logging
 # import multiprocessing
-# import os
+import os
 # import pprint
 # import pymongo
 # import redis
-# import shutil
+import shutil
 # import subprocess
-# import sys
+import sys
 # import time
 
 # RAPD imports
-from basefile import CommandlineFileGenerator, split_text_blob
+from base import FileGenerator as CommandlineFileGenerator
+from base import split_text_blob
 # import commandline_utils
 # import import detectors.detector_utils as detector_utils
 # import utils
 
-class DetectorFileGenerator(CommandlineFileGenerator):
-    """File generator for detector wrapper"""
+class FileGenerator(CommandlineFileGenerator):
+    """File generator for plugin wrapper"""
 
     def run(self):
         """The main actions of the module"""
 
         self.preprocess()
-
+        self.create_directory()
+        self.create_init()
+        self.create_readme()
+        sys.exit()
         self.write_file_docstring()
         self.write_license()
         self.write_docstrings()
@@ -66,6 +70,42 @@ class DetectorFileGenerator(CommandlineFileGenerator):
         self.write_commandline(description="Parse image file header")
         self.write_main_func()
         self.write_main()
+
+    def preprocess(self):
+        """Set up the plugin generation"""
+
+        # Check to make sure that the directory we want to create does not exist
+        if os.path.exists(self.args.plugin_name):
+            if self.args.force:
+                shutil.rmtree(self.args.plugin_name)
+            else:
+                raise Exception("%s already exists - use -f option to force overwrite. Exiting." %
+                                self.args.plugin_name)
+
+    def create_directory(self):
+        """Create the plugin directory and move to it"""
+
+        os.mkdir(self.args.plugin_name)
+        os.chdir(self.args.plugin_name)
+
+    def create_init(self):
+        """Create the __init__.py"""
+
+        with open("__init__.py", "a"):
+            os.utime("__init__.py", None)
+
+    def create_readme(self):
+        """Create the README.md"""
+
+        with open("__init__.py", "a"):
+            os.utime("__init__.py", None)
+
+    def write_file(fname, lines):
+        """Write lines into a file fname"""
+
+        with open(fname, "a") as the_file:
+            for line in lines:
+                the_file.write(line+"\n")
 
     def write_main_func(self, main_func_lines=False):
         """Write the main function"""
@@ -232,7 +272,7 @@ class DetectorFileGenerator(CommandlineFileGenerator):
 
         self.output_function(read_header)
 
-def get_commandline():
+def get_commandline(args=None):
     """Get the commandline variables and handle them"""
 
     # Parse the commandline arguments
@@ -274,12 +314,19 @@ def get_commandline():
 
     # File name to be generated
     parser.add_argument(action="store",
-                        dest="file",
+                        dest="plugin_name",
                         nargs="?",
-                        default=False,
-                        help="Name of file to be generated")
+                        default="test_plugin",
+                        help="Name of plugin to be generated")
 
-    return parser.parse_args()
+    # Pull from the input list
+    if isinstance(args, list):
+        my_args = parser.parse_args(args)
+    # Grab straight from the commandline
+    else:
+        my_args = parser.parse_args()
+
+    return my_args
 
 def main():
     """
@@ -292,7 +339,7 @@ def main():
 
     print commandline_args
 
-    file_generator = DetectorFileGenerator(commandline_args)
+    file_generator = FileGenerator(commandline_args)
     file_generator.run()
 
 if __name__ == "__main__":
