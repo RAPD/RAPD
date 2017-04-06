@@ -27,7 +27,6 @@ __status__ = "Development"
 # Standard imports
 import argparse
 # import datetime
-from distutils.spawn import find_executable
 # import glob
 # import json
 # import logging

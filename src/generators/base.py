@@ -114,7 +114,7 @@ class BaseFileGenerator(object):
     def __init__(self, args=False):
         """Initialize the BaseFileGenerator instance"""
 
-        print args
+        # print args
 
         self.args = args
 
@@ -133,7 +133,7 @@ class BaseFileGenerator(object):
     def preprocess(self):
         """Do pre-write checks"""
 
-        print "BaseFileGenerator.preprocess"
+        # print "BaseFileGenerator.preprocess"
 
         # Determine output function
         if self.args:
@@ -237,7 +237,7 @@ class BaseFileGenerator(object):
             self.output_function([value])
 
         # Special RAPD imports
-        print added_rapd_imports
+        # print added_rapd_imports
         for value in added_rapd_imports:
             if (value not in standard_imports) or (value not in rapd_imports):
                 self.output_function(["import " + value])
