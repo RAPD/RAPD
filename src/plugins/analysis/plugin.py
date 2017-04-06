@@ -85,7 +85,7 @@ class RapdPlugin(multiprocessing.Process):
     }
     """
 
-    def __init__(self, site, command, tprint=False, logger=False):
+    def __init__(self, command, tprint=False, logger=False):
         """Initialize the plugin"""
 
         # If the logging instance is passed in...
@@ -110,7 +110,6 @@ class RapdPlugin(multiprocessing.Process):
         self.logger.info(command)
 
         # Store passed-in variables
-        self.site = site
         self.command = command
         self.reply_address = self.command["return_address"]
         multiprocessing.Process.__init__(self, name="analysis")
@@ -178,4 +177,3 @@ def main(args):
         commandline_args = get_commandline()
 
         main(args=commandline_args)
-
