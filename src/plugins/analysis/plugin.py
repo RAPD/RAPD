@@ -85,6 +85,8 @@ class RapdPlugin(multiprocessing.Process):
     }
     """
 
+    test = False
+
     def __init__(self, command, tprint=False, logger=False):
         """Initialize the plugin"""
 
@@ -109,12 +111,11 @@ class RapdPlugin(multiprocessing.Process):
             self.tprint = func
 
         # Some logging
-        self.logger.info(site)
         self.logger.info(command)
 
         # Store passed-in variables
         self.command = command
-        self.reply_address = self.command["return_address"]
+        # self.reply_address = self.command["return_address"]
         multiprocessing.Process.__init__(self, name="analysis")
         self.start()
 
@@ -129,6 +130,24 @@ class RapdPlugin(multiprocessing.Process):
         """Set up for plugin action"""
 
         self.tprint("preprocess")
+        self.logger.debug("preprocess")
+
+        # Make the work_dir if it does not exist.
+        if os.path.exists(self.command["directories"]["work"]) == False:
+            os.makedirs(self.command["directories"]["work"])
+
+        # Change directory to the one specified in the incoming dict
+        os.chdir(self.command["directories"]["work"])
+
+        # Check if input file is sca and convert to mtz.
+        if self.datafile:
+            self.input_sg, self.cell, self.cell2, vol = Utils.getMTZInfo(self, False, True, True)
+            # Change timer to allow more time for Ribosome structures.
+            if Utils.calcResNumber(self, self.input_sg, False, vol) > 5000:
+                self.stats_timer = 300
+
+        if self.test:
+            self.logger.debug("TEST IS SET \"ON\"")
 
     def process(self):
         """Run plugin action"""
@@ -139,6 +158,9 @@ class RapdPlugin(multiprocessing.Process):
         """Clean up after plugin action"""
 
         self.tprint("postprocess")
+
+        # Print out recognition of the program being used
+        self.print_info()
 
 def get_commandline():
     """Grabs the commandline"""
