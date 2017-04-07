@@ -315,7 +315,7 @@ def calc_res_number(sg, se=False, vol=False):
 
     # try:
     if vol:
-        num_residues = calcTotResNumber(self, vol)
+        num_residues = calc_tot_res_number(vol)
     else:
         num_residues = calcTotResNumber(self, calcVolume(self))
 
@@ -343,7 +343,7 @@ def calc_res_number(sg, se=False, vol=False):
     #   else:
     #     return(200)
 
-def calcTotResNumber(self,volume):
+def calcTotResNumber(self, volume):
   """
   Calculates number of residues in the unit cell for Raddose calculation. If cell volume bigger than 50000000, then
   turns on Ribosome which makes changes so meaning strategy is presented.
@@ -367,6 +367,30 @@ def calcTotResNumber(self,volume):
   except:
     self.logger.exception('**Error in Utils.calcTotResNumber**')
     return (None)
+
+def calc_tot_res_number(volume):
+    """
+    Calculates number of residues in the unit cell for Raddose calculation. If cell volume bigger than 50000000, then
+    turns on Ribosome which makes changes so meaning strategy is presented.
+    """
+    # try:
+    checkVolume(self, volume)
+    content = 1 - float(self.solvent_content)
+
+    # Calculate number of residues based on solvent content in volume of cell.
+    if self.sample_type == 'Protein':
+        # Based on average MW of residue = 110 DA
+        return int((float(volume)*float(content))/135.3)
+    elif self.sample_type == 'DNA':
+        # Based on average MW of residue = 330 DA
+        return int((float(volume)*float(content))/273.9)
+    else:
+        # RNA or Ribosome
+        # RNA based on average MW of residue = 340 DA
+        return int((float(volume)*float(content))/282.2)
+    # except:
+    #   self.logger.exception('**Error in Utils.calcTotResNumber**')
+    #   return (None)
 
 def calcTransmission(self,attenuation=1):
     """
@@ -1832,7 +1856,7 @@ def getMTZInfo(self, inp=False, convert=True, volume=False):
   else:
       return(sg, cell, cell2, 0)
 
-def get_mtz_info(inp, volume=False):
+def get_mtz_info(datafile):
     """
     Get unit cell and SG from input mtz
     """
@@ -1842,19 +1866,17 @@ def get_mtz_info(inp, volume=False):
     cell2 = False
     vol = False
 
-    if isinstance(inp, unicode):
-        inp = convert_unicode(inp)
+    if isinstance(datafile, unicode):
+        datafile = convert_unicode(datafile)
 
-    data = iotbx_mtz.object(inp)
+    data = iotbx_mtz.object(datafile)
     sg = fix_R3_sg(data.space_group_name().replace(" ", ""))
-    cell2 = [str(round(x,3)) for x in data.crystals()[0].unit_cell_parameters() ]
-    cell = ' '.join(cell2)
+    cell = [str(round(x,3)) for x in data.crystals()[0].unit_cell_parameters() ]
+    # cell = ' '.join(cell2)
 
-    if volume:
-        vol = data.crystals()[0].unit_cell().volume()
-        return(sg, cell, cell2, vol)
-    else:
-        return(sg, cell, cell2, 0)
+    vol = data.crystals()[0].unit_cell().volume()
+
+    return (sg, cell, vol)
 
 def getPDBInfo(self,inp,matthews=True,cell_analysis=False):
   """
