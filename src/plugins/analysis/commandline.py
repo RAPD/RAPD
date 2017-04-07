@@ -42,6 +42,7 @@ import os
 import sys
 # import time
 # import unittest
+import uuid
 
 # RAPD imports
 # import commandline_utils
@@ -58,7 +59,7 @@ def construct_command(commandline_args, logger):
 
     # The task to be carried out
     command = {
-        "command": "INDEX",
+        "command": "ANALYSIS",
         "process_id": uuid.uuid1().get_hex(),
         }
 
@@ -81,17 +82,17 @@ def construct_command(commandline_args, logger):
 
     # Information on input
     command["input_data"] = {
-        "datafile": commandline_args.datafile
+        "datafile": os.path.abspath(commandline_args.datafile)
     }
 
     # Plugin settings
     command["preferences"] = {}
 
     # JSON output?
-    command["preferences"]["json_output"] = commandline_args.json
+    # command["preferences"]["json_output"] = commandline_args.json
 
     # Show plots
-    command["preferences"]["show_plots"] = commandline_args.plotting
+    # command["preferences"]["show_plots"] = commandline_args.plotting
 
     logger.debug("Command for index plugin: %s", command)
 
@@ -107,10 +108,28 @@ def get_commandline():
     my_parser = argparse.ArgumentParser(description=commandline_description)
 
     # A True/False flag
-    my_parser.add_argument("-c", "--commandline",
+    my_parser.add_argument("-l", "--logging-off",
+                           action="store_false",
+                           dest="logging",
+                           help="Turn logging off")
+
+    # A True/False flag
+    my_parser.add_argument("-t", "--test",
                            action="store_true",
-                           dest="commandline",
-                           help="Generate commandline argument parsing")
+                           dest="test",
+                           help="Turn test mode on")
+
+    # A True/False flag
+    my_parser.add_argument("-q", "--quiet",
+                           action="store_false",
+                           dest="verbose",
+                           help="Reduce output")
+
+    # A True/False flag
+    my_parser.add_argument("-c", "--color",
+                           action="store_false",
+                           dest="no_color",
+                           help="Colorize terminal output")
 
     # Positional argument
     my_parser.add_argument(action="store",
@@ -159,7 +178,7 @@ def main():
     # Set up terminal printer
     # Verbosity
     if commandline_args.verbose:
-        terminal_log_level = 30
+        terminal_log_level = 10
     elif commandline_args.json:
         terminal_log_level = 100
     else:
@@ -184,106 +203,8 @@ def main():
         logger.debug("  " + key + " : " + val)
         tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
 
-    # List sites?
-    if commandline_args.listsites:
-        tprint(arg="\nAvailable sites", level=99, color="blue")
-        commandline_utils.print_sites(left_buffer="  ")
-        if not commandline_args.listdetectors:
-            sys.exit()
-
-    # List detectors?
-    if commandline_args.listdetectors:
-        tprint(arg="Available detectors", level=99, color="blue")
-        commandline_utils.print_detectors(left_buffer="  ")
-        sys.exit()
-
-    # Get the data files
-    data_files = commandline_utils.analyze_data_sources(sources=commandline_args.sources,
-                                                        mode="index")
-
-    if "hdf5_files" in data_files:
-        logger.debug("HDF5 source file(s)")
-        tprint(arg="\nHDF5 source file(s)", level=99, color="blue")
-        logger.debug(data_files["hdf5_files"])
-        for data_file in data_files["hdf5_files"]:
-            tprint(arg="  " + data_file, level=99, color="white")
-        logger.debug("CBF file(s) from HDF5 file(s)")
-        tprint(arg="\nData files", level=99, color="blue")
-    else:
-        logger.debug("Data file(s)")
-        tprint(arg="\nData file(s)", level=99, color="blue")
-
-    if len(data_files) == 0:
-        tprint(arg="  None", level=99, color="white")
-    else:
-        logger.debug(data_files["files"])
-        for data_file in data_files["files"]:
-            tprint(arg="  " + data_file, level=99, color="white")
-
-    # Need data
-    if len(data_files) == 0 and commandline_args.test == False:
-        if logger:
-            logger.exception("No files input for indexing.")
-        raise Exception, "No files input for indexing."
-
-    # Too much data?
-    if len(data_files) > 2:
-        if logger:
-            logger.exception("Too many files for indexing. 1 or 2 images accepted")
-        raise Exception, "Too many files for indexing. 1 or 2 images accepted"
-
-    # Get site - commandline wins over the environmental variable
-    site = False
-    site_module = False
-    detector = {}
-    detector_module = False
-    if commandline_args.site:
-        site = commandline_args.site
-    elif environmental_vars.has_key("RAPD_SITE"):
-        site = environmental_vars["RAPD_SITE"]
-
-    # Detector is defined by the user
-    if commandline_args.detector:
-        detector = commandline_args.detector
-        detector_module = detector_utils.load_detector(detector)
-
-    # If no site or detector, try to figure out the detector
-    if not (site or detector):
-        detector = detector_utils.get_detector_file(data_files["files"][0])
-        if isinstance(detector, dict):
-            if detector.has_key("site"):
-                site_target = detector.get("site")
-                site_file = utils.site.determine_site(site_arg=site_target)
-                # print site_file
-                site_module = importlib.import_module(site_file)
-                detector_target = site_module.DETECTOR.lower()
-                detector_module = detector_utils.load_detector(detector_target)
-            elif detector.has_key("detector"):
-                site_module = False
-                detector_target = detector.get("detector")
-                detector_module = detector_utils.load_detector(detector_target)
-
-    # Have a detector - read in file data
-    if detector_module:
-        image_headers = {}
-        for data_file in data_files["files"]:
-            if site_module:
-                image_headers[data_file] = detector_module.read_header(data_file,
-                                                                       site_module.BEAM_SETTINGS)
-            else:
-                image_headers[data_file] = detector_module.read_header(data_file)
-
-        logger.debug("Image headers: %s", image_headers)
-        print_headers(tprint, image_headers)
-
-        command = construct_command(image_headers=image_headers,
-                                    commandline_args=commandline_args,
-                                    detector_module=detector_module,
+        command = construct_command(commandline_args=commandline_args,
                                     logger=logger)
-    else:
-        if logger:
-            logger.exception("No detector module found")
-        raise Exception("No detector module found")
 
     plugin = modules.load_module(seek_module="plugin",
                                  directories=["plugins.analysis"],
@@ -295,10 +216,8 @@ def main():
     tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
-    plugin.RapdPlugin(None, command, tprint, logger)
+    plugin.RapdPlugin(command, tprint, logger)
 
 if __name__ == "__main__":
 
-    commandline_args = get_commandline()
-
-    main(args=commandline_args)
+    main()

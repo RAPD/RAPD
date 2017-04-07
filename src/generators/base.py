@@ -210,7 +210,8 @@ class BaseFileGenerator(object):
                             "subprocess",
                             "sys",
                             "time",
-                            "unittest")
+                            "unittest",
+                            "uuid")
 
         rapd_imports = ("commandline_utils",
                         "detectors.detector_utils as detector_utils",

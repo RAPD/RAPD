@@ -44,7 +44,7 @@ import json
 import logging
 import multiprocessing
 import os
-# import pprint
+from pprint import pprint
 # import pymongo
 # import re
 # import redis
@@ -58,6 +58,7 @@ import time
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
+import utils.xutils as xutils
 import info
 
 # Software dependencies
@@ -85,7 +86,10 @@ class RapdPlugin(multiprocessing.Process):
     }
     """
 
-    test = False
+    input_sg = None
+    cell = None
+    cell2 = None
+    vol = None
 
     def __init__(self, command, tprint=False, logger=False):
         """Initialize the plugin"""
@@ -112,12 +116,12 @@ class RapdPlugin(multiprocessing.Process):
 
         # Some logging
         self.logger.info(command)
-        pprint.pprint(command)
-        sys.exit()
+        pprint(command)
 
         # Store passed-in variables
         self.command = command
-        # self.reply_address = self.command["return_address"]
+
+        # Start up processing
         multiprocessing.Process.__init__(self, name="analysis")
         self.start()
 
@@ -142,10 +146,13 @@ class RapdPlugin(multiprocessing.Process):
         os.chdir(self.command["directories"]["work"])
 
         # Check if input file is sca and convert to mtz.
-        if self.datafile:
-            self.input_sg, self.cell, self.cell2, vol = Utils.getMTZInfo(self, False, True, True)
+        if self.command["input_data"]["datafile"]:
+            self.input_sg, self.cell, self.cell2, self.vol = xutils.get_mtz_info(
+                inp=self.command["input_data"]["datafile"],
+                volume=True)
+            sys.exit()
             # Change timer to allow more time for Ribosome structures.
-            if Utils.calcResNumber(self, self.input_sg, False, vol) > 5000:
+            if xutils.calcResNumber(self, self.input_sg, False, vol) > 5000:
                 self.stats_timer = 300
 
         if self.test:

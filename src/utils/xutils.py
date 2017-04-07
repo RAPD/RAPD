@@ -32,6 +32,8 @@ import shutil
 import subprocess
 import sys
 
+from iotbx import mtz as iotbx_mtz
+
 # RAPD imports
 import agents.subcontractors.parse as Parse
 
@@ -305,6 +307,41 @@ def calcResNumber(self,sg,se=False,vol=False):
       return(5)
     else:
       return(200)
+
+def calc_res_number(sg, se=False, vol=False):
+    """
+    Calculates total number of residues or number of Se in AU.
+    """
+
+    # try:
+    if vol:
+        num_residues = calcTotResNumber(self, vol)
+    else:
+        num_residues = calcTotResNumber(self, calcVolume(self))
+
+    den = sg_to_nsymops(sg)
+
+    if sg == "R3":
+        if self.cell2[-1].startswith("120"):
+            den = sg_to_nsymops("H3")
+    elif sg == "R32":
+        if self.cell2[-1].startswith("120"):
+            den = sg_to_nsymops("H32")
+
+    # Figure about 1 SeMet every 75 residues.
+    if se:
+        num_se = int(round((num_residues/75)/den))
+        if num_se == 0:
+            num_se = 1
+        return num_se
+    else:
+        return int(num_residues/den)
+    # except:
+    #   self.logger.exception('**Error in Utils.calcResNumber**')
+    #   if se:
+    #     return(5)
+    #   else:
+    #     return(200)
 
 def calcTotResNumber(self,volume):
   """
@@ -882,6 +919,18 @@ def convertUnicode(self,inp=False):
   else:
     out = inp0
   return(out)
+
+def convert_unicode(inp):
+  """
+  Convert unicode to Python string for Phenix.
+  """
+
+  if isinstance(inp, unicode):
+    out = inp.encode('utf8')
+  else:
+    out = inp
+
+  return out
 
 def copyShelxFiles(self,inp):
   """
@@ -1541,6 +1590,22 @@ def fixR3SG(self,inp):
   except:
     self.logger.exception('**ERROR in Utils.fixR3SG**')
 
+def fix_R3_sg(inp):
+    """
+    Fix input SG if R3/R32.
+    """
+
+    # try:
+    if inp == "R3":
+        return "H3"
+    elif inp == "R32":
+        return "H32"
+    else:
+        return inp
+
+    # except:
+    #   self.logger.exception('**ERROR in Utils.fixR3SG**')
+
 def foldersLabelit(self,iteration=0):
   """
   Sets up new directory and changes to it for each error iteration in multiproc_labelit.
@@ -1716,7 +1781,7 @@ def getHTMLHeader(self,inp=False):
   s +='%4s<script type="text/javascript" charset="utf-8">\n'%''
   return(s)
 
-def getMTZInfo(self,inp=False,convert=True,volume=False):
+def getMTZInfo(self, inp=False, convert=True, volume=False):
   """
   Get unit cell and SG from input data regardless of file type.
   """
@@ -1749,19 +1814,47 @@ def getMTZInfo(self,inp=False,convert=True,volume=False):
       vol = data.crystals()[0].unit_cell().volume()
 
   except:
-    #Should have converted file to MTZ...
+    # Should have converted file to MTZ...
     self.logger.debug('Input file is not mtz')
-    #Run in SAD since input is converted to SCA for SHELX
+
+    # Run in SAD since input is converted to SCA for SHELX
     junk = open(inp,'r').readlines()[2]
-    #Save unit cell info
+
+    # Save unit cell info
     cell2 = junk.split()[:6]
     cell = ' '.join(cell2)
-    #Save correct SG info and fix sca file
+
+    # Save correct SG info and fix sca file
     sg = junk[61:-1].upper().replace(' ','')
+
   if volume:
-    return(sg,cell,cell2,vol)
+      return(sg, cell, cell2, vol)
   else:
-    return(sg,cell,cell2,0)
+      return(sg, cell, cell2, 0)
+
+def get_mtz_info(inp, volume=False):
+    """
+    Get unit cell and SG from input mtz
+    """
+
+    sg = False
+    cell = False
+    cell2 = False
+    vol = False
+
+    if isinstance(inp, unicode):
+        inp = convert_unicode(inp)
+
+    data = iotbx_mtz.object(inp)
+    sg = fix_R3_sg(data.space_group_name().replace(" ", ""))
+    cell2 = [str(round(x,3)) for x in data.crystals()[0].unit_cell_parameters() ]
+    cell = ' '.join(cell2)
+
+    if volume:
+        vol = data.crystals()[0].unit_cell().volume()
+        return(sg, cell, cell2, vol)
+    else:
+        return(sg, cell, cell2, 0)
 
 def getPDBInfo(self,inp,matthews=True,cell_analysis=False):
   """
@@ -2890,7 +2983,7 @@ def subGroups(self,inp1,inp2='shelx'):
   except:
     self.logger.exception('**ERROR in Utils.subGroups**')
 
-def symopsSG(self,inp):
+def symopsSG(self, inp):
   """
   Convert SG to SG#.
   """
@@ -2981,6 +3074,96 @@ def symopsSG(self,inp):
     return(sg)
   except:
     self.logger.exception('**ERROR in Utils.symopsSG**')
+
+def sg_to_nsymops(inp):
+    """
+    Convert SG to SG#.
+    """
+    #try:
+    symops = {'P1': 1,
+              'C2': 4,
+              'C121': 4,
+              'I121': 4,
+              'A121': 4,
+              'A112': 4,
+              'B112': 4,
+              'I112': 4,
+              'P2': 2,
+              'P121': 2,
+              'P21': 2,
+              'P1211': 2,
+              'F222': 16,
+              'I222': 8,
+              'I212121': 8,
+              'C222': 8,
+              'C2221': 8,
+              'P222': 4,
+              'P2221': 4,
+              'P2212': 4,
+              'P2122': 4,
+              'P21212': 4,
+              'P21221': 4,
+              'P22121': 4,
+              'P212121': 4,
+              'I4': 8,
+              'I41': 8,
+              'I422': 16,
+              'I4122': 16,
+              'P4': 4,
+              'P41': 4,
+              'P42': 4,
+              'P43': 4,
+              'P422': 8,
+              'P4212': 8,
+              'P4122': 8,
+              'P4322': 8,
+              'P4222': 8,
+              'P42212': 8,
+              'P41212': 8,
+              'P43212': 8,
+              'P3': 3,
+              'P31': 3,
+              'P32': 3,
+              'P312': 6,
+              'P3112': 6,
+              'P3212': 6,
+              'P321': 6,
+              'P3121': 6,
+              'P3221': 6,
+              'P6': 6,
+              'P61': 6,
+              'P65': 6,
+              'P62': 6,
+              'P64': 6,
+              'P63': 6,
+              'P622': 12,
+              'P6122': 12,
+              'P6522': 12,
+              'P6222': 12,
+              'P6422': 12,
+              'P6322': 12,
+              'R3': 3,
+              'H3': 9,
+              'R32': 6,
+              'H32': 18,
+              'F23': 48,
+              'F432': 96,
+              'F4132': 96,
+              'I23': 24,
+              'I213': 24,
+              'I432': 48,
+              'I4132': 48,
+              'P23': 12,
+              'P213': 12,
+              'P432': 24,
+              'P4232': 24,
+              'P4332': 24,
+              'P4132': 24}
+
+    sg = symops[inp]
+    return sg
+  # except:
+  #   self.logger.exception('**ERROR in Utils.symopsSG**')
 
 def XDS2Shelx(self,inp,output=False):
   """
