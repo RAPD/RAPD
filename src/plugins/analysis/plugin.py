@@ -3,7 +3,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2017, Cornell University
+Copyright (C) 2011-2017, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -19,9 +19,9 @@ You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-__created__ = "2017-04-06"
-__maintainer__ = "Frank Murphy"
-__email__ = "fmurphy@anl.gov"
+__created__ = "2011-02-02"
+__maintainer__ = "Jon Schuermann"
+__email__ = "schuerjp@anl.gov"
 __status__ = "Development"
 
 # This is an active RAPD plugin
@@ -112,6 +112,8 @@ class RapdPlugin(multiprocessing.Process):
 
         # Some logging
         self.logger.info(command)
+        pprint.pprint(command)
+        sys.exit()
 
         # Store passed-in variables
         self.command = command

@@ -53,7 +53,7 @@ import utils.text as text
 import utils.commandline_utils as commandline_utils
 import detectors.detector_utils as detector_utils
 
-def construct_command(image_headers, commandline_args, detector_module, logger):
+def construct_command(commandline_args, logger):
     """Put together the command for the plugin"""
 
     # The task to be carried out
@@ -73,21 +73,16 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     # run_repr += "+".join(image_numbers)
 
     command["directories"] = {
-        "work": os.path.join(os.path.abspath(os.path.curdir), "analysis")# run_repr)
+        "work": os.path.join(os.path.abspath(os.path.curdir), "analysis")
         }
 
     # Handle work directory
     commandline_utils.check_work_dir(command["directories"]["work"], True)
 
-    # Image data
-    images = image_headers.keys()
-    images.sort()
-    counter = 0
-    for image in images:
-        counter += 1
-        command["header%d" % counter] = image_headers[image]
-    if counter == 1:
-        command["header2"] = None
+    # Information on input
+    command["input_data"] = {
+        "datafile": commandline_args.datafile
+    }
 
     # Plugin settings
     command["preferences"] = {}
@@ -119,10 +114,10 @@ def get_commandline():
 
     # Positional argument
     my_parser.add_argument(action="store",
-                           dest="file",
+                           dest="datafile",
                            nargs="?",
                            default=False,
-                           help="Name of file to be generated")
+                           help="Name of file to be analyzed")
 
     # Print help message if no arguments
     if len(sys.argv[1:])==0:
