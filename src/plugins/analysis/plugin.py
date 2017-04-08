@@ -143,6 +143,10 @@ class RapdPlugin(multiprocessing.Process):
         self.tprint("preprocess")
         self.logger.debug("preprocess")
 
+        # Handle sample type from commandline
+        if not self.command["preferences"]["sample_type"] == "default":
+            self.sample_type = self.command["preferences"]["sample_type"]
+
         # Make the work_dir if it does not exist.
         if os.path.exists(self.command["directories"]["work"]) == False:
             os.makedirs(self.command["directories"]["work"])
@@ -150,22 +154,24 @@ class RapdPlugin(multiprocessing.Process):
         # Change directory to the one specified in the incoming dict
         os.chdir(self.command["directories"]["work"])
 
-        # Check if input file is sca and convert to mtz.
-        if self.command["input_data"]["datafile"]:
-            self.input_sg, self.cell, self.volume = \
-                xutils.get_mtz_info(
-                    datafile=self.command["input_data"]["datafile"])
-            self.tprint("  Spacegroup: %s" % self.input_sg)
-            self.tprint("  Cell: %s" % str(self.cell))
-            self.tprint("  Volume: %f" % self.volume)
+        # Get information from the data file
+        self.input_sg, self.cell, self.volume = \
+            xutils.get_mtz_info(
+                datafile=self.command["input_data"]["datafile"])
 
-            # Change timer to allow more time for Ribosome structures.
-            if volume > 25000000.0: #For 30S
-                self.sample_type = 'ribosome'
-                self.solvent_content = 0.64
-                self.stats_timer = 300
+        self.tprint("  Spacegroup: %s" % self.input_sg, level=20)
+        self.tprint("  Cell: %s" % str(self.cell), level=20)
+        self.tprint("  Volume: %f" % self.volume, level=20)
 
+        # Handle ribosome sample types
+        if (self.command["preferences"]["sample_type"] != "default" and \
+            self.volume > 25000000.0) or \
+            self.command["preferences"]["sample_type"] == "ribosome": #For 30S
+            self.sample_type = "ribosome"
+            self.solvent_content = 0.64
+            self.stats_timer = 300
 
+        sys.exit()
         if self.test:
             self.logger.debug("TEST IS SET \"ON\"")
 

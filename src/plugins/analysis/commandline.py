@@ -87,7 +87,8 @@ def construct_command(commandline_args, logger):
 
     # Plugin settings
     command["preferences"] = {
-        "test" = commandline_args.test
+        "sample_type": commandline_args.sample_type,
+        "test": commandline_args.test,
     }
 
     # JSON output?
@@ -139,6 +140,15 @@ def get_commandline():
                            nargs="?",
                            default=False,
                            help="Name of file to be analyzed")
+
+    # Sample type
+    my_parser.add_argument("--sample_type",
+                           action="store",
+                           dest="sample_type",
+                           # nargs=1,
+                           default="default",
+                           choices=["default", "protein", "ribosome"],
+                           help="Complexity of BEST strategy")
 
     # Print help message if no arguments
     if len(sys.argv[1:])==0:

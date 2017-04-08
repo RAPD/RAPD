@@ -628,7 +628,7 @@ def check_volume(volume):
   """
 
   # try:
-    if float(volume) > 25000000.0: #For 30S
+  if float(volume) > 25000000.0: #For 30S
       sample_type = 'Ribosome'
       solvent_content = 0.64
   # except:
