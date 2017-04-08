@@ -308,14 +308,14 @@ def calcResNumber(self,sg,se=False,vol=False):
     else:
       return(200)
 
-def calc_res_number(sg, se=False, vol=False):
+def calc_res_number(sg, se=False, volume=False):
     """
     Calculates total number of residues or number of Se in AU.
     """
 
     # try:
-    if vol:
-        num_residues = calc_tot_res_number(vol)
+    if volume:
+        num_residues = calc_tot_res_number(volume)
     else:
         num_residues = calcTotResNumber(self, calcVolume(self))
 
@@ -374,7 +374,7 @@ def calc_tot_res_number(volume):
     turns on Ribosome which makes changes so meaning strategy is presented.
     """
     # try:
-    checkVolume(self, volume)
+    checkVolume(volume)
     content = 1 - float(self.solvent_content)
 
     # Calculate number of residues based on solvent content in volume of cell.
@@ -621,6 +621,20 @@ def checkVolume(self,volume):
       self.solvent_content = 0.64
   except:
     self.logger.exception('**Error in Utils.checkVolume**')
+
+def check_volume(volume):
+  """
+  Check to see if unit cell is really big.
+  """
+
+  # try:
+    if float(volume) > 25000000.0: #For 30S
+      sample_type = 'Ribosome'
+      solvent_content = 0.64
+  # except:
+  #   self.logger.exception('**Error in Utils.checkVolume**')
+
+  return (sample_type, solvent_content)
 
 def checkXparm(self):
   """
@@ -1863,17 +1877,22 @@ def get_mtz_info(datafile):
 
     sg = False
     cell = False
-    cell2 = False
     vol = False
 
+    # Convert from unicode
     if isinstance(datafile, unicode):
         datafile = convert_unicode(datafile)
 
+    # Read datafile
     data = iotbx_mtz.object(datafile)
-    sg = fix_R3_sg(data.space_group_name().replace(" ", ""))
-    cell = [str(round(x,3)) for x in data.crystals()[0].unit_cell_parameters() ]
-    # cell = ' '.join(cell2)
 
+    # Derive space group from datafile
+    sg = fix_R3_sg(data.space_group_name().replace(" ", ""))
+
+    # Wrangle the cell parameters
+    cell = [str(round(x,3)) for x in data.crystals()[0].unit_cell_parameters() ]
+
+    # The volume
     vol = data.crystals()[0].unit_cell().volume()
 
     return (sg, cell, vol)

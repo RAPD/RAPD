@@ -89,8 +89,11 @@ class RapdPlugin(multiprocessing.Process):
     input_sg = None
     cell = None
     cell2 = None
+    sample_type = "protein"
     solvent_content = 0.55
-    vol = None
+    stats_timer = 180
+    test = True
+    volume = None
 
     def __init__(self, command, tprint=False, logger=False):
         """Initialize the plugin"""
@@ -130,6 +133,7 @@ class RapdPlugin(multiprocessing.Process):
         """Execution path of the plugin"""
 
         self.preprocess()
+        sys.exit()
         self.process()
         self.postprocess()
 
@@ -148,16 +152,19 @@ class RapdPlugin(multiprocessing.Process):
 
         # Check if input file is sca and convert to mtz.
         if self.command["input_data"]["datafile"]:
-            self.input_sg, self.cell, self.vol = \
+            self.input_sg, self.cell, self.volume = \
                 xutils.get_mtz_info(
                     datafile=self.command["input_data"]["datafile"])
             self.tprint("  Spacegroup: %s" % self.input_sg)
             self.tprint("  Cell: %s" % str(self.cell))
-            self.tprint("  Volume: %f" % self.vol)
-            sys.exit()
+            self.tprint("  Volume: %f" % self.volume)
+
             # Change timer to allow more time for Ribosome structures.
-            if xutils.calcResNumber(self, self.input_sg, False, vol) > 5000:
+            if volume > 25000000.0: #For 30S
+                self.sample_type = 'ribosome'
+                self.solvent_content = 0.64
                 self.stats_timer = 300
+
 
         if self.test:
             self.logger.debug("TEST IS SET \"ON\"")

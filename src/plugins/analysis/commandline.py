@@ -86,7 +86,9 @@ def construct_command(commandline_args, logger):
     }
 
     # Plugin settings
-    command["preferences"] = {}
+    command["preferences"] = {
+        "test" = commandline_args.test
+    }
 
     # JSON output?
     # command["preferences"]["json_output"] = commandline_args.json
