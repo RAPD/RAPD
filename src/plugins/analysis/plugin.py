@@ -60,6 +60,7 @@ import time
 # import utils
 import utils.xutils as xutils
 import info
+from subcontractors.pdb_query import PDBQuery
 
 # Software dependencies
 VERSIONS = {
@@ -133,8 +134,8 @@ class RapdPlugin(Process):
         """Execution path of the plugin"""
 
         self.preprocess()
-        sys.exit()
         self.process()
+        sys.exit()
         self.postprocess()
 
     def preprocess(self):
@@ -174,7 +175,6 @@ class RapdPlugin(Process):
         self.tprint("  Sample type: %s" % self.sample_type, level=20, color="white")
         self.tprint("  Solvent content: %s" % self.solvent_content, level=20, color="white")
 
-        sys.exit()
         if self.test:
             self.logger.debug("TEST IS SET \"ON\"")
 
@@ -197,10 +197,10 @@ class RapdPlugin(Process):
         """Prepare and run PDBQuery"""
         self.logger.debug("process_pdb_query")
 
-        Process(target=PDBQuery, args=(command=self.command,
-                                       output=self.cell_output,
-                                       tprint=self.tprint,
-                                       logger=self.logger)).start()
+        Process(target=PDBQuery, args=(self.command,
+                                       self.cell_output,
+                                       self.tprint,
+                                       self.logger)).start()
 
         # except:
         #     self.logger.exception("**Error in AutoStats.process_pdb_query**")

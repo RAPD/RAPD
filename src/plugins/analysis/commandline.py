@@ -74,7 +74,7 @@ def construct_command(commandline_args, logger):
     # run_repr += "+".join(image_numbers)
 
     command["directories"] = {
-        "work": os.path.join(os.path.abspath(os.path.curdir), "analysis")
+        "work": os.path.join(os.path.abspath(os.path.curdir), "rapd_analysis")
         }
 
     # Handle work directory
@@ -164,9 +164,9 @@ def get_commandline():
 def print_welcome_message(printer):
     """Print a welcome message to the terminal"""
     message = """
-------------
-RAPD Example
-------------"""
+-------------
+RAPD Analysis
+-------------"""
     printer(message, 50, color="blue")
 
 def main():
@@ -183,7 +183,7 @@ def main():
     # Set up logging
     if commandline_args.logging:
         logger = utils.log.get_logger(logfile_dir="./",
-                                      logfile_id="rapd_index",
+                                      logfile_id="rapd_analysis",
                                       level=log_level,
                                       console=commandline_args.test)
 

@@ -27,20 +27,50 @@ __status__ = "Development"
 # Standard imports
 from multiprocessing import Process, Queue
 import os
+from pprint import pprint
 import shutil
+import sys
 import time
 import urllib2
 
 # RAPD imports
 from agents.rapd_agent_phaser import RunPhaser
-import parse as Parse
-import summary as Summary
-from utils.communicate import rapd_send
+# import parse as Parse
+# import summary as Summary
+# from utils.communicate import rapd_send
 import utils.xutils as Utils
 
 class PDBQuery(Process):
 
+    # Settings
+    # Calc ADF for each solution (creates a lot of big map files).
+    adf = False
+    percent = 0.01
+    # Run rigid-body refinement after MR.
+    rigid = False
+    # Search for common contaminants.
+    search_common = True
+
+    # Parameters
     cell = None
+    cell2 = False
+    cell_output = False
+    cell_summary = False
+    tooltips = False
+    pdb_summary = False
+    large_cell = False
+    input_sg = False
+    laue = False
+    dres = False
+    common = False
+    phaser_results = {}
+    jobs = {}
+    pids = {}
+    pdbquery_timer = 30
+    phaser_timer = 2000 #was 600 but too short for mackinnon (144,144,288,90,90,90)
+    # Used as technicality
+    solvent_content = 0.55
+
 
     def __init__(self, command, output=None, tprint=False, logger=False):
 
@@ -69,17 +99,10 @@ class PDBQuery(Process):
         self.output = output
         self.logger = logger
 
-        # Input parameters
-        self.percent = 0.01
-        # Calc ADF for each solution (creates a lot of big map files).
-        self.adf = False
-        # Run rigid-body refinement after MR.
-        self.rigid = False
-        # Search for common contaminants.
-        self.search_common = True
+        pprint(command)
+        sys.exit()
 
         # Params
-        self.cell2 = False
         self.working_dir = self.input[0].get("dir", os.getcwd())
         self.test = self.input[0].get("test", False)
         self.sample_type = self.input[0].get("type", "Protein")
@@ -89,22 +112,6 @@ class PDBQuery(Process):
         self.controller_address = self.input[0].get("control", False)
         self.verbose = self.input[0].get("verbose", False)
         self.datafile = Utils.convertUnicode(self, self.input[0].get("data"))
-        self.cell_output = False
-        self.cell_summary = False
-        self.tooltips = False
-        self.pdb_summary = False
-        self.large_cell = False
-        self.input_sg = False
-        self.laue = False
-        self.dres = False
-        self.common = False
-        self.phaser_results = {}
-        self.jobs = {}
-        self.pids = {}
-        self.pdbquery_timer = 30
-        self.phaser_timer = 2000 #was 600 but too short for mackinnon (144,144,288,90,90,90)
-        # Used as technicality
-        self.solvent_content = 0.55
 
         Process.__init__(self, name="PDBQuery")
         self.start()
