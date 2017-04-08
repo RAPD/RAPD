@@ -42,7 +42,7 @@ VERSION = "1.0.0"
 import glob
 import json
 import logging
-import multiprocessing
+from multiprocessing import Process, Queue
 import os
 from pprint import pprint
 # import pymongo
@@ -69,7 +69,7 @@ VERSIONS = {
     )
 }
 
-class RapdPlugin(multiprocessing.Process):
+class RapdPlugin(Process):
     """
     RAPD plugin class
 
@@ -88,7 +88,7 @@ class RapdPlugin(multiprocessing.Process):
 
     input_sg = None
     cell = None
-    cell2 = None
+    cell_output = Queue()
     sample_type = "protein"
     solvent_content = 0.55
     stats_timer = 180
@@ -126,7 +126,7 @@ class RapdPlugin(multiprocessing.Process):
         self.command = command
 
         # Start up processing
-        multiprocessing.Process.__init__(self, name="analysis")
+        Process.__init__(self, name="analysis")
         self.start()
 
     def run(self):
@@ -159,9 +159,9 @@ class RapdPlugin(multiprocessing.Process):
             xutils.get_mtz_info(
                 datafile=self.command["input_data"]["datafile"])
 
-        self.tprint("  Spacegroup: %s" % self.input_sg, level=20)
-        self.tprint("  Cell: %s" % str(self.cell), level=20)
-        self.tprint("  Volume: %f" % self.volume, level=20)
+        self.tprint("  Spacegroup: %s" % self.input_sg, level=20, color="white")
+        self.tprint("  Cell: %s" % str(self.cell), level=20, color="white")
+        self.tprint("  Volume: %f" % self.volume, level=20, color="white")
 
         # Handle ribosome sample types
         if (self.command["preferences"]["sample_type"] != "default" and \
@@ -170,6 +170,9 @@ class RapdPlugin(multiprocessing.Process):
             self.sample_type = "ribosome"
             self.solvent_content = 0.64
             self.stats_timer = 300
+
+        self.tprint("  Sample type: %s" % self.sample_type, level=20, color="white")
+        self.tprint("  Solvent content: %s" % self.solvent_content, level=20, color="white")
 
         sys.exit()
         if self.test:
@@ -180,6 +183,8 @@ class RapdPlugin(multiprocessing.Process):
 
         self.tprint("process")
 
+        self.process_pdb_query()
+
     def postprocess(self):
         """Clean up after plugin action"""
 
@@ -187,6 +192,18 @@ class RapdPlugin(multiprocessing.Process):
 
         # Print out recognition of the program being used
         self.print_info()
+
+    def process_pdb_query(self):
+        """Prepare and run PDBQuery"""
+        self.logger.debug("process_pdb_query")
+
+        Process(target=PDBQuery, args=(command=self.command,
+                                       output=self.cell_output,
+                                       tprint=self.tprint,
+                                       logger=self.logger)).start()
+
+        # except:
+        #     self.logger.exception("**Error in AutoStats.process_pdb_query**")
 
 def get_commandline():
     """Grabs the commandline"""
