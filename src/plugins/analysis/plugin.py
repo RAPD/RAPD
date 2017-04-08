@@ -197,6 +197,9 @@ class RapdPlugin(Process):
         """Prepare and run PDBQuery"""
         self.logger.debug("process_pdb_query")
 
+        # Move some information
+        self.command["preferences"]["sample_type"] = self.sample_type
+
         Process(target=PDBQuery, args=(self.command,
                                        self.cell_output,
                                        self.tprint,

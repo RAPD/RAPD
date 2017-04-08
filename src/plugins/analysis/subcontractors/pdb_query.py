@@ -38,7 +38,7 @@ from agents.rapd_agent_phaser import RunPhaser
 # import parse as Parse
 # import summary as Summary
 # from utils.communicate import rapd_send
-import utils.xutils as Utils
+import utils.xutils as xutils
 
 class PDBQuery(Process):
 
@@ -100,18 +100,19 @@ class PDBQuery(Process):
         self.logger = logger
 
         pprint(command)
-        sys.exit()
 
         # Params
-        self.working_dir = self.input[0].get("dir", os.getcwd())
-        self.test = self.input[0].get("test", False)
-        self.sample_type = self.input[0].get("type", "Protein")
-        self.cluster_use = self.input[0].get("cluster", True)
-        self.clean = self.input[0].get("clean", True)
-        self.gui = self.input[0].get("gui", True)
-        self.controller_address = self.input[0].get("control", False)
-        self.verbose = self.input[0].get("verbose", False)
-        self.datafile = Utils.convertUnicode(self, self.input[0].get("data"))
+        self.working_dir = self.input["directories"].get("work", os.getcwd())
+        self.test = self.input["preferences"].get("test", False)
+        self.sample_type = self.input["preferences"].get("type", "Protein")
+        self.cluster_use = self.input["preferences"].get("cluster", True)
+        self.clean = self.input["preferences"].get("clean", True)
+        self.gui = self.input["preferences"].get("gui", True)
+        # self.controller_address = self.input[0].get("control", False)
+        self.verbose = self.input["preferences"].get("verbose", False)
+        self.datafile = xutils.convert_unicode(self.input["input_data"].get("datafile"))
+
+        sys.exit()
 
         Process.__init__(self, name="PDBQuery")
         self.start()
@@ -120,13 +121,12 @@ class PDBQuery(Process):
         """
         Convoluted path of modules to run.
         """
-        if self.verbose:
-            self.logger.debug("PDBQuery::run")
+        self.logger.debug("PDBQuery::run")
 
         self.preprocess()
-        #Utils.getSGInfo(self,"/gpfs5/users/necat/rapd/pdbq/pdb/y3/2y3e.cif")
-
+        sys.exit()
         self.processPDB()
+
         if self.search_common:
             self.process_common_pdb()
 
@@ -138,22 +138,24 @@ class PDBQuery(Process):
         """
         Check input file and convert to mtz if neccessary.
         """
-        if self.verbose:
-            self.logger.debug("PDBQuery::preprocess")
-        try:
-            self.input_sg, self.cell, self.cell2, vol = Utils.getMTZInfo(self, False, True, True)
-            self.dres = Utils.getRes(self)
-            self.laue = Utils.subGroups(self, Utils.convertSG(self, self.input_sg), "simple")
-            #Set by number of residues in AU. Ribosome (70s) is 24k.
-            if Utils.calcResNumber(self, self.input_sg, False, vol) > 5000:
-                self.large_cell = True
-                self.phaser_timer = 3000
-            if self.test:
-                self.logger.debug("TEST IS SET \"ON\"")
-            self.print_info()
 
-        except:
-            self.logger.exception("**ERROR in PDBQuery.preprocess**")
+        self.logger.debug("PDBQuery::preprocess")
+
+        # try:
+        # TODO
+        self.input_sg, self.cell, self.cell2, vol = Utils.getMTZInfo(self, False, True, True)
+        self.dres = Utils.getRes(self)
+        self.laue = Utils.subGroups(self, Utils.convertSG(self, self.input_sg), "simple")
+        #Set by number of residues in AU. Ribosome (70s) is 24k.
+        if Utils.calcResNumber(self, self.input_sg, False, vol) > 5000:
+            self.large_cell = True
+            self.phaser_timer = 3000
+        if self.test:
+            self.logger.debug("TEST IS SET \"ON\"")
+        self.print_info()
+
+        # except:
+        #     self.logger.exception("**ERROR in PDBQuery.preprocess**")
 
     def processPDB(self):
         """
