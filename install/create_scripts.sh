@@ -40,6 +40,11 @@ if [ "$RAPD_HOME" != "" ]; then
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/plugins\/integrate\/commandline.py \"\$@\"" >>$RAPD_HOME/bin/rapd.integrate
   chmod +x $RAPD_HOME/bin/rapd.integrate
 
+  # X-ray Analysis
+  echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.analysis
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/plugins\/analysis\/commandline.py \"\$@\"" >>$RAPD_HOME/bin/rapd.analysis
+  chmod +x $RAPD_HOME/bin/rapd.analysis
+
 # Environmental var not set - don't run
 else
   echo "The RAPD_HOME environmental variable must be set. Exiting"
