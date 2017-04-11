@@ -25,6 +25,7 @@ __email__ = "schuerjp@anl.gov"
 __status__ = "Development"
 
 # Standard imports
+import json
 from multiprocessing import Process, Queue
 import os
 from pprint import pprint
@@ -40,6 +41,8 @@ from agents.rapd_agent_phaser import RunPhaser
 # from utils.communicate import rapd_send
 import utils.xutils as xutils
 
+PDBQ_SERVER = "remote.nec.aps.anl.gov:3030"
+
 class PDBQuery(Process):
 
     # Settings
@@ -51,25 +54,30 @@ class PDBQuery(Process):
     # Search for common contaminants.
     search_common = True
 
+    sample_type = "protein"
+    solvent_content = 0
+
     # Parameters
     cell = None
-    cell2 = False
     cell_output = False
     cell_summary = False
+    est_res_number = 0
     tooltips = False
     pdb_summary = False
+
     large_cell = False
     input_sg = False
+    input_sg_num = 0
     laue = False
-    dres = False
+    dres = 0.0
     common = False
+    volume = 0
     phaser_results = {}
     jobs = {}
     pids = {}
     pdbquery_timer = 30
+
     phaser_timer = 2000 #was 600 but too short for mackinnon (144,144,288,90,90,90)
-    # Used as technicality
-    solvent_content = 0.55
 
 
     def __init__(self, command, output=None, tprint=False, logger=False):
@@ -104,15 +112,14 @@ class PDBQuery(Process):
         # Params
         self.working_dir = self.input["directories"].get("work", os.getcwd())
         self.test = self.input["preferences"].get("test", False)
-        self.sample_type = self.input["preferences"].get("type", "Protein")
+        self.sample_type = self.input["preferences"].get("type", "protein")
+        self.solvent_content = self.input["preferences"].get("solvent_content", 0.55)
         self.cluster_use = self.input["preferences"].get("cluster", True)
         self.clean = self.input["preferences"].get("clean", True)
         self.gui = self.input["preferences"].get("gui", True)
         # self.controller_address = self.input[0].get("control", False)
         self.verbose = self.input["preferences"].get("verbose", False)
         self.datafile = xutils.convert_unicode(self.input["input_data"].get("datafile"))
-
-        sys.exit()
 
         Process.__init__(self, name="PDBQuery")
         self.start()
@@ -124,14 +131,7 @@ class PDBQuery(Process):
         self.logger.debug("PDBQuery::run")
 
         self.preprocess()
-        sys.exit()
-        self.processPDB()
-
-        if self.search_common:
-            self.process_common_pdb()
-
-        self.process_phaser()
-        self.run_queue()
+        self.process()
         self.postprocess()
 
     def preprocess(self):
@@ -142,143 +142,145 @@ class PDBQuery(Process):
         self.logger.debug("PDBQuery::preprocess")
 
         # try:
-        # TODO
-        self.input_sg, self.cell, self.cell2, vol = Utils.getMTZInfo(self, False, True, True)
-        self.dres = Utils.getRes(self)
-        self.laue = Utils.subGroups(self, Utils.convertSG(self, self.input_sg), "simple")
-        #Set by number of residues in AU. Ribosome (70s) is 24k.
-        if Utils.calcResNumber(self, self.input_sg, False, vol) > 5000:
+        self.input_sg, self.cell, self.volume = xutils.get_mtz_info(self.datafile)
+        self.dres = xutils.get_res(self.datafile)
+        self.input_sg_num = int(xutils.convert_sg(self.input_sg))
+        self.laue = xutils.get_sub_groups(self.input_sg_num, "simple")
+
+        self.tprint("  Spacegroup: %s  (%d)" % (self.input_sg, self.input_sg_num),
+                    level=10,
+                    color="white")
+        self.tprint("  Cell: %f %f %f %f %f %f" % tuple(self.cell), level=10, color="white")
+        self.tprint("  Volume: %f" % self.volume, level=10, color="white")
+        self.tprint("  Resolution: %f" % self.dres, level=10, color="white")
+        self.tprint("  Subgroups: %s" % self.laue, level=10, color="white")
+
+
+        # Set by number of residues in AU. Ribosome (70s) is 24k.
+        self.est_res_number = xutils.calc_res_number(self.input_sg,
+                                                     se=False,
+                                                     volume=self.volume,
+                                                     sample_type=self.sample_type,
+                                                     solvent_content=self.solvent_content)
+        if self.est_res_number > 5000:
             self.large_cell = True
             self.phaser_timer = 3000
+
         if self.test:
             self.logger.debug("TEST IS SET \"ON\"")
-        self.print_info()
 
-        # except:
-        #     self.logger.exception("**ERROR in PDBQuery.preprocess**")
+    def process(self):
+        """Main processing coordination"""
 
-    def processPDB(self):
-        """
-        Check if cell is found in PDB.
-        """
-        if self.verbose:
-            self.logger.debug("PDBQuery::processPDBCell")
+        self.query_pdbq()
+        sys.exit()
 
-        try:
-            def connect_rcsb(inp):
-                l0 = inp
-                l1 = ["length_a", "length_b", "length_c", "angle_alpha", "angle_beta", "angle_gamma"]
-                querycell = '<?xml version="1.0" encoding="UTF-8"?>'
-                if permute:
-                    querycell = '<orgPdbCompositeQuery version="1.0">'
-                for y in range(end):
-                    if permute:
-                        querycell += "<queryRefinement><queryRefinementLevel>%s</queryRefinementLevel>"  %y
-                        if y != 0:
-                            querycell += "<conjunctionType>or</conjunctionType>"
-                    querycell += "<orgPdbQuery><queryType>org.pdb.query.simple.XrayCellQuery</queryType>"
-                    for x in range(len(l1)):
-                        querycell += "<cell.%s.comparator>between</cell.%s.comparator>" % (2*(l1[x], ))
-                        querycell += "<cell.%s.min>%s</cell.%s.min>" % (l1[x], float(self.cell2[l2[y][x]])-float(self.cell2[l2[y][x]])*self.percent/2, l1[x])
-                        querycell += "<cell.%s.max>%s</cell.%s.max>" % (l1[x], float(self.cell2[l2[y][x]])+float(self.cell2[l2[y][x]])*self.percent/2, l1[x])
-                    querycell += "</orgPdbQuery>"
-                    if permute:
-                        querycell += "</queryRefinement>"
-                        if y == end -1:
-                            querycell += "</orgPdbCompositeQuery>"
-                self.logger.debug("Checking the PDB...")
-                self.logger.debug(querycell)
-                #Sometimes I get an error in urlopen saying it can't resolve the output from the PDB.
-                try:
-                    #l0.extend(urllib2.urlopen(urllib2.Request("http://www.rcsb.org/pdb/rest/search",data=querycell)).read().split())
-                    l0.extend(urllib2.urlopen(urllib2.Request("http://www.rcsb.org/pdb/rest/search", data=querycell), timeout=10).read().split())
-                except:
-                    pass
-                return l0
+        if self.search_common:
+            self.process_common_pdb()
 
-            def connect_frank(inp):
-                import json
-                _d0_ = inp
-                l1 = ["a", "b", "c", "alpha", "beta", "gamma"]
-                for y in range(end):
-                    _d_ = {}
-                    for x in range(len(l1)):
-                        _d_[l1[x]] = [float(self.cell2[l2[y][x]])-float(self.cell2[l2[y][x]])*self.percent/2,
-                                      float(self.cell2[l2[y][x]])+float(self.cell2[l2[y][x]])*self.percent/2]
-                    # Send to Frank thru urllib2
-                    response = urllib2.urlopen(urllib2.Request("http://remote.nec.aps.anl.gov:3030/pdb/rest/search/", data=json.dumps(_d_))).read()
-                    j = json.loads(response)
-                    for k in j.keys():
-                        j[k]["Name"] = j[k].pop("struct.pdbx_descriptor")
-                    # print j
-                    _d0_.update(j)
-                return _d0_
+        self.process_phaser()
+        self.run_queue()
 
-            def limitOut(inp):
-                l = inp.keys()[:i+1]
-                for p in inp.keys():
-                    if l.count(p) == 0:
-                        del inp[p]
-                return inp
+    def query_pdbq(self):
+        """Check if cell is found in PDBQ"""
 
-            d = {}
-            permute = False
-            end = 1
-            l2 = [(0, 1, 2, 3, 4, 5), (1, 2, 0, 4, 5, 3), (2, 0, 1, 5, 3, 4)]
-            #Check for orthorhombic
-            if self.laue == "16":
+        self.logger.debug("query_pdbq")
+        self.tprint("Searching for similar unit cells in the PDB", level=10, color="blue")
+
+        def connect_pdbq(inp):
+            """
+            Query the PDBQ server
+
+            Places relevant pdbs into self.cell_output
+            """
+            _d0_ = inp
+            l1 = ["a", "b", "c", "alpha", "beta", "gamma"]
+            for y in range(end):
+                _d_ = {}
+                for x in range(len(l1)):
+                    _d_[l1[x]] = [self.cell[l2[y][x]] - self.cell[l2[y][x]] * self.percent/2,
+                                  self.cell[l2[y][x]] + self.cell[l2[y][x]] *self.percent/2]
+                # Query server
+                response = urllib2.urlopen(urllib2.Request("http://%s/pdb/rest/search/" % \
+                           PDBQ_SERVER, data=json.dumps(_d_))).read()
+                j = json.loads(response)
+                for k in j.keys():
+                    j[k]["Name"] = j[k].pop("struct.pdbx_descriptor")
+                _d0_.update(j)
+            return _d0_
+
+        def limitOut(inp):
+            """Filter repeates out of query"""
+            l = inp.keys()[:i+1]
+            for p in inp.keys():
+                if l.count(p) == 0:
+                    del inp[p]
+            return inp
+
+        pdbq_results = {}
+        permute = False
+        end = 1
+        l2 = [(0, 1, 2, 3, 4, 5), (1, 2, 0, 4, 5, 3), (2, 0, 1, 5, 3, 4)]
+        # Check for orthorhombic
+        if self.laue == "16":
+            permute = True
+        # Check monoclinic when Beta is near 90.
+        if self.laue in ("3", "5"):
+            if 89.0 < float(self.cell2[4]) < 91.0:
                 permute = True
-            #Check monoclinic when Beta is near 90.
-            if self.laue in ("3", "5"):
-                if 89.0 < float(self.cell2[4]) < 91.0:
-                    permute = True
-            if permute:
-                end = len(l2)
-            #Limit the minimum number of results
-            no_limit = False
-            if self.cluster_use:
-                if self.large_cell:
-                    i = 10
-                elif permute:
-                    i = 60
-                else:
-                    no_limit = True
-                    i = 40
+        if permute:
+            end = len(l2)
+        # Limit the minimum number of results
+        no_limit = False
+        if self.cluster_use:
+            if self.large_cell:
+                i = 10
+            elif permute:
+                i = 60
             else:
-                i = 8
-            counter = 0
+                no_limit = True
+                i = 40
+        else:
+            i = 8
+        counter = 0
 
-            # Limit the unit cell difference to 25%. Also stops it if errors are received.
-            while counter < 25:
-                #l = connect_rcsb(l)
-                d = connect_frank(d)
-                if len(d.keys()) != 0:
-                    for line in d.keys():
-                        # remove anything bigger than 4 letters
-                        if len(line) > 4:
-                            del d[line]
+        # Limit the unit cell difference to 25%. Also stops it if errors are received.
+        while counter < 25:
+            self.tprint("  Querying server at %s" % PDBQ_SERVER,
+                        level=20,
+                        color="white")
+            pdbq_results = connect_pdbq(pdbq_results)
+            if len(pdbq_results.keys()) != 0:
+                for line in pdbq_results.keys():
+                    # remove anything bigger than 4 letters
+                    if len(line) > 4:
+                        del pdbq_results[line]
 
-                    #Do not limit number of results if many models come out really close in cell dimensions.
-                    if counter in (0, 1):
-                        #Limit output
-                        if no_limit == False:
-                            d = limitOut(d)
-                    else:
-                        d = limitOut(d)
-                if len(d.keys()) < i:
-                    counter += 1
-                    self.percent += 0.01
-                    self.logger.debug("Not enough PDB results. Going for more...")
+                # Do not limit number of results if many models come out really close in cell
+                # dimensions.
+                if counter in (0, 1):
+                    #Limit output
+                    if no_limit == False:
+                        pdbq_results = limitOut(pdbq_results)
                 else:
-                    break
-            if len(d.keys()) > 0:
-                self.cell_output = d
+                    pdbq_results = limitOut(pdbq_results)
+            if len(pdbq_results.keys()) < i:
+                counter += 1
+                self.percent += 0.01
+                self.logger.debug("Not enough PDB results. Going for more...")
             else:
-                self.cell_output = {}
-                self.logger.debug("Failed to find pdb with similar cell.")
-
-        except:
-            self.logger.exception("**ERROR in PDBQuery.processPDBCell**")
+                break
+        if len(pdbq_results.keys()) > 0:
+            self.cell_output = pdbq_results
+            self.tprint("  %d relevant PDB files found on the PDBQ server" % len(pdbq_results.keys()),
+                        level=50,
+                        color="white")
+        else:
+            self.cell_output = {}
+            self.logger.debug("Failed to find pdb with similar cell.")
+            self.tprint("No relevant PDB files found on the PDBQ server",
+                        level=50,
+                        color="red")
 
     def process_common_pdb(self):
         """
@@ -374,27 +376,27 @@ class PDBQuery(Process):
               #for code in ["4ER2"]:
                 l = False
                 copy = 1
-                Utils.folders(self, "Phaser_%s" % code)
+                xutils.folders(self, "Phaser_%s" % code)
                 f = os.path.basename(self.cell_output[code].get("path"))
                 #Check if symlink exists and create if not.
                 if os.path.exists(f) == False:
                     os.symlink(self.cell_output[code].get("path"), f)
                 #If mmCIF, checks if file exists or if it is super structure with
                 #multiple PDB codes, and returns False, otherwise sends back SG.
-                sg_pdb = Utils.fixSG(self, Utils.getSGInfo(self, f))
+                sg_pdb = xutils.fixSG(self, xutils.getSGInfo(self, f))
                 #Remove codes that won't run or PDB/mmCIF's that don't exist.
                 if sg_pdb == False:
                     del self.cell_output[code]
                     continue
                 #**Now check all SG's**
-                lg_pdb = Utils.subGroups(self, Utils.convertSG(self, sg_pdb), "simple")
+                lg_pdb = xutils.subGroups(self, xutils.convertSG(self, sg_pdb), "simple")
                 #SG from data
-                sg = Utils.convertSG(self, self.laue, True)
+                sg = xutils.convertSG(self, self.laue, True)
                 #Fewer mols in AU or in self.common.
                 if code in self.common or float(self.laue) > float(lg_pdb):
                     #if SM is lower sym, which will cause problems, since PDB is too big.
                     #Need full path for copying pdb files to folders.
-                    pdb_info = Utils.getPDBInfo(self, os.path.join(os.getcwd(), f))
+                    pdb_info = xutils.getPDBInfo(self, os.path.join(os.getcwd(), f))
                     #Prune if only one chain present, b/c "all" and "A" will be the same.
                     if len(pdb_info.keys()) == 2:
                         for key in pdb_info.keys():
@@ -409,15 +411,15 @@ class PDBQuery(Process):
                         l = [chain for chain in pdb_info.keys() if pdb_info[chain]["res"] != 0.0]
                 #More mols in AU
                 elif float(self.laue) < float(lg_pdb):
-                    pdb_info = Utils.getPDBInfo(self, f, True, True)
+                    pdb_info = xutils.getPDBInfo(self, f, True, True)
                     copy = pdb_info["all"]["NMol"]
                 #Same number of mols in AU.
                 else:
-                    pdb_info = Utils.getPDBInfo(self, f, False, True)
+                    pdb_info = xutils.getPDBInfo(self, f, False, True)
 
                 d = {"data":self.datafile, "pdb":f, "name":code, "verbose":self.verbose, "sg":sg,
                      "copy":copy, "test":self.test, "cluster":self.cluster_use, "cell analysis":True,
-                     "large":self.large_cell, "res":Utils.setPhaserRes(self, pdb_info["all"]["res"]),
+                     "large":self.large_cell, "res":xutils.setPhaserRes(self, pdb_info["all"]["res"]),
                     }
 
                 if l == False:
@@ -426,9 +428,9 @@ class PDBQuery(Process):
                     d1 = {}
                     for chain in l:
                         new_code = "%s_%s" % (code, chain)
-                        Utils.folders(self, "Phaser_%s" % new_code)
+                        xutils.folders(self, "Phaser_%s" % new_code)
                         d.update({"pdb":pdb_info[chain]["file"], "name":new_code, "copy":pdb_info[chain]["NMol"],
-                                  "res":Utils.setPhaserRes(self, pdb_info[chain]["res"])})
+                                  "res":xutils.setPhaserRes(self, pdb_info[chain]["res"])})
                         launch_job(d)
 
         except:
@@ -444,14 +446,14 @@ class PDBQuery(Process):
 
         try:
             pdb = "%s.1.pdb" % inp
-            info = Utils.getPDBInfo(self, pdb, False)
+            info = xutils.getPDBInfo(self, pdb, False)
             command = "phenix.refine %s %s strategy=tls+rigid_body refinement.input.xray_data.labels=IMEAN,SIGIMEAN " % (pdb, self.datafile)
             command += "refinement.main.number_of_macro_cycles=1 nproc=2"
             chains = [chain for chain in info.keys() if chain != "all"]
             for chain in chains:
                 command += ' refine.adp.tls="chain %s"' % chain
             if self.test == False:
-                Utils.processLocal((command, "rigid.log"), self.logger)
+                xutils.processLocal((command, "rigid.log"), self.logger)
             else:
                 os.system("touch rigid.log")
 
@@ -523,7 +525,7 @@ class PDBQuery(Process):
                         if job.is_alive() == False:
                             jobs.remove(job)
                             code = self.jobs.pop(job)
-                            Utils.folders(self, "Phaser_%s" % code)
+                            xutils.folders(self, "Phaser_%s" % code)
                             new_jobs = []
                             if self.test == False:
                                 del self.pids[code]
@@ -539,7 +541,7 @@ class PDBQuery(Process):
                                         time.sleep(5)
                             if p.count("ADF"):
                                 if os.path.exists("adf.com") == False:
-                                    j = Process(target=Utils.calcADF, args=(self, code))
+                                    j = Process(target=xutils.calcADF, args=(self, code))
                                     j.start()
                                     new_jobs.append(j)
                             if len(new_jobs) > 0:
@@ -560,7 +562,7 @@ class PDBQuery(Process):
                                 # BLspec.killChildrenCluster(self,self.pids[j])
                                 pass
                             else:
-                                Utils.killChildren(self, self.pids[j])
+                                xutils.killChildren(self, self.pids[j])
                         if self.phaser_results.has_key(j) == False:
                             self.phaser_results[j] = {"AutoMR results": Parse.setPhaserFailed("Timed out")}
                     if self.verbose:
@@ -731,8 +733,8 @@ class PDBQuery(Process):
                 jon_summary = open("jon_summary_cell.php", "w")
             else:
                 jon_summary = open("jon_summary_cell.html", "w")
-            #jon_summary.write(Utils.getHTMLHeader(self,"phaser"))
-            jon_summary.write(Utils.getHTMLHeader(self, "pdbquery"))
+            #jon_summary.write(xutils.getHTMLHeader(self,"phaser"))
+            jon_summary.write(xutils.getHTMLHeader(self, "pdbquery"))
             jon_summary.write("%6s$(document).ready(function() {\n" % "")
             if self.gui:
                 jon_summary.write("%8s$('button').button(); \n" % "")
@@ -758,32 +760,5 @@ class PDBQuery(Process):
         except:
             self.logger.exception("**ERROR in PDBQuery.html_summary**")
 
-if __name__ == "__main__":
-    # Construct test input
-    import logging, logging.handlers
-    INPUT = [{"dir" :  "/gpfs6/users/necat/Jon/RAPD_test/Output",
-              #"data": "/gpfs6/users/necat/Jon/RAPD_test/Datasets/SAD/PK_lu_peak.sca",
-              #"data": "/gpfs6/users/necat/Jon/RAPD_test/Datasets/SAD/PK_lu_peak_new_free.mtz",
-              "data": "/gpfs6/users/necat/Jon/RAPD_test/Temp/Alex/freer.mtz",
-              "cluster": True,
-              "test": False,
-              "verbose": True,
-              #"type": "Protein",
-              "clean": False,
-              "gui"  : False,
-              "control": ("164.54.212.22", 50001),
-              "process_id": 11111,
-             }]
-    #start logging
-    LOG_FILENAME = os.path.join(INPUT[0].get("dir"), "rapd.log")
-    # Set up a specific logger with our desired output level
-    LOGGER = logging.getLogger("RAPDLogger")
-    LOGGER.setLevel(logging.DEBUG)
-    # Add the log message handler to the logger
-    HANDLER = logging.handlers.RotatingFileHandler(LOG_FILENAME, maxBytes=100000, backupCount=5)
-    #add a formatter
-    FORMATTER = logging.Formatter("%(asctime)s - %(message)s")
-    HANDLER.setFormatter(FORMATTER)
-    LOGGER.addHandler(HANDLER)
-    #LOGGER.info("PDBQuery.__init__")
-    PDBQuery(input=INPUT, output=None, logger=LOGGER)
+        # Print attributions
+        self.print_info()

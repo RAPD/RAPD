@@ -175,6 +175,10 @@ class RapdPlugin(Process):
         self.tprint("  Sample type: %s" % self.sample_type, level=20, color="white")
         self.tprint("  Solvent content: %s" % self.solvent_content, level=20, color="white")
 
+        # Get some data back into the command
+        self.command["preferences"]["sample_type"] = self.sample_type
+        self.command["preferences"]["solvent_content"] = self.solvent_content
+
         if self.test:
             self.logger.debug("TEST IS SET \"ON\"")
 

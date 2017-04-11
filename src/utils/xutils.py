@@ -308,14 +308,14 @@ def calcResNumber(self,sg,se=False,vol=False):
     else:
       return(200)
 
-def calc_res_number(sg, se=False, volume=False):
+def calc_res_number(sg, se=False, volume=0.0, sample_type="protein", solvent_content=0.55):
     """
     Calculates total number of residues or number of Se in AU.
     """
 
     # try:
     if volume:
-        num_residues = calc_tot_res_number(volume)
+        num_residues = calc_tot_res_number(volume, sample_type, solvent_content)
     else:
         num_residues = calcTotResNumber(self, calcVolume(self))
 
@@ -368,29 +368,40 @@ def calcTotResNumber(self, volume):
     self.logger.exception('**Error in Utils.calcTotResNumber**')
     return (None)
 
-def calc_tot_res_number(volume):
+def calc_tot_res_number(volume, sample_type=False, solvent_content=False):
     """
     Calculates number of residues in the unit cell for Raddose calculation. If cell volume bigger than 50000000, then
     turns on Ribosome which makes changes so meaning strategy is presented.
     """
     # try:
-    checkVolume(volume)
-    content = 1 - float(self.solvent_content)
+    if not sample_type:
+        if volume > 25000000.0: #For 30S
+            sample_type = "ribosome"
+        # Guessing
+        else:
+            sample_type = "protein"
+
+    if not solvent_content:
+        if sample_type == "protein":
+            solvent_content = 0.55
+        elif sample_type == "ribosome":
+            solvent_content = 0.64
+        elif sample_type == "dna":
+            solvent_content = 0.64
+
+    content = 1 - solvent_content
 
     # Calculate number of residues based on solvent content in volume of cell.
-    if self.sample_type == 'Protein':
+    if sample_type == "protein":
         # Based on average MW of residue = 110 DA
         return int((float(volume)*float(content))/135.3)
-    elif self.sample_type == 'DNA':
+    elif sample_type == "dna":
         # Based on average MW of residue = 330 DA
         return int((float(volume)*float(content))/273.9)
     else:
         # RNA or Ribosome
         # RNA based on average MW of residue = 340 DA
         return int((float(volume)*float(content))/282.2)
-    # except:
-    #   self.logger.exception('**Error in Utils.calcTotResNumber**')
-    #   return (None)
 
 def calcTransmission(self,attenuation=1):
     """
@@ -623,18 +634,13 @@ def checkVolume(self,volume):
     self.logger.exception('**Error in Utils.checkVolume**')
 
 def check_volume(volume):
-  """
-  Check to see if unit cell is really big.
-  """
+    """Check to see if unit cell is really big"""
 
-  # try:
-  if float(volume) > 25000000.0: #For 30S
-      sample_type = 'Ribosome'
-      solvent_content = 0.64
-  # except:
-  #   self.logger.exception('**Error in Utils.checkVolume**')
+    if float(volume) > 25000000.0: #For 30S
+        sample_type = "ribosome"
+        solvent_content = 0.64
 
-  return (sample_type, solvent_content)
+    return (sample_type, solvent_content)
 
 def checkXparm(self):
   """
@@ -916,6 +922,107 @@ def convertSG(self, inp, reverse=False):
 
     # except:
     #     self.logger.exception('**ERROR in Utils.convertSG**')
+
+def convert_sg(inp, reverse=False):
+    """Convert SG to SG#"""
+
+    # CCP4 conversion file /programs/i386-linux/ccp4/6.2.0/ccp4-6.2.0/lib/data/syminfo.lib
+    std2intl = { "P1": "1",
+                 "C121": "5",
+                 "C2": "5",
+                 "I121": "5.1",
+                 "A121": "5.2",  # 2005
+                 "A112": "5.3",
+                 "B112": "5.4",  # 1005
+                 "I112": "5.5",  # 4005
+                 "P2": "3",
+                 "P121": "3",
+                 "P21": "4",
+                 "P1211": "4",
+                 "F222": "22",
+                 "I222": "23",
+                 "I212121": "24",
+                 "C222": "21",
+                 "C2221": "20",
+                 "P222": "16",
+                 "P2221": "17",
+                 "P2212": "17.1",  # 2017
+                 "P2122": "17.2",  # 1017
+                 "P21212": "18",
+                 "P21221": "18.1",  # 2018
+                 "P22121": "18.2",  # 3018
+                 "P212121": "19",
+                 "I4": "79",
+                 "I41": "80",
+                 "I422": "97",
+                 "I4122": "98",
+                 "P4": "75",
+                 "P41": "76",
+                 "P42": "77",
+                 "P43": "78",
+                 "P422": "89",
+                 "P4212": "90",
+                 "P4122": "91",
+                 "P4322": "95",
+                 "P4222": "93",
+                 "P42212": "94",
+                 "P41212": "92",
+                 "P43212": "96",
+                 "P3": "143",
+                 "P31": "144",
+                 "P32": "145",
+                 "P312": "149",
+                 "P3112": "151",
+                 "P3212": "153",
+                 "P321": "150",
+                 "P3121": "152",
+                 "P3221": "154",
+                 "P6": "168",
+                 "P61": "169",
+                 "P65": "170",
+                 "P62": "171",
+                 "P64": "172",
+                 "P63": "173",
+                 "P622": "177",
+                 "P6122": "178",
+                 "P6522": "179",
+                 "P6222": "180",
+                 "P6422": "181",
+                 "P6322": "182",
+                 "R3": "146.1",  # 1146
+                 "H3": "146.2",  # 146
+                 "R32": "155.1",  # 1155
+                 "H32": "155.2",  # 155
+                 "F23": "196",
+                 "F432": "209",
+                 "F4132": "210",
+                 "I23": "197",
+                 "I213": "199",
+                 "I432": "211",
+                 "I4132": "214",
+                 "P23": "195",
+                 "P213": "198",
+                 "P432": "207",
+                 "P4232": "208",
+                 "P4332": "212",
+                 "P4132": "213",
+                 }
+
+    mono = {"C121": "C2",
+            "P121": "P2",
+            "P1211": "P21"}
+
+    if reverse:
+        for letters, number in std2intl.items():
+            if number == inp:
+                if mono.has_key(letters):
+                    sg = mono[letters]
+                else:
+                    sg = letters
+    else:
+        sg = std2intl[inp]
+
+    return sg
 
 def convertShelxFiles(self,inp):
   """
@@ -1880,8 +1987,7 @@ def get_mtz_info(datafile):
     vol = False
 
     # Convert from unicode
-    if isinstance(datafile, unicode):
-        datafile = convert_unicode(datafile)
+    datafile = convert_unicode(datafile)
 
     # Read datafile
     data = iotbx_mtz.object(datafile)
@@ -1890,7 +1996,7 @@ def get_mtz_info(datafile):
     sg = fix_R3_sg(data.space_group_name().replace(" ", ""))
 
     # Wrangle the cell parameters
-    cell = [str(round(x,3)) for x in data.crystals()[0].unit_cell_parameters() ]
+    cell = [round(x,3) for x in data.crystals()[0].unit_cell_parameters() ]
 
     # The volume
     vol = data.crystals()[0].unit_cell().volume()
@@ -2198,6 +2304,14 @@ def getRes(self,inp=False):
   except:
     self.logger.exception('**ERROR in Utils.getRes**')
     return (0.0)
+
+def get_res(datafile):
+    """Return resolution limit of dataset"""
+
+    datafile = convert_unicode(datafile)
+    data = iotbx_mtz.object(datafile)
+
+    return float(data.max_min_resolution()[-1])
 
 def get_detector(image, load=False):
     """
@@ -2921,6 +3035,7 @@ def stillRunning(pid):
   except:
     self.logger.exception('**Error in Utils.stillRunning**')
   """
+
 def subGroups(self,inp1,inp2='shelx'):
   """
   Determine which SG's to run.
@@ -3023,6 +3138,108 @@ def subGroups(self,inp1,inp2='shelx'):
         return([sg])
   except:
     self.logger.exception('**ERROR in Utils.subGroups**')
+
+def get_sub_groups(input_sg, mode="simple"):
+    """Return sub subgroups releated to input spacegroup"""
+
+    shelx_sg = False
+
+    if isinstance(input_sg, int):
+        input_sg = str(input_sg)
+
+    subgroups1 = {"1": [None],
+                  "5": [None],
+                  "5.1": [None],
+                  "5.2": [None],
+                  "5.3": [None],
+                  "5.4": [None],
+                  "5.5": [None],
+                  "3": ["4"],
+                  "16": ["17", "17.1", "17.2", "18", "18.1", "18.2", "19"],
+                  "20": ["21"],
+                  "22": [None],
+                  "23": ["24"],
+                  "75": ["76", "77", "78"],
+                  "79": ["80"],
+                  "89": ["90", "91", "95", "94", "93", "92", "96"],
+                  "97": ["98"],
+                  "143": ["144", "145"],
+                  "149": ["151", "153"],
+                  "150": ["152", "154"],
+                  "146.1": [None],
+                  "146.2": [None],
+                  "155.1": [None],
+                  "155.2": [None],
+                  "168": ["169", "170", "171", "172", "173"],
+                  "177": ["178", "179", "180", "181", "182"],
+                  "196": [None],
+                  "195": ["198"],
+                  "197": ["199"],
+                  "207": ["208", "212", "213"],
+                  "209": ["210"],
+                  "211": ["214"]}
+
+    subgroups2 = {"3": ["3", "4"],
+                  "16": ["16", "17", "17.1", "17.2", "18", "18.1", "18.2", "19"],
+                  "20": ["20", "21"],
+                  "23": ["23", "24"],
+                  "75": ["75", "76", "77"],
+                  "79": ["79", "80"],
+                  "89": ["89", "90", "91", "94", "93", "92"],
+                  "97": ["97", "98"],
+                  "143": ["143", "144"],
+                  "149": ["149", "151"],
+                  "150": ["150", "152"],
+                  "168": ["168", "169", "171", "173"],
+                  "177": ["177", "178", "180", "182"],
+                  "195": ["195", "198"],
+                  "197": ["197", "199"],
+                  "207": ["207", "208", "212"],
+                  "209": ["209", "210"],
+                  "211": ["211", "214"]}
+
+    subgroups3 = {"3": ["3", "4"],
+                  "16": ["16", "17", "17.1", "17.2", "18", "18.1", "18.2", "19"],
+                  "20": ["20", "21"],
+                  "23": ["23", "24"],
+                  "75": ["75", "76", "77", "78"],
+                  "79": ["79", "80"],
+                  "89": ["89", "90", "91", "94", "93", "92", "95", "96"],
+                  "97": ["97", "98"],
+                  "143": ["143", "144", "145"],
+                  "149": ["149", "151", "153"],
+                  "150": ["150", "152", "154"],
+                  "168": ["168", "169", "171", "173", "170", "172"],
+                  "177": ["177", "178", "180", "182", "179", "181"],
+                  "195": ["195", "198"],
+                  "197": ["197", "199"],
+                  "207": ["207", "208", "212", "213"],
+                  "209": ["209", "210"],
+                  "211": ["211", "214"]}
+
+    # Look for subgroups
+    if subgroups1.has_key(input_sg):
+        simple_sg = input_sg
+    else:
+        my_sg = subgroups1.items()
+        for line in my_sg:
+            if line[1].count(input_sg):
+                simple_sg = line[0]
+
+    # Returns Laue group number
+    if mode == "simple":
+        return simple_sg
+    else:
+        if mode == "shelx":
+            if subgroups2.has_key(simple_sg):
+                shelx_sg = subgroups2[simple_sg]
+        else:
+            if subgroups3.has_key(simple_sg):
+                shelx_sg = subgroups3[simple_sg]
+        if shelx_sg:
+            return shelx_sg
+        else:
+            return [simple_sg]
 
 def symopsSG(self, inp):
   """
