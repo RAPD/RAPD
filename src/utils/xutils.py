@@ -33,6 +33,8 @@ import subprocess
 import sys
 
 from iotbx import mtz as iotbx_mtz
+from iotbx import pdb as iotbx_pdb
+import iotbx.pdb.mmcif as iotbx_mmcif
 
 # RAPD imports
 import agents.subcontractors.parse as Parse
@@ -923,7 +925,7 @@ def convertSG(self, inp, reverse=False):
     # except:
     #     self.logger.exception('**ERROR in Utils.convertSG**')
 
-def convert_sg(inp, reverse=False):
+def convert_spacegroup(inp, reverse=False):
     """Convert SG to SG#"""
 
     # CCP4 conversion file /programs/i386-linux/ccp4/6.2.0/ccp4-6.2.0/lib/data/syminfo.lib
@@ -1718,6 +1720,22 @@ def fixSG(self,inp):
   except:
     self.logger.exception('**ERROR in Utils.fixSG**')
 
+def fix_spacegroup(spacegroup):
+    """Fix input SG if R3/R32"""
+
+    # print "fix_spacegroup", spacegroup
+
+    if spacegroup == "H3":
+        return "R3"
+    elif spacegroup == 'H32':
+        return "R32"
+    elif spacegroup == "R3:H":
+        return "R3"
+    elif spacegroup == "R32:H":
+        return "R32"
+    else:
+        return spacegroup
+
 def fixR3SG(self,inp):
   """
   Fix input SG if R3/R32.
@@ -1816,6 +1834,22 @@ def folders(self,inp=None):
 
   except:
     self.logger.exception('**Error in Utils.folders**')
+
+def create_folders(working_dir=None, new_dir=None):
+    """Creates and moves to a new directory"""
+
+    if working_dir == None:
+        working_dir = os.getcwd()
+
+    if new_dir != None:
+        target_dir = os.path.join(working_dir, new_dir)
+    else:
+        target_dir = working_dir
+
+    if os.path.exists(target_dir) == False:
+        os.mkdir(target_dir)
+
+    os.chdir(target_dir)
 
 def folders2(self,inp=None):
   """
@@ -2065,7 +2099,7 @@ def getPDBInfo(self,inp,matthews=True,cell_analysis=False):
             if self.test == False:
               temp.write_pdb_file(file_name=n)
             if matthews:
-              #Run Matthews Calc. on chain
+              # Run Matthews Calc. on chain
               nmol,sc,res1 = runPhaserModule(self,(np1,na1,res0,n))
             else:
               res1 = runPhaserModule(self,n)
@@ -2098,6 +2132,93 @@ def getPDBInfo(self,inp,matthews=True,cell_analysis=False):
   except:
     self.logger.exception('**ERROR in Utils.getPDBInfo')
     return(False)
+
+def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False):
+    """Get info from PDB of mmCIF file"""
+
+    # Get rid of ligands and water so Phenix won't error.
+    np = 0
+    na = 0
+    nmol = 1
+    sc = 0.55
+    nchains = 0
+    res1 = 0.0
+    d = {}
+    l = []
+
+    # Read in the file
+    cif_file = convert_unicode(cif_file)
+    if cif_file[-3:].lower() == 'cif':
+        root = iotbx_mmcif.cif_input(file_name=cif_file).construct_hierarchy()
+    else:
+        root = iotbx_pdb.input(cif_file).construct_hierarchy()
+
+    # Go through the chains
+    for chain in root.models()[0].chains():
+        np1 = 0
+        na1 = 0
+
+        # Sometimes Hetatoms are AA with same segid.
+        if l.count(chain.id) == 0:
+            l.append(chain.id)
+            repeat = False
+            nchains += 1
+        else:
+            repeat = True
+
+        # Count the number of AA and NA in pdb file.
+        for rg in chain.residue_groups():
+            if rg.atoms()[0].parent().resname in iotbx_pdb.common_residue_names_amino_acid:
+                np1 += 1
+            if rg.atoms()[0].parent().resname in iotbx_pdb.common_residue_names_rna_dna:
+                na1 += 1
+            # Not sure if I get duplicates?
+            if rg.atoms()[0].parent().resname in iotbx_pdb.common_residue_names_ccp4_mon_lib_rna_dna:
+                na1 += 1
+        # Limit to 10 chains?!?
+        if nchains < 10:
+            # Do not split up PDB if run from cell analysis
+            if cell_analysis == False and repeat == False:
+
+                # Save info for each chain.
+                if np1 or na1:
+
+                  # Write new pdb files for each chain.
+                  temp = iotbx_pdb.hierarchy.new_hierarchy_from_chain(chain)
+
+                  # Long was of making sure that user does not have directory named '.pdb' or '.cif'
+                  n = os.path.join(os.path.dirname(cif_file),'%s_%s.pdb'%(os.path.basename(cif_file)[:os.path.basename(cif_file).find('.')],chain.id))
+                  temp.write_pdb_file(file_name=n)
+                  if matthews:
+                      # Run Matthews Calc. on chain
+                      nmol, sc, res1 = run_phaser_module((np1, na1, dres, n))
+                  else:
+                      res1 = run_phaser_module(n)
+                  d[chain.id] = {'file': n,
+                                 'NRes':np1+na1,
+                                 'MWna':na1*330,
+                                 'MWaa':np1*110,
+                                 'MW':na1*330+np1*110,
+                                 'NMol':nmol,
+                                 'SC':sc,
+                                 'res':res1,}
+        np += np1
+        na += na1
+
+    # Run on entire PDB
+    if matthews:
+        nmol, sc, res1 = run_phaser_module((np, na, dres, cif_file))
+    else:
+        res1 = run_phaser_module(cif_file)
+    d['all'] = {'file': cif_file,
+                'NRes': np+na,
+                'MWna': na*330,
+                'MWaa': np*110,
+                'MW': na*330+np*110,
+                'NMol': nmol,
+                'SC': sc,
+                'res': res1}
+    return d
 
 def getSGInfo(self,inp):
   """
@@ -2147,6 +2268,34 @@ def getSGInfo(self,inp):
   except:
     self.logger.exception('**ERROR in Utils.getSGInfo')
     return(False)
+
+def get_spacegroup_info(cif_file):
+    """Get info from PDB of mmCIF file"""
+
+    # print "get_spacegroup_info", cif_file, os.getcwd()
+
+    cif_file = convert_unicode(cif_file)
+
+    if cif_file[-3:].lower() == "cif":
+        fail = False
+        cif_spacegroup = False
+
+        try:
+            input_file = open(cif_file, "r").read(20480)
+            for line in input_file.split('\n'):
+                if "_symmetry.space_group_name_H-M" in line:
+                    cif_spacegroup = line[32:].strip()[1:-1].upper().replace(" ", "")
+                if "_pdbx_database_status.pdb_format_compatible" in line:
+                    if line.split()[1] == "N":
+                        fail = True
+        except IOError:
+            return False
+        if fail:
+            return False
+        else:
+            return cif_spacegroup
+    else:
+        return str(iotbx_pdb.input(cif_file).crystal_symmetry().space_group_info()).upper().replace(" ", "")
 
 def getLabelitCell(self,inp=False):
   """
@@ -2865,6 +3014,146 @@ def runPhaserModule(self,inp=False):
       return((0,0.0,0.0))
     else:
       return(0.0)
+
+def run_phaser_module(inp=False):
+    """
+    Run separate module of Phaser to get results before running full job.
+    Setup so that I can read the data in once and run multiple modules.
+    """
+
+    print "run_phaser_module"
+
+    # import phaser
+    #
+    # res = 0.0
+    # z = 0
+    # sc = 0.0
+    #
+    # try:
+    #   def run_ellg():
+    #     res0 = 0.0
+    #     i0 = phaser.InputMR_ELLG()
+    #     i0.setSPAC_HALL(r.getSpaceGroupHall())
+    #     i0.setCELL6(r.getUnitCell())
+    #     i0.setMUTE(True)
+    #     i0.setREFL_DATA(r.getDATA())
+    #     i0.addENSE_PDB_ID("junk",f,0.7)
+    #     #i.addSEAR_ENSE_NUM("junk",5)
+    #     r1 = phaser.runMR_ELLG(i0)
+    #     #print r1.logfile()
+    #     if r1.Success():
+    #       res0 = r1.get_target_resolution('junk')
+    #     del(r1)
+    #     return(res0)
+    #
+    #   def run_cca():
+    #     z0 = 0
+    #     sc0 = 0.0
+    #     i0 = phaser.InputCCA()
+    #     i0.setSPAC_HALL(r.getSpaceGroupHall())
+    #     i0.setCELL6(r.getUnitCell())
+    #     i0.setMUTE(True)
+    #     #Have to set high res limit!!
+    #     i0.setRESO_HIGH(res0)
+    #     if np > 0:
+    #       i0.addCOMP_PROT_NRES_NUM(np,1)
+    #     if na > 0:
+    #       i0.addCOMP_NUCL_NRES_NUM(na,1)
+    #     r1 = phaser.runCCA(i0)
+    #     #print r1.logfile()
+    #     if r1.Success():
+    #       z0 = r1.getBestZ()
+    #       sc0 = 1-(1.23/r1.getBestVM())
+    #     del(r1)
+    #     return((z0,sc0))
+    #
+    #   def run_ncs():
+    #     i0 = phaser.InputNCS()
+    #     i0.setSPAC_HALL(r.getSpaceGroupHall())
+    #     i0.setCELL6(r.getUnitCell())
+    #     i0.setREFL_DATA(r.getDATA())
+    #     #i0.setREFL_F_SIGF(r.getMiller(),r.getF(),r.getSIGF())
+    #     #i0.setLABI_F_SIGF(f,sigf)
+    #     i0.setMUTE(True)
+    #     #i0.setVERB(True)
+    #     r1 = phaser.runNCS(i0)
+    #     print r1.logfile()
+    #     print r1.loggraph().size()
+    #     print r1.loggraph().__dict__.keys()
+    #     #print r1.getCentricE4()
+    #     if r1.Success():
+    #       return(r1)
+    #
+    #   def run_ano():
+    #     #from cStringIO import StringIO
+    #     i0 = phaser.InputANO()
+    #     i0.setSPAC_HALL(r.getSpaceGroupHall())
+    #     i0.setCELL6(r.getUnitCell())
+    #     #i0.setREFL(p.getMiller(),p.getF(),p.getSIGF())
+    #     #i0.setREFL_F_SIGF(r.getMiller(),r.getF(),r.getSIGF())
+    #     #i0.setREFL_F_SIGF(p.getMiller(),p.getIobs(),p.getSigIobs())
+    #     i0.setREFL_DATA(r.getDATA())
+    #     i0.setMUTE(True)
+    #     r1 = phaser.runANO(i0)
+    #     print r1.loggraph().__dict__.keys()
+    #     print r1.loggraph().size()
+    #     print r1.logfile()
+    #     """
+    #     o = phaser.Output()
+    #     redirect_str = StringIO()
+    #     o.setPackagePhenix(file_object=redirect_str)
+    #     r1 = phaser.runANO(i0,o)
+    #     """
+    #
+    #     if r1.Success():
+    #       print 'SUCCESS'
+    #       return(r1)
+    #
+    #   #Setup which modules are run
+    #   matthews = False
+    #   if inp:
+    #     ellg = True
+    #     ncs = False
+    #     if type(inp) == str:
+    #       f = inp
+    #     else:
+    #       np,na,res0,f = inp
+    #       matthews = True
+    #   else:
+    #     ellg = False
+    #     ncs = True
+    #
+    #   #Read the dataset
+    #   i = phaser.InputMR_DAT()
+    #   i.setHKLI(self.datafile)
+    #   #f = 'F'
+    #   #sigf = 'SIGF'
+    #   i.setLABI_F_SIGF('F','SIGF')
+    #   i.setMUTE(True)
+    #   r = phaser.runMR_DAT(i)
+    #   if r.Success():
+    #     if ellg:
+    #       res = run_ellg()
+    #     if matthews:
+    #       z,sc = run_cca()
+    #     if ncs:
+    #       n = run_ncs()
+    #   if matthews:
+    #     #Assumes ellg is run as well.
+    #     return((z,sc,res))
+    #   elif ellg:
+    #     #ellg run by itself
+    #     return(res)
+    #   else:
+    #     #NCS
+    #     return(n)
+    #
+    # except:
+    #   self.logger.exception('**ERROR in Utils.runPhaserModule')
+    #   if matthews:
+    #     return((0,0.0,0.0))
+    #   else:
+    #     return(0.0)
 
 def sca2mtz(self,res=False,run_before=False):
   """
