@@ -434,17 +434,25 @@ class PDBQuery(Process):
                 if pdb_info["all"]["SC"] < 0.2:
                     # Only run on chains that will fit in the AU.
                     l = [chain for chain in pdb_info.keys() if pdb_info[chain]["res"] != 0.0]
-            #More mols in AU
+            # More mols in AU
             elif float(self.laue) < float(lg_pdb):
-                pdb_info = xutils.getPDBInfo(self, f, True, True)
+                pdb_info = xutils.get_pdb_info(cif_file, self.dres, True, True)
                 copy = pdb_info["all"]["NMol"]
-            #Same number of mols in AU.
+            # Same number of mols in AU.
             else:
-                pdb_info = xutils.getPDBInfo(self, f, False, True)
+                pdb_info = xutils.get_pdb_info(cif_file, self.dres, False, True)
 
-            d = {"data":self.datafile, "pdb":f, "name":code, "verbose":self.verbose, "sg":data_spacegroup,
-                 "copy":copy, "test":self.test, "cluster":self.cluster_use, "cell analysis":True,
-                 "large":self.large_cell, "res":xutils.setPhaserRes(self, pdb_info["all"]["res"]),
+            d = {"data": self.datafile,
+                 "pdb": cif_file,
+                 "name": code,
+                 "verbose": self.verbose,
+                 "sg": data_spacegroup,
+                 "copy": copy,
+                 "test": self.test,
+                 "cluster": self.cluster_use,
+                 "cell analysis": True,
+                 "large": self.large_cell,
+                 "res": xutils.set_phaser_res(pdb_info["all"]["res"], self.large_cell, self.dres),
                 }
 
             if l == False:
@@ -454,8 +462,10 @@ class PDBQuery(Process):
                 for chain in l:
                     new_code = "%s_%s" % (code, chain)
                     xutils.folders(self, "Phaser_%s" % new_code)
-                    d.update({"pdb":pdb_info[chain]["file"], "name":new_code, "copy":pdb_info[chain]["NMol"],
-                              "res":xutils.setPhaserRes(self, pdb_info[chain]["res"])})
+                    d.update({"pdb":pdb_info[chain]["file"],
+                              "name":new_code,
+                              "copy":pdb_info[chain]["NMol"],
+                              "res":xutils.set_phaser_res(pdb_info[chain]["res"], self.large_cell, self.dres)})
                     launch_job(d)
 
     def process_refine(self, inp):

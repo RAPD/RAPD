@@ -2155,7 +2155,9 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False):
 
     # Go through the chains
     for chain in root.models()[0].chains():
+        # Number of protein residues
         np1 = 0
+        # Number of nucleic acid residues
         na1 = 0
 
         # Sometimes Hetatoms are AA with same segid.
@@ -2191,6 +2193,7 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False):
                   temp.write_pdb_file(file_name=n)
                   if matthews:
                       # Run Matthews Calc. on chain
+                      print np1, na1, dres, n
                       nmol, sc, res1 = run_phaser_module((np1, na1, dres, n))
                   else:
                       res1 = run_phaser_module(n)
@@ -3222,6 +3225,25 @@ def setPhaserRes(self,res):
   except:
     self.logger.exception('**ERROR in Utils.setPhaserRes**')
     return(res)
+
+def set_phaser_res(res, large_cell, dres):
+    """Determine the best resolution to run Phaser at"""
+
+    # If recommended res is greater than 6 use it, or limit to 6 if less than.
+    if large_cell:
+        if res < 6.0:
+            res = 6.0
+    else:
+        # If recommended res is higher than dataset res.
+        # Use recommend res if lower than 4.5.
+        if res > dres:
+            # If easy solution
+            if res > 6.0:
+              res = 6.0
+            # If recommended res is 6 to 4.5, use 4.5.
+            elif 4.5 < res < 6.0:
+              res = 4.5
+    return res
 
 def setCellSymXDS(self):
   """
