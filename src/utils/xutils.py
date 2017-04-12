@@ -2100,9 +2100,9 @@ def getPDBInfo(self,inp,matthews=True,cell_analysis=False):
               temp.write_pdb_file(file_name=n)
             if matthews:
               # Run Matthews Calc. on chain
-              nmol,sc,res1 = runPhaserModule(self,(np1,na1,res0,n))
+              nmol, sc, res1 = runPhaserModule(self, (np1, na1, res0, n))
             else:
-              res1 = runPhaserModule(self,n)
+              res1 = runPhaserModule(self, n)
             d[chain.id] = {'file':n,
                            'NRes':np1+na1,
                            'MWna':na1*330,
@@ -2133,7 +2133,7 @@ def getPDBInfo(self,inp,matthews=True,cell_analysis=False):
     self.logger.exception('**ERROR in Utils.getPDBInfo')
     return(False)
 
-def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False):
+def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=False):
     """Get info from PDB of mmCIF file"""
 
     # Get rid of ligands and water so Phenix won't error.
@@ -2194,7 +2194,8 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False):
                   if matthews:
                       # Run Matthews Calc. on chain
                       print np1, na1, dres, n
-                      nmol, sc, res1 = run_phaser_module((np1, na1, dres, n))
+                      run_phaser_module((np1, na1, dres, n, data_file))
+                      #   nmol, sc, res1 = run_phaser_module((np1, na1, dres, n, data_file))
                   else:
                       res1 = run_phaser_module(n)
                   d[chain.id] = {'file': n,
@@ -2210,7 +2211,8 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False):
 
     # Run on entire PDB
     if matthews:
-        nmol, sc, res1 = run_phaser_module((np, na, dres, cif_file))
+        # nmol, sc, res1 = run_phaser_module((np, na, dres, cif_file, data_file))
+        run_phaser_module((np, na, dres, cif_file, data_file))
     else:
         res1 = run_phaser_module(cif_file)
     d['all'] = {'file': cif_file,
@@ -2878,7 +2880,7 @@ def readMarHeader(inp):
   f.close()
 
 
-def runPhaserModule(self,inp=False):
+def runPhaserModule(self, inp=False):
   """
   Run separate module of Phaser to get results before running full job.
   Setup so that I can read the data in once and run multiple modules.
@@ -3112,19 +3114,39 @@ def run_phaser_module(inp=False):
     #       print 'SUCCESS'
     #       return(r1)
     #
-    #   #Setup which modules are run
-    #   matthews = False
-    #   if inp:
-    #     ellg = True
-    #     ncs = False
-    #     if type(inp) == str:
-    #       f = inp
-    #     else:
-    #       np,na,res0,f = inp
-    #       matthews = True
-    #   else:
-    #     ellg = False
-    #     ncs = True
+    # Setup which modules are run
+    matthews = False
+    if inp:
+        ellg = True
+        ncs = False
+        if type(inp) == str:
+            f = inp
+        else:
+            np, na, res0, pdb_file , data_file = inp
+            matthews = True
+            print np, na, res0, pdb_file, data_file, matthews
+            command = ["phenix.python",
+                       "/Users/fmurphy/workspace/rapd_github/src/plugins/analysis/subcontractors/phaser_preflight.py",
+                       "--json",
+                       "--np",
+                       str(np),
+                       "--na",
+                       str(na),
+                       "--resolution",
+                       str(res0),
+                       "--pdb_file",
+                       pdb_file,
+                       "--data_file",
+                       data_file
+                       ]
+            if matthews:
+                command.append("--matthews")
+            phaser_preflight = subprocess.Popen(command)
+            phaser_preflight.wait()
+
+    else:
+        ellg = False
+        ncs = True
     #
     #   #Read the dataset
     #   i = phaser.InputMR_DAT()

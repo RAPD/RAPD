@@ -48,17 +48,10 @@ import sys
 # import unittest
 # import uuid
 
-# RAPD imports
-# import commandline_utils
-# import detectors.detector_utils as detector_utils
-# import utils
+# Phenix imports
+import phaser
 
-# Software dependencies
-VERSIONS = {
-# "eiger2cbf": ("160415",)
-}
-
-def run_phaser_module(inp=False):
+def run_phaser_module(args):
     """
     Run separate module of Phaser to get results before running full job.
     Setup so that I can read the data in once and run multiple modules.
@@ -66,75 +59,67 @@ def run_phaser_module(inp=False):
 
     print "run_phaser_module"
 
-    # import phaser
-    #
-    # res = 0.0
-    # z = 0
-    # sc = 0.0
-    #
-    # try:
-    #   def run_ellg():
+    res = 0.0
+    z = 0
+    sc = 0.0
+
+    # def run_ellg():
+    #     print "run_ellg"
     #     res0 = 0.0
     #     i0 = phaser.InputMR_ELLG()
     #     i0.setSPAC_HALL(r.getSpaceGroupHall())
     #     i0.setCELL6(r.getUnitCell())
     #     i0.setMUTE(True)
     #     i0.setREFL_DATA(r.getDATA())
-    #     i0.addENSE_PDB_ID("junk",f,0.7)
+    #     i0.addENSE_PDB_ID("junk", args.pdb_file, 0.7)
     #     #i.addSEAR_ENSE_NUM("junk",5)
     #     r1 = phaser.runMR_ELLG(i0)
     #     #print r1.logfile()
     #     if r1.Success():
     #       res0 = r1.get_target_resolution('junk')
     #     del(r1)
-    #     return(res0)
+    #     return res0
     #
-    #   def run_cca():
+    # def run_cca():
+    #     print "run_cca"
     #     z0 = 0
     #     sc0 = 0.0
     #     i0 = phaser.InputCCA()
     #     i0.setSPAC_HALL(r.getSpaceGroupHall())
     #     i0.setCELL6(r.getUnitCell())
     #     i0.setMUTE(True)
-    #     #Have to set high res limit!!
+    #     # Have to set high res limit!!
     #     i0.setRESO_HIGH(res0)
-    #     if np > 0:
-    #       i0.addCOMP_PROT_NRES_NUM(np,1)
-    #     if na > 0:
-    #       i0.addCOMP_NUCL_NRES_NUM(na,1)
+    #     if args.np > 0:
+    #         i0.addCOMP_PROT_NRES_NUM(args.np, 1)
+    #     if args.na > 0:
+    #         i0.addCOMP_NUCL_NRES_NUM(args.na, 1)
     #     r1 = phaser.runCCA(i0)
-    #     #print r1.logfile()
     #     if r1.Success():
-    #       z0 = r1.getBestZ()
-    #       sc0 = 1-(1.23/r1.getBestVM())
+    #         z0 = r1.getBestZ()
+    #         sc0 = 1-(1.23/r1.getBestVM())
     #     del(r1)
-    #     return((z0,sc0))
+    #     return (z0, sc0)
     #
-    #   def run_ncs():
+    # def run_ncs():
+    #     print "run_ncs"
     #     i0 = phaser.InputNCS()
     #     i0.setSPAC_HALL(r.getSpaceGroupHall())
     #     i0.setCELL6(r.getUnitCell())
     #     i0.setREFL_DATA(r.getDATA())
-    #     #i0.setREFL_F_SIGF(r.getMiller(),r.getF(),r.getSIGF())
-    #     #i0.setLABI_F_SIGF(f,sigf)
     #     i0.setMUTE(True)
-    #     #i0.setVERB(True)
     #     r1 = phaser.runNCS(i0)
     #     print r1.logfile()
     #     print r1.loggraph().size()
     #     print r1.loggraph().__dict__.keys()
-    #     #print r1.getCentricE4()
     #     if r1.Success():
-    #       return(r1)
+    #         return r1
     #
-    #   def run_ano():
-    #     #from cStringIO import StringIO
+    # def run_ano():
+    #     print "run_ano"
     #     i0 = phaser.InputANO()
     #     i0.setSPAC_HALL(r.getSpaceGroupHall())
     #     i0.setCELL6(r.getUnitCell())
-    #     #i0.setREFL(p.getMiller(),p.getF(),p.getSIGF())
-    #     #i0.setREFL_F_SIGF(r.getMiller(),r.getF(),r.getSIGF())
-    #     #i0.setREFL_F_SIGF(p.getMiller(),p.getIobs(),p.getSigIobs())
     #     i0.setREFL_DATA(r.getDATA())
     #     i0.setMUTE(True)
     #     r1 = phaser.runANO(i0)
@@ -149,54 +134,45 @@ def run_phaser_module(inp=False):
     #     """
     #
     #     if r1.Success():
-    #       print 'SUCCESS'
-    #       return(r1)
-    #
-    #   #Setup which modules are run
-    #   matthews = False
-    #   if inp:
-    #     ellg = True
-    #     ncs = False
-    #     if type(inp) == str:
-    #       f = inp
-    #     else:
-    #       np,na,res0,f = inp
-    #       matthews = True
-    #   else:
+    #         print 'SUCCESS'
+    #         return r1
+
+    # Setup which modules are run
+    # if inp:
+    ellg = True
+    ncs = False
+
+    if not (args.np or args.na or args.resolution):
+        pass
+    # else:
     #     ellg = False
     #     ncs = True
-    #
-    #   #Read the dataset
-    #   i = phaser.InputMR_DAT()
-    #   i.setHKLI(self.datafile)
-    #   #f = 'F'
-    #   #sigf = 'SIGF'
-    #   i.setLABI_F_SIGF('F','SIGF')
-    #   i.setMUTE(True)
-    #   r = phaser.runMR_DAT(i)
-    #   if r.Success():
-    #     if ellg:
-    #       res = run_ellg()
-    #     if matthews:
-    #       z,sc = run_cca()
-    #     if ncs:
-    #       n = run_ncs()
-    #   if matthews:
-    #     #Assumes ellg is run as well.
-    #     return((z,sc,res))
-    #   elif ellg:
-    #     #ellg run by itself
-    #     return(res)
-    #   else:
-    #     #NCS
-    #     return(n)
-    #
-    # except:
-    #   self.logger.exception('**ERROR in Utils.runPhaserModule')
-    #   if matthews:
-    #     return((0,0.0,0.0))
-    #   else:
-    #     return(0.0)
+
+    # Read the dataset
+    i = phaser.InputMR_DAT()
+    print i
+    i.setHKLI(args.data_file)
+    i.setLABI_F_SIGF("F", "SIGF")
+    i.setMUTE(False)
+    r = phaser.runMR_DAT(i)
+    print r
+    if r.Success():
+        if ellg:
+            res = run_ellg()
+        if args.matthews:
+            z, sc = run_cca()
+        if ncs:
+            n = run_ncs()
+    if args.matthews:
+        # Assumes ellg is run as well.
+        print ">>>", z, sc, res
+        return (z, sc, res)
+    elif ellg:
+        #ellg run by itself
+        return res
+    else:
+        # NCS
+        return n
 
 def main(args):
     """
@@ -205,31 +181,67 @@ def main(args):
     the commandline
     """
 
-    print "main"
+    print args
+
+    run_phaser_module(args)
 
 def get_commandline():
     """
     Grabs the commandline
     """
 
-    print "get_commandline"
+    # print "get_commandline"
 
     # Parse the commandline arguments
     commandline_description = "Generate a generic RAPD file"
     my_parser = argparse.ArgumentParser(description=commandline_description)
 
     # A True/False flag
-    my_parser.add_argument("-c", "--commandline",
+    my_parser.add_argument("--json",
                            action="store_true",
-                           dest="commandline",
-                           help="Generate commandline argument parsing")
+                           dest="json",
+                           help="JSON output only")
 
-    # File name to be generated
-    my_parser.add_argument(action="store",
-                           dest="file",
-                           nargs="?",
+    # Protein residues
+    my_parser.add_argument("--np",
+                           dest="np",
+                           default=0,
+                           type=int,
+                           help="Number of protein residues")
+
+    # Nucleic acid residues
+    my_parser.add_argument("--na",
+                           dest="na",
+                           default=0,
+                           type=int,
+                           help="Number of nucleic acid residues")
+
+    # Resolution
+    my_parser.add_argument("--resolution",
+                           dest="resolution",
+                           default=0.0,
+                           type=float,
+                           help="Resolution for calculations")
+
+    # Calculate matthews coeff?
+    my_parser.add_argument("--matthews",
+                           action="store_true",
+                           dest="matthews",
+                           help="Perform matthews calculation")
+
+    # Data file
+    my_parser.add_argument("--data_file",
+                           action="store",
+                           dest="data_file",
                            default=False,
-                           help="Name of file to be generated")
+                           help="Data file input")
+
+    # PDB file
+    my_parser.add_argument("--pdb_file",
+                           action="store",
+                           dest="pdb_file",
+                           default=False,
+                           help="PDB file input")
 
     # Print help message is no arguments
     if len(sys.argv[1:])==0:

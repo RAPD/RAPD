@@ -421,7 +421,8 @@ class PDBQuery(Process):
                 pdb_info = xutils.get_pdb_info(os.path.join(os.getcwd(), cif_file),
                                                dres=self.dres,
                                                matthews=True,
-                                               cell_analysis=False)
+                                               cell_analysis=False,
+                                               data_file=self.datafile)
                 #Prune if only one chain present, b/c "all" and "A" will be the same.
                 if len(pdb_info.keys()) == 2:
                     for key in pdb_info.keys():
@@ -436,11 +437,11 @@ class PDBQuery(Process):
                     l = [chain for chain in pdb_info.keys() if pdb_info[chain]["res"] != 0.0]
             # More mols in AU
             elif float(self.laue) < float(lg_pdb):
-                pdb_info = xutils.get_pdb_info(cif_file, self.dres, True, True)
+                pdb_info = xutils.get_pdb_info(cif_file, self.dres, True, True, self.datafile)
                 copy = pdb_info["all"]["NMol"]
             # Same number of mols in AU.
             else:
-                pdb_info = xutils.get_pdb_info(cif_file, self.dres, False, True)
+                pdb_info = xutils.get_pdb_info(cif_file, self.dres, False, True, self.datafile)
 
             d = {"data": self.datafile,
                  "pdb": cif_file,
