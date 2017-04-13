@@ -26,6 +26,7 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
 # Standard imports
+import json
 import os
 from pprint import pprint
 import shutil
@@ -3124,7 +3125,7 @@ def run_phaser_module(inp=False):
         else:
             np, na, res0, pdb_file , data_file = inp
             matthews = True
-            print np, na, res0, pdb_file, data_file, matthews
+            # print np, na, res0, pdb_file, data_file, matthews
             command = ["phenix.python",
                        "/Users/fmurphy/workspace/rapd_github/src/plugins/analysis/subcontractors/phaser_preflight.py",
                        "--json",
@@ -3138,11 +3139,14 @@ def run_phaser_module(inp=False):
                        pdb_file,
                        "--data_file",
                        data_file
-                       ]
+                      ]
             if matthews:
                 command.append("--matthews")
-            phaser_preflight = subprocess.Popen(command)
+            phaser_preflight = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             phaser_preflight.wait()
+            stdout, _ = phaser_preflight.communicate()
+            preflight_return = json.loads(stdout.rstrip())
+            print ">>>>", preflight_return, "<<<<"
 
     else:
         ellg = False

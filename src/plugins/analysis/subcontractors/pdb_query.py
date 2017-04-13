@@ -381,8 +381,12 @@ class PDBQuery(Process):
             cif_file = os.path.basename(self.cell_output[code].get("path"))
 
             # Get the gzipped cif file from the PDBQ server
-            response = urllib2.urlopen(urllib2.Request("http://%s/pdbq/entry/get_cif/%s" % \
-                       (PDBQ_SERVER, cif_file.replace(".cif", "")))).read()
+            try:
+                response = urllib2.urlopen(urllib2.Request("http://%s/pdbq/entry/get_cif/%s" % \
+                        (PDBQ_SERVER, cif_file.replace(".cif", ""))), timeout=60).read()
+            except urllib2.HTTPError as e:
+                self.tprint("%s when fetching %s" % (e, cif_file), level=50, color="red")
+                continue
 
             # Write the file
             gzip_file = cif_file+".gz"
