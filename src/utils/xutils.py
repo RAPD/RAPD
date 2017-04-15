@@ -2186,44 +2186,49 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=F
                 # Save info for each chain.
                 if np1 or na1:
 
-                  # Write new pdb files for each chain.
-                  temp = iotbx_pdb.hierarchy.new_hierarchy_from_chain(chain)
+                    # Write new pdb files for each chain.
+                    temp = iotbx_pdb.hierarchy.new_hierarchy_from_chain(chain)
 
-                  # Long was of making sure that user does not have directory named '.pdb' or '.cif'
-                  n = os.path.join(os.path.dirname(cif_file),'%s_%s.pdb'%(os.path.basename(cif_file)[:os.path.basename(cif_file).find('.')],chain.id))
-                  temp.write_pdb_file(file_name=n)
-                  if matthews:
-                      # Run Matthews Calc. on chain
-                      print np1, na1, dres, n
-                      run_phaser_module((np1, na1, dres, n, data_file))
-                      #   nmol, sc, res1 = run_phaser_module((np1, na1, dres, n, data_file))
-                  else:
-                      res1 = run_phaser_module(n)
-                  d[chain.id] = {'file': n,
-                                 'NRes':np1+na1,
-                                 'MWna':na1*330,
-                                 'MWaa':np1*110,
-                                 'MW':na1*330+np1*110,
-                                 'NMol':nmol,
-                                 'SC':sc,
-                                 'res':res1,}
+                    # Long was of making sure that user does not have directory named '.pdb' or
+                    # '.cif'
+                    n = os.path.join(os.path.dirname(cif_file), "%s_%s.pdb" % \
+                        (os.path.basename(cif_file)[:os.path.basename(cif_file).find('.')], chain.id))
+                    temp.write_pdb_file(file_name=n)
+                    if matthews:
+                        # Run Matthews Calc. on chain
+                        phaser_return = run_phaser_module((np1, na1, dres, n, data_file))
+                        print ">>>>", phaser_return, "<<<<"
+                        #   nmol, sc, res1 = run_phaser_module((np1, na1, dres, n, data_file))
+                    else:
+                        res1 = run_phaser_module(n)
+
+                    d[chain.id] = {'file': n,
+                                   'NRes': np1+na1,
+                                   'MWna': na1*330,
+                                   'MWaa': np1*110,
+                                   'MW': na1*330+np1*110,
+                                   'NMol': phaser_return["z"],
+                                   'SC': phaser_return["solvent_content"],
+                                   'res': phaser_return["target_resolution"]}
         np += np1
         na += na1
 
     # Run on entire PDB
     if matthews:
         # nmol, sc, res1 = run_phaser_module((np, na, dres, cif_file, data_file))
-        run_phaser_module((np, na, dres, cif_file, data_file))
+        phaser_return = run_phaser_module((np, na, dres, cif_file, data_file))
     else:
+        print "NOT Matthews"
         res1 = run_phaser_module(cif_file)
+
     d['all'] = {'file': cif_file,
                 'NRes': np+na,
                 'MWna': na*330,
                 'MWaa': np*110,
                 'MW': na*330+np*110,
-                'NMol': nmol,
-                'SC': sc,
-                'res': res1}
+                'NMol': phaser_return["z"],
+                'SC': phaser_return["solvent_content"],
+                'res': phaser_return["target_resolution"]}
     return d
 
 def getSGInfo(self,inp):
@@ -3027,7 +3032,7 @@ def run_phaser_module(inp=False):
     Setup so that I can read the data in once and run multiple modules.
     """
 
-    print "run_phaser_module"
+    # print "run_phaser_module"
 
     # import phaser
     #
@@ -3146,7 +3151,8 @@ def run_phaser_module(inp=False):
             phaser_preflight.wait()
             stdout, _ = phaser_preflight.communicate()
             preflight_return = json.loads(stdout.rstrip())
-            print ">>>>", preflight_return, "<<<<"
+
+            return preflight_return
 
     else:
         ellg = False

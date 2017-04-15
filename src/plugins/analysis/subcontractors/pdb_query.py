@@ -41,6 +41,7 @@ from agents.rapd_agent_phaser import RunPhaser
 # import parse as Parse
 # import summary as Summary
 # from utils.communicate import rapd_send
+import utils.site as site_utils
 import utils.xutils as xutils
 
 PDBQ_SERVER = "remote.nec.aps.anl.gov:3030"
@@ -48,6 +49,8 @@ PDBQ_SERVER = "remote.nec.aps.anl.gov:3030"
 class PDBQuery(Process):
 
     # Settings
+    # Place that structure files may be stored
+    cif_cache = False
     # Calc ADF for each solution (creates a lot of big map files).
     adf = False
     percent = 0.01
@@ -142,6 +145,14 @@ class PDBQuery(Process):
         """
 
         self.logger.debug("PDBQuery::preprocess")
+
+        # Get the local pdb cache Location
+        environmental_vars = site_utils.get_environmental_variables()
+        if "RAPD_HOME" in environmental_vars:
+            self.cif_cache = os.path.join(environmental_vars["RAPD_HOME"],
+                                          "cache/cif_files")
+            if not os.path.exists(self.cif_cache):
+                self.cif_cache = False
 
         # try:
         self.input_sg, self.cell, self.volume = xutils.get_mtz_info(self.datafile)
@@ -379,21 +390,50 @@ class PDBQuery(Process):
 
             # The cif file name
             cif_file = os.path.basename(self.cell_output[code].get("path"))
-
-            # Get the gzipped cif file from the PDBQ server
-            try:
-                response = urllib2.urlopen(urllib2.Request("http://%s/pdbq/entry/get_cif/%s" % \
-                        (PDBQ_SERVER, cif_file.replace(".cif", ""))), timeout=60).read()
-            except urllib2.HTTPError as e:
-                self.tprint("%s when fetching %s" % (e, cif_file), level=50, color="red")
-                continue
-
-            # Write the file
+            print "cif_file", cif_file
             gzip_file = cif_file+".gz"
-            with open(gzip_file, "wb") as outfile:
-                outfile.write(response)
+            print "gzip_file", gzip_file
+            cached_file = False
 
-            # Uncompress the cif file
+            # Is the cif file in the local cache?
+            if self.cif_cache:
+                cached_file = os.path.join(self.cif_cache, gzip_file)
+                print "cached_file", cached_file
+                if os.path.exists(cached_file):
+                    self.tprint("  Have cached cif file %s" % gzip_file, level=10, color="white")
+
+                else:
+                    # Get the gzipped cif file from the PDBQ server
+                    self.tprint("  Fetching %s" % cif_file, level=10, color="white")
+                    try:
+                        response = urllib2.urlopen(urllib2.Request("http://%s/pdbq/entry/get_cif/%s" % (PDBQ_SERVER, cif_file.replace(".cif", ""))), timeout=60).read()
+                    except urllib2.HTTPError as e:
+                        self.tprint("  %s when fetching %s" % (e, cif_file), level=50, color="red")
+                        continue
+
+                    # Write the  gzip file
+                    with open(cached_file, "wb") as outfile:
+                        outfile.write(response)
+
+                # Copy the gzip file to the cwd
+                print "Copying %s to %s" % (cached_file, os.path.join(os.getcwd(), gzip_file))
+                shutil.copy(cached_file, os.path.join(os.getcwd(), gzip_file))
+
+            # No local CIF file cache
+            else:
+                # Get the gzipped cif file from the PDBQ server
+                self.tprint("  Fetching %s" % cif_file, level=10, color="white")
+                try:
+                    response = urllib2.urlopen(urllib2.Request("http://%s/pdbq/entry/get_cif/%s" % (PDBQ_SERVER, cif_file.replace(".cif", ""))), timeout=60).read()
+                except urllib2.HTTPError as e:
+                    self.tprint("%s when fetching %s" % (e, cif_file), level=50, color="red")
+                    continue
+
+                # Write the  gzip file
+                with open(gzip_file, "wb") as outfile:
+                    outfile.write(response)
+
+            # Uncompress the gzipped file
             unzip_proc = subprocess.Popen(["gunzip", gzip_file])
             unzip_proc.wait()
 
@@ -439,13 +479,23 @@ class PDBQuery(Process):
                 if pdb_info["all"]["SC"] < 0.2:
                     # Only run on chains that will fit in the AU.
                     l = [chain for chain in pdb_info.keys() if pdb_info[chain]["res"] != 0.0]
+
             # More mols in AU
             elif float(self.laue) < float(lg_pdb):
-                pdb_info = xutils.get_pdb_info(cif_file, self.dres, True, True, self.datafile)
+                pdb_info = xutils.get_pdb_info(cif_file=cif_file,
+                                               dres=self.dres,
+                                               matthews=True,
+                                               cell_analysis=True,
+                                               data_file=self.datafile)
                 copy = pdb_info["all"]["NMol"]
+
             # Same number of mols in AU.
             else:
-                pdb_info = xutils.get_pdb_info(cif_file, self.dres, False, True, self.datafile)
+                pdb_info = xutils.get_pdb_info(cif_file=cif_file,
+                                               dres=self.dres,
+                                               matthews=False,
+                                               cell_analysis=True,
+                                               data_file=self.datafile)
 
             d = {"data": self.datafile,
                  "pdb": cif_file,

@@ -12,6 +12,7 @@ install/test
 rapd.cshrc
 rapd.shrc
 phenix-installer-*
+cache
 
 # Archives
 *.tar
