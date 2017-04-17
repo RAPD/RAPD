@@ -104,10 +104,10 @@ def read_header(image,
 
     def mmorm(x):
         d = float(x)
-        if (d < 2):
-            return(d*1000)
+        if d < 2:
+            return d*1000
         else:
-            return(d)
+            return d
 
     #item:(pattern,transform)
     header_items = {

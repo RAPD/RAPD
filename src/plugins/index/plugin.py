@@ -1099,27 +1099,16 @@ class RapdPlugin(Process):
             # pprint.pprint(self.distl_results)
 
             # Print DISTL results to commandline - verbose only
-            self.tprint(arg="\nDISTL analysis results", level=10, color="blue")
+            self.tprint(arg="\nDISTL analysis results", level=30, color="blue")
             distl_results = self.distl_results["distl_results"]
             if len(distl_results["distl res"]) == 2:
-                self.tprint(arg="  %21s  %6s %6s" % ("", "image 1", "image 2"), level=10, color="white")
+                self.tprint(arg="  %21s  %6s %6s" % ("", "image 1", "image 2"), level=30, color="white")
                 format_string = "  %21s: %6s  %6s"
+                default_result = ["-", "-"]
             else:
                 format_string = "  %21s: %s"
+                default_result = ["-",]
 
-            distl_labels = {
-                "total spots": "Total Spots",
-                "spots in res": "Spots in Resolution",
-                "good Bragg spots": "Good Bragg Spots",
-                "overloads": "Overloaded Spots",
-                "distl res": "DISTL Resolution",
-                "labelit res": "Labelit Resolution",
-                "max cell": "Max Cell",
-                "ice rings": "Ice Rings",
-                "min signal strength": "Min Signal Strength",
-                "max signal strength": "Max Signal Strength",
-                "mean int signal": "Mean Intensity Signal",
-            }
             distl_labels = OrderedDict([
                 ("total spots", "Total Spots"),
                 ("spots in res", "Spots in Resolution"),
@@ -1135,9 +1124,11 @@ class RapdPlugin(Process):
                 ])
 
             for key, val in distl_labels.iteritems():
-                vals = tuple([val] + distl_results[key])
-                # print format_string % vals
-                self.tprint(arg=format_string % vals, level=10, color="white")
+                result = distl_results.get(key)
+                if not result:
+                    result = default_result
+                vals = tuple([val] + result)
+                self.tprint(arg=format_string % vals, level=30, color="white")
 
         except:
             self.logger.exception("**Error in postprocessDistl**")
@@ -1183,6 +1174,8 @@ class RapdPlugin(Process):
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::postprocessBest")
 
+        print inp
+
         try:
             xml = "None"
             anom = False
@@ -1200,6 +1193,9 @@ class RapdPlugin(Process):
         except:
             self.logger.exception("**Error in postprocessBest.**")
 
+        print log
+        print xml
+        print anom
         data = Parse.ParseOutputBest(self, (log, xml), anom)
         # print data.get("strategy res limit")
 
@@ -1517,7 +1513,10 @@ class RapdPlugin(Process):
                         self.ignore_user_SG = True
 
             # Print Labelit results to commandline
-            self.tprint(arg="Highest symmetry Labelit result", level=99, color="blue")
+            self.tprint(arg="\nHighest symmetry Labelit result",
+                        level=99,
+                        color="blue",
+                        newline=False)
             for line in self.labelit_results["Labelit results"]["output"][5:]:
                 self.tprint(arg="  %s" % line.rstrip(), level=99, color="white")
             # pprint.pprint(self.labelit_results["Labelit results"]["output"])
