@@ -37,7 +37,7 @@ import time
 import urllib2
 
 # RAPD imports
-from agents.rapd_agent_phaser import RunPhaser
+from phaser_run import RunPhaser
 # import parse as Parse
 # import summary as Summary
 # from utils.communicate import rapd_send
@@ -119,7 +119,7 @@ class PDBQuery(Process):
         self.test = self.input["preferences"].get("test", False)
         self.sample_type = self.input["preferences"].get("type", "protein")
         self.solvent_content = self.input["preferences"].get("solvent_content", 0.55)
-        self.cluster_use = self.input["preferences"].get("cluster", True)
+        self.cluster_use = self.input["preferences"].get("cluster", False)
         self.clean = self.input["preferences"].get("clean", True)
         self.gui = self.input["preferences"].get("gui", True)
         # self.controller_address = self.input[0].get("control", False)
@@ -372,6 +372,8 @@ class PDBQuery(Process):
 
         def launch_job(inp):
             """Run a phaser process and retrieve results"""
+
+            print "launch_job", inp
 
             queue = Queue()
             job = Process(target=RunPhaser, args=(inp, queue, self.logger))

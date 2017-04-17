@@ -169,7 +169,7 @@ def run_phaser_module(args):
                 "target_resolution": target_resolution}
     elif ellg:
         # ellg run by itself
-        return target_resolution
+        return {"target_resolution": target_resolution}
     else:
         # NCS
         return n

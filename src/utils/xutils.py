@@ -2217,18 +2217,27 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=F
     if matthews:
         # nmol, sc, res1 = run_phaser_module((np, na, dres, cif_file, data_file))
         phaser_return = run_phaser_module((np, na, dres, cif_file, data_file))
+        d['all'] = {'file': cif_file,
+                    'NRes': np+na,
+                    'MWna': na*330,
+                    'MWaa': np*110,
+                    'MW': na*330+np*110,
+                    'NMol': phaser_return["z"],
+                    'SC': phaser_return["solvent_content"],
+                    'res': phaser_return["target_resolution"]}
     else:
         print "NOT Matthews"
-        res1 = run_phaser_module(cif_file)
-
-    d['all'] = {'file': cif_file,
-                'NRes': np+na,
-                'MWna': na*330,
-                'MWaa': np*110,
-                'MW': na*330+np*110,
-                'NMol': phaser_return["z"],
-                'SC': phaser_return["solvent_content"],
-                'res': phaser_return["target_resolution"]}
+        # phaser_return = run_phaser_module(cif_file)
+        phaser_return = run_phaser_module((np, na, dres, cif_file, data_file))
+        print phaser_return
+        d['all'] = {'file': cif_file,
+                    'NRes': np+na,
+                    'MWna': na*330,
+                    'MWaa': np*110,
+                    'MW': na*330+np*110,
+                    'NMol': phaser_return["z"],
+                    'SC': phaser_return["solvent_content"],
+                    'res': phaser_return["target_resolution"]}
     return d
 
 def getSGInfo(self,inp):
