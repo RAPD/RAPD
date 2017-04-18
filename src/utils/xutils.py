@@ -1084,101 +1084,103 @@ def errorLabelitPost(self, iteration, error, run_before=False):
   except:
     self.logger.exception('**ERROR in Utils.errorLabelitPost**')
 
-def errorLabelit(self,iteration):
-  """
-  Labelit error correction. Set/reset setting in dataset_preferences.py according to error iteration.
-  Commented out things were tried before.
-  """
-  if self.verbose:
-    self.logger.debug('Utilities::errorLabelit')
-  try:
-    #create separate folders for Labelit runs.
-    if self.multiproc == False:
-      iteration += 1
-    foldersLabelit(self,iteration)
-    preferences    = open('dataset_preferences.py','a')
+def errorLabelit(self, iteration):
     """
-    if self.min_spots:
-      preferences.write(self.min_spots+'\n')
+    Labelit error correction. Set/reset setting in dataset_preferences.py according to error iteration.
+    Commented out things were tried before.
     """
-    preferences.write('\n#iteration %s\n'%iteration)
-    if self.twotheta == False:
-      preferences.write('beam_search_scope=0.3\n')
-    if iteration == 1:
-      #Seemed to pick stronger spots on Pilatis
-      if self.vendortype in ('Pilatus-6M','ADSC-HF4M'):
-      #if self.pilatus:
-        preferences.write('distl.minimum_spot_area=3\n')
-        preferences.write('distl.minimum_signal_height=4\n')
-      else:
-        #Q315
-        preferences.write('distl.minimum_spot_area=6\n')
-        preferences.write('distl.minimum_signal_height=4.3\n')
-      preferences.close()
-      self.labelit_log[str(iteration)] = ['\nLooking for long unit cell.\n']
-      if self.verbose:
-        self.logger.debug('Looking for long unit cell.')
-    elif iteration == 2:
-      #Change it up and go for larger peaks like small molecule.
-      preferences.write('distl.minimum_spot_height=6\n')
-      #preferences.write('distl.minimum_signal_height=5.0\n')
-      #preferences.write('beam_search_scope=2\n')
-      #preferences.write('distl_profile_bumpiness = 7\n')
-      preferences.close()
-      self.labelit_log[str(iteration)] = ['\nChanging settings to look for stronger peaks (ie. small molecule).\n']
-      if self.verbose:
-        self.logger.debug('Changing settings to look for stronger peaks (ie. small molecule).')
-    elif iteration == 3:
-      if self.vendortype in ('Pilatus-6M','ADSC-HF4M'):
-      #if self.pilatus:
-        preferences.write('distl.minimum_spot_area=2\n')
-        preferences.write('distl.minimum_signal_height=2.3\n')
-      else:
-        preferences.write('distl.minimum_spot_area=7\n')
-        preferences.write('distl.minimum_signal_height=1.2\n')
-      preferences.close()
-      self.labelit_log[str(iteration)] = ['\nLooking for weak diffraction.\n']
-      if self.verbose:
-        self.logger.debug('Looking for weak diffraction.')
-    elif iteration == 4:
-      #preferences.write('distl_aggressive = {"passthru_arguments":"-s3 7 -d1 3.7"}\n')
-      if self.vendortype in ('Pilatus-6M','ADSC-HF4M'):
-      #if self.pilatus:
-        preferences.write('distl.minimum_spot_area=3\n')
-        self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 3.\n']
-      else:
-        preferences.write('distl.minimum_spot_area=8\n')
-        self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 8.\n']
-      #preferences.write('distl.minimum_signal_height=5.0\n')
-      #preferences.write('distl.minimum_spot_height=4.3\n')
-      #preferences.write('beam_search_scope=0.5\n')
-      #preferences.write('distl_profile_bumpiness=3\n')
-      preferences.close()
-      if self.verbose:
-        self.logger.debug('Setting spot picking level to 3 or 8.')
-    elif iteration == 5:
-      #preferences.write('distl_aggressive = {"passthru_arguments":"-s3 6 -d1 3.7"}\n')
-      if self.vendortype in ('Pilatus-6M','ADSC-HF4M'):
-      #if self.pilatus:
-        preferences.write('distl.minimum_spot_area=2\n')
-        #preferences.write('distl.minimum_spot_area=1\n')
-        preferences.write('distl_highres_limit=5\n')
-        self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 2 and resolution to 5.\n']
-      else:
-        preferences.write('distl.minimum_spot_area=6\n')
-        preferences.write('distl_highres_limit=5\n')
-        self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 6 and resolution to 5.\n']
-      #preferences.write('distl.minimum_signal_height=5.0\n')
-      #preferences.write('distl.minimum_spot_height=4.3\n')
-      #preferences.write('distl_profile_bumpiness=5\n')
-      preferences.close()
-      if self.verbose:
-        self.logger.debug('Setting spot picking level to 2 or 6.')
-    return(self.processLabelit(iteration))
 
-  except:
-    self.logger.exception('**ERROR in Utils.errorLabelit**')
-    self.labelit_log[str(iteration)] = ['**ERROR in errorLabelit**\n']
+    self.logger.debug('Utilities::errorLabelit')
+
+    # Create separate folders for Labelit runs.
+    if self.multiproc == False:
+        iteration += 1
+    foldersLabelit(self, iteration)
+
+    preferences = open('dataset_preferences.py','a')
+
+    preferences.write('\n#iteration %s\n' % iteration)
+
+    if self.twotheta == False:
+        preferences.write('beam_search_scope=0.3\n')
+
+    if iteration == 1:
+        # Seemed to pick stronger spots on Pilatis
+        if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
+            preferences.write('distl.minimum_spot_area=3\n')
+            preferences.write('distl.minimum_signal_height=4\n')
+        elif "Eiger" in self.vendortype:
+            preferences.write('distl.minimum_spot_area=3\n')
+            preferences.write('distl.minimum_signal_height=5.5\n')
+        else:
+            preferences.write('distl.minimum_spot_area=6\n')
+            preferences.write('distl.minimum_signal_height=4.3\n')
+        preferences.close()
+        self.labelit_log[str(iteration)] = ['\nLooking for long unit cell.\n']
+        self.tprint("  Looking for long unit cell", level=30, color="white")
+        self.logger.debug('Looking for long unit cell.')
+
+    elif iteration == 2:
+        # Change it up and go for larger peaks like small molecule.
+        preferences.write('distl.minimum_spot_height=6\n')
+        preferences.close()
+        self.labelit_log[str(iteration)] = ['\nChanging settings to look for stronger peaks (ie. small molecule).\n']
+        self.tprint("  Looking for stronger peaks (ie. small molecule)", level=30, color="white")
+        self.logger.debug('Changing settings to look for stronger peaks (ie. small molecule).')
+
+    elif iteration == 3:
+        if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
+            preferences.write('distl.minimum_spot_area=2\n')
+            preferences.write('distl.minimum_signal_height=2.3\n')
+        elif "Eiger" in self.vendortype:
+            preferences.write('distl.minimum_spot_area=3\n')
+            preferences.write('distl.minimum_signal_height=2.6\n')
+        else:
+            preferences.write('distl.minimum_spot_area=7\n')
+            preferences.write('distl.minimum_signal_height=1.2\n')
+        preferences.close()
+        self.labelit_log[str(iteration)] = ['\nLooking for weak diffraction.\n']
+        self.tprint("  Looking for weak diffraction", level=30, color="white")
+        self.logger.debug('Looking for weak diffraction.')
+
+    elif iteration == 4:
+        if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
+            preferences.write('distl.minimum_spot_area=3\n')
+            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 3.\n']
+            area = 3
+        elif "Eiger" in self.vendortype:
+            preferences.write('distl.minimum_spot_area=3\n')
+            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 3.\n']
+            area = 3
+        else:
+            preferences.write('distl.minimum_spot_area=8\n')
+            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 8.\n']
+            area = 8
+        preferences.close()
+        self.tprint("  Setting spot picking level to %d" % area, level=30, color="white")
+        self.logger.debug('Setting spot picking level to 3 or 8.')
+
+    elif iteration == 5:
+        if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
+            preferences.write('distl.minimum_spot_area=2\n')
+            preferences.write('distl_highres_limit=5\n')
+            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 2 and resolution to 5.\n']
+            setting = (2, 5)
+        elif "Eiger" in self.vendortype:
+            preferences.write('distl.minimum_spot_area=2\n')
+            preferences.write('distl_highres_limit=4\n')
+            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 2 and resolution to 4.\n']
+            setting = (2, 4)
+        else:
+            preferences.write('distl.minimum_spot_area=6\n')
+            preferences.write('distl_highres_limit=5\n')
+            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 6 and resolution to 5.\n']
+            setting = (6, 5)
+        preferences.close()
+        self.tprint("  Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white")
+        self.logger.debug('Setting spot picking level to 2 or 6.')
+
+    return self.process_labelit(iteration)
 
 def errorLabelitMin(self,iteration,line):
   """
@@ -1194,13 +1196,13 @@ def errorLabelitMin(self,iteration,line):
       if self.verbose:
         self.logger.debug('Not enough spots to autoindex!')
       self.labelit_log[str(iteration)].extend('\nNot enough spots to autoindex!\n')
-      self.postprocessLabelit(iteration,True,True)
+      self.postprocess_labelit(iteration,True,True)
       return(None)
     else:
       preferences = open('dataset_preferences.py','a')
       preferences.write('%s\n'%line)
       preferences.close()
-      return(self.processLabelit(iteration))
+      return(self.process_labelit(iteration))
 
   except:
     self.logger.exception('**ERROR in Utils.errorLabelitMin**')
@@ -1226,7 +1228,7 @@ def errorLabelitFixCell(self,iteration,lg,labelit_sol):
           else:
             if line[4] == str(m):
               cell = 'known_cell=%s,%s,%s,%s,%s,%s'%(line[8],line[9],line[10],line[11],line[12],line[13])
-    return(self.processLabelit(iteration,inp=cell))
+    return(self.process_labelit(iteration,inp=cell))
 
   except:
     self.logger.exception('**Error in Utils.errorLabelitFixCell**')
@@ -1242,7 +1244,7 @@ def errorLabelitCellSG(self,iteration):
     self.ignore_user_cell = True
     self.ignore_user_SG = True
     self.labelit_log[str(iteration)].extend('\nIgnoring user cell and SG command and rerunning.\n')
-    return (self.processLabelit(iteration))
+    return (self.process_labelit(iteration))
 
   except:
     self.logger.exception('**ERROR in Utils.errorLabelitCellSG**')
@@ -1263,7 +1265,7 @@ def errorLabelitBump(self,iteration):
     preferences = open('dataset_preferences.py','w')
     preferences.writelines(temp1)
     preferences.close()
-    return (self.processLabelit(iteration))
+    return (self.process_labelit(iteration))
 
   except:
     self.logger.exception('**ERROR in Utils.errorLabelitBump**')
@@ -1289,7 +1291,7 @@ def errorLabelitGoodSpots(self,iteration):
       self.labelit_log[str(iteration)].extend('\nSetting min number of good bragg spots to %s.\n'%self.min_good_spots)
       if self.verbose:
         self.logger.debug('Setting min number of good bragg spots to %s'%self.min_good_spots)
-      return (self.processLabelit(iteration))
+      return (self.process_labelit(iteration))
     else:
       return(None)
 
@@ -1314,7 +1316,7 @@ def errorLabelitMosflm(self,iteration):
                 preferences.write('\n#iteration %s\nmosflm_integration_reslimit_override = %s\n'%(iteration,new_res))
                 self.labelit_log[str(iteration)].extend('\nDecreasing integration resolution to %s and rerunning.\n'%new_res)
         preferences.close()
-        return (self.processLabelit(iteration))
+        return (self.process_labelit(iteration))
 
     except:
         self.logger.exception('**ERROR in Utils.errorLabelitMosflm**')
@@ -1628,24 +1630,44 @@ def fix_R3_sg(inp):
     # except:
     #   self.logger.exception('**ERROR in Utils.fixR3SG**')
 
-def foldersLabelit(self,iteration=0):
+def foldersLabelit(self, iteration=0):
   """
   Sets up new directory and changes to it for each error iteration in multiproc_labelit.
   """
   if self.verbose:
     self.logger.debug('Utilities::foldersLabelit')
   try:
-    if os.path.exists(os.path.join(self.working_dir,str(iteration))):
+    if os.path.exists(os.path.join(self.working_dir, str(iteration))):
       copy = False
     else:
       copy = True
-    folders(self,iteration)
+    folders(self, iteration)
     if copy:
       pref = 'dataset_preferences.py'
-      pref_path = os.path.join(self.working_dir,pref)
-      shutil.copy(pref_path,pref)
+      pref_path = os.path.join(self.working_dir, pref)
+      shutil.copy(pref_path, pref)
   except:
     self.logger.exception('**Error in Utils.foldersLabelit**')
+
+def create_folders_labelit(working_dir, iteration=0):
+    """
+    Sets up new directory and changes to it for each error iteration in multiproc_labelit.
+    """
+
+    target_directory = os.path.join(working_dir, str(iteration))
+
+    if os.path.exists(target_directory):
+        copy = False
+    else:
+        copy = True
+
+    # Create and move to the target_directory
+    create_folder(target_directory)
+
+    if copy:
+        pref = 'dataset_preferences.py'
+        pref_path = os.path.join(working_dir, pref)
+        shutil.copy(pref_path, pref)
 
 def foldersStrategy(self, iteration=0):
   """
@@ -1693,6 +1715,18 @@ def folders(self,inp=None):
 
   except:
     self.logger.exception('**Error in Utils.folders**')
+
+def create_folder(target_directory, move_to=True):
+    """
+    Sets up new directory and move to it.
+    """
+
+    if not os.path.exists(target_directory):
+        os.makedirs(target_directory)
+
+    # Move to the directory
+    if move_to:
+        os.chdir(target_directory)
 
 def folders2(self,inp=None):
   """
