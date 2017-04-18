@@ -671,29 +671,28 @@ class RapdPlugin(Process):
         Reduce resolution limit and rerun Mosflm to calculate new files.
         """
 
-        if self.verbose:
-            self.logger.debug("errorBest")
+        self.logger.debug("errorBest")
 
-        try:
-            if iteration != 0:
-                if self.test == False:
-                    temp = []
-                    f = "%s_res%s"%(self.index_number, iteration)
-                    shutil.copy(self.index_number, f)
-                    for line in open(f, "r").readlines():
-                        temp.append(line)
-                        if line.startswith("RESOLUTION"):
-                            temp.remove(line)
-                            temp.append("RESOLUTION %s\n" % str(float(line.split()[1]) + iteration))
-                    new = open(f, "w")
-                    new.writelines(temp)
-                    new.close()
-                    subprocess.Popen("sh %s" % f, shell=True).wait()
-            self.processBest(iteration, best_version)
+        # try:
+        if iteration != 0:
+            if self.test == False:
+                temp = []
+                f = "%s_res%s"%(self.index_number, iteration)
+                shutil.copy(self.index_number, f)
+                for line in open(f, "r").readlines():
+                    temp.append(line)
+                    if line.startswith("RESOLUTION"):
+                        temp.remove(line)
+                        temp.append("RESOLUTION %s\n" % str(float(line.split()[1]) + iteration))
+                new = open(f, "w")
+                new.writelines(temp)
+                new.close()
+                subprocess.Popen("sh %s" % f, shell=True).wait()
+        self.processBest(iteration, best_version)
 
-        except:
-            self.logger.exception("**ERROR in errorBest**")
-            self.best_log.append("\nCould not reset Mosflm resolution for Best.\n")
+        # except:
+        #     self.logger.exception("**ERROR in errorBest**")
+        #     self.best_log.append("\nCould not reset Mosflm resolution for Best.\n")
 
     def processBest(self, iteration=0, best_version="3.2.0", runbefore=False):
         """
@@ -990,8 +989,7 @@ class RapdPlugin(Process):
         iteration -- (default False)
         """
 
-        if self.verbose:
-            self.logger.debug("AutoindexingStrategy::processStrategy")
+        self.logger.debug("processStrategy")
 
         # try:
         if iteration:
@@ -1315,82 +1313,81 @@ class RapdPlugin(Process):
         """
         run_queue for strategy.
         """
-        if self.verbose:
-            self.logger.debug("AutoindexingStrategy::run_queue")
 
+        self.logger.debug("AutoindexingStrategy::run_queue")
         self.tprint(arg="\nStarting strategy calculations", level=99, color="blue")
 
-        try:
-            def set_best_results(i,x):
-                # Set Best output if it failed after 3 tries
-                if i == 3:
-                    if x == 0:
-                        self.best_results = {"Best results":"FAILED"}
-                        self.best_failed = True
-                    else:
-                        self.best_anom_results = {"Best ANOM results":"FAILED"}
-                        self.best_anom_failed = True
+        # try:
+        def set_best_results(i, x):
+            # Set Best output if it failed after 3 tries
+            if i == 3:
+                if x == 0:
+                    self.best_results = {"Best results":"FAILED"}
+                    self.best_failed = True
+                else:
+                    self.best_anom_results = {"Best ANOM results":"FAILED"}
+                    self.best_anom_failed = True
 
-            st = 0
-            if self.strategy == "mosflm":
-                st = 4
-            # dict = {}
-            # Run twice for regular(0) and anomalous(1) strategies
-            l = ["", "_anom"]
-            for x in range(0, 2):
-                for i in range(st, 5):
-                    timed_out = False
-                    timer = 0
-                    job = self.jobs[str(i)]
-                    while 1:
-                        if job.is_alive() == False:
-                            if i == 4:
-                                log = os.path.join(self.labelit_dir, "mosflm_strat%s.out" % l[x])
-                            else:
-                                log = os.path.join(self.labelit_dir, str(i))+"/best%s.log" % l[x]
-                            break
-                        time.sleep(0.1)
-                        timer += 0.1
-                        if self.verbose:
-                            number = round(timer%1,1)
-                            if number in (0.0, 1.0):
-                                self.tprint(arg="    Waiting for strategy to finish %s seconds" % timer, level=10, color="white")
-                        if self.strategy_timer:
-                            if timer >= self.strategy_timer:
-                                timed_out = True
-                                break
-                    if timed_out:
-                        self.tprint(arg="Strategy calculation timed out", level=30, color="red")
-                        set_best_results(i, x)
-                    else:
+        st = 0
+        if self.strategy == "mosflm":
+            st = 4
+        # dict = {}
+        # Run twice for regular(0) and anomalous(1) strategies
+        l = ["", "_anom"]
+        for x in range(0, 2):
+            for i in range(st, 5):
+                timed_out = False
+                timer = 0
+                job = self.jobs[str(i)]
+                while 1:
+                    if job.is_alive() == False:
                         if i == 4:
-                            self.postprocessMosflm(log)
+                            log = os.path.join(self.labelit_dir, "mosflm_strat%s.out" % l[x])
                         else:
-                            job1 = self.postprocessBest(log)
-                            if job1 == "OK":
-                                break
-                            # If Best failed...
-                            else:
-                                if self.multiproc == False:
-                                    self.processStrategy(i+1)
-                                set_best_results(i, x)
-
-            if self.test == False:
-                if self.multiproc:
-                    if self.cluster_adapter:
-                        # kill child process on DRMAA job causes error on cluster.
-                        # turn off multiprocessing.event so any jobs still running on cluster are terminated.
-                        self.running.clear()
+                            log = os.path.join(self.labelit_dir, str(i))+"/best%s.log" % l[x]
+                        break
+                    time.sleep(0.1)
+                    timer += 0.1
+                    if self.verbose:
+                        number = round(timer%1,1)
+                        if number in (0.0, 1.0):
+                            self.tprint(arg="    Waiting for strategy to finish %s seconds" % timer, level=10, color="white")
+                    if self.strategy_timer:
+                        if timer >= self.strategy_timer:
+                            timed_out = True
+                            break
+                if timed_out:
+                    self.tprint(arg="Strategy calculation timed out", level=30, color="red")
+                    set_best_results(i, x)
+                else:
+                    if i == 4:
+                        self.postprocessMosflm(log)
                     else:
-                        # kill all the remaining running jobs
-                        for i in range(st, 5):
-                            if self.jobs[str(i)].is_alive():
-                                if self.verbose:
-                                    self.logger.debug("terminating job: %s" % self.jobs[str(i)])
-                                Utils.killChildren(self, self.jobs[str(i)].pid)
+                        job1 = self.postprocessBest(log)
+                        if job1 == "OK":
+                            break
+                        # If Best failed...
+                        else:
+                            if self.multiproc == False:
+                                self.processStrategy(i+1)
+                            set_best_results(i, x)
 
-        except:
-            self.logger.exception("**Error in run_queue**")
+        if self.test == False:
+            if self.multiproc:
+                if self.cluster_adapter:
+                    # kill child process on DRMAA job causes error on cluster.
+                    # turn off multiprocessing.event so any jobs still running on cluster are terminated.
+                    self.running.clear()
+                else:
+                    # kill all the remaining running jobs
+                    for i in range(st, 5):
+                        if self.jobs[str(i)].is_alive():
+                            if self.verbose:
+                                self.logger.debug("terminating job: %s" % self.jobs[str(i)])
+                            Utils.killChildren(self, self.jobs[str(i)].pid)
+
+        # except:
+        #     self.logger.exception("**Error in run_queue**")
 
     def convert_images(self):
         """

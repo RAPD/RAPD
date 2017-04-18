@@ -1474,31 +1474,29 @@ def fixBestSGBack(self):
     self.logger.exception('**ERROR in Utils.fixBestSGBack**')
 
 def fixBestfile(self):
-  """
-  Fix the 'BEAM SWUNG_OUT' line in case of 2 theta usage.
-  """
-  if self.verbose:
+    """
+    Fix the 'BEAM SWUNG_OUT' line in case of 2 theta usage.
+    """
     self.logger.debug('Utilities::fixBestfile')
-  try:
+    # try:
     temp = []
     tt = False
     #r3 = False
     for i,line in enumerate(open('bestfile.par','r').readlines()):
-      temp.append(line)
-      if line.startswith('BEAM'):
-        if line.split()[1] == 'SWUNG_OUT':
-          tt = True
-          temp.remove(line)
-          temp.insert(i,'BEAM           $s %s\n'%(line.split()[2],line.split()[3]))
-    #if tt or r3:
+        temp.append(line)
+        if line.startswith('BEAM'):
+            if line.split()[1] == 'SWUNG_OUT':
+                tt = True
+                temp.remove(line)
+                temp.insert(i,'BEAM           $s %s\n'%(line.split()[2],line.split()[3]))
     if tt:
-      shutil.copy('bestfile.par','bestfile_orig.par')
-      new = open('bestfile.par','w')
-      new.writelines(temp)
-      new.close()
+        shutil.copy('bestfile.par', 'bestfile_orig.par')
+        new = open('bestfile.par', 'w')
+        new.writelines(temp)
+        new.close()
 
-  except:
-    self.logger.exception('**ERROR in Utils.fixBestfile**')
+    # except:
+    #   self.logger.exception('**ERROR in Utils.fixBestfile**')
 
 def fixMosflmSG(self):
   """
@@ -1649,7 +1647,7 @@ def foldersLabelit(self,iteration=0):
   except:
     self.logger.exception('**Error in Utils.foldersLabelit**')
 
-def foldersStrategy(self,iteration=0):
+def foldersStrategy(self, iteration=0):
   """
   Sets up new directory for programs.
   """
