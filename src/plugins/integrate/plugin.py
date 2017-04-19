@@ -596,7 +596,6 @@ class RapdPlugin(Process):
 
         # Already have hi res cutoff
         if self.hi_res:
-            print "HAVE hi_res"
             new_rescut = self.hi_res
         # Find a suitable cutoff for resolution
         else:
@@ -635,15 +634,11 @@ class RapdPlugin(Process):
         # If low resolution, don't try to polish the data, as this tends to blow up.
         polishing_rounds = 0
         if new_rescut <= 4.5:
-            # pprint(newinp)
             # Don't use the GXPARM if changing the spacegroup on the first polishing round
             if spacegoup_agree or self.settings["spacegroup_decider"] == "xds" or polishing_rounds > 0:
-                # print ">>> Copying GXPARM <<<"
                 os.rename('%s/GXPARM.XDS' % xdsdir, '%s/XPARM.XDS' % xdsdir)
             os.rename('%s/CORRECT.LP' % xdsdir, '%s/CORRECT.LP.old' % xdsdir)
             os.rename('%s/XDS.LOG' % xdsdir, '%s/XDS.LOG.old' % xdsdir)
-            pprint(newinp)
-            sys.exit()
             self.write_file(xdsfile, newinp)
             self.tprint(arg="  Polishing",
                         level=99,
@@ -654,7 +649,6 @@ class RapdPlugin(Process):
         else:
             # Check to see if a new resolution cutoff should be applied
             new_rescut = self.find_correct_res(xdsdir, 1.0)
-            # sys.exit()
             if new_rescut != False:
                 os.rename('%s/CORRECT.LP' %xdsdir, '%s/CORRECT.LP.oldcutoff' %xdsdir)
                 os.rename('%s/XDS.LOG' %xdsdir, '%s/XDS.LOG.oldcutoff' %xdsdir)
