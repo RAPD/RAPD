@@ -389,7 +389,7 @@ class RapdPlugin(Process):
         else:
 
             # Run Labelit
-            self.process_labelit()
+            self.start_labelit()
 
       	    # Sorts labelit results by highest symmetry.
             self.labelitSort()
@@ -518,7 +518,7 @@ class RapdPlugin(Process):
         # except:
             # self.logger.exception("**ERROR in preprocessRaddose**")
 
-    def process_labelit(self):
+    def start_labelit(self):
         """
         Initiate Labelit runs.
         """
@@ -1172,7 +1172,7 @@ class RapdPlugin(Process):
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::postprocessBest")
 
-        print inp
+        # print inp
 
         try:
             xml = "None"
@@ -1191,9 +1191,9 @@ class RapdPlugin(Process):
         except:
             self.logger.exception("**Error in postprocessBest.**")
 
-        print log
-        print xml
-        print anom
+        # print log
+        # print xml
+        # print anom
         data = Parse.ParseOutputBest(self, (log, xml), anom)
         # print data.get("strategy res limit")
 
@@ -1560,7 +1560,7 @@ class RapdPlugin(Process):
                 if p_e == False:
                     return 'FAILED'
                 else:
-                    return(int(round(float(p_e)-float(p_s[0]))))
+                    return int(round(float(p_e)-float(p_s[0])))
             except:
                 self.logger.exception('**Error in getBestRotRange**')
                 return 'FAILED'
@@ -1923,6 +1923,8 @@ class RapdPlugin(Process):
 
 class RunLabelit(Process):
 
+
+
     def __init__(self, command, output, params, tprint=False, logger=None):
         """
         input >> command
@@ -1975,19 +1977,24 @@ class RunLabelit(Process):
 
         # params
         self.test = params.get("test", False)
+
         # Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Adds
         # 1-3s to total run time.
-        # self.cluster_use = params.get("cluster",True)
+        self.cluster_use = params.get("cluster", False)
 
         # If self.cluster_use == True, you can specify a batch queue on your cluster. False to not
         # specify.
         self.cluster_queue = params.get("cluster_queue", False)
+
         # Get detector vendortype for settings. Defaults to ADSC.
         self.vendortype = params.get("vendortype", "ADSC")
+
         # Turn on verbose output
         self.verbose = params.get("verbose", False)
+
         # Number of Labelit iteration to run.
         self.iterations = params.get("iterations", 6)
+
         # If limiting number of LABELIT run on cluster.
         # self.red = params.get("redis", False)
         self.short = False
@@ -2055,8 +2062,7 @@ class RunLabelit(Process):
         """
         # print "run"
 
-        if self.verbose:
-            self.logger.debug("RunLabelit::run")
+        self.logger.debug("RunLabelit::run")
 
         self.preprocess()
 
@@ -2075,9 +2081,10 @@ class RunLabelit(Process):
                 self.labelit_jobs[xutils.errorLabelit(self, self.iterations).keys()[0]] = self.iterations
         else:
             # Create the separate folders for the labelit runs, modify the dataset_preferences.py file, and launch for each iteration.
-            for iteration in range(self.iterations):
+            for iteration in range(1, self.iterations):
                 xutils.create_folders_labelit(self.working_dir, iteration)
-
+            xutils.create_folders_labelit(self.working_dir, 0)
+            # xutils.foldersLabelit(self, self.iterations)
             # Launch first job
             self.labelit_jobs[self.process_labelit().keys()[0]] = 0
 
@@ -2187,7 +2194,7 @@ class RunLabelit(Process):
         try:
             labelit_input = []
 
-            #Check if user specific unit cell
+            # Check if user specific unit cell
             d = {'a': False, 'c': False, 'b': False, 'beta': False, 'alpha': False, 'gamma': False}
             counter = 0
             for l in d.keys():
@@ -2222,8 +2229,7 @@ class RunLabelit(Process):
                 command += "%s " % self.header2.get("fullname")
 
             # Save the command to the top of log file, before running job.
-            if self.verbose:
-                self.logger.debug(command)
+            self.logger.debug(command)
             labelit_input.append(command)
             if iteration == 0:
                 self.labelit_log[str(iteration)] = labelit_input
@@ -2250,47 +2256,54 @@ class RunLabelit(Process):
                                          'queue': self.cluster_queue,
                                          'pid': pid_queue},) )
                 else:
+                    # print "Run %s in directory %s" % (command, os.getcwd())
                     run = Process(target=xutils.processLocal, args=((command, log), self.logger, pid_queue))
                 run.start()
 
-                #Save the PID for killing the job later if needed.
+                # Save the PID for killing the job later if needed.
                 self.pids[str(iteration)] = pid_queue.get()
+                # print self.pids
                 labelit_jobs[run] = iteration
 
-            #return a dict with the job and iteration
-            return(labelit_jobs)
+            # return a dict with the job and iteration
+            return labelit_jobs
 
         except:
             self.logger.exception('**Error in RunLabelit.process_labelit**')
 
-    def postprocess_labelit(self,iteration=0,run_before=False,blank=False):
+    def postprocess_labelit(self, iteration=0, run_before=False, blank=False):
         """
         Sends Labelit log for parsing and error checking for rerunning Labelit. Save output dicts.
         """
-        if self.verbose:
-            self.logger.debug('RunLabelit::postprocess_labelit')
-        try:
-            xutils.foldersLabelit(self, iteration)
-    	    #labelit_failed = False
-            if blank:
-                error = 'Not enough spots for autoindexing.'
-                if self.verbose:
-                    self.logger.debug(error)
-                self.labelit_log[str(iteration)].extend(error+'\n')
-                return(None)
+        # print "postprocess_labelit", iteration, run_before, blank
+        self.logger.debug('RunLabelit::postprocess_labelit')
+
+        # try:
+        xutils.foldersLabelit(self, iteration)
+
+        # print "cwd", os.getcwd()
+        #labelit_failed = False
+        if blank:
+            error = 'Not enough spots for autoindexing.'
+            if self.verbose:
+                self.logger.debug(error)
+            self.labelit_log[str(iteration)].extend(error+'\n')
+            return(None)
+        else:
+            log = open('labelit.log', 'r').readlines()
+            # for line in log:
+                # print line.rstrip()
+            self.labelit_log[str(iteration)].extend('\n\n')
+            self.labelit_log[str(iteration)].extend(log)
+            data = Parse.ParseOutputLabelit(self, log, iteration)
+            if self.short:
+                #data = Parse.ParseOutputLabelitNoMosflm(self,log,iteration)
+                self.labelit_results = { 'Labelit results' : data }
             else:
-                log = open('labelit.log', 'r').readlines()
-                self.labelit_log[str(iteration)].extend('\n\n')
-                self.labelit_log[str(iteration)].extend(log)
-                data = Parse.ParseOutputLabelit(self,log,iteration)
-                if self.short:
-                    #data = Parse.ParseOutputLabelitNoMosflm(self,log,iteration)
-                    self.labelit_results = { 'Labelit results' : data }
-                else:
-                    #data = Parse.ParseOutputLabelit(self,log,iteration)
-                    self.labelit_results[str(iteration)] = { 'Labelit results' : data }
-        except:
-            self.logger.exception('**ERROR in RunLabelit.postprocess_labelit**')
+                #data = Parse.ParseOutputLabelit(self,log,iteration)
+                self.labelit_results[str(iteration)] = { 'Labelit results' : data }
+        # except:
+        #     self.logger.exception('**ERROR in RunLabelit.postprocess_labelit**')
 
         # Do error checking and send to correct place according to iteration.
         out = {'bad input': {'error':'Labelit did not like your input unit cell dimensions or SG.','run':'xutils.errorLabelitCellSG(self,iteration)'},
@@ -2361,81 +2374,81 @@ class RunLabelit(Process):
         """
         Run Queue for Labelit.
         """
-        if self.verbose:
-            self.logger.debug('RunLabelit::run_queue')
-        try:
-            timed_out = False
-            timer = 0
-            # labelit = False
-            jobs = self.labelit_jobs.keys()
-            # Set wait time longer to lower the load on the node running the job.
-            if self.short:
-                wait = 1
-            else:
-                wait = 0.1
-            if jobs != ['None']:
-                counter = len(jobs)
-                while counter != 0:
-                    for job in jobs:
-                        if self.test:
-                            running = False
-                        else:
-                            running = job.is_alive()
-                        if running == False:
-                            jobs.remove(job)
-                            iteration = self.labelit_jobs[job]
-                            if self.verbose:
-                                self.logger.debug('Finished Labelit%s'%iteration)
-                                # self.tprint(arg="Finished Labelit%s" % iteration, level=10)
-                            # Check if job had been rerun, fix the iteration.
-                            if iteration >= 10:
-                                iteration -=10
-                                job = self.postprocess_labelit(iteration, True)
-                            else:
-                                job = self.postprocess_labelit(iteration, False)
-                            # If job is rerun, then save the iteration and pid.
-                            if job != None:
-                                if self.multiproc:
-                                    iteration +=10
-                                else:
-                                    iteration +=1
-                                self.labelit_jobs[job.keys()[0]] = iteration
-                                jobs.extend(job.keys())
-                            else:
-                                counter -= 1
-                    time.sleep(wait)
-                    timer += wait
+        self.logger.debug('RunLabelit::run_queue')
 
-                    if self.labelit_timer:
-                        if timer >= self.labelit_timer:
+        # try:
+        timed_out = False
+        timer = 0
+        # labelit = False
+        jobs = self.labelit_jobs.keys()
+        # Set wait time longer to lower the load on the node running the job.
+        if self.short:
+            wait = 1
+        else:
+            wait = 0.1
+        if jobs != ['None']:
+            counter = len(jobs)
+            while counter != 0:
+                for job in jobs:
+                    if self.test:
+                        running = False
+                    else:
+                        running = job.is_alive()
+                    if running == False:
+                        jobs.remove(job)
+                        iteration = self.labelit_jobs[job]
+                        # if self.verbose:
+                            # self.logger.debug('Finished Labelit%s'%iteration)
+                            # self.tprint(arg="Finished Labelit%s" % iteration, level=30)
+                        # Check if job had been rerun, fix the iteration.
+                        if iteration >= 10:
+                            iteration -=10
+                            job = self.postprocess_labelit(iteration, True)
+                        else:
+                            job = self.postprocess_labelit(iteration, False)
+                        # If job is rerun, then save the iteration and pid.
+                        if job != None:
                             if self.multiproc:
+                                iteration +=10
+                            else:
+                                iteration +=1
+                            self.labelit_jobs[job.keys()[0]] = iteration
+                            jobs.extend(job.keys())
+                        else:
+                            counter -= 1
+                time.sleep(wait)
+                timer += wait
+
+                if self.labelit_timer:
+                    if timer >= self.labelit_timer:
+                        if self.multiproc:
+                            timed_out = True
+                            break
+                        else:
+                            iteration += 1
+                            if iteration <= self.iterations:
+                                xutils.errorLabelit(self, iteration)
+                            else:
                                 timed_out = True
                                 break
-                            else:
-                                iteration += 1
-                                if iteration <= self.iterations:
-                                    xutils.errorLabelit(self, iteration)
-                                else:
-                                    timed_out = True
-                                    break
-                if timed_out:
-                    self.logger.debug('Labelit timed out.')
-                    for job in jobs:
-                        i = self.labelit_jobs[job]
-                        if i >= 10:
-                            i -=10
-                        self.labelit_results[str(i)] = {'Labelit results': 'FAILED'}
-                        if self.cluster_use:
-                            # xutils.killChildrenCluster(self,self.pids[str(i)])
-                            self.cluster_adapter.killChildrenCluster(self, self.pids[str(i)])
-                        else:
-                            xutils.killChildren(self, self.pids[str(i)])
+            if timed_out:
+                self.logger.debug('Labelit timed out.')
+                for job in jobs:
+                    i = self.labelit_jobs[job]
+                    if i >= 10:
+                        i -=10
+                    self.labelit_results[str(i)] = {'Labelit results': 'FAILED'}
+                    if self.cluster_use:
+                        # xutils.killChildrenCluster(self,self.pids[str(i)])
+                        self.cluster_adapter.killChildrenCluster(self, self.pids[str(i)])
+                    else:
+                        xutils.killChildren(self, self.pids[str(i)])
 
-            if self.short == False:
-                self.logger.debug('Labelit finished.')
+        if self.short == False:
+            self.logger.debug('Labelit finished.')
 
-        except:
-            self.logger.exception('**Error in RunLabelit.run_queue**')
+        # except:
+        #     self.logger.exception('**Error in RunLabelit.run_queue**')
 
     def labelitLog(self):
         """Put the Labelit logs together"""

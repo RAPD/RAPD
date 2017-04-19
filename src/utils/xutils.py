@@ -1182,25 +1182,26 @@ def errorLabelit(self, iteration):
 
     return self.process_labelit(iteration)
 
-def errorLabelitMin(self,iteration,line):
+def errorLabelitMin(self, iteration, line):
   """
   Labelit error correction. Reset min spots allowed. Set/reset setting in dataset_preferences.py according
   to error iteration. Only run in multiproc mode.
   """
-  if self.verbose:
-    self.logger.debug('Utilities::errorLabelitMin')
+
+  self.logger.debug('Utilities::errorLabelitMin')
+
   try:
     spots = int(line[line.find('=')+1:])
-    #Minimum number of spots to define a blank image.
+    # Minimum number of spots to define a blank image.
     if spots < 25:
       if self.verbose:
         self.logger.debug('Not enough spots to autoindex!')
       self.labelit_log[str(iteration)].extend('\nNot enough spots to autoindex!\n')
-      self.postprocess_labelit(iteration,True,True)
-      return(None)
+      self.postprocess_labelit(iteration, True, True)
+      return None
     else:
-      preferences = open('dataset_preferences.py','a')
-      preferences.write('%s\n'%line)
+      preferences = open('dataset_preferences.py', 'a')
+      preferences.write('%s\n' % line)
       preferences.close()
       return(self.process_labelit(iteration))
 
