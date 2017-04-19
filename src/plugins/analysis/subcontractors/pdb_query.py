@@ -146,15 +146,11 @@ class PDBQuery(Process):
 
         self.logger.debug("PDBQuery::preprocess")
 
-        # Get the local pdb cache Location
-        environmental_vars = site_utils.get_environmental_variables()
-        if "RAPD_HOME" in environmental_vars:
-            self.cif_cache = os.path.join(environmental_vars["RAPD_HOME"],
-                                          "cache/cif_files")
-            if not os.path.exists(self.cif_cache):
-                self.cif_cache = False
+        # Check the local pdb cache Location
+        self.cif_cache = "/tmp/rapd_cache/cif_files"
+        if not os.path.exists(self.cif_cache):
+            os.makedirs(self.cif_cache)
 
-        # try:
         self.input_sg, self.cell, self.volume = xutils.get_mtz_info(self.datafile)
         self.dres = xutils.get_res(self.datafile)
         self.input_sg_num = int(xutils.convert_spacegroup(self.input_sg))
@@ -383,7 +379,11 @@ class PDBQuery(Process):
             self.jobs[job] = inp["name"]
             self.pids[inp["name"]] = queue.get()
 
+        # Run through the pdbs
         for code in self.cell_output.keys():
+
+            self.trprin
+
             l = False
             copy = 1
 
@@ -447,6 +447,11 @@ class PDBQuery(Process):
             if sg_pdb == False:
                 del self.cell_output[code]
                 continue
+
+            # Convert from cif to pdb
+            conversion_proc = subprocess.Popen(["phenix.cif_as_pdb", cif_file])
+            conversion_proc.wait()
+            cif_file = cif_file.replace(".cif", ".pdb")
 
             # Now check all SG's
             sg_num = xutils.convert_spacegroup(sg_pdb)

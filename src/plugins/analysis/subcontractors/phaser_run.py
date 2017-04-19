@@ -174,10 +174,15 @@ class RunPhaser(Process):
         self.logger.debug("RunPhaser::process")
 
         # try:
-        command = "tcsh phaser.com"
 
-        queue = Queue()
-        phaser_proc = subprocess.Popen([command])
+        command = "sh phaser.com"
+        # command = "which phaser"
+        print os.path.exists("phaser.com")
+        # queue = Queue()
+        phaser_proc = subprocess.Popen([command],
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE,
+                                       shell=True)
         phaser_proc.wait()
 
         # Process(target=Utils.processLocal, args=((command, "phaser.log"), self.logger, queue)).start()
