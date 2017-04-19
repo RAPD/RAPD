@@ -133,8 +133,8 @@ class RapdPlugin(Process):
         command -- dict of all information for this plugin to run
         """
 
-        pprint(command)
-        sys.exit()
+        # pprint(command)
+        # sys.exit()
 
         # Store tprint for use throughout
         if tprint:
@@ -516,6 +516,8 @@ class RapdPlugin(Process):
         xdsinp = self.change_xds_inp(xdsinp, "DATA_RANGE=%s\n" % data_range)
         xdsfile = os.path.join(xdsdir, 'XDS.INP')
         self.write_file(xdsfile, xdsinp)
+        pprint(xdsinp)
+        sys.exit()
         self.tprint(arg="  Searching for peaks",
                     level=99,
                     color="white",
