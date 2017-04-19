@@ -542,8 +542,6 @@ class RapdPlugin(Process):
                 "JOB=DEFPIX INTEGRATE CORRECT \n\n")
 
         self.write_file(xdsfile, xdsinp)
-        pprint(xdsinp)
-        sys.exit()
         self.tprint(arg="  Integrating",
                     level=99,
                     color="white",
@@ -552,7 +550,8 @@ class RapdPlugin(Process):
 
         # If known xds_errors occur, catch them and take corrective action
         newinp = self.check_for_xds_errors(xdsdir, xdsinp)
-        # pprint(newinp)
+        pprint(newinp)
+        sys.exit()
         if newinp == False:
             self.logger.exception('Unknown xds error occurred. Please check for cause!')
             self.tprint(arg="\nXDS error unknown to RAPD has occurred. Please check for cause!",
