@@ -1453,19 +1453,22 @@ class RapdPlugin(Process):
             self.logger.debug('    Please check logs and files in %s', self.dirs['work'])
             return 'Failed'
 
+        # Parse the aimless logfile to look for resolution cutoff.
+        aimlog = open(aimless_log, "r").readlines()
+        for line in aimlog:
+            if 'High resolution limit' in line:
+                current_resolution = line.split()[-1]
+            elif 'from half-dataset correlation' in line:
+                resline = line
+            elif 'from Mn(I/sd) >  1.50' in line:
+                resline2 = line
+                break
+
+        # If manually overiding the hi_res
         if self.settings.get("hi_res", False):
             res_cut = self.settings.get("hi_res")
+        # Determine from data
         else:
-            # Parse the aimless logfile to look for resolution cutoff.
-            aimlog = open(aimless_log, "r").readlines()
-            for line in aimlog:
-                if 'High resolution limit' in line:
-                    current_resolution = line.split()[-1]
-                elif 'from half-dataset correlation' in line:
-                    resline = line
-                elif 'from Mn(I/sd) >  1.50' in line:
-                    resline2 = line
-                    break
             res_cut = resline.split('=')[1].split('A')[0].strip()
             res_cut2 = resline2.split('=')[1].split('A')[0].strip()
             if float(res_cut2) < float(res_cut):
