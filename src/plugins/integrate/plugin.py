@@ -550,8 +550,6 @@ class RapdPlugin(Process):
 
         # If known xds_errors occur, catch them and take corrective action
         newinp = self.check_for_xds_errors(xdsdir, xdsinp)
-        pprint(newinp)
-        sys.exit()
         if newinp == False:
             self.logger.exception('Unknown xds error occurred. Please check for cause!')
             self.tprint(arg="\nXDS error unknown to RAPD has occurred. Please check for cause!",
@@ -564,7 +562,6 @@ class RapdPlugin(Process):
         prelim_results = self.run_results(xdsdir)
         self.tprint("\nPreliminary results summary", 99, "blue")
         self.print_results(prelim_results)
-        # pprint(prelim_results["summary"])
 
         # Grab the spacegroup from the Pointless output and convert to number for XDS
         sg_let_pointless = prelim_results["summary"]["scaling_spacegroup"]
@@ -599,6 +596,7 @@ class RapdPlugin(Process):
 
         # Already have hi res cutoff
         if self.hi_res:
+            print "HAVE hi_res"
             new_rescut = self.hi_res
         # Find a suitable cutoff for resolution
         else:
@@ -644,6 +642,8 @@ class RapdPlugin(Process):
                 os.rename('%s/GXPARM.XDS' % xdsdir, '%s/XPARM.XDS' % xdsdir)
             os.rename('%s/CORRECT.LP' % xdsdir, '%s/CORRECT.LP.old' % xdsdir)
             os.rename('%s/XDS.LOG' % xdsdir, '%s/XDS.LOG.old' % xdsdir)
+            pprint(newinp)
+            sys.exit()
             self.write_file(xdsfile, newinp)
             self.tprint(arg="  Polishing",
                         level=99,
