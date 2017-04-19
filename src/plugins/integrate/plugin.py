@@ -516,8 +516,6 @@ class RapdPlugin(Process):
         xdsinp = self.change_xds_inp(xdsinp, "DATA_RANGE=%s\n" % data_range)
         xdsfile = os.path.join(xdsdir, 'XDS.INP')
         self.write_file(xdsfile, xdsinp)
-        pprint(xdsinp)
-        sys.exit()
         self.tprint(arg="  Searching for peaks",
                     level=99,
                     color="white",
@@ -544,6 +542,8 @@ class RapdPlugin(Process):
                 "JOB=DEFPIX INTEGRATE CORRECT \n\n")
 
         self.write_file(xdsfile, xdsinp)
+        pprint(xdsinp)
+        sys.exit()
         self.tprint(arg="  Integrating",
                     level=99,
                     color="white",
