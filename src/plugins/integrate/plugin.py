@@ -1431,14 +1431,15 @@ class RapdPlugin(Process):
         Takes the results from xds integration/scaling and prepares
         tables and plots for the user interface.
         """
+
         self.logger.debug('FastIntegration::run_results')
+
         os.chdir(directory)
 
         orig_rescut = False
 
         # Open up the GXPARM for info
         xparm = self.parse_xparm()
-        # pprint(xparm)
 
         # Run pointless to convert XDS_ASCII.HKL to mtz format.
         mtzfile = self.pointless()
@@ -1449,23 +1450,26 @@ class RapdPlugin(Process):
             aimless_log = self.aimless(mtzfile)
         else:
             self.logger.debug('    Pointless did not run properly!')
-            self.logger.debug('    Please check logs and files in %s' %self.dirs['work'])
+            self.logger.debug('    Please check logs and files in %s', self.dirs['work'])
             return 'Failed'
 
-        # Parse the aimless logfile to look for resolution cutoff.
-        aimlog = open(aimless_log, "r").readlines()
-        for line in aimlog:
-            if 'High resolution limit' in line:
-                current_resolution = line.split()[-1]
-            elif 'from half-dataset correlation' in line:
-                resline = line
-            elif 'from Mn(I/sd) >  1.50' in line:
-                resline2 = line
-                break
-        res_cut = resline.split('=')[1].split('A')[0].strip()
-        res_cut2 = resline2.split('=')[1].split('A')[0].strip()
-        if float(res_cut2) < float(res_cut):
-            res_cut = res_cut2
+        if self.settings.get("hi_res", False):
+            res_cut = self.settings.get("hi_res")
+        else:
+            # Parse the aimless logfile to look for resolution cutoff.
+            aimlog = open(aimless_log, "r").readlines()
+            for line in aimlog:
+                if 'High resolution limit' in line:
+                    current_resolution = line.split()[-1]
+                elif 'from half-dataset correlation' in line:
+                    resline = line
+                elif 'from Mn(I/sd) >  1.50' in line:
+                    resline2 = line
+                    break
+            res_cut = resline.split('=')[1].split('A')[0].strip()
+            res_cut2 = resline2.split('=')[1].split('A')[0].strip()
+            if float(res_cut2) < float(res_cut):
+                res_cut = res_cut2
 
         # Run aimless with a higher resolution cutoff if the suggested resolution
         # is greater than the initial resolution + 0.05.
