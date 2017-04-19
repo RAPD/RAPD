@@ -133,8 +133,8 @@ class RapdPlugin(Process):
         command -- dict of all information for this plugin to run
         """
 
-        # pprint(command)
-        # sys.exit()
+        pprint(command)
+        sys.exit()
 
         # Store tprint for use throughout
         if tprint:
