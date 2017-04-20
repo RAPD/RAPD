@@ -130,6 +130,18 @@ def get_commandline():
                            dest="verbose",
                            help="Run with less output")
 
+    # Color
+    # my_parser.add_argument("--color",
+    #                        action="store_false",
+    #                        dest="no_color",
+    #                        help="Color the terminal output")
+
+    # No color
+    my_parser.add_argument("--nocolor",
+                           action="store_true",
+                           dest="no_color",
+                           help="Do not color the terminal output")
+
     # Positional argument
     my_parser.add_argument(action="store",
                            dest="datafile",
