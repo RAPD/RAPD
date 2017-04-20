@@ -59,6 +59,7 @@ import uuid
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
+# import utils.xutils as xutils
 import info
 
 # Software dependencies
@@ -159,7 +160,7 @@ class RapdPlugin(multiprocessing.Process):
         self.clean = self.command["preferences"].get("clean", True)
         self.gui = self.command["preferences"].get("gui", True)
         self.verbose = self.command["preferences"].get("verbose", False)
-        self.datafile = xutils.convert_unicode(self.command["input_data"].get("datafile"))
+        # self.datafile = xutils.convert_unicode(self.command["input_data"].get("datafile"))
 
         multiprocessing.Process.__init__(self, name="pdbquery")
         self.start()

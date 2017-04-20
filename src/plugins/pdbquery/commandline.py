@@ -71,11 +71,16 @@ def construct_command(commandline_args, logger):
     # Check the work directory
     commandline_utils.check_work_dir(command["directories"]["work"], True)
 
-    # Plugin settings
-    command["preferences"] = {}
+    # Information on input
+    command["input_data"] = {
+        "datafile": os.path.abspath(commandline_args.datafile)
+    }
 
-    # JSON output?
-    # command["preferences"]["json_output"] = commandline_args.json
+    # Plugin settings
+    command["preferences"] = {
+        "json": commandline_args.json,
+        "test": commandline_args.test,
+    }
 
     logger.debug("Command for pdbquery plugin: %s", command)
 
@@ -83,8 +88,6 @@ def construct_command(commandline_args, logger):
 
 def get_commandline():
     """Grabs the commandline"""
-
-    print "get_commandline"
 
     # Parse the commandline arguments
     commandline_description = "Launch pdbquery plugin"
@@ -172,7 +175,7 @@ def main():
     # Set up terminal printer
     # Verbosity
     if commandline_args.verbose:
-        terminal_log_level = 30
+        terminal_log_level = 10
     elif commandline_args.json:
         terminal_log_level = 100
     else:
@@ -214,7 +217,7 @@ def main():
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
     # Run the plugin
-    plugin.RapdPlugin(None, command, tprint, logger)
+    plugin.RapdPlugin(command, tprint, logger)
 
 if __name__ == "__main__":
 
