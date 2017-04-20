@@ -54,7 +54,7 @@ import utils.text as text
 import utils.commandline_utils as commandline_utils
 import detectors.detector_utils as detector_utils
 
-def construct_command(image_headers, commandline_args, detector_module, logger):
+def construct_command(commandline_args, logger):
     """Put together the command for the plugin"""
 
     # The task to be carried out

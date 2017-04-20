@@ -227,7 +227,7 @@ class FileGenerator(CommandlineFileGenerator):
         """Write the construct command function of the commandline.py"""
 
         construct_command_func_lines = [
-            "def construct_command(image_headers, commandline_args, detector_module, logger):",
+            "def construct_command(commandline_args, logger):",
             "    \"\"\"Put together the command for the plugin\"\"\"\n",
             "    # The task to be carried out",
             "    command = {",
