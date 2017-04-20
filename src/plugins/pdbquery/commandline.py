@@ -113,17 +113,17 @@ def get_commandline():
     my_parser = argparse.ArgumentParser(description=commandline_description)
 
     # A True/False flag
-    my_parser.add_argument("-c", "--commandline",
+    my_parser.add_argument("-test", "--test",
                            action="store_true",
-                           dest="commandline",
-                           help="Generate commandline argument parsing")
+                           dest="test",
+                           help="Run in test mode")
 
     # Positional argument
     my_parser.add_argument(action="store",
-                           dest="file",
+                           dest="datafile",
                            nargs="?",
                            default=False,
-                           help="Name of file to be generated")
+                           help="NName of file to be analyzed")
 
     # Print help message if no arguments
     if len(sys.argv[1:])==0:
@@ -156,11 +156,10 @@ def main():
     log_level = 10
 
     # Set up logging
-    if commandline_args.logging:
-        logger = utils.log.get_logger(logfile_dir="./",
-                                      logfile_id="rapd_index",
-                                      level=log_level,
-                                      console=commandline_args.test)
+    logger = utils.log.get_logger(logfile_dir="./",
+                                  logfile_id="rapd_pdbquery",
+                                  level=log_level,
+                                  console=commandline_args.test)
 
     # Set up terminal printer
     # Verbosity
@@ -305,6 +304,4 @@ def main():
 
 if __name__ == "__main__":
 
-    commandline_args = get_commandline()
-
-    main(args=commandline_args)
+    main()
