@@ -59,45 +59,23 @@ def construct_command(commandline_args, logger):
 
     # The task to be carried out
     command = {
-        "command": "INDEX",
+        "command": "PDBQUERY",
         "process_id": uuid.uuid1().get_hex(),
         }
 
-    # Working directory
-    # image_numbers = []
-    # image_template =
-    # for _, header in image_headers.iteritems():
-    #     image_numbers.append(str(header["image_number"]))
-    #     image_template = header["image_template"]
-    # image_numbers.sort()
-    # run_repr = "rapd_index_" + image_template.replace(detector_module.DETECTOR_SUFFIX, "").replace("?", "")
-    # run_repr += "+".join(image_numbers)
-
+    # Work directory
     command["directories"] = {
-        "work": os.path.join(os.path.abspath(os.path.curdir), "pdbquery")# run_repr)
+        "work": os.path.join(os.path.abspath(os.path.curdir), "pdbquery")
         }
 
-    # Handle work directory
+    # Check the work directory
     commandline_utils.check_work_dir(command["directories"]["work"], True)
-
-    # Image data
-    images = image_headers.keys()
-    images.sort()
-    counter = 0
-    for image in images:
-        counter += 1
-        command["header%d" % counter] = image_headers[image]
-    if counter == 1:
-        command["header2"] = None
 
     # Plugin settings
     command["preferences"] = {}
 
     # JSON output?
-    command["preferences"]["json_output"] = commandline_args.json
-
-    # Show plots
-    command["preferences"]["show_plots"] = commandline_args.plotting
+    # command["preferences"]["json_output"] = commandline_args.json
 
     logger.debug("Command for pdbquery plugin: %s", command)
 
@@ -141,6 +119,12 @@ def get_commandline():
                            action="store_true",
                            dest="no_color",
                            help="Do not color the terminal output")
+
+    # JSON Output
+    my_parser.add_argument("-j", "--json",
+                           action="store_true",
+                           dest="json",
+                           help="Output JSON format string")
 
     # Positional argument
     my_parser.add_argument(action="store",
