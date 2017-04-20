@@ -700,8 +700,7 @@ class FileGenerator(CommandlineFileGenerator):
             "        verbosity = 1\n",
             "    unittest.main(verbosity=verbosity)\n",
             "    if __name__ == \"__main__\":\n",
-            "        commandline_args = get_commandline()\n",
-            "        main(args=commandline_args)\n",
+            "        main()\n",
         ]
         file_generator.output_function(main_func_lines)
 
