@@ -215,8 +215,8 @@ def main():
         logger.debug("  " + key + " : " + val)
         tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
 
-        command = construct_command(commandline_args=commandline_args,
-                                    logger=logger)
+    command = construct_command(commandline_args=commandline_args,
+                                logger=logger)
 
     plugin = modules.load_module(seek_module="plugin",
                                  directories=["plugins.analysis"],

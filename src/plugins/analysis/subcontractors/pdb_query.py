@@ -37,15 +37,15 @@ import time
 import urllib2
 
 # RAPD imports
-from phaser_run import RunPhaser
+from phaser_run import phaser_func
+from plugins.subcontractors.parse import ParseOutputPhaser, setPhaserFailed
 # import parse as Parse
 # import summary as Summary
 # from utils.communicate import rapd_send
-import utils.site as site_utils
+# import utils.site as site_utils
 import utils.xutils as xutils
 
 PDBQ_SERVER = "remote.nec.aps.anl.gov:3030"
-POOL = Pool(processes=4)
 
 class PDBQuery(Process):
 
@@ -184,9 +184,9 @@ class PDBQuery(Process):
 
         self.query_pdbq()
         self.add_common_pdb()
-        self.process_phaser()
-        sys.exit()
-        self.run_queue()
+        phaser_results_raw = self.process_phaser()
+        self.postprocess_phaser(phaser_results_raw)
+        pprint(self.phaser_results)
 
     def query_pdbq(self):
         """
@@ -367,26 +367,30 @@ class PDBQuery(Process):
         self.logger.debug("process_phaser")
         self.tprint("\nStarting molecular replacement", level=30, color="blue")
 
-        def launch_job(inp):
-            """Run a phaser process and retrieve results"""
-
-            print "launch_job", inp
-
-            # queue = Queue()
-            # result = POOL.apply_async(RunPhaser, (inp, queue, self.logger))
-
-            queue = Queue()
-            job = Process(target=RunPhaser, args=(inp, queue, self.logger))
-            job.start()
-            # Get results
-            queue.get()  # For the log I don"t use
-            self.jobs[job] = inp["name"]
-            self.pids[inp["name"]] = queue.get()
+        # POOL = Pool(processes=4)
+        #
+        # def launch_job(inp):
+        #     """Run a phaser process and retrieve results"""
+        #
+        #     print "launch_job", inp
+        #
+        #     queue = Queue()
+        #     result = POOL.apply_async(phaser_func, (inp, queue, self.logger))
+        #
+        #     # queue = Queue()
+        #     # job = Process(target=RunPhaser, args=(inp, queue, self.logger))
+        #     # job.start()
+        #     # # Get results
+        #     # queue.get()  # For the log I don"t use
+        #     # self.jobs[job] = inp["name"]
+        #     # self.pids[inp["name"]] = queue.get()
 
         # Run through the pdbs
+        self.tprint("  Assembling Phaser runs", level=10, color="white")
+        commands = []
         for code in self.cell_output.keys():
 
-            self.tprint("  %s" % code, level=30, color="white")
+            self.tprint("    %s" % code, level=30, color="white")
 
             l = False
             copy = 1
@@ -406,18 +410,18 @@ class PDBQuery(Process):
                 cached_file = os.path.join(self.cif_cache, gzip_file)
                 # print "cached_file", cached_file
                 if os.path.exists(cached_file):
-                    self.tprint("    Have cached cif file %s" % gzip_file, level=10, color="white")
+                    self.tprint("      Have cached cif file %s" % gzip_file, level=10, color="white")
 
                 else:
                     # Get the gzipped cif file from the PDBQ server
-                    self.tprint("  Fetching %s" % cif_file, level=10, color="white")
+                    self.tprint("      Fetching %s" % cif_file, level=10, color="white")
                     try:
                         response = urllib2.urlopen(urllib2.Request(\
                                    "http://%s/pdbq/entry/get_cif/%s" % \
                                    (PDBQ_SERVER, cif_file.replace(".cif", "")))\
                                    , timeout=60).read()
                     except urllib2.HTTPError as http_error:
-                        self.tprint("  %s when fetching %s" % (http_error, cif_file),
+                        self.tprint("      %s when fetching %s" % (http_error, cif_file),
                                     level=50,
                                     color="red")
                         continue
@@ -433,14 +437,14 @@ class PDBQuery(Process):
             # No local CIF file cache
             else:
                 # Get the gzipped cif file from the PDBQ server
-                self.tprint("  Fetching %s" % cif_file, level=10, color="white")
+                self.tprint("      Fetching %s" % cif_file, level=10, color="white")
                 try:
                     response = urllib2.urlopen(urllib2.Request(\
                                "http://%s/pdbq/entry/get_cif/%s" % \
                                (PDBQ_SERVER, cif_file.replace(".cif", ""))), \
                                timeout=60).read()
                 except urllib2.HTTPError as http_error:
-                    self.tprint("%s when fetching %s" % (http_error, cif_file),
+                    self.tprint("      %s when fetching %s" % (http_error, cif_file),
                                 level=50,
                                 color="red")
                     continue
@@ -472,14 +476,14 @@ class PDBQuery(Process):
             # Now check all SG's
             sg_num = xutils.convert_spacegroup(sg_pdb)
             lg_pdb = xutils.get_sub_groups(sg_num, "simple")
-            self.tprint("    %s spacegroup: %s (%s)" % (cif_file, sg_pdb, sg_num),
+            self.tprint("      %s spacegroup: %s (%s)" % (cif_file, sg_pdb, sg_num),
                         level=10,
                         color="white")
             self.tprint("    subgroups: %s" % str(lg_pdb), level=10, color="white")
 
             # SG from data
             data_spacegroup = xutils.convert_spacegroup(self.laue, True)
-            self.tprint("    Data spacegoup: %s" % data_spacegroup, level=10, color="white")
+            # self.tprint("      Data spacegroup: %s" % data_spacegroup, level=10, color="white")
 
             # Fewer mols in AU or in self.common.
             if code in self.common or float(self.laue) > float(lg_pdb):
@@ -521,6 +525,7 @@ class PDBQuery(Process):
                                                data_file=self.datafile)
 
             job_description = {
+                "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % code)),
                 "data": self.datafile,
                 "pdb": cif_file,
                 "name": code,
@@ -532,25 +537,41 @@ class PDBQuery(Process):
                 "cell analysis": True,
                 "large": self.large_cell,
                 "res": xutils.set_phaser_res(pdb_info["all"]["res"], self.large_cell, self.dres),
-                }
-
-            print l
+                "timeout": self.phaser_timer}
 
             if not l:
-                launch_job(job_description)
+                commands.append(job_description)
             else:
                 # d1 = {}
                 for chain in l:
                     new_code = "%s_%s" % (code, chain)
                     xutils.folders(self, "Phaser_%s" % new_code)
                     job_description.update({
+                        "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % \
+                            new_code)),
                         "pdb":pdb_info[chain]["file"],
                         "name":new_code,
                         "copy":pdb_info[chain]["NMol"],
                         "res":xutils.set_phaser_res(pdb_info[chain]["res"],
                                                     self.large_cell,
                                                     self.dres)})
-                    launch_job(job_description)
+
+                    commands.append(job_description)
+
+        # pprint(commands)
+        # phaser_results = []
+        # for command in commands:
+        #     phaser_results.append(phaser_func(command))
+
+        # Run in pool
+        pool = Pool(2)
+        self.tprint("    Initiating Phaser runs", level=10, color="white")
+        results = pool.map_async(phaser_func, commands)
+        pool.close()
+        pool.join()
+        phaser_results = results.get()
+
+        return phaser_results
 
     def process_refine(self, inp):
         """
@@ -576,60 +597,42 @@ class PDBQuery(Process):
         except:
             self.logger.exception("**ERROR in PDBQuery.process_refine**")
 
-    def postprocess_phaser(self, inp):
+    def postprocess_phaser(self, phaser_results):
         """
         Look at Phaser results.
         """
-        if self.verbose:
-            self.logger.debug("PDBQuery::postprocess_phaser")
 
-        try:
+        self.logger.debug("postprocess_phaser")
+
+        for phaser_result in phaser_results:
+
+            pprint(phaser_result)
+
+            pdb_code = phaser_result["pdb_code"]
+            phaser_lines = phaser_result["log"].split("\n")
+
             nosol = False
-            output = []
-            if os.path.exists("phaser.log"):
-                #For older versions of Phaser
-                #data = Parse.ParseOutputPhaser(self,open("%s.sum"%inp,"r").readlines())
-                data = Parse.ParseOutputPhaser(self, open("phaser.log", "r").readlines())
-                if data["AutoMR sg"] in ("No solution", "Timed out", "NA", "DL FAILED"):
+
+            data = ParseOutputPhaser(self, phaser_lines)
+            pprint(data)
+            if data["AutoMR sg"] in ("No solution", "Timed out", "NA", "DL FAILED"):
+                nosol = True
+            else:
+                # Check for negative or low LL-Gain.
+                if float(data["AutoMR gain"]) < 200.0:
                     nosol = True
-                else:
-                    #Check for negative or low LL-Gain.
-                    if float(data["AutoMR gain"]) < 200.0:
-                        nosol = True
-                if nosol:
-                    self.phaser_results[inp] = {"AutoMR results":Parse.setPhaserFailed("No solution")}
-                else:
-                    self.phaser_results[inp] = {"AutoMR results":data}
-                if self.rigid:
-                    if nosol:
-                        #Tells Queue job is finished
-                        os.system("touch rigid.com")
-                    else:
-                        output.append("rigid")
-                if self.adf:
-                    if nosol:
-                        #Tells Queue job is finished
-                        os.system("touch adf.com")
-                    else:
-                        #Put path of map and peaks pdb in results
-                        self.phaser_results[inp].get("AutoMR results").update({"AutoMR adf": "%s_adf.map" % inp})
-                        self.phaser_results[inp].get("AutoMR results").update({"AutoMR peak":"%s_adf_peak.pdb" % inp})
-                        output.append("ADF")
-            elif self.test:
-                #Set output for Phaser runs that didn't actually run.
-                self.phaser_results[inp] = {"AutoMR results":Parse.setPhaserFailed("No solution")}
-
-            return output
-
-        except:
-            self.logger.exception("**ERROR in PDBQuery.postprocess_phaser**")
+            if nosol:
+                self.phaser_results[pdb_code] = {"AutoMR results": \
+                    setPhaserFailed("No solution")}
+            else:
+                self.phaser_results[pdb_code] = {"AutoMR results":data}
 
     def run_queue(self):
         """
         queue system.
         """
-        if self.verbose:
-            self.logger.debug("PDBQuery::run_queue")
+
+        self.logger.debug("PDBQuery::run_queue")
 
         try:
             timed_out = False
@@ -648,22 +651,22 @@ class PDBQuery(Process):
                             #if self.verbose:
                             self.logger.debug("Finished Phaser on %s" % code)
                             p = self.postprocess_phaser(code)
-                            if p.count("rigid"):
-                                if os.path.exists("rigid.log") == False:
-                                    j = Process(target=self.process_refine, args=(code, ))
-                                    j.start()
-                                    new_jobs.append(j)
-                                    if self.test:
-                                        time.sleep(5)
-                            if p.count("ADF"):
-                                if os.path.exists("adf.com") == False:
-                                    j = Process(target=xutils.calcADF, args=(self, code))
-                                    j.start()
-                                    new_jobs.append(j)
-                            if len(new_jobs) > 0:
-                                for j1 in new_jobs:
-                                    self.jobs[j1] = code
-                                    jobs.append(j1)
+                            # if p.count("rigid"):
+                            #     if os.path.exists("rigid.log") == False:
+                            #         j = Process(target=self.process_refine, args=(code, ))
+                            #         j.start()
+                            #         new_jobs.append(j)
+                            #         if self.test:
+                            #             time.sleep(5)
+                            # if p.count("ADF"):
+                            #     if os.path.exists("adf.com") == False:
+                            #         j = Process(target=xutils.calcADF, args=(self, code))
+                            #         j.start()
+                            #         new_jobs.append(j)
+                            # if len(new_jobs) > 0:
+                            #     for j1 in new_jobs:
+                            #         self.jobs[j1] = code
+                            #         jobs.append(j1)
                     time.sleep(0.2)
                     timer += 0.2
                     if self.phaser_timer:

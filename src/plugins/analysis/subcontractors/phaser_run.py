@@ -38,7 +38,8 @@ import os
 # import re
 # import redis
 import shutil
-import subprocess
+import signal
+import subprocess32 as subprocess
 import sys
 import time
 # import unittest
@@ -219,36 +220,43 @@ class RunPhaser(Process):
         # except:
         #   self.logger.exception("**Error in RunPhaser.process**")
 
-def phaser_func(inp, output=False, logger=None):
+def phaser_func(inp):
     """
     #The minimum input
     {"input":{"data":self.datafile,"pdb":self.input_pdb,"sg":self.sg,}
      "output",
      "logger}
     """
-    print "phaser_func"
-    logger.info("RunPhaser.__init__")
-    input = inp
-    output = output
-    logger = logger
+
+    # Change to correct directory
+    print "changing to %s" % inp["work_dir"]
+    os.chdir(inp["work_dir"])
+
+    # print "phaser_func"
+    # print inp
+    # logger.info("RunPhaser.__init__")
+    # input = inp
+    # output = output
+    # logger = logger
     # setup params
     run_before = inp.get("run_before", False)
     # verbose = inp.get("verbose", False)
     copy = inp.get("copy", 1)
     res = inp.get("res", False)
-    test = inp.get("test", False)
-    cluster_use = inp.get("cluster", True)
+    # test = inp.get("test", False)
+    # cluster_use = inp.get("cluster", True)
     datafile = inp.get("data")
     input_pdb = inp.get("pdb")
     sg = inp.get("sg")
     ca = inp.get("cell analysis", False)
-    #mwaa = inp.get("mwaa", False)
-    #mwna = inp.get("mwna", False)
     n = inp.get("name", sg)
     large_cell = inp.get("large", False)
+    timeout = inp.get("timeout", False)
+
+    # print "phaser_func"
     # try:
     ft = "PDB"
-    command  = "phaser << eof\nMODE MR_AUTO\n"
+    command = "phaser << eof\nMODE MR_AUTO\n"
     command += "HKLIn %s\nLABIn F=F SIGF=SIGF\n" % datafile
     if input_pdb[-3:].lower() == "cif":
         ft = "CIF"
@@ -307,14 +315,33 @@ def phaser_func(inp, output=False, logger=None):
     f = open("phaser.com", "w")
     f.writelines(command)
     f.close()
-    if output:
-        output.put(command)
+
+    # print command
+
     command = "sh phaser.com"
-    # command = "which phaser"
-    print os.path.exists("phaser.com")
-    # queue = Queue()
+
     phaser_proc = subprocess.Popen([command],
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE,
-                                   shell=True)
-    phaser_proc.wait()
+                                   shell=True,
+                                   preexec_fn=os.setsid)
+    try:
+        stdout, _ = phaser_proc.communicate(timeout=timeout)
+        # print stdout
+        # print stderr
+        return {"pdb_code": input_pdb.replace(".pdb", ""),
+                "log": stdout,
+                "status": "COMPLETE"}
+    except subprocess.TimeoutExpired:
+        print "  killing %d" % phaser_proc.pid
+        os.killpg(os.getpgid(phaser_proc.pid), signal.SIGTERM)
+        return {"pdb_code": input_pdb.replace(".pdb", ""),
+                "log": "Timed out after %d seconds" % timeout,
+                "status": "ERROR"}
+        # try:
+        #     phaser_proc.communicate(subprocess.signal.SIGTERM)
+        # except ValueError:
+        #
+        #     print "Have ValueError"
+        #
+        #     time.sleep(30)
