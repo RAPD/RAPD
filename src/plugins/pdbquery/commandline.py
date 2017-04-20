@@ -112,11 +112,23 @@ def get_commandline():
     commandline_description = "Launch pdbquery plugin"
     my_parser = argparse.ArgumentParser(description=commandline_description)
 
-    # A True/False flag
-    my_parser.add_argument("-test", "--test",
+    # Run in test mode
+    my_parser.add_argument("-t", "--test",
                            action="store_true",
                            dest="test",
                            help="Run in test mode")
+
+    # Verbose
+    # my_parser.add_argument("-v", "--verbose",
+    #                        action="store_true",
+    #                        dest="verbose",
+    #                        help="More output")
+
+    # Quiet
+    my_parser.add_argument("-q", "--quiet",
+                           action="store_false",
+                           dest="verbose",
+                           help="Run with less output")
 
     # Positional argument
     my_parser.add_argument(action="store",
