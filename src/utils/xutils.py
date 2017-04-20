@@ -2197,7 +2197,7 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=F
                     if matthews:
                         # Run Matthews Calc. on chain
                         phaser_return = run_phaser_module((np1, na1, dres, n, data_file))
-                        print ">>>>", phaser_return, "<<<<"
+                        # print ">>>>", phaser_return, "<<<<"
                         #   nmol, sc, res1 = run_phaser_module((np1, na1, dres, n, data_file))
                     else:
                         res1 = run_phaser_module(n)
@@ -2226,10 +2226,10 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=F
                     'SC': phaser_return["solvent_content"],
                     'res': phaser_return["target_resolution"]}
     else:
-        print "NOT Matthews"
+        # print "NOT Matthews"
         # phaser_return = run_phaser_module(cif_file)
         phaser_return = run_phaser_module((np, na, dres, cif_file, data_file))
-        print phaser_return
+        # print phaser_return
         d['all'] = {'file': cif_file,
                     'NRes': np+na,
                     'MWna': na*330,

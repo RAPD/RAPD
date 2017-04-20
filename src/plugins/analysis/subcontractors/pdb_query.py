@@ -364,7 +364,7 @@ class PDBQuery(Process):
         """Start Phaser for input pdb"""
 
         self.logger.debug("process_phaser")
-        self.tprint("Starting molecular replacement", level=20, color="white")
+        self.tprint("\nStarting molecular replacement", level=30, color="blue")
 
         def launch_job(inp):
             """Run a phaser process and retrieve results"""
@@ -382,7 +382,7 @@ class PDBQuery(Process):
         # Run through the pdbs
         for code in self.cell_output.keys():
 
-            self.trprin
+            self.tprint("  %s" % code, level=30, color="white")
 
             l = False
             copy = 1
@@ -392,25 +392,30 @@ class PDBQuery(Process):
 
             # The cif file name
             cif_file = os.path.basename(self.cell_output[code].get("path"))
-            print "cif_file", cif_file
+            # print "cif_file", cif_file
             gzip_file = cif_file+".gz"
-            print "gzip_file", gzip_file
+            # print "gzip_file", gzip_file
             cached_file = False
 
             # Is the cif file in the local cache?
             if self.cif_cache:
                 cached_file = os.path.join(self.cif_cache, gzip_file)
-                print "cached_file", cached_file
+                # print "cached_file", cached_file
                 if os.path.exists(cached_file):
-                    self.tprint("  Have cached cif file %s" % gzip_file, level=10, color="white")
+                    self.tprint("    Have cached cif file %s" % gzip_file, level=10, color="white")
 
                 else:
                     # Get the gzipped cif file from the PDBQ server
                     self.tprint("  Fetching %s" % cif_file, level=10, color="white")
                     try:
-                        response = urllib2.urlopen(urllib2.Request("http://%s/pdbq/entry/get_cif/%s" % (PDBQ_SERVER, cif_file.replace(".cif", ""))), timeout=60).read()
-                    except urllib2.HTTPError as e:
-                        self.tprint("  %s when fetching %s" % (e, cif_file), level=50, color="red")
+                        response = urllib2.urlopen(urllib2.Request(\
+                                   "http://%s/pdbq/entry/get_cif/%s" % \
+                                   (PDBQ_SERVER, cif_file.replace(".cif", "")))\
+                                   , timeout=60).read()
+                    except urllib2.HTTPError as http_error:
+                        self.tprint("  %s when fetching %s" % (http_error, cif_file),
+                                    level=50,
+                                    color="red")
                         continue
 
                     # Write the  gzip file
@@ -418,7 +423,7 @@ class PDBQuery(Process):
                         outfile.write(response)
 
                 # Copy the gzip file to the cwd
-                print "Copying %s to %s" % (cached_file, os.path.join(os.getcwd(), gzip_file))
+                # print "Copying %s to %s" % (cached_file, os.path.join(os.getcwd(), gzip_file))
                 shutil.copy(cached_file, os.path.join(os.getcwd(), gzip_file))
 
             # No local CIF file cache
@@ -426,9 +431,14 @@ class PDBQuery(Process):
                 # Get the gzipped cif file from the PDBQ server
                 self.tprint("  Fetching %s" % cif_file, level=10, color="white")
                 try:
-                    response = urllib2.urlopen(urllib2.Request("http://%s/pdbq/entry/get_cif/%s" % (PDBQ_SERVER, cif_file.replace(".cif", ""))), timeout=60).read()
-                except urllib2.HTTPError as e:
-                    self.tprint("%s when fetching %s" % (e, cif_file), level=50, color="red")
+                    response = urllib2.urlopen(urllib2.Request(\
+                               "http://%s/pdbq/entry/get_cif/%s" % \
+                               (PDBQ_SERVER, cif_file.replace(".cif", ""))), \
+                               timeout=60).read()
+                except urllib2.HTTPError as http_error:
+                    self.tprint("%s when fetching %s" % (http_error, cif_file),
+                                level=50,
+                                color="red")
                     continue
 
                 # Write the  gzip file
@@ -449,21 +459,23 @@ class PDBQuery(Process):
                 continue
 
             # Convert from cif to pdb
-            conversion_proc = subprocess.Popen(["phenix.cif_as_pdb", cif_file])
+            conversion_proc = subprocess.Popen(["phenix.cif_as_pdb", cif_file],
+                                               stdout=subprocess.PIPE,
+                                               stderr=subprocess.PIPE)
             conversion_proc.wait()
             cif_file = cif_file.replace(".cif", ".pdb")
 
             # Now check all SG's
             sg_num = xutils.convert_spacegroup(sg_pdb)
             lg_pdb = xutils.get_sub_groups(sg_num, "simple")
-            self.tprint("  %s spacegroup: %s (%s)" % (cif_file, sg_pdb, sg_num),
+            self.tprint("    %s spacegroup: %s (%s)" % (cif_file, sg_pdb, sg_num),
                         level=10,
                         color="white")
-            self.tprint("  subgroups: %s" % str(lg_pdb), level=10, color="white")
+            self.tprint("    subgroups: %s" % str(lg_pdb), level=10, color="white")
 
             # SG from data
             data_spacegroup = xutils.convert_spacegroup(self.laue, True)
-            self.tprint("  Data spacegoup: %s" % data_spacegroup, level=10, color="white")
+            self.tprint("    Data spacegoup: %s" % data_spacegroup, level=10, color="white")
 
             # Fewer mols in AU or in self.common.
             if code in self.common or float(self.laue) > float(lg_pdb):
@@ -504,31 +516,38 @@ class PDBQuery(Process):
                                                cell_analysis=True,
                                                data_file=self.datafile)
 
-            d = {"data": self.datafile,
-                 "pdb": cif_file,
-                 "name": code,
-                 "verbose": self.verbose,
-                 "sg": data_spacegroup,
-                 "copy": copy,
-                 "test": self.test,
-                 "cluster": self.cluster_use,
-                 "cell analysis": True,
-                 "large": self.large_cell,
-                 "res": xutils.set_phaser_res(pdb_info["all"]["res"], self.large_cell, self.dres),
+            job_description = {
+                "data": self.datafile,
+                "pdb": cif_file,
+                "name": code,
+                "verbose": self.verbose,
+                "sg": data_spacegroup,
+                "copy": copy,
+                "test": self.test,
+                "cluster": self.cluster_use,
+                "cell analysis": True,
+                "large": self.large_cell,
+                "res": xutils.set_phaser_res(pdb_info["all"]["res"], self.large_cell, self.dres),
                 }
 
-            if l == False:
-                launch_job(d)
+            print l
+            continue
+
+            if not l:
+                launch_job(job_description)
             else:
-                d1 = {}
+                # d1 = {}
                 for chain in l:
                     new_code = "%s_%s" % (code, chain)
                     xutils.folders(self, "Phaser_%s" % new_code)
-                    d.update({"pdb":pdb_info[chain]["file"],
-                              "name":new_code,
-                              "copy":pdb_info[chain]["NMol"],
-                              "res":xutils.set_phaser_res(pdb_info[chain]["res"], self.large_cell, self.dres)})
-                    launch_job(d)
+                    job_description.update({
+                        "pdb":pdb_info[chain]["file"],
+                        "name":new_code,
+                        "copy":pdb_info[chain]["NMol"],
+                        "res":xutils.set_phaser_res(pdb_info[chain]["res"],
+                                                    self.large_cell,
+                                                    self.dres)})
+                    launch_job(job_description)
 
     def process_refine(self, inp):
         """
