@@ -336,7 +336,7 @@ class FileGenerator(CommandlineFileGenerator):
             #     "# Return address",
             # "    command["return_address"] = None",
             # "",
-            "    logger.debug(\"Command for index plugin: %s\", command)\n",
+            "    logger.debug(\"Command for %s plugin: %s\", (self.args.plugin_name, command))\n",
             "    return command\n",
         ]
         file_generator.output_function(construct_command_func_lines)
