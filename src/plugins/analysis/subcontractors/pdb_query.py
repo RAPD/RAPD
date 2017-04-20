@@ -27,7 +27,7 @@ __status__ = "Development"
 # Standard imports
 import gzip
 import json
-from multiprocessing import Process, Queue
+from multiprocessing import Pool, Process, Queue
 import os
 from pprint import pprint
 import shutil
@@ -45,6 +45,7 @@ import utils.site as site_utils
 import utils.xutils as xutils
 
 PDBQ_SERVER = "remote.nec.aps.anl.gov:3030"
+POOL = Pool(processes=4)
 
 class PDBQuery(Process):
 
@@ -371,6 +372,9 @@ class PDBQuery(Process):
 
             print "launch_job", inp
 
+            # queue = Queue()
+            # result = POOL.apply_async(RunPhaser, (inp, queue, self.logger))
+
             queue = Queue()
             job = Process(target=RunPhaser, args=(inp, queue, self.logger))
             job.start()
@@ -531,7 +535,6 @@ class PDBQuery(Process):
                 }
 
             print l
-            continue
 
             if not l:
                 launch_job(job_description)
