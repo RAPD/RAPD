@@ -2176,7 +2176,8 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=F
             if rg.atoms()[0].parent().resname in iotbx_pdb.common_residue_names_rna_dna:
                 na1 += 1
             # Not sure if I get duplicates?
-            if rg.atoms()[0].parent().resname in iotbx_pdb.common_residue_names_ccp4_mon_lib_rna_dna:
+            if rg.atoms()[0].parent().resname in \
+               iotbx_pdb.common_residue_names_ccp4_mon_lib_rna_dna:
                 na1 += 1
         # Limit to 10 chains?!?
         if nchains < 10:
@@ -2192,13 +2193,12 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=F
                     # Long was of making sure that user does not have directory named '.pdb' or
                     # '.cif'
                     n = os.path.join(os.path.dirname(cif_file), "%s_%s.pdb" % \
-                        (os.path.basename(cif_file)[:os.path.basename(cif_file).find('.')], chain.id))
+                        (os.path.basename(cif_file)[:os.path.basename(cif_file).find('.')], \
+                        chain.id))
                     temp.write_pdb_file(file_name=n)
                     if matthews:
                         # Run Matthews Calc. on chain
                         phaser_return = run_phaser_module((np1, na1, dres, n, data_file))
-                        # print ">>>>", phaser_return, "<<<<"
-                        #   nmol, sc, res1 = run_phaser_module((np1, na1, dres, n, data_file))
                     else:
                         res1 = run_phaser_module(n)
 
@@ -2215,7 +2215,6 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=F
 
     # Run on entire PDB
     if matthews:
-        # nmol, sc, res1 = run_phaser_module((np, na, dres, cif_file, data_file))
         phaser_return = run_phaser_module((np, na, dres, cif_file, data_file))
         d['all'] = {'file': cif_file,
                     'NRes': np+na,
@@ -2226,10 +2225,7 @@ def get_pdb_info(cif_file, dres, matthews=True, cell_analysis=False, data_file=F
                     'SC': phaser_return["solvent_content"],
                     'res': phaser_return["target_resolution"]}
     else:
-        # print "NOT Matthews"
-        # phaser_return = run_phaser_module(cif_file)
         phaser_return = run_phaser_module((np, na, dres, cif_file, data_file))
-        # print phaser_return
         d['all'] = {'file': cif_file,
                     'NRes': np+na,
                     'MWna': na*330,
