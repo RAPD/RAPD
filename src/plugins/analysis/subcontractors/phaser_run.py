@@ -218,3 +218,103 @@ class RunPhaser(Process):
         #             Process(target=Utils.processLocal, args=((command, "phaser.log"), self.logger)).start()
         # except:
         #   self.logger.exception("**Error in RunPhaser.process**")
+
+def phaser_func(inp, output=False, logger=None):
+    """
+    #The minimum input
+    {"input":{"data":self.datafile,"pdb":self.input_pdb,"sg":self.sg,}
+     "output",
+     "logger}
+    """
+    print "phaser_func"
+    logger.info("RunPhaser.__init__")
+    input = inp
+    output = output
+    logger = logger
+    # setup params
+    run_before = inp.get("run_before", False)
+    # verbose = inp.get("verbose", False)
+    copy = inp.get("copy", 1)
+    res = inp.get("res", False)
+    test = inp.get("test", False)
+    cluster_use = inp.get("cluster", True)
+    datafile = inp.get("data")
+    input_pdb = inp.get("pdb")
+    sg = inp.get("sg")
+    ca = inp.get("cell analysis", False)
+    #mwaa = inp.get("mwaa", False)
+    #mwna = inp.get("mwna", False)
+    n = inp.get("name", sg)
+    large_cell = inp.get("large", False)
+    # try:
+    ft = "PDB"
+    command  = "phaser << eof\nMODE MR_AUTO\n"
+    command += "HKLIn %s\nLABIn F=F SIGF=SIGF\n" % datafile
+    if input_pdb[-3:].lower() == "cif":
+        ft = "CIF"
+    if os.path.exists(input_pdb):
+        command += "ENSEmble junk %s %s IDENtity 70\n" % (ft, input_pdb)
+    else:
+        command += "ENSEmble junk %s ../%s IDENtity 70\n" % (ft, input_pdb)
+    """
+    #Makes LL-gain scores ~10% higher, but can decrease if residues are mis-identified. Not worth it.
+    if mwaa:
+      if mwaa > 0:
+        command += "COMPosition PROTein MW "+str(input["mwaa"])+" NUM "+str(input["copy"])+"\n"
+    if mwna:
+      if mwna > 0:
+        command += "COMPosition NUCLEIC MW "+str(input["mwna"])+" NUM "+str(input["copy"])+"\n"
+    """
+    command += "SEARch ENSEmble junk NUM %s\n" % copy
+    command += "SPACEGROUP %s\n" % sg
+    if ca:
+        command += "SGALTERNATIVE SELECT ALL\n"
+        # Set it for worst case in orth
+        command += "JOBS 8\n"
+    else:
+        command += "SGALTERNATIVE SELECT NONE\n"
+    if run_before:
+        # Picks own resolution
+        # Round 2, pick best solution as long as less that 10% clashes
+        command += "PACK SELECT PERCENT\n"
+        command += "PACK CUTOFF 10\n"
+    else:
+        # For first round and cell analysis
+        # Only set the resolution limit in the first round or cell analysis.
+        if res:
+            command += "RESOLUTION %s\n" % res
+        else:
+            # Otherwise it runs a second MR at full resolution!!
+            # I dont think a second round is run anymore.
+            # command += "RESOLUTION SEARCH HIGH OFF\n"
+            if large_cell:
+                command += "RESOLUTION 6\n"
+            else:
+                command += "RESOLUTION 4.5\n"
+        command += "SEARCH DEEP OFF\n"
+        # Don"t seem to work since it picks the high res limit now.
+        # Get an error when it prunes all the solutions away and TF has no input.
+        # command += "PEAKS ROT SELECT SIGMA CUTOFF 4.0\n"
+        # command += "PEAKS TRA SELECT SIGMA CUTOFF 6.0\n"
+    # Turn off pruning in 2.6.0
+    command += "SEARCH PRUNE OFF\n"
+    # Choose more top peaks to help with getting it correct.
+    command += "PURGE ROT ENABLE ON\nPURGE ROT NUMBER 3\n"
+    command += "PURGE TRA ENABLE ON\nPURGE TRA NUMBER 1\n"
+    # Only keep the top after refinement.
+    command += "PURGE RNP ENABLE ON\nPURGE RNP NUMBER 1\n"
+    command += "ROOT %s\neof\n" % n
+    f = open("phaser.com", "w")
+    f.writelines(command)
+    f.close()
+    if output:
+        output.put(command)
+    command = "sh phaser.com"
+    # command = "which phaser"
+    print os.path.exists("phaser.com")
+    # queue = Queue()
+    phaser_proc = subprocess.Popen([command],
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE,
+                                   shell=True)
+    phaser_proc.wait()
