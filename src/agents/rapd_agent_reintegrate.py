@@ -441,10 +441,16 @@ class ReIntegration(Process, Communicate):
                 osc_range = value.strip().split('=')[-1].split('!')[0]
             elif value.startswith('NAME_TEMPLATE'):
                 template = value.strip().split('=')[-1]
-                if '.img' in template:
-                    first_image = template.replace('???','%03d' % start)
-                elif '.cbf' in template:
-                    first_image = template.replace('????','%04d' % start)
+                pad = template.count('?')
+                # replace first instance of '?' with the start image number, padded out with zeros
+                # pad + 1 is needed to make sure the full number of digits are placed.
+                first_image = template.replace('?', '%d'.zfill(pad+1) % start, 1)
+                # replace the remaining '?'s with an empty string to remove them from the template
+                first_image = first_image.replace('?','')
+                #if '.img' in template:
+                #    first_image = template.replace('???','%03d' % start)
+                #elif '.cbf' in template:
+                #    first_image = template.replace('????','%04d' % start)
             #if value.startswith('SPOT_RANGE'):
             #    xdsinput[i] = ('SPOT_RANGE=%s %s\n' %(str(start), str(last)))
         data = {'first_image':first_image, 'osc_range':osc_range}
