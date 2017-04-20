@@ -61,6 +61,7 @@ def construct_command(commandline_args, logger):
     command = {
         "command": "PDBQUERY",
         "process_id": uuid.uuid1().get_hex(),
+        "status": 0,
         }
 
     # Work directory
@@ -73,12 +74,15 @@ def construct_command(commandline_args, logger):
 
     # Information on input
     command["input_data"] = {
-        "datafile": os.path.abspath(commandline_args.datafile)
+        "datafile": os.path.abspath(commandline_args.datafile),
+        "pdbs": commandline_args.pdbs
     }
 
     # Plugin settings
     command["preferences"] = {
+        "contaminants": commandline_args.contaminants,
         "json": commandline_args.json,
+        "nproc": commandline_args.nproc,
         "test": commandline_args.test,
     }
 
@@ -129,12 +133,31 @@ def get_commandline():
                            dest="json",
                            help="Output JSON format string")
 
-    # Positional argument
-    my_parser.add_argument(action="store",
-                           dest="datafile",
-                           nargs="?",
+    # Multiprocessing
+    my_parser.add_argument("--nproc",
+                           dest="nproc",
+                           type=int,
+                           default=1,
+                           help="Number of processors to employ")
+
+    # Run contaminant screen
+    my_parser.add_argument("--contaminants",
+                           action="store_true",
+                           dest="contaminants",
+                           help="Run screen of known common contaminants")
+
+    # Run contaminant screen
+    my_parser.add_argument("--pdbs",
+                           dest="pdbs",
+                           nargs="*",
                            default=False,
-                           help="Name of file to be analyzed")
+                           help="PDB codes to test")
+
+    # Positional argument
+    my_parser.add_argument("--datafile",
+                           dest="datafile",
+                           required=True,
+                           help="Name of data file to be analyzed")
 
     # Print help message if no arguments
     if len(sys.argv[1:])==0:
@@ -144,6 +167,12 @@ def get_commandline():
     args = my_parser.parse_args()
 
     # Insert logic to check or modify args here
+
+    # Capitalize pdb codes
+    tmp_pdbs = []
+    for pdb in args.pdbs:
+        tmp_pdbs.append(pdb.upper())
+    args.pdbs = tmp_pdbs
 
     return args
 

@@ -233,6 +233,7 @@ class FileGenerator(CommandlineFileGenerator):
             "    command = {",
             "        \"command\": \"%s\"," % self.args.plugin_name.upper(),
             "        \"process_id\": uuid.uuid1().get_hex(),",
+            "        \"status\": 0,",
             "        }\n",
             "    # Work directory",
             "    command[\"directories\"] = {",
@@ -248,6 +249,7 @@ class FileGenerator(CommandlineFileGenerator):
             "    # Plugin settings",
             "    command[\"preferences\"] = {",
             "        \"json\": commandline_args.json,"
+            "        \"nproc\": commandline_args.nproc,",
             "        \"test\": commandline_args.test,"
             "    }\n",
             "    logger.debug(\"Command for %s plugin: %s\", (self.args.plugin_name, command))\n",
@@ -297,6 +299,12 @@ class FileGenerator(CommandlineFileGenerator):
             "                           action=\"store_true\",",
             "                           dest=\"json\",",
             "                           help=\"Output JSON format string\")\n",
+            "    # Multiprocessing",
+            "    my_parser.add_argument(\"--nproc\",",
+            "                           dest=\"nproc\",",
+            "                           type=int,",
+            "                           default=1,",
+            "                           help=\"Number of processors to employ\")\n",
             "    # Positional argument",
             "    my_parser.add_argument(action=\"store\",",
             "                           dest=\"datafile\",",
