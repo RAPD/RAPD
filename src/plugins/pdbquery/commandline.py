@@ -83,6 +83,7 @@ def construct_command(commandline_args, logger):
         "contaminants": commandline_args.contaminants,
         "json": commandline_args.json,
         "nproc": commandline_args.nproc,
+        "search": commandline_args.search,
         "test": commandline_args.test,
     }
 
@@ -140,6 +141,12 @@ def get_commandline():
                            default=1,
                            help="Number of processors to employ")
 
+    # Run similarity search
+    my_parser.add_argument("--search",
+                           dest="search",
+                           action="store_true",
+                           help="Search for structures with similar unit cells")
+
     # Run contaminant screen
     my_parser.add_argument("--contaminants",
                            action="store_true",
@@ -169,10 +176,11 @@ def get_commandline():
     # Insert logic to check or modify args here
 
     # Capitalize pdb codes
-    tmp_pdbs = []
-    for pdb in args.pdbs:
-        tmp_pdbs.append(pdb.upper())
-    args.pdbs = tmp_pdbs
+    if args.pdbs:
+        tmp_pdbs = []
+        for pdb in args.pdbs:
+            tmp_pdbs.append(pdb.upper())
+        args.pdbs = tmp_pdbs
 
     return args
 

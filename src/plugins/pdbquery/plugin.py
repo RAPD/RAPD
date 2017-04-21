@@ -39,7 +39,7 @@ VERSION = "1.0.0"
 # import argparse
 # import from collections import OrderedDict
 # import datetime
-import glob
+# import glob
 import json
 import logging
 import multiprocessing
@@ -49,11 +49,12 @@ from pprint import pprint
 # import re
 # import redis
 import shutil
-import subprocess
+import subprocess32
 import sys
 import time
 # import unittest
-import uuid
+import urllib2
+# import uuid
 
 # RAPD imports
 # import commandline_utils
@@ -72,6 +73,104 @@ VERSIONS = {
         "gnuplot 5.0",
     )
 }
+
+def phaser_func(command):
+    """
+    Run phaser
+    """
+
+    # Change to correct directory
+    os.chdir(command["work_dir"])
+
+    # Setup params
+    run_before = command.get("run_before", False)
+    copy = command.get("copy", 1)
+    resolution = command.get("res", False)
+    datafile = command.get("data")
+    input_pdb = command.get("pdb")
+    spacegroup = command.get("sg")
+    cell_analysis = command.get("cell analysis", False)
+    name = command.get("name", spacegroup)
+    large_cell = command.get("large", False)
+    timeout = command.get("timeout", False)
+
+
+    # Construct the phaser command file
+    command = "phaser << eof\nMODE MR_AUTO\n"
+    command += "HKLIn %s\nLABIn F=F SIGF=SIGF\n" % datafile
+
+    # CIF or PDB?
+    structure_format = "PDB"
+    if input_pdb[-3:].lower() == "cif":
+        structure_format = "CIF"
+    command += "ENSEmble junk %s %s IDENtity 70\n" % (structure_format, input_pdb)
+    command += "SEARch ENSEmble junk NUM %s\n" % copy
+    command += "SPACEGROUP %s\n" % spacegroup
+    if cell_analysis:
+        command += "SGALTERNATIVE SELECT ALL\n"
+        # Set it for worst case in orth
+        command += "JOBS 8\n"
+    else:
+        command += "SGALTERNATIVE SELECT NONE\n"
+    if run_before:
+        # Picks own resolution
+        # Round 2, pick best solution as long as less that 10% clashes
+        command += "PACK SELECT PERCENT\n"
+        command += "PACK CUTOFF 10\n"
+    else:
+        # For first round and cell analysis
+        # Only set the resolution limit in the first round or cell analysis.
+        if resolution:
+            command += "RESOLUTION %s\n" % resolution
+        else:
+            # Otherwise it runs a second MR at full resolution!!
+            # I dont think a second round is run anymore.
+            # command += "RESOLUTION SEARCH HIGH OFF\n"
+            if large_cell:
+                command += "RESOLUTION 6\n"
+            else:
+                command += "RESOLUTION 4.5\n"
+        command += "SEARCH DEEP OFF\n"
+        # Don"t seem to work since it picks the high res limit now.
+        # Get an error when it prunes all the solutions away and TF has no input.
+        # command += "PEAKS ROT SELECT SIGMA CUTOFF 4.0\n"
+        # command += "PEAKS TRA SELECT SIGMA CUTOFF 6.0\n"
+
+    # Turn off pruning in 2.6.0
+    command += "SEARCH PRUNE OFF\n"
+
+    # Choose more top peaks to help with getting it correct.
+    command += "PURGE ROT ENABLE ON\nPURGE ROT NUMBER 3\n"
+    command += "PURGE TRA ENABLE ON\nPURGE TRA NUMBER 1\n"
+
+    # Only keep the top after refinement.
+    command += "PURGE RNP ENABLE ON\nPURGE RNP NUMBER 1\n"
+    command += "ROOT %s\neof\n" % name
+
+    # Write the phaser command file
+    phaser_com_file = open("phaser.com", "w")
+    phaser_com_file.writelines(command)
+    phaser_com_file.close()
+
+    # Run the phaser process
+    phaser_proc = subprocess32.Popen(["sh phaser.com"],
+                                     stdout=subprocess32.PIPE,
+                                     stderr=subprocess32.PIPE,
+                                     shell=True,
+                                     preexec_fn=os.setsid)
+    try:
+        stdout, _ = phaser_proc.communicate(timeout=timeout)
+        # print stdout
+        # print stderr
+        return {"pdb_code": input_pdb.replace(".pdb", ""),
+                "log": stdout,
+                "status": "COMPLETE"}
+    except subprocess32.TimeoutExpired:
+        print "  killing %d" % phaser_proc.pid
+        os.killpg(os.getpgid(phaser_proc.pid), signal.SIGTERM)
+        return {"pdb_code": input_pdb.replace(".pdb", ""),
+                "log": "Timed out after %d seconds" % timeout,
+                "status": "ERROR"}
 
 class RapdPlugin(multiprocessing.Process):
     """
@@ -106,7 +205,7 @@ class RapdPlugin(multiprocessing.Process):
 
     # Parameters
     cell = None
-    cell_output = False
+    cell_output = {}
     cell_summary = False
     est_res_number = 0
     tooltips = False
@@ -117,7 +216,7 @@ class RapdPlugin(multiprocessing.Process):
     input_sg_num = 0
     laue = False
     dres = 0.0
-    common = False
+    common = []
     volume = 0
     phaser_results = {}
     jobs = {}
@@ -220,11 +319,51 @@ class RapdPlugin(multiprocessing.Process):
 
         self.tprint("process")
 
-        self.query_pdbq()
-        # self.add_common_pdb()
-        # phaser_results_raw = self.process_phaser()
+        if self.command["input_data"].get("pdbs", False):
+            self.add_custom_pdbs()
+
+        if self.command["preferences"].get("search", False):
+            self.query_pdbq()
+
+        if self.command["preferences"].get("contaminants", False):
+            self.add_contaminants()
+
+        phaser_results_raw = self.process_phaser()
+
+        pprint(phaser_results_raw)
         # self.postprocess_phaser(phaser_results_raw)
         # pprint(self.phaser_results)
+
+    def add_custom_pdbs(self):
+        """Add custom pdb codes to the screen"""
+
+        self.logger.debug("add_custom_pdbs")
+        self.tprint("\nAdding input PDB codes", level=10, color="blue")
+
+        # Query the server for information and add to self.cell_output
+        for pdb_code in self.command["input_data"].get("pdbs"):
+
+            # Query pdbq server
+            response = urllib2.urlopen(urllib2.Request("http://%s/entry/%s" % \
+                       (PDBQ_SERVER, pdb_code))).read()
+
+            # Decode search result
+            entry = json.loads(response)
+
+            # Grab the description
+            description = entry["message"]["_entity-pdbx_description"][0]
+
+            # Print info to console
+            self.tprint("  %s - %s" % (pdb_code, description),
+                        level=10,
+                        color="white")
+
+            # Save into self.cell_output
+            self.cell_output.update({
+                pdb_code: {
+                    "Name": description
+                }
+            })
 
     def query_pdbq(self):
         """
@@ -236,36 +375,54 @@ class RapdPlugin(multiprocessing.Process):
         self.logger.debug("query_pdbq")
         self.tprint("Searching for similar unit cells in the PDB", level=10, color="blue")
 
-        def connect_pdbq(inp):
+        def connect_pdbq(previous_results, permutations, end=0):
             """Function to query the PDBQ server"""
 
-            _d0_ = inp
-            l1 = ["a", "b", "c", "alpha", "beta", "gamma"]
-            for y in range(end):
-                _d_ = {}
-                for x in range(len(l1)):
-                    _d_[l1[x]] = [self.cell[l2[y][x]] - self.cell[l2[y][x]] * self.percent/2,
-                                  self.cell[l2[y][x]] + self.cell[l2[y][x]] *self.percent/2]
+            all_results = previous_results.copy()
+
+            # Fields for search parameters
+            fields = ["a", "b", "c", "alpha", "beta", "gamma"]
+
+            for permute_counter in range(end):
+                search_params = {}
+                for field_index, field in enumerate(fields):
+                    search_params[field] = \
+                        [self.cell[permutations[permute_counter][field_index]] -
+                         self.cell[permutations[permute_counter][field_index]] *
+                         self.percent/2,
+                         self.cell[permutations[permute_counter][field_index]] +
+                         self.cell[permutations[permute_counter][field_index]] *
+                         self.percent/2]
+                # print "search_params", search_params
+
                 # Query server
                 response = urllib2.urlopen(urllib2.Request("http://%s/pdb/rest/search/" % \
-                           PDBQ_SERVER, data=json.dumps(_d_))).read()
-                j = json.loads(response)
-                for k in j.keys():
-                    j[k]["Name"] = j[k].pop("struct.pdbx_descriptor")
-                _d0_.update(j)
-            return _d0_
+                           PDBQ_SERVER, data=json.dumps(search_params))).read()
 
-        def limitOut(inp):
-            """Filter repeates out of query"""
-            l = inp.keys()[:i+1]
-            for p in inp.keys():
-                if l.count(p) == 0:
-                    del inp[p]
-            return inp
+                # Decode search result
+                search_results = json.loads(response)
+
+                # Create handy Name key
+                for k in search_results.keys():
+                    search_results[k]["Name"] = search_results[k].pop("struct.pdbx_descriptor")
+
+                # Add new results to previous
+                all_results.update(search_results)
+
+            # Return all results
+            return all_results
+
+        def limit_pdbq_results(pdbq_results, limit):
+            """Filter repeats out of query"""
+            entries_beyond_limit = pdbq_results.keys()[:limit+1]
+            for p in pdbq_results.keys():
+                if p in entries_beyond_limit:
+                    del pdbq_results[p]
+            return pdbq_results
 
         permute = False
         end = 1
-        l2 = [(0, 1, 2, 3, 4, 5), (1, 2, 0, 4, 5, 3), (2, 0, 1, 5, 3, 4)]
+        permutations = [(0, 1, 2, 3, 4, 5), (1, 2, 0, 4, 5, 3), (2, 0, 1, 5, 3, 4)]
 
         # Check for orthorhombic
         if self.laue == "16":
@@ -277,50 +434,50 @@ class RapdPlugin(multiprocessing.Process):
                 permute = True
 
         if permute:
-            end = len(l2)
+            end = len(permutations)
 
         # Limit the minimum number of results
         no_limit = False
         if self.cluster_use:
             if self.large_cell:
-                i = 10
+                limit = 10
             elif permute:
-                i = 60
+                limit = 60
             else:
                 no_limit = True
-                i = 40
+                limit = 40
         else:
-            i = 8
-        counter = 0
+            limit = 8
 
         # Limit the unit cell difference to 25%. Also stops it if errors are received.
         pdbq_results = {}
+        counter = 0
         while counter < 25:
             self.tprint("  Querying server at %s" % PDBQ_SERVER,
                         level=20,
                         color="white")
 
             # Connect to and query the PDBQ server
-            pdbq_results = connect_pdbq(pdbq_results)
+            pdbq_results = connect_pdbq(pdbq_results, permutations, end)
 
             # Handle results
             if pdbq_results:
                 for line in pdbq_results.keys():
-                    # remove anything bigger than 4 letters
+                    # Remove anything bigger than 4 letters
                     if len(line) > 4:
                         del pdbq_results[line]
 
                 # Do not limit number of results if many models come out really close in cell
                 # dimensions.
                 if counter in (0, 1):
-                    #Limit output
+                    # Limit output
                     if no_limit == False:
-                        pdbq_results = limitOut(pdbq_results)
+                        pdbq_results = limit_pdbq_results(pdbq_results, limit)
                 else:
-                    pdbq_results = limitOut(pdbq_results)
+                    pdbq_results = limit_pdbq_results(pdbq_results, limit)
 
             # Not enough results
-            if len(pdbq_results.keys()) < i:
+            if len(pdbq_results.keys()) < limit:
                 counter += 1
                 self.percent += 0.01
                 self.logger.debug("Not enough PDB results. Going for more...")
@@ -329,17 +486,242 @@ class RapdPlugin(multiprocessing.Process):
 
         # There will be results!
         if pdbq_results:
-            self.cell_output = pdbq_results
+            self.cell_output.update(pdbq_results)
             self.tprint("  %d relevant PDB files found on the PDBQ server" % len(pdbq_results.keys()),
                         level=50,
                         color="white")
         else:
-            self.cell_output = {}
             self.logger.debug("Failed to find pdb with similar cell.")
             self.tprint("No relevant PDB files found on the PDBQ server",
                         level=50,
                         color="red")
 
+    def add_contaminants(self):
+        """
+        Add common PDB contaminants to the search list.
+
+        Adds files to self.cell_output
+        """
+        self.logger.debug("add_common_pdb")
+        self.tprint("\nAdding common contaminants to PDB screen",
+                    level=10,
+                    color="blue")
+
+        # Save these codes in a separate list so they can be separated in the Summary.
+        common_contaminants = info.CONTAMINANTS.copy()
+        self.common = common_contaminants.keys()
+
+        # Remove PDBs from self.common if they were already caught by unit cell dimensions.
+        for contaminant in self.common:
+            if contaminant in self.cell_output:
+                del common_contaminants[contaminant]
+                self.common.remove(contaminant)
+
+        # Put contaminants in list to be screened
+        self.tprint("  %d contaminants added to screen" % len(common_contaminants),
+                    level=10,
+                    color="white")
+        self.cell_output.update(common_contaminants)
+
+    def process_phaser(self):
+        """Start Phaser for input pdb"""
+
+        self.logger.debug("process_phaser")
+        self.tprint("\nStarting molecular replacement", level=30, color="blue")
+
+        self.tprint("  Assembling Phaser runs", level=10, color="white")
+
+        # Run through the pdbs
+        commands = []
+        for code in self.cell_output.keys():
+
+            self.tprint("    %s" % code, level=30, color="white")
+
+            l = False
+            copy = 1
+
+            # Create directory for MR
+            xutils.create_folders(self.working_dir, "Phaser_%s" % code)
+
+            # Get the structure file
+            pdb_file, sg_pdb = self.get_pdb_file(code)
+
+            # Now check all SG's
+            sg_num = xutils.convert_spacegroup(sg_pdb)
+            lg_pdb = xutils.get_sub_groups(sg_num, "simple")
+            self.tprint("      %s spacegroup: %s (%s)" % (pdb_file, sg_pdb, sg_num),
+                        level=10,
+                        color="white")
+            self.tprint("      subgroups: %s" % str(lg_pdb), level=10, color="white")
+
+            # SG from data
+            data_spacegroup = xutils.convert_spacegroup(self.laue, True)
+            # self.tprint("      Data spacegroup: %s" % data_spacegroup, level=10, color="white")
+
+            # Fewer mols in AU or in self.common.
+            if code in self.common or float(self.laue) > float(lg_pdb):
+                # if SM is lower sym, which will cause problems, since PDB is too big.
+                # Need full path for copying pdb files to folders.
+                pdb_info = xutils.get_pdb_info(os.path.join(os.getcwd(), pdb_file),
+                                               dres=self.dres,
+                                               matthews=True,
+                                               cell_analysis=False,
+                                               data_file=self.datafile)
+                #Prune if only one chain present, b/c "all" and "A" will be the same.
+                if len(pdb_info.keys()) == 2:
+                    for key in pdb_info.keys():
+                        if key != "all":
+                            del pdb_info[key]
+                copy = pdb_info["all"]["NMol"]
+                if copy == 0:
+                    copy = 1
+                # If pdb_info["all"]["res"] == 0.0:
+                if pdb_info["all"]["SC"] < 0.2:
+                    # Only run on chains that will fit in the AU.
+                    l = [chain for chain in pdb_info.keys() if pdb_info[chain]["res"] != 0.0]
+
+            # More mols in AU
+            elif float(self.laue) < float(lg_pdb):
+                pdb_info = xutils.get_pdb_info(cif_file=pdb_file,
+                                               dres=self.dres,
+                                               matthews=True,
+                                               cell_analysis=True,
+                                               data_file=self.datafile)
+                copy = pdb_info["all"]["NMol"]
+
+            # Same number of mols in AU.
+            else:
+                pdb_info = xutils.get_pdb_info(cif_file=pdb_file,
+                                               dres=self.dres,
+                                               matthews=False,
+                                               cell_analysis=True,
+                                               data_file=self.datafile)
+
+            job_description = {
+                "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % code)),
+                "data": self.datafile,
+                "pdb": pdb_file,
+                "name": code,
+                "sg": data_spacegroup,
+                "copy": copy,
+                "test": self.test,
+                "cell analysis": True,
+                "large": self.large_cell,
+                "res": xutils.set_phaser_res(pdb_info["all"]["res"],
+                                             self.large_cell,
+                                             self.dres),
+                "timeout": self.phaser_timer}
+
+            if not l:
+                commands.append(job_description)
+            else:
+                # d1 = {}
+                for chain in l:
+                    new_code = "%s_%s" % (code, chain)
+                    xutils.folders(self, "Phaser_%s" % new_code)
+                    job_description.update({
+                        "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % \
+                            new_code)),
+                        "pdb":pdb_info[chain]["file"],
+                        "name":new_code,
+                        "copy":pdb_info[chain]["NMol"],
+                        "res":xutils.set_phaser_res(pdb_info[chain]["res"],
+                                                    self.large_cell,
+                                                    self.dres)})
+
+                    commands.append(job_description)
+
+        # Run in pool
+        pool = multiprocessing.Pool(2)
+        self.tprint("  Initiating Phaser runs", level=10, color="white")
+        results = pool.map_async(phaser_func, commands)
+        pool.close()
+        pool.join()
+        phaser_results = results.get()
+
+        return phaser_results
+
+    def get_pdb_file(self, pdb_code):
+        """Retrieve/check for/uncompress/convert structure file"""
+
+        # The cif file name
+        cif_file = pdb_code.lower() + ".cif"
+        # print "cif_file", cif_file
+        gzip_file = cif_file+".gz"
+        # print "gzip_file", gzip_file
+        cached_file = False
+
+        # There is a local cache
+        if self.cif_cache:
+            cached_file = os.path.join(self.cif_cache, gzip_file)
+            # print "cached_file", cached_file
+
+            # Have cached version of the file
+            if os.path.exists(cached_file):
+                self.tprint("      Have cached cif file %s" % gzip_file, level=10, color="white")
+
+            # DO NOT have cached version of file
+            else:
+                # Get the gzipped cif file from the PDBQ server
+                self.tprint("      Fetching %s" % cif_file, level=10, color="white")
+                try:
+                    response = urllib2.urlopen(urllib2.Request(\
+                               "http://%s/pdbq/entry/get_cif/%s" % \
+                               (PDBQ_SERVER, cif_file.replace(".cif", "")))\
+                               , timeout=60).read()
+                except urllib2.HTTPError as http_error:
+                    self.tprint("      %s when fetching %s" % (http_error, cif_file),
+                                level=50,
+                                color="red")
+                    return False
+
+                # Write the  gzip file
+                with open(cached_file, "wb") as outfile:
+                    outfile.write(response)
+
+            # Copy the gzip file to the cwd
+            shutil.copy(cached_file, os.path.join(os.getcwd(), gzip_file))
+
+        # No local CIF file cache
+        else:
+            # Get the gzipped cif file from the PDBQ server
+            self.tprint("      Fetching %s" % cif_file, level=10, color="white")
+            try:
+                response = urllib2.urlopen(urllib2.Request(\
+                           "http://%s/pdbq/entry/get_cif/%s" % \
+                           (PDBQ_SERVER, cif_file.replace(".cif", ""))), \
+                           timeout=60).read()
+            except urllib2.HTTPError as http_error:
+                self.tprint("      %s when fetching %s" % (http_error, cif_file),
+                            level=50,
+                            color="red")
+                return False
+
+            # Write the  gzip file
+            with open(gzip_file, "wb") as outfile:
+                outfile.write(response)
+
+        # Uncompress the gzipped file
+        unzip_proc = subprocess32.Popen(["gunzip", gzip_file])
+        unzip_proc.wait()
+
+        # If mmCIF, checks if file exists or if it is super structure with
+        # multiple PDB codes, and returns False, otherwise sends back SG.
+        sg_pdb = xutils.fix_spacegroup(xutils.get_spacegroup_info(cif_file))
+
+        # Remove codes that won't run or PDB/mmCIF's that don't exist.
+        if sg_pdb == False:
+            del self.cell_output[pdb_code]
+            return False
+
+        # Convert from cif to pdb
+        conversion_proc = subprocess32.Popen(["phenix.cif_as_pdb", cif_file],
+                                             stdout=subprocess32.PIPE,
+                                             stderr=subprocess32.PIPE)
+        conversion_proc.wait()
+        pdb_file = cif_file.replace(".cif", ".pdb")
+
+        return (pdb_file, sg_pdb)
 
     def postprocess(self):
         """Clean up after plugin action"""
