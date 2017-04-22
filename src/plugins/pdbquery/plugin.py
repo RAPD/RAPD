@@ -60,6 +60,7 @@ import urllib2
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
+from plugins.subcontractors.parse import parse_phaser_output, setPhaserFailed
 import utils.xutils as xutils
 import info
 
@@ -218,6 +219,7 @@ class RapdPlugin(multiprocessing.Process):
     dres = 0.0
     common = []
     volume = 0
+    phaser_results_raw = []
     phaser_results = {}
     jobs = {}
     pids = {}
@@ -328,11 +330,11 @@ class RapdPlugin(multiprocessing.Process):
         if self.command["preferences"].get("contaminants", False):
             self.add_contaminants()
 
-        phaser_results_raw = self.process_phaser()
+        self.phaser_results_raw = self.process_phaser()
 
-        pprint(phaser_results_raw)
-        # self.postprocess_phaser(phaser_results_raw)
-        # pprint(self.phaser_results)
+        self.phaser_results = self.postprocess_phaser(self.phaser_results_raw)
+
+        pprint(self.phaser_results)
 
     def add_custom_pdbs(self):
         """Add custom pdb codes to the screen"""
@@ -640,6 +642,36 @@ class RapdPlugin(multiprocessing.Process):
         phaser_results = results.get()
 
         return phaser_results
+
+    def postprocess_phaser(self, phaser_results):
+        """
+        Look at Phaser results.
+        """
+
+        self.logger.debug("postprocess_phaser")
+
+        for phaser_result in phaser_results:
+
+            pprint(phaser_result)
+
+            pdb_code = phaser_result["pdb_code"]
+            phaser_lines = phaser_result["log"].split("\n")
+
+            nosol = False
+
+            data = parse_phaser_output(phaser_lines)
+            pprint(data)
+            if data["AutoMR sg"] in ("No solution", "Timed out", "NA", "DL FAILED"):
+                nosol = True
+            else:
+                # Check for negative or low LL-Gain.
+                if float(data["AutoMR gain"]) < 200.0:
+                    nosol = True
+            if nosol:
+                self.phaser_results[pdb_code] = {"AutoMR results": \
+                    setPhaserFailed("No solution")}
+            else:
+                self.phaser_results[pdb_code] = {"AutoMR results":data}
 
     def get_pdb_file(self, pdb_code):
         """Retrieve/check for/uncompress/convert structure file"""

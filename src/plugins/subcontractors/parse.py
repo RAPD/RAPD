@@ -1905,6 +1905,72 @@ def ParseOutputPhaser(self,inp):
     self.logger.exception('**ERROR in Parse.ParseOutputPhaser**')
     return(setPhaserFailed('No solution'))
 
+def parse_phaser_output(phaser_log):
+    """ Parse Phaser log file"""
+
+    pdb = False
+    st = False
+    clash = 'NC'
+    end = False
+    temp = []
+    tncs = False
+    nmol = 0
+    for x, line in enumerate(phaser_log):
+        temp.append(line)
+        directory = os.getcwd()
+        if line.count('SPACEGROUP'):
+            sg = line.split()[-1]
+        if line.count('Solution') or line.count('Partial Solution '):
+            if line.count('written'):
+                if line.count('PDB'):
+                    pdb = line.split()[-1]
+                if line.count('MTZ'):
+                    mtz = line.split()[-1]
+            if line.count('RFZ='):
+                st = x
+        if line.count('SOLU SET'):
+            st = x
+        if line.count('SOLU ENSEMBLE'):
+            end = x
+    if st:
+        for line in phaser_log[st:end]:
+            if line.count('SOLU 6DIM'):
+                nmol += 1
+            for param in line.split():
+                if param.startswith('RFZ'):
+                    if param.count('=') == 1:
+                        rfz = param[param.find('=')+param.count('='):]
+                if param.startswith('RF*0'):
+                    rfz = 'NC'
+                if param.startswith('TFZ'):
+                    if param.count('=') == 1:
+                        tfz = param[param.find('=')+param.count('='):]
+                if param.startswith('TF*0'):
+                    tfz = 'NC'
+                if param.startswith('PAK'):
+                    clash = param[param.find('=')+param.count('='):]
+                if param.startswith('LLG'):
+                    llgain = param[param.find('=')+param.count('='):]
+                if param.startswith('+TNCS'):
+                    tncs = True
+    if not pdb:
+        phaser = setPhaserFailed('No solution')
+    else:
+        phaser = {'AutoMR nosol': 'False',
+                  'AutoMR pdb': pdb,
+                  'AutoMR mtz': mtz,
+                  'AutoMR gain': llgain,
+                  'AutoMR rfz': rfz,
+                  'AutoMR tfz': tfz,
+                  'AutoMR clash': clash,
+                  'AutoMR dir': directory,
+                  'AutoMR sg': sg,
+                  'AutoMR tNCS': tncs,
+                  'AutoMR nmol': nmol,
+                  'AutoMR adf': 'None',
+                  'AutoMR peak': 'None'}
+    return phaser
+
 def ParseOutputPhaserNCS(self,inp):
   if self.verbose:
     self.logger.debug('Parse::ParseOutputPhaserNCS')
