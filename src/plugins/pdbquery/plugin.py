@@ -282,7 +282,7 @@ class RapdPlugin(multiprocessing.Process):
     def preprocess(self):
         """Set up for plugin action"""
 
-        self.tprint("preprocess")
+        # self.tprint("preprocess")
 
         # Check the local pdb cache Location
         if self.cif_cache:
@@ -319,7 +319,7 @@ class RapdPlugin(multiprocessing.Process):
     def process(self):
         """Run plugin action"""
 
-        self.tprint("process")
+        # self.tprint("process")
 
         if self.command["input_data"].get("pdbs", False):
             self.add_custom_pdbs()
@@ -332,7 +332,7 @@ class RapdPlugin(multiprocessing.Process):
 
         self.phaser_results_raw = self.process_phaser()
 
-        self.phaser_results = self.postprocess_phaser(self.phaser_results_raw)
+        self.postprocess_phaser(self.phaser_results_raw)
 
         pprint(self.phaser_results)
 
@@ -652,7 +652,7 @@ class RapdPlugin(multiprocessing.Process):
 
         for phaser_result in phaser_results:
 
-            pprint(phaser_result)
+            # pprint(phaser_result)
 
             pdb_code = phaser_result["pdb_code"]
             phaser_lines = phaser_result["log"].split("\n")
@@ -671,7 +671,9 @@ class RapdPlugin(multiprocessing.Process):
                 self.phaser_results[pdb_code] = {"AutoMR results": \
                     setPhaserFailed("No solution")}
             else:
-                self.phaser_results[pdb_code] = {"AutoMR results":data}
+                self.phaser_results[pdb_code] = {"AutoMR results": data}
+
+            print self.phaser_results.keys()
 
     def get_pdb_file(self, pdb_code):
         """Retrieve/check for/uncompress/convert structure file"""
@@ -758,7 +760,138 @@ class RapdPlugin(multiprocessing.Process):
     def postprocess(self):
         """Clean up after plugin action"""
 
-        self.tprint("postprocess")
+        # self.tprint("postprocess")
+
+        pdb_codes = self.phaser_results.keys()
+        pdb_codes.sort()
+        for pdb_code in pdb_codes:
+            print pdb_code
+
+        sys.exit()
+
+        output = {}
+        status = False
+        output_files = False
+        cell_results = False
+        failed = False
+
+        # Add tar info to automr results and take care of issue if no SCA file was input.
+        try:
+            def check_bz2(tar):
+                # Remove old tar's in working dir, if they exist and copy new one over.
+                if os.path.exists(os.path.join(self.working_dir, "%s.bz2" % tar)):
+                    os.system("rm -rf %s" % os.path.join(self.working_dir, "%s.bz2" % tar))
+                shutil.copy("%s.bz2" % tar, self.working_dir)
+
+            if self.cell_output:
+                for pdb in self.phaser_results.keys():
+                    pdb_file = self.phaser_results[pdb].get("AutoMR results").get("AutoMR pdb")
+                    mtz_file = self.phaser_results[pdb].get("AutoMR results").get("AutoMR mtz")
+                    adf_file = self.phaser_results[pdb].get("AutoMR results").get("AutoMR adf")
+                    peak_file = self.phaser_results[pdb].get("AutoMR results").get("AutoMR peak")
+                    if pdb_file not in ("No solution", "Timed out", "NA", "Still running", "DL Failed"):
+                        #pack all the output files into a tar and save the path
+                        os.chdir(self.phaser_results[pdb].get("AutoMR results").get("AutoMR dir"))
+                        tar = "%s.tar" % pdb
+                        #Speed up in testing mode.
+                        if os.path.exists("%s.bz2" % tar):
+                            check_bz2(tar)
+                            self.phaser_results[pdb].get("AutoMR results").update({"AutoMR tar": os.path.join(self.working_dir, "%s.bz2" % tar)})
+                        else:
+                            l = [pdb_file, mtz_file, adf_file, peak_file, pdb_file.replace(".pdb", "_refine_001.pdb"), mtz_file.replace(".mtz", "_refine_001.mtz")]
+                            for p in l:
+                                if os.path.exists(p):
+                                    os.system("tar -rf %s %s" % (tar, p))
+                            if os.path.exists(tar):
+                                os.system("bzip2 -qf %s" % tar)
+                                check_bz2(tar)
+                                self.phaser_results[pdb].get("AutoMR results").update({"AutoMR tar": os.path.join(self.working_dir, "%s.bz2" % tar)})
+                            else:
+                                self.phaser_results[pdb].get("AutoMR results").update({"AutoMR tar": "None"})
+                    # Save everthing into one dict
+                    if pdb in self.cell_output.keys():
+                        self.phaser_results[pdb].update(self.cell_output[pdb])
+                    else:
+                        self.phaser_results[pdb].update(self.cell_output[pdb[:pdb.rfind("_")]])
+                cell_results = {"Cell analysis results":self.phaser_results}
+            else:
+                cell_results = {"Cell analysis results":"None"}
+        except:
+            self.logger.exception("**Could not AutoMR results in postprocess.**")
+            cell_results = {"Cell analysis results":"FAILED"}
+            failed = True
+
+        try:
+            # Create the output html file
+            os.chdir(self.working_dir)
+            Summary.summaryCell(self, "pdbquery")
+            self.html_summary()
+            if self.gui:
+                sl = "jon_summary_cell.php"
+            else:
+                sl = "jon_summary_cell.html"
+            if os.path.exists(os.path.join(self.working_dir, sl)):
+                output["Cell summary html"] = os.path.join(self.working_dir, sl)
+            else:
+                output["Cell summary html"] = "None"
+        except:
+            self.logger.exception("**Could not update path of shelx summary html file.**")
+            output["Cell summary html"] = "FAILED"
+            failed = True
+
+        try:
+            output_files = {"Output files":output}
+        except:
+            self.logger.exception("**Could not update the output dict.**")
+
+        #Get proper status.
+        if failed:
+            status = {"status":"FAILED"}
+            self.clean = False
+        else:
+            status = {"status":"SUCCESS"}
+
+        #Put all the result dicts from all the programs run into one resultant dict and pass it along the pipe.
+        try:
+            results = {}
+            if status:
+                results.update(status)
+            if cell_results:
+                results.update(cell_results)
+            if output_files:
+                results.update(output_files)
+            if results:
+                self.input.append(results)
+            if self.output != None:
+                self.output.put(results)
+            else:
+                if self.gui:
+                #   self.sendBack2(self.input)
+                    rapd_send(self.controller_address, self.input)
+        except:
+            self.logger.exception("**Could not send results to pipe**")
+
+        try:
+            # Cleanup my mess.
+            if self.clean:
+                os.chdir(self.working_dir)
+                os.system("rm -rf Phaser_* temp.mtz")
+                if self.verbose:
+                    self.logger.debug("Cleaning up Phaser files and folders")
+        except:
+            self.logger.exception("**Could not cleanup**")
+
+        # Say job is complete.
+        run_time = round(time.time() - self.start_time)
+        self.logger.debug(50 * "-")
+        self.logger.debug("RAPD PDBQuery complete.")
+        self.logger.debug("Total elapsed time: %s seconds" % run_time)
+        self.logger.debug(50*"-")
+        if self.output == None:
+            print 50*"-"
+            print "\nRAPD PDBQuery complete."
+            print "Total elapsed time: %s seconds" % run_time
+            print 50*"-"
 
 def get_commandline():
     """Grabs the commandline"""
