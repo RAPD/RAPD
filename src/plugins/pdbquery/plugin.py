@@ -211,20 +211,24 @@ class RapdPlugin(multiprocessing.Process):
     est_res_number = 0
     tooltips = False
     pdb_summary = False
-
     large_cell = False
     input_sg = False
     input_sg_num = 0
     laue = False
     dres = 0.0
-    common = []
     volume = 0
+
+    # Holders for pdb ids
+    custom_structures = []
+    common_contaminants = []
+    search_results = []
+
+    # Holders for results
     phaser_results_raw = []
     phaser_results = {}
-    jobs = {}
-    pids = {}
-    pdbquery_timer = 30
 
+    # Timers for processes
+    pdbquery_timer = 30
     phaser_timer = 2000 #was 600 but too short for mackinnon (144,144,288,90,90,90)
 
     def __init__(self, command, tprint=False, logger=False):
@@ -278,11 +282,12 @@ class RapdPlugin(multiprocessing.Process):
         self.preprocess()
         self.process()
         self.postprocess()
+        self.print_credits()
 
     def preprocess(self):
         """Set up for plugin action"""
 
-        # self.tprint("preprocess")
+        self.tprint("preprocess")
 
         # Check the local pdb cache Location
         if self.cif_cache:
@@ -319,7 +324,7 @@ class RapdPlugin(multiprocessing.Process):
     def process(self):
         """Run plugin action"""
 
-        # self.tprint("process")
+        self.tprint("process")
 
         if self.command["input_data"].get("pdbs", False):
             self.add_custom_pdbs()
@@ -333,8 +338,6 @@ class RapdPlugin(multiprocessing.Process):
         self.phaser_results_raw = self.process_phaser()
 
         self.postprocess_phaser(self.phaser_results_raw)
-
-        pprint(self.phaser_results)
 
     def add_custom_pdbs(self):
         """Add custom pdb codes to the screen"""
@@ -366,6 +369,9 @@ class RapdPlugin(multiprocessing.Process):
                     "Name": description
                 }
             })
+
+            # Save IDs to easily used spot
+            self.custom_structures.append(pdb_code)
 
     def query_pdbq(self):
         """
@@ -488,6 +494,7 @@ class RapdPlugin(multiprocessing.Process):
 
         # There will be results!
         if pdbq_results:
+            self.search_results = pdbq_results.keys()[:]
             self.cell_output.update(pdbq_results)
             self.tprint("  %d relevant PDB files found on the PDBQ server" % len(pdbq_results.keys()),
                         level=50,
@@ -511,13 +518,13 @@ class RapdPlugin(multiprocessing.Process):
 
         # Save these codes in a separate list so they can be separated in the Summary.
         common_contaminants = info.CONTAMINANTS.copy()
-        self.common = common_contaminants.keys()
+        self.common_contaminants = common_contaminants.keys()
 
         # Remove PDBs from self.common if they were already caught by unit cell dimensions.
-        for contaminant in self.common:
+        for contaminant in self.common_contaminants:
             if contaminant in self.cell_output:
                 del common_contaminants[contaminant]
-                self.common.remove(contaminant)
+                self.common_contaminants.remove(contaminant)
 
         # Put contaminants in list to be screened
         self.tprint("  %d contaminants added to screen" % len(common_contaminants),
@@ -561,7 +568,7 @@ class RapdPlugin(multiprocessing.Process):
             # self.tprint("      Data spacegroup: %s" % data_spacegroup, level=10, color="white")
 
             # Fewer mols in AU or in self.common.
-            if code in self.common or float(self.laue) > float(lg_pdb):
+            if code in self.common_contaminants or float(self.laue) > float(lg_pdb):
                 # if SM is lower sym, which will cause problems, since PDB is too big.
                 # Need full path for copying pdb files to folders.
                 pdb_info = xutils.get_pdb_info(os.path.join(os.getcwd(), pdb_file),
@@ -569,7 +576,7 @@ class RapdPlugin(multiprocessing.Process):
                                                matthews=True,
                                                cell_analysis=False,
                                                data_file=self.datafile)
-                #Prune if only one chain present, b/c "all" and "A" will be the same.
+                # Prune if only one chain present, b/c "all" and "A" will be the same.
                 if len(pdb_info.keys()) == 2:
                     for key in pdb_info.keys():
                         if key != "all":
@@ -760,7 +767,27 @@ class RapdPlugin(multiprocessing.Process):
     def postprocess(self):
         """Clean up after plugin action"""
 
-        # self.tprint("postprocess")
+        self.tprint("\nResults", level=99, color="blue")
+
+        # Custom PDBs
+        print "self.custom_structures"
+        # pprint(self.custom_structures)
+        for pdb_code in self.custom_structures:
+            self.tprint(pdb_code, level=99, color="white")
+
+        # Common contaminants
+        print "self.common_contaminants"
+        # pprint(self.common_contaminants)
+        for pdb_code in self.common_contaminants:
+            self.tprint(pdb_code, level=99, color="white")
+
+        # Found structures
+        print "self.search_results"
+        # pprint(self.search_results)
+        for pdb_code in self.search_results:
+            self.tprint(pdb_code, level=99, color="white")
+
+        sys.exit()
 
         pdb_codes = self.phaser_results.keys()
         pdb_codes.sort()
@@ -768,6 +795,9 @@ class RapdPlugin(multiprocessing.Process):
             print pdb_code
 
         sys.exit()
+
+        print "self.phaser_results"
+        pprint(self.phaser_results)
 
         output = {}
         status = False
@@ -892,6 +922,18 @@ class RapdPlugin(multiprocessing.Process):
             print "\nRAPD PDBQuery complete."
             print "Total elapsed time: %s seconds" % run_time
             print 50*"-"
+
+    def print_credits(self):
+        """Print credits for programs utilized by this plugin"""
+
+        self.tprint("RAPD now using Phenix")
+        self.tprint("=======================")
+        self.tprint("RAPD developed using Phenix")
+        self.tprint("Reference: Adams PD, et al.(2010) Acta Cryst. D66:213-221")
+        self.tprint("Website: http://www.phenix-online.org/\n")
+        self.tprint("RAPD developed using Phaser")
+        self.tprint("Reference: McCoy AJ, et al.(2007) J. Appl. Cryst. 40:658-674.")
+        self.tprint("Website: http://www.phenix-online.org/documentation/phaser.htm\n")
 
 def get_commandline():
     """Grabs the commandline"""
