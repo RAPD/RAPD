@@ -253,7 +253,8 @@ class FileGenerator(CommandlineFileGenerator):
             "        \"nproc\": commandline_args.nproc,",
             "        \"test\": commandline_args.test,",
             "    }\n",
-            "    logger.debug(\"Command for %s plugin: %s\", (self.args.plugin_name, command))\n",
+            "    logger.debug(\"Command for {} plugin: %s\", command)\n".format(\
+                self.args.plugin_name),
             "    return command\n",
         ]
         file_generator.output_function(construct_command_func_lines)
@@ -470,7 +471,7 @@ class FileGenerator(CommandlineFileGenerator):
             "        self.logger.info(command)\n",
             "        # Store passed-in variables",
             "        self.command = command",
-            "        self.reply_address = self.command[\"return_address\"]",
+            # "        self.reply_address = self.command[\"return_address\"]",
             "        multiprocessing.Process.__init__(self, name=\"%s\")" % self.args.plugin_name,
             "        self.start()\n",
             "    def run(self):",
