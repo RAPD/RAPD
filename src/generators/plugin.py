@@ -476,7 +476,8 @@ class FileGenerator(CommandlineFileGenerator):
             "        \"\"\"Execution path of the plugin\"\"\"\n",
             "        self.preprocess()",
             "        self.process()",
-            "        self.postprocess()\n",
+            "        self.postprocess()",
+            "        self.print_credits()\n",
             "    def preprocess(self):",
             "        \"\"\"Set up for plugin action\"\"\"\n",
             "        self.tprint(\"preprocess\")\n",
@@ -486,7 +487,9 @@ class FileGenerator(CommandlineFileGenerator):
             "    def postprocess(self):",
             "        \"\"\"Clean up after plugin action\"\"\"\n",
             "        self.tprint(\"postprocess\")\n",
-
+            "    def print_credits(self):",
+            "        \"\"\"Print credits for programs utilized by this plugin\"\"\"\n",
+            "        self.tprint(\"print_credits\")\n",
 
         ]
         file_generator.output_function(plugin_lines)
