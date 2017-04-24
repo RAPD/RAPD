@@ -66,25 +66,23 @@ def construct_command(commandline_args, logger):
         "status": 0,
         }
 
-    # Work directory
-    command["directories"] = {
-        "work": os.path.join(os.path.abspath(os.path.curdir), "get_cif")
-        }
-
-    # Check the work directory
-    commandline_utils.check_work_dir(command["directories"]["work"], True)
-
     # Information on input
     command["input_data"] = {
-        "datafile": os.path.abspath(commandline_args.datafile)
+        # "datafile": os.path.abspath(commandline_args.datafile)
+        "pdb_codes": commandline_args.pdb_codes
     }
 
     # Plugin settings
     command["preferences"] = {
-        "json": commandline_args.json,        "nproc": commandline_args.nproc,
-        "test": commandline_args.test,    }
+        "cached": commandline_args.cached,
+        "force": commandline_args.force,
+        "json": commandline_args.json,
+        # "nproc": commandline_args.nproc,
+        "pdb": commandline_args.pdb,
+        "test": commandline_args.test,
+        }
 
-    logger.debug("Command for %s plugin: %s", (self.args.plugin_name, command))
+    logger.debug("Command for get_pdb plugin: %s" %command)
 
     return command
 
@@ -102,6 +100,12 @@ def get_commandline():
                            action="store_true",
                            dest="test",
                            help="Run in test mode")
+
+    # Force
+    my_parser.add_argument("-f", "--force",
+                           action="store_true",
+                           dest="force",
+                           help="Allow overwrite of the target files")
 
     # Verbose
     #my_parser.add_argument("-v", "--verbose",
@@ -133,19 +137,24 @@ def get_commandline():
                            dest="json",
                            help="Output JSON format string")
 
-    # Multiprocessing
-    my_parser.add_argument("--nproc",
-                           dest="nproc",
-                           type=int,
-                           default=1,
-                           help="Number of processors to employ")
+    # Ignore cached file
+    my_parser.add_argument("--nocache",
+                           action="store_false",
+                           dest="cached",
+                           help="Ignore cached version and download file")
+
+    # Run in test mode
+    my_parser.add_argument("--pdb",
+                           action="store_true",
+                           dest="pdb",
+                           help="Retrieve PDB files, not CIF")
 
     # Positional argument
     my_parser.add_argument(action="store",
-                           dest="datafile",
-                           nargs="?",
+                           dest="pdb_codes",
+                           nargs="+",
                            default=False,
-                           help="Name of file to be analyzed")
+                           help="PDB codes to be retrieved")
 
     # Print help message if no arguments
     if len(sys.argv[1:]) == 0:
@@ -155,6 +164,12 @@ def get_commandline():
     args = my_parser.parse_args()
 
     # Insert logic to check or modify args here
+
+    # ALL CAPS PDB CODES
+    tmp_args = []
+    for pdb_code in args.pdb_codes:
+        tmp_args.append(pdb_code.upper())
+    args.pdb_codes = tmp_args
 
     return args
 
@@ -232,6 +247,5 @@ def main():
 
 if __name__ == "__main__":
 
-    commandline_args = get_commandline()
 
-    main(args=commandline_args)
+    main()
