@@ -249,9 +249,9 @@ class FileGenerator(CommandlineFileGenerator):
             "    }\n",
             "    # Plugin settings",
             "    command[\"preferences\"] = {",
-            "        \"json\": commandline_args.json,"
+            "        \"json\": commandline_args.json,",
             "        \"nproc\": commandline_args.nproc,",
-            "        \"test\": commandline_args.test,"
+            "        \"test\": commandline_args.test,",
             "    }\n",
             "    logger.debug(\"Command for %s plugin: %s\", (self.args.plugin_name, command))\n",
             "    return command\n",
