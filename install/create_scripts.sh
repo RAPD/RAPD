@@ -40,6 +40,21 @@ if [ "$RAPD_HOME" != "" ]; then
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/plugins\/integrate\/commandline.py \"\$@\"" >>$RAPD_HOME/bin/rapd.integrate
   chmod +x $RAPD_HOME/bin/rapd.integrate
 
+  # Test collected data against PDB
+  echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.pdbquery
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/plugins\/pdbquery\/commandline.py \"\$@\"" >>$RAPD_HOME/bin/rapd.pdbquery
+  chmod +x $RAPD_HOME/bin/rapd.pdbquery
+
+  # Fetch a PDB from PDBQ
+  echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.get_pdb
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/plugins\/get_cif\/commandline.py --pdb \"\$@\"" >>$RAPD_HOME/bin/rapd.get_pdb
+  chmod +x $RAPD_HOME/bin/rapd.get_pdb
+
+  # Fetch a CIF from PDBQ
+  echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.get_cif
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/plugins\/get_cif\/commandline.py \"\$@\"" >>$RAPD_HOME/bin/rapd.get_cif
+  chmod +x $RAPD_HOME/bin/rapd.get_cif
+
 # Environmental var not set - don't run
 else
   echo "The RAPD_HOME environmental variable must be set. Exiting"
