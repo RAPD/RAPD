@@ -926,14 +926,18 @@ class RapdPlugin(multiprocessing.Process):
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
 
-        self.tprint("RAPD now using Phenix")
-        self.tprint("=======================")
-        self.tprint("RAPD developed using Phenix")
-        self.tprint("Reference: Adams PD, et al.(2010) Acta Cryst. D66:213-221")
-        self.tprint("Website: http://www.phenix-online.org/\n")
-        self.tprint("RAPD developed using Phaser")
-        self.tprint("Reference: McCoy AJ, et al.(2007) J. Appl. Cryst. 40:658-674.")
-        self.tprint("Website: http://www.phenix-online.org/documentation/phaser.htm\n")
+        self.tprint("RAPD ndepends on the work of others:",
+                    level=99,
+                    color="blue")
+
+        info_string = """    Phenix
+    Reference: J. Appl. Cryst. 37, 399-409 (2004)
+    Website:   http://adder.lbl.gov/labelit/ \n
+    Phaser
+    Reference: McCoy AJ, et al.(2007) J. Appl. Cryst. 40:658-674.
+    Website: http://www.phenix-online.org/documentation/phaser.htm\n
+    """
+        self.tprint(info_string, level=99, color="white")
 
 def get_commandline():
     """Grabs the commandline"""
