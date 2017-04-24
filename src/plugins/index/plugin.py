@@ -55,6 +55,7 @@ import info
 import plugins.subcontractors.parse as Parse
 # import plugins.subcontractors.summary as Summary
 from plugins.subcontractors.xoalign import RunXOalign
+import utils.credits as credits
 from utils.communicate import rapd_send
 # from utils.modules import load_module
 import utils.spacegroup as spacegroup
@@ -1623,12 +1624,12 @@ class RapdPlugin(Process):
         with open("result.json", 'w') as outfile:
             outfile.writelines(json_string)
 
-    def print_info(self):
+    def print_credits(self):
         """
         Print information regarding programs utilized by RAPD
         """
         if self.verbose:
-            self.logger.debug('AutoindexingStrategy::print_info')
+            self.logger.debug('AutoindexingStrategy::print_credits')
 
         # try:
         self.tprint(arg="\nRAPD index & strategy uses:", level=99, color="blue")
@@ -1863,7 +1864,7 @@ class RapdPlugin(Process):
             self.logger.exception("**Could not move files from RAM to destination dir.**")
 
         # Print out recognition of the programs being used
-        self.print_info()
+        self.print_credits()
 
         # Say job is complete.
         t = round(time.time() - self.st)

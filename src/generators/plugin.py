@@ -132,6 +132,7 @@ class FileGenerator(CommandlineFileGenerator):
                                                  "sys",
                                                  "uuid"),
                                      added_rapd_imports=(
+                                         "utils.credits as credits",
                                          "utils.log",
                                          "utils.modules as modules",
                                          "utils.text as text",
