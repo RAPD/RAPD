@@ -211,6 +211,7 @@ class BaseFileGenerator(object):
                             "sys",
                             "time",
                             "unittest",
+                            "urllib2",
                             "uuid")
 
         rapd_imports = ("commandline_utils",
