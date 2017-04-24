@@ -97,7 +97,6 @@ def phaser_func(command):
     large_cell = command.get("large", False)
     timeout = command.get("timeout", False)
 
-
     # Construct the phaser command file
     command = "phaser << eof\nMODE MR_AUTO\n"
     command += "HKLIn %s\nLABIn F=F SIGF=SIGF\n" % datafile
@@ -281,9 +280,9 @@ class RapdPlugin(multiprocessing.Process):
     def run(self):
         """Execution path of the plugin"""
 
-        # self.preprocess()
-        # self.process()
-        # self.postprocess()
+        self.preprocess()
+        self.process()
+        self.postprocess()
         self.print_credits()
 
     def preprocess(self):
@@ -368,12 +367,16 @@ class RapdPlugin(multiprocessing.Process):
             # Save into self.cell_output
             self.cell_output.update({
                 pdb_code: {
-                    "Name": description
+                    "description": description
                 }
             })
 
             # Save IDs to easily used spot
             self.custom_structures.append(pdb_code)
+
+            # Test mode = only one PDB
+            if self.command["preferences"].get("test", False):
+                break
 
     def query_pdbq(self):
         """
@@ -412,9 +415,10 @@ class RapdPlugin(multiprocessing.Process):
                 # Decode search result
                 search_results = json.loads(response)
 
-                # Create handy Name key
+                # Create handy description key
                 for k in search_results.keys():
-                    search_results[k]["Name"] = search_results[k].pop("struct.pdbx_descriptor")
+                    search_results[k]["description"] = \
+                        search_results[k].pop("struct.pdbx_descriptor")
 
                 # Add new results to previous
                 all_results.update(search_results)
@@ -496,6 +500,9 @@ class RapdPlugin(multiprocessing.Process):
 
         # There will be results!
         if pdbq_results:
+            # Test mode = only one PDB
+            if self.command["preferences"].get("test", False):
+                pdbq_results = pdbq_results[0]
             self.search_results = pdbq_results.keys()[:]
             self.cell_output.update(pdbq_results)
             self.tprint("  %d relevant PDB files found on the PDBQ server" % len(pdbq_results.keys()),
@@ -521,6 +528,12 @@ class RapdPlugin(multiprocessing.Process):
         # Save these codes in a separate list so they can be separated in the Summary.
         common_contaminants = info.CONTAMINANTS.copy()
         self.common_contaminants = common_contaminants.keys()
+
+        # Test mode = only one PDB
+        if self.command["preferences"].get("test", False):
+            common_contaminants[info.CONTAMINANTS.keys()[0]] = \
+                info.CONTAMINANTS[info.CONTAMINANTS.keys()[0]]
+            self.common_contaminants = common_contaminants.keys()
 
         # Remove PDBs from self.common if they were already caught by unit cell dimensions.
         for contaminant in self.common_contaminants:
@@ -682,7 +695,7 @@ class RapdPlugin(multiprocessing.Process):
             else:
                 self.phaser_results[pdb_code] = {"AutoMR results": data}
 
-            print self.phaser_results.keys()
+            # print self.phaser_results.keys()
 
     def get_pdb_file(self, pdb_code):
         """Retrieve/check for/uncompress/convert structure file"""
@@ -769,37 +782,9 @@ class RapdPlugin(multiprocessing.Process):
     def postprocess(self):
         """Clean up after plugin action"""
 
-        self.tprint("\nResults", level=99, color="blue")
-
-        # Custom PDBs
-        print "self.custom_structures"
-        # pprint(self.custom_structures)
-        for pdb_code in self.custom_structures:
-            self.tprint(pdb_code, level=99, color="white")
-
-        # Common contaminants
-        print "self.common_contaminants"
-        # pprint(self.common_contaminants)
-        for pdb_code in self.common_contaminants:
-            self.tprint(pdb_code, level=99, color="white")
-
-        # Found structures
-        print "self.search_results"
-        # pprint(self.search_results)
-        for pdb_code in self.search_results:
-            self.tprint(pdb_code, level=99, color="white")
+        self.print_results()
 
         sys.exit()
-
-        pdb_codes = self.phaser_results.keys()
-        pdb_codes.sort()
-        for pdb_code in pdb_codes:
-            print pdb_code
-
-        sys.exit()
-
-        print "self.phaser_results"
-        pprint(self.phaser_results)
 
         output = {}
         status = False
@@ -821,25 +806,38 @@ class RapdPlugin(multiprocessing.Process):
                     mtz_file = self.phaser_results[pdb].get("AutoMR results").get("AutoMR mtz")
                     adf_file = self.phaser_results[pdb].get("AutoMR results").get("AutoMR adf")
                     peak_file = self.phaser_results[pdb].get("AutoMR results").get("AutoMR peak")
-                    if pdb_file not in ("No solution", "Timed out", "NA", "Still running", "DL Failed"):
-                        #pack all the output files into a tar and save the path
+                    if pdb_file not in ("No solution",
+                                        "Timed out",
+                                        "NA",
+                                        "Still running",
+                                        "DL Failed"):
+                        # Pack all the output files into a tar and save the path
                         os.chdir(self.phaser_results[pdb].get("AutoMR results").get("AutoMR dir"))
                         tar = "%s.tar" % pdb
-                        #Speed up in testing mode.
+                        # Speed up in testing mode.
                         if os.path.exists("%s.bz2" % tar):
                             check_bz2(tar)
-                            self.phaser_results[pdb].get("AutoMR results").update({"AutoMR tar": os.path.join(self.working_dir, "%s.bz2" % tar)})
+                            self.phaser_results[pdb].get("AutoMR results").update({"AutoMR tar": \
+                                os.path.join(self.working_dir, "%s.bz2" % tar)})
                         else:
-                            l = [pdb_file, mtz_file, adf_file, peak_file, pdb_file.replace(".pdb", "_refine_001.pdb"), mtz_file.replace(".mtz", "_refine_001.mtz")]
-                            for p in l:
+                            file_list = [pdb_file,
+                                         mtz_file,
+                                         adf_file,
+                                         peak_file,
+                                         pdb_file.replace(".pdb", "_refine_001.pdb"),
+                                         mtz_file.replace(".mtz", "_refine_001.mtz"),
+                                        ]
+                            for p in file_list:
                                 if os.path.exists(p):
                                     os.system("tar -rf %s %s" % (tar, p))
                             if os.path.exists(tar):
                                 os.system("bzip2 -qf %s" % tar)
                                 check_bz2(tar)
-                                self.phaser_results[pdb].get("AutoMR results").update({"AutoMR tar": os.path.join(self.working_dir, "%s.bz2" % tar)})
+                                self.phaser_results[pdb].get("AutoMR results").update(\
+                                    {"AutoMR tar": os.path.join(self.working_dir, "%s.bz2" % tar)})
                             else:
-                                self.phaser_results[pdb].get("AutoMR results").update({"AutoMR tar": "None"})
+                                self.phaser_results[pdb].get("AutoMR results").update(\
+                                    {"AutoMR tar": "None"})
                     # Save everthing into one dict
                     if pdb in self.cell_output.keys():
                         self.phaser_results[pdb].update(self.cell_output[pdb])
@@ -853,37 +851,37 @@ class RapdPlugin(multiprocessing.Process):
             cell_results = {"Cell analysis results":"FAILED"}
             failed = True
 
-        try:
-            # Create the output html file
-            os.chdir(self.working_dir)
-            Summary.summaryCell(self, "pdbquery")
-            self.html_summary()
-            if self.gui:
-                sl = "jon_summary_cell.php"
-            else:
-                sl = "jon_summary_cell.html"
-            if os.path.exists(os.path.join(self.working_dir, sl)):
-                output["Cell summary html"] = os.path.join(self.working_dir, sl)
-            else:
-                output["Cell summary html"] = "None"
-        except:
-            self.logger.exception("**Could not update path of shelx summary html file.**")
-            output["Cell summary html"] = "FAILED"
-            failed = True
+        # try:
+        #     # Create the output html file
+        #     os.chdir(self.working_dir)
+        #     Summary.summaryCell(self, "pdbquery")
+        #     self.html_summary()
+        #     if self.gui:
+        #         sl = "jon_summary_cell.php"
+        #     else:
+        #         sl = "jon_summary_cell.html"
+        #     if os.path.exists(os.path.join(self.working_dir, sl)):
+        #         output["Cell summary html"] = os.path.join(self.working_dir, sl)
+        #     else:
+        #         output["Cell summary html"] = "None"
+        # except:
+        #     self.logger.exception("**Could not update path of shelx summary html file.**")
+        #     output["Cell summary html"] = "FAILED"
+        #     failed = True
 
         try:
             output_files = {"Output files":output}
         except:
             self.logger.exception("**Could not update the output dict.**")
 
-        #Get proper status.
+        # Get proper status.
         if failed:
-            status = {"status":"FAILED"}
+            status = {"status": "FAILED"}
             self.clean = False
         else:
-            status = {"status":"SUCCESS"}
+            status = {"status": "SUCCESS"}
 
-        #Put all the result dicts from all the programs run into one resultant dict and pass it along the pipe.
+        # Put all the result dicts from all the programs run into one resultant dict and pass it along the pipe.
         try:
             results = {}
             if status:
@@ -924,6 +922,136 @@ class RapdPlugin(multiprocessing.Process):
             print "\nRAPD PDBQuery complete."
             print "Total elapsed time: %s seconds" % run_time
             print 50*"-"
+
+    def print_results(self):
+        """Print the results to the commandline"""
+
+        pprint(self.phaser_results)
+
+        self.tprint("\nResults", level=99, color="blue")
+
+        # Custom PDBs
+        if self.custom_structures:
+
+            # Find out the longest description field
+            longest_field = 0
+            for pdb_code in self.custom_structures:
+                length = len(self.cell_output[pdb_code]["description"])
+                if length > longest_field:
+                    longest_field = length
+
+            self.tprint("  User-input structures", level=99, color="white")
+            self.tprint(("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14}").format(
+                "PDB",
+                "Description",
+                "LL-Gain",
+                "RF Z-score",
+                "TF Z-score",
+                "# Clashes",
+                width=str(longest_field)),
+                        level=99,
+                        color="white")
+
+            # Run through the codes
+            for pdb_code in self.custom_structures:
+
+                # Get the result in question
+                my_result = self.phaser_results[pdb_code.lower()]["AutoMR results"]
+
+                # Print the result line
+                self.tprint("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14}".format(
+                    pdb_code,
+                    self.cell_output[pdb_code]["description"],
+                    my_result["AutoMR gain"],
+                    my_result["AutoMR rfz"],
+                    my_result["AutoMR tfz"],
+                    my_result["AutoMR clash"],
+                    width=str(longest_field)
+                    ),
+                            level=99,
+                            color="white")
+
+        # Common contaminants
+        if self.common_contaminants:
+
+            # Find out the longest description field
+            longest_field = 0
+            for pdb_code in self.common_contaminants:
+                length = len(self.cell_output[pdb_code]["description"])
+                if length > longest_field:
+                    longest_field = length
+
+            self.tprint("  Common contaminants", level=99, color="white")
+            self.tprint(("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14}").format(
+                "PDB",
+                "Description",
+                "LL-Gain",
+                "RF Z-score",
+                "TF Z-score",
+                "# Clashes",
+                width=str(longest_field)),
+                        level=99,
+                        color="white")
+
+            # Run through the codes
+            for pdb_code in self.common_contaminants:
+
+                # Get the result in question
+                my_result = self.phaser_results[pdb_code.lower()]["AutoMR results"]
+
+                # Print the result line
+                self.tprint("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14}".format(
+                    pdb_code,
+                    self.cell_output[pdb_code]["description"],
+                    my_result["AutoMR gain"],
+                    my_result["AutoMR rfz"],
+                    my_result["AutoMR tfz"],
+                    my_result["AutoMR clash"],
+                    width=str(longest_field)
+                    ),
+                            level=99,
+                            color="white")
+
+        # Structures with similar cell dimensions
+        if self.search_results:
+
+            # Find out the longest description field
+            longest_field = 0
+            for pdb_code in self.search_results:
+                length = len(self.cell_output[pdb_code]["description"])
+                if length > longest_field:
+                    longest_field = length
+
+            self.tprint("  User-input structures", level=99, color="white")
+            self.tprint(("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14}").format(
+                "PDB",
+                "Description",
+                "LL-Gain",
+                "RF Z-score",
+                "TF Z-score",
+                "# Clashes",
+                width=str(longest_field)),
+                        level=99,
+                        color="white")
+
+            # Run through the codes
+            for pdb_code in self.search_results:
+
+                # Get the result in question
+                my_result = self.phaser_results[pdb_code.lower()]["AutoMR results"]
+
+                # Print the result line
+                self.tprint("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14}".format(
+                    pdb_code,
+                    self.cell_output[pdb_code]["description"],
+                    my_result["AutoMR gain"],
+                    my_result["AutoMR rfz"],
+                    my_result["AutoMR tfz"],
+                    my_result["AutoMR clash"],
+                    width=str(longest_field)
+                    ),
+                            level=99,
+                            color="white")
 
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
