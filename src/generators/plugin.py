@@ -491,7 +491,9 @@ class FileGenerator(CommandlineFileGenerator):
             "    def print_credits(self):",
             "        \"\"\"Print credits for programs utilized by this plugin\"\"\"\n",
             "        self.tprint(\"print_credits\")\n",
-
+            "        programs = [\"CCTBX\"]",
+            "        info_string = credit.get_credits_text(programs, \"    \")",
+            "        self.tprint(info_string, level=99, color=\"white\"\n)",
         ]
         file_generator.output_function(plugin_lines)
 

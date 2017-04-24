@@ -2,7 +2,7 @@
 
 """
 This file is part of RAPD
-
+c
 Copyright (C) 2017, Cornell University
 All rights reserved.
 
@@ -48,6 +48,7 @@ from pprint import pprint
 # import pymongo
 # import re
 # import redis
+import signal
 import shutil
 import subprocess32
 import sys
@@ -61,6 +62,7 @@ import urllib2
 # import detectors.detector_utils as detector_utils
 # import utils
 from plugins.subcontractors.parse import parse_phaser_output, setPhaserFailed
+import utils.credits as credit
 import utils.xutils as xutils
 import info
 
@@ -279,9 +281,9 @@ class RapdPlugin(multiprocessing.Process):
     def run(self):
         """Execution path of the plugin"""
 
-        self.preprocess()
-        self.process()
-        self.postprocess()
+        # self.preprocess()
+        # self.process()
+        # self.postprocess()
         self.print_credits()
 
     def preprocess(self):
@@ -926,12 +928,12 @@ class RapdPlugin(multiprocessing.Process):
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
 
-        self.tprint("RAPD ndepends on the work of others:",
+        self.tprint("RAPD depends on the work of others",
                     level=99,
                     color="blue")
 
-        programs = ["PHENIX", "PHASER"]
-        info_string = []
+        programs = ["CCTBX", "PHENIX", "PHASER"]
+        info_string = credit.get_credits_text(programs, "    ")
 
         self.tprint(info_string, level=99, color="white")
 

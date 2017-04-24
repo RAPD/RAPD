@@ -25,34 +25,40 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 # Standard imports
-# import argparse
-# import from collections import OrderedDict
-# import datetime
-# import glob
-# import json
-# import logging
-# import multiprocessing
-# import os
-# import pprint
-# import pymongo
-# import re
-# import redis
-# import shutil
-# import subprocess
-# import sys
-# import time
-# import unittest
+import sys
 
-# RAPD imports
-# import commandline_utils
-# import detectors.detector_utils as detector_utils
-# import utils
+CCTBX = [
+    "CCTBX - Computational Crystallography Toolbox",
+    "Reference: Grosse-Kunstleve et al. (2002) J. Appl. Cryst. 35:126-136",
+    "Website: https://cctbx.github.io/\n"
+]
+
+PHASER = [
+    "Phaser",
+    "Reference: McCoy AJ, et al. (2007) J. Appl. Cryst. 40:658-674",
+    "Website: http://www.phenix-online.org/documentation/phaser.htm\n"
+]
 
 PHENIX = [
     "Phenix",
-    "Reference: J. Appl. Cryst. 37, 399-409 (2004)",
-    "Website:   http://adder.lbl.gov/labelit/",
+    "Reference: Sauter NK, et al. (2004) J. Appl. Cryst. 37:399-409",
+    "Website:   http://adder.lbl.gov/labelit/\n",
 ]
 
+MAIN_MODULE = sys.modules[__name__]
+
 def get_credit(requested_program="PHENIX"):
-    return getattr(main_module, requested_program.upper())
+    """Return credit lines for requested program"""
+    return getattr(MAIN_MODULE, requested_program.upper())
+
+def get_credits_text(programs, indent=""):
+    """Return text for printing out credits"""
+
+    return_text = ""
+
+    for program in programs:
+        raw_lines = get_credit(program.upper())
+        for line in raw_lines:
+            return_text += (indent + line + "\n")
+
+    return return_text
