@@ -288,14 +288,9 @@ class BaseFileGenerator(object):
     def write_main(self, main_lines=False):
         """Write the main function"""
         if not main_lines:
-            if self.args.commandline:
-                main_lines = ["if __name__ == \"__main__\":\n",
-                              "    commandline_args = get_commandline()\n",
-                              "    main(args=commandline_args)\n",]
-            else:
-                main_lines = ["if __name__ == \"__main__\":\n",
-                              "    # Execute code",
-                              "    main()"]
+            main_lines = ["if __name__ == \"__main__\":\n",
+                          "    # Execute code",
+                          "    main()"]
 
         self.output_function(main_lines)
 
