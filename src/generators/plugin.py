@@ -313,7 +313,7 @@ class FileGenerator(CommandlineFileGenerator):
             "                           default=False,",
             "                           help=\"Name of file to be analyzed\")\n",
             "    # Print help message if no arguments",
-            "    if len(sys.argv[1:])==0:",
+            "    if len(sys.argv[1:]) == 0:",
             "        my_parser.print_help()",
             "        my_parser.exit()\n",
             "    args = my_parser.parse_args()\n",
