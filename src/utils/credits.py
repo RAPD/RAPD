@@ -53,3 +53,6 @@ PHENIX = [
     "Reference: J. Appl. Cryst. 37, 399-409 (2004)",
     "Website:   http://adder.lbl.gov/labelit/",
 ]
+
+def get_credit(requested_program="PHENIX"):
+    return getattr(main_module, requested_program.upper())
