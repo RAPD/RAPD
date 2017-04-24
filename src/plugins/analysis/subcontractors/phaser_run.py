@@ -327,11 +327,16 @@ def phaser_func(inp):
                                    preexec_fn=os.setsid)
     try:
         stdout, _ = phaser_proc.communicate(timeout=timeout)
-        # print stdout
-        # print stderr
+
+        # Write the log file
+        with open("phaser.log", "w") as log_file:
+            log_file.write(stdout)
+
+        # Return output
         return {"pdb_code": input_pdb.replace(".pdb", ""),
                 "log": stdout,
                 "status": "COMPLETE"}
+
     except subprocess.TimeoutExpired:
         print "  killing %d" % phaser_proc.pid
         os.killpg(os.getpgid(phaser_proc.pid), signal.SIGTERM)

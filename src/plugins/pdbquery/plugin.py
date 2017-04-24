@@ -63,11 +63,12 @@ import urllib2
 # import utils
 from plugins.subcontractors.parse import parse_phaser_output, setPhaserFailed
 import utils.credits as credit
+import utils.globals as rglobals
 import utils.xutils as xutils
 import info
 
 # NE-CAT REST PDB server
-PDBQ_SERVER = "remote.nec.aps.anl.gov:3030"
+PDBQ_SERVER = rglobals.PDBQ_SERVER
 
 # Software dependencies
 VERSIONS = {
@@ -162,11 +163,17 @@ def phaser_func(command):
                                      preexec_fn=os.setsid)
     try:
         stdout, _ = phaser_proc.communicate(timeout=timeout)
-        # print stdout
-        # print stderr
+
+        # Write the log file
+        with open("phaser.log", "w") as log_file:
+            log_file.write(stdout)
+
+        # Return results
         return {"pdb_code": input_pdb.replace(".pdb", ""),
                 "log": stdout,
                 "status": "COMPLETE"}
+
+    # Run taking too long
     except subprocess32.TimeoutExpired:
         print "  killing %d" % phaser_proc.pid
         os.killpg(os.getpgid(phaser_proc.pid), signal.SIGTERM)
@@ -288,7 +295,7 @@ class RapdPlugin(multiprocessing.Process):
     def preprocess(self):
         """Set up for plugin action"""
 
-        self.tprint("preprocess")
+        # self.tprint("preprocess")
 
         # Check the local pdb cache Location
         if self.cif_cache:
@@ -325,7 +332,7 @@ class RapdPlugin(multiprocessing.Process):
     def process(self):
         """Run plugin action"""
 
-        self.tprint("process")
+        # self.tprint("process")
 
         if self.command["input_data"].get("pdbs", False):
             self.add_custom_pdbs()
@@ -348,6 +355,9 @@ class RapdPlugin(multiprocessing.Process):
 
         # Query the server for information and add to self.cell_output
         for pdb_code in self.command["input_data"].get("pdbs"):
+
+            # Make sure we are in upper case
+            pdb_code = pdb_code.upper()
 
             # Query pdbq server
             response = urllib2.urlopen(urllib2.Request("http://%s/entry/%s" % \
@@ -386,7 +396,7 @@ class RapdPlugin(multiprocessing.Process):
         """
 
         self.logger.debug("query_pdbq")
-        self.tprint("Searching for similar unit cells in the PDB", level=10, color="blue")
+        self.tprint("\nSearching for similar unit cells in the PDB", level=10, color="blue")
 
         def connect_pdbq(previous_results, permutations, end=0):
             """Function to query the PDBQ server"""
@@ -476,7 +486,7 @@ class RapdPlugin(multiprocessing.Process):
 
             # Handle results
             if pdbq_results:
-                for line in pdbq_results.keys():
+                for line in pdbq_results:
                     # Remove anything bigger than 4 letters
                     if len(line) > 4:
                         del pdbq_results[line]
@@ -491,7 +501,7 @@ class RapdPlugin(multiprocessing.Process):
                     pdbq_results = limit_pdbq_results(pdbq_results, limit)
 
             # Not enough results
-            if len(pdbq_results.keys()) < limit:
+            if len(pdbq_results) < limit:
                 counter += 1
                 self.percent += 0.01
                 self.logger.debug("Not enough PDB results. Going for more...")
@@ -502,7 +512,10 @@ class RapdPlugin(multiprocessing.Process):
         if pdbq_results:
             # Test mode = only one PDB
             if self.command["preferences"].get("test", False):
-                pdbq_results = pdbq_results[0]
+                my_pdbq_results = {
+                    pdbq_results.keys()[0]: pdbq_results[pdbq_results.keys()[0]]
+                    }
+                pdbq_results = my_pdbq_results
             self.search_results = pdbq_results.keys()[:]
             self.cell_output.update(pdbq_results)
             self.tprint("  %d relevant PDB files found on the PDBQ server" % len(pdbq_results.keys()),
@@ -529,22 +542,25 @@ class RapdPlugin(multiprocessing.Process):
         common_contaminants = info.CONTAMINANTS.copy()
         self.common_contaminants = common_contaminants.keys()
 
-        # Test mode = only one PDB
-        if self.command["preferences"].get("test", False):
-            common_contaminants[info.CONTAMINANTS.keys()[0]] = \
-                info.CONTAMINANTS[info.CONTAMINANTS.keys()[0]]
-            self.common_contaminants = common_contaminants.keys()
-
         # Remove PDBs from self.common if they were already caught by unit cell dimensions.
         for contaminant in self.common_contaminants:
             if contaminant in self.cell_output:
                 del common_contaminants[contaminant]
                 self.common_contaminants.remove(contaminant)
 
+        # Test mode = only one PDB
+        if self.command["preferences"].get("test", False):
+            my_contaminants = {
+                common_contaminants.keys()[0]: common_contaminants[common_contaminants.keys()[0]]
+                }
+            common_contaminants = my_contaminants
+            self.common_contaminants = common_contaminants.keys()
+
         # Put contaminants in list to be screened
         self.tprint("  %d contaminants added to screen" % len(common_contaminants),
                     level=10,
                     color="white")
+        print common_contaminants
         self.cell_output.update(common_contaminants)
 
     def process_phaser(self):
@@ -557,18 +573,18 @@ class RapdPlugin(multiprocessing.Process):
 
         # Run through the pdbs
         commands = []
-        for code in self.cell_output.keys():
+        for pdb_code in self.cell_output:
 
-            self.tprint("    %s" % code, level=30, color="white")
+            self.tprint("    %s" % pdb_code, level=30, color="white")
 
             l = False
             copy = 1
 
             # Create directory for MR
-            xutils.create_folders(self.working_dir, "Phaser_%s" % code)
+            xutils.create_folders(self.working_dir, "Phaser_%s" % pdb_code)
 
             # Get the structure file
-            pdb_file, sg_pdb = self.get_pdb_file(code)
+            pdb_file, sg_pdb = self.get_pdb_file(pdb_code)
 
             # Now check all SG's
             sg_num = xutils.convert_spacegroup(sg_pdb)
@@ -583,7 +599,7 @@ class RapdPlugin(multiprocessing.Process):
             # self.tprint("      Data spacegroup: %s" % data_spacegroup, level=10, color="white")
 
             # Fewer mols in AU or in self.common.
-            if code in self.common_contaminants or float(self.laue) > float(lg_pdb):
+            if pdb_code in self.common_contaminants or float(self.laue) > float(lg_pdb):
                 # if SM is lower sym, which will cause problems, since PDB is too big.
                 # Need full path for copying pdb files to folders.
                 pdb_info = xutils.get_pdb_info(os.path.join(os.getcwd(), pdb_file),
@@ -622,10 +638,10 @@ class RapdPlugin(multiprocessing.Process):
                                                data_file=self.datafile)
 
             job_description = {
-                "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % code)),
+                "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % pdb_code)),
                 "data": self.datafile,
                 "pdb": pdb_file,
-                "name": code,
+                "name": pdb_code,
                 "sg": data_spacegroup,
                 "copy": copy,
                 "test": self.test,
@@ -641,7 +657,7 @@ class RapdPlugin(multiprocessing.Process):
             else:
                 # d1 = {}
                 for chain in l:
-                    new_code = "%s_%s" % (code, chain)
+                    new_code = "%s_%s" % (pdb_code, chain)
                     xutils.folders(self, "Phaser_%s" % new_code)
                     job_description.update({
                         "work_dir": os.path.abspath(os.path.join(self.working_dir, "Phaser_%s" % \
@@ -784,8 +800,6 @@ class RapdPlugin(multiprocessing.Process):
 
         self.print_results()
 
-        sys.exit()
-
         output = {}
         status = False
         output_files = False
@@ -793,86 +807,88 @@ class RapdPlugin(multiprocessing.Process):
         failed = False
 
         # Add tar info to automr results and take care of issue if no SCA file was input.
-        try:
-            def check_bz2(tar):
-                # Remove old tar's in working dir, if they exist and copy new one over.
-                if os.path.exists(os.path.join(self.working_dir, "%s.bz2" % tar)):
-                    os.system("rm -rf %s" % os.path.join(self.working_dir, "%s.bz2" % tar))
-                shutil.copy("%s.bz2" % tar, self.working_dir)
-
-            if self.cell_output:
-                for pdb in self.phaser_results.keys():
-                    pdb_file = self.phaser_results[pdb].get("AutoMR results").get("AutoMR pdb")
-                    mtz_file = self.phaser_results[pdb].get("AutoMR results").get("AutoMR mtz")
-                    adf_file = self.phaser_results[pdb].get("AutoMR results").get("AutoMR adf")
-                    peak_file = self.phaser_results[pdb].get("AutoMR results").get("AutoMR peak")
-                    if pdb_file not in ("No solution",
-                                        "Timed out",
-                                        "NA",
-                                        "Still running",
-                                        "DL Failed"):
-                        # Pack all the output files into a tar and save the path
-                        os.chdir(self.phaser_results[pdb].get("AutoMR results").get("AutoMR dir"))
-                        tar = "%s.tar" % pdb
-                        # Speed up in testing mode.
-                        if os.path.exists("%s.bz2" % tar):
-                            check_bz2(tar)
-                            self.phaser_results[pdb].get("AutoMR results").update({"AutoMR tar": \
-                                os.path.join(self.working_dir, "%s.bz2" % tar)})
-                        else:
-                            file_list = [pdb_file,
-                                         mtz_file,
-                                         adf_file,
-                                         peak_file,
-                                         pdb_file.replace(".pdb", "_refine_001.pdb"),
-                                         mtz_file.replace(".mtz", "_refine_001.mtz"),
-                                        ]
-                            for p in file_list:
-                                if os.path.exists(p):
-                                    os.system("tar -rf %s %s" % (tar, p))
-                            if os.path.exists(tar):
-                                os.system("bzip2 -qf %s" % tar)
-                                check_bz2(tar)
-                                self.phaser_results[pdb].get("AutoMR results").update(\
-                                    {"AutoMR tar": os.path.join(self.working_dir, "%s.bz2" % tar)})
-                            else:
-                                self.phaser_results[pdb].get("AutoMR results").update(\
-                                    {"AutoMR tar": "None"})
-                    # Save everthing into one dict
-                    if pdb in self.cell_output.keys():
-                        self.phaser_results[pdb].update(self.cell_output[pdb])
-                    else:
-                        self.phaser_results[pdb].update(self.cell_output[pdb[:pdb.rfind("_")]])
-                cell_results = {"Cell analysis results":self.phaser_results}
-            else:
-                cell_results = {"Cell analysis results":"None"}
-        except:
-            self.logger.exception("**Could not AutoMR results in postprocess.**")
-            cell_results = {"Cell analysis results":"FAILED"}
-            failed = True
-
         # try:
-        #     # Create the output html file
-        #     os.chdir(self.working_dir)
-        #     Summary.summaryCell(self, "pdbquery")
-        #     self.html_summary()
-        #     if self.gui:
-        #         sl = "jon_summary_cell.php"
-        #     else:
-        #         sl = "jon_summary_cell.html"
-        #     if os.path.exists(os.path.join(self.working_dir, sl)):
-        #         output["Cell summary html"] = os.path.join(self.working_dir, sl)
-        #     else:
-        #         output["Cell summary html"] = "None"
+        def check_bz2(tar):
+            # Remove old tar's in working dir, if they exist and copy new one over.
+            if os.path.exists(os.path.join(self.working_dir, "%s.bz2" % tar)):
+                os.unlink(os.path.join(self.working_dir, "%s.bz2" % tar))
+            shutil.copy("%s.bz2" % tar, self.working_dir)
+
+        if self.cell_output:
+            for pdb_code in self.phaser_results:
+                print pdb_code
+                pdb_file = self.phaser_results[pdb_code].get("AutoMR results").get("AutoMR pdb")
+                mtz_file = self.phaser_results[pdb_code].get("AutoMR results").get("AutoMR mtz")
+                adf_file = self.phaser_results[pdb_code].get("AutoMR results").get("AutoMR adf")
+                peak_file = self.phaser_results[pdb_code].get("AutoMR results").get(\
+                    "AutoMR peak")
+                print pdb_file, mtz_file, adf_file, peak_file
+
+                # Success of a sort
+                if pdb_file not in ("No solution",
+                                    "Timed out",
+                                    "NA",
+                                    "Still running",
+                                    "DL Failed"):
+                    # Pack all the output files into a tar and save the path
+                    os.chdir(self.phaser_results[pdb_code].get("AutoMR results").get(\
+                        "AutoMR dir"))
+                    tar_file = "%s.tar" % pdb_code
+                    # Speed up in testing mode.
+                    if os.path.exists("%s.bz2" % tar_file):
+                        check_bz2(tar_file)
+                        self.phaser_results[pdb_code].get("AutoMR results").update(\
+                            {"AutoMR tar": os.path.join(self.working_dir, "%s.bz2" % tar_file)})
+                    else:
+                        file_list = [pdb_file,
+                                     mtz_file,
+                                     adf_file,
+                                     peak_file,
+                                     pdb_file.replace(".pdb", "_refine_001.pdb"),
+                                     mtz_file.replace(".mtz", "_refine_001.mtz"),
+                                    ]
+                        for my_file in file_list:
+                            if os.path.exists(my_file):
+                                # subprocess32.run(["tar", "-rf", tar_file, my_file])
+                                tar_proc = subprocess32.Popen(["tar", "-rf", tar_file, my_file],
+                                                              stdout=subprocess32.PIPE,
+                                                              stderr=subprocess32.PIPE) #,
+                                                              # shell=True)
+                                # os.system("tar -rf %s %s" % (tar_file, my_file))
+                        if os.path.exists(tar_file):
+                            # subprocess32.run(["bzip2", "-qf", tar_file])
+                            bzip_process = subprocess32.Popen(["bzip2", "-qf", tar_file],
+                                                              stdout=subprocess32.PIPE,
+                                                              stderr=subprocess32.PIPE) #,
+                                                              # shell=True)
+                            bzip_process.wait()
+                            # os.system("bzip2 -qf %s" % tar_file)
+                            check_bz2(tar_file)
+                            self.phaser_results[pdb_code].get("AutoMR results").update(
+                                {"AutoMR tar": os.path.join(self.working_dir, "%s.bz2" % \
+                                    tar_file)})
+                        else:
+                            self.phaser_results[pdb_code].get("AutoMR results").update(\
+                                {"AutoMR tar": "None"})
+
+                # Save everthing into one dict
+                if pdb_code in self.cell_output:
+                    self.phaser_results[pdb_code].update(self.cell_output[pdb_code])
+                else:
+                    self.phaser_results[pdb_code].update(
+                        self.cell_output[pdb_code[:pdb_code.rfind("_")]])
+            cell_results = {"Cell analysis results": self.phaser_results}
+        else:
+            cell_results = {"Cell analysis results": "None"}
         # except:
-        #     self.logger.exception("**Could not update path of shelx summary html file.**")
-        #     output["Cell summary html"] = "FAILED"
+        #     self.logger.exception("**Could not AutoMR results in postprocess.**")
+        #     cell_results = {"Cell analysis results":"FAILED"}
         #     failed = True
 
-        try:
-            output_files = {"Output files":output}
-        except:
-            self.logger.exception("**Could not update the output dict.**")
+        # try:
+        output_files = {"Output files": output}
+        # except:
+        #     self.logger.exception("**Could not update the output dict.**")
 
         # Get proper status.
         if failed:
@@ -881,52 +897,55 @@ class RapdPlugin(multiprocessing.Process):
         else:
             status = {"status": "SUCCESS"}
 
-        # Put all the result dicts from all the programs run into one resultant dict and pass it along the pipe.
-        try:
-            results = {}
-            if status:
-                results.update(status)
-            if cell_results:
-                results.update(cell_results)
-            if output_files:
-                results.update(output_files)
-            if results:
-                self.input.append(results)
-            if self.output != None:
-                self.output.put(results)
-            else:
-                if self.gui:
-                #   self.sendBack2(self.input)
-                    rapd_send(self.controller_address, self.input)
-        except:
-            self.logger.exception("**Could not send results to pipe**")
+        # Put all the result dicts from all the programs run into one resultant dict and pass it
+        # along the pipe.
+        # try:
+        results = {}
+        if status:
+            results.update(status)
+        if cell_results:
+            results.update(cell_results)
+        if output_files:
+            results.update(output_files)
 
-        try:
-            # Cleanup my mess.
-            if self.clean:
-                os.chdir(self.working_dir)
-                os.system("rm -rf Phaser_* temp.mtz")
-                if self.verbose:
-                    self.logger.debug("Cleaning up Phaser files and folders")
-        except:
-            self.logger.exception("**Could not cleanup**")
+        pprint(results)
+
+        # if results:
+        #     self.input.append(results)
+        # if self.output != None:
+        #     self.output.put(results)
+        # else:
+        #     if self.gui:
+        #     #   self.sendBack2(self.input)
+        #         rapd_send(self.controller_address, self.input)
+        # except:
+        #     self.logger.exception("**Could not send results to pipe**")
+
+        # try:
+        # Cleanup my mess.
+        if self.clean:
+            os.chdir(self.working_dir)
+            os.system("rm -rf Phaser_* temp.mtz")
+            self.logger.debug("Cleaning up Phaser files and folders")
+        # except:
+        #     self.logger.exception("**Could not cleanup**")
 
         # Say job is complete.
         run_time = round(time.time() - self.start_time)
         self.logger.debug(50 * "-")
         self.logger.debug("RAPD PDBQuery complete.")
-        self.logger.debug("Total elapsed time: %s seconds" % run_time)
-        self.logger.debug(50*"-")
-        if self.output == None:
-            print 50*"-"
-            print "\nRAPD PDBQuery complete."
-            print "Total elapsed time: %s seconds" % run_time
-            print 50*"-"
+        self.logger.debug("Total elapsed time: %s seconds", run_time)
+        self.logger.debug(50 * "-")
+        # if self.output == None:
+        #     print 50*"-"
+        #     print "\nRAPD PDBQuery complete."
+        #     print "Total elapsed time: %s seconds" % run_time
+        #     print 50*"-"
 
     def print_results(self):
         """Print the results to the commandline"""
 
-        pprint(self.phaser_results)
+        # pprint(self.phaser_results)
 
         self.tprint("\nResults", level=99, color="blue")
 
@@ -981,7 +1000,7 @@ class RapdPlugin(multiprocessing.Process):
                 if length > longest_field:
                     longest_field = length
 
-            self.tprint("  Common contaminants", level=99, color="white")
+            self.tprint("\n  Common contaminants", level=99, color="white")
             self.tprint(("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14}").format(
                 "PDB",
                 "Description",
@@ -1022,7 +1041,7 @@ class RapdPlugin(multiprocessing.Process):
                 if length > longest_field:
                     longest_field = length
 
-            self.tprint("  User-input structures", level=99, color="white")
+            self.tprint("\n  Cell parameter search structures", level=99, color="white")
             self.tprint(("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14}").format(
                 "PDB",
                 "Description",

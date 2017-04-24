@@ -43,9 +43,10 @@ from plugins.subcontractors.parse import ParseOutputPhaser, setPhaserFailed
 # import summary as Summary
 # from utils.communicate import rapd_send
 # import utils.site as site_utils
+import utils.globals as rglobals
 import utils.xutils as xutils
 
-PDBQ_SERVER = "remote.nec.aps.anl.gov:3030"
+PDBQ_SERVER = rglobals.PDBQ_SERVER
 
 class PDBQuery(Process):
 
@@ -113,7 +114,7 @@ class PDBQuery(Process):
         self.output = output
         self.logger = logger
 
-        pprint(command)
+        # pprint(command)
 
         # Params
         self.working_dir = self.input["directories"].get("work", os.getcwd())

@@ -1906,7 +1906,7 @@ def parse_phaser_output(phaser_log):
     """ Parse Phaser log file"""
 
     pdb = False
-    st = False
+    start = False
     clash = 'NC'
     end = False
     temp = []
@@ -1924,13 +1924,14 @@ def parse_phaser_output(phaser_log):
                 if line.count('MTZ'):
                     mtz = line.split()[-1]
             if line.count('RFZ='):
-                st = x
+                start = x
         if line.count('SOLU SET'):
-            st = x
+            start = x
         if line.count('SOLU ENSEMBLE'):
             end = x
-    if st:
-        for line in phaser_log[st:end]:
+    if start:
+        for line in phaser_log[start:end]:
+            print line
             if line.count('SOLU 6DIM'):
                 nmol += 1
             for param in line.split():

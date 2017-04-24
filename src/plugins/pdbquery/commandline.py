@@ -73,6 +73,7 @@ def construct_command(commandline_args, logger):
     commandline_utils.check_work_dir(command["directories"]["work"], True)
 
     # Information on input
+    print commandline_args.datafile
     command["input_data"] = {
         "datafile": os.path.abspath(commandline_args.datafile),
         "pdbs": commandline_args.pdbs
@@ -163,6 +164,7 @@ def get_commandline():
     # Positional argument
     my_parser.add_argument("--datafile",
                            dest="datafile",
+                        #    nargs="+",
                            required=True,
                            help="Name of data file to be analyzed")
 
