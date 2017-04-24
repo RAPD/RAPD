@@ -1919,7 +1919,7 @@ def parse_phaser_output(phaser_log):
         temp.append(line)
         directory = os.getcwd()
         if line.count('SPACEGROUP'):
-            sg = line.split()[-1]
+            spacegroup = line.split()[-1]
         if line.count('Solution') or line.count('Partial Solution '):
             if line.count('written'):
                 if line.count('PDB'):
@@ -1954,22 +1954,24 @@ def parse_phaser_output(phaser_log):
                 if param.startswith('+TNCS'):
                     tncs = True
     if not pdb:
-        phaser = setPhaserFailed('No solution')
+        phaser_result = setPhaserFailed('No solution')
     else:
-        phaser = {'AutoMR nosol': 'False',
-                  'AutoMR pdb': pdb,
-                  'AutoMR mtz': mtz,
-                  'AutoMR gain': llgain,
-                  'AutoMR rfz': rfz,
-                  'AutoMR tfz': tfz,
-                  'AutoMR clash': clash,
-                  'AutoMR dir': directory,
-                  'AutoMR sg': sg,
-                  'AutoMR tNCS': tncs,
-                  'AutoMR nmol': nmol,
-                  'AutoMR adf': 'None',
-                  'AutoMR peak': 'None'}
-    return phaser
+        phaser_result = {"nosol": False,
+                         "pdb": pdb,
+                         "mtz": mtz,
+                         "gain": llgain,
+                         "rfz": rfz,
+                         "tfz": tfz,
+                         "clash": clash,
+                         "dir": directory,
+                         "spacegroup": spacegroup,
+                         "tNCS": tncs,
+                         "nmol": nmol,
+                         "adf": None,
+                         "peak": None,
+                        }
+
+    return phaser_result
 
 def ParseOutputPhaserNCS(self,inp):
   if self.verbose:

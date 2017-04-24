@@ -92,7 +92,7 @@ def phaser_func(command):
     resolution = command.get("res", False)
     datafile = command.get("data")
     input_pdb = command.get("pdb")
-    spacegroup = command.get("sg")
+    spacegroup = command.get("spacegroup")
     cell_analysis = command.get("cell analysis", False)
     name = command.get("name", spacegroup)
     large_cell = command.get("large", False)
@@ -220,8 +220,8 @@ class RapdPlugin(multiprocessing.Process):
     tooltips = False
     pdb_summary = False
     large_cell = False
-    input_sg = False
-    input_sg_num = 0
+    input_spacegroup = False
+    input_spacegroup_num = 0
     laue = False
     dres = 0.0
     volume = 0
@@ -303,15 +303,15 @@ class RapdPlugin(multiprocessing.Process):
                 os.makedirs(self.cif_cache)
 
         # Glean some information on the input file
-        self.input_sg, self.cell, self.volume = xutils.get_mtz_info(self.datafile)
+        self.input_spacegroup, self.cell, self.volume = xutils.get_mtz_info(self.datafile)
         self.dres = xutils.get_res(self.datafile)
-        self.input_sg_num = int(xutils.convert_spacegroup(self.input_sg))
-        self.laue = xutils.get_sub_groups(self.input_sg_num, "simple")
+        self.input_spacegroup_num = int(xutils.convert_spacegroup(self.input_spacegroup))
+        self.laue = xutils.get_sub_groups(self.input_spacegroup_num, "simple")
 
         # Throw some information into the terminal
         self.tprint("\nDataset information", color="blue", level=10)
         self.tprint("  Data file: %s" % self.datafile, level=10, color="white")
-        self.tprint("  Spacegroup: %s  (%d)" % (self.input_sg, self.input_sg_num),
+        self.tprint("  Spacegroup: %s  (%d)" % (self.input_spacegroup, self.input_spacegroup_num),
                     level=10,
                     color="white")
         self.tprint("  Cell: %f %f %f %f %f %f" % tuple(self.cell), level=10, color="white")
@@ -320,7 +320,7 @@ class RapdPlugin(multiprocessing.Process):
         self.tprint("  Subgroups: %s" % self.laue, level=10, color="white")
 
         # Set by number of residues in AU. Ribosome (70s) is 24k.
-        self.est_res_number = xutils.calc_res_number(self.input_sg,
+        self.est_res_number = xutils.calc_res_number(self.input_spacegroup,
                                                      se=False,
                                                      volume=self.volume,
                                                      sample_type=self.sample_type,
@@ -584,12 +584,12 @@ class RapdPlugin(multiprocessing.Process):
             xutils.create_folders(self.working_dir, "Phaser_%s" % pdb_code)
 
             # Get the structure file
-            pdb_file, sg_pdb = self.get_pdb_file(pdb_code)
+            pdb_file, spacegroup_pdb = self.get_pdb_file(pdb_code)
 
             # Now check all SG's
-            sg_num = xutils.convert_spacegroup(sg_pdb)
-            lg_pdb = xutils.get_sub_groups(sg_num, "simple")
-            self.tprint("      %s spacegroup: %s (%s)" % (pdb_file, sg_pdb, sg_num),
+            spacegroup_num = xutils.convert_spacegroup(spacegroup_pdb)
+            lg_pdb = xutils.get_sub_groups(spacegroup_num, "simple")
+            self.tprint("      %s spacegroup: %s (%s)" % (pdb_file, spacegroup_pdb, spacegroup_num),
                         level=10,
                         color="white")
             self.tprint("      subgroups: %s" % str(lg_pdb), level=10, color="white")
@@ -642,7 +642,7 @@ class RapdPlugin(multiprocessing.Process):
                 "data": self.datafile,
                 "pdb": pdb_file,
                 "name": pdb_code,
-                "sg": data_spacegroup,
+                "spacegroup": data_spacegroup,
                 "copy": copy,
                 "test": self.test,
                 "cell analysis": True,
@@ -699,34 +699,31 @@ class RapdPlugin(multiprocessing.Process):
 
             data = parse_phaser_output(phaser_lines)
             pprint(data)
-            if data["AutoMR sg"] in ("No solution", "Timed out", "NA", "DL FAILED"):
+            if data["spacegroup"] in ("No solution", "Timed out", "NA", "DL FAILED"):
                 nosol = True
             else:
                 # Check for negative or low LL-Gain.
-                if float(data["AutoMR gain"]) < 200.0:
+                if float(data["gain"]) < 200.0:
                     nosol = True
             if nosol:
-                self.phaser_results[pdb_code] = {"AutoMR results": \
+                self.phaser_results[pdb_code] = {"results": \
                     setPhaserFailed("No solution")}
             else:
-                self.phaser_results[pdb_code] = {"AutoMR results": data}
+                self.phaser_results[pdb_code] = {"results": data}
 
             # print self.phaser_results.keys()
 
     def get_pdb_file(self, pdb_code):
         """Retrieve/check for/uncompress/convert structure file"""
 
-        # The cif file name
+        # Set up some file names
         cif_file = pdb_code.lower() + ".cif"
-        # print "cif_file", cif_file
         gzip_file = cif_file+".gz"
-        # print "gzip_file", gzip_file
         cached_file = False
 
         # There is a local cache
         if self.cif_cache:
             cached_file = os.path.join(self.cif_cache, gzip_file)
-            # print "cached_file", cached_file
 
             # Have cached version of the file
             if os.path.exists(cached_file):
@@ -779,10 +776,10 @@ class RapdPlugin(multiprocessing.Process):
 
         # If mmCIF, checks if file exists or if it is super structure with
         # multiple PDB codes, and returns False, otherwise sends back SG.
-        sg_pdb = xutils.fix_spacegroup(xutils.get_spacegroup_info(cif_file))
+        spacegroup_pdb = xutils.fix_spacegroup(xutils.get_spacegroup_info(cif_file))
 
         # Remove codes that won't run or PDB/mmCIF's that don't exist.
-        if sg_pdb == False:
+        if spacegroup_pdb == False:
             del self.cell_output[pdb_code]
             return False
 
@@ -793,7 +790,7 @@ class RapdPlugin(multiprocessing.Process):
         conversion_proc.wait()
         pdb_file = cif_file.replace(".cif", ".pdb")
 
-        return (pdb_file, sg_pdb)
+        return (pdb_file, spacegroup_pdb)
 
     def postprocess(self):
         """Clean up after plugin action"""
@@ -807,83 +804,81 @@ class RapdPlugin(multiprocessing.Process):
         failed = False
 
         # Add tar info to automr results and take care of issue if no SCA file was input.
-        # try:
         def check_bz2(tar):
-            # Remove old tar's in working dir, if they exist and copy new one over.
+            """
+            Remove old tar's in working dir, if they exist and copy new one
+            over.
+            """
             if os.path.exists(os.path.join(self.working_dir, "%s.bz2" % tar)):
                 os.unlink(os.path.join(self.working_dir, "%s.bz2" % tar))
             shutil.copy("%s.bz2" % tar, self.working_dir)
 
-        if self.cell_output:
-            for pdb_code in self.phaser_results:
-                print pdb_code
-                pdb_file = self.phaser_results[pdb_code].get("AutoMR results").get("AutoMR pdb")
-                mtz_file = self.phaser_results[pdb_code].get("AutoMR results").get("AutoMR mtz")
-                adf_file = self.phaser_results[pdb_code].get("AutoMR results").get("AutoMR adf")
-                peak_file = self.phaser_results[pdb_code].get("AutoMR results").get(\
-                    "AutoMR peak")
-                print pdb_file, mtz_file, adf_file, peak_file
+        for pdb_code in self.phaser_results:
 
-                # Success of a sort
-                if pdb_file not in ("No solution",
-                                    "Timed out",
-                                    "NA",
-                                    "Still running",
-                                    "DL Failed"):
-                    # Pack all the output files into a tar and save the path
-                    os.chdir(self.phaser_results[pdb_code].get("AutoMR results").get(\
-                        "AutoMR dir"))
-                    tar_file = "%s.tar" % pdb_code
-                    # Speed up in testing mode.
-                    if os.path.exists("%s.bz2" % tar_file):
-                        check_bz2(tar_file)
-                        self.phaser_results[pdb_code].get("AutoMR results").update(\
-                            {"AutoMR tar": os.path.join(self.working_dir, "%s.bz2" % tar_file)})
-                    else:
-                        file_list = [pdb_file,
-                                     mtz_file,
-                                     adf_file,
-                                     peak_file,
-                                     pdb_file.replace(".pdb", "_refine_001.pdb"),
-                                     mtz_file.replace(".mtz", "_refine_001.mtz"),
-                                    ]
-                        for my_file in file_list:
-                            if os.path.exists(my_file):
-                                # subprocess32.run(["tar", "-rf", tar_file, my_file])
-                                tar_proc = subprocess32.Popen(["tar", "-rf", tar_file, my_file],
-                                                              stdout=subprocess32.PIPE,
-                                                              stderr=subprocess32.PIPE,
-                                                              shell=True)
-                                # os.system("tar -rf %s %s" % (tar_file, my_file))
-                        if os.path.exists(tar_file):
-                            # subprocess32.run(["bzip2", "-qf", tar_file])
-                            bzip_process = subprocess32.Popen(["bzip2", "-qf", tar_file],
-                                                              stdout=subprocess32.PIPE,
-                                                              stderr=subprocess32.PIPE) #,
-                                                              # shell=True)
-                            bzip_process.wait()
-                            # os.system("bzip2 -qf %s" % tar_file)
-                            check_bz2(tar_file)
-                            self.phaser_results[pdb_code].get("AutoMR results").update(
-                                {"AutoMR tar": os.path.join(self.working_dir, "%s.bz2" % \
-                                    tar_file)})
-                        else:
-                            self.phaser_results[pdb_code].get("AutoMR results").update(\
-                                {"AutoMR tar": "None"})
+            # Get some file names
+            pdb_file = self.phaser_results[pdb_code].\
+                get("results").get("pdb")
+            mtz_file = self.phaser_results[pdb_code].\
+                get("results").get("mtz")
+            adf_file = self.phaser_results[pdb_code].\
+                get("results").get("adf")
+            peak_file = self.phaser_results[pdb_code].get("results").\
+                get("peak")
 
-                # Save everthing into one dict
-                if pdb_code in self.cell_output:
-                    self.phaser_results[pdb_code].update(self.cell_output[pdb_code])
+            # Success of a sort
+            if pdb_file not in ("No solution",
+                                "Timed out",
+                                "NA",
+                                "Still running",
+                                "DL Failed"):
+                # Pack all the output files into a tar and save the path
+                os.chdir(self.phaser_results[pdb_code].get("results").get(\
+                    "dir"))
+                tar_file = "%s.tar" % pdb_code
+                # Speed up in testing mode.
+                if os.path.exists("%s.bz2" % tar_file):
+                    check_bz2(tar_file)
+                    self.phaser_results[pdb_code].get("results").update(\
+                        {"tar": os.path.join(self.working_dir, "%s.bz2" % tar_file)})
                 else:
-                    self.phaser_results[pdb_code].update(
-                        self.cell_output[pdb_code[:pdb_code.rfind("_")]])
-            cell_results = {"Cell analysis results": self.phaser_results}
-        else:
-            cell_results = {"Cell analysis results": "None"}
-        # except:
-        #     self.logger.exception("**Could not AutoMR results in postprocess.**")
-        #     cell_results = {"Cell analysis results":"FAILED"}
-        #     failed = True
+                    file_list = [pdb_file,
+                                 mtz_file,
+                                 adf_file,
+                                 peak_file,
+                                 pdb_file.replace(".pdb", "_refine_001.pdb"),
+                                 mtz_file.replace(".mtz", "_refine_001.mtz"),
+                                ]
+                    for my_file in file_list:
+                        if os.path.exists(my_file):
+                            # subprocess32.run(["tar", "-rf", tar_file, my_file])
+                            tar_proc = subprocess32.Popen(["tar", "-rf", tar_file, my_file],
+                                                          stdout=subprocess32.PIPE,
+                                                          stderr=subprocess32.PIPE,
+                                                          shell=True)
+                            # os.system("tar -rf %s %s" % (tar_file, my_file))
+                    if os.path.exists(tar_file):
+                        # subprocess32.run(["bzip2", "-qf", tar_file])
+                        bzip_process = subprocess32.Popen(["bzip2", "-qf", tar_file],
+                                                          stdout=subprocess32.PIPE,
+                                                          stderr=subprocess32.PIPE) #,
+                                                          # shell=True)
+                        bzip_process.wait()
+                        # os.system("bzip2 -qf %s" % tar_file)
+                        check_bz2(tar_file)
+                        self.phaser_results[pdb_code].get("results").update(
+                            {"tar": os.path.join(self.working_dir, "%s.bz2" % \
+                                tar_file)})
+                    else:
+                        self.phaser_results[pdb_code].get("results").update(\
+                            {"tar": "None"})
+
+            # Save everthing into one dict
+            if pdb_code in self.cell_output:
+                self.phaser_results[pdb_code].update(self.cell_output[pdb_code])
+            else:
+                self.phaser_results[pdb_code].update(
+                    self.cell_output[pdb_code[:pdb_code.rfind("_")]])
+        cell_results = {"Cell analysis results": self.phaser_results}
 
         # try:
         output_files = {"Output files": output}
@@ -975,16 +970,16 @@ class RapdPlugin(multiprocessing.Process):
             for pdb_code in self.custom_structures:
 
                 # Get the result in question
-                my_result = self.phaser_results[pdb_code]["AutoMR results"]
+                my_result = self.phaser_results[pdb_code]["results"]
 
                 # Print the result line
                 self.tprint("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14}".format(
                     pdb_code,
                     self.cell_output[pdb_code]["description"],
-                    my_result["AutoMR gain"],
-                    my_result["AutoMR rfz"],
-                    my_result["AutoMR tfz"],
-                    my_result["AutoMR clash"],
+                    my_result["gain"],
+                    my_result["rfz"],
+                    my_result["tfz"],
+                    my_result["clash"],
                     width=str(longest_field)
                     ),
                             level=99,
@@ -1016,16 +1011,16 @@ class RapdPlugin(multiprocessing.Process):
             for pdb_code in self.common_contaminants:
 
                 # Get the result in question
-                my_result = self.phaser_results[pdb_code]["AutoMR results"]
+                my_result = self.phaser_results[pdb_code]["results"]
 
                 # Print the result line
                 self.tprint("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14}".format(
                     pdb_code,
                     self.cell_output[pdb_code]["description"],
-                    my_result["AutoMR gain"],
-                    my_result["AutoMR rfz"],
-                    my_result["AutoMR tfz"],
-                    my_result["AutoMR clash"],
+                    my_result["gain"],
+                    my_result["rfz"],
+                    my_result["tfz"],
+                    my_result["clash"],
                     width=str(longest_field)
                     ),
                             level=99,
@@ -1057,16 +1052,16 @@ class RapdPlugin(multiprocessing.Process):
             for pdb_code in self.search_results:
 
                 # Get the result in question
-                my_result = self.phaser_results[pdb_code]["AutoMR results"]
+                my_result = self.phaser_results[pdb_code]["results"]
 
                 # Print the result line
                 self.tprint("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14}".format(
                     pdb_code,
                     self.cell_output[pdb_code]["description"],
-                    my_result["AutoMR gain"],
-                    my_result["AutoMR rfz"],
-                    my_result["AutoMR tfz"],
-                    my_result["AutoMR clash"],
+                    my_result["gain"],
+                    my_result["rfz"],
+                    my_result["tfz"],
+                    my_result["clash"],
                     width=str(longest_field)
                     ),
                             level=99,
