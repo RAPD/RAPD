@@ -169,7 +169,7 @@ def phaser_func(command):
             log_file.write(stdout)
 
         # Return results
-        return {"pdb_code": input_pdb.replace(".pdb", ""),
+        return {"pdb_code": input_pdb.replace(".pdb", "").upper(),
                 "log": stdout,
                 "status": "COMPLETE"}
 
@@ -177,7 +177,7 @@ def phaser_func(command):
     except subprocess32.TimeoutExpired:
         print "  killing %d" % phaser_proc.pid
         os.killpg(os.getpgid(phaser_proc.pid), signal.SIGTERM)
-        return {"pdb_code": input_pdb.replace(".pdb", ""),
+        return {"pdb_code": input_pdb.replace(".pdb", "").upper(),
                 "log": "Timed out after %d seconds" % timeout,
                 "status": "ERROR"}
 
@@ -852,8 +852,8 @@ class RapdPlugin(multiprocessing.Process):
                                 # subprocess32.run(["tar", "-rf", tar_file, my_file])
                                 tar_proc = subprocess32.Popen(["tar", "-rf", tar_file, my_file],
                                                               stdout=subprocess32.PIPE,
-                                                              stderr=subprocess32.PIPE) #,
-                                                              # shell=True)
+                                                              stderr=subprocess32.PIPE,
+                                                              shell=True)
                                 # os.system("tar -rf %s %s" % (tar_file, my_file))
                         if os.path.exists(tar_file):
                             # subprocess32.run(["bzip2", "-qf", tar_file])
@@ -900,11 +900,11 @@ class RapdPlugin(multiprocessing.Process):
         # Put all the result dicts from all the programs run into one resultant dict and pass it
         # along the pipe.
         # try:
-        results = {}
+        results = self.phaser_results.copy()
         if status:
             results.update(status)
-        if cell_results:
-            results.update(cell_results)
+        # if cell_results:
+        #     results.update(cell_results)
         if output_files:
             results.update(output_files)
 
@@ -923,10 +923,10 @@ class RapdPlugin(multiprocessing.Process):
 
         # try:
         # Cleanup my mess.
-        if self.clean:
-            os.chdir(self.working_dir)
-            os.system("rm -rf Phaser_* temp.mtz")
-            self.logger.debug("Cleaning up Phaser files and folders")
+        # if self.clean:
+        #     os.chdir(self.working_dir)
+        #     os.system("rm -rf Phaser_* temp.mtz")
+        #     self.logger.debug("Cleaning up Phaser files and folders")
         # except:
         #     self.logger.exception("**Could not cleanup**")
 
@@ -975,7 +975,7 @@ class RapdPlugin(multiprocessing.Process):
             for pdb_code in self.custom_structures:
 
                 # Get the result in question
-                my_result = self.phaser_results[pdb_code.lower()]["AutoMR results"]
+                my_result = self.phaser_results[pdb_code]["AutoMR results"]
 
                 # Print the result line
                 self.tprint("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14}".format(
@@ -1016,7 +1016,7 @@ class RapdPlugin(multiprocessing.Process):
             for pdb_code in self.common_contaminants:
 
                 # Get the result in question
-                my_result = self.phaser_results[pdb_code.lower()]["AutoMR results"]
+                my_result = self.phaser_results[pdb_code]["AutoMR results"]
 
                 # Print the result line
                 self.tprint("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14}".format(
@@ -1057,7 +1057,7 @@ class RapdPlugin(multiprocessing.Process):
             for pdb_code in self.search_results:
 
                 # Get the result in question
-                my_result = self.phaser_results[pdb_code.lower()]["AutoMR results"]
+                my_result = self.phaser_results[pdb_code]["AutoMR results"]
 
                 # Print the result line
                 self.tprint("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14}".format(
