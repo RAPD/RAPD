@@ -27,6 +27,8 @@ __status__ = "Development"
 # Standard imports
 import sys
 
+HEADER = "\nRAPD depends on the work of others"
+
 CCTBX = [
     "CCTBX - Computational Crystallography Toolbox",
     "Reference: Grosse-Kunstleve et al. (2002) J. Appl. Cryst. 35:126-136",
