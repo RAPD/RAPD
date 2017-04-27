@@ -1954,19 +1954,19 @@ def parse_phaser_output(phaser_log):
     if not pdb:
         phaser = setPhaserFailed('No solution')
     else:
-        phaser = {'AutoMR nosol': 'False',
-                  'AutoMR pdb': pdb,
-                  'AutoMR mtz': mtz,
-                  'AutoMR gain': llgain,
-                  'AutoMR rfz': rfz,
-                  'AutoMR tfz': tfz,
-                  'AutoMR clash': clash,
-                  'AutoMR dir': directory,
-                  'AutoMR sg': sg,
-                  'AutoMR tNCS': tncs,
-                  'AutoMR nmol': nmol,
-                  'AutoMR adf': 'None',
-                  'AutoMR peak': 'None'}
+        phaser = {'nosol': 'False',
+                  'pdb': pdb,
+                  'mtz': mtz,
+                  'gain': llgain,
+                  'rfz': rfz,
+                  'tfz': tfz,
+                  'clash': clash,
+                  'dir': directory,
+                  'sg': sg,
+                  'tNCS': tncs,
+                  'nmol': nmol,
+                  'adf': 'None',
+                  'peak': 'None'}
     return phaser
 
 
