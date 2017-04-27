@@ -62,7 +62,7 @@ import urllib2
 # import detectors.detector_utils as detector_utils
 # import utils
 from plugins.subcontractors.parse import parse_phaser_output, setPhaserFailed
-import utils.credits as credit
+import utils.credits as credits
 import utils.globals as rglobals
 import utils.pdb as rpdb
 import utils.xutils as xutils
@@ -797,11 +797,12 @@ class RapdPlugin(multiprocessing.Process):
             return False
 
         # Convert from cif to pdb
-        rpdb.cif_as_pdb((cif_file,))
-        # conversion_proc = subprocess32.Popen(["phenix.cif_as_pdb", cif_file],
-        #                                      stdout=subprocess32.PIPE,
-        #                                      stderr=subprocess32.PIPE)
-        # conversion_proc.wait()
+        # rpdb.cif_as_pdb((cif_file,))
+        # time.sleep(0.1)
+        conversion_proc = subprocess32.Popen(["phenix.cif_as_pdb", cif_file],
+                                             stdout=subprocess32.PIPE,
+                                             stderr=subprocess32.PIPE)
+        conversion_proc.wait()
         pdb_file = cif_file.replace(".cif", ".pdb")
 
         return (pdb_file, sg_pdb)
@@ -1086,12 +1087,12 @@ class RapdPlugin(multiprocessing.Process):
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
 
-        self.tprint("RAPD depends on the work of others",
+        self.tprint(credits.HEADER,
                     level=99,
                     color="blue")
 
         programs = ["CCTBX", "PHENIX", "PHASER"]
-        info_string = credit.get_credits_text(programs, "    ")
+        info_string = credits.get_credits_text(programs, "    ")
 
         self.tprint(info_string, level=99, color="white")
 
