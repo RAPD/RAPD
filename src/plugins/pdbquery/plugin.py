@@ -64,6 +64,7 @@ import urllib2
 from plugins.subcontractors.parse import parse_phaser_output, setPhaserFailed
 import utils.credits as credit
 import utils.globals as rglobals
+import utils.pdb as rpdb
 import utils.xutils as xutils
 import info
 
@@ -360,11 +361,20 @@ class RapdPlugin(multiprocessing.Process):
             pdb_code = pdb_code.upper()
 
             # Query pdbq server
-            response = urllib2.urlopen(urllib2.Request("http://%s/entry/%s" % \
-                       (PDBQ_SERVER, pdb_code))).read()
+            try:
+                response = urllib2.urlopen(urllib2.Request("http://%s/entry/%s" % \
+                           (PDBQ_SERVER, pdb_code))).read()
 
-            # Decode search result
-            entry = json.loads(response)
+                # Decode search result
+                entry = json.loads(response)
+
+            except urllib2.URLError as pdbq_error:
+                self.tprint("  Error connecting to PDBQ server %s" % pdbq_error,
+                            level=30,
+                            color="red")
+                entry = {"message": {"_entity-pdbx_description": [
+                    "Unknown - unable to connect to PDBQ sever"
+                ]}}
 
             # Grab the description
             description = entry["message"]["_entity-pdbx_description"][0]
@@ -787,10 +797,11 @@ class RapdPlugin(multiprocessing.Process):
             return False
 
         # Convert from cif to pdb
-        conversion_proc = subprocess32.Popen(["phenix.cif_as_pdb", cif_file],
-                                             stdout=subprocess32.PIPE,
-                                             stderr=subprocess32.PIPE)
-        conversion_proc.wait()
+        rpdb.cif_as_pdb((cif_file,))
+        # conversion_proc = subprocess32.Popen(["phenix.cif_as_pdb", cif_file],
+        #                                      stdout=subprocess32.PIPE,
+        #                                      stderr=subprocess32.PIPE)
+        # conversion_proc.wait()
         pdb_file = cif_file.replace(".cif", ".pdb")
 
         return (pdb_file, sg_pdb)
