@@ -62,8 +62,9 @@ import urllib2
 # import detectors.detector_utils as detector_utils
 # import utils
 from plugins.subcontractors.parse import parse_phaser_output, setPhaserFailed
-import utils.credits as credit
+import utils.credits as credits
 import utils.globals as rglobals
+import utils.pdb as rpdb
 import utils.xutils as xutils
 import info
 
@@ -360,11 +361,20 @@ class RapdPlugin(multiprocessing.Process):
             pdb_code = pdb_code.upper()
 
             # Query pdbq server
-            response = urllib2.urlopen(urllib2.Request("http://%s/entry/%s" % \
-                       (PDBQ_SERVER, pdb_code))).read()
+            try:
+                response = urllib2.urlopen(urllib2.Request("http://%s/entry/%s" % \
+                           (PDBQ_SERVER, pdb_code))).read()
 
-            # Decode search result
-            entry = json.loads(response)
+                # Decode search result
+                entry = json.loads(response)
+
+            except urllib2.URLError as pdbq_error:
+                self.tprint("  Error connecting to PDBQ server %s" % pdbq_error,
+                            level=30,
+                            color="red")
+                entry = {"message": {"_entity-pdbx_description": [
+                    "Unknown - unable to connect to PDBQ sever"
+                ]}}
 
             # Grab the description
             description = entry["message"]["_entity-pdbx_description"][0]
@@ -784,6 +794,8 @@ class RapdPlugin(multiprocessing.Process):
             return False
 
         # Convert from cif to pdb
+        # rpdb.cif_as_pdb((cif_file,))
+        # time.sleep(0.1)
         conversion_proc = subprocess32.Popen(["phenix.cif_as_pdb", cif_file],
                                              stdout=subprocess32.PIPE,
                                              stderr=subprocess32.PIPE)
@@ -813,72 +825,97 @@ class RapdPlugin(multiprocessing.Process):
                 os.unlink(os.path.join(self.working_dir, "%s.bz2" % tar))
             shutil.copy("%s.bz2" % tar, self.working_dir)
 
-        for pdb_code in self.phaser_results:
+        results = {
+            "custom_structures": {},
+            "common_contaminants": {},
+            "search_results": {}
+        }
 
-            # Get some file names
-            pdb_file = self.phaser_results[pdb_code].\
-                get("results").get("pdb")
-            mtz_file = self.phaser_results[pdb_code].\
-                get("results").get("mtz")
-            adf_file = self.phaser_results[pdb_code].\
-                get("results").get("adf")
-            peak_file = self.phaser_results[pdb_code].get("results").\
-                get("peak")
+        types = (
+            ("custom_structures", self.custom_structures),
+            ("common_contaminants", self.common_contaminants),
+            ("search_results", self.search_results)
+        )
 
-            # Success of a sort
-            if pdb_file not in ("No solution",
-                                "Timed out",
-                                "NA",
-                                "Still running",
-                                "DL Failed"):
-                # Pack all the output files into a tar and save the path
-                os.chdir(self.phaser_results[pdb_code].get("results").get(\
-                    "dir"))
-                tar_file = "%s.tar" % pdb_code
-                # Speed up in testing mode.
-                if os.path.exists("%s.bz2" % tar_file):
-                    check_bz2(tar_file)
-                    self.phaser_results[pdb_code].get("results").update(\
-                        {"tar": os.path.join(self.working_dir, "%s.bz2" % tar_file)})
-                else:
-                    file_list = [pdb_file,
-                                 mtz_file,
-                                 adf_file,
-                                 peak_file,
-                                 pdb_file.replace(".pdb", "_refine_001.pdb"),
-                                 mtz_file.replace(".mtz", "_refine_001.mtz"),
-                                ]
-                    for my_file in file_list:
-                        if os.path.exists(my_file):
-                            # subprocess32.run(["tar", "-rf", tar_file, my_file])
-                            tar_proc = subprocess32.Popen(["tar", "-rf", tar_file, my_file],
-                                                          stdout=subprocess32.PIPE,
-                                                          stderr=subprocess32.PIPE,
-                                                          shell=True)
-                            # os.system("tar -rf %s %s" % (tar_file, my_file))
-                    if os.path.exists(tar_file):
-                        # subprocess32.run(["bzip2", "-qf", tar_file])
-                        bzip_process = subprocess32.Popen(["bzip2", "-qf", tar_file],
-                                                          stdout=subprocess32.PIPE,
-                                                          stderr=subprocess32.PIPE) #,
-                                                          # shell=True)
-                        bzip_process.wait()
-                        # os.system("bzip2 -qf %s" % tar_file)
+        # Run through result types
+        for result_type, pdb_codes in types:
+            print result_type
+            print pdb_codes
+
+            # Process each result
+            for pdb_code in pdb_codes:
+
+                # Get the result in question
+                phaser_result = self.phaser_results[pdb_code]["results"]
+
+                print phaser_result
+
+                sys.exit()
+
+                pdb_file = phaser_result.get("results").get("pdb")
+                mtz_file = phaser_result.get("results").get("mtz")
+                adf_file = phaser_result.get("results").get("adf")
+                peak_file = phaser_result.get("results").get("peak")
+
+                # Success!
+                if pdb_file not in ("No solution",
+                                    "Timed out",
+                                    "NA",
+                                    "Still running",
+                                    "DL Failed"):
+                    # Pack all the output files into a tar and save the path
+                    os.chdir(phaser_result.get("results").get("dir"))
+                    tar_file = "%s.tar" % pdb_code
+                    # Speed up in testing mode.
+                    if os.path.exists("%s.bz2" % tar_file):
                         check_bz2(tar_file)
-                        self.phaser_results[pdb_code].get("results").update(
-                            {"tar": os.path.join(self.working_dir, "%s.bz2" % \
-                                tar_file)})
-                    else:
                         self.phaser_results[pdb_code].get("results").update(\
-                            {"tar": "None"})
+                            {"tar": os.path.join(self.working_dir, "%s.bz2" % tar_file)})
+                    else:
+                        file_list = [pdb_file,
+                                     mtz_file,
+                                     adf_file,
+                                     peak_file,
+                                     pdb_file.replace(".pdb", "_refine_001.pdb"),
+                                     mtz_file.replace(".mtz", "_refine_001.mtz"),
+                                    ]
+                        for my_file in file_list:
+                            if os.path.exists(my_file):
+                                # subprocess32.run(["tar", "-rf", tar_file, my_file])
+                                tar_proc = subprocess32.Popen(["tar", "-rf", tar_file, my_file],
+                                                              stdout=subprocess32.PIPE,
+                                                              stderr=subprocess32.PIPE,
+                                                              shell=True)
+                                # os.system("tar -rf %s %s" % (tar_file, my_file))
+                        if os.path.exists(tar_file):
+                            # subprocess32.run(["bzip2", "-qf", tar_file])
+                            bzip_process = subprocess32.Popen(["bzip2", "-qf", tar_file],
+                                                              stdout=subprocess32.PIPE,
+                                                              stderr=subprocess32.PIPE) #,
+                                                              # shell=True)
+                            bzip_process.wait()
+                            # os.system("bzip2 -qf %s" % tar_file)
+                            check_bz2(tar_file)
+                            self.phaser_results[pdb_code].get("results").update(
+                                {"tar": os.path.join(self.working_dir, "%s.bz2" % \
+                                    tar_file)})
+                        else:
+                            self.phaser_results[pdb_code].get("results").update(\
+                                {"tar": "None"})
 
-            # Save everthing into one dict
-            if pdb_code in self.cell_output:
-                self.phaser_results[pdb_code].update(self.cell_output[pdb_code])
-            else:
-                self.phaser_results[pdb_code].update(
-                    self.cell_output[pdb_code[:pdb_code.rfind("_")]])
-        cell_results = {"Cell analysis results": self.phaser_results}
+                # Save everthing into one dict
+                if pdb_code in self.cell_output:
+                    self.phaser_results[pdb_code].update(self.cell_output[pdb_code])
+                else:
+                    self.phaser_results[pdb_code].update(
+                        self.cell_output[pdb_code[:pdb_code.rfind("_")]])
+            cell_results = {"Cell analysis results": self.phaser_results}
+        else:
+            cell_results = {"Cell analysis results": "None"}
+        # except:
+        #     self.logger.exception("**Could not results in postprocess.**")
+        #     cell_results = {"Cell analysis results":"FAILED"}
+        #     failed = True
 
         # try:
         output_files = {"Output files": output}
@@ -887,10 +924,10 @@ class RapdPlugin(multiprocessing.Process):
 
         # Get proper status.
         if failed:
-            status = {"status": "FAILED"}
+            status = {"status": -1}
             self.clean = False
         else:
-            status = {"status": "SUCCESS"}
+            status = {"status": 100}
 
         # Put all the result dicts from all the programs run into one resultant dict and pass it
         # along the pipe.
@@ -1070,12 +1107,12 @@ class RapdPlugin(multiprocessing.Process):
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
 
-        self.tprint("RAPD depends on the work of others",
+        self.tprint(credits.HEADER,
                     level=99,
                     color="blue")
 
         programs = ["CCTBX", "PHENIX", "PHASER"]
-        info_string = credit.get_credits_text(programs, "    ")
+        info_string = credits.get_credits_text(programs, "    ")
 
         self.tprint(info_string, level=99, color="white")
 
