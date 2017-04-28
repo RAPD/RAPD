@@ -52,7 +52,7 @@ import utils.log
 import utils.modules as modules
 import utils.text as text
 import utils.commandline_utils as commandline_utils
-import detectors.detector_utils as detector_utils
+# import detectors.detector_utils as detector_utils
 
 def construct_command(commandline_args, logger):
     """Put together the command for the plugin"""
@@ -66,7 +66,9 @@ def construct_command(commandline_args, logger):
 
     # Work directory
     command["directories"] = {
-        "work": os.path.join(os.path.abspath(os.path.curdir), "pdbquery")
+        "work": os.path.join(os.path.abspath(os.path.curdir), "pdbquery_%s" % \
+                ".".join(os.path.basename(commandline_args.datafile).\
+                split(".")[:-1]))
         }
 
     # Check the work directory
@@ -81,6 +83,7 @@ def construct_command(commandline_args, logger):
 
     # Plugin settings
     command["preferences"] = {
+        "clean": commandline_args.clean,
         "contaminants": commandline_args.contaminants,
         "json": commandline_args.json,
         "nproc": commandline_args.nproc,
@@ -116,6 +119,18 @@ def get_commandline():
                            action="store_false",
                            dest="verbose",
                            help="Run with less output")
+
+    # Messy
+    # my_parser.add_argument("--messy",
+    #                        action="store_false",
+    #                        dest="clean",
+    #                        help="Keep intermediate files")
+
+    # Clean
+    my_parser.add_argument("--clean",
+                           action="store_true",
+                           dest="clean",
+                           help="Remove intermediate files")
 
     # Color
     # my_parser.add_argument("--color",
@@ -155,7 +170,7 @@ def get_commandline():
                            help="Run screen of known common contaminants")
 
     # Run contaminant screen
-    my_parser.add_argument("--pdbs",
+    my_parser.add_argument("--pdbs", "--pdb",
                            dest="pdbs",
                            nargs="*",
                            default=False,
@@ -164,7 +179,6 @@ def get_commandline():
     # Positional argument
     my_parser.add_argument("--datafile",
                            dest="datafile",
-                        #    nargs="+",
                            required=True,
                            help="Name of data file to be analyzed")
 
@@ -181,6 +195,9 @@ def get_commandline():
     if args.pdbs:
         tmp_pdbs = []
         for pdb in args.pdbs:
+            if not len(pdb) == 4:
+                raise Exception(\
+                "PDB codes must be 4 characters. %s is not valid." % pdb)
             tmp_pdbs.append(pdb.upper())
         args.pdbs = tmp_pdbs
 

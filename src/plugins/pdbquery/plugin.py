@@ -39,7 +39,7 @@ VERSION = "1.0.0"
 # import argparse
 # import from collections import OrderedDict
 # import datetime
-# import glob
+import glob
 import json
 import logging
 import multiprocessing
@@ -850,12 +850,10 @@ class RapdPlugin(multiprocessing.Process):
 
                 print phaser_result
 
-                sys.exit()
-
-                pdb_file = phaser_result.get("results").get("pdb")
-                mtz_file = phaser_result.get("results").get("mtz")
-                adf_file = phaser_result.get("results").get("adf")
-                peak_file = phaser_result.get("results").get("peak")
+                pdb_file = phaser_result.get("pdb")
+                mtz_file = phaser_result.get("mtz")
+                adf_file = phaser_result.get("adf")
+                peak_file = phaser_result.get("peak")
 
                 # Success!
                 if pdb_file not in ("No solution",
@@ -863,116 +861,96 @@ class RapdPlugin(multiprocessing.Process):
                                     "NA",
                                     "Still running",
                                     "DL Failed"):
+
                     # Pack all the output files into a tar and save the path
-                    os.chdir(phaser_result.get("results").get("dir"))
+                    os.chdir(phaser_result.get("dir"))
+                    print os.getcwd()
                     tar_file = "%s.tar" % pdb_code
+
                     # Speed up in testing mode.
-                    if os.path.exists("%s.bz2" % tar_file):
+                    if self.command["preferences"].get("test", False) and \
+                    os.path.exists("%s.bz2" % tar_file):
                         check_bz2(tar_file)
-                        self.phaser_results[pdb_code].get("results").update(\
-                            {"tar": os.path.join(self.working_dir, "%s.bz2" % tar_file)})
+                        phaser_result.update({
+                            "tar": os.path.join(self.working_dir, \
+                            "%s.bz2" % tar_file)})
                     else:
-                        file_list = [pdb_file,
-                                     mtz_file,
-                                     adf_file,
-                                     peak_file,
-                                     pdb_file.replace(".pdb", "_refine_001.pdb"),
-                                     mtz_file.replace(".mtz", "_refine_001.mtz"),
-                                    ]
+                        file_list = [
+                            pdb_file,
+                            mtz_file,
+                            adf_file,
+                            peak_file,
+                            # pdb_file.replace(".pdb", "_refine_001.pdb"),
+                            # mtz_file.replace(".mtz", "_refine_001.mtz"),
+                            ]
+
+                        # Pack up results
+                        pprint(file_list)
+                        append_tar = False
                         for my_file in file_list:
-                            if os.path.exists(my_file):
-                                # subprocess32.run(["tar", "-rf", tar_file, my_file])
-                                tar_proc = subprocess32.Popen(["tar", "-rf", tar_file, my_file],
-                                                              stdout=subprocess32.PIPE,
-                                                              stderr=subprocess32.PIPE,
-                                                              shell=True)
-                                # os.system("tar -rf %s %s" % (tar_file, my_file))
+                            if my_file:
+                                if os.path.exists(my_file):
+                                    print "Adding %s to %s" % (my_file, tar_file)
+                                    if append_tar:
+                                        tar_options = "rf"
+                                    else:
+                                        tar_options = "cf"
+                                        append_tar = True
+                                    tar_process = subprocess32.Popen(
+                                        ["tar %s %s %s" % (
+                                            tar_options,
+                                            tar_file,
+                                            my_file)
+                                        ],
+                                        stdout=subprocess32.PIPE,
+                                        stderr=subprocess32.PIPE,
+                                        shell=True)
+                                    tar_process.wait()
+
+                        # Compress the archive
                         if os.path.exists(tar_file):
-                            # subprocess32.run(["bzip2", "-qf", tar_file])
-                            bzip_process = subprocess32.Popen(["bzip2", "-qf", tar_file],
-                                                              stdout=subprocess32.PIPE,
-                                                              stderr=subprocess32.PIPE) #,
-                                                              # shell=True)
+                            print "Compressing the archive"
+                            bzip_process = subprocess32.Popen(
+                                ["bzip2", "-qf", tar_file],
+                                stdout=subprocess32.PIPE,
+                                stderr=subprocess32.PIPE)
                             bzip_process.wait()
-                            # os.system("bzip2 -qf %s" % tar_file)
+
                             check_bz2(tar_file)
-                            self.phaser_results[pdb_code].get("results").update(
-                                {"tar": os.path.join(self.working_dir, "%s.bz2" % \
-                                    tar_file)})
+                            phaser_result.update({
+                                "tar": os.path.join(self.working_dir, "%s.bz2" \
+                                % tar_file)})
                         else:
-                            self.phaser_results[pdb_code].get("results").update(\
-                                {"tar": "None"})
+                            phaser_result.update({"tar": None})
 
-                # Save everthing into one dict
-                if pdb_code in self.cell_output:
-                    self.phaser_results[pdb_code].update(self.cell_output[pdb_code])
+                # NOT Success
                 else:
-                    self.phaser_results[pdb_code].update(
-                        self.cell_output[pdb_code[:pdb_code.rfind("_")]])
-            cell_results = {"Cell analysis results": self.phaser_results}
-        else:
-            cell_results = {"Cell analysis results": "None"}
-        # except:
-        #     self.logger.exception("**Could not results in postprocess.**")
-        #     cell_results = {"Cell analysis results":"FAILED"}
-        #     failed = True
+                    pass
 
-        # try:
-        output_files = {"Output files": output}
-        # except:
-        #     self.logger.exception("**Could not update the output dict.**")
+                # Save into common results
+                results[result_type][pdb_code] = phaser_result
 
-        # Get proper status.
-        if failed:
-            status = {"status": -1}
-            self.clean = False
-        else:
-            status = {"status": 100}
+        # Finished
+        results["status"] = 100
 
-        # Put all the result dicts from all the programs run into one resultant dict and pass it
-        # along the pipe.
-        # try:
-        results = self.phaser_results.copy()
-        if status:
-            results.update(status)
-        # if cell_results:
-        #     results.update(cell_results)
-        if output_files:
-            results.update(output_files)
-
-        pprint(results)
-
-        # if results:
-        #     self.input.append(results)
-        # if self.output != None:
-        #     self.output.put(results)
-        # else:
-        #     if self.gui:
-        #     #   self.sendBack2(self.input)
-        #         rapd_send(self.controller_address, self.input)
-        # except:
-        #     self.logger.exception("**Could not send results to pipe**")
-
-        # try:
         # Cleanup my mess.
-        # if self.clean:
-        #     os.chdir(self.working_dir)
-        #     os.system("rm -rf Phaser_* temp.mtz")
-        #     self.logger.debug("Cleaning up Phaser files and folders")
-        # except:
-        #     self.logger.exception("**Could not cleanup**")
+        if self.command["preferences"].get("clean", False):
+            self.logger.debug("Cleaning up Phaser files and folders")
 
-        # Say job is complete.
-        run_time = round(time.time() - self.start_time)
-        self.logger.debug(50 * "-")
+            # Change to work dir
+            os.chdir(self.working_dir)
+
+            # Gather targets and remove
+            files_to_clean = glob.glob("Phaser_*")
+            for target in files_to_clean:
+                shutil.rmtree(target)
+
+        # Log job is complete.
+        run_time = time.time() - self.start_time
         self.logger.debug("RAPD PDBQuery complete.")
         self.logger.debug("Total elapsed time: %s seconds", run_time)
-        self.logger.debug(50 * "-")
-        # if self.output == None:
-        #     print 50*"-"
-        #     print "\nRAPD PDBQuery complete."
-        #     print "Total elapsed time: %s seconds" % run_time
-        #     print 50*"-"
+
+        pprint(results)
 
     def print_results(self):
         """Print the results to the commandline"""
@@ -1116,43 +1094,43 @@ class RapdPlugin(multiprocessing.Process):
 
         self.tprint(info_string, level=99, color="white")
 
-def get_commandline():
-    """Grabs the commandline"""
+def construct_command(commandline_args, logger):
+    """Put together the command for the plugin"""
 
-    print "get_commandline"
+    # The task to be carried out
+    command = {
+        "command": "PDBQUERY",
+        "process_id": uuid.uuid1().get_hex(),
+        "status": 0,
+        }
 
-    # Parse the commandline arguments
-    commandline_description = "Test pdbquery plugin"
-    my_parser = argparse.ArgumentParser(description=commandline_description)
+    # Work directory
+    command["directories"] = {
+        "work": os.path.join(os.path.abspath(os.path.curdir), "pdbquery_%s" % \
+                ".".join(os.path.basename(commandline_args.datafile).\
+                split(".")[:-1]))
+        }
 
-    # A True/False flag
-    my_parser.add_argument("-q", "--quiet",
-                           action="store_false",
-                           dest="verbose",
-                           help="Reduce output")
+    # Check the work directory
+    commandline_utils.check_work_dir(command["directories"]["work"], True)
 
-    args = my_parser.parse_args()
+    # Information on input
+    print commandline_args.datafile
+    command["input_data"] = {
+        "datafile": os.path.abspath(commandline_args.datafile),
+        "pdbs": commandline_args.pdbs
+    }
 
-    # Insert logic to check or modify args here
+    # Plugin settings
+    command["preferences"] = {
+        "clean": commandline_args.clean,
+        "contaminants": commandline_args.contaminants,
+        "json": commandline_args.json,
+        "nproc": commandline_args.nproc,
+        "search": commandline_args.search,
+        "test": commandline_args.test,
+    }
 
-    return args
+    logger.debug("Command for pdbquery plugin: %s", command)
 
-def main(args):
-    """
-    The main process docstring
-    This function is called when this module is invoked from
-    the commandline
-    """
-
-    if args.verbose:
-        verbosity = 2
-    else:
-        verbosity = 1
-
-    unittest.main(verbosity=verbosity)
-
-    if __name__ == "__main__":
-
-        commandline_args = get_commandline()
-
-        main(args=commandline_args)
+    return command
