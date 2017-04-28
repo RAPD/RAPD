@@ -1095,7 +1095,23 @@ class RapdPlugin(multiprocessing.Process):
         self.tprint(info_string, level=99, color="white")
 
 def construct_command(commandline_args, logger):
-    """Put together the command for the plugin"""
+    """
+    Put together the command for the plugin
+
+    commandline_args needs to look like:
+
+    class commandline_args(object):
+        clean = True | False
+        contaminants = True | False
+        datafile = ""
+        json = True | False
+        no_color = True | False
+        nproc = int
+        pdbs = False | ["pdbid", ...]
+        search = True | False
+        test = True | False
+        verbose = True | False
+    """
 
     # The task to be carried out
     command = {
