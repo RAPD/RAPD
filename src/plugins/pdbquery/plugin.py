@@ -269,7 +269,7 @@ class RapdPlugin(multiprocessing.Process):
         # Store passed-in variables
         self.command = command
 
-        pprint(command)
+        # pprint(command)
 
         # Params
         self.working_dir = self.command["directories"].get("work", os.getcwd())
@@ -570,7 +570,7 @@ class RapdPlugin(multiprocessing.Process):
         self.tprint("  %d contaminants added to screen" % len(common_contaminants),
                     level=10,
                     color="white")
-        print common_contaminants
+        # print common_contaminants
         self.cell_output.update(common_contaminants)
 
     def process_phaser(self):
@@ -807,8 +807,6 @@ class RapdPlugin(multiprocessing.Process):
     def postprocess(self):
         """Clean up after plugin action"""
 
-        self.print_results()
-
         output = {}
         status = False
         output_files = False
@@ -839,8 +837,8 @@ class RapdPlugin(multiprocessing.Process):
 
         # Run through result types
         for result_type, pdb_codes in types:
-            print result_type
-            print pdb_codes
+            # print result_type
+            # print pdb_codes
 
             # Process each result
             for pdb_code in pdb_codes:
@@ -848,7 +846,7 @@ class RapdPlugin(multiprocessing.Process):
                 # Get the result in question
                 phaser_result = self.phaser_results[pdb_code]["results"]
 
-                print phaser_result
+                # print phaser_result
 
                 pdb_file = phaser_result.get("pdb")
                 mtz_file = phaser_result.get("mtz")
@@ -864,7 +862,6 @@ class RapdPlugin(multiprocessing.Process):
 
                     # Pack all the output files into a tar and save the path
                     os.chdir(phaser_result.get("dir"))
-                    print os.getcwd()
                     tar_file = "%s.tar" % pdb_code
 
                     # Speed up in testing mode.
@@ -890,7 +887,7 @@ class RapdPlugin(multiprocessing.Process):
                         for my_file in file_list:
                             if my_file:
                                 if os.path.exists(my_file):
-                                    print "Adding %s to %s" % (my_file, tar_file)
+                                    # print "Adding %s to %s" % (my_file, tar_file)
                                     if append_tar:
                                         tar_options = "rf"
                                     else:
@@ -909,7 +906,7 @@ class RapdPlugin(multiprocessing.Process):
 
                         # Compress the archive
                         if os.path.exists(tar_file):
-                            print "Compressing the archive"
+                            # print "Compressing the archive"
                             bzip_process = subprocess32.Popen(
                                 ["bzip2", "-qf", tar_file],
                                 stdout=subprocess32.PIPE,
@@ -930,10 +927,21 @@ class RapdPlugin(multiprocessing.Process):
                 # Save into common results
                 results[result_type][pdb_code] = phaser_result
 
+        # Cleanup my mess.
+        self.clean_up()
+
         # Finished
         results["status"] = 100
+        self.results = results
 
-        # Cleanup my mess.
+        # Notify inerested party
+        self.handle_return()
+
+    def clean_up(self):
+        """Clean up the working directory"""
+
+        self.tprint("  Cleaning up", level=30, color="white")
+
         if self.command["preferences"].get("clean", False):
             self.logger.debug("Cleaning up Phaser files and folders")
 
@@ -945,17 +953,22 @@ class RapdPlugin(multiprocessing.Process):
             for target in files_to_clean:
                 shutil.rmtree(target)
 
-        # Log job is complete.
-        run_time = time.time() - self.start_time
-        self.logger.debug("RAPD PDBQuery complete.")
-        self.logger.debug("Total elapsed time: %s seconds", run_time)
+    def handle_return(self):
+        """Output data to consumer"""
 
-        pprint(results)
+        run_mode = self.command["preferences"]["run_mode"]
+
+        if run_mode == "interactive":
+            self.print_results()
+        elif run_mode == "json":
+            self.print_json()
+        elif run_mode == "server":
+            pass
+        elif run_mode == "subprocess":
+            return self.results
 
     def print_results(self):
         """Print the results to the commandline"""
-
-        # pprint(self.phaser_results)
 
         self.tprint("\nResults", level=99, color="blue")
 
@@ -1082,6 +1095,13 @@ class RapdPlugin(multiprocessing.Process):
                             level=99,
                             color="white")
 
+    def print_json(self):
+        """Print out JSON-formatted result"""
+
+        json_result = json.dumps(self.results)
+
+        print json_result
+
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
 
@@ -1093,60 +1113,3 @@ class RapdPlugin(multiprocessing.Process):
         info_string = credits.get_credits_text(programs, "    ")
 
         self.tprint(info_string, level=99, color="white")
-
-def construct_command(commandline_args, logger):
-    """
-    Put together the command for the plugin
-
-    commandline_args needs to look like:
-
-    class commandline_args(object):
-        clean = True | False
-        contaminants = True | False
-        datafile = ""
-        json = True | False
-        no_color = True | False
-        nproc = int
-        pdbs = False | ["pdbid", ...]
-        search = True | False
-        test = True | False
-        verbose = True | False
-    """
-
-    # The task to be carried out
-    command = {
-        "command": "PDBQUERY",
-        "process_id": uuid.uuid1().get_hex(),
-        "status": 0,
-        }
-
-    # Work directory
-    command["directories"] = {
-        "work": os.path.join(os.path.abspath(os.path.curdir), "pdbquery_%s" % \
-                ".".join(os.path.basename(commandline_args.datafile).\
-                split(".")[:-1]))
-        }
-
-    # Check the work directory
-    commandline_utils.check_work_dir(command["directories"]["work"], True)
-
-    # Information on input
-    print commandline_args.datafile
-    command["input_data"] = {
-        "datafile": os.path.abspath(commandline_args.datafile),
-        "pdbs": commandline_args.pdbs
-    }
-
-    # Plugin settings
-    command["preferences"] = {
-        "clean": commandline_args.clean,
-        "contaminants": commandline_args.contaminants,
-        "json": commandline_args.json,
-        "nproc": commandline_args.nproc,
-        "search": commandline_args.search,
-        "test": commandline_args.test,
-    }
-
-    logger.debug("Command for pdbquery plugin: %s", command)
-
-    return command

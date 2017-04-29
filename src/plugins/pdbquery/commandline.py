@@ -54,8 +54,25 @@ import utils.text as text
 import utils.commandline_utils as commandline_utils
 # import detectors.detector_utils as detector_utils
 
-def construct_command(commandline_args, logger):
-    """Put together the command for the plugin"""
+def construct_command(commandline_args):
+    """
+    Put together the command for the plugin
+
+    commandline_args needs to look like:
+
+    class commandline_args(object):
+        clean = True | False
+        contaminants = True | False
+        datafile = ""
+        json = True | False
+        no_color = True | False
+        nproc = int
+        pdbs = False | ["pdbid", ...]
+        run_mode = "interactive" | "json" | "server" | "subprocess"
+        search = True | False
+        test = True | False
+        verbose = True | False
+    """
 
     # The task to be carried out
     command = {
@@ -75,7 +92,6 @@ def construct_command(commandline_args, logger):
     commandline_utils.check_work_dir(command["directories"]["work"], True)
 
     # Information on input
-    print commandline_args.datafile
     command["input_data"] = {
         "datafile": os.path.abspath(commandline_args.datafile),
         "pdbs": commandline_args.pdbs
@@ -85,13 +101,12 @@ def construct_command(commandline_args, logger):
     command["preferences"] = {
         "clean": commandline_args.clean,
         "contaminants": commandline_args.contaminants,
-        "json": commandline_args.json,
+        # "json": commandline_args.json,
         "nproc": commandline_args.nproc,
+        "run_mode": commandline_args.run_mode,
         "search": commandline_args.search,
         "test": commandline_args.test,
     }
-
-    logger.debug("Command for pdbquery plugin: %s", command)
 
     return command
 
@@ -191,6 +206,12 @@ def get_commandline():
 
     # Insert logic to check or modify args here
 
+    # Running in interactive mode if this code is being called
+    if args.json:
+        args.run_mode = "json"
+    else:
+        args.run_mode = "interactive"
+
     # Capitalize pdb codes
     if args.pdbs:
         tmp_pdbs = []
@@ -230,10 +251,10 @@ def main():
 
     # Set up terminal printer
     # Verbosity
-    if commandline_args.verbose:
-        terminal_log_level = 10
-    elif commandline_args.json:
+    if commandline_args.json:
         terminal_log_level = 100
+    elif commandline_args.verbose:
+        terminal_log_level = 10
     else:
         terminal_log_level = 50
 
@@ -257,8 +278,7 @@ def main():
         tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
 
     # Construct the command
-    command = construct_command(commandline_args=commandline_args,
-                                logger=logger)
+    command = construct_command(commandline_args=commandline_args)
 
     # Load the plugin
     plugin = modules.load_module(seek_module="plugin",
