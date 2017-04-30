@@ -58,9 +58,12 @@ import time
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
+import utils.modules as modules
 import utils.xutils as xutils
 import info
-from subcontractors.pdb_query import PDBQuery
+# from subcontractors.pdb_query import PDBQuery
+import plugins.pdbquery.commandline
+
 
 # Software dependencies
 VERSIONS = {
@@ -201,13 +204,50 @@ class RapdPlugin(Process):
         """Prepare and run PDBQuery"""
         self.logger.debug("process_pdb_query")
 
-        # Move some information
-        self.command["preferences"]["sample_type"] = self.sample_type
+        # Construct the pdbquery plugin command
+        class pdbquery_args(object):
+            clean = True
+            contaminants = True
+            datafile = self.command["input_data"]["datafile"]
+            json = False
+            no_color = False
+            nproc = 1
+            pdbs = False
+            run_mode = "subprocess"
+            search = True
+            test = False
+            verbose = True
 
-        Process(target=PDBQuery, args=(self.command,
-                                       self.cell_output,
-                                       self.tprint,
-                                       self.logger)).start()
+        pdbquery_command = plugins.pdbquery.commandline.construct_command(pdbquery_args)
+
+        print pdbquery_command
+
+        # Load the plugin
+        plugin = modules.load_module(seek_module="plugin",
+                                     directories=["plugins.pdbquery"],
+                                     logger=self.logger)
+
+        # Print out plugin info
+        self.tprint(arg="\nPlugin information", level=10, color="blue")
+        self.tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10, color="white")
+        self.tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10, color="white")
+        self.tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
+        self.tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
+
+        # Run the plugin
+        pdbquery_result = plugin.RapdPlugin(pdbquery_command,
+                                            self.tprint,
+                                            self.logger)
+
+        sys.exit()
+
+        # Move some information
+        # self.command["preferences"]["sample_type"] = self.sample_type
+        #
+        # Process(target=PDBQuery, args=(self.command,
+        #                                self.cell_output,
+        #                                self.tprint,
+        #                                self.logger)).start()
 
         # except:
         #     self.logger.exception("**Error in AutoStats.process_pdb_query**")
