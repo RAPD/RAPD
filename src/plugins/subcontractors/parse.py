@@ -27,7 +27,8 @@ __status__ = "Production"
 
 # Standard imports
 import os
-import pprint
+from pprint import pprint
+import sys
 
 # RAPD imports
 from utils.numbers import try_int, try_float
@@ -2002,6 +2003,82 @@ def ParseOutputPhaserNCS(self,inp):
 
   except:
     self.logger.exception('**ERROR in Parse.ParseOutputPhaserNCS**')
+
+def parse_phaser_ncs_output(raw_output):
+    """
+    Parse phaser output and return data
+
+    Plots look like:
+    {"<*plot label*>":{
+                       "data":[],
+                       "parameters" : {<*plot parameters*>}
+                      }
+     ...
+     ...
+    }
+
+    """
+
+    table_titles = []
+    table_labels = []
+    temp = []
+    start = []
+    plots = {}
+
+    # Look for graphs
+    for index, line in enumerate(raw_output.split("\n")):
+        # print index, line
+        temp.append(line)
+        if "$$ loggraph $$" in line:
+            start.append(index)
+            table_labels.append(raw_output.split("\n")[index-1].split())
+        elif "$TABLE" in line:
+            table_titles.append(line.split(":")[1].strip())
+
+    pprint(start)
+
+    if start:
+        for index, start_line in enumerate(start):
+
+            # print index, start_line, table_titles[index], table_labels[index]
+
+            table_title = table_titles[index]
+            table_label = table_labels[index]
+
+            # Create the plot in the storage dict
+            plots[table_title] = {
+                "data": []
+            }
+
+            for label in table_label[1:]:
+                plots[table_title]["data"].append({
+                    "parameters": {
+                        "linelabel": label,
+                        },
+                    "series": [
+                        {
+                            "xs": [],
+                            "ys": []
+                            }
+                    ]
+                })
+
+            for line in temp[start[index]+1:]:
+                # print line
+                if "$$" in line:
+                    break
+                #if len(line.split()) == len(temp[start[i]+1].split()):
+                else:
+                    sline = line.split()
+                    x_val = float(sline[0])
+                    for idx, val in enumerate(sline[1:]):
+                        # print idx, val
+                        plots[table_title]["data"][idx]["series"][0]["xs"]\
+                             .append(x_val)
+                        plots[table_title]["data"][idx]["series"][0]["ys"]\
+                             .append(float(val))
+
+    return plots
 
 def ParseOutputXtriage_NEW(self,inp):
   """

@@ -249,7 +249,7 @@ class AutoStats(Process):
       self.logger.debug('AutoStats::postprocessXtriage')
     try:
       if os.path.exists('logfile.log'):
-        self.xtriage_results = { 'Xtriage results' : Parse.ParseOutputXtriage(self,open('logfile.log','r').readlines()) }
+        self.xtriage_results = { 'Xtriage results' : Parse.ParseOutputXtriage(self, open('logfile.log', 'r').readlines()) }
         #self.xtriage_results = { 'Xtriage results' : Parse.ParseOutputXtriage_NEW(self,open('logfile.log','r').readlines()) }
       else:
         self.xtriage_results = { 'Xtriage results' : Parse.setXtriageFailed(self)}

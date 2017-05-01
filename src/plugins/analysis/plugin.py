@@ -58,10 +58,10 @@ import time
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
+import plugins.subcontractors.parse as parse
 import utils.modules as modules
 import utils.xutils as xutils
 import info
-# from subcontractors.pdb_query import PDBQuery
 import plugins.pdbquery.commandline
 
 
@@ -98,6 +98,11 @@ class RapdPlugin(Process):
     stats_timer = 180
     test = True
     volume = None
+
+    xtriage_output_raw = None
+    molrep_output_raw = None
+    phaser_output_raw = None
+    ncs_results = None
 
     def __init__(self, command, tprint=False, logger=False):
         """Initialize the plugin"""
@@ -188,7 +193,13 @@ class RapdPlugin(Process):
     def process(self):
         """Run plugin action"""
 
-        self.tprint("process")
+        self.tprint("Analyzing the data file", level=30, color="blue")
+
+        # self.run_xtriage()
+        # self.run_molrep()
+        self.run_phaser_ncs()
+
+        sys.exit()
 
         self.process_pdb_query()
 
@@ -199,6 +210,63 @@ class RapdPlugin(Process):
 
         # Print out recognition of the program being used
         self.print_info()
+
+    def run_xtriage(self):
+        """Run Xtriage and the parse the output"""
+
+        self.tprint("  Running xtriage", level=30, color="white")
+
+        command = "phenix.xtriage %s scaling.input.xray_data.obs_labels=\"I(+),\
+SIGI(+),I(-),SIGI(-)\" " % self.command["input_data"]["datafile"]
+
+        xtriage_proc = subprocess.Popen([command,],
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE,
+                                        shell=True)
+        stdout, _ = xtriage_proc.communicate()
+        self.xtriage_output_raw = stdout
+
+        return True
+
+    def run_molrep(self):
+        """Run Molrep to calculate self rotation function"""
+
+        self.tprint("  Calculating self rotation function",
+                    level=30,
+                    color="white")
+
+        command = "molrep -f %s -i <<stop\n_DOC  Y\n_RESMAX 4\n_RESMIN 9\nstop"\
+                  % self.command["input_data"]["datafile"]
+
+        molrep_proc = subprocess.Popen([command,],
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE,
+                                       shell=True)
+        stdout, _ = molrep_proc.communicate()
+        self.molrep_output_raw = stdout
+
+        return True
+
+    def run_phaser_ncs(self):
+        """Run Phaser tNCS and anisotropy correction"""
+
+        self.tprint("  Analyzing NCS and anisotropy",
+                    level=30,
+                    color="white")
+
+        command  = "phenix.phaser << eof\nMODE NCS\nHKLIn %s\nLABIn F=F SIGF=SI\
+GF\neof\n" % self.command["input_data"]["datafile"]
+
+        phaser_proc = subprocess.Popen([command,],
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE,
+                                       shell=True)
+        stdout, _ = phaser_proc.communicate()
+        phaser_output_raw = stdout
+
+        self.ncs_results = parse.parse_phaser_ncs_output(phaser_output_raw)
+
+        return True
 
     def process_pdb_query(self):
         """Prepare and run PDBQuery"""
@@ -239,8 +307,6 @@ class RapdPlugin(Process):
                                             self.tprint,
                                             self.logger)
 
-        sys.exit()
-
         # Move some information
         # self.command["preferences"]["sample_type"] = self.sample_type
         #
@@ -251,6 +317,11 @@ class RapdPlugin(Process):
 
         # except:
         #     self.logger.exception("**Error in AutoStats.process_pdb_query**")
+
+    def print_info(self):
+        """Print information on programs used to the terminal"""
+
+        pass
 
 def get_commandline():
     """Grabs the commandline"""
