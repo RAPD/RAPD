@@ -2549,6 +2549,7 @@ def parse_xtriage_output(raw_output):
     skip = True
     pat_info = {}
     coset = []
+    verdict_text = []
 
     # Tables with an embedded label
     tables = {}
@@ -2594,6 +2595,22 @@ def parse_xtriage_output(raw_output):
 
         # Store a copy
         output_lines.append(line)
+
+        # Spacegroup information
+        if line.startswith("Space group:"):
+            sg_full = line.strip().split(":")[1].strip()
+            sg_text = sg_full.split("(")[0].strip()
+            sg_num = int(sg_full.split("(")[1].split()[1].replace(")", ""))
+
+        # Unit cell info
+        if line.startswith("Unit cell:"):
+            unit_cell_full = line.strip().split(":")[1].strip().replace("(", "").replace(")", "")
+            a, b, c, alpha, beta, gamma = [float(x) for x in line.strip().split(":")[1].strip().\
+                replace("(", "").replace(")", "").split(",")]
+
+        # Final verdict of xtriage
+        if "Final verdict" in line:
+            final_verdict_line = index
 
         if line.startswith("bin "):
             anom_lines.append(line)
@@ -2653,9 +2670,9 @@ def parse_xtriage_output(raw_output):
             coset.append(index)
 
     if pat_dist:
-        data2 = {"frac x": pat_x,
-                 "frac y": pat_y,
-                 "frac z": pat_z,
+        data2 = {"frac x": float(pat_x),
+                 "frac y": float(pat_y),
+                 "frac z": float(pat_z),
                  "peak": pat_height,
                  "p-val": patterson_p_value,
                  "dist": pat_dist
@@ -2664,6 +2681,13 @@ def parse_xtriage_output(raw_output):
 
     else:
         skip = False
+
+    # Handle the final verdict lines
+    for line in output_lines[final_verdict_line+1:]:
+        if "------" in line:
+            break
+        elif line.strip():
+            verdict_text.append(line.strip())
 
     # Handle list of Patterson peaks
     if pat_st:
@@ -2810,11 +2834,11 @@ def parse_xtriage_output(raw_output):
 
     # Grab tables missing embedded labels
     for table_label in unlabeled_table_labels:
-        print "Grabbing tables"
-        print "table_label", table_label
+        # print "Grabbing tables"
+        # print "table_label", table_label
 
         table_start = unlabeled_tables[table_label]
-        print "table_start", table_start
+        # print "table_start", table_start
 
         column_labels = []
         column_data = {}
@@ -2836,7 +2860,7 @@ def parse_xtriage_output(raw_output):
             elif started_table:
                 if not have_header:
                     sline = line.split(" | ")
-                    print sline
+                    # print sline
                     if len(sline) > 3:
                         for item in sline:
                             label = item.strip()
@@ -2928,6 +2952,36 @@ def parse_xtriage_output(raw_output):
 
         tables[table_label] = column_data
 
+    # Turn tables into plots
+    plots = {}
+
+    # Run through all the tables
+    labels_to_plot = (
+        # "Completeness and data strength",
+    )
+    for table_label in table_labels + unlabeled_table_labels:
+
+        print table_label
+
+        if table_label in labels_to_plot:
+            print "  Plotting"
+            pprint(tables[table_label])
+        # for label in table_label[1:]:
+        #     plots[table_title]["data"].append({
+        #         "parameters": {
+        #             "linelabel": label,
+        #             },
+        #         "series": [
+        #             {
+        #                 "xs": [],
+        #                 "ys": []
+        #                 }
+        #         ]
+        #     })
+
+
+    sys.exit()
+
     # for line in output_lines[index_patterson+5:-3]:
     #     summary.append(line)
 
@@ -2940,9 +2994,22 @@ def parse_xtriage_output(raw_output):
         # "summary": summary,
         "patterson search positive": patterson_positive,
         "PTS info": pat_info,
+        "spacegroup": {
+            "number": sg_num,
+            "text": sg_text,
+        },
         "tables": tables,
         "twin": twin,
         "twin info": twin_info,
+        "unit_cell": {
+            "a": a,
+            "b": b,
+            "c": c,
+            "alpha": alpha,
+            "beta": beta,
+            "gamma": gamma
+        },
+        "verdict_text": verdict_text,
         "z-score": z_score,
     }
 

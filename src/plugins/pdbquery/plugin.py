@@ -291,7 +291,6 @@ class RapdPlugin(multiprocessing.Process):
         self.preprocess()
         self.process()
         self.postprocess()
-        self.print_credits()
 
     def preprocess(self):
         """Set up for plugin action"""
@@ -960,6 +959,7 @@ class RapdPlugin(multiprocessing.Process):
 
         if run_mode == "interactive":
             self.print_results()
+            self.print_credits()
         elif run_mode == "json":
             self.print_json()
         elif run_mode == "server":
@@ -968,6 +968,7 @@ class RapdPlugin(multiprocessing.Process):
             return self.results
         elif run_mode == "subprocess-interactive":
             self.print_results()
+            self.print_credits()
             return self.results
 
     def print_results(self):

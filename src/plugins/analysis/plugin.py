@@ -40,8 +40,8 @@ VERSION = "1.0.0"
 # import from collections import OrderedDict
 # import datetime
 from distutils.spawn import find_executable
-import glob
-import json
+# import glob
+# import json
 import logging
 from multiprocessing import Process, Queue
 import os
@@ -60,6 +60,7 @@ import time
 # import detectors.detector_utils as detector_utils
 # import utils
 import plugins.subcontractors.parse as parse
+import utils.credits as credits
 import utils.modules as modules
 import utils.xutils as xutils
 import info
@@ -134,7 +135,7 @@ class RapdPlugin(Process):
 
         # Some logging
         self.logger.info(command)
-        pprint(command)
+        # pprint(command)
 
         # Store passed-in variables
         self.command = command
@@ -153,7 +154,7 @@ class RapdPlugin(Process):
     def preprocess(self):
         """Set up for plugin action"""
 
-        self.tprint("preprocess")
+        # self.tprint("preprocess")
         self.logger.debug("preprocess")
 
         # Handle sample type from commandline
@@ -172,6 +173,7 @@ class RapdPlugin(Process):
             xutils.get_mtz_info(
                 datafile=self.command["input_data"]["datafile"])
 
+        self.tprint("\nReading in datafile", level=30, color="blue")
         self.tprint("  Spacegroup: %s" % self.input_sg, level=20, color="white")
         self.tprint("  Cell: %s" % str(self.cell), level=20, color="white")
         self.tprint("  Volume: %f" % self.volume, level=20, color="white")
@@ -197,11 +199,15 @@ class RapdPlugin(Process):
     def process(self):
         """Run plugin action"""
 
-        self.tprint("Analyzing the data file", level=30, color="blue")
+        self.tprint("\nAnalyzing the data file", level=30, color="blue")
 
         self.run_xtriage()
+        self.print_xtriage_results()
         self.run_molrep()
         self.run_phaser_ncs()
+        self.print_plots()
+
+        # Run the pdbquery
         # self.process_pdb_query()
 
     def postprocess(self):
@@ -209,8 +215,14 @@ class RapdPlugin(Process):
 
         self.tprint("postprocess")
 
-        # Print out recognition of the program being used
-        self.print_info()
+        # Cleanup my mess.
+        self.clean_up()
+
+        # Finished
+        self.results["status"] = 100
+
+        # Notify inerested party
+        self.handle_return()
 
     def run_xtriage(self):
         """Run Xtriage and the parse the output"""
@@ -312,6 +324,9 @@ GF\neof\n" % self.command["input_data"]["datafile"]
         """Prepare and run PDBQuery"""
         self.logger.debug("process_pdb_query")
 
+        self.tprint("\nLaunching PDBQUERY plugin", level=30, color="blue")
+        self.tpring("  This can take a while...", level=30, color="white")
+
         # Construct the pdbquery plugin command
         class pdbquery_args(object):
             clean = True
@@ -321,7 +336,7 @@ GF\neof\n" % self.command["input_data"]["datafile"]
             no_color = False
             nproc = 1
             pdbs = False
-            run_mode = "subprocess"
+            run_mode = "subprocess-interactive"
             search = True
             test = False
             verbose = True
@@ -347,21 +362,114 @@ GF\neof\n" % self.command["input_data"]["datafile"]
                                             self.tprint,
                                             self.logger)
 
-        # Move some information
-        # self.command["preferences"]["sample_type"] = self.sample_type
+        self.results["pdbquery"] = pdbquery_result
+
+    def clean_up(self):
+        """Clean up the working directory"""
+
+        self.tprint("  Cleaning up", level=30, color="white")
+
+        # if self.command["preferences"].get("clean", False):
+        #     self.logger.debug("Cleaning up Phaser files and folders")
         #
-        # Process(target=PDBQuery, args=(self.command,
-        #                                self.cell_output,
-        #                                self.tprint,
-        #                                self.logger)).start()
+        #     # Change to work dir
+        #     os.chdir(self.working_dir)
+        #
+        #     # Gather targets and remove
+        #     files_to_clean = glob.glob("Phaser_*")
+        #     for target in files_to_clean:
+        #         shutil.rmtree(target)
 
-        # except:
-        #     self.logger.exception("**Error in AutoStats.process_pdb_query**")
+    def handle_return(self):
+        """Output data to consumer"""
 
-    def print_info(self):
-        """Print information on programs used to the terminal"""
+        run_mode = self.command["preferences"]["run_mode"]
+
+        if run_mode == "interactive":
+            self.print_results()
+            self.print_credits()
+        elif run_mode == "json":
+            self.print_json()
+        elif run_mode == "server":
+            pass
+        elif run_mode == "subprocess":
+            return self.results
+        elif run_mode == "subprocess-interactive":
+            self.print_results()
+            self.print_credits()
+            return self.results
+
+    def print_results(self):
+        """Print the results to the commandline"""
+
+        self.print_xtriage_results()
+        self.print_plots()
+
+    def print_xtriage_results(self):
+        """Print out the xtriage results"""
+
+        xtriage_results = self.results["parsed"]["xtriage"]
+
+        self.tprint("\nXtriage results", level=99, color="blue")
+
+        self.tprint("  Spacegroup: %s (%d)" % (
+            xtriage_results["spacegroup"]["text"],
+            xtriage_results["spacegroup"]["number"]),
+                    level=99,
+                    color="white")
+
+        self.tprint("\n  Unit cell: a= %.2f      b= %.2f     c= %.2f" % (
+            xtriage_results["unit_cell"]["a"],
+            xtriage_results["unit_cell"]["b"],
+            xtriage_results["unit_cell"]["c"]),
+                    level=99,
+                    color="white")
+        self.tprint("             alpha= %.2f  beta= %.2f  gamma= %.2f" % (
+            xtriage_results["unit_cell"]["alpha"],
+            xtriage_results["unit_cell"]["beta"],
+            xtriage_results["unit_cell"]["gamma"]),
+                    level=99,
+                    color="white")
+
+        self.tprint("\n  Patterson analysis (off-origin peaks)", level=99, color="white")
+        self.tprint("                % of origin   dist from    fractional coords",
+                    level=99,
+                    color="white")
+        self.tprint("  #   p-value      peak         origin      x      y      z",
+                    level=99,
+                    color="white")
+        for peak_id, peak_data in xtriage_results["Patterson peaks"].iteritems():
+            self.tprint("  {}   {:6.4f}     {:5.2f}%         {:5.2f}     {:5.3f}  {:5.3f}  {:5.3f}"\
+                .format(peak_id,
+                        peak_data["p-val"],
+                        peak_data["peak"]*100.0,
+                        peak_data["dist"],
+                        peak_data["frac x"],
+                        peak_data["frac y"],
+                        peak_data["frac z"]),
+                        level=99,
+                        color="white")
+
+        self.tprint("\n  Xtriage verdict", level=99, color="white")
+        for line in xtriage_results["verdict_text"]:
+            self.tprint("    %s" % line, level=99, color="white")
+
+    def print_plots(self):
+        """Print plots to the terminal"""
 
         pass
+
+    def print_credits(self):
+        """Print information on programs used to the terminal"""
+
+        self.tprint(credits.HEADER,
+                    level=99,
+                    color="blue")
+
+        programs = ["CCTBX", "MOLREP", "PHENIX", "PHASER"]
+        info_string = credits.get_credits_text(programs, "    ")
+
+        self.tprint(info_string, level=99, color="white")
 
 def get_commandline():
     """Grabs the commandline"""

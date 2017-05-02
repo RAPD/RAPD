@@ -87,6 +87,8 @@ def construct_command(commandline_args, logger):
 
     # Plugin settings
     command["preferences"] = {
+        "clean": commandline_args.clean,
+        "run_mode": commandline_args.run_mode,
         "sample_type": commandline_args.sample_type,
         "test": commandline_args.test,
     }
@@ -104,7 +106,7 @@ def construct_command(commandline_args, logger):
 def get_commandline():
     """Grabs the commandline"""
 
-    print "get_commandline"
+    # print "get_commandline"
 
     # Parse the commandline arguments
     commandline_description = "Launch analysis plugin"
@@ -122,17 +124,47 @@ def get_commandline():
                            dest="test",
                            help="Turn test mode on")
 
-    # A True/False flag
+    # Verbose
+    # my_parser.add_argument("-v", "--verbose",
+    #                        action="store_true",
+    #                        dest="verbose",
+    #                        help="More output")
+
+    # Quiet
     my_parser.add_argument("-q", "--quiet",
                            action="store_false",
                            dest="verbose",
                            help="Reduce output")
 
-    # A True/False flag
-    my_parser.add_argument("-c", "--color",
-                           action="store_false",
+    # Messy
+    # my_parser.add_argument("--messy",
+    #                        action="store_false",
+    #                        dest="clean",
+    #                        help="Keep intermediate files")
+
+    # Clean
+    my_parser.add_argument("--clean",
+                           action="store_true",
+                           dest="clean",
+                           help="Remove intermediate files")
+
+    # Color
+    # my_parser.add_argument("--color",
+    #                        action="store_false",
+    #                        dest="no_color",
+    #                        help="Color the terminal output")
+
+    # No color
+    my_parser.add_argument("--nocolor",
+                           action="store_true",
                            dest="no_color",
-                           help="Colorize terminal output")
+                           help="Do not color the terminal output")
+
+    # JSON Output
+    my_parser.add_argument("-j", "--json",
+                           action="store_true",
+                           dest="json",
+                           help="Output JSON format string")
 
     # Positional argument
     my_parser.add_argument(action="store",
@@ -158,6 +190,11 @@ def get_commandline():
     args = my_parser.parse_args()
 
     # Insert logic to check or modify args here
+    # Running in interactive mode if this code is being called
+    if args.json:
+        args.run_mode = "json"
+    else:
+        args.run_mode = "interactive"
 
     return args
 

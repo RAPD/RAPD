@@ -35,6 +35,12 @@ CCTBX = [
     "Website: https://cctbx.github.io/\n"
 ]
 
+MOLREP = [
+    "Molrep",
+    "Reference: Vagin A, Teplyakov A (1997) J. Appl. Cryst. 30:1022-1025",
+    "Website: http://www.ccp4.ac.uk/html/molrep.html\n"
+]
+
 PHASER = [
     "Phaser",
     "Reference: McCoy AJ, et al. (2007) J. Appl. Cryst. 40:658-674",

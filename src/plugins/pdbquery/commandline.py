@@ -101,7 +101,6 @@ def construct_command(commandline_args):
     command["preferences"] = {
         "clean": commandline_args.clean,
         "contaminants": commandline_args.contaminants,
-        # "json": commandline_args.json,
         "nproc": commandline_args.nproc,
         "run_mode": commandline_args.run_mode,
         "search": commandline_args.search,
