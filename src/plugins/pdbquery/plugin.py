@@ -966,6 +966,9 @@ class RapdPlugin(multiprocessing.Process):
             pass
         elif run_mode == "subprocess":
             return self.results
+        elif run_mode == "subprocess-interactive":
+            self.print_results()
+            return self.results
 
     def print_results(self):
         """Print the results to the commandline"""
