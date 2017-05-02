@@ -26,6 +26,7 @@ __email__ = "schuerjp@anl.gov"
 __status__ = "Production"
 
 # Standard imports
+import math
 import os
 from pprint import pprint
 import sys
@@ -2035,7 +2036,7 @@ def parse_phaser_ncs_output(raw_output):
         elif "$TABLE" in line:
             table_titles.append(line.split(":")[1].strip())
 
-    pprint(start)
+    # pprint(start)
 
     if start:
         for index, start_line in enumerate(start):
@@ -2527,6 +2528,219 @@ def ParseOutputXtriage(self,inp):
       self.logger.exception('**ERROR in Parse.ParseOutputXtriage**')
       return(setXtriageFailed(self))
   """
+
+def parse_xtriage_output(raw_output):
+    """
+    Parse phenix.xtriage output.
+    """
+
+    output_lines = []
+    junk = []
+    anom = {}
+    pat = {}
+    twin_info = {}
+    summary = []
+    pts = False
+    twin = False
+    # Index for list of Patterson peaks
+    pat_st = 0
+    pat_dist = 0.0
+    skip = True
+    pat_info = {}
+    coset = []
+    plots = {}
+    l = [('Intensity','int'), ('Z scores','z'), ('Anomalous','anom'),
+         ('<I/sigma_I>','i'), ('NZ','nz'), ('L test','ltest')]
+
+    for index, line in enumerate(raw_output.split("\n")):
+
+        # Store a copy
+        output_lines.append(line)
+
+        if line.startswith("bin "):
+            junk.append(line)
+
+        # A Table is found
+        if line.startswith("$TABLE:"):
+            for i in range(len(l)):
+                if line.count(l[i][0]):
+                    plots[l[i][1]] = {'start': index + 6}
+
+        # Z score
+        if line.startswith("  Multivariate Z score"):
+            z_score = float(line.split()[4])
+
+        # Patterson analysis
+        if line.startswith("Patterson analyses"):
+            index_patterson = index
+        if line.startswith(" Frac. coord."):
+            pat_x = line.split()[3]
+            pat_y = line.split()[4]
+            pat_z = line.split()[5]
+        if line.startswith(" Distance to origin"):
+            pat_dist = float(line.split()[4])
+        if line.startswith(" Height (origin=100)"):
+            pat_height = float(line.split()[3])
+        if line.count("Height relative to origin"):
+            pat_height = float(line.split()[5])
+        if line.startswith(" p_value(height)"):
+            pat_p = float(line.split()[2])
+            if pat_p <= 0.05:
+                pts = True
+        # There is a list of patterson peaks
+        if line.startswith("The full list of Patterson peaks is:"):
+            pat_st = index
+
+        # Systematic absences
+        if line.startswith("Systematic absences"):
+            pat_fn = index
+
+        # Twinning
+        if line.startswith("| Type | Axis   | R metric"):
+            twin = True
+            twin_st = index
+        if line.startswith("M:  Merohedral twin law"):
+            twin_fn = index
+        if line.startswith("Statistics depending on twin"):
+            twin2_st = index
+        if line.startswith("  Coset number"):
+            coset.append(index)
+
+    if pat_dist:
+        data2 = {"frac x": pat_x,
+                 "frac y": pat_y,
+                 "frac z": pat_z,
+                 "peak": pat_height,
+                 "p-val": pat_p,
+                 "dist": pat_dist
+                }
+        pat["1"] = data2
+
+    else:
+        skip = False
+
+    # Handle list of Patterson peaks
+    if pat_st:
+        i = 2
+        for line in output_lines[pat_st+2:pat_fn]:
+            split = line.split()
+            if line.startswith("("):
+                if not skip:
+                    x_frac = float(line[1:7].replace(" ", ""))
+                    y_frac = float(line[8:14].replace(" ", ""))
+                    z_frac = float(line[15:21].replace(" ", ""))
+                    pk_height = float(line[25:34].replace(" ", ""))
+                    p_value = float(line[38:-2].replace(" ", ""))
+                    data = {"frac x": x_frac,
+                            "frac y": y_frac,
+                            "frac z": z_frac,
+                            "peak": pk_height,
+                            "p-val": p_value,
+                           }
+                    pat[str(i)] = data
+                    i += 1
+                skip = False
+            if line.startswith(" space group"):
+                pts = True
+                pts_sg = output_lines.index(line)
+                i1 = 1
+                for line2 in output_lines[pts_sg+1:pat_fn]:
+                    if line2.split() != []:
+                        a = line2.find("(")
+                        b = line2.find(")")
+                        c = line2.rfind("(")
+                        d = line2.rfind(")")
+                        sg = line2[:a-1].replace(" ", "")+" "+line2[a:b+1].replace(" ", "")
+                        op = line2[b+1:c].replace(" ", "")
+                        ce = line2[c+1:d]
+                        data2 = {"space group": sg,
+                                 "operator": op,
+                                 "cell": ce}
+                        pat_info[i1] = data2
+                        i1 += 1
+
+    # Handle twinning
+    if twin:
+        for line in output_lines[twin_st+2:twin_fn-1]:
+            split = line.split()
+            law = split[11]
+            data = {'type'     : split[1],
+                    'axis'     : split[3],
+                    'r_metric' : split[5],
+                    'd_lepage' : split[7],
+                    'd_leb'    : split[9]}
+            twin_info[law] = data
+
+        for line in output_lines[twin2_st+4:index_patterson-2]:
+            split = line.split()
+            law = split[1]
+            data = {'r_obs'      : split[5],
+                    'britton'    : split[7],
+                    'h-test'     : split[9],
+                    'ml'         : split[11]}
+            twin_info[law].update(data)
+
+        if len(coset) > 0:
+            for line in coset[1:]:
+                sg = output_lines[line][38:-2]
+                #   try:
+                for i in range(2, 4):
+                    if len(output_lines[line+i].split()) > 0:
+                        law = output_lines[line+i].split()[1]
+                        if twin_info.has_key(law):
+                            twin_info[law].update({'sg':sg})
+                #   except:
+                #     self.logger.exception('Warning. Missing Coset info.')
+        else:
+            crap = {'sg':'NA'}
+            for key in twin_info.keys():
+              twin_info[key].update(crap)
+
+
+    for line in junk[10:20]:
+      if len(line.split()) == 7:
+        anom[line.split()[4]] = line.split()[6]
+      else:
+        anom[line.split()[4]] = '0.0000'
+
+    # Save plots
+    for i in range(len(l)):
+      temp3 = []
+      for line in output_lines[plots[l[i][1]].get('start'):]:
+        if len(output_lines[plots[l[i][1]].get('start')].split()) == len(line.split()):
+          #Convert resolution
+          if i < 4:
+            temp2 = []
+            temp2.append(str(math.sqrt(1/float(line.split()[0]))))
+            temp2.extend(line.split()[1:])
+            temp3.append(temp2)
+          else:
+            split = line.split()
+            if split[1] == 'nan':
+              split[1] = '0.0'
+            temp3.append(split)
+        else:
+          break
+      plots[l[i][1]].update({'data':temp3})
+
+    for line in output_lines[index_patterson+5:-3]:
+      summary.append(line)
+    xtriage = {'Xtriage anom'         : anom,
+               'Xtriage anom plot'    : plots['anom'].get('data'),
+               'Xtriage int plot'     : plots['int'].get('data'),
+               'Xtriage i plot'       : plots['i'].get('data'),
+               'Xtriage z plot'       : plots['z'].get('data'),
+               'Xtriage nz plot'      : plots['nz'].get('data'),
+               'Xtriage l-test plot'  : plots['ltest'].get('data'),
+               'Xtriage z-score'      : z_score,
+               'Xtriage pat'          : pat,
+               'Xtriage pat p-value'  : pat_p,
+               'Xtriage summary'      : summary,
+               'Xtriage PTS'          : pts,
+               'Xtriage PTS info'     : pat_info,
+               'Xtriage twin'         : twin,
+               'Xtriage twin info'    : twin_info,       }
+    return xtriage
 
 def ParseOutputMolrep(self,inp):
   """

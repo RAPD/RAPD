@@ -101,8 +101,7 @@ class RapdPlugin(Process):
 
     xtriage_output_raw = None
     molrep_output_raw = None
-    phaser_output_raw = None
-    ncs_results = None
+    phaser_results = None
 
     def __init__(self, command, tprint=False, logger=False):
         """Initialize the plugin"""
@@ -195,12 +194,10 @@ class RapdPlugin(Process):
 
         self.tprint("Analyzing the data file", level=30, color="blue")
 
-        # self.run_xtriage()
-        # self.run_molrep()
-        self.run_phaser_ncs()
-
+        self.run_xtriage()
         sys.exit()
-
+        self.run_molrep()
+        self.run_phaser_ncs()
         self.process_pdb_query()
 
     def postprocess(self):
@@ -224,7 +221,12 @@ SIGI(+),I(-),SIGI(-)\" " % self.command["input_data"]["datafile"]
                                         stderr=subprocess.PIPE,
                                         shell=True)
         stdout, _ = xtriage_proc.communicate()
-        self.xtriage_output_raw = stdout
+        xtriage_output_raw = stdout
+
+        # Move logfile.log
+        shutil.move("logfile.log", "xtriage.log")
+
+        self.xtriage_results = parse.parse_xtriage_output(xtriage_output_raw)
 
         return True
 
@@ -245,6 +247,10 @@ SIGI(+),I(-),SIGI(-)\" " % self.command["input_data"]["datafile"]
         stdout, _ = molrep_proc.communicate()
         self.molrep_output_raw = stdout
 
+        # Save the output in log form
+        with open("molrep_selfrf.log", "w") as out_file:
+            out_file.write(stdout)
+
         return True
 
     def run_phaser_ncs(self):
@@ -264,7 +270,11 @@ GF\neof\n" % self.command["input_data"]["datafile"]
         stdout, _ = phaser_proc.communicate()
         phaser_output_raw = stdout
 
-        self.ncs_results = parse.parse_phaser_ncs_output(phaser_output_raw)
+        self.phaser_results = parse.parse_phaser_ncs_output(phaser_output_raw)
+
+        # Save the output in log form
+        with open("phaser_ncs.log", "w") as out_file:
+            out_file.write(stdout)
 
         return True
 
