@@ -2535,12 +2535,13 @@ def parse_xtriage_output(raw_output):
     """
 
     output_lines = []
-    junk = []
+    anom_lines = []
     anom = {}
+    anomalous_present = True
     pat = {}
     twin_info = {}
-    summary = []
-    pts = False
+    patterson_positive = False
+    patterson_p_value = 0
     twin = False
     # Index for list of Patterson peaks
     pat_st = 0
@@ -2548,23 +2549,68 @@ def parse_xtriage_output(raw_output):
     skip = True
     pat_info = {}
     coset = []
-    plots = {}
-    l = [('Intensity','int'), ('Z scores','z'), ('Anomalous','anom'),
-         ('<I/sigma_I>','i'), ('NZ','nz'), ('L test','ltest')]
+
+    # Tables with an embedded label
+    tables = {}
+    table_labels = (
+        "Completeness and data strength",
+        "Mean intensity by shell (outliers)",
+        "NZ test",
+        "L test, acentric data",
+    )
+
+    # Tables that lack an embedded label
+    unlabeled_tables = {}
+    unlabeled_table_labels = (
+        "Low resolution completeness analyses",
+        "Completeness (log-binning)",
+        "Measurability of anomalous signal",
+        "Ice ring related problems",
+        "Table of systematic absence rules",
+        "Space group identification",
+    )
+
+    # Table coilumns that need special handling
+    table_special_columns = (
+        "Completeness",
+        "Res. range",
+        "Resolution range",
+        "Resolution",
+        "N(obs)/N(possible)",
+        "Reflections",
+        "Operator",  # str
+        "# expected systematic absences",  # int
+        "<I/sigI> (violations)",  # complicated
+        "# expected non absences",  # int
+        "# other reflections",  # int
+        "space group",
+        "# absent",
+        "+++",
+        "---",
+    )
 
     for index, line in enumerate(raw_output.split("\n")):
+        # print index, line
 
         # Store a copy
         output_lines.append(line)
 
         if line.startswith("bin "):
-            junk.append(line)
+            anom_lines.append(line)
+        if "There seems to be no real significant anomalous differences in this dataset" in line:
+            anomalous_present = False
 
         # A Table is found
-        if line.startswith("$TABLE:"):
-            for i in range(len(l)):
-                if line.count(l[i][0]):
-                    plots[l[i][1]] = {'start': index + 6}
+        for table_label in table_labels:
+            if line.startswith("  | "+table_label):
+                tables[table_label] = index
+
+        # A table with no label is found
+        for table_label in unlabeled_table_labels:
+            # print table_label
+            if "--"+table_label+"--" in line:
+                # print ">>>>", index, line
+                unlabeled_tables[table_label] = index
 
         # Z score
         if line.startswith("  Multivariate Z score"):
@@ -2580,13 +2626,13 @@ def parse_xtriage_output(raw_output):
         if line.startswith(" Distance to origin"):
             pat_dist = float(line.split()[4])
         if line.startswith(" Height (origin=100)"):
-            pat_height = float(line.split()[3])
-        if line.count("Height relative to origin"):
-            pat_height = float(line.split()[5])
-        if line.startswith(" p_value(height)"):
-            pat_p = float(line.split()[2])
-            if pat_p <= 0.05:
-                pts = True
+            pat_height = float(line.split()[3])/100.0
+        if "Height relative to origin" in line:
+            pat_height = float(line.split()[5])/100.0
+        if "p_value(" in line:
+            patterson_p_value = float(line.split()[2])
+            if patterson_p_value <= 0.05:
+                patterson_positive = True
         # There is a list of patterson peaks
         if line.startswith("The full list of Patterson peaks is:"):
             pat_st = index
@@ -2611,7 +2657,7 @@ def parse_xtriage_output(raw_output):
                  "frac y": pat_y,
                  "frac z": pat_z,
                  "peak": pat_height,
-                 "p-val": pat_p,
+                 "p-val": patterson_p_value,
                  "dist": pat_dist
                 }
         pat["1"] = data2
@@ -2641,7 +2687,7 @@ def parse_xtriage_output(raw_output):
                     i += 1
                 skip = False
             if line.startswith(" space group"):
-                pts = True
+                patterson_positive = True
                 pts_sg = output_lines.index(line)
                 i1 = 1
                 for line2 in output_lines[pts_sg+1:pat_fn]:
@@ -2664,20 +2710,20 @@ def parse_xtriage_output(raw_output):
         for line in output_lines[twin_st+2:twin_fn-1]:
             split = line.split()
             law = split[11]
-            data = {'type'     : split[1],
-                    'axis'     : split[3],
-                    'r_metric' : split[5],
-                    'd_lepage' : split[7],
-                    'd_leb'    : split[9]}
+            data = {"type": split[1],
+                    "axis": split[3],
+                    "r_metric": split[5],
+                    "d_lepage": split[7],
+                    "d_leb": split[9]}
             twin_info[law] = data
 
         for line in output_lines[twin2_st+4:index_patterson-2]:
             split = line.split()
             law = split[1]
-            data = {'r_obs'      : split[5],
-                    'britton'    : split[7],
-                    'h-test'     : split[9],
-                    'ml'         : split[11]}
+            data = {"r_obs": split[5],
+                    "britton": split[7],
+                    "h-test": split[9],
+                    "ml": split[11]}
             twin_info[law].update(data)
 
         if len(coset) > 0:
@@ -2688,59 +2734,219 @@ def parse_xtriage_output(raw_output):
                     if len(output_lines[line+i].split()) > 0:
                         law = output_lines[line+i].split()[1]
                         if twin_info.has_key(law):
-                            twin_info[law].update({'sg':sg})
+                            twin_info[law].update({"sg":sg})
                 #   except:
-                #     self.logger.exception('Warning. Missing Coset info.')
+                #     self.logger.exception("Warning. Missing Coset info.")
         else:
-            crap = {'sg':'NA'}
+            crap = {"sg":"NA"}
             for key in twin_info.keys():
-              twin_info[key].update(crap)
+                twin_info[key].update(crap)
 
 
-    for line in junk[10:20]:
-      if len(line.split()) == 7:
-        anom[line.split()[4]] = line.split()[6]
-      else:
-        anom[line.split()[4]] = '0.0000'
-
-    # Save plots
-    for i in range(len(l)):
-      temp3 = []
-      for line in output_lines[plots[l[i][1]].get('start'):]:
-        if len(output_lines[plots[l[i][1]].get('start')].split()) == len(line.split()):
-          #Convert resolution
-          if i < 4:
-            temp2 = []
-            temp2.append(str(math.sqrt(1/float(line.split()[0]))))
-            temp2.extend(line.split()[1:])
-            temp3.append(temp2)
-          else:
-            split = line.split()
-            if split[1] == 'nan':
-              split[1] = '0.0'
-            temp3.append(split)
+    for line in anom_lines[10:20]:
+        if len(line.split()) == 7:
+            anom[line.split()[4]] = line.split()[6]
         else:
-          break
-      plots[l[i][1]].update({'data':temp3})
+            anom[line.split()[4]] = "0.0000"
 
-    for line in output_lines[index_patterson+5:-3]:
-      summary.append(line)
-    xtriage = {'Xtriage anom'         : anom,
-               'Xtriage anom plot'    : plots['anom'].get('data'),
-               'Xtriage int plot'     : plots['int'].get('data'),
-               'Xtriage i plot'       : plots['i'].get('data'),
-               'Xtriage z plot'       : plots['z'].get('data'),
-               'Xtriage nz plot'      : plots['nz'].get('data'),
-               'Xtriage l-test plot'  : plots['ltest'].get('data'),
-               'Xtriage z-score'      : z_score,
-               'Xtriage pat'          : pat,
-               'Xtriage pat p-value'  : pat_p,
-               'Xtriage summary'      : summary,
-               'Xtriage PTS'          : pts,
-               'Xtriage PTS info'     : pat_info,
-               'Xtriage twin'         : twin,
-               'Xtriage twin info'    : twin_info,       }
-    return xtriage
+    # Grab the tables
+    for table_label in table_labels:
+        # print "Grabbing tables"
+        # print "table_label", table_label
+
+        table_start = tables[table_label]
+        # print "table_start", table_start
+
+        column_labels = []
+        column_data = {}
+        column_labels = []
+        have_header = False
+        have_body = False
+        for line in output_lines[table_start:]:
+            # print line
+            # Skip dividers
+            if "----" in line:
+                if have_body:
+                    break
+                else:
+                    continue
+            elif not have_header:
+                sline = line.split(" | ")
+                # print sline
+                if len(sline) > 3:
+                    for item in sline:
+                        label = item.strip()
+                        if label:
+                            column_labels.append(label)
+                    column_labels[-1] = column_labels[-1].rstrip(" |")
+                    for column_label in column_labels:
+                        if column_label in table_special_columns:
+                            if column_label == "Res. range":
+                                column_data["Low Res"] = []
+                                column_data["High Res"] = []
+                        else:
+                            column_data[column_label] = []
+                    have_header = True
+            else:
+                have_body = True
+                # print line
+                sline = line[4:-2].split("|")
+                # print sline
+                for position, value in enumerate(sline):
+                    if column_labels[position] in table_special_columns:
+                        if column_labels[position] == "Res. range":
+                            column_data["Low Res"].append(float(value.split("-")[0].strip()))
+                            column_data["High Res"].append(float(value.split("-")[1].strip()))
+                        elif column_label in ("Completeness",):
+                            if "%" in value:
+                                column_data[column_label].append(float(value.\
+                                    replace("%", ""))/100.0)
+                            else:
+                                column_data[column_labels[position]].append(float(value.strip()))
+                    else:
+                        column_data[column_labels[position]].append(float(value.strip()))
+
+        tables[table_label] = column_data
+
+    # Grab tables missing embedded labels
+    for table_label in unlabeled_table_labels:
+        print "Grabbing tables"
+        print "table_label", table_label
+
+        table_start = unlabeled_tables[table_label]
+        print "table_start", table_start
+
+        column_labels = []
+        column_data = {}
+        column_labels = []
+        started_table = False
+        have_header = False
+        have_body = False
+        for line in output_lines[table_start+1:]:
+            # print line
+            # Skip dividers
+            if "----" in line:
+                if not started_table:
+                    started_table = True
+                    continue
+                if have_body:
+                    break
+                else:
+                    continue
+            elif started_table:
+                if not have_header:
+                    sline = line.split(" | ")
+                    print sline
+                    if len(sline) > 3:
+                        for item in sline:
+                            label = item.strip()
+                            if label:
+                                column_labels.append(label)
+                        column_labels[-1] = column_labels[-1].rstrip(" |")
+                        for column_index, column_label in enumerate(column_labels):
+                            if column_label in table_special_columns:
+                                if column_label in ("Res. range", "Resolution range", "Resolution"):
+                                    column_data["Low Res"] = []
+                                    column_data["High Res"] = []
+                                elif column_label == "<I/sigI> (violations)":
+                                    if column_index == 2:
+                                        column_data["Expected absences <I/sigI>"] = []
+                                        column_data["Expected absences #"] = []
+                                        column_data["Expected absences %"] = []
+                                    elif column_index == 4:
+                                        column_data["Expected non absences <I/sigI>"] = []
+                                        column_data["Expected non absences #"] = []
+                                        column_data["Expected non absences %"] = []
+                                    elif column_index == 6:
+                                        column_data["Other reflections <I/sigI>"] = []
+                                        column_data["Other reflections #"] = []
+                                        column_data["Other reflections %"] = []
+                                else:
+                                    column_data[column_label] = []
+                            else:
+                                column_data[column_label] = []
+                            have_header = True
+                else:
+                    have_body = True
+                    # print line
+                    sline = line[4:-2].split("|")
+                    # print sline
+                    for column_index, value in enumerate(sline):
+                        column_label = column_labels[column_index]
+                        # print ">>>%s<<<" % column_label
+                        if column_label in table_special_columns:
+                            if column_label in ("Res. range", "Resolution range", "Resolution"):
+                                column_data["Low Res"].append(float(value.split("-")[0].strip()))
+                                column_data["High Res"].append(float(value.split("-")[1].strip()))
+                            elif column_label == "N(obs)/N(possible)":
+                                column_data[column_label].append(value.strip().replace("[", "").\
+                                    replace("]", ""))
+                            elif column_label in ("Reflections",
+                                                  "space group"):
+                                column_data[column_label].append(value.strip())
+                            elif column_label in ("Completeness",):
+                                if "%" in value:
+                                    column_data[column_label].append(float(value.replace("%",
+                                                                                         ""))/100.0)
+                                else:
+                                    column_data[column_label].append(float(value.strip()))
+
+                            elif column_label == "<I/sigI> (violations)":
+                                isigi, number, percentage = value.replace("(", "").\
+                                    replace(")", "").replace(",", "").split()
+                                if column_index == 2:
+                                    column_data["Expected absences <I/sigI>"].append(float(isigi))
+                                    column_data["Expected absences #"].append(int(number))
+                                    column_data["Expected absences %"].append(float(percentage.\
+                                        replace("%", ""))/100.0)
+                                if column_index == 4:
+                                    column_data["Expected non absences <I/sigI>"].\
+                                        append(float(isigi))
+                                    column_data["Expected non absences #"].append(int(number))
+                                    column_data["Expected non absences %"].append(float(percentage.\
+                                        replace("%", ""))/100.0)
+                                if column_index == 6:
+                                    column_data["Other reflections <I/sigI>"].append(float(isigi))
+                                    column_data["Other reflections #"].append(int(number))
+                                    column_data["Other reflections %"].append(float(percentage.\
+                                        replace("%", ""))/100.0)
+
+                            # Integer
+                            elif column_label in ("# absent",
+                                                  "+++",
+                                                  "---",
+                                                  "# other reflections",
+                                                  "# expected systematic absences",
+                                                  "# expected non absences"):
+                                column_data[column_label].append(int(value.strip()))
+
+                            # String
+                            elif column_label in ("Operator", ):
+                                column_data[column_label].append(value.strip())
+                        else:
+                            column_data[column_label].append(float(value.strip()))
+
+        tables[table_label] = column_data
+
+    # for line in output_lines[index_patterson+5:-3]:
+    #     summary.append(line)
+
+    # Assemble for return
+    results = {
+        "anom": anom,
+        "anomalous_present": anomalous_present,
+        "Patterson peaks": pat,
+        "Patterson p-value": patterson_p_value,
+        # "summary": summary,
+        "patterson search positive": patterson_positive,
+        "PTS info": pat_info,
+        "tables": tables,
+        "twin": twin,
+        "twin info": twin_info,
+        "z-score": z_score,
+    }
+
+    return results
 
 def ParseOutputMolrep(self,inp):
   """
@@ -2788,6 +2994,50 @@ def ParseOutputMolrep(self,inp):
   except:
     self.logger.exception('**ERROR in Parse.ParseOutputMolrep**')
     return(setMolrepFailed(self))
+
+def parse_molrep_output(raw_output):
+    """Parse Molrep self rotation function output"""
+
+    output_lines = []
+    pat = {}
+    pseudotranslation_detected = False
+    for line in raw_output.split("\n"):
+        output_lines.append(line)
+        if line.startswith("INFO: pseudo-translation was detected"):
+            ind1 = output_lines.index(line)
+            pseudotranslation_detected = True
+        if line.startswith("INFO:  use keyword: \"PST\""):
+            ind2 = output_lines.index(line)
+
+    # Pseudotranslation detected, so handle
+    if pseudotranslation_detected:
+        for line in output_lines[ind1:ind2]:
+            split = line.split()
+            if split[0] == "Origin":
+                origin = {
+                    "peak": split[-2],
+                    "psig": split[-1]
+                }
+                pat["origin"] = origin
+            if split[0].isdigit():
+                junk1 = {
+                    "peak": split[-2],
+                    "psig": split[-1]
+                }
+                pat[split[0]] = junk1
+            if split[0] == "Peak":
+                ind3 = output_lines.index(line)
+                pat[split[1][:-1]].update({"frac x": output_lines[ind3+1].split()[-3]})
+                pat[split[1][:-1]].update({"frac y": output_lines[ind3+1].split()[-2]})
+                pat[split[1][:-1]].update({"frac z": output_lines[ind3+1].split()[-1]})
+
+    # Organize the return data
+    results = {
+        "pseudotranslation_detected": pseudotranslation_detected,
+        "pseudotranslation_peak": pat,
+    }
+
+    return results
 
 def ParseOutputScala(self,inp):
   """

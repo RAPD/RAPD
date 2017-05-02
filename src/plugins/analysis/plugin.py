@@ -39,6 +39,7 @@ VERSION = "1.0.0"
 # import argparse
 # import from collections import OrderedDict
 # import datetime
+from distutils.spawn import find_executable
 import glob
 import json
 import logging
@@ -103,6 +104,11 @@ class RapdPlugin(Process):
     molrep_output_raw = None
     phaser_results = None
 
+    results = {
+        "parsed": {},
+        "raw": {}
+    }
+
     def __init__(self, command, tprint=False, logger=False):
         """Initialize the plugin"""
 
@@ -142,7 +148,6 @@ class RapdPlugin(Process):
 
         self.preprocess()
         self.process()
-        sys.exit()
         self.postprocess()
 
     def preprocess(self):
@@ -195,10 +200,9 @@ class RapdPlugin(Process):
         self.tprint("Analyzing the data file", level=30, color="blue")
 
         self.run_xtriage()
-        sys.exit()
         self.run_molrep()
         self.run_phaser_ncs()
-        self.process_pdb_query()
+        # self.process_pdb_query()
 
     def postprocess(self):
         """Clean up after plugin action"""
@@ -223,10 +227,13 @@ SIGI(+),I(-),SIGI(-)\" " % self.command["input_data"]["datafile"]
         stdout, _ = xtriage_proc.communicate()
         xtriage_output_raw = stdout
 
+        # Store raw output
+        self.results["raw"]["xtriage"] = xtriage_output_raw
+
         # Move logfile.log
         shutil.move("logfile.log", "xtriage.log")
 
-        self.xtriage_results = parse.parse_xtriage_output(xtriage_output_raw)
+        self.results["parsed"]["xtriage"] = parse.parse_xtriage_output(xtriage_output_raw)
 
         return True
 
@@ -245,11 +252,31 @@ SIGI(+),I(-),SIGI(-)\" " % self.command["input_data"]["datafile"]
                                        stderr=subprocess.PIPE,
                                        shell=True)
         stdout, _ = molrep_proc.communicate()
-        self.molrep_output_raw = stdout
+        molrep_output_raw = stdout
+
+        # Store raw output
+        self.results["raw"]["molrep"] = molrep_output_raw
 
         # Save the output in log form
         with open("molrep_selfrf.log", "w") as out_file:
             out_file.write(stdout)
+
+        # Parse the Molrep log
+        parsed_molrep_results = parse.parse_molrep_output(molrep_output_raw)
+
+        # Convert the Molrep postscript file to JPEG, if convert is available
+        if find_executable("convert"):
+            convert_proc = subprocess.Popen(["convert", "molrep_rf.ps", "molrep_rf.jpg"],
+                                            shell=False)
+            convert_proc.wait()
+            parsed_molrep_results["self_rotation_image"] = os.path.abspath("molrep_rf.jpg")
+        else:
+            self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be installed",
+                        level=30,
+                        color="red")
+            parsed_molrep_results["self_rotation_image"] = False
+
+        self.results["parsed"]["molrep"] = parsed_molrep_results
 
         return True
 
@@ -270,11 +297,14 @@ GF\neof\n" % self.command["input_data"]["datafile"]
         stdout, _ = phaser_proc.communicate()
         phaser_output_raw = stdout
 
-        self.phaser_results = parse.parse_phaser_ncs_output(phaser_output_raw)
+        # Store raw output
+        self.results["raw"]["phaser"] = phaser_output_raw
 
         # Save the output in log form
         with open("phaser_ncs.log", "w") as out_file:
             out_file.write(stdout)
+
+        self.results["parsed"]["phaser"] = parse.parse_phaser_ncs_output(phaser_output_raw)
 
         return True
 
