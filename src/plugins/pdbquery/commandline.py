@@ -83,9 +83,10 @@ def construct_command(commandline_args):
 
     # Work directory
     command["directories"] = {
-        "work": os.path.join(os.path.abspath(os.path.curdir), "pdbquery_%s" % \
-                ".".join(os.path.basename(commandline_args.datafile).\
-                split(".")[:-1]))
+        "work": os.path.join(
+            os.path.abspath(os.path.curdir),
+            "rapd_pdbquery_%s" %  ".".join(
+                os.path.basename(commandline_args.datafile).split(".")[:-1]))
         }
 
     # Check the work directory

@@ -41,31 +41,32 @@ VERSION = "1.0.0"
 # import datetime
 from distutils.spawn import find_executable
 # import glob
-# import json
+import json
 import logging
 from multiprocessing import Process, Queue
-import numpy
 import os
-from pprint import pprint
+# from pprint import pprint
 # import pymongo
 # import re
 # import redis
 import shutil
 import subprocess
-import sys
+# import sys
 import time
 # import unittest
+import numpy
 
 # RAPD imports
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
 import plugins.subcontractors.parse as parse
-import utils.credits as credits
+import utils.credits as rcredits
 import utils.modules as modules
 import utils.xutils as xutils
-import info
+# import info
 import plugins.pdbquery.commandline
+import plugins.pdbquery.plugin
 
 
 # Software dependencies
@@ -107,8 +108,10 @@ class RapdPlugin(Process):
     phaser_results = None
 
     results = {
+        "command": None,
         "parsed": {},
-        "raw": {}
+        "raw": {},
+        "status": 1,
     }
 
     def __init__(self, command, tprint=False, logger=False):
@@ -140,6 +143,7 @@ class RapdPlugin(Process):
 
         # Store passed-in variables
         self.command = command
+        self.results["command"] = command
 
         # Start up processing
         Process.__init__(self, name="analysis")
@@ -203,24 +207,30 @@ class RapdPlugin(Process):
         self.tprint("\nAnalyzing the data file", level=30, color="blue")
 
         self.run_xtriage()
+        self.run_molrep()
+        self.run_phaser_ncs()
+
+        # Output to terminal
         self.print_xtriage_results()
-        # self.run_molrep()
-        # self.run_phaser_ncs()
         self.print_plots()
 
         # Run the pdbquery
-        # self.process_pdb_query()
+        if self.command["preferences"]["pdbquery"]:
+            self.process_pdb_query()
 
     def postprocess(self):
         """Clean up after plugin action"""
 
-        self.tprint("postprocess")
+        self.tprint("postprocess", level=10, color="white")
 
         # Cleanup my mess.
         self.clean_up()
 
         # Finished
         self.results["status"] = 100
+
+        # Handle JSON output
+        self.handle_json()
 
         # Notify inerested party
         self.handle_return()
@@ -234,20 +244,22 @@ class RapdPlugin(Process):
 SIGI(+),I(-),SIGI(-)\"  scaling.input.parameters.reporting.loggraphs=True" % \
 self.command["input_data"]["datafile"]
 
-        # xtriage_proc = subprocess.Popen([command,],
-        #                                 stdout=subprocess.PIPE,
-        #                                 stderr=subprocess.PIPE,
-        #                                 shell=True)
+        xtriage_proc = subprocess.Popen([command,],
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE,
+                                        shell=True)
         # stdout, _ = xtriage_proc.communicate()
         # xtriage_output_raw = stdout
+        xtriage_proc.wait()
 
         # Store raw output
-        self.results["raw"]["xtriage"] = open("xtriage.log", "r").readlines()
+        self.results["raw"]["xtriage"] = open("logfile.log", "r").readlines()
 
         # Move logfile.log
-        # shutil.move("logfile.log", "xtriage.log")
+        shutil.move("logfile.log", "xtriage.log")
 
-        self.results["parsed"]["xtriage"] = parse.parse_xtriage_output(self.results["raw"]["xtriage"])
+        self.results["parsed"]["xtriage"] = \
+            parse.parse_xtriage_output(self.results["raw"]["xtriage"])
 
         return True
 
@@ -280,10 +292,20 @@ self.command["input_data"]["datafile"]
 
         # Convert the Molrep postscript file to JPEG, if convert is available
         if find_executable("convert"):
-            convert_proc = subprocess.Popen(["convert", "molrep_rf.ps", "molrep_rf.jpg"],
+            convert_proc = subprocess.Popen(["convert",
+                                             "molrep_rf.ps",
+                                             "molrep_rf.jpg"],
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE,
                                             shell=False)
-            convert_proc.wait()
-            parsed_molrep_results["self_rotation_image"] = os.path.abspath("molrep_rf.jpg")
+            _, stderr = convert_proc.communicate()
+            if stderr:
+                self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be installed",
+                            level=30,
+                            color="red")
+                parsed_molrep_results["self_rotation_image"] = False
+            else:
+                parsed_molrep_results["self_rotation_image"] = os.path.abspath("molrep_rf.jpg")
         else:
             self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be installed",
                         level=30,
@@ -327,7 +349,7 @@ GF\neof\n" % self.command["input_data"]["datafile"]
         self.logger.debug("process_pdb_query")
 
         self.tprint("\nLaunching PDBQUERY plugin", level=30, color="blue")
-        self.tpring("  This can take a while...", level=30, color="white")
+        self.tprint("  This can take a while...", level=30, color="white")
 
         # Construct the pdbquery plugin command
         class pdbquery_args(object):
@@ -345,12 +367,13 @@ GF\neof\n" % self.command["input_data"]["datafile"]
 
         pdbquery_command = plugins.pdbquery.commandline.construct_command(pdbquery_args)
 
-        print pdbquery_command
+        # print pdbquery_command
 
-        # Load the plugin
-        plugin = modules.load_module(seek_module="plugin",
-                                     directories=["plugins.pdbquery"],
-                                     logger=self.logger)
+        # The pdbquery plugin
+        plugin = plugins.pdbquery.plugin
+        # plugin = modules.load_module(seek_module="plugin",
+        #                              directories=["plugins.pdbquery"],
+        #                              logger=self.logger)
 
         # Print out plugin info
         self.tprint(arg="\nPlugin information", level=10, color="blue")
@@ -371,16 +394,17 @@ GF\neof\n" % self.command["input_data"]["datafile"]
 
         self.tprint("  Cleaning up", level=30, color="white")
 
-        # if self.command["preferences"].get("clean", False):
-        #     self.logger.debug("Cleaning up Phaser files and folders")
-        #
-        #     # Change to work dir
-        #     os.chdir(self.working_dir)
-        #
-        #     # Gather targets and remove
-        #     files_to_clean = glob.glob("Phaser_*")
-        #     for target in files_to_clean:
-        #         shutil.rmtree(target)
+        if self.command["preferences"].get("clean", False):
+
+            self.logger.debug("Cleaning up Phaser files and folders")
+
+            # Change to work dir
+            os.chdir(self.working_dir)
+
+            # # Gather targets and remove
+            # files_to_clean = glob.glob("Phaser_*")
+            # for target in files_to_clean:
+            #     shutil.rmtree(target)
 
     def handle_return(self):
         """Output data to consumer"""
@@ -388,17 +412,18 @@ GF\neof\n" % self.command["input_data"]["datafile"]
         run_mode = self.command["preferences"]["run_mode"]
 
         if run_mode == "interactive":
-            self.print_results()
-            self.print_credits()
+            pass
+            # self.print_results()
+            # self.print_credits()
         elif run_mode == "json":
-            self.print_json()
+            pass
         elif run_mode == "server":
             pass
         elif run_mode == "subprocess":
             return self.results
         elif run_mode == "subprocess-interactive":
-            self.print_results()
-            self.print_credits()
+            # self.print_results()
+            # self.print_credits()
             return self.results
 
     def print_results(self):
@@ -407,6 +432,19 @@ GF\neof\n" % self.command["input_data"]["datafile"]
         self.print_xtriage_results()
         self.print_plots()
 
+    def handle_json(self):
+        """Output JSON-formatted results to terminal"""
+
+        json_results = json.dumps(self.results)
+
+        # Write the results to a JSON-encoded file
+        with open("result.json", "w") as out_file:
+            out_file.write(json_results)
+
+        # If running in JSON mode, print to terminal
+        if self.command["preferences"]["run_mode"] == "json":
+            print json_results
+
     def print_xtriage_results(self):
         """Print out the xtriage results"""
 
@@ -414,19 +452,19 @@ GF\neof\n" % self.command["input_data"]["datafile"]
 
         self.tprint("\nXtriage results", level=99, color="blue")
 
-        self.tprint("  Spacegroup: %s (%d)" % (
+        self.tprint("  Input spacegroup: %s (%d)" % (
             xtriage_results["spacegroup"]["text"],
             xtriage_results["spacegroup"]["number"]),
                     level=99,
                     color="white")
 
-        self.tprint("\n  Unit cell: a= %.2f      b= %.2f     c= %.2f" % (
+        self.tprint("\n  Input unit cell: a= %.2f      b= %.2f     c= %.2f" % (
             xtriage_results["unit_cell"]["a"],
             xtriage_results["unit_cell"]["b"],
             xtriage_results["unit_cell"]["c"]),
                     level=99,
                     color="white")
-        self.tprint("             alpha= %.2f  beta= %.2f  gamma= %.2f" % (
+        self.tprint("                   alpha= %.2f  beta= %.2f  gamma= %.2f" % (
             xtriage_results["unit_cell"]["alpha"],
             xtriage_results["unit_cell"]["beta"],
             xtriage_results["unit_cell"]["gamma"]),
@@ -434,14 +472,14 @@ GF\neof\n" % self.command["input_data"]["datafile"]
                     color="white")
 
         self.tprint("\n  Patterson analysis (off-origin peaks)", level=99, color="white")
-        self.tprint("                % of origin   dist from    fractional coords",
+        self.tprint("                height % of   dist from    fractional coords",
                     level=99,
                     color="white")
-        self.tprint("  #   p-value      peak         origin      x      y      z",
+        self.tprint("  #   p-value   origin peak     origin      x      y      z",
                     level=99,
                     color="white")
         for peak_id, peak_data in xtriage_results["Patterson peaks"].iteritems():
-            self.tprint("  {}   {:6.4f}     {:5.2f}%         {:5.2f}     {:5.3f}  {:5.3f}  {:5.3f}"\
+            self.tprint("  {}   {:6.4f}     {:5.2f}%         {:5.2f}    {:5.3f}  {:5.3f}  {:5.3f}"\
                 .format(peak_id,
                         peak_data["p-val"],
                         peak_data["peak"]*100.0,
@@ -452,7 +490,7 @@ GF\neof\n" % self.command["input_data"]["datafile"]
                         level=99,
                         color="white")
 
-        self.tprint("\n  Xtriage verdict", level=99, color="white")
+        self.tprint("\n  Xtriage verdict\n", level=99, color="white")
         for line in xtriage_results["verdict_text"]:
             self.tprint("    %s" % line, level=99, color="white")
 
@@ -498,8 +536,8 @@ GF\neof\n" % self.command["input_data"]["datafile"]
                     reverse = True
                     plot_data = (plot_data[0],)
                 elif plot_label in ("NZ test", "L test, acentric data"):
-                    pprint(plot_parameters)
-                    pprint(plot_data)
+                    # pprint(plot_parameters)
+                    # pprint(plot_data)
                     plot_title = plot_parameters["toplabel"]
                     x_axis_label = plot_parameters["x_label"]
                     y_axis_label = ""
@@ -513,7 +551,7 @@ GF\neof\n" % self.command["input_data"]["datafile"]
                 x_min = x_array.min()
 
                 # Special y_max & second y set
-                if plot_label ==  "Measurability of Anomalous signal":
+                if plot_label == "Measurability of Anomalous signal":
                     y_max = max(0.055, y_max)
 
                 gnuplot = subprocess.Popen(["gnuplot"],
@@ -538,7 +576,7 @@ GF\neof\n" % self.command["input_data"]["datafile"]
                     plot_string = "plot [%f:%f] [%f:%f] " \
                                       % (x_min, x_max, y_min, y_max)
                 # Mark the minimum measurability
-                if plot_label ==  "Measurability of Anomalous signal":
+                if plot_label == "Measurability of Anomalous signal":
                     plot_string += "'-' using 1:2 with lines title '%s', " % line_label_2
                     plot_string += "'-' using 1:2 with lines title '%s'\n" % line_label
 
@@ -553,12 +591,12 @@ GF\neof\n" % self.command["input_data"]["datafile"]
 
                 else:
                     plot_string += "'-' using 1:2 title '%s' with lines\n" % line_label
+
                 gnuplot.stdin.write(plot_string)
-                if plot_label == "NZ test":
-                    print plot_string
+
 
                 # Mark the minimum measurability
-                if plot_label ==  "Measurability of Anomalous signal":
+                if plot_label == "Measurability of Anomalous signal":
                     # Run through the data and add to gnuplot
                     for plot in plot_data:
                         xs = plot["series"][0]["xs"]
@@ -589,12 +627,12 @@ GF\neof\n" % self.command["input_data"]["datafile"]
     def print_credits(self):
         """Print information on programs used to the terminal"""
 
-        self.tprint(credits.HEADER,
+        self.tprint(rcredits.HEADER,
                     level=99,
                     color="blue")
 
         programs = ["CCTBX", "MOLREP", "PHENIX", "PHASER"]
-        info_string = credits.get_credits_text(programs, "    ")
+        info_string = rcredits.get_credits_text(programs, "    ")
 
         self.tprint(info_string, level=99, color="white")
 

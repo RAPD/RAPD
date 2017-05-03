@@ -2079,9 +2079,6 @@ def parse_phaser_ncs_output(raw_output):
                         plots[table_title]["data"][idx]["series"][0]["ys"]\
                              .append(float(val))
 
-    # pprint(plots["Intensity distribution for Data"])
-    pprint(plots.keys())
-
     return plots
 
 def ParseOutputXtriage_NEW(self,inp):
@@ -2651,7 +2648,7 @@ def parse_xtriage_output(raw_output):
         # A loggraph table of interest is found
         for table_label in loggraph_table_labels:
             if "TABLE: "+table_label in line:
-                print ">>>>", index, line
+                # print ">>>>", index, line
                 loggraph_tables[table_label] = index
                 continue
 
@@ -3052,7 +3049,7 @@ def parse_xtriage_output(raw_output):
                        + unlabeled_table_labels \
                        + loggraph_table_labels:
 
-        print table_label
+        # print table_label
 
         top_labels = {
             "Intensity plots": "Intensities",
@@ -3088,7 +3085,7 @@ def parse_xtriage_output(raw_output):
         }
 
         if table_label in labels_to_plot:
-            print "  Grabbing plot %s" % table_label
+            # print "  Grabbing plot %s" % table_label
 
             table_data = tables[table_label]
             x_column = x_columns[table_label]
@@ -3103,7 +3100,7 @@ def parse_xtriage_output(raw_output):
             }
 
             for column_label in table_data:
-                print "    %s" % column_label
+                # print "    %s" % column_label
                 if column_label in my_columns_to_plot:
                     plots[table_label]["data"].append({
                         "parameters": {

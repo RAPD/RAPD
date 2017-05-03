@@ -64,21 +64,16 @@ def construct_command(commandline_args, logger):
         }
 
     # Working directory
-    # image_numbers = []
-    # image_template =
-    # for _, header in image_headers.iteritems():
-    #     image_numbers.append(str(header["image_number"]))
-    #     image_template = header["image_template"]
-    # image_numbers.sort()
-    # run_repr = "rapd_index_" + image_template.replace(detector_module.DETECTOR_SUFFIX, "").replace("?", "")
-    # run_repr += "+".join(image_numbers)
-
     command["directories"] = {
-        "work": os.path.join(os.path.abspath(os.path.curdir), "rapd_analysis")
-        }
+        "work": os.path.join(
+            os.path.abspath(os.path.curdir),
+            "rapd_analysis_%s" % ".".join(
+                os.path.basename(commandline_args.datafile).split(".")[:-1]))
+    }
+    # os.path.join(os.path.abspath(os.path.curdir), "rapd_analysis_")
 
     # Handle work directory
-    # commandline_utils.check_work_dir(command["directories"]["work"], True)
+    commandline_utils.check_work_dir(command["directories"]["work"], True)
 
     # Information on input
     command["input_data"] = {
@@ -88,6 +83,7 @@ def construct_command(commandline_args, logger):
     # Plugin settings
     command["preferences"] = {
         "clean": commandline_args.clean,
+        "pdbquery": commandline_args.pdbquery,
         "run_mode": commandline_args.run_mode,
         "sample_type": commandline_args.sample_type,
         "test": commandline_args.test,
@@ -180,7 +176,19 @@ def get_commandline():
                            # nargs=1,
                            default="default",
                            choices=["default", "protein", "ribosome"],
-                           help="Complexity of BEST strategy")
+                           help="Type of sample")
+
+    # Verbose
+    my_parser.add_argument("--pdbquery",
+                           action="store_true",
+                           dest="pdbquery",
+                           help="Run pdbquery as part of analysis")
+
+    # Quiet
+    # my_parser.add_argument("--nopdbquery",
+    #                        action="store_false",
+    #                        dest="pdbquery",
+    #                        help="Don't run pdbquery as part of analysis")
 
     # Print help message if no arguments
     if len(sys.argv[1:])==0:
@@ -225,11 +233,12 @@ def main():
                                       console=commandline_args.test)
 
     # Set up terminal printer
-    # Verbosity
-    if commandline_args.verbose:
-        terminal_log_level = 10
-    elif commandline_args.json:
+    # JSON only
+    if commandline_args.json:
         terminal_log_level = 100
+    # Verbosity
+    elif commandline_args.verbose:
+        terminal_log_level = 10
     else:
         terminal_log_level = 50
 
