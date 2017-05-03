@@ -974,8 +974,8 @@ class RapdAgent(Process):
     	# Count the number of '?' that need to be padded in a image filename.
         pad = file_template.count('?')
     	# Replace the first instance of '?' with the padded out image number
-    	# of the last frame
-        self.last_image = file_template.replace('?', '%d'.zfill(pad) % last_frame, 1)
+    	# of the last frame. Need pad + 1 to get the right number of digits.
+        self.last_image = file_template.replace('?', '%d'.zfill(pad + 1) % last_frame, 1)
     	# Remove the remaining '?'
         self.last_image = self.last_image.replace('?', '')
     	# Repeat the last two steps for the first image's filename.
