@@ -3042,32 +3042,42 @@ def parse_xtriage_output(raw_output):
     plots = {}
 
     # Run through all the tables
-    # labels_to_plot = (
-    #     "Completeness and data strength",
-    #     "Measurability of anomalous signal",
-    # )
-    # for table_label in table_labels + unlabeled_table_labels:
-    #
-    #     print table_label
-    #
-    #     if table_label in labels_to_plot:
-    #         print "  Grabbing plot"
-    #         pprint(tables[table_label])
-        # for label in table_label[1:]:
-        #     plots[table_title]["data"].append({
-        #         "parameters": {
-        #             "linelabel": label,
-        #             },
-        #         "series": [
-        #             {
-        #                 "xs": [],
-        #                 "ys": []
-        #                 }
-        #         ]
-        #     })
+    labels_to_plot = (
+        "Intensity plots",
+        "Measurability of Anomalous signal"
+    )
+    for table_label in table_labels \
+                       + unlabeled_table_labels \
+                       + loggraph_table_labels:
+
+        # print table_label
+
+        if table_label in labels_to_plot:
+            # print "  Grabbing plot"
+
+            table_data = tables[table_label]
+
+            plots[table_label] = {
+                "data": [],
+                "parameters": {
+                    "toplabel": table_label,
+                    "x_label": "Resolution (A)"
+                }
+            }
 
 
-    sys.exit()
+            for column_label in table_data:
+                if column_label in ("<I>_smooth_approximation",
+                                    "Smooth_approximation",):
+                    plots[table_label]["data"].append({
+                        "parameters": {
+                            "linelabel": column_label
+                        },
+                        "series": [{
+                            "xs": table_data["resol"],
+                            "ys": table_data[column_label]
+                        }]
+                    })
 
     # for line in output_lines[index_patterson+5:-3]:
     #     summary.append(line)
@@ -3080,6 +3090,7 @@ def parse_xtriage_output(raw_output):
         "Patterson p-value": patterson_p_value,
         # "summary": summary,
         "patterson search positive": patterson_positive,
+        "plots": plots,
         "PTS info": pat_info,
         "spacegroup": {
             "number": sg_num,
