@@ -471,10 +471,12 @@ GF\neof\n" % self.command["input_data"]["datafile"]
 
             # The intensity plot
             for plot_label in ("Intensity plots",
-                               "Measurability of Anomalous signal"):
+                               "Measurability of Anomalous signal",
+                               "NZ test"):
 
                 # The plot data
-                plot_data = xtriage_plots[plot_label]["data"][0]
+                plot_parameters = xtriage_plots[plot_label]["parameters"]
+                plot_data = xtriage_plots[plot_label]["data"]
 
                 # Settings for each plot
                 if plot_label == "Intensity plots":
@@ -483,28 +485,35 @@ GF\neof\n" % self.command["input_data"]["datafile"]
                     y_axis_label = "Intensity"
                     line_label = y_axis_label
                     reverse = True
+                    plot_data = (plot_data[0],)
                 elif plot_label == "Measurability of Anomalous signal":
                     plot_title = "Anomalous Measurability"
                     x_axis_label = "Resolution (A)"
                     y_axis_label = "Measurability"
                     line_label = "Measured"
                     # Line for what is meaningful signal
-                    y2s = [0.05,] * len(plot_data["series"][0]["ys"])
+                    y2s = [0.05,] * len(plot_data[0]["series"][0]["ys"])
                     line_label_2 = "Meaningful"
                     reverse = True
+                    plot_data = (plot_data[0],)
+                elif plot_label == "NZ test":
+                    pprint(plot_parameters)
+                    pprint(plot_data)
+                    plot_title = plot_parameters["toplabel"]
+                    x_axis_label = plot_parameters["x_label"]
+                    y_axis_label = ""
 
                 # Determine plot extent
-                y_array = numpy.array(plot_data["series"][0]["ys"])
+                y_array = numpy.array(plot_data[0]["series"][0]["ys"])
                 y_max = y_array.max() * 1.1
                 y_min = 0
-                x_array = numpy.array(plot_data["series"][0]["xs"])
+                x_array = numpy.array(plot_data[0]["series"][0]["xs"])
                 x_max = x_array.max()
                 x_min = x_array.min()
 
                 # Special y_max & second y set
                 if plot_label ==  "Measurability of Anomalous signal":
                     y_max = max(0.055, y_max)
-
 
                 gnuplot = subprocess.Popen(["gnuplot"],
                                            stdin=subprocess.PIPE,
@@ -531,14 +540,26 @@ GF\neof\n" % self.command["input_data"]["datafile"]
                 if plot_label ==  "Measurability of Anomalous signal":
                     plot_string += "'-' using 1:2 with lines title '%s', " % line_label
                     plot_string += "'-' using 1:2 with lines title '%s'\n" % line_label_2
+
+                elif plot_label == "NZ test":
+                    for index, data in enumerate(plot_data):
+                        line_label = data["parameters"]["linelabel"]
+                        plot_string += "'-' using 1:2 with lines title '%s' " % line_label
+                        if index == len(plot_data) - 1:
+                            plot_string += "\n"
+                        else:
+                            plot_string += ", "
+
                 else:
                     plot_string += "'-' using 1:2 title '%s' with lines\n" % line_label
                 gnuplot.stdin.write(plot_string)
+                if plot_label == "NZ test":
+                    print plot_string
 
                 # Mark the minimum measurability
                 if plot_label ==  "Measurability of Anomalous signal":
                     # Run through the data and add to gnuplot
-                    for plot in (plot_data,):
+                    for plot in plot_data:
                         xs = plot["series"][0]["xs"]
                         ys = plot["series"][0]["ys"]
                         # Minimal impact line
@@ -552,7 +573,7 @@ GF\neof\n" % self.command["input_data"]["datafile"]
                         gnuplot.stdin.write("e\n")
                 else:
                     # Run through the data and add to gnuplot
-                    for plot in (plot_data,):
+                    for plot in plot_data:
                         xs = plot["series"][0]["xs"]
                         ys = plot["series"][0]["ys"]
                         for x_val, y_val in zip(xs, ys):

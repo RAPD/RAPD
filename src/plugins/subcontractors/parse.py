@@ -2993,11 +2993,11 @@ def parse_xtriage_output(raw_output):
 
     # Loggraph tables
     for table_label in loggraph_table_labels:
-        print "Grabbing tables"
-        print "table_label", table_label
+        # print "Grabbing tables"
+        # print "table_label", table_label
 
         table_start = loggraph_tables[table_label]
-        print "table_start", table_start
+        # print "table_start", table_start
 
         column_labels = []
         column_data = {}
@@ -3044,40 +3044,74 @@ def parse_xtriage_output(raw_output):
     # Run through all the tables
     labels_to_plot = (
         "Intensity plots",
-        "Measurability of Anomalous signal"
+        "Measurability of Anomalous signal",
+        "NZ test",
+        # "L test, acentric data"
     )
     for table_label in table_labels \
                        + unlabeled_table_labels \
                        + loggraph_table_labels:
 
-        # print table_label
+        print table_label
+
+        top_labels = {
+            "Intensity plots": "Intensities",
+            "Measurability of Anomalous signal": "Anomalous Measurability",
+            "NZ test": "NZ Test"
+        }
+
+        x_labels = {
+            "Intensity plots": "Resolution (A)",
+            "Measurability of Anomalous signal": "Resolution (A)",
+            "NZ test": "Z"
+        }
+
+        x_columns = {
+            "Intensity plots": "resol",
+            "Measurability of Anomalous signal": "resol",
+            "NZ test": "z"
+        }
+
+        columns_to_plot = {
+            "Intensity plots": ("<I>_smooth_approximation",),
+            "Measurability of Anomalous signal": ("Smooth_approximation",),
+            "NZ test": ("Centric observed",
+                        "Acentric observed",
+                        "Acentric untwinned",
+                        "Centric untwinned")
+        }
+
+
 
         if table_label in labels_to_plot:
-            # print "  Grabbing plot"
+            print "  Grabbing plot %s" % table_label
 
             table_data = tables[table_label]
+            x_column = x_columns[table_label]
+            my_columns_to_plot = columns_to_plot[table_label]
 
             plots[table_label] = {
                 "data": [],
                 "parameters": {
-                    "toplabel": table_label,
-                    "x_label": "Resolution (A)"
+                    "toplabel": top_labels[table_label],
+                    "x_label": x_labels[table_label]
                 }
             }
 
-
             for column_label in table_data:
-                if column_label in ("<I>_smooth_approximation",
-                                    "Smooth_approximation",):
+                print "    %s" % column_label
+                if column_label in my_columns_to_plot:
                     plots[table_label]["data"].append({
                         "parameters": {
                             "linelabel": column_label
                         },
                         "series": [{
-                            "xs": table_data["resol"],
+                            "xs": table_data[x_column],
                             "ys": table_data[column_label]
                         }]
                     })
+
+    # sys.exit()
 
     # for line in output_lines[index_patterson+5:-3]:
     #     summary.append(line)
