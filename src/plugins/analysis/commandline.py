@@ -78,7 +78,7 @@ def construct_command(commandline_args, logger):
         }
 
     # Handle work directory
-    commandline_utils.check_work_dir(command["directories"]["work"], True)
+    # commandline_utils.check_work_dir(command["directories"]["work"], True)
 
     # Information on input
     command["input_data"] = {

@@ -44,6 +44,7 @@ from distutils.spawn import find_executable
 # import json
 import logging
 from multiprocessing import Process, Queue
+import numpy
 import os
 from pprint import pprint
 # import pymongo
@@ -203,8 +204,8 @@ class RapdPlugin(Process):
 
         self.run_xtriage()
         self.print_xtriage_results()
-        self.run_molrep()
-        self.run_phaser_ncs()
+        # self.run_molrep()
+        # self.run_phaser_ncs()
         self.print_plots()
 
         # Run the pdbquery
@@ -233,18 +234,18 @@ class RapdPlugin(Process):
 SIGI(+),I(-),SIGI(-)\"  scaling.input.parameters.reporting.loggraphs=True" % \
 self.command["input_data"]["datafile"]
 
-        xtriage_proc = subprocess.Popen([command,],
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE,
-                                        shell=True)
-        stdout, _ = xtriage_proc.communicate()
-        xtriage_output_raw = stdout
+        # xtriage_proc = subprocess.Popen([command,],
+        #                                 stdout=subprocess.PIPE,
+        #                                 stderr=subprocess.PIPE,
+        #                                 shell=True)
+        # stdout, _ = xtriage_proc.communicate()
+        # xtriage_output_raw = stdout
 
         # Store raw output
-        self.results["raw"]["xtriage"] = open("logfile.log", "r").readlines()
+        self.results["raw"]["xtriage"] = open("xtriage.log", "r").readlines()
 
         # Move logfile.log
-        shutil.move("logfile.log", "xtriage.log")
+        # shutil.move("logfile.log", "xtriage.log")
 
         self.results["parsed"]["xtriage"] = parse.parse_xtriage_output(self.results["raw"]["xtriage"])
 
@@ -458,7 +459,110 @@ GF\neof\n" % self.command["input_data"]["datafile"]
     def print_plots(self):
         """Print plots to the terminal"""
 
-        pass
+        if "interactive" in self.command["preferences"].get("run_mode"):
+
+            self.tprint("\nPlots", level=99, color="blue")
+
+            # Determine the open terminal size
+            term_size = os.popen('stty size', 'r').read().split()
+
+            xtriage_plots = self.results["parsed"]["xtriage"]["plots"]
+            # pprint(xtriage_plots)
+
+            # The intensity plot
+            for plot_label in ("Intensity plots",
+                               "Measurability of Anomalous signal"):
+
+                # The plot data
+                plot_data = xtriage_plots[plot_label]["data"][0]
+
+                # Settings for each plot
+                if plot_label == "Intensity plots":
+                    plot_title = "Intensity vs. Resolution"
+                    x_axis_label = "Resolution (A)"
+                    y_axis_label = "Intensity"
+                    line_label = y_axis_label
+                    reverse = True
+                elif plot_label == "Measurability of Anomalous signal":
+                    plot_title = "Anomalous Measurability"
+                    x_axis_label = "Resolution (A)"
+                    y_axis_label = "Measurability"
+                    line_label = "Measured"
+                    # Line for what is meaningful signal
+                    y2s = [0.05,] * len(plot_data["series"][0]["ys"])
+                    line_label_2 = "Meaningful"
+                    reverse = True
+
+                # Determine plot extent
+                y_array = numpy.array(plot_data["series"][0]["ys"])
+                y_max = y_array.max() * 1.1
+                y_min = 0
+                x_array = numpy.array(plot_data["series"][0]["xs"])
+                x_max = x_array.max()
+                x_min = x_array.min()
+
+                # Special y_max & second y set
+                if plot_label ==  "Measurability of Anomalous signal":
+                    y_max = max(0.055, y_max)
+
+
+                gnuplot = subprocess.Popen(["gnuplot"],
+                                           stdin=subprocess.PIPE,
+                                           stderr=subprocess.PIPE)
+
+                gnuplot.stdin.write("""set term dumb %d,%d
+                                       set title '%s'
+                                       set xlabel '%s'
+                                       set ylabel '%s' rotate by 90 \n""" %
+                                    (int(term_size[1])-20,
+                                     30,
+                                     plot_title,
+                                     x_axis_label,
+                                     y_axis_label))
+
+                # Create the plot string
+                if reverse:
+                    plot_string = "plot [%f:%f] [%f:%f] " \
+                                      % (x_max, x_min, y_min, y_max)
+                else:
+                    plot_string = "plot [%f:%f] [%f:%f] " \
+                                      % (x_min, x_max, y_min, y_max)
+                # Mark the minimum measurability
+                if plot_label ==  "Measurability of Anomalous signal":
+                    plot_string += "'-' using 1:2 with lines title '%s', " % line_label
+                    plot_string += "'-' using 1:2 with lines title '%s'\n" % line_label_2
+                else:
+                    plot_string += "'-' using 1:2 title '%s' with lines\n" % line_label
+                gnuplot.stdin.write(plot_string)
+
+                # Mark the minimum measurability
+                if plot_label ==  "Measurability of Anomalous signal":
+                    # Run through the data and add to gnuplot
+                    for plot in (plot_data,):
+                        xs = plot["series"][0]["xs"]
+                        ys = plot["series"][0]["ys"]
+                        # Minimal impact line
+                        for x_val, y_val in zip(xs, y2s):
+                            gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
+                        gnuplot.stdin.write("e\n")
+                        # Experimental line
+                        for x_val, y_val in zip(xs, ys):
+                            # print x_val, y_val, y2_val
+                            gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
+                        gnuplot.stdin.write("e\n")
+                else:
+                    # Run through the data and add to gnuplot
+                    for plot in (plot_data,):
+                        xs = plot["series"][0]["xs"]
+                        ys = plot["series"][0]["ys"]
+                        for x_val, y_val in zip(xs, ys):
+                            gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
+                        gnuplot.stdin.write("e\n")
+
+                # Now plot!
+                gnuplot.stdin.flush()
+                time.sleep(2)
+                gnuplot.terminate()
 
     def print_credits(self):
         """Print information on programs used to the terminal"""
