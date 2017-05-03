@@ -2079,6 +2079,9 @@ def parse_phaser_ncs_output(raw_output):
                         plots[table_title]["data"][idx]["series"][0]["ys"]\
                              .append(float(val))
 
+    # pprint(plots["Intensity distribution for Data"])
+    pprint(plots.keys())
+
     return plots
 
 def ParseOutputXtriage_NEW(self,inp):
@@ -2571,6 +2574,13 @@ def parse_xtriage_output(raw_output):
         "Space group identification",
     )
 
+    # Tables only in the loggraph sections
+    loggraph_tables = {}
+    loggraph_table_labels = (
+        "Intensity plots",
+        "Measurability of Anomalous signal"
+    )
+
     # Table coilumns that need special handling
     table_special_columns = (
         "Completeness",
@@ -2590,7 +2600,8 @@ def parse_xtriage_output(raw_output):
         "---",
     )
 
-    for index, line in enumerate(raw_output.split("\n")):
+
+    for index, line in enumerate(raw_output):
         # print index, line
 
         # Store a copy
@@ -2601,26 +2612,33 @@ def parse_xtriage_output(raw_output):
             sg_full = line.strip().split(":")[1].strip()
             sg_text = sg_full.split("(")[0].strip()
             sg_num = int(sg_full.split("(")[1].split()[1].replace(")", ""))
+            continue
 
         # Unit cell info
         if line.startswith("Unit cell:"):
             unit_cell_full = line.strip().split(":")[1].strip().replace("(", "").replace(")", "")
             a, b, c, alpha, beta, gamma = [float(x) for x in line.strip().split(":")[1].strip().\
                 replace("(", "").replace(")", "").split(",")]
+            continue
 
         # Final verdict of xtriage
         if "Final verdict" in line:
             final_verdict_line = index
+            continue
 
         if line.startswith("bin "):
             anom_lines.append(line)
+            continue
+
         if "There seems to be no real significant anomalous differences in this dataset" in line:
             anomalous_present = False
+            continue
 
         # A Table is found
         for table_label in table_labels:
             if line.startswith("  | "+table_label):
                 tables[table_label] = index
+                continue
 
         # A table with no label is found
         for table_label in unlabeled_table_labels:
@@ -2628,46 +2646,67 @@ def parse_xtriage_output(raw_output):
             if "--"+table_label+"--" in line:
                 # print ">>>>", index, line
                 unlabeled_tables[table_label] = index
+                continue
+
+        # A loggraph table of interest is found
+        for table_label in loggraph_table_labels:
+            if "TABLE: "+table_label in line:
+                print ">>>>", index, line
+                loggraph_tables[table_label] = index
+                continue
 
         # Z score
         if line.startswith("  Multivariate Z score"):
             z_score = float(line.split()[4])
+            continue
 
         # Patterson analysis
         if line.startswith("Patterson analyses"):
             index_patterson = index
+            continue
         if line.startswith(" Frac. coord."):
             pat_x = line.split()[3]
             pat_y = line.split()[4]
             pat_z = line.split()[5]
+            continue
         if line.startswith(" Distance to origin"):
             pat_dist = float(line.split()[4])
+            continue
         if line.startswith(" Height (origin=100)"):
             pat_height = float(line.split()[3])/100.0
+            continue
         if "Height relative to origin" in line:
             pat_height = float(line.split()[5])/100.0
+            continue
         if "p_value(" in line:
             patterson_p_value = float(line.split()[2])
             if patterson_p_value <= 0.05:
                 patterson_positive = True
+            continue
         # There is a list of patterson peaks
         if line.startswith("The full list of Patterson peaks is:"):
             pat_st = index
+            continue
 
         # Systematic absences
         if line.startswith("Systematic absences"):
             pat_fn = index
+            continue
 
         # Twinning
         if line.startswith("| Type | Axis   | R metric"):
             twin = True
             twin_st = index
+            continue
         if line.startswith("M:  Merohedral twin law"):
             twin_fn = index
+            continue
         if line.startswith("Statistics depending on twin"):
             twin2_st = index
+            continue
         if line.startswith("  Coset number"):
             coset.append(index)
+            continue
 
     if pat_dist:
         data2 = {"frac x": float(pat_x),
@@ -2956,16 +2995,17 @@ def parse_xtriage_output(raw_output):
     plots = {}
 
     # Run through all the tables
-    labels_to_plot = (
-        # "Completeness and data strength",
-    )
-    for table_label in table_labels + unlabeled_table_labels:
-
-        print table_label
-
-        if table_label in labels_to_plot:
-            print "  Plotting"
-            pprint(tables[table_label])
+    # labels_to_plot = (
+    #     "Completeness and data strength",
+    #     "Measurability of anomalous signal",
+    # )
+    # for table_label in table_labels + unlabeled_table_labels:
+    #
+    #     print table_label
+    #
+    #     if table_label in labels_to_plot:
+    #         print "  Grabbing plot"
+    #         pprint(tables[table_label])
         # for label in table_label[1:]:
         #     plots[table_title]["data"].append({
         #         "parameters": {

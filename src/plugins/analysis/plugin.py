@@ -230,7 +230,8 @@ class RapdPlugin(Process):
         self.tprint("  Running xtriage", level=30, color="white")
 
         command = "phenix.xtriage %s scaling.input.xray_data.obs_labels=\"I(+),\
-SIGI(+),I(-),SIGI(-)\" " % self.command["input_data"]["datafile"]
+SIGI(+),I(-),SIGI(-)\"  scaling.input.parameters.reporting.loggraphs=True" % \
+self.command["input_data"]["datafile"]
 
         xtriage_proc = subprocess.Popen([command,],
                                         stdout=subprocess.PIPE,
@@ -240,12 +241,12 @@ SIGI(+),I(-),SIGI(-)\" " % self.command["input_data"]["datafile"]
         xtriage_output_raw = stdout
 
         # Store raw output
-        self.results["raw"]["xtriage"] = xtriage_output_raw
+        self.results["raw"]["xtriage"] = open("logfile.log", "r").readlines()
 
         # Move logfile.log
         shutil.move("logfile.log", "xtriage.log")
 
-        self.results["parsed"]["xtriage"] = parse.parse_xtriage_output(xtriage_output_raw)
+        self.results["parsed"]["xtriage"] = parse.parse_xtriage_output(self.results["raw"]["xtriage"])
 
         return True
 
