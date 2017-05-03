@@ -2991,6 +2991,53 @@ def parse_xtriage_output(raw_output):
 
         tables[table_label] = column_data
 
+    # Loggraph tables
+    for table_label in loggraph_table_labels:
+        print "Grabbing tables"
+        print "table_label", table_label
+
+        table_start = loggraph_tables[table_label]
+        print "table_start", table_start
+
+        column_labels = []
+        column_data = {}
+        column_labels = []
+        have_header = False
+        have_body = False
+        for line in output_lines[table_start:]:
+            # print line
+            # Ignore some lines
+            if line.startswith("$") or line.startswith(":"):
+                if have_body:
+                    break
+                else:
+                    continue
+
+            elif not have_header:
+                sline = line.split()
+                # print sline
+                if len(sline) > 3:
+                    for label in sline[:-1]:
+                        column_labels.append(label)
+                    for column_label in column_labels:
+                        column_data[column_label] = []
+                        if column_label == "1/resol**2":
+                            column_data["resol"] = []
+                    have_header = True
+            elif have_header:
+                have_body = True
+                sline = line.split()
+                # print sline
+                for position, value in enumerate(sline):
+                    column_label = column_labels[position]
+                    column_data[column_label].append(float(value))
+                    # Store resolution for convenience sake
+                    if column_label == "1/resol**2":
+                        column_data["resol"].append(math.sqrt(1.0/float(value)))
+        # pprint(column_data)
+
+        tables[table_label] = column_data
+
     # Turn tables into plots
     plots = {}
 
