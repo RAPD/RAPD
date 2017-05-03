@@ -472,7 +472,8 @@ GF\neof\n" % self.command["input_data"]["datafile"]
             # The intensity plot
             for plot_label in ("Intensity plots",
                                "Measurability of Anomalous signal",
-                               "NZ test"):
+                               "NZ test",
+                               "L test, acentric data",):
 
                 # The plot data
                 plot_parameters = xtriage_plots[plot_label]["parameters"]
@@ -496,7 +497,7 @@ GF\neof\n" % self.command["input_data"]["datafile"]
                     line_label_2 = "Meaningful"
                     reverse = True
                     plot_data = (plot_data[0],)
-                elif plot_label == "NZ test":
+                elif plot_label in ("NZ test", "L test, acentric data"):
                     pprint(plot_parameters)
                     pprint(plot_data)
                     plot_title = plot_parameters["toplabel"]
@@ -538,10 +539,10 @@ GF\neof\n" % self.command["input_data"]["datafile"]
                                       % (x_min, x_max, y_min, y_max)
                 # Mark the minimum measurability
                 if plot_label ==  "Measurability of Anomalous signal":
-                    plot_string += "'-' using 1:2 with lines title '%s', " % line_label
-                    plot_string += "'-' using 1:2 with lines title '%s'\n" % line_label_2
+                    plot_string += "'-' using 1:2 with lines title '%s', " % line_label_2
+                    plot_string += "'-' using 1:2 with lines title '%s'\n" % line_label
 
-                elif plot_label == "NZ test":
+                elif plot_label in ("NZ test", "L test, acentric data"):
                     for index, data in enumerate(plot_data):
                         line_label = data["parameters"]["linelabel"]
                         plot_string += "'-' using 1:2 with lines title '%s' " % line_label

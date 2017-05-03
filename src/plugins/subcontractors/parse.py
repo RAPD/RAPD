@@ -3046,7 +3046,7 @@ def parse_xtriage_output(raw_output):
         "Intensity plots",
         "Measurability of Anomalous signal",
         "NZ test",
-        # "L test, acentric data"
+        "L test, acentric data",
     )
     for table_label in table_labels \
                        + unlabeled_table_labels \
@@ -3057,19 +3057,22 @@ def parse_xtriage_output(raw_output):
         top_labels = {
             "Intensity plots": "Intensities",
             "Measurability of Anomalous signal": "Anomalous Measurability",
-            "NZ test": "NZ Test"
+            "NZ test": "NZ Test",
+            "L test, acentric data": "L Test",
         }
 
         x_labels = {
             "Intensity plots": "Resolution (A)",
             "Measurability of Anomalous signal": "Resolution (A)",
-            "NZ test": "Z"
+            "NZ test": "Z",
+            "L test, acentric data": "|L|",
         }
 
         x_columns = {
             "Intensity plots": "resol",
             "Measurability of Anomalous signal": "resol",
-            "NZ test": "z"
+            "NZ test": "z",
+            "L test, acentric data": "|l|",
         }
 
         columns_to_plot = {
@@ -3078,10 +3081,11 @@ def parse_xtriage_output(raw_output):
             "NZ test": ("Centric observed",
                         "Acentric observed",
                         "Acentric untwinned",
-                        "Centric untwinned")
+                        "Centric untwinned"),
+            "L test, acentric data": ("Observed",
+                                      "Acentric theory",
+                                      "Acentric theory, perfect twin"),
         }
-
-
 
         if table_label in labels_to_plot:
             print "  Grabbing plot %s" % table_label
@@ -3110,8 +3114,6 @@ def parse_xtriage_output(raw_output):
                             "ys": table_data[column_label]
                         }]
                     })
-
-    # sys.exit()
 
     # for line in output_lines[index_patterson+5:-3]:
     #     summary.append(line)
