@@ -51,7 +51,7 @@ from pprint import pprint
 import signal
 import shutil
 import subprocess32
-import sys
+# import sys
 import time
 # import unittest
 import urllib2
@@ -62,7 +62,7 @@ import urllib2
 # import detectors.detector_utils as detector_utils
 # import utils
 from plugins.subcontractors.parse import parse_phaser_output, set_phaser_failed
-import utils.credits as credits
+import utils.credits as rcredits
 import utils.globals as rglobals
 import utils.pdb as rpdb
 import utils.xutils as xutils
@@ -1111,11 +1111,11 @@ class RapdPlugin(multiprocessing.Process):
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
 
-        self.tprint(credits.HEADER,
+        self.tprint(rcredits.HEADER,
                     level=99,
                     color="blue")
 
         programs = ["CCTBX", "PHENIX", "PHASER"]
-        info_string = credits.get_credits_text(programs, "    ")
+        info_string = rcredits.get_credits_text(programs, "    ")
 
         self.tprint(info_string, level=99, color="white")
