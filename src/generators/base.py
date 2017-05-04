@@ -267,7 +267,8 @@ class BaseFileGenerator(object):
                 "    This function is called when this module is invoked from",
                 "    the commandline",
                 "    \"\"\"\n",
-                "    print \"main\"\n"]
+                "    print \"main\"\n",
+                "    args = get_commandline()\n"]
 
             if self.args.commandline:
                 main_func_lines = ["def main(args):"]
