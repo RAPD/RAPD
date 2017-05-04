@@ -169,6 +169,32 @@ def setPhaserFailed(inp=False):
                   'AutoMR peak' : 'None'}
   return(phaser)
 
+def set_phaser_failed(tag=False):
+    """
+    Return dict with all the params set to NA.
+    """
+
+    if not tag:
+        tag = "Timed out"
+
+    phaser_return = {
+        "nosol": True,
+        "tar": None,
+        "pdb": tag,
+        "mtz": tag,
+        "gain": tag,
+        "rfz": tag,
+        "tfz": tag,
+        "clash": tag,
+        "dir": tag,
+        "spacegroup": tag,
+        "nmol": 0,
+        "adf": None,
+        "peak": None
+    }
+
+    return phaser_return
+
 def setRaddoseFailed(inp=False):
   if inp:
     tag = inp
@@ -1912,7 +1938,7 @@ def parse_phaser_output(phaser_log):
 
     pdb = False
     st = False
-    clash = 'NC'
+    clash = "NC"
     end = False
     temp = []
     tncs = False
@@ -1920,43 +1946,43 @@ def parse_phaser_output(phaser_log):
     for x, line in enumerate(phaser_log):
         temp.append(line)
         directory = os.getcwd()
-        if line.count('SPACEGROUP'):
+        if line.count("SPACEGROUP"):
             spacegroup = line.split()[-1]
-        if line.count('Solution') or line.count('Partial Solution '):
-            if line.count('written'):
-                if line.count('PDB'):
+        if line.count("Solution") or line.count("Partial Solution "):
+            if line.count("written"):
+                if line.count("PDB"):
                     pdb = line.split()[-1]
-                if line.count('MTZ'):
+                if line.count("MTZ"):
                     mtz = line.split()[-1]
-            if line.count('RFZ='):
+            if line.count("RFZ="):
                 st = x
-        if line.count('SOLU SET'):
+        if line.count("SOLU SET"):
             st = x
-        if line.count('SOLU ENSEMBLE'):
+        if line.count("SOLU ENSEMBLE"):
             end = x
     if st:
         for line in phaser_log[st:end]:
-            if line.count('SOLU 6DIM'):
+            if line.count("SOLU 6DIM"):
                 nmol += 1
             for param in line.split():
-                if param.startswith('RFZ'):
-                    if param.count('=') == 1:
-                        rfz = param[param.find('=')+param.count('='):]
-                if param.startswith('RF*0'):
-                    rfz = 'NC'
-                if param.startswith('TFZ'):
-                    if param.count('=') == 1:
-                        tfz = param[param.find('=')+param.count('='):]
-                if param.startswith('TF*0'):
-                    tfz = 'NC'
-                if param.startswith('PAK'):
-                    clash = param[param.find('=')+param.count('='):]
-                if param.startswith('LLG'):
-                    llgain = param[param.find('=')+param.count('='):]
-                if param.startswith('+TNCS'):
+                if param.startswith("RFZ"):
+                    if param.count("=") == 1:
+                        rfz = param[param.find("=")+param.count("="):]
+                if param.startswith("RF*0"):
+                    rfz = "NC"
+                if param.startswith("TFZ"):
+                    if param.count("=") == 1:
+                        tfz = param[param.find("=")+param.count("="):]
+                if param.startswith("TF*0"):
+                    tfz = "NC"
+                if param.startswith("PAK"):
+                    clash = param[param.find("=")+param.count("="):]
+                if param.startswith("LLG"):
+                    llgain = param[param.find("=")+param.count("="):]
+                if param.startswith("+TNCS"):
                     tncs = True
     if not pdb:
-        phaser_result = setPhaserFailed('No solution')
+        phaser_result = set_phaser_failed("No solution")
     else:
         phaser_result = {"nosol": False,
                          "pdb": pdb,

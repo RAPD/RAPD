@@ -51,3 +51,6 @@ __status__ = "Development"
 
 CIF_CACHE = "/tmp/rapd_cache/cif_files"
 PDBQ_SERVER = "remote.nec.aps.anl.gov:3030"
+
+# Timeout for phaser MR process
+PHASER_TIMEOUT = 5000

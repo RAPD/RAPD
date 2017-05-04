@@ -61,7 +61,7 @@ import urllib2
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
-from plugins.subcontractors.parse import parse_phaser_output, setPhaserFailed
+from plugins.subcontractors.parse import parse_phaser_output, set_phaser_failed
 import utils.credits as credits
 import utils.globals as rglobals
 import utils.pdb as rpdb
@@ -176,7 +176,7 @@ def phaser_func(command):
 
     # Run taking too long
     except subprocess32.TimeoutExpired:
-        print "  killing %d" % phaser_proc.pid
+        print "  Timeout of %ds exceeded - killing %d" % (timeout, phaser_proc.pid)
         os.killpg(os.getpgid(phaser_proc.pid), signal.SIGTERM)
         return {"pdb_code": input_pdb.replace(".pdb", "").upper(),
                 "log": "Timed out after %d seconds" % timeout,
@@ -238,7 +238,7 @@ class RapdPlugin(multiprocessing.Process):
 
     # Timers for processes
     pdbquery_timer = 30
-    phaser_timer = 2000 #was 600 but too short for mackinnon (144,144,288,90,90,90)
+    phaser_timer = rglobals.PHASER_TIMEOUT
 
     def __init__(self, command, tprint=False, logger=False):
         """Initialize the plugin"""
@@ -327,7 +327,7 @@ class RapdPlugin(multiprocessing.Process):
                                                      solvent_content=self.solvent_content)
         if self.est_res_number > 5000:
             self.large_cell = True
-            self.phaser_timer = 3000
+            self.phaser_timer = self.phaser_timer * 1.5
 
     def process(self):
         """Run plugin action"""
@@ -716,7 +716,7 @@ class RapdPlugin(multiprocessing.Process):
                     nosol = True
             if nosol:
                 self.phaser_results[pdb_code] = {"results": \
-                    setPhaserFailed("No solution")}
+                    set_phaser_failed("No solution")}
             else:
                 self.phaser_results[pdb_code] = {"results": data}
 
@@ -845,15 +845,17 @@ class RapdPlugin(multiprocessing.Process):
                 # Get the result in question
                 phaser_result = self.phaser_results[pdb_code]["results"]
 
-                # print phaser_result
+                print phaser_result
 
                 pdb_file = phaser_result.get("pdb")
                 mtz_file = phaser_result.get("mtz")
                 adf_file = phaser_result.get("adf")
                 peak_file = phaser_result.get("peak")
 
+                print pdb_file
+
                 # Success!
-                if pdb_file not in ("No solution",
+                if not pdb_file in ("No solution",
                                     "Timed out",
                                     "NA",
                                     "Still running",
