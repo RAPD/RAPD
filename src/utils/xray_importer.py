@@ -231,6 +231,12 @@ xray_column_synonyms = {
 
 }
 
+RAPD_COLUMN_SIGNATURES = {
+    "mergable_mtz": [],
+    "rfree_mtz": [],
+    "xds_corrected": []
+}
+
 def main():
     """
     The main process docstring
@@ -250,26 +256,14 @@ def main():
 
         datafile = reflection_file_reader.any_reflection_file(file_name=input_datafile)
 
-        print type(datafile)
-
         file_type = datafile.file_type()
 
         print "  file_type", datafile.file_type()
-        # print "  miller_arrays", dir(datafile.as_miller_arrays()[0])
 
         # Get the columns
-        # MTZ
-        if file_type == "ccp4_mtz":
-            columns = datafile.file_content().column_labels()
-        # XDS
-        elif file_type == "xds_ascii":
-            columns = get_xds_ascii_columns(input_datafile)
+        columns = get_columns(datafile)
 
-        # Unhandled
-        else:
-            raise Exception("Unable to handle file of type %s" % file_type)
-
-        print columns
+        print "  columns:", columns
 
 def get_file_type(reflection_file):
     """Return the file type"""
@@ -278,12 +272,34 @@ def get_file_type(reflection_file):
         reflection_file = datafile
 
 def get_columns(datafile):
-    """Return a list of columns for the input file"""
+    """
+    Return a list of columns for a datafile
 
-    pass
+    Takes a phenix any_reflection_file
+    """
+
+    # Determine file type
+    file_type = datafile.file_type()
+
+    # MTZ
+    if file_type == "ccp4_mtz":
+        columns = datafile.file_content().column_labels()
+    # XDS
+    elif file_type == "xds_ascii":
+        columns = get_xds_ascii_columns(datafile.file_name())
+    elif file_type == "xds_integrate_hkl":
+        columns = get_xds_integrate_hkl_columns(datafile.file_name())
+    else:
+        columns = False
+
+    return columns
 
 def get_xds_ascii_columns(datafile):
-    """Look at a text file ang return an array of columns"""
+    """
+    Look at an xds_ascii file and return an array of columns
+
+    datafile should be iotbx.reflection_file_reader.any_reflection_file
+    """
 
     columns = []
 
@@ -292,6 +308,30 @@ def get_xds_ascii_columns(datafile):
         if line.startswith("!ITEM_"):
             columns.append(line.replace("!ITEM_", "").split("=")[0])
         elif not line.startswith("!"):
+            break
+
+    return columns
+
+def get_xds_integrate_hkl_columns(datafile):
+    """
+    Look at an xds_integrate_hkl file and return an array of columns
+
+    datafile should be iotbx.reflection_file_reader.any_reflection_file
+
+    """
+
+    columns = []
+    next_line = False
+    inlines = open(datafile, "r").read(2048)
+    for line in inlines.split("\n"):
+        if line.startswith("!H,K,L") or next_line:
+            columns += line[1:].strip().rstrip(",").split(",")
+            if next_line:
+                next_line = False
+                break
+            else:
+                next_line = True
+        elif line.startswith("!END_OF_HEADER"):
             break
 
     return columns
