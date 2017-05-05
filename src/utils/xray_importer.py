@@ -32,13 +32,13 @@ import argparse
 # import json
 # import logging
 # import multiprocessing
-# import os
+import os
 from pprint import pprint
 # import pymongo
 # import re
 # import redis
 # import shutil
-# import subprocess
+import subprocess
 import sys
 # import time
 # import unittest
@@ -124,6 +124,7 @@ def preprocess(self):
     else:
         combine_dir = self.create_subdirectory(prefix='COMBINE', path=self.dirs['work'])
         os.chdir(combine_dir)
+
     # convert all files to mtz format
     # copy the files to be merged to the work directory
     for count, dataset in enumerate(self.datasets):
@@ -231,10 +232,18 @@ xray_column_synonyms = {
 
 }
 
+# Column signatures for file put out by RAPD
 RAPD_COLUMN_SIGNATURES = {
-    "mergable_mtz": [],
-    "rfree_mtz": [],
-    "xds_corrected": []
+    "mergable_mtz": ['H', 'K', 'L', 'M_ISYM', 'BATCH', 'I', 'SIGI', 'FRACTIONCALC', 'XDET', 'YDET', 'ROT', 'LP', 'FLAG'],
+    "rfree_mtz": ['H', 'K', 'L', 'FreeR_flag', 'IMEAN', 'SIGIMEAN', 'I(+)', 'SIGI(+)', 'I(-)', 'SIGI(-)', 'F', 'SIGF', 'DANO', 'SIGDANO', 'F(+)', 'SIGF(+)', 'F(-)', 'SIGF(-)', 'ISYM'],
+    "xds_corrected": ['H', 'K', 'L', 'IOBS', 'SIGMA(IOBS)', 'XD', 'YD', 'ZD', 'RLP', 'PEAK', 'CORR', 'PSI'],
+    "xds_integrated": ['H', 'K', 'L', 'IOBS', 'SIGMA', 'XCAL', 'YCAL', 'ZCAL', 'RLP', 'PEAK', 'CORR', 'MAXC', 'XOBS', 'YOBS', 'ZOBS', 'ALF0', 'BET0', 'ALF1', 'BET1', 'PSI', 'ISEG'],
+}
+
+RAPD_CONVERSIONS = {
+    ("rfree_mtz", "mergable_mtz"): False,
+    ("xds_corrected", "mergable_mtz"): True,
+    ("xds_integrated", "mergable_mtz"): True,
 }
 
 def main():
@@ -264,6 +273,21 @@ def main():
         columns = get_columns(datafile)
 
         print "  columns:", columns
+
+        # Get the RAPD file type
+        rapd_file_type = get_rapd_file_type(columns)
+
+        print "  RAPD file type:", rapd_file_type
+
+        if rapd_file_type == "mergable_mtz":
+            print "  Correct file type"
+        elif RAPD_CONVERSIONS.get((rapd_file_type, "mergable_mtz")):
+            print "  Converting to mergable_mtz"
+            main_module = sys.modules[__name__]
+            method_to_call = getattr(main_module, "%s_to_%s" % (rapd_file_type, "mergable_mtz"))
+            method_to_call(input_datafile)
+        else:
+            print "  This file cannot be converted to the necessary format"
 
 def get_file_type(reflection_file):
     """Return the file type"""
@@ -317,7 +341,6 @@ def get_xds_integrate_hkl_columns(datafile):
     Look at an xds_integrate_hkl file and return an array of columns
 
     datafile should be iotbx.reflection_file_reader.any_reflection_file
-
     """
 
     columns = []
@@ -336,12 +359,67 @@ def get_xds_integrate_hkl_columns(datafile):
 
     return columns
 
-def determine_if_unmerged(datafile, columns=None):
-    """Determine if a file is unmerged"""
+def get_rapd_file_type(columns):
+    """Returns RAPD-defined file type, if known. False if not"""
 
-    if columns == None:
+    for file_type, column_signature in RAPD_COLUMN_SIGNATURES.iteritems():
+        if columns == column_signature:
+            return file_type
+    else:
+        return False
 
-        pass
+#
+# FILE CONVERSION METHODS
+#
+def xds_integrated_to_mergable_mtz(source, dest=False, overwrite=False):
+    """Convert file"""
+
+    # Name of resulting file
+    if not dest:
+        dest = source.replace(".HKL", "_imported.mtz")
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest)
+
+    pointless_proc = subprocess.Popen(["pointless",
+                                       "-c",
+                                       "xdsin",
+                                       source,
+                                       "hklout",
+                                       dest
+                                      ],
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE
+                                     )
+    pointless_proc.wait()
+
+    return dest
+
+def xds_corrected_to_mergable_mtz(source, dest=False, overwrite=False):
+    """Convert files"""
+
+    # Name of resulting file
+    if not dest:
+        dest = source.replace(".HKL", "_imported.mtz")
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest)
+
+    pointless_proc = subprocess.Popen(["pointless",
+                                       "-c",
+                                       "xdsin",
+                                       source,
+                                       "hklout",
+                                       dest
+                                      ],
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE
+                                     )
+    pointless_proc.wait()
+
+    return dest
 
 def get_commandline():
     """
