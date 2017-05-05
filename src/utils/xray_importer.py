@@ -50,12 +50,38 @@ from iotbx import reflection_file_reader, file_reader
 # RAPD imports
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
-# import utils
+from utils.xutils import fix_mtz_to_sca
 # import utils.credits as credits
 
 # Software dependencies
+# Software dependencies
 VERSIONS = {
-# "eiger2cbf": ("160415",)
+    "aimless": (
+        "version 0.5",
+        ),
+    "freerflag": (
+        "version 2.2",
+    ),
+    # "gnuplot": (
+    #     "gnuplot 4.2",
+    #     "gnuplot 5.0",
+    # ),
+    "mtz2various": (
+        "version 1.1",
+    ),
+    "pointless": (
+        "version 1.10",
+        ),
+    "truncate": (
+        "version 7.0",
+    ),
+    "xds": (
+        "VERSION Nov 1, 2016",
+        ),
+    # "xds_par": (
+    #     # "VERSION May 1, 2016",
+    #     "VERSION Nov 1, 2016",
+    #     ),
 }
 
 
@@ -236,14 +262,24 @@ xray_column_synonyms = {
 RAPD_COLUMN_SIGNATURES = {
     "mergable_mtz": ['H', 'K', 'L', 'M_ISYM', 'BATCH', 'I', 'SIGI', 'FRACTIONCALC', 'XDET', 'YDET', 'ROT', 'LP', 'FLAG'],
     "rfree_mtz": ['H', 'K', 'L', 'FreeR_flag', 'IMEAN', 'SIGIMEAN', 'I(+)', 'SIGI(+)', 'I(-)', 'SIGI(-)', 'F', 'SIGF', 'DANO', 'SIGDANO', 'F(+)', 'SIGF(+)', 'F(-)', 'SIGF(-)', 'ISYM'],
+    "scalepack_anomalous": ['H', 'K', 'L', 'I(+)', 'SIGI(+)', 'I(-)', 'SIGI(-)'],
+    "scalepack_native": ['H', 'K', 'L', 'I', 'SIGI'],
     "xds_corrected": ['H', 'K', 'L', 'IOBS', 'SIGMA(IOBS)', 'XD', 'YD', 'ZD', 'RLP', 'PEAK', 'CORR', 'PSI'],
     "xds_integrated": ['H', 'K', 'L', 'IOBS', 'SIGMA', 'XCAL', 'YCAL', 'ZCAL', 'RLP', 'PEAK', 'CORR', 'MAXC', 'XOBS', 'YOBS', 'ZOBS', 'ALF0', 'BET0', 'ALF1', 'BET1', 'PSI', 'ISEG'],
 }
 
 RAPD_CONVERSIONS = {
+    ("mergable_mtz", "rfree_mtz"): True,
     ("rfree_mtz", "mergable_mtz"): False,
+    ("rfree_mtz", "scalepack_native"): True,
+    ("scalepack_anomalous", "mergable_mtz"): False,
+    ("scalepack_native", "mergable_mtz"): False,
     ("xds_corrected", "mergable_mtz"): True,
+    ("xds_corrected", "rfree_mtz"): True,
+    ("xds_corrected", "xds_integrated"): False,
     ("xds_integrated", "mergable_mtz"): True,
+    ("xds_integrated", "rfree_mtz"): True,
+    ("xds_integrated", "xds_corrected"): True,
 }
 
 def main():
@@ -279,15 +315,21 @@ def main():
 
         print "  RAPD file type:", rapd_file_type
 
-        if rapd_file_type == "mergable_mtz":
-            print "  Correct file type"
-        elif RAPD_CONVERSIONS.get((rapd_file_type, "mergable_mtz")):
-            print "  Converting to mergable_mtz"
-            main_module = sys.modules[__name__]
-            method_to_call = getattr(main_module, "%s_to_%s" % (rapd_file_type, "mergable_mtz"))
-            method_to_call(input_datafile)
-        else:
-            print "  This file cannot be converted to the necessary format"
+        if rapd_file_type == "rfree_mtz":
+
+            print "CONVERTING TO scalepack NATIVE"
+            rfree_mtz_to_scalepack_anomalous(input_datafile)
+
+
+        # if rapd_file_type == "mergable_mtz":
+        #     print "  Correct file type"
+        # elif RAPD_CONVERSIONS.get((rapd_file_type, "mergable_mtz")):
+        #     print "  Converting to mergable_mtz"
+        #     main_module = sys.modules[__name__]
+        #     method_to_call = getattr(main_module, "%s_to_%s" % (rapd_file_type, "mergable_mtz"))
+        #     method_to_call(input_datafile)
+        # else:
+        #     print "  This file cannot be converted to the necessary format"
 
 def get_file_type(reflection_file):
     """Return the file type"""
@@ -310,9 +352,39 @@ def get_columns(datafile):
         columns = datafile.file_content().column_labels()
     # XDS
     elif file_type == "xds_ascii":
-        columns = get_xds_ascii_columns(datafile.file_name())
+        columns = get_xds_ascii_columns(datafile)
     elif file_type == "xds_integrate_hkl":
-        columns = get_xds_integrate_hkl_columns(datafile.file_name())
+        columns = get_xds_integrate_hkl_columns(datafile)
+    elif file_type == "scalepack_merge":
+        columns = get_scalepack_merge_columns(datafile)
+    else:
+        # for d in dir(datafile.file_content()):
+        #     print d
+        columns = False
+
+    return columns
+
+def get_scalepack_merge_columns(datafile):
+    """
+    Look at an scalepack_merge file and return an array of columns
+
+    datafile should be iotbx.reflection_file_reader.any_reflection_file
+    """
+
+    hi_len = 0
+    inlines = open(datafile.file_name(), "r").read(6144)
+    for line in inlines.split("\n")[3:]:
+        # print line
+        my_len = len(line.split())
+        # print my_len, line
+        hi_len = max(my_len, hi_len)
+
+    # print hi_len
+
+    if hi_len == 5:
+        columns = ["H", "K", "L", "I", "SIGI"]
+    elif hi_len == 7:
+        columns = ["H", "K", "L", "I(+)", "SIGI(+)", "I(-)", "SIGI(-)"]
     else:
         columns = False
 
@@ -327,7 +399,7 @@ def get_xds_ascii_columns(datafile):
 
     columns = []
 
-    inlines = open(datafile, "r").read(6144)
+    inlines = open(datafile.file_name(), "r").read(6144)
     for line in inlines.split("\n"):
         if line.startswith("!ITEM_"):
             columns.append(line.replace("!ITEM_", "").split("=")[0])
@@ -345,7 +417,7 @@ def get_xds_integrate_hkl_columns(datafile):
 
     columns = []
     next_line = False
-    inlines = open(datafile, "r").read(2048)
+    inlines = open(datafile.file_name(), "r").read(2048)
     for line in inlines.split("\n"):
         if line.startswith("!H,K,L") or next_line:
             columns += line[1:].strip().rstrip(",").split(",")
@@ -371,28 +443,71 @@ def get_rapd_file_type(columns):
 #
 # FILE CONVERSION METHODS
 #
-def xds_integrated_to_mergable_mtz(source, dest=False, overwrite=False):
+
+def mergable_mtz_to_rfree_mtz(source, dest=False, overwrite=True):
     """Convert file"""
+
+    pass
+
+def rfree_mtz_to_scalepack_anomalous(source, dest=False, overwrite=True):
+    """Convert files"""
 
     # Name of resulting file
     if not dest:
-        dest = source.replace(".HKL", "_imported.mtz")
+        dest = source.replace(".mtz", "_imported_ANOM.sca")
 
     # Check if we are going to overwrite
     if os.path.exists(dest) and not overwrite:
         raise Exception("%s already exists. Exiting" % dest)
 
-    pointless_proc = subprocess.Popen(["pointless",
-                                       "-c",
-                                       "xdsin",
-                                       source,
-                                       "hklout",
-                                       dest
-                                      ],
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.PIPE
-                                     )
-    pointless_proc.wait()
+    mtz2various_proc = subprocess.Popen(["mtz2various",
+                                         "hklin",
+                                         source,
+                                         "hklout",
+                                         dest],
+                                        stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE)
+
+    mtz2various_proc.stdin.write("OUTPUT SCALEPACK\n")
+    mtz2various_proc.stdin.write("labin I(+)=I(+) SIGI(+)=SIGI(+) I(-)=I(-) SIGI(-)=SIGI(-)\n")
+    mtz2various_proc.stdin.write("END\n")
+    # mtz2various_proc.stdin.write()
+    mtz2various_proc.wait()
+
+    # Fix some known converted scalepack problems
+    fix_mtz_to_sca(dest)
+
+    return dest
+
+def rfree_mtz_to_scalepack_native(source, dest=False, overwrite=True):
+    """Convert files"""
+
+    # Name of resulting file
+    if not dest:
+        dest = source.replace(".mtz", "_imported_NATIVE.sca")
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest)
+
+    mtz2various_proc = subprocess.Popen(["mtz2various",
+                                         "hklin",
+                                         source,
+                                         "hklout",
+                                         dest],
+                                        stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE)
+
+    mtz2various_proc.stdin.write("OUTPUT SCALEPACK\n")
+    mtz2various_proc.stdin.write("labin I=IMEAN SIGI=SIGIMEAN\n")
+    mtz2various_proc.stdin.write("END\n")
+    # mtz2various_proc.stdin.write()
+    mtz2various_proc.wait()
+
+    # Fix some known converted scalepack problems
+    fix_mtz_to_sca(dest)
 
     return dest
 
@@ -420,6 +535,87 @@ def xds_corrected_to_mergable_mtz(source, dest=False, overwrite=False):
     pointless_proc.wait()
 
     return dest
+
+def xds_corrected_to_rfree_mtz(source, dest=False, overwrite=False):
+    """Convert files"""
+
+    # # Name of resulting file
+    # if not dest:
+    #     dest = source.replace(".HKL", "_imported.mtz")
+    #
+    # # Check if we are going to overwrite
+    # if os.path.exists(dest) and not overwrite:
+    #     raise Exception("%s already exists. Exiting" % dest)
+    #
+    # pointless_proc = subprocess.Popen(["pointless",
+    #                                    "-c",
+    #                                    "xdsin",
+    #                                    source,
+    #                                    "hklout",
+    #                                    dest
+    #                                   ],
+    #                                   stdout=subprocess.PIPE,
+    #                                   stderr=subprocess.PIPE
+    #                                  )
+    # pointless_proc.wait()
+    #
+    # return dest
+
+def xds_integrated_to_mergable_mtz(source, dest=False, overwrite=False):
+    """Convert file"""
+
+    # Name of resulting file
+    if not dest:
+        dest = source.replace(".HKL", "_imported.mtz")
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest)
+
+    pointless_proc = subprocess.Popen(["pointless",
+                                       "-c",
+                                       "xdsin",
+                                       source,
+                                       "hklout",
+                                       dest
+                                      ],
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE
+                                     )
+    pointless_proc.wait()
+
+    return dest
+
+def xds_integrated_to_rfree_mtz(source, dest=False, overwrite=False):
+    """Convert file"""
+
+    # # Name of resulting file
+    # if not dest:
+    #     dest = source.replace(".HKL", "_imported.mtz")
+    #
+    # # Check if we are going to overwrite
+    # if os.path.exists(dest) and not overwrite:
+    #     raise Exception("%s already exists. Exiting" % dest)
+    #
+    # pointless_proc = subprocess.Popen(["pointless",
+    #                                    "-c",
+    #                                    "xdsin",
+    #                                    source,
+    #                                    "hklout",
+    #                                    dest
+    #                                   ],
+    #                                   stdout=subprocess.PIPE,
+    #                                   stderr=subprocess.PIPE
+    #                                  )
+    # pointless_proc.wait()
+    #
+    # return dest
+
+#
+# Utils used by converter functions
+#
+
+
 
 def get_commandline():
     """
