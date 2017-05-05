@@ -40,6 +40,7 @@ from pprint import pprint
 # import shutil
 import subprocess
 import sys
+import tempfile
 # import time
 # import unittest
 # import urllib2
@@ -319,7 +320,9 @@ def main():
 
             print "CONVERTING TO scalepack NATIVE"
             rfree_mtz_to_scalepack_anomalous(input_datafile)
-
+        if rapd_file_type == "mergable_mtz":
+            print "CONVERTING TO rfree_mtz"
+            mergable_mtz_to_rfree_mtz(input_datafile)
 
         # if rapd_file_type == "mergable_mtz":
         #     print "  Correct file type"
@@ -444,10 +447,88 @@ def get_rapd_file_type(columns):
 # FILE CONVERSION METHODS
 #
 
-def mergable_mtz_to_rfree_mtz(source, dest=False, overwrite=True):
+def mergable_mtz_to_rfree_mtz(source, dest=False, overwrite=True, clean=True):
     """Convert file"""
 
-    pass
+    # Name of resulting file
+    if not dest:
+        dest = source.replace(".mtz", "_imported_free.mtz")
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest)
+
+    # Merge the data
+    aimfile = next(tempfile._get_candidate_names()) + ".mtz"
+    aimless_proc = subprocess.Popen(["aimless",
+                                     "hklin",
+                                     source,
+                                     "hklout",
+                                     aimfile
+                                    ],
+                                    stdin=subprocess.PIPE,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+
+    aimless_proc.stdin.write("anomalous on\n")
+    aimless_proc.stdin.write("scales constant\n")
+    aimless_proc.stdin.write("sdcorrection norefine full 1 0 0 partial 1 0 0\n")
+    aimless_proc.stdin.write("cycles 0\n")
+    aimless_proc.stdin.write("END\n")
+    aimless_proc.wait()
+
+    # Truncate the data
+    truncfile = next(tempfile._get_candidate_names()) + ".mtz"
+    # original = sys.stdout
+    # sys.stdout = open('truncate.log', 'w')
+    truncate_proc = subprocess.Popen(["truncate",
+                                      "hklin",
+                                      aimfile,
+                                      "hklout",
+                                      truncfile,
+                                     ],
+                                     stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE)
+    truncate_proc.stdin.write("END\n")
+    stdout, stderr = truncate_proc.communicate()
+    # truncate_proc.wait()
+    # sys.stdout = original
+
+    # print stdout
+    # print stderr
+
+    # Set the free R flag
+    freerflag_proc = subprocess.Popen(["freerflag",
+                                       "hklin",
+                                       truncfile,
+                                       "hklout",
+                                       dest
+                                      ],
+                                      stdin=subprocess.PIPE,
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE)
+
+    freerflag_proc.stdin.write("END\n")
+    freerflag_proc.wait()
+
+    # Clean up
+    if clean:
+        files_to_remove = (
+            aimfile,
+            truncfile,
+            "ANOMPLOT",
+            "CORRELPLOT",
+            "NORMPLOT",
+            "ROGUES",
+            "ROGUEPLOT",
+            "SCALES"
+        )
+
+        for file_to_remove in files_to_remove:
+            os.unlink(file_to_remove)
+
+    return dest
 
 def rfree_mtz_to_scalepack_anomalous(source, dest=False, overwrite=True):
     """Convert files"""
