@@ -350,11 +350,56 @@ def main():
                 if possible:
                     print "      %s" % conversion[1]
 
+    convert_intensities_files(datafiles, "rfree_mtz")
 
-def convert_intensities(input_file_name,
-                        output_rapd_type,
-                        output_file_name=False,
-                        force=False):
+
+
+def convert_intensities_files(input_file_names,
+                              output_rapd_type,
+                              output_file_names=False,
+                              force=False):
+    """Convert a list or tuple of input files to an input rapd file type"""
+
+    # Make sure the input_file_names is iterable
+    if not (isinstance(input_file_names, list) or \
+            isinstance(input_file_names, tuple)):
+        raise Exception("input_file_names should be a list or tuple")
+
+    # Make sure all the files exist
+    for input_file in input_file_names:
+        if not os.path.exists(input_file):
+            raise Exception("%s does not exist" % input_file)
+
+    if output_file_names:
+        # Make sure that there are output file names for all input_file_names
+        if not len(output_file_names) == len(output_file_names):
+            raise Exception("Mismatch in number of input and output file names")
+    else:
+        # Create some Falses for output file names
+        output_file_names = [False] * len(input_file_names)
+
+    # Is the final format understood?
+    if not output_rapd_type in RAPD_COLUMN_SIGNATURES:
+        raise Exception("Output type %s is not a format that is understood by \
+RAPD" % output_rapd_type)
+
+    # Run through and convert files
+    output_files = []
+    for input_file_name, output_file_name in zip(input_file_names, output_file_names):
+
+        print input_file_name, output_rapd_type, output_file_name, force
+
+        output_files.append(convert_intensities_file(input_file_name,
+                                                     output_rapd_type,
+                                                     output_file_name,
+                                                     force))
+
+    return output_files
+
+def convert_intensities_file(input_file_name,
+                             output_rapd_type,
+                             output_file_name=False,
+                             force=False):
     """
     Convert a datafile of intensities to a new type
 
@@ -373,7 +418,7 @@ def convert_intensities(input_file_name,
 RAPD" % output_rapd_type)
 
     # Check to make sure source_file exists
-    if not os.path.exists(source_file_name):
+    if not os.path.exists(input_file_name):
         raise Exception("%s does not exist" % input_file_name)
 
     # Read in input file
@@ -409,15 +454,9 @@ by RAPD" % input_file_name)
 Please change to %s" % RAPD_FILE_SUFFIXES[output_rapd_type])
     else:
         # Create output file name from the input
-        # Full suffix replacement
-        if input_file_name.endswith(RAPD_FILE_SUFFIXES[input_rapd_type]):
-            # print RAPD_FILE_SUFFIXES[input_rapd_type]
-            # print RAPD_FILE_SUFFIXES[output_rapd_type]
-            output_file_name = input_file_name.replace(RAPD_FILE_SUFFIXES[input_rapd_type], RAPD_FILE_SUFFIXES[output_rapd_type])
-        # Just post "." suffix replacement
-        else:
-            output_file_name = ".".join(input_file_name.split(".")[:-1]
-                                     +[RAPD_FILE_SUFFIXES[output_rapd_type]])
+        output_file_name = replace_suffix(input_file_name,
+                                          input_rapd_type,
+                                          output_rapd_type)
 
     if not force:
         if os.path.exists(output_file_name):
