@@ -51,11 +51,12 @@ import unittest
 # import detectors.detector_utils as detector_utils
 import test_sets
 import utils.global_vars as rglobals
+print rglobals
 import utils.log
 import utils.site as site
 
 # Cache for test data
-TEST_CACHE = rglobals.PDBQ_SERVER.TEST_CACHE
+TEST_CACHE = rglobals.TEST_CACHE
 
 # Software dependencies
 VERSIONS = {
@@ -141,9 +142,17 @@ def check_for_data(target, tprint):
         os.makedirs(target_dir)
     target_archive = os.path.join(TEST_CACHE, target_def["location"])
 
-    # Does target directory exist?
-    if not os.path.exists(target_dir):
-        tprint("  Data directory not present", level=10, color="white")
+    print target_def
+    print target_dir
+    print target_archive
+
+    # Are there any files in the target directory?
+    data_dir_glob = os.path.join(target_dir, "data/*")
+    files = glob.glob(data_dir_glob)
+    print files
+    if not files:
+    # if not os.path.exists(target_dir):
+        tprint("  Data directory empty", level=10, color="white")
 
         if os.path.exists(target_archive):
             tprint("  Data archive present", level=10, color="white")
@@ -163,30 +172,39 @@ def check_for_data(target, tprint):
         else:
             return False
     else:
-        tprint("  Data directory present", level=10, color="white")
+        tprint("  Data directory not empty", level=10, color="white")
 
     # Check the sha digest
     tprint("  Checking data integrity", level=10, color="white")
     data_dir_glob = os.path.join(target_dir, "data/*")
     files = glob.glob(data_dir_glob)
     files.sort()
-    final_hash = hashlib.sha1()
-    for my_file in files:
-        final_hash.update(open(my_file).read())
-    local_sha = final_hash.hexdigest()
 
-    # Read the known digest
-    remote_sha_file = os.path.join(target_dir, "data.sha")
-    remote_sha = open(remote_sha_file).readlines()[0].rstrip()
-
-    if local_sha != remote_sha:
-        tprint("  Data shasum not equal", level=40, color="red")
-        raise Exception("Data integrity compromised. Reccomend erase and \
-redownload")
+    # No files == go get them
+    if not files:
+        return False
+    # Files == see id they are OK
     else:
-        tprint("  Data integrity OK", level=10, color="green")
+        final_hash = hashlib.sha1()
+        for my_file in files:
+            final_hash.update(open(my_file).read())
+        local_sha = final_hash.hexdigest()
 
-    return True
+        # Read the known digest
+        remote_sha_file = os.path.join(target_dir, "data.sha")
+        if os.path.exists(remote_sha_file):
+            remote_sha = open(remote_sha_file).readlines()[0].rstrip()
+        else:
+            remote_sha = -1
+
+        if local_sha != remote_sha:
+            tprint("  Data shasum not equal", level=40, color="red")
+            raise Exception("Data integrity compromised. Reccomend erase and \
+    redownload")
+        else:
+            tprint("  Data integrity OK", level=10, color="green")
+
+        return True
 
 def download_data(target, force, tprint):
     """Fetch data from NE-CAT server"""
@@ -232,14 +250,14 @@ RAPD Testing
 ------------"""
     printer(message, 50, color="blue")
 
-def main(args):
+def main():
     """
     The main process docstring
     This function is called when this module is invoked from
     the commandline
     """
 
-    args=get_commandline()
+    commandline_args = get_commandline()
 
     # pprint(args)
     # sys.exit()
@@ -269,19 +287,19 @@ def main(args):
     print_welcome_message(tprint)
 
     # Make sure targets are in common format
-    if isinstance(args.targets, str):
-        targets = [args.targets]
+    if isinstance(commandline_args.targets, str):
+        targets = [commandline_args.targets]
     else:
-        targets = args.targets
+        targets = commandline_args.targets
 
     # Handle the all setting for plugins
-    if "all" in args.plugins:
+    if "all" in commandline_args.plugins:
         plugins = []
         for plugin in test_sets.PLUGINS.keys():
             if not plugin == "all":
                 plugins.append(plugin)
     else:
-        plugins = args.plugins
+        plugins = commandline_args.plugins
 
     # Check dependencies first
     if "DEPENDENCIES" in targets:
@@ -295,7 +313,7 @@ def main(args):
             tprint("Dependency testing", 10, "white")
             for plugin in plugins:
                 # Run normal unit testing
-                run_unit(plugin, tprint, "DEPENDENCIES", args.verbose)
+                run_unit(plugin, tprint, "DEPENDENCIES", commandline_args.verbose)
 
         else:
             # Check that data exists
@@ -305,7 +323,7 @@ def main(args):
             # Download data
             if not data_present:
                 download_data(target,
-                              args.force,
+                              commandline_args.force,
                               tprint)
 
                 # Check that data exists again
@@ -321,12 +339,12 @@ data")
             for plugin in plugins:
 
                 # Run unit testing
-                run_unit(plugin, tprint, "ALL", args.verbose)
+                run_unit(plugin, tprint, "ALL", commandline_args.verbose)
 
                 run_processing(target,
                                plugin,
                                tprint,
-                               args.verbose)
+                               commandline_args.verbose)
 
 
 def get_commandline():

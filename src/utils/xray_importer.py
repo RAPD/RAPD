@@ -411,8 +411,8 @@ Please change to %s" % RAPD_FILE_SUFFIXES[output_rapd_type])
         # Create output file name from the input
         # Full suffix replacement
         if input_file_name.endswith(RAPD_FILE_SUFFIXES[input_rapd_type]):
-            print RAPD_FILE_SUFFIXES[input_rapd_type]
-            print RAPD_FILE_SUFFIXES[output_rapd_type]
+            # print RAPD_FILE_SUFFIXES[input_rapd_type]
+            # print RAPD_FILE_SUFFIXES[output_rapd_type]
             output_file_name = input_file_name.replace(RAPD_FILE_SUFFIXES[input_rapd_type], RAPD_FILE_SUFFIXES[output_rapd_type])
         # Just post "." suffix replacement
         else:
@@ -533,6 +533,19 @@ def get_rapd_file_type(columns):
     else:
         return False
 
+def replace_suffix(input_file_name, input_rapd_type, output_rapd_type):
+    """Replace a file suffix with as much of a RAPD suffix as possible"""
+
+    # Full suffix replacement
+    if input_file_name.endswith(RAPD_FILE_SUFFIXES[input_rapd_type]):
+        output_file_name = input_file_name.replace(RAPD_FILE_SUFFIXES[input_rapd_type], RAPD_FILE_SUFFIXES[output_rapd_type])
+    # Just post "." suffix replacement
+    else:
+        output_file_name = ".".join(input_file_name.split(".")[:-1]
+                                 +[RAPD_FILE_SUFFIXES[output_rapd_type]])
+
+    return output_file_name
+
 #
 # FILE CONVERSION METHODS
 #
@@ -620,7 +633,7 @@ def convert_mergable_mtz_to_scalepack_anomalous(source_file_name,
                                                 dest_file_name=False,
                                                 overwrite=True,
                                                 clean=True):
-    """Convert files"""
+    """Convert file"""
 
     # Name of resulting file
     if not dest_file_name:
@@ -670,7 +683,7 @@ def convert_mergable_mtz_to_scalepack_native(source_file_name,
                                              dest_file_name=False,
                                              overwrite=True,
                                              clean=True):
-    """Convert files"""
+    """Convert file"""
 
     # Name of resulting file
     if not dest_file_name:
@@ -719,7 +732,7 @@ def convert_rfree_mtz_to_scalepack_anomalous(source_file_name,
                                              dest_file_name=False,
                                              overwrite=True,
                                              clean=True):
-    """Convert files"""
+    """Convert file"""
 
     # Name of resulting file
     if not dest_file_name:
@@ -754,7 +767,7 @@ def convert_rfree_mtz_to_scalepack_native(source_file_name,
                                           dest_file_name=False,
                                           overwrite=True,
                                           clean=True):
-    """Convert files"""
+    """Convert file"""
 
     # Name of resulting file
     if not dest_file_name:
@@ -788,7 +801,7 @@ def convert_xds_corrected_to_mergable_mtz(source_file_name,
                                           dest_file_name=False,
                                           overwrite=False,
                                           clean=True):
-    """Convert files"""
+    """Convert file"""
 
     # Name of resulting file
     if not dest_file_name:
@@ -816,7 +829,7 @@ def convert_xds_corrected_to_rfree_mtz(source_file_name,
                                        dest_file_name=False,
                                        overwrite=False,
                                        clean=True):
-    """Convert files"""
+    """Convert file"""
 
     # Name of resulting file
     if not dest_file_name:
@@ -931,9 +944,7 @@ def convert_xds_integrated_to_rfree_mtz(source_file_name,
     return dest_file_name
 
 def get_commandline():
-    """
-    Grabs the commandline
-    """
+    """Grabs the commandline"""
 
     # print "get_commandline"
 
