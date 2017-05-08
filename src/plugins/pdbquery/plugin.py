@@ -63,7 +63,7 @@ import urllib2
 # import utils
 from plugins.subcontractors.parse import parse_phaser_output, set_phaser_failed
 import utils.credits as rcredits
-import utils.globals as rglobals
+import utils.global_vars as rglobals
 import utils.pdb as rpdb
 import utils.xutils as xutils
 import info

@@ -133,7 +133,7 @@ class FileGenerator(CommandlineFileGenerator):
                                                  "uuid"),
                                      added_rapd_imports=(
                                          "utils.credits as credits",
-                                         "utils.globals as rglobals",
+                                         "utils.global_vars as rglobals",
                                          "utils.log",
                                          "utils.modules as modules",
                                          "utils.text as text",

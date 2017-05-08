@@ -43,7 +43,7 @@ from plugins.subcontractors.parse import ParseOutputPhaser, setPhaserFailed
 # import summary as Summary
 # from utils.communicate import rapd_send
 # import utils.site as site_utils
-import utils.globals as rglobals
+import utils.global_vars as rglobals
 import utils.xutils as xutils
 
 PDBQ_SERVER = rglobals.PDBQ_SERVER

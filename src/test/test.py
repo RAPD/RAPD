@@ -50,7 +50,7 @@ import unittest
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 import test_sets
-import utils.globals as rglobals
+import utils.global_vars as rglobals
 import utils.log
 import utils.site as site
 
@@ -89,7 +89,7 @@ def run_unit(plugin, tprint, mode="DEPENDENCIES", verbose=True):
            10,
            "white")
 
-def run_processing(target, plugin, rapd_home, tprint, verbose=True):
+def run_processing(target, plugin, tprint, verbose=True):
     """Run a processing test"""
 
     tprint("  Testing %s" % plugin, 99, "white")
@@ -109,7 +109,10 @@ def run_processing(target, plugin, rapd_home, tprint, verbose=True):
     if verbose:
         proc = subprocess.Popen(command, shell=True)
     else:
-        proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = subprocess.Popen(command,
+                                shell=True,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
     proc.wait()
 
     # Read in the results
@@ -126,7 +129,7 @@ def run_processing(target, plugin, rapd_home, tprint, verbose=True):
 
     return test_successful
 
-def check_for_data(target, rapd_home, tprint):
+def check_for_data(target, tprint):
     """Look to where test data should be to see if it is there"""
 
     tprint("Checking test data", level=10, color="white")
@@ -185,7 +188,7 @@ redownload")
 
     return True
 
-def download_data(target, rapd_home, force, tprint):
+def download_data(target, force, tprint):
     """Fetch data from NE-CAT server"""
 
     tprint("Downloading test data", level=50, color="white")
@@ -235,6 +238,8 @@ def main(args):
     This function is called when this module is invoked from
     the commandline
     """
+
+    args=get_commandline()
 
     # pprint(args)
     # sys.exit()
@@ -295,24 +300,22 @@ def main(args):
         else:
             # Check that data exists
             data_present = check_for_data(target,
-                                          environmental_vars["RAPD_HOME"],
                                           tprint)
 
             # Download data
             if not data_present:
                 download_data(target,
-                              environmental_vars["RAPD_HOME"],
                               args.force,
                               tprint)
 
                 # Check that data exists again
                 data_present = check_for_data(target,
-                                              environmental_vars["RAPD_HOME"],
                                               tprint)
 
                 # We have a problem
                 if not data_present:
-                    raise Exception("There is a problem getting valid test data")
+                    raise Exception("There is a problem getting valid test \
+data")
 
             tprint("Plugin testing", 99, "white")
             for plugin in plugins:
@@ -322,7 +325,6 @@ def main(args):
 
                 run_processing(target,
                                plugin,
-                               environmental_vars["RAPD_HOME"],
                                tprint,
                                args.verbose)
 
@@ -370,7 +372,8 @@ def get_commandline():
                         dest="targets",
                         nargs="+",
                         default=["DEPENDENCIES"],
-                        help="Target tests available: \n-----------------------\n" + targets + "\n")
+                        help="Target tests available: \n-----------------------\
+\n" + targets + "\n")
 
     # Plugins to test
     plugins = test_sets.PLUGINS.keys()
@@ -381,7 +384,8 @@ def get_commandline():
                         dest="plugins",
                         nargs="+",
                         default=["integrate"],
-                        help="Plugin(s) to test:\n-----------------\n" + plugins)
+                        help="Plugin(s) to test:\n-----------------\n" \
+                             + plugins)
 
     # Print help message is no arguments
     # if len(sys.argv[1:])==0:
@@ -394,6 +398,4 @@ def get_commandline():
 
 if __name__ == "__main__":
 
-    commandline_args = get_commandline()
-
-    main(args=commandline_args)
+    main()
