@@ -305,7 +305,14 @@ RAPD_FILE_SIGNATURES = {
     "minimal_rfree_mtz": (
         "ccp4_mtz",
         [
-
+             'H',
+             'K',
+             'L',
+             'FreeR_flag',
+             'IMEAN',
+             'SIGIMEAN',
+             'F',
+             'SIGF',
         ]
     ),
     "rfree_mtz": ("ccp4_mtz",
@@ -330,16 +337,18 @@ RAPD_FILE_SIGNATURES = {
                    'ISYM'
                   ],
                  ),
-    "scalepack_anomalous": ("scalepack_anomalous",
-                            ['H',
-                             'K',
-                             'L',
-                             'I(+)',
-                             'SIGI(+)',
-                             'I(-)',
-                             'SIGI(-)'
-                            ],
-                           ),
+    "scalepack_anomalous": (
+        "scalepack_anomalous",
+        [
+            'H',
+            'K',
+            'L',
+            'I(+)',
+            'SIGI(+)',
+            'I(-)',
+            'SIGI(-)',
+        ],
+    ),
     "scalepack_merge": ("scalepack_merge",
                          ['H',
                           'K',
@@ -471,7 +480,7 @@ def main():
                     print "      %s" % conversion[1]
 
         if rapd_file_type == "scalepack_merge":
-            print convert_scalepack_merge_to_minimal_refl_mtz(input_file_name, "foo.mtz")
+            print convert_scalepack_merge_to_minimal_rfree_mtz(input_file_name, "foo.mtz")
 
     # convert_intensities_files(datafiles, "rfree_mtz")
 
@@ -997,34 +1006,122 @@ def convert_scalepack_merge_to_minimal_refl_mtz(source_file_name,
 
     # Convert the file to mtz
     unsorted_file = next(tempfile._get_candidate_names()) + ".mtz"
-    cmd =  "scalepack2mtz hklin %s hklout %s <<eof" % (source_file_name,
+    cmd =  "scalepack2mtz hklin %s hklout %s" % (source_file_name,
                                                        unsorted_file)
-    scalepack2mtz_proc = subprocess.Popen([cmd],
+    scalepack2mtz_proc = subprocess.Popen([cmd, "<<eof"],
                                           stdin=subprocess.PIPE,
-                                        #   stdout=subprocess.PIPE,
-                                        #   stderr=subprocess.PIPE,
+                                          stdout=subprocess.PIPE,
+                                          stderr=subprocess.PIPE,
                                           shell=True
                                          )
+    scalepack2mtz_proc.stdin.write("ANOMALOUS NO\n")
     scalepack2mtz_proc.stdin.write("END\n")
     scalepack2mtz_proc.stdin.write("eof\n")
     scalepack2mtz_proc.wait()
-    time.sleep(1)
 
     # Sort the file into correct CCP4 format
     cmd = "cad hklin1 %s hklout %s" % (unsorted_file, dest_file_name)
-    print ">>>>", cmd, "<<<<"
     cad_proc = subprocess.Popen([cmd, "<<eof"],
                                  stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
                                  shell=True)
 
-    cad_proc.stdin.write("labin file 1 E1=IMEAN E2=SIGIMEAN\n")
-    cad_proc.stdin.write("sort H K L\n")
-    # cad_proc.stdin.write("LABIN FILE 1 E1=IMEAN E2=SIGIMEAN E3=I(+) E4=SIGI(+) E5=I(-) E6=SIGI(-)\n")
-    # cad_proc.stdin.write("CTYP FILE 1 E1=J E2=Q E3=K E4=M E5=K E6=M\n")
-    # cad_proc.stdin.write("LABOUT FILE 1 E1=I E2=SIGI\n")
+    cad_proc.stdin.write("LABIN FILE 1 E1=IMEAN E2=SIGIMEAN\n")
+    cad_proc.stdin.write("SORT H K L\n")
     cad_proc.stdin.write("END\n")
     cad_proc.stdin.write("eof\n")
     cad_proc.wait()
+
+    # Clean up
+    if clean:
+        files_to_remove = (
+            unsorted_file,
+        )
+
+        for file_to_remove in files_to_remove:
+            os.unlink(file_to_remove)
+
+    return dest_file_name
+
+def convert_scalepack_merge_to_minimal_rfree_mtz(source_file_name,
+                                                 dest_file_name=False,
+                                                 overwrite=False,
+                                                 clean=True):
+    "Convert file"
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = source_file_name.replace(
+            ".sca",
+            RAPD_FILE_SUFFIXES["minimal_refl_mtz"])
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    # Convert the file to mtz
+    unsorted_file = next(tempfile._get_candidate_names()) + ".mtz"
+    cmd =  "scalepack2mtz hklin %s hklout %s" % (source_file_name,
+                                                       unsorted_file)
+    scalepack2mtz_proc = subprocess.Popen([cmd, "<<eof"],
+                                          stdin=subprocess.PIPE,
+                                          stdout=subprocess.PIPE,
+                                          stderr=subprocess.PIPE,
+                                          shell=True
+                                         )
+    scalepack2mtz_proc.stdin.write("ANOMALOUS NO\n")
+    scalepack2mtz_proc.stdin.write("END\n")
+    scalepack2mtz_proc.stdin.write("eof\n")
+    scalepack2mtz_proc.wait()
+
+    # Truncate the data
+    truncate_file = next(tempfile._get_candidate_names()) + ".mtz"
+    cmd = "truncate hklin %s hklout %s" % (unsorted_file, truncate_file)
+    truncate_proc = subprocess.Popen([cmd, "<<eof"],
+                                     stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     shell=True)
+    truncate_proc.stdin.write("END\n")
+    truncate_proc.stdin.write("eof\n")
+    stdout, stderr = truncate_proc.communicate()
+
+    # Sort the file into correct CCP4 format
+    cad_file = next(tempfile._get_candidate_names()) + ".mtz"
+    cmd = "cad hklin1 %s hklout %s" % (truncate_file, cad_file)
+    cad_proc = subprocess.Popen([cmd, "<<eof"],
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 shell=True)
+    cad_proc.stdin.write("LABIN FILE 1 E1=IMEAN E2=SIGIMEAN E3=F E4=SIGF\n")
+    cad_proc.stdin.write("SORT H K L\n")
+    cad_proc.stdin.write("END\n")
+    cad_proc.stdin.write("eof\n")
+    cad_proc.wait()
+
+    # Set the free R flag
+    cmd = "freerflag hklin %s hklout %s" % (cad_file, dest_file_name)
+    freerflag_proc = subprocess.Popen([cmd, "<<eof"],
+                                      stdin=subprocess.PIPE,
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE,
+                                      shell=True)
+    freerflag_proc.stdin.write("END\n")
+    freerflag_proc.stdin.write("eof\n")
+    freerflag_proc.wait()
+
+    # Clean up
+    if clean:
+        files_to_remove = (
+            unsorted_file,
+            truncate_file,
+            cad_file
+        )
+
+        for file_to_remove in files_to_remove:
+            os.unlink(file_to_remove)
 
     return dest_file_name
 
