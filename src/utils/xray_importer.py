@@ -307,38 +307,40 @@ RAPD_FILE_SIGNATURES = {
     "minimal_rfree_mtz": (
         "ccp4_mtz",
         [
-             'H',
-             'K',
-             'L',
-             'FreeR_flag',
-             'IMEAN',
-             'SIGIMEAN',
-             'F',
-             'SIGF',
+            'H',
+            'K',
+            'L',
+            'FreeR_flag',
+            'IMEAN',
+            'SIGIMEAN',
+            'F',
+            'SIGF',
         ]
     ),
-    "rfree_mtz": ("ccp4_mtz",
-                  ['H',
-                   'K',
-                   'L',
-                   'FreeR_flag',
-                   'IMEAN',
-                   'SIGIMEAN',
-                   'I(+)',
-                   'SIGI(+)',
-                   'I(-)',
-                   'SIGI(-)',
-                   'F',
-                   'SIGF',
-                   'DANO',
-                   'SIGDANO',
-                   'F(+)',
-                   'SIGF(+)',
-                   'F(-)',
-                   'SIGF(-)',
-                   'ISYM'
-                  ],
-                 ),
+    "rfree_mtz": (
+        "ccp4_mtz",
+        [
+            'H',
+            'K',
+            'L',
+            'FreeR_flag',
+            'IMEAN',
+            'SIGIMEAN',
+            'I(+)',
+            'SIGI(+)',
+            'I(-)',
+            'SIGI(-)',
+            'F',
+            'SIGF',
+            'DANO',
+            'SIGDANO',
+            'F(+)',
+            'SIGF(+)',
+            'F(-)',
+            'SIGF(-)',
+            'ISYM'
+        ],
+    ),
     "scalepack_anomalous": (
         "scalepack_merge",
         [
@@ -414,9 +416,9 @@ RAPD_CONVERSIONS = {
     ("rfree_mtz", "scalepack_merge"): True,
 
     ("scalepack_anomalous", "minimal_refl_anom_mtz"): True,
-    ("scalepack_anomalous", "minimal_refl_mtz"): False,
+    ("scalepack_anomalous", "minimal_refl_mtz"): True,
     ("scalepack_anomalous", "rfree_mtz"): True,
-    ("scalepack_anomalous", "scalepack_merge"): False,
+    ("scalepack_anomalous", "scalepack_merge"): True,
 
     ("scalepack_merge", "minimal_refl_mtz"): True,
     ("scalepack_merge", "minimal_rfree_mtz"): True,
@@ -482,8 +484,8 @@ def main():
         elif rapd_file_type == "scalepack_anomalous":
             print convert_scalepack_anomalous_to_minimal_refl_anom_mtz(input_file_name, "minimal_refl_anom_mtz.mtz", True)
             print convert_scalepack_anomalous_to_rfree_mtz(input_file_name, "rfree_mtz.mtz", True)
-
-
+            print convert_scalepack_anomalous_to_minimal_refl_mtz(input_file_name, "minimal_refl_mtz.mtz", True)
+            print convert_scalepack_anomalous_to_scalepack_merge(input_file_name, "foo_merge.sca", True)
 
 
 def convert_intensities_files(input_file_names,
@@ -964,7 +966,6 @@ def convert_minimal_rfree_mtz_to_scalepack_merge(source_file_name,
                                                        overwrite,
                                                        clean)
 
-
 def convert_rfree_mtz_to_scalepack_anomalous(source_file_name,
                                              dest_file_name=False,
                                              overwrite=True,
@@ -1044,7 +1045,7 @@ def convert_scalepack_anomalous_to_minimal_refl_anom_mtz(source_file_name,
     if not dest_file_name:
         dest_file_name = source_file_name.replace(
             ".sca",
-            RAPD_FILE_SUFFIXES["minimal_refl_mtz"])
+            RAPD_FILE_SUFFIXES["minimal_refl_anom_mtz"])
 
     # Check if we are going to overwrite
     if os.path.exists(dest_file_name) and not overwrite:
@@ -1074,6 +1075,62 @@ def convert_scalepack_anomalous_to_minimal_refl_anom_mtz(source_file_name,
                                  shell=True)
 
     cad_proc.stdin.write("LABIN FILE 1 ALL\n")
+    cad_proc.stdin.write("SORT H K L\n")
+    cad_proc.stdin.write("END\n")
+    cad_proc.stdin.write("eof\n")
+    cad_proc.wait()
+
+    # Clean up
+    if clean:
+        files_to_remove = (
+            unsorted_file,
+        )
+
+        for file_to_remove in files_to_remove:
+            os.unlink(file_to_remove)
+
+    return dest_file_name
+
+def convert_scalepack_anomalous_to_minimal_refl_mtz(source_file_name,
+                                                    dest_file_name=False,
+                                                    overwrite=False,
+                                                    clean=True):
+    """Convert file"""
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = source_file_name.replace(
+            ".sca",
+            RAPD_FILE_SUFFIXES["minimal_refl_mtz"])
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    # Convert the file to mtz
+    unsorted_file = next(tempfile._get_candidate_names()) + ".mtz"
+    cmd =  "scalepack2mtz hklin %s hklout %s" % (source_file_name,
+                                                       unsorted_file)
+    scalepack2mtz_proc = subprocess.Popen([cmd, "<<eof"],
+                                          stdin=subprocess.PIPE,
+                                          stdout=subprocess.PIPE,
+                                          stderr=subprocess.PIPE,
+                                          shell=True
+                                         )
+    scalepack2mtz_proc.stdin.write("ANOMALOUS YES\n")
+    scalepack2mtz_proc.stdin.write("END\n")
+    scalepack2mtz_proc.stdin.write("eof\n")
+    scalepack2mtz_proc.wait()
+
+    # Sort the file into correct CCP4 format
+    cmd = "cad hklin1 %s hklout %s" % (unsorted_file, dest_file_name)
+    cad_proc = subprocess.Popen([cmd, "<<eof"],
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 shell=True)
+
+    cad_proc.stdin.write("LABIN FILE 1 E1=IMEAN E2=SIGIMEAN\n")
     cad_proc.stdin.write("SORT H K L\n")
     cad_proc.stdin.write("END\n")
     cad_proc.stdin.write("eof\n")
@@ -1152,6 +1209,70 @@ def convert_scalepack_anomalous_to_rfree_mtz(source_file_name,
         files_to_remove = (
             unsorted_file,
             truncate_file,
+        )
+
+        for file_to_remove in files_to_remove:
+            os.unlink(file_to_remove)
+
+    return dest_file_name
+
+def convert_scalepack_anomalous_to_scalepack_merge(source_file_name,
+                                                   dest_file_name=False,
+                                                   overwrite=False,
+                                                   clean=True):
+    """Convert file"""
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = source_file_name.replace(
+            ".sca",
+            RAPD_FILE_SUFFIXES["scalepack_merge"])
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    # Convert the file to mtz
+    unsorted_file = next(tempfile._get_candidate_names()) + ".mtz"
+    cmd =  "scalepack2mtz hklin %s hklout %s" % (source_file_name,
+                                                       unsorted_file)
+    scalepack2mtz_proc = subprocess.Popen([cmd, "<<eof"],
+                                          stdin=subprocess.PIPE,
+                                          stdout=subprocess.PIPE,
+                                          stderr=subprocess.PIPE,
+                                          shell=True
+                                         )
+    scalepack2mtz_proc.stdin.write("ANOMALOUS YES\n")
+    scalepack2mtz_proc.stdin.write("END\n")
+    scalepack2mtz_proc.stdin.write("eof\n")
+    scalepack2mtz_proc.wait()
+
+    # Sort the file into correct CCP4 format
+    cad_file = next(tempfile._get_candidate_names()) + ".mtz"
+    cmd = "cad hklin1 %s hklout %s" % (unsorted_file, cad_file)
+    cad_proc = subprocess.Popen([cmd, "<<eof"],
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 shell=True)
+
+    cad_proc.stdin.write("LABIN FILE 1 E1=IMEAN E2=SIGIMEAN\n")
+    cad_proc.stdin.write("SORT H K L\n")
+    cad_proc.stdin.write("END\n")
+    cad_proc.stdin.write("eof\n")
+    cad_proc.wait()
+
+    # Convert to .sca file
+    convert_minimal_refl_mtz_to_scalepack_merge(cad_file,
+                                                dest_file_name,
+                                                overwrite,
+                                                clean)
+
+    # Clean up
+    if clean:
+        files_to_remove = (
+            unsorted_file,
+            cad_file
         )
 
         for file_to_remove in files_to_remove:
