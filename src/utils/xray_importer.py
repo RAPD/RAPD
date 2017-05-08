@@ -404,12 +404,23 @@ RAPD_FILE_SIGNATURES = {
 
 # Conversions that RAPD can and cannot perform
 RAPD_CONVERSIONS = {
+    ("mergable_mtz", "minimal_refl_anom_mtz"): True,
+    ("mergable_mtz", "minimal_refl_mtz"): False,
+    ("mergable_mtz", "minimal_rfree_mtz"): False,
     ("mergable_mtz", "rfree_mtz"): True,
     ("mergable_mtz", "scalepack_anomalous"): True,
     ("mergable_mtz", "scalepack_merge"): True,
 
+    ("minimal_refl_anom_mtz", "minimal_refl_mtz"): False,
+    ("minimal_refl_anom_mtz", "minimal_rfree_mtz"): False,
+    ("minimal_refl_anom_mtz", "scalepack_anomalous"): False,
+    ("minimal_refl_anom_mtz", "rfree_mtz"): False,
+    ("minimal_refl_anom_mtz", "scalepack_merge"): False,
+
+    ("minimal_refl_mtz", "minimal_rfree_mtz"): False,
     ("minimal_refl_mtz", "scalepack_merge"): True,
 
+    ("minimal_rfree_mtz", "minimal_refl_mtz"): False,
     ("minimal_rfree_mtz", "scalepack_merge"): True,
 
     ("rfree_mtz", "scalepack_anomalous"): True,
@@ -424,11 +435,15 @@ RAPD_CONVERSIONS = {
     ("scalepack_merge", "minimal_rfree_mtz"): True,
 
     ("xds_corrected", "mergable_mtz"): True,
+    ("xds_corrected", "minimal_refl_anom_mtz"): False,
+    ("xds_corrected", "minimal_rfree_mtz"): False,
     ("xds_corrected", "rfree_mtz"): True,
     ("xds_corrected", "scalepack_anomalous"): False,
     ("xds_corrected", "scalepack_merge"): False,
 
     ("xds_integrated", "mergable_mtz"): True,
+    ("xds_integrated", "minimal_refl_anom_mtz"): False,
+    ("xds_integrated", "minimal_rfree_mtz"): False,
     ("xds_integrated", "rfree_mtz"): True,
     ("xds_integrated", "scalepack_anomalous"): False,
     ("xds_integrated", "scalepack_merge"): False,
@@ -486,6 +501,9 @@ def main():
             print convert_scalepack_anomalous_to_rfree_mtz(input_file_name, "rfree_mtz.mtz", True)
             print convert_scalepack_anomalous_to_minimal_refl_mtz(input_file_name, "minimal_refl_mtz.mtz", True)
             print convert_scalepack_anomalous_to_scalepack_merge(input_file_name, "foo_merge.sca", True)
+
+        elif rapd_file_type == "mergable_mtz":
+            print convert_mergable_mtz_to_minimal_refl_anom_mtz(input_file_name, overwrite=True)
 
 
 def convert_intensities_files(input_file_names,
@@ -743,11 +761,69 @@ def replace_suffix(input_file_name, input_rapd_type, output_rapd_type):
 # FILE CONVERSION METHODS
 #
 
+def convert_mergable_mtz_to_minimal_refl_anom_mtz(source_file_name,
+                                                  dest_file_name=False,
+                                                  overwrite=True,
+                                                  clean=True):
+    """Convert file"""
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = source_file_name.replace(
+            ".mtz",
+            RAPD_FILE_SUFFIXES["minimal_refl_anom_mtz"])
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    # Merge the data
+    aimless_file = next(tempfile._get_candidate_names()) + ".mtz"
+    cmd = "aimless hklin %s hklout %s" % (source_file_name, aimless_file)
+    aimless_proc = subprocess.Popen([cmd, "<<eof"],
+                                    stdin=subprocess.PIPE,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    shell=True)
+    aimless_proc.stdin.write("ANOMALOUS ON\n")
+    aimless_proc.stdin.write("SCALES CONSTANT\n")
+    aimless_proc.stdin.write("SDCORRECTION NOREFINE FULL 1 0 0 PARTIAL 1 0 0\n")
+    aimless_proc.stdin.write("CYCLES 0\n")
+    aimless_proc.stdin.write("END\n")
+    aimless_proc.stdin.write("eof\n")
+    aimless_proc.wait()
+
+    # Prune away unwanted columns
+    cmd = "cad hklin1 %s hklout %s" % (aimless_file, dest_file_name)
+    cad_proc = subprocess.Popen([cmd, "<<eof"],
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 shell=True)
+    cad_proc.stdin.write("LABIN FILE 1 E1=IMEAN E2=SIGIMEAN E3=I(+) E4=SIGI(+) E5=I(-) E6=SIGI(-)\n")
+    cad_proc.stdin.write("SORT H K L\n")
+    cad_proc.stdin.write("END\n")
+    cad_proc.stdin.write("eof\n")
+    cad_proc.wait()
+
+    # Clean up
+    if clean:
+        files_to_remove = (
+            aimless_file,
+        )
+
+        for file_to_remove in files_to_remove:
+            os.unlink(file_to_remove)
+
+    return dest_file_name
+
 def convert_mergable_mtz_to_rfree_mtz(source_file_name,
                                       dest_file_name=False,
                                       overwrite=True,
                                       clean=True):
     """Convert file"""
+
+
 
     # Name of resulting file
     if not dest_file_name:
