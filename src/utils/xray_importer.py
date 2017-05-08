@@ -41,7 +41,7 @@ from pprint import pprint
 import subprocess
 import sys
 import tempfile
-# import time
+import time
 # import unittest
 # import urllib2
 # import uuid
@@ -257,59 +257,180 @@ xray_column_synonyms = {
 # File suffixes used by RAPD
 RAPD_FILE_SUFFIXES = {
     "mergable_mtz": "_mergable.mtz",
+    "minimal_refl_anom_mtz": "_min_anom.mtz",
+    "minimal_refl_mtz": "_min.mtz",
     "rfree_mtz": "_rfree.mtz",
     "scalepack_anomalous": "_ANOM.sca",
-    "scalepack_native": "_NORM.sca",
+    "scalepack_merge": ".sca",
     "xds_corrected": "_ASCII.HKL",
     "xds_integrated": "_INTEGRATE.HKL",
 }
 
 # Column signatures for file put out by RAPD
-RAPD_COLUMN_SIGNATURES = {
-    "mergable_mtz": ['H', 'K', 'L', 'M_ISYM', 'BATCH', 'I', 'SIGI', 'FRACTIONCALC', 'XDET', 'YDET', 'ROT', 'LP', 'FLAG'],
-    "rfree_mtz": ['H', 'K', 'L', 'FreeR_flag', 'IMEAN', 'SIGIMEAN', 'I(+)', 'SIGI(+)', 'I(-)', 'SIGI(-)', 'F', 'SIGF', 'DANO', 'SIGDANO', 'F(+)', 'SIGF(+)', 'F(-)', 'SIGF(-)', 'ISYM'],
-    "scalepack_anomalous": ['H', 'K', 'L', 'I(+)', 'SIGI(+)', 'I(-)', 'SIGI(-)'],
-    "scalepack_native": ['H', 'K', 'L', 'I', 'SIGI'],
-    "xds_corrected": ['H', 'K', 'L', 'IOBS', 'SIGMA(IOBS)', 'XD', 'YD', 'ZD', 'RLP', 'PEAK', 'CORR', 'PSI'],
-    "xds_integrated": ['H', 'K', 'L', 'IOBS', 'SIGMA', 'XCAL', 'YCAL', 'ZCAL', 'RLP', 'PEAK', 'CORR', 'MAXC', 'XOBS', 'YOBS', 'ZOBS', 'ALF0', 'BET0', 'ALF1', 'BET1', 'PSI', 'ISEG'],
+RAPD_FILE_SIGNATURES = {
+    "mergable_mtz": ("ccp4_mtz",
+                     ['H',
+                      'K',
+                      'L',
+                      'M_ISYM',
+                      'BATCH',
+                      'I',
+                      'SIGI',
+                      'FRACTIONCALC',
+                      'XDET',
+                      'YDET',
+                      'ROT',
+                      'LP',
+                      'FLAG',
+                     ],
+                    ),
+    "minimal_refl_mtz": ("ccp4_mtz",
+                         ['H',
+                          'K',
+                          'L',
+                          'I',
+                          'SIGI',
+                         ],
+                        ),
+    "minimal_refl_anom_mtz": ("ccp4_mtz",
+                              ['H',
+                               'K',
+                               'L',
+                               'I(+)',
+                               'SIGI(+)',
+                               'I(-)',
+                               'SIGI(-)',
+                              ],
+                             ),
+    "minimal_rfree_mtz": (
+        "ccp4_mtz",
+        [
+
+        ]
+    ),
+    "rfree_mtz": ("ccp4_mtz",
+                  ['H',
+                   'K',
+                   'L',
+                   'FreeR_flag',
+                   'IMEAN',
+                   'SIGIMEAN',
+                   'I(+)',
+                   'SIGI(+)',
+                   'I(-)',
+                   'SIGI(-)',
+                   'F',
+                   'SIGF',
+                   'DANO',
+                   'SIGDANO',
+                   'F(+)',
+                   'SIGF(+)',
+                   'F(-)',
+                   'SIGF(-)',
+                   'ISYM'
+                  ],
+                 ),
+    "scalepack_anomalous": ("scalepack_anomalous",
+                            ['H',
+                             'K',
+                             'L',
+                             'I(+)',
+                             'SIGI(+)',
+                             'I(-)',
+                             'SIGI(-)'
+                            ],
+                           ),
+    "scalepack_merge": ("scalepack_merge",
+                         ['H',
+                          'K',
+                          'L',
+                          'I',
+                          'SIGI',
+                         ],
+                        ),
+    "xds_corrected": ("xds_ascii",
+                      ['H',
+                       'K',
+                       'L',
+                       'IOBS',
+                       'SIGMA(IOBS)',
+                       'XD',
+                       'YD',
+                       'ZD',
+                       'RLP',
+                       'PEAK',
+                       'CORR',
+                       'PSI',
+                       ],
+                     ),
+    "xds_integrated": ("xds_integrate_hkl",
+                       ['H',
+                        'K',
+                        'L',
+                        'IOBS',
+                        'SIGMA',
+                        'XCAL',
+                        'YCAL',
+                        'ZCAL',
+                        'RLP',
+                        'PEAK',
+                        'CORR',
+                        'MAXC',
+                        'XOBS',
+                        'YOBS',
+                        'ZOBS',
+                        'ALF0',
+                        'BET0',
+                        'ALF1',
+                        'BET1',
+                        'PSI',
+                        'ISEG',
+                        ],
+                       ),
 }
 
 # Conversions that RAPD can and cannot perform
 RAPD_CONVERSIONS = {
     ("mergable_mtz", "rfree_mtz"): True,
     ("mergable_mtz", "scalepack_anomalous"): True,
-    ("mergable_mtz", "scalepack_native"): True,
+    ("mergable_mtz", "scalepack_merge"): True,
     ("mergable_mtz", "xds_corrected"): False,
     ("mergable_mtz", "xds_integrated"): False,
 
+    ("minimal_refl_mtz", "scalepack_merge"): True,      ##
+
     ("rfree_mtz", "mergable_mtz"): False,
     ("rfree_mtz", "scalepack_anomalous"): True,
-    ("rfree_mtz", "scalepack_native"): True,
+    ("rfree_mtz", "scalepack_merge"): True,
     ("rfree_mtz", "xds_corrected"): False,
     ("rfree_mtz", "xds_integrated"): False,
 
     ("scalepack_anomalous", "mergable_mtz"): False,
+    ("scalepack_anomalous", "minimal_refl_anom_mtz"): True,     ##
+    ("scalepack_anomalous", "minimal_refl_mtz"): True,     ##
     ("scalepack_anomalous", "rfree_mtz"): False,
-    ("scalepack_anomalous", "scalepack_native"): False,
+    ("scalepack_anomalous", "scalepack_merge"): True,      ##
     ("scalepack_anomalous", "xds_corrected"): False,
     ("scalepack_anomalous", "xds_integrated"): False,
 
-    ("scalepack_native", "mergable_mtz"): False,
-    ("scalepack_native", "rfree_mtz"): True,            ##
-    ("scalepack_native", "scalepack_anomalous"): False,
-    ("scalepack_native", "xds_corrected"): False,
-    ("scalepack_native", "xds_integrated"): False,
+    ("scalepack_merge", "mergable_mtz"): False,
+    ("scalepack_merge", "minimal_refl_anom_mtz"): False,
+    ("scalepack_merge", "minimal_refl_mtz"): True,
+    ("scalepack_merge", "rfree_mtz"): True,            ##
+    ("scalepack_merge", "scalepack_anomalous"): False,
+    ("scalepack_merge", "xds_corrected"): False,
+    ("scalepack_merge", "xds_integrated"): False,
 
     ("xds_corrected", "mergable_mtz"): True,
     ("xds_corrected", "rfree_mtz"): True,
     ("xds_corrected", "scalepack_anomalous"): True,     ##
-    ("xds_corrected", "scalepack_native"): True,        ##
+    ("xds_corrected", "scalepack_merge"): True,        ##
     ("xds_corrected", "xds_integrated"): False,
 
     ("xds_integrated", "mergable_mtz"): True,
     ("xds_integrated", "rfree_mtz"): True,
     ("xds_integrated", "scalepack_anomalous"): True,    ##
-    ("xds_integrated", "scalepack_native"): True,       ##
+    ("xds_integrated", "scalepack_merge"): True,       ##
     ("xds_integrated", "xds_corrected"): True,          ##
 }
 
@@ -336,11 +457,10 @@ def main():
 
         # Get the columns
         columns = get_columns(datafile)
-
         print "  columns:", columns
 
         # Get the RAPD file type
-        rapd_file_type = get_rapd_file_type(columns)
+        rapd_file_type = get_rapd_file_type(input_file_name)
 
         print "  RAPD file type:", rapd_file_type
 
@@ -350,7 +470,10 @@ def main():
                 if possible:
                     print "      %s" % conversion[1]
 
-    convert_intensities_files(datafiles, "rfree_mtz")
+        if rapd_file_type == "scalepack_merge":
+            print convert_scalepack_merge_to_minimal_refl_mtz(input_file_name, "foo.mtz")
+
+    # convert_intensities_files(datafiles, "rfree_mtz")
 
 
 
@@ -379,7 +502,7 @@ def convert_intensities_files(input_file_names,
         output_file_names = [False] * len(input_file_names)
 
     # Is the final format understood?
-    if not output_rapd_type in RAPD_COLUMN_SIGNATURES:
+    if not output_rapd_type in RAPD_FILE_SIGNATURES:
         raise Exception("Output type %s is not a format that is understood by \
 RAPD" % output_rapd_type)
 
@@ -404,7 +527,7 @@ def convert_intensities_file(input_file_name,
     Convert a datafile of intensities to a new type
 
     input_file_name - filename of file to be converted
-    output_rapd_type - type to be converted to. Must be in RAPD_COLUMN_SIGNATURES
+    output_rapd_type - type to be converted to. Must be in RAPD_FILE_SIGNATURES
     output_file_name - name of the file to be created by the conversion. Must have
                     the proper suffix
     force - allows overwrite of files if True
@@ -413,7 +536,7 @@ def convert_intensities_file(input_file_name,
     """
 
     # Is the final format understood?
-    if not output_rapd_type in RAPD_COLUMN_SIGNATURES:
+    if not output_rapd_type in RAPD_FILE_SIGNATURES:
         raise Exception("Output type %s is not a format that is understood by \
 RAPD" % output_rapd_type)
 
@@ -563,14 +686,34 @@ def get_xds_integrate_hkl_columns(datafile):
 
     return columns
 
-def get_rapd_file_type(columns):
+def get_rapd_file_type(file_name):
     """Returns RAPD-defined file type, if known. False if not"""
 
-    for file_type, column_signature in RAPD_COLUMN_SIGNATURES.iteritems():
-        if columns == column_signature:
-            return file_type
+    # Read in input file
+    reflection_file = reflection_file_reader.any_reflection_file(file_name=\
+                      file_name)
+
+    columns = get_columns(reflection_file)
+    cctbx_file_type = reflection_file.file_type()
+
+    # Look for signature
+    for rapd_file_type, signature in RAPD_FILE_SIGNATURES.iteritems():
+        ft, cols = signature
+        if cctbx_file_type == ft and columns == cols:
+            return rapd_file_type
     else:
         return False
+
+# def get_rapd_file_type(columns):
+#     """Returns RAPD-defined file type, if known. False if not"""
+#
+#     for file_type, column_signature in RAPD_FILE_SIGNATURES.iteritems():
+#         ft, cols = column_signature
+#         if
+#         if cctbx_file_type, columns == column_signature:
+#             return rapd_file_type
+#     else:
+#         return False
 
 def replace_suffix(input_file_name, input_rapd_type, output_rapd_type):
     """Replace a file suffix with as much of a RAPD suffix as possible"""
@@ -718,7 +861,7 @@ def convert_mergable_mtz_to_scalepack_anomalous(source_file_name,
 
     return dest_file_name
 
-def convert_mergable_mtz_to_scalepack_native(source_file_name,
+def convert_mergable_mtz_to_scalepack_merge(source_file_name,
                                              dest_file_name=False,
                                              overwrite=True,
                                              clean=True):
@@ -802,7 +945,7 @@ def convert_rfree_mtz_to_scalepack_anomalous(source_file_name,
 
     return dest_file_name
 
-def convert_rfree_mtz_to_scalepack_native(source_file_name,
+def convert_rfree_mtz_to_scalepack_merge(source_file_name,
                                           dest_file_name=False,
                                           overwrite=True,
                                           clean=True):
@@ -833,6 +976,55 @@ def convert_rfree_mtz_to_scalepack_native(source_file_name,
 
     # Fix some known converted scalepack problems
     fix_mtz_to_sca(dest_file_name)
+
+    return dest_file_name
+
+def convert_scalepack_merge_to_minimal_refl_mtz(source_file_name,
+                                                dest_file_name=False,
+                                                overwrite=False,
+                                                clean=True):
+    "Convert file"
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = source_file_name.replace(
+            ".sca",
+            RAPD_FILE_SUFFIXES["minimal_refl_mtz"])
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    # Convert the file to mtz
+    unsorted_file = next(tempfile._get_candidate_names()) + ".mtz"
+    cmd =  "scalepack2mtz hklin %s hklout %s <<eof" % (source_file_name,
+                                                       unsorted_file)
+    scalepack2mtz_proc = subprocess.Popen([cmd],
+                                          stdin=subprocess.PIPE,
+                                        #   stdout=subprocess.PIPE,
+                                        #   stderr=subprocess.PIPE,
+                                          shell=True
+                                         )
+    scalepack2mtz_proc.stdin.write("END\n")
+    scalepack2mtz_proc.stdin.write("eof\n")
+    scalepack2mtz_proc.wait()
+    time.sleep(1)
+
+    # Sort the file into correct CCP4 format
+    cmd = "cad hklin1 %s hklout %s" % (unsorted_file, dest_file_name)
+    print ">>>>", cmd, "<<<<"
+    cad_proc = subprocess.Popen([cmd, "<<eof"],
+                                 stdin=subprocess.PIPE,
+                                 shell=True)
+
+    cad_proc.stdin.write("labin file 1 E1=IMEAN E2=SIGIMEAN\n")
+    cad_proc.stdin.write("sort H K L\n")
+    # cad_proc.stdin.write("LABIN FILE 1 E1=IMEAN E2=SIGIMEAN E3=I(+) E4=SIGI(+) E5=I(-) E6=SIGI(-)\n")
+    # cad_proc.stdin.write("CTYP FILE 1 E1=J E2=Q E3=K E4=M E5=K E6=M\n")
+    # cad_proc.stdin.write("LABOUT FILE 1 E1=I E2=SIGI\n")
+    cad_proc.stdin.write("END\n")
+    cad_proc.stdin.write("eof\n")
+    cad_proc.wait()
 
     return dest_file_name
 
