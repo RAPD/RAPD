@@ -184,7 +184,7 @@ def preprocess(self):
         # Make a list of filenames
         self.data_files.append(hkl_filename)
 
-reflection_file_types = (
+data_file_cctbx_types = (
     "ccp4_mtz",
     "scalepack_merge",
     "scalepack_no_merge_original_index",
@@ -273,6 +273,8 @@ RAPD_CONVERSIONS = {
     ("mergable_mtz", "rfree_mtz"): True,
     ("mergable_mtz", "scalepack_anomalous"): True,
     ("mergable_mtz", "scalepack_native"): True,
+    ("mergable_mtz", "xds_corrected"): False,
+    ("mergable_mtz", "xds_integrated"): False,
 
     ("rfree_mtz", "mergable_mtz"): False,
     ("rfree_mtz", "scalepack_anomalous"): True,
@@ -281,6 +283,10 @@ RAPD_CONVERSIONS = {
     ("rfree_mtz", "xds_integrated"): False,
 
     ("scalepack_anomalous", "mergable_mtz"): False,
+    ("scalepack_anomalous", "rfree_mtz"): False,
+    ("scalepack_anomalous", "scalepack_native"): False,
+    ("scalepack_anomalous", "xds_corrected"): False,
+    ("scalepack_anomalous", "xds_integrated"): False,
 
     ("scalepack_native", "mergable_mtz"): False,
 
@@ -292,7 +298,18 @@ RAPD_CONVERSIONS = {
 
     ("xds_integrated", "mergable_mtz"): True,
     ("xds_integrated", "rfree_mtz"): True,
+    ("xds_integrated", "scalepack_anomalous"): True,    ##
+    ("xds_integrated", "scalepack_native"): True,       ##
     ("xds_integrated", "xds_corrected"): True,          ##
+}
+
+RAPD_FILE_SUFFIXES = {
+    "mergable_mtz": "_mergable.mtz",
+    "rfree_mtz": "_rfree.mtz",
+    "scalepack_anomalous": "_ANOM.sca",
+    "scalepack_native": "_NORM.sca",
+    "xds_corrected": "_ASCII.HKL",
+    "xds_integrated": "_INTEGRATE.HKL",
 }
 
 def main():
@@ -343,7 +360,8 @@ def main():
 
             print "CONVERTING to rfree_mtz"
 
-            xds_corrected_to_rfree_mtz(input_datafile)
+            # xds_corrected_to_rfree_mtz(input_datafile)
+            convert_intensities(input_datafile, "rfree_mtz")
 
         # if rapd_file_type == "mergable_mtz":
         #     print "  Correct file type"
@@ -360,6 +378,77 @@ def main():
 #
 #     if not isinstance(datafile, iotbx.reflection_file_reader.any_reflection_file):
 #         reflection_file = datafile
+
+def convert_intensities(input_file_name,
+                        output_rapd_type,
+                        out_file_name=False,
+                        force=False):
+    """
+    Convert a datafile of intensities to a new type
+
+    input_file_name - filename of file to be converted
+    output_rapd_type - type to be converted to. Must be in RAPD_COLUMN_SIGNATURES
+    out_file_name - name of the file to be created by the conversion. Must have
+                    the proper suffix
+    force - allows overwrite of files if True
+    """
+
+    # Is the final format understood?
+    if not output_rapd_type in RAPD_COLUMN_SIGNATURES:
+        raise Exception("Output type %s is not a format that is understood by \
+RAPD" % output_rapd_type)
+
+    # Read in input file
+    reflection_file = reflection_file_reader.any_reflection_file(file_name=\
+                      input_file_name)
+    # Get CCTBX type
+    input_file_cctbx_type = reflection_file.file_type()
+    # Is the initial format understood?
+    if not input_file_cctbx_type in data_file_cctbx_types:
+        raise Exception("%s is not a format that is understood by RAPD" % \
+                        input_file_cctbx_type)
+    # Get the RAPD column signature
+    input_columns = get_columns(reflection_file)
+    input_rapd_type = get_rapd_file_type(input_columns)
+    if not input_rapd_type:
+        raise Exception("Input data file %s is not a format that is understood \
+by RAPD" % input_file_name)
+
+    # Can the conversion be made?
+    if not RAPD_CONVERSIONS.get((input_rapd_type, output_rapd_type)):
+        raise Exception("RAPD is unable to convert from %s to %s" % \
+                        (input_rapd_type, output_rapd_type))
+
+    # Handle the output file name
+    if out_file_name:
+        # Only the file suffix after the "." is insisted upon
+        if not out_file_name.endswith(RAPD_FILE_SUFFIXES[output_rapd_type].split("."[-1])):
+            raise Exception("Output file suffix does not match RAPD standards. \
+Please change to %s" % RAPD_FILE_SUFFIXES[output_rapd_type])
+    else:
+        # Create output file name from the input
+        # Full suffix replacement
+        if input_file_name.endswith(RAPD_FILE_SUFFIXES[input_rapd_type]):
+            print RAPD_FILE_SUFFIXES[input_rapd_type]
+            print RAPD_FILE_SUFFIXES[output_rapd_type]
+            out_file_name = input_file_name.replace(RAPD_FILE_SUFFIXES[input_rapd_type], RAPD_FILE_SUFFIXES[output_rapd_type])
+        # Just post "." suffix replacement
+        else:
+            out_file_name = ".".join(input_file_name.split(".")[:-1]
+                                     +[RAPD_FILE_SUFFIXES[output_rapd_type]])
+
+
+
+
+
+    if not force:
+        if os.path.exists(out_file_name):
+            raise Exception("%s already exists. Exiting" % out_file_name)
+
+    # Perform the conversion
+    main_module = sys.modules[__name__]
+    method_to_call = getattr(main_module, "%s_to_%s" % (input_rapd_type, output_rapd_type))
+    method_to_call(source=input_file_name, dest=out_file_name, overwrite=force, clean=True)
 
 def get_columns(datafile):
     """
