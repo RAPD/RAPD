@@ -347,7 +347,6 @@ def main():
         print "  Formats possible to be converted to:"
         for conversion, possible in RAPD_CONVERSIONS.iteritems():
             if conversion[0] == rapd_file_type:
-                # print conversion, possible
                 if possible:
                     print "      %s" % conversion[1]
 
@@ -364,6 +363,8 @@ def convert_intensities(input_file_name,
     output_file_name - name of the file to be created by the conversion. Must have
                     the proper suffix
     force - allows overwrite of files if True
+
+    returns the output file name
     """
 
     # Is the final format understood?
@@ -390,6 +391,10 @@ RAPD" % output_rapd_type)
     if not input_rapd_type:
         raise Exception("Input data file %s is not a format that is understood \
 by RAPD" % input_file_name)
+
+    # If the file is already in the desired format, return it
+    if input_rapd_type == output_rapd_type:
+        return input_file_name
 
     # Can the conversion be made?
     if not RAPD_CONVERSIONS.get((input_rapd_type, output_rapd_type)):
@@ -421,7 +426,9 @@ Please change to %s" % RAPD_FILE_SUFFIXES[output_rapd_type])
     # Perform the conversion
     main_module = sys.modules[__name__]
     method_to_call = getattr(main_module, "convert_%s_to_%s" % (input_rapd_type, output_rapd_type))
-    method_to_call(source_file_name=input_file_name, dest_file_name=output_file_name, overwrite=force, clean=True)
+    output_file = method_to_call(source_file_name=input_file_name, dest_file_name=output_file_name, overwrite=force, clean=True)
+
+    return output_file
 
 def get_columns(datafile):
     """

@@ -49,7 +49,11 @@ __status__ = "Development"
 # import utils
 
 
+# Caches for data
 CIF_CACHE = "/tmp/rapd_cache/cif_files"
+TEST_CACHE = "/tmp/rapd_cache/test_data"
+
+# NE-CAT PDBQ Server
 PDBQ_SERVER = "remote.nec.aps.anl.gov:3030"
 
 # Timeout for phaser MR process

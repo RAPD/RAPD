@@ -36,7 +36,7 @@ import json
 # import logging
 # import multiprocessing
 import os
-from pprint import pprint
+# from pprint import pprint
 # import pymongo
 # import re
 # import redis
@@ -50,12 +50,16 @@ import unittest
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 import test_sets
+import utils.globals as rglobals
 import utils.log
 import utils.site as site
 
+# Cache for test data
+TEST_CACHE = rglobals.PDBQ_SERVER.TEST_CACHE
+
 # Software dependencies
 VERSIONS = {
-# "eiger2cbf": ("160415",)
+    # "eiger2cbf": ("160415",)
 }
 
 def run_unit(plugin, tprint, mode="DEPENDENCIES", verbose=True):
@@ -95,7 +99,9 @@ def run_processing(target, plugin, rapd_home, tprint, verbose=True):
     test_module = importlib.import_module(test_sets.PLUGINS[plugin]+".test")
 
     # Change to working directory
-    work_dir = os.path.join(rapd_home, "test_data", target)
+    work_dir = os.path.join(TEST_CACHE, target)
+    if not os.path.exists(work_dir):
+        os.makedirs(work_dir)
     os.chdir(work_dir)
 
     # Run the process
@@ -127,8 +133,10 @@ def check_for_data(target, rapd_home, tprint):
 
     # Establish targets
     target_def = test_sets.DATA_SETS[target]
-    target_dir = os.path.join(rapd_home, "test_data", target)
-    target_archive = os.path.join(rapd_home, "test_data", target_def["location"])
+    target_dir = os.path.join(TEST_CACHE, target)
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+    target_archive = os.path.join(TEST_CACHE, target_def["location"])
 
     # Does target directory exist?
     if not os.path.exists(target_dir):
@@ -138,7 +146,7 @@ def check_for_data(target, rapd_home, tprint):
             tprint("  Data archive present", level=10, color="white")
             tprint("  Unpacking data archive", level=10, color="white")
 
-            os.chdir(os.path.join(rapd_home, "test_data"))
+            os.chdir(TEST_CACHE)
 
             # Unpack archive
             tar = subprocess.Popen(["tar", "xvjf", target_def["location"]])
@@ -170,7 +178,8 @@ def check_for_data(target, rapd_home, tprint):
 
     if local_sha != remote_sha:
         tprint("  Data shasum not equal", level=40, color="red")
-        raise Exception("Data integrity compromised. Reccomend erase and redownload")
+        raise Exception("Data integrity compromised. Reccomend erase and \
+redownload")
     else:
         tprint("  Data integrity OK", level=10, color="green")
 
@@ -183,7 +192,9 @@ def download_data(target, rapd_home, force, tprint):
 
     # Establish targets
     target_def = test_sets.DATA_SETS[target]
-    target_dir = os.path.join(rapd_home, "test_data")
+    target_dir = os.path.join(TEST_CACHE)
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
     download_path = test_sets.DATA_SERVER + target_def["location"]
 
     # Move to where the data goes
