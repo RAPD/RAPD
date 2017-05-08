@@ -79,12 +79,7 @@ VERSIONS = {
     "xds": (
         "VERSION Nov 1, 2016",
         ),
-    # "xds_par": (
-    #     # "VERSION May 1, 2016",
-    #     "VERSION Nov 1, 2016",
-    #     ),
 }
-
 
 # Preprocess function from Kay Perry
 def preprocess(self):
@@ -259,6 +254,16 @@ xray_column_synonyms = {
 
 }
 
+# File suffixes used by RAPD
+RAPD_FILE_SUFFIXES = {
+    "mergable_mtz": "_mergable.mtz",
+    "rfree_mtz": "_rfree.mtz",
+    "scalepack_anomalous": "_ANOM.sca",
+    "scalepack_native": "_NORM.sca",
+    "xds_corrected": "_ASCII.HKL",
+    "xds_integrated": "_INTEGRATE.HKL",
+}
+
 # Column signatures for file put out by RAPD
 RAPD_COLUMN_SIGNATURES = {
     "mergable_mtz": ['H', 'K', 'L', 'M_ISYM', 'BATCH', 'I', 'SIGI', 'FRACTIONCALC', 'XDET', 'YDET', 'ROT', 'LP', 'FLAG'],
@@ -269,6 +274,7 @@ RAPD_COLUMN_SIGNATURES = {
     "xds_integrated": ['H', 'K', 'L', 'IOBS', 'SIGMA', 'XCAL', 'YCAL', 'ZCAL', 'RLP', 'PEAK', 'CORR', 'MAXC', 'XOBS', 'YOBS', 'ZOBS', 'ALF0', 'BET0', 'ALF1', 'BET1', 'PSI', 'ISEG'],
 }
 
+# Conversions that RAPD can and cannot perform
 RAPD_CONVERSIONS = {
     ("mergable_mtz", "rfree_mtz"): True,
     ("mergable_mtz", "scalepack_anomalous"): True,
@@ -289,6 +295,10 @@ RAPD_CONVERSIONS = {
     ("scalepack_anomalous", "xds_integrated"): False,
 
     ("scalepack_native", "mergable_mtz"): False,
+    ("scalepack_native", "rfree_mtz"): True,            ##
+    ("scalepack_native", "scalepack_anomalous"): False,
+    ("scalepack_native", "xds_corrected"): False,
+    ("scalepack_native", "xds_integrated"): False,
 
     ("xds_corrected", "mergable_mtz"): True,
     ("xds_corrected", "rfree_mtz"): True,
@@ -303,15 +313,6 @@ RAPD_CONVERSIONS = {
     ("xds_integrated", "xds_corrected"): True,          ##
 }
 
-RAPD_FILE_SUFFIXES = {
-    "mergable_mtz": "_mergable.mtz",
-    "rfree_mtz": "_rfree.mtz",
-    "scalepack_anomalous": "_ANOM.sca",
-    "scalepack_native": "_NORM.sca",
-    "xds_corrected": "_ASCII.HKL",
-    "xds_integrated": "_INTEGRATE.HKL",
-}
-
 def main():
     """
     The main process docstring
@@ -319,21 +320,19 @@ def main():
     the commandline
     """
 
-    print "main"
-
     args = get_commandline()
 
     datafiles = args.datafiles
 
-    for input_datafile in datafiles:
+    for input_file_name in datafiles:
 
-        print "\n", input_datafile
+        print "\nInput file name: %s" % input_file_name
 
-        datafile = reflection_file_reader.any_reflection_file(file_name=input_datafile)
+        datafile = reflection_file_reader.any_reflection_file(file_name=input_file_name)
 
         file_type = datafile.file_type()
 
-        print "  file_type", datafile.file_type()
+        print "  CCTBX file type", datafile.file_type()
 
         # Get the columns
         columns = get_columns(datafile)
@@ -345,50 +344,24 @@ def main():
 
         print "  RAPD file type:", rapd_file_type
 
-        if rapd_file_type == "rfree_mtz":
+        print "  Formats possible to be converted to:"
+        for conversion, possible in RAPD_CONVERSIONS.iteritems():
+            if conversion[0] == rapd_file_type:
+                # print conversion, possible
+                if possible:
+                    print "      %s" % conversion[1]
 
-            print "CONVERTING TO scalepack NATIVE"
-            rfree_mtz_to_scalepack_anomalous(input_datafile)
-
-        if rapd_file_type == "mergable_mtz":
-            print "CONVERTING TO scalepack_native"
-            mergable_mtz_to_scalepack_native(input_datafile)
-            # mergable_mtz_to_scalepack_anomalous(input_datafile)
-            # mergable_mtz_to_rfree_mtz(input_datafile)
-
-        if rapd_file_type == "xds_corrected":
-
-            print "CONVERTING to rfree_mtz"
-
-            # xds_corrected_to_rfree_mtz(input_datafile)
-            convert_intensities(input_datafile, "rfree_mtz")
-
-        # if rapd_file_type == "mergable_mtz":
-        #     print "  Correct file type"
-        # elif RAPD_CONVERSIONS.get((rapd_file_type, "mergable_mtz")):
-        #     print "  Converting to mergable_mtz"
-        #     main_module = sys.modules[__name__]
-        #     method_to_call = getattr(main_module, "%s_to_%s" % (rapd_file_type, "mergable_mtz"))
-        #     method_to_call(input_datafile)
-        # else:
-        #     print "  This file cannot be converted to the necessary format"
-
-# def get_file_type(reflection_file):
-#     """Return the file type"""
-#
-#     if not isinstance(datafile, iotbx.reflection_file_reader.any_reflection_file):
-#         reflection_file = datafile
 
 def convert_intensities(input_file_name,
                         output_rapd_type,
-                        out_file_name=False,
+                        output_file_name=False,
                         force=False):
     """
     Convert a datafile of intensities to a new type
 
     input_file_name - filename of file to be converted
     output_rapd_type - type to be converted to. Must be in RAPD_COLUMN_SIGNATURES
-    out_file_name - name of the file to be created by the conversion. Must have
+    output_file_name - name of the file to be created by the conversion. Must have
                     the proper suffix
     force - allows overwrite of files if True
     """
@@ -397,6 +370,10 @@ def convert_intensities(input_file_name,
     if not output_rapd_type in RAPD_COLUMN_SIGNATURES:
         raise Exception("Output type %s is not a format that is understood by \
 RAPD" % output_rapd_type)
+
+    # Check to make sure source_file exists
+    if not os.path.exists(source_file_name):
+        raise Exception("%s does not exist" % input_file_name)
 
     # Read in input file
     reflection_file = reflection_file_reader.any_reflection_file(file_name=\
@@ -420,9 +397,9 @@ by RAPD" % input_file_name)
                         (input_rapd_type, output_rapd_type))
 
     # Handle the output file name
-    if out_file_name:
+    if output_file_name:
         # Only the file suffix after the "." is insisted upon
-        if not out_file_name.endswith(RAPD_FILE_SUFFIXES[output_rapd_type].split("."[-1])):
+        if not output_file_name.endswith(RAPD_FILE_SUFFIXES[output_rapd_type].split("."[-1])):
             raise Exception("Output file suffix does not match RAPD standards. \
 Please change to %s" % RAPD_FILE_SUFFIXES[output_rapd_type])
     else:
@@ -431,30 +408,26 @@ Please change to %s" % RAPD_FILE_SUFFIXES[output_rapd_type])
         if input_file_name.endswith(RAPD_FILE_SUFFIXES[input_rapd_type]):
             print RAPD_FILE_SUFFIXES[input_rapd_type]
             print RAPD_FILE_SUFFIXES[output_rapd_type]
-            out_file_name = input_file_name.replace(RAPD_FILE_SUFFIXES[input_rapd_type], RAPD_FILE_SUFFIXES[output_rapd_type])
+            output_file_name = input_file_name.replace(RAPD_FILE_SUFFIXES[input_rapd_type], RAPD_FILE_SUFFIXES[output_rapd_type])
         # Just post "." suffix replacement
         else:
-            out_file_name = ".".join(input_file_name.split(".")[:-1]
+            output_file_name = ".".join(input_file_name.split(".")[:-1]
                                      +[RAPD_FILE_SUFFIXES[output_rapd_type]])
 
-
-
-
-
     if not force:
-        if os.path.exists(out_file_name):
-            raise Exception("%s already exists. Exiting" % out_file_name)
+        if os.path.exists(output_file_name):
+            raise Exception("%s already exists. Exiting" % output_file_name)
 
     # Perform the conversion
     main_module = sys.modules[__name__]
-    method_to_call = getattr(main_module, "%s_to_%s" % (input_rapd_type, output_rapd_type))
-    method_to_call(source=input_file_name, dest=out_file_name, overwrite=force, clean=True)
+    method_to_call = getattr(main_module, "convert_%s_to_%s" % (input_rapd_type, output_rapd_type))
+    method_to_call(source_file_name=input_file_name, dest_file_name=output_file_name, overwrite=force, clean=True)
 
 def get_columns(datafile):
     """
     Return a list of columns for a datafile
 
-    Takes a phenix any_reflection_file
+    datafile is a phenix any_reflection_file
     """
 
     # Determine file type
@@ -557,22 +530,25 @@ def get_rapd_file_type(columns):
 # FILE CONVERSION METHODS
 #
 
-def mergable_mtz_to_rfree_mtz(source, dest=False, overwrite=True, clean=True):
+def convert_mergable_mtz_to_rfree_mtz(source_file_name,
+                                      dest_file_name=False,
+                                      overwrite=True,
+                                      clean=True):
     """Convert file"""
 
     # Name of resulting file
-    if not dest:
-        dest = source.replace(".mtz", "_imported_free.mtz")
+    if not dest_file_name:
+        dest_file_name = source_file_name.replace(".mtz", "_imported_free.mtz")
 
     # Check if we are going to overwrite
-    if os.path.exists(dest) and not overwrite:
-        raise Exception("%s already exists. Exiting" % dest)
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
 
     # Merge the data
     aimfile = next(tempfile._get_candidate_names()) + ".mtz"
     aimless_proc = subprocess.Popen(["aimless",
                                      "hklin",
-                                     source,
+                                     source_file_name,
                                      "hklout",
                                      aimfile
                                     ],
@@ -606,7 +582,7 @@ def mergable_mtz_to_rfree_mtz(source, dest=False, overwrite=True, clean=True):
                                        "hklin",
                                        truncfile,
                                        "hklout",
-                                       dest
+                                       dest_file_name
                                       ],
                                       stdin=subprocess.PIPE,
                                       stdout=subprocess.PIPE,
@@ -631,221 +607,297 @@ def mergable_mtz_to_rfree_mtz(source, dest=False, overwrite=True, clean=True):
         for file_to_remove in files_to_remove:
             os.unlink(file_to_remove)
 
-    return dest
+    return dest_file_name
 
-def mergable_mtz_to_scalepack_anomalous(source,
-                                        dest=False,
-                                        overwrite=True,
+def convert_mergable_mtz_to_scalepack_anomalous(source_file_name,
+                                                dest_file_name=False,
+                                                overwrite=True,
+                                                clean=True):
+    """Convert files"""
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = source_file_name.replace(".mtz", "_imported_ANOM.sca")
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    # Convert mergable_mtz to rfree_mtz
+    rfree_file = next(tempfile._get_candidate_names()) + ".mtz"
+    mergable_mtz_to_rfree_mtz(source_file_name=source_file_name, dest_file_name=rfree_file, clean=clean)
+
+
+    # Convert the rfree_mtz to scalepack_anomalous
+    mtz2various_proc = subprocess.Popen(["mtz2various",
+                                         "hklin",
+                                         rfree_file,
+                                         "hklout",
+                                         dest_file_name],
+                                        stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE)
+
+    mtz2various_proc.stdin.write("OUTPUT SCALEPACK\n")
+    mtz2various_proc.stdin.write("labin I(+)=I(+) SIGI(+)=SIGI(+) I(-)=I(-) \
+    SIGI(-)=SIGI(-)\n")
+    mtz2various_proc.stdin.write("END\n")
+    # mtz2various_proc.stdin.write()
+    mtz2various_proc.wait()
+
+    # Fix some known converted scalepack problems
+    fix_mtz_to_sca(dest_file_name)
+
+    # Clean up
+    if clean:
+        files_to_remove = (
+            rfree_file,
+        )
+
+        for file_to_remove in files_to_remove:
+            os.unlink(file_to_remove)
+
+    return dest_file_name
+
+def convert_mergable_mtz_to_scalepack_native(source_file_name,
+                                             dest_file_name=False,
+                                             overwrite=True,
+                                             clean=True):
+    """Convert files"""
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = source_file_name.replace(".mtz", "_imported_NATIVE.sca")
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    # Convert mergable_mtz to rfree_mtz
+    rfree_file = next(tempfile._get_candidate_names()) + ".mtz"
+    mergable_mtz_to_rfree_mtz(source_file_name=source_file_name, dest_file_name=rfree_file, clean=clean)
+
+
+    # Convert the rfree_mtz to scalepack_anomalous
+    mtz2various_proc = subprocess.Popen(["mtz2various",
+                                         "hklin",
+                                         rfree_file,
+                                         "hklout",
+                                         dest_file_name],
+                                        stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE)
+
+    mtz2various_proc.stdin.write("OUTPUT SCALEPACK\n")
+    mtz2various_proc.stdin.write("labin I=IMEAN SIGI=SIGIMEAN\n")
+    mtz2various_proc.stdin.write("END\n")
+    # mtz2various_proc.stdin.write()
+    mtz2various_proc.wait()
+
+    # Fix some known converted scalepack problems
+    fix_mtz_to_sca(dest_file_name)
+
+    # Clean up
+    if clean:
+        files_to_remove = (
+            rfree_file,
+        )
+
+        for file_to_remove in files_to_remove:
+            os.unlink(file_to_remove)
+
+    return dest_file_name
+
+def convert_rfree_mtz_to_scalepack_anomalous(source_file_name,
+                                             dest_file_name=False,
+                                             overwrite=True,
+                                             clean=True):
+    """Convert files"""
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = source_file_name.replace(".mtz", "_imported_ANOM.sca")
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    mtz2various_proc = subprocess.Popen(["mtz2various",
+                                         "hklin",
+                                         source_file_name,
+                                         "hklout",
+                                         dest_file_name],
+                                        stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE)
+
+    mtz2various_proc.stdin.write("OUTPUT SCALEPACK\n")
+    mtz2various_proc.stdin.write("labin I(+)=I(+) SIGI(+)=SIGI(+) I(-)=I(-) \
+    SIGI(-)=SIGI(-)\n")
+    mtz2various_proc.stdin.write("END\n")
+    # mtz2various_proc.stdin.write()
+    mtz2various_proc.wait()
+
+    # Fix some known converted scalepack problems
+    fix_mtz_to_sca(dest_file_name)
+
+    return dest_file_name
+
+def convert_rfree_mtz_to_scalepack_native(source_file_name,
+                                          dest_file_name=False,
+                                          overwrite=True,
+                                          clean=True):
+    """Convert files"""
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = source_file_name.replace(".mtz", "_imported_NATIVE.sca")
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    mtz2various_proc = subprocess.Popen(["mtz2various",
+                                         "hklin",
+                                         source_file_name,
+                                         "hklout",
+                                         dest_file_name],
+                                        stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE)
+
+    mtz2various_proc.stdin.write("OUTPUT SCALEPACK\n")
+    mtz2various_proc.stdin.write("labin I=IMEAN SIGI=SIGIMEAN\n")
+    mtz2various_proc.stdin.write("END\n")
+    # mtz2various_proc.stdin.write()
+    mtz2various_proc.wait()
+
+    # Fix some known converted scalepack problems
+    fix_mtz_to_sca(dest_file_name)
+
+    return dest_file_name
+
+def convert_xds_corrected_to_mergable_mtz(source_file_name,
+                                          dest_file_name=False,
+                                          overwrite=False,
+                                          clean=True):
+    """Convert files"""
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = source_file_name.replace(".HKL", "_imported_mergable.mtz")
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    pointless_proc = subprocess.Popen(["pointless",
+                                       "-c",
+                                       "xdsin",
+                                       source_file_name,
+                                       "hklout",
+                                       dest_file_name
+                                      ],
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE
+                                     )
+    pointless_proc.wait()
+
+    return dest_file_name
+
+def convert_xds_corrected_to_rfree_mtz(source_file_name,
+                                       dest_file_name=False,
+                                       overwrite=False,
+                                       clean=True):
+    """Convert files"""
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = source_file_name.replace(".HKL", "_imported_rfree.mtz")
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    # Convert to mergable
+    mergable_file = next(tempfile._get_candidate_names()) + ".mtz"
+    pointless_proc = subprocess.Popen(["pointless",
+                                       "-c",
+                                       "xdsin",
+                                       source_file_name,
+                                       "hklout",
+                                       mergable_file
+                                      ],
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE
+                                     )
+    pointless_proc.wait()
+
+    # Convert mergable to rfree
+    _ = mergable_mtz_to_rfree_mtz(source_file_name=mergable_file,
+                                  dest_file_name=dest_file_name,
+                                  overwrite=overwrite,
+                                  clean=clean)
+
+    # Clean up
+    if clean:
+        files_to_remove = (
+            mergable_file,
+        )
+
+        for file_to_remove in files_to_remove:
+            os.unlink(file_to_remove)
+
+    return dest_file_name
+
+def convert_xds_integrated_to_mergable_mtz(source_file_name,
+                                           dest_file_name=False,
+                                           overwrite=False,
+                                           clean=True):
+    """Convert file"""
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = source_file_name.replace(".HKL", "_imported.mtz")
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    pointless_proc = subprocess.Popen(["pointless",
+                                       "-c",
+                                       "xdsin",
+                                       source_file_name,
+                                       "hklout",
+                                       dest_file_name
+                                      ],
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE
+                                     )
+    pointless_proc.wait()
+
+    return dest_file_name
+
+def convert_xds_integrated_to_rfree_mtz(source_file_name,
+                                        dest_file_name=False,
+                                        overwrite=False,
                                         clean=True):
-    """Convert files"""
+    """Convert file"""
 
     # Name of resulting file
-    if not dest:
-        dest = source.replace(".mtz", "_imported_ANOM.sca")
+    if not dest_file_name:
+        dest_file_name = source_file_name.replace(".HKL", "_imported.mtz")
 
     # Check if we are going to overwrite
-    if os.path.exists(dest) and not overwrite:
-        raise Exception("%s already exists. Exiting" % dest)
-
-    # Convert mergable_mtz to rfree_mtz
-    rfree_file = next(tempfile._get_candidate_names()) + ".mtz"
-    mergable_mtz_to_rfree_mtz(source=source, dest=rfree_file, clean=clean)
-
-
-    # Convert the rfree_mtz to scalepack_anomalous
-    mtz2various_proc = subprocess.Popen(["mtz2various",
-                                         "hklin",
-                                         rfree_file,
-                                         "hklout",
-                                         dest],
-                                        stdin=subprocess.PIPE,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE)
-
-    mtz2various_proc.stdin.write("OUTPUT SCALEPACK\n")
-    mtz2various_proc.stdin.write("labin I(+)=I(+) SIGI(+)=SIGI(+) I(-)=I(-) \
-    SIGI(-)=SIGI(-)\n")
-    mtz2various_proc.stdin.write("END\n")
-    # mtz2various_proc.stdin.write()
-    mtz2various_proc.wait()
-
-    # Fix some known converted scalepack problems
-    fix_mtz_to_sca(dest)
-
-    # Clean up
-    if clean:
-        files_to_remove = (
-            rfree_file,
-        )
-
-        for file_to_remove in files_to_remove:
-            os.unlink(file_to_remove)
-
-    return dest
-
-def mergable_mtz_to_scalepack_native(source,
-                                     dest=False,
-                                     overwrite=True,
-                                     clean=True):
-    """Convert files"""
-
-    # Name of resulting file
-    if not dest:
-        dest = source.replace(".mtz", "_imported_NATIVE.sca")
-
-    # Check if we are going to overwrite
-    if os.path.exists(dest) and not overwrite:
-        raise Exception("%s already exists. Exiting" % dest)
-
-    # Convert mergable_mtz to rfree_mtz
-    rfree_file = next(tempfile._get_candidate_names()) + ".mtz"
-    mergable_mtz_to_rfree_mtz(source=source, dest=rfree_file, clean=clean)
-
-
-    # Convert the rfree_mtz to scalepack_anomalous
-    mtz2various_proc = subprocess.Popen(["mtz2various",
-                                         "hklin",
-                                         rfree_file,
-                                         "hklout",
-                                         dest],
-                                        stdin=subprocess.PIPE,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE)
-
-    mtz2various_proc.stdin.write("OUTPUT SCALEPACK\n")
-    mtz2various_proc.stdin.write("labin I=IMEAN SIGI=SIGIMEAN\n")
-    mtz2various_proc.stdin.write("END\n")
-    # mtz2various_proc.stdin.write()
-    mtz2various_proc.wait()
-
-    # Fix some known converted scalepack problems
-    fix_mtz_to_sca(dest)
-
-    # Clean up
-    if clean:
-        files_to_remove = (
-            rfree_file,
-        )
-
-        for file_to_remove in files_to_remove:
-            os.unlink(file_to_remove)
-
-    return dest
-
-def rfree_mtz_to_scalepack_anomalous(source,
-                                     dest=False,
-                                     overwrite=True,
-                                     clean=True):
-    """Convert files"""
-
-    # Name of resulting file
-    if not dest:
-        dest = source.replace(".mtz", "_imported_ANOM.sca")
-
-    # Check if we are going to overwrite
-    if os.path.exists(dest) and not overwrite:
-        raise Exception("%s already exists. Exiting" % dest)
-
-    mtz2various_proc = subprocess.Popen(["mtz2various",
-                                         "hklin",
-                                         source,
-                                         "hklout",
-                                         dest],
-                                        stdin=subprocess.PIPE,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE)
-
-    mtz2various_proc.stdin.write("OUTPUT SCALEPACK\n")
-    mtz2various_proc.stdin.write("labin I(+)=I(+) SIGI(+)=SIGI(+) I(-)=I(-) \
-    SIGI(-)=SIGI(-)\n")
-    mtz2various_proc.stdin.write("END\n")
-    # mtz2various_proc.stdin.write()
-    mtz2various_proc.wait()
-
-    # Fix some known converted scalepack problems
-    fix_mtz_to_sca(dest)
-
-    return dest
-
-def rfree_mtz_to_scalepack_native(source,
-                                 dest=False,
-                                 overwrite=True,
-                                 clean=True):
-    """Convert files"""
-
-    # Name of resulting file
-    if not dest:
-        dest = source.replace(".mtz", "_imported_NATIVE.sca")
-
-    # Check if we are going to overwrite
-    if os.path.exists(dest) and not overwrite:
-        raise Exception("%s already exists. Exiting" % dest)
-
-    mtz2various_proc = subprocess.Popen(["mtz2various",
-                                         "hklin",
-                                         source,
-                                         "hklout",
-                                         dest],
-                                        stdin=subprocess.PIPE,
-                                        stdout=subprocess.PIPE,
-                                        stderr=subprocess.PIPE)
-
-    mtz2various_proc.stdin.write("OUTPUT SCALEPACK\n")
-    mtz2various_proc.stdin.write("labin I=IMEAN SIGI=SIGIMEAN\n")
-    mtz2various_proc.stdin.write("END\n")
-    # mtz2various_proc.stdin.write()
-    mtz2various_proc.wait()
-
-    # Fix some known converted scalepack problems
-    fix_mtz_to_sca(dest)
-
-    return dest
-
-def xds_corrected_to_mergable_mtz(source,
-                                  dest=False,
-                                  overwrite=False,
-                                  clean=True):
-    """Convert files"""
-
-    # Name of resulting file
-    if not dest:
-        dest = source.replace(".HKL", "_imported_mergable.mtz")
-
-    # Check if we are going to overwrite
-    if os.path.exists(dest) and not overwrite:
-        raise Exception("%s already exists. Exiting" % dest)
-
-    pointless_proc = subprocess.Popen(["pointless",
-                                       "-c",
-                                       "xdsin",
-                                       source,
-                                       "hklout",
-                                       dest
-                                      ],
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.PIPE
-                                     )
-    pointless_proc.wait()
-
-    return dest
-
-def xds_corrected_to_rfree_mtz(source, dest=False, overwrite=False, clean=True):
-    """Convert files"""
-
-    # Name of resulting file
-    if not dest:
-        dest = source.replace(".HKL", "_imported_rfree.mtz")
-
-    # Check if we are going to overwrite
-    if os.path.exists(dest) and not overwrite:
-        raise Exception("%s already exists. Exiting" % dest)
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
 
     # Convert to mergable
     mergable_file = next(tempfile._get_candidate_names()) + ".mtz"
     pointless_proc = subprocess.Popen(["pointless",
                                        "-c",
                                        "xdsin",
-                                       source,
+                                       source_file_name,
                                        "hklout",
                                        mergable_file
                                       ],
@@ -855,8 +907,8 @@ def xds_corrected_to_rfree_mtz(source, dest=False, overwrite=False, clean=True):
     pointless_proc.wait()
 
     # Convert mergable to rfree
-    _ = mergable_mtz_to_rfree_mtz(source=mergable_file,
-                                  dest=dest,
+    _ = mergable_mtz_to_rfree_mtz(source_file_name=mergable_file,
+                                  dest_file_name=dest_file_name,
                                   overwrite=overwrite,
                                   clean=clean)
 
@@ -869,93 +921,14 @@ def xds_corrected_to_rfree_mtz(source, dest=False, overwrite=False, clean=True):
         for file_to_remove in files_to_remove:
             os.unlink(file_to_remove)
 
-    return dest
-
-def xds_integrated_to_mergable_mtz(source,
-                                   dest=False,
-                                   overwrite=False,
-                                   clean=True):
-    """Convert file"""
-
-    # Name of resulting file
-    if not dest:
-        dest = source.replace(".HKL", "_imported.mtz")
-
-    # Check if we are going to overwrite
-    if os.path.exists(dest) and not overwrite:
-        raise Exception("%s already exists. Exiting" % dest)
-
-    pointless_proc = subprocess.Popen(["pointless",
-                                       "-c",
-                                       "xdsin",
-                                       source,
-                                       "hklout",
-                                       dest
-                                      ],
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.PIPE
-                                     )
-    pointless_proc.wait()
-
-    return dest
-
-def xds_integrated_to_rfree_mtz(source,
-                                dest=False,
-                                overwrite=False,
-                                clean=True):
-    """Convert file"""
-
-    # Name of resulting file
-    if not dest:
-        dest = source.replace(".HKL", "_imported.mtz")
-
-    # Check if we are going to overwrite
-    if os.path.exists(dest) and not overwrite:
-        raise Exception("%s already exists. Exiting" % dest)
-
-    # Convert to mergable
-    mergable_file = next(tempfile._get_candidate_names()) + ".mtz"
-    pointless_proc = subprocess.Popen(["pointless",
-                                       "-c",
-                                       "xdsin",
-                                       source,
-                                       "hklout",
-                                       mergable_file
-                                      ],
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.PIPE
-                                     )
-    pointless_proc.wait()
-
-    # Convert mergable to rfree
-    _ = mergable_mtz_to_rfree_mtz(source=mergable_file,
-                                  dest=dest,
-                                  overwrite=overwrite,
-                                  clean=clean)
-
-    # Clean up
-    if clean:
-        files_to_remove = (
-            mergable_file,
-        )
-
-        for file_to_remove in files_to_remove:
-            os.unlink(file_to_remove)
-
-    return dest
-
-#
-# Utils used by converter functions
-#
-
-
+    return dest_file_name
 
 def get_commandline():
     """
     Grabs the commandline
     """
 
-    print "get_commandline"
+    # print "get_commandline"
 
     # Parse the commandline arguments
     commandline_description = "Generate a generic RAPD file"
