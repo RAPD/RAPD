@@ -248,14 +248,16 @@ XRAY_COLUMN_SYNONYMS = {
 # File suffixes used by RAPD
 RAPD_FILE_SUFFIXES = {
     "mergable_mtz": "_mergable.mtz",
+    "minimal_mergeable_mtz": "_min_mergeable.mtz",
     "minimal_refl_anom_mtz": "_min_anom.mtz",
     "minimal_refl_mtz": "_min.mtz",
     "minimal_rfree_mtz": "_min_rfree.mtz",
     "rfree_mtz": "_rfree.mtz",
     "scalepack_anomalous": "_ANOM.sca",
     "scalepack_merge": ".sca",
+    "scalepack_no_merge_original_index": "_nmoi.sca",
     "xds_corrected": "_ASCII.HKL",
-    "xds_integrated": "_INTEGRATE.HKL",
+    "xds_integrated": ".HKL",
 }
 
 # Column signatures for file put out by RAPD
@@ -277,6 +279,18 @@ RAPD_FILE_SIGNATURES = {
             'LP',
             'FLAG',
         ],
+    ),
+    "minimal_mergeable_mtz": (
+        "ccp4_mtz",
+        [
+            "H",
+            "K",
+            "L",
+            "M/ISYM",
+            "BATCH",
+            "I",
+            "SIGI",
+        ]
     ),
     "minimal_refl_mtz": ("ccp4_mtz",
                          ['H',
@@ -357,6 +371,23 @@ RAPD_FILE_SIGNATURES = {
             'SIGI',
         ],
     ),
+    "scalepack_no_merge_original_index": (
+        "scalepack_no_merge_original_index",
+        [
+            "H",
+            "K",
+            "L",
+            "H0",
+            "K0",
+            "L0",
+            "BATCH",
+            "UNK",
+            "UNK",
+            "UNK",
+            "I",
+            "SIGI",
+        ]
+    ),
     "xds_corrected": (
         "xds_ascii",
         [
@@ -404,6 +435,7 @@ RAPD_FILE_SIGNATURES = {
 
 # Conversions that RAPD can and cannot perform
 RAPD_CONVERSIONS = {
+    ("mergable_mtz", "minimal_mergeable_mtz"): True,
     ("mergable_mtz", "minimal_refl_anom_mtz"): True,
     ("mergable_mtz", "minimal_refl_mtz"): True,
     ("mergable_mtz", "minimal_rfree_mtz"): True,
@@ -434,7 +466,18 @@ RAPD_CONVERSIONS = {
     ("scalepack_merge", "minimal_refl_mtz"): True,
     ("scalepack_merge", "minimal_rfree_mtz"): True,
 
+    ("scalepack_no_merge_original_index", "minimal_mergeable_mtz"): True,
+    ("scalepack_no_merge_original_index", "minimal_refl_anom_mtz"): False,
+    ("scalepack_no_merge_original_index", "minimal_refl_mtz"): False,
+    ("scalepack_no_merge_original_index", "minimal_rfree_mtz"): False,
+    ("scalepack_no_merge_original_index", "rfree_mtz"): False,
+    ("scalepack_no_merge_original_index", "scalepack_anomalous"): False,
+    ("scalepack_no_merge_original_index", "scalepack_merge"): False,
+    ("scalepack_no_merge_original_index", ""): False,
+    ("scalepack_no_merge_original_index", ""): False,
+
     ("xds_corrected", "mergable_mtz"): True,
+    ("xds_corrected", "minimal_mergeable_mtz"): True,
     ("xds_corrected", "minimal_refl_anom_mtz"): False,
     ("xds_corrected", "minimal_rfree_mtz"): False,
     ("xds_corrected", "rfree_mtz"): True,
@@ -442,6 +485,7 @@ RAPD_CONVERSIONS = {
     ("xds_corrected", "scalepack_merge"): False,
 
     ("xds_integrated", "mergable_mtz"): True,
+    ("xds_integrated", "minimal_mergeable_mtz"): False,
     ("xds_integrated", "minimal_refl_anom_mtz"): False,
     ("xds_integrated", "minimal_rfree_mtz"): False,
     ("xds_integrated", "rfree_mtz"): True,
@@ -486,9 +530,21 @@ def main():
                 if possible:
                     print "      %s" % conversion[1]
 
+        if rapd_file_type == "xds_corrected":
+            print "convert_xds_corrected_to_minimal_mergeable_mtz >> %s" % \
+                  convert_xds_corrected_to_minimal_mergeable_mtz(input_file_name, overwrite=True)
+
+        if rapd_file_type == "xds_integrated":
+            print "convert_xds_integrated_to_minimal_mergeable_mtz >> %s" % \
+                  convert_xds_integrated_to_minimal_mergeable_mtz(input_file_name, overwrite=True)
+
         if rapd_file_type == "scalepack_merge":
-            print convert_scalepack_merge_to_minimal_refl_mtz(input_file_name, "minimal_refl_mtz.mtz", True)
-            print convert_scalepack_merge_to_minimal_rfree_mtz(input_file_name, "minimal_rfree_mtz.mtz", True)
+            print convert_scalepack_merge_to_minimal_refl_mtz(input_file_name,
+                                                              "minimal_refl_mtz.mtz",
+                                                              True)
+            print convert_scalepack_merge_to_minimal_rfree_mtz(input_file_name,
+                                                               "minimal_rfree_mtz.mtz",
+                                                               True)
 
         elif rapd_file_type == "minimal_refl_mtz":
             print convert_minimal_refl_mtz_to_scalepack_merge(input_file_name, "foo.sca", True)
@@ -503,12 +559,14 @@ def main():
             print convert_scalepack_anomalous_to_scalepack_merge(input_file_name, "foo_merge.sca", True)
 
         elif rapd_file_type == "mergable_mtz":
-            print "convert_mergable_mtz_to_minimal_refl_anom_mtz >> %s"  % \
-                  convert_mergable_mtz_to_minimal_refl_anom_mtz(input_file_name, overwrite=True)
-            print "convert_mergable_mtz_to_minimal_refl_mtz >> %s" % \
-                  convert_mergable_mtz_to_minimal_refl_mtz(input_file_name, overwrite=True)
-            print "convert_mergable_mtz_to_minimal_rfree_mtz >> %s" % \
-                  convert_mergable_mtz_to_minimal_rfree_mtz(input_file_name, overwrite=True)
+            print "convert_mergable_mtz_to_minimal_mergeable_mtz >> %s" % \
+                  convert_mergable_mtz_to_minimal_mergeable_mtz(input_file_name, overwrite=True)
+            # print "convert_mergable_mtz_to_minimal_refl_anom_mtz >> %s"  % \
+            #       convert_mergable_mtz_to_minimal_refl_anom_mtz(input_file_name, overwrite=True)
+            # print "convert_mergable_mtz_to_minimal_refl_mtz >> %s" % \
+            #       convert_mergable_mtz_to_minimal_refl_mtz(input_file_name, overwrite=True)
+            # print "convert_mergable_mtz_to_minimal_rfree_mtz >> %s" % \
+            #       convert_mergable_mtz_to_minimal_rfree_mtz(input_file_name, overwrite=True)
 
         elif rapd_file_type == "minimal_refl_anom_mtz":
             # print "  convert_minimal_refl_anom_mtz_to_minimal_refl_mtz >> %s" % \
@@ -524,6 +582,12 @@ def main():
             print "convert_minimal_refl_anom_mtz_to_scalepack_merge >> %s " % \
                   convert_minimal_refl_anom_mtz_to_scalepack_merge(input_file_name,
                                                                    overwrite=True)
+
+        elif rapd_file_type == "scalepack_no_merge_original_index":
+            print "convert_scalepack_no_merge_original_index_to_minimal_mergeable_mtz >> %s" % \
+                  convert_scalepack_no_merge_original_index_to_minimal_mergeable_mtz(
+                      input_file_name,
+                      overwrite=True)
 
 def convert_intensities_files(input_file_names,
                               output_rapd_type,
@@ -660,6 +724,8 @@ def get_columns(datafile):
         columns = get_xds_integrate_hkl_columns(datafile)
     elif file_type == "scalepack_merge":
         columns = get_scalepack_merge_columns(datafile)
+    elif file_type == "scalepack_no_merge_original_index":
+        columns = get_scalepack_no_merge_columns(datafile)
     else:
         # for d in dir(datafile.file_content()):
         #     print d
@@ -690,6 +756,15 @@ def get_scalepack_merge_columns(datafile):
         columns = ["H", "K", "L", "I(+)", "SIGI(+)", "I(-)", "SIGI(-)"]
     else:
         columns = False
+
+    return columns
+
+def get_scalepack_no_merge_columns(datafile):
+    """
+    Returns columns for a scalepack no merge original index file
+    """
+
+    columns = ["H", "K", "L", "H0", "K0", "L0", "BATCH", "UNK", "UNK", "UNK", "I", "SIGI"]
 
     return columns
 
@@ -756,8 +831,11 @@ def replace_suffix(input_file_name, input_rapd_type, output_rapd_type):
     """Replace a file suffix with as much of a RAPD suffix as possible"""
 
     # Full suffix replacement
+    # print RAPD_FILE_SUFFIXES[input_rapd_type]
+    # print RAPD_FILE_SUFFIXES[output_rapd_type]
     if input_file_name.endswith(RAPD_FILE_SUFFIXES[input_rapd_type]):
-        output_file_name = input_file_name.replace(RAPD_FILE_SUFFIXES[input_rapd_type], RAPD_FILE_SUFFIXES[output_rapd_type])
+        output_file_name = input_file_name.replace(RAPD_FILE_SUFFIXES[input_rapd_type],
+                                                   RAPD_FILE_SUFFIXES[output_rapd_type])
     # Just post "." suffix replacement
     else:
         output_file_name = ".".join(input_file_name.split(".")[:-1]
@@ -826,6 +904,40 @@ E6=SIGI(-)\n")
 
         for file_to_remove in files_to_remove:
             os.unlink(file_to_remove)
+
+    return dest_file_name
+
+def convert_mergable_mtz_to_minimal_mergeable_mtz(source_file_name,
+                                                  dest_file_name=False,
+                                                  overwrite=True,
+                                                  clean=True):
+    """Convert file"""
+
+    source_format = "mergable_mtz"
+    dest_format = "minimal_mergeable_mtz"
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    # Prune away unwanted columns
+    cmd = "mtzutils hklin1 %s hklout %s" % (source_file_name, dest_file_name)
+    mtzutils_proc = subprocess.Popen([cmd, "<<eof"],
+                                     stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     shell=True)
+    mtzutils_proc.stdin.write("INCLUDE M/ISYM BATCH I SIGI\n")
+    mtzutils_proc.stdin.write("EXCLUDE FRACTIONCALC XDET YDET ROT LP FLAG\n")
+    mtzutils_proc.stdin.write("END\n")
+    mtzutils_proc.stdin.write("eof\n")
+    mtzutils_proc.wait()
 
     return dest_file_name
 
@@ -1858,10 +1970,10 @@ def convert_scalepack_merge_to_minimal_rfree_mtz(source_file_name,
     cad_file = next(tempfile._get_candidate_names()) + ".mtz"
     cmd = "cad hklin1 %s hklout %s" % (truncate_file, cad_file)
     cad_proc = subprocess.Popen([cmd, "<<eof"],
-                                 stdin=subprocess.PIPE,
-                                 stdout=subprocess.PIPE,
-                                 stderr=subprocess.PIPE,
-                                 shell=True)
+                                stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                shell=True)
     cad_proc.stdin.write("LABIN FILE 1 E1=IMEAN E2=SIGIMEAN E3=F E4=SIGF\n")
     cad_proc.stdin.write("SORT H K L\n")
     cad_proc.stdin.write("END\n")
@@ -1892,6 +2004,43 @@ def convert_scalepack_merge_to_minimal_rfree_mtz(source_file_name,
 
     return dest_file_name
 
+def convert_scalepack_no_merge_original_index_to_minimal_mergeable_mtz(
+        source_file_name,
+        dest_file_name=False,
+        cell=(90, 90, 90, 90, 90, 90),
+        overwrite=False,
+        clean=True):
+    """Convert file"""
+
+    source_format = "scalepack_no_merge_original_index"
+    dest_format = "minimal_mergeable_mtz"
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    # Convert the file to mtz
+    # pointless_file = next(tempfile._get_candidate_names()) + ".mtz"
+    cmd = "pointless -c scain %s hklout %s" % (source_file_name, dest_file_name)
+    pointless_proc = subprocess.Popen([cmd, "<<eof"],
+                                      stdin=subprocess.PIPE,
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE,
+                                      shell=True
+                                     )
+    pointless_proc.stdin.write("CELL %f %f %f %f %f %f \n" % cell)
+    pointless_proc.stdin.write("END\n")
+    pointless_proc.stdin.write("eof\n")
+    pointless_proc.wait()
+
+    return dest_file_name
+
 def convert_xds_corrected_to_mergable_mtz(source_file_name,
                                           dest_file_name=False,
                                           overwrite=False,
@@ -1917,6 +2066,62 @@ def convert_xds_corrected_to_mergable_mtz(source_file_name,
                                       stderr=subprocess.PIPE
                                      )
     pointless_proc.wait()
+
+    return dest_file_name
+
+def convert_xds_corrected_to_minimal_mergeable_mtz(source_file_name,
+                                                   dest_file_name=False,
+                                                   overwrite=False,
+                                                   clean=True):
+    """Convert file"""
+
+    source_format = "xds_corrected"
+    dest_format = "minimal_mergeable_mtz"
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    # Import using pointless
+    pointless_file = next(tempfile._get_candidate_names()) + ".mtz"
+    cmd = "pointless -c xdsin %s hklout %s" % (source_file_name, pointless_file)
+    pointless_proc = subprocess.Popen([cmd, "<<eof"],
+                                      stdin=subprocess.PIPE,
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE,
+                                      shell=True
+                                     )
+    pointless_proc.stdin.write("END\n")
+    pointless_proc.stdin.write("eof\n")
+    pointless_proc.wait()
+
+    # Prune away unwanted columns
+    cmd = "mtzutils hklin1 %s hklout %s" % (pointless_file, dest_file_name)
+    mtzutils_proc = subprocess.Popen([cmd, "<<eof"],
+                                     stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     shell=True)
+    mtzutils_proc.stdin.write("INCLUDE M/ISYM BATCH I SIGI\n")
+    mtzutils_proc.stdin.write("EXCLUDE FRACTIONCALC XDET YDET ROT LP FLAG\n")
+    mtzutils_proc.stdin.write("END\n")
+    mtzutils_proc.stdin.write("eof\n")
+    mtzutils_proc.wait()
+
+    # Clean up
+    if clean:
+        files_to_remove = (
+            pointless_file,
+        )
+
+        for file_to_remove in files_to_remove:
+            os.unlink(file_to_remove)
 
     return dest_file_name
 
@@ -1990,6 +2195,62 @@ def convert_xds_integrated_to_mergable_mtz(source_file_name,
                                       stderr=subprocess.PIPE
                                      )
     pointless_proc.wait()
+
+    return dest_file_name
+
+def convert_xds_integrated_to_minimal_mergeable_mtz(source_file_name,
+                                                    dest_file_name=False,
+                                                    overwrite=False,
+                                                    clean=True):
+    """Convert file"""
+
+    source_format = "xds_integrated"
+    dest_format = "minimal_mergeable_mtz"
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    # Import using pointless
+    pointless_file = next(tempfile._get_candidate_names()) + ".mtz"
+    cmd = "pointless -c xdsin %s hklout %s" % (source_file_name, pointless_file)
+    pointless_proc = subprocess.Popen([cmd, "<<eof"],
+                                      stdin=subprocess.PIPE,
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE,
+                                      shell=True
+                                     )
+    pointless_proc.stdin.write("END\n")
+    pointless_proc.stdin.write("eof\n")
+    pointless_proc.wait()
+
+    # Prune away unwanted columns
+    cmd = "mtzutils hklin1 %s hklout %s" % (pointless_file, dest_file_name)
+    mtzutils_proc = subprocess.Popen([cmd, "<<eof"],
+                                     stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     shell=True)
+    mtzutils_proc.stdin.write("INCLUDE M/ISYM BATCH I SIGI\n")
+    mtzutils_proc.stdin.write("EXCLUDE FRACTIONCALC XDET YDET ROT LP FLAG\n")
+    mtzutils_proc.stdin.write("END\n")
+    mtzutils_proc.stdin.write("eof\n")
+    mtzutils_proc.wait()
+
+    # Clean up
+    if clean:
+        files_to_remove = (
+            pointless_file,
+        )
+
+        for file_to_remove in files_to_remove:
+            os.unlink(file_to_remove)
 
     return dest_file_name
 
