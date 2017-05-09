@@ -66,6 +66,10 @@ def parse_aimless(logfile):
 	Parses the aimless logfile in order to pull out data for
 	graphing and the results summary table.
 	Relevant values for the summary table are stored in a dict.
+        key = name of result value
+        value = list of three numbers,  1 - Overall
+                                        2 - Inner Shell
+                                        3 - Outer Shell
 	Relevant information for creating plots are stored in a dict,
 	with the following format for each entry (i.e. each plot):
 
