@@ -485,7 +485,7 @@ RAPD_CONVERSIONS = {
     ("xds_corrected", "scalepack_merge"): False,
 
     ("xds_integrated", "mergable_mtz"): True,
-    ("xds_integrated", "minimal_mergeable_mtz"): False,
+    ("xds_integrated", "minimal_mergeable_mtz"): True,
     ("xds_integrated", "minimal_refl_anom_mtz"): False,
     ("xds_integrated", "minimal_rfree_mtz"): False,
     ("xds_integrated", "rfree_mtz"): True,
@@ -589,13 +589,32 @@ def main():
                       input_file_name,
                       overwrite=True)
 
+
+#
+# High-level functions
+#
 def convert_intensities_files(input_file_names,
                               output_rapd_type,
                               output_file_names=False,
-                              force=False):
-    """Convert a list or tuple of input files to an input rapd file type"""
+                              force=False,
+                              cell=False):
+    """
+    Convert multiple input files to a requested RAPD file type.
 
-    # Make sure the input_file_names is iterable
+    Keyword arguments
+    -----------------
+    input_file_names - list or tuple of input files to be converted
+    output_rapd_type - type of file to convert to. If RAPD is unable to convert to a requested
+                       format from the input file, it will throw an Exception.
+    output_file_names - list or tuple of output file names for the converted files
+    force - allow overwrite of files if True
+    cell - a tuple of cell dimensions & angles. Only necessary if a file input is
+           scalepack no merge original index
+
+    Returns a list of the converted file names
+    """
+
+    # Make sure the input_file_names is a list or tuple
     if not (isinstance(input_file_names, list) or \
             isinstance(input_file_names, tuple)):
         raise Exception("input_file_names should be a list or tuple")
@@ -606,6 +625,11 @@ def convert_intensities_files(input_file_names,
             raise Exception("%s does not exist" % input_file)
 
     if output_file_names:
+        # Make sure the output_file_names is a list or tuple
+        if not (isinstance(output_file_names, list) or \
+                isinstance(output_file_names, tuple)):
+            raise Exception("output_file_names should be a list or tuple")
+
         # Make sure that there are output file names for all input_file_names
         if not len(output_file_names) == len(output_file_names):
             raise Exception("Mismatch in number of input and output file names")
@@ -618,33 +642,44 @@ def convert_intensities_files(input_file_names,
         raise Exception("Output type %s is not a format that is understood by \
 RAPD" % output_rapd_type)
 
+    # Is the cell either False or a tuple
+    if cell:
+        if not isinstance(cell, tuple):
+            raise Exception("cell should be a tuple")
+        if not len(cell) == 6:
+            raise Exception("cell should have 6 real numbers for a, b, c, alpha, beta, gamma")
+
     # Run through and convert files
     output_files = []
     for input_file_name, output_file_name in zip(input_file_names, output_file_names):
-
-        print input_file_name, output_rapd_type, output_file_name, force
-
+        # print input_file_name, output_rapd_type, output_file_name, force
         output_files.append(convert_intensities_file(input_file_name,
                                                      output_rapd_type,
                                                      output_file_name,
-                                                     force))
+                                                     force,
+                                                     cell))
 
     return output_files
 
 def convert_intensities_file(input_file_name,
                              output_rapd_type,
                              output_file_name=False,
-                             force=False):
+                             force=False,
+                             cell=False):
     """
-    Convert a datafile of intensities to a new type
+    Convert input file to a requested RAPD file type.
 
+    Keyword arguments
+    -----------------
     input_file_name - filename of file to be converted
     output_rapd_type - type to be converted to. Must be in RAPD_FILE_SIGNATURES
     output_file_name - name of the file to be created by the conversion. Must have
                     the proper suffix
     force - allows overwrite of files if True
+    cell - a tuple of cell dimensions & angles. Only necessary if a file input is
+           scalepack no merge original index
 
-    returns the output file name
+    Returns the output file name
     """
 
     # Is the final format understood?
@@ -692,18 +727,38 @@ Please change to %s" % RAPD_FILE_SUFFIXES[output_rapd_type])
         output_file_name = replace_suffix(input_file_name,
                                           input_rapd_type,
                                           output_rapd_type)
-
     if not force:
         if os.path.exists(output_file_name):
             raise Exception("%s already exists. Exiting" % output_file_name)
 
+    # Is the cell either False or a tuple
+    if cell:
+        if not isinstance(cell, tuple):
+            raise Exception("cell should be a tuple")
+        if not len(cell) == 6:
+            raise Exception("cell should have 6 real numbers for a, b, c, alpha, beta, gamma")
+
     # Perform the conversion
     main_module = sys.modules[__name__]
     method_to_call = getattr(main_module, "convert_%s_to_%s" % (input_rapd_type, output_rapd_type))
-    output_file = method_to_call(source_file_name=input_file_name, dest_file_name=output_file_name, overwrite=force, clean=True)
+    if input_rapd_type == "scalepack_no_merge_original_index":
+        output_file = method_to_call(source_file_name=input_file_name,
+                                     dest_file_name=output_file_name,
+                                     cell=cell,
+                                     overwrite=force,
+                                     clean=True)
+
+    else:
+        output_file = method_to_call(source_file_name=input_file_name,
+                                     dest_file_name=output_file_name,
+                                     overwrite=force,
+                                     clean=True)
 
     return output_file
 
+#
+# Low-level functions
+#
 def get_columns(datafile):
     """
     Return a list of columns for a datafile
@@ -821,11 +876,13 @@ def get_rapd_file_type(file_name):
 
     # Look for signature
     for rapd_file_type, signature in RAPD_FILE_SIGNATURES.iteritems():
-        ft, cols = signature
-        if cctbx_file_type == ft and columns == cols:
-            return rapd_file_type
+        signature_file_type, cols = signature
+        if cctbx_file_type == signature_file_type and columns == cols:
+            break
     else:
-        return False
+        rapd_file_type = False
+
+    return rapd_file_type
 
 def replace_suffix(input_file_name, input_rapd_type, output_rapd_type):
     """Replace a file suffix with as much of a RAPD suffix as possible"""
@@ -838,20 +895,33 @@ def replace_suffix(input_file_name, input_rapd_type, output_rapd_type):
                                                    RAPD_FILE_SUFFIXES[output_rapd_type])
     # Just post "." suffix replacement
     else:
-        output_file_name = ".".join(input_file_name.split(".")[:-1]
-                                 +[RAPD_FILE_SUFFIXES[output_rapd_type]])
+        output_file_name = ".".join(
+            input_file_name.split(".")[:-1]+[RAPD_FILE_SUFFIXES[output_rapd_type]]
+            )
 
     return output_file_name
 
 #
 # FILE CONVERSION METHODS
 #
-
 def convert_mergable_mtz_to_minimal_refl_anom_mtz(source_file_name,
                                                   dest_file_name=False,
                                                   overwrite=True,
                                                   clean=True):
-    """Convert file"""
+    """
+    Convert reflection file
+
+    mergable_mtz - a standard RAPD file format of integrated X-ray intensities
+    minimal_refl_anom_mtz - minimal mtz file containing anomalous intensities
+
+    Keyword arguments
+    -----------------
+    source_file_name - file to be converted
+    dest_file_name - name of converted file. RAPD will name a file appropriately if this is False
+                     (default = False)
+    overwrite - converted file will overwrite previous if preset (default = True)
+    clean - remove intermediate files if True (default = True)
+    """
 
     source_format = "mergable_mtz"
     dest_format = "minimal_refl_anom_mtz"
@@ -911,7 +981,20 @@ def convert_mergable_mtz_to_minimal_mergeable_mtz(source_file_name,
                                                   dest_file_name=False,
                                                   overwrite=True,
                                                   clean=True):
-    """Convert file"""
+    """
+    Convert reflection file
+
+    mergable_mtz - a standard RAPD file format of integrated X-ray intensities
+    minimal_mergeable_mtz - minimal mergeable mtz file containing intensities and batch information
+
+    Keyword arguments
+    -----------------
+    source_file_name - file to be converted
+    dest_file_name - name of converted file. RAPD will name a file appropriately if this is False
+                     (default = False)
+    overwrite - converted file will overwrite previous if preset (default = True)
+    clean - remove intermediate files if True (default = True)
+    """
 
     source_format = "mergable_mtz"
     dest_format = "minimal_mergeable_mtz"
@@ -1097,9 +1180,14 @@ def convert_mergable_mtz_to_rfree_mtz(source_file_name,
                                       clean=True):
     """Convert file"""
 
+    source_format = "mergable_mtz"
+    dest_format = "rfree_mtz"
+
     # Name of resulting file
     if not dest_file_name:
-        dest_file_name = source_file_name.replace(".mtz", "_imported_free.mtz")
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
 
     # Check if we are going to overwrite
     if os.path.exists(dest_file_name) and not overwrite:
@@ -1176,9 +1264,14 @@ def convert_mergable_mtz_to_scalepack_anomalous(source_file_name,
                                                 clean=True):
     """Convert file"""
 
+    source_format = "mergable_mtz"
+    dest_format = "scalepack_anomalous"
+
     # Name of resulting file
     if not dest_file_name:
-        dest_file_name = source_file_name.replace(".mtz", "_imported_ANOM.sca")
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
 
     # Check if we are going to overwrite
     if os.path.exists(dest_file_name) and not overwrite:
@@ -1229,9 +1322,14 @@ def convert_mergable_mtz_to_scalepack_merge(source_file_name,
                                             clean=True):
     """Convert file"""
 
+    source_format = "mergable_mtz"
+    dest_format = "scalepack_merge"
+
     # Name of resulting file
     if not dest_file_name:
-        dest_file_name = source_file_name.replace(".mtz", "_imported_NATIVE.sca")
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
 
     # Check if we are going to overwrite
     if os.path.exists(dest_file_name) and not overwrite:
@@ -1560,9 +1658,14 @@ def convert_rfree_mtz_to_scalepack_anomalous(source_file_name,
                                              clean=True):
     """Convert file"""
 
+    source_format = "rfree_mtz"
+    dest_format = "scalepack_anomalous"
+
     # Name of resulting file
     if not dest_file_name:
-        dest_file_name = source_file_name.replace(".mtz", "_imported_ANOM.sca")
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
 
     # Check if we are going to overwrite
     if os.path.exists(dest_file_name) and not overwrite:
@@ -1589,14 +1692,19 @@ def convert_rfree_mtz_to_scalepack_anomalous(source_file_name,
     return dest_file_name
 
 def convert_rfree_mtz_to_scalepack_merge(source_file_name,
-                                          dest_file_name=False,
-                                          overwrite=True,
-                                          clean=True):
+                                         dest_file_name=False,
+                                         overwrite=True,
+                                         clean=True):
     """Convert file"""
+
+    source_format = "rfree_mtz"
+    dest_format = "scalepack_merge"
 
     # Name of resulting file
     if not dest_file_name:
-        dest_file_name = source_file_name.replace(".mtz", "_imported_NATIVE.sca")
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
 
     # Check if we are going to overwrite
     if os.path.exists(dest_file_name) and not overwrite:
@@ -1628,11 +1736,14 @@ def convert_scalepack_anomalous_to_minimal_refl_anom_mtz(source_file_name,
                                                          clean=True):
     """Convert file"""
 
+    source_format = "scalepack_anomalous"
+    dest_format = "minimal_refl_anom_mtz"
+
     # Name of resulting file
     if not dest_file_name:
-        dest_file_name = source_file_name.replace(
-            ".sca",
-            RAPD_FILE_SUFFIXES["minimal_refl_anom_mtz"])
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
 
     # Check if we are going to overwrite
     if os.path.exists(dest_file_name) and not overwrite:
@@ -1640,8 +1751,7 @@ def convert_scalepack_anomalous_to_minimal_refl_anom_mtz(source_file_name,
 
     # Convert the file to mtz
     unsorted_file = next(tempfile._get_candidate_names()) + ".mtz"
-    cmd =  "scalepack2mtz hklin %s hklout %s" % (source_file_name,
-                                                       unsorted_file)
+    cmd =  "scalepack2mtz hklin %s hklout %s" % (source_file_name, unsorted_file)
     scalepack2mtz_proc = subprocess.Popen([cmd, "<<eof"],
                                           stdin=subprocess.PIPE,
                                           stdout=subprocess.PIPE,
@@ -1684,11 +1794,14 @@ def convert_scalepack_anomalous_to_minimal_refl_mtz(source_file_name,
                                                     clean=True):
     """Convert file"""
 
+    source_format = "scalepack_anomalous"
+    dest_format = "minimal_refl_mtz"
+
     # Name of resulting file
     if not dest_file_name:
-        dest_file_name = source_file_name.replace(
-            ".sca",
-            RAPD_FILE_SUFFIXES["minimal_refl_mtz"])
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
 
     # Check if we are going to overwrite
     if os.path.exists(dest_file_name) and not overwrite:
@@ -1740,11 +1853,14 @@ def convert_scalepack_anomalous_to_rfree_mtz(source_file_name,
                                              clean=True):
     """Convert file"""
 
+    source_format = "scalepack_anomalous"
+    dest_format = "rfree_mtz"
+
     # Name of resulting file
     if not dest_file_name:
-        dest_file_name = source_file_name.replace(
-            ".sca",
-            RAPD_FILE_SUFFIXES["rfree_mtz"])
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
 
     # Check if we are going to overwrite
     if os.path.exists(dest_file_name) and not overwrite:
@@ -1752,8 +1868,7 @@ def convert_scalepack_anomalous_to_rfree_mtz(source_file_name,
 
     # Convert the file to mtz
     unsorted_file = next(tempfile._get_candidate_names()) + ".mtz"
-    cmd =  "scalepack2mtz hklin %s hklout %s" % (source_file_name,
-                                                       unsorted_file)
+    cmd =  "scalepack2mtz hklin %s hklout %s" % (source_file_name, unsorted_file)
     scalepack2mtz_proc = subprocess.Popen([cmd, "<<eof"],
                                           stdin=subprocess.PIPE,
                                           stdout=subprocess.PIPE,
@@ -1809,11 +1924,14 @@ def convert_scalepack_anomalous_to_scalepack_merge(source_file_name,
                                                    clean=True):
     """Convert file"""
 
+    source_format = "scalepack_anomalous"
+    dest_format = "scalepack_merge"
+
     # Name of resulting file
     if not dest_file_name:
-        dest_file_name = source_file_name.replace(
-            ".sca",
-            RAPD_FILE_SUFFIXES["scalepack_merge"])
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
 
     # Check if we are going to overwrite
     if os.path.exists(dest_file_name) and not overwrite:
@@ -1873,11 +1991,14 @@ def convert_scalepack_merge_to_minimal_refl_mtz(source_file_name,
                                                 clean=True):
     "Convert file"
 
+    source_format = "scalepack_merge"
+    dest_format = "minimal_refl_mtz"
+
     # Name of resulting file
     if not dest_file_name:
-        dest_file_name = source_file_name.replace(
-            ".sca",
-            RAPD_FILE_SUFFIXES["minimal_refl_mtz"])
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
 
     # Check if we are going to overwrite
     if os.path.exists(dest_file_name) and not overwrite:
@@ -1929,11 +2050,14 @@ def convert_scalepack_merge_to_minimal_rfree_mtz(source_file_name,
                                                  clean=True):
     "Convert file"
 
+    source_format = "scalepack_merge"
+    dest_format = "minimal_rfree_mtz"
+
     # Name of resulting file
     if not dest_file_name:
-        dest_file_name = source_file_name.replace(
-            ".sca",
-            RAPD_FILE_SUFFIXES["minimal_refl_mtz"])
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
 
     # Check if we are going to overwrite
     if os.path.exists(dest_file_name) and not overwrite:
@@ -2047,9 +2171,14 @@ def convert_xds_corrected_to_mergable_mtz(source_file_name,
                                           clean=True):
     """Convert file"""
 
+    source_format = "xds_corrected"
+    dest_format = "mergable_mtz"
+
     # Name of resulting file
     if not dest_file_name:
-        dest_file_name = source_file_name.replace(".HKL", "_imported_mergable.mtz")
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
 
     # Check if we are going to overwrite
     if os.path.exists(dest_file_name) and not overwrite:
@@ -2131,9 +2260,14 @@ def convert_xds_corrected_to_rfree_mtz(source_file_name,
                                        clean=True):
     """Convert file"""
 
+    source_format = "xds_corrected"
+    dest_format = "rfree_mtz"
+
     # Name of resulting file
     if not dest_file_name:
-        dest_file_name = source_file_name.replace(".HKL", "_imported_rfree.mtz")
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
 
     # Check if we are going to overwrite
     if os.path.exists(dest_file_name) and not overwrite:
@@ -2176,9 +2310,14 @@ def convert_xds_integrated_to_mergable_mtz(source_file_name,
                                            clean=True):
     """Convert file"""
 
+    source_format = "xds_integrated"
+    dest_format = "mergeable_mtz"
+
     # Name of resulting file
     if not dest_file_name:
-        dest_file_name = source_file_name.replace(".HKL", "_imported.mtz")
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
 
     # Check if we are going to overwrite
     if os.path.exists(dest_file_name) and not overwrite:
@@ -2260,9 +2399,14 @@ def convert_xds_integrated_to_rfree_mtz(source_file_name,
                                         clean=True):
     """Convert file"""
 
+    source_format = "xds_integrated"
+    dest_format = "rfree_mtz"
+
     # Name of resulting file
     if not dest_file_name:
-        dest_file_name = source_file_name.replace(".HKL", "_imported.mtz")
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
 
     # Check if we are going to overwrite
     if os.path.exists(dest_file_name) and not overwrite:
