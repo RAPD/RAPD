@@ -412,7 +412,7 @@ RAPD_CONVERSIONS = {
     ("mergable_mtz", "scalepack_anomalous"): True,
     ("mergable_mtz", "scalepack_merge"): True,
 
-    ("minimal_refl_anom_mtz", "minimal_refl_mtz"): False,
+    ("minimal_refl_anom_mtz", "minimal_refl_mtz"): True,
     ("minimal_refl_anom_mtz", "minimal_rfree_mtz"): False,
     ("minimal_refl_anom_mtz", "scalepack_anomalous"): False,
     ("minimal_refl_anom_mtz", "rfree_mtz"): False,
@@ -507,6 +507,12 @@ def main():
             print convert_mergable_mtz_to_minimal_refl_anom_mtz(input_file_name, overwrite=True)
             print convert_mergable_mtz_to_minimal_refl_mtz(input_file_name, overwrite=True)
             print convert_mergable_mtz_to_minimal_rfree_mtz(input_file_name, overwrite=True)
+
+        elif rapd_file_type == "minimal_refl_anom_mtz":
+            print "  convert_minimal_refl_anom_mtz_to_minimal_refl_mtz >> %s" % \
+                  convert_minimal_refl_anom_mtz_to_minimal_refl_mtz(input_file_name, overwrite=True)
+            print "  convert_minimal_refl_anom_mtz_to_minimal_rfree_mtz >> %s" % \
+                  convert_minimal_refl_anom_mtz_to_minimal_rfree_mtz(input_file_name, overwrite=True)
 
 def convert_intensities_files(input_file_names,
                               output_rapd_type,
@@ -760,9 +766,12 @@ def convert_mergable_mtz_to_minimal_refl_anom_mtz(source_file_name,
 
     # Name of resulting file
     if not dest_file_name:
-        dest_file_name = source_file_name.replace(
-            ".mtz",
-            RAPD_FILE_SUFFIXES["minimal_refl_anom_mtz"])
+        # dest_file_name = source_file_name.replace(
+        #     ".mtz",
+        #     RAPD_FILE_SUFFIXES["minimal_refl_anom_mtz"])
+        dest_file_name = replace_suffix(source_file_name,
+                                        "mergable_mtz",
+                                        "minimal_refl_anom_mtz")
 
     # Check if we are going to overwrite
     if os.path.exists(dest_file_name) and not overwrite:
@@ -1125,6 +1134,116 @@ def convert_mergable_mtz_to_scalepack_merge(source_file_name,
     if clean:
         files_to_remove = (
             rfree_file,
+        )
+
+        for file_to_remove in files_to_remove:
+            os.unlink(file_to_remove)
+
+    return dest_file_name
+
+def convert_minimal_refl_anom_mtz_to_minimal_refl_mtz(source_file_name,
+                                                      dest_file_name=False,
+                                                      overwrite=True,
+                                                      clean=True):
+    """Convert file"""
+
+    SOURCE_FORMAT = "minimal_refl_anom_mtz"
+    DEST_FORMAT = "minimal_refl_mtz"
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = replace_suffix(source_file_name,
+                                        SOURCE_FORMAT,
+                                        DEST_FORMAT)
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    # Prune away unwanted columns
+    cmd = "cad hklin1 %s hklout %s" % (source_file_name, dest_file_name)
+    cad_proc = subprocess.Popen([cmd, "<<eof"],
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 shell=True)
+    cad_proc.stdin.write("LABIN FILE 1 E1=IMEAN E2=SIGIMEAN\n")
+    cad_proc.stdin.write("SORT H K L\n")
+    cad_proc.stdin.write("END\n")
+    cad_proc.stdin.write("eof\n")
+    cad_proc.wait()
+
+    return dest_file_name
+
+def convert_minimal_refl_anom_mtz_to_minimal_rfree_mtz(source_file_name,
+                                                       dest_file_name=False,
+                                                       overwrite=True,
+                                                       clean=True):
+    """Convert file"""
+
+    SOURCE_FORMAT = "minimal_refl_anom_mtz"
+    DEST_FORMAT = "minimal_rfree_mtz"
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = replace_suffix(source_file_name,
+                                        SOURCE_FORMAT,
+                                        DEST_FORMAT)
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    # Truncate
+    # Truncate the data
+    truncate_file = next(tempfile._get_candidate_names()) + ".mtz"
+    cmd = "truncate hklin %s hklout %s" % (source_file_name, truncate_file)
+    truncate_proc = subprocess.Popen([cmd, "<<eof"],
+                                     stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     shell=True)
+    truncate_proc.stdin.write("END\n")
+    truncate_proc.stdin.write("eof\n")
+    stdout, stderr = truncate_proc.communicate()
+
+    # Sort the file and prune columns
+    cad_file = next(tempfile._get_candidate_names()) + ".mtz"
+    cmd = "cad hklin1 %s hklout %s" % (truncate_file, cad_file)
+    cad_proc = subprocess.Popen([cmd, "<<eof"],
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 shell=True)
+
+    cad_proc.stdin.write("LABIN FILE 1 E1=IMEAN E2=SIGIMEAN E3=F E4=SIGF\n")
+    cad_proc.stdin.write("SORT H K L\n")
+    cad_proc.stdin.write("END\n")
+    cad_proc.stdin.write("eof\n")
+    cad_proc.wait()
+
+    # Set the free R flag
+    cmd = "freerflag hklin %s hklout %s" % (cad_file, dest_file_name)
+    freerflag_proc = subprocess.Popen([cmd, "<<eof"],
+                                      stdin=subprocess.PIPE,
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE,
+                                      shell=True)
+    freerflag_proc.stdin.write("END\n")
+    freerflag_proc.stdin.write("eof\n")
+    freerflag_proc.wait()
+
+    # Clean up
+    if clean:
+        files_to_remove = (
+            truncate_file,
+            cad_file,
+            # "ANOMPLOT",
+            # "CORRELPLOT",
+            # "NORMPLOT",
+            # "ROGUES",
+            # "ROGUEPLOT",
+            # "SCALES"
         )
 
         for file_to_remove in files_to_remove:
