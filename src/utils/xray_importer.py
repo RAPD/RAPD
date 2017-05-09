@@ -413,9 +413,9 @@ RAPD_CONVERSIONS = {
 
     ("minimal_refl_anom_mtz", "minimal_refl_mtz"): True,
     ("minimal_refl_anom_mtz", "minimal_rfree_mtz"): True,
-    ("minimal_refl_anom_mtz", "scalepack_anomalous"): False,
-    ("minimal_refl_anom_mtz", "rfree_mtz"): False,
-    ("minimal_refl_anom_mtz", "scalepack_merge"): False,
+    ("minimal_refl_anom_mtz", "scalepack_anomalous"): True,
+    ("minimal_refl_anom_mtz", "rfree_mtz"): True,
+    ("minimal_refl_anom_mtz", "scalepack_merge"): True,
 
     ("minimal_refl_mtz", "minimal_rfree_mtz"): False,
     ("minimal_refl_mtz", "scalepack_merge"): True,
@@ -511,14 +511,19 @@ def main():
                   convert_mergable_mtz_to_minimal_rfree_mtz(input_file_name, overwrite=True)
 
         elif rapd_file_type == "minimal_refl_anom_mtz":
-            print "  convert_minimal_refl_anom_mtz_to_minimal_refl_mtz >> %s" % \
-                  convert_minimal_refl_anom_mtz_to_minimal_refl_mtz(input_file_name, overwrite=True)
-            print "  convert_minimal_refl_anom_mtz_to_minimal_rfree_mtz >> %s" % \
-                  convert_minimal_refl_anom_mtz_to_minimal_rfree_mtz(input_file_name,
-                                                                     overwrite=True)
-            print "convert_minimal_refl_anom_mtz_to_scalepack_anomalous >> %s " % \
-                  convert_minimal_refl_anom_mtz_to_scalepack_anomalous(input_file_name,
-                                                                       overwrite=True)
+            # print "  convert_minimal_refl_anom_mtz_to_minimal_refl_mtz >> %s" % \
+            #       convert_minimal_refl_anom_mtz_to_minimal_refl_mtz(input_file_name, overwrite=True)
+            # print "  convert_minimal_refl_anom_mtz_to_minimal_rfree_mtz >> %s" % \
+            #       convert_minimal_refl_anom_mtz_to_minimal_rfree_mtz(input_file_name,
+            #                                                          overwrite=True)
+            # print "convert_minimal_refl_anom_mtz_to_scalepack_anomalous >> %s " % \
+            #       convert_minimal_refl_anom_mtz_to_scalepack_anomalous(input_file_name,
+            #                                                            overwrite=True)
+            # print "convert_minimal_refl_anom_mtz_to_rfree_mtz >> %s " % \
+            #       convert_minimal_refl_anom_mtz_to_rfree_mtz(input_file_name, overwrite=True)
+            print "convert_minimal_refl_anom_mtz_to_scalepack_merge >> %s " % \
+                  convert_minimal_refl_anom_mtz_to_scalepack_merge(input_file_name,
+                                                                   overwrite=True)
 
 def convert_intensities_files(input_file_names,
                               output_rapd_type,
@@ -1210,7 +1215,6 @@ def convert_minimal_refl_anom_mtz_to_minimal_rfree_mtz(source_file_name,
     if os.path.exists(dest_file_name) and not overwrite:
         raise Exception("%s already exists. Exiting" % dest_file_name)
 
-    # Truncate
     # Truncate the data
     truncate_file = next(tempfile._get_candidate_names()) + ".mtz"
     cmd = "truncate hklin %s hklout %s" % (source_file_name, truncate_file)
@@ -1254,12 +1258,59 @@ def convert_minimal_refl_anom_mtz_to_minimal_rfree_mtz(source_file_name,
         files_to_remove = (
             truncate_file,
             cad_file,
-            # "ANOMPLOT",
-            # "CORRELPLOT",
-            # "NORMPLOT",
-            # "ROGUES",
-            # "ROGUEPLOT",
-            # "SCALES"
+        )
+
+        for file_to_remove in files_to_remove:
+            os.unlink(file_to_remove)
+
+    return dest_file_name
+
+def convert_minimal_refl_anom_mtz_to_rfree_mtz(source_file_name,
+                                               dest_file_name=False,
+                                               overwrite=True,
+                                               clean=True):
+    """Convert file"""
+
+    source_format = "minimal_refl_anom_mtz"
+    dest_format = "rfree_mtz"
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    # Truncate the data
+    truncate_file = next(tempfile._get_candidate_names()) + ".mtz"
+    cmd = "truncate hklin %s hklout %s" % (source_file_name, truncate_file)
+    truncate_proc = subprocess.Popen([cmd, "<<eof"],
+                                     stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     shell=True)
+    truncate_proc.stdin.write("END\n")
+    truncate_proc.stdin.write("eof\n")
+    _, _ = truncate_proc.communicate()
+
+    # Set the free R flag
+    cmd = "freerflag hklin %s hklout %s" % (truncate_file, dest_file_name)
+    freerflag_proc = subprocess.Popen([cmd, "<<eof"],
+                                      stdin=subprocess.PIPE,
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE,
+                                      shell=True)
+    freerflag_proc.stdin.write("END\n")
+    freerflag_proc.stdin.write("eof\n")
+    freerflag_proc.wait()
+
+    # Clean up
+    if clean:
+        files_to_remove = (
+            truncate_file,
         )
 
         for file_to_remove in files_to_remove:
@@ -1296,6 +1347,44 @@ def convert_minimal_refl_anom_mtz_to_scalepack_anomalous(source_file_name,
 
     mtz2various_proc.stdin.write("OUTPUT SCALEPACK\n")
     mtz2various_proc.stdin.write("labin I(+)=I(+) SIGI(+)=SIGI(+) I(-)=I(-) SIGI(-)=SIGI(-)\n")
+    mtz2various_proc.stdin.write("END\n")
+    mtz2various_proc.stdin.write("eof\n")
+    mtz2various_proc.wait()
+
+    # Fix some known converted scalepack problems
+    fix_mtz_to_sca(dest_file_name)
+
+    return dest_file_name
+
+def convert_minimal_refl_anom_mtz_to_scalepack_merge(source_file_name,
+                                                     dest_file_name=False,
+                                                     overwrite=True,
+                                                     clean=True):
+    """Convert file"""
+
+    source_format = "minimal_refl_anom_mtz"
+    dest_format = "scalepack_merge"
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = replace_suffix(source_file_name,
+                                        source_format,
+                                        dest_format)
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    # Convert
+    cmd = "mtz2various hklin %s hklout %s" % (source_file_name, dest_file_name)
+    mtz2various_proc = subprocess.Popen([cmd, "<<eof"],
+                                        stdin=subprocess.PIPE,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE,
+                                        shell=True)
+
+    mtz2various_proc.stdin.write("OUTPUT SCALEPACK\n")
+    mtz2various_proc.stdin.write("labin I=IMEAN SIGI=SIGIMEAN\n")
     mtz2various_proc.stdin.write("END\n")
     mtz2various_proc.stdin.write("eof\n")
     mtz2various_proc.wait()
