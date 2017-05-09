@@ -259,6 +259,7 @@ RAPD_FILE_SUFFIXES = {
     "mergable_mtz": "_mergable.mtz",
     "minimal_refl_anom_mtz": "_min_anom.mtz",
     "minimal_refl_mtz": "_min.mtz",
+    "minimal_rfree_mtz": "_min_rfree.mtz",
     "rfree_mtz": "_rfree.mtz",
     "scalepack_anomalous": "_ANOM.sca",
     "scalepack_merge": ".sca",
@@ -405,8 +406,8 @@ RAPD_FILE_SIGNATURES = {
 # Conversions that RAPD can and cannot perform
 RAPD_CONVERSIONS = {
     ("mergable_mtz", "minimal_refl_anom_mtz"): True,
-    ("mergable_mtz", "minimal_refl_mtz"): False,
-    ("mergable_mtz", "minimal_rfree_mtz"): False,
+    ("mergable_mtz", "minimal_refl_mtz"): True,
+    ("mergable_mtz", "minimal_rfree_mtz"): True,
     ("mergable_mtz", "rfree_mtz"): True,
     ("mergable_mtz", "scalepack_anomalous"): True,
     ("mergable_mtz", "scalepack_merge"): True,
@@ -504,7 +505,8 @@ def main():
 
         elif rapd_file_type == "mergable_mtz":
             print convert_mergable_mtz_to_minimal_refl_anom_mtz(input_file_name, overwrite=True)
-
+            print convert_mergable_mtz_to_minimal_refl_mtz(input_file_name, overwrite=True)
+            print convert_mergable_mtz_to_minimal_rfree_mtz(input_file_name, overwrite=True)
 
 def convert_intensities_files(input_file_names,
                               output_rapd_type,
@@ -733,17 +735,6 @@ def get_rapd_file_type(file_name):
     else:
         return False
 
-# def get_rapd_file_type(columns):
-#     """Returns RAPD-defined file type, if known. False if not"""
-#
-#     for file_type, column_signature in RAPD_FILE_SIGNATURES.iteritems():
-#         ft, cols = column_signature
-#         if
-#         if cctbx_file_type, columns == column_signature:
-#             return rapd_file_type
-#     else:
-#         return False
-
 def replace_suffix(input_file_name, input_rapd_type, output_rapd_type):
     """Replace a file suffix with as much of a RAPD suffix as possible"""
 
@@ -810,6 +801,150 @@ def convert_mergable_mtz_to_minimal_refl_anom_mtz(source_file_name,
     if clean:
         files_to_remove = (
             aimless_file,
+        )
+
+        for file_to_remove in files_to_remove:
+            os.unlink(file_to_remove)
+
+    return dest_file_name
+
+def convert_mergable_mtz_to_minimal_refl_mtz(source_file_name,
+                                             dest_file_name=False,
+                                             overwrite=True,
+                                             clean=True):
+    """Convert file"""
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = source_file_name.replace(
+            ".mtz",
+            RAPD_FILE_SUFFIXES["minimal_refl_mtz"])
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    # Merge the data
+    aimless_file = next(tempfile._get_candidate_names()) + ".mtz"
+    cmd = "aimless hklin %s hklout %s" % (source_file_name, aimless_file)
+    aimless_proc = subprocess.Popen([cmd, "<<eof"],
+                                    stdin=subprocess.PIPE,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    shell=True)
+    aimless_proc.stdin.write("ANOMALOUS OFF\n")
+    aimless_proc.stdin.write("SCALES CONSTANT\n")
+    aimless_proc.stdin.write("SDCORRECTION NOREFINE FULL 1 0 0 PARTIAL 1 0 0\n")
+    aimless_proc.stdin.write("CYCLES 0\n")
+    aimless_proc.stdin.write("END\n")
+    aimless_proc.stdin.write("eof\n")
+    aimless_proc.wait()
+
+    # Prune away unwanted columns
+    cmd = "cad hklin1 %s hklout %s" % (aimless_file, dest_file_name)
+    cad_proc = subprocess.Popen([cmd, "<<eof"],
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 shell=True)
+    cad_proc.stdin.write("LABIN FILE 1 E1=IMEAN E2=SIGIMEAN\n")
+    cad_proc.stdin.write("SORT H K L\n")
+    cad_proc.stdin.write("END\n")
+    cad_proc.stdin.write("eof\n")
+    cad_proc.wait()
+
+    # Clean up
+    if clean:
+        files_to_remove = (
+            aimless_file,
+        )
+
+        for file_to_remove in files_to_remove:
+            os.unlink(file_to_remove)
+
+    return dest_file_name
+
+def convert_mergable_mtz_to_minimal_rfree_mtz(source_file_name,
+                                             dest_file_name=False,
+                                             overwrite=True,
+                                             clean=True):
+    """Convert file"""
+
+    # Name of resulting file
+    if not dest_file_name:
+        dest_file_name = source_file_name.replace(
+            ".mtz",
+            RAPD_FILE_SUFFIXES["minimal_rfree_mtz"])
+
+    # Check if we are going to overwrite
+    if os.path.exists(dest_file_name) and not overwrite:
+        raise Exception("%s already exists. Exiting" % dest_file_name)
+
+    # Merge the data
+    aimless_file = next(tempfile._get_candidate_names()) + ".mtz"
+    cmd = "aimless hklin %s hklout %s" % (source_file_name, aimless_file)
+    aimless_proc = subprocess.Popen([cmd, "<<eof"],
+                                    stdin=subprocess.PIPE,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE,
+                                    shell=True)
+    aimless_proc.stdin.write("ANOMALOUS OFF\n")
+    aimless_proc.stdin.write("SCALES CONSTANT\n")
+    aimless_proc.stdin.write("SDCORRECTION NOREFINE FULL 1 0 0 PARTIAL 1 0 0\n")
+    aimless_proc.stdin.write("CYCLES 0\n")
+    aimless_proc.stdin.write("END\n")
+    aimless_proc.stdin.write("eof\n")
+    aimless_proc.wait()
+
+    # Truncate the data
+    truncate_file = next(tempfile._get_candidate_names()) + ".mtz"
+    cmd = "truncate hklin %s hklout %s" % (aimless_file, truncate_file)
+    truncate_proc = subprocess.Popen([cmd, "<<eof"],
+                                     stdin=subprocess.PIPE,
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
+                                     shell=True)
+    truncate_proc.stdin.write("END\n")
+    truncate_proc.stdin.write("eof\n")
+    stdout, stderr = truncate_proc.communicate()
+
+    # Set the free R flag
+    freer_file = next(tempfile._get_candidate_names()) + ".mtz"
+    cmd = "freerflag hklin %s hklout %s" % (truncate_file, freer_file)
+    freerflag_proc = subprocess.Popen([cmd, "<<eof"],
+                                      stdin=subprocess.PIPE,
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE,
+                                      shell=True)
+    freerflag_proc.stdin.write("END\n")
+    freerflag_proc.stdin.write("eof\n")
+    freerflag_proc.wait()
+
+    # Prune away unwanted columns
+    cmd = "cad hklin1 %s hklout %s" % (freer_file, dest_file_name)
+    cad_proc = subprocess.Popen([cmd, "<<eof"],
+                                 stdin=subprocess.PIPE,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE,
+                                 shell=True)
+    cad_proc.stdin.write("LABIN FILE 1 E1=FreeR_flag E2=IMEAN E3=SIGIMEAN E4=F E5=SIGF\n")
+    cad_proc.stdin.write("SORT H K L\n")
+    cad_proc.stdin.write("END\n")
+    cad_proc.stdin.write("eof\n")
+    cad_proc.wait()
+
+    # Clean up
+    if clean:
+        files_to_remove = (
+            aimless_file,
+            truncate_file,
+            freer_file,
+            "ANOMPLOT",
+            "CORRELPLOT",
+            "NORMPLOT",
+            "ROGUES",
+            "ROGUEPLOT",
+            "SCALES"
         )
 
         for file_to_remove in files_to_remove:
