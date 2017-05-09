@@ -81,104 +81,6 @@ VERSIONS = {
         ),
 }
 
-# Preprocess function from Kay Perry
-def preprocess(self):
-    """
-    Before running the main process
-    - change to the current directory
-    - copy files to the working directory
-    - convert all files to cctbx usable format and save in self
-    - test reflection files for acceptable format (XDS and unmerged mtz only)
-    - ensure all files are the same format
-    """
-
-    self.logger.debug('HCMerge::Prechecking files: %s' % str(self.datasets))
-
-    if self.precheck:
-
-        # mtz and xds produce different file formats.  Check for type to do duplicate comparison specific to file type.
-        types = []
-        hashset = {}
-        for dataset in self.datasets:
-            reflection_file = reflection_file_reader.any_reflection_file(file_name=dataset)
-            types.append(reflection_file.file_type()) # Get types for format test
-            hashset[dataset] = hashlib.md5(open(dataset, 'rb').read()).hexdigest() # hash for duplicates test
-
-            # Test for SCA format
-            if reflection_file.file_type() == 'scalepack_no_merge_original_index' or reflection_file.file_type() == 'scalepack_merge':
-                self.logger.error('HCMerge::Scalepack format. Aborted')
-                raise ValueError("Scalepack Format. Unmerged mtz format required.")
-
-            # Test reflection files to make sure they are XDS or MTZ format
-            elif reflection_file.file_type() != 'xds_ascii' and reflection_file.file_type() != 'ccp4_mtz':
-                self.logger.error('HCMerge::%s Reflection Check Failed.  Not XDS format.' % reflection_file.file_name())
-                raise ValueError("%s has incorrect file format. Unmerged reflections in XDS format only." % reflection_file.file_name())
-
-            # Test for all the same format
-            elif len(set(types)) > 1:
-                self.logger.error('HCMerge::Too Many File Types')
-                raise ValueError("All files must be the same type and format.")
-
-            # Test reflection files to make sure they have observations
-            elif ((reflection_file.file_type() == 'xds_ascii') and (reflection_file.file_content().iobs.size() == 0)):
-                self.logger.error('HCMerge::%s Reflection Check Failed.  No Observations.' % reflection_file.file_name())
-                raise ValueError("%s Reflection Check Failed. No Observations." % reflection_file.file_name())
-            elif ((reflection_file.file_type() == 'ccp4_mtz') and (reflection_file.file_content().n_reflections() == 0)):
-                self.logger.error('HCMerge::%s Reflection Check Failed.  No Observations.' % reflection_file.file_name())
-                raise ValueError("%s Reflection Check Failed. No Observations." % reflection_file.file_name())
-
-            # Test reflection file if mtz and make sure it isn't merged by checking for amplitude column
-            elif ((reflection_file.file_type() == 'ccp4_mtz') and ('F' in reflection_file.file_content().column_labels())):
-                self.logger.error('HCMerge::%s Reflection Check Failed.  Must be unmerged reflections.' % reflection_file.file_name())
-                raise ValueError("%s Reflection Check Failed. Must be unmerged reflections." % reflection_file.file_name())
-
-        # Test reflection files to make sure there are no duplicates
-        combos_temp =  self.make_combinations(self.datasets,2)
-        for combo in combos_temp:
-            if hashset[combo[0]] == hashset[combo[1]]:
-                self.datasets.remove(combo[1]) # Remove second occurrence in list of datasets
-                self.logger.error('HCMerge::Same file Entered Twice. %s deleted from list.' % combo[1])
-
-    # Make and move to the work directory
-    if os.path.isdir(self.dirs['work']) == False:
-        os.makedirs(self.dirs['work'])
-        os.chdir(self.dirs['work'])
-    else:
-        combine_dir = self.create_subdirectory(prefix='COMBINE', path=self.dirs['work'])
-        os.chdir(combine_dir)
-
-    # convert all files to mtz format
-    # copy the files to be merged to the work directory
-    for count, dataset in enumerate(self.datasets):
-        hkl_filename = str(count)+'_'+dataset.rsplit("/",1)[1].rsplit(".",1)[0]+'.mtz'
-        if self.user_spacegroup != 0:
-            sg = space_group_symbols(self.user_spacegroup).universal_hermann_mauguin()
-            self.logger.debug('HCMerge::Converting %s to %s and copying to Working Directory.' % (str(hkl_filename), str(sg)))
-            out_file = hkl_filename.rsplit(".",1)[0]
-            command = []
-            command.append('pointless hklout '+hkl_filename+'> '+out_file+'_import.log <<eof \n')
-            command.append('xdsin '+dataset+' \n')
-            command.append('lauegroup %s \n' % sg)
-            command.append('choose spacegroup %s \n' % sg)
-            command.append('eof\n')
-            comfile = open(out_file+'_import.sh','w')
-            comfile.writelines(command)
-            comfile.close()
-            os.chmod('./'+out_file+'_import.sh',0755)
-
-            p = subprocess.Popen(self.cmd_prefix+' ./'+out_file+'_import.sh',
-                             shell=True,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE).wait()
-        else:
-            self.logger.debug('HCMerge::Copying %s to Working Directory.' % str(dataset))
-            p = subprocess.Popen('pointless -copy xdsin ' + dataset + ' hklout ' + hkl_filename,
-                             shell=True,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE).wait()
-        # Make a list of filenames
-        self.data_files.append(hkl_filename)
-
 DATA_FILE_CCTBX_TYPES = (
     "ccp4_mtz",
     "scalepack_merge",
@@ -248,7 +150,7 @@ XRAY_COLUMN_SYNONYMS = {
 # File suffixes used by RAPD
 RAPD_FILE_SUFFIXES = {
     "mergable_mtz": "_mergable.mtz",
-    "minimal_mergeable_mtz": "_min_mergeable.mtz",
+    "minimal_mergable_mtz": "_min_mergable.mtz",
     "minimal_refl_anom_mtz": "_min_anom.mtz",
     "minimal_refl_mtz": "_min.mtz",
     "minimal_rfree_mtz": "_min_rfree.mtz",
@@ -280,7 +182,7 @@ RAPD_FILE_SIGNATURES = {
             'FLAG',
         ],
     ),
-    "minimal_mergeable_mtz": (
+    "minimal_mergable_mtz": (
         "ccp4_mtz",
         [
             "H",
@@ -435,7 +337,7 @@ RAPD_FILE_SIGNATURES = {
 
 # Conversions that RAPD can and cannot perform
 RAPD_CONVERSIONS = {
-    ("mergable_mtz", "minimal_mergeable_mtz"): True,
+    ("mergable_mtz", "minimal_mergable_mtz"): True,
     ("mergable_mtz", "minimal_refl_anom_mtz"): True,
     ("mergable_mtz", "minimal_refl_mtz"): True,
     ("mergable_mtz", "minimal_rfree_mtz"): True,
@@ -466,18 +368,16 @@ RAPD_CONVERSIONS = {
     ("scalepack_merge", "minimal_refl_mtz"): True,
     ("scalepack_merge", "minimal_rfree_mtz"): True,
 
-    ("scalepack_no_merge_original_index", "minimal_mergeable_mtz"): True,
+    ("scalepack_no_merge_original_index", "minimal_mergable_mtz"): True,
     ("scalepack_no_merge_original_index", "minimal_refl_anom_mtz"): False,
     ("scalepack_no_merge_original_index", "minimal_refl_mtz"): False,
     ("scalepack_no_merge_original_index", "minimal_rfree_mtz"): False,
     ("scalepack_no_merge_original_index", "rfree_mtz"): False,
     ("scalepack_no_merge_original_index", "scalepack_anomalous"): False,
     ("scalepack_no_merge_original_index", "scalepack_merge"): False,
-    ("scalepack_no_merge_original_index", ""): False,
-    ("scalepack_no_merge_original_index", ""): False,
 
     ("xds_corrected", "mergable_mtz"): True,
-    ("xds_corrected", "minimal_mergeable_mtz"): True,
+    ("xds_corrected", "minimal_mergable_mtz"): True,
     ("xds_corrected", "minimal_refl_anom_mtz"): False,
     ("xds_corrected", "minimal_rfree_mtz"): False,
     ("xds_corrected", "rfree_mtz"): True,
@@ -485,7 +385,7 @@ RAPD_CONVERSIONS = {
     ("xds_corrected", "scalepack_merge"): False,
 
     ("xds_integrated", "mergable_mtz"): True,
-    ("xds_integrated", "minimal_mergeable_mtz"): True,
+    ("xds_integrated", "minimal_mergable_mtz"): True,
     ("xds_integrated", "minimal_refl_anom_mtz"): False,
     ("xds_integrated", "minimal_rfree_mtz"): False,
     ("xds_integrated", "rfree_mtz"): True,
@@ -525,42 +425,46 @@ def main():
         print "  RAPD file type:", rapd_file_type
 
         print "  Formats possible to be converted to:"
-        for conversion, possible in RAPD_CONVERSIONS.iteritems():
-            if conversion[0] == rapd_file_type:
-                if possible:
-                    print "      %s" % conversion[1]
+        for conversion in get_conversions(rapd_file_type):
+                    print "          %s" % conversion
 
-        if rapd_file_type == "xds_corrected":
-            print "convert_xds_corrected_to_minimal_mergeable_mtz >> %s" % \
-                  convert_xds_corrected_to_minimal_mergeable_mtz(input_file_name, overwrite=True)
+        # if rapd_file_type == "xds_corrected":
+        #     print "convert_xds_corrected_to_minimal_mergable_mtz >> %s" % \
+        #           convert_xds_corrected_to_minimal_mergable_mtz(input_file_name, overwrite=True)
+        #
+        # if rapd_file_type == "xds_integrated":
+        #     print "convert_xds_integrated_to_minimal_mergable_mtz >> %s" % \
+        #           convert_xds_integrated_to_minimal_mergable_mtz(input_file_name, overwrite=True)
+        #
+        # if rapd_file_type == "scalepack_merge":
+        #     print convert_scalepack_merge_to_minimal_refl_mtz(input_file_name,
+        #                                                       "minimal_refl_mtz.mtz",
+        #                                                       True)
+        #     print convert_scalepack_merge_to_minimal_rfree_mtz(input_file_name,
+        #                                                        "minimal_rfree_mtz.mtz",
+        #                                                        True)
+        #
+        # elif rapd_file_type == "minimal_refl_mtz":
+        #     print convert_minimal_refl_mtz_to_scalepack_merge(input_file_name, "foo.sca", True)
+        #
+        # elif rapd_file_type == "minimal_rfree_mtz":
+        #     print convert_minimal_rfree_mtz_to_scalepack_merge(input_file_name, "foo.sca", True)
+        #
+        # elif rapd_file_type == "scalepack_anomalous":
+        #     print convert_scalepack_anomalous_to_minimal_refl_anom_mtz(input_file_name,
+        #                                                                "minimal_refl_anom_mtz.mtz",
+        #                                                                True)
+        #     print convert_scalepack_anomalous_to_rfree_mtz(input_file_name, "rfree_mtz.mtz", True)
+        #     print convert_scalepack_anomalous_to_minimal_refl_mtz(input_file_name,
+        #                                                           "minimal_refl_mtz.mtz",
+        #                                                           True)
+        #     print convert_scalepack_anomalous_to_scalepack_merge(input_file_name,
+        #                                                          "foo_merge.sca",
+        #                                                          True)
 
-        if rapd_file_type == "xds_integrated":
-            print "convert_xds_integrated_to_minimal_mergeable_mtz >> %s" % \
-                  convert_xds_integrated_to_minimal_mergeable_mtz(input_file_name, overwrite=True)
-
-        if rapd_file_type == "scalepack_merge":
-            print convert_scalepack_merge_to_minimal_refl_mtz(input_file_name,
-                                                              "minimal_refl_mtz.mtz",
-                                                              True)
-            print convert_scalepack_merge_to_minimal_rfree_mtz(input_file_name,
-                                                               "minimal_rfree_mtz.mtz",
-                                                               True)
-
-        elif rapd_file_type == "minimal_refl_mtz":
-            print convert_minimal_refl_mtz_to_scalepack_merge(input_file_name, "foo.sca", True)
-
-        elif rapd_file_type == "minimal_rfree_mtz":
-            print convert_minimal_rfree_mtz_to_scalepack_merge(input_file_name, "foo.sca", True)
-
-        elif rapd_file_type == "scalepack_anomalous":
-            print convert_scalepack_anomalous_to_minimal_refl_anom_mtz(input_file_name, "minimal_refl_anom_mtz.mtz", True)
-            print convert_scalepack_anomalous_to_rfree_mtz(input_file_name, "rfree_mtz.mtz", True)
-            print convert_scalepack_anomalous_to_minimal_refl_mtz(input_file_name, "minimal_refl_mtz.mtz", True)
-            print convert_scalepack_anomalous_to_scalepack_merge(input_file_name, "foo_merge.sca", True)
-
-        elif rapd_file_type == "mergable_mtz":
-            print "convert_mergable_mtz_to_minimal_mergeable_mtz >> %s" % \
-                  convert_mergable_mtz_to_minimal_mergeable_mtz(input_file_name, overwrite=True)
+        # elif rapd_file_type == "mergable_mtz":
+        #     print "convert_mergable_mtz_to_minimal_mergable_mtz >> %s" % \
+        #           convert_mergable_mtz_to_minimal_mergable_mtz(input_file_name, overwrite=True)
             # print "convert_mergable_mtz_to_minimal_refl_anom_mtz >> %s"  % \
             #       convert_mergable_mtz_to_minimal_refl_anom_mtz(input_file_name, overwrite=True)
             # print "convert_mergable_mtz_to_minimal_refl_mtz >> %s" % \
@@ -568,9 +472,10 @@ def main():
             # print "convert_mergable_mtz_to_minimal_rfree_mtz >> %s" % \
             #       convert_mergable_mtz_to_minimal_rfree_mtz(input_file_name, overwrite=True)
 
-        elif rapd_file_type == "minimal_refl_anom_mtz":
+        # elif rapd_file_type == "minimal_refl_anom_mtz":
             # print "  convert_minimal_refl_anom_mtz_to_minimal_refl_mtz >> %s" % \
-            #       convert_minimal_refl_anom_mtz_to_minimal_refl_mtz(input_file_name, overwrite=True)
+            #       convert_minimal_refl_anom_mtz_to_minimal_refl_mtz(input_file_name,
+            #                                                         overwrite=True)
             # print "  convert_minimal_refl_anom_mtz_to_minimal_rfree_mtz >> %s" % \
             #       convert_minimal_refl_anom_mtz_to_minimal_rfree_mtz(input_file_name,
             #                                                          overwrite=True)
@@ -579,15 +484,15 @@ def main():
             #                                                            overwrite=True)
             # print "convert_minimal_refl_anom_mtz_to_rfree_mtz >> %s " % \
             #       convert_minimal_refl_anom_mtz_to_rfree_mtz(input_file_name, overwrite=True)
-            print "convert_minimal_refl_anom_mtz_to_scalepack_merge >> %s " % \
-                  convert_minimal_refl_anom_mtz_to_scalepack_merge(input_file_name,
-                                                                   overwrite=True)
-
-        elif rapd_file_type == "scalepack_no_merge_original_index":
-            print "convert_scalepack_no_merge_original_index_to_minimal_mergeable_mtz >> %s" % \
-                  convert_scalepack_no_merge_original_index_to_minimal_mergeable_mtz(
-                      input_file_name,
-                      overwrite=True)
+        #     print "convert_minimal_refl_anom_mtz_to_scalepack_merge >> %s " % \
+        #           convert_minimal_refl_anom_mtz_to_scalepack_merge(input_file_name,
+        #                                                            overwrite=True)
+        #
+        # elif rapd_file_type == "scalepack_no_merge_original_index":
+        #     print "convert_scalepack_no_merge_original_index_to_minimal_mergable_mtz >> %s" % \
+        #           convert_scalepack_no_merge_original_index_to_minimal_mergable_mtz(
+        #               input_file_name,
+        #               overwrite=True)
 
 
 #
@@ -757,6 +662,46 @@ Please change to %s" % RAPD_FILE_SUFFIXES[output_rapd_type])
     return output_file
 
 #
+# High-level documentation functions
+#
+def print_file_types():
+    """Prints a list of file types understood by RAPD"""
+
+    print "%35s  %35s  %s" % ("RAPD", "CCTBX", "Columns")
+    print "%35s  %35s  %s" % ("======", "=======", "="*80)
+
+    file_types = RAPD_FILE_SIGNATURES.keys()
+    file_types.sort()
+    for file_type in file_types:
+        cctbx_file_type, columns = RAPD_FILE_SIGNATURES[file_type]
+        print "%35s  %35s  %s" % (file_type, cctbx_file_type, str(columns))
+
+def print_file_conversions(source_file_type=False, columns=False):
+    """
+    Prints a list of file conversions available. If a source_file_type is given, only conversions
+    for this type will be printed
+
+    Keyword arguments
+    -----------------
+    source_file_type - RAPD file type to list conversions for (default = False)
+    """
+
+    if source_file_type:
+        rapd_file_types = (source_file_type,)
+    else:
+        rapd_file_types = RAPD_FILE_SIGNATURES.keys()
+        rapd_file_types.sort()
+
+
+    print "Available file conversions"
+    for rapd_file_type in rapd_file_types:
+        print rapd_file_type
+        for conversion in get_conversions(rapd_file_type):
+            if columns:
+                print "          >> %s   %s" % (conversion, RAPD_FILE_SIGNATURES[conversion][1])
+            else:
+                print "          >> %s" % conversion
+#
 # Low-level functions
 #
 def get_columns(datafile):
@@ -884,6 +829,16 @@ def get_rapd_file_type(file_name):
 
     return rapd_file_type
 
+def get_conversions(rapd_file_type):
+    """ """
+    conversions = []
+    for conversion, possible in RAPD_CONVERSIONS.iteritems():
+        if conversion[0] == rapd_file_type:
+            if possible:
+                conversions.append(conversion[1])
+
+    return conversions
+
 def replace_suffix(input_file_name, input_rapd_type, output_rapd_type):
     """Replace a file suffix with as much of a RAPD suffix as possible"""
 
@@ -977,7 +932,7 @@ E6=SIGI(-)\n")
 
     return dest_file_name
 
-def convert_mergable_mtz_to_minimal_mergeable_mtz(source_file_name,
+def convert_mergable_mtz_to_minimal_mergable_mtz(source_file_name,
                                                   dest_file_name=False,
                                                   overwrite=True,
                                                   clean=True):
@@ -985,7 +940,7 @@ def convert_mergable_mtz_to_minimal_mergeable_mtz(source_file_name,
     Convert reflection file
 
     mergable_mtz - a standard RAPD file format of integrated X-ray intensities
-    minimal_mergeable_mtz - minimal mergeable mtz file containing intensities and batch information
+    minimal_mergable_mtz - minimal mergable mtz file containing intensities and batch information
 
     Keyword arguments
     -----------------
@@ -997,7 +952,7 @@ def convert_mergable_mtz_to_minimal_mergeable_mtz(source_file_name,
     """
 
     source_format = "mergable_mtz"
-    dest_format = "minimal_mergeable_mtz"
+    dest_format = "minimal_mergable_mtz"
 
     # Name of resulting file
     if not dest_file_name:
@@ -2128,7 +2083,7 @@ def convert_scalepack_merge_to_minimal_rfree_mtz(source_file_name,
 
     return dest_file_name
 
-def convert_scalepack_no_merge_original_index_to_minimal_mergeable_mtz(
+def convert_scalepack_no_merge_original_index_to_minimal_mergable_mtz(
         source_file_name,
         dest_file_name=False,
         cell=(90, 90, 90, 90, 90, 90),
@@ -2137,7 +2092,7 @@ def convert_scalepack_no_merge_original_index_to_minimal_mergeable_mtz(
     """Convert file"""
 
     source_format = "scalepack_no_merge_original_index"
-    dest_format = "minimal_mergeable_mtz"
+    dest_format = "minimal_mergable_mtz"
 
     # Name of resulting file
     if not dest_file_name:
@@ -2198,14 +2153,14 @@ def convert_xds_corrected_to_mergable_mtz(source_file_name,
 
     return dest_file_name
 
-def convert_xds_corrected_to_minimal_mergeable_mtz(source_file_name,
+def convert_xds_corrected_to_minimal_mergable_mtz(source_file_name,
                                                    dest_file_name=False,
                                                    overwrite=False,
                                                    clean=True):
     """Convert file"""
 
     source_format = "xds_corrected"
-    dest_format = "minimal_mergeable_mtz"
+    dest_format = "minimal_mergable_mtz"
 
     # Name of resulting file
     if not dest_file_name:
@@ -2311,7 +2266,7 @@ def convert_xds_integrated_to_mergable_mtz(source_file_name,
     """Convert file"""
 
     source_format = "xds_integrated"
-    dest_format = "mergeable_mtz"
+    dest_format = "mergable_mtz"
 
     # Name of resulting file
     if not dest_file_name:
@@ -2337,14 +2292,14 @@ def convert_xds_integrated_to_mergable_mtz(source_file_name,
 
     return dest_file_name
 
-def convert_xds_integrated_to_minimal_mergeable_mtz(source_file_name,
+def convert_xds_integrated_to_minimal_mergable_mtz(source_file_name,
                                                     dest_file_name=False,
                                                     overwrite=False,
                                                     clean=True):
     """Convert file"""
 
     source_format = "xds_integrated"
-    dest_format = "minimal_mergeable_mtz"
+    dest_format = "minimal_mergable_mtz"
 
     # Name of resulting file
     if not dest_file_name:
