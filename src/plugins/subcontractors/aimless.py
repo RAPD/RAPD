@@ -61,7 +61,7 @@ VERSIONS = {
     # "eiger2cbf": ("160415",)
 }
 
-def parse_aimless(self, logfile):
+def parse_aimless(logfile):
     """
 	Parses the aimless logfile in order to pull out data for
 	graphing and the results summary table.
