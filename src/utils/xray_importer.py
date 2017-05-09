@@ -26,35 +26,16 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
-# import from collections import OrderedDict
-# import datetime
-# import glob
-# import json
-# import logging
-# import multiprocessing
 import os
-# from pprint import pprint
-# import pymongo
-# import re
-# import redis
-# import shutil
 import subprocess
 import sys
 import tempfile
-# import time
-# import unittest
-# import urllib2
-# import uuid
 
 from iotbx import reflection_file_reader
 
 # RAPD imports
-# import commandline_utils
-# import detectors.detector_utils as detector_utils
 from utils.xutils import fix_mtz_to_sca
-# import utils.credits as credits
 
-# Software dependencies
 # Software dependencies
 VERSIONS = {
     "aimless": (
