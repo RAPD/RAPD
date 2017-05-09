@@ -33,7 +33,7 @@ import argparse
 # import logging
 # import multiprocessing
 import os
-from pprint import pprint
+# from pprint import pprint
 # import pymongo
 # import re
 # import redis
@@ -41,12 +41,12 @@ from pprint import pprint
 import subprocess
 import sys
 import tempfile
-import time
+# import time
 # import unittest
 # import urllib2
 # import uuid
 
-from iotbx import reflection_file_reader, file_reader
+from iotbx import reflection_file_reader
 
 # RAPD imports
 # import commandline_utils
@@ -411,13 +411,8 @@ def main():
 
         datafile = reflection_file_reader.any_reflection_file(file_name=input_file_name)
 
-        file_type = datafile.file_type()
-
         print "  CCTBX file type", datafile.file_type()
-
-        # Get the columns
-        columns = get_columns(datafile)
-        print "  columns:", columns
+        print "  columns:", get_columns(datafile)
 
         # Get the RAPD file type
         rapd_file_type = get_rapd_file_type(input_file_name)
@@ -426,8 +421,9 @@ def main():
 
         print "  Formats possible to be converted to:"
         for conversion in get_conversions(rapd_file_type):
-                    print "          %s" % conversion
+            print "          %s" % conversion
 
+        # Testing code
         # if rapd_file_type == "xds_corrected":
         #     print "convert_xds_corrected_to_minimal_mergable_mtz >> %s" % \
         #           convert_xds_corrected_to_minimal_mergable_mtz(input_file_name, overwrite=True)
@@ -451,9 +447,10 @@ def main():
         #     print convert_minimal_rfree_mtz_to_scalepack_merge(input_file_name, "foo.sca", True)
         #
         # elif rapd_file_type == "scalepack_anomalous":
-        #     print convert_scalepack_anomalous_to_minimal_refl_anom_mtz(input_file_name,
-        #                                                                "minimal_refl_anom_mtz.mtz",
-        #                                                                True)
+        #     print convert_scalepack_anomalous_to_minimal_refl_anom_mtz(
+        #               input_file_name,
+        #               "minimal_refl_anom_mtz.mtz",
+        #               True)
         #     print convert_scalepack_anomalous_to_rfree_mtz(input_file_name, "rfree_mtz.mtz", True)
         #     print convert_scalepack_anomalous_to_minimal_refl_mtz(input_file_name,
         #                                                           "minimal_refl_mtz.mtz",
@@ -461,29 +458,29 @@ def main():
         #     print convert_scalepack_anomalous_to_scalepack_merge(input_file_name,
         #                                                          "foo_merge.sca",
         #                                                          True)
-
+        #
         # elif rapd_file_type == "mergable_mtz":
         #     print "convert_mergable_mtz_to_minimal_mergable_mtz >> %s" % \
         #           convert_mergable_mtz_to_minimal_mergable_mtz(input_file_name, overwrite=True)
-            # print "convert_mergable_mtz_to_minimal_refl_anom_mtz >> %s"  % \
-            #       convert_mergable_mtz_to_minimal_refl_anom_mtz(input_file_name, overwrite=True)
-            # print "convert_mergable_mtz_to_minimal_refl_mtz >> %s" % \
-            #       convert_mergable_mtz_to_minimal_refl_mtz(input_file_name, overwrite=True)
-            # print "convert_mergable_mtz_to_minimal_rfree_mtz >> %s" % \
-            #       convert_mergable_mtz_to_minimal_rfree_mtz(input_file_name, overwrite=True)
-
+        #     print "convert_mergable_mtz_to_minimal_refl_anom_mtz >> %s"  % \
+        #           convert_mergable_mtz_to_minimal_refl_anom_mtz(input_file_name, overwrite=True)
+        #     print "convert_mergable_mtz_to_minimal_refl_mtz >> %s" % \
+        #           convert_mergable_mtz_to_minimal_refl_mtz(input_file_name, overwrite=True)
+        #     print "convert_mergable_mtz_to_minimal_rfree_mtz >> %s" % \
+        #           convert_mergable_mtz_to_minimal_rfree_mtz(input_file_name, overwrite=True)
+        #
         # elif rapd_file_type == "minimal_refl_anom_mtz":
-            # print "  convert_minimal_refl_anom_mtz_to_minimal_refl_mtz >> %s" % \
-            #       convert_minimal_refl_anom_mtz_to_minimal_refl_mtz(input_file_name,
-            #                                                         overwrite=True)
-            # print "  convert_minimal_refl_anom_mtz_to_minimal_rfree_mtz >> %s" % \
-            #       convert_minimal_refl_anom_mtz_to_minimal_rfree_mtz(input_file_name,
-            #                                                          overwrite=True)
-            # print "convert_minimal_refl_anom_mtz_to_scalepack_anomalous >> %s " % \
-            #       convert_minimal_refl_anom_mtz_to_scalepack_anomalous(input_file_name,
-            #                                                            overwrite=True)
-            # print "convert_minimal_refl_anom_mtz_to_rfree_mtz >> %s " % \
-            #       convert_minimal_refl_anom_mtz_to_rfree_mtz(input_file_name, overwrite=True)
+        #     print "  convert_minimal_refl_anom_mtz_to_minimal_refl_mtz >> %s" % \
+        #           convert_minimal_refl_anom_mtz_to_minimal_refl_mtz(input_file_name,
+        #                                                             overwrite=True)
+        #     print "  convert_minimal_refl_anom_mtz_to_minimal_rfree_mtz >> %s" % \
+        #           convert_minimal_refl_anom_mtz_to_minimal_rfree_mtz(input_file_name,
+        #                                                              overwrite=True)
+        #     print "convert_minimal_refl_anom_mtz_to_scalepack_anomalous >> %s " % \
+        #           convert_minimal_refl_anom_mtz_to_scalepack_anomalous(input_file_name,
+        #                                                                overwrite=True)
+        #     print "convert_minimal_refl_anom_mtz_to_rfree_mtz >> %s " % \
+        #           convert_minimal_refl_anom_mtz_to_rfree_mtz(input_file_name, overwrite=True)
         #     print "convert_minimal_refl_anom_mtz_to_scalepack_merge >> %s " % \
         #           convert_minimal_refl_anom_mtz_to_scalepack_merge(input_file_name,
         #                                                            overwrite=True)
@@ -568,7 +565,7 @@ RAPD" % output_rapd_type)
 
 def convert_intensities_file(input_file_name,
                              output_rapd_type,
-                             output_file_name=False,
+                             output_file_name="",
                              force=False,
                              cell=False):
     """
@@ -602,7 +599,7 @@ RAPD" % output_rapd_type)
     # Get CCTBX type
     input_file_cctbx_type = reflection_file.file_type()
     # Is the initial format understood?
-    if not input_file_cctbx_type in data_file_cctbx_types:
+    if not input_file_cctbx_type in DATA_FILE_CCTBX_TYPES:
         raise Exception("%s is not a format that is understood by RAPD" % \
                         input_file_cctbx_type)
     # Get the RAPD column signature
@@ -725,7 +722,7 @@ def get_columns(datafile):
     elif file_type == "scalepack_merge":
         columns = get_scalepack_merge_columns(datafile)
     elif file_type == "scalepack_no_merge_original_index":
-        columns = get_scalepack_no_merge_columns(datafile)
+        columns = get_scalepack_no_merge_original_index_columns()
     else:
         # for d in dir(datafile.file_content()):
         #     print d
@@ -759,7 +756,7 @@ def get_scalepack_merge_columns(datafile):
 
     return columns
 
-def get_scalepack_no_merge_columns(datafile):
+def get_scalepack_no_merge_original_index_columns():
     """
     Returns columns for a scalepack no merge original index file
     """
@@ -933,9 +930,9 @@ E6=SIGI(-)\n")
     return dest_file_name
 
 def convert_mergable_mtz_to_minimal_mergable_mtz(source_file_name,
-                                                  dest_file_name=False,
-                                                  overwrite=True,
-                                                  clean=True):
+                                                 dest_file_name=False,
+                                                 overwrite=True,
+                                                 clean=True):
     """
     Convert reflection file
 
@@ -1179,7 +1176,7 @@ def convert_mergable_mtz_to_rfree_mtz(source_file_name,
                                      stdout=subprocess.PIPE,
                                      stderr=subprocess.PIPE)
     truncate_proc.stdin.write("END\n")
-    stdout, stderr = truncate_proc.communicate()
+    _, _ stderr = truncate_proc.communicate()
 
     # Set the free R flag
     freerflag_proc = subprocess.Popen(["freerflag",
