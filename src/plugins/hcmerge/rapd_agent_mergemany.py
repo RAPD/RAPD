@@ -89,7 +89,7 @@ class MergeMany(Process):
         # dict for keeping track of file identities
         self.id_list                       = OrderedDict() # Dict will hold prefix as key and pair of file names as value
         self.dirs['data']                  = 'DATA'
-        
+
         # Establish setting defaults
         # Check for agglomerative clustering linkage method
         # Options for linkage are:
@@ -152,7 +152,7 @@ class MergeMany(Process):
             self.start_point=self.settings['start_point']
         else:
             self.start_point= 'start'
-            
+
         # Check whether to skip prechecking files during preprocess
         if self.settings.has_key('precheck'):
             self.precheck=self.settings['precheck']
@@ -164,7 +164,7 @@ class MergeMany(Process):
             self.dpi=self.settings['dpi']
         else:
             self.dpi = 100
-                        
+
         # Check on number of processors
         if self.settings.has_key('nproc'):
             self.nproc = self.settings['nproc']
@@ -293,7 +293,7 @@ class MergeMany(Process):
                                  stderr=subprocess.PIPE).wait()
             # Make a list of filenames
             self.data_files.append(hkl_filename)
-        
+
     def process(self):
         """
         Make 1x1 combinations, combine using pointless, scale, determine CC, make matrix and select dataset
@@ -356,7 +356,7 @@ class MergeMany(Process):
         self.merge_wedges(wedge_files)
 
         # Store the dicts for future use
-        self.store_dicts({'data_files': self.data_files, 'id_list': self.id_list, 
+        self.store_dicts({'data_files': self.data_files, 'id_list': self.id_list,
                           'results': self.results, 'graphs': self.graphs, 'matrix': matrix,
                           'merged_files': self.merged_files})
 
@@ -384,7 +384,7 @@ class MergeMany(Process):
         for file in self.data_files:
 	        shutil.copy(file,data_dir)
 		self.get_dicts(self.prefix + '.pkl')
-        self.store_dicts({'data_files': self.data_files, 'id_list': self.id_list, 
+        self.store_dicts({'data_files': self.data_files, 'id_list': self.id_list,
                           'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix,
                           'merged_files': self.merged_files, 'data_dir': data_dir})
         # Check for postprocessing flags
@@ -397,11 +397,11 @@ class MergeMany(Process):
         # Move final files to top directory
         for file in self.merged_files:
         	shutil.copy(file + '_scaled.mtz', self.dirs['work'])
-        	shutil.copy(file + '_scaled.log', self.dirs['work'])        	
+        	shutil.copy(file + '_scaled.log', self.dirs['work'])
     	shutil.copy(self.prefix + '-dendrogram.png', self.dirs['work'])
     	shutil.copy(self.prefix + '.log', self.dirs['work'])
     	shutil.copy(self.prefix + '.pkl', self.dirs['work'])
-       
+
 
     def make_combinations(self, files, number=2):
         """
@@ -486,7 +486,7 @@ class MergeMany(Process):
                                  shell = True,
                                  stdout = subprocess.PIPE,
                                  stderr = subprocess.PIPE).communicate()
-                                                 
+
         # Check for known FATAL ERROR of unable to pick LAUE GROUP due to not enough reflections
         plog = open(out_file+'_pointless.log', 'r').readlines()
         for num,line in enumerate(plog):
@@ -532,7 +532,7 @@ class MergeMany(Process):
                                  stdout = subprocess.PIPE,
                                  stderr = subprocess.PIPE).communicate()
 
-    
+
 #        sts = os.waitpid(p.pid, 1)[1]
 
     def get_batch(self, in_file):
@@ -924,7 +924,7 @@ class MergeMany(Process):
         """
         # lists for running the multiprocessing
         jobs                               = []
-        
+
         # Check for all_clusters flag
         if self.all_clusters:
             for cnt,cluster in enumerate(wedge_files.values()):
@@ -981,7 +981,7 @@ class MergeMany(Process):
         except:
             dendrogram(matrix, color_threshold = 1 - self.cutoff, no_plot=True)
             self.logger.error('HCMerge::matplotlib.pylab unavailable in your version of cctbx.  Plot not generated.')
-        
+
     def write_db(self):
         """
         Writes the results to a database, currently MySQL for RAPD
@@ -999,7 +999,7 @@ class MergeMany(Process):
 
         # Make a comparison table of results
         # Set up list of lists for making comparison table
-        table = [['', 'Correlation', 'Space Group', 'Resolution', 'Completeness', 
+        table = [['', 'Correlation', 'Space Group', 'Resolution', 'Completeness',
                   'Multiplicity', 'I/SigI', 'Rmerge', 'Rmeas', 'Anom Rmeas',
                   'Rpim', 'Anom Rpim', 'CC 1/2', 'Anom Completeness', 'Anom Multiplicity',
                   'Anom CC', 'Anom Slope', 'Total Obs', 'Unique Obs']]
@@ -1091,33 +1091,33 @@ class MergeMany(Process):
 
 			# Make relationship matrix
 			matrix = self.make_matrix(self.method)
-        	   
+
             # Find data above CC cutoff.  Key 0 is most wedges and above CC cutoff
 			wedge_files = self.select_data(matrix, 1 - self.cutoff)
-    
+
             # Merge all wedges together
 			self.merge_wedges(wedge_files)
-    
+
             # Store the dicts for future use
-			self.store_dicts({'data_files': self.data_files, 'id_list': self.id_list, 
+			self.store_dicts({'data_files': self.data_files, 'id_list': self.id_list,
                               'results': self.results, 'graphs': self.graphs, 'matrix': matrix,
                               'merged_files': self.merged_files})
-                              
+
 			# Make the summary text file for all merged files
 			self.make_log(self.merged_files)
-                              
+
         else:
             pass
         # Make the dendrogram and write it out as a PNG
         self.make_dendrogram(self.matrix, self.dpi)
-            
+
     def create_subdirectory(self, n_dir_max=None, prefix="TEMP", path="", directory_number=None):
         """
         Make subdirectories as needed for all the many script, log and mtz files
         Is the same code as phenix create_temp_directory.  Replace if distributed with phenix.
         """
-        
-        if n_dir_max is None: 
+
+        if n_dir_max is None:
             n_dir_max=1000
             temp_dir=prefix
         if directory_number is None:
@@ -1139,7 +1139,7 @@ class MergeMany(Process):
             except Exception, e: pass
         raise ValueError("Unable to create directory %s " %(temp_dir)+ "\nError message is: %s " %(str(e)))
 
- 
+
 class MakeTables:
     """
     From GITS blog: http://ginstrom.com/scribbles/2007/09/04/pretty-printing-a-table-in-python/
@@ -1194,7 +1194,7 @@ if __name__ == '__main__':
     command = 'MERGE'
     working_dir = os.getcwd()
     dirs = {'work': working_dir}
- 
+
     usage = "usage: %prog [options] filelist or pickle file"
     parser = OptionParser(usage=usage)
     parser.add_option("-a", "--all", action="store_true", dest="all_clusters", default=False,
