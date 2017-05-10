@@ -2823,6 +2823,7 @@ def processLocal(inp, logger=False, output=False):
   """
   Run job as subprocess on local machine.
   """
+  print "processLocal"
   from subprocess import Popen
 
   try:
@@ -2837,7 +2838,6 @@ def processLocal(inp, logger=False, output=False):
       myoutput.wait()
       if type(inp) == tuple:
           f.close()
-
   except:
       if logger:
           logger.exception('**Error in Utilities.processLocal**')
