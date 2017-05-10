@@ -58,6 +58,7 @@ import numpy
 # RAPD imports
 from plugins.subcontractors.xdsme.xds2mos import Xds2Mosflm
 from plugins.subcontractors.aimless import parse_aimless
+from plugins.subcontractors.aimless import get_avg_mosaicity_from_integratelp, get_isa_from_correctlp
 from utils.communicate import rapd_send
 from utils.numbers import try_int, try_float
 #from plugins.analysis import RapdPlugin as AnalysisPlugin
@@ -1489,10 +1490,10 @@ class RapdPlugin(Process):
         summary['wedge'] = '-'.join(wedge)
 
         # Parse INTEGRATE.LP and add information about mosaicity to summary.
-        summary['mosaicity'] = float(self.parse_integrateLP())
+        summary['mosaicity'] = get_avg_mosaicity_from_integratelp()
 
         # Parse CORRECT.LP and add information from that to summary.
-        summary['ISa'] = float(self.parse_correctLP())
+        summary['ISa'] = get_isa_from_correctlp()
 
         # Parse CORRECT.LP and pull out per wedge statistics
         #self.parse_correct()
@@ -1569,7 +1570,7 @@ class RapdPlugin(Process):
         mtzfile = '_'.join([self.image_data['image_prefix'], 'pointless.mtz'])
         logfile = mtzfile.replace('mtz', 'log')
         if self.spacegroup:
-            cmd = ('pointless xdsin %s hklout %s << eof > %s\nSETTING C2\nSPACEGROUP HKLIN\n eof'
+            cmd = ("pointless xdsin %s hklout %s << eof > %s\nSETTING C2\n\SPACEGROUP HKLIN\n eof"
                    % (hklfile, mtzfile, logfile))
         else:
             cmd = ('pointless xdsin %s hklout %s << eof > %s\n SETTING C2 \n eof'
@@ -1579,10 +1580,10 @@ class RapdPlugin(Process):
         p.wait()
         # sts = os.waitpid(p.pid, 0)[1]
         tmp = open(logfile, "r").readlines()
-        return_value="Failed"
+        return_value = "Failed"
         for i in range(-10, -1):
             if tmp[i].startswith('P.R.Evans'):
-                return_value=mtzfile
+                return_value = mtzfile
                 break
         return return_value
 
@@ -1789,35 +1790,6 @@ class RapdPlugin(Process):
         #     self.logger.debug('    Execution of AutoStats failed')
         #     return('Failed')
         return "Success"
-
-    def parse_integrateLP(self):
-        """
-        Parse the INTEGRATE.LP file and extract information
-        about the mosaicity.
-        """
-        self.logger.debug('FastIntegration::parse_integrateLP')
-
-        lp = open('INTEGRATE.LP', 'r').readlines()
-
-        for linenum, line in enumerate(lp):
-            if 'SUGGESTED VALUES FOR INPUT PARAMETERS' in line:
-                avg_mosaicity_line = lp[linenum + 2]
-        avg_mosaicity = avg_mosaicity_line.strip().split(' ')[-1]
-        return avg_mosaicity
-
-    def parse_correctLP(self):
-        """
-        Parses the CORRECT.LP file to extract information
-        """
-        self.logger.debug('FastIntegration::parse_correctLP')
-
-        lp = open('CORRECT.LP', 'r').readlines()
-        for i, line in enumerate(lp):
-            if 'ISa\n' in line:
-                isa_line = lp[i + 1]
-                break
-        ISa = isa_line.strip().split()[-1]
-        return ISa
 
     def find_xds_symm(self, xdsdir, xdsinp):
         """
