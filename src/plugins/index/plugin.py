@@ -42,6 +42,7 @@ import glob
 import json
 import logging
 from multiprocessing import Process, Queue, Event
+import multiprocessing
 import numpy
 import os
 from pprint import pprint
@@ -57,6 +58,7 @@ import plugins.subcontractors.parse as Parse
 from plugins.subcontractors.xoalign import RunXOalign
 import utils.credits as credits
 from utils.communicate import rapd_send
+from utils.processes import local_subprocess
 # from utils.modules import load_module
 import utils.spacegroup as spacegroup
 import utils.xutils as xutils
@@ -1924,7 +1926,8 @@ class RapdPlugin(Process):
 
 class RunLabelit(Process):
 
-
+    # For results passing
+    indexing_results_queue = multiprocessing.Queue()
 
     def __init__(self, command, output, params, tprint=False, logger=None):
         """
@@ -2079,22 +2082,27 @@ class RunLabelit(Process):
             if self.iterations == 0:
                 self.labelit_jobs[self.process_labelit().keys()[0]] = 0
             else:
-                self.labelit_jobs[xutils.errorLabelit(self, self.iterations).keys()[0]] = self.iterations
+                self.labelit_jobs[xutils.errorLabelit(self, self.iterations).keys()[0]] = \
+                    self.iterations
+
+        # NOT short
         else:
-            # Create the separate folders for the labelit runs, modify the dataset_preferences.py file, and launch for each iteration.
-            for iteration in range(1, self.iterations):
+
+            # Create the separate folders for the labelit runs, modify the dataset_preferences.py
+            # file, and launch for each iteration.
+            for iteration in range(self.iterations, -1, -1):
                 xutils.create_folders_labelit(self.working_dir, iteration)
-            xutils.create_folders_labelit(self.working_dir, 0)
-            # xutils.foldersLabelit(self, self.iterations)
+
             # Launch first job
             self.labelit_jobs[self.process_labelit().keys()[0]] = 0
 
-            # If self.multiproc==True runs all labelits at the same time.
+            # If self.multiproc == True runs all labelits at the same time.
             if self.multiproc:
                 for i in range(1, self.iterations):
                     self.labelit_jobs[xutils.errorLabelit(self, i).keys()[0]] = i
 
         self.run_queue()
+
         if self.short == False:
             # Put the logs together
             self.labelitLog()
@@ -2192,85 +2200,100 @@ class RunLabelit(Process):
         """
         self.logger.debug("RunLabelit::process_labelit")
 
-        try:
-            labelit_input = []
+        print "process_labelit %d %s" % (iteration, inp)
 
-            # Check if user specific unit cell
-            d = {'a': False, 'c': False, 'b': False, 'beta': False, 'alpha': False, 'gamma': False}
-            counter = 0
-            for l in d.keys():
-                temp = str(self.preferences.get(l, 0.0))
-                if temp != '0.0':
-                    d[l] = temp
-                    counter += 1
-            if counter != 6:
-                d = False
+        # try:
+        labelit_input = []
 
-            # Put together the command for labelit.index
-            command = 'labelit.index '
+        # Check if user specific unit cell
+        unit_cell_defaults = dict(zip(["a", "b", "c", "alpha", "beta", "gamma"], [False]*6))
+        counter = 0
+        for parameter in unit_cell_defaults:
+            parameter_pref = self.preferences.get(parameter, 0.0)
+            if parameter_pref != 0:
+                unit_cell_defaults[parameter] = parameter_pref
+                counter += 1
+        # Can't set less than 6 unit cell parameters
+        if counter != 6:
+            unit_cell_defaults = False
 
-            # If first labelit run errors because not happy with user specified cell or SG then
-            # ignore user input in the rerun.
-            if self.ignore_user_cell == False:
-                if d:
-                    command += 'known_cell=%s,%s,%s,%s,%s,%s ' % (d['a'], d['b'], d['c'], d['alpha'], d['beta'], d['gamma'])
-            if self.ignore_user_SG == False:
-                if self.spacegroup != False:
-                    command += 'known_symmetry=%s ' % self.spacegroup
+        # Put together the command for labelit.index
+        command = 'labelit.index '
 
-            # For peptide crystals. Doesn't work that much.
-            if self.sample_type == 'Peptide':
-                command += 'codecamp.maxcell=80 codecamp.minimum_spot_count=10 '
-            if inp:
-                command += '%s ' % inp
-            command += '%s ' % self.header.get('fullname')
+        # If first labelit run errors because not happy with user specified cell or SG then
+        # ignore user input in the rerun.
+        if self.ignore_user_cell == False:
+            if unit_cell_defaults:
+                command += 'known_cell=%s,%s,%s,%s,%s,%s ' % \
+                           (unit_cell_defaults['a'], unit_cell_defaults['b'], unit_cell_defaults['c'], unit_cell_defaults['alpha'], unit_cell_defaults['beta'], unit_cell_defaults['gamma'])
+        if self.ignore_user_SG == False:
+            if self.spacegroup != False:
+                command += 'known_symmetry=%s ' % self.spacegroup
 
-            # If pair of images
-            if self.header2:
-                command += "%s " % self.header2.get("fullname")
+        # For peptide crystals. Doesn't work that much.
+        if self.sample_type == 'Peptide':
+            command += 'codecamp.maxcell=80 codecamp.minimum_spot_count=10 '
+        if inp:
+            command += '%s ' % inp
+        command += '%s ' % self.header.get('fullname')
 
-            # Save the command to the top of log file, before running job.
-            self.logger.debug(command)
-            labelit_input.append(command)
-            if iteration == 0:
-                self.labelit_log[str(iteration)] = labelit_input
+        # If pair of images
+        if self.header2:
+            command += "%s " % self.header2.get("fullname")
+
+        # Save the command to the top of log file, before running job.
+        labelit_input.append(command)
+        if iteration == 0:
+            self.labelit_log[str(iteration)] = labelit_input
+        else:
+            self.labelit_log[str(iteration)].extend(labelit_input)
+        labelit_jobs = {}
+
+        # Don't launch job if self.test = True
+        if self.test:
+            labelit_jobs["junk%s" % iteration] = iteration
+        else:
+            # print command
+            log = os.path.join(os.getcwd(), "labelit.log")
+
+            # queue to retrieve the PID or JobIB once submitted.
+            pid_queue = Queue()
+            if self.cluster_adapter:
+                # Delete the previous log still in the folder, otherwise the cluster jobs
+                # will append to it.
+                if os.path.exists(log):
+                    os.system("rm -rf %s" % log)
+                run = Process(target=self.cluster_adapter.process_cluster_beorun,
+	                          args=({'command': command,
+                                     'log': log,
+                                     'queue': self.cluster_queue,
+                                     'pid': pid_queue},) )
             else:
-                self.labelit_log[str(iteration)].extend(labelit_input)
-            labelit_jobs = {}
+                # print "Run %s in directory %s" % (command, os.getcwd())
+                run = multiprocessing.Process(target=local_subprocess,
+                                              args=({"command": command,
+                                                     "logfile": log,
+                                                     "pid_queue": pid_queue,
+                                                     "result_queue": self.indexing_results_queue,
+                                                     "tag": iteration
+                                                    },
+                                                   )
+                                             )
 
-            # Don't launch job if self.test = True
-            if self.test:
-                labelit_jobs["junk%s" % iteration] = iteration
-            else:
-                # print command
-                log = os.path.join(os.getcwd(), "labelit.log")
+            # Start the subprocess
+            run.start()
 
-                # queue to retrieve the PID or JobIB once submitted.
-                pid_queue = Queue()
-                if self.cluster_adapter:
-                    # Delete the previous log still in the folder, otherwise the cluster jobs will append to it.
-                    if os.path.exists(log):
-                        os.system("rm -rf %s" % log)
-                    run = Process(target=self.cluster_adapter.process_cluster_beorun,
-		                          args=({'command': command,
-                                         'log': log,
-                                         'queue': self.cluster_queue,
-                                         'pid': pid_queue},) )
-                else:
-                    # print "Run %s in directory %s" % (command, os.getcwd())
-                    run = Process(target=xutils.processLocal, args=((command, log), self.logger, pid_queue))
-                run.start()
+            # Save the PID for killing the job later if needed.
+            self.pids[str(iteration)] = pid_queue.get()
 
-                # Save the PID for killing the job later if needed.
-                self.pids[str(iteration)] = pid_queue.get()
-                # print self.pids
-                labelit_jobs[run] = iteration
+            # print self.pids
+            labelit_jobs[run] = iteration
 
-            # return a dict with the job and iteration
-            return labelit_jobs
+        # return a dict with the job and iteration
+        return labelit_jobs
 
-        except:
-            self.logger.exception('**Error in RunLabelit.process_labelit**')
+        # except:
+        #     self.logger.exception('**Error in RunLabelit.process_labelit**')
 
     def postprocess_labelit(self, iteration=0, run_before=False, blank=False):
         """

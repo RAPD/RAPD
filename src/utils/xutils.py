@@ -2820,29 +2820,37 @@ def pp2(inp):
   f1.close()
 
 def processLocal(inp, logger=False, output=False):
-  """
-  Run job as subprocess on local machine.
-  """
-  print "processLocal"
-  from subprocess import Popen
+    """
+    Run job as subprocess on local machine.
+    """
+    
+    # Logfile might be passed in
+    if type(inp) == tuple:
+        command, logfile = inp
+    else:
+        command = inp
+        logfile = False
 
-  try:
-      if type(inp) == tuple:
-          command,log = inp
-          f = open(log,'w')
-          myoutput = Popen(command, shell=True, stdout=f, stderr=f)
-      else:
-          myoutput = Popen(inp,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-      if output:
-          output.put(myoutput.pid)
-      myoutput.wait()
-      if type(inp) == tuple:
-          f.close()
-  except:
-      if logger:
-          logger.exception('**Error in Utilities.processLocal**')
-      else:
-          print '**Error in Utilities.processLocal**'
+    # Run the process
+    proc = subprocess.Popen(command,
+                            shell=True,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+
+    # Send back PID if have outlet
+    if output:
+        output.put(proc.pid)
+
+    # Get the stdout and stderr from process
+    stdout, stderr = proc.communicate()
+    print stdout
+    print stderr
+
+    # Write out a log file, if name passed in
+    if logfile:
+        with open(logfile, "w") as out_file:
+            out_file.write(stdout)
+            out_file.write(stderr)
 
 def rocksCommand(inp, logger=False):
   """
