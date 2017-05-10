@@ -29,10 +29,22 @@ import sys
 
 HEADER = "\nRAPD depends on the work of others"
 
+AIMLESS = [
+    "Aimless"
+    "Reference: Evans PR (2006) Acta Cryst. D62:72-82.",
+    "Website: http://www.mrc-lmb.cam.ac.uk/harry/pre/aimless.html",
+]
+
 BEST = [
     "BEST",
     "Reference: Bourenkov GP and Popov AN (2006) Acta Cryst. D62:58-64",
     "Website: http://www.embl-hamburg.de/BEST/\n"
+]
+
+CCP4 = [
+    "CCP4",
+    "Reference: Acta Cryst. D50:760-763",
+    "Website: http://www.ccp4.ac.uk",
 ]
 
 CCTBX = [
@@ -66,10 +78,22 @@ PHENIX = [
     "Website:   http://adder.lbl.gov/labelit/\n",
 ]
 
+POINTLESS = [
+    "Pointless",
+    "Reference: Evans PR (2006) Acta Cryst. D62:72-82.",
+    "Website: http://www.mrc-lmb.cam.ac.uk/harry/pre/pointless.html",
+]
+
 RADDOSE = [
     "Raddose",
     "Reference: Paithankar, et al. (2009) J. Synch. Rad. 16:152-162",
     "Website:   http://biop.ox.ac.uk/www/garman/lab_tools.html/\n",
+]
+
+XDS = [
+    "XDS",
+    "Reference: Kabsch W (2010) Acta Cryst. D66:125-132",
+    "Website: http://xds.mpimf-heidelberg.mpg.de/",
 ]
 
 MAIN_MODULE = sys.modules[__name__]
