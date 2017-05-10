@@ -6,11 +6,16 @@
 4. [How to Contribute Code](#how-to-contribute-code)
 
 ### Getting Involved
-It's not always clear in projects what needs to be done, or what the maintainers are willing to let
-new contributors (i.e. outsiders) do. The RAPD project is designed as a framework for building plugins,
-so there are many ways to contribute built into the design of the project.
+It's not always clear in projects what needs to be done, or what the maintainers are willing to let new contributors (i.e. outsiders) do. The RAPD project is designed as a framework for building plugins, so there are many ways to contribute built into the design of the project.
 
-
+Ways to help:
+* Report a bug
+* Make a feature request
+* Test with a new version of dependent software and make a pull request
+* Fix a bug and make a pull request
+* Write a wrapper for a detector
+* Write a plugin
+* Write some documentation
 
 ### Questions and Discussion
 
