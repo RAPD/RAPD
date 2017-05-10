@@ -162,7 +162,10 @@ def get_run_data(detector_module, image_0_data, image_n_data, commandline_args):
         run_data["total"] = image_n_data.get("image_number") - run_data["start"] + 1
 
     # The repr for the run
-    run_data["repr"] = detector_module.create_image_template(image_0_data.get("image_prefix"), image_0_data.get("run_number")).rstrip(detector_module.DETECTOR_SUFFIX).replace("?", "") + ("%d-%d" % (run_data.get("start"), run_data.get("end")))
+    run_data["repr"] = detector_module.create_image_template(image_0_data.get("image_prefix"), \
+                       image_0_data.get("run_number")).rstrip(\
+                       detector_module.DETECTOR_SUFFIX).replace("?", "") + ("%d-%d" % \
+                       (run_data.get("start"), run_data.get("end")))
 
     return run_data
 
@@ -287,11 +290,10 @@ def main():
         commandline_args.template,
         mode="integrate",
         start_image=commandline_args.start_image,
-        end_image=commandline_args.end_image)
+        end_image=commandline_args.end_image,
+        timeout=3)
 
-    pprint(data_files)
-    sys.exit()
-
+    # Change hdf5 to cbf
     if "hdf5_files" in data_files:
         logger.debug("HDF5 source file(s)")
         tprint(arg="\nHDF5 source file(s)", level=99, color="blue")
@@ -300,15 +302,15 @@ def main():
             tprint(arg="  " + data_file, level=99, color="white")
         logger.debug("CBF file(s) from HDF5 file(s)")
         tprint(arg="\nData files", level=99, color="blue")
-    else:
-        logger.debug("Data to be integrated")
-        tprint(arg="\nData to be integrated", level=99, color="blue")
-        tprint(arg="  From %s" % data_files["data_files"][0], level=99, color="white")
-        tprint(arg="    To %s" % data_files["data_files"][-1], level=99, color="white")
+
+    # logger.debug("Data to be integrated")
+    # tprint(arg="\nData to be integrated", level=99, color="blue")
+    # tprint(arg="  From %s" % data_files["data_files"][0], level=99, color="white")
+    # tprint(arg="    To %s" % data_files["data_files"][-1], level=99, color="white")
 
     # No images match - assume that images will be arriving soon
     if len(data_files) == 0 and commandline_args.test == False:
-        raise Exception("No files input for integration.")
+        raise Exception("No files found for integration.")
 
     # Get site - commandline wins over the environmental variable
     site = False
@@ -352,18 +354,27 @@ def main():
                                   detector_module=detector_module,
                                   site_module=site_module)
 
-    logger.debug("Image header: %s, %s", image_0_data, image_n_data)
-    tprint(arg="\nImage headers", level=10, color="blue")
-    count = 0
-    for header in (image_0_data, image_n_data):
-        keys = header.keys()
-        keys.sort()
-        if count > 0:
-            tprint(arg="", level=10, color="white")
-        tprint(arg="  %s" % header["fullname"], level=10, color="white")
-        for key in keys:
-            tprint(arg="    arg:%-22s  val:%s" % (key, header[key]), level=10, color="white")
-        count += 1
+    # # Have an end image set
+    # if commandline_args.end_image:
+    #     # End image not yet present
+    #     if image_n_data["image_number"] < commandline_args.end_image:
+    #         pass
+    #     # End image present
+    #     else:
+    #         pass
+    # # No end image set
+    # else:
+    #     pass
+
+    logger.debug("First image header: %s", image_0_data)
+    tprint(arg="\nFirst image header", level=10, color="blue")
+    keys = image_0_data.keys()
+    keys.sort()
+    tprint(arg="  %s" % image_0_data["fullname"], level=10, color="white")
+    for key in keys:
+        tprint(arg="    arg:%-22s  val:%s" % (key, image_0_data[key]),
+               level=10,
+               color="white")
 
     # Get the run data
     run_data = get_run_data(detector_module, image_0_data, image_n_data, commandline_args)
@@ -394,9 +405,10 @@ def main():
 
     # Instantiate the plugin
     plugin.RapdPlugin(site=None,
-                     command=command,
-                     tprint=tprint,
-                     logger=logger)
+                      command=command,
+                      tprint=tprint,
+                      logger=logger)
+    plugin.run()
 
 if __name__ == "__main__":
 

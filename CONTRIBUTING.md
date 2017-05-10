@@ -5,13 +5,20 @@
 3. [How To Report Bugs](#how-to-report-bugs)
 4. [How to Contribute Code](#how-to-contribute-code)
 
-## Getting Involved
+### Getting Involved
+It's not always clear in projects what needs to be done, or what the maintainers are willing to let
+new contributors (i.e. outsiders) do. The RAPD project is designed as a framework for building plugins,
+so there are many ways to contribute built into the design of the project.
 
-## Questions and Discussion
 
-## How to Report Bugs
 
-## How to Contribute Code
+### Questions and Discussion
+
+### Bugs and Issues
+
+### Feature Requests
+
+### How to Contribute Code
 
 ### Certificate of Origin
 By making a contribution to this project, I certify that:

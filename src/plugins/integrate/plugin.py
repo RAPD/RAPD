@@ -279,7 +279,7 @@ class RapdPlugin(Process):
             self.procs = 4
 
         Process.__init__(self, name="FastIntegration")
-        self.start()
+        # self.start()
 
     def run(self):
         self.logger.debug('Fastintegration::run')
@@ -294,6 +294,7 @@ class RapdPlugin(Process):
         2. Read in detector specific parameters.
         """
         self.logger.debug('FastIntegration::preprocess')
+
         if os.path.isdir(self.dirs['work']) == False:
             os.makedirs(self.dirs['work'])
         os.chdir(self.dirs['work'])
@@ -333,7 +334,6 @@ class RapdPlugin(Process):
                 else:
                     integration_results = self.xds_processing(xds_input)
             os.chdir(self.dirs['work'])
-
 
         if integration_results == 'False':
             # Do a quick clean up?
