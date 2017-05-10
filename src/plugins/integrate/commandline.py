@@ -30,7 +30,7 @@ __status__ = "Development"
 import argparse
 import importlib
 import os
-# from pprint import pprint
+from pprint import pprint
 import sys
 import uuid
 
@@ -40,6 +40,9 @@ from utils.modules import load_module
 import utils.text as text
 import utils.commandline_utils as commandline_utils
 import detectors.detector_utils as detector_utils
+
+# Time to wait for first image to appear in seconds
+TIME_TO_WAIT = 30
 
 def get_commandline():
     """Get the commandline variables and handle them"""
@@ -286,6 +289,9 @@ def main():
         start_image=commandline_args.start_image,
         end_image=commandline_args.end_image)
 
+    pprint(data_files)
+    sys.exit()
+
     if "hdf5_files" in data_files:
         logger.debug("HDF5 source file(s)")
         tprint(arg="\nHDF5 source file(s)", level=99, color="blue")
@@ -300,7 +306,7 @@ def main():
         tprint(arg="  From %s" % data_files["data_files"][0], level=99, color="white")
         tprint(arg="    To %s" % data_files["data_files"][-1], level=99, color="white")
 
-    # Need data
+    # No images match - assume that images will be arriving soon
     if len(data_files) == 0 and commandline_args.test == False:
         raise Exception("No files input for integration.")
 
