@@ -58,19 +58,19 @@ import numpy
 # RAPD imports
 from plugins.subcontractors.xdsme.xds2mos import Xds2Mosflm
 from plugins.subcontractors.aimless import parse_aimless
-from plugins.subcontractors.aimless import get_avg_mosaicity_from_integratelp, get_isa_from_correctlp
+from plugins.subcontractors.xds import get_avg_mosaicity_from_integratelp, get_isa_from_correctlp
 from utils.communicate import rapd_send
 from utils import exceptions
 from utils.numbers import try_int, try_float
 from utils.processes import local_subprocess
+import utils.credits as rcredits
 import utils.text as text
 import utils.xutils as Utils
 import utils.spacegroup as spacegroup
 
-# Import smartie.py from the installed CCP4 package
-# smartie.py is a python script for parsing log files from CCP4
-# sys.path.append(os.path.join(os.environ["CCP4"], "share", "smartie"))
-# import smartie
+# Import RAPD plugins
+import plugins.analysis.commandline
+import plugins.analysis.plugin
 
 # Software dependencies
 VERSIONS = {
@@ -363,25 +363,62 @@ class RapdPlugin(Process):
 
         self.write_json(self.results)
 
-        self.print_info()
+        self.print_credits()
 
-        return
+        self.run_analysis_plugin()
 
-        # Skip this for now
-        analysis = self.run_analysis(final_results['files']['mtzfile'], self.dirs['work'])
-        analysis = 'Success'
-        if analysis == 'Failed':
-            self.logger.debug(analysis)
-            # Add method for dealing with a failure by run_analysis.
-        elif analysis == 'Success':
-            self.logger.debug(analysis)
-            self.results["status"] = "SUCCESS"
-            self.logger.debug(self.results)
-            # self.sendBack2(results)
-            if self.controller_address:
-                rapd_send(self.controller_address, self.results)
+        # return
+        #
+        # # Skip this for now
+        # analysis = self.run_analysis(final_results['files']['mtzfile'], self.dirs['work'])
+        # analysis = 'Success'
+        # if analysis == 'Failed':
+        #     self.logger.debug(analysis)
+        #     # Add method for dealing with a failure by run_analysis.
+        # elif analysis == 'Success':
+        #     self.logger.debug(analysis)
+        #     self.results["status"] = "SUCCESS"
+        #     self.logger.debug(self.results)
+        #     # self.sendBack2(results)
+        #     if self.controller_address:
+        #         rapd_send(self.controller_address, self.results)
+        #
+        # return
 
-        return
+    def run_analysis_plugin(self):
+        """Set up and run the analysis plugin"""
+
+        self.logger.debug("Setting up analysis plugin")
+        self.tprint("\nLaunching ANALYSIS plugin", level=30, color="blue")
+
+        # Construct the pdbquery plugin command
+        class AnalysisArgs(object):
+            """Object containing settings for plugin command construction"""
+            clean = True
+            datafile = self.results["results"]["files"]["mtzfile"]
+            pdbquery = True
+            run_mode = "subprocess-interactive"
+            sample_type = "default"
+            test = False
+
+        analysis_command = plugins.analysis.commandline.construct_command(AnalysisArgs)
+
+        # The pdbquery plugin
+        plugin = plugins.analysis.plugin
+
+        # Print out plugin info
+        self.tprint(arg="\nPlugin information", level=10, color="blue")
+        self.tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10, color="white")
+        self.tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10, color="white")
+        self.tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
+        self.tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
+
+        # Run the plugin
+        analysis_result = plugin.RapdPlugin(analysis_command,
+                                            self.tprint,
+                                            self.logger)
+
+        self.results["analysis"] = analysis_result
 
     def postprocess(self):
         """After it's all done"""
@@ -2039,54 +2076,17 @@ class RapdPlugin(Process):
                 gnuplot.terminate()
 
 
-    def print_info(self):
-        """
-        Print information regarding programs utilized by RAPD
-        """
-        self.logger.debug('AutoindexingStrategy::print_info')
+    def print_credits(self):
+        """Print credits for programs utilized by this plugin"""
 
-        # try:
-        self.tprint(arg="\nRAPD integration uses:", level=99, color="blue")
-        """
-    '\n\nRAPD used the following programs for integrating and scaling the dataset:\n',
-               '  XDS - \n',
-               '       "XDS", W. Kabsch (2010) Acta Cryst. D66, 125-132.\n',
-               '       "Integration, scaling, space-group assignment and post-refinement",',
-               ' W. Kabsch (2010) Acta Cryst. D66, 133-144.\n',
-               '  pointless and aimless - \n',
-               '      "Scaling and assessment of data quality", P.R.',
-               ' Evans (2006) Acta Cryst. D62, 72-82.\n',
-               '      "An introduction to data reduction: space-group',
-               ' determination and intensity statistics,',
-               ' P.R. Evans (2011) Acta Cryst. D67, 282-292\n',
-               '      "How good are my data and what is the resolution?"',
-               ' P.R. Evans and G.N. Murshudov (2013) Acta Cryst. D66,',
-               ' 1204-1214.\n',
-               '  truncate, freerflag, and mtz2various  - \n',
-               '       "The CCP4 Suite: Programs for Protein ',
-               'Crystallography". Acta Cryst. D50, 760-763 \n',
-               '  xdsstat - \n      http://strucbio.biologie.',
-               'uni-konstanz.de/xdswiki/index.php/Xdsstat\n',
-               '\n</pre></div></div></body>'
-               ]
-        """
-        info_string = """    XDS
-    "XDS", W. Kabsch (2010) Acta Cryst. D66, 125-132.
-    "Integration, scaling, space-group assignment and post-refinement",
-    W. Kabsch (2010) Acta Cryst. D66, 133-144.
+        self.tprint(credits.HEADER,
+                    level=99,
+                    color="blue")
 
-    Pointless & Aimless
-    "Scaling and assessment of data quality", P.R. Evans (2006) Acta Cryst.
-    D62, 72-82.
-    "An introduction to data reduction: space-group determination and
-    intensity statistics", P.R. Evans (2011) Acta Cryst. D67, 282-292.
-    "How good are my data and what is the resolution?", P.R. Evans and
-    G.N. Murshudov (2013) Acta Cryst. D66, 1204-1214.
-    """
+        programs = ["AIMLESS", "CCP4", "CCTBX", "POINTLESS", "XDS"]
+        info_string = rcredits.get_credits_text(programs, "    ")
 
-        self.tprint(arg=info_string, level=99, color="white")
-
-        self.logger.debug(info_string)
+        self.tprint(info_string, level=99, color="white")
 
     def write_json(self, results):
         """Write a file with the JSON version of the results"""
