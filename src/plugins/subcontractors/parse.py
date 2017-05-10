@@ -3010,7 +3010,7 @@ def parse_xtriage_output(raw_output):
                             elif column_label in ("Operator", ):
                                 column_data[column_label].append(value.strip())
                         else:
-                            column_data[column_label].append(float(value.strip()))
+                            column_data[column_label].append(try_float(value.strip()))
 
         tables[table_label] = column_data
 
