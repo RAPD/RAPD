@@ -68,7 +68,7 @@ def get_avg_mosaicity_from_integratelp(integrate_lp="INTEGRATE.LP"):
 
     for linenum, line in enumerate(lp_lines):
         if "SUGGESTED VALUES FOR INPUT PARAMETERS" in line:
-            avg_mosaicity_line = lp[linenum + 2]
+            avg_mosaicity_line = lp_lines[linenum + 2]
     avg_mosaicity = try_float(avg_mosaicity_line.strip().split(' ')[-1])
 
     return avg_mosaicity
@@ -83,9 +83,9 @@ def get_isa_from_correctlp(correct_lp="CORRECT.LP"):
         if "ISa\n" in line:
             isa_line = lp_lines[i + 1]
             break
-    ISa = try_float(isa_line.strip().split()[-1])
+    isa = try_float(isa_line.strip().split()[-1])
 
-    return ISa
+    return isa
 
 
 def main(args):
