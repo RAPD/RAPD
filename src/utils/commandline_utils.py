@@ -48,9 +48,6 @@ import utils.site
 import utils.spacegroup as spacegroup
 # import utils.text as text
 
-# Time to wait for first image to appear in seconds
-TIME_TO_WAIT = 3
-
 # The data processing parser - to be used by commandline RAPD processes
 dp_parser = argparse.ArgumentParser(add_help=False)
 
@@ -326,7 +323,8 @@ def print_detectors(left_buffer="", show_py=False):
 def analyze_data_sources(sources,
                          mode="index",
                          start_image=False,
-                         end_image=False):
+                         end_image=False,
+                         timeout=30):
     """
     Return information on files or directory from input
     """
@@ -449,7 +447,7 @@ def analyze_data_sources(sources,
             full_path_template = full_path_template.replace("?", "[0-9]").replace("#", "[0-9]")
             start_time = time.time()
 
-            while (time.time() - start_time) < TIME_TO_WAIT:
+            while (time.time() - start_time) < timeout:
                 # sys.stdout.write(".")
                 # sys.stdout.flush()
                 # Look at FS for data files
