@@ -62,7 +62,7 @@ import urllib2
 # import detectors.detector_utils as detector_utils
 # import utils
 from plugins.subcontractors.parse import parse_phaser_output, set_phaser_failed
-import utils.credits as credits
+import utils.credits as rcredits
 import utils.globals as rglobals
 import utils.pdb as rpdb
 import utils.xutils as xutils
@@ -314,10 +314,12 @@ class RapdPlugin(multiprocessing.Process):
         self.tprint("  Spacegroup: %s  (%d)" % (self.input_spacegroup, self.input_spacegroup_num),
                     level=10,
                     color="white")
-        self.tprint("  Cell: %f %f %f %f %f %f" % tuple(self.cell), level=10, color="white")
-        self.tprint("  Volume: %f" % self.volume, level=10, color="white")
-        self.tprint("  Resolution: %f" % self.dres, level=10, color="white")
-        self.tprint("  Subgroups: %s" % self.laue, level=10, color="white")
+        self.tprint("  Cell: %f.2 %f.2 %f.2 %f.2 %f.2 %f.2" % tuple(self.cell),
+                    level=10,
+                    color="white")
+        self.tprint("  Volume: %f.1" % self.volume, level=10, color="white")
+        self.tprint("  Resolution: %f.1" % self.dres, level=10, color="white")
+        # self.tprint("  Subgroups: %s" % self.laue, level=10, color="white")
 
         # Set by number of residues in AU. Ribosome (70s) is 24k.
         self.est_res_number = xutils.calc_res_number(self.input_spacegroup,
@@ -1111,11 +1113,11 @@ class RapdPlugin(multiprocessing.Process):
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
 
-        self.tprint(credits.HEADER,
+        self.tprint(rcredits.HEADER,
                     level=99,
                     color="blue")
 
         programs = ["CCTBX", "PHENIX", "PHASER"]
-        info_string = credits.get_credits_text(programs, "    ")
+        info_string = rcredits.get_credits_text(programs, "    ")
 
         self.tprint(info_string, level=99, color="white")
