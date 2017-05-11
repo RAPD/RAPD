@@ -87,9 +87,10 @@ def local_subprocess(commands):
     if result_queue:
         result = {
             "pid": proc.pid,
-            "status": proc.returncode,
+            "returncode": proc.returncode,
             "stdout": stdout,
-            "stderr": stderr
+            "stderr": stderr,
+            "tag": tag
         }
         result_queue.put(result)
 
