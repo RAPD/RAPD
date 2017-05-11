@@ -55,6 +55,7 @@ import time
 # RAPD imports
 import info
 import plugins.subcontractors.parse as Parse
+import plugins.subcontractors.labelit as labelit
 # import plugins.subcontractors.summary as Summary
 from plugins.subcontractors.xoalign import RunXOalign
 import utils.credits as credits
@@ -2346,30 +2347,40 @@ class RunLabelit(Process):
         stdout = raw_result["stdout"]
 
         # There is an error
-        if raw_result["returncode"] != 0:
+        # if raw_result["returncode"] != 0:
+        error = False
 
-            # Look for labelit problem with Eiger CBFs
-            if "TypeError: unsupported operand type(s) for %: 'NoneType' and 'int'" in stdout:
-                error = "IOTBX needs patched for Eiger CBF files\n"
-                if not self.errors_printed:
-                    self.print_warning("Eiger CBF")
-                    self.errors_printed = True
+        # Add to log
+        self.labelit_log[iteration].append("\n\n")
+        self.labelit_log[iteration].append(stdout)
 
-            # Couldn't index
-            elif "No_Indexing_Solution: (couldn't find 3 good basis vectors)" in stdout:
-                error = "No_Indexing_Solution: (couldn't find 3 good basis vectors)"
+        # Look for labelit problem with Eiger CBFs
+        if "TypeError: unsupported operand type(s) for %: 'NoneType' and 'int'" in stdout:
+            error = "IOTBX needs patched for Eiger CBF files\n"
+            if not self.errors_printed:
+                self.print_warning("Eiger CBF")
+                self.errors_printed = True
 
+        # Couldn't index
+        elif "No_Indexing_Solution: (couldn't find 3 good basis vectors)" in stdout:
+            error = "No_Indexing_Solution: (couldn't find 3 good basis vectors)"
+
+        # Return if there is an error
+        if error:
             self.labelit_log[iteration].append(error)
             self.labelit_results[iteration] = {"Labelit results": "ERROR"}
-
             return False
+
+        # No error
+        else:
+            
+            data = labelit.parse_output(stdout, iteration)
 
     """
         # No system-level error
         else:
 
-            self.labelit_log[iteration].extend("\n\n")
-            self.labelit_log[iteration].extend(stdout)
+
 
             data = Parse.ParseOutputLabelit(self, log, iteration)
             if self.short:
