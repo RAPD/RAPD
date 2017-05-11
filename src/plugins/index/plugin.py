@@ -1441,6 +1441,13 @@ class RapdPlugin(Process):
         self.labelit_results = self.labelitQueue.get()
         self.labelit_log = self.labelitQueue.get()
 
+        print "labelit_results"
+        pprint(self.labelit_results)
+        print "labelit_log"
+        pprint(self.labelit_log)
+
+        sys.exit()
+
         for run in self.labelit_results.keys():
             if type(self.labelit_results[run].get("Labelit results")) == dict:
                 #Check for pseudotranslation in any Labelit run
@@ -1931,6 +1938,9 @@ class RunLabelit(Process):
     labelit_pids = []
     labelit_jobs = {}
 
+    # Holder for results
+    labelit_log = {}
+
     # For results passing
     indexing_results_queue = multiprocessing.Queue()
 
@@ -2048,7 +2058,6 @@ class RunLabelit(Process):
         # This is where I have chosen to place my results
         self.auto_summary = False
         self.labelit_input = False
-        self.labelit_log = {}
         self.labelit_results = {}
         self.labelit_summary = False
         self.labelit_failed = False
@@ -2099,7 +2108,8 @@ class RunLabelit(Process):
                 xutils.create_folders_labelit(self.working_dir, iteration)
 
             # Launch first job
-            self.labelit_jobs[self.process_labelit().keys()[0]] = 0
+            self.process_labelit(iteration=0)
+            # self.labelit_jobs[self.process_labelit().keys()[0]] = 0
 
             # If self.multiproc == True runs all labelits at the same time.
             if self.multiproc:
@@ -2112,6 +2122,7 @@ class RunLabelit(Process):
         if self.short == False:
             # Put the logs together
             self.labelitLog()
+
         self.postprocess()
 
     def preprocess(self):
@@ -2210,6 +2221,7 @@ class RunLabelit(Process):
 
         # try:
         labelit_input = []
+        self.labelit_log[iteration] = []
 
         # Check if user specific unit cell
         unit_cell_defaults = dict(zip(["a", "b", "c", "alpha", "beta", "gamma"], [False]*6))
@@ -2250,9 +2262,9 @@ class RunLabelit(Process):
         # Save the command to the top of log file, before running job.
         labelit_input.append(command)
         if iteration == 0:
-            self.labelit_log[str(iteration)] = labelit_input
+            self.labelit_log[iteration] = labelit_input
         else:
-            self.labelit_log[str(iteration)].extend(labelit_input)
+            self.labelit_log[iteration].extend(labelit_input)
         labelit_jobs = {}
 
         # Don't launch job if self.test = True
@@ -2317,37 +2329,41 @@ class RunLabelit(Process):
 
         # print "cwd", os.getcwd()
 
-        pprint(raw_result)
+        # pprint(raw_result)
+
+        iteration = raw_result["tag"]
+        stdout = raw_result["stdout"]
 
         # There is an error
+        errors_printed = False
         if raw_result["returncode"] != 0:
 
             print "ERROR in labelit process"
 
+            # Look for labelit problem with Eiger CBFs
+            if "TypeError: unsupported operand type(s) for %: 'NoneType' and 'int'" in stdout:
+                error = "IOTBX needs patched for Eiger CBF files\n"
+                if not errors_printed:
+                    self.print_warning("Eiger CBF")
+            self.labelit_log[iteration].append(error)
+            self.labelit_results[iteration] = {"Labelit results": "ERROR"}
 
+            return False
 
-        return True
-
-        #labelit_failed = False
-        if blank:
-            error = 'Not enough spots for autoindexing.'
-            if self.verbose:
-                self.logger.debug(error)
-            self.labelit_log[str(iteration)].extend(error+'\n')
-            return None
+    """
+        # No system-level error
         else:
-            log = open('labelit.log', 'r').readlines()
-            # for line in log:
-                # print line.rstrip()
-            self.labelit_log[str(iteration)].extend('\n\n')
-            self.labelit_log[str(iteration)].extend(log)
+
+            self.labelit_log[iteration].extend("\n\n")
+            self.labelit_log[iteration].extend(stdout)
+
             data = Parse.ParseOutputLabelit(self, log, iteration)
             if self.short:
                 #data = Parse.ParseOutputLabelitNoMosflm(self,log,iteration)
                 self.labelit_results = { 'Labelit results' : data }
             else:
                 #data = Parse.ParseOutputLabelit(self,log,iteration)
-                self.labelit_results[str(iteration)] = { 'Labelit results' : data }
+                self.labelit_results[iteration] = { 'Labelit results' : data }
         # except:
         #     self.logger.exception('**ERROR in RunLabelit.postprocess_labelit**')
 
@@ -2393,7 +2409,18 @@ class RunLabelit(Process):
                 xutils.errorLabelitPost(self,iteration,error,run_before)
                 if self.multiproc == False:
                     if iteration <= self.iterations:
-                        return (xutils.errorLabelit(self,iteration))
+                        return (xutils.errorLabelit(self, iteration))
+    """
+
+    def print_warning(self, warn_type):
+        """ """
+
+        if warn_type == "Eiger CBF":
+            self.tprint("The installation of Phenix you are running needs patched to be used for \
+Eiger HDF5 files that have been converted to CBFs.\n\nInstructions for patching are in \
+RAPD_HOME/install/sources/cctbx/README.md",
+                        level=50,
+                        color="red")
 
     def postprocess_labelit(self, iteration=0, run_before=False, blank=False):
         """
@@ -2411,21 +2438,21 @@ class RunLabelit(Process):
             error = 'Not enough spots for autoindexing.'
             if self.verbose:
                 self.logger.debug(error)
-            self.labelit_log[str(iteration)].extend(error+'\n')
+            self.labelit_log[iteration].extend(error+'\n')
             return None
         else:
             log = open('labelit.log', 'r').readlines()
             # for line in log:
                 # print line.rstrip()
-            self.labelit_log[str(iteration)].extend('\n\n')
-            self.labelit_log[str(iteration)].extend(log)
+            self.labelit_log[iteration].extend('\n\n')
+            self.labelit_log[iteration].extend(log)
             data = Parse.ParseOutputLabelit(self, log, iteration)
             if self.short:
                 #data = Parse.ParseOutputLabelitNoMosflm(self,log,iteration)
-                self.labelit_results = { 'Labelit results' : data }
+                self.labelit_results = {'Labelit results': data}
             else:
                 #data = Parse.ParseOutputLabelit(self,log,iteration)
-                self.labelit_results[str(iteration)] = { 'Labelit results' : data }
+                self.labelit_results[iteration] = {'Labelit results': data}
         # except:
         #     self.logger.exception('**ERROR in RunLabelit.postprocess_labelit**')
 
@@ -2480,6 +2507,8 @@ class RunLabelit(Process):
         if self.verbose:
             self.logger.debug("RunLabelit::postprocess")
 
+        print "postprocess"
+
         # try:
 
         # Free up spot on cluster.
@@ -2488,6 +2517,7 @@ class RunLabelit(Process):
 
         # Pass back output
         self.output.put(self.labelit_results)
+
         if self.short == False:
             self.output.put(self.labelit_log)
 
@@ -2500,15 +2530,11 @@ class RunLabelit(Process):
         """
         self.logger.debug('RunLabelit::run_queue')
 
-        print ">>labelit_run_queue"
-
-        # try:
         timed_out = False
         timer = 0
         start_time = time.time()
 
         while time.time() - start_time < 60:
-            print time.time() - start_time
             if not self.indexing_results_queue.empty():
                 result = self.indexing_results_queue.get(False)
                 pprint(result)
@@ -2524,7 +2550,6 @@ class RunLabelit(Process):
                     break
             time.sleep(1)
         else:
-            print time.time() - start_time
             # Make sure all jobs are done or kill them
             for pid in self.labelit_pids:
                 iteration = self.labelit_jobs[pid]
@@ -2534,10 +2559,9 @@ class RunLabelit(Process):
                 self.labelit_results[iteration] = {"Labelit results": "FAILED"}
 
         pprint(self.labelit_results)
-        sys.exit()
 
 
-
+        """
         # Set wait time longer to lower the load on the node running the job.
         if self.short:
             wait = 1
@@ -2611,6 +2635,7 @@ class RunLabelit(Process):
 
         # except:
         #     self.logger.exception('**Error in RunLabelit.run_queue**')
+        """
 
     def labelitLog(self):
         """Put the Labelit logs together"""
@@ -2619,13 +2644,13 @@ class RunLabelit(Process):
             self.logger.debug("RunLabelit::LabelitLog")
 
         # try:
-        for i in range(0,self.iterations):
-            if self.labelit_log.has_key(str(i)):
+        for i in range(0, self.iterations):
+            if i in self.labelit_log:
                 junk = ["-------------------------\nLABELIT ITERATION %s\n-------------------------\n" % i]
                 if i == 0:
                     self.labelit_log["run1"] = ["\nRun 1\n"]
                 self.labelit_log["run1"].extend(junk)
-                self.labelit_log["run1"].extend(self.labelit_log[str(i)])
+                self.labelit_log["run1"].extend(self.labelit_log[i])
                 self.labelit_log["run1"].extend("\n")
             else:
                 self.labelit_log["run1"].extend("\nLabelit iteration %s FAILED\n"%i)
