@@ -33,7 +33,7 @@ import argparse
 # import logging
 # import multiprocessing
 import os
-# import pprint
+from pprint import pprint
 # import pymongo
 # import re
 # import redis
@@ -63,6 +63,8 @@ def parse_output(labelit_output, iteration=0):
 
     Code adapted from work by J.Schuermann
     """
+
+    print ">>>>parse_output"
 
     labelit_output = labelit_output.split("\n")
 

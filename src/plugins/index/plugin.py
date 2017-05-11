@@ -60,6 +60,7 @@ import plugins.subcontractors.labelit as labelit
 from plugins.subcontractors.xoalign import RunXOalign
 import utils.credits as credits
 from utils.communicate import rapd_send
+import utils.global_vars as global_vars
 from utils.processes import local_subprocess
 # from utils.modules import load_module
 import utils.spacegroup as spacegroup
@@ -1450,6 +1451,8 @@ class RapdPlugin(Process):
         # All runs in error state
         error_count = 0
         for iteration, result in self.labelit_results.iteritems():
+            print "RESULT"
+            pprint(result)
             if result["Labelit results"] in ("ERROR", "TIMEOUT"):
                 error_count += 1
         if error_count == len(self.labelit_results):
@@ -2352,7 +2355,7 @@ class RunLabelit(Process):
 
         # Add to log
         self.labelit_log[iteration].append("\n\n")
-        self.labelit_log[iteration].append(stdout)
+        self.labelit_log[iteration].extend(stdout.split("\n"))
 
         # Look for labelit problem with Eiger CBFs
         if "TypeError: unsupported operand type(s) for %: 'NoneType' and 'int'" in stdout:
@@ -2362,8 +2365,8 @@ class RunLabelit(Process):
                 self.errors_printed = True
 
         # Couldn't index
-        elif "No_Indexing_Solution: (couldn't find 3 good basis vectors)" in stdout:
-            error = "No_Indexing_Solution: (couldn't find 3 good basis vectors)"
+        # elif "No_Indexing_Solution: (couldn't find 3 good basis vectors)" in stdout:
+        #     error = "No_Indexing_Solution: (couldn't find 3 good basis vectors)"
 
         # Return if there is an error
         if error:
@@ -2373,10 +2376,73 @@ class RunLabelit(Process):
 
         # No error
         else:
-            
-            data = labelit.parse_output(stdout, iteration)
 
-    """
+            parsed_result = labelit.parse_output(stdout, iteration)
+            # Save the return into the shared var
+            self.labelit_results = {"Labelit results": parsed_result}
+            # pprint(data)
+            # sys.exit()
+
+            # Do error checking and send to correct place according to iteration.
+            potential_problems = {
+                "bad input": {
+                    "error": "Labelit did not like your input unit cell dimensions or SG.",
+                    "run": "xutils.errorLabelitCellSG(self,iteration)"
+                },
+                "bumpiness": {
+                    "error": "Labelit settings need to be adjusted.",
+                    "run": "xutils.errorLabelitBump(self,iteration)"
+                },
+                "mosflm error": {
+                    "error": "Mosflm could not integrate your image.",
+                    "run": "xutils.errorLabelitMosflm(self,iteration)"
+                },
+                "min good spots": {
+                    "error": "Labelit did not have enough spots to find a solution",
+                    "run": "xutils.errorLabelitGoodSpots(self,iteration)"
+                },
+                "no index": {
+                    "error": "No solutions found in Labelit.",
+                    "run": "xutils.errorLabelit(self,iteration)"
+                },
+                "fix labelit": {
+                    "error": "Distance is not getting read correctly from the image header.",
+                    "kill": True
+                },
+                "no pair": {
+                    "error": "Images are not a pair.",
+                    "kill": True
+                },
+                "failed": {
+                    "error": "Autoindexing Failed to find a solution",
+                    "kill": True
+                },
+                "min spots": {
+                    "error": "Labelit did not have enough spots to find a solution.",
+                    "run1": "xutils.errorLabelitMin(self,iteration,data[1])",
+                    "run2": "xutils.errorLabelit(self,iteration)"
+                },
+                "fix_cell": {
+                    "error": "Labelit had multiple choices for user SG and failed.",
+                    "run1": "xutils.errorLabelitFixCell(self,iteration,data[1],data[2])",
+                    "run2": "xutils.errorLabelitCellSG(self,iteration)"
+                },
+            }
+
+            # If Labelit results are OK, then...
+            if isinstance(parsed_result, dict):
+                problem_flag = False
+            # Otherwise deal with fixing and rerunning Labelit
+            elif isinstance(parsed_result, tuple):
+                problem_flag = parsed_result[0]
+            else:
+                problem_flag = parsed_result
+
+            if problem_flag:
+                if problem_flag in potential_problems:
+                    print "PROBLEM", problem_flag
+
+    """"
         # No system-level error
         else:
 
@@ -2385,7 +2451,7 @@ class RunLabelit(Process):
             data = Parse.ParseOutputLabelit(self, log, iteration)
             if self.short:
                 #data = Parse.ParseOutputLabelitNoMosflm(self,log,iteration)
-                self.labelit_results = { 'Labelit results' : data }
+                self.labelit_results = { "Labelit results" : data }
             else:
                 #data = Parse.ParseOutputLabelit(self,log,iteration)
                 self.labelit_results[iteration] = { 'Labelit results' : data }
@@ -2559,7 +2625,7 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
         timer = 0
         start_time = time.time()
 
-        while time.time() - start_time < 60:
+        while time.time() - start_time < global_vars.LABELIT_TIMEOUT:
             if not self.indexing_results_queue.empty():
                 result = self.indexing_results_queue.get(False)
                 # pprint(result)
