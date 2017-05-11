@@ -35,6 +35,9 @@ import pprint
 import shutil
 import sys
 
+# CCTBX Imports
+from cctbx.sgtbx import space_group_symbols
+
 # RAPD imports
 import detectors.detector_utils as detector_utils
 # import utils.log
@@ -216,18 +219,7 @@ gf_parser.add_argument(action="store",
 def regularize_spacegroup(sg_in):
     """Standardize the input spacegroup to numeric form"""
 
-    # print "regularize_spacegroup %s" % sg_in
-
-    # An integer has been input
-    try:
-        sg_num = str(int(sg_in))
-    except ValueError:
-        sg_up = sg_in.upper()
-        sg_num = spacegroup.std2intl[sg_up]
-
-    # print sg_num
-    # sys.exit()
-    return sg_num
+    return space_group_symbols(sg_in).number()
 
 def check_work_dir(target_dir, active=True):
     """

@@ -2270,6 +2270,7 @@ class RunLabelit(Process):
                                      'pid': pid_queue},) )
             else:
                 # print "Run %s in directory %s" % (command, os.getcwd())
+                # Run in another thread
                 run = multiprocessing.Process(target=local_subprocess,
                                               args=({"command": command,
                                                      "logfile": log,
@@ -2403,14 +2404,17 @@ class RunLabelit(Process):
         # try:
         timed_out = False
         timer = 0
-        # labelit = False
-        jobs = self.labelit_jobs.keys()
+
         # Set wait time longer to lower the load on the node running the job.
         if self.short:
             wait = 1
         else:
             wait = 0.1
-        if jobs != ['None']:
+
+        jobs = self.labelit_jobs.keys()
+        print "JOBS %s" % jobs
+
+        if jobs != ["None"]:
             counter = len(jobs)
             while counter != 0:
                 for job in jobs:
@@ -2418,6 +2422,7 @@ class RunLabelit(Process):
                         running = False
                     else:
                         running = job.is_alive()
+                    print "Job %d running:%s" % (self.labelit_jobs[job], running)
                     if running == False:
                         jobs.remove(job)
                         iteration = self.labelit_jobs[job]
