@@ -34,6 +34,7 @@ import os
 import pprint
 import shutil
 import sys
+import time
 
 # RAPD imports
 import detectors.detector_utils as detector_utils
@@ -43,7 +44,6 @@ import utils.convert_hdf5_cbf as convert_hdf5_cbf
 import utils.site
 import utils.spacegroup as spacegroup
 # import utils.text as text
-
 
 # The data processing parser - to be used by commandline RAPD processes
 dp_parser = argparse.ArgumentParser(add_help=False)
@@ -288,7 +288,8 @@ def print_detectors(left_buffer="", show_py=False):
 def analyze_data_sources(sources,
                          mode="index",
                          start_image=False,
-                         end_image=False):
+                         end_image=False,
+                         timeout=30):
     """
     Return information on files or directory from input
     """
@@ -398,38 +399,52 @@ def analyze_data_sources(sources,
 
             if start_image:
                 first_file = full_path_template.replace("#"*depth, number_format % start_image, 1)
+                # Mark as needing to look to make sure image number is in range
                 in_range = False
             else:
+                # No need to worry about the image number
                 in_range = True
 
             if end_image:
                 last_file = full_path_template.replace("#"*depth, number_format % end_image, 1)
 
-
-            full_path_template = full_path_template.replace("?", "[0-9]").replace("#", "[0-9]")
-            data_files = glob.glob(full_path_template)
-            data_files.sort()
-
             return_data["data_files"] = []
+            full_path_template = full_path_template.replace("?", "[0-9]").replace("#", "[0-9]")
+            start_time = time.time()
 
-            for data_file in data_files:
-                # print in_range
-                if in_range:
-                    # print data_file
-                    return_data["data_files"].append(data_file)
-                    if end_image:
-                        if last_file == data_file:
-                            break
-                else:
-                    if first_file == data_file:
-                        in_range = True
-                        # print data_file
+            while (time.time() - start_time) < timeout:
+                # sys.stdout.write(".")
+                # sys.stdout.flush()
+                # Look at FS for data files
+                data_files = glob.glob(full_path_template)
+                data_files.sort()
+
+                # Go through the data files found
+                for data_file in data_files:
+                    # Images are in the range for images of interest
+                    if in_range:
                         return_data["data_files"].append(data_file)
+                        if end_image:
+                            if last_file == data_file:
+                                break
+                    else:
+                        if first_file == data_file:
+                            in_range = True
+                            # print data_file
+                            return_data["data_files"].append(data_file)
 
+                # Have some files - break the while loop
+                if return_data["data_files"]:
+                    break
+                else:
+                    time.sleep(0.1)
+
+            # Sort into order
             return_data["data_files"].sort()
 
             if len(return_data["data_files"]) == 0:
-                raise Exception("No files for %s found" % template)
+                raise Exception("Unable to find files for the template: %s" \
+                                % template)
 
             return return_data
 

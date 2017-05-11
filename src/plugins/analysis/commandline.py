@@ -54,7 +54,7 @@ import utils.text as text
 import utils.commandline_utils as commandline_utils
 import detectors.detector_utils as detector_utils
 
-def construct_command(commandline_args, logger):
+def construct_command(commandline_args):
     """Put together the command for the plugin"""
 
     # The task to be carried out
@@ -95,7 +95,7 @@ def construct_command(commandline_args, logger):
     # Show plots
     # command["preferences"]["show_plots"] = commandline_args.plotting
 
-    logger.debug("Command for index plugin: %s", command)
+    # logger.debug("Command for index plugin: %s", command)
 
     return command
 
@@ -261,8 +261,7 @@ def main():
         logger.debug("  " + key + " : " + val)
         tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
 
-    command = construct_command(commandline_args=commandline_args,
-                                logger=logger)
+    command = construct_command(commandline_args=commandline_args)
 
     plugin = modules.load_module(seek_module="plugin",
                                  directories=["plugins.analysis"],

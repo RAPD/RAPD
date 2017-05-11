@@ -54,3 +54,30 @@ PDBQ_SERVER = "remote.nec.aps.anl.gov:3030"
 
 # Timeout for phaser MR process
 PHASER_TIMEOUT = 5000
+
+# Software versions that work with RAPD
+SOFTWARE_VERSIONS = {
+    "AIMLESS": (
+        "version 0.5",
+        ),
+    "FREERFLAG": (
+        "version 2.2",
+    ),
+    "GNUPLOT": (
+        "gnuplot 4.2",
+        "gnuplot 5.0",
+    ),
+    "MTZ2VARIOUS": (
+        "version 1.1",
+    ),
+    "POINTLESS": (
+        "version 1.10",
+        ),
+    "TRUNCATE": (
+        "version 7.0",
+    ),
+    "XDS": (
+        "VERSION Nov 1, 2016",
+    ),
+
+}
