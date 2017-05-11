@@ -61,7 +61,7 @@ def local_subprocess(commands):
         pid_queue - a multiprocessing.Queue for placing PID of subprocess in
         tag - an identifying tag to be useful to the caller
     """
-    pprint(commands)
+    # pprint(commands)
     command = commands.get("command", False)
     logfile = commands.get("logfile", False)
     pid_queue = commands.get("pid_queue", False)

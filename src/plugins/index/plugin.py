@@ -530,7 +530,7 @@ class RapdPlugin(Process):
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::runLabelit")
 
-        self.tprint(arg="  Starting Labelit runs", level=99, color="white")
+        self.tprint(arg="  Starting Labelit runs", level=99, color="white", newline=False)
 
         # try:
         # Setup queue for getting labelit log and results in labelitSort.
@@ -1446,12 +1446,20 @@ class RapdPlugin(Process):
         print "labelit_log"
         pprint(self.labelit_log)
 
-        sys.exit()
+        # All runs in error state
+        error_count = 0
+        for iteration, result in self.labelit_results.iteritems():
+            if result["Labelit results"] in ("ERROR", "TIMEOUT"):
+                error_count += 1
+        if error_count == len(self.labelit_results):
+            print "Unsuccessful indexing run. Exiting."
+            sys.exit(9)
 
-        for run in self.labelit_results.keys():
-            if type(self.labelit_results[run].get("Labelit results")) == dict:
-                #Check for pseudotranslation in any Labelit run
-                if self.labelit_results[run].get("Labelit results").get("pseudotrans") == True:
+        for run, result in self.labelit_results.iteritems():
+            if isinstance(result.get("Labelit results"), dict):
+                labelit_result = result.get("Labelit results")
+                # Check for pseudotranslation in any Labelit run
+                if labelit_result.get("pseudotrans") == True:
                     self.pseudotrans = True
                 s, r, m, v = xutils.getLabelitStats(self, inp=run, simple=True)
                 sg = xutils.convertSG(self, s)
@@ -1944,6 +1952,9 @@ class RunLabelit(Process):
     # For results passing
     indexing_results_queue = multiprocessing.Queue()
 
+    # For handling print_warning
+    errors_printed = False
+
     def __init__(self, command, output, params, tprint=False, logger=None):
         """
         input >> command
@@ -2121,7 +2132,7 @@ class RunLabelit(Process):
 
         if self.short == False:
             # Put the logs together
-            self.labelitLog()
+            self.condense_logs()
 
         self.postprocess()
 
@@ -2217,7 +2228,7 @@ class RunLabelit(Process):
         """
         self.logger.debug("RunLabelit::process_labelit")
 
-        print "process_labelit %d %s" % (iteration, inp)
+        # print "process_labelit %d %s" % (iteration, inp)
 
         # try:
         labelit_input = []
@@ -2322,29 +2333,32 @@ class RunLabelit(Process):
         """
         Sends Labelit log for parsing and error checking for rerunning Labelit. Save output dicts.
         """
-        print "new_postprocess_labelit"
+        # print "new_postprocess_labelit"
 
         # Move to proper directory
         # xutils.create_folders_labelit(working_dir=self.working_dir, iteration=raw_result["tag"])
 
         # print "cwd", os.getcwd()
 
-        # pprint(raw_result)
+        pprint(raw_result)
 
         iteration = raw_result["tag"]
         stdout = raw_result["stdout"]
 
         # There is an error
-        errors_printed = False
         if raw_result["returncode"] != 0:
-
-            print "ERROR in labelit process"
 
             # Look for labelit problem with Eiger CBFs
             if "TypeError: unsupported operand type(s) for %: 'NoneType' and 'int'" in stdout:
                 error = "IOTBX needs patched for Eiger CBF files\n"
-                if not errors_printed:
+                if not self.errors_printed:
                     self.print_warning("Eiger CBF")
+                    self.errors_printed = True
+
+            # Couldn't index
+            elif "No_Indexing_Solution: (couldn't find 3 good basis vectors)" in stdout:
+                error = "No_Indexing_Solution: (couldn't find 3 good basis vectors)"
+
             self.labelit_log[iteration].append(error)
             self.labelit_results[iteration] = {"Labelit results": "ERROR"}
 
@@ -2416,9 +2430,9 @@ class RunLabelit(Process):
         """ """
 
         if warn_type == "Eiger CBF":
-            self.tprint("The installation of Phenix you are running needs patched to be used for \
-Eiger HDF5 files that have been converted to CBFs.\n\nInstructions for patching are in \
-RAPD_HOME/install/sources/cctbx/README.md",
+            self.tprint("\nThe installation of Phenix you are running needs patched to be used for \
+Eiger HDF5 files that have been converted to CBFs.\nInstructions for patching are in \
+$RAPD_HOME/install/sources/cctbx/README.md\n",
                         level=50,
                         color="red")
 
@@ -2507,7 +2521,7 @@ RAPD_HOME/install/sources/cctbx/README.md",
         if self.verbose:
             self.logger.debug("RunLabelit::postprocess")
 
-        print "postprocess"
+        # print "postprocess"
 
         # try:
 
@@ -2537,7 +2551,7 @@ RAPD_HOME/install/sources/cctbx/README.md",
         while time.time() - start_time < 60:
             if not self.indexing_results_queue.empty():
                 result = self.indexing_results_queue.get(False)
-                pprint(result)
+                # pprint(result)
                 # Remove job from dict
                 self.labelit_pids.remove(result["pid"])
                 # Add result to labelit_results
@@ -2548,6 +2562,8 @@ RAPD_HOME/install/sources/cctbx/README.md",
                 if not len(self.labelit_pids):
                     print "All jobs done"
                     break
+            sys.stdout.write(".")
+            sys.stdout.flush()
             time.sleep(1)
         else:
             # Make sure all jobs are done or kill them
@@ -2558,7 +2574,7 @@ RAPD_HOME/install/sources/cctbx/README.md",
                 self.labelit_pids.remove(pid)
                 self.labelit_results[iteration] = {"Labelit results": "FAILED"}
 
-        pprint(self.labelit_results)
+        # pprint(self.labelit_results)
 
 
         """
@@ -2637,26 +2653,22 @@ RAPD_HOME/install/sources/cctbx/README.md",
         #     self.logger.exception('**Error in RunLabelit.run_queue**')
         """
 
-    def labelitLog(self):
+    def condense_logs(self):
         """Put the Labelit logs together"""
 
-        if self.verbose:
-            self.logger.debug("RunLabelit::LabelitLog")
+        self.logger.debug("RunLabelit::LabelitLog")
 
-        # try:
-        for i in range(0, self.iterations):
-            if i in self.labelit_log:
-                junk = ["-------------------------\nLABELIT ITERATION %s\n-------------------------\n" % i]
-                if i == 0:
+        for iteration in range(0, self.iterations):
+            if iteration in self.labelit_log:
+                header_line = "-------------------------\nLABELIT ITERATION %s\n-------------------\
+------\n" % iteration
+                if iteration == 0:
                     self.labelit_log["run1"] = ["\nRun 1\n"]
-                self.labelit_log["run1"].extend(junk)
-                self.labelit_log["run1"].extend(self.labelit_log[i])
-                self.labelit_log["run1"].extend("\n")
+                self.labelit_log["run1"].append(header_line)
+                self.labelit_log["run1"].extend(self.labelit_log[iteration])
+                self.labelit_log["run1"].append("\n")
             else:
-                self.labelit_log["run1"].extend("\nLabelit iteration %s FAILED\n"%i)
-
-        # except:
-        #     self.logger.exception("**ERROR in RunLabelit.LabelitLog**")
+                self.labelit_log["run1"].append("\nLabelit iteration %s FAILED\n" % iteration)
 
 def BestAction(inp, logger=False, output=False):
     """

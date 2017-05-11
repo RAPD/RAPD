@@ -256,9 +256,53 @@ def parse_output(labelit_output, iteration=0):
             "mosflm_index": mosflm_index,
             "output": labelit_output}
 
-
     pprint(data)
     return data
+
+# def getLabelitStats(self,inp=False,simple=False):
+#   """
+#   Returns stats from Labelit for determining beam center. (Extra parsing from self.labelit_results)
+#   """
+#   if self.verbose:
+#     self.logger.debug('Utilities::getLabelitStats')
+#   output = {}
+#   try:
+#     if inp:
+#       j1 = '[inp]'
+#     else:
+#       j1 = ''
+#     if simple:
+#       x = 1
+#     else:
+#       x = 2
+#     if type(eval('self.labelit_results%s'%j1).get('Labelit results')) == dict:
+#       for i in range(0,x):
+#         if i == 0:
+#           ind = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_face').index(':)')
+#           sg   = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_sg')[ind]
+#           sol  = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_solution')[ind]
+#         else:
+#           #P1 stats
+#           ind = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_solution').index('1')
+#           sol = '1'
+#         mos_rms = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_rms')[ind]
+#         mos_x = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_beam_x')[ind]
+#         mos_y = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_beam_y')[ind]
+#         ind1  = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_solution').index(sol)
+#         met  = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_metric')[ind1]
+#         rmsd = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_rmsd')[ind1]
+#         vol = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_volume')[ind1]
+#         if i == 0:
+#           output['best'] = {'SG':sg, 'mos_rms':mos_rms, 'mos_x':mos_x, 'mos_y':mos_y, 'metric':met, 'rmsd':rmsd, 'sol':sol}
+#         else:
+#           output['P1']   = {'mos_rms':mos_rms, 'mos_x':mos_x, 'mos_y':mos_y, 'rmsd':rmsd}
+#       if simple:
+#         return(sg,mos_rms,met,vol)
+#       else:
+#         eval('self.labelit_results%s'%j1).update({'labelit_stats': output})
+#   except:
+#     self.logger.exception('**Error in Utils.getLabelitStats**')
+
 
 def main(args):
     """
