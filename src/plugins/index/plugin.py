@@ -2249,6 +2249,9 @@ class RunLabelit(Process):
 
         # print "process_labelit %d %s" % (iteration, inp)
 
+        # Get in the right directory
+        os.chdir(os.path.join(self.working_dir, str(iteration)))
+
         # try:
         labelit_input = []
         self.labelit_log[iteration] = []
@@ -2261,6 +2264,7 @@ class RunLabelit(Process):
             if parameter_pref != 0:
                 unit_cell_defaults[parameter] = parameter_pref
                 counter += 1
+
         # Can't set less than 6 unit cell parameters
         if counter != 6:
             unit_cell_defaults = False
@@ -2305,8 +2309,8 @@ class RunLabelit(Process):
         # Don't launch job if self.test = True
         if self.test:
             labelit_jobs["junk%s" % iteration] = iteration
+        # Not testing
         else:
-            # print command
             log = os.path.join(os.getcwd(), "labelit.log")
 
             # queue to retrieve the PID or JobIB once submitted.
@@ -2315,14 +2319,14 @@ class RunLabelit(Process):
                 # Delete the previous log still in the folder, otherwise the cluster jobs
                 # will append to it.
                 if os.path.exists(log):
-                    os.system("rm -rf %s" % log)
+                    os.unlink(log)
                 run = Process(target=self.cluster_adapter.process_cluster_beorun,
 	                          args=({'command': command,
                                      'log': log,
                                      'queue': self.cluster_queue,
                                      'pid': pid_queue},) )
             else:
-                # print "Run %s in directory %s" % (command, os.getcwd())
+                print "Run %s in directory %s" % (command, os.getcwd())
                 # Run in another thread
                 run = multiprocessing.Process(target=local_subprocess,
                                               args=({"command": command,
@@ -2407,9 +2411,9 @@ class RunLabelit(Process):
             potential_problems = {
                 "bad input": {
                     "error": "Labelit did not like your input unit cell dimensions or SG.",
-                    "execute": functools.partial(self.process_labelit,
+                    "execute": [functools.partial(self.process_labelit,
                                                  overrides={"ignore_user_cell": True,
-                                                            "ignore_user_SG": True}),
+                                                            "ignore_user_SG": True}),],
                     "run": "xutils.errorLabelitCellSG(self, iteration)"
                 },
                 "bumpiness": {
@@ -2476,7 +2480,8 @@ class RunLabelit(Process):
                     else:
                         if iteration <= self.iterations:
                             if "execute" in problem_actions:
-                                problem_actions["execute"](iteration=iteration)
+                                for func in problem_actions["execute"]:
+                                    func(iteration=iteration)
                             # return eval(problem_actions.get('run', problem_actions.get("run2")))
 
 
