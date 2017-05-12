@@ -419,7 +419,8 @@ if [ $INSTALL_PYTHON == 1 ]; then
   rapd.pip install drmaa
   rapd.pip install paramiko
   rapd.pip install fabio
-  rapd.pip install hcluster
+  # rapd.pip install hcluster
+  rapd.pip install scipy
   # Get the up arrow working in the CLI
   rapd.pip install readline
 
