@@ -1433,8 +1433,8 @@ class RapdPlugin(Process):
         rms_list1 = []
         sg_list1 = []
         metric_list1 = []
-        vol = []
-        sg_dict  = {}
+        volumes = []
+        sg_dict = {}
         sol_dict = {}
         sym = "0"
 
@@ -1451,7 +1451,7 @@ class RapdPlugin(Process):
         # All runs in error state
         error_count = 0
         for iteration, result in self.labelit_results.iteritems():
-            print "RESULT"
+            # print "RESULT"
             pprint(result)
             if result["Labelit results"] in ("ERROR", "TIMEOUT"):
                 error_count += 1
@@ -1459,44 +1459,60 @@ class RapdPlugin(Process):
             print "Unsuccessful indexing run. Exiting."
             sys.exit(9)
 
-        for run, result in self.labelit_results.iteritems():
+        # Run through all the results - compile them
+        for iteration, result in self.labelit_results.iteritems():
             if isinstance(result.get("Labelit results"), dict):
                 labelit_result = result.get("Labelit results")
                 # Check for pseudotranslation in any Labelit run
                 if labelit_result.get("pseudotrans") == True:
                     self.pseudotrans = True
-                s, r, m, v = xutils.getLabelitStats(self, inp=run, simple=True)
-                sg = xutils.convertSG(self, s)
-                sg_dict[run] = sg
-                sg_list1.append(float(sg))
-                rms_list1.append(float(r))
-                metric_list1.append(float(m))
-                vol.append(v)
+                my_spacegroup, rms, metric, volume = labelit.get_labelit_stats(
+                    labelit_results=labelit_result,
+                    simple=True)
+                spacegroup_num = xutils.convert_spacegroup(my_spacegroup)
+                sg_dict[iteration] = spacegroup_num
+                sg_list1.append(float(spacegroup_num))
+                rms_list1.append(rms)
+                metric_list1.append(metric)
+                volumes.append(volume)
             else:
-                #If Labelit failed, set dummy params
-                sg_dict[run] = "0"
+                # If Labelit failed, set dummy params
+                sg_dict[iteration] = "0"
                 sg_list1.append(0)
                 rms_list1.append(100)
                 metric_list1.append(100)
-                vol.append("0")
-        for x in range(len(sg_list1)):
-            if sg_list1[x] == numpy.amax(sg_list1):
+                volumes.append(0)
+        # pprint(sg_dict)
+        # pprint(sg_list1)
+        # pprint(rms_list1)
+        # pprint(metric_list1)
+        # pprint(volumes)
+
+        for index in range(len(sg_list1)):
+            if sg_list1[index] == numpy.amax(sg_list1):
                 # If its P1 look at the Mosflm RMS, else look at the Labelit metric.
-                if str(sg_list1[x]) == "1.0":
-                    sol_dict[rms_list1[x]]    = self.labelit_results.keys()[x]
+                if sg_list1[index] == 1.0:
+                    sol_dict[rms_list1[index]] = self.labelit_results.keys()[index]
                 else:
-                    sol_dict[metric_list1[x]] = self.labelit_results.keys()[x]
-        l = sol_dict.keys()
-        l.sort()
+                    sol_dict[metric_list1[index]] = self.labelit_results.keys()[index]
+
+        # print "sol_dict"
+        # pprint(sol_dict)
+
+        sol_dict_keys = sol_dict.keys()
+        sol_dict_keys.sort()
         # Best Labelit_results key
-        highest = sol_dict[l[0]]
+        highest = sol_dict[sol_dict_keys[0]]
         # Since iter 5 cuts res, it is often the best. Only choose if its the only solution.
-        if len(l) > 1:
-            if highest == "5":
-                highest = sol_dict[l[1]]
+        if len(sol_dict_keys) > 1:
+            if highest == 5:
+                highest = sol_dict[sol_dict_keys[1]]
 
         # symmetry of best solution
         sym = sg_dict[highest]
+        print "sym", sym
+
+        sys.exit()
 
         # If there is a solution...
         if sym != "0":
@@ -1507,7 +1523,7 @@ class RapdPlugin(Process):
             # pprint.pprint(self.labelit_results)
 
             # Set self.volume for best solution
-            self.volume = vol[int(highest)]
+            self.volume = volumes[int(highest)]
 
             # Set self.labelit_dir and go to it.
             self.labelit_dir = os.path.join(self.working_dir, highest)
@@ -2379,7 +2395,7 @@ class RunLabelit(Process):
 
             parsed_result = labelit.parse_output(stdout, iteration)
             # Save the return into the shared var
-            self.labelit_results = {"Labelit results": parsed_result}
+            self.labelit_results[iteration] = {"Labelit results": parsed_result}
             # pprint(data)
             # sys.exit()
 
