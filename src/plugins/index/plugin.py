@@ -38,6 +38,7 @@ VERSION = "2.0.0"
 
 # Standard imports
 from collections import OrderedDict
+import functools
 import glob
 import json
 import logging
@@ -2240,7 +2241,7 @@ class RunLabelit(Process):
         # except:
         #     self.logger.exception('**ERROR in RunLabelit.preprocess_labelit**')
 
-    def process_labelit(self, iteration=0, inp=False):
+    def process_labelit(self, iteration=0, inp=False, overrides={}):
         """
         Construct the labelit command and run. Passes back dict with PID:iteration.
         """
@@ -2269,11 +2270,16 @@ class RunLabelit(Process):
 
         # If first labelit run errors because not happy with user specified cell or SG then
         # ignore user input in the rerun.
-        if self.ignore_user_cell == False:
+        if not self.ignore_user_cell and overrides.get("ignore_user_cell"):
             if unit_cell_defaults:
                 command += 'known_cell=%s,%s,%s,%s,%s,%s ' % \
-                           (unit_cell_defaults['a'], unit_cell_defaults['b'], unit_cell_defaults['c'], unit_cell_defaults['alpha'], unit_cell_defaults['beta'], unit_cell_defaults['gamma'])
-        if self.ignore_user_SG == False:
+                           (unit_cell_defaults['a'],
+                            unit_cell_defaults['b'],
+                            unit_cell_defaults['c'],
+                            unit_cell_defaults['alpha'],
+                            unit_cell_defaults['beta'],
+                            unit_cell_defaults['gamma'])
+        if not self.ignore_user_SG and overrides.get("ignore_user_SG"):
             if self.spacegroup != False:
                 command += 'known_symmetry=%s ' % self.spacegroup
 
@@ -2401,19 +2407,22 @@ class RunLabelit(Process):
             potential_problems = {
                 "bad input": {
                     "error": "Labelit did not like your input unit cell dimensions or SG.",
-                    "run": "xutils.errorLabelitCellSG(self,iteration)"
+                    "execute": functools.partial(self.process_labelit,
+                                                 overrides={"ignore_user_cell": True,
+                                                            "ignore_user_SG": True}),
+                    "run": "xutils.errorLabelitCellSG(self, iteration)"
                 },
                 "bumpiness": {
                     "error": "Labelit settings need to be adjusted.",
-                    "run": "xutils.errorLabelitBump(self,iteration)"
+                    "run": "xutils.errorLabelitBump(self, iteration)"
                 },
                 "mosflm error": {
                     "error": "Mosflm could not integrate your image.",
-                    "run": "xutils.errorLabelitMosflm(self,iteration)"
+                    "run": "xutils.errorLabelitMosflm(self, iteration)"
                 },
                 "min good spots": {
                     "error": "Labelit did not have enough spots to find a solution",
-                    "run": "xutils.errorLabelitGoodSpots(self,iteration)"
+                    "run": "xutils.errorLabelitGoodSpots(self, iteration)"
                 },
                 "no index": {
                     "error": "No solutions found in Labelit.",
@@ -2456,44 +2465,24 @@ class RunLabelit(Process):
                 if problem_flag in potential_problems:
                     print "PROBLEM", problem_flag
 
+                    problem_actions = potential_problems[problem_flag]
+                    pprint(problem_actions)
+
+                    # No recovery
+                    if "kill" in problem_actions:
+                        self.labelit_log[iteration].extend("\n%s\n" % error)
+                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                    # Try to correct
+                    else:
+                        if iteration <= self.iterations:
+                            if "execute" in problem_actions:
+                                problem_actions["execute"](iteration=iteration)
+                            # return eval(problem_actions.get('run', problem_actions.get("run2")))
+
+
+
     """"
-        # No system-level error
-        else:
 
-
-
-            data = Parse.ParseOutputLabelit(self, log, iteration)
-            if self.short:
-                #data = Parse.ParseOutputLabelitNoMosflm(self,log,iteration)
-                self.labelit_results = { "Labelit results" : data }
-            else:
-                #data = Parse.ParseOutputLabelit(self,log,iteration)
-                self.labelit_results[iteration] = { 'Labelit results' : data }
-        # except:
-        #     self.logger.exception('**ERROR in RunLabelit.postprocess_labelit**')
-
-        # Do error checking and send to correct place according to iteration.
-        out = {'bad input': {'error':'Labelit did not like your input unit cell dimensions or SG.','run':'xutils.errorLabelitCellSG(self,iteration)'},
-               'bumpiness': {'error':'Labelit settings need to be adjusted.','run':'xutils.errorLabelitBump(self,iteration)'},
-               'mosflm error': {'error':'Mosflm could not integrate your image.','run':'xutils.errorLabelitMosflm(self,iteration)'},
-               'min good spots': {'error':'Labelit did not have enough spots to find a solution','run':'xutils.errorLabelitGoodSpots(self,iteration)'},
-               'no index': {'error':'No solutions found in Labelit.','run':'xutils.errorLabelit(self,iteration)'},
-               'fix labelit': {'error':'Distance is not getting read correctly from the image header.','kill':True},
-               'no pair': {'error':'Images are not a pair.','kill':True},
-               'failed': {'error':'Autoindexing Failed to find a solution','kill':True},
-               'min spots': {'error':'Labelit did not have enough spots to find a solution.','run1':'xutils.errorLabelitMin(self,iteration,data[1])',
-                             'run2':'xutils.errorLabelit(self,iteration)'},
-               'fix_cell': {'error':'Labelit had multiple choices for user SG and failed.','run1':'xutils.errorLabelitFixCell(self,iteration,data[1],data[2])',
-                            'run2':'xutils.errorLabelitCellSG(self,iteration)'},
-               }
-        # If Labelit results are OK, then...
-        if type(data) == dict:
-            d = False
-        # Otherwise deal with fixing and rerunning Labelit
-        elif type(data) == tuple:
-            d = data[0]
-        else:
-            d = data
         if d:
             if out.has_key(d):
                 if out[d].has_key('kill'):
