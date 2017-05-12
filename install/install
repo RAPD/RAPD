@@ -128,6 +128,9 @@ if [[ $PLATFORM == "Linux" ]]; then
 
     printf "  CentOS\n"
 
+    cat /etc/centos-release | cut -d" " -f4 | cut -d "." -f1
+    CENTOS_VERSION_MAJOR=$?
+
     function isinstalled {
       if yum list installed "$@" >/dev/null 2>&1; then
         true
