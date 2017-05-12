@@ -1512,10 +1512,8 @@ class RapdPlugin(Process):
         sym = sg_dict[highest]
         print "sym", sym
 
-        sys.exit()
-
         # If there is a solution...
-        if sym != "0":
+        if sym != 0:
             self.logger.debug("The sorted labelit solution was #%s", highest)
 
             # Save best results in corect place.
