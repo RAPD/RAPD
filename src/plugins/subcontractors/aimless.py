@@ -33,7 +33,7 @@ import argparse
 # import logging
 # import multiprocessing
 import os
-# import pprint
+from pprint import pprint
 # import pymongo
 # import re
 # import redis
@@ -66,6 +66,9 @@ def parse_aimless(logfile):
     """
 	Parses the aimless logfile in order to pull out data for
 	graphing and the results summary table.
+
+    logfile should be input as the name of the log file
+
 	Relevant values for the summary table are stored in a dict.
 	Relevant information for creating plots are stored in a dict,
 	with the following format for each entry (i.e. each plot):
@@ -144,20 +147,28 @@ def parse_aimless(logfile):
     # The beginning of the titles for all common tables in the
     # aimless log file are given below, but not all of them
     # are currently used to generate a plot.
-
-    scales = "=== Scales v rotation"
+    # scales = "=== Scales v rotation"
     rfactor = "Analysis against all Batches"
     cchalf = "Correlations CC(1/2)"
-    anisotropy = "Anisotropy analysis"
-    vresolution = "Analysis against resolution, XDSdataset"
-    anomalous = "Analysis against resolution, with & without"
-    intensity = "Analysis against intensity"
+    # anisotropy = "Anisotropy analysis"
+    vresolution = "Analysis against resolution,"
+    # anomalous = "Analysis against resolution, with & without"
+    # rresolution = "Analysis against resolution for each run"
+    # intensity = "Analysis against intensity"
     completeness = "Completeness & multiplicity"
-    deviation = "Run 1, standard deviation"
+    # deviation = "Run 1, standard deviation" # and 2, 3, ...
+    # all_deviation = "All runs, standard deviation"
+    # effect = "Effect of parameter variance on sd(I)"
     rcp = "Radiation damage"
 
-    plots = {
-        "Rmerge vs Frame": {
+    # pprint(dir(log))
+    # for table in log.tables():
+    #     print table.title()
+
+    # Grab plots - None is plot missing
+    plots = {}
+    try:
+        plots["Rmerge vs Frame"] = {
             "data": [
                 {
                     "parameters": {
@@ -165,33 +176,42 @@ def parse_aimless(logfile):
                         "linelabel": "Rmerge",
                         "linetype": "11",
                         "linewidth": "3"
-                       },
+                    },
                     "series": [
                         {
                             "xs": [int(x) for x in log.tables(rfactor)[0].col("Batch")],
                             "ys": [try_float(x, 0.0) for x in \
                                   log.tables(rfactor)[0].col("Rmerge")]
                             }
-                        ]},
-                {"parameters": {
-                    "linecolor": "4",
-                    "linelabel": "SmRmerge",
-                    "linetype": "11",
-                    "linewidth": "3",
-                    },
-                 "series": [
-                     {"xs" : [try_int(x) for x in log.tables(rfactor)[0].col("Batch")],
-                      "ys" : [try_float(x, 0.0) for x in log.tables(rfactor)[0].col("SmRmerge")]
-                     }
-                 ]
+                        ]
+                },
+                {
+                    "parameters": {
+                        "linecolor": "4",
+                        "linelabel": "SmRmerge",
+                        "linetype": "11",
+                        "linewidth": "3",
+                        },
+                    "series": [
+                        {
+                            "xs": [try_int(x) for x in log.tables(rfactor)[0].col("Batch")],
+                            "ys": [try_float(x, 0.0) for x in log.tables(rfactor)[0].\
+                                   col("SmRmerge")]
+                        }
+                    ]
                 },
             ],
             "parameters": {
                 "toplabel": "Rmerge vs Batch for all Runs",
                 "xlabel": "Image Number",
-                },
             },
-        "Imean/RMS scatter": {
+        }
+    # Plot not present
+    except IndexError:
+        plots["Rmerge vs Frame"] = None
+
+    try:
+        plots["Imean/RMS scatter"] = {
             "data": [
                 {
                     "parameters": {
@@ -213,8 +233,13 @@ def parse_aimless(logfile):
                 "toplabel": "Imean / RMS scatter",
                 "xlabel": "Image Number",
             }
-        },
-        "Anomalous & Imean CCs vs Resolution": {
+        }
+    # Plot not present
+    except IndexError:
+        plots["Imean/RMS scatter"] = None
+
+    try:
+        plots["Anomalous & Imean CCs vs Resolution"] = {
             "data": [
                 {
                     "parameters": {
@@ -253,8 +278,13 @@ def parse_aimless(logfile):
                 "toplabel": "Anomalous & Imean CCs vs. Resolution",
                 "xlabel": "Dmid (Angstroms)"
             }
-        },
-        "RMS correlation ration": {
+        }
+    # Plot not present
+    except IndexError:
+        plots["Anomalous & Imean CCs vs Resolution"] = None
+
+    try:
+        plots["RMS correlation ration"] = {
             "data": [
                 {
                     "parameters": {
@@ -277,8 +307,13 @@ def parse_aimless(logfile):
                 "toplabel": "RMS correlation ratio",
                 "xlabel": "Dmid (Angstroms)",
             }
-        },
-        "I/sigma, Mean Mn(I)/sd(Mn(I))": {
+        }
+    # Plot not present
+    except IndexError:
+        plots["RMS correlation ration"] = None
+
+    try:
+        plots["I/sigma, Mean Mn(I)/sd(Mn(I))"] = {
             "data": [
                 {
                     "parameters": {
@@ -317,8 +352,13 @@ def parse_aimless(logfile):
                 "toplabel": "I/sigma, Mean Mn(I)/sd(Mn(I))",
                 "xlabel": "Dmid (Angstroms)"
             }
-        },
-        "Rmerge, Rfull, Rmeas, Rpim vs. Resolution": {
+        }
+    # Plot not present
+    except IndexError:
+        plots["I/sigma, Mean Mn(I)/sd(Mn(I))"] = None
+
+    try:
+        plots["Rmerge, Rfull, Rmeas, Rpim vs. Resolution"] = {
             "data": [
                 {
                     "parameters": {
@@ -389,8 +429,13 @@ def parse_aimless(logfile):
                 "toplabel": "Rmerge, Rfull, Rmeas, Rpim vs. Resolution",
                 "xlabel": "Dmid (Angstroms)"
             }
-        },
-        "Average I, RMS deviation, and Sd": {
+        }
+    # Plot not present
+    except IndexError:
+        plots["Rmerge, Rfull, Rmeas, Rpim vs. Resolution"] = None
+
+    try:
+        plots["Average I, RMS deviation, and Sd"] = {
             "data": [
                 {
                     "parameters": {
@@ -444,8 +489,13 @@ def parse_aimless(logfile):
                 "toplabel": "Average I, RMS dev., and std. dev.",
                 "xlabel": "Dmid (Ansgstroms)"
             }
-        },
-        "Completeness": {
+        }
+    # Plot not present
+    except IndexError:
+        plots["Average I, RMS deviation, and Sd"] = None
+
+    try:
+        plots["Completeness"] = {
             "data": [
                 {
                     "parameters": {
@@ -516,8 +566,13 @@ def parse_aimless(logfile):
                 "toplabel": "Completeness vs. Resolution",
                 "xlabel": "Dmid (Angstroms)"
             }
-        },
-        "Redundancy": {
+        }
+    # Plot not present
+    except IndexError:
+        plots["Completeness"] = None
+
+    try:
+        plots["Redundancy"] = {
             "data": [
                 {
                     "parameters": {
@@ -556,8 +611,13 @@ def parse_aimless(logfile):
                 "toplabel": "Redundancy",
                 "xlabel": "Dmid (Angstroms)"
             }
-        },
-        "Radiation Damage": {
+        }
+    # Plot not present
+    except IndexError:
+        plots["Redundancy"] = None
+
+    try:
+        plots["Radiation Damage"] = {
             "data": [
                 {
                     "parameters": {
@@ -579,12 +639,16 @@ def parse_aimless(logfile):
                 "xlabel": "Relative frame difference"
             }
         }
-    }
+    # Plot not present
+    except IndexError:
+        plots["Radiation Damage"] = None
 
-	# Return to the main program.
+    pprint(plots)
+
+    # Return to the main program.
     return (plots, int_results)
 
-def main(args):
+def main():
     """
     The main process docstring
     This function is called when this module is invoked from
@@ -592,6 +656,11 @@ def main(args):
     """
 
     print "main"
+
+    args = get_commandline()
+    print args
+
+    parse_aimless(args.file)
 
 def get_commandline():
     """
