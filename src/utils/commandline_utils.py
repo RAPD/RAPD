@@ -84,6 +84,12 @@ dp_parser.add_argument("--json",
                        dest="json",
                        help="Output only final and full JSON")
 
+# Output progress updates?
+dp_parser.add_argument("--progress",
+                       action="store_true",
+                       dest="progress",
+                       help="Output progress updates to the terminal")
+
 # The site
 dp_parser.add_argument("-s", "--site",
                        action="store",

@@ -375,8 +375,8 @@ class RapdPlugin(Process):
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::run")
 
-        self.tprint(arg="\nStarting indexing procedures", level=99, color="blue")
-
+        self.tprint(arg="\nStarting indexing procedures", level=98, color="blue")
+        self.tprint(arg=0, level="progress")
         # Check if h5 file is input and convert to cbf's.
         if self.header["fullname"][-3:] == ".h5":
             if self.convert_images() == False:
@@ -527,7 +527,7 @@ class RapdPlugin(Process):
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::runLabelit")
 
-        self.tprint(arg="  Starting Labelit runs", level=99, color="white")
+        self.tprint(arg="  Starting Labelit runs", level=98, color="white")
 
         try:
             # Setup queue for getting labelit log and results in labelitSort.
@@ -783,7 +783,8 @@ class RapdPlugin(Process):
         else:
             command += " -t %s" % self.time
         command += ' -e %s -sh %s -su %s' % (self.preferences.get('best_complexity', 'none'),\
-                                             self.preferences.get('shape', '2.0'), self.preferences.get('susceptibility', '1.0'))
+                                             self.preferences.get('shape', '2.0'), \
+                                             self.preferences.get('susceptibility', '1.0'))
         if self.preferences.get('aimed_res') != 0.0:
             command += ' -r %s' % self.preferences.get('aimed_res')
         if best_version >= "3.4":
@@ -795,7 +796,8 @@ class RapdPlugin(Process):
         # Set min and max detector distance
         if best_version >= "3.4":
             command += ' -DIS_MAX %s -DIS_MIN %s' % (max_dis, min_dis)
-        # Fix bug in BEST for PAR detectors. Use the cumulative completeness of 99% instead of all bin.
+        # Fix bug in BEST for PAR detectors. Use the cumulative completeness of 99% instead of all
+        # bin.
         if self.vendortype in ('Pilatus-6M', 'ADSC-HF4M'):
             command += ' -low never'
         # set dose  and limit, else set time
@@ -1013,10 +1015,10 @@ class RapdPlugin(Process):
         for i in range(st, end):
             # Print for 1st BEST run
             if i == 1:
-                self.tprint(arg="  Starting BEST runs", level=99, color="white")
+                self.tprint(arg="  Starting BEST runs", level=98, color="white")
             # Run Mosflm for strategy
             if i == 4:
-                self.tprint(arg="  Starting Mosflm runs", level=99, color="white")
+                self.tprint(arg="  Starting Mosflm runs", level=98, color="white")
                 xutils.folders(self, self.labelit_dir)
                 job = Process(target=self.processMosflm, name="mosflm%s" % i)
             # Run BEST
@@ -1212,14 +1214,14 @@ class RapdPlugin(Process):
                 # pprint.pprint(data)
                 if "strategy anom flag" in data:
                     flag = "strategy "
-                    self.tprint(arg="\nBEST strategy standard", level=99, color="blue")
+                    self.tprint(arg="\nBEST strategy standard", level=98, color="blue")
                 else:
                     flag = "strategy anom "
-                    self.tprint(arg="\nBEST strategy ANOMALOUS", level=99, color="blue")
+                    self.tprint(arg="\nBEST strategy ANOMALOUS", level=98, color="blue")
                 # Header lines
-                self.tprint(arg="  " + "-" * 85, level=99, color="white")
-                self.tprint(arg="  " + " N |  Omega_start |  N.of.images | Rot.width |  Exposure | Distance | % Transmission", level=99, color="white")
-                self.tprint(arg="  " + "-" * 85, level=99, color="white")
+                self.tprint(arg="  " + "-" * 85, level=98, color="white")
+                self.tprint(arg="  " + " N |  Omega_start |  N.of.images | Rot.width |  Exposure | Distance | % Transmission", level=98, color="white")
+                self.tprint(arg="  " + "-" * 85, level=98, color="white")
                 for i in range(len(data[flag+"run number"])):
                     self.tprint(
                         arg="  %2d |    %6.2f    |   %6d     |   %5.2f   |   %5.2f   | %7s  |     %3.2f      |" %
@@ -1232,9 +1234,9 @@ class RapdPlugin(Process):
                                 str(data[flag+"distance"][i]),
                                 float(data[flag+"new transmission"][i])
                             ),
-                        level=99,
+                        level=98,
                         color="white")
-                self.tprint(arg="  " + "-" * 85, level=99, color="white")
+                self.tprint(arg="  " + "-" * 85, level=98, color="white")
 
                 return("OK")
             # BEST has failed
@@ -1275,14 +1277,14 @@ class RapdPlugin(Process):
         # pprint.pprint(data)
         if "strategy run number" in data:
             flag = "strategy "
-            self.tprint(arg="\nMosflm strategy standard", level=99, color="blue")
+            self.tprint(arg="\nMosflm strategy standard", level=98, color="blue")
         else:
             flag = "strategy anom "
-            self.tprint(arg="\nMosflm strategy ANOMALOUS", level=99, color="blue")
+            self.tprint(arg="\nMosflm strategy ANOMALOUS", level=98, color="blue")
         # Header lines
-        self.tprint(arg="  " + "-" * 69, level=99, color="white")
-        self.tprint(arg="  " + " N |  Omega_start |  N.of.images | Rot.width |  Exposure | Distance ", level=99, color="white")
-        self.tprint(arg="  " + "-" * 69, level=99, color="white")
+        self.tprint(arg="  " + "-" * 69, level=98, color="white")
+        self.tprint(arg="  " + " N |  Omega_start |  N.of.images | Rot.width |  Exposure | Distance ", level=98, color="white")
+        self.tprint(arg="  " + "-" * 69, level=98, color="white")
         for i in range(len(data[flag+"run number"])):
             self.tprint(
                 arg="  %2d |    %6.2f    |   %6d     |   %5s   |   %5.2f   | %7s  " %
@@ -1294,9 +1296,9 @@ class RapdPlugin(Process):
                         float(data[flag+"image exp time"]),
                         str(data[flag+"distance"])
                     ),
-                level=99,
+                level=98,
                 color="white")
-        self.tprint(arg="  " + "-" * 69, level=99, color="white")
+        self.tprint(arg="  " + "-" * 69, level=98, color="white")
 
         if data == None:
             if self.verbose:
@@ -1316,7 +1318,8 @@ class RapdPlugin(Process):
         """
 
         self.logger.debug("AutoindexingStrategy::run_queue")
-        self.tprint(arg="\nStarting strategy calculations", level=99, color="blue")
+        self.tprint(arg="\nStarting strategy calculations", level=98, color="blue")
+        self.tprint(75, level="progress")
 
         # try:
         def set_best_results(i, x):
@@ -1512,11 +1515,11 @@ class RapdPlugin(Process):
 
             # Print Labelit results to commandline
             self.tprint(arg="\nHighest symmetry Labelit result",
-                        level=99,
+                        level=98,
                         color="blue",
                         newline=False)
             for line in self.labelit_results["Labelit results"]["output"][5:]:
-                self.tprint(arg="  %s" % line.rstrip(), level=99, color="white")
+                self.tprint(arg="  %s" % line.rstrip(), level=98, color="white")
             # pprint.pprint(self.labelit_results["Labelit results"]["output"])
 
         # No Labelit solution
@@ -1628,7 +1631,7 @@ class RapdPlugin(Process):
             self.logger.debug('AutoindexingStrategy::print_credits')
 
         # try:
-        self.tprint(arg="\nRAPD index & strategy uses:", level=99, color="blue")
+        self.tprint(arg="\nRAPD index & strategy uses:", level=98, color="blue")
 
         info_string = """    Phenix
     Reference: J. Appl. Cryst. 37, 399-409 (2004)
@@ -1642,7 +1645,7 @@ class RapdPlugin(Process):
     Best
     Reference: G.P. Bourenkov and A.N. Popov,  Acta Cryst. (2006). D62, 58-64
     Website:   http://www.embl-hamburg.de/BEST/"""
-        self.tprint(arg=info_string, level=99, color="white")
+        self.tprint(arg=info_string, level=98, color="white")
 
         self.logger.debug(info_string)
 
@@ -1661,7 +1664,7 @@ class RapdPlugin(Process):
                 if plot_type in self.plots:
 
                     if not titled:
-                        self.tprint(arg="\nPlots from BEST", level=99, color="blue")
+                        self.tprint(arg="\nPlots from BEST", level=98, color="blue")
                         titled = True
 
                     tag = {"osc_range":"standard", "osc_range_anom":"ANOMALOUS"}[plot_type]
@@ -1828,6 +1831,7 @@ class RapdPlugin(Process):
             self.write_json(self.results)
             if self.controller_address:
                 rapd_send(self.controller_address, self.results)
+            self.tprint(arg=100, level="progress")
         except:
             self.logger.exception("**Could not send results to pipe**")
 
@@ -1868,7 +1872,7 @@ class RapdPlugin(Process):
         self.logger.debug("RAPD autoindexing/strategy complete.")
         self.logger.debug("Total elapsed time: %s seconds", t)
         self.logger.debug("-------------------------------------")
-        self.tprint(arg="\nRAPD autoindexing & strategy complete", level=99, color="green")
+        self.tprint(arg="\nRAPD autoindexing & strategy complete", level=98, color="green")
         self.tprint(arg="Total elapsed time: %s seconds" % t, level=10, color="white")
 
     def htmlBestPlots(self):

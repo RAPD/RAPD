@@ -348,7 +348,8 @@ def main():
         terminal_log_level = 50
 
     tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level,
-                                            no_color=commandline_args.no_color)
+                                            no_color=commandline_args.no_color,
+                                            progress=commandline_args.progress)
 
     print_welcome_message(tprint)
 
@@ -368,14 +369,14 @@ def main():
 
     # List sites?
     if commandline_args.listsites:
-        tprint(arg="\nAvailable sites", level=99, color="blue")
+        tprint(arg="\nAvailable sites", level=98, color="blue")
         commandline_utils.print_sites(left_buffer="  ")
         if not commandline_args.listdetectors:
             sys.exit()
 
     # List detectors?
     if commandline_args.listdetectors:
-        tprint(arg="Available detectors", level=99, color="blue")
+        tprint(arg="Available detectors", level=98, color="blue")
         commandline_utils.print_detectors(left_buffer="  ")
         sys.exit()
 
@@ -385,22 +386,22 @@ def main():
 
     if "hdf5_files" in data_files:
         logger.debug("HDF5 source file(s)")
-        tprint(arg="\nHDF5 source file(s)", level=99, color="blue")
+        tprint(arg="\nHDF5 source file(s)", level=98, color="blue")
         logger.debug(data_files["hdf5_files"])
         for data_file in data_files["hdf5_files"]:
-            tprint(arg="  " + data_file, level=99, color="white")
+            tprint(arg="  " + data_file, level=98, color="white")
         logger.debug("CBF file(s) from HDF5 file(s)")
-        tprint(arg="\nData files", level=99, color="blue")
+        tprint(arg="\nData files", level=98, color="blue")
     else:
         logger.debug("Data file(s)")
-        tprint(arg="\nData file(s)", level=99, color="blue")
+        tprint(arg="\nData file(s)", level=98, color="blue")
 
     if len(data_files) == 0:
-        tprint(arg="  None", level=99, color="white")
+        tprint(arg="  None", level=98, color="white")
     else:
         logger.debug(data_files["files"])
         for data_file in data_files["files"]:
-            tprint(arg="  " + data_file, level=99, color="white")
+            tprint(arg="  " + data_file, level=98, color="white")
 
     # Need data
     if len(data_files) == 0 and commandline_args.test == False:
