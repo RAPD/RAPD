@@ -138,14 +138,14 @@ def parse_output(labelit_output, iteration=0):
                 spot_problem = True
             if line.startswith("InputFileError: Input error: File header must contain the sample-to\
 -detector distance in mm; value is 0."):
-                return "fix labelit"
+                return "fix_labelit"
             if line.startswith("InputFileError: Input error:"):
-                return "no pair"
+                return "no_pair"
             if line.startswith("Have "):
                 # self.min_good_spots = line.split()[1].rstrip(";")
                 few_spots = True
             if line.startswith("UnboundLocalError"):
-                return "bad input"
+                return "bad_input"
             if line.startswith("divide by zero"):
                 return "bumpiness"
             # Could give error is too many choices with close cell dimensions, but...
@@ -153,9 +153,9 @@ def parse_output(labelit_output, iteration=0):
                 multi_sg = True
                 error_lg = line.split()[11]
             if line.startswith("No_Lattice_Selection: The known_symmetry"):
-                return "bad input"
+                return "bad_input"
             if line.startswith("MOSFLM_Warning: MOSFLM does not give expected results on r_"):
-                return "mosflm error"
+                return "mosflm_error"
             # Save the beam center
             if line.startswith("Beam center"):
                 labelit_bc["labelit_x_beam"] = line.split()[3][:-3]
@@ -234,7 +234,7 @@ def parse_output(labelit_output, iteration=0):
     # Sometimes Labelit works with few spots, sometimes it doesn"t...
     if few_spots:
         if os.path.exists(mosflm_index) == False:
-            return "min good spots"
+            return "min_good_spots"
 
     data = {"labelit_face": labelit_face,
             "labelit_solution": labelit_solution,
@@ -348,16 +348,166 @@ def decrease_spot_requirements(spot_count):
     """Decrease the required spot count in an attempt to get indexing to work"""
 
     if spot_count < 25:
-      if self.verbose:
-        self.logger.debug('Not enough spots to autoindex!')
-      self.labelit_log[str(iteration)].extend('\nNot enough spots to autoindex!\n')
-      self.postprocess_labelit(iteration, True, True)
-      return False
+        return False
     else:
-      preferences = open('dataset_preferences.py', 'a')
-      preferences.write('%s\n' % line)
-      preferences.close()
-      return True
+        # Update dataset preferences to have lower spot number requirement
+        with open("dataset_preferences.py", "a") as preferences:
+            preferences.write("distl_minimum_number_spots_for_indexing=%d\n" % spot_count)
+
+        return spot_count
+
+def decrease_good_spot_requirements(iteration, min_spots=20):
+    """
+    Sometimes Labelit gives an eror saying that there aren't enough 'good spots' for Mosflm. Not a
+    Labelit failure error. Forces Labelit/Mosflm to give result regardless. Sometimes causes failed
+    index.
+    """
+
+    with open("dataset_preferences.py", "a") as preferences:
+        preferences.write("\n#iteration %s\n" % iteration)
+        preferences.write("model_refinement_minimum_N=%d" % min_spots)
+
+    return min_spots
+
+def no_bumpiness():
+    """
+    Get rid of distl_profile_bumpiness line in dataset_preferences.py.
+    """
+
+    input_lines = open("dataset_preferences.py", "r").readlines()
+
+    removed = False
+    with open("dataset_preferences.py", "w") as preferences:
+        for line in input_lines:
+            if line.startswith("distl_profile_bumpiness"):
+                removed = True
+            else:
+                preferences.write(line)
+
+    return removed
+
+def fix_multiple_cells(lattice_group, labelit_solution):
+    """
+    Pick correct cell (lowest rmsd) if multiple cell choices are possible in user selected SG
+    """
+
+    rmsd = []
+    min_rmsd = False
+    for index in range(2):
+        if index == 1:
+            min_rmsd = min(rmsd)
+        for line in labelit_solution:
+            if line[7] == lattice_group:
+                if index == 0:
+                    rmsd.append(float(line[4]))
+                else:
+                    if line[4] == str(min_rmsd):
+                        cell_cmd = "known_cell=%s,%s,%s,%s,%s,%s " % (line[8],
+                                                                      line[9],
+                                                                      line[10],
+                                                                      line[11],
+                                                                      line[12],
+                                                                      line[13])
+                        return cell_cmd
+
+
+# def errorLabelit(self, iteration):
+#     """
+#     Labelit error correction. Set/reset setting in dataset_preferences.py according to error iteration.
+#     Commented out things were tried before.
+#     """
+#
+#     self.logger.debug('Utilities::errorLabelit')
+#
+#     # Create separate folders for Labelit runs.
+#     if self.multiproc == False:
+#         iteration += 1
+#     foldersLabelit(self, iteration)
+#
+#     preferences = open('dataset_preferences.py','a')
+#
+#     preferences.write('\n#iteration %s\n' % iteration)
+#
+#     if self.twotheta == False:
+#         preferences.write('beam_search_scope=0.3\n')
+#
+#     if iteration == 1:
+#         # Seemed to pick stronger spots on Pilatis
+#         if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
+#             preferences.write('distl.minimum_spot_area=3\n')
+#             preferences.write('distl.minimum_signal_height=4\n')
+#         elif "Eiger" in self.vendortype:
+#             preferences.write('distl.minimum_spot_area=3\n')
+#             preferences.write('distl.minimum_signal_height=5.5\n')
+#         else:
+#             preferences.write('distl.minimum_spot_area=6\n')
+#             preferences.write('distl.minimum_signal_height=4.3\n')
+#         preferences.close()
+#         self.labelit_log[str(iteration)] = ['\nLooking for long unit cell.\n']
+#         self.tprint("\n    Looking for long unit cell", level=30, color="white", newline=False)
+#         self.logger.debug('Looking for long unit cell.')
+#
+#     elif iteration == 2:
+#         # Change it up and go for larger peaks like small molecule.
+#         preferences.write('distl.minimum_spot_height=6\n')
+#         preferences.close()
+#         self.labelit_log[str(iteration)] = ['\nChanging settings to look for stronger peaks (ie. small molecule).\n']
+#         self.tprint("\n    Looking for stronger peaks (ie. small molecule)", level=30, color="white", newline=False)
+#         self.logger.debug('Changing settings to look for stronger peaks (ie. small molecule).')
+#
+#     elif iteration == 3:
+#         if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
+#             preferences.write('distl.minimum_spot_area=2\n')
+#             preferences.write('distl.minimum_signal_height=2.3\n')
+#         elif "Eiger" in self.vendortype:
+#             preferences.write('distl.minimum_spot_area=3\n')
+#             preferences.write('distl.minimum_signal_height=2.6\n')
+#         else:
+#             preferences.write('distl.minimum_spot_area=7\n')
+#             preferences.write('distl.minimum_signal_height=1.2\n')
+#         preferences.close()
+#         self.labelit_log[str(iteration)] = ['\nLooking for weak diffraction.\n']
+#         self.tprint("\n    Looking for weak diffraction", level=30, color="white", newline=False)
+#         self.logger.debug('Looking for weak diffraction.')
+#
+#     elif iteration == 4:
+#         if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
+#             preferences.write('distl.minimum_spot_area=3\n')
+#             self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 3.\n']
+#             area = 3
+#         elif "Eiger" in self.vendortype:
+#             preferences.write('distl.minimum_spot_area=3\n')
+#             self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 3.\n']
+#             area = 3
+#         else:
+#             preferences.write('distl.minimum_spot_area=8\n')
+#             self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 8.\n']
+#             area = 8
+#         preferences.close()
+#         self.tprint("\n    Setting spot picking level to %d" % area, level=30, color="white", newline=False)
+#         self.logger.debug('Setting spot picking level to 3 or 8.')
+#
+#     elif iteration == 5:
+#         if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
+#             preferences.write('distl.minimum_spot_area=2\n')
+#             preferences.write('distl_highres_limit=5\n')
+#             self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 2 and resolution to 5.\n']
+#             setting = (2, 5)
+#         elif "Eiger" in self.vendortype:
+#             preferences.write('distl.minimum_spot_area=2\n')
+#             preferences.write('distl_highres_limit=4\n')
+#             self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 2 and resolution to 4.\n']
+#             setting = (2, 4)
+#         else:
+#             preferences.write('distl.minimum_spot_area=6\n')
+#             preferences.write('distl_highres_limit=5\n')
+#             self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 6 and resolution to 5.\n']
+#             setting = (6, 5)
+#         preferences.close()
+#         self.tprint("\n    Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white", newline=False)
+#         self.logger.debug('Setting spot picking level to 2 or 6.')
+#
+#     return self.process_labelit(iteration)
 
 def main():
     """

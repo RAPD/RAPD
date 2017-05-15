@@ -1396,31 +1396,31 @@ class RapdPlugin(Process):
         # except:
         #     self.logger.exception("**Error in run_queue**")
 
-    def convert_images(self):
-        """
-        Convert H5 files to CBF's for strategies.
-        """
-        if self.verbose:
-            self.logger.debug('AutoindexingStrategy::convert_images')
-
-        try:
-            def run_convert(img, imgn=False):
-                header = xutils.convert_hdf5_cbf(inp=img, imgn=imgn)
-                l = ['run_id', 'twotheta', 'place_in_run', 'date', 'transmission','collect_mode']
-                if type(header) == dict:
-                    for x in range(len(l)):
-                        del header[l[x]]
-                return (header)
-
-            self.header.update(run_convert(self.header['fullname'], imgn=1))
-
-            if self.header2:
-                self.header2.update(run_convert(self.header2['fullname'], imgn=2))
-            return True
-
-        except:
-            self.logger.exception('**ERROR in convert_images**')
-            return False
+    # def convert_images(self):
+    #     """
+    #     Convert H5 files to CBF's for strategies.
+    #     """
+    #     if self.verbose:
+    #         self.logger.debug('AutoindexingStrategy::convert_images')
+    #
+    #     try:
+    #         def run_convert(img, imgn=False):
+    #             header = xutils.convert_hdf5_cbf(inp=img, imgn=imgn)
+    #             l = ['run_id', 'twotheta', 'place_in_run', 'date', 'transmission','collect_mode']
+    #             if type(header) == dict:
+    #                 for x in range(len(l)):
+    #                     del header[l[x]]
+    #             return header
+    #
+    #         self.header.update(run_convert(self.header['fullname'], imgn=1))
+    #
+    #         if self.header2:
+    #             self.header2.update(run_convert(self.header2['fullname'], imgn=2))
+    #         return True
+    #
+    #     except:
+    #         self.logger.exception('**ERROR in convert_images**')
+    #         return False
 
     def labelitSort(self):
         """
@@ -1533,7 +1533,7 @@ class RapdPlugin(Process):
                 # print check_lg
                 # Input as number now.
                 # user_sg  = xutils.convertSG(self, self.spacegroup, reverse=True)
-                user_sg  = self.spacegroup
+                user_sg = self.spacegroup
                 # print user_sg
                 # sys.exit()
                 if user_sg != sym:
@@ -2095,7 +2095,7 @@ class RunLabelit(Process):
         self.index_number = False
         self.ignore_user_cell = False
         self.ignore_user_SG = False
-        self.min_good_spots = False
+        # self.min_good_spots = False
         self.twotheta = False
         # dicts for running the Queues
         self.labelit_jobs = {}
@@ -2143,8 +2143,8 @@ class RunLabelit(Process):
 
             # If self.multiproc == True runs all labelits at the same time.
             if self.multiproc:
-                for i in range(1, self.iterations):
-                    self.labelit_jobs[xutils.errorLabelit(self, i).keys()[0]] = i
+                for index in range(1, self.iterations):
+                    self.labelit_jobs[xutils.errorLabelit(self, index).keys()[0]] = index
 
         # Watch for returns
         self.labelit_run_queue()
@@ -2241,6 +2241,45 @@ class RunLabelit(Process):
         # except:
         #     self.logger.exception('**ERROR in RunLabelit.preprocess_labelit**')
 
+    def correct_labelit(self, iteration, overrides):
+        """
+        Perform Labelit corrections - called from process_labelit after directory creation and
+        relocation
+        """
+
+        # Try to run with generic
+        if overrides.get("no_solution"):
+            print ">>> NO SOLUTION", iteration
+            sys.exit()
+
+        # Correct error by decreasing the good spots requirement
+        if overrides.get("min_good_spots"):
+            good_spots = labelit.decrease_good_spot_requirements(iteration, min_spots=20)
+            self.labelit_log[iteration].extend("\nSetting min number of good bragg spots to %d and \
+rerunning.\n" % good_spots)
+
+        # Correct error by increasing Mosflm resolution
+        if overrides.get("increase_mosflm_resolution"):
+            new_res = labelit.increase_mosflm_resolution(iteration)
+            self.labelit_log[iteration].extend("\nDecreasing integration resolution to %.1f and \
+rerunning.\n" % new_res)
+
+        # Decrease the number of spots required
+        if overrides.get("min_spots"):
+            spot_count = labelit.decrease_spot_requirements(overrides.get("min_spots"))
+            self.labelit_log[iteration].extend("\nDecreasing spot requirments to %d and \
+rerunning.\n" % spot_count)
+
+        # Get rid of bumpiness
+        if overrides.get("bumpiness"):
+            removed = labelit.no_bumpiness()
+            if removed:
+                self.labelit_log[iteration].extend("\nProfile bumpiness removed and rerunning.\n")
+            else:
+                pass
+
+        return True
+
     def process_labelit(self, iteration=0, inp=False, overrides={}):
         """
         Construct the labelit command and run. Passes back dict with PID:iteration.
@@ -2272,11 +2311,17 @@ class RunLabelit(Process):
         # Put together the command for labelit.index
         command = 'labelit.index '
 
-        # Correct error by increasing Mosflm resolution
-        if overrides.get("increase_mosflm_resolution"):
-            new_res = labelit.increase_mosflm_resolution(iteration)
-            self.labelit_log[iteration].extend("\nDecreasing integration resolution to %.1f and \
-rerunning.\n" % new_res)
+        # Fix some errors
+        if overrides:
+            self.correct_labelit(iteration, overrides)
+
+        # Multiple possible spacegroups
+        if overrides.get("fix_cell"):
+            add_to_command = labelit.fix_multiple_cells(
+                lattice_group=overrides.get("lattice_group"),
+                labelit_solution=overrides.get("labelit_solution")
+            )
+            command += add_to_command
 
         # If first labelit run errors because not happy with user specified cell or SG then
         # ignore user input in the rerun.
@@ -2415,37 +2460,32 @@ rerunning.\n" % new_res)
 
             # Do error checking and send to correct place according to iteration.
             potential_problems = {
-                "bad input": {
+                "bad_input": {
                     "error": "Labelit did not like your input unit cell dimensions or SG.",
                     "execute": functools.partial(self.process_labelit,
                                                  overrides={"ignore_user_cell": True,
-                                                            "ignore_user_SG": True}),
-                    "run": "xutils.errorLabelitCellSG(self, iteration)"
+                                                            "ignore_user_SG": True})
                 },
                 "bumpiness": {
                     "error": "Labelit settings need to be adjusted.",
-                    # "execute" :
-                    "run": "xutils.errorLabelitBump(self, iteration)"
+                    "execute": functools.partial(self.process_labelit,
+                                                 overrides={"bumpiness": True})
                 },
-                "mosflm error": {
+                "mosflm_error": {
                     "error": "Mosflm could not integrate your image.",
                     "execute": functools.partial(self.process_labelit,
-                                                 overrides={"increase_mosflm_resolution":True}),
-                    "run": "xutils.errorLabelitMosflm(self, iteration)"
+                                                 overrides={"increase_mosflm_resolution": True})
                 },
-                "min good spots": {
+                "min_good_spots": {
                     "error": "Labelit did not have enough spots to find a solution",
-                    "run": "xutils.errorLabelitGoodSpots(self, iteration)"
+                    "execute": functools.partial(self.process_labelit,
+                                                 overrides={"min_good_spots": True})
                 },
-                "no index": {
-                    "error": "No solutions found in Labelit.",
-                    "run": "xutils.errorLabelit(self,iteration)"
-                },
-                "fix labelit": {
+                "fix_labelit": {
                     "error": "Distance is not getting read correctly from the image header.",
                     "kill": True
                 },
-                "no pair": {
+                "no_pair": {
                     "error": "Images are not a pair.",
                     "kill": True
                 },
@@ -2453,23 +2493,15 @@ rerunning.\n" % new_res)
                     "error": "Autoindexing Failed to find a solution",
                     "kill": True
                 },
-                "min spots": {
-                    "error": "Labelit did not have enough spots to find a solution.",
-                    "execute": functools.partial(self.process_labelit,
-                                                 overrides={}),
-                    "run1": "xutils.errorLabelitMin(self, iteration, data[1])",
-                    "run2": "xutils.errorLabelit(self, iteration)"
-                },
                 "fix_cell": {
-                    "error": "Labelit had multiple choices for user SG and failed.",
-                    "run1": "xutils.errorLabelitFixCell(self,iteration,data[1],data[2])",
-                    "run2": "xutils.errorLabelitCellSG(self,iteration)"
+                    "error": "Labelit had multiple choices for user SG and failed."
                 },
             }
 
             # If Labelit results are OK, then...
             if isinstance(parsed_result, dict):
                 problem_flag = False
+
             # Otherwise deal with fixing and rerunning Labelit
             elif isinstance(parsed_result, tuple):
                 problem_flag = parsed_result[0]
@@ -2477,12 +2509,34 @@ rerunning.\n" % new_res)
                 problem_flag = parsed_result
 
             if problem_flag:
-                if problem_flag == "min spots":
-                    print "MIN SPOTS"
-                    pprint(parsed_result)
-                    sys.exit()
 
-                if problem_flag in potential_problems:
+                # Failure to index due to too few spots
+                if problem_flag == "min spots":
+                    # print "MIN SPOTS"
+                    # pprint(parsed_result)
+                    spot_count = parsed_result[1]
+                    # Failed
+                    if spot_count < 25:
+                        self.labelit_log[iteration].append("\nNot enough spots to autoindex!\n")
+                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                    # Try again
+                    else:
+                        self.process_labelit(iteration, overrides={"min_spots": parsed_result[1]})
+
+                # Mulitple solutions possible
+                elif problem_flag == "fix_cell":
+                    print "FIX CELL"
+                    problem_action = potential_problems[problem_flag]
+
+                    problem_action(iteration=iteration,
+                                   overrides={
+                                       "fix_cell": True,
+                                       "lattice_group": parsed_result[1],
+                                       "labelit_solution": parsed_result[2]
+                                   })
+
+                # Rest of the problems
+                elif problem_flag in potential_problems:
                     print "PROBLEM", problem_flag
 
                     problem_actions = potential_problems[problem_flag]
@@ -2497,34 +2551,12 @@ rerunning.\n" % new_res)
                         if iteration <= self.iterations:
                             if "execute" in problem_actions:
                                 problem_actions["execute"](iteration=iteration)
-                            # return eval(problem_actions.get('run', problem_actions.get("run2")))
 
-
-
-    """"
-
-        if d:
-            if out.has_key(d):
-                if out[d].has_key('kill'):
-                    if self.multiproc:
-                        xutils.errorLabelitPost(self,iteration,out[d].get('error'),True)
-                    else:
-                        xutils.errorLabelitPost(self,self.iterations,out[d].get('error'))
+                # No solution
                 else:
-                    xutils.errorLabelitPost(self,iteration,out[d].get('error'),run_before)
-                    if self.multiproc:
-                        if run_before == False:
-                            return(eval(out[d].get('run',out[d].get('run1'))))
-                    else:
-                        if iteration <= self.iterations:
-                            return(eval(out[d].get('run',out[d].get('run2'))))
-            else:
-                error = 'Labelit failed to find solution.'
-                xutils.errorLabelitPost(self,iteration,error,run_before)
-                if self.multiproc == False:
-                    if iteration <= self.iterations:
-                        return (xutils.errorLabelit(self, iteration))
-    """
+                    error = "Labelit failed to find solution."
+                    self.labelit_log[iteration].append("\n%s\n" % error)
+                    self.labelit_results[iteration] = {"Labelit results": "FAILED"}
 
     def print_warning(self, warn_type):
         """ """
@@ -2552,7 +2584,7 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
             error = 'Not enough spots for autoindexing.'
             if self.verbose:
                 self.logger.debug(error)
-            self.labelit_log[iteration].extend(error+'\n')
+            self.labelit_log[iteration].append(error+'\n')
             return None
         else:
             log = open('labelit.log', 'r').readlines()
@@ -2606,7 +2638,7 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
                             return(eval(out[d].get('run',out[d].get('run1'))))
                     else:
                         if iteration <= self.iterations:
-                            return(eval(out[d].get('run',out[d].get('run2'))))
+                            return(eval(out[d].get('run', out[d].get('run2'))))
             else:
                 error = 'Labelit failed to find solution.'
                 xutils.errorLabelitPost(self,iteration,error,run_before)
