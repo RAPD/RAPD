@@ -78,7 +78,7 @@ def construct_command(commandline_args, logger):
 
     # Information on input
     command["input_data"] = {
-        "datafile": os.path.abspath(commandline_args.datafile)
+        "datasets": commandline_args.datasets
     }
 
     # Plugin settings
@@ -87,6 +87,8 @@ def construct_command(commandline_args, logger):
         "nproc": commandline_args.nproc,
         "test": commandline_args.test,
     }
+    for setting in commandline_args._get_kwargs():
+        command['preferences'][setting[0]] = setting[1]
 
     logger.debug("Command for hcmerge plugin: %s", command)
 
@@ -98,85 +100,171 @@ def get_commandline():
     print "get_commandline"
 
     # Parse the commandline arguments
-    commandline_description = "Launch hcmerge plugin"
-    my_parser = argparse.ArgumentParser(description=commandline_description)
+    commandline_description = "Launch HCMerge plugin with filelist or pickle file"
+    parser = argparse.ArgumentParser(description=commandline_description)
+    parser.add_argument("-a", "--all",
+                        action="store_true",
+                        dest="all_clusters",
+                        default=False,
+                        help="make all agglomerative clusters greater than cutoff value")
+    parser.add_argument("-c", "--cutoff",
+                        dest="cutoff",
+                        type=float,
+                        default=0.95,
+                        help="set a percentage cutoff for the similarity between datasets")
+    parser.add_argument("-d", "--dpi",
+                        dest="dpi",
+                        type=int,
+                        default=100,
+                        help="set resolution in dpi for the dendrogram image")
+    parser.add_argument("-l", "--labels",
+                        action="store_true",
+                        dest="labels",
+                        default=False,
+                        help="add file names and labels to the dendrogram")
+    parser.add_argument("-m", "--method",
+                        dest="method",
+                        default="complete",
+                        help="set alternative clustering method: single, complete, average, or weighted")
+    parser.add_argument("-o", "--output_prefix",
+                        dest="prefix",
+                        default="merged",
+                        help="set a prefix for output files. Used in rerun as the name of the .pkl file")
+    parser.add_argument("-p", "--precheck",
+                        action="store_false",
+                        dest="precheck",
+                        default=True,
+                        help="precheck for duplicate or incorrect data files, default=True")
+#    parser.add_argument("-q", "--qsub", action="store_true", dest="cluster_use", default=False,
+#                      help = "use qsub on a cluster to execute the job, default is sh for a single computer")
+    parser.add_argument("-r", "--resolution",
+                        dest="resolution",
+                        type=float,
+                        default=0,
+                        help="set a resolution cutoff for merging data")
+    parser.add_argument("-s", "--spacegroup",
+                        dest="spacegroup",
+                        help="set a user-defined spacegroup")
+    parser.add_argument("--rerun",
+                        dest="start_point",
+                        default="start",
+                        help="use pickle file and run merging again starting at: clustering, dendrogram")
 
     # Run in test mode
-    my_parser.add_argument("-t", "--test",
-                           action="store_true",
-                           dest="test",
-                           help="Run in test mode")
+    parser.add_argument("-t", "--test",
+                        action="store_true",
+                        dest="test",
+                        help="Run in test mode")
 
     # Verbose/Quiet are a pair of opposites
     # Recommend defaulting to verbose during development and to
     # quiet during production
     # Verbose
-    #my_parser.add_argument("-v", "--verbose",
+    #parser.add_argument("-v", "--verbose",
     #                       action="store_true",
     #                       dest="verbose",
     #                       help="More output")
 
     # Quiet
-    my_parser.add_argument("-q", "--quiet",
-                           action="store_false",
-                           dest="verbose",
-                           help="More output")
+    parser.add_argument("-q", "--quiet",
+                        action="store_false",
+                        dest="verbose",
+                        help="More output")
 
     # Messy/Clean are a pair of opposites.
     # Recommend defaulting to messy during development and to
     # clean during production
     # Messy
-    #my_parser.add_argument("--messy",
+    #parser.add_argument("--messy",
     #                       action="store_false",
     #                       dest="clean",
     #                       help="Keep intermediate files")
 
     # Clean
-    my_parser.add_argument("--clean",
-                           action="store_true",
-                           dest="clean",
-                           help="Clean up intermediate files")
+    parser.add_argument("--clean",
+                        action="store_true",
+                        dest="clean",
+                        help="Clean up intermediate files")
 
     # Color
-    #my_parser.add_argument("--color",
+    #parser.add_argument("--color",
     #                       action="store_false",
     #                       dest="no_color",
     #                       help="Color the terminal output")
 
     # No color
-    my_parser.add_argument("--nocolor",
-                           action="store_true",
-                           dest="no_color",
-                           help="Do not color the terminal output")
+    parser.add_argument("--nocolor",
+                        action="store_true",
+                        dest="no_color",
+                        help="Do not color the terminal output")
 
     # JSON Output
-    my_parser.add_argument("-j", "--json",
-                           action="store_true",
-                           dest="json",
-                           help="Output JSON format string")
+    parser.add_argument("-j", "--json",
+                        action="store_true",
+                        dest="json",
+                        help="Output JSON format string")
 
     # Multiprocessing
-    my_parser.add_argument("--nproc",
-                           dest="nproc",
-                           type=int,
-                           default=1,
-                           help="Number of processors to employ")
+    parser.add_argument("--nproc",
+                        dest="nproc",
+                        type=int,
+                        help="Number of processors to employ")
 
     # Positional argument
-    my_parser.add_argument(action="store",
-                           dest="datafile",
-                           nargs="?",
-                           default=False,
-                           help="Name of file to be analyzed")
+    parser.add_argument(action="store",
+                        dest="datasets",
+                        nargs="*",
+                        help="Either a space-separated list of datasets, a file containing a list of datasets, or a pkl file")
 
     # Print help message if no arguments
     if len(sys.argv[1:]) == 0:
-        my_parser.print_help()
-        my_parser.exit()
+        parser.print_help()
+        parser.exit()
 
-    args = my_parser.parse_args()
+    args = parser.parse_args()
 
     # Insert logic to check or modify args here
+    if len(args.datasets) > 1:
+        # Get absolute path in case people have relative paths
+        args.datasets = [os.path.abspath(x) for x in args.datasets]
+    elif len(args.datasets) == 0:
+        # print 'MergeMany requires a text file with a list of files (one per line) or a list of files on the command line'
+        parser.print_help()
+        sys.exit(9)
+    elif args.datasets[0].split('.')[1].lower() == 'pkl':
+        args.datasets = args.datasets[0]
+    else:
+        # Read in text file with each file on a separate line
+        args.datasets = open(args.datasets[0], 'rb').readlines()
+        # Remove entries created from the blank lines in the file.  Compensating for returns at end of file.
+        args.datasets = filter(lambda x: x != '\n', args.datasets)
+        # Remove empty space on either side of the filenames
+        args.datasets = [os.path.abspath(x.strip()) for x in args.datasets]
+
+    # Regularize spacegroup
+    # Check to see if the user has set a spacegroup.  If so, then change from symbol to IUCR number.
+    if args.spacegroup:
+        args.spacegroup = commandline_utils.regularize_spacegroup(args.spacegroup)
+    try:
+        method_list = ['single', 'complete', 'average', 'weighted']
+        if [i for i in method_list if i in args.method]:
+            args.method = args.method
+    except:
+        print 'Unrecognized method.'
+        sys.exit()
+    try:
+        rerun_list = ['start', 'clustering', 'dendrogram']
+        if [i for i in rerun_list if i in args.start_point]:
+            args.start_point = args.start_point
+    except:
+        print 'Unrecognized option for rerunning HCMerge.'
+        sys.exit()
+    # Deal with negative integers and what happens if cpu_count() raises NotImplementedError
+    if args.nproc <= 0:
+        try:
+            args.nproc = cpu_count()
+        except:
+            args.nproc = 1
 
     return args
 
