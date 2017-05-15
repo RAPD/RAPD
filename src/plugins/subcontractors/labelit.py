@@ -33,7 +33,7 @@ import argparse
 # import logging
 # import multiprocessing
 import os
-from pprint import pprint
+# import pprint
 # import pymongo
 # import re
 # import redis
@@ -63,8 +63,6 @@ def parse_output(labelit_output, iteration=0):
 
     Code adapted from work by J.Schuermann
     """
-
-    print ">>>>parse_output"
 
     labelit_output = labelit_output.split("\n")
 
@@ -258,69 +256,67 @@ def parse_output(labelit_output, iteration=0):
             "mosflm_index": mosflm_index,
             "output": labelit_output}
 
+    pprint(data)
     return data
 
+# def getLabelitStats(self,inp=False,simple=False):
+#   """
+#   Returns stats from Labelit for determining beam center. (Extra parsing from self.labelit_results)
+#   """
+#   if self.verbose:
+#     self.logger.debug('Utilities::getLabelitStats')
+#   output = {}
+#   try:
+#     if inp:
+#       j1 = '[inp]'
+#     else:
+#       j1 = ''
+#     if simple:
+#       x = 1
+#     else:
+#       x = 2
+#     if type(eval('self.labelit_results%s'%j1).get('Labelit results')) == dict:
+#       for i in range(0,x):
+#         if i == 0:
+#           ind = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_face').index(':)')
+#           sg   = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_sg')[ind]
+#           sol  = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_solution')[ind]
+#         else:
+#           #P1 stats
+#           ind = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_solution').index('1')
+#           sol = '1'
+#         mos_rms = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_rms')[ind]
+#         mos_x = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_beam_x')[ind]
+#         mos_y = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_beam_y')[ind]
+#         ind1  = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_solution').index(sol)
+#         met  = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_metric')[ind1]
+#         rmsd = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_rmsd')[ind1]
+#         vol = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_volume')[ind1]
+#         if i == 0:
+#           output['best'] = {'SG':sg, 'mos_rms':mos_rms, 'mos_x':mos_x, 'mos_y':mos_y, 'metric':met, 'rmsd':rmsd, 'sol':sol}
+#         else:
+#           output['P1']   = {'mos_rms':mos_rms, 'mos_x':mos_x, 'mos_y':mos_y, 'rmsd':rmsd}
+#       if simple:
+#         return(sg,mos_rms,met,vol)
+#       else:
+#         eval('self.labelit_results%s'%j1).update({'labelit_stats': output})
+#   except:
+#     self.logger.exception('**Error in Utils.getLabelitStats**')
 
-def get_labelit_stats(labelit_results, simple=False):
-    """
-    Returns stats from Labelit for determining beam center
-    """
 
-    output = {}
+def remove_line_from_prefs(directory, line):
+    """Remove a specified line from dataset_preferences.py in specified directory"""
 
-    print "get_labelit_stats"
-    pprint(labelit_results)
+    # Start dir
+    start_dir = os.getcwd()
 
-    if not isinstance(labelit_results, dict):
-        raise Exception("labelit_output needs to be a dict for this function")
+    # Move to the right directory
+    os.chdir(directory)
 
-    # Set the limit of parsing
-    if simple:
-        limit = 1
-    else:
-        limit = 2
 
-    for index in range(0, limit):
-        # Best stats
-        if index == 0:
-            face_index = labelit_results.get("mosflm_face").index(":)")
-            spacegroup = labelit_results.get("mosflm_sg")[face_index]
-            solution = labelit_results.get("mosflm_solution")[face_index]
-        # P1 stats
-        else:
-            face_index = labelit_results.get("mosflm_solution").index("1")
-            solution = "1"
+    # Back to starting directory
+    os.chdir(start_dir)
 
-        mos_rms = float(labelit_results.get("mosflm_rms")[face_index])
-        mos_x = float(labelit_results.get("mosflm_beam_x")[face_index])
-        mos_y = float(labelit_results.get("mosflm_beam_y")[face_index])
-        solution_index = labelit_results.get("labelit_solution").index(solution)
-        metric = float(labelit_results.get("labelit_metric")[solution_index])
-        rmsd = float(labelit_results.get("labelit_rmsd")[solution_index])
-        volume = int(labelit_results.get("labelit_volume")[solution_index])
-
-        if index == 0:
-            output["best"] = {
-                "spacegroup": spacegroup,
-                "mos_rms": mos_rms,
-                "mos_x" :mos_x,
-                "mos_y": mos_y,
-                "metric": metric,
-                "rmsd": rmsd,
-                "sol": solution
-            }
-        else:
-            output["P1"] = {
-                "mos_rms": mos_rms,
-                "mos_x": mos_x,
-                "mos_y": mos_y,
-                "rmsd": rmsd
-            }
-
-    if simple:
-        return (spacegroup, mos_rms, metric, volume)
-    else:
-        return output
 
 def main(args):
     """
