@@ -247,7 +247,8 @@ def main():
         terminal_log_level = 50
 
     tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level,
-                                            no_color=commandline_args.no_color)
+                                            no_color=commandline_args.no_color,
+                                            progress=commandline_args.progress)
 
     print_welcome_message(tprint)
 
