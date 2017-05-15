@@ -174,7 +174,9 @@ def parse_output(labelit_output, iteration=0):
     if len(result_lines) == 0:
         if spot_problem:
             if min_spots:
-                return ("min spots", labelit_output[-1])
+                # print "min spots", labelit_output
+                spots_count = int(labelit_output[-2].split("=")[1])
+                return ("min spots", spots_count)
             else:
                 return "failed"
         else:
@@ -322,7 +324,42 @@ def get_labelit_stats(labelit_results, simple=False):
     else:
         return output
 
-def main(args):
+#
+# Functions for modifying labelit runs
+#
+
+def increase_mosflm_resolution(iteration):
+    """Increases resolution of mosflm run"""
+
+    # Open and modify preferences
+    preferences = open("dataset_preferences.py", "a")
+
+    # Open index01 and grab out resolution
+    for line in open("index01", "r").readlines():
+        if line.startswith("RESOLUTION"):
+            new_res = float(line.split()[1])+1.00
+            preferences.write("\n#iteration %d\nmosflm_integration_reslimit_override = %.1f\n" % \
+                              (iteration, new_res))
+    preferences.close()
+
+    return new_res
+
+def decrease_spot_requirements(spot_count):
+    """Decrease the required spot count in an attempt to get indexing to work"""
+
+    if spot_count < 25:
+      if self.verbose:
+        self.logger.debug('Not enough spots to autoindex!')
+      self.labelit_log[str(iteration)].extend('\nNot enough spots to autoindex!\n')
+      self.postprocess_labelit(iteration, True, True)
+      return False
+    else:
+      preferences = open('dataset_preferences.py', 'a')
+      preferences.write('%s\n' % line)
+      preferences.close()
+      return True
+
+def main():
     """
     The main process docstring
     This function is called when this module is invoked from
@@ -330,6 +367,8 @@ def main(args):
     """
 
     print "main"
+
+    args = get_commandline()
 
 def get_commandline():
     """

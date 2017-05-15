@@ -1510,11 +1510,8 @@ class RapdPlugin(Process):
             if highest == 5:
                 highest = sol_dict[sol_dict_keys[1]]
 
-        print highest
-
         # symmetry of best solution
         sym = sg_dict[highest]
-        print "sym", sym
 
         # If there is a solution...
         if sym != 0:
@@ -2275,6 +2272,12 @@ class RunLabelit(Process):
         # Put together the command for labelit.index
         command = 'labelit.index '
 
+        # Correct error by increasing Mosflm resolution
+        if overrides.get("increase_mosflm_resolution"):
+            new_res = labelit.increase_mosflm_resolution(iteration)
+            self.labelit_log[iteration].extend("\nDecreasing integration resolution to %.1f and \
+rerunning.\n" % new_res)
+
         # If first labelit run errors because not happy with user specified cell or SG then
         # ignore user input in the rerun.
         if not self.ignore_user_cell and overrides.get("ignore_user_cell"):
@@ -2414,17 +2417,20 @@ class RunLabelit(Process):
             potential_problems = {
                 "bad input": {
                     "error": "Labelit did not like your input unit cell dimensions or SG.",
-                    "execute": [functools.partial(self.process_labelit,
+                    "execute": functools.partial(self.process_labelit,
                                                  overrides={"ignore_user_cell": True,
-                                                            "ignore_user_SG": True}),],
+                                                            "ignore_user_SG": True}),
                     "run": "xutils.errorLabelitCellSG(self, iteration)"
                 },
                 "bumpiness": {
                     "error": "Labelit settings need to be adjusted.",
+                    # "execute" :
                     "run": "xutils.errorLabelitBump(self, iteration)"
                 },
                 "mosflm error": {
                     "error": "Mosflm could not integrate your image.",
+                    "execute": functools.partial(self.process_labelit,
+                                                 overrides={"increase_mosflm_resolution":True}),
                     "run": "xutils.errorLabelitMosflm(self, iteration)"
                 },
                 "min good spots": {
@@ -2449,8 +2455,10 @@ class RunLabelit(Process):
                 },
                 "min spots": {
                     "error": "Labelit did not have enough spots to find a solution.",
-                    "run1": "xutils.errorLabelitMin(self,iteration,data[1])",
-                    "run2": "xutils.errorLabelit(self,iteration)"
+                    "execute": functools.partial(self.process_labelit,
+                                                 overrides={}),
+                    "run1": "xutils.errorLabelitMin(self, iteration, data[1])",
+                    "run2": "xutils.errorLabelit(self, iteration)"
                 },
                 "fix_cell": {
                     "error": "Labelit had multiple choices for user SG and failed.",
@@ -2469,6 +2477,11 @@ class RunLabelit(Process):
                 problem_flag = parsed_result
 
             if problem_flag:
+                if problem_flag == "min spots":
+                    print "MIN SPOTS"
+                    pprint(parsed_result)
+                    sys.exit()
+
                 if problem_flag in potential_problems:
                     print "PROBLEM", problem_flag
 
@@ -2483,8 +2496,7 @@ class RunLabelit(Process):
                     else:
                         if iteration <= self.iterations:
                             if "execute" in problem_actions:
-                                for func in problem_actions["execute"]:
-                                    func(iteration=iteration)
+                                problem_actions["execute"](iteration=iteration)
                             # return eval(problem_actions.get('run', problem_actions.get("run2")))
 
 
