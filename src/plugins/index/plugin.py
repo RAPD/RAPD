@@ -2684,7 +2684,13 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
         timer = 0
         start_time = time.time()
 
-        while time.time() - start_time < global_vars.LABELIT_TIMEOUT:
+        ellapsed_time = time.time() - start_time
+        current_progress = 0
+        while ellapsed_time < global_vars.LABELIT_TIMEOUT:
+            prog = int(7*ellapsed_time / 50)
+            if prog > current_progress:
+                self.tprint(prog*10, "progress")
+                current_progress = prog
             if not self.indexing_results_queue.empty():
                 result = self.indexing_results_queue.get(False)
                 # pprint(result)
@@ -2701,6 +2707,7 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
             sys.stdout.write(".")
             sys.stdout.flush()
             time.sleep(1)
+            ellapsed_time = time.time() - start_time
         else:
             # Make sure all jobs are done or kill them
             for pid in self.labelit_pids:
