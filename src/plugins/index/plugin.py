@@ -1501,12 +1501,15 @@ class RapdPlugin(Process):
 
         sol_dict_keys = sol_dict.keys()
         sol_dict_keys.sort()
+
         # Best Labelit_results key
         highest = sol_dict[sol_dict_keys[0]]
         # Since iter 5 cuts res, it is often the best. Only choose if its the only solution.
         if len(sol_dict_keys) > 1:
             if highest == 5:
                 highest = sol_dict[sol_dict_keys[1]]
+
+        print highest
 
         # symmetry of best solution
         sym = sg_dict[highest]
@@ -1521,10 +1524,10 @@ class RapdPlugin(Process):
             # pprint.pprint(self.labelit_results)
 
             # Set self.volume for best solution
-            self.volume = volumes[int(highest)]
+            self.volume = volumes[highest]
 
             # Set self.labelit_dir and go to it.
-            self.labelit_dir = os.path.join(self.working_dir, highest)
+            self.labelit_dir = os.path.join(self.working_dir, str(highest))
             self.index_number = self.labelit_results.get("Labelit results").get("mosflm_index")
             os.chdir(self.labelit_dir)
             if self.spacegroup != False:
