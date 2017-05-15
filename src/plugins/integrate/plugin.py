@@ -284,7 +284,7 @@ class RapdPlugin(Process):
         self.logger.debug('Fastintegration::run')
         self.preprocess()
         self.process()
-        #self.postprocess()
+        self.postprocess()
 
     def preprocess(self):
         """
@@ -293,6 +293,7 @@ class RapdPlugin(Process):
         2. Read in detector specific parameters.
         """
         self.logger.debug('FastIntegration::preprocess')
+        self.tprint(0, "progress")
         if os.path.isdir(self.dirs['work']) == False:
             os.makedirs(self.dirs['work'])
         os.chdir(self.dirs['work'])
@@ -369,6 +370,11 @@ class RapdPlugin(Process):
                 rapd_send(self.controller_address, self.results)
 
         return
+
+    def postprocess(self):
+        """After it's all done"""
+
+        self.tprint(100, "progress")
 
     def ram_total(self, xdsinput):
         """
@@ -560,6 +566,7 @@ class RapdPlugin(Process):
         prelim_results = self.run_results(xdsdir)
         self.tprint("\nPreliminary results summary", 99, "blue")
         self.print_results(prelim_results)
+        self.tprint(33, "progress")
 
         # Grab the spacegroup from the Pointless output and convert to number for XDS
         sg_let_pointless = prelim_results["summary"]["scaling_spacegroup"]
@@ -625,6 +632,7 @@ class RapdPlugin(Process):
                 prelim_results_2 = self.run_results(xdsdir)
                 self.tprint("\nIntermediate results summary", 99, "blue")
                 self.print_results(prelim_results_2)
+                self.tprint(66, "progress")
 
         # Polish up xds processing by moving GXPARM.XDS to XPARM.XDS
         # and rerunning xds.
@@ -663,6 +671,7 @@ class RapdPlugin(Process):
         self.tprint("\nFinal results summary", 99, "blue")
         self.print_results(final_results)
         self.print_plots(final_results)
+        self.tprint(90, "progress")
 
         final_results['status'] = 'ANALYSIS'
         return final_results
