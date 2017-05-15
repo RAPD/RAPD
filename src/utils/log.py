@@ -56,7 +56,7 @@ def verbose_print(arg,
                true when setting up the terminal printer
     """
 
-    if progress and level=="progress":
+    if progress and level == "progress":
         if not isinstance(arg, int):
             raise TypeError("a number is required")
         sys.stdout.write("%DONE={}\n".format(arg))
