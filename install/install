@@ -126,8 +126,8 @@ if [[ $PLATFORM == "Linux" ]]; then
   # Cent OS
   if [ -f /etc/centos-release ]; then
 
-    printf "  CentOS\n"
-
+    FLAVOR="CentOS"
+    print "  $FLAVOR"
     cat /etc/centos-release | cut -d" " -f4 | cut -d "." -f1
     CENTOS_VERSION_MAJOR=$?
 
@@ -173,6 +173,7 @@ if [[ $PLATFORM == "Linux" ]]; then
 
     if [[ $OS == "ubuntu" ]]; then
 
+      FLAVOR="Ubuntu"
       printf "  Ubuntu\n"
 
       MODULES_LIST="wget subversion git bzip2 libncurses5-dev zlib1g-dev libssl-dev pkg-config python build-essential libgl1-mesa-dev libglu1-mesa-dev"
@@ -414,6 +415,14 @@ if [ $INSTALL_PYTHON == 1 ]; then
 
   # Modules
   printf "  Installing python modules needed by RAPD"
+  if [[ $PLATFORM == "Linux" ]]; then
+    if [[ $FLAVOR == "CentOS" ]]; then
+      if [[ $MAJOR_VERSION == "7" ]]; then
+        ln -s /lib64/libncurses.so.5 /lib64/libncurses.so
+      fi
+    fi
+  fi
+
   rapd.pip install crypto
   if [[ $PLATFORM == "Darwin" ]]; then
     rapd.pip install pyopenssl
@@ -434,8 +443,6 @@ if [ $INSTALL_PYTHON == 1 ]; then
 
   printf "\033[92mRAPD python install complete.\033[0m\n"
 fi
-
-
 
 if [ $INSTALL_SCRIPTS == 1 ]; then
   printf "\n\033[94mInstalling RAPD executable scripts\033[0m\n"
