@@ -2494,7 +2494,7 @@ class RapdPlugin(Process):
         """
 
         # Plot as long as JSON output is not selected
-        if self.settings.get("show_plots", True) and (not self.settings.get("json_output", False)):
+        if self.settings.get("show_plots", True) and (not self.settings.get("json", False)):
 
             plots = results["plots"]
 
@@ -2607,7 +2607,7 @@ class RapdPlugin(Process):
         json_string = json.dumps(results)
 
         # Output to terminal?
-        if self.settings["json_output"]:
+        if self.settings["json"]:
             print json_string
 
         # Write a file

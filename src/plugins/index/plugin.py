@@ -383,6 +383,7 @@ class RapdPlugin(Process):
 
         self.tprint(arg="\nStarting indexing procedures", level=98, color="blue")
         self.tprint(arg=0, level="progress")
+        self.tprint(arg=0, level="progress")
         # Check if h5 file is input and convert to cbf's.
         if self.header["fullname"][-3:] == ".h5":
             if self.convert_images() == False:
@@ -1648,11 +1649,11 @@ class RapdPlugin(Process):
         json_string = json.dumps(results) #.replace("\\n", "")
 
         # json_output = json.dumps(self.results).replace("\\n", "")
-        # if self.preferences.get("json_output", False):
+        # if self.preferences.get("json", False):
             # print json_output
 
         # Output to terminal?
-        if self.preferences.get("json_output", False):
+        if self.preferences.get("json", False):
             print json_string
 
         # Always write a file
@@ -1690,7 +1691,7 @@ class RapdPlugin(Process):
         """Display plots on the commandline"""
 
         # Plot as long as JSON output is not selected
-        if self.preferences.get("show_plots", True) and (not self.preferences.get("json_output", False)):
+        if self.preferences.get("show_plots", True) and (not self.preferences.get("json", False)):
 
             # Determine the open terminal size
             term_size = os.popen('stty size', 'r').read().split()
@@ -1863,7 +1864,7 @@ class RapdPlugin(Process):
             self.logger.debug(self.results)
             # Print results to screen in JSON format
             # json_output = json.dumps(self.results).replace("\\n", "")
-            # if self.preferences.get("json_output", False):
+            # if self.preferences.get("json", False):
             #     print json_output
             self.write_json(self.results)
             if self.controller_address:

@@ -83,7 +83,8 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     command["preferences"] = {}
 
     # JSON output?
-    command["preferences"]["json_output"] = commandline_args.json
+    command["preferences"]["json"] = commandline_args.json
+    command["preferences"]["progress"] = commandline_args.progress
 
     # Show plots
     command["preferences"]["show_plots"] = commandline_args.plotting
