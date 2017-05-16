@@ -131,6 +131,12 @@ if [[ $PLATFORM == "Linux" ]]; then
     cat /etc/centos-release | cut -d" " -f4 | cut -d "." -f1
     CENTOS_VERSION_MAJOR=$?
 
+    if [ $CENTOS_VERSION_MAJOR == "6" ]; then
+      MODULES_LIST="wget subversion git make bzip2 openssl-devel gcc-c++ mesa-libGL-devel mesa-libGLU-devel"
+    elif [ $CENTOS_VERSION_MAJOR == "7" ]; then
+      MODULES_LIST="gcc-c++ make wget subversion git bzip2 openssl-devel mesa-libGL-devel mesa-libGLU-devel readline patch python"
+    fi
+
     function isinstalled {
       if yum list installed "$@" >/dev/null 2>&1; then
         true
@@ -141,7 +147,7 @@ if [[ $PLATFORM == "Linux" ]]; then
 
     error=0
     missing_packages=""
-    for package in wget subversion git make bzip2 openssl-devel gcc-c++ mesa-libGL-devel mesa-libGLU-devel
+    for package in `echo $MODULES_LIST`
     do
       if isinstalled $package; then
         echo "  $package installed";
@@ -169,6 +175,8 @@ if [[ $PLATFORM == "Linux" ]]; then
 
       printf "  Ubuntu\n"
 
+      MODULES_LIST="wget subversion git bzip2 libncurses5-dev zlib1g-dev libssl-dev pkg-config python build-essential libgl1-mesa-dev libglu1-mesa-dev"
+
       function isinstalled {
         dpkg -l "$@" > /dev/null 2>&1
         INSTALLED=$?
@@ -179,7 +187,7 @@ if [[ $PLATFORM == "Linux" ]]; then
         fi
       }
 
-      for package in wget subversion git bzip2 libncurses5-dev zlib1g-dev libssl-dev pkg-config python build-essential libgl1-mesa-dev libglu1-mesa-dev
+      for package in `echo $MODULES_LIST`
       do
         if isinstalled $package; then
           echo "  $package installed";
