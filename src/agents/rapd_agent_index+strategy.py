@@ -1550,7 +1550,7 @@ class RapdAgent(Process):
         """Display plots on the commandline"""
 
         # Plot as long as JSON output is not selected
-        if self.preferences.get("show_plots", True) and (not self.preferences.get("json_output", False)):
+        if self.preferences.get("show_plots", True) and (not self.preferences.get("json", False)):
 
             # Determine the open terminal size
             term_size = os.popen('stty size', 'r').read().split()
@@ -1720,7 +1720,7 @@ class RapdAgent(Process):
             self.results["results"] = results
             self.logger.debug(self.results)
             # Print results to screen in JSON format
-            if self.preferences.get("json_output", False):
+            if self.preferences.get("json", False):
                 json_output = json.dumps(self.results).replace("\\n", "")
                 print json_output
             if self.controller_address:
