@@ -26,33 +26,15 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
-# import from collections import OrderedDict
-# import datetime
-# import glob
-# import json
-# import logging
-# import multiprocessing
 import os
-# import pprint
-# import pymongo
-# import re
-# import redis
-# import shutil
-# import subprocess
 import sys
-# import time
-# import unittest
 import uuid
 
 # RAPD imports
-# import commandline_utils
-# import detectors.detector_utils as detector_utils
-# import utils
 import utils.log
 import utils.modules as modules
 import utils.text as text
 import utils.commandline_utils as commandline_utils
-# import detectors.detector_utils as detector_utils
 
 def construct_command(commandline_args):
     """
@@ -68,6 +50,7 @@ def construct_command(commandline_args):
         no_color = True | False
         nproc = int
         pdbs = False | ["pdbid", ...]
+        progress = True | False
         run_mode = "interactive" | "json" | "server" | "subprocess"
         search = True | False
         test = True | False
@@ -103,6 +86,7 @@ def construct_command(commandline_args):
         "clean": commandline_args.clean,
         "contaminants": commandline_args.contaminants,
         "nproc": commandline_args.nproc,
+        "progress": commandline_args.progress,
         "run_mode": commandline_args.run_mode,
         "search": commandline_args.search,
         "test": commandline_args.test,
@@ -164,6 +148,12 @@ def get_commandline():
                            action="store_true",
                            dest="json",
                            help="Output JSON format string")
+
+    # Output progress updates?
+    my_parser.add_argument("--progress",
+                           action="store_true",
+                           dest="progress",
+                           help="Output progress updates to the terminal")
 
     # Multiprocessing
     my_parser.add_argument("--nproc",
@@ -259,7 +249,8 @@ def main():
         terminal_log_level = 50
 
     tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level,
-                                            no_color=commandline_args.no_color)
+                                            no_color=commandline_args.no_color,
+                                            progress=commandline_args.progress)
 
     print_welcome_message(tprint)
 

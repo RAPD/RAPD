@@ -1,0 +1,14 @@
+(dp0
+S'classname'
+p1
+S'InputFileError'
+p2
+sS'message'
+p3
+S'Input error: Need at least one image file in directory or named on command line.'
+p4
+sS'traceback'
+p5
+S'  File "/programs/i386-mac/phenix/1.11.1-2575/phenix-1.11.1-2575/build/../modules/labelit/command_line/index.py", line 5, in <module>\n    top_level_indexing(args)\n  File "/programs/i386-mac/phenix/1.11.1-2575/phenix-1.11.1-2575/modules/labelit/command_line/screen.py", line 84, in top_level_indexing\n    api(*args)\n  File "/programs/i386-mac/phenix/1.11.1-2575/phenix-1.11.1-2575/modules/labelit/command_line/screen.py", line 59, in api\n    verbose=labelit_commands.distl.bins.verbose,argument_module=E)\n  File "/programs/i386-mac/phenix/1.11.1-2575/phenix-1.11.1-2575/modules/labelit/command_line/stats_index.py", line 30, in __init__\n    self.setCommandInput(kwargs[\'argument_module\'])\n  File "/programs/i386-mac/phenix/1.11.1-2575/phenix-1.11.1-2575/modules/labelit/command_line/stats_index.py", line 42, in setCommandInput\n    self.Files = ImageFiles(argument_module,self.horizons_phil)\n  File "/programs/i386-mac/phenix/1.11.1-2575/phenix-1.11.1-2575/modules/labelit/command_line/imagefiles.py", line 187, in __init__\n    if not allow_full_dataset: self.filenames.namecheck()\n  File "/programs/i386-mac/phenix/1.11.1-2575/phenix-1.11.1-2575/modules/labelit/command_line/imagefiles.py", line 89, in namecheck\n    raise InputFileError("""Need at least one image file in directory or named on command line.""")\n'
+p6
+s.

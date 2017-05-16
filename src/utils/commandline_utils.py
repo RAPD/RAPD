@@ -35,6 +35,9 @@ import pprint
 import shutil
 import sys
 
+# CCTBX Imports
+from cctbx.sgtbx import space_group_symbols
+
 # RAPD imports
 import detectors.detector_utils as detector_utils
 # import utils.log
@@ -83,6 +86,12 @@ dp_parser.add_argument("--json",
                        action="store_true",
                        dest="json",
                        help="Output only final and full JSON")
+
+# Output progress updates?
+dp_parser.add_argument("--progress",
+                       action="store_true",
+                       dest="progress",
+                       help="Output progress updates to the terminal")
 
 # The site
 dp_parser.add_argument("-s", "--site",
@@ -216,18 +225,7 @@ gf_parser.add_argument(action="store",
 def regularize_spacegroup(sg_in):
     """Standardize the input spacegroup to numeric form"""
 
-    # print "regularize_spacegroup %s" % sg_in
-
-    # An integer has been input
-    try:
-        sg_num = str(int(sg_in))
-    except ValueError:
-        sg_up = sg_in.upper()
-        sg_num = spacegroup.std2intl[sg_up]
-
-    # print sg_num
-    # sys.exit()
-    return sg_num
+    return space_group_symbols(sg_in).number()
 
 def check_work_dir(target_dir, active=True):
     """
