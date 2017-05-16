@@ -20,6 +20,6 @@ RUN yum -y install gcc-c++ \
                    python
 
 WORKDIR /opt
-RUN git clone -b master https://github.com/RAPD/RAPD.git rapd
+RUN git clone -b iss008 https://github.com/RAPD/RAPD.git rapd
 WORKDIR /opt/rapd/install
 # RUN ./install -mb

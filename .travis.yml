@@ -1,7 +1,10 @@
+# os:
+#   - linux
+  # - osx
+sudo: false
 language: python
 python:
   - "2.7"
-sudo: false
 addons:
   apt:
     packages:
@@ -17,4 +20,6 @@ addons:
     - build-essential
     - libgl1-mesa-dev
     - libglu1-mesa-dev
-install: "install/install -mb"
+script:
+  - cd install
+  - ./install -mb
