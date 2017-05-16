@@ -42,6 +42,7 @@ import json
 import logging
 import logging.handlers
 import math
+import multiprocessing
 from multiprocessing import Process
 import os
 # import os.path
@@ -60,6 +61,7 @@ from plugins.subcontractors.xdsme.xds2mos import Xds2Mosflm
 from utils.communicate import rapd_send
 from utils.numbers import try_int, try_float
 #from plugins.analysis import RapdPlugin as AnalysisPlugin
+from utils.processes import local_subprocess
 import utils.text as text
 import utils.xutils as Utils
 import utils.spacegroup as spacegroup
@@ -1119,14 +1121,15 @@ class RapdPlugin(Process):
         os.chdir(directory)
         # TODO skip processing for now
         if self.cluster_use == True:
-            job = Process(target=BLspec.processCluster,
-                          args=(self, (xds_command, 'XDS.LOG', '8', 'phase2.q')))
+            xds_proc = Process(target=BLspec.processCluster,
+                               args=(self, (xds_command, 'XDS.LOG', '8', 'phase2.q')))
         else:
-            job = Process(target=Utils.processLocal,
-                          args=((xds_command, "XDS.LOG"),
-                                self.logger))
-        job.start()
-        while job.is_alive():
+            xds_proc = multiprocessing.Process(target=local_subprocess,
+                                               args=(({"command": xds_command,
+                                                       "logfile": "XDS.LOG",
+                                                      },)))
+        xds_proc.start()
+        while xds_proc.is_alive():
             time.sleep(1)
             self.tprint(arg=".", level=99, color="white", newline=False)
         self.tprint(arg=" done", level=99, color="white")
@@ -1142,8 +1145,11 @@ class RapdPlugin(Process):
         """
         self.logger.debug('FastIntegration::xds_ram')
         my_command = ('ssh -x %s "cd $PWD && xds_par > XDS.LOG"' % first_node)
-        self.logger.debug('		%s', command)
-        p = subprocess.Popen(my_command, shell=True, )
+        self.logger.debug('		%s', my_command)
+        p = subprocess.Popen(my_command,
+                             shell=True,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
         p.wait()
 
         return
@@ -2109,10 +2115,10 @@ class RapdPlugin(Process):
         p.wait()
         # sts = os.waitpid(p.pid, 0)[1]
         tmp = open(logfile, "r").readlines()
-        return_value="Failed"
+        return_value = "Failed"
         for i in range(-10, -1):
             if tmp[i].startswith('P.R.Evans'):
-                return_value=mtzfile
+                return_value = mtzfile
                 break
         return return_value
 
