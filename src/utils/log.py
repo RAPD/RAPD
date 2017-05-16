@@ -63,6 +63,9 @@ def verbose_print(arg,
         sys.stdout.flush()
         return True
 
+    elif level == "progress":
+        return False
+
     # Cast everything to a string
     if not isinstance(arg, str):
         arg = str(arg)
