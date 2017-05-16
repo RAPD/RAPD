@@ -647,7 +647,7 @@ def parse_aimless(logfile):
     except IndexError:
         plots["Radiation Damage"] = None
 
-    pprint(plots)
+    # pprint(plots)
 
     # Return to the main program.
     return (plots, int_results)
