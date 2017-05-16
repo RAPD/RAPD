@@ -73,7 +73,7 @@ import cPickle as pickle # For storing dicts as pickle files for later use
 
 # RAPD imports
 import plugins.subcontractors.aimless as aimless
-# import commandline_utils
+import utils.commandline_utils as commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
 import utils.credits as credits
@@ -144,10 +144,10 @@ class RapdPlugin(multiprocessing.Process):
 #        self.cmdline = self.settings['cmdline']
 #        self.process_id = self.settings['process_id']
 
-        if 'work_dir_override' in self.settings:
-            if (self.settings['work_dir_override'] == True or
-                self.settings['work_dir_override'] == 'True'):
-                self.dirs['work'] = self.settings['work_directory']
+        # if 'work_dir_override' in self.settings:
+        #     if (self.settings['work_dir_override'] == True or
+        #         self.settings['work_dir_override'] == 'True'):
+        #         self.dirs['work'] = self.settings['work_directory']
 
         # Variables for holding filenames and results
         self.data_files                    = []            # List of data file names
@@ -156,7 +156,7 @@ class RapdPlugin(multiprocessing.Process):
         self.merged_files                  = []            # List of prefixes for final files.
         # dict for keeping track of file identities
         self.id_list                       = OrderedDict() # Dict will hold prefix as key and pair of file names as value
-        self.dirs['data']                  = 'DATA'
+        self.dirs['data']                  = os.path.join(self.command['directories']['work'], "DATA")
 
         # Establish setting defaults
         # Check for agglomerative clustering linkage method
@@ -334,8 +334,10 @@ class RapdPlugin(multiprocessing.Process):
             os.makedirs(self.dirs['work'])
             os.chdir(self.dirs['work'])
         else:
-        	combine_dir = self.create_subdirectory(prefix='COMBINE', path=self.dirs['work'])
-        	os.chdir(combine_dir)
+            os.chdir(self.dirs['work'])
+        # 	combine_dir = self.create_subdirectory(prefix='COMBINE', path=self.dirs['work'])
+        #     self.dirs['main']=self.dirs['work']
+        # 	os.chdir(combine_dir)
         # convert all files to mtz format
         # copy the files to be merged to the work directory
         for count, dataset in enumerate(self.datasets):
@@ -411,10 +413,10 @@ class RapdPlugin(multiprocessing.Process):
         for pair in self.id_list.keys():
             self.results[pair] = {}
             if os.path.isfile(pair+'_pointless.mtz'):
-                # First, get batch information from pointless log file
-                batches = self.get_batch(pair)
+                # First, get batch information from pointless mtz file
+                batches = self.get_batch(pair+'_pointless.mtz')
                 # Second, check if both datasets made it into the final mtz
-                if (batches.get(1) and batches.get(2)):
+                if len(batches)>=2:
                 # Third, calculate the linear correlation coefficient if there are two datasets
                     self.results[pair]['CC'] = self.get_cc_pointless(pair,batches) # results are a dict with pair as key
                 else:
@@ -459,13 +461,14 @@ class RapdPlugin(multiprocessing.Process):
 
         self.logger.debug('HCMerge::Cleaning up in postprocess.')
         # Copy original datasets to a DATA directory
-        data_dir = self.create_subdirectory(prefix='DATA', path=self.dirs['work'])
+        # data_dir = self.create_subdirectory(prefix='DATA', path=self.dirs['work'])
+        commandline_utils.check_work_dir(self.dirs['data'], True)
         for file in self.data_files:
-	        shutil.copy(file,data_dir)
+	        shutil.move(file,self.dirs['data'])
 		self.get_dicts(self.prefix + '.pkl')
         self.store_dicts({'data_files': self.data_files, 'id_list': self.id_list,
                           'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix,
-                          'merged_files': self.merged_files, 'data_dir': data_dir})
+                          'merged_files': self.merged_files, 'data_dir': self.dirs['data']})
         # Check for postprocessing flags
         # Clean up mess
         if self.settings['clean']:
@@ -474,12 +477,12 @@ class RapdPlugin(multiprocessing.Process):
         #     self.write_db()
         #     self.results['status'] = 'SUCCESS'
         # Move final files to top directory
-        for file in self.merged_files:
-        	shutil.copy(file + '_scaled.mtz', self.dirs['work'])
-        	shutil.copy(file + '_scaled.log', self.dirs['work'])
-    	shutil.copy(self.prefix + '-dendrogram.png', self.dirs['work'])
-    	shutil.copy(self.prefix + '.log', self.dirs['work'])
-    	shutil.copy(self.prefix + '.pkl', self.dirs['work'])
+        # for file in self.merged_files:
+        # 	shutil.copy(file + '_scaled.mtz', self.dirs['work'])
+        # 	shutil.copy(file + '_scaled.log', self.dirs['work'])
+    	# shutil.copy(self.prefix + '-dendrogram.png', self.dirs['work'])
+    	# shutil.copy(self.prefix + '.log', self.dirs['work'])
+    	# shutil.copy(self.prefix + '.pkl', self.dirs['work'])
 
     def clean_up(self):
         """
@@ -495,9 +498,9 @@ class RapdPlugin(multiprocessing.Process):
                 killlist.append(prefix+ext)
     #        for itm in self.merged_files:
     #            killlist.append(itm+'_aimless.sh')
-        filelist = [ f for f in os.getcwd() if f.endswith(".sh") or f.endswith(".log")
+        filelist = [ f for f in os.listdir(self.dirs['work']) if f.endswith(".sh") or f.endswith(".log")
                      or f.endswith(".mtz")]
-        purgelist = set(filelist).intersection( set(killlist) )
+        purgelist = set(filelist).intersection(set(killlist))
     #        purgelist = [f for f in filelist if f not in safelist]
         for file in purgelist:
             os.remove(file)
@@ -671,23 +674,36 @@ class RapdPlugin(multiprocessing.Process):
 
     def get_batch(self, in_file):
         """
-        Obtain batch numbers from pointless log.
+        Obtain batch numbers from mtz file. Returns a list of tuples.
         """
 
-        self.logger.debug('HCMerge::get_batch %s from pointless log.' % str(in_file))
+        self.logger.debug('HCMerge::get_batch %s from mtz file.' % str(in_file))
 
-        batches = {}
-        log = open(in_file+'_pointless.log','r').readlines()
-
-        for line in log:
-            if ('consists of batches' in line):
-                sline = line.split()
-                run_number = int(sline[2])
-                batch_start = int(sline[6])
-                batch_end = int(sline[len(sline)-1])
-                batches[run_number] = (batch_start,batch_end)
-                self.logger.debug('%s has batches %d to %d' % (in_file,batch_start,batch_end))
-
+        batch_list = []
+        batches = []
+        reflection_file = reflection_file_reader.any_reflection_file(file_name=in_file)
+        # Make a list of all the batch numbers
+        for item in reflection_file.file_content().batches():
+            batch_list.append(item.num())
+        from operator import itemgetter
+        from itertools import groupby
+        # Go through the list of batches, find the gaps and group by ranges
+        for k, g in groupby(enumerate(batch_list), lambda x:x[0]-x[1]):
+            group = list(map(itemgetter(1), g))
+            batches.append((group[0], group[-1]))
+        #
+        # batches = {}
+        # log = open(in_file+'_pointless.log','r').readlines()
+        #
+        # for line in log:
+        #     if ('consists of batches' in line):
+        #         sline = line.split()
+        #         run_number = int(sline[2])
+        #         batch_start = int(sline[6])
+        #         batch_end = int(sline[len(sline)-1])
+        #         batches[run_number] = (batch_start,batch_end)
+        #         self.logger.debug('%s has batches %d to %d' % (in_file,batch_start,batch_end))
+        #
         return(batches)
 
     def get_cc_pointless(self, in_file, batches):
@@ -711,10 +727,10 @@ class RapdPlugin(multiprocessing.Process):
         indices1 = flex.miller_index()
         indices2 = flex.miller_index()
 
-        run1_batch_start = batches[1][0]
-        run1_batch_end = batches[1][1]
-        run2_batch_start = batches[2][0]
-        run2_batch_end = batches[2][1]
+        run1_batch_start = batches[0][0]
+        run1_batch_end = batches[0][1]
+        run2_batch_start = batches[1][0]
+        run2_batch_end = batches[1][1]
 
         # Separate datasets by batch
         for cnt,batch in enumerate(ma[1].data()):
