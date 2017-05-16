@@ -12,6 +12,7 @@ RUN yum -y install gcc-c++ \
                    subversion \
                    git \
                    bzip2 \
+                   libffi-devel \
                    openssl-devel \
                    mesa-libGL-devel \
                    mesa-libGLU-devel \
