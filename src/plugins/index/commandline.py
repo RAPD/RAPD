@@ -41,7 +41,7 @@ import utils.text as text
 import utils.commandline_utils as commandline_utils
 import detectors.detector_utils as detector_utils
 
-def construct_command(image_headers, commandline_args, detector_module, logger):
+def construct_command(image_headers, commandline_args, detector_module):
     """
     Put together the command for the plugin
     """
@@ -59,7 +59,8 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
         image_numbers.append(str(header["image_number"]))
         image_template = header["image_template"]
     image_numbers.sort()
-    run_repr = "rapd_index_" + image_template.replace(detector_module.DETECTOR_SUFFIX, "").replace("?", "")
+    run_repr = "rapd_index_" + image_template.replace(detector_module.DETECTOR_SUFFIX, "").\
+               replace("?", "")
     run_repr += "+".join(image_numbers)
 
     command["directories"] = {
@@ -101,6 +102,7 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     # Best & Labelit
     command["preferences"]["sample_type"] = commandline_args.sample_type
     command["preferences"]["spacegroup"] = commandline_args.spacegroup
+    command["preferences"]["unitcell"] = commandline_args.unitcell
 
     # Labelit
     command["preferences"]["a"] = 0.0
@@ -162,7 +164,6 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     # Return address
     command["return_address"] = None
 
-    logger.debug("Command for index plugin: %s", command)
     return command
 
 
@@ -342,7 +343,7 @@ def main():
     # Set up terminal printer
     # Verbosity
     if commandline_args.verbose:
-        terminal_log_level = 30
+        terminal_log_level = 10
     elif commandline_args.json:
         terminal_log_level = 100
     else:
@@ -462,8 +463,7 @@ def main():
 
         command = construct_command(image_headers=image_headers,
                                     commandline_args=commandline_args,
-                                    detector_module=detector_module,
-                                    logger=logger)
+                                    detector_module=detector_module)
     else:
         if logger:
             logger.exception("No detector module found")

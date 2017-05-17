@@ -464,6 +464,7 @@ class RapdPlugin(Process):
         # Get unit cell
         cell = xutils.getLabelitCell(self)
         nres = xutils.calcTotResNumber(self, self.volume)
+
         # Adding these typically does not change the Best strategy much, if it at all.
         patm = False
         satm = False
@@ -491,7 +492,12 @@ class RapdPlugin(Process):
         setup += "PHOSEC %s\n" % self.flux
         setup += "EXPOSURE %s\n" % self.time
         if cell:
-            setup += "CELL %s %s %s %s %s %s\n" % (cell[0], cell[1], cell[2], cell[3], cell[4], cell[5])
+            setup += "CELL %s %s %s %s %s %s\n" % (cell[0],
+                                                   cell[1],
+                                                   cell[2],
+                                                   cell[3],
+                                                   cell[4],
+                                                   cell[5])
         else:
             self.logger.debug("Could not get unit cell from bestfile.par")
 
@@ -2290,7 +2296,6 @@ rerunning.\n" % spot_count)
         Construct the labelit command and run. Passes back dict with PID:iteration.
         """
         self.logger.debug("RunLabelit::process_labelit")
-
         # print "process_labelit %d %s" % (iteration, inp)
 
         # Get in the right directory
@@ -2331,14 +2336,9 @@ rerunning.\n" % spot_count)
         # If first labelit run errors because not happy with user specified cell or SG then
         # ignore user input in the rerun.
         if not self.ignore_user_cell and overrides.get("ignore_user_cell"):
-            if unit_cell_defaults:
-                command += 'known_cell=%s,%s,%s,%s,%s,%s ' % \
-                           (unit_cell_defaults['a'],
-                            unit_cell_defaults['b'],
-                            unit_cell_defaults['c'],
-                            unit_cell_defaults['alpha'],
-                            unit_cell_defaults['beta'],
-                            unit_cell_defaults['gamma'])
+            user_cell = self.preferences.get("unitcell", False)
+            if user_cell:
+                command += 'known_cell=%s,%s,%s,%s,%s,%s ' % tuple(user_cell)
         if not self.ignore_user_SG and overrides.get("ignore_user_SG"):
             if self.spacegroup != False:
                 command += 'known_symmetry=%s ' % self.spacegroup
