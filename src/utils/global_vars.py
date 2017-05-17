@@ -57,4 +57,5 @@ TEST_CACHE = "/tmp/rapd_cache/test_data"
 PDBQ_SERVER = "remote.nec.aps.anl.gov:3030"
 
 # Timeout for phaser MR process
+LABELIT_TIMEOUT = 120
 PHASER_TIMEOUT = 5000

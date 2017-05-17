@@ -197,7 +197,8 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
         "spacegroup": commandline_args.spacegroup,
         "low_res": commandline_args.lowres,
         "hi_res": commandline_args.hires,
-        "json_output": commandline_args.json,
+        "json": commandline_args.json,
+        "progress": commandline_args.progress,
         "show_plots": commandline_args.plotting,
         "xdsinp": detector_module.XDSINP,
         "spacegroup_decider": commandline_args.spacegroup_decider,
@@ -247,7 +248,8 @@ def main():
         terminal_log_level = 50
 
     tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level,
-                                            no_color=commandline_args.no_color)
+                                            no_color=commandline_args.no_color,
+                                            progress=commandline_args.progress)
 
     print_welcome_message(tprint)
 

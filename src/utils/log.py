@@ -31,7 +31,13 @@ import sys
 import utils.text as text
 
 
-def verbose_print(arg, level=20, color="default", verbosity=20, no_color=False, newline=True):
+def verbose_print(arg,
+                  level=20,
+                  color="default",
+                  verbosity=20,
+                  no_color=False,
+                  progress=False,
+                  newline=True):
     """Print to terminal window screened by verbosity setting
 
     Keyword arguments:
@@ -40,13 +46,27 @@ def verbose_print(arg, level=20, color="default", verbosity=20, no_color=False, 
     verbosity -- the value level must be less than or equal to to print (default 2)
 
     levels:
-    100 - silent
+    100 - silent: only print JSON at the end if in json run mode (outside terminal printer system)
     50 - alert
     40 - error
     30 - warning
     20 - info
     10 - debug
+    progress - this will print the accompanying number to the terminal if progress was passed in as
+               true when setting up the terminal printer
     """
+
+    if progress and level == "progress":
+        if not isinstance(arg, int):
+            raise TypeError("a number is required")
+        sys.stdout.write("%DONE={}\n".format(arg))
+        sys.stdout.flush()
+        return True
+
+    elif level == "progress":
+        return False
+
+    # Cast everything to a string
     if not isinstance(arg, str):
         arg = str(arg)
 
@@ -65,7 +85,7 @@ def verbose_print(arg, level=20, color="default", verbosity=20, no_color=False, 
                 sys.stdout.write(arg)
             sys.stdout.flush()
 
-def get_terminal_printer(verbosity=50, no_color=False):
+def get_terminal_printer(verbosity=50, no_color=False, progress=False):
     """Returns a terminal printer
 
     Keyword arguments:
@@ -74,7 +94,8 @@ def get_terminal_printer(verbosity=50, no_color=False):
 
     terminal_print = functools.partial(verbose_print,
                                        verbosity=verbosity,
-                                       no_color=no_color)
+                                       no_color=no_color,
+                                       progress=progress)
     return terminal_print
 
 

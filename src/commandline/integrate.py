@@ -170,7 +170,7 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
         "spacegroup": commandline_args.spacegroup,
         "low_res": commandline_args.lowres,
         "hi_res": commandline_args.hires,
-        "json_output": commandline_args.json,
+        "json": commandline_args.json,
         "show_plots": commandline_args.plotting,
         "xdsinp": detector_module.XDSINP,
     }
