@@ -65,15 +65,17 @@ def construct_command(commandline_args):
         }
 
     # Work directory
-    command["directories"] = {
-        "work": os.path.join(
+    work_dir = commandline_utils.check_work_dir(
+        os.path.join(
             os.path.abspath(os.path.curdir),
             "rapd_pdbquery_%s" %  ".".join(
-                os.path.basename(commandline_args.datafile).split(".")[:-1]))
-        }
+                os.path.basename(commandline_args.datafile).split(".")[:-1])),
+        active=True,
+        up=commandline_args.dir_up)
 
-    # Check the work directory
-    commandline_utils.check_work_dir(command["directories"]["work"], True)
+    command["directories"] = {
+        "work": work_dir
+        }
 
     # Information on input
     command["input_data"] = {
