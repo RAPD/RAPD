@@ -124,6 +124,15 @@ dp_parser.add_argument("-sg", "--sg", "--spacegroup",
                        default=False,
                        help="Input a spacegroup")
 
+# Unit cell
+dp_parser.add_argument("-u", "--unit", "--unitcell",
+                       action="store",
+                       dest="unitcell",
+                       default=False,
+                       nargs=6,
+                       type=float,
+                       help="Input a unit cell a b c alpha beta gamma")
+
 # Sample type
 dp_parser.add_argument("--sample_type",
                        action="store",
