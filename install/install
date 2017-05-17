@@ -435,7 +435,7 @@ if [ $INSTALL_PYTHON == 1 ]; then
     if [[ $FLAVOR == "CentOS" ]]; then
       if [[ $MAJOR_VERSION == "7" ]]; then
         if [ ! -e /lib64/libncurses.so ]; then
-          if [ "$EUID" -ne 0 ]
+          if [ "$EUID" -ne 0 ]; then
             printf "\033[31mreadline python module needs /lib64/libncurses.so \033[0m"
             printf "\033[31mYou can enable readline with the following commands\033[0m"
             printf "\033[31m  > ln -s /lib64/libncurses.so.5 /lib64/libncurses.so \033[0m"
