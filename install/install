@@ -127,9 +127,8 @@ if [[ $PLATFORM == "Linux" ]]; then
   if [ -f /etc/centos-release ]; then
 
     FLAVOR="CentOS"
-    print "  $FLAVOR"
-    cat /etc/centos-release | cut -d" " -f4 | cut -d "." -f1
-    CENTOS_VERSION_MAJOR=$?
+    printf "  $FLAVOR\n"
+    CENTOS_VERSION_MAJOR=`cat /etc/centos-release | cut -d" " -f4 | cut -d "." -f1`
 
     if [ $CENTOS_VERSION_MAJOR == "6" ]; then
       MODULES_LIST="wget subversion git make bzip2 openssl-devel gcc-c++ mesa-libGL-devel mesa-libGLU-devel"
@@ -174,7 +173,7 @@ if [[ $PLATFORM == "Linux" ]]; then
     if [[ $OS == "ubuntu" ]]; then
 
       FLAVOR="Ubuntu"
-      printf "  Ubuntu\n"
+      printf "  $FLAVOR\n"
 
       MODULES_LIST="wget subversion git bzip2 libncurses5-dev zlib1g-dev libssl-dev pkg-config python build-essential libgl1-mesa-dev libglu1-mesa-dev"
 
@@ -415,13 +414,6 @@ if [ $INSTALL_PYTHON == 1 ]; then
 
   # Modules
   printf "  Installing python modules needed by RAPD"
-  if [[ $PLATFORM == "Linux" ]]; then
-    if [[ $FLAVOR == "CentOS" ]]; then
-      if [[ $MAJOR_VERSION == "7" ]]; then
-        ln -s /lib64/libncurses.so.5 /lib64/libncurses.so
-      fi
-    fi
-  fi
 
   rapd.pip install crypto
   if [[ $PLATFORM == "Darwin" ]]; then
@@ -439,7 +431,30 @@ if [ $INSTALL_PYTHON == 1 ]; then
   # rapd.pip install hcluster
   rapd.pip install scipy
   # Get the up arrow working in the CLI
-  rapd.pip install readline
+  if [[ $PLATFORM == "Linux" ]]; then
+    if [[ $FLAVOR == "CentOS" ]]; then
+      if [[ $MAJOR_VERSION == "7" ]]; then
+        if [ ! -e /lib64/libncurses.so ]; then
+          if [ "$EUID" -ne 0 ]
+            printf "\033[31mreadline python module needs /lib64/libncurses.so \033[0m"
+            printf "\033[31mYou can enable readline with the following commands\033[0m"
+            printf "\033[31m  > ln -s /lib64/libncurses.so.5 /lib64/libncurses.so \033[0m"
+            printf "\033[31m  > rapd.pip install readline \033[0m"
+          else
+            printf "  Making libncurses softlink to enable readline"
+            ln -s /lib64/libncurses.so.5 /lib64/libncurses.so
+            rapd.pip install readline
+          fi
+        fi
+      else
+        rapd.pip install readline
+      fi
+    else
+      rapd.pip install readline
+    fi
+  else
+    rapd.pip install readline
+  fi
 
   printf "\033[92mRAPD python install complete.\033[0m\n"
 fi
