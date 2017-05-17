@@ -253,6 +253,8 @@ def check_work_dir(target_dir, active=True, up=False):
 
     # print "check_work_dir %s %s" % (target_dir, active)
 
+    target_dir = os.path.abspath(target_dir)
+
     # Target dir exists
     if os.path.exists(target_dir):
         # Going up
