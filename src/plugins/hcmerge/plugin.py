@@ -420,24 +420,24 @@ class RapdPlugin(multiprocessing.Process):
                 self.results[pair]['CC'] = 0
 
         # Make relationship matrix
-        matrix = self.make_matrix(self.method)
+        self.matrix = self.make_matrix(self.method)
 
         # Find data above CC cutoff.  Key 0 is most wedges and above CC cutoff
-        wedge_files = self.select_data(matrix, 1 - self.cutoff)
+        wedge_files = self.select_data(self.matrix, 1 - self.cutoff)
 
         # Merge files in selected wedges together using POINTLESS and AIMLESS
         self.merge_wedges(wedge_files)
 
         # Store the dicts for future use
         self.store_dicts({'data_files': self.data_files, 'id_list': self.id_list,
-                          'results': self.results, 'graphs': self.graphs, 'matrix': matrix,
+                          'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix,
                           'merged_files': self.merged_files})
 
 		# Make the summary text file for all merged files
         self.make_log(self.merged_files)
 
         # Make the dendrogram and write it out as a PNG
-        self.make_dendrogram(matrix, self.dpi)
+        self.make_dendrogram(self.matrix, self.dpi)
         self.logger.debug('HCMerge::Data merging finished.')
 
     def postprocess(self):
@@ -455,7 +455,7 @@ class RapdPlugin(multiprocessing.Process):
         commandline_utils.check_work_dir(self.dirs['data'], True)
         for file in self.data_files:
 	        shutil.move(file,self.dirs['data'])
-		self.get_dicts(self.prefix + '.pkl')
+#		self.get_dicts(self.prefix + '.pkl')
         self.store_dicts({'data_files': self.data_files, 'id_list': self.id_list,
                           'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix,
                           'merged_files': self.merged_files, 'data_dir': self.dirs['data']})
@@ -908,6 +908,8 @@ class RapdPlugin(multiprocessing.Process):
         Separated from process so that I can use it in rerun.
         Requires: wedge_files = flat list of all the original leaves.
         """
+
+        self.logger.debug('HCMerge::Merge Wedges: %s' % wedge_files)
         # lists for running the multiprocessing
         jobs                               = []
 
@@ -1046,30 +1048,31 @@ class RapdPlugin(multiprocessing.Process):
         self.logger.debug('HCMerge::rerun')
         self.get_dicts(pkl_file)
         if self.start_point == 'clustering':
-			self.merged_files = []						# List for storing new merged files.
+            self.merged_files = []                    # List for storing new merged files.
+            os.chdir(self.dirs['work'])
         	# Make new COMBINE directory and move data files over
-			combine_dir = self.create_subdirectory(prefix='COMBINE', path=self.dirs['work'])
-			os.chdir(combine_dir)
-			self.logger.debug('HCMerge::Copying files from %s to %s' % (self.data_dir,combine_dir))
-			for file in self.data_files:
-				shutil.copy(self.data_dir + '/' + file, combine_dir)
+			# combine_dir = self.create_subdirectory(prefix='COMBINE', path=self.dirs['work'])
+			# os.chdir(combine_dir)
+            self.logger.debug('HCMerge::Copying files from %s to %s' % (self.data_dir, self.dirs['work']))
+            for file in self.data_files:
+                shutil.copy(self.data_dir + '/' + file, self.dirs['work'])
 
 			# Make relationship matrix
-			matrix = self.make_matrix(self.method)
+            self.matrix = self.make_matrix(self.method)
 
             # Find data above CC cutoff.  Key 0 is most wedges and above CC cutoff
-			wedge_files = self.select_data(matrix, 1 - self.cutoff)
+            wedge_files = self.select_data(self.matrix, 1 - self.cutoff)
 
             # Merge all wedges together
-			self.merge_wedges(wedge_files)
+            self.merge_wedges(wedge_files)
 
             # Store the dicts for future use
-			self.store_dicts({'data_files': self.data_files, 'id_list': self.id_list,
-                              'results': self.results, 'graphs': self.graphs, 'matrix': matrix,
+            self.store_dicts({'data_files': self.data_files, 'id_list': self.id_list,
+                              'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix,
                               'merged_files': self.merged_files})
 
 			# Make the summary text file for all merged files
-			self.make_log(self.merged_files)
+            self.make_log(self.merged_files)
 
         else:
             pass
