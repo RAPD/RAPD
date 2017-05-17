@@ -29,16 +29,29 @@ import sys
 
 HEADER = "\nRAPD depends on the work of others"
 
+BEST = [
+    "BEST",
+    "Reference: Bourenkov GP and Popov AN (2006) Acta Cryst. D62:58-64",
+    "Website: http://www.embl-hamburg.de/BEST/\n"
+]
+
 CCTBX = [
     "CCTBX - Computational Crystallography Toolbox",
-    "Reference: Grosse-Kunstleve et al. (2002) J. Appl. Cryst. 35:126-136",
+    "Reference: Grosse-Kunstleve et al (2002) J. Appl. Cryst. 35:126-136",
     "Website: https://cctbx.github.io/\n"
 ]
 
 MOLREP = [
     "Molrep",
-    "Reference: Vagin A, Teplyakov A (1997) J. Appl. Cryst. 30:1022-1025",
+    "Reference: Vagin A and Teplyakov A (1997) J. Appl. Cryst. 30:1022-1025",
     "Website: http://www.ccp4.ac.uk/html/molrep.html\n"
+]
+
+MOSFLM = [
+    "Mosflm",
+    "Reference: Leslie AGW (1992) Joint CCP4 + ESF-EAMCB Newsletter on Protein Crystallography, No.\
+ 26",
+    "Website: http://www.mrc-lmb.cam.ac.uk/harry/mosflm/\n"
 ]
 
 PHASER = [
@@ -51,6 +64,12 @@ PHENIX = [
     "Phenix",
     "Reference: Sauter NK, et al. (2004) J. Appl. Cryst. 37:399-409",
     "Website:   http://adder.lbl.gov/labelit/\n",
+]
+
+RADDOSE = [
+    "Raddose",
+    "Reference: Paithankar, et al. (2009) J. Synch. Rad. 16:152-162",
+    "Website:   http://biop.ox.ac.uk/www/garman/lab_tools.html/\n",
 ]
 
 MAIN_MODULE = sys.modules[__name__]

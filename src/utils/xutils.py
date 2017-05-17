@@ -2843,8 +2843,8 @@ def processLocal(inp, logger=False, output=False):
 
     # Get the stdout and stderr from process
     stdout, stderr = proc.communicate()
-    print stdout
-    print stderr
+    # print stdout
+    # print stderr
 
     # Write out a log file, if name passed in
     if logfile:

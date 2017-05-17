@@ -64,8 +64,6 @@ def parse_output(labelit_output, iteration=0):
     Code adapted from work by J.Schuermann
     """
 
-    print ">>>>parse_output"
-
     labelit_output = labelit_output.split("\n")
 
     # Holders for parsed data
@@ -262,7 +260,6 @@ def parse_output(labelit_output, iteration=0):
 
     return data
 
-
 def get_labelit_stats(labelit_results, simple=False):
     """
     Returns stats from Labelit for determining beam center
@@ -270,8 +267,8 @@ def get_labelit_stats(labelit_results, simple=False):
 
     output = {}
 
-    print "get_labelit_stats"
-    pprint(labelit_results)
+    # print "get_labelit_stats"
+    # pprint(labelit_results)
 
     if not isinstance(labelit_results, dict):
         raise Exception("labelit_output needs to be a dict for this function")

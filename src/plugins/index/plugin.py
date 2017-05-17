@@ -39,7 +39,7 @@ VERSION = "2.0.0"
 # Standard imports
 from collections import OrderedDict
 import functools
-import glob
+# import glob
 import json
 import logging
 from multiprocessing import Process, Queue, Event
@@ -59,7 +59,7 @@ import plugins.subcontractors.parse as Parse
 import plugins.subcontractors.labelit as labelit
 # import plugins.subcontractors.summary as Summary
 from plugins.subcontractors.xoalign import RunXOalign
-import utils.credits as credits
+import utils.credits as rcredits
 from utils.communicate import rapd_send
 import utils.global_vars as global_vars
 from utils.processes import local_subprocess
@@ -631,25 +631,35 @@ class RapdPlugin(Process):
         """
         if self.verbose:
             self.logger.debug('AutoindexingStrategy::processDistl')
-        try:
-            self.distl_output = []
-            l = ["", "2"]
-            f = 1
-            if self.header2:
-                f = 2
-            for i in range(0, f):
-                if self.test:
-                    inp = "ls"
-                    job = Process(target=xutils.processLocal, args=(inp, self.logger))
-                else:
-                    inp = "distl.signal_strength %s" % eval("self.header%s" % l[i]).get("fullname")
-                    job = Process(target=xutils.processLocal,
-                                  args=((inp, "distl%s.log" % i), self.logger))
-                job.start()
-                self.distl_output.append(job)
+        # try:
 
-        except:
-            self.logger.exception("**Error in ProcessDistl**")
+        self.distl_output = []
+        l = ["", "2"]
+        f = 1
+        if self.header2:
+            f = 2
+        for i in range(0, f):
+            if self.test:
+                inp = "ls"
+                job = Process(target=xutils.processLocal, args=(inp, self.logger))
+            else:
+                command = "distl.signal_strength %s" % eval("self.header%s" % l[i]).get("fullname")
+                job = multiprocessing.Process(target=local_subprocess,
+                                              args=({"command": command,
+                                                     "logfile": "distl%s.log" % i,
+                                                     "pid_queue": False,
+                                                     "result_queue": False,
+                                                     "tag": i
+                                                    },
+                                                   )
+                                             )
+                # job = Process(target=xutils.processLocal,
+                #               args=((inp, "distl%s.log" % i), self.logger))
+            job.start()
+            self.distl_output.append(job)
+
+        # except:
+        #     self.logger.exception("**Error in ProcessDistl**")
 
     def processRaddose(self):
         """
@@ -1454,20 +1464,20 @@ class RapdPlugin(Process):
         self.labelit_results = self.labelitQueue.get()
         self.labelit_log = self.labelitQueue.get()
 
-        print "labelit_results"
-        pprint(self.labelit_results)
-        print "labelit_log"
-        pprint(self.labelit_log)
+        # print "labelit_results"
+        # pprint(self.labelit_results)
+        # print "labelit_log"
+        # pprint(self.labelit_log)
 
         # All runs in error state
         error_count = 0
         for iteration, result in self.labelit_results.iteritems():
             # print "RESULT"
-            pprint(result)
+            # pprint(result)
             if result["Labelit results"] in ("ERROR", "TIMEOUT"):
                 error_count += 1
         if error_count == len(self.labelit_results):
-            print "Unsuccessful indexing run. Exiting."
+            # print "Unsuccessful indexing run. Exiting."
             sys.exit(9)
 
         # Run through all the results - compile them
@@ -1671,27 +1681,13 @@ class RapdPlugin(Process):
         """
         Print information regarding programs utilized by RAPD
         """
-        if self.verbose:
-            self.logger.debug('AutoindexingStrategy::print_credits')
 
-        # try:
-        self.tprint(arg="\nRAPD index & strategy uses:", level=98, color="blue")
+        self.tprint(rcredits.HEADER,
+                    level=99,
+                    color="blue")
 
-        info_string = """    Phenix
-    Reference: J. Appl. Cryst. 37, 399-409 (2004)
-    Website:   http://adder.lbl.gov/labelit/ \n
-    Mosflm
-    Reference: Leslie, A.G.W., (1992), Joint CCP4 + ESF-EAMCB Newsletter on Protein Crystallography, No. 26
-    Website:   http://www.mrc-lmb.cam.ac.uk/harry/mosflm/ \n
-    RADDOSE
-    Reference: Paithankar et. al. (2009) J. Synch. Rad. 16, 152-162.
-    Website:   http://biop.ox.ac.uk/www/garman/lab_tools.html/ \n
-    Best
-    Reference: G.P. Bourenkov and A.N. Popov,  Acta Cryst. (2006). D62, 58-64
-    Website:   http://www.embl-hamburg.de/BEST/"""
-        self.tprint(arg=info_string, level=98, color="white")
-
-        self.logger.debug(info_string)
+        programs = ["CCTBX", "BEST", "MOSFLM", "RADDOSE"]
+        info_string = rcredits.get_credits_text(programs, "    ")
 
     def print_plots(self):
         """Display plots on the commandline"""
@@ -2260,7 +2256,7 @@ class RunLabelit(Process):
 
         # Try to run with generic
         if overrides.get("no_solution"):
-            print ">>> NO SOLUTION", iteration
+            # print ">>> NO SOLUTION", iteration
             sys.exit()
 
         # Correct error by decreasing the good spots requirement
@@ -2382,7 +2378,6 @@ rerunning.\n" % spot_count)
                                      'queue': self.cluster_queue,
                                      'pid': pid_queue},) )
             else:
-                print "Run %s in directory %s" % (command, os.getcwd())
                 # Run in another thread
                 run = multiprocessing.Process(target=local_subprocess,
                                               args=({"command": command,
@@ -2424,7 +2419,7 @@ rerunning.\n" % spot_count)
 
         # print "cwd", os.getcwd()
 
-        pprint(raw_result)
+        # pprint(raw_result)
 
         iteration = raw_result["tag"]
         stdout = raw_result["stdout"]
@@ -2542,10 +2537,9 @@ rerunning.\n" % spot_count)
 
                 # Rest of the problems
                 elif problem_flag in potential_problems:
-                    print "PROBLEM", problem_flag
 
                     problem_actions = potential_problems[problem_flag]
-                    pprint(problem_actions)
+                    # pprint(problem_actions)
 
                     # No recovery
                     if "kill" in problem_actions:
@@ -2703,17 +2697,18 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
                 self.new_postprocess_labelit(raw_result=result)
                 # All jobs have finished
                 if not len(self.labelit_pids):
-                    print "All jobs done"
+                    # print "All jobs done"
                     break
-            sys.stdout.write(".")
-            sys.stdout.flush()
+            # sys.stdout.write(".")
+            # sys.stdout.flush()
             time.sleep(1)
             ellapsed_time = time.time() - start_time
         else:
             # Make sure all jobs are done or kill them
             for pid in self.labelit_pids:
                 iteration = self.labelit_jobs[pid]
-                print "Killing iteration:%d pid:%d" % (iteration, pid)
+                #TODO
+                # print "Killing iteration:%d pid:%d" % (iteration, pid)
                 os.kill(pid, signal.SIGKILL)
                 self.labelit_pids.remove(pid)
                 self.labelit_results[iteration] = {"Labelit results": "FAILED"}
