@@ -433,13 +433,13 @@ if [ $INSTALL_PYTHON == 1 ]; then
   # Get the up arrow working in the CLI
   if [[ $PLATFORM == "Linux" ]]; then
     if [[ $FLAVOR == "CentOS" ]]; then
-      if [[ $MAJOR_VERSION == "7" ]]; then
+      if [[ $CENTOS_VERSION_MAJOR == "7" ]]; then
         if [ ! -e /lib64/libncurses.so ]; then
           if [ "$EUID" -ne 0 ]; then
-            printf "\033[31mreadline python module needs /lib64/libncurses.so \033[0m"
-            printf "\033[31mYou can enable readline with the following commands\033[0m"
-            printf "\033[31m  > ln -s /lib64/libncurses.so.5 /lib64/libncurses.so \033[0m"
-            printf "\033[31m  > rapd.pip install readline \033[0m"
+            printf "\033[31mreadline python module needs /lib64/libncurses.so\n \033[0m"
+            printf "\033[31mYou can enable readline with the following commands\n\033[0m"
+            printf "  > ln -s /lib64/libncurses.so.5 /lib64/libncurses.so\n"
+            printf "  > rapd.pip install readline\n"
           else
             printf "  Making libncurses softlink to enable readline"
             ln -s /lib64/libncurses.so.5 /lib64/libncurses.so
