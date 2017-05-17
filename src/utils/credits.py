@@ -32,13 +32,13 @@ HEADER = "\nRAPD depends on the work of others"
 AIMLESS = [
     "Aimless",
     "Reference: Evans PR (2006) Acta Cryst. D62:72-82.",
-    "Website: http://www.mrc-lmb.cam.ac.uk/harry/pre/aimless.html",
+    "Website: http://www.mrc-lmb.cam.ac.uk/harry/pre/aimless.html\n"
 ]
 
 CCP4 = [
     "CCP4",
     "Reference: Acta Cryst. D50:760-763",
-    "Website: http://www.ccp4.ac.uk",
+    "Website: http://www.ccp4.ac.uk\n"
 ]
 
 CCTBX = [
@@ -62,19 +62,19 @@ PHASER = [
 PHENIX = [
     "Phenix",
     "Reference: Sauter NK, et al. (2004) J. Appl. Cryst. 37:399-409",
-    "Website:   http://adder.lbl.gov/labelit/\n",
+    "Website:   http://adder.lbl.gov/labelit/\n"
 ]
 
 POINTLESS = [
     "Pointless",
     "Reference: Evans PR (2006) Acta Cryst. D62:72-82.",
-    "Website: http://www.mrc-lmb.cam.ac.uk/harry/pre/pointless.html",
+    "Website: http://www.mrc-lmb.cam.ac.uk/harry/pre/pointless.html\n"
 ]
 
 XDS = [
     "XDS",
     "Reference: Kabsch W (2010) Acta Cryst. D66:125-132",
-    "Website: http://xds.mpimf-heidelberg.mpg.de/",
+    "Website: http://xds.mpimf-heidelberg.mpg.de/\n"
 ]
 
 MAIN_MODULE = sys.modules[__name__]
