@@ -414,6 +414,8 @@ class FileGenerator(CommandlineFileGenerator):
             "    for key, val in environmental_vars.iteritems():",
             "        logger.debug(\"  \" + key + \" : \" + val)",
             "        tprint(arg=\"  arg:%-20s  val:%s\" % (key, val), level=10, color=\"white\")\n",
+            "    # Get the direction of directory incrementing into commandline_args",
+            "",
             "    # Construct the command",
             "    command = construct_command(commandline_args=commandline_args,",
             "                                logger=logger)\n",
