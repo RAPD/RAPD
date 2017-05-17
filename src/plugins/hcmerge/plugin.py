@@ -61,7 +61,9 @@ import matplotlib
 # Force matplotlib to not use any Xwindows backend.  Must be called before any other matplotlib/pylab import.
 matplotlib.use('Agg')
 import hashlib
-from itertools import combinations
+from itertools import combinations, groupby
+from operator import itemgetter
+
 from iotbx import reflection_file_reader
 from cctbx import miller
 from cctbx.array_family import flex
@@ -96,7 +98,7 @@ class RapdPlugin(multiprocessing.Process):
        "command":"hcmerge",
        "directories":
            {
-               "work": ""                          # Where to perform the work
+               "work": "hcmerge"                          # Where to perform the work
            },
        "site_parameters": {}                       # Site data
        "preferences": {}                           # Settings for calculations
@@ -135,7 +137,6 @@ class RapdPlugin(multiprocessing.Process):
         self.command = command
 
         self.dirs = self.command['directories']
-#        self.datasets = self.command[2]['MergeMany'] # RAPD 1 - This is a dict of all results.  Each result is a dict.
         # List of original data files to be merged.  Currently expected to be ASCII.HKL
         self.datasets = self.command['input_data']['datasets']
         self.settings = self.command['preferences']
@@ -143,11 +144,6 @@ class RapdPlugin(multiprocessing.Process):
         # Variables
 #        self.cmdline = self.settings['cmdline']
 #        self.process_id = self.settings['process_id']
-
-        # if 'work_dir_override' in self.settings:
-        #     if (self.settings['work_dir_override'] == True or
-        #         self.settings['work_dir_override'] == 'True'):
-        #         self.dirs['work'] = self.settings['work_directory']
 
         # Variables for holding filenames and results
         self.data_files                    = []            # List of data file names
@@ -335,13 +331,10 @@ class RapdPlugin(multiprocessing.Process):
             os.chdir(self.dirs['work'])
         else:
             os.chdir(self.dirs['work'])
-        # 	combine_dir = self.create_subdirectory(prefix='COMBINE', path=self.dirs['work'])
-        #     self.dirs['main']=self.dirs['work']
-        # 	os.chdir(combine_dir)
         # convert all files to mtz format
         # copy the files to be merged to the work directory
         for count, dataset in enumerate(self.datasets):
-            hkl_filename = str(count)+'_'+dataset.rsplit("/",1)[1].rsplit(".",1)[0]+'.mtz'
+            hkl_filename = str(count)+'_'+dataset.rsplit("/", 1)[1].rsplit(".", 1)[0]+'.mtz'
             if self.user_spacegroup != 0:
                 sg = space_group_symbols(self.user_spacegroup).universal_hermann_mauguin()
                 self.logger.debug('HCMerge::Converting %s to %s and copying to Working Directory.' % (str(hkl_filename), str(sg)))
@@ -448,20 +441,17 @@ class RapdPlugin(multiprocessing.Process):
         self.logger.debug('HCMerge::Data merging finished.')
 
     def postprocess(self):
-        """Events after plugin action"""
+        """
+        Data transfer, file cleanup and other maintenance issues.
+        """
 
         self.tprint("postprocess")
 
         # Send back results
         # self.handle_return()
 
-        """
-        Data transfer, file cleanup and other maintenance issues.
-        """
-
         self.logger.debug('HCMerge::Cleaning up in postprocess.')
         # Copy original datasets to a DATA directory
-        # data_dir = self.create_subdirectory(prefix='DATA', path=self.dirs['work'])
         commandline_utils.check_work_dir(self.dirs['data'], True)
         for file in self.data_files:
 	        shutil.move(file,self.dirs['data'])
@@ -473,16 +463,6 @@ class RapdPlugin(multiprocessing.Process):
         # Clean up mess
         if self.settings['clean']:
             self.clean_up()
-        # if self.cmdline is False:
-        #     self.write_db()
-        #     self.results['status'] = 'SUCCESS'
-        # Move final files to top directory
-        # for file in self.merged_files:
-        # 	shutil.copy(file + '_scaled.mtz', self.dirs['work'])
-        # 	shutil.copy(file + '_scaled.log', self.dirs['work'])
-    	# shutil.copy(self.prefix + '-dendrogram.png', self.dirs['work'])
-    	# shutil.copy(self.prefix + '.log', self.dirs['work'])
-    	# shutil.copy(self.prefix + '.pkl', self.dirs['work'])
 
     def clean_up(self):
         """
@@ -536,7 +516,7 @@ class RapdPlugin(multiprocessing.Process):
 
         self.tprint(credits.HEADER, level=99, color="blue")
 
-        programs = ["CCTBX"]
+        programs = ["CCTBX", "AIMLESS", "POINTLESS"]
         info_string = credits.get_credits_text(programs, "    ")
         self.tprint(info_string, level=99, color="white")
 
@@ -685,8 +665,6 @@ class RapdPlugin(multiprocessing.Process):
         # Make a list of all the batch numbers
         for item in reflection_file.file_content().batches():
             batch_list.append(item.num())
-        from operator import itemgetter
-        from itertools import groupby
         # Go through the list of batches, find the gaps and group by ranges
         for k, g in groupby(enumerate(batch_list), lambda x:x[0]-x[1]):
             group = list(map(itemgetter(1), g))
@@ -1097,35 +1075,6 @@ class RapdPlugin(multiprocessing.Process):
             pass
         # Make the dendrogram and write it out as a PNG
         self.make_dendrogram(self.matrix, self.dpi)
-
-    def create_subdirectory(self, n_dir_max=None, prefix="TEMP", path="", directory_number=None):
-        """
-        Make subdirectories as needed for all the many script, log and mtz files
-        Is the same code as phenix create_temp_directory.  Replace if distributed with phenix.
-        """
-
-        if n_dir_max is None:
-            n_dir_max=1000
-            temp_dir=prefix
-        if directory_number is None:
-            starting_number = 1
-            ending_number = n_dir_max
-            e = "Maximum number of directories is %d" %(n_dir_max)
-        else:
-            starting_number = directory_number
-            ending_number = directory_number
-            e = "The directory %s could not be created (it may already exist)" %(
-                os.path.join(path, prefix + "_" + str(directory_number)))
-
-        for i in xrange(starting_number, ending_number + 1):
-            temp_dir = os.path.join(path, prefix + "_" + str(i))
-            try:
-                if not os.path.exists(temp_dir):
-                    os.mkdir(temp_dir)
-                    return os.path.join(os.getcwd(), temp_dir)
-            except Exception, e: pass
-        raise ValueError("Unable to create directory %s " %(temp_dir)+ "\nError message is: %s " %(str(e)))
-
 
 class MakeTables:
     """
