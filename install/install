@@ -25,6 +25,7 @@ __status__="Development"
 THIS_DIR=$(cd $(dirname $0); pwd)
 THIS_FILE=$(basename $0)
 SRC_DIR=$THIS_DIR"/sources"
+ROOT_DIR=$(cd $THIS_DIR/..; pwd)
 PREFIX=`echo $THIS_DIR | sed -e "s%/install%%"`
 RAPD_VERSION=$(grep RAPD_VERSION $THIS_DIR/../src/version.py | cut -d'"' -f2)
 
@@ -245,7 +246,7 @@ if [[ ($FORCE == 0) && (-e $PREFIX/share) ]]; then
   exit 1
 fi
 
-# Make the new directory
+# Make the target directory
 if [ ! -e $PREFIX ]; then
   mkdir -p $PREFIX
   if (( $? )); then
@@ -254,6 +255,11 @@ if [ ! -e $PREFIX ]; then
   fi
 fi
 PREFIX=$(cd $PREFIX; pwd)
+
+# Install the rapd src tree
+if [[ $ROOT_DIR != $PREFIX ]]; then
+  rsync -a $ROOT_DIR/* $PREFIX/.
+fi
 
 if [ $INSTALL_CCTBX == 1 ]; then
 
