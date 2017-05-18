@@ -180,13 +180,17 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
         "process_id": uuid.uuid1().get_hex()
         }
 
+    work_dir = commandline_utils.check_work_dir(
+        os.path.join(
+            os.path.abspath(os.path.curdir),
+            "rapd_integrate_" + run_data["repr"]),
+        active=True,
+        up=commandline_args.dir_up)
+
     # Where to do the work
     command["directories"] = {
-        "work": os.path.join(
-            os.path.abspath(os.path.curdir),
-            "rapd_integrate_" + run_data["repr"])
+        "work": work_dir
         }
-    commandline_utils.check_work_dir(command["directories"]["work"], True)
 
     # Data data
     command["data"] = {
@@ -203,7 +207,8 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
         "spacegroup": commandline_args.spacegroup,
         "low_res": commandline_args.lowres,
         "hi_res": commandline_args.hires,
-        "json_output": commandline_args.json,
+        "json": commandline_args.json,
+        "progress": commandline_args.progress,
         "show_plots": commandline_args.plotting,
         "xdsinp": detector_module.XDSINP,
         "spacegroup_decider": commandline_args.spacegroup_decider,
@@ -253,7 +258,8 @@ def main():
         terminal_log_level = 50
 
     tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level,
-                                            no_color=commandline_args.no_color)
+                                            no_color=commandline_args.no_color,
+                                            progress=commandline_args.progress)
 
     print_welcome_message(tprint)
 
@@ -271,6 +277,12 @@ def main():
     for key, val in environmental_vars.iteritems():
         logger.debug("  " + key + " : " + val)
         tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
+
+    # Should working directory go up or down?
+    if environmental_vars.get("RAPD_DIR_INCREMENT") == "up":
+        commandline_args.dir_up = True
+    else:
+        commandline_args.dir_up = False
 
     # List sites?
     if commandline_args.listsites:
@@ -408,7 +420,10 @@ def main():
                       command=command,
                       tprint=tprint,
                       logger=logger)
+<<<<<<< HEAD
     plugin.run()
+=======
+>>>>>>> origin/master
 
 if __name__ == "__main__":
 

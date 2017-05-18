@@ -36,33 +36,35 @@ ID = "f06818cf1b0f11e79232ac87a3333966"
 VERSION = "1.0.0"
 
 # Standard imports
+<<<<<<< HEAD
 import argparse
 # import from collections import OrderedDict
 # import datetime
+=======
+>>>>>>> origin/master
 from distutils.spawn import find_executable
-# import glob
 import json
 import logging
 from multiprocessing import Process, Queue
 import os
 # from pprint import pprint
-# import pymongo
-# import re
-# import redis
 import shutil
 import subprocess
 # import sys
 import time
+<<<<<<< HEAD
 import unittest
+=======
+>>>>>>> origin/master
 import numpy
 
 # RAPD imports
-# import commandline_utils
-# import detectors.detector_utils as detector_utils
-# import utils
 import plugins.subcontractors.parse as parse
 import utils.credits as rcredits
+<<<<<<< HEAD
 # import utils.modules as modules
+=======
+>>>>>>> origin/master
 import utils.xutils as xutils
 # import info
 import plugins.pdbquery.commandline
@@ -161,6 +163,7 @@ class RapdPlugin(Process):
 
         # self.tprint("preprocess")
         self.logger.debug("preprocess")
+        self.tprint(arg=0, level="progress")
 
         # Handle sample type from commandline
         if not self.command["preferences"]["sample_type"] == "default":
@@ -207,8 +210,11 @@ class RapdPlugin(Process):
         self.tprint("\nAnalyzing the data file", level=30, color="blue")
 
         self.run_xtriage()
+        self.tprint(arg=10, level="progress")
         self.run_molrep()
+        self.tprint(arg=20, level="progress")
         self.run_phaser_ncs()
+        self.tprint(arg=30, level="progress")
 
         # Output to terminal
         self.print_xtriage_results()
@@ -228,6 +234,7 @@ class RapdPlugin(Process):
 
         # Finished
         self.results["status"] = 100
+        self.tprint(arg=100, level="progress")
 
         # Handle JSON output
         self.handle_json()
@@ -300,7 +307,8 @@ self.command["input_data"]["datafile"]
                                             shell=False)
             _, stderr = convert_proc.communicate()
             if stderr:
-                self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be installed",
+                self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be \
+installed",
                             level=30,
                             color="red")
                 parsed_molrep_results["self_rotation_image"] = False
@@ -323,8 +331,13 @@ self.command["input_data"]["datafile"]
                     level=30,
                     color="white")
 
+<<<<<<< HEAD
         command = "phenix.phaser << eof\nMODE NCS\nHKLIn %s\nLABIn F=F SIGF=SI\GF\neof\n" \
                   % self.command["input_data"]["datafile"]
+=======
+        command = "phenix.phaser << eof\nMODE NCS\nHKLIn %s\nLABIn F=F SIGF=SI\
+GF\neof\n" % self.command["input_data"]["datafile"]
+>>>>>>> origin/master
 
         phaser_proc = subprocess.Popen([command,],
                                        stdout=subprocess.PIPE,
@@ -352,7 +365,8 @@ self.command["input_data"]["datafile"]
         self.tprint("  This can take a while...", level=30, color="white")
 
         # Construct the pdbquery plugin command
-        class pdbquery_args(object):
+        class PdbqueryArgs(object):
+            """Object for command construction"""
             clean = True
             contaminants = True
             datafile = self.command["input_data"]["datafile"]
@@ -360,20 +374,16 @@ self.command["input_data"]["datafile"]
             no_color = False
             nproc = 1
             pdbs = False
+            progress = self.command["preferences"]["progress"]
             run_mode = "subprocess-interactive"
             search = True
             test = False
             verbose = True
 
-        pdbquery_command = plugins.pdbquery.commandline.construct_command(pdbquery_args)
-
-        # print pdbquery_command
+        pdbquery_command = plugins.pdbquery.commandline.construct_command(PdbqueryArgs)
 
         # The pdbquery plugin
         plugin = plugins.pdbquery.plugin
-        # plugin = modules.load_module(seek_module="plugin",
-        #                              directories=["plugins.pdbquery"],
-        #                              logger=self.logger)
 
         # Print out plugin info
         self.tprint(arg="\nPlugin information", level=10, color="blue")

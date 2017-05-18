@@ -36,31 +36,19 @@ ID = "9a2e422625e811e79866ac87a3333966"
 VERSION = "1.0.0"
 
 # Standard imports
-# import argparse
-# import from collections import OrderedDict
-# import datetime
 import glob
 import json
 import logging
 import multiprocessing
 import os
 from pprint import pprint
-# import pymongo
-# import re
-# import redis
 import signal
 import shutil
 import subprocess32
-# import sys
 import time
-# import unittest
 import urllib2
-# import uuid
 
 # RAPD imports
-# import commandline_utils
-# import detectors.detector_utils as detector_utils
-# import utils
 from plugins.subcontractors.parse import parse_phaser_output, set_phaser_failed
 import utils.credits as rcredits
 import utils.global_vars as rglobals
@@ -296,6 +284,7 @@ class RapdPlugin(multiprocessing.Process):
         """Set up for plugin action"""
 
         # self.tprint("preprocess")
+        self.tprint(arg=0, level="progress")
 
         # Check the local pdb cache Location
         if self.cif_cache:
@@ -427,9 +416,10 @@ class RapdPlugin(multiprocessing.Process):
                          self.cell[permutations[permute_counter][field_index]] +
                          self.cell[permutations[permute_counter][field_index]] *
                          self.percent/2]
-                # print "search_params", search_params
+                print "search_params", search_params
 
                 # Query server
+                print "http://%s/pdb/rest/search/" % PDBQ_SERVER
                 response = urllib2.urlopen(urllib2.Request("http://%s/pdb/rest/search/" % \
                            PDBQ_SERVER, data=json.dumps(search_params))).read()
 
@@ -814,6 +804,8 @@ class RapdPlugin(multiprocessing.Process):
         cell_results = False
         failed = False
 
+        self.tprint(arg=90, level="progress")
+
         # Add tar info to automr results and take care of issue if no SCA file was input.
         def check_bz2(tar):
             """
@@ -935,6 +927,7 @@ class RapdPlugin(multiprocessing.Process):
 
         # Finished
         results["status"] = 100
+        self.tprint(arg=100, level="progress")
         self.results = results
 
         # Notify inerested party

@@ -1241,7 +1241,7 @@ def errorLabelit(self, iteration):
             preferences.write('distl.minimum_signal_height=4.3\n')
         preferences.close()
         self.labelit_log[str(iteration)] = ['\nLooking for long unit cell.\n']
-        self.tprint("  Looking for long unit cell", level=30, color="white")
+        self.tprint("\n    Looking for long unit cell", level=30, color="white", newline=False)
         self.logger.debug('Looking for long unit cell.')
 
     elif iteration == 2:
@@ -1249,7 +1249,7 @@ def errorLabelit(self, iteration):
         preferences.write('distl.minimum_spot_height=6\n')
         preferences.close()
         self.labelit_log[str(iteration)] = ['\nChanging settings to look for stronger peaks (ie. small molecule).\n']
-        self.tprint("  Looking for stronger peaks (ie. small molecule)", level=30, color="white")
+        self.tprint("\n    Looking for stronger peaks (ie. small molecule)", level=30, color="white", newline=False)
         self.logger.debug('Changing settings to look for stronger peaks (ie. small molecule).')
 
     elif iteration == 3:
@@ -1264,7 +1264,7 @@ def errorLabelit(self, iteration):
             preferences.write('distl.minimum_signal_height=1.2\n')
         preferences.close()
         self.labelit_log[str(iteration)] = ['\nLooking for weak diffraction.\n']
-        self.tprint("  Looking for weak diffraction", level=30, color="white")
+        self.tprint("\n    Looking for weak diffraction", level=30, color="white", newline=False)
         self.logger.debug('Looking for weak diffraction.')
 
     elif iteration == 4:
@@ -1281,7 +1281,7 @@ def errorLabelit(self, iteration):
             self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 8.\n']
             area = 8
         preferences.close()
-        self.tprint("  Setting spot picking level to %d" % area, level=30, color="white")
+        self.tprint("\n    Setting spot picking level to %d" % area, level=30, color="white", newline=False)
         self.logger.debug('Setting spot picking level to 3 or 8.')
 
     elif iteration == 5:
@@ -1301,7 +1301,7 @@ def errorLabelit(self, iteration):
             self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 6 and resolution to 5.\n']
             setting = (6, 5)
         preferences.close()
-        self.tprint("  Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white")
+        self.tprint("\n    Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white", newline=False)
         self.logger.debug('Setting spot picking level to 2 or 6.')
 
     return self.process_labelit(iteration)
@@ -2820,29 +2820,37 @@ def pp2(inp):
   f1.close()
 
 def processLocal(inp, logger=False, output=False):
-  """
-  Run job as subprocess on local machine.
-  """
-  from subprocess import Popen
+    """
+    Run job as subprocess on local machine.
+    """
 
-  try:
-      if type(inp) == tuple:
-          command,log = inp
-          f = open(log,'w')
-          myoutput = Popen(command, shell=True, stdout=f, stderr=f)
-      else:
-          myoutput = Popen(inp,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-      if output:
-          output.put(myoutput.pid)
-      myoutput.wait()
-      if type(inp) == tuple:
-          f.close()
+    # Logfile might be passed in
+    if type(inp) == tuple:
+        command, logfile = inp
+    else:
+        command = inp
+        logfile = False
 
-  except:
-      if logger:
-          logger.exception('**Error in Utilities.processLocal**')
-      else:
-          print '**Error in Utilities.processLocal**'
+    # Run the process
+    proc = subprocess.Popen(command,
+                            shell=True,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+
+    # Send back PID if have outlet
+    if output:
+        output.put(proc.pid)
+
+    # Get the stdout and stderr from process
+    stdout, stderr = proc.communicate()
+    # print stdout
+    # print stderr
+
+    # Write out a log file, if name passed in
+    if logfile:
+        with open(logfile, "w") as out_file:
+            out_file.write(stdout)
+            out_file.write(stderr)
 
 def rocksCommand(inp, logger=False):
   """

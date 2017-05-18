@@ -26,33 +26,15 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
-# import from collections import OrderedDict
-# import datetime
-# import glob
-# import json
-# import logging
-# import multiprocessing
 import os
-# import pprint
-# import pymongo
-# import re
-# import redis
-# import shutil
-# import subprocess
 import sys
-# import time
-# import unittest
 import uuid
 
 # RAPD imports
-# import commandline_utils
-# import detectors.detector_utils as detector_utils
-# import utils
 import utils.log
 import utils.modules as modules
 import utils.text as text
 import utils.commandline_utils as commandline_utils
-import detectors.detector_utils as detector_utils
 
 def construct_command(commandline_args):
     """Put together the command for the plugin"""
@@ -64,16 +46,17 @@ def construct_command(commandline_args):
         }
 
     # Working directory
-    command["directories"] = {
-        "work": os.path.join(
+    work_dir = commandline_utils.check_work_dir(
+        os.path.join(
             os.path.abspath(os.path.curdir),
             "rapd_analysis_%s" % ".".join(
-                os.path.basename(commandline_args.datafile).split(".")[:-1]))
-    }
-    # os.path.join(os.path.abspath(os.path.curdir), "rapd_analysis_")
+                os.path.basename(commandline_args.datafile).split(".")[:-1])),
+        active=True,
+        up=commandline_args.dir_up)
 
-    # Handle work directory
-    commandline_utils.check_work_dir(command["directories"]["work"], True)
+    command["directories"] = {
+        "work": work_dir
+    }
 
     # Information on input
     command["input_data"] = {
@@ -84,19 +67,21 @@ def construct_command(commandline_args):
     command["preferences"] = {
         "clean": commandline_args.clean,
         "pdbquery": commandline_args.pdbquery,
+        "json": commandline_args.json,
+        "progress": commandline_args.progress,
         "run_mode": commandline_args.run_mode,
         "sample_type": commandline_args.sample_type,
         "test": commandline_args.test,
     }
 
-    # JSON output?
-    # command["preferences"]["json_output"] = commandline_args.json
-
     # Show plots
     # command["preferences"]["show_plots"] = commandline_args.plotting
 
+<<<<<<< HEAD
     # logger.debug("Command for index plugin: %s", command)
 
+=======
+>>>>>>> origin/master
     return command
 
 def get_commandline():
@@ -162,6 +147,12 @@ def get_commandline():
                            dest="json",
                            help="Output JSON format string")
 
+    # Output progress updates?
+    my_parser.add_argument("--progress",
+                           action="store_true",
+                           dest="progress",
+                           help="Output progress updates to the terminal")
+
     # Positional argument
     my_parser.add_argument(action="store",
                            dest="datafile",
@@ -191,7 +182,7 @@ def get_commandline():
     #                        help="Don't run pdbquery as part of analysis")
 
     # Print help message if no arguments
-    if len(sys.argv[1:])==0:
+    if len(sys.argv[1:]) == 0:
         my_parser.print_help()
         my_parser.exit()
 
@@ -243,7 +234,8 @@ def main():
         terminal_log_level = 50
 
     tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level,
-                                            no_color=commandline_args.no_color)
+                                            no_color=commandline_args.no_color,
+                                            progress=commandline_args.progress)
 
     print_welcome_message(tprint)
 
@@ -261,6 +253,15 @@ def main():
         logger.debug("  " + key + " : " + val)
         tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
 
+<<<<<<< HEAD
+=======
+    # Should working directory go up or down?
+    if environmental_vars.get("RAPD_DIR_INCREMENT") == "up":
+        commandline_args.dir_up = True
+    else:
+        commandline_args.dir_up = False
+
+>>>>>>> origin/master
     command = construct_command(commandline_args=commandline_args)
 
     plugin = modules.load_module(seek_module="plugin",

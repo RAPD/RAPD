@@ -42,6 +42,7 @@ import json
 import logging
 import logging.handlers
 import math
+import multiprocessing
 from multiprocessing import Process
 import os
 # import os.path
@@ -61,7 +62,12 @@ from plugins.subcontractors.aimless import parse_aimless
 from plugins.subcontractors.xds import get_avg_mosaicity_from_integratelp, get_isa_from_correctlp
 from utils.communicate import rapd_send
 from utils.numbers import try_int, try_float
+<<<<<<< HEAD
 import utils.credits as rcredits
+=======
+#from plugins.analysis import RapdPlugin as AnalysisPlugin
+from utils.processes import local_subprocess
+>>>>>>> origin/master
 import utils.text as text
 import utils.xutils as Utils
 import utils.spacegroup as spacegroup
@@ -285,7 +291,7 @@ class RapdPlugin(Process):
         self.logger.debug('Fastintegration::run')
         self.preprocess()
         self.process()
-        #self.postprocess()
+        self.postprocess()
 
     def preprocess(self):
         """
@@ -294,7 +300,11 @@ class RapdPlugin(Process):
         2. Read in detector specific parameters.
         """
         self.logger.debug('FastIntegration::preprocess')
+<<<<<<< HEAD
 
+=======
+        self.tprint(0, "progress")
+>>>>>>> origin/master
         if os.path.isdir(self.dirs['work']) == False:
             os.makedirs(self.dirs['work'])
         os.chdir(self.dirs['work'])
@@ -407,6 +417,11 @@ class RapdPlugin(Process):
                                             self.logger)
 
         self.results["analysis"] = analysis_result
+
+    def postprocess(self):
+        """After it's all done"""
+
+        self.tprint(100, "progress")
 
     def ram_total(self, xdsinput):
         """
@@ -598,6 +613,7 @@ class RapdPlugin(Process):
         prelim_results = self.run_results(xdsdir)
         self.tprint("\nPreliminary results summary", 99, "blue")
         self.print_results(prelim_results)
+        self.tprint(33, "progress")
 
         # Grab the spacegroup from the Pointless output and convert to number for XDS
         sg_let_pointless = prelim_results["summary"]["scaling_spacegroup"]
@@ -663,6 +679,7 @@ class RapdPlugin(Process):
                 prelim_results_2 = self.run_results(xdsdir)
                 self.tprint("\nIntermediate results summary", 99, "blue")
                 self.print_results(prelim_results_2)
+                self.tprint(66, "progress")
 
         # Polish up xds processing by moving GXPARM.XDS to XPARM.XDS
         # and rerunning xds.
@@ -701,6 +718,7 @@ class RapdPlugin(Process):
         self.tprint("\nFinal results summary", 99, "blue")
         self.print_results(final_results)
         self.print_plots(final_results)
+        self.tprint(90, "progress")
 
         final_results['status'] = 'ANALYSIS'
         return final_results
@@ -1148,14 +1166,15 @@ class RapdPlugin(Process):
         os.chdir(directory)
         # TODO skip processing for now
         if self.cluster_use == True:
-            job = Process(target=BLspec.processCluster,
-                          args=(self, (xds_command, 'XDS.LOG', '8', 'phase2.q')))
+            xds_proc = Process(target=BLspec.processCluster,
+                               args=(self, (xds_command, 'XDS.LOG', '8', 'phase2.q')))
         else:
-            job = Process(target=Utils.processLocal,
-                          args=((xds_command, "XDS.LOG"),
-                                self.logger))
-        job.start()
-        while job.is_alive():
+            xds_proc = multiprocessing.Process(target=local_subprocess,
+                                               args=(({"command": xds_command,
+                                                       "logfile": "XDS.LOG",
+                                                      },)))
+        xds_proc.start()
+        while xds_proc.is_alive():
             time.sleep(1)
             self.tprint(arg=".", level=99, color="white", newline=False)
         self.tprint(arg=" done", level=99, color="white")
@@ -1171,8 +1190,11 @@ class RapdPlugin(Process):
         """
         self.logger.debug('FastIntegration::xds_ram')
         my_command = ('ssh -x %s "cd $PWD && xds_par > XDS.LOG"' % first_node)
-        self.logger.debug('		%s', command)
-        p = subprocess.Popen(my_command, shell=True, )
+        self.logger.debug('		%s', my_command)
+        p = subprocess.Popen(my_command,
+                             shell=True,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
         p.wait()
 
         return
@@ -1966,7 +1988,7 @@ class RapdPlugin(Process):
         """
 
         # Plot as long as JSON output is not selected
-        if self.settings.get("show_plots", True) and (not self.settings.get("json_output", False)):
+        if self.settings.get("show_plots", True) and (not self.settings.get("json", False)):
 
             plots = results["plots"]
 
@@ -2042,7 +2064,7 @@ class RapdPlugin(Process):
         json_string = json.dumps(results)
 
         # Output to terminal?
-        if self.settings["json_output"]:
+        if self.settings["json"]:
             print json_string
 
         # Write a file

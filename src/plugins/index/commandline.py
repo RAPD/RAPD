@@ -30,7 +30,7 @@ __status__ = "Development"
 import argparse
 import importlib
 import os
-# from pprint import pprint
+from pprint import pprint
 import sys
 import uuid
 
@@ -41,11 +41,11 @@ import utils.text as text
 import utils.commandline_utils as commandline_utils
 import detectors.detector_utils as detector_utils
 
-def construct_command(image_headers, commandline_args, detector_module, logger):
+def construct_command(image_headers, commandline_args, detector_module):
     """
     Put together the command for the plugin
     """
-
+    
     # The task to be carried out
     command = {
         "command":"INDEX",
@@ -59,15 +59,18 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
         image_numbers.append(str(header["image_number"]))
         image_template = header["image_template"]
     image_numbers.sort()
-    run_repr = "rapd_index_" + image_template.replace(detector_module.DETECTOR_SUFFIX, "").replace("?", "")
+    run_repr = "rapd_index_" + image_template.replace(detector_module.DETECTOR_SUFFIX, "").\
+               replace("?", "")
     run_repr += "+".join(image_numbers)
 
-    command["directories"] = {
-        "work": os.path.join(os.path.abspath(os.path.curdir), run_repr)
-        }
+    work_dir = commandline_utils.check_work_dir(
+        os.path.join(os.path.abspath(os.path.curdir), run_repr),
+        active=True,
+        up=commandline_args.dir_up)
 
-    # Handle work directory
-    commandline_utils.check_work_dir(command["directories"]["work"], True)
+    command["directories"] = {
+        "work": work_dir
+        }
 
     # Image data
     images = image_headers.keys()
@@ -83,7 +86,8 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     command["preferences"] = {}
 
     # JSON output?
-    command["preferences"]["json_output"] = commandline_args.json
+    command["preferences"]["json"] = commandline_args.json
+    command["preferences"]["progress"] = commandline_args.progress
 
     # Show plots
     command["preferences"]["show_plots"] = commandline_args.plotting
@@ -100,6 +104,7 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     # Best & Labelit
     command["preferences"]["sample_type"] = commandline_args.sample_type
     command["preferences"]["spacegroup"] = commandline_args.spacegroup
+    command["preferences"]["unitcell"] = commandline_args.unitcell
 
     # Labelit
     command["preferences"]["a"] = 0.0
@@ -161,7 +166,6 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     # Return address
     command["return_address"] = None
 
-    logger.debug("Command for index plugin: %s", command)
     return command
 
 
@@ -341,14 +345,15 @@ def main():
     # Set up terminal printer
     # Verbosity
     if commandline_args.verbose:
-        terminal_log_level = 30
+        terminal_log_level = 10
     elif commandline_args.json:
         terminal_log_level = 100
     else:
         terminal_log_level = 50
 
     tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level,
-                                            no_color=commandline_args.no_color)
+                                            no_color=commandline_args.no_color,
+                                            progress=commandline_args.progress)
 
     print_welcome_message(tprint)
 
@@ -366,16 +371,22 @@ def main():
         logger.debug("  " + key + " : " + val)
         tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
 
+    # Should working directory go up or down?
+    if environmental_vars.get("RAPD_DIR_INCREMENT") == "up":
+        commandline_args.dir_up = True
+    else:
+        commandline_args.dir_up = False
+
     # List sites?
     if commandline_args.listsites:
-        tprint(arg="\nAvailable sites", level=99, color="blue")
+        tprint(arg="\nAvailable sites", level=98, color="blue")
         commandline_utils.print_sites(left_buffer="  ")
         if not commandline_args.listdetectors:
             sys.exit()
 
     # List detectors?
     if commandline_args.listdetectors:
-        tprint(arg="Available detectors", level=99, color="blue")
+        tprint(arg="Available detectors", level=98, color="blue")
         commandline_utils.print_detectors(left_buffer="  ")
         sys.exit()
 
@@ -385,22 +396,22 @@ def main():
 
     if "hdf5_files" in data_files:
         logger.debug("HDF5 source file(s)")
-        tprint(arg="\nHDF5 source file(s)", level=99, color="blue")
+        tprint(arg="\nHDF5 source file(s)", level=98, color="blue")
         logger.debug(data_files["hdf5_files"])
         for data_file in data_files["hdf5_files"]:
-            tprint(arg="  " + data_file, level=99, color="white")
+            tprint(arg="  " + data_file, level=98, color="white")
         logger.debug("CBF file(s) from HDF5 file(s)")
-        tprint(arg="\nData files", level=99, color="blue")
+        tprint(arg="\nData files", level=98, color="blue")
     else:
         logger.debug("Data file(s)")
-        tprint(arg="\nData file(s)", level=99, color="blue")
+        tprint(arg="\nData file(s)", level=98, color="blue")
 
     if len(data_files) == 0:
-        tprint(arg="  None", level=99, color="white")
+        tprint(arg="  None", level=98, color="white")
     else:
         logger.debug(data_files["files"])
         for data_file in data_files["files"]:
-            tprint(arg="  " + data_file, level=99, color="white")
+            tprint(arg="  " + data_file, level=98, color="white")
 
     # Need data
     if len(data_files) == 0 and commandline_args.test == False:
@@ -460,8 +471,7 @@ def main():
 
         command = construct_command(image_headers=image_headers,
                                     commandline_args=commandline_args,
-                                    detector_module=detector_module,
-                                    logger=logger)
+                                    detector_module=detector_module)
     else:
         if logger:
             logger.exception("No detector module found")
