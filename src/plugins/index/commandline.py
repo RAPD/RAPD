@@ -30,7 +30,7 @@ __status__ = "Development"
 import argparse
 import importlib
 import os
-# from pprint import pprint
+from pprint import pprint
 import sys
 import uuid
 
@@ -45,7 +45,7 @@ def construct_command(image_headers, commandline_args, detector_module):
     """
     Put together the command for the plugin
     """
-
+    
     # The task to be carried out
     command = {
         "command":"INDEX",
@@ -63,12 +63,14 @@ def construct_command(image_headers, commandline_args, detector_module):
                replace("?", "")
     run_repr += "+".join(image_numbers)
 
-    command["directories"] = {
-        "work": os.path.join(os.path.abspath(os.path.curdir), run_repr)
-        }
+    work_dir = commandline_utils.check_work_dir(
+        os.path.join(os.path.abspath(os.path.curdir), run_repr),
+        active=True,
+        up=commandline_args.dir_up)
 
-    # Handle work directory
-    commandline_utils.check_work_dir(command["directories"]["work"], True)
+    command["directories"] = {
+        "work": work_dir
+        }
 
     # Image data
     images = image_headers.keys()
@@ -368,6 +370,12 @@ def main():
     for key, val in environmental_vars.iteritems():
         logger.debug("  " + key + " : " + val)
         tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
+
+    # Should working directory go up or down?
+    if environmental_vars.get("RAPD_DIR_INCREMENT") == "up":
+        commandline_args.dir_up = True
+    else:
+        commandline_args.dir_up = False
 
     # List sites?
     if commandline_args.listsites:

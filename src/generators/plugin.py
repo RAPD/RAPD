@@ -229,7 +229,7 @@ class FileGenerator(CommandlineFileGenerator):
         """Write the construct command function of the commandline.py"""
 
         construct_command_func_lines = [
-            "def construct_command(commandline_args, logger):",
+            "def construct_command(commandline_args):",
             "    \"\"\"Put together the command for the plugin\"\"\"\n",
             "    # The task to be carried out",
             "    command = {",
@@ -238,9 +238,12 @@ class FileGenerator(CommandlineFileGenerator):
             "        \"status\": 0,",
             "        }\n",
             "    # Work directory",
+            "    work_dir = commandline_utils.check_work_dir(",
+            "        os.path.join(os.path.abspath(os.path.curdir), run_repr),",
+            "        active=True,",
+            "        up=commandline_args.dir_up)\n",
             "    command[\"directories\"] = {",
-            "        \"work\": os.path.join(os.path.abspath(os.path.curdir), \"%s\")" % \
-            self.args.plugin_name,
+            "        \"work\": work_dir",
             "        }\n",
             "    # Check the work directory",
             "    commandline_utils.check_work_dir(command[\"directories\"][\"work\"], True)\n",
@@ -254,8 +257,6 @@ class FileGenerator(CommandlineFileGenerator):
             "        \"nproc\": commandline_args.nproc,",
             "        \"test\": commandline_args.test,",
             "    }\n",
-            "    logger.debug(\"Command for {} plugin: %s\", command)\n".format(\
-                self.args.plugin_name),
             "    return command\n",
         ]
         file_generator.output_function(construct_command_func_lines)
@@ -414,6 +415,11 @@ class FileGenerator(CommandlineFileGenerator):
             "    for key, val in environmental_vars.iteritems():",
             "        logger.debug(\"  \" + key + \" : \" + val)",
             "        tprint(arg=\"  arg:%-20s  val:%s\" % (key, val), level=10, color=\"white\")\n",
+            "    # Should working directory go up or down?",
+            "    if environmental_vars.get(\"RAPD_DIR_INCREMENT\") == \"up\":",
+            "        commandline_args.dir_up = True",
+            "    else:",
+            "        commandline_args.dir_up = False\n",
             "    # Construct the command",
             "    command = construct_command(commandline_args=commandline_args,",
             "                                logger=logger)\n",
