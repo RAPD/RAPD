@@ -165,6 +165,7 @@ class FileGenerator(CommandlineFileGenerator):
         file_generator.write_docstrings()
         self.p_write_tags(file_generator)
         file_generator.write_imports(write_list=("collections import OrderedDict",
+                                                 "from distutils.spawn import find_executable",
                                                  "glob",
                                                  "json",
                                                  "logging",
@@ -176,6 +177,8 @@ class FileGenerator(CommandlineFileGenerator):
                                                  "sys",
                                                  "time",
                                                  "uuid"),
+                                     added_normal_imports=(
+                                         ("from distutils.spawn import find_executable",)),
                                      added_rapd_imports=(("info",))
                                     )
         self.p_write_versions(file_generator)
