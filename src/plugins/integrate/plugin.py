@@ -45,7 +45,6 @@ import math
 import multiprocessing
 from multiprocessing import Process
 import os
-# import os.path
 from pprint import pprint
 # import shutil
 import stat
@@ -60,7 +59,6 @@ import numpy
 from plugins.subcontractors.xdsme.xds2mos import Xds2Mosflm
 from utils.communicate import rapd_send
 from utils.numbers import try_int, try_float
-#from plugins.analysis import RapdPlugin as AnalysisPlugin
 from utils.processes import local_subprocess
 import utils.text as text
 import utils.xutils as Utils
