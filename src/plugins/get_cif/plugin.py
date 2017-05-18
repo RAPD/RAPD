@@ -37,24 +37,14 @@ VERSION = "1.0.0"
 
 # Standard imports
 import argparse
-# import from collections import OrderedDict
-# import datetime
-# import glob
 import json
 import logging
 import multiprocessing
 import os
-# import pprint
-# import pymongo
-# import re
-# import redis
 import shutil
 import subprocess32
-# import sys
 import time
-# import unittest
 import urllib2
-# import uuid
 
 # RAPD imports
 # import commandline_utils
@@ -135,6 +125,11 @@ class RapdPlugin(multiprocessing.Process):
 
         # Check to make sure we are not going to overwrite any files in the local directory
         self.check_path()
+
+        # Make sure that the caching directory exists
+        if CIF_CACHE:
+            if not os.path.exists(CIF_CACHE):
+                os.makedirs(CIF_CACHE)
 
     def process(self):
         """Run plugin action"""
