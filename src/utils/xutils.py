@@ -1701,6 +1701,34 @@ def fixSCA(self,inp=False):
   except:
     self.logger.exception('**ERROR in Utils.fixSCA**')
 
+def fix_mtz_to_sca(input_file):
+    """Fix spaces in SG and * in sca file"""
+
+    new_lines = []
+
+    # Read in the input sca file symmetry line and correct
+    symmetry_line = open(input_file, "r").readlines()[2]
+    corrected_symmetry_line = (
+        symmetry_line[:symmetry_line.index(symmetry_line.split()[6])]
+        + ''.join(symmetry_line.split()[6:]) + "\n")
+
+    for line in open(input_file, "r").readlines():
+
+        # Broken line
+        if line.startswith(symmetry_line):
+            line = corrected_symmetry_line
+
+        # Throw out lines with * in them
+        if "*" in line:
+            continue
+
+        # This line is a keeper
+        new_lines.append(line)
+
+    # Write out the file
+    with open(input_file, "w") as output_file:
+        output_file.writelines(new_lines)
+
 def fixSG(self,inp):
   """
   Fix input SG if R3/R32.

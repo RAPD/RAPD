@@ -61,7 +61,7 @@ import urllib2
 # import detectors.detector_utils as detector_utils
 # import utils
 import utils.credits as rcredits
-import utils.globals as rglobals
+import utils.global_vars as rglobals
 # import info
 
 # Cache of CIF files

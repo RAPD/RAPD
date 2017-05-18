@@ -1,4 +1,4 @@
-"""Generate a generic rapd file"""
+"""Generate a generic RAPD file"""
 
 """
 This file is part of RAPD
@@ -267,7 +267,8 @@ class BaseFileGenerator(object):
                 "    This function is called when this module is invoked from",
                 "    the commandline",
                 "    \"\"\"\n",
-                "    print \"main\"\n"]
+                "    print \"main\"\n",
+                "    args = get_commandline()\n"]
 
             if self.args.commandline:
                 main_func_lines = ["def main(args):"]
@@ -333,7 +334,7 @@ class FileGenerator(BaseFileGenerator):
             "    \"\"\"\n",
             "    print \"get_commandline\"\n",
             "    # Parse the commandline arguments",
-            "    commandline_description = \"%s\"" % description,
+            "    commandline_description = \"%s\"\n" % description,
             "    my_parser = argparse.ArgumentParser(description=commandline_description)\n",
             "    # A True/False flag",
             "    my_parser.add_argument(\"-c\", \"--commandline\",",

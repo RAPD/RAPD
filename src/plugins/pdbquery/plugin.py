@@ -51,7 +51,7 @@ from pprint import pprint
 import signal
 import shutil
 import subprocess32
-import sys
+# import sys
 import time
 # import unittest
 import urllib2
@@ -63,7 +63,7 @@ import urllib2
 # import utils
 from plugins.subcontractors.parse import parse_phaser_output, set_phaser_failed
 import utils.credits as rcredits
-import utils.globals as rglobals
+import utils.global_vars as rglobals
 import utils.pdb as rpdb
 import utils.xutils as xutils
 import info
