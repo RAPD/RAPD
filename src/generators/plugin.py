@@ -512,8 +512,8 @@ class FileGenerator(CommandlineFileGenerator):
             "        # Store passed-in variables",
             "        self.command = command\n",
             "        # Set up the results with command and process data",
-            "        self.results[\"command\"] = command",
-            "        # Create a process section of results with the id and a starting status of 1"
+            "        self.results[\"command\"] = command\n",
+            "        # Create a process section of results with the id and a starting status of 1",
             "        self.results[\"process\"] = {",
             "            \"process_id\": self.command.get(\"process_id\"),",
             "            \"status\": 1}\n",
