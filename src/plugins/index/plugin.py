@@ -384,8 +384,6 @@ class RapdPlugin(Process):
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::run")
 
-        self.tprint(arg="\nStarting indexing procedures", level=98, color="blue")
-        self.tprint(arg=0, level="progress")
         self.tprint(arg=0, level="progress")
         # Check if h5 file is input and convert to cbf's.
         if self.header["fullname"][-3:] == ".h5":
@@ -394,6 +392,8 @@ class RapdPlugin(Process):
                 self.postprocess()
 
         self.preprocess()
+
+        self.tprint(arg="\nStarting indexing procedures", level=98, color="blue")
 
         if self.minikappa:
             self.processXOalign()
@@ -412,7 +412,7 @@ class RapdPlugin(Process):
                 self.processDistl()
                 if self.multiproc == False:
                     self.postprocessDistl()
-                self.preprocessRaddose()
+                self.preprocess_raddose()
                 self.processRaddose()
                 self.processStrategy()
                 self.run_queue()
@@ -428,8 +428,7 @@ class RapdPlugin(Process):
         """
         Setup the working dir in the RAM and save the dir where the results will go at the end.
         """
-        if self.verbose:
-            self.logger.debug("AutoindexingStrategy::preprocess")
+        self.logger.debug("AutoindexingStrategy::preprocess")
 
         # Determine detector vendortype
         self.vendortype = xutils.getVendortype(self, self.header)
@@ -467,7 +466,7 @@ class RapdPlugin(Process):
         # If no gnuplot turn off printing
         if self.preferences.get("show_plots", True) and (not self.preferences.get("json", False)):
             if not find_executable("gnuplot"):
-                self.tprint("Executable for gnuplot is not present, turning off plotting",
+                self.tprint("\nExecutable for gnuplot is not present, turning off plotting",
                             level=30,
                             color="red")
                 self.preferences["show_plots"] = False
@@ -492,13 +491,19 @@ class RapdPlugin(Process):
             self.write_json(self.results)
             raise exceptions.MissingExecutableException("ipmosflm")
 
-    def preprocessRaddose(self):
+        # If no raddose, should be OK
+        if not find_executable("raddose"):
+            self.tprint("\nExecutable for raddose is not present - will continue",
+                        level=30,
+                        color="red")
+
+    def preprocess_raddose(self):
         """
         Create the raddose.com file which will run in processRaddose. Several beamline specific
         entries for flux and aperture size passed in from rapd_site.py
         """
         if self.verbose:
-            self.logger.debug("AutoindexingStrategy::preprocessRaddose")
+            self.logger.debug("AutoindexingStrategy::preprocess_raddose")
 
         # try:
         beam_size_x = False
@@ -575,7 +580,7 @@ class RapdPlugin(Process):
         raddose.close()
 
         # except:
-            # self.logger.exception("**ERROR in preprocessRaddose**")
+            # self.logger.exception("**ERROR in preprocess_raddose**")
 
     def start_labelit(self):
         """
