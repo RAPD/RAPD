@@ -823,7 +823,8 @@ class RapdPlugin(Process):
         # Adjust dose for ribosome crystals.
         if self.sample_type == 'Ribosome':
             dose = 500001
-        # If dose is too high, warns user and sets to reasonable amount and reruns Best but give warning.
+        # If dose is too high, warns user and sets to reasonable amount and reruns Best but give
+        # warning.
         if dose > 500000:
             dose = 500000
             exp_dose_lim = 100
