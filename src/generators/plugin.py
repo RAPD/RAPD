@@ -179,7 +179,8 @@ class FileGenerator(CommandlineFileGenerator):
                                                  "uuid"),
                                      added_normal_imports=(
                                          ("from distutils.spawn import find_executable",)),
-                                     added_rapd_imports=(("info",))
+                                     added_rapd_imports=(("info",
+                                                          "from utils import exceptions"))
                                     )
         self.p_write_versions(file_generator)
         self.p_write_plugin(file_generator)
