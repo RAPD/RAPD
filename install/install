@@ -132,7 +132,7 @@ if [[ $PLATFORM == "Linux" ]]; then
     CENTOS_VERSION_MAJOR=`cat /etc/centos-release | cut -d" " -f4 | cut -d "." -f1`
 
     if [ $CENTOS_VERSION_MAJOR == "6" ]; then
-      MODULES_LIST="wget subversion git make bzip2 openssl-devel gcc-c++ mesa-libGL-devel mesa-libGLU-devel"
+      MODULES_LIST="wget subversion git make bzip2 openssl-devel gcc-c++ mesa-libGL-devel mesa-libGLU-devel patch"
     elif [ $CENTOS_VERSION_MAJOR == "7" ]; then
       MODULES_LIST="gcc-c++ make wget subversion git bzip2 openssl-devel libffi-devel mesa-libGL-devel mesa-libGLU-devel readline patch python"
     fi
