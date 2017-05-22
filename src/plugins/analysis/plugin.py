@@ -491,7 +491,7 @@ installed",
             out_file.write(json_results)
 
         # If running in JSON mode, print to terminal
-        if self.preferences.get("run_mode"]) == "json":
+        if self.preferences.get("run_mode") == "json":
             print json_results
 
     def print_xtriage_results(self):

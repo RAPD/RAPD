@@ -68,7 +68,7 @@ def construct_command(commandline_args):
         "clean": commandline_args.clean,
         "pdbquery": commandline_args.pdbquery,
         "json": commandline_args.json,
-        "show_plots" = commandline_args.show_plots,
+        "show_plots": commandline_args.show_plots,
         "progress": commandline_args.progress,
         "run_mode": commandline_args.run_mode,
         "sample_type": commandline_args.sample_type,

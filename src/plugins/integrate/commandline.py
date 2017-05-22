@@ -249,7 +249,7 @@ def main():
     elif commandline_args.json:
         terminal_log_level = 100
     else:
-        terminal_log_level = 50
+        terminal_log_level = 30
 
     tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level,
                                             no_color=commandline_args.no_color,
@@ -399,10 +399,11 @@ def main():
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
     # Instantiate the plugin
-    plugin.RapdPlugin(site=None,
-                      command=command,
-                      tprint=tprint,
-                      logger=logger)
+    plugin_instance = plugin.RapdPlugin(site=None,
+                                        command=command,
+                                        tprint=tprint,
+                                        logger=logger)
+    plugin_instance.start()
 
 if __name__ == "__main__":
 

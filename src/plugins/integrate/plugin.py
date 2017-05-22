@@ -182,7 +182,8 @@ class RapdPlugin(Process):
         # print "self.image_data[\"start\"]", self.image_data["start"]
 
         if self.preferences.get("end_frame", False):
-            self.image_data["total"] = self.preferences.get("end_frame") - self.image_data["start"] + 1
+            self.image_data["total"] = self.preferences.get("end_frame") - \
+                                       self.image_data["start"] + 1
         else:
             self.image_data["total"] = self.run_data.get("total")
         # print "self.image_data[\"total\"]", self.image_data["total"]
