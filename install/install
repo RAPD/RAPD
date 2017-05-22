@@ -25,6 +25,7 @@ __status__="Development"
 THIS_DIR=$(cd $(dirname $0); pwd)
 THIS_FILE=$(basename $0)
 SRC_DIR=$THIS_DIR"/sources"
+# ROOT_DIR=$(cd $THIS_DIR/..; pwd)
 PREFIX=`echo $THIS_DIR | sed -e "s%/install%%"`
 RAPD_VERSION=$(grep RAPD_VERSION $THIS_DIR/../src/version.py | cut -d'"' -f2)
 
@@ -39,7 +40,7 @@ INSTALL_PYTHON=1
 PLATFORM=$(uname -s)
 
 # Handle command line
-while getopts "bcfhimop:sty" x; do
+while getopts "bcfhimosty" x; do
     case "$x" in
         h)
             echo "usage: $0 [options]
@@ -52,7 +53,6 @@ Installs RAPD v$RAPD_VERSION
     -h           print this help message and exit
     -m           skip installed modules query
     -o           overwrite cctbx
-    -p PREFIX    install prefix, defaults to $PREFIX
 
     Install or reinstall
     -t           cctbx
@@ -72,9 +72,6 @@ Installs RAPD v$RAPD_VERSION
         f)
             FORCE=1
             ;;
-        p)
-            PREFIX="$OPTARG"
-            ;;
         o)
             OVERWRITE=1
             ;;
@@ -86,7 +83,6 @@ Installs RAPD v$RAPD_VERSION
             printf "Finished.\n"
             exit 0
             ;;
-
         t)
             INSTALL_CCTBX=1
             INSTALL_INIT=0
@@ -121,12 +117,17 @@ done
 # First test for installed modules
 if [[ $PLATFORM == "Linux" ]]; then
 
-  printf "\033[94mChecking installed packages\033[0m\n"
-
   # Cent OS
   if [ -f /etc/centos-release ]; then
 
-    printf "  CentOS\n"
+    LINUX_FLAVOR="CentOS"
+    CENTOS_VERSION_MAJOR=`cat /etc/centos-release | cut -d" " -f4 | cut -d "." -f1`
+
+    if [ $CENTOS_VERSION_MAJOR == "6" ]; then
+      MODULES_LIST="wget subversion git make bzip2 openssl-devel gcc-c++ mesa-libGL-devel mesa-libGLU-devel patch"
+    elif [ $CENTOS_VERSION_MAJOR == "7" ]; then
+      MODULES_LIST="gcc-c++ make wget subversion git bzip2 ncurses-devel openssl-devel libffi-devel mesa-libGL-devel mesa-libGLU-devel readline patch python"
+    fi
 
     function isinstalled {
       if yum list installed "$@" >/dev/null 2>&1; then
@@ -135,10 +136,11 @@ if [[ $PLATFORM == "Linux" ]]; then
         false
       fi
     }
+    printf "\033[94mChecking installed packages required for $LINUX_FLAVOR $CENTOS_VERSION_MAJOR \033[0m\n"
 
     error=0
     missing_packages=""
-    for package in wget subversion git make bzip2 openssl-devel gcc-c++ mesa-libGL-devel mesa-libGLU-devel
+    for package in `echo $MODULES_LIST`
     do
       if isinstalled $package; then
         echo "  $package installed";
@@ -164,7 +166,11 @@ if [[ $PLATFORM == "Linux" ]]; then
 
     if [[ $OS == "ubuntu" ]]; then
 
-      printf "  Ubuntu\n"
+      LINUX_FLAVOR="Ubuntu"
+
+      printf "\033[94mChecking installed packages required for $LINUX_FLAVOR \033[0m\n"
+
+      MODULES_LIST="wget subversion git bzip2 libncurses5-dev zlib1g-dev libssl-dev pkg-config python build-essential libgl1-mesa-dev libglu1-mesa-dev"
 
       function isinstalled {
         dpkg -l "$@" > /dev/null 2>&1
@@ -176,7 +182,7 @@ if [[ $PLATFORM == "Linux" ]]; then
         fi
       }
 
-      for package in wget subversion git bzip2 libncurses5-dev zlib1g-dev libssl-dev pkg-config python build-essential libgl1-mesa-dev libglu1-mesa-dev
+      for package in `echo $MODULES_LIST`
       do
         if isinstalled $package; then
           echo "  $package installed";
@@ -210,20 +216,20 @@ RAPD2 will be installed into this location:
 $PREFIX
   - Press ENTER to confirm the location
   - Press CTRL-C to abort the installation
-  - Or specify a different location below
 
 [$PREFIX] >>> "
   read user_prefix
   if [[ $user_prefix != "" ]]; then
-      case "$user_prefix" in
-          *\ * )
-              echo "ERROR: Cannot install into directories with spaces" >&2
-              exit 1
-              ;;
-          *)
-              eval PREFIX="$user_prefix"
-              ;;
-      esac
+    exit 9
+#      case "$user_prefix" in
+#          *\ * )
+#              echo "ERROR: Cannot install into directories with spaces" >&2
+#              exit 1
+#              ;;
+#          *)
+#              eval PREFIX="$user_prefix"
+#              ;;
+#      esac
   fi
 fi # ! BATCH
 
@@ -234,15 +240,25 @@ if [[ ($FORCE == 0) && (-e $PREFIX/share) ]]; then
   exit 1
 fi
 
-# Make the new directory
-if [ ! -e $PREFIX ]; then
-  mkdir -p $PREFIX
-  if (( $? )); then
-      echo "ERROR: Could not create directory: $PREFIX" >&2
-      exit 1
-  fi
-fi
-PREFIX=$(cd $PREFIX; pwd)
+# Make the target directory
+# echo $ROOT_DIR
+# echo $PREFIX
+# exit 0
+
+## Installing into directory not the currently cloned tree?
+#if [ ! -e $PREFIX ]; then
+#  mkdir -p $PREFIX
+#  if (( $? )); then
+#      echo "ERROR: Could not create directory: $PREFIX" >&2
+#      exit 1
+#  fi
+#fi
+#PREFIX=$(cd $PREFIX; pwd)
+
+## Install the rapd src tree
+#if [[ $ROOT_DIR != $PREFIX ]]; then
+#  rsync -a $ROOT_DIR/* $PREFIX/.
+#fi
 
 if [ $INSTALL_CCTBX == 1 ]; then
 
@@ -403,6 +419,7 @@ if [ $INSTALL_PYTHON == 1 ]; then
 
   # Modules
   printf "  Installing python modules needed by RAPD"
+
   rapd.pip install crypto
   if [[ $PLATFORM == "Darwin" ]]; then
     rapd.pip install pyopenssl
@@ -416,14 +433,38 @@ if [ $INSTALL_PYTHON == 1 ]; then
   rapd.pip install drmaa
   rapd.pip install paramiko
   rapd.pip install fabio
-  rapd.pip install hcluster
+  # rapd.pip install hcluster
+  rapd.pip install scipy
   # Get the up arrow working in the CLI
-  rapd.pip install readline
+  if [[ $PLATFORM == "Linux" ]]; then
+    if [[ $LINUX_FLAVOR == "CentOS" ]]; then
+      if [[ $CENTOS_VERSION_MAJOR == "7" ]]; then
+        if [ ! -e /lib64/libncurses.so ]; then
+          if [ "$EUID" -ne 0 ]; then
+            printf "\033[31mreadline python module needs /lib64/libncurses.so\n \033[0m"
+            printf "\033[31mYou can enable readline with the following commands\n\033[0m"
+            printf "  > ln -s /lib64/libncurses.so.5 /lib64/libncurses.so\n"
+            printf "  > rapd.pip install readline\n"
+          else
+            printf "  Making libncurses softlink to enable readline"
+            ln -s /lib64/libncurses.so.5 /lib64/libncurses.so
+            rapd.pip install readline
+          fi
+        else
+          rapd.pip install readline
+        fi
+      else
+        rapd.pip install readline
+      fi
+    else
+      rapd.pip install readline
+    fi
+  else
+    rapd.pip install readline
+  fi
 
   printf "\033[92mRAPD python install complete.\033[0m\n"
 fi
-
-
 
 if [ $INSTALL_SCRIPTS == 1 ]; then
   printf "\n\033[94mInstalling RAPD executable scripts\033[0m\n"
