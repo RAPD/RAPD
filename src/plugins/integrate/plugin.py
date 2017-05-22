@@ -158,8 +158,14 @@ class RapdPlugin(Process):
         # Store passed-in variables
         self.site = site
         self.command = command
-        self.settings = self.command.get("preferences")
+        self.preferences = self.command.get("preferences")
         self.controller_address = self.command.get("return_address", False)
+
+        # Store into results
+        self.results["command"] = command
+        self.results["process"] = {
+            "process_id": self.command.get("process_id"),
+            "status": 1}
 
         self.dirs = self.command["directories"]
         self.image_data = self.command.get("data").get("image_data")
@@ -168,14 +174,14 @@ class RapdPlugin(Process):
 
         self.logger.debug("self.image_data = %s", self.image_data)
 
-        if self.settings.get("start_frame", False):
-            self.image_data["start"] = self.settings.get("start_frame")
+        if self.preferences.get("start_frame", False):
+            self.image_data["start"] = self.preferences.get("start_frame")
         else:
             self.image_data["start"] = self.run_data.get("start")
         # print "self.image_data[\"start\"]", self.image_data["start"]
 
-        if self.settings.get("end_frame", False):
-            self.image_data["total"] = self.settings.get("end_frame") - self.image_data["start"] + 1
+        if self.preferences.get("end_frame", False):
+            self.image_data["total"] = self.preferences.get("end_frame") - self.image_data["start"] + 1
         else:
             self.image_data["total"] = self.run_data.get("total")
         # print "self.image_data[\"total\"]", self.image_data["total"]
@@ -185,20 +191,20 @@ class RapdPlugin(Process):
         # Check for 2theta tilt:
         if 'twotheta' in self.run_data:
             self.image_data['twotheta'] = self.run_data['twotheta']
-            # self.image_data['start'] = self.settings['request']['frame_start']
-            # self.image_data['total'] = str( int(self.settings['request']['frame_start'])
-            #                         + int(self.settings['request']['frame_finish']) - 1)
-        if self.settings.get('spacegroup', False):
-            self.spacegroup = self.settings['spacegroup']
+            # self.image_data['start'] = self.preferences['request']['frame_start']
+            # self.image_data['total'] = str( int(self.preferences['request']['frame_start'])
+            #                         + int(self.preferences['request']['frame_finish']) - 1)
+        if self.preferences.get('spacegroup', False):
+            self.spacegroup = self.preferences['spacegroup']
 
-        if self.settings.get("hi_res", False):
-            self.hi_res = self.settings.get("hi_res")
+        if self.preferences.get("hi_res", False):
+            self.hi_res = self.preferences.get("hi_res")
 
-        if self.settings.get("low_res", False):
-            self.low_res = self.settings.get("low_res")
+        if self.preferences.get("low_res", False):
+            self.low_res = self.preferences.get("low_res")
 
-        if 'multiprocessing' in self.settings:
-            self.cluster_use = self.settings['multiprocessing']
+        if 'multiprocessing' in self.preferences:
+            self.cluster_use = self.preferences['multiprocessing']
             if self.cluster_use == 'True':
                 self.cluster_use = True
             elif self.cluster_use == 'False':
@@ -206,14 +212,14 @@ class RapdPlugin(Process):
         else:
             self.cluster_use = False
 
-        if 'ram_integrate' in self.settings:
-            self.ram_use = self.settings['ram_integrate']
+        if 'ram_integrate' in self.preferences:
+            self.ram_use = self.preferences['ram_integrate']
             if self.ram_use == 'True':
                 self.ram_use = True
             elif self.ram_use == 'False':
                 self.ram_use = False
             if self.ram_use == True:
-                self.ram_nodes = self.settings['ram_nodes']
+                self.ram_nodes = self.preferences['ram_nodes']
             # ram_nodes is a list containing three lists.
             # ram_nodes[0] is a list containing the name of the nodes where
             # data was distributed to.
@@ -227,8 +233,8 @@ class RapdPlugin(Process):
             self.ram_use = False
             self.ram_nodes = None
 
-        if 'standalone' in self.settings:
-            self.standalone = self.settings['standalone']
+        if 'standalone' in self.preferences:
+            self.standalone = self.preferences['standalone']
             if self.standalone == 'True':
                 self.standalone = True
             elif self.standalone == 'False':
@@ -236,19 +242,19 @@ class RapdPlugin(Process):
         else:
             self.standalone = False
 
-        if 'work_dir_override' in self.settings:
-            if (self.settings['work_dir_override'] == True
-                    or self.settings['work_dir_override'] == 'True'):
-                self.dirs['work'] = self.settings['work_directory']
+        if 'work_dir_override' in self.preferences:
+            if (self.preferences['work_dir_override'] == True
+                    or self.preferences['work_dir_override'] == 'True'):
+                self.dirs['work'] = self.preferences['work_directory']
 
-        if 'beam_center_override' in self.settings:
-            if (self.settings['beam_center_override'] == True
-                    or self.settings['beam_center_override'] == 'True'):
-                self.image_data['x_beam'] = self.settings['x_beam']
-                self.image_data['y_beam'] = self.settings['y_beam']
+        if 'beam_center_override' in self.preferences:
+            if (self.preferences['beam_center_override'] == True
+                    or self.preferences['beam_center_override'] == 'True'):
+                self.image_data['x_beam'] = self.preferences['x_beam']
+                self.image_data['y_beam'] = self.preferences['y_beam']
 
         # Some detectord need flipped for XDS
-        if self.settings.get('flip_beam', False):
+        if self.preferences.get('flip_beam', False):
             x = self.image_data['y_beam']
             self.image_data['y_beam'] = self.image_data['x_beam']
             self.image_data['x_beam'] = x
@@ -301,7 +307,14 @@ class RapdPlugin(Process):
             os.makedirs(self.dirs['work'])
         os.chdir(self.dirs['work'])
 
-        self.xds_default = self.create_xds_input(self.settings['xdsinp'])
+        self.xds_default = self.create_xds_input(self.preferences['xdsinp'])
+
+        self.check_dependencies()
+
+    def check_dependencies(self):
+        """Make sure dependencies are all available"""
+
+        
 
     def process(self):
         """
@@ -387,7 +400,7 @@ class RapdPlugin(Process):
             clean = True
             datafile = self.results["results"]["files"]["mtzfile"]
             pdbquery = True
-            show_plots = self.settings["show_plots"]
+            show_plots = self.preferences["show_plots"]
             run_mode = "subprocess-interactive"
             sample_type = "default"
             test = False
@@ -624,13 +637,13 @@ class RapdPlugin(Process):
                         (sg_let_pointless, sg_let_xds),
                         99,
                         "red")
-            if self.settings["spacegroup_decider"] in ("auto", "pointless"):
+            if self.preferences["spacegroup_decider"] in ("auto", "pointless"):
                 self.tprint(" Using the pointless spacegroup %s" % sg_let_pointless, 99, "red")
             else:
                 self.tprint(" Using the XDS spacegroup %s" % sg_let_xds, 99, "red")
             spacegoup_agree = False
 
-        if self.settings["spacegroup_decider"] in ("auto", "pointless"):
+        if self.preferences["spacegroup_decider"] in ("auto", "pointless"):
             newinp = self.change_xds_inp(
                 newinp,
                 "UNIT_CELL_CONSTANTS=%.2f %.2f %.2f %.2f %.2f %.2f\n" %
@@ -682,7 +695,7 @@ class RapdPlugin(Process):
         if new_rescut <= 4.5:
             # Don't use the GXPARM if changing the spacegroup on the first polishing round
             if spacegoup_agree or \
-               self.settings["spacegroup_decider"] == "xds" or \
+               self.preferences["spacegroup_decider"] == "xds" or \
                polishing_rounds > 0:
                 os.rename('%s/GXPARM.XDS' % xdsdir, '%s/XPARM.XDS' % xdsdir)
             os.rename('%s/CORRECT.LP' % xdsdir, '%s/CORRECT.LP.old' % xdsdir)
@@ -1518,8 +1531,8 @@ class RapdPlugin(Process):
                 break
 
         # If manually overiding the hi_res
-        if self.settings.get("hi_res", False):
-            res_cut = self.settings.get("hi_res")
+        if self.preferences.get("hi_res", False):
+            res_cut = self.preferences.get("hi_res")
         # Determine from data
         else:
             res_cut = resline.split('=')[1].split('A')[0].strip()
@@ -1762,7 +1775,7 @@ class RapdPlugin(Process):
         # Remove xds_lp_files directory
         os.system('rm -rf xds_lp_files')
         # If ramdisks were used, erase files from ram_disks.
-        if self.ram_use == True and self.settings['ram_cleanup'] == True:
+        if self.ram_use == True and self.preferences['ram_cleanup'] == True:
             remove_command = 'rm -rf /dev/shm/%s' % self.image_data['image_prefix']
             for node in self.ram_nodes[0]:
                 command2 = 'ssh -x %s "%s"' % (node, remove_command)
@@ -1981,7 +1994,7 @@ class RapdPlugin(Process):
         """
 
         # Plot as long as JSON output is not selected
-        if self.settings.get("show_plots", True) and (not self.settings.get("json", False)):
+        if self.preferences.get("show_plots", True) and (not self.preferences.get("json", False)):
 
             plots = results["plots"]
 
@@ -2057,7 +2070,7 @@ class RapdPlugin(Process):
         json_string = json.dumps(results)
 
         # Output to terminal?
-        if self.settings["json"]:
+        if self.preferences["json"]:
             print json_string
 
         # Write a file
