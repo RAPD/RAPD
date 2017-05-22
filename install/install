@@ -450,6 +450,8 @@ if [ $INSTALL_PYTHON == 1 ]; then
             ln -s /lib64/libncurses.so.5 /lib64/libncurses.so
             rapd.pip install readline
           fi
+        else
+          rapd.pip install readline
         fi
       else
         rapd.pip install readline
