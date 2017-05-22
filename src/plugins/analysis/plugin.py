@@ -138,6 +138,7 @@ class RapdPlugin(Process):
 
         # Store passed-in variables
         self.command = command
+        self.preferences = command.get("preferences", {})
         self.results["command"] = command
 
         # Store into results
@@ -259,7 +260,7 @@ calculation",
         self.print_plots()
 
         # Run the pdbquery
-        if self.command["preferences"]["pdbquery"]:
+        if self.preferences.get("pdbquery", False):
             self.process_pdb_query()
 
     def postprocess(self):
@@ -412,7 +413,7 @@ installed",
             no_color = False
             nproc = 1
             pdbs = False
-            progress = self.command["preferences"]["progress"]
+            progress = self.preferences.get("progress", False)
             run_mode = "subprocess-interactive"
             search = True
             test = False
@@ -442,7 +443,7 @@ installed",
 
         self.tprint("  Cleaning up", level=30, color="white")
 
-        if self.command["preferences"].get("clean", False):
+        if self.preferences.get("clean", False):
 
             self.logger.debug("Cleaning up Phaser files and folders")
 
@@ -457,7 +458,7 @@ installed",
     def handle_return(self):
         """Output data to consumer"""
 
-        run_mode = self.command["preferences"]["run_mode"]
+        run_mode = self.preferences["run_mode"]
 
         if run_mode == "interactive":
             pass
@@ -490,7 +491,7 @@ installed",
             out_file.write(json_results)
 
         # If running in JSON mode, print to terminal
-        if self.command["preferences"]["run_mode"] == "json":
+        if self.preferences.get("run_mode"]) == "json":
             print json_results
 
     def print_xtriage_results(self):
@@ -545,7 +546,7 @@ installed",
     def print_plots(self):
         """Print plots to the terminal"""
 
-        if "interactive" in self.command["preferences"].get("run_mode"):
+        if "interactive" in self.preferences.get("run_mode"):
 
             if self.preferences.get("show_plots", False):
 

@@ -223,6 +223,7 @@ class RapdPlugin(multiprocessing.Process):
     # Holders for results
     phaser_results_raw = []
     phaser_results = {}
+    results = {}
 
     # Timers for processes
     pdbquery_timer = 30
@@ -256,6 +257,11 @@ class RapdPlugin(multiprocessing.Process):
 
         # Store passed-in variables
         self.command = command
+
+        self.results["command"] = command
+        self.results["process"] = {
+            "process_id": self.command.get("process_id"),
+            "status": 1}
 
         # pprint(command)
 
@@ -317,6 +323,14 @@ class RapdPlugin(multiprocessing.Process):
         if self.est_res_number > 5000:
             self.large_cell = True
             self.phaser_timer = self.phaser_timer * 1.5
+
+        # Check for dependency problems
+        self.check_dependencies()
+
+    def check_dependencies(self):
+        """Make sure dependencies are all available"""
+
+        
 
     def process(self):
         """Run plugin action"""
