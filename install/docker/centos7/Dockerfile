@@ -17,6 +17,7 @@ RUN yum -y install gcc-c++ \
                    mesa-libGLU-devel \
                    readline \
                    patch \
+                   ncurses-devel \
                    python
 
 WORKDIR /opt

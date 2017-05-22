@@ -15,7 +15,8 @@ RUN yum -y install gcc-c++ \
                    openssl-devel \
                    mesa-libGL-devel \
                    mesa-libGLU-devel \
-                   patch
+                   patch \
+                   ncurses-devel
 
 WORKDIR /opt
 RUN git clone -b iss008 https://github.com/RAPD/RAPD.git rapd
