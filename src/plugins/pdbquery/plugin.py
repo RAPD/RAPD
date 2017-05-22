@@ -36,6 +36,7 @@ ID = "9a2e422625e811e79866ac87a3333966"
 VERSION = "1.0.0"
 
 # Standard imports
+from distutils.spawn import find_executable
 import glob
 import json
 import logging
@@ -215,6 +216,10 @@ class RapdPlugin(multiprocessing.Process):
     dres = 0.0
     volume = 0
 
+    # Holders for passed-in info
+    command = None
+    preferences = None
+
     # Holders for pdb ids
     custom_structures = []
     common_contaminants = []
@@ -257,6 +262,7 @@ class RapdPlugin(multiprocessing.Process):
 
         # Store passed-in variables
         self.command = command
+        self.preferences = self.command.get("preferences", {})
 
         self.results["command"] = command
         self.results["process"] = {
@@ -330,7 +336,25 @@ class RapdPlugin(multiprocessing.Process):
     def check_dependencies(self):
         """Make sure dependencies are all available"""
 
-        
+        # Any of these missing, dead in the water
+        #TODO reduce external dependencies
+        for executable in ("bzip2", "gunzip", "phaser", "phenix.cif_as_pdb", "tar"):
+            if not find_executable(executable):
+                self.tprint("Executable for %s is not present, exiting" % executable,
+                            level=30,
+                            color="red")
+                self.results["process"]["status"] = -1
+                self.results["error"] = "Executable for %s is not present" % executable
+                self.write_json(self.results)
+                raise exceptions.MissingExecutableException(executable)
+
+        # If no gnuplot turn off printing
+        # if self.preferences.get("show_plots", True) and (not self.preferences.get("json", False)):
+        #     if not find_executable("gnuplot"):
+        #         self.tprint("\nExecutable for gnuplot is not present, turning off plotting",
+        #                     level=30,
+        #                     color="red")
+        #         self.preferences["show_plots"] = False
 
     def process(self):
         """Run plugin action"""
@@ -889,7 +913,7 @@ class RapdPlugin(multiprocessing.Process):
                             ]
 
                         # Pack up results
-                        pprint(file_list)
+                        # pprint(file_list)
                         append_tar = False
                         for my_file in file_list:
                             if my_file:
@@ -966,11 +990,11 @@ class RapdPlugin(multiprocessing.Process):
 
         run_mode = self.command["preferences"]["run_mode"]
 
+        self.write_json()
+
         if run_mode == "interactive":
             self.print_results()
             self.print_credits()
-        elif run_mode == "json":
-            self.print_json()
         elif run_mode == "server":
             pass
         elif run_mode == "subprocess":
@@ -1108,12 +1132,19 @@ class RapdPlugin(multiprocessing.Process):
                             level=99,
                             color="white")
 
-    def print_json(self):
+    def write_json(self):
         """Print out JSON-formatted result"""
 
-        json_result = json.dumps(self.results)
+        json_string = json.dumps(self.results)
 
-        print json_result
+        # Output to terminal?
+        if self.preferences.get("json", False):
+            print json_string
+
+        # Always write a file
+        os.chdir(self.working_dir)
+        with open("result.json", "w") as outfile:
+            outfile.writelines(json_string)
 
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
