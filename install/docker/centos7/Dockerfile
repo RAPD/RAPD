@@ -6,22 +6,22 @@ FROM centos:7
 MAINTAINER Frank Murphy <fmurphy@anl.gov>
 
 # Needed to build Phenix
-RUN yum -y install gcc-c++ \
-                   make \
-                   wget \
-                   subversion \
+RUN yum -y install bzip2 \
+                   gcc-c++ \
                    git \
-                   bzip2 \
                    libffi-devel \
-                   openssl-devel \
+                   make \
                    mesa-libGL-devel \
                    mesa-libGLU-devel \
-                   readline \
                    ncurses-devel \
+                   openssl-devel \
                    patch \
-                   python
+                   python \
+                   readline \
+                   subversion \
+                   wget
 
 WORKDIR /opt
-RUN git clone -b iss008 https://github.com/RAPD/RAPD.git rapd
+RUN git clone -b master https://github.com/RAPD/RAPD.git rapd
 WORKDIR /opt/rapd/install
 # RUN ./install -mb
