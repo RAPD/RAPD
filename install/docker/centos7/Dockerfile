@@ -17,6 +17,7 @@ RUN yum -y install gcc-c++ \
                    mesa-libGL-devel \
                    mesa-libGLU-devel \
                    readline \
+                   ncurses-devel \
                    patch \
                    python
 
