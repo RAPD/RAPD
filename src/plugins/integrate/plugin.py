@@ -37,7 +37,7 @@ ID = "bd11f4401eaa11e697c3ac87a3333966"
 VERSION = "2.0.0"
 
 # Standard imports
-# from distutils.spawn import find_executable
+from distutils.spawn import find_executable
 import json
 import logging
 import logging.handlers
@@ -61,7 +61,8 @@ from plugins.subcontractors.xdsme.xds2mos import Xds2Mosflm
 from plugins.subcontractors.aimless import parse_aimless
 from plugins.subcontractors.xds import get_avg_mosaicity_from_integratelp, get_isa_from_correctlp
 from utils.communicate import rapd_send
-from utils.numbers import try_int, try_float
+import utils.exceptions as exceptions
+# from utils.numbers import try_int, try_float
 import utils.credits as rcredits
 from utils.processes import local_subprocess
 import utils.text as text
@@ -314,7 +315,24 @@ class RapdPlugin(Process):
     def check_dependencies(self):
         """Make sure dependencies are all available"""
 
-        
+        # Any of these missing, dead in the water
+        for executable in ("aimless", "freerflag", "mtz2various", "pointless", "truncate", "xds"):
+            if not find_executable(executable):
+                self.tprint("Executable for %s is not present, exiting" % executable,
+                            level=30,
+                            color="red")
+                self.results["process"]["status"] = -1
+                self.results["error"] = "Executable for %s is not present" % executable
+                self.write_json(self.results)
+                raise exceptions.MissingExecutableException(executable)
+
+        # If no gnuplot turn off printing
+        if self.preferences.get("show_plots", True) and (not self.preferences.get("json", False)):
+            if not find_executable("gnuplot"):
+                self.tprint("\nExecutable for gnuplot is not present, turning off plotting",
+                            level=30,
+                            color="red")
+                self.preferences["show_plots"] = False
 
     def process(self):
         """
