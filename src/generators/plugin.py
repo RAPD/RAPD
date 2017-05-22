@@ -165,6 +165,7 @@ class FileGenerator(CommandlineFileGenerator):
         file_generator.write_docstrings()
         self.p_write_tags(file_generator)
         file_generator.write_imports(write_list=("collections import OrderedDict",
+                                                 "from distutils.spawn import find_executable",
                                                  "glob",
                                                  "json",
                                                  "logging",
@@ -176,7 +177,10 @@ class FileGenerator(CommandlineFileGenerator):
                                                  "sys",
                                                  "time",
                                                  "uuid"),
-                                     added_rapd_imports=(("info",))
+                                     added_normal_imports=(
+                                         ("from distutils.spawn import find_executable",)),
+                                     added_rapd_imports=(("info",
+                                                          "from utils import exceptions"))
                                     )
         self.p_write_versions(file_generator)
         self.p_write_plugin(file_generator)
@@ -229,7 +233,7 @@ class FileGenerator(CommandlineFileGenerator):
         """Write the construct command function of the commandline.py"""
 
         construct_command_func_lines = [
-            "def construct_command(commandline_args, logger):",
+            "def construct_command(commandline_args):",
             "    \"\"\"Put together the command for the plugin\"\"\"\n",
             "    # The task to be carried out",
             "    command = {",
@@ -238,9 +242,12 @@ class FileGenerator(CommandlineFileGenerator):
             "        \"status\": 0,",
             "        }\n",
             "    # Work directory",
+            "    work_dir = commandline_utils.check_work_dir(",
+            "        os.path.join(os.path.abspath(os.path.curdir), run_repr),",
+            "        active=True,",
+            "        up=commandline_args.dir_up)\n",
             "    command[\"directories\"] = {",
-            "        \"work\": os.path.join(os.path.abspath(os.path.curdir), \"%s\")" % \
-            self.args.plugin_name,
+            "        \"work\": work_dir",
             "        }\n",
             "    # Check the work directory",
             "    commandline_utils.check_work_dir(command[\"directories\"][\"work\"], True)\n",
@@ -254,8 +261,6 @@ class FileGenerator(CommandlineFileGenerator):
             "        \"nproc\": commandline_args.nproc,",
             "        \"test\": commandline_args.test,",
             "    }\n",
-            "    logger.debug(\"Command for {} plugin: %s\", command)\n".format(\
-                self.args.plugin_name),
             "    return command\n",
         ]
         file_generator.output_function(construct_command_func_lines)
@@ -414,6 +419,11 @@ class FileGenerator(CommandlineFileGenerator):
             "    for key, val in environmental_vars.iteritems():",
             "        logger.debug(\"  \" + key + \" : \" + val)",
             "        tprint(arg=\"  arg:%-20s  val:%s\" % (key, val), level=10, color=\"white\")\n",
+            "    # Should working directory go up or down?",
+            "    if environmental_vars.get(\"RAPD_DIR_INCREMENT\") == \"up\":",
+            "        commandline_args.dir_up = True",
+            "    else:",
+            "        commandline_args.dir_up = False\n",
             "    # Construct the command",
             "    command = construct_command(commandline_args=commandline_args,",
             "                                logger=logger)\n",
@@ -506,7 +516,13 @@ class FileGenerator(CommandlineFileGenerator):
             "        # Some logging",
             "        self.logger.info(command)\n",
             "        # Store passed-in variables",
-            "        self.command = command",
+            "        self.command = command\n",
+            "        # Set up the results with command and process data",
+            "        self.results[\"command\"] = command\n",
+            "        # Create a process section of results with the id and a starting status of 1",
+            "        self.results[\"process\"] = {",
+            "            \"process_id\": self.command.get(\"process_id\"),",
+            "            \"status\": 1}\n",
             # "        self.reply_address = self.command[\"return_address\"]",
             "        multiprocessing.Process.__init__(self, name=\"%s\")" % self.args.plugin_name,
             "        self.start()\n",
@@ -520,6 +536,8 @@ class FileGenerator(CommandlineFileGenerator):
             "        \"\"\"Set up for plugin action\"\"\"\n",
             "        self.tprint(arg=0, level=\"progress\")",
             "        self.tprint(\"preprocess\")\n",
+            "        # Check for dependency problems",
+            "        self.check_dependencies()\n",
             "    def process(self):",
             "        \"\"\"Run plugin action\"\"\"\n",
             "        self.tprint(\"process\")\n",
@@ -531,6 +549,43 @@ class FileGenerator(CommandlineFileGenerator):
             "        self.clean_up()\n",
             "        # Send back results",
             "        self.handle_return()\n",
+            "    def check_dependencies(self):",
+            "        \"\"\"Make sure dependencies are all available\"\"\"\n",
+            "        # A couple examples from index plugin",
+            "        # Can avoid using best in the plugin b"
+            "        # If no best, switch to mosflm for strategy",
+            "        # if self.strategy == \"best\":",
+            "        #     if not find_executable(\"best\"):",
+            "        #         self.tprint(\"Executable for best is not present, using Mosflm for s\
+trategy\",",
+            "        #                     level=30,",
+            "        #                     color=\"red\")",
+            "        #         self.strategy = \"mosflm\"\n",
+            "        # If no gnuplot turn off printing",
+            "        # if self.preferences.get(\"show_plots\", True) and (not self.preferences.get(\
+\"json\", False)):",
+            "        #     if not find_executable(\"gnuplot\"):",
+            "        #         self.tprint(\"\\nExecutable for gnuplot is not present, turning off p\
+lotting\",",
+            "        #                     level=30,",
+            "        #                     color=\"red\")",
+            "        #         self.preferences[\"show_plots\"] = False\n",
+            "        # If no labelit.index, dead in the water",
+            "        # if not find_executable(\"labelit.index\"):",
+            "        #     self.tprint(\"Executable for labelit.index is not present, exiting\",",
+            "        #                 level=30,",
+            "        #                 color=\"red\")",
+            "        #     self.results[\"process\"][\"status\"] = -1",
+            "        #     self.results[\"error\"] = \"Executable for labelit.index is not present\
+\"",
+            "        #     self.write_json(self.results)",
+            "        #     raise exceptions.MissingExecutableException(\"labelit.index\")\n",
+            "        # If no raddose, should be OK",
+            "        # if not find_executable(\"raddose\"):",
+            "        #     self.tprint(\"\\nExecutable for raddose is not present - will continue\
+\",",
+            "        #                 level=30,",
+            "        #                 color=\"red\")\n",
             "    def clean_up(self):",
             "        \"\"\"Clean up after plugin action\"\"\"\n",
             "        self.tprint(\"clean_up\")\n",

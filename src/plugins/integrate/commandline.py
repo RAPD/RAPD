@@ -174,13 +174,17 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
         "process_id": uuid.uuid1().get_hex()
         }
 
+    work_dir = commandline_utils.check_work_dir(
+        os.path.join(
+            os.path.abspath(os.path.curdir),
+            "rapd_integrate_" + run_data["repr"]),
+        active=True,
+        up=commandline_args.dir_up)
+
     # Where to do the work
     command["directories"] = {
-        "work": os.path.join(
-            os.path.abspath(os.path.curdir),
-            "rapd_integrate_" + run_data["repr"])
+        "work": work_dir
         }
-    commandline_utils.check_work_dir(command["directories"]["work"], True)
 
     # Data data
     command["data"] = {
@@ -267,6 +271,12 @@ def main():
     for key, val in environmental_vars.iteritems():
         logger.debug("  " + key + " : " + val)
         tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
+
+    # Should working directory go up or down?
+    if environmental_vars.get("RAPD_DIR_INCREMENT") == "up":
+        commandline_args.dir_up = True
+    else:
+        commandline_args.dir_up = False
 
     # List sites?
     if commandline_args.listsites:
@@ -390,9 +400,9 @@ def main():
 
     # Instantiate the plugin
     plugin.RapdPlugin(site=None,
-                     command=command,
-                     tprint=tprint,
-                     logger=logger)
+                      command=command,
+                      tprint=tprint,
+                      logger=logger)
 
 if __name__ == "__main__":
 

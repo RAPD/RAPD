@@ -38,8 +38,9 @@ VERSION = "2.0.0"
 
 # Standard imports
 from collections import OrderedDict
+from distutils.spawn import find_executable
 import functools
-import glob
+# import glob
 import json
 import logging
 from multiprocessing import Process, Queue, Event
@@ -54,17 +55,15 @@ import sys
 import time
 
 # RAPD imports
-import info
+# import info
 import plugins.subcontractors.parse as Parse
 import plugins.subcontractors.labelit as labelit
-# import plugins.subcontractors.summary as Summary
 from plugins.subcontractors.xoalign import RunXOalign
-import utils.credits as credits
+import utils.credits as rcredits
 from utils.communicate import rapd_send
+import utils.exceptions as exceptions
 import utils.global_vars as global_vars
 from utils.processes import local_subprocess
-# from utils.modules import load_module
-import utils.spacegroup as spacegroup
 import utils.xutils as xutils
 
 DETECTOR_TO_BEST = {
@@ -228,6 +227,10 @@ class RapdPlugin(Process):
         # Store passed-in variables
         self.site = site
         self.command = command
+        self.results["command"] = command
+        self.results["process"] = {
+            "process_id": self.command.get("process_id"),
+            "status": 1}
         self.reply_address = self.command["return_address"]
 
         # Setting up data input
@@ -381,8 +384,6 @@ class RapdPlugin(Process):
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::run")
 
-        self.tprint(arg="\nStarting indexing procedures", level=98, color="blue")
-        self.tprint(arg=0, level="progress")
         self.tprint(arg=0, level="progress")
         # Check if h5 file is input and convert to cbf's.
         if self.header["fullname"][-3:] == ".h5":
@@ -391,6 +392,8 @@ class RapdPlugin(Process):
                 self.postprocess()
 
         self.preprocess()
+
+        self.tprint(arg="\nStarting indexing procedures", level=98, color="blue")
 
         if self.minikappa:
             self.processXOalign()
@@ -409,7 +412,7 @@ class RapdPlugin(Process):
                 self.processDistl()
                 if self.multiproc == False:
                     self.postprocessDistl()
-                self.preprocessRaddose()
+                self.preprocess_raddose()
                 self.processRaddose()
                 self.processStrategy()
                 self.run_queue()
@@ -425,8 +428,7 @@ class RapdPlugin(Process):
         """
         Setup the working dir in the RAM and save the dir where the results will go at the end.
         """
-        if self.verbose:
-            self.logger.debug("AutoindexingStrategy::preprocess")
+        self.logger.debug("AutoindexingStrategy::preprocess")
 
         # Determine detector vendortype
         self.vendortype = xutils.getVendortype(self, self.header)
@@ -447,13 +449,61 @@ class RapdPlugin(Process):
             self.running = Event()
             self.running.set()
 
-    def preprocessRaddose(self):
+        # Check for dependency problems
+        self.check_dependencies()
+
+    def check_dependencies(self):
+        """Make sure dependencies are all available"""
+
+        # If no best, switch to mosflm for strategy
+        if self.strategy == "best":
+            if not find_executable("best"):
+                self.tprint("Executable for best is not present, using Mosflm for strategy",
+                            level=30,
+                            color="red")
+                self.strategy = "mosflm"
+
+        # If no gnuplot turn off printing
+        if self.preferences.get("show_plots", True) and (not self.preferences.get("json", False)):
+            if not find_executable("gnuplot"):
+                self.tprint("\nExecutable for gnuplot is not present, turning off plotting",
+                            level=30,
+                            color="red")
+                self.preferences["show_plots"] = False
+
+        # If no labelit.index, dead in the water
+        if not find_executable("labelit.index"):
+            self.tprint("Executable for labelit.index is not present, exiting",
+                        level=30,
+                        color="red")
+            self.results["process"]["status"] = -1
+            self.results["error"] = "Executable for labelit.index is not present"
+            self.write_json(self.results)
+            raise exceptions.MissingExecutableException("labelit.index")
+
+        # If no mosflm, dead in the water
+        if not find_executable("ipmosflm"):
+            self.tprint("Executable for mosflm is not present, exiting",
+                        level=30,
+                        color="red")
+            self.results["process"]["status"] = -1
+            self.results["error"] = "Executable for mosflm is not present"
+            self.write_json(self.results)
+            raise exceptions.MissingExecutableException("ipmosflm")
+
+        # If no raddose, should be OK
+        if not find_executable("raddose"):
+            self.tprint("\nExecutable for raddose is not present - will continue",
+                        level=30,
+                        color="red")
+
+    def preprocess_raddose(self):
         """
-        Create the raddose.com file which will run in processRaddose. Several beamline specific entries for flux and
-        aperture size passed in from rapd_site.py
+        Create the raddose.com file which will run in processRaddose. Several beamline specific
+        entries for flux and aperture size passed in from rapd_site.py
         """
         if self.verbose:
-            self.logger.debug("AutoindexingStrategy::preprocessRaddose")
+            self.logger.debug("AutoindexingStrategy::preprocess_raddose")
 
         # try:
         beam_size_x = False
@@ -464,6 +514,7 @@ class RapdPlugin(Process):
         # Get unit cell
         cell = xutils.getLabelitCell(self)
         nres = xutils.calcTotResNumber(self, self.volume)
+
         # Adding these typically does not change the Best strategy much, if it at all.
         patm = False
         satm = False
@@ -491,7 +542,12 @@ class RapdPlugin(Process):
         setup += "PHOSEC %s\n" % self.flux
         setup += "EXPOSURE %s\n" % self.time
         if cell:
-            setup += "CELL %s %s %s %s %s %s\n" % (cell[0], cell[1], cell[2], cell[3], cell[4], cell[5])
+            setup += "CELL %s %s %s %s %s %s\n" % (cell[0],
+                                                   cell[1],
+                                                   cell[2],
+                                                   cell[3],
+                                                   cell[4],
+                                                   cell[5])
         else:
             self.logger.debug("Could not get unit cell from bestfile.par")
 
@@ -524,7 +580,7 @@ class RapdPlugin(Process):
         raddose.close()
 
         # except:
-            # self.logger.exception("**ERROR in preprocessRaddose**")
+            # self.logger.exception("**ERROR in preprocess_raddose**")
 
     def start_labelit(self):
         """
@@ -625,25 +681,35 @@ class RapdPlugin(Process):
         """
         if self.verbose:
             self.logger.debug('AutoindexingStrategy::processDistl')
-        try:
-            self.distl_output = []
-            l = ["", "2"]
-            f = 1
-            if self.header2:
-                f = 2
-            for i in range(0, f):
-                if self.test:
-                    inp = "ls"
-                    job = Process(target=xutils.processLocal, args=(inp, self.logger))
-                else:
-                    inp = "distl.signal_strength %s" % eval("self.header%s" % l[i]).get("fullname")
-                    job = Process(target=xutils.processLocal,
-                                  args=((inp, "distl%s.log" % i), self.logger))
-                job.start()
-                self.distl_output.append(job)
+        # try:
 
-        except:
-            self.logger.exception("**Error in ProcessDistl**")
+        self.distl_output = []
+        l = ["", "2"]
+        f = 1
+        if self.header2:
+            f = 2
+        for i in range(0, f):
+            if self.test:
+                inp = "ls"
+                job = Process(target=xutils.processLocal, args=(inp, self.logger))
+            else:
+                command = "distl.signal_strength %s" % eval("self.header%s" % l[i]).get("fullname")
+                job = multiprocessing.Process(target=local_subprocess,
+                                              args=({"command": command,
+                                                     "logfile": "distl%s.log" % i,
+                                                     "pid_queue": False,
+                                                     "result_queue": False,
+                                                     "tag": i
+                                                    },
+                                                   )
+                                             )
+                # job = Process(target=xutils.processLocal,
+                #               args=((inp, "distl%s.log" % i), self.logger))
+            job.start()
+            self.distl_output.append(job)
+
+        # except:
+        #     self.logger.exception("**Error in ProcessDistl**")
 
     def processRaddose(self):
         """
@@ -757,7 +823,8 @@ class RapdPlugin(Process):
         # Adjust dose for ribosome crystals.
         if self.sample_type == 'Ribosome':
             dose = 500001
-        # If dose is too high, warns user and sets to reasonable amount and reruns Best but give warning.
+        # If dose is too high, warns user and sets to reasonable amount and reruns Best but give
+        # warning.
         if dose > 500000:
             dose = 500000
             exp_dose_lim = 100
@@ -1448,20 +1515,20 @@ class RapdPlugin(Process):
         self.labelit_results = self.labelitQueue.get()
         self.labelit_log = self.labelitQueue.get()
 
-        print "labelit_results"
-        pprint(self.labelit_results)
-        print "labelit_log"
-        pprint(self.labelit_log)
+        # print "labelit_results"
+        # pprint(self.labelit_results)
+        # print "labelit_log"
+        # pprint(self.labelit_log)
 
         # All runs in error state
         error_count = 0
         for iteration, result in self.labelit_results.iteritems():
             # print "RESULT"
-            pprint(result)
+            # pprint(result)
             if result["Labelit results"] in ("ERROR", "TIMEOUT"):
                 error_count += 1
         if error_count == len(self.labelit_results):
-            print "Unsuccessful indexing run. Exiting."
+            # print "Unsuccessful indexing run. Exiting."
             sys.exit(9)
 
         # Run through all the results - compile them
@@ -1648,44 +1715,28 @@ class RapdPlugin(Process):
 
         json_string = json.dumps(results) #.replace("\\n", "")
 
-        # json_output = json.dumps(self.results).replace("\\n", "")
-        # if self.preferences.get("json", False):
-            # print json_output
-
         # Output to terminal?
         if self.preferences.get("json", False):
             print json_string
 
         # Always write a file
         os.chdir(self.working_dir)
-        with open("result.json", 'w') as outfile:
+        with open("result.json", "w") as outfile:
             outfile.writelines(json_string)
 
     def print_credits(self):
         """
         Print information regarding programs utilized by RAPD
         """
-        if self.verbose:
-            self.logger.debug('AutoindexingStrategy::print_credits')
 
-        # try:
-        self.tprint(arg="\nRAPD index & strategy uses:", level=98, color="blue")
+        self.tprint(rcredits.HEADER,
+                    level=99,
+                    color="blue")
 
-        info_string = """    Phenix
-    Reference: J. Appl. Cryst. 37, 399-409 (2004)
-    Website:   http://adder.lbl.gov/labelit/ \n
-    Mosflm
-    Reference: Leslie, A.G.W., (1992), Joint CCP4 + ESF-EAMCB Newsletter on Protein Crystallography, No. 26
-    Website:   http://www.mrc-lmb.cam.ac.uk/harry/mosflm/ \n
-    RADDOSE
-    Reference: Paithankar et. al. (2009) J. Synch. Rad. 16, 152-162.
-    Website:   http://biop.ox.ac.uk/www/garman/lab_tools.html/ \n
-    Best
-    Reference: G.P. Bourenkov and A.N. Popov,  Acta Cryst. (2006). D62, 58-64
-    Website:   http://www.embl-hamburg.de/BEST/"""
-        self.tprint(arg=info_string, level=98, color="white")
+        programs = ["CCTBX", "BEST", "MOSFLM", "RADDOSE"]
+        info_string = rcredits.get_credits_text(programs, "    ")
 
-        self.logger.debug(info_string)
+        self.tprint(info_string, level=99, color="white")
 
     def print_plots(self):
         """Display plots on the commandline"""
@@ -1720,22 +1771,23 @@ class RapdPlugin(Process):
                            set key outside
                            set title 'Minimal Oscillation Ranges %s'
                            set xlabel 'Starting Angle'
-                           set ylabel 'Rotation Range' rotate by 90 \n""" %
+                           set ylabel 'Rotation Range' rotate by 90 \n""" % \
                            (min(180, int(term_size[1])), max(30, int(int(term_size[0])/3)), tag))
 
                     # Create the plot string
                     plot_string = "plot [0:180] [%d:%d] " % (y_min, y_max)
                     for i in range(min(5, len(plot_data["data"]))):
-                        plot_string += "'-' using 1:2 title '%s' with lines," % plot_data["data"][i]["parameters"]["linelabel"].replace("compl -", "")
+                        plot_string += "'-' using 1:2 title '%s' with lines," % \
+                        plot_data["data"][i]["parameters"]["linelabel"].replace("compl -", "")
                     plot_string = plot_string.rstrip(",") + "\n"
                     gnuplot.stdin.write(plot_string)
 
                     # Run through the data and add to gnuplot
                     for i in range(min(5, len(plot_data["data"]))):
                         plot = plot_data["data"][i]
-                        xs = plot["series"][0]["xs"]
-                        ys = plot["series"][0]["ys"]
-                        for i, j in zip(xs, ys):
+                        x_series = plot["series"][0]["xs"]
+                        y_series = plot["series"][0]["ys"]
+                        for i, j in zip(x_series, y_series):
                             gnuplot.stdin.write("%f %f\n" % (i, j))
                         gnuplot.stdin.write("e\n")
 
@@ -1754,87 +1806,67 @@ class RapdPlugin(Process):
         output = {}
 
         # Set up the results for return
-        self.results["process"] = {
-            "process_id": self.command.get("process_id"),
-            "status": 100}
-        self.results["directories"] = self.setup
-        self.results["information"] = self.header
-        self.results["preferences"] = self.preferences
+        self.results["process"]["status"] = 100
+        # self.results["directories"] = self.setup
+        # self.results["information"] = self.header
+        # self.results["preferences"] = self.preferences
 
-        # Generate the proper summaries that go into the output HTML files
-        # if self.labelit_failed == False:
-        #     if self.labelit_results:
-        #         Summary.summaryLabelit(self)
-        #         Summary.summaryAutoCell(self, True)
-        # if self.distl_results:
-        #     Summary.summaryDistl(self)
-        # if self.raddose_results:
-        #     Summary.summaryRaddose(self)
         if self.labelit_failed == False:
             if self.strategy == "mosflm":
                 pass
-                # Summary.summaryMosflm(self, False)
-                # Summary.summaryMosflm(self, True)
             else:
                 if self.best_failed:
                     if self.best_anom_failed:
                         pass
-                        # Summary.summaryMosflm(self, False)
-                        # Summary.summaryMosflm(self, True)
                     else:
-                        # Summary.summaryMosflm(self, False)
-                        # Summary.summaryBest(self, True)
                         self.htmlBestPlots()
                 elif self.best_anom_failed:
-                    # Summary.summaryMosflm(self, True)
-                    # Summary.summaryBest(self, False)
                     self.htmlBestPlots()
                 else:
-                    # Summary.summaryBest(self, False)
-                    # Summary.summaryBest(self, True)
                     self.htmlBestPlots()
                     self.print_plots()
 
         # Save path for files required for future STAC runs.
-        try:
-            if self.labelit_failed == False:
-                os.chdir(self.labelit_dir)
-                # files = ["DNA_mosflm.inp", "bestfile.par"]
-                # files = ["mosflm.inp", "%s.mat"%self.index_number]
-                files = ["%s.mat" % self.index_number, "bestfile.par"]
-                for x, f in enumerate(files):
-                    shutil.copy(f, self.working_dir)
-                    if os.path.exists(os.path.join(self.working_dir, f)):
-                        output["STAC file%s"%str(x+1)] = os.path.join(self.dest_dir, f)
-                    else:
-                        output["STAC file%s"%str(x+1)] = "None"
-            else:
-                output["STAC file1"] = "None"
-                output["STAC file2"] = "None"
-        except:
-            self.logger.exception("**Could not update path of STAC files**")
-            output["STAC file1"] = "FAILED"
-            output["STAC file2"] = "FAILED"
-
-        # Pass back paths for html files
-        if self.gui:
-            e = ".php"
-        else:
-            e = ".html"
-        l = [("best_plots%s" % e, "Best plots html"),
-             ("jon_summary_long%s" % e, "Long summary html"),
-             ("jon_summary_short%s" % e, "Short summary html")]
-        for i in range(len(l)):
-            try:
-                path = os.path.join(self.working_dir, l[i][0])
-                path2 = os.path.join(self.dest_dir, l[i][0])
-                if os.path.exists(path):
-                    output[l[i][1]] = path2
+        # try:
+        if self.labelit_failed == False:
+            os.chdir(self.labelit_dir)
+            # files = ["DNA_mosflm.inp", "bestfile.par"]
+            # files = ["mosflm.inp", "%s.mat"%self.index_number]
+            files = ["%s.mat" % self.index_number, "bestfile.par"]
+            for index, file_to_copy in enumerate(files):
+                shutil.copy(file_to_copy, self.working_dir)
+                if os.path.exists(os.path.join(self.working_dir, file_to_copy)):
+                    output["STAC file%s" % str(index+1)] = os.path.join(self.dest_dir,
+                                                                        file_to_copy)
                 else:
-                    output[l[i][1]] = "None"
-            except:
-                self.logger.exception("**Could not update path of %s file.**" % l[i][0])
-                output[l[i][1]] = "FAILED"
+                    output["STAC file%s" % str(index+1)] = "None"
+        else:
+            output["STAC file1"] = "None"
+            output["STAC file2"] = "None"
+        # except:
+        #     self.logger.exception("**Could not update path of STAC files**")
+        #     output["STAC file1"] = "FAILED"
+        #     output["STAC file2"] = "FAILED"
+
+        # # Pass back paths for html files
+        # if self.gui:
+        #     suffix = ".php"
+        # else:
+        #     suffix = ".html"
+        # l = [("best_plots%s" % suffix, "Best plots html"),
+        #      ("jon_summary_long%s" % suffix, "Long summary html"),
+        #      ("jon_summary_short%s" % suffix, "Short summary html")]
+        # for i in range(len(l)):
+        #     try:
+        #         path = os.path.join(self.working_dir, l[i][0])
+        #         path2 = os.path.join(self.dest_dir, l[i][0])
+        #         if os.path.exists(path):
+        #             output[l[i][1]] = path2
+        #         else:
+        #             output[l[i][1]] = "None"
+        #     except:
+        #         self.logger.exception("**Could not update path of %s file.**" % l[i][0])
+        #         output[l[i][1]] = "FAILED"
 
         # Put all output files into a singe dict to pass back.
         output_files = {"Output files" : output}
@@ -2254,7 +2286,7 @@ class RunLabelit(Process):
 
         # Try to run with generic
         if overrides.get("no_solution"):
-            print ">>> NO SOLUTION", iteration
+            # print ">>> NO SOLUTION", iteration
             sys.exit()
 
         # Correct error by decreasing the good spots requirement
@@ -2290,7 +2322,6 @@ rerunning.\n" % spot_count)
         Construct the labelit command and run. Passes back dict with PID:iteration.
         """
         self.logger.debug("RunLabelit::process_labelit")
-
         # print "process_labelit %d %s" % (iteration, inp)
 
         # Get in the right directory
@@ -2331,14 +2362,9 @@ rerunning.\n" % spot_count)
         # If first labelit run errors because not happy with user specified cell or SG then
         # ignore user input in the rerun.
         if not self.ignore_user_cell and overrides.get("ignore_user_cell"):
-            if unit_cell_defaults:
-                command += 'known_cell=%s,%s,%s,%s,%s,%s ' % \
-                           (unit_cell_defaults['a'],
-                            unit_cell_defaults['b'],
-                            unit_cell_defaults['c'],
-                            unit_cell_defaults['alpha'],
-                            unit_cell_defaults['beta'],
-                            unit_cell_defaults['gamma'])
+            user_cell = self.preferences.get("unitcell", False)
+            if user_cell:
+                command += 'known_cell=%s,%s,%s,%s,%s,%s ' % tuple(user_cell)
         if not self.ignore_user_SG and overrides.get("ignore_user_SG"):
             if self.spacegroup != False:
                 command += 'known_symmetry=%s ' % self.spacegroup
@@ -2382,7 +2408,6 @@ rerunning.\n" % spot_count)
                                      'queue': self.cluster_queue,
                                      'pid': pid_queue},) )
             else:
-                print "Run %s in directory %s" % (command, os.getcwd())
                 # Run in another thread
                 run = multiprocessing.Process(target=local_subprocess,
                                               args=({"command": command,
@@ -2424,7 +2449,7 @@ rerunning.\n" % spot_count)
 
         # print "cwd", os.getcwd()
 
-        pprint(raw_result)
+        # pprint(raw_result)
 
         iteration = raw_result["tag"]
         stdout = raw_result["stdout"]
@@ -2542,10 +2567,9 @@ rerunning.\n" % spot_count)
 
                 # Rest of the problems
                 elif problem_flag in potential_problems:
-                    print "PROBLEM", problem_flag
 
                     problem_actions = potential_problems[problem_flag]
-                    pprint(problem_actions)
+                    # pprint(problem_actions)
 
                     # No recovery
                     if "kill" in problem_actions:
@@ -2703,17 +2727,18 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
                 self.new_postprocess_labelit(raw_result=result)
                 # All jobs have finished
                 if not len(self.labelit_pids):
-                    print "All jobs done"
+                    # print "All jobs done"
                     break
-            sys.stdout.write(".")
-            sys.stdout.flush()
+            # sys.stdout.write(".")
+            # sys.stdout.flush()
             time.sleep(1)
             ellapsed_time = time.time() - start_time
         else:
             # Make sure all jobs are done or kill them
             for pid in self.labelit_pids:
                 iteration = self.labelit_jobs[pid]
-                print "Killing iteration:%d pid:%d" % (iteration, pid)
+                #TODO
+                # print "Killing iteration:%d pid:%d" % (iteration, pid)
                 os.kill(pid, signal.SIGKILL)
                 self.labelit_pids.remove(pid)
                 self.labelit_results[iteration] = {"Labelit results": "FAILED"}

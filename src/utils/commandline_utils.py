@@ -133,6 +133,15 @@ dp_parser.add_argument("-sg", "--sg", "--spacegroup",
                        default=False,
                        help="Input a spacegroup")
 
+# Unit cell
+dp_parser.add_argument("-u", "--unit", "--unitcell",
+                       action="store",
+                       dest="unitcell",
+                       default=False,
+                       nargs=6,
+                       type=float,
+                       help="Input a unit cell a b c alpha beta gamma")
+
 # Sample type
 dp_parser.add_argument("--sample_type",
                        action="store",
@@ -227,38 +236,66 @@ def regularize_spacegroup(sg_in):
 
     return space_group_symbols(sg_in).number()
 
-def check_work_dir(target_dir, active=True):
+def check_work_dir(target_dir, active=True, up=False):
     """
     Check if a directory exists, increment old versions if present and create an
     empty instance
+
+    Arguments
+    ---------
+    target_dir - string directory to make
+    active - boolean if True make and move directories, if False make no changes but return new
+             directory name
+    up - If True, newest directory will count up. If my_dir exists, new directory will be my_dir_1
+         If False, old directories will be incremented, so if my_dir exists, my_dir will be moved
+         to my_dir_1 and the new directory will be my_dir
     """
 
     # print "check_work_dir %s %s" % (target_dir, active)
 
-    if os.path.exists(target_dir):
-        # print "  Directory exists"
-        # Look for the highest incremented directory
-        i = 1
-        while True:
-            if os.path.exists(target_dir+"_%d" % i):
-                i += 1
-            else:
-                break
+    target_dir = os.path.abspath(target_dir)
 
-        # Move the present directories around
-        for j in range(i, 0, -1):
-            k = j - 1
-            # Add a 1 to current target
-            if k == 0:
-                # print "Move %s to %s_1" % (target_dir, target_dir)
-                shutil.move(target_dir, target_dir+"_1")
-            # Move an already incremented directory higher
-            else:
-                # print "Move %s_%d to %s_%d" % (target_dir, k, target_dir, j)
-                shutil.move(target_dir+"_%d" % k, target_dir+"_%d" % j)
+    # Target dir exists
+    if os.path.exists(target_dir):
+        # Going up
+        if up:
+            # Look for the highest incremented directory
+            i = 1
+            while True:
+                if os.path.exists(target_dir+"_%d" % i):
+                    i += 1
+                else:
+                    break
+            target_dir = target_dir + "_%d" % i
+        # Everyone else is going up
+        else:
+            # If not active and not up - just return directory name
+            if active:
+                # Look for the highest incremented directory
+                i = 1
+                while True:
+                    if os.path.exists(target_dir+"_%d" % i):
+                        i += 1
+                    else:
+                        break
+
+                # Move the present directories around
+                for j in range(i, 0, -1):
+                    k = j - 1
+                    # Add a 1 to current target
+                    if k == 0:
+                        # print "Move %s to %s_1" % (target_dir, target_dir)
+                        shutil.move(target_dir, target_dir+"_1")
+                    # Move an already incremented directory higher
+                    else:
+                        # print "Move %s_%d to %s_%d" % (target_dir, k, target_dir, j)
+                        shutil.move(target_dir+"_%d" % k, target_dir+"_%d" % j)
 
     # Now make the target directory
-    os.makedirs(target_dir)
+    if active:
+        os.makedirs(target_dir)
+
+    return target_dir
 
 def print_sites(left_buffer=""):
     """

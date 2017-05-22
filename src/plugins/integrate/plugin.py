@@ -37,7 +37,7 @@ ID = "bd11f4401eaa11e697c3ac87a3333966"
 VERSION = "2.0.0"
 
 # Standard imports
-# from distutils.spawn import find_executable
+from distutils.spawn import find_executable
 import json
 import logging
 import logging.handlers
@@ -45,7 +45,6 @@ import math
 import multiprocessing
 from multiprocessing import Process
 import os
-# import os.path
 from pprint import pprint
 # import shutil
 import stat
@@ -59,8 +58,8 @@ import numpy
 # RAPD imports
 from plugins.subcontractors.xdsme.xds2mos import Xds2Mosflm
 from utils.communicate import rapd_send
+from utils import exceptions
 from utils.numbers import try_int, try_float
-#from plugins.analysis import RapdPlugin as AnalysisPlugin
 from utils.processes import local_subprocess
 import utils.text as text
 import utils.xutils as Utils
@@ -164,6 +163,12 @@ class RapdPlugin(Process):
         self.image_data = self.command.get("data").get("image_data")
         self.run_data = self.command.get("data").get("run_data")
         self.process_id = self.command["process_id"]
+
+        self.results["command"] = command
+        self.results["process"] = {
+            "process_id": self.command.get("process_id"),
+            "status": 1
+        }
 
         self.logger.debug("self.image_data = %s", self.image_data)
 
@@ -302,6 +307,9 @@ class RapdPlugin(Process):
 
         self.xds_default = self.create_xds_input(self.settings['xdsinp'])
 
+        # Check for dependency problems
+        self.check_dependencies()
+
     def process(self):
         """
         Things to do in main process:
@@ -377,6 +385,34 @@ class RapdPlugin(Process):
         """After it's all done"""
 
         self.tprint(100, "progress")
+
+    def check_dependencies(self):
+        """Make sure dependencies are all available"""
+
+        # Dependencies that have to be present
+        for dependency in ("aimless",
+                           "freerflag",
+                           "mtz2various",
+                           "pointless",
+                           "truncate",
+                           "xds",
+                           "xds_par"):
+            if not find_executable(dependency):
+                self.tprint("Executable for %s is not present, exiting" % dependency,
+                            level=30,
+                            color="red")
+                self.results["process"]["status"] = -1
+                self.results["error"] = "Executable for %s is not present" % dependency
+                self.write_json(self.results)
+                raise exceptions.MissingExecutableException(dependency)
+
+        # If no gnuplot turn off printing
+        if self.settings.get("show_plots", True) and (not self.settings.get("json", False)):
+            if not find_executable("gnuplot"):
+                self.tprint("\nExecutable for gnuplot is not present, turning off plotting",
+                            level=30,
+                            color="red")
+                self.settings["show_plots"] = False
 
     def ram_total(self, xdsinput):
         """

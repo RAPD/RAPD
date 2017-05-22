@@ -30,7 +30,7 @@ __status__ = "Development"
 import argparse
 import importlib
 import os
-# from pprint import pprint
+from pprint import pprint
 import sys
 import uuid
 
@@ -41,11 +41,11 @@ import utils.text as text
 import utils.commandline_utils as commandline_utils
 import detectors.detector_utils as detector_utils
 
-def construct_command(image_headers, commandline_args, detector_module, logger):
+def construct_command(image_headers, commandline_args, detector_module):
     """
     Put together the command for the plugin
     """
-
+    
     # The task to be carried out
     command = {
         "command":"INDEX",
@@ -59,15 +59,18 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
         image_numbers.append(str(header["image_number"]))
         image_template = header["image_template"]
     image_numbers.sort()
-    run_repr = "rapd_index_" + image_template.replace(detector_module.DETECTOR_SUFFIX, "").replace("?", "")
+    run_repr = "rapd_index_" + image_template.replace(detector_module.DETECTOR_SUFFIX, "").\
+               replace("?", "")
     run_repr += "+".join(image_numbers)
 
-    command["directories"] = {
-        "work": os.path.join(os.path.abspath(os.path.curdir), run_repr)
-        }
+    work_dir = commandline_utils.check_work_dir(
+        os.path.join(os.path.abspath(os.path.curdir), run_repr),
+        active=True,
+        up=commandline_args.dir_up)
 
-    # Handle work directory
-    commandline_utils.check_work_dir(command["directories"]["work"], True)
+    command["directories"] = {
+        "work": work_dir
+        }
 
     # Image data
     images = image_headers.keys()
@@ -101,6 +104,7 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     # Best & Labelit
     command["preferences"]["sample_type"] = commandline_args.sample_type
     command["preferences"]["spacegroup"] = commandline_args.spacegroup
+    command["preferences"]["unitcell"] = commandline_args.unitcell
 
     # Labelit
     command["preferences"]["a"] = 0.0
@@ -162,7 +166,6 @@ def construct_command(image_headers, commandline_args, detector_module, logger):
     # Return address
     command["return_address"] = None
 
-    logger.debug("Command for index plugin: %s", command)
     return command
 
 
@@ -342,11 +345,11 @@ def main():
     # Set up terminal printer
     # Verbosity
     if commandline_args.verbose:
-        terminal_log_level = 30
+        terminal_log_level = 10
     elif commandline_args.json:
         terminal_log_level = 100
     else:
-        terminal_log_level = 50
+        terminal_log_level = 30
 
     tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level,
                                             no_color=commandline_args.no_color,
@@ -367,6 +370,12 @@ def main():
     for key, val in environmental_vars.iteritems():
         logger.debug("  " + key + " : " + val)
         tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
+
+    # Should working directory go up or down?
+    if environmental_vars.get("RAPD_DIR_INCREMENT") == "up":
+        commandline_args.dir_up = True
+    else:
+        commandline_args.dir_up = False
 
     # List sites?
     if commandline_args.listsites:
@@ -462,8 +471,7 @@ def main():
 
         command = construct_command(image_headers=image_headers,
                                     commandline_args=commandline_args,
-                                    detector_module=detector_module,
-                                    logger=logger)
+                                    detector_module=detector_module)
     else:
         if logger:
             logger.exception("No detector module found")
