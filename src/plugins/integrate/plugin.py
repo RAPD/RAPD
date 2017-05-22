@@ -37,7 +37,7 @@ ID = "bd11f4401eaa11e697c3ac87a3333966"
 VERSION = "2.0.0"
 
 # Standard imports
-from distutils.spawn import find_executable
+# from distutils.spawn import find_executable
 import json
 import logging
 import logging.handlers
@@ -45,6 +45,7 @@ import math
 import multiprocessing
 from multiprocessing import Process
 import os
+# import os.path
 from pprint import pprint
 # import shutil
 import stat
@@ -57,18 +58,19 @@ import numpy
 
 # RAPD imports
 from plugins.subcontractors.xdsme.xds2mos import Xds2Mosflm
+from plugins.subcontractors.aimless import parse_aimless
+from plugins.subcontractors.xds import get_avg_mosaicity_from_integratelp, get_isa_from_correctlp
 from utils.communicate import rapd_send
-from utils import exceptions
 from utils.numbers import try_int, try_float
+import utils.credits as rcredits
 from utils.processes import local_subprocess
 import utils.text as text
 import utils.xutils as Utils
 import utils.spacegroup as spacegroup
 
-# Import smartie.py from the installed CCP4 package
-# smartie.py is a python script for parsing log files from CCP4
-sys.path.append(os.path.join(os.environ["CCP4"], "share", "smartie"))
-import smartie
+# Import RAPD plugins
+import plugins.analysis.commandline
+import plugins.analysis.plugin
 
 # Software dependencies
 VERSIONS = {
@@ -163,12 +165,6 @@ class RapdPlugin(Process):
         self.image_data = self.command.get("data").get("image_data")
         self.run_data = self.command.get("data").get("run_data")
         self.process_id = self.command["process_id"]
-
-        self.results["command"] = command
-        self.results["process"] = {
-            "process_id": self.command.get("process_id"),
-            "status": 1
-        }
 
         self.logger.debug("self.image_data = %s", self.image_data)
 
@@ -285,7 +281,7 @@ class RapdPlugin(Process):
             self.procs = 4
 
         Process.__init__(self, name="FastIntegration")
-        self.start()
+        # self.start()
 
     def run(self):
         self.logger.debug('Fastintegration::run')
@@ -306,9 +302,6 @@ class RapdPlugin(Process):
         os.chdir(self.dirs['work'])
 
         self.xds_default = self.create_xds_input(self.settings['xdsinp'])
-
-        # Check for dependency problems
-        self.check_dependencies()
 
     def process(self):
         """
@@ -344,7 +337,6 @@ class RapdPlugin(Process):
                     integration_results = self.xds_processing(xds_input)
             os.chdir(self.dirs['work'])
 
-
         if integration_results == 'False':
             # Do a quick clean up?
             pass
@@ -361,58 +353,68 @@ class RapdPlugin(Process):
 
         self.write_json(self.results)
 
-        self.print_info()
+        self.print_credits()
 
-        return
+        self.run_analysis_plugin()
 
-        # Skip this for now
-        analysis = self.run_analysis(final_results['files']['mtzfile'], self.dirs['work'])
-        analysis = 'Success'
-        if analysis == 'Failed':
-            self.logger.debug(analysis)
-            # Add method for dealing with a failure by run_analysis.
-        elif analysis == 'Success':
-            self.logger.debug(analysis)
-            self.results["status"] = "SUCCESS"
-            self.logger.debug(self.results)
-            # self.sendBack2(results)
-            if self.controller_address:
-                rapd_send(self.controller_address, self.results)
+        # return
+        #
+        # # Skip this for now
+        # analysis = self.run_analysis(final_results['files']['mtzfile'], self.dirs['work'])
+        # analysis = 'Success'
+        # if analysis == 'Failed':
+        #     self.logger.debug(analysis)
+        #     # Add method for dealing with a failure by run_analysis.
+        # elif analysis == 'Success':
+        #     self.logger.debug(analysis)
+        #     self.results["status"] = "SUCCESS"
+        #     self.logger.debug(self.results)
+        #     # self.sendBack2(results)
+        #     if self.controller_address:
+        #         rapd_send(self.controller_address, self.results)
+        #
+        # return
 
-        return
+    def run_analysis_plugin(self):
+        """Set up and run the analysis plugin"""
+
+        self.logger.debug("Setting up analysis plugin")
+        self.tprint("\nLaunching ANALYSIS plugin", level=30, color="blue")
+
+        # Construct the pdbquery plugin command
+        class AnalysisArgs(object):
+            """Object containing settings for plugin command construction"""
+            clean = True
+            datafile = self.results["results"]["files"]["mtzfile"]
+            pdbquery = True
+            show_plots = self.settings["show_plots"]
+            run_mode = "subprocess-interactive"
+            sample_type = "default"
+            test = False
+
+        analysis_command = plugins.analysis.commandline.construct_command(AnalysisArgs)
+
+        # The pdbquery plugin
+        plugin = plugins.analysis.plugin
+
+        # Print out plugin info
+        self.tprint(arg="\nPlugin information", level=10, color="blue")
+        self.tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10, color="white")
+        self.tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10, color="white")
+        self.tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
+        self.tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
+
+        # Run the plugin
+        analysis_result = plugin.RapdPlugin(analysis_command,
+                                            self.tprint,
+                                            self.logger)
+
+        self.results["analysis"] = analysis_result
 
     def postprocess(self):
         """After it's all done"""
 
         self.tprint(100, "progress")
-
-    def check_dependencies(self):
-        """Make sure dependencies are all available"""
-
-        # Dependencies that have to be present
-        for dependency in ("aimless",
-                           "freerflag",
-                           "mtz2various",
-                           "pointless",
-                           "truncate",
-                           "xds",
-                           "xds_par"):
-            if not find_executable(dependency):
-                self.tprint("Executable for %s is not present, exiting" % dependency,
-                            level=30,
-                            color="red")
-                self.results["process"]["status"] = -1
-                self.results["error"] = "Executable for %s is not present" % dependency
-                self.write_json(self.results)
-                raise exceptions.MissingExecutableException(dependency)
-
-        # If no gnuplot turn off printing
-        if self.settings.get("show_plots", True) and (not self.settings.get("json", False)):
-            if not find_executable("gnuplot"):
-                self.tprint("\nExecutable for gnuplot is not present, turning off plotting",
-                            level=30,
-                            color="red")
-                self.settings["show_plots"] = False
 
     def ram_total(self, xdsinput):
         """
@@ -1533,16 +1535,16 @@ class RapdPlugin(Process):
             # rerun aimless
             aimless_log = self.aimless(mtzfile, res_cut)
 
-        graphs, summary = self.parse_aimless(aimless_log)
+        graphs, summary = parse_aimless(aimless_log)
 
         wedge = directory.split('_')[-2:]
         summary['wedge'] = '-'.join(wedge)
 
         # Parse INTEGRATE.LP and add information about mosaicity to summary.
-        summary['mosaicity'] = float(self.parse_integrateLP())
+        summary['mosaicity'] = get_avg_mosaicity_from_integratelp()
 
         # Parse CORRECT.LP and add information from that to summary.
-        summary['ISa'] = float(self.parse_correctLP())
+        summary['ISa'] = get_isa_from_correctlp()
 
         # Parse CORRECT.LP and pull out per wedge statistics
         #self.parse_correct()
@@ -1575,528 +1577,6 @@ class RapdPlugin(Process):
             rapd_send(self.controller_address, self.results)
 
         return results
-
-    def parse_aimless(self, logfile):
-        """
-    	Parses the aimless logfile in order to pull out data for
-    	graphing and the results summary table.
-    	Relevant values for the summary table are stored in a dict.
-    	Relevant information for creating plots are stored in a dict,
-    	with the following format for each entry (i.e. each plot):
-
-    	{"<*plot label*>":{
-    	                   "data":{
-    	                          "parameters":{<*line parameters*>},
-    	                           "series":[
-    	                                     {xs : [],
-    	                                      ys : []
-    	                                     }
-    	                                    ]
-    	                          }
-    	                   "parameters" : {<*plot parameters*>}
-    	                  }
-    	 ...
-    	 ...
-    	}
-    	"""
-
-        log = smartie.parselog(logfile)
-
-    	# Pull out information for the results summary table.
-        flag = True
-        summary = log.keytext(0).message().split("\n")
-
-    	# For some reason "Anomalous flag switched ON" is not always
-    	# found, so the line below creates a blank entry for the
-    	# the variable that should be created when that phrase is
-    	# found, eliminating the problem where the program reports that
-    	# the variable anomalous_report is referenced before assignment.
-        anomalous_report = ""
-
-        for line in summary:
-            if "Space group" in line:
-                space_group = line.strip().split(": ")[-1]
-            elif "Average unit cell" in line:
-                unit_cell = [try_float(x) for x in line.split()[3:]]
-            elif "Anomalous flag switched ON" in line:
-                anomalous_report = line
-
-        int_results = {
-            "bins_low": [try_float(x) for x in summary[3].split()[-3:]],
-            "bins_high": [try_float(x) for x in summary[4].split()[-3:]],
-            "rmerge_anom": [try_float(x) for x in summary[6].split()[-3:]],
-            "rmerge_norm": [try_float(x) for x in summary[7].split()[-3:]],
-            "rmeas_anom": [try_float(x) for x in summary[8].split()[-3:]],
-            "rmeas_norm": [try_float(x) for x in summary[9].split()[-3:]],
-            "rpim_anom": [try_float(x) for x in summary[10].split()[-3:]],
-            "rpim_norm": [try_float(x) for x in summary[11].split()[-3:]],
-            "rmerge_top": float(summary[12].split()[-3]),
-            "total_obs": [try_int(x) for x in summary[13].split()[-3:]],
-            "unique_obs": [try_int(x) for x in summary[14].split()[-3:]],
-            "isigi": [try_float(x) for x in summary[15].split()[-3:]],
-            "cc-half": [try_float(x) for x in summary[16].split()[-3:]],
-            "completeness": [try_float(x) for x in summary[17].split()[-3:]],
-            "multiplicity": [try_float(x) for x in summary[18].split()[-3:]],
-            "anom_completeness": [try_float(x) for x in summary[20].split()[-3:]],
-            "anom_multiplicity": [try_float(x) for x in summary[21].split()[-3:]],
-            "anom_correlation": [try_float(x) for x in summary[22].split()[-3:]],
-            "anom_slope": [try_float(summary[23].split()[-3])],
-            "scaling_spacegroup": space_group,
-            "scaling_unit_cell": unit_cell,
-            "text2": anomalous_report,
-            }
-        # Smartie can pull table information based on a regular
-        # expression pattern that matches the table title from
-        # the aimless log file.
-        # NOTE : the regular expression must match the beginning
-        # of the table's title, but does not need to be the entire
-        # title.
-        #
-        # We will use this to pull out the data from tables we are
-        # interested in.
-        #
-        # The beginning of the titles for all common tables in the
-        # aimless log file are given below, but not all of them
-        # are currently used to generate a plot.
-
-        scales = "=== Scales v rotation"
-        rfactor = "Analysis against all Batches"
-        cchalf = "Correlations CC(1/2)"
-        anisotropy = "Anisotropy analysis"
-        vresolution = "Analysis against resolution, XDSdataset"
-        anomalous = "Analysis against resolution, with & without"
-        intensity = "Analysis against intensity"
-        completeness = "Completeness & multiplicity"
-        deviation = "Run 1, standard deviation"
-        rcp = "Radiation damage"
-
-        plots = {
-            "Rmerge vs Frame": {
-                "data": [
-                    {
-                        "parameters": {
-                            "linecolor": "3",
-                            "linelabel": "Rmerge",
-                            "linetype": "11",
-                            "linewidth": "3"
-	                       },
-                        "series": [
-                            {
-                                "xs": [int(x) for x in log.tables(rfactor)[0].col("Batch")],
-                                "ys": [try_float(x, 0.0) for x in \
-                                      log.tables(rfactor)[0].col("Rmerge")]
-                                }
-                            ]},
-                    {"parameters": {
-                        "linecolor": "4",
-                        "linelabel": "SmRmerge",
-                        "linetype": "11",
-                        "linewidth": "3",
-                        },
-                     "series": [
-                         {"xs" : [try_int(x) for x in log.tables(rfactor)[0].col("Batch")],
-                          "ys" : [try_float(x, 0.0) for x in log.tables(rfactor)[0].col("SmRmerge")]
-                         }
-                     ]
-                    },
-                ],
-                "parameters": {
-                    "toplabel": "Rmerge vs Batch for all Runs",
-                    "xlabel": "Image Number",
-                    },
-                },
-            "Imean/RMS scatter": {
-                "data": [
-                    {
-                        "parameters": {
-                            "linecolor": "3",
-                            "linelabel": "I/rms",
-                            "linetype": "11",
-                            "linewidth": "3",
-                        },
-                        "series": [
-                            {
-                                "xs" : [int(x) for x in log.tables(rfactor)[0].col("N")],
-                                "ys" : [try_float(x, 0.0) for x in \
-                                       log.tables(rfactor)[0].col("I/rms")],
-                            }
-                        ]
-                    }
-                ],
-                "parameters": {
-                    "toplabel": "Imean / RMS scatter",
-                    "xlabel": "Image Number",
-                }
-            },
-            "Anomalous & Imean CCs vs Resolution": {
-                "data": [
-                    {
-                        "parameters": {
-                            "linecolor": "3",
-                            "linelabel": "CCanom",
-                            "linetype": "11",
-                            "linewidth": "3",
-                        },
-                        "series": [
-                            {
-                                "xs": [try_float(x, 0.0) for x in \
-                                      log.tables(cchalf)[0].col("1/d^2")],
-                                "ys": [try_float(x, 0.0) for x in \
-                                      log.tables(cchalf)[0].col("CCanom")],
-                            }
-                        ]
-                    },
-                    {
-                        "parameters": {
-                            "linecolor": "4",
-                            "linelabel": "CC1/2",
-                            "linetype": "11",
-                            "linewidth": "3"
-                        },
-                        "series": [
-                            {
-                                "xs": [try_float(x, 0.0) for x in \
-                                      log.tables(cchalf)[0].col("1/d^2")],
-                                "ys": [try_float(x, 0.0) for x in \
-                                      log.tables(cchalf)[0].col("CC1/2")],
-                            }
-                        ]
-                    }
-                ],
-                "parameters": {
-                    "toplabel": "Anomalous & Imean CCs vs. Resolution",
-                    "xlabel": "Dmid (Angstroms)"
-                }
-            },
-            "RMS correlation ration": {
-                "data": [
-                    {
-                        "parameters": {
-                            "linecolor": "3",
-                            "linelabel": "RCRanom",
-                            "linetype": "11",
-                            "linewidth": "3",
-                        },
-                        "series": [
-                            {
-                                "xs": [try_float(x, 0.0) for x in \
-                                      log.tables(cchalf)[0].col("1/d^2")],
-                                "ys": [try_float(x, 0.0) for x in \
-                                      log.tables(cchalf)[0].col("RCRanom")]
-                            }
-                        ]
-                    }
-                ],
-                "parameters": {
-                    "toplabel": "RMS correlation ratio",
-                    "xlabel": "Dmid (Angstroms)",
-                }
-            },
-            "I/sigma, Mean Mn(I)/sd(Mn(I))": {
-                "data": [
-                    {
-                        "parameters": {
-                            "linecolor": "3",
-                            "linelabel": "I/RMS",
-                            "linetype": "11",
-                            "linewidth": "3",
-                        },
-                        "series": [
-                            {
-                                "xs": [try_float(x, 0.0) for x in \
-                                      log.tables(vresolution)[0].col("1/d^2")],
-                                "ys": [try_float(x, 0.0) for x in \
-                                      log.tables(vresolution)[0].col("I/RMS")]
-                            }
-                        ]
-                    },
-                    {
-                        "parameters": {
-                            "linecolor": "4",
-                            "linelabel": "Mn(I/sd)",
-                            "linetype": "11",
-                            "linewidth": "3"
-                        },
-                        "series": [
-                            {
-                                "xs": [try_float(x, 0.0) for x in \
-                                      log.tables(vresolution)[0].col("1/d^2")],
-                                "ys": [try_float(x, 0.0) for x in \
-                                      log.tables(vresolution)[0].col("Mn(I/sd)")]
-                            }
-                        ]
-                    }
-                ],
-                "parameters": {
-                    "toplabel": "I/sigma, Mean Mn(I)/sd(Mn(I))",
-                    "xlabel": "Dmid (Angstroms)"
-                }
-            },
-            "Rmerge, Rfull, Rmeas, Rpim vs. Resolution": {
-                "data": [
-                    {
-                        "parameters": {
-                            "linecolor": "3",
-                            "linelabel": "Remerge",
-                            "linetype": "11",
-                            "linewidth": "3"
-                        },
-                        "series": [
-                            {
-                                "xs": [try_float(x, 0.0) for x in \
-                                      log.tables(vresolution)[0].col("1/d^2")],
-                                "ys": [try_float(x, 0.0) for x in \
-                                      log.tables(vresolution)[0].col("Rmrg")]
-                            }
-                        ]
-                    },
-                    {
-                        "parameters": {
-                            "linecolor": "4",
-                            "linelabel": "Rfull",
-                            "linetype": "11",
-                            "linewidth": "3"
-                        },
-                        "series": [
-                            {
-                                "xs": [try_float(x, 0.0) for x in \
-                                      log.tables(vresolution)[0].col("1/d^2")],
-                                "ys": [try_float(x, 0.0) for x in \
-                                      log.tables(vresolution)[0].col("Rfull")]
-                            }
-                        ]
-                    },
-                    {
-                        "parameters": {
-                            "linecolor": "5",
-                            "linelabel": "Rmeas",
-                            "linetype": "11",
-                            "linewidth": "3"
-                        },
-                        "series": [
-                            {
-                                "xs": [try_float(x, 0.0) for x in \
-                                      log.tables(vresolution)[0].col("1/d^2")],
-                                "ys": [try_float(x, 0.0) for x in \
-                                      log.tables(vresolution)[0].col("Rmeas")]
-                            }
-                        ]
-                    },
-                    {
-                        "parameters": {
-                            "linecolor": "6",
-                            "linelabel": "Rpim",
-                            "linetype": "11",
-                            "linewidth": "3"
-                        },
-                        "series": [
-                            {
-                                "xs": [try_float(x, 0.0) for x in \
-                                      log.tables(vresolution)[0].col("1/d^2")],
-                                "ys": [try_float(x, 0.0) for x in \
-                                      log.tables(vresolution)[0].col("Rpim")]
-                            }
-                        ]
-                    }
-                ],
-                "parameters": {
-                    "toplabel": "Rmerge, Rfull, Rmeas, Rpim vs. Resolution",
-                    "xlabel": "Dmid (Angstroms)"
-                }
-            },
-            "Average I, RMS deviation, and Sd": {
-                "data": [
-                    {
-                        "parameters": {
-                            "linecolor": "3",
-                            "linelabel": "Average I",
-                            "linetype": "11",
-                            "linewidth": "3"
-                        },
-                        "series": [
-                            {
-                                "xs": [try_float(x, 0.0) for x in \
-                                      log.tables(vresolution)[0].col("1/d^2")],
-                                "ys": [try_int(x, 0) for x in log.tables(vresolution)[0].col("AvI")]
-                            }
-                        ]
-                    },
-                    {
-                        "parameters": {
-                            "linecolor": "4",
-                            "linelabel": "RMS deviation",
-                            "linetype": "11",
-                            "linewidth": "3"
-                        },
-                        "series": [
-                            {
-                                "xs": [try_float(x, 0.0) for x in \
-                                      log.tables(vresolution)[0].col("1/d^2")],
-                                "ys": [try_float(x, 0.0) for x in \
-                                      log.tables(vresolution)[0].col("RMSdev")]
-                            }
-                        ]
-                    },
-                    {
-                        "parameters": {
-                            "linecolor": "5",
-                            "linelabel": "std. dev.",
-                            "linetype": "11",
-                            "linewidth": "3"
-                        },
-                        "series": [
-                            {
-                                "xs": [try_float(x, 0.0) for x in \
-                                      log.tables(vresolution)[0].col("1/d^2")],
-                                "ys": [try_float(x, 0.0) for x in \
-                                      log.tables(vresolution)[0].col("sd")]
-                            }
-                        ]
-                    }
-                ],
-                "parameters": {
-                    "toplabel": "Average I, RMS dev., and std. dev.",
-                    "xlabel": "Dmid (Ansgstroms)"
-                }
-            },
-            "Completeness": {
-                "data": [
-                    {
-                        "parameters": {
-                            "linecolor": "3",
-                            "linelabel": "%poss",
-                            "linetype": "11",
-                            "linewidth": "3"
-                        },
-                        "series": [
-                            {
-                                "xs": [try_float(x, 0.0) for x in \
-                                      log.tables(completeness)[0].col("1/d^2")],
-                                "ys": [try_float(x, 0.0) for x in \
-                                      log.tables(completeness)[0].col("%poss")]
-                            }
-                        ]
-                    },
-                    {
-                        "parameters": {
-                            "linecolor": "4",
-                            "linelabel": "C%poss",
-                            "linetype": "11",
-                            "linewidth": "3"
-                        },
-                        "series": [
-                            {
-                                "xs": [try_float(x, 0.0) for x in \
-                                      log.tables(completeness)[0].col("1/d^2")],
-                                "ys": [try_float(x, 0.0) for x in \
-                                      log.tables(completeness)[0].col("C%poss")]
-                            }
-                        ]
-                    },
-                    {
-                        "parameters": {
-                            "linecolor": "5",
-                            "linelabel": "AnoCmp",
-                            "linetype": "11",
-                            "linewidth": "3"
-                        },
-                        "series": [
-                            {
-                                "xs": [try_float(x, 0.0) for x in \
-                                      log.tables(completeness)[0].col("1/d^2")],
-                                "ys": [try_float(x, 0.0) for x in \
-                                      log.tables(completeness)[0].col("AnoCmp")]
-                            }
-                        ]
-                    },
-                    {
-                        "parameters": {
-                            "linecolor": "6",
-                            "linelabel": "AnoFrc",
-                            "linetype": "11",
-                            "linewidth": "3"
-                        },
-                        "series": [
-                            {
-                                "xs": [try_float(x, 0.0) for x in \
-                                      log.tables(completeness)[0].col("1/d^2")],
-                                "ys": [try_float(x, 0.0) for x in \
-                                      log.tables(completeness)[0].col("AnoFrc")]
-                            }
-                        ]
-                    }
-                ],
-                "parameters": {
-                    "toplabel": "Completeness vs. Resolution",
-                    "xlabel": "Dmid (Angstroms)"
-                }
-            },
-            "Redundancy": {
-                "data": [
-                    {
-                        "parameters": {
-                            "linecolor": "3",
-                            "linelabel": "multiplicity",
-                            "linetype": "11",
-                            "linewidth": "3"
-                        },
-                        "series": [
-                            {
-                                "xs": [try_float(x, 0.0) for x in \
-                                      log.tables(completeness)[0].col("1/d^2")],
-                                "ys": [try_float(x, 0.0) for x in \
-                                      log.tables(completeness)[0].col("Mlplct")]
-                            }
-                        ]
-                    },
-                    {
-                        "parameters": {
-                            "linecolor": "4",
-                            "linelabel": "anomalous multiplicity",
-                            "linetype": "11",
-                            "linewidth": "3"
-                        },
-                        "series": [
-                            {
-                                "xs": [try_float(x, 0.0) for x in \
-                                      log.tables(completeness)[0].col("1/d^2")],
-                                "ys": [try_float(x, 0.0) for x in \
-                                      log.tables(completeness)[0].col("AnoMlt")]
-                            }
-                        ]
-                    }
-                ],
-                "parameters": {
-                    "toplabel": "Redundancy",
-                    "xlabel": "Dmid (Angstroms)"
-                }
-            },
-            "Radiation Damage": {
-                "data": [
-                    {
-                        "parameters": {
-                            "linecolor": "3",
-                            "linelabel": "Rcp",
-                            "linetype": "11",
-                            "linewidth": "3"
-                        },
-                        "series": [
-                            {
-                                "xs": [int(x) for x in log.tables(rcp)[0].col("Batch")],
-                                "ys": [try_float(x, 0.0) for x in log.tables(rcp)[0].col("Rcp")]
-                            }
-                        ]
-                    }
-                ],
-                "parameters": {
-                    "toplabel": "Rcp vs. Batch",
-                    "xlabel": "Relative frame difference"
-                }
-            }
-        }
-
-		# Return to the main program.
-        return (plots, int_results)
 
     def aimless(self, mtzin, resolution=False):
         """
@@ -2141,7 +1621,7 @@ class RapdPlugin(Process):
         mtzfile = '_'.join([self.image_data['image_prefix'], 'pointless.mtz'])
         logfile = mtzfile.replace('mtz', 'log')
         if self.spacegroup:
-            cmd = ('pointless xdsin %s hklout %s << eof > %s\nSETTING C2\nSPACEGROUP HKLIN\n eof'
+            cmd = ("pointless xdsin %s hklout %s << eof > %s\nSETTING C2\n\SPACEGROUP HKLIN\n eof"
                    % (hklfile, mtzfile, logfile))
         else:
             cmd = ('pointless xdsin %s hklout %s << eof > %s\n SETTING C2 \n eof'
@@ -2362,35 +1842,6 @@ class RapdPlugin(Process):
         #     return('Failed')
         return "Success"
 
-    def parse_integrateLP(self):
-        """
-        Parse the INTEGRATE.LP file and extract information
-        about the mosaicity.
-        """
-        self.logger.debug('FastIntegration::parse_integrateLP')
-
-        lp = open('INTEGRATE.LP', 'r').readlines()
-
-        for linenum, line in enumerate(lp):
-            if 'SUGGESTED VALUES FOR INPUT PARAMETERS' in line:
-                avg_mosaicity_line = lp[linenum + 2]
-        avg_mosaicity = avg_mosaicity_line.strip().split(' ')[-1]
-        return avg_mosaicity
-
-    def parse_correctLP(self):
-        """
-        Parses the CORRECT.LP file to extract information
-        """
-        self.logger.debug('FastIntegration::parse_correctLP')
-
-        lp = open('CORRECT.LP', 'r').readlines()
-        for i, line in enumerate(lp):
-            if 'ISa\n' in line:
-                isa_line = lp[i + 1]
-                break
-        ISa = isa_line.strip().split()[-1]
-        return ISa
-
     def find_xds_symm(self, xdsdir, xdsinp):
         """
         Checks xds results for consistency with user input spacegroup.
@@ -2588,54 +2039,17 @@ class RapdPlugin(Process):
                 gnuplot.terminate()
 
 
-    def print_info(self):
-        """
-        Print information regarding programs utilized by RAPD
-        """
-        self.logger.debug('AutoindexingStrategy::print_info')
+    def print_credits(self):
+        """Print credits for programs utilized by this plugin"""
 
-        # try:
-        self.tprint(arg="\nRAPD integration uses:", level=99, color="blue")
-        """
-    '\n\nRAPD used the following programs for integrating and scaling the dataset:\n',
-               '  XDS - \n',
-               '       "XDS", W. Kabsch (2010) Acta Cryst. D66, 125-132.\n',
-               '       "Integration, scaling, space-group assignment and post-refinement",',
-               ' W. Kabsch (2010) Acta Cryst. D66, 133-144.\n',
-               '  pointless and aimless - \n',
-               '      "Scaling and assessment of data quality", P.R.',
-               ' Evans (2006) Acta Cryst. D62, 72-82.\n',
-               '      "An introduction to data reduction: space-group',
-               ' determination and intensity statistics,',
-               ' P.R. Evans (2011) Acta Cryst. D67, 282-292\n',
-               '      "How good are my data and what is the resolution?"',
-               ' P.R. Evans and G.N. Murshudov (2013) Acta Cryst. D66,',
-               ' 1204-1214.\n',
-               '  truncate, freerflag, and mtz2various  - \n',
-               '       "The CCP4 Suite: Programs for Protein ',
-               'Crystallography". Acta Cryst. D50, 760-763 \n',
-               '  xdsstat - \n      http://strucbio.biologie.',
-               'uni-konstanz.de/xdswiki/index.php/Xdsstat\n',
-               '\n</pre></div></div></body>'
-               ]
-        """
-        info_string = """    XDS
-    "XDS", W. Kabsch (2010) Acta Cryst. D66, 125-132.
-    "Integration, scaling, space-group assignment and post-refinement",
-    W. Kabsch (2010) Acta Cryst. D66, 133-144.
+        self.tprint(credits.HEADER,
+                    level=99,
+                    color="blue")
 
-    Pointless & Aimless
-    "Scaling and assessment of data quality", P.R. Evans (2006) Acta Cryst.
-    D62, 72-82.
-    "An introduction to data reduction: space-group determination and
-    intensity statistics", P.R. Evans (2011) Acta Cryst. D67, 282-292.
-    "How good are my data and what is the resolution?", P.R. Evans and
-    G.N. Murshudov (2013) Acta Cryst. D66, 1204-1214.
-    """
+        programs = ["AIMLESS", "CCP4", "CCTBX", "POINTLESS", "XDS"]
+        info_string = rcredits.get_credits_text(programs, "    ")
 
-        self.tprint(arg=info_string, level=99, color="white")
-
-        self.logger.debug(info_string)
+        self.tprint(info_string, level=99, color="white")
 
     def write_json(self, results):
         """Write a file with the JSON version of the results"""

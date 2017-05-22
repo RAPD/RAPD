@@ -51,6 +51,7 @@ import numpy
 # RAPD imports
 import plugins.subcontractors.parse as parse
 import utils.credits as rcredits
+import utils.exceptions as exceptions
 import utils.xutils as xutils
 # import info
 import plugins.pdbquery.commandline
@@ -62,6 +63,9 @@ VERSIONS = {
     "gnuplot": (
         "gnuplot 4.2",
         "gnuplot 5.0",
+    ),
+    "phenix": (
+        "Version: 1.11.1",
     )
 }
 
@@ -91,6 +95,9 @@ class RapdPlugin(Process):
     test = True
     volume = None
 
+    do_molrep = True
+    do_phaser = True
+
     xtriage_output_raw = None
     molrep_output_raw = None
     phaser_results = None
@@ -99,7 +106,7 @@ class RapdPlugin(Process):
         "command": None,
         "parsed": {},
         "raw": {},
-        "status": 1,
+        "process": None
     }
 
     def __init__(self, command, tprint=False, logger=False):
@@ -132,6 +139,12 @@ class RapdPlugin(Process):
         # Store passed-in variables
         self.command = command
         self.results["command"] = command
+
+        # Store into results
+        self.results["command"] = command
+        self.results["process"] = {
+            "process_id": self.command.get("process_id"),
+            "status": 1}
 
         # Start up processing
         Process.__init__(self, name="analysis")
@@ -190,6 +203,45 @@ class RapdPlugin(Process):
         if self.test:
             self.logger.debug("TEST IS SET \"ON\"")
 
+        # Check for dependency problems
+        self.check_dependencies()
+
+    def check_dependencies(self):
+        """Make sure dependencies are all available"""
+
+        # If no gnuplot turn off printing
+        if self.preferences.get("show_plots", True) and (not self.preferences.get("json", False)):
+            if not find_executable("gnuplot"):
+                self.tprint("\nExecutable for gnuplot is not present, turning off plotting",
+                            level=30,
+                            color="red")
+                self.preferences["show_plots"] = False
+
+        # If no phenix.xtriage, dead in the water
+        if not find_executable("phenix.xtriage"):
+            self.tprint("Executable for phenix.xtriage is not present, exiting",
+                        level=30,
+                        color="red")
+            self.results["process"]["status"] = -1
+            self.results["error"] = "Executable for phenix.xtriage is not present"
+            self.write_json(self.results)
+            raise exceptions.MissingExecutableException("phenix.xtriage")
+
+        # If no molrep, skip it
+        if not find_executable("molrep"):
+            self.tprint("\nExecutable for molrep is not present, turning off self rotation \
+calculation",
+                        level=30,
+                        color="red")
+            self.do_molrep = False
+
+        # If no phaser, skip it
+        if not find_executable("phenix.phaser"):
+            self.tprint("\nExecutable for phaser is not present, turning off analysis",
+                        level=30,
+                        color="red")
+            self.do_phaser = False
+
     def process(self):
         """Run plugin action"""
 
@@ -219,7 +271,7 @@ class RapdPlugin(Process):
         self.clean_up()
 
         # Finished
-        self.results["status"] = 100
+        self.results["process"]["status"] = 100
         self.tprint(arg=100, level="progress")
 
         # Handle JSON output
@@ -259,82 +311,87 @@ self.command["input_data"]["datafile"]
     def run_molrep(self):
         """Run Molrep to calculate self rotation function"""
 
-        self.tprint("  Calculating self rotation function",
-                    level=30,
-                    color="white")
+        if self.do_molrep:
 
-        command = "molrep -f %s -i <<stop\n_DOC  Y\n_RESMAX 4\n_RESMIN 9\nstop"\
-                  % self.command["input_data"]["datafile"]
+            self.tprint("  Calculating self rotation function",
+                        level=30,
+                        color="white")
 
-        molrep_proc = subprocess.Popen([command,],
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE,
-                                       shell=True)
-        stdout, _ = molrep_proc.communicate()
-        molrep_output_raw = stdout
+            command = "molrep -f %s -i <<stop\n_DOC  Y\n_RESMAX 4\n_RESMIN 9\nstop"\
+                      % self.command["input_data"]["datafile"]
 
-        # Store raw output
-        self.results["raw"]["molrep"] = molrep_output_raw
+            molrep_proc = subprocess.Popen([command,],
+                                           stdout=subprocess.PIPE,
+                                           stderr=subprocess.PIPE,
+                                           shell=True)
+            stdout, _ = molrep_proc.communicate()
+            molrep_output_raw = stdout
 
-        # Save the output in log form
-        with open("molrep_selfrf.log", "w") as out_file:
-            out_file.write(stdout)
+            # Store raw output
+            self.results["raw"]["molrep"] = molrep_output_raw
 
-        # Parse the Molrep log
-        parsed_molrep_results = parse.parse_molrep_output(molrep_output_raw)
+            # Save the output in log form
+            with open("molrep_selfrf.log", "w") as out_file:
+                out_file.write(stdout)
 
-        # Convert the Molrep postscript file to JPEG, if convert is available
-        if find_executable("convert"):
-            convert_proc = subprocess.Popen(["convert",
-                                             "molrep_rf.ps",
-                                             "molrep_rf.jpg"],
-                                            stdout=subprocess.PIPE,
-                                            stderr=subprocess.PIPE,
-                                            shell=False)
-            _, stderr = convert_proc.communicate()
-            if stderr:
+            # Parse the Molrep log
+            parsed_molrep_results = parse.parse_molrep_output(molrep_output_raw)
+
+            # Convert the Molrep postscript file to JPEG, if convert is available
+            if find_executable("convert"):
+                convert_proc = subprocess.Popen(["convert",
+                                                 "molrep_rf.ps",
+                                                 "molrep_rf.jpg"],
+                                                stdout=subprocess.PIPE,
+                                                stderr=subprocess.PIPE,
+                                                shell=False)
+                _, stderr = convert_proc.communicate()
+                if stderr:
+                    self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be \
+    installed",
+                                level=30,
+                                color="red")
+                    parsed_molrep_results["self_rotation_image"] = False
+                else:
+                    parsed_molrep_results["self_rotation_image"] = os.path.abspath("molrep_rf.jpg")
+            else:
                 self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be \
 installed",
                             level=30,
                             color="red")
                 parsed_molrep_results["self_rotation_image"] = False
-            else:
-                parsed_molrep_results["self_rotation_image"] = os.path.abspath("molrep_rf.jpg")
-        else:
-            self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be installed",
-                        level=30,
-                        color="red")
-            parsed_molrep_results["self_rotation_image"] = False
 
-        self.results["parsed"]["molrep"] = parsed_molrep_results
+            self.results["parsed"]["molrep"] = parsed_molrep_results
 
         return True
 
     def run_phaser_ncs(self):
         """Run Phaser tNCS and anisotropy correction"""
 
-        self.tprint("  Analyzing NCS and anisotropy",
-                    level=30,
-                    color="white")
+        if self.do_phaser:
 
-        command = "phenix.phaser << eof\nMODE NCS\nHKLIn %s\nLABIn F=F SIGF=SI\
-GF\neof\n" % self.command["input_data"]["datafile"]
+            self.tprint("  Analyzing NCS and anisotropy",
+                        level=30,
+                        color="white")
 
-        phaser_proc = subprocess.Popen([command,],
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE,
-                                       shell=True)
-        stdout, _ = phaser_proc.communicate()
-        phaser_output_raw = stdout
+            command = "phenix.phaser << eof\nMODE NCS\nHKLIn %s\nLABIn F=F SIGF=SIGF\neof\n" % \
+                      self.command["input_data"]["datafile"]
 
-        # Store raw output
-        self.results["raw"]["phaser"] = phaser_output_raw
+            phaser_proc = subprocess.Popen([command,],
+                                           stdout=subprocess.PIPE,
+                                           stderr=subprocess.PIPE,
+                                           shell=True)
+            stdout, _ = phaser_proc.communicate()
+            phaser_output_raw = stdout
 
-        # Save the output in log form
-        with open("phaser_ncs.log", "w") as out_file:
-            out_file.write(stdout)
+            # Store raw output
+            self.results["raw"]["phaser"] = phaser_output_raw
 
-        self.results["parsed"]["phaser"] = parse.parse_phaser_ncs_output(phaser_output_raw)
+            # Save the output in log form
+            with open("phaser_ncs.log", "w") as out_file:
+                out_file.write(stdout)
+
+            self.results["parsed"]["phaser"] = parse.parse_phaser_ncs_output(phaser_output_raw)
 
         return True
 
@@ -490,130 +547,132 @@ GF\neof\n" % self.command["input_data"]["datafile"]
 
         if "interactive" in self.command["preferences"].get("run_mode"):
 
-            self.tprint("\nPlots", level=99, color="blue")
+            if self.preferences.get("show_plots", False):
 
-            # Determine the open terminal size
-            term_size = os.popen('stty size', 'r').read().split()
+                self.tprint("\nPlots", level=99, color="blue")
 
-            xtriage_plots = self.results["parsed"]["xtriage"]["plots"]
-            # pprint(xtriage_plots)
+                # Determine the open terminal size
+                term_size = os.popen('stty size', 'r').read().split()
 
-            # The intensity plot
-            for plot_label in ("Intensity plots",
-                               "Measurability of Anomalous signal",
-                               "NZ test",
-                               "L test, acentric data",):
+                xtriage_plots = self.results["parsed"]["xtriage"]["plots"]
+                # pprint(xtriage_plots)
 
-                # The plot data
-                plot_parameters = xtriage_plots[plot_label]["parameters"]
-                plot_data = xtriage_plots[plot_label]["data"]
+                # The intensity plot
+                for plot_label in ("Intensity plots",
+                                   "Measurability of Anomalous signal",
+                                   "NZ test",
+                                   "L test, acentric data",):
 
-                # Settings for each plot
-                if plot_label == "Intensity plots":
-                    plot_title = "Intensity vs. Resolution"
-                    x_axis_label = "Resolution (A)"
-                    y_axis_label = "Intensity"
-                    line_label = y_axis_label
-                    reverse = True
-                    plot_data = (plot_data[0],)
-                elif plot_label == "Measurability of Anomalous signal":
-                    plot_title = "Anomalous Measurability"
-                    x_axis_label = "Resolution (A)"
-                    y_axis_label = "Measurability"
-                    line_label = "Measured"
-                    # Line for what is meaningful signal
-                    y2s = [0.05,] * len(plot_data[0]["series"][0]["ys"])
-                    line_label_2 = "Meaningful"
-                    reverse = True
-                    plot_data = (plot_data[0],)
-                elif plot_label in ("NZ test", "L test, acentric data"):
-                    # pprint(plot_parameters)
-                    # pprint(plot_data)
-                    plot_title = plot_parameters["toplabel"]
-                    x_axis_label = plot_parameters["x_label"]
-                    y_axis_label = ""
+                    # The plot data
+                    plot_parameters = xtriage_plots[plot_label]["parameters"]
+                    plot_data = xtriage_plots[plot_label]["data"]
 
-                # Determine plot extent
-                y_array = numpy.array(plot_data[0]["series"][0]["ys"])
-                y_max = y_array.max() * 1.1
-                y_min = 0
-                x_array = numpy.array(plot_data[0]["series"][0]["xs"])
-                x_max = x_array.max()
-                x_min = x_array.min()
+                    # Settings for each plot
+                    if plot_label == "Intensity plots":
+                        plot_title = "Intensity vs. Resolution"
+                        x_axis_label = "Resolution (A)"
+                        y_axis_label = "Intensity"
+                        line_label = y_axis_label
+                        reverse = True
+                        plot_data = (plot_data[0],)
+                    elif plot_label == "Measurability of Anomalous signal":
+                        plot_title = "Anomalous Measurability"
+                        x_axis_label = "Resolution (A)"
+                        y_axis_label = "Measurability"
+                        line_label = "Measured"
+                        # Line for what is meaningful signal
+                        y2s = [0.05,] * len(plot_data[0]["series"][0]["ys"])
+                        line_label_2 = "Meaningful"
+                        reverse = True
+                        plot_data = (plot_data[0],)
+                    elif plot_label in ("NZ test", "L test, acentric data"):
+                        # pprint(plot_parameters)
+                        # pprint(plot_data)
+                        plot_title = plot_parameters["toplabel"]
+                        x_axis_label = plot_parameters["x_label"]
+                        y_axis_label = ""
 
-                # Special y_max & second y set
-                if plot_label == "Measurability of Anomalous signal":
-                    y_max = max(0.055, y_max)
+                    # Determine plot extent
+                    y_array = numpy.array(plot_data[0]["series"][0]["ys"])
+                    y_max = y_array.max() * 1.1
+                    y_min = 0
+                    x_array = numpy.array(plot_data[0]["series"][0]["xs"])
+                    x_max = x_array.max()
+                    x_min = x_array.min()
 
-                gnuplot = subprocess.Popen(["gnuplot"],
-                                           stdin=subprocess.PIPE,
-                                           stderr=subprocess.PIPE)
+                    # Special y_max & second y set
+                    if plot_label == "Measurability of Anomalous signal":
+                        y_max = max(0.055, y_max)
 
-                gnuplot.stdin.write("""set term dumb %d,%d
-                                       set title '%s'
-                                       set xlabel '%s'
-                                       set ylabel '%s' rotate by 90 \n""" %
-                                    (int(term_size[1])-20,
-                                     30,
-                                     plot_title,
-                                     x_axis_label,
-                                     y_axis_label))
+                    gnuplot = subprocess.Popen(["gnuplot"],
+                                               stdin=subprocess.PIPE,
+                                               stderr=subprocess.PIPE)
 
-                # Create the plot string
-                if reverse:
-                    plot_string = "plot [%f:%f] [%f:%f] " \
-                                      % (x_max, x_min, y_min, y_max)
-                else:
-                    plot_string = "plot [%f:%f] [%f:%f] " \
-                                      % (x_min, x_max, y_min, y_max)
-                # Mark the minimum measurability
-                if plot_label == "Measurability of Anomalous signal":
-                    plot_string += "'-' using 1:2 with lines title '%s', " % line_label_2
-                    plot_string += "'-' using 1:2 with lines title '%s'\n" % line_label
+                    gnuplot.stdin.write("""set term dumb %d,%d
+                                           set title '%s'
+                                           set xlabel '%s'
+                                           set ylabel '%s' rotate by 90 \n""" %
+                                        (int(term_size[1])-20,
+                                         30,
+                                         plot_title,
+                                         x_axis_label,
+                                         y_axis_label))
 
-                elif plot_label in ("NZ test", "L test, acentric data"):
-                    for index, data in enumerate(plot_data):
-                        line_label = data["parameters"]["linelabel"]
-                        plot_string += "'-' using 1:2 with lines title '%s' " % line_label
-                        if index == len(plot_data) - 1:
-                            plot_string += "\n"
-                        else:
-                            plot_string += ", "
+                    # Create the plot string
+                    if reverse:
+                        plot_string = "plot [%f:%f] [%f:%f] " \
+                                          % (x_max, x_min, y_min, y_max)
+                    else:
+                        plot_string = "plot [%f:%f] [%f:%f] " \
+                                          % (x_min, x_max, y_min, y_max)
+                    # Mark the minimum measurability
+                    if plot_label == "Measurability of Anomalous signal":
+                        plot_string += "'-' using 1:2 with lines title '%s', " % line_label_2
+                        plot_string += "'-' using 1:2 with lines title '%s'\n" % line_label
 
-                else:
-                    plot_string += "'-' using 1:2 title '%s' with lines\n" % line_label
+                    elif plot_label in ("NZ test", "L test, acentric data"):
+                        for index, data in enumerate(plot_data):
+                            line_label = data["parameters"]["linelabel"]
+                            plot_string += "'-' using 1:2 with lines title '%s' " % line_label
+                            if index == len(plot_data) - 1:
+                                plot_string += "\n"
+                            else:
+                                plot_string += ", "
 
-                gnuplot.stdin.write(plot_string)
+                    else:
+                        plot_string += "'-' using 1:2 title '%s' with lines\n" % line_label
+
+                    gnuplot.stdin.write(plot_string)
 
 
-                # Mark the minimum measurability
-                if plot_label == "Measurability of Anomalous signal":
-                    # Run through the data and add to gnuplot
-                    for plot in plot_data:
-                        xs = plot["series"][0]["xs"]
-                        ys = plot["series"][0]["ys"]
-                        # Minimal impact line
-                        for x_val, y_val in zip(xs, y2s):
-                            gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
-                        gnuplot.stdin.write("e\n")
-                        # Experimental line
-                        for x_val, y_val in zip(xs, ys):
-                            # print x_val, y_val, y2_val
-                            gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
-                        gnuplot.stdin.write("e\n")
-                else:
-                    # Run through the data and add to gnuplot
-                    for plot in plot_data:
-                        xs = plot["series"][0]["xs"]
-                        ys = plot["series"][0]["ys"]
-                        for x_val, y_val in zip(xs, ys):
-                            gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
-                        gnuplot.stdin.write("e\n")
+                    # Mark the minimum measurability
+                    if plot_label == "Measurability of Anomalous signal":
+                        # Run through the data and add to gnuplot
+                        for plot in plot_data:
+                            xs = plot["series"][0]["xs"]
+                            ys = plot["series"][0]["ys"]
+                            # Minimal impact line
+                            for x_val, y_val in zip(xs, y2s):
+                                gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
+                            gnuplot.stdin.write("e\n")
+                            # Experimental line
+                            for x_val, y_val in zip(xs, ys):
+                                # print x_val, y_val, y2_val
+                                gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
+                            gnuplot.stdin.write("e\n")
+                    else:
+                        # Run through the data and add to gnuplot
+                        for plot in plot_data:
+                            xs = plot["series"][0]["xs"]
+                            ys = plot["series"][0]["ys"]
+                            for x_val, y_val in zip(xs, ys):
+                                gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
+                            gnuplot.stdin.write("e\n")
 
-                # Now plot!
-                gnuplot.stdin.flush()
-                time.sleep(2)
-                gnuplot.terminate()
+                    # Now plot!
+                    gnuplot.stdin.flush()
+                    time.sleep(2)
+                    gnuplot.terminate()
 
     def print_credits(self):
         """Print information on programs used to the terminal"""

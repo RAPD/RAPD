@@ -203,7 +203,7 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
         "hi_res": commandline_args.hires,
         "json": commandline_args.json,
         "progress": commandline_args.progress,
-        "show_plots": commandline_args.plotting,
+        "show_plots": commandline_args.show_plots,
         "xdsinp": detector_module.XDSINP,
         "spacegroup_decider": commandline_args.spacegroup_decider,
         "rounds_polishing": commandline_args.rounds_polishing

@@ -68,14 +68,12 @@ def construct_command(commandline_args):
         "clean": commandline_args.clean,
         "pdbquery": commandline_args.pdbquery,
         "json": commandline_args.json,
+        "show_plots" = commandline_args.show_plots,
         "progress": commandline_args.progress,
         "run_mode": commandline_args.run_mode,
         "sample_type": commandline_args.sample_type,
         "test": commandline_args.test,
     }
-
-    # Show plots
-    # command["preferences"]["show_plots"] = commandline_args.plotting
 
     return command
 
@@ -141,6 +139,12 @@ def get_commandline():
                            action="store_true",
                            dest="json",
                            help="Output JSON format string")
+
+    # Hide plots?
+    my_parser.add_argument("--noplot",
+                           action="store_false",
+                           dest="show_plots",
+                           help="No plotting")
 
     # Output progress updates?
     my_parser.add_argument("--progress",

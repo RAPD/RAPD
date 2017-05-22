@@ -66,7 +66,7 @@ dp_parser.add_argument("--nolog",
 # No plotting in commandline
 dp_parser.add_argument("--noplot",
                        action="store_false",
-                       dest="plotting",
+                       dest="show_plots",
                        help="Do not display plots in CLI")
 
 # No color in terminal printing
