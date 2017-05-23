@@ -45,17 +45,22 @@ import sys
 # import urllib2
 # import uuid
 
-# Import smartie.py from the installed CCP4 package
-# smartie.py is a python script for parsing log files from CCP4
-sys.path.append(os.path.join(os.environ["CCP4"], "share", "smartie"))
-import smartie
-
 # RAPD imports
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
 # import utils.credits as credits
 from utils.numbers import try_int, try_float
+
+# Import smartie.py from the installed CCP4 package
+# smartie.py is a python script for parsing log files from CCP4
+try:
+    sys.path.append(os.path.join(os.environ["CCP4"], "share", "smartie"))
+except KeyError as e:
+    print "\nError importing smartie from CCP4."
+    print "Environmental variable %s not set. Exiting." % e
+    exit(9)
+import smartie
 
 # Software dependencies
 VERSIONS = {

@@ -2074,7 +2074,7 @@ class RapdPlugin(Process):
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
 
-        self.tprint(credits.HEADER,
+        self.tprint(rcredits.HEADER,
                     level=99,
                     color="blue")
 
