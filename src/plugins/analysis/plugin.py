@@ -276,7 +276,7 @@ calculation",
         self.tprint(arg=100, level="progress")
 
         # Handle JSON output
-        self.handle_json()
+        self.write_json()
 
         # Notify inerested party
         self.handle_return()
@@ -481,7 +481,7 @@ installed",
         self.print_xtriage_results()
         self.print_plots()
 
-    def handle_json(self):
+    def write_json(self):
         """Output JSON-formatted results to terminal"""
 
         json_results = json.dumps(self.results)
