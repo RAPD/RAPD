@@ -1982,7 +1982,7 @@ def parse_phaser_output(phaser_log):
                 if param.startswith("+TNCS"):
                     tncs = True
     if not pdb:
-        phaser_result = set_phaser_failed("No solution")
+        phaser_result = False # set_phaser_failed("No solution")
     else:
         phaser_result = {"nosol": False,
                          "pdb": pdb,

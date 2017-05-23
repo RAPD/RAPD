@@ -54,7 +54,7 @@ from plugins.subcontractors.parse import parse_phaser_output, set_phaser_failed
 import utils.credits as rcredits
 import utils.exceptions as exceptions
 import utils.global_vars as rglobals
-import utils.pdb as rpdb
+# import utils.pdb as rpdb
 import utils.xutils as xutils
 import info
 
@@ -737,14 +737,14 @@ class RapdPlugin(multiprocessing.Process):
 
             data = parse_phaser_output(phaser_lines)
             pprint(data)
-            if data["spacegroup"] in ("No solution", "Timed out", "NA", "DL FAILED"):
+            if not data:  # data["spacegroup"] in ("No solution", "Timed out", "NA", "DL FAILED"):
                 nosol = True
             else:
                 # Check for negative or low LL-Gain.
                 if float(data["gain"]) < 200.0:
                     nosol = True
             if nosol:
-                self.phaser_results[pdb_code] = {"results": set_phaser_failed("No solution")}
+                self.phaser_results[pdb_code] = {"results": False} # set_phaser_failed("No solution")}
             else:
                 self.phaser_results[pdb_code] = {"results": data}
 
