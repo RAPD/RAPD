@@ -41,6 +41,12 @@ BEST = [
     "Website: http://www.embl-hamburg.de/BEST/\n"
 ]
 
+CCP4 = [
+    "CCP4",
+    "Reference: Acta Cryst. D50:760-763",
+    "Website: http://www.ccp4.ac.uk\n"
+]
+
 CCTBX = [
     "CCTBX - Computational Crystallography Toolbox",
     "Reference: Grosse-Kunstleve et al (2002) J. Appl. Cryst. 35:126-136",
