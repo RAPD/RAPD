@@ -52,6 +52,7 @@ import urllib2
 # RAPD imports
 from plugins.subcontractors.parse import parse_phaser_output, set_phaser_failed
 import utils.credits as rcredits
+import utils.exceptions as exceptions
 import utils.global_vars as rglobals
 import utils.pdb as rpdb
 import utils.xutils as xutils
@@ -218,7 +219,7 @@ class RapdPlugin(multiprocessing.Process):
 
     # Holders for passed-in info
     command = None
-    preferences = None
+    preferences = {}
 
     # Holders for pdb ids
     custom_structures = []
@@ -345,7 +346,7 @@ class RapdPlugin(multiprocessing.Process):
                             color="red")
                 self.results["process"]["status"] = -1
                 self.results["error"] = "Executable for %s is not present" % executable
-                self.write_json(self.results)
+                self.write_json()
                 raise exceptions.MissingExecutableException(executable)
 
         # If no gnuplot turn off printing
@@ -743,8 +744,7 @@ class RapdPlugin(multiprocessing.Process):
                 if float(data["gain"]) < 200.0:
                     nosol = True
             if nosol:
-                self.phaser_results[pdb_code] = {"results": \
-                    set_phaser_failed("No solution")}
+                self.phaser_results[pdb_code] = {"results": set_phaser_failed("No solution")}
             else:
                 self.phaser_results[pdb_code] = {"results": data}
 
@@ -834,11 +834,11 @@ class RapdPlugin(multiprocessing.Process):
     def postprocess(self):
         """Clean up after plugin action"""
 
-        output = {}
-        status = False
-        output_files = False
-        cell_results = False
-        failed = False
+        # output = {}
+        # status = False
+        # output_files = False
+        # cell_results = False
+        # failed = False
 
         self.tprint(arg=90, level="progress")
 
@@ -852,12 +852,12 @@ class RapdPlugin(multiprocessing.Process):
                 os.unlink(os.path.join(self.working_dir, "%s.bz2" % tar))
             shutil.copy("%s.bz2" % tar, self.working_dir)
 
-        results = {
-            "custom_structures": {},
-            "common_contaminants": {},
-            "search_results": {}
-        }
+        # Add fields to results
+        self.results["custom_structures"] = {}
+        self.results["common_contaminants"] = {}
+        self.results["search_results"] = {}
 
+        # Three result types to run through
         types = (
             ("custom_structures", self.custom_structures),
             ("common_contaminants", self.common_contaminants),
@@ -874,15 +874,14 @@ class RapdPlugin(multiprocessing.Process):
 
                 # Get the result in question
                 phaser_result = self.phaser_results[pdb_code]["results"]
-
-                print phaser_result
+                # print phaser_result
 
                 pdb_file = phaser_result.get("pdb")
                 mtz_file = phaser_result.get("mtz")
                 adf_file = phaser_result.get("adf")
                 peak_file = phaser_result.get("peak")
 
-                print pdb_file
+                # print pdb_file
 
                 # Success!
                 if not pdb_file in ("No solution",
@@ -956,15 +955,15 @@ class RapdPlugin(multiprocessing.Process):
                     pass
 
                 # Save into common results
-                results[result_type][pdb_code] = phaser_result
+                self.results[result_type][pdb_code] = phaser_result
 
         # Cleanup my mess.
         self.clean_up()
 
         # Finished
-        results["status"] = 100
+        self.results["process"]["status"] = 100
         self.tprint(arg=100, level="progress")
-        self.results = results
+        pprint(self.results)
 
         # Notify inerested party
         self.handle_return()
