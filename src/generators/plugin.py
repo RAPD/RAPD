@@ -128,6 +128,7 @@ class FileGenerator(CommandlineFileGenerator):
         file_generator.write_docstrings()
         file_generator.write_imports(write_list=("argparse",
                                                  "importlib",
+                                                 "multiprocessing",
                                                  "os",
                                                  "sys",
                                                  "uuid"),
@@ -332,7 +333,7 @@ class FileGenerator(CommandlineFileGenerator):
             "    my_parser.add_argument(\"--nproc\",",
             "                           dest=\"nproc\",",
             "                           type=int,",
-            "                           default=1,",
+            "                           default=max(1, multiprocessing.cpu_count() - 1),",
             "                           help=\"Number of processors to employ\")\n",
             "    # Positional argument",
             "    my_parser.add_argument(action=\"store\",",
