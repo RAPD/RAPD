@@ -54,7 +54,6 @@ def run_phaser_pdbquery(command):
     """
     Run phaser for pdbquery
     """
-
     # Change to correct directory
     os.chdir(command["work_dir"])
 
@@ -84,7 +83,8 @@ def run_phaser_pdbquery(command):
     if cell_analysis:
         command += "SGALTERNATIVE SELECT ALL\n"
         # Set it for worst case in orth
-        command += "JOBS 8\n"
+        # number of processes to run in parallel where possible
+        command += "JOBS 1\n"
     else:
         command += "SGALTERNATIVE SELECT NONE\n"
     if run_before:

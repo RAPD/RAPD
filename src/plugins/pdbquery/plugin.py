@@ -70,109 +70,6 @@ VERSIONS = {
     )
 }
 
-# def phaser_func(command):
-#     """
-#     Run phaser
-#     """
-#
-#     # Change to correct directory
-#     os.chdir(command["work_dir"])
-#
-#     # Setup params
-#     run_before = command.get("run_before", False)
-#     copy = command.get("copy", 1)
-#     resolution = command.get("res", False)
-#     datafile = command.get("data")
-#     input_pdb = command.get("pdb")
-#     spacegroup = command.get("spacegroup")
-#     cell_analysis = command.get("cell analysis", False)
-#     name = command.get("name", spacegroup)
-#     large_cell = command.get("large", False)
-#     timeout = command.get("timeout", False)
-#
-#     # Construct the phaser command file
-#     command = "phaser << eof\nMODE MR_AUTO\n"
-#     command += "HKLIn %s\nLABIn F=F SIGF=SIGF\n" % datafile
-#
-#     # CIF or PDB?
-#     structure_format = "PDB"
-#     if input_pdb[-3:].lower() == "cif":
-#         structure_format = "CIF"
-#     command += "ENSEmble junk %s %s IDENtity 70\n" % (structure_format, input_pdb)
-#     command += "SEARch ENSEmble junk NUM %s\n" % copy
-#     command += "SPACEGROUP %s\n" % spacegroup
-#     if cell_analysis:
-#         command += "SGALTERNATIVE SELECT ALL\n"
-#         # Set it for worst case in orth
-#         command += "JOBS 8\n"
-#     else:
-#         command += "SGALTERNATIVE SELECT NONE\n"
-#     if run_before:
-#         # Picks own resolution
-#         # Round 2, pick best solution as long as less that 10% clashes
-#         command += "PACK SELECT PERCENT\n"
-#         command += "PACK CUTOFF 10\n"
-#     else:
-#         # For first round and cell analysis
-#         # Only set the resolution limit in the first round or cell analysis.
-#         if resolution:
-#             command += "RESOLUTION %s\n" % resolution
-#         else:
-#             # Otherwise it runs a second MR at full resolution!!
-#             # I dont think a second round is run anymore.
-#             # command += "RESOLUTION SEARCH HIGH OFF\n"
-#             if large_cell:
-#                 command += "RESOLUTION 6\n"
-#             else:
-#                 command += "RESOLUTION 4.5\n"
-#         command += "SEARCH DEEP OFF\n"
-#         # Don"t seem to work since it picks the high res limit now.
-#         # Get an error when it prunes all the solutions away and TF has no input.
-#         # command += "PEAKS ROT SELECT SIGMA CUTOFF 4.0\n"
-#         # command += "PEAKS TRA SELECT SIGMA CUTOFF 6.0\n"
-#
-#     # Turn off pruning in 2.6.0
-#     command += "SEARCH PRUNE OFF\n"
-#
-#     # Choose more top peaks to help with getting it correct.
-#     command += "PURGE ROT ENABLE ON\nPURGE ROT NUMBER 3\n"
-#     command += "PURGE TRA ENABLE ON\nPURGE TRA NUMBER 1\n"
-#
-#     # Only keep the top after refinement.
-#     command += "PURGE RNP ENABLE ON\nPURGE RNP NUMBER 1\n"
-#     command += "ROOT %s\neof\n" % name
-#
-#     # Write the phaser command file
-#     phaser_com_file = open("phaser.com", "w")
-#     phaser_com_file.writelines(command)
-#     phaser_com_file.close()
-#
-#     # Run the phaser process
-#     phaser_proc = subprocess32.Popen(["sh phaser.com"],
-#                                      stdout=subprocess32.PIPE,
-#                                      stderr=subprocess32.PIPE,
-#                                      shell=True,
-#                                      preexec_fn=os.setsid)
-#     try:
-#         stdout, _ = phaser_proc.communicate(timeout=timeout)
-#
-#         # Write the log file
-#         with open("phaser.log", "w") as log_file:
-#             log_file.write(stdout)
-#
-#         # Return results
-#         return {"pdb_code": input_pdb.replace(".pdb", "").upper(),
-#                 "log": stdout,
-#                 "status": "COMPLETE"}
-#
-#     # Run taking too long
-#     except subprocess32.TimeoutExpired:
-#         print "  Timeout of %ds exceeded - killing %d" % (timeout, phaser_proc.pid)
-#         os.killpg(os.getpgid(phaser_proc.pid), signal.SIGTERM)
-#         return {"pdb_code": input_pdb.replace(".pdb", "").upper(),
-#                 "log": "Timed out after %d seconds" % timeout,
-#                 "status": "ERROR"}
-
 class RapdPlugin(multiprocessing.Process):
     """
     RAPD plugin class
@@ -234,7 +131,7 @@ class RapdPlugin(multiprocessing.Process):
 
     # Timers for processes
     pdbquery_timer = 30
-    phaser_timer = 10 # rglobals.PHASER_TIMEOUT
+    phaser_timer = rglobals.PHASER_TIMEOUT
 
     def __init__(self, command, tprint=False, logger=False):
         """Initialize the plugin"""

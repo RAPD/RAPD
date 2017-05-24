@@ -26,6 +26,7 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
+import multiprocessing
 import os
 import sys
 import uuid
@@ -161,7 +162,7 @@ def get_commandline():
     my_parser.add_argument("--nproc",
                            dest="nproc",
                            type=int,
-                           default=1,
+                           default=max(1, multiprocessing.cpu_count() - 1),
                            help="Number of processors to employ")
 
     # Run similarity search
