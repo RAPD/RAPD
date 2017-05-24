@@ -29,7 +29,6 @@ import sys
 
 HEADER = "\nRAPD depends on the work of others"
 
-<<<<<<< HEAD
 AIMLESS = [
     "Aimless",
     "Reference: Evans PR (2006) Acta Cryst. D62:72-82.",
@@ -45,7 +44,6 @@ BEST = [
     "BEST",
     "Reference: Bourenkov GP and Popov AN (2006) Acta Cryst. D62:58-64",
     "Website: http://www.embl-hamburg.de/BEST/\n"
->>>>>>> origin/master
 ]
 
 CCTBX = [
