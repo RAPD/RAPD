@@ -50,7 +50,8 @@ import time
 import urllib2
 
 # RAPD imports
-from plugins.subcontractors.parse import parse_phaser_output, set_phaser_failed
+from plugins.subcontractors.phaser import parse_phaser_output, run_phaser_pdbquery
+# from plugins.subcontractors.parse import parse_phaser_output, set_phaser_failed
 import utils.credits as rcredits
 import utils.exceptions as exceptions
 import utils.global_vars as rglobals
@@ -69,108 +70,108 @@ VERSIONS = {
     )
 }
 
-def phaser_func(command):
-    """
-    Run phaser
-    """
-
-    # Change to correct directory
-    os.chdir(command["work_dir"])
-
-    # Setup params
-    run_before = command.get("run_before", False)
-    copy = command.get("copy", 1)
-    resolution = command.get("res", False)
-    datafile = command.get("data")
-    input_pdb = command.get("pdb")
-    spacegroup = command.get("spacegroup")
-    cell_analysis = command.get("cell analysis", False)
-    name = command.get("name", spacegroup)
-    large_cell = command.get("large", False)
-    timeout = command.get("timeout", False)
-
-    # Construct the phaser command file
-    command = "phaser << eof\nMODE MR_AUTO\n"
-    command += "HKLIn %s\nLABIn F=F SIGF=SIGF\n" % datafile
-
-    # CIF or PDB?
-    structure_format = "PDB"
-    if input_pdb[-3:].lower() == "cif":
-        structure_format = "CIF"
-    command += "ENSEmble junk %s %s IDENtity 70\n" % (structure_format, input_pdb)
-    command += "SEARch ENSEmble junk NUM %s\n" % copy
-    command += "SPACEGROUP %s\n" % spacegroup
-    if cell_analysis:
-        command += "SGALTERNATIVE SELECT ALL\n"
-        # Set it for worst case in orth
-        command += "JOBS 8\n"
-    else:
-        command += "SGALTERNATIVE SELECT NONE\n"
-    if run_before:
-        # Picks own resolution
-        # Round 2, pick best solution as long as less that 10% clashes
-        command += "PACK SELECT PERCENT\n"
-        command += "PACK CUTOFF 10\n"
-    else:
-        # For first round and cell analysis
-        # Only set the resolution limit in the first round or cell analysis.
-        if resolution:
-            command += "RESOLUTION %s\n" % resolution
-        else:
-            # Otherwise it runs a second MR at full resolution!!
-            # I dont think a second round is run anymore.
-            # command += "RESOLUTION SEARCH HIGH OFF\n"
-            if large_cell:
-                command += "RESOLUTION 6\n"
-            else:
-                command += "RESOLUTION 4.5\n"
-        command += "SEARCH DEEP OFF\n"
-        # Don"t seem to work since it picks the high res limit now.
-        # Get an error when it prunes all the solutions away and TF has no input.
-        # command += "PEAKS ROT SELECT SIGMA CUTOFF 4.0\n"
-        # command += "PEAKS TRA SELECT SIGMA CUTOFF 6.0\n"
-
-    # Turn off pruning in 2.6.0
-    command += "SEARCH PRUNE OFF\n"
-
-    # Choose more top peaks to help with getting it correct.
-    command += "PURGE ROT ENABLE ON\nPURGE ROT NUMBER 3\n"
-    command += "PURGE TRA ENABLE ON\nPURGE TRA NUMBER 1\n"
-
-    # Only keep the top after refinement.
-    command += "PURGE RNP ENABLE ON\nPURGE RNP NUMBER 1\n"
-    command += "ROOT %s\neof\n" % name
-
-    # Write the phaser command file
-    phaser_com_file = open("phaser.com", "w")
-    phaser_com_file.writelines(command)
-    phaser_com_file.close()
-
-    # Run the phaser process
-    phaser_proc = subprocess32.Popen(["sh phaser.com"],
-                                     stdout=subprocess32.PIPE,
-                                     stderr=subprocess32.PIPE,
-                                     shell=True,
-                                     preexec_fn=os.setsid)
-    try:
-        stdout, _ = phaser_proc.communicate(timeout=timeout)
-
-        # Write the log file
-        with open("phaser.log", "w") as log_file:
-            log_file.write(stdout)
-
-        # Return results
-        return {"pdb_code": input_pdb.replace(".pdb", "").upper(),
-                "log": stdout,
-                "status": "COMPLETE"}
-
-    # Run taking too long
-    except subprocess32.TimeoutExpired:
-        print "  Timeout of %ds exceeded - killing %d" % (timeout, phaser_proc.pid)
-        os.killpg(os.getpgid(phaser_proc.pid), signal.SIGTERM)
-        return {"pdb_code": input_pdb.replace(".pdb", "").upper(),
-                "log": "Timed out after %d seconds" % timeout,
-                "status": "ERROR"}
+# def phaser_func(command):
+#     """
+#     Run phaser
+#     """
+#
+#     # Change to correct directory
+#     os.chdir(command["work_dir"])
+#
+#     # Setup params
+#     run_before = command.get("run_before", False)
+#     copy = command.get("copy", 1)
+#     resolution = command.get("res", False)
+#     datafile = command.get("data")
+#     input_pdb = command.get("pdb")
+#     spacegroup = command.get("spacegroup")
+#     cell_analysis = command.get("cell analysis", False)
+#     name = command.get("name", spacegroup)
+#     large_cell = command.get("large", False)
+#     timeout = command.get("timeout", False)
+#
+#     # Construct the phaser command file
+#     command = "phaser << eof\nMODE MR_AUTO\n"
+#     command += "HKLIn %s\nLABIn F=F SIGF=SIGF\n" % datafile
+#
+#     # CIF or PDB?
+#     structure_format = "PDB"
+#     if input_pdb[-3:].lower() == "cif":
+#         structure_format = "CIF"
+#     command += "ENSEmble junk %s %s IDENtity 70\n" % (structure_format, input_pdb)
+#     command += "SEARch ENSEmble junk NUM %s\n" % copy
+#     command += "SPACEGROUP %s\n" % spacegroup
+#     if cell_analysis:
+#         command += "SGALTERNATIVE SELECT ALL\n"
+#         # Set it for worst case in orth
+#         command += "JOBS 8\n"
+#     else:
+#         command += "SGALTERNATIVE SELECT NONE\n"
+#     if run_before:
+#         # Picks own resolution
+#         # Round 2, pick best solution as long as less that 10% clashes
+#         command += "PACK SELECT PERCENT\n"
+#         command += "PACK CUTOFF 10\n"
+#     else:
+#         # For first round and cell analysis
+#         # Only set the resolution limit in the first round or cell analysis.
+#         if resolution:
+#             command += "RESOLUTION %s\n" % resolution
+#         else:
+#             # Otherwise it runs a second MR at full resolution!!
+#             # I dont think a second round is run anymore.
+#             # command += "RESOLUTION SEARCH HIGH OFF\n"
+#             if large_cell:
+#                 command += "RESOLUTION 6\n"
+#             else:
+#                 command += "RESOLUTION 4.5\n"
+#         command += "SEARCH DEEP OFF\n"
+#         # Don"t seem to work since it picks the high res limit now.
+#         # Get an error when it prunes all the solutions away and TF has no input.
+#         # command += "PEAKS ROT SELECT SIGMA CUTOFF 4.0\n"
+#         # command += "PEAKS TRA SELECT SIGMA CUTOFF 6.0\n"
+#
+#     # Turn off pruning in 2.6.0
+#     command += "SEARCH PRUNE OFF\n"
+#
+#     # Choose more top peaks to help with getting it correct.
+#     command += "PURGE ROT ENABLE ON\nPURGE ROT NUMBER 3\n"
+#     command += "PURGE TRA ENABLE ON\nPURGE TRA NUMBER 1\n"
+#
+#     # Only keep the top after refinement.
+#     command += "PURGE RNP ENABLE ON\nPURGE RNP NUMBER 1\n"
+#     command += "ROOT %s\neof\n" % name
+#
+#     # Write the phaser command file
+#     phaser_com_file = open("phaser.com", "w")
+#     phaser_com_file.writelines(command)
+#     phaser_com_file.close()
+#
+#     # Run the phaser process
+#     phaser_proc = subprocess32.Popen(["sh phaser.com"],
+#                                      stdout=subprocess32.PIPE,
+#                                      stderr=subprocess32.PIPE,
+#                                      shell=True,
+#                                      preexec_fn=os.setsid)
+#     try:
+#         stdout, _ = phaser_proc.communicate(timeout=timeout)
+#
+#         # Write the log file
+#         with open("phaser.log", "w") as log_file:
+#             log_file.write(stdout)
+#
+#         # Return results
+#         return {"pdb_code": input_pdb.replace(".pdb", "").upper(),
+#                 "log": stdout,
+#                 "status": "COMPLETE"}
+#
+#     # Run taking too long
+#     except subprocess32.TimeoutExpired:
+#         print "  Timeout of %ds exceeded - killing %d" % (timeout, phaser_proc.pid)
+#         os.killpg(os.getpgid(phaser_proc.pid), signal.SIGTERM)
+#         return {"pdb_code": input_pdb.replace(".pdb", "").upper(),
+#                 "log": "Timed out after %d seconds" % timeout,
+#                 "status": "ERROR"}
 
 class RapdPlugin(multiprocessing.Process):
     """
@@ -233,7 +234,7 @@ class RapdPlugin(multiprocessing.Process):
 
     # Timers for processes
     pdbquery_timer = 30
-    phaser_timer = rglobals.PHASER_TIMEOUT
+    phaser_timer = 10 # rglobals.PHASER_TIMEOUT
 
     def __init__(self, command, tprint=False, logger=False):
         """Initialize the plugin"""
@@ -712,7 +713,7 @@ class RapdPlugin(multiprocessing.Process):
         # Run in pool
         pool = multiprocessing.Pool(2)
         self.tprint("  Initiating Phaser runs", level=10, color="white")
-        results = pool.map_async(phaser_func, commands)
+        results = pool.map_async(run_phaser_pdbquery, commands)
         pool.close()
         pool.join()
         phaser_results = results.get()
@@ -733,22 +734,24 @@ class RapdPlugin(multiprocessing.Process):
             pdb_code = phaser_result["pdb_code"]
             phaser_lines = phaser_result["log"].split("\n")
 
-            nosol = False
+            solution = True
 
             data = parse_phaser_output(phaser_lines)
-            pprint(data)
-            if not data:  # data["spacegroup"] in ("No solution", "Timed out", "NA", "DL FAILED"):
-                nosol = True
-            else:
-                # Check for negative or low LL-Gain.
-                if float(data["gain"]) < 200.0:
-                    nosol = True
-            if nosol:
-                self.phaser_results[pdb_code] = {"results": False} # set_phaser_failed("No solution")}
-            else:
-                self.phaser_results[pdb_code] = {"results": data}
-
-            # print self.phaser_results.keys()
+            # pprint(data)
+            # if not data:  # data["spacegroup"] in ("No solution", "Timed out", "NA", "DL FAILED"):
+            # if data in ("No Solution", "Timed Out"):
+            #     nosol = True
+            # else:
+            # Check for negative or low LL-Gain.
+            if data.get("gain"):
+                if data.get("gain") < 200.0:
+                    # nosol = True
+                    data = {"solution": False,
+                            "message": "No solution"}
+            # if nosol:
+            self.phaser_results[pdb_code] = {"results": data}
+            # else:
+            #     self.phaser_results[pdb_code] = {"results": data}
 
     def get_pdb_file(self, pdb_code):
         """Retrieve/check for/uncompress/convert structure file"""
@@ -884,11 +887,12 @@ class RapdPlugin(multiprocessing.Process):
                 # print pdb_file
 
                 # Success!
-                if not pdb_file in ("No solution",
-                                    "Timed out",
-                                    "NA",
-                                    "Still running",
-                                    "DL Failed"):
+                if pdb_file:
+                    # in ("No solution",
+                    # "Timed out",
+                    # "NA",
+                    # "Still running",
+                    # "DL Failed"):
 
                     # Pack all the output files into a tar and save the path
                     os.chdir(phaser_result.get("dir"))
@@ -1008,128 +1012,68 @@ class RapdPlugin(multiprocessing.Process):
 
         self.tprint("\nResults", level=99, color="blue")
 
-        # Custom PDBs
-        if self.custom_structures:
-
-            # Find out the longest description field
+        def get_longest_field(pdb_codes):
+            """Calculate the ongest field in a set of results"""
             longest_field = 0
-            for pdb_code in self.custom_structures:
+            for pdb_code in pdb_codes:
                 length = len(self.cell_output[pdb_code]["description"])
                 if length > longest_field:
                     longest_field = length
+            return longest_field
 
-            self.tprint("  User-input structures", level=99, color="white")
-            self.tprint(("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14}").format(
+        def print_header_line(longest_field):
+            """Print the table header line"""
+            self.tprint(("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14} {}").format(
                 "PDB",
                 "Description",
                 "LL-Gain",
                 "RF Z-score",
                 "TF Z-score",
                 "# Clashes",
+                "Info",
                 width=str(longest_field)),
                         level=99,
                         color="white")
 
-            # Run through the codes
-            for pdb_code in self.custom_structures:
+        def print_result_line(my_result, longest_field):
+            """Print the result line in the table"""
 
-                # Get the result in question
-                my_result = self.phaser_results[pdb_code]["results"]
+            print my_result
 
-                # Print the result line
-                self.tprint("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14}".format(
-                    pdb_code,
-                    self.cell_output[pdb_code]["description"],
-                    my_result["gain"],
-                    my_result["rfz"],
-                    my_result["tfz"],
-                    my_result["clash"],
-                    width=str(longest_field)
-                    ),
-                            level=99,
-                            color="white")
-
-        # Common contaminants
-        if self.common_contaminants:
-
-            # Find out the longest description field
-            longest_field = 0
-            for pdb_code in self.common_contaminants:
-                length = len(self.cell_output[pdb_code]["description"])
-                if length > longest_field:
-                    longest_field = length
-
-            self.tprint("\n  Common contaminants", level=99, color="white")
-            self.tprint(("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14}").format(
-                "PDB",
-                "Description",
-                "LL-Gain",
-                "RF Z-score",
-                "TF Z-score",
-                "# Clashes",
-                width=str(longest_field)),
+            self.tprint("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14} {}".format(
+                pdb_code,
+                self.cell_output[pdb_code]["description"],
+                my_result.get("gain", "-"),
+                my_result.get("rfz", "-"),
+                my_result.get("tfz", "-"),
+                my_result.get("clash", "-"),
+                my_result.get("message", ""),
+                width=str(longest_field)
+                ),
                         level=99,
                         color="white")
 
-            # Run through the codes
-            for pdb_code in self.common_contaminants:
+        for tag, pdb_codes in (("User-input structures", self.custom_structures),
+                               ("Common contaminants", self.common_contaminants),
+                               ("Cell parameter search structures", self.search_results)):
 
-                # Get the result in question
-                my_result = self.phaser_results[pdb_code]["results"]
+            if pdb_codes:
 
-                # Print the result line
-                self.tprint("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14}".format(
-                    pdb_code,
-                    self.cell_output[pdb_code]["description"],
-                    my_result["gain"],
-                    my_result["rfz"],
-                    my_result["tfz"],
-                    my_result["clash"],
-                    width=str(longest_field)
-                    ),
-                            level=99,
-                            color="white")
+                # Find out the longest description field
+                longest_field = get_longest_field(pdb_codes)
 
-        # Structures with similar cell dimensions
-        if self.search_results:
+                # Print header for table
+                self.tprint("\n  %s" % tag, level=99, color="white")
+                print_header_line(longest_field)
 
-            # Find out the longest description field
-            longest_field = 0
-            for pdb_code in self.search_results:
-                length = len(self.cell_output[pdb_code]["description"])
-                if length > longest_field:
-                    longest_field = length
+                # Run through the codes
+                for pdb_code in pdb_codes:
 
-            self.tprint("\n  Cell parameter search structures", level=99, color="white")
-            self.tprint(("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14}").format(
-                "PDB",
-                "Description",
-                "LL-Gain",
-                "RF Z-score",
-                "TF Z-score",
-                "# Clashes",
-                width=str(longest_field)),
-                        level=99,
-                        color="white")
+                    # Get the result in question
+                    my_result = self.phaser_results[pdb_code]["results"]
 
-            # Run through the codes
-            for pdb_code in self.search_results:
-
-                # Get the result in question
-                my_result = self.phaser_results[pdb_code]["results"]
-
-                # Print the result line
-                self.tprint("    {:4} {:^{width}} {:^14} {:^14} {:^14} {:^14}".format(
-                    pdb_code,
-                    self.cell_output[pdb_code]["description"],
-                    my_result["gain"],
-                    my_result["rfz"],
-                    my_result["tfz"],
-                    my_result["clash"],
-                    width=str(longest_field)
-                    ),
-                            level=99,
-                            color="white")
+                    # Print the result line
+                    print_result_line(my_result, longest_field)
 
     def write_json(self):
         """Print out JSON-formatted result"""
