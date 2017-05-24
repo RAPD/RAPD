@@ -249,7 +249,7 @@ def main():
         tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
 
     # Should working directory go up or down?
-    if environmental_vars.get("RAPD_DIR_INCREMENT") == "up":
+    if environmental_vars.get("RAPD_DIR_INCREMENT") in ("up", "UP"):
         commandline_args.dir_up = True
     else:
         commandline_args.dir_up = False
