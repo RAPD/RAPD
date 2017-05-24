@@ -491,21 +491,23 @@ class RapdPlugin(multiprocessing.Process):
 
         # Print results to the terminal
         if run_mode == "interactive":
-            self.print_results()
+            self.print_results(self.merged_files)
         # Prints JSON of results to the terminal
         elif run_mode == "json":
             self.write_json({'data_files': self.data_files, 'id_list': self.id_list,
-                              'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix,
-                              'merged_files': self.merged_files, 'data_dir': self.dirs['data']})
+                             'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix.tolist(),
+                             'merged_files': self.merged_files, 'data_dir': self.dirs['data']})
         # Traditional mode as at the beamline
         elif run_mode == "server":
             pass
         # Run and return results to launcher
         elif run_mode == "subprocess":
-            return self.results
+            return {'data_files': self.data_files, 'id_list': self.id_list,
+                    'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix,
+                    'merged_files': self.merged_files, 'data_dir': self.dirs['data']}
         # A subprocess with terminal printing
         elif run_mode == "subprocess-interactive":
-            self.print_results()
+            self.print_results(self.merged_files)
             return self.results
 
     def write_json(self, results):
@@ -518,7 +520,7 @@ class RapdPlugin(multiprocessing.Process):
             print json_string
 
         # Always write a file
-        os.chdir(self.working_dir)
+        os.chdir(self.dirs['work'])
         with open("result.json", 'w') as outfile:
             outfile.writelines(json_string)
 
@@ -1055,7 +1057,7 @@ class RapdPlugin(multiprocessing.Process):
 
         # Append a key for merged file names
         for file in files:
-            tprint(file + ' = ' + str(self.results[file]['files']) + '\n')
+            print(file + ' = ' + str(self.results[file]['files']) + '\n')
 
     def store_dicts(self, dicts):
         """

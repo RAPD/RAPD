@@ -62,7 +62,22 @@ import detectors.detector_utils as detector_utils
 from cctbx.sgtbx import space_group_symbols
 
 def construct_command(commandline_args, logger):
-    """Put together the command for the plugin"""
+    """
+    Put together the command for the plugin
+
+    commandline_args needs to look like:
+
+    class commandline_args(object):
+        clean = True | False
+        datafile = ""
+        json = True | False
+        no_color = True | False
+        nproc = int
+        progress = True | False
+        run_mode = "interactive" | "json" | "server" | "subprocess"
+        test = True | False
+        verbose = True | False
+    """
 
     # The task to be carried out
     command = {
@@ -74,7 +89,7 @@ def construct_command(commandline_args, logger):
     work_dir = commandline_utils.check_work_dir(
         os.path.join(
             os.path.abspath(os.path.curdir),
-            "hcmerge" + run_data["repr"]),
+            "hcmerge"),
         active=True,
         up=commandline_args.dir_up)
 
@@ -100,6 +115,7 @@ def construct_command(commandline_args, logger):
     command["preferences"] = {
         "json": commandline_args.json,
         "nproc": commandline_args.nproc,
+        "run_mode": commandline_args.run_mode,
         "test": commandline_args.test,
     }
     for setting in commandline_args._get_kwargs():
@@ -215,9 +231,15 @@ def get_commandline():
 
     # JSON Output
     parser.add_argument("-j", "--json",
-                        action="store_true",
-                        dest="json",
+                        dest="run_mode",
+                        action="store_const",
+                        const="json",
+                        default="interactive",
                         help="Output JSON format string")
+    parser.add_argument("--run_mode",
+                        dest="run_mode",
+                        help="Specifically set the run mode: interactive, json, server, subprocess"
+                        )
 
     # Multiprocessing
     parser.add_argument("--nproc",
@@ -280,6 +302,19 @@ def get_commandline():
             args.nproc = cpu_count()
         except:
             args.nproc = 1
+    # Implement different run modes
+    if args.run_mode == 'json':
+        args.json = True
+    else:
+        args.json = False
+
+    try:
+        run_mode_list = ['interactive', 'json', 'server', 'subprocess']
+        if [i for i in run_mode_list if i in args.run_mode]:
+            args.run_mode = args.run_mode
+    except:
+        print 'Unrecognized run mode.'
+        sys.exit()
 
     return args
 
