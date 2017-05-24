@@ -39,7 +39,8 @@ CCP4 = [
     "CCP4",
     "Reference: Acta Cryst. D50:760-763",
     "Website: http://www.ccp4.ac.uk\n"
-=======
+]
+
 BEST = [
     "BEST",
     "Reference: Bourenkov GP and Popov AN (2006) Acta Cryst. D62:58-64",
