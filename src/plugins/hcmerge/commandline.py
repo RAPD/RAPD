@@ -58,6 +58,9 @@ import utils.text as text
 import utils.commandline_utils as commandline_utils
 import detectors.detector_utils as detector_utils
 
+# Plugin-specific imports
+from cctbx.sgtbx import space_group_symbols
+
 def construct_command(commandline_args, logger):
     """Put together the command for the plugin"""
 
@@ -68,10 +71,22 @@ def construct_command(commandline_args, logger):
         "status": 0,
         }
 
+    work_dir = commandline_utils.check_work_dir(
+        os.path.join(
+            os.path.abspath(os.path.curdir),
+            "hcmerge" + run_data["repr"]),
+        active=True,
+        up=commandline_args.dir_up)
+
     # Work directory
     command["directories"] = {
-        "work": os.path.join(os.path.abspath(os.path.curdir), "hcmerge")
+        "work": work_dir
         }
+
+    # # Work directory
+    # command["directories"] = {
+    #     "work": os.path.join(os.path.abspath(os.path.curdir), "hcmerge")
+    #     }
 
     # Check the work directory
     commandline_utils.check_work_dir(command["directories"]["work"], True)
@@ -244,7 +259,7 @@ def get_commandline():
     # Regularize spacegroup
     # Check to see if the user has set a spacegroup.  If so, then change from symbol to IUCR number.
     if args.spacegroup:
-        args.spacegroup = commandline_utils.regularize_spacegroup(args.spacegroup)
+        args.spacegroup = space_group_symbols(args.spacegroup).number()
     try:
         method_list = ['single', 'complete', 'average', 'weighted']
         if [i for i in method_list if i in args.method]:
@@ -320,6 +335,12 @@ def main():
     for key, val in environmental_vars.iteritems():
         logger.debug("  " + key + " : " + val)
         tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
+
+    # Should working directory go up or down?
+    if environmental_vars.get("RAPD_DIR_INCREMENT") == "up":
+        commandline_args.dir_up = True
+    else:
+        commandline_args.dir_up = False
 
     # Construct the command
     command = construct_command(commandline_args=commandline_args,

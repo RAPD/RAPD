@@ -98,7 +98,7 @@ class RapdPlugin(multiprocessing.Process):
        "command":"hcmerge",
        "directories":
            {
-               "work": "hcmerge"                          # Where to perform the work
+               "work": "hcmerge"                   # Where to perform the work
            },
        "site_parameters": {}                       # Site data
        "preferences": {}                           # Settings for calculations
@@ -262,10 +262,10 @@ class RapdPlugin(multiprocessing.Process):
             if self.start_point == 'start':
                 self.preprocess()
                 self.process()
+                self.postprocess()
             else:
                 pkl_file = self.datasets
                 self.rerun(pkl_file)
-            self.postprocess()
         except ValueError, Argument:
             self.logger.error('HCMerge::Failure to Run.')
             self.logger.exception(Argument)
@@ -445,17 +445,14 @@ class RapdPlugin(multiprocessing.Process):
         Data transfer, file cleanup and other maintenance issues.
         """
 
-        self.tprint("postprocess")
-
         # Send back results
-        # self.handle_return()
+        self.handle_return()
 
         self.logger.debug('HCMerge::Cleaning up in postprocess.')
         # Copy original datasets to a DATA directory
         commandline_utils.check_work_dir(self.dirs['data'], True)
         for file in self.data_files:
 	        shutil.move(file,self.dirs['data'])
-#		self.get_dicts(self.prefix + '.pkl')
         self.store_dicts({'data_files': self.data_files, 'id_list': self.id_list,
                           'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix,
                           'merged_files': self.merged_files, 'data_dir': self.dirs['data']})
@@ -486,7 +483,7 @@ class RapdPlugin(multiprocessing.Process):
             os.remove(file)
 
     def handle_return(self):
-        """Output data to consumer - still under construction"""
+        """Output data to consumer"""
 
         self.tprint("handle_return")
 
@@ -497,7 +494,9 @@ class RapdPlugin(multiprocessing.Process):
             self.print_results()
         # Prints JSON of results to the terminal
         elif run_mode == "json":
-            self.print_json()
+            self.write_json({'data_files': self.data_files, 'id_list': self.id_list,
+                              'results': self.results, 'graphs': self.graphs, 'matrix': self.matrix,
+                              'merged_files': self.merged_files, 'data_dir': self.dirs['data']})
         # Traditional mode as at the beamline
         elif run_mode == "server":
             pass
@@ -509,10 +508,22 @@ class RapdPlugin(multiprocessing.Process):
             self.print_results()
             return self.results
 
+    def write_json(self, results):
+        """Write a file with the JSON version of the results"""
+
+        json_string = json.dumps(results) #.replace("\\n", "")
+
+        # Output to terminal?
+        if self.settings.get("json", False):
+            print json_string
+
+        # Always write a file
+        os.chdir(self.working_dir)
+        with open("result.json", 'w') as outfile:
+            outfile.writelines(json_string)
+
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
-
-        self.tprint("print_credits")
 
         self.tprint(credits.HEADER, level=99, color="blue")
 
@@ -563,7 +574,6 @@ class RapdPlugin(multiprocessing.Process):
                              shell = True,
                              stdout = subprocess.PIPE,
                              stderr = subprocess.PIPE).communicate()
-#            p = utils.processCluster('sh '+out_file+'_pointless.sh')
         if self.user_spacegroup == 0:
             # Sub-routine for different point groups
             if (p[0] == '' and p[1] == '') == False:
@@ -970,13 +980,6 @@ class RapdPlugin(multiprocessing.Process):
             dendrogram(matrix, color_threshold = 1 - self.cutoff, no_plot=True)
             self.logger.error('HCMerge::matplotlib.pylab unavailable in your version of cctbx.  Plot not generated.')
 
-    def write_db(self):
-        """
-        Writes the results to a database, currently MySQL for RAPD
-        """
-
-        self.logger.debug('HCMerge::Write Results to Database')
-
     def make_log(self, files):
         """
         Makes a log file of the merging results
@@ -1018,6 +1021,41 @@ class RapdPlugin(multiprocessing.Process):
         for file in files:
             out.write(file + ' = ' + str(self.results[file]['files']) + '\n')
         out.close()
+
+    def print_results(self, files):
+        """
+        Makes a log file of the merging results
+        files = list of results files, prefix only
+        """
+
+        # Make a comparison table of results
+        # Set up list of lists for making comparison table
+        table = [['', 'Correlation', 'Space Group', 'Resolution', 'Completeness',
+                  'Multiplicity', 'I/SigI', 'Rmerge', 'Rmeas', 'Anom Rmeas',
+                  'Rpim', 'Anom Rpim', 'CC 1/2', 'Anom Completeness', 'Anom Multiplicity',
+                  'Anom CC', 'Anom Slope', 'Total Obs', 'Unique Obs']]
+        key_list = ['CC', 'scaling_spacegroup', 'bins_high', 'completeness', 'multiplicity',
+                    'isigi', 'rmerge_norm', 'rmeas_norm', 'rmeas_anom',
+                    'rpim_norm', 'rpim_anom', 'cc-half', 'anom_completeness',
+                    'anom_multiplicity', 'anom_correlation', 'anom_slope', 'total_obs', 'unique_obs']
+        for file in files:
+            row = [ file ]
+            for item in key_list:
+                # If it is a list, add first item from the list which is overall stat
+                if type(self.results[file][item]) == list:
+                    row.append(self.results[file][item][0])
+                # Otherwise, add the entire contents of the item
+                else:
+                    row.append(self.results[file][item])
+            table.append(row)
+        # flip columns and rows since rows are so long
+        table = zip(*table)
+        table_print = MakeTables()
+        table_print.pprint_table(sys.stdout, table)
+
+        # Append a key for merged file names
+        for file in files:
+            tprint(file + ' = ' + str(self.results[file]['files']) + '\n')
 
     def store_dicts(self, dicts):
         """
@@ -1073,6 +1111,7 @@ class RapdPlugin(multiprocessing.Process):
 
 			# Make the summary text file for all merged files
             self.make_log(self.merged_files)
+
 
         else:
             pass
