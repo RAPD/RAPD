@@ -449,7 +449,9 @@ class RapdPlugin(multiprocessing.Process):
             # Test mode = only one PDB
             if self.command["preferences"].get("test", False):
                 my_pdbq_results = {
-                    pdbq_results.keys()[0]: pdbq_results[pdbq_results.keys()[0]]
+                    pdbq_results.keys()[0]: pdbq_results[pdbq_results.keys()[0]],
+                    pdbq_results.keys()[1]: pdbq_results[pdbq_results.keys()[1]],
+                    pdbq_results.keys()[2]: pdbq_results[pdbq_results.keys()[2]],
                     }
                 pdbq_results = my_pdbq_results
             self.search_results = pdbq_results.keys()[:]
@@ -608,7 +610,7 @@ class RapdPlugin(multiprocessing.Process):
                     commands.append(job_description)
 
         # Run in pool
-        pool = multiprocessing.Pool(2)
+        pool = multiprocessing.Pool(self.preferences.get("nproc", 1))
         self.tprint("  Initiating Phaser runs", level=10, color="white")
         results = pool.map_async(run_phaser_pdbquery, commands)
         pool.close()
