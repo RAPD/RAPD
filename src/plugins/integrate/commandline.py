@@ -420,6 +420,7 @@ def main():
                       command=command,
                       tprint=tprint,
                       logger=logger)
+    plugin.run()
 
 if __name__ == "__main__":
 
