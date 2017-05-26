@@ -26,6 +26,7 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
+import multiprocessing
 import os
 import sys
 import uuid
@@ -67,6 +68,7 @@ def construct_command(commandline_args):
     command["preferences"] = {
         "clean": commandline_args.clean,
         "dir_up": commandline_args.dir_up,
+        "nproc": commandline_args.nproc,
         "pdbquery": commandline_args.pdbquery,
         "json": commandline_args.json,
         "show_plots": commandline_args.show_plots,
@@ -98,6 +100,13 @@ def get_commandline():
                            action="store_true",
                            dest="test",
                            help="Turn test mode on")
+
+    # Multiprocessing
+    my_parser.add_argument("--nproc",
+                           dest="nproc",
+                           type=int,
+                           default=max(1, multiprocessing.cpu_count() - 1),
+                           help="Number of processors to employ")
 
     # Verbose
     # my_parser.add_argument("-v", "--verbose",
