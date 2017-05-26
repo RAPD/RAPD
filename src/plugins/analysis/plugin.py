@@ -412,7 +412,7 @@ installed",
             dir_up = self.preferences.get("dir_up", False)
             json = False
             no_color = False
-            nproc = 1
+            nproc = self.preferences.get("nproc", 1)
             pdbs = False
             progress = self.preferences.get("progress", False)
             # return_queue = multiprocessing.Queue()
