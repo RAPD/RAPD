@@ -258,9 +258,13 @@ class FileGenerator(CommandlineFileGenerator):
             "    }\n",
             "    # Plugin settings",
             "    command[\"preferences\"] = {",
+            "        \"clean\": commandline_args.clean,",
             "        \"json\": commandline_args.json,",
+            "        \"no_color\": commandline_args.no_color,",
             "        \"nproc\": commandline_args.nproc,",
+            "        \"progress\": commandline_args.progress,",
             "        \"test\": commandline_args.test,",
+            "        \"verbose\": commandline_args.verbose,",
             "    }\n",
             "    return command\n",
         ]
