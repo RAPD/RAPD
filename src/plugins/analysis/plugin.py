@@ -349,7 +349,7 @@ self.command["input_data"]["datafile"]
                 _, stderr = convert_proc.communicate()
                 if stderr:
                     self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be \
-    installed",
+installed",
                                 level=30,
                                 color="red")
                     parsed_molrep_results["self_rotation_image"] = False
@@ -409,15 +409,24 @@ installed",
             clean = True
             contaminants = True
             datafile = self.command["input_data"]["datafile"]
+            dir_up = self.preferences.get("dir_up", False)
             json = False
             no_color = False
             nproc = 1
             pdbs = False
             progress = self.preferences.get("progress", False)
-            run_mode = "subprocess-interactive"
+            # return_queue = multiprocessing.Queue()
+            run_mode = None
             search = True
-            test = False
+            test = True
             verbose = True
+
+        # Set the run mode dependent on this plugin's run mode
+        run_mode = self.preferences.get("run_mode")
+        if run_mode in ("interactive", "subprocess-interactive"):
+            PdbqueryArgs.run_mode = "subprocess-interactive"
+        elif run_mode in ("subprocess", "json", "server"):
+            PdbqueryArgs.run_mode = "subprocess"
 
         pdbquery_command = plugins.pdbquery.commandline.construct_command(PdbqueryArgs)
 
