@@ -77,6 +77,8 @@ def construct_command(commandline_args):
     # Show plots
     # command["preferences"]["show_plots"] = commandline_args.plotting
 
+    # logger.debug("Command for index plugin: %s", command)
+
     return command
 
 def get_commandline():
