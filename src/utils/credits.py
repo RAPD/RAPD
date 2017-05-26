@@ -82,15 +82,12 @@ POINTLESS = [
     "Pointless",
     "Reference: Evans PR (2006) Acta Cryst. D62:72-82.",
     "Website: http://www.mrc-lmb.cam.ac.uk/harry/pre/pointless.html\n"
-<<<<<<< HEAD
-=======
 ]
 
 XDS = [
     "XDS",
     "Reference: Kabsch W (2010) Acta Cryst. D66:125-132",
     "Website: http://xds.mpimf-heidelberg.mpg.de/\n"
->>>>>>> ba9c9852aeac0168483dff11da44e904b88dde31
 ]
 
 RADDOSE = [
