@@ -83,10 +83,16 @@ import info
 
 # Software dependencies
 VERSIONS = {
+    "aimless": (
+        "0.5",
+        ),
     "gnuplot": (
         "gnuplot 4.2",
         "gnuplot 5.0",
-    )
+    ),
+    "pointless": (
+        "1.10.23",
+        )
 }
 
 class RapdPlugin(multiprocessing.Process):
@@ -509,29 +515,6 @@ class RapdPlugin(multiprocessing.Process):
         elif run_mode == "subprocess-interactive":
             self.print_results(self.merged_files)
             return self.results
-
-    def write_json(self, results):
-        """Write a file with the JSON version of the results"""
-
-        json_string = json.dumps(results) #.replace("\\n", "")
-
-        # Output to terminal?
-        if self.settings.get("json", False):
-            print json_string
-
-        # Always write a file
-        os.chdir(self.dirs['work'])
-        with open("result.json", 'w') as outfile:
-            outfile.writelines(json_string)
-
-    def print_credits(self):
-        """Print credits for programs utilized by this plugin"""
-
-        self.tprint(credits.HEADER, level=99, color="blue")
-
-        programs = ["CCTBX", "AIMLESS", "POINTLESS"]
-        info_string = credits.get_credits_text(programs, "    ")
-        self.tprint(info_string, level=99, color="white")
 
     def make_combinations(self, files, number=2):
         """
@@ -1114,11 +1097,33 @@ class RapdPlugin(multiprocessing.Process):
 			# Make the summary text file for all merged files
             self.make_log(self.merged_files)
 
-
         else:
             pass
         # Make the dendrogram and write it out as a PNG
         self.make_dendrogram(self.matrix, self.dpi)
+
+    def write_json(self, results):
+        """Write a file with the JSON version of the results"""
+
+        json_string = json.dumps(results) #.replace("\\n", "")
+
+        # Output to terminal?
+        if self.settings.get("json", False):
+            print json_string
+
+        # Always write a file
+        os.chdir(self.dirs['work'])
+        with open("result.json", 'w') as outfile:
+            outfile.writelines(json_string)
+
+    def print_credits(self):
+        """Print credits for programs utilized by this plugin"""
+
+        self.tprint(credits.HEADER, level=99, color="blue")
+
+        programs = ["CCTBX", "AIMLESS", "POINTLESS"]
+        info_string = credits.get_credits_text(programs, "    ")
+        self.tprint(info_string, level=99, color="white")
 
 class MakeTables:
     """

@@ -62,12 +62,9 @@ from plugins.subcontractors.aimless import parse_aimless
 from plugins.subcontractors.xds import get_avg_mosaicity_from_integratelp, get_isa_from_correctlp
 from utils.communicate import rapd_send
 from utils.numbers import try_int, try_float
-<<<<<<< HEAD
 import utils.credits as rcredits
-=======
 #from plugins.analysis import RapdPlugin as AnalysisPlugin
 from utils.processes import local_subprocess
->>>>>>> origin/master
 import utils.text as text
 import utils.xutils as Utils
 import utils.spacegroup as spacegroup
@@ -300,11 +297,7 @@ class RapdPlugin(Process):
         2. Read in detector specific parameters.
         """
         self.logger.debug('FastIntegration::preprocess')
-<<<<<<< HEAD
-
-=======
         self.tprint(0, "progress")
->>>>>>> origin/master
         if os.path.isdir(self.dirs['work']) == False:
             os.makedirs(self.dirs['work'])
         os.chdir(self.dirs['work'])

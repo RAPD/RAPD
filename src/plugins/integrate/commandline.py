@@ -420,10 +420,7 @@ def main():
                       command=command,
                       tprint=tprint,
                       logger=logger)
-<<<<<<< HEAD
     plugin.run()
-=======
->>>>>>> origin/master
 
 if __name__ == "__main__":
 
