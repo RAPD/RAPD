@@ -456,7 +456,8 @@ class RapdPlugin(multiprocessing.Process):
                 pdbq_results = my_pdbq_results
             self.search_results = pdbq_results.keys()[:]
             self.cell_output.update(pdbq_results)
-            self.tprint("  %d relevant PDB files found on the PDBQ server" % len(pdbq_results.keys()),
+            self.tprint("  %d relevant PDB files found on the PDBQ server" % \
+                        len(pdbq_results.keys()),
                         level=50,
                         color="white")
         else:
