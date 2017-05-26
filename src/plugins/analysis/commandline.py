@@ -66,6 +66,7 @@ def construct_command(commandline_args):
     # Plugin settings
     command["preferences"] = {
         "clean": commandline_args.clean,
+        "dir_up": commandline_args.dir_up,
         "pdbquery": commandline_args.pdbquery,
         "json": commandline_args.json,
         "show_plots": commandline_args.show_plots,
