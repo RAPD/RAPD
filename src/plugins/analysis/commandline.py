@@ -77,11 +77,8 @@ def construct_command(commandline_args):
     # Show plots
     # command["preferences"]["show_plots"] = commandline_args.plotting
 
-<<<<<<< HEAD
     # logger.debug("Command for index plugin: %s", command)
 
-=======
->>>>>>> origin/master
     return command
 
 def get_commandline():
@@ -253,15 +250,12 @@ def main():
         logger.debug("  " + key + " : " + val)
         tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
 
-<<<<<<< HEAD
-=======
     # Should working directory go up or down?
     if environmental_vars.get("RAPD_DIR_INCREMENT") == "up":
         commandline_args.dir_up = True
     else:
         commandline_args.dir_up = False
 
->>>>>>> origin/master
     command = construct_command(commandline_args=commandline_args)
 
     plugin = modules.load_module(seek_module="plugin",
