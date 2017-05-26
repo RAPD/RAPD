@@ -20,7 +20,7 @@ Ways to help:
 ### Questions and Discussion
 
 ### Bugs and Issues
-* Claim the issue by posting on the [issues](https://github.com/rapd/rapd/issues) thread 
+* Claim the issue by posting on the [issues](https://github.com/rapd/rapd/issues) thread
 * Search [GitHub](https://github.com/rapd/rapd/pulls) for an open or closed PR
   that relates to your submission. You don't want to duplicate effort. Someone should have updated the issue, but check just in case!
 * Make your changes in a new git branch that includes the issue number:
