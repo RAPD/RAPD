@@ -303,15 +303,8 @@ class RapdPlugin(Process):
         2. Read in detector specific parameters.
         """
         self.logger.debug('FastIntegration::preprocess')
-<<<<<<< HEAD
-<<<<<<< HEAD
         self.tprint(0, "progress")
-=======
 
->>>>>>> Working toward the run without all images...
-=======
-        self.tprint(0, "progress")
->>>>>>> Trying to fix branch HEAD problems with in integrate and index
         if os.path.isdir(self.dirs['work']) == False:
             os.makedirs(self.dirs['work'])
         os.chdir(self.dirs['work'])
@@ -374,7 +367,6 @@ class RapdPlugin(Process):
         self.print_credits()
 
         self.run_analysis_plugin()
-<<<<<<< HEAD
 
         # return
         #
@@ -397,30 +389,6 @@ class RapdPlugin(Process):
     def run_analysis_plugin(self):
         """Set up and run the analysis plugin"""
 
-=======
-
-        # return
-        #
-        # # Skip this for now
-        # analysis = self.run_analysis(final_results['files']['mtzfile'], self.dirs['work'])
-        # analysis = 'Success'
-        # if analysis == 'Failed':
-        #     self.logger.debug(analysis)
-        #     # Add method for dealing with a failure by run_analysis.
-        # elif analysis == 'Success':
-        #     self.logger.debug(analysis)
-        #     self.results["status"] = "SUCCESS"
-        #     self.logger.debug(self.results)
-        #     # self.sendBack2(results)
-        #     if self.controller_address:
-        #         rapd_send(self.controller_address, self.results)
-        #
-        # return
-
-    def run_analysis_plugin(self):
-        """Set up and run the analysis plugin"""
-
->>>>>>> ba9c9852aeac0168483dff11da44e904b88dde31
         self.logger.debug("Setting up analysis plugin")
         self.tprint("\nLaunching ANALYSIS plugin", level=30, color="blue")
 
