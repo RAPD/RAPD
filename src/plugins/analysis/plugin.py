@@ -36,12 +36,9 @@ ID = "f06818cf1b0f11e79232ac87a3333966"
 VERSION = "1.0.0"
 
 # Standard imports
-<<<<<<< HEAD
 import argparse
 # import from collections import OrderedDict
 # import datetime
-=======
->>>>>>> origin/master
 from distutils.spawn import find_executable
 import json
 import logging
@@ -52,19 +49,13 @@ import shutil
 import subprocess
 # import sys
 import time
-<<<<<<< HEAD
 import unittest
-=======
->>>>>>> origin/master
 import numpy
 
 # RAPD imports
 import plugins.subcontractors.parse as parse
 import utils.credits as rcredits
-<<<<<<< HEAD
 # import utils.modules as modules
-=======
->>>>>>> origin/master
 import utils.xutils as xutils
 # import info
 import plugins.pdbquery.commandline
@@ -331,13 +322,8 @@ installed",
                     level=30,
                     color="white")
 
-<<<<<<< HEAD
         command = "phenix.phaser << eof\nMODE NCS\nHKLIn %s\nLABIn F=F SIGF=SI\GF\neof\n" \
                   % self.command["input_data"]["datafile"]
-=======
-        command = "phenix.phaser << eof\nMODE NCS\nHKLIn %s\nLABIn F=F SIGF=SI\
-GF\neof\n" % self.command["input_data"]["datafile"]
->>>>>>> origin/master
 
         phaser_proc = subprocess.Popen([command,],
                                        stdout=subprocess.PIPE,
