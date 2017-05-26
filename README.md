@@ -1,10 +1,11 @@
 # RAPD
 
-A package for automated indexing, strategy, integration, analysis, & structure solution of macromolecular crystallographic data, complete with AJAX-based user interface.
+A package for automated indexing, strategy, integration, analysis, & structure solution of macromolecular crystallographic data.
 
 Currently we are building out capabilities to the commandline and adding detectors to the software.
 
 Current commands:
+
 * analyze - analyze an MX data set and perform pdbquery
 * get_cif - get a CIF file from the PDB by 4-character code
 * get_pdb - get a PDB file from the PDB by 4-character code
@@ -33,3 +34,5 @@ Current site detectors supported (more are coming):
 
 - UCLA
     - ucla_rigaku_raxisivpp
+
+For instructions on installation and setup, see install/README.md

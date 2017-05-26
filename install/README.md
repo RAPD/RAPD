@@ -24,6 +24,13 @@ This is an install for sites that are integrating RAPD into their systems and wa
 1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git`
 2. Navigate to the install directory and `./install_min`
 
+## Environmental Variables
+RAPD uses environmental variables for setting some defaults:
+* RAPD_AUTHOR_NAME - (development) if set, rapd.generate will put your name in generated files as author
+* RAPD_AUTHOR_EMAIL - (development) if set, rapd.generate will put your email in generated files as author email
+* RAPD_DIR_INCREMENT - if set to "up" or "UP" RAPD will increment directories up as it goes: `rapd_index_XXX_N, ... , rapd_index_XXX_1, rapd_index_XXX`  (newest to oldest) just like Phenix does. If it is set to anything else, RAPD will descend: `rapd_index_XXX, rapd_index_XXX_1, ... , rapd_index_XXX_N` (newest to oldest)
+* RAPD_HOME - is set by RAPD when it sources the rapd.[c]shrc
+
 # Databases
 Running a full site installation requires both Redis and MongoDB. To understand why these are necessary and how to set them up, please see the documentation.
 ### Docker
