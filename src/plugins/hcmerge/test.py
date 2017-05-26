@@ -45,7 +45,7 @@ import unittest
 # import urllib2
 # import uuid
 from distutils.spawn import find_executable
-
+from distutils.version import LooseVersion, StrictVersion
 # RAPD imports
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
@@ -55,6 +55,32 @@ import plugin
 
 class TestDependencies(unittest.TestCase):
     """Example test fixture WITHOUT setUp and tearDown"""
+
+    def test_aimless(self):
+        """Make sure the aimless executable is present"""
+
+        test = find_executable("aimless")
+        self.assertNotEqual(test, None)
+
+    @classmethod
+    def test_aimless_version(cls):
+        """Make sure the aimless executable is an acceptable version"""
+
+        subproc = subprocess.Popen(["aimless"],
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+        time.sleep(4.0)
+        subproc.terminate()
+        # stdout, _ = subproc.communicate()
+        (stdout, stderr) = subproc.communicate()
+        found = False
+
+        # while (subproc.poll() == None):
+        #     time.sleep(0.1)
+        m = re.search('version ([\d\.]+)', stdout)
+        version = m.group(1)
+        # See if found version is higher than minimally required version
+        found = LooseVersion(plugin.VERSIONS["aimless"]) <= LooseVersion(version)
 
     def test_gnuplot(self):
         """Make sure the gnuplot executable is present"""
@@ -72,6 +98,31 @@ class TestDependencies(unittest.TestCase):
         stdout, _ = subproc.communicate()
         found = False
         for version in plugin.VERSIONS["gnuplot"]:
+            if version in stdout:
+                found = True
+                break
+
+        assert found == True
+
+    def test_pointless(self):
+        """Make sure the pointless executable is present"""
+
+        test = find_executable("pointless")
+        self.assertNotEqual(test, None)
+
+    @classmethod
+    def test_pointless_version(cls):
+        """Make sure the pointless executable is an acceptable version"""
+
+        subproc = subprocess.Popen(["pointless"],
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE)
+
+        time.sleep(2.0)
+        subproc.terminate()
+        stdout, _ = subproc.communicate()
+        found = False
+        for version in plugin.VERSIONS["pointless"]:
             if version in stdout:
                 found = True
                 break

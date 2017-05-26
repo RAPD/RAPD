@@ -62,8 +62,14 @@ from plugins.subcontractors.xds import get_avg_mosaicity_from_integratelp, get_i
 from utils.communicate import rapd_send
 from utils import exceptions
 from utils.numbers import try_int, try_float
+<<<<<<< HEAD
 from utils.processes import local_subprocess
 import utils.credits as rcredits
+=======
+import utils.credits as rcredits
+#from plugins.analysis import RapdPlugin as AnalysisPlugin
+from utils.processes import local_subprocess
+>>>>>>> Trying to fix branch HEAD problems with in integrate and index
 import utils.text as text
 import utils.xutils as Utils
 import utils.spacegroup as spacegroup
@@ -303,10 +309,14 @@ class RapdPlugin(Process):
         """
         self.logger.debug('FastIntegration::preprocess')
 <<<<<<< HEAD
+<<<<<<< HEAD
         self.tprint(0, "progress")
 =======
 
 >>>>>>> Working toward the run without all images...
+=======
+        self.tprint(0, "progress")
+>>>>>>> Trying to fix branch HEAD problems with in integrate and index
         if os.path.isdir(self.dirs['work']) == False:
             os.makedirs(self.dirs['work'])
         os.chdir(self.dirs['work'])
