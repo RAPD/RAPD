@@ -117,17 +117,18 @@ class TestDependencies(unittest.TestCase):
         subproc = subprocess.Popen(["pointless"],
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.PIPE)
-
-        time.sleep(2.0)
+        time.sleep(4.0)
         subproc.terminate()
-        stdout, _ = subproc.communicate()
+        # stdout, _ = subproc.communicate()
+        (stdout, stderr) = subproc.communicate()
         found = False
-        for version in plugin.VERSIONS["pointless"]:
-            if version in stdout:
-                found = True
-                break
 
-        assert found == True
+        # while (subproc.poll() == None):
+        #     time.sleep(0.1)
+        m = re.search('version ([\d\.]+)', stdout)
+        version = m.group(1)
+        # See if found version is higher than minimally required version
+        found = LooseVersion(plugin.VERSIONS["pointless"]) <= LooseVersion(version)
 
 def get_dependencies_tests():
     """Return a suite with dependencies tests"""
