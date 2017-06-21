@@ -154,6 +154,7 @@ dp_parser.add_argument("--sample_type",
 dp_parser.add_argument("--solvent",
                        action="store",
                        dest="solvent",
+                       default=0.55,
                        type=float,
                        help="Solvent fraction 0.0-1.0")
 
@@ -327,7 +328,7 @@ def analyze_data_sources(sources,
     """
     Return information on files or directory from input
     """
-    # print "analyze_data_sources", sources
+    print "analyze_data_sources", sources
 
     return_data = {}
 

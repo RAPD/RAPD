@@ -146,7 +146,7 @@ def construct_command(image_headers, commandline_args, detector_module):
     command["preferences"]["crystal_size_x"] = "100"
     command["preferences"]["crystal_size_y"] = "100"
     command["preferences"]["crystal_size_z"] = "100"
-    command["preferences"]["solvent_content"] = 0.55
+    command["preferences"]["solvent_content"] = commandline_args.solvent
 
     # Unknown
     command["preferences"]["beam_flip"] = False
@@ -514,7 +514,7 @@ def main():
     tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
-    plugin.RapdPlugin(None, command, tprint, logger)
+    # plugin.RapdPlugin(None, command, tprint, logger)
 
 if __name__ == "__main__":
 
