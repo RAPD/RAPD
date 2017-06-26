@@ -55,7 +55,7 @@ import sys
 import time
 
 # RAPD imports
-# import info
+import info
 import plugins.subcontractors.parse as Parse
 import plugins.subcontractors.labelit as labelit
 from plugins.subcontractors.xoalign import RunXOalign
@@ -275,7 +275,7 @@ class RapdPlugin(Process):
             self.distl_timer = 30
 
         # Set strategy timer. "False" disables.
-        self.strategy_timer = False
+        self.strategy_timer = 120    
 
         # Set timer for XOAlign. "False" will disable.
         self.xoalign_timer = 30
@@ -1597,6 +1597,7 @@ class RapdPlugin(Process):
 
             # Set self.labelit_dir and go to it.
             self.labelit_dir = os.path.join(self.working_dir, str(highest))
+            # pprint(self.labelit_results)
             self.index_number = self.labelit_results.get("Labelit results").get("mosflm_index")
             os.chdir(self.labelit_dir)
             if self.spacegroup != False:

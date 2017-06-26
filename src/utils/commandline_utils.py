@@ -334,8 +334,11 @@ def analyze_data_sources(sources,
 
     if mode == "index":
 
+        h5_run = False
+        counter = 1
         for source in sources:
             source_abspath = os.path.abspath(source)
+            print "  source_abspath:", source_abspath
 
             # Does file/dir exist?
             if os.path.exists(source_abspath):
@@ -351,7 +354,15 @@ def analyze_data_sources(sources,
                         else:
                             return_data["hdf5_files"].append(source_abspath)
 
-                        prefix = os.path.basename(source).replace("_master.h5", "")
+                        basename = os.path.basename(source)
+                        prefix = basename.replace("_master.h5", "").replace(".", "_")
+                        # print "  prefix:", prefix
+
+                        # Come up with a base h5 cbf name
+                        run = "_"+prefix[-3:]+"_"
+                        if not h5_run:
+                            h5_run = run
+                            # print "  h5_run:", h5_run
 
                         converter = convert_hdf5_cbf.hdf5_to_cbf_converter(
                             master_file=source_abspath,
@@ -363,12 +374,21 @@ def analyze_data_sources(sources,
                             verbose=False)
 
                         converter.run()
-
+                        # print "  output_images:", converter.output_images
                         source_abspath = os.path.abspath(converter.output_images[0])
+
+                        # If this is the second image of a pair, increment file number
+                        if counter > 1:
+                            target_abspath = source_abspath.replace("1.cbf", "%d.cbf" % counter).replace(run, h5_run)
+                            shutil.move(source_abspath, target_abspath)
+                            source_abspath = target_abspath
+
+                        # print "  final source_abspath:", source_abspath
 
                     # 1st file of 1 or 2
                     if not "files" in return_data:
                         return_data["files"] = [source_abspath]
+
                     # 3rd file - error
                     elif len(return_data["files"]) > 1:
                         raise Exception("Up to two images can be submitted for indexing")
@@ -380,6 +400,8 @@ def analyze_data_sources(sources,
                         else:
                             return_data["files"].append(source_abspath)
                             break
+
+                    counter += 1
             else:
                 raise Exception("%s does not exist" % source_abspath)
 

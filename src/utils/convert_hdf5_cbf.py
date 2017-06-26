@@ -109,6 +109,9 @@ class hdf5_to_cbf_converter(object):
         self.verbose = verbose
         self.logger = logger
 
+        # Clear out output images on init
+        self.output_images = []
+
     def run(self):
         """Coordinates the running of the conversion process"""
 
@@ -154,12 +157,6 @@ class hdf5_to_cbf_converter(object):
         # Check for already present files
         self.check_for_output_images()
 
-    def run(self):
-        """Convenience function"""
-
-        self.preprocess()
-        self.process()
-
     def process(self):
         """Coordinates the conversion"""
 
@@ -178,12 +175,10 @@ class hdf5_to_cbf_converter(object):
 
             else:
                 for range_to_make in self.ranges_to_make:
-                    # print "Have to make range from %d to %d" % (range_to_make[0], range_to_make[-1])
                     self.convert_images(start_image=range_to_make[0],
                                         end_image=range_to_make[-1])
 
                 for range_not_to_make in self.ranges_not_to_make:
-                    # print "Have to make range from %d to %d" % (range_to_make[0], range_to_make[-1])
                     self.convert_images(start_image=range_not_to_make[0],
                                         end_image=range_not_to_make[-1],
                                         active=False)
