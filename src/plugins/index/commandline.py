@@ -63,7 +63,6 @@ def construct_command(image_headers, commandline_args, detector_module):
             if h5:
                 h5 += "_"
             h5 += os.path.basename(header["hdf5_source"]).replace("_master.h5", "")
-            print h5
     image_numbers.sort()
 
     if h5:
