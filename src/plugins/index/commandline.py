@@ -393,7 +393,6 @@ def main():
     # Get the data files
     data_files = commandline_utils.analyze_data_sources(sources=commandline_args.sources,
                                                         mode="index")
-
     if "hdf5_files" in data_files:
         logger.debug("HDF5 source file(s)")
         tprint(arg="\nHDF5 source file(s)", level=98, color="blue")
