@@ -350,20 +350,25 @@ def analyze_data_sources(sources,
                         else:
                             return_data["hdf5_files"].append(source_abspath)
 
-                        prefix = os.path.basename(source).replace("_master.h5", "")
+                        #prefix = os.path.basename(source).replace("_master.h5", "")
+                        prefix = os.path.basename(source)[:os.path.basename(source).find('.')]
 
                         converter = convert_hdf5_cbf.hdf5_to_cbf_converter(
                             master_file=source_abspath,
                             output_dir="cbf_files",
                             prefix=prefix,
-                            start_image=1,
-                            end_image=1,
+                            #start_image=1,
+                            start_image=len(return_data["hdf5_files"]),
+                            #end_image=1,
+                            end_image=len(return_data["hdf5_files"]),
                             overwrite=True,
                             verbose=False)
 
                         converter.run()
 
-                        source_abspath = os.path.abspath(converter.output_images[0])
+                        #source_abspath = os.path.abspath(converter.output_images[0])
+                        source_abspath = os.path.abspath(converter.output_images[-1])
+
 
                     # 1st file of 1 or 2
                     if not "files" in return_data:
@@ -381,7 +386,7 @@ def analyze_data_sources(sources,
                             break
             else:
                 raise Exception("%s does not exist" % source_abspath)
-
+        
         return return_data
 
     elif mode == "integrate":
