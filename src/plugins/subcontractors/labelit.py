@@ -204,6 +204,7 @@ def parse_output(labelit_output, iteration=0):
         mosflm_lines = labelit_output[result_lines[1]+1:result_lines[2]-1]
     # If no pseudotrans...
     else:
+        # pprint(labelit_output)
         mosflm_lines = labelit_output[result_lines[1]+1:]
 
     #  Parse Mosflm results

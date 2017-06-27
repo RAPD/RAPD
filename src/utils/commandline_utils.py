@@ -154,6 +154,7 @@ dp_parser.add_argument("--sample_type",
 dp_parser.add_argument("--solvent",
                        action="store",
                        dest="solvent",
+                       default=0.55,
                        type=float,
                        help="Solvent fraction 0.0-1.0")
 
@@ -327,14 +328,17 @@ def analyze_data_sources(sources,
     """
     Return information on files or directory from input
     """
-    # print "analyze_data_sources", sources
+    print "analyze_data_sources", sources
 
     return_data = {}
 
     if mode == "index":
 
+        #h5_run = False
+        #counter = 1
         for source in sources:
             source_abspath = os.path.abspath(source)
+            print "  source_abspath:", source_abspath
 
             # Does file/dir exist?
             if os.path.exists(source_abspath):
@@ -352,6 +356,17 @@ def analyze_data_sources(sources,
 
                         #prefix = os.path.basename(source).replace("_master.h5", "")
                         prefix = os.path.basename(source)[:os.path.basename(source).find('.')]
+                        """
+                        basename = os.path.basename(source)
+                        prefix = basename.replace("_master.h5", "").replace(".", "_")
+                        # print "  prefix:", prefix
+
+                        # Come up with a base h5 cbf name
+                        run = "_"+prefix[-3:]+"_"
+                        if not h5_run:
+                            h5_run = run
+                            # print "  h5_run:", h5_run
+                        """
 
                         converter = convert_hdf5_cbf.hdf5_to_cbf_converter(
                             master_file=source_abspath,
@@ -368,11 +383,19 @@ def analyze_data_sources(sources,
 
                         #source_abspath = os.path.abspath(converter.output_images[0])
                         source_abspath = os.path.abspath(converter.output_images[-1])
+                        """
+                        # If this is the second image of a pair, increment file number
+                        if counter > 1:
+                            target_abspath = source_abspath.replace("1.cbf", "%d.cbf" % counter).replace(run, h5_run)
+                            shutil.move(source_abspath, target_abspath)
+                            source_abspath = target_abspath
 
-
+                        # print "  final source_abspath:", source_abspath
+                        """
                     # 1st file of 1 or 2
                     if not "files" in return_data:
                         return_data["files"] = [source_abspath]
+
                     # 3rd file - error
                     elif len(return_data["files"]) > 1:
                         raise Exception("Up to two images can be submitted for indexing")
@@ -384,6 +407,8 @@ def analyze_data_sources(sources,
                         else:
                             return_data["files"].append(source_abspath)
                             break
+
+                    #counter += 1
             else:
                 raise Exception("%s does not exist" % source_abspath)
         
