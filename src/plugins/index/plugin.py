@@ -55,7 +55,7 @@ import sys
 import time
 
 # RAPD imports
-# import info
+import info
 import plugins.subcontractors.parse as Parse
 import plugins.subcontractors.labelit as labelit
 from plugins.subcontractors.xoalign import RunXOalign
@@ -275,7 +275,7 @@ class RapdPlugin(Process):
             self.distl_timer = 30
 
         # Set strategy timer. "False" disables.
-        self.strategy_timer = False
+        self.strategy_timer = 60
 
         # Set timer for XOAlign. "False" will disable.
         self.xoalign_timer = 30
@@ -1067,6 +1067,7 @@ class RapdPlugin(Process):
         """
 
         self.logger.debug("processStrategy")
+        # print "processStrategy", iteration
 
         # try:
         if iteration:
@@ -1097,9 +1098,10 @@ class RapdPlugin(Process):
                 job = Process(target=self.processMosflm, name="mosflm%s" % i)
             # Run BEST
             else:
+                # print "Starting %d" % i
                 xutils.foldersStrategy(self, os.path.join(os.path.basename(self.labelit_dir), str(i)))
                 # Reduces resolution and reruns Mosflm to calc new files, then runs Best.
-                job = Process(target=self.errorBest, name="best%s" % i, args=(i, best_version))
+                job = multiprocessing.Process(target=self.errorBest, name="best%s" % i, args=(i, best_version))
             job.start()
             self.jobs[str(i)] = job
 
@@ -1322,8 +1324,9 @@ class RapdPlugin(Process):
                     if out.has_key(data):
                         self.error_best_post(iteration, out[data],anom)
                 self.tprint(arg="BEST unable to calculate a strategy", level=30, color="red")
+
                 # print data
-                return("FAILED")
+                return "FAILED"
 
     def postprocessMosflm(self, inp):
         """
@@ -1334,6 +1337,8 @@ class RapdPlugin(Process):
         """
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::postprocessMosflm %s" % inp)
+
+        # print "postprocessMosflm"
 
         try:
             if inp.count("anom"):
@@ -1418,25 +1423,33 @@ class RapdPlugin(Process):
                 timer = 0
                 job = self.jobs[str(i)]
                 while 1:
+                    # print "<<< x=%d, i=%d" % (x, i)
                     if job.is_alive() == False:
                         if i == 4:
                             log = os.path.join(self.labelit_dir, "mosflm_strat%s.out" % l[x])
                         else:
                             log = os.path.join(self.labelit_dir, str(i))+"/best%s.log" % l[x]
                         break
-                    time.sleep(0.1)
-                    timer += 0.1
+                    time.sleep(1)
+                    timer += 1
                     if self.verbose:
-                        number = round(timer%1,1)
+                        number = round(timer % 1, 1)
                         if number in (0.0, 1.0):
-                            self.tprint(arg="    Waiting for strategy to finish %s seconds" % timer, level=10, color="white")
+                            self.tprint(arg="    Waiting for strategy to finish %s seconds" % timer,
+                                        level=10,
+                                        color="white")
                     if self.strategy_timer:
                         if timer >= self.strategy_timer:
                             timed_out = True
+                            # print "Timed out"
+                            job.terminate()
                             break
                 if timed_out:
-                    self.tprint(arg="Strategy calculation timed out", level=30, color="red")
+                    self.tprint(arg="  Strategy calculation timed out", level=30, color="red")
                     set_best_results(i, x)
+                    if i < 4:
+                        if self.multiproc == False:
+                            self.processStrategy(i+1)
                 else:
                     if i == 4:
                         self.postprocessMosflm(log)
@@ -1463,35 +1476,6 @@ class RapdPlugin(Process):
                             if self.verbose:
                                 self.logger.debug("terminating job: %s" % self.jobs[str(i)])
                             xutils.killChildren(self, self.jobs[str(i)].pid)
-
-        # except:
-        #     self.logger.exception("**Error in run_queue**")
-
-    # def convert_images(self):
-    #     """
-    #     Convert H5 files to CBF's for strategies.
-    #     """
-    #     if self.verbose:
-    #         self.logger.debug('AutoindexingStrategy::convert_images')
-    #
-    #     try:
-    #         def run_convert(img, imgn=False):
-    #             header = xutils.convert_hdf5_cbf(inp=img, imgn=imgn)
-    #             l = ['run_id', 'twotheta', 'place_in_run', 'date', 'transmission','collect_mode']
-    #             if type(header) == dict:
-    #                 for x in range(len(l)):
-    #                     del header[l[x]]
-    #             return header
-    #
-    #         self.header.update(run_convert(self.header['fullname'], imgn=1))
-    #
-    #         if self.header2:
-    #             self.header2.update(run_convert(self.header2['fullname'], imgn=2))
-    #         return True
-    #
-    #     except:
-    #         self.logger.exception('**ERROR in convert_images**')
-    #         return False
 
     def labelitSort(self):
         """
@@ -1597,6 +1581,7 @@ class RapdPlugin(Process):
 
             # Set self.labelit_dir and go to it.
             self.labelit_dir = os.path.join(self.working_dir, str(highest))
+            # pprint(self.labelit_results)
             self.index_number = self.labelit_results.get("Labelit results").get("mosflm_index")
             os.chdir(self.labelit_dir)
             if self.spacegroup != False:

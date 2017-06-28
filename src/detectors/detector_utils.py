@@ -56,6 +56,7 @@ parameters_to_get = (
     "chi_range_average",
     "chi_range_total",
     "chi_start",
+    "data_collection_date",
     "kappa",
     "kappa_end",
     "kappa_increment",
@@ -325,10 +326,12 @@ def print_hdf5_item_structure(g, offset='    ') :
 def print_hdf5_header_info(file_name):
     """Prints out information from an hdf5 file"""
 
+
     header = read_hdf5_header(file_name)
 
     print "\n Information from HDF5 file"
     print "============================"
+
     keys = header.keys()
     keys.sort()
     for key in keys:
@@ -337,24 +340,26 @@ def print_hdf5_header_info(file_name):
 
 def read_hdf5_header(file_name) :
     """Searched the HDF5 file header for information and returns a dict"""
-    file = h5py.File(file_name, 'r') # open read-only
-    item = file #["/Configure:0000/Run:0000"]
+    h5_file = h5py.File(file_name, 'r') # open read-only
+    # item = h5_file #["/Configure:0000/Run:0000"]
     header = {}
-    interrogate_hdf5_item_structure("root", item, header)
-    file.close()
+    interrogate_hdf5_item_structure("root", h5_file, header)
+    h5_file.close()
     return header
 
 def interrogate_hdf5_item_structure(key, g, header) :
     """Prints the input file/group/dataset (g) name and begin iterations on its content"""
 
 
-    if isinstance(g, h5py.Dataset) :
-
+    if isinstance(g, h5py.Dataset):
+        # print "dataset"
         if key in parameters_to_get:
             header[key] = g.value
 
-    if isinstance(g, h5py.File) or isinstance(g, h5py.Group) :
-        for new_key,val in dict(g).iteritems() :
+    if isinstance(g, h5py.File) or isinstance(g, h5py.Group):
+        # print "file"
+        for new_key, val in dict(g).iteritems():
+            # print new_key, val
             subg = val
             #print offset, key, #,"   ", subg.name #, val, subg.len(), type(subg),
             interrogate_hdf5_item_structure(new_key, subg, header)
