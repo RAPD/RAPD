@@ -308,60 +308,7 @@ class RapdPlugin(Process):
         else:
             self.multicrystalstrat = True
             self.strategy = "mosflm"
-        """
-        # This is where I place my overall folder settings.
-        self.working_dir                        = False
-        # This is where I have chosen to place my results
-        self.auto_summary                       = False
-        self.labelit_log                        = {}
-        self.labelit_results                    = {}
-        self.labelit_summary                    = False
-        self.labelit_failed                     = False
-        self.distl_log                          = []
-        self.distl_results                      = {}
-        self.distl_summary                      = False
-        self.raddose_results                    = False
-        self.raddose_summary                    = False
-        self.best_log                           = []
-        self.best_results                       = False
-        self.best_summary                       = False
-        self.best1_summary                      = False
-        self.best_summary_long                  = False
-        self.best_anom_log                      = []
-        self.best_anom_results                  = False
-        self.best_anom_summary                  = False
-        self.best1_anom_summary                 = False
-        self.best_anom_summary_long             = False
-        self.best_failed                        = False
-        self.best_anom_failed                   = False
-        self.rerun_best                         = False
-        self.mosflm_strat_log                   = []
-        self.mosflm_strat_anom_log              = []
-        self.mosflm_strat_results               = {}
-        self.mosflm_strat_anom_results          = {}
-        self.mosflm_strat_summary               = False
-        self.mosflm_strat1_summary              = False
-        self.mosflm_strat_summary_long          = False
-        self.mosflm_strat_anom_summary          = False
-        self.mosflm_strat1_anom_summary         = False
-        self.mosflm_strat_anom_summary_long     = False
-        # Labelit settings
-        self.index_number                       = False
-        self.ignore_user_SG                     = False
-        self.pseudotrans                        = False
-        # Raddose settings
-        self.volume                             = False
-        self.calc_num_residues                  = False
-        # Mosflm settings
-        self.prev_sg                            = False
-        # Extra features for BEST
-        self.high_dose                          = False
-        self.crystal_life                       = None
-        self.iso_B                              = False
-        # Dicts for running the Queues
-        self.jobs                               = {}
-        self.vips_images                        = {}
-        """
+
         # Settings for all programs
         #self.beamline = self.header.get("beamline")
         self.time = str(self.header.get("time", "1.0"))
