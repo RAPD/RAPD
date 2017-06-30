@@ -46,10 +46,6 @@ if [ "$RAPD_HOME" != "" ]; then
   echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/test\/test.py \"\$@\"" >>$RAPD_HOME/bin/rapd.test
   chmod +x $RAPD_HOME/bin/rapd.test
 
-  echo "#! /bin/bash" > $RAPD_HOME/install/test
-  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/test\/test.py \"\$@\"" >>$RAPD_HOME/install/test
-  chmod +x $RAPD_HOME/install/test
-
 # Environmental var not set - don't run
 else
   echo "The RAPD_HOME environmental variable must be set. Exiting"

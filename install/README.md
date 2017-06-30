@@ -4,20 +4,32 @@ There are two install types available:
 2. Minimal Install(`install_min`) - useful for gatherer processes, not for data processing or commandline functionality. It will fetch and install Python, add some modules to python, and then create scripts for RAPD to use.
 
 ## Full Install
+This is the install for running RAPD for processing, etc. It is a heavy install (sorry) to make sure all tools are present for people wishing to use all the features present in CCTBX.
 #### Requirements
 A number of packages are required for the full install to function properly. The install script searches and notifies if packages are Missing
-- CentOS and derivatives: `wget subversion git make bzip2 openssl-devel gcc-c+ mesa-libGL-devel mesa-libGLU-devel`
-- Ubuntu: `wget subversion git bzip2 libncurses5-dev zlib1g-dev libssl-dev pkg-config python build-essential libgl1-mesa-dev libglu1-mesa-dev`
+- CentOS 6 and derivatives: `bzip2 gcc-c++ git make mesa-libGL-devel mesa-libGLU-devel openssl-devel patch subversion wget`
+
+- CentOS 7 and derivatives: `bzip2 gcc-c++ git libffi-devel make mesa-libGL-devel mesa-libGLU-devel ncurses-devel openssl-devel patch python readline subversion wget`
+
+- Ubuntu 16: `build-essential bzip2  git libgl1-mesa-dev libglu1-mesa-dev libncurses5-dev libssl-dev pkg-config python subversion wget zlib1g-dev`
 
 #### Installing
 1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git rapd`  
 2. Navigate to the install directory `cd rapd/install` and run the install `./install`  
 
 ## Minimal Install
+This is an install for sites that are integrating RAPD into their systems and want a simple version on nodes for data watching, signaling, etc. Unable to process images, etc. with this install.
 #### Requirements
 #### Installing
 1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git`
 2. Navigate to the install directory and `./install_min`
+
+## Environmental Variables
+RAPD uses environmental variables for setting some defaults:
+* RAPD_AUTHOR_NAME - (development) if set, rapd.generate will put your name in generated files as author
+* RAPD_AUTHOR_EMAIL - (development) if set, rapd.generate will put your email in generated files as author email
+* RAPD_DIR_INCREMENT - if set to "up" or "UP" RAPD will increment directories up as it goes: `rapd_index_XXX_N, ... , rapd_index_XXX_1, rapd_index_XXX`  (newest to oldest) just like Phenix does. If it is set to anything else, RAPD will descend: `rapd_index_XXX, rapd_index_XXX_1, ... , rapd_index_XXX_N` (newest to oldest)
+* RAPD_HOME - is set by RAPD when it sources the rapd.[c]shrc
 
 # Databases
 Running a full site installation requires both Redis and MongoDB. To understand why these are necessary and how to set them up, please see the documentation.
@@ -34,7 +46,7 @@ Required software that should be installed prior to RAPD2 install:
 - CCP4 (http://www.ccp4.ac.uk/)  
 - RADDOSE  
 - MOSFLM (http://www.mrc-lmb.cam.ac.uk/harry/mosflm/)  
-- XOalign.py (xdsme, https://code.google.com/p/xdsme/)  
+- XDSME (https://code.google.com/p/xdsme/)  
 - XDS (http://xds.mpimf-heidelberg.mpg.de/)  
 
 After installing BEST, you will have to go into the installation directory and inspect
@@ -44,16 +56,7 @@ first column ('Name') and edit rapd_agent_strategy.py 'processBest' for the firs
 in command to specify the name of the detector (ie. 'best -f pilatus6m').If this is not
 correct, your strategies will not be very accurate.
 
-1. Install the EPEL repository `sudo yum install epel-release`  
-2. Install Docker `sudo yum install docker-io`  
-3. Start the Docker daemon `sudo service docker start`  
-4. Configure Docker to start on boot `sudo chkconfig docker on`
-
-
-
-
-
-# Common Errors
+# Known Errors
 
 ### CentOS 6
 #### Problem building Cython

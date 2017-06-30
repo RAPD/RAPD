@@ -55,13 +55,22 @@ def construct_command(image_headers, commandline_args, detector_module):
     # Working directory
     image_numbers = []
     image_template = ""
+    h5 = ""
     for _, header in image_headers.iteritems():
         image_numbers.append(str(header["image_number"]))
         image_template = header["image_template"]
+        if "hdf5_source" in header:
+            if h5:
+                h5 += "_"
+            h5 += os.path.basename(header["hdf5_source"]).replace("_master.h5", "")
     image_numbers.sort()
-    run_repr = "rapd_index_" + image_template.replace(detector_module.DETECTOR_SUFFIX, "").\
-               replace("?", "")
-    run_repr += "+".join(image_numbers)
+
+    if h5:
+        run_repr = "rapd_index_" + h5
+    else:
+        run_repr = "rapd_index_" + image_template.replace(detector_module.DETECTOR_SUFFIX, "").\
+                   replace("?", "")
+        run_repr += "+".join(image_numbers)
 
     work_dir = commandline_utils.check_work_dir(
         os.path.join(os.path.abspath(os.path.curdir), run_repr),
@@ -146,7 +155,7 @@ def construct_command(image_headers, commandline_args, detector_module):
     command["preferences"]["crystal_size_x"] = "100"
     command["preferences"]["crystal_size_y"] = "100"
     command["preferences"]["crystal_size_z"] = "100"
-    command["preferences"]["solvent_content"] = 0.55
+    command["preferences"]["solvent_content"] = commandline_args.solvent
 
     # Unknown
     command["preferences"]["beam_flip"] = False
@@ -372,7 +381,7 @@ def main():
         tprint(arg="  arg:%-20s  val:%s" % (key, val), level=10, color="white")
 
     # Should working directory go up or down?
-    if environmental_vars.get("RAPD_DIR_INCREMENT") == "up":
+    if environmental_vars.get("RAPD_DIR_INCREMENT") in ("up", "UP"):
         commandline_args.dir_up = True
     else:
         commandline_args.dir_up = False
@@ -393,7 +402,6 @@ def main():
     # Get the data files
     data_files = commandline_utils.analyze_data_sources(sources=commandline_args.sources,
                                                         mode="index")
-
     if "hdf5_files" in data_files:
         logger.debug("HDF5 source file(s)")
         tprint(arg="\nHDF5 source file(s)", level=98, color="blue")
@@ -459,12 +467,15 @@ def main():
     # Have a detector - read in file data
     if detector_module:
         image_headers = {}
-        for data_file in data_files["files"]:
+        for index, data_file in enumerate(data_files["files"]):
             if site_module:
                 image_headers[data_file] = detector_module.read_header(data_file,
                                                                        site_module.BEAM_SETTINGS)
             else:
                 image_headers[data_file] = detector_module.read_header(data_file)
+            # If this image is derived from an hdf5 master file, tag it
+            if "hdf5_files" in data_files:
+                image_headers[data_file]["hdf5_source"] = data_files["hdf5_files"][index]
 
         logger.debug("Image headers: %s", image_headers)
         print_headers(tprint, image_headers)
