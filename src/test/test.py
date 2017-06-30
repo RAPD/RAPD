@@ -51,7 +51,6 @@ import unittest
 # import detectors.detector_utils as detector_utils
 import test_sets
 import utils.global_vars as rglobals
-print rglobals
 import utils.log
 import utils.site as site
 
@@ -118,6 +117,7 @@ def run_processing(target, plugin, tprint, verbose=True):
 
     # Read in the results
     tprint("    Comparing results", 10, "white")
+    print "cwd", os.getcwd()
     result_standard = json.loads(open(plugin+".json", "r").readlines()[0])
     result_test = json.loads(open(target_def[plugin+"_result"], "r").readlines()[0])
 
