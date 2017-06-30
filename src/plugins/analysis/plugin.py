@@ -457,9 +457,10 @@ installed",
             self.logger.debug("Cleaning up Phaser files and folders")
 
             # Change to work dir
-            os.chdir(self.working_dir)
+            os.chdir(self.command["directories"]["work"])
 
             # # Gather targets and remove
+            #TODO
             # files_to_clean = glob.glob("Phaser_*")
             # for target in files_to_clean:
             #     shutil.rmtree(target)

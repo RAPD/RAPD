@@ -90,6 +90,7 @@ VERSIONS = {
     ),
     "pointless": (
         "version 1.10",
+        "version 1.11",
         ),
     "truncate": (
         "version 7.0",
@@ -418,10 +419,14 @@ class RapdPlugin(Process):
             """Object containing settings for plugin command construction"""
             clean = True
             datafile = self.results["results"]["files"]["mtzfile"]
-            pdbquery = True
-            show_plots = self.preferences["show_plots"]
+            dir_up = self.preferences["dir_up"]
+            json = self.preferences["json"]
+            nproc = self.preferences["nproc"]
+            pdbquery = False  #TODO
+            progress = self.preferences["progress"]
             run_mode = "subprocess-interactive"
             sample_type = "default"
+            show_plots = self.preferences["show_plots"]
             test = False
 
         analysis_command = plugins.analysis.commandline.construct_command(AnalysisArgs)

@@ -203,6 +203,7 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
         "low_res": commandline_args.lowres,
         "hi_res": commandline_args.hires,
         "json": commandline_args.json,
+        "nproc": commandline_args.nproc,
         "progress": commandline_args.progress,
         "show_plots": commandline_args.show_plots,
         "xdsinp": detector_module.XDSINP,
