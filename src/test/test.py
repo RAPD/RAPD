@@ -51,7 +51,6 @@ import unittest
 # import detectors.detector_utils as detector_utils
 import test_sets
 import utils.global_vars as rglobals
-print rglobals
 import utils.log
 import utils.site as site
 
