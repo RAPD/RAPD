@@ -193,6 +193,7 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
         }
 
     command["preferences"] = {
+        "dir_up": commandline_args.dir_up,
         "start_frame": commandline_args.start_image,
         "end_frame": commandline_args.end_image,
         "flip_beam": detector_module.XDS_FLIP_BEAM,
@@ -203,7 +204,7 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
         "hi_res": commandline_args.hires,
         "json": commandline_args.json,
         "progress": commandline_args.progress,
-        "show_plots": commandline_args.plotting,
+        "show_plots": commandline_args.show_plots,
         "xdsinp": detector_module.XDSINP,
         "spacegroup_decider": commandline_args.spacegroup_decider,
         "rounds_polishing": commandline_args.rounds_polishing
@@ -249,7 +250,7 @@ def main():
     elif commandline_args.json:
         terminal_log_level = 100
     else:
-        terminal_log_level = 50
+        terminal_log_level = 30
 
     tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level,
                                             no_color=commandline_args.no_color,
@@ -399,10 +400,11 @@ def main():
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
     # Instantiate the plugin
-    plugin.RapdPlugin(site=None,
-                      command=command,
-                      tprint=tprint,
-                      logger=logger)
+    plugin_instance = plugin.RapdPlugin(site=None,
+                                        command=command,
+                                        tprint=tprint,
+                                        logger=logger)
+    plugin_instance.start()
 
 if __name__ == "__main__":
 

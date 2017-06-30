@@ -99,7 +99,7 @@ def construct_command(image_headers, commandline_args, detector_module):
     command["preferences"]["progress"] = commandline_args.progress
 
     # Show plots
-    command["preferences"]["show_plots"] = commandline_args.plotting
+    command["preferences"]["show_plots"] = commandline_args.show_plots
 
     # Strategy type
     command["preferences"]["strategy_type"] = commandline_args.strategy_type
@@ -317,21 +317,21 @@ def print_welcome_message(printer):
 ---------------------
 RAPD Index & Strategy
 ---------------------"""
-    printer(message, 50, color="blue")
+    printer(message, 98, color="blue")
 
 def print_headers(tprint, image_headers):
     """Convenience function"""
 
-    tprint(arg="\nImage headers", level=30, color="blue")
+    tprint(arg="\nImage headers", level=20, color="blue")
     count = 0
     for fullname, header in image_headers.iteritems():
         keys = header.keys()
         keys.sort()
         if count > 0:
-            tprint(arg="", level=30, color="white")
-        tprint(arg="  %s" % fullname, level=30, color="white")
+            tprint(arg="", level=20, color="white")
+        tprint(arg="  %s" % fullname, level=20, color="white")
         for key in keys:
-            tprint(arg="    arg:%-22s  val:%s" % (key, header[key]), level=30, color="white")
+            tprint(arg="    arg:%-22s  val:%s" % (key, header[key]), level=20, color="white")
         count += 1
 
 def main():

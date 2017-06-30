@@ -29,10 +29,22 @@ import sys
 
 HEADER = "\nRAPD depends on the work of others"
 
+AIMLESS = [
+    "Aimless",
+    "Reference: Evans PR (2006) Acta Cryst. D62:72-82.",
+    "Website: http://www.mrc-lmb.cam.ac.uk/harry/pre/aimless.html\n"
+]
+
 BEST = [
     "BEST",
     "Reference: Bourenkov GP and Popov AN (2006) Acta Cryst. D62:58-64",
     "Website: http://www.embl-hamburg.de/BEST/\n"
+]
+
+CCP4 = [
+    "CCP4",
+    "Reference: Acta Cryst. D50:760-763",
+    "Website: http://www.ccp4.ac.uk\n"
 ]
 
 CCTBX = [
