@@ -147,8 +147,28 @@ def main():
     # Get the commandline args
     commandline_args = get_commandline()
 
-    # Determine the site
-    site_file = utils.site.determine_site(site_arg=commandline_args.site)
+    # Get the environmental variables
+    environmental_vars = utils.site.get_environmental_variables()
+
+    # Get site - commandline wins
+    site = False
+    if commandline_args.site:
+        site = commandline_args.site
+    elif environmental_vars.has_key("RAPD_SITE"):
+        site = environmental_vars["RAPD_SITE"]
+
+    # If no site, error
+    if site == False:
+        print text.error+"Could not determine a site. Exiting."+text.stop
+        sys.exit(9)
+
+    # Determine the site_file
+    site_file = utils.site.determine_site(site_arg=site)
+
+    # Error out if no site_file to import
+    if site_file == False:
+        print text.error+"Could not find a site file. Exiting."+text.stop
+        sys.exit(9)
 
     # Import the site settings
     SITE = importlib.import_module(site_file)
