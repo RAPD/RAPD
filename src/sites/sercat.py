@@ -154,7 +154,7 @@ LAUNCHER_LOCK_FILE = "/tmp/lock/launcher.lock"
 
 # Launcher to send jobs to
 # The value should be the key of the launcher to select in LAUNCHER_SPECIFICATIONS
-LAUNCHER_TARGET = 2
+LAUNCHER_TARGET = 1
 
 # Directories to look for rapd agents
 RAPD_AGENT_DIRECTORIES = ("sites.agents",
