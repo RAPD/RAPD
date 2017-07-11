@@ -333,7 +333,7 @@ class Model(object):
 
         print "send_command"
 
-        self.redis.lpush(channel, json.loads(command))
+        self.redis.lpush(channel, json.dumps(command))
 
     def stop(self):
         """Stop the ImageMonitor,CloudMonitor and StatusRegistrar."""

@@ -54,7 +54,7 @@ class Database(object):
 
     def __init__(self,
                  host=None,
-                 port=3306,
+                 port=27017,
                  user=None,
                  password=None,
                  settings=None):
