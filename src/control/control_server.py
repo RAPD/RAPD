@@ -71,7 +71,9 @@ class ControllerServer(threading.Thread):
 
             channel, message = self.redis.brpop(["RAPD_RESULTS"])
 
-            self.receiver(json.loads(message))
+            print channel, message
+
+            # self.receiver(json.loads(message))
 
     def stop(self):
         self.logger.debug("Received signal to stop")
