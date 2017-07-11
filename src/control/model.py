@@ -191,7 +191,7 @@ class Model(object):
         """Start up the listening process for core"""
 
         self.server = ControllerServer(receiver=self.receive,
-                                       port=self.site.CONTROL_PORT)
+                                       site=self.site)
 
     def stop_server(self):
         """Stop the listening server on exit"""
