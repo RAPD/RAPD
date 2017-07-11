@@ -65,6 +65,8 @@ class LauncherAdapter(object):
     Doesn't launch the job, but merely echoes it back
     """
 
+    redis = None
+
     def __init__(self, site, message, settings):
         """
         Initialize the plugin
@@ -120,4 +122,5 @@ class LauncherAdapter(object):
         """Clean up after adapter functions"""
 
         # Pass back result
+        self.redis.publish("RAPD_RESULTS", self.message)
         self.redis.lpush("RAPD_RESULTS", self.message)
