@@ -131,7 +131,7 @@ class Launcher(object):
         # The connection
         self.redis = redis.Redis(connection_pool=pool)
 
-    def handle_command(self, message):
+    def handle_command(self, command):
         """
         Handle an incoming command
 
