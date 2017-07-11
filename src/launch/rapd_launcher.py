@@ -140,10 +140,10 @@ class Launcher(object):
         """
         print "handle_command"
         pprint(command)
-        self.logger.debug("Message received: %s", message)
 
         # Split up the command
-        queue, message = command
+        channel, message = command
+        self.logger.debug("Command received  channel:%s  message: %s", channel, message)
 
         # Use the adapter to launch
         self.adapter(self.site, message, self.specifications)
