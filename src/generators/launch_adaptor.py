@@ -89,312 +89,53 @@ class FileGenerator(CommandlineFileGenerator):
         file_generator.write_license()
         file_generator.write_docstrings()
         self.p_write_tags(file_generator)
-        file_generator.write_imports(write_list=("json",
-                                                 "logging",
-                                                 "os",
-                                                 "pprint import pprint",
-                                                 "shutil",
-                                                 "subprocess",
-                                                 "sys",
-                                                 "time",
-                                                 "uuid"),
-                                     added_normal_imports=(
-                                         ("from distutils.spawn import find_executable",)),
-                                     added_rapd_imports=(("from utils import exceptions",))
-                                    )
-        self.p_write_versions(file_generator)
-        self.p_write_plugin(file_generator)
-        self.t_write_get_commandline(file_generator)
+        file_generator.write_imports(
+            write_list=("json",
+                        "logging",
+                        "os",
+                        "pprint import pprint",
+                        "shutil",
+                        "subprocess",
+                        "sys",
+                        "time",
+                        "uuid"),
+            added_normal_imports=(("from distutils.spawn import find_executable",)),
+            added_rapd_imports=(("from utils import exceptions",
+                                 "import utils.launch_tools as launch_tools"))
+            )
+        # self.p_write_versions(file_generator)
+        self.p_write_adaptor(file_generator)
+        # self.t_write_get_commandline(file_generator)
         # self.cl_write_construct_command(file_generator)
         # self.cl_write_get_commandline(file_generator)
         # self.cl_write_print_welcome_message(file_generator)
         # self.cl_write_main(file_generator)
-        self.t_write_main(file_generator)
+        # self.t_write_main(file_generator)
 
-
-
-    def cl_write_construct_command(self, file_generator):
-        """Write the construct command function of the commandline.py"""
-
-        construct_command_func_lines = [
-            "def construct_command(commandline_args):",
-            "    \"\"\"Put together the command for the plugin\"\"\"\n",
-            "    # The task to be carried out",
-            "    command = {",
-            "        \"command\": \"%s\"," % self.args.plugin_name.upper(),
-            "        \"process_id\": uuid.uuid1().get_hex(),",
-            "        \"status\": 0,",
-            "        }\n",
-            "    # Work directory",
-            "    work_dir = commandline_utils.check_work_dir(",
-            "        os.path.join(os.path.abspath(os.path.curdir), run_repr),",
-            "        active=True,",
-            "        up=commandline_args.dir_up)\n",
-            "    command[\"directories\"] = {",
-            "        \"work\": work_dir",
-            "        }\n",
-            "    # Check the work directory",
-            "    commandline_utils.check_work_dir(command[\"directories\"][\"work\"], True)\n",
-            "    # Information on input",
-            "    command[\"input_data\"] = {",
-            "        \"datafile\": os.path.abspath(commandline_args.datafile)",
-            "    }\n",
-            "    # Plugin settings",
-            "    command[\"preferences\"] = {",
-            "        \"clean\": commandline_args.clean,",
-            "        \"json\": commandline_args.json,",
-            "        \"no_color\": commandline_args.no_color,",
-            "        \"nproc\": commandline_args.nproc,",
-            "        \"progress\": commandline_args.progress,",
-            "        \"test\": commandline_args.test,",
-            "        \"verbose\": commandline_args.verbose,",
-            "    }\n",
-            "    return command\n",
-        ]
-        file_generator.output_function(construct_command_func_lines)
-
-    def cl_write_get_commandline(self, file_generator):
-        """Write the get_commandline function of the commandline.py"""
-
-        description = "Launch %s plugin" % self.args.plugin_name
-
-        get_commandline_func_lines = [
-            "def get_commandline():",
-            "    \"\"\"Grabs the commandline\"\"\"\n",
-            "    print \"get_commandline\"\n",
-            "    # Parse the commandline arguments",
-            "    commandline_description = \"%s\"" % description,
-            "    my_parser = argparse.ArgumentParser(description=commandline_description)\n",
-            "    # Run in test mode",
-            "    my_parser.add_argument(\"-t\", \"--test\",",
-            "                           action=\"store_true\",",
-            "                           dest=\"test\",",
-            "                           help=\"Run in test mode\")\n",
-            "    # Verbose/Quiet are a pair of opposites",
-            "    # Recommend defaulting to verbose during development and to",
-            "    # quiet during production",
-            "    # Verbose",
-            "    #my_parser.add_argument(\"-v\", \"--verbose\",",
-            "    #                       action=\"store_true\",",
-            "    #                       dest=\"verbose\",",
-            "    #                       help=\"More output\")\n",
-            "    # Quiet",
-            "    my_parser.add_argument(\"-q\", \"--quiet\",",
-            "                           action=\"store_false\",",
-            "                           dest=\"verbose\",",
-            "                           help=\"More output\")\n",
-            "    # Messy/Clean are a pair of opposites.",
-            "    # Recommend defaulting to messy during development and to",
-            "    # clean during production",
-            "    # Messy",
-            "    #my_parser.add_argument(\"--messy\",",
-            "    #                       action=\"store_false\",",
-            "    #                       dest=\"clean\",",
-            "    #                       help=\"Keep intermediate files\")\n",
-            "    # Clean",
-            "    my_parser.add_argument(\"--clean\",",
-            "                           action=\"store_true\",",
-            "                           dest=\"clean\",",
-            "                           help=\"Clean up intermediate files\")\n",
-            "    # Color",
-            "    #my_parser.add_argument(\"--color\",",
-            "    #                       action=\"store_false\",",
-            "    #                       dest=\"no_color\",",
-            "    #                       help=\"Color the terminal output\")\n",
-            "    # No color",
-            "    my_parser.add_argument(\"--nocolor\",",
-            "                           action=\"store_true\",",
-            "                           dest=\"no_color\",",
-            "                           help=\"Do not color the terminal output\")\n",
-            "    # JSON Output",
-            "    my_parser.add_argument(\"-j\", \"--json\",",
-            "                           action=\"store_true\",",
-            "                           dest=\"json\",",
-            "                           help=\"Output JSON format string\")\n",
-            "    # Output progress",
-            "    my_parser.add_argument(\"--progress\",",
-            "                           action=\"store_true\",",
-            "                           dest=\"progress\",",
-            "                           help=\"Output progess to terminal\")\n",
-            "    # Multiprocessing",
-            "    my_parser.add_argument(\"--nproc\",",
-            "                           dest=\"nproc\",",
-            "                           type=int,",
-            "                           default=max(1, multiprocessing.cpu_count() - 1),",
-            "                           help=\"Number of processors to employ\")\n",
-            "    # Positional argument",
-            "    my_parser.add_argument(action=\"store\",",
-            "                           dest=\"datafile\",",
-            "                           nargs=\"?\",",
-            "                           default=False,",
-            "                           help=\"Name of file to be analyzed\")\n",
-            "    # Print help message if no arguments",
-            "    if len(sys.argv[1:]) == 0:",
-            "        my_parser.print_help()",
-            "        my_parser.exit()\n",
-            "    args = my_parser.parse_args()\n",
-            "    # Insert logic to check or modify args here\n",
-            "    return args\n",
-        ]
-        file_generator.output_function(get_commandline_func_lines)
-
-    def cl_write_print_welcome_message(self, file_generator):
-        """Write the print_welcome_message function of commandline.py"""
-
-        print_welcome_func_lines = [
-            "def print_welcome_message(printer):",
-            "    \"\"\"Print a welcome message to the terminal\"\"\"",
-            "    message = \"\"\"",
-            "------------",
-            "RAPD Example",
-            "------------\"\"\"\n"
-            "    printer(message, 50, color=\"blue\")\n",
-        ]
-        file_generator.output_function(print_welcome_func_lines)
-
-    def cl_write_main(self, file_generator):
-        """Write the print_welcome_message function of commandline.py"""
-
-        main_func_lines = [
-            "def main():",
-            "    \"\"\"",
-            "    The main process",
-            "    Setup logging and instantiate the model\"\"\"\n",
-            "    # Get the commandline args",
-            "    commandline_args = get_commandline()\n",
-            "    # Output log file is always verbose",
-            "    log_level = 10\n",
-            "    # Set up logging",
-            # "    if commandline_args.logging:",
-            "    logger = utils.log.get_logger(logfile_dir=\"./\",",
-            "                                  logfile_id=\"rapd_%s\"," % self.args.plugin_name,
-            "                                  level=log_level,",
-            "                                  console=commandline_args.test)\n",
-            "    # Set up terminal printer",
-            "    # tprint prints to the terminal, taking the arguments",
-            "    #     arg - the string to be printed (if using level of \"progress\" this needs to\
- be an int)",
-            "    #     level - value 0 to 99 or \"progress\". Do NOT use a value of 100 or above",
-            "    #             50 - alert",
-            "    #             40 - error",
-            "    #             30 - warning",
-            "    #             20 - info",
-            "    #             10 - debug",
-            "    #     color - color to print (\"red\" and so forth. See list in utils/text)",
-            "    #     newline - put in False if you don't want a newline at the end of your print",
-            "    #     ",
-            "    # Verbosity",
-            "    if commandline_args.verbose:",
-            "        terminal_log_level = 10",
-            "    elif commandline_args.json:",
-            "        terminal_log_level = 100",
-            "    else:",
-            "        terminal_log_level = 50\n",
-            "    tprint = utils.log.get_terminal_printer(verbosity=terminal_log_level,",
-            "                                            no_color=commandline_args.no_color,",
-            "                                            progress=commandline_args.progress)\n",
-            "    print_welcome_message(tprint)\n",
-            "    logger.debug(\"Commandline arguments:\")",
-            "    tprint(arg=\"\\nCommandline arguments:\", level=10, color=\"blue\")",
-            "    for pair in commandline_args._get_kwargs():",
-            "        logger.debug(\"  arg:%s  val:%s\", pair[0], pair[1])",
-            "        tprint(arg=\"  arg:%-20s  val:%s\" % (pair[0], pair[1]), level=10, \
-            color=\"white\")\n",
-            "    # Get the environmental variables",
-            "    environmental_vars = utils.site.get_environmental_variables()",
-            "    logger.debug(\"\" + text.info + \"Environmental variables\" + text.stop)",
-            "    tprint(\"\\nEnvironmental variables\", level=10, color=\"blue\")",
-            "    for key, val in environmental_vars.iteritems():",
-            "        logger.debug(\"  \" + key + \" : \" + val)",
-            "        tprint(arg=\"  arg:%-20s  val:%s\" % (key, val), level=10, color=\"white\")\n",
-            "    # Should working directory go up or down?",
-            "    if environmental_vars.get(\"RAPD_DIR_INCREMENT\") in (\"up\", \"UP\"):",
-            "        commandline_args.dir_up = True",
-            "    else:",
-            "        commandline_args.dir_up = False\n",
-            "    # Construct the command",
-            "    command = construct_command(commandline_args=commandline_args,",
-            "                                logger=logger)\n",
-            "    # Load the plugin",
-            "    plugin = modules.load_module(seek_module=\"plugin\",",
-            "                                 directories=[\"plugins.%s\"]," % \
-            self.args.plugin_name,
-            "                                 logger=logger)\n",
-            "    # Print plugin info",
-            "    tprint(arg=\"\\nPlugin information\", level=10, color=\"blue\")",
-            "    tprint(arg=\"  Plugin type:    %s\" % plugin.PLUGIN_TYPE, level=10, \
-            color=\"white\")",
-            "    tprint(arg=\"  Plugin subtype: %s\" % plugin.PLUGIN_SUBTYPE, level=10, \
-            color=\"white\")",
-            "    tprint(arg=\"  Plugin version: %s\" % plugin.VERSION, level=10, color=\"white\")",
-            "    tprint(arg=\"  Plugin id:      %s\" % plugin.ID, level=10, color=\"white\")\n",
-            "    # Run the plugin",
-            "    plugin.RapdPlugin(command, tprint, logger)\n",
-        ]
-        file_generator.output_function(main_func_lines)
-
-    def p_write_tags(self, file_generator):
-        """Write RAPD informations tags for the plugin.py"""
-
-        tags_lines = [
-            "# This is an active RAPD plugin",
-            "RAPD_PLUGIN = True\n",
-            "# This plugin's type",
-            "PLUGIN_TYPE = \"%s\"" % self.args.plugin_name.upper(),
-            "PLUGIN_SUBTYPE = \"EXPERIMENTAL\"\n",
-            "# A unique UUID for this handler (uuid.uuid1().hex)",
-            "ID = \"%s\"" % uuid.uuid1().hex,
-            "VERSION = \"1.0.0\"\n"
-        ]
-        file_generator.output_function(tags_lines)
-
-    def p_write_versions(self, file_generator):
-        """Write the versions information function of the plugin.py"""
-
-        versions_lines = [
-            "# Software dependencies",
-            "VERSIONS = {",
-            "    \"gnuplot\": (",
-            "        \"gnuplot 4.2\",",
-            "        \"gnuplot 5.0\",",
-            "    )",
-            "}\n"
-        ]
-        file_generator.output_function(versions_lines)
-
-    def p_write_plugin(self, file_generator):
-        """Write the RapdPlugin class"""
+    def p_write_adaptor(self, file_generator):
+        """Write the LauncherAdapter class"""
 
         plugin_lines = [
-            "class RapdPlugin(multiprocessing.Process):",
+            "class LauncherAdapter(object):",
             "    \"\"\"",
-            "    RAPD plugin class\n",
-            "    Command format:",
-            "    {",
-            "       \"command\":\"%s\"," % self.args.plugin_name,
-            "       \"directories\":",
-            "           {",
-            "               \"work\": \"\"                          # Where to perform the work",
-            "           },",
-            "       \"site_parameters\": {}                       # Site data",
-            "       \"preferences\": {}                           # Settings for calculations",
-            "       \"return_address\":(\"127.0.0.1\", 50000)       # Location of control process",
-            "    }",
+            "    RAPD adapter for launcher process",
             "    \"\"\"\n",
-            "    # Holders for passed-in info",
-            "    command = None",
-            "    preferences = None\n",
-            "    # Holders for results"
-            "    results = {}\n",
-            "    def __init__(self, command, tprint=False, logger=False):",
-            "        \"\"\"Initialize the plugin\"\"\"\n",
-            "        # If the logging instance is passed in...",
-            "        if logger:",
-            "            self.logger = logger",
-            "        else:",
-            "            # Otherwise get the logger Instance",
-            "            self.logger = logging.getLogger(\"RAPDLogger\")",
-            "            self.logger.debug(\"__init__\")\n",
+            # "    # Holders for passed-in info",
+            # "    command = None",
+            # "    preferences = None\n",
+            # "    # Holders for results"
+            # "    results = {}\n",
+            "    def __init__(self, site, message, settings):",
+            "        \"\"\"",
+            "        Initialize the plugin\n",
+            "        Keyword arguments",
+            "        site -- imported site definition module",
+            "        message -- command from the control process, encoded as JSON",
+            "        settings --",
+            "        \"\"\"\n",
+            "        # Get the logger Instance",
+            "        self.logger = logging.getLogger(\"RAPDLogger\")",
+            "        self.logger.debug(\"__init__\")\n",
             "        # Keep track of start time",
             "        self.start_time = time.time()",
             "        # Store tprint for use throughout",
