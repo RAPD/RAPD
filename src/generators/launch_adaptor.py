@@ -85,10 +85,9 @@ class FileGenerator(CommandlineFileGenerator):
 
         # Go through the steps of writing the file
         file_generator.preprocess()
-        file_generator.write_file_docstring("%s RAPD plugin" % self.args.plugin_name)
+        file_generator.write_file_docstring("%s RAPD launcher adaptor" % self.args.adaptor_name)
         file_generator.write_license()
         file_generator.write_docstrings()
-        self.p_write_tags(file_generator)
         file_generator.write_imports(
             write_list=("json",
                         "logging",
@@ -103,14 +102,7 @@ class FileGenerator(CommandlineFileGenerator):
             added_rapd_imports=(("from utils import exceptions",
                                  "import utils.launch_tools as launch_tools"))
             )
-        # self.p_write_versions(file_generator)
         self.p_write_adaptor(file_generator)
-        # self.t_write_get_commandline(file_generator)
-        # self.cl_write_construct_command(file_generator)
-        # self.cl_write_get_commandline(file_generator)
-        # self.cl_write_print_welcome_message(file_generator)
-        # self.cl_write_main(file_generator)
-        # self.t_write_main(file_generator)
 
     def p_write_adaptor(self, file_generator):
         """Write the LauncherAdapter class"""
@@ -120,11 +112,6 @@ class FileGenerator(CommandlineFileGenerator):
             "    \"\"\"",
             "    RAPD adapter for launcher process",
             "    \"\"\"\n",
-            # "    # Holders for passed-in info",
-            # "    command = None",
-            # "    preferences = None\n",
-            # "    # Holders for results"
-            # "    results = {}\n",
             "    def __init__(self, site, message, settings):",
             "        \"\"\"",
             "        Initialize the plugin\n",
@@ -136,129 +123,27 @@ class FileGenerator(CommandlineFileGenerator):
             "        # Get the logger Instance",
             "        self.logger = logging.getLogger(\"RAPDLogger\")",
             "        self.logger.debug(\"__init__\")\n",
-            "        # Keep track of start time",
-            "        self.start_time = time.time()",
-            "        # Store tprint for use throughout",
-            "        if tprint:",
-            "            self.tprint = tprint",
-            "        # Dead end if no tprint passed",
-            "        else:",
-            "            def func(arg=False, level=False, verbosity=False, color=False):",
-            "                pass",
-            "            self.tprint = func\n",
-            "        # Some logging",
-            "        self.logger.info(command)\n",
             "        # Store passed-in variables",
-            "        self.command = command",
-            "        self.preferences = self.command.get(\"preferences\", {})\n",
-            "        # Set up the results with command and process data",
-            "        self.results[\"command\"] = command\n",
-            "        # Create a process section of results with the id and a starting status of 1",
-            "        self.results[\"process\"] = {",
-            "            \"process_id\": self.command.get(\"process_id\"),",
-            "            \"status\": 1}\n",
-            # "        self.reply_address = self.command[\"return_address\"]",
-            "        multiprocessing.Process.__init__(self, name=\"%s\")" % self.args.plugin_name,
-            "        self.start()\n",
+            "        self.site = site",
+            "        self.message = message",
+            "        self.settings = settings\n",
+            "        # Decode message",
+            "        self.decoded_message = json.loads(self.message)\n",
+            "        self.run()\n",
             "    def run(self):",
-            "        \"\"\"Execution path of the plugin\"\"\"\n",
+            "        \"\"\"Orchestrate the adapter's actions\"\"\"\n",
             "        self.preprocess()",
             "        self.process()",
-            "        self.postprocess()",
-            "        self.print_credits()\n",
+            "        self.postprocess()\n",
             "    def preprocess(self):",
-            "        \"\"\"Set up for plugin action\"\"\"\n",
-            "        self.tprint(arg=0, level=\"progress\")",
-            "        self.tprint(\"preprocess\")\n",
-            "        # Check for dependency problems",
-            "        self.check_dependencies()\n",
+            "        \"\"\"Adjust the command passed in in install-specific ways\"\"\"\n",
+            "        pass\n",
             "    def process(self):",
-            "        \"\"\"Run plugin action\"\"\"\n",
-            "        self.tprint(\"process\")\n",
+            "        \"\"\"The main action of the adaptor\"\"\"\n",
+            "        pass\n",
             "    def postprocess(self):",
-            "        \"\"\"Events after plugin action\"\"\"\n",
-            "        self.tprint(\"postprocess\")\n",
-            "        self.tprint(arg=99, level=\"progress\")",
-            "        # Clean up mess",
-            "        self.clean_up()\n",
-            "        # Send back results",
-            "        self.handle_return()\n",
-            "    def check_dependencies(self):",
-            "        \"\"\"Make sure dependencies are all available\"\"\"\n",
-            "        # A couple examples from index plugin",
-            "        # Can avoid using best in the plugin b"
-            "        # If no best, switch to mosflm for strategy",
-            "        # if self.strategy == \"best\":",
-            "        #     if not find_executable(\"best\"):",
-            "        #         self.tprint(\"Executable for best is not present, using Mosflm for s\
-trategy\",",
-            "        #                     level=30,",
-            "        #                     color=\"red\")",
-            "        #         self.strategy = \"mosflm\"\n",
-            "        # If no gnuplot turn off printing",
-            "        # if self.preferences.get(\"show_plots\", True) and (not self.preferences.get(\
-\"json\", False)):",
-            "        #     if not find_executable(\"gnuplot\"):",
-            "        #         self.tprint(\"\\nExecutable for gnuplot is not present, turning off p\
-lotting\",",
-            "        #                     level=30,",
-            "        #                     color=\"red\")",
-            "        #         self.preferences[\"show_plots\"] = False\n",
-            "        # If no labelit.index, dead in the water",
-            "        # if not find_executable(\"labelit.index\"):",
-            "        #     self.tprint(\"Executable for labelit.index is not present, exiting\",",
-            "        #                 level=30,",
-            "        #                 color=\"red\")",
-            "        #     self.results[\"process\"][\"status\"] = -1",
-            "        #     self.results[\"error\"] = \"Executable for labelit.index is not present\
-\"",
-            "        #     self.write_json(self.results)",
-            "        #     raise exceptions.MissingExecutableException(\"labelit.index\")\n",
-            "        # If no raddose, should be OK",
-            "        # if not find_executable(\"raddose\"):",
-            "        #     self.tprint(\"\\nExecutable for raddose is not present - will continue\
-\",",
-            "        #                 level=30,",
-            "        #                 color=\"red\")\n",
-            "    def clean_up(self):",
-            "        \"\"\"Clean up after plugin action\"\"\"\n",
-            "        self.tprint(\"clean_up\")\n",
-            "    def handle_return(self):",
-            "        \"\"\"Output data to consumer - still under construction\"\"\"\n",
-            "        self.tprint(\"handle_return\")\n",
-            "        run_mode = self.command[\"preferences\"][\"run_mode\"]\n",
-            "        # Handle JSON At least write to file"
-            "        self.write_json()\n",
-            "        # Print results to the terminal",
-            "        if run_mode == \"interactive\":",
-            "            self.print_results()",
-            "        # Traditional mode as at the beamline",
-            "        elif run_mode == \"server\":",
-            "            pass",
-            "        # Run and return results to launcher",
-            "        elif run_mode == \"subprocess\":",
-            "            return self.results",
-            "        # A subprocess with terminal printing",
-            "        elif run_mode == \"subprocess-interactive\":",
-            "            self.print_results()",
-            "            return self.results\n",
-            "        def write_json(self):",
-            "            \"\"\"Print out JSON-formatted result\"\"\"\n",
-            "            json_string = json.dumps(self.results)\n",
-            "            # Output to terminal?",
-            "            if self.preferences.get(\"json\", False):",
-            "                print json_string\n",
-            "            # Always write a file",
-            "            os.chdir(self.working_dir)",
-            "            with open(\"result.json\", \"w\") as outfile:",
-            "                outfile.writelines(json_string)",
-            "    def print_credits(self):",
-            "        \"\"\"Print credits for programs utilized by this plugin\"\"\"\n",
-            "        self.tprint(\"print_credits\")\n",
-            "        self.tprint(credits.HEADER, level=99, color=\"blue\")\n",
-            "        programs = [\"CCTBX\"]",
-            "        info_string = credits.get_credits_text(programs, \"    \")",
-            "        self.tprint(info_string, level=99, color=\"white\")\n",
+            "        \"\"\"Clean up after adaptor functions\"\"\"\n",
+            "        pass\n",
         ]
         file_generator.output_function(plugin_lines)
 
