@@ -32,6 +32,7 @@ import argparse
 import importlib
 # import logging
 # import logging.handlers
+from pprint import pprint
 import redis
 import socket
 import sys
@@ -136,7 +137,8 @@ class Launcher(object):
         Keyword arguments:
         message -- raw message from socket
         """
-        print "handle_message %s" % message
+        print "handle_message"
+        pprint(message)
         self.logger.debug("Message received: %s", message)
 
         # Strip the message of its delivery tags
