@@ -501,7 +501,7 @@ class FileGenerator(CommandlineFileGenerator):
             "    # Holders for passed-in info",
             "    command = None",
             "    preferences = None\n",
-            "    # Holders for results"
+            "    # Holders for results",
             "    results = {}\n",
             "    def __init__(self, command, tprint=False, logger=False):",
             "        \"\"\"Initialize the plugin\"\"\"\n",
@@ -513,7 +513,7 @@ class FileGenerator(CommandlineFileGenerator):
             "            self.logger = logging.getLogger(\"RAPDLogger\")",
             "            self.logger.debug(\"__init__\")\n",
             "        # Keep track of start time",
-            "        self.start_time = time.time()",
+            "        self.start_time = time.time()\n",
             "        # Store tprint for use throughout",
             "        if tprint:",
             "            self.tprint = tprint",
