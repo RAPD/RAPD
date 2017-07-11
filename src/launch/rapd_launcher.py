@@ -32,6 +32,7 @@ import argparse
 import importlib
 # import logging
 # import logging.handlers
+import redis
 import socket
 import sys
 import time
@@ -49,19 +50,19 @@ BUFFER_SIZE = 8192
 
 class Launcher(object):
     """
-    Runs a socket server and spawns new threads using defined launcher_adapter
-    when connections are received
+    Connects to Redis instance, listens for jobs, and spawns new threads using defined
+    launcher_adapter
     """
 
-    database = None
     adapter = None
+    adapter_file = None
+    database = None
     # address = None
     ip_address = None
-    tag = None
-    port = None
     job_types = None
-    adapter_file = None
     launcher = None
+    port = None
+    tag = None
 
     def __init__(self, site, tag="", logger=None, overwatch_id=False):
         """
@@ -88,6 +89,9 @@ class Launcher(object):
         # Load the adapter
         self.load_adapter()
 
+        # Connect to Redis for communications
+        self.connect_to_redis()
+
         # Start listening for commands
         self.run()
 
@@ -101,44 +105,32 @@ class Launcher(object):
                                           ow_id=self.overwatch_id)
             self.ow_registrar.register({"site_id":self.site.ID})
 
-        # Create socket to listen for commands
-        _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        _socket.settimeout(5)
-        _socket.bind(("", self.specifications["port"]))
-
         # This is the server portion of the code
         while 1:
-            try:
-                # Have Registrar update status
-                if self.overwatch_id:
-                    self.ow_registrar.update({"site_id":self.site.ID})
+            # Have Registrar update status
+            if self.overwatch_id:
+                self.ow_registrar.update({"site_id":self.site.ID})
 
-                # Listen for connections
-                _socket.listen(5)
-                conn, address = _socket.accept()
+            # Listen for connections
+            _socket.listen(5)
+            conn, address = _socket.accept()
 
-                # Read the message from the socket
-                message = ""
-                while not message.endswith("<rapd_end>"):
-                    try:
-                        data = conn.recv(BUFFER_SIZE)
-                        message += data
-                    except:
-                        pass
-                    time.sleep(0.01)
+            # Look for a new command
+            message = self.redis.brpop("RAPD_JOBS", 5)
 
-                # Close the connection
-                conn.close()
+            # Handle the message
+            self.handle_message(message)
 
-                # Handle the message
-                self.handle_message(message)
+    def connect_to_redis(self):
+        """Connect to the redis instance"""
 
-            except socket.timeout:
-                pass
-                # print "5 seconds up"
+        # Create a pool connection
+        pool = redis.ConnectionPool(host=self.site.CONTROL_REDIS_HOST,
+                                    port=self.site.CONTROL_REDIS_PORT,
+                                    db=self.site.CONTROL_REDIS_DB)
 
-        # If we exit...
-        _socket.close()
+        # The connection
+        self.redis = redis.Redis(connection_pool=pool)
 
     def handle_message(self, message):
         """

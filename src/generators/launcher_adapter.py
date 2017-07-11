@@ -1,4 +1,4 @@
-"""Generate a RAPD launch adaptor scaffold file"""
+"""Generate a RAPD launch adapter scaffold file"""
 
 """
 This file is part of RAPD
@@ -56,36 +56,36 @@ class FileGenerator(CommandlineFileGenerator):
         """The main actions of the module"""
 
         self.preprocess()
-        self.create_adaptor()
+        self.create_adapter()
         sys.exit()
 
     def preprocess(self):
         """Set up the plugin generation"""
 
         # Check to make sure that the directory we want to create does not exist
-        if os.path.exists(self.args.adaptor_name):
+        if os.path.exists(self.args.adapter_name):
             if self.args.force:
-                shutil.rmtree(self.args.adaptor_name)
+                shutil.rmtree(self.args.adapter_name)
             else:
                 raise Exception("%s already exists - use -f option to force overwrite. Exiting." %
-                                self.args.adaptor_name)
+                                self.args.adapter_name)
 
 
-    def create_adaptor(self):
-        """Create the adaptor"""
+    def create_adapter(self):
+        """Create the adapter"""
 
         # Load the module
         module = importlib.import_module("generators.base")
 
         # Add the filename to the args
-        self.args.file = self.args.adaptor_name
+        self.args.file = self.args.adapter_name
 
         # Instantiate the FileGenerator
         file_generator = module.FileGenerator(self.args)
 
         # Go through the steps of writing the file
         file_generator.preprocess()
-        file_generator.write_file_docstring("%s RAPD launcher adaptor" % self.args.adaptor_name)
+        file_generator.write_file_docstring("%s RAPD launcher adapter" % self.args.adapter_name)
         file_generator.write_license()
         file_generator.write_docstrings()
         file_generator.write_imports(
@@ -102,9 +102,9 @@ class FileGenerator(CommandlineFileGenerator):
             added_rapd_imports=(("from utils import exceptions",
                                  "import utils.launch_tools as launch_tools"))
             )
-        self.p_write_adaptor(file_generator)
+        self.p_write_adapter(file_generator)
 
-    def p_write_adaptor(self, file_generator):
+    def p_write_adapter(self, file_generator):
         """Write the LauncherAdapter class"""
 
         plugin_lines = [
@@ -139,10 +139,10 @@ class FileGenerator(CommandlineFileGenerator):
             "        \"\"\"Adjust the command passed in in install-specific ways\"\"\"\n",
             "        pass\n",
             "    def process(self):",
-            "        \"\"\"The main action of the adaptor\"\"\"\n",
+            "        \"\"\"The main action of the adapter\"\"\"\n",
             "        pass\n",
             "    def postprocess(self):",
-            "        \"\"\"Clean up after adaptor functions\"\"\"\n",
+            "        \"\"\"Clean up after adapter functions\"\"\"\n",
             "        pass\n",
         ]
         file_generator.output_function(plugin_lines)
@@ -279,10 +279,10 @@ def get_commandline(args=None):
 
     # File name to be generated
     parser.add_argument(action="store",
-                        dest="adaptor_name",
+                        dest="adapter_name",
                         nargs="?",
-                        default="test_adaptor",
-                        help="Name of adaptor to be generated")
+                        default="test_adapter",
+                        help="Name of adapter to be generated")
 
     # Pull from the input list
     if isinstance(args, list):

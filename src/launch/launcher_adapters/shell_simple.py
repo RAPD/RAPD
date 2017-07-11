@@ -1,4 +1,8 @@
 """
+Provides a simple launcher adapter that will launch processes in a shell
+"""
+
+"""
 This file is part of RAPD
 
 Copyright (C) 2016-2017 Cornell University
@@ -21,10 +25,6 @@ __created__ = "2016-03-02"
 __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
-
-"""
-Provides a simple launcher adapter that will launch processes in a shell
-"""
 
 import logging
 import json
@@ -67,7 +67,7 @@ class LauncherAdapter(object):
         command_file = launch_tools.write_command_file(self.settings["launch_dir"], command, self.message)
 
         # Call the launch process on the command file
-        self.logger.debug("%s", "rapd.launch", "-v", "-s", self.site.ID.lower(), command_file)
+        self.logger.debug("rapd.launch", "-s", self.site.ID.lower(), command_file)
         Popen(["rapd.launch", "-s", self.site.ID.lower(), command_file])
 
 if __name__ == "__main__":
