@@ -1040,16 +1040,21 @@ class Model(object):
 
         self.logger.debug("Received: %s", message)
 
+        command = message.get("command")
+
+        if command == "ECHO":
+            self.logger.info("Echo reply received")
+
         # NEWIMAGE
-        if message.get("message_type", None) == "NEWIMAGE":
+        elif message.get("message_type", None) == "NEWIMAGE":
             self.add_image(message)
 
         # NEWRUN
         elif message.get("message_type", None) == "NEWRUN":
             self.add_run(message)
 
-        # AGENTS
-        elif message["process"]["origin"] == "AGENT":
+        # PLUGINS
+        elif message["process"].get("origin", False) == "PLUGIN":
             self.logger.debug("Communication from agent")
 
             self.handle_agent_communication(message=message)
