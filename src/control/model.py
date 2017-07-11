@@ -323,7 +323,7 @@ class Model(object):
         command = {"command":"ECHO",
                    "process":{"agent_process_id":agent_process_id},
                    "directories":{"work":work_dir}
-                  },
+                  }
         self.send_command(command, "RAPD_JOBS")
 
     def send_command(self, command, channel="RAPD_JOBS"):

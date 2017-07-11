@@ -104,7 +104,7 @@ class LauncherAdapter(object):
         """Adjust the command passed in in install-specific ways"""
 
         # Decode message
-        self.decoded_message = json.loads(self.message)
+        self.decoded_message = json.loads(self.message)[0]
         print "decoded_message"
         pprint(self.decoded_message)
 
