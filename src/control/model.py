@@ -320,10 +320,16 @@ class Model(object):
         #              settings=None)
 
         # Run an echo to make sure everything is up
-        command = {"command":"ECHO",
-                   "process":{"agent_process_id":agent_process_id},
-                   "directories":{"work":work_dir}
-                  }
+        command = {
+            "command":"ECHO",
+            "process":{
+                "agent_process_id":agent_process_id,
+                "status":0
+                },
+            "directories":{
+                "work":work_dir
+                }
+            }
         self.send_command(command, "RAPD_JOBS")
 
     def send_command(self, command, channel="RAPD_JOBS"):

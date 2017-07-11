@@ -103,11 +103,6 @@ class LauncherAdapter(object):
     def preprocess(self):
         """Adjust the command passed in in install-specific ways"""
 
-        # Decode message
-        self.decoded_message = json.loads(self.message)[0]
-        print "decoded_message"
-        pprint(self.decoded_message)
-
         # Connect to redis
         pool = redis.ConnectionPool(host=self.site.CONTROL_REDIS_HOST,
                                     port=self.site.CONTROL_REDIS_PORT,
@@ -118,9 +113,11 @@ class LauncherAdapter(object):
     def process(self):
         """The main action of the adapter"""
 
-        pass
+        # Set status on message to done
+        self.message["process"]["status"] = 100
 
     def postprocess(self):
         """Clean up after adapter functions"""
 
-        pass
+        # Pass back result
+        self.redis.lpush("RAPD_RESULTS", self.message)

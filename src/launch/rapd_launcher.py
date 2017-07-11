@@ -143,10 +143,12 @@ class Launcher(object):
 
         # Split up the command
         channel, message = command
+        decoded_message = json.loads(message)
+
         self.logger.debug("Command received  channel:%s  message: %s", channel, message)
 
         # Use the adapter to launch
-        self.adapter(self.site, message, self.specifications)
+        self.adapter(self.site, decoded_message, self.specifications)
 
     def get_settings(self):
         """
