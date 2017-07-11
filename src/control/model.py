@@ -171,6 +171,8 @@ class Model(object):
         # The connection
         self.redis = redis.Redis(connection_pool=pool)
 
+        print self.redis.keys("*")
+
     def connect_to_database(self):
         """Set up database connection"""
 
@@ -328,6 +330,8 @@ class Model(object):
 
     def send_command(self, command, channel="RAPD_JOBS"):
         """Send a command over redis for processing"""
+
+        print "send_command"
 
         self.redis.lpush(channel, json.loads(command))
 
