@@ -72,6 +72,7 @@ class ControllerServer(threading.Thread):
             channel, message = self.redis.brpop(["RAPD_RESULTS"])
 
             print channel, message
+            print type(message)
 
             # self.receiver(json.loads(message))
 
