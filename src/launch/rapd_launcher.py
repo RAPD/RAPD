@@ -113,12 +113,12 @@ class Launcher(object):
                 self.ow_registrar.update({"site_id":self.site.ID})
 
             # Look for a new command
-            message = self.redis.brpop(["RAPD_JOBS",], 5)
-            print message
+            command = self.redis.brpop(["RAPD_JOBS",], 5)
+            print command
 
             # Handle the message
-            if message:
-                self.handle_message(message)
+            if command:
+                self.handle_command(command)
 
     def connect_to_redis(self):
         """Connect to the redis instance"""
@@ -131,19 +131,19 @@ class Launcher(object):
         # The connection
         self.redis = redis.Redis(connection_pool=pool)
 
-    def handle_message(self, message):
+    def handle_command(self, message):
         """
-        Handle an incoming message
+        Handle an incoming command
 
         Keyword arguments:
-        message -- raw message from socket
+        command -- command from redis
         """
-        print "handle_message"
-        pprint(message)
+        print "handle_command"
+        pprint(command)
         self.logger.debug("Message received: %s", message)
 
-        # Strip the message of its delivery tags
-        message = message.rstrip().replace("<rapd_start>", "").replace("<rapd_end>", "")
+        # Split up the command
+        queue, message = command
 
         # Use the adapter to launch
         self.adapter(self.site, message, self.specifications)
