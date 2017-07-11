@@ -31,8 +31,10 @@ __status__ = "Production"
 import collections
 import datetime
 import importlib
+import json
 import logging
 import os
+import redis
 import socket
 
 # RAPD imports
@@ -325,7 +327,7 @@ class Model(object):
     def send_command(self, command, channel="RAPD_JOBS"):
         """Send a command over redis for processing"""
 
-        self.redis.lpush(channel, command)
+        self.redis.lpush(channel, json.loads(command))
 
     def stop(self):
         """Stop the ImageMonitor,CloudMonitor and StatusRegistrar."""
