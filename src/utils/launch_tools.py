@@ -27,6 +27,7 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 # Standard imports
+import json
 import os
 import stat
 import tempfile
@@ -53,7 +54,7 @@ def write_command_file(target_directory, command, message):
                                            prefix=command+"_",
                                            suffix=".rapd",
                                            delete=False)
-    out_file.write(message)
+    out_file.write(json.dumps(message))
     out_file.close()
 
     return out_file.name
