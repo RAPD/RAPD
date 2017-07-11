@@ -113,6 +113,9 @@ class Model(object):
         # Process the site
         self.init_site()
 
+        # Start connection pool to redis instance
+        self.connect_to_redis()
+
         # Start connection to the core database
         self.connect_to_database()
 
@@ -154,6 +157,17 @@ class Model(object):
             for site_id in self.site.ID:
                 self.site_ids.append(site_id)
                 self.pairs[site_id] = collections.deque([("", 0), ("", 0)], 2)
+
+    def connect_to_redis(self):
+        """Connect to the redis instance"""
+
+        # Create a pool connection
+        pool = redis.ConnectionPool(host=self.site.CONTROL_REDIS_HOST,
+                                    port=self.site.CONTROL_REDIS_PORT,
+                                    db=self.site.CONTROL_REDIS_DB)
+
+        # The connection
+        self.redis = redis.Redis(connection_pool=pool)
 
     def connect_to_database(self):
         """Set up database connection"""
@@ -294,12 +308,24 @@ class Model(object):
                                                            data_root_dir=None)
 
         # Run autoindex and strategy agent
-        LaunchAction(command={"command":"ECHO",
-                              "process":{"agent_process_id":agent_process_id},
-                              "directories":{"work":work_dir},
-                              "return_address":self.return_address},
-                     launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
-                     settings=None)
+        # LaunchAction(command={"command":"ECHO",
+        #                       "process":{"agent_process_id":agent_process_id},
+        #                       "directories":{"work":work_dir},
+        #                       "return_address":self.return_address},
+        #              launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
+        #              settings=None)
+
+        # Run an echo to make sure everything is up
+        command = {"command":"ECHO",
+                   "process":{"agent_process_id":agent_process_id},
+                   "directories":{"work":work_dir}
+                  },
+        self.send_command(command, "RAPD_JOBS")
+
+    def send_command(self, command, channel="RAPD_JOBS"):
+        """Send a command over redis for processing"""
+
+        self.redis.lpush(channel, command)
 
     def stop(self):
         """Stop the ImageMonitor,CloudMonitor and StatusRegistrar."""
@@ -876,7 +902,7 @@ class Model(object):
             result_id = self.database.save_agent_result({"process":message["process"],
                                                          "results":message["results"]})
 
-        
+
 
             # Add result to database
             #     result_db = self.database.addSingleResult(dirs=dirs,
