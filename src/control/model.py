@@ -303,17 +303,17 @@ class Model(object):
         work_dir, new_repr = self.get_work_dir(type_level="echo")
 
         # Add the process to the database to display as in-process
-        agent_process_id = self.database.add_agent_process(agent_type="echo",
-                                                           request_type="original",
-                                                           representation=new_repr,
-                                                           status=1,
-                                                           display="hide",
-                                                           session_id=None,
-                                                           data_root_dir=None)
+        plugin_process_id = self.database.add_plugin_process(plugin_type="echo",
+                                                            request_type="original",
+                                                            representation=new_repr,
+                                                            status=1,
+                                                            display="hide",
+                                                            session_id=None,
+                                                            data_root_dir=None)
 
-        # Run autoindex and strategy agent
+        # Run autoindex and strategy plugin
         # LaunchAction(command={"command":"ECHO",
-        #                       "process":{"agent_process_id":agent_process_id},
+        #                       "process":{"plugin_process_id":plugin_process_id},
         #                       "directories":{"work":work_dir},
         #                       "return_address":self.return_address},
         #              launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
@@ -323,8 +323,9 @@ class Model(object):
         command = {
             "command":"ECHO",
             "process":{
-                "agent_process_id":agent_process_id,
-                "status":0
+                "plugin_process_id":plugin_process_id,
+                "status":0,
+                "type":"plugin"
                 },
             "directories":{
                 "work":work_dir
@@ -697,7 +698,7 @@ class Model(object):
             # Now package directories into a dict for easy access by worker class
             directories = {"work":work_dir,
                            "data_root_dir":data_root_dir,
-                           "agent_directories":self.site.RAPD_AGENT_DIRECTORIES}
+                           "plugin_directories":self.site.RAPD_plugin_DIRECTORIES}
 
             # Is the session information figured out by the image file name
             session_id = self.database.get_session_id(
@@ -706,7 +707,7 @@ class Model(object):
                 session_name=header.get("rapd_session_name", None))
 
             # Add the process to the database to display as in-process
-            agent_process_id = self.database.add_agent_process(agent_type="index+strategy:single",
+            plugin_process_id = self.database.add_plugin_process(plugin_type="index+strategy:single",
                                                                request_type="original",
                                                                representation=new_repr,
                                                                status=1,
@@ -717,9 +718,9 @@ class Model(object):
             # Add the ID entry to the header dict
             header.update({"repr":new_repr})
 
-            # Run autoindex and strategy agent
+            # Run autoindex and strategy plugin
             LaunchAction(command={"command":"INDEX+STRATEGY",
-                                  "process":{"agent_process_id":agent_process_id,
+                                  "process":{"plugin_process_id":plugin_process_id,
                                              "session_id":session_id},
                                   "directories":directories,
                                   "header1":header,
@@ -758,7 +759,7 @@ class Model(object):
                     # Now package directories into a dict for easy access by worker class
                     directories = {"work" : work_dir,
                                    "data_root_dir" : data_root_dir,
-                                   "agent_directories":self.site.RAPD_AGENT_DIRECTORIES}
+                                   "plugin_directories":self.site.RAPD_plugin_DIRECTORIES}
 
                     # Is the session information figured out by the image file name
                     session_id = self.database.get_session_id(
@@ -767,7 +768,7 @@ class Model(object):
                         session_name=header1.get("rapd_session_name", None))
 
                     # Add the process to the database to display as in-process
-                    agent_process_id = self.database.add_agent_process(agent_type="index+strategy:pair",
+                    plugin_process_id = self.database.add_plugin_process(plugin_type="index+strategy:pair",
                                                                        request_type="original",
                                                                        representation=new_repr,
                                                                        status=1,
@@ -776,14 +777,14 @@ class Model(object):
                                                                        data_root_dir=data_root_dir)
 
                     # Add the ID entry to the header dict
-                    header1.update({"agent_process_id":agent_process_id,
+                    header1.update({"plugin_process_id":plugin_process_id,
                                     "repr":new_repr})
-                    header2.update({"agent_process_id":agent_process_id,
+                    header2.update({"plugin_process_id":plugin_process_id,
                                     "repr":new_repr})
 
-                    # Run autoindex and strategy agent
+                    # Run autoindex and strategy plugin
                     LaunchAction(command={"command":"INDEX+STRATEGY",
-                                          "process":{"agent_process_id":agent_process_id,
+                                          "process":{"plugin_process_id":plugin_process_id,
                                                      "session_id":session_id},
                                           "directories":directories,
                                           "header1":header1,
@@ -809,7 +810,7 @@ class Model(object):
             # Now package directories into a dict for easy access by worker class
             directories = {"work":work_dir,
                            "data_root_dir":data_root_dir,
-                           "agent_directories":self.site.RAPD_AGENT_DIRECTORIES}
+                           "plugin_directories":self.site.RAPD_plugin_DIRECTORIES}
 
             # If we are to integrate, do it
             try:
@@ -822,7 +823,7 @@ class Model(object):
 
 
                 # Add the process to the database to display as in-process
-                agent_process_id = self.database.add_agent_process(agent_type="integrate",
+                plugin_process_id = self.database.add_plugin_process(plugin_type="integrate",
                                                                    request_type="original",
                                                                    representation=new_repr,
                                                                    status=1,
@@ -831,12 +832,12 @@ class Model(object):
                                                                    data_root_dir=data_root_dir)
 
                 # Add the ID entry to the header dict
-                header.update({"agent_process_id":agent_process_id,
+                header.update({"plugin_process_id":plugin_process_id,
                                "repr":new_repr})
 
                 # Connect to the server and autoindex the single image
                 LaunchAction(command={"command":"INTEGRATE",
-                                      "process":{"agent_process_id":agent_process_id,
+                                      "process":{"plugin_process_id":plugin_process_id,
                                                  "session_id":session_id},
                                       "directories":directories,
                                       "image_data":header,
@@ -852,7 +853,7 @@ class Model(object):
 
     def get_work_dir(self, type_level, image_data1=False, image_data2=False):
         """
-        Return a valid working directory for rapd_agent to work in
+        Return a valid working directory for rapd_plugin to work in
 
         Keyword arguments
         type_level -- the type of work, single, pair, integrate, echo
@@ -891,142 +892,28 @@ class Model(object):
 
         return work_dir_candidate, new_repr
 
-    def handle_agent_communication(self, message):
+    def handle_plugin_communication(self, message):
         """
-        Handle incoming communications from agents
+        Handle incoming communications from plugins
 
         Keyword arguments
         message -- dict of pertinent information. Needs to at least contain
-                       a dict under the key process with entries for agent_process_id
+                       a dict under the key process with entries for plugin_process_id
                        and status
 
-        This form of handling returns from agents is soon to be discontinued. To
-        make RAPD more flexible to new agents changes will be coming.
+        This form of handling returns from plugins is soon to be discontinued. To
+        make RAPD more flexible to new plugins changes will be coming.
         """
 
-        # Update the agent_process in the DB
-        self.database.update_agent_process(
-            agent_process_id=message["process"].get("agent_process_id", None),
+        # Update the plugin_process in the DB
+        self.database.update_plugin_process(
+            plugin_process_id=message["process"].get("plugin_process_id", None),
             status=message["process"].get("status", 1))
 
-        # Save the results for the agent
+        # Save the results for the plugin
         if message.get("results", False):
-            result_id = self.database.save_agent_result({"process":message["process"],
-                                                         "results":message["results"]})
-
-
-
-            # Add result to database
-            #     result_db = self.database.addSingleResult(dirs=dirs,
-            #                                               info=info,
-            #                                               settings=settings,
-            #                                               results=results)
-            #
-            #     self.logger.debug("Added single result: %s" % str(result_db))
-            #
-            #     # Mark the process as finished
-            #     self.database.modifyProcessDisplay(process_id=info["process_id"],
-            #                                        display_value="complete")
-            #
-            #     # Move the files to the server & other
-            #     if result_db:
-            #
-            #         # Update the Remote project
-            #         if self.remote_adapter:
-            #             wedges = self.database.getStrategyWedges(id=result_db["single_result_id"])
-            #             result_db["image_id"] = info["image_id"]
-            #             self.remote_adapterAdapter.update_image_stats(result_db, wedges)
-            #
-            #         # Now mark the cloud database if this is a reprocess request
-            #         if result_db["type"] in ("reprocess", "stac"):
-            #             #remove the process from cloud_current
-            #             self.database.removeCloudCurrent(
-            #                 cloud_request_id=settings["request"]["cloud_request_id"]
-            #                 )
-            #             #note the result in cloud_complete
-            #             self.database.enterCloudComplete(
-            #                 cloud_request_id=settings["request"]["cloud_request_id"],
-            #                 request_timestamp=settings["request"]["timestamp"],
-            #                 request_type=settings["request"]["request_type"],
-            #                 data_root_dir=settings["request"]["data_root_dir"],
-            #                 ip_address=settings["request"]["ip_address"],
-            #                 start_timestamp=settings["request"]["timestamp"],
-            #                 result_id=result_db["result_id"],
-            #                 archive=False
-            #                 )
-            #             #mark in cloud_requests
-            #             self.database.markCloudRequest(
-            #                 cloud_request_id=settings["request"]["cloud_request_id"],
-            #                 mark="complete"
-            #                 )
-            #
-            #         trip_db = self.database.getTrips(data_root_dir=dirs["data_root_dir"])
-            #         # This data has an associated trip
-            #         if trip_db:
-            #             for record in trip_db:
-            #                 #update the dates for the trip
-            #                 self.database.updateTrip(
-            #                     trip_id=record["trip_id"],
-            #                     date=result_db["date"]
-            #                     )
-            #                 #now transfer the files
-            #                 transferred = TransferToUI(
-            #                     type="single",
-            #                     settings=self.SecretSettings,
-            #                     result=result_db,
-            #                     trip=record,
-            #                     logger=self.logger
-            #                     )
-            #
-            #         # This data is an "orphan"
-            #         else:
-            #             self.logger.debug("Orphan result")
-            #             #add the orphan to the orphan database table
-            #             self.database.addOrphanResult(
-            #                 type="single",
-            #                 root=dirs["data_root_dir"],
-            #                 id=result_db["single_result_id"],
-            #                 date=info["date"]
-            #                 )
-            #             #copy the files to the UI host
-            #             dest = os.path.join(self.SecretSettings["ui_user_dir"], "orphans/single/")
-            #             #now transfer the files
-            #             transferred = TransferToUI(
-            #                 type="single-orphan",
-            #                 settings=self.SecretSettings,
-            #                 result=result_db,
-            #                 trip=trip_db,
-            #                 logger=self.logger
-            #                 )
-            #
-            #
-            #     # The addition of result to db has failed, but still needs removed from the cloud
-            #     else:
-            #         if settings["request"]["request_type"] == "reprocess":
-            #             #remove the process from cloud_current
-            #             self.database.removeCloudCurrent(
-            #                 cloud_request_id=settings["request"]["cloud_request_id"]
-            #                 )
-            #             #note the result in cloud_complete
-            #             self.database.enterCloudComplete(
-            #                 cloud_request_id=settings["request"]["cloud_request_id"],
-            #                 request_timestamp=settings["request"]["timestamp"],
-            #                 request_type=settings["request"]["request_type"],
-            #                 data_root_dir=settings["request"]["data_root_dir"],
-            #                 ip_address=settings["request"]["ip_address"],
-            #                 start_timestamp=settings["request"]["timestamp"],
-            #                 result_id=0,
-            #                 archive=False
-            #                 )
-            #             #mark in cloud_requests
-            #             self.database.markCloudRequest(
-            #                 cloud_request_id=settings["request"]["cloud_request_id"],
-            #                 mark="failure"
-            #                 )
-
-        # elif agent_type == "INTEGRATE":
-        #     pass
-
+            __ = self.database.save_plugin_result({"process":message["process"],
+                                                   "results":message["results"]})
 
     def receive(self, message):
         """
@@ -1042,8 +929,9 @@ class Model(object):
 
         command = message.get("command")
 
-        if command == "ECHO":
-            self.logger.info("Echo reply received")
+        # From a plugin
+        if message.get("process", {}).get("type") == "plugin":
+            self.handle_plugin_communication(message=message)
 
         # NEWIMAGE
         elif message.get("message_type", None) == "NEWIMAGE":
@@ -1052,13 +940,6 @@ class Model(object):
         # NEWRUN
         elif message.get("message_type", None) == "NEWRUN":
             self.add_run(message)
-
-        # PLUGINS
-        elif message["process"].get("origin", False) == "PLUGIN":
-            self.logger.debug("Communication from agent")
-
-            self.handle_agent_communication(message=message)
-
 
         # elif command == "PILATUS_ABORT":
         #     self.logger.debug("Run aborted")

@@ -806,25 +806,25 @@ class Database(object):
         # except:
         #     pass
 
-        return(settings_dict)
+        return settings_dict
 
-    ##################################################################################################################
-    # Functions for processes                                                                                        #
-    ##################################################################################################################
-    def add_agent_process(self,
-                          agent_type=None,
-                          request_type=None,
-                          representation=None,
-                          status=0,
-                          display="show",
-                          session_id=None,
-                          data_root_dir=None):
+    #
+    # Functions for processes                                                                      #
+    #
+    def add_plugin_process(self,
+                           plugin_type=None,
+                           request_type=None,
+                           representation=None,
+                           status=0,
+                           display="show",
+                           session_id=None,
+                           data_root_dir=None):
         """
-        Add an entry to the agent_processes table - for keeping track of
+        Add an entry to the plugin_processes table - for keeping track of
         launched processes and their state
 
         Keyword arguments
-        agent_type -- type of agent
+        plugin_type -- type of plugin
         request_type -- request type, such as original
         representation -- how the request is represented to users
         status -- progress from 0 to 100 (default = 0) 1 = started,
@@ -835,7 +835,7 @@ class Database(object):
         """
 
         self.logger.debug("%s %s %s %s %s %s %s",
-                          agent_type,
+                          plugin_type,
                           request_type,
                           representation,
                           status,
@@ -847,33 +847,33 @@ class Database(object):
         db = self.get_db_connection()
 
         # Insert into db
-        result = db.agent_processes.insert_one({"agent_type":agent_type,
-                                                "display":display,
-                                                "status":status,
-                                                "representation":representation,
-                                                "request_type":request_type,
-                                                "session_id":session_id,
-                                                "data_root_dir":data_root_dir,
-                                                "timestamp":datetime.datetime.utcnow()})
+        result = db.plugin_processes.insert_one({"plugin_type":plugin_type,
+                                                 "display":display,
+                                                 "status":status,
+                                                 "representation":representation,
+                                                 "request_type":request_type,
+                                                 "session_id":session_id,
+                                                 "data_root_dir":data_root_dir,
+                                                 "timestamp":datetime.datetime.utcnow()})
 
         return str(result.inserted_id)
 
-    def update_agent_process(self,
-                             agent_process_id,
-                             status=False,
-                             display=False):
+    def update_plugin_process(self,
+                              plugin_process_id,
+                              status=False,
+                              display=False):
         """
-        Add an entry to the agent_processes table - for keeping track of
+        Add an entry to the plugin_processes table - for keeping track of
         launched processes and their state
 
         Keyword arguments
-        agent_process_id -- unique identifier for process
+        plugin_process_id -- unique identifier for process
         status -- progress from 0 to 100 (default = 0) 1 = started,
                   100 = finished, -1 = error
         display -- display state of this process (default = show)
         """
 
-        self.logger.debug("update_agent_process %s %s %s", agent_process_id, status, display)
+        self.logger.debug("update_plugin_process %s %s %s", plugin_process_id, status, display)
 
         # Connect to the database
         db = self.get_db_connection()
@@ -886,8 +886,8 @@ class Database(object):
         if display:
             set_dict["display"] = display
 
-        db.agent_processes.update({"_id":ObjectId(str(agent_process_id))},
-                                  {"$set":set_dict})
+        db.plugin_processes.update({"_id":ObjectId(str(plugin_process_id))},
+                                   {"$set":set_dict})
 
         return True
 
@@ -1006,26 +1006,26 @@ class Database(object):
         #     self.close_connection(connection, cursor)
         #     return(False, False)
 
-    def save_agent_result(self, agent_result):
+    def save_plugin_result(self, plugin_result):
         """
-        Add and AUTOINDEX+STRATEGY result from the core agent
+        Add and AUTOINDEX+STRATEGY result from the core plugin
 
         Keyword argument
-        agent_result -- dict of information from agent - must have a process key pointing to a dict
+        plugin_result -- dict of information from plugin - must have a process key pointing to a dict
         """
 
-        self.logger.debug("save_agent_result %s", agent_result)
+        self.logger.debug("save_plugin_result %s", plugin_result)
 
         # Connect to the database
         db = self.get_db_connection()
 
-        # Add the current timestamp to the agent_result
-        agent_result["timestamp"] = datetime.datetime.utcnow()
+        # Add the current timestamp to the plugin_result
+        plugin_result["timestamp"] = datetime.datetime.utcnow()
 
         # Add to results
-        result = db.agent_results.update(
-            {"process.agent_process_id":agent_result["process"]["agent_process_id"]},
-            {"$set":agent_result},
+        result = db.plugin_results.update(
+            {"process.plugin_process_id":plugin_result["process"]["plugin_process_id"]},
+            {"$set":plugin_result},
             upsert=True)
 
         self.logger.debug(result)
@@ -1033,8 +1033,8 @@ class Database(object):
         # Work out the _id for the result
         # update
         if result.get("updatedExisting", True):
-            return str(db.agent_results.find_one(
-                {"process.agent_process_id":agent_result["process"]["agent_process_id"]},
+            return str(db.plugin_results.find_one(
+                {"process.plugin_process_id":plugin_result["process"]["plugin_process_id"]},
                 {"_id":1})["_id"])
         # upsert
         else:
