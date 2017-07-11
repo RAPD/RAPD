@@ -91,9 +91,6 @@ class LauncherAdapter(object):
         print "settings"
         pprint(settings)
 
-        # Decode message
-        self.decoded_message = json.loads(self.message)
-
         self.run()
 
     def run(self):
@@ -106,7 +103,17 @@ class LauncherAdapter(object):
     def preprocess(self):
         """Adjust the command passed in in install-specific ways"""
 
-        pass
+        # Decode message
+        self.decoded_message = json.loads(self.message)
+        print "decoded_message"
+        pprint(self.decoded_message)
+
+        # Connect to redis
+        pool = redis.ConnectionPool(host=self.site.CONTROL_REDIS_HOST,
+                                    port=self.site.CONTROL_REDIS_PORT,
+                                    db=self.site.CONTROL_REDIS_DB)
+
+        self.redis = redis.Redis(connection_pool=pool)
 
     def process(self):
         """The main action of the adapter"""

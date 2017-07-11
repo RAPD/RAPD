@@ -171,8 +171,6 @@ class Model(object):
         # The connection
         self.redis = redis.Redis(connection_pool=pool)
 
-        print self.redis.keys("*")
-
     def connect_to_database(self):
         """Set up database connection"""
 
