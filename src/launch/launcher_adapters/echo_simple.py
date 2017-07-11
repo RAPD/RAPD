@@ -51,8 +51,8 @@ from distutils.spawn import find_executable
 # import detectors.detector_utils as detector_utils
 # import utils
 # import utils.credits as credits
-import from utils import exceptions
-import import utils.launch_tools as launch_tools
+from utils import exceptions
+import utils.launch_tools as launch_tools
 
 class LauncherAdapter(object):
     """
