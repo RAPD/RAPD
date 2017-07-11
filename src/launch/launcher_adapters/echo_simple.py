@@ -36,19 +36,19 @@ __status__ = "Development"
 import json
 import logging
 # import multiprocessing
-import os
+# import os
 from pprint import pprint
 # import pymongo
 # import re
-# import redis
-import shutil
-import subprocess
-import sys
-import time
+import redis
+# import shutil
+# import subprocess
+# import sys
+# import time
 # import unittest
 # import urllib2
-import uuid
-from distutils.spawn import find_executable
+# import uuid
+# from distutils.spawn import find_executable
 
 # RAPD imports
 # import commandline_utils
