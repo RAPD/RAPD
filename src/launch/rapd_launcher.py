@@ -136,7 +136,7 @@ class Launcher(object):
         Keyword arguments:
         message -- raw message from socket
         """
-
+        print "handle_message %s" % message
         self.logger.debug("Message received: %s", message)
 
         # Strip the message of its delivery tags
