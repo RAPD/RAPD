@@ -57,7 +57,7 @@ MODES = [
     "base",
     "container",
     "detector",
-    "launch_adapter",
+    "launcher_adapter",
     "plugin",
     "test",
     ]
