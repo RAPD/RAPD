@@ -106,20 +106,17 @@ class Launcher(object):
             self.ow_registrar.register({"site_id":self.site.ID})
 
         # This is the server portion of the code
-        while 1:
+        while True:
             # Have Registrar update status
             if self.overwatch_id:
                 self.ow_registrar.update({"site_id":self.site.ID})
-
-            # Listen for connections
-            _socket.listen(5)
-            conn, address = _socket.accept()
 
             # Look for a new command
             message = self.redis.brpop("RAPD_JOBS", 5)
 
             # Handle the message
-            self.handle_message(message)
+            if message:
+                self.handle_message(message)
 
     def connect_to_redis(self):
         """Connect to the redis instance"""
