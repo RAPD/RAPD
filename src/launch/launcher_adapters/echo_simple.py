@@ -1,4 +1,8 @@
-"""simple_echo.py RAPD launcher adapter"""
+"""
+Simple echo RAPD launcher adapter
+
+For use in testing setup
+"""
 
 """
 This file is part of RAPD
@@ -79,6 +83,13 @@ class LauncherAdapter(object):
         self.site = site
         self.message = message
         self.settings = settings
+
+        print "site"
+        pprint(site)
+        print "message"
+        pprint(message)
+        print "settings"
+        pprint(settings)
 
         # Decode message
         self.decoded_message = json.loads(self.message)
