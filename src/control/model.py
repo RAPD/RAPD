@@ -297,6 +297,8 @@ class Model(object):
     def send_echo(self):
         """Send a test echo request to Launch"""
 
+        print "send_echo"
+
         # Construct a working directory and repr
         work_dir, new_repr = self.get_work_dir(type_level="echo")
 
