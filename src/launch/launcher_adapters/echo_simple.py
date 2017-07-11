@@ -121,6 +121,9 @@ class LauncherAdapter(object):
     def postprocess(self):
         """Clean up after adapter functions"""
 
+        # Encode in JSON
+        json_message = json.dumps(self.message)
+
         # Pass back result
-        self.redis.publish("RAPD_RESULTS", self.message)
-        self.redis.lpush("RAPD_RESULTS", self.message)
+        self.redis.publish("RAPD_RESULTS", json_message)
+        self.redis.lpush("RAPD_RESULTS", json_message)
