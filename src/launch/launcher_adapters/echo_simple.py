@@ -37,7 +37,7 @@ import json
 import logging
 # import multiprocessing
 import os
-# import pprint
+from pprint import pprint
 # import pymongo
 # import re
 # import redis
