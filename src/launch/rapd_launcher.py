@@ -113,7 +113,8 @@ class Launcher(object):
                 self.ow_registrar.update({"site_id":self.site.ID})
 
             # Look for a new command
-            message = self.redis.brpop("RAPD_JOBS", 5)
+            message = self.redis.brpop(["RAPD_JOBS",], 5)
+            print message
 
             # Handle the message
             if message:
