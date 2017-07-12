@@ -514,6 +514,9 @@ class Model(object):
 
         # Query local runs in reverse chronological order
         for run_id, run in self.recent_runs.iteritems():
+
+            self.logger.debug("run_id: run:%s" % (run_id, str(run)))
+
             if run.get("site_tag", None) == site_tag and \
                run.get("directory", None) == directory and \
                run.get("image_prefix", None) == image_prefix and \
