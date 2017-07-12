@@ -251,6 +251,7 @@ class RapdPlugin(multiprocessing.Process):
         # Traditional mode as at the beamline
         elif run_mode == "server":
             json_results = json.dumps(self.results)
+            print json_results
             self.redis.publish("RAPD_RESULTS", json_results)
             self.redis.lpush("RAPD_RESULTS", json_results)
         # Run and return results to launcher
