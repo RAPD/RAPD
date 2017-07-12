@@ -257,7 +257,10 @@ def main():
     site_file = utils.site.determine_site(site_arg=site)
 
     # Import the site settings
+    print "site", site
+    print "site_file", site_file
     SITE = importlib.import_module(site_file)
+
 
     # Determine the tag - commandline wins
     if commandline_args.tag:
