@@ -159,9 +159,8 @@ LAUNCHER_TARGET = 1
 # Directories to look for rapd agents
 RAPD_PLUGIN_DIRECTORIES = ("sites.plugins",
                            "plugins")
-# Queried in order, so a rapd_agent_echo.py in src/sites/agents will override
-# the same file in src/agents
-
+# Queried in order, so a echo/plugin.py in src/sites/plugins will override
+# the same file in src/plugins
 
 # Directories to look for launcher adapters
 RAPD_LAUNCHER_ADAPTER_DIRECTORIES = ("launch.launcher_adapters",
@@ -233,7 +232,7 @@ LAUNCHER_SETTINGS = {
 }
 
 LAUNCH_SETTINGS = {
-    "RAPD_AGENT_DIRECTORIES":RAPD_AGENT_DIRECTORIES,
+    "RAPD_PLUGIN_DIRECTORIES":RAPD_PLUGIN_DIRECTORIES,
     "LAUNCHER_ADDRESS":(LAUNCHER_SPECIFICATIONS[LAUNCHER_TARGET]["ip_address"],
                         LAUNCHER_SPECIFICATIONS[LAUNCHER_TARGET]["port"])
 }
