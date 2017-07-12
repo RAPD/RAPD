@@ -75,8 +75,10 @@ class Launch(object):
         # Load the plugin for this command
         self.load_plugin(self.command.get("command"))
 
+        print self.command
+
         # Run the plugin
-        self.plugin.Rapdplugin(self.site, self.command)
+        self.plugin.RapdPlugin(self.site, self.command)
 
     def load_command(self):
         """
