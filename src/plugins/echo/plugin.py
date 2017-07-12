@@ -156,6 +156,7 @@ class RapdPlugin(multiprocessing.Process):
         # Connect to redis
         if self.preferences.get("run_mode") == "server":
             self.connect_to_redis()
+            print self.redis.keys("*")
 
     def process(self):
         """Run plugin action"""
