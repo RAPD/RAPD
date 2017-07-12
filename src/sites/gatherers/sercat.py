@@ -144,7 +144,7 @@ class Gatherer(object):
                             # Publish to Redis
                             red.publish("image_collected:%s" % self.tag, image_name)
                             # Push onto redis list in case no one is currently listening
-                            red.rpush("images_collected:%s" % self.tag, image_name)
+                            red.lpush("images_collected:%s" % self.tag, image_name)
                         break
                     else:
                         time.sleep(0.05)

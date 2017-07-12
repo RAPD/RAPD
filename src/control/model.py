@@ -256,7 +256,8 @@ class Model(object):
             run_monitor = importlib.import_module("%s" % site.RUN_MONITOR.lower())
             self.run_monitor = run_monitor.Monitor(site=self.site,
                                                    notify=self.receive,
-                                                   # Not using overwatch in run monitor - could if we wanted to
+                                                   # Not using overwatch in run monitor
+                                                   # could if we wanted to
                                                    overwatch_id=None)
 
     def start_cloud_monitor(self):

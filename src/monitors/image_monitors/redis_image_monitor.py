@@ -145,7 +145,7 @@ class Monitor(threading.Thread):
             self.ow_registrar.register()
 
         # Determine interval for overwatch update
-        ow_round_interval = int ((5 * len(self.image_lists)) / POLLING_REST)
+        ow_round_interval = int((5 * len(self.image_lists)) / POLLING_REST)
 
         while self.running:
 
@@ -155,6 +155,7 @@ class Monitor(threading.Thread):
                 for tag in self.tags:
 
                     # Try to pop the oldest image off the list
+                    self.logger.debug("Rpopping off of images_collected:%s" % tag)
                     new_image = self.redis.rpop("images_collected:%s" % tag)
 
                     # Have a new_image
