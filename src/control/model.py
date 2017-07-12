@@ -507,6 +507,8 @@ class Model(object):
         boolean -- return just True if there is a or False
         """
 
+        self.logger.debug("query_in_run")
+
         # Query local runs in reverse chronological order
         for run_id, run in self.recent_runs.iteritems():
             if run.get("site_tag", None) == site_tag and \
@@ -577,6 +579,9 @@ class Model(object):
 
             # Save the run_data to local store
             self.recent_runs[run_id] = run_data
+
+            self.logger.debug("run added to database")
+            self.logger.debug(run_data)
 
         return True
 
