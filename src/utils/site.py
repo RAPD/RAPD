@@ -127,11 +127,11 @@ def determine_site(site_arg=False):
     Keyword arguments:
     site_arg -- user-specified site arguments (default None)
     """
-    print "determine_site %s" % site_arg
+    # print "determine_site %s" % site_arg
 
     # Get possible site files
     site_files = get_site_files()
-    print site_files
+    # print site_files
 
     # Transform site files to a more palatable form
     safe_sites = {}
@@ -162,7 +162,7 @@ def determine_site(site_arg=False):
     sites = []
     for safe_site_arg in safe_site_args:
         if safe_site_arg in safe_sites:
-            print "Have one! %s %s" % (safe_site_arg, safe_sites[safe_site_arg])
+            # print "Have one! %s %s" % (safe_site_arg, safe_sites[safe_site_arg])
             sites.append(safe_site_arg)
 
     # Need only one site

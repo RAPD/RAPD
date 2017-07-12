@@ -47,7 +47,7 @@ import os
 # import pprint
 # import pymongo
 # import re
-# import redis
+import redis
 import shutil
 import subprocess
 import sys
@@ -88,6 +88,9 @@ class RapdPlugin(multiprocessing.Process):
     # Holders for passed-in info
     command = None
     preferences = None
+
+    # Instance variables
+    redis = None
 
     # Holders for results
     results = {}
@@ -150,6 +153,10 @@ class RapdPlugin(multiprocessing.Process):
         # Check for dependency problems
         self.check_dependencies()
 
+        # Connect to redis
+        if self.preferences.get("run_mode") == "server":
+            self.connect_to_redis()
+
     def process(self):
         """Run plugin action"""
 
@@ -202,6 +209,17 @@ class RapdPlugin(multiprocessing.Process):
         #     self.tprint("\nExecutable for raddose is not present - will continue",
         #                 level=30,
         #                 color="red")
+
+    def connect_to_redis(self):
+        """Connect to the redis instance"""
+
+        # Create a pool connection
+        pool = redis.ConnectionPool(host=self.command["site"].CONTROL_REDIS_HOST,
+                                    port=self.command["site"].CONTROL_REDIS_PORT,
+                                    db=self.command["site"].CONTROL_REDIS_DB)
+
+        # The connection
+        self.redis = redis.Redis(connection_pool=pool)
 
     def clean_up(self):
         """Clean up after plugin action"""
