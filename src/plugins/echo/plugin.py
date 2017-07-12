@@ -131,6 +131,7 @@ class RapdPlugin(multiprocessing.Process):
         # Update process with a starting status of 1
         if self.results.get("process"):
             self.results["process"]["status"] = 1
+
         # Create a process section of results with the id and a starting status of 1
         else:
             self.results["process"] = {
@@ -176,6 +177,9 @@ class RapdPlugin(multiprocessing.Process):
         # If command["site"] is there, make it a string representation, not a module
         if self.command.get("site"):
             self.results["command"]["site"] = self.command.get("site").SITE
+
+        # Set status to done
+        self.results["process"]["status"] = 100
 
         # Clean up mess
         self.clean_up()
@@ -243,17 +247,18 @@ class RapdPlugin(multiprocessing.Process):
         run_mode = self.preferences.get("run_mode")
         print "run_mode", run_mode
 
-        # Handle JSON At least write to file        self.write_json()
-
         # Print results to the terminal
         if run_mode == "interactive":
             self.print_results()
+
         # Traditional mode as at the beamline
         elif run_mode == "server":
             json_results = json.dumps(self.results)
             print json_results
             self.redis.publish("RAPD_RESULTS", json_results)
             self.redis.lpush("RAPD_RESULTS", json_results)
+            print self.redis.info()
+
         # Run and return results to launcher
         elif run_mode == "subprocess":
             return self.results
@@ -262,19 +267,6 @@ class RapdPlugin(multiprocessing.Process):
             self.print_results()
             return self.results
 
-        def write_json(self):
-            """Print out JSON-formatted result"""
-
-            json_string = json.dumps(self.results)
-
-            # Output to terminal?
-            if self.preferences.get("json", False):
-                print json_string
-
-            # Always write a file
-            os.chdir(self.working_dir)
-            with open("result.json", "w") as outfile:
-                outfile.writelines(json_string)
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
 

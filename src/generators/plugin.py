@@ -603,7 +603,7 @@ lotting\",",
             "        \"\"\"Output data to consumer - still under construction\"\"\"\n",
             "        self.tprint(\"handle_return\")\n",
             "        run_mode = self.command[\"preferences\"][\"run_mode\"]\n",
-            "        # Handle JSON At least write to file"
+            "        # Handle JSON At least write to file",
             "        self.write_json()\n",
             "        # Print results to the terminal",
             "        if run_mode == \"interactive\":",
