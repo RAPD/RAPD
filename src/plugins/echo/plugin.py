@@ -38,9 +38,8 @@ VERSION = "1.0.0"
 # Standard imports
 # import argparse
 # import from collections import OrderedDict
-import copy
 # import datetime
-import glob
+# import glob
 import json
 import logging
 import multiprocessing
@@ -49,22 +48,22 @@ import os
 # import pymongo
 # import re
 import redis
-import shutil
-import subprocess
-import sys
+# import shutil
+# import subprocess
+# import sys
 import time
 # import unittest
 # import urllib2
-import uuid
-from distutils.spawn import find_executable
+# import uuid
+# from distutils.spawn import find_executable
 
 # RAPD imports
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
 import utils.credits as rcredits
-import info
-from utils import exceptions
+# import info
+# from utils import exceptions
 
 # Software dependencies
 VERSIONS = {}
@@ -176,8 +175,8 @@ class RapdPlugin(multiprocessing.Process):
         self.tprint(arg=99, level="progress")
 
         # If command["site"] is there, make it a string representation, not a module
-        if command.get("site"):
-            self.results["command"]["site"] = command.get("site").SITE
+        if self.command.get("site"):
+            self.results["command"]["site"] = self.command.get("site").SITE
 
         # Clean up mess
         self.clean_up()
