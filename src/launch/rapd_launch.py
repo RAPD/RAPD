@@ -30,6 +30,7 @@ import argparse
 import importlib
 import json
 import os
+import sys
 
 # RAPD imports
 import utils.commandline
@@ -103,6 +104,7 @@ class Launch(object):
         print directories
 
         # Load the plugin from directories defined in site file
+        print sys.path
         self.plugin = load_module(seek_module="plugin",
                                   directories=directories,
                                   logger=self.logger)
