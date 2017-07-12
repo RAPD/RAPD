@@ -226,6 +226,8 @@ class RapdPlugin(multiprocessing.Process):
     def connect_to_redis(self):
         """Connect to the redis instance"""
 
+        print "Connecting to Redis at %s" % self.command["site"].CONTROL_REDIS_HOST
+
         # Create a pool connection
         pool = redis.ConnectionPool(host=self.command["site"].CONTROL_REDIS_HOST,
                                     port=self.command["site"].CONTROL_REDIS_PORT,
@@ -255,8 +257,8 @@ class RapdPlugin(multiprocessing.Process):
         elif run_mode == "server":
             json_results = json.dumps(self.results)
             print json_results
-            self.redis.publish("RAPD_RESULTS", json_results)
             self.redis.lpush("RAPD_RESULTS", json_results)
+            self.redis.publish("RAPD_RESULTS", json_results)
             print self.redis.info()
 
         # Run and return results to launcher
