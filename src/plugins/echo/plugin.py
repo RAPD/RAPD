@@ -38,6 +38,7 @@ VERSION = "1.0.0"
 # Standard imports
 # import argparse
 # import from collections import OrderedDict
+import copy
 # import datetime
 import glob
 import json
