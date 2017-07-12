@@ -261,6 +261,8 @@ def main():
     print "site_file", site_file
     SITE = importlib.import_module(site_file)
 
+    # Set the site tag
+    SITE.SITE_TAG = site.upper()
 
     # Determine the tag - commandline wins
     if commandline_args.tag:

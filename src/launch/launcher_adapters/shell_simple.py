@@ -68,7 +68,7 @@ class LauncherAdapter(object):
 
         # Call the launch process on the command file
         self.logger.debug("rapd.launch", "-s", self.site.ID.lower(), command_file)
-        Popen(["rapd.launch", "-s", self.site.ID.lower(), command_file])
+        Popen(["rapd.launch", "-s", self.site.SITE_TAG, command_file])
 
 if __name__ == "__main__":
 
