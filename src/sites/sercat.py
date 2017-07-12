@@ -30,7 +30,11 @@ import sys
 # RAPD imports
 from utils.site import read_secrets
 
-# Site ID - limited to 12 characters. Should be UPPERCASE
+# Site
+SITE = "SERCAT"
+
+# Site IDs
+# Should be UPPERCASE
 # May be a string or list or tuple of strings
 ID = ("SERCAT_ID", "SERCAT_BM")
 
