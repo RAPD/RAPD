@@ -106,10 +106,8 @@ class Launch(object):
         directories = []
         for directory in self.site.RAPD_PLUGIN_DIRECTORIES:
             directories.append(directory+".%s" % self.command.get("command").lower())
-        print directories
 
         # Load the plugin from directories defined in site file
-        print sys.path
         self.plugin = load_module(seek_module="plugin",
                                   directories=directories,
                                   logger=self.logger)
