@@ -146,8 +146,10 @@ class Launcher(object):
         channel, message = command
         decoded_message = json.loads(message)
 
-        print "decoded_message"
-        pprint(decoded_message)
+        # Update preferences to be in server run mode
+        if not decoded_message.get("preferences"):
+            decoded_message["preferences"] = {}
+        decoded_message["preferences"]["run_mode"] = "server"
 
         self.logger.debug("Command received  channel:%s  message: %s", channel, message)
 
