@@ -504,11 +504,10 @@ class Database(object):
 
         results = db.runs.find(query, projection).sort("file_ctime", order_param)
 
-        self.logger.debug(results)
-
         # Now filter for image_number inclusion
         filtered_results = []
         for result in results:
+            self.logger.debug(results)
             if image_number <= (result["start_image_number"]+result["number_images"]+1):
                 filtered_results.append(result)
 
