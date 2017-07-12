@@ -160,7 +160,6 @@ class RapdPlugin(multiprocessing.Process):
         # Connect to redis
         if self.preferences.get("run_mode") == "server":
             self.connect_to_redis()
-            print self.redis.keys("*")
 
     def process(self):
         """Run plugin action"""
@@ -242,6 +241,7 @@ class RapdPlugin(multiprocessing.Process):
         self.tprint("handle_return")
 
         run_mode = self.preferences.get("run_mode")
+        print "run_mode", run_mode
 
         # Handle JSON At least write to file        self.write_json()
 
