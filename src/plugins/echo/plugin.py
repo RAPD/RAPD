@@ -125,13 +125,21 @@ class RapdPlugin(multiprocessing.Process):
         self.command = command
         self.preferences = self.command.get("preferences", {})
 
-        # Set up the results with command and process data
+        # Set up the results with command
         self.results["command"] = command
 
+        # If command["site"] is there, make it a string representation
+        if command.get("site"):
+            self.results["command"]["site"] = command.get("site").SITE
+
+        # Update process with a starting status of 1
+        if self.results.get("process"):
+            self.results["process"]["status"] = 1
         # Create a process section of results with the id and a starting status of 1
-        self.results["process"] = {
-            "process_id": self.command.get("process_id"),
-            "status": 1}
+        else:
+            self.results["process"] = {
+                "process_id": self.command.get("process_id"),
+                "status": 1}
 
         multiprocessing.Process.__init__(self, name="echo")
         self.start()
@@ -232,7 +240,7 @@ class RapdPlugin(multiprocessing.Process):
 
         self.tprint("handle_return")
 
-        run_mode = self.command["preferences"]["run_mode"]
+        run_mode = self.preferences.get("run_mode")
 
         # Handle JSON At least write to file        self.write_json()
 
@@ -241,7 +249,9 @@ class RapdPlugin(multiprocessing.Process):
             self.print_results()
         # Traditional mode as at the beamline
         elif run_mode == "server":
-            pass
+            json_results = json.dumps(self.results)
+            self.redis.publish("RAPD_RESULTS", json_results)
+            self.redis.lpush("RAPD_RESULTS", json_results)
         # Run and return results to launcher
         elif run_mode == "subprocess":
             return self.results
