@@ -70,7 +70,7 @@ class Launch(object):
         self.command = self.load_command()
 
         # Put the site object into the command
-        self.command["site"] = site
+        self.command["site"] = self.site
 
         self.logger.debug("command: %s", self.command.get("command", None))
         self.logger.debug("return_address: %s", self.command.get("return_address", None))
