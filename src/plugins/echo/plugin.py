@@ -178,6 +178,11 @@ class RapdPlugin(multiprocessing.Process):
         self.tprint("postprocess")
 
         self.tprint(arg=99, level="progress")
+
+        # If command["site"] is there, make it a string representation, not a module
+        if command.get("site"):
+            self.results["command"]["site"] = command.get("site").SITE
+
         # Clean up mess
         self.clean_up()
 
