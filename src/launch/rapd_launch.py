@@ -63,11 +63,14 @@ class Launch(object):
         Orchsetrate the Launch process
         """
 
+        # Start the logger
+        self.init_logger()
+
         # Load and decode json command file
         self.command = self.load_command()
 
-        # Start the logger
-        self.init_logger()
+        # Put the site object into the command
+        self.command["site"] = site
 
         self.logger.debug("command: %s", self.command.get("command", None))
         self.logger.debug("return_address: %s", self.command.get("return_address", None))
@@ -75,11 +78,10 @@ class Launch(object):
         # Load the plugin for this command
         self.load_plugin(self.command.get("command"))
 
-        print self.command
-        print self.site
-
         # Run the plugin
-        self.plugin.RapdPlugin(self.site, self.command)
+        self.plugin.RapdPlugin(command=self.command,
+                               tprint=False,
+                               logger=self.logger)
 
     def load_command(self):
         """
