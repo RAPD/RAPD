@@ -489,7 +489,7 @@ class Database(object):
                  "run_number":run_number,
                  "start_image_number":{"$lte":image_number}}
 
-        self.logger.debug("query", query)
+        self.logger.debug(query)
 
         # Limit to a time window
         if minutes != 0:
@@ -504,7 +504,7 @@ class Database(object):
 
         results = db.runs.find(query, projection).sort("file_ctime", order_param)
 
-        self.logger.debug("results", results)
+        self.logger.debug(results)
 
         # Now filter for image_number inclusion
         filtered_results = []
