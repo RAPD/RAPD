@@ -426,8 +426,12 @@ class Model(object):
             self.logger.debug("%s is a snap", fullname)
 
             # Get all the image information
-            header = detector.read_header(fullname=fullname,
-                                          beam_settings=self.site.BEAM_INFO[site_tag.upper()])
+            try:
+                header = detector.read_header(fullname=fullname,
+                                              beam_settings=self.site.BEAM_INFO[site_tag.upper()])
+            except IOError:
+                logger.exception("Unable to access image")
+                return False
 
             # Add some data to the header - no run_id for snaps
             header["collect_mode"] = "SNAP"
@@ -443,7 +447,7 @@ class Model(object):
             image_status = self.database.add_image(data=header, return_type="boolean")
 
             # Duplicate entry
-            if db_result == False:
+            if image_status == False:
                 return False
 
             # Update remote client
@@ -452,7 +456,6 @@ class Model(object):
 
             # KBO
             self.new_data_image(header=header)
-
 
         # No information is findable
         else:
