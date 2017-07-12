@@ -430,7 +430,7 @@ class Model(object):
                 header = detector.read_header(fullname=fullname,
                                               beam_settings=self.site.BEAM_INFO[site_tag.upper()])
             except IOError:
-                logger.exception("Unable to access image")
+                self.logger.exception("Unable to access image")
                 return False
 
             # Add some data to the header - no run_id for snaps
