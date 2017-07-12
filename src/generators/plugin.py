@@ -133,7 +133,7 @@ class FileGenerator(CommandlineFileGenerator):
                                                  "sys",
                                                  "uuid"),
                                      added_rapd_imports=(
-                                         "utils.credits as credits",
+                                         "utils.credits as rcredits",
                                          "utils.global_vars as rglobals",
                                          "utils.log",
                                          "utils.modules as modules",
@@ -631,9 +631,9 @@ lotting\",",
             "    def print_credits(self):",
             "        \"\"\"Print credits for programs utilized by this plugin\"\"\"\n",
             "        self.tprint(\"print_credits\")\n",
-            "        self.tprint(credits.HEADER, level=99, color=\"blue\")\n",
+            "        self.tprint(rcredits.HEADER, level=99, color=\"blue\")\n",
             "        programs = [\"CCTBX\"]",
-            "        info_string = credits.get_credits_text(programs, \"    \")",
+            "        info_string = rcredits.get_credits_text(programs, \"    \")",
             "        self.tprint(info_string, level=99, color=\"white\")\n",
         ]
         file_generator.output_function(plugin_lines)

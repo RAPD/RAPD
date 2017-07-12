@@ -61,7 +61,7 @@ from distutils.spawn import find_executable
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
-# import utils.credits as credits
+import utils.credits as rcredits
 import info
 from utils import exceptions
 
@@ -105,7 +105,7 @@ class RapdPlugin(multiprocessing.Process):
 
         # Keep track of start time
         self.start_time = time.time()
-        
+
         # Store tprint for use throughout
         if tprint:
             self.tprint = tprint
@@ -249,10 +249,10 @@ class RapdPlugin(multiprocessing.Process):
 
         self.tprint("print_credits")
 
-        self.tprint(credits.HEADER, level=99, color="blue")
+        self.tprint(rcredits.HEADER, level=99, color="blue")
 
         programs = ["CCTBX"]
-        info_string = credits.get_credits_text(programs, "    ")
+        info_string = rcredits.get_credits_text(programs, "    ")
         self.tprint(info_string, level=99, color="white")
 
 def get_commandline():

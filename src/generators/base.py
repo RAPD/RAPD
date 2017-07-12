@@ -217,7 +217,7 @@ class BaseFileGenerator(object):
         rapd_imports = ("commandline_utils",
                         "detectors.detector_utils as detector_utils",
                         "utils",
-                        "utils.credits as credits")
+                        "utils.credits as rcredits")
 
         self.output_function(["# Standard imports"])
         for value in standard_imports:
