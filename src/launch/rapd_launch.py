@@ -40,10 +40,10 @@ import utils.site
 class Launch(object):
     """
     Launches json-formatted RAPD command files using the command-appropriate
-    rapd agent
+    rapd plugin
     """
 
-    agent = None
+    plugin = None
     logger = None
 
     def __init__(self, site, command_file):
@@ -71,11 +71,11 @@ class Launch(object):
         self.logger.debug("command: %s", self.command.get("command", None))
         self.logger.debug("return_address: %s", self.command.get("return_address", None))
 
-        # Load the agent for this command
-        self.load_agent(self.command.get("command"))
+        # Load the plugin for this command
+        self.load_plugin(self.command.get("command"))
 
-        # Run the agent
-        self.agent.RapdAgent(self.site, self.command)
+        # Run the plugin
+        self.plugin.Rapdplugin(self.site, self.command)
 
     def load_command(self):
         """
@@ -88,21 +88,24 @@ class Launch(object):
         # Decode json command file
         return json.loads(message)
 
-    def load_agent(self, command):
+    def load_plugin(self, command):
         """
-        Load the agent file for this command
+        Load the plugin file for this command
 
         Keyword arguments
         command -- the command to be run (index+strategy for example)
         """
 
-        # Agent we are looking for
-        seek_module = "rapd_agent_%s" % command.lower()
+        # plugin directories we are looking for
+        directories = []
+        for directory in self.site.RAPD_PLUGIN_DIRECTORIES:
+            directories.append(directory+".%s" % self.command.get("command").lower())
+        directories = tuple(directories)
 
-        # Load the agent from directories defined in site file
-        self.agent = load_module(seek_module=seek_module,
-                                 directories=self.site.RAPD_AGENT_DIRECTORIES,
-                                 logger=self.logger)
+        # Load the plugin from directories defined in site file
+        self.plugin = load_module(seek_module="plugin",
+                                  directories=directories,
+                                  logger=self.logger)
 
     def init_logger(self):
         """

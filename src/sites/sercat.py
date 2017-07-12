@@ -157,8 +157,8 @@ LAUNCHER_LOCK_FILE = "/tmp/lock/launcher.lock"
 LAUNCHER_TARGET = 1
 
 # Directories to look for rapd agents
-RAPD_AGENT_DIRECTORIES = ("sites.agents",
-                          "agents")
+RAPD_PLUGIN_DIRECTORIES = ("sites.plugins",
+                           "plugins")
 # Queried in order, so a rapd_agent_echo.py in src/sites/agents will override
 # the same file in src/agents
 
