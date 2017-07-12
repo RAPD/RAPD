@@ -67,7 +67,7 @@ class LauncherAdapter(object):
         command_file = launch_tools.write_command_file(self.settings["launch_dir"], command, self.message)
 
         # Call the launch process on the command file
-        self.logger.debug("rapd.launch", "-s", self.site.SITE_TAG, command_file)
+        self.logger.debug("rapd.launch", "-s", self.site.SITE, command_file)
         Popen(["rapd.launch", "-s", self.site.SITE, command_file])
 
 if __name__ == "__main__":
