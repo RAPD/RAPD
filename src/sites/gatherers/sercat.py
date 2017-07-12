@@ -130,7 +130,7 @@ class Gatherer(object):
                         # Publish to Redis
                         red.publish("run_data:%s" % self.tag, run_data_json)
                         # Push onto redis list in case no one is currently listening
-                        red.rpush("run_data:%s" % self.tag, run_data_json)
+                        red.lpush("run_data:%s" % self.tag, run_data_json)
 
                 # 20 image checks
                 for __ in range(20):

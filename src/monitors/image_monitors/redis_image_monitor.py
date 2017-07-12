@@ -145,7 +145,7 @@ class Monitor(threading.Thread):
             self.ow_registrar.register()
 
         # Determine interval for overwatch update
-        ow_round_interval = int((5 * len(self.image_lists)) / POLLING_REST)
+        ow_round_interval = 50 # int((5 * len(self.image_lists)) / POLLING_REST)
 
         while self.running:
 
