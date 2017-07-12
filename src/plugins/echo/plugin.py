@@ -129,10 +129,6 @@ class RapdPlugin(multiprocessing.Process):
         # Set up the results with command
         self.results["command"] = command
 
-        # If command["site"] is there, make it a string representation
-        if command.get("site"):
-            self.results["command"]["site"] = command.get("site").SITE
-
         # Update process with a starting status of 1
         if self.results.get("process"):
             self.results["process"]["status"] = 1
