@@ -62,7 +62,6 @@ class LauncherAdapter(object):
 
         # Decode message
         command = self.message["command"]
-        print "command", command
 
         # Put the command into a file
         command_file = launch_tools.write_command_file(self.settings["launch_dir"],

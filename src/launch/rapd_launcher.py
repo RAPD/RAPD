@@ -146,6 +146,9 @@ class Launcher(object):
         channel, message = command
         decoded_message = json.loads(message)
 
+        print "decoded_message"
+        pprint(decoded_message)
+
         self.logger.debug("Command received  channel:%s  message: %s", channel, message)
 
         # Use the adapter to launch
