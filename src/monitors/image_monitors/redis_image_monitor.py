@@ -155,7 +155,6 @@ class Monitor(threading.Thread):
                 for tag in self.tags:
 
                     # Try to pop the oldest image off the list
-                    self.logger.debug("Rpopping off of images_collected:%s" % tag)
                     new_image = self.redis.rpop("images_collected:%s" % tag)
 
                     # Have a new_image
@@ -166,8 +165,6 @@ class Monitor(threading.Thread):
                         self.notify({"message_type":"NEWIMAGE",
                                      "fullname":new_image,
                                      "site_tag":tag})
-                        # self.notify(("NEWIMAGE", {"fullname":new_image,
-                        #                           "site_tag":tag}))
 
                     # Slow it down a little
                     time.sleep(POLLING_REST)
