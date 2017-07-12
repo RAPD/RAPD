@@ -56,13 +56,13 @@ def load_module(seek_module, directories=False, logger=False):
     # Look for rapd plugins in the specified directories
     if directories:
         for directory in directories:
-            # try:
-            # print "Attempting to load module %s" % directory+"."+seek_module
-            if logger:
-                logger.debug("Attempting to load module %s", directory+"."+seek_module)
-            module = importlib.import_module(directory+"."+seek_module)
-            break
-            # except ImportError:
+            try:
+                if logger:
+                    logger.debug("Attempting to load module %s", directory+"."+seek_module)
+                module = importlib.import_module(directory+"."+seek_module)
+                break
+            except ImportError:
+                pass
             #     if logger:
             #         logger.error("Error loading %s", directory+"."+seek_module)
     else:
