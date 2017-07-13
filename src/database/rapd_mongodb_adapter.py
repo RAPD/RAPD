@@ -440,10 +440,10 @@ class Database(object):
 
         results = db.runs.find(query, projection).sort("file_ctime", order_param)
 
-        self.logger.debug("results.count", results.count)
+        self.logger.debug("results.count()", results.count())
 
         # If no return, return a False
-        if results.count == 0:
+        if results.count() == 0:
             return False
         else:
             if return_type == "boolean":
