@@ -50,7 +50,7 @@ class Database(object):
     Provides connection to MongoDB for Model.
     """
 
-    client = False
+    client = None
 
     def __init__(self,
                  host=None,
@@ -106,6 +106,7 @@ class Database(object):
 
         # No client - then connect
         if not self.client:
+            self.logger.debug("Connecting to MongDB at %s:%d", self.db_host, self.db_port)
             # Connect
             self.client = pymongo.MongoClient(host=self.db_host,
                                               port=self.db_port)
