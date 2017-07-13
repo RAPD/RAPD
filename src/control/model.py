@@ -563,6 +563,8 @@ class Model(object):
         run_data -- dict containing data describing the run
         """
 
+        self.logger.debug(run_dict)
+
         # Unpack the run_dict
         run_data = run_dict["run_data"]
 

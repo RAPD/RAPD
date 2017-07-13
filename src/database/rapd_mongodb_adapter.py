@@ -359,6 +359,8 @@ class Database(object):
         return_type -- "boolean", "id", or "dict" (default = "id")
         """
 
+        self.logger.debug(data)
+
         db = self.get_db_connection()
 
         try:
@@ -369,7 +371,7 @@ class Database(object):
             if return_type == "boolean":
                 return True
             elif return_type == "id":
-                return str(db.find_one({"_id":result.inserted_id},{"_id":1}))
+                return str(db.find_one({"_id":result.inserted_id}, {"_id":1}))
             elif return_type == "dict":
                 result_dict = db.find_one({"_id":result.inserted_id})
                 result_dict["_id"] = str(result_dict["_id"])
