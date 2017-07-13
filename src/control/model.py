@@ -131,7 +131,7 @@ class Model(object):
         self.start_run_monitor()
 
         # Start the image monitor
-        # self.start_image_monitor()
+        self.start_image_monitor()
 
         # Start the cloud monitor
         # self.start_cloud_monitor()
@@ -570,7 +570,6 @@ class Model(object):
 
         # Check if this run has already been stored
         recent_run = self.query_for_run(run_data=run_data, boolean=True)
-        self.logger.debug(recent_run)
 
         # Run data already stored
         if recent_run == True:

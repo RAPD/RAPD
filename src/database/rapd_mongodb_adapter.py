@@ -441,20 +441,20 @@ class Database(object):
             time_limit = datetime.datetime.utcnow() + datetime.timedelta(minutes=minutes)
             query.update({"timestamp":{"$lt":time_limit}})
 
-        self.logger.debug(query)
-        self.logger.debug(projection)
-        self.logger.debug(order_param)
+        # self.logger.debug(query)
+        # self.logger.debug(projection)
+        # self.logger.debug(order_param)
 
         results = db.runs.find(query, projection).sort("file_ctime", order_param)
 
-        self.logger.debug("results.count() %d", results.count())
+        # self.logger.debug("results.count() %d", results.count())
 
         # If no return, return a False
         if results.count() == 0:
             return False
         else:
             if return_type == "boolean":
-                self.logger.debug("Returning True")
+                # self.logger.debug("Returning True")
                 return True
             else:
                 return results
