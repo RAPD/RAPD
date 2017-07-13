@@ -452,6 +452,7 @@ class Database(object):
             return False
         else:
             if return_type == "boolean":
+                self.logger.debug("Returning True")
                 return True
             else:
                 return results

@@ -569,11 +569,11 @@ class Model(object):
         run_data = run_dict["run_data"]
 
         # Check if this run has already been stored
-        recent_run_data = self.query_for_run(run_data=run_data, boolean=True)
-        self.logger.debug(recent_run_data)
+        recent_run = self.query_for_run(run_data=run_data, boolean=True)
+        self.logger.debug(recent_run)
 
         # Run data already stored
-        if recent_run_data == True:
+        if recent_run == True:
 
             self.logger.debug("This run has already been recorded")
 
