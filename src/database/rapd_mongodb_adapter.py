@@ -442,6 +442,8 @@ class Database(object):
             query.update({"file_ctime":{"$lt":time_limit}})
 
         self.logger.debug(query)
+        self.logger.debug(projection)
+        self.logger.debug(order_param)
 
         results = db.runs.find(query, projection).sort("file_ctime", order_param)
 
