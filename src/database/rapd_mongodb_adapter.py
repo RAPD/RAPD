@@ -436,7 +436,11 @@ class Database(object):
             time_limit = datetime.datetime.utcnow() - datetime.timedelta(minutes=minutes)
             query.update({"file_ctime":{"$lt":time_limit}})
 
+        self.logger.debug(query)
+
         results = db.runs.find(query, projection).sort("file_ctime", order_param)
+
+        self.logger.debug("results.count", results.count)
 
         # If no return, return a False
         if results.count == 0:

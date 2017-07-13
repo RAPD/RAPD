@@ -570,7 +570,8 @@ class Model(object):
 
         # Check if this run has already been stored
         recent_run_data = self.query_for_run(run_data=run_data, boolean=True)
-
+        self.logger.debug(recent_run_data)
+        
         # Run data already stored
         if recent_run_data == True:
 
