@@ -362,17 +362,22 @@ class Database(object):
 
         self.logger.debug(run_data)
 
+        # Add timestamp to the run_data
+        run_data.update({"timestamp":datetime.datetime.utcnow()})
+
         db = self.get_db_connection()
 
         try:
             # Insert into db
-            result = db.runs.insert_one(run_data.update({"timestamp":datetime.datetime.utcnow()}))
+            result = db.runs.insert_one(run_data)
+
+            self.logger.debug("Inserted run _id", str(result.inserted_id))
 
             # Return the requested type
             if return_type == "boolean":
                 return True
             elif return_type == "id":
-                return str(db.find_one({"_id":result.inserted_id}, {"_id":1}))
+                return str(result.inserted_id)
             elif return_type == "dict":
                 result_dict = db.find_one({"_id":result.inserted_id})
                 result_dict["_id"] = str(result_dict["_id"])

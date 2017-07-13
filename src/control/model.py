@@ -583,7 +583,7 @@ class Model(object):
             self.logger.debug("Adding run")
 
             # Save to the database
-            run_id = self.database.add_run(run_data=run_data)
+            run_id = self.database.add_run(run_data=run_data, return_type="id")
 
             # Update the run data with the db run_id
             run_data["run_id"] = run_id
