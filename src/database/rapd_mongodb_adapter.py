@@ -351,7 +351,7 @@ class Database(object):
     ############################################################################
     # Functions for runs                                                       #
     ############################################################################
-    def add_run(self, data, return_type="id"):
+    def add_run(self, run_data, return_type="id"):
         """
         Add new run to the MySQL database.
 
@@ -360,13 +360,13 @@ class Database(object):
         return_type -- "boolean", "id", or "dict" (default = "id")
         """
 
-        self.logger.debug(data)
+        self.logger.debug(run_data)
 
         db = self.get_db_connection()
 
         try:
             # Insert into db
-            result = db.runs.insert_one(data.update({"timestamp":datetime.datetime.utcnow()}))
+            result = db.runs.insert_one(run_data.update({"timestamp":datetime.datetime.utcnow()}))
 
             # Return the requested type
             if return_type == "boolean":
