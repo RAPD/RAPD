@@ -261,7 +261,8 @@ class Gatherer(object):
                         image_name = False
                         break
                     else:
-                        image_name = os.path.realpath(sline[1])
+                        # image_name = os.path.realpath(sline[1])
+                        image_name = sline[1]
                         break
 
             self.logger.debug("SercatGatherer.parse_image_line - %s", image_name)
