@@ -528,6 +528,7 @@ class Database(object):
 
         # If no return, return a False
         if len(filtered_results) == 0:
+            self.logger.debug("Returning False")
             return False
         else:
             # boolean
