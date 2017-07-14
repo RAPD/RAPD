@@ -115,7 +115,7 @@ class Launcher(object):
 
             # Look for a new command
             command = self.redis.brpop(["RAPD_JOBS",], 5)
-            print command
+            # print command
 
             # Handle the message
             if command:
@@ -219,9 +219,6 @@ s IP address (%s), but not for the input tag (%s)" % (self.ip_address, self.tag)
     #
     #     # Instantiate the database connection
     #     self.database = database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-
-
-
 
 def get_commandline():
     """Get the commandline variables and handle them"""
