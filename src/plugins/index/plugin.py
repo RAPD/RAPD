@@ -980,6 +980,8 @@ class RapdPlugin(Process):
     def check_best_detector(self, detector):
         """Check that the detector we need is in the BEST configuration file"""
 
+        # print "check_best_detector", detector
+
         best_executable = subprocess.check_output(["which", "best"])
         detector_info = os.path.join(os.path.dirname(best_executable),
                                      "detector-inf.dat")
@@ -989,7 +991,7 @@ class RapdPlugin(Process):
         found = False
         for line in lines:
             # print line.rstrip()
-            if line.startswith(detector):
+            if line.startswith(detector+" "):
                 found = True
                 break
             elif line.startswith("end"):
