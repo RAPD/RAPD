@@ -50,7 +50,8 @@ __status__ = "Development"
 
 # Information for BEST detector-inf.dat that may be missing
 BEST_INFO = {
-    "mx300hs": "mx300hs     mar300  300.00 0.0781250 3840 3840 0.001   0 1.40 0.0 10.0 0.035 4096 DC DA 0  0",
-    "pilatus6m": "pilatus6m    6m      434.64 0.172000  2463 2527  0.004 0 0.50 0.0  0.0 0.030  pck DC DA 0  0",
-    "eiger9m": "eiger9m     9m      245.20 0.075000  3110 3269  0.000003 0 0.50 0.0 0.0 0.030 pck DC DA 0  0",
+    "mx300":     "mx300       mar300  300.00 0.0730000 8192 8192   2.6   0 1.40 0.0 10.0 0.035 4096 DC DA 0  0",
+    "mx300hs":   "mx300hs     mar300  300.00 0.0781250 3840 3840 0.001   0 1.40 0.0 10.0 0.035 4096 DC DA 0  0",
+    "pilatus6m": "pilatus6m   6m      434.64 0.172000  2463 2527  0.004 0 0.50 0.0  0.0 0.030  pck DC DA 0  0",
+    "eiger9m":   "eiger9m     9m      245.20 0.075000  3110 3269  0.000003 0 0.50 0.0 0.0 0.030 pck DC DA 0  0",
 }
