@@ -640,7 +640,12 @@ class Model(object):
         # Tease out the info from the file name
         directory, basename, image_prefix, run_number, image_number = detector.parse_file_name(fullname)
 
-        self.logger.debug("%s %s %s %s %s", directory, basename, image_prefix, run_number, image_number)
+        self.logger.debug("%s %s %s %s %s",
+                          directory,
+                          basename,
+                          image_prefix,
+                          run_number,
+                          image_number)
 
         # Look for run information for this image
         run_info = self.query_in_run(site_tag=site_tag,
