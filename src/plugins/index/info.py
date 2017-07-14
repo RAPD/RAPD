@@ -50,7 +50,6 @@ __status__ = "Development"
 
 # Information for BEST detector-inf.dat that may be missing
 BEST_INFO = {
-
     "q4": "q4          q4      188.00 0.0816000 2304 2304   2.5   0 1.30 0.0 20.0 0.030  512 DC DA 0  0",
     "q4-2x":       "q4-2x       q4-2x   188.00 0.1632000 1152 1152   2.5   0 1.30 0.0 20.0 0.030  512 DC DA 0  0",
     "q210":        "q210        q210    210.00 0.0512000 4096 4096   2.5   0 1.30 0.0 20.0 0.030  512 DC DA 0  0",
