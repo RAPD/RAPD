@@ -526,7 +526,7 @@ class Model(object):
                 run_start = run.get("start_image_number")
                 run_end = run.get("number_images") + run_start - 1
                 if image_number >= run_start and image_number <= run_end:
-                    if boolean:
+                    if return_type == "boolean":
                         return True
                     else:
                         return [run]
