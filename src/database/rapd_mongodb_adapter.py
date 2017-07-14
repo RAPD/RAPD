@@ -507,7 +507,7 @@ class Database(object):
         # Limit to a time window
         if minutes != 0:
             time_limit = datetime.datetime.utcnow() + datetime.timedelta(minutes=minutes)
-            query.update({"file_ctime":{"$lt":time_limit}})
+            query.update({"timestamp":{"$lt":time_limit}})
 
         # Projection determined by return_type
         if return_type in ("boolean", "id"):

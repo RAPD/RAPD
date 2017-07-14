@@ -326,6 +326,7 @@ apiRoutes.use(function(req, res, next) {
 
 // test route to make sure everything is working (accessed at GET http://localhost:8080/api)
 // apiRoutes.use(jwtCheck);
+
 apiRoutes.get('/', function(req, res) {
     res.json({ message: 'Welcome to the RAPD api!' });
 });
@@ -773,6 +774,13 @@ apiRoutes.route('/groups/:group_id')
 // REGISTER OUR ROUTES -------------------------------
 
 // basic route
+/**
+ * @api {get} / Feedback that server is up
+ * @apiName Base
+ * @apiGroup Admin
+ *
+ * @apiSuccess {String} message Message in the format "Hello! The API is at http://localhost:3000/api".
+ */
 app.get('/', function(req, res) {
     res.send('Hello! The API is at http://localhost:' + app.get('port') + '/api');
 });
