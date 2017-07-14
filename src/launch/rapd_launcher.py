@@ -115,7 +115,6 @@ class Launcher(object):
 
             # Look for a new command
             command = self.redis.brpop(["RAPD_JOBS",], 5)
-            # print command
 
             # Handle the message
             if command:
