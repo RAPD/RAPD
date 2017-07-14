@@ -515,7 +515,7 @@ class Model(object):
         # Query local runs in reverse chronological order
         for run_id, run in self.recent_runs.iteritems():
 
-            self.logger.debug("run_id:%s run:%s" % (run_id, str(run)))
+            self.logger.debug("_id:%s run:%s" % (run_id, str(run)))
 
             if run.get("site_tag", None) == site_tag and \
                run.get("directory", None) == directory and \
@@ -684,7 +684,7 @@ class Model(object):
             #         run_data=run_info)
 
             # Return the run position for this image
-            return run_info["run_id"], run_position
+            return run_info["_id"], run_position
 
     def new_data_image(self, header):
         """
