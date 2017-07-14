@@ -519,7 +519,7 @@ class Database(object):
         self.logger.debug(projection)
         self.logger.debug(order_param)
 
-        results = db.runs.find(query, projection).sort("file_ctime", order_param)
+        results = db.runs.find(query).sort("file_ctime", order_param)
         self.logger.debug(results.count())
 
         # Now filter for image_number inclusion
