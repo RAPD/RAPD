@@ -504,11 +504,9 @@ class Database(object):
                  "run_number":run_number,
                  "start_image_number":{"$lte":image_number}}
 
-        self.logger.debug(query)
-
         # Limit to a time window
         if minutes != 0:
-            time_limit = datetime.datetime.utcnow() - datetime.timedelta(minutes=minutes)
+            time_limit = datetime.datetime.utcnow() + datetime.timedelta(minutes=minutes)
             query.update({"file_ctime":{"$lt":time_limit}})
 
         # Projection determined by return_type
@@ -516,6 +514,10 @@ class Database(object):
             projection = {"_id":1, "start_image_number":1, "number_images":1}
         else:
             projection = {}
+
+        self.logger.debug(query)
+        self.logger.debug(projection)
+        self.logger.debug(order_param)
 
         results = db.runs.find(query, projection).sort("file_ctime", order_param)
         self.logger.debug(results.count())
