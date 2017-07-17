@@ -11,8 +11,8 @@ var jwt = require('jsonwebtoken');
 var uuid = require('node-uuid');
 
 // Redis
-var redis = require('redis');
-var redis_client = redis.createClient();
+// var redis = require('redis');
+// var redis_client = redis.createClient();
 
 // Import models
 var Result = require('./models/result');

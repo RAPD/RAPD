@@ -45,7 +45,9 @@ var server = http.createServer(app);
 
 // Add session handling
 let app_session = session({
-  store: new RedisStore({}),
+  // store: new RedisStore({
+  //   host: config.redis_host
+  // }),
   secret: 'keyboard cat',
   resave: false,
   saveUninitialized: true
@@ -291,7 +293,12 @@ apiRoutes.use(function(req, res, next) {
   // console.log(req.headers);
 
   // check header or url parameters or post parameters for token
-  var token = req.headers.authorization.replace('Bearer ', '');
+  try {
+    var token = req.headers.authorization.replace('Bearer ', '');
+  } catch (e) {
+    console.error(e);
+    var token = false;
+  }
 
   // decode token
   if (token) {
