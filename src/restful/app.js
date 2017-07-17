@@ -1,34 +1,27 @@
+var bodyParser = require('body-parser');
+var config = require('./config'); // get our config file
+var cookieParser = require('cookie-parser');
 var debug = require('debug')('backend:server');
-var http = require('http');
 var express = require('express');
 var session = require('express-session');
-var RedisStore = require('connect-redis')(session);
-var path = require('path');
-var favicon = require('serve-favicon');
+var http = require('http');
+var jwt = require('jsonwebtoken');
+var mongoose = require('mongoose');
 var morgan = require('morgan');
-var cookieParser = require('cookie-parser');
-
-var randomstring = require("randomstring");
 var nodemailer = require('nodemailer');
 var smtpTransport = require('nodemailer-smtp-transport');
-// var parseCookie = express.cookieParser();
-var bodyParser = require('body-parser');
+var path = require('path');
+var randomstring = require("randomstring");
+var favicon = require('serve-favicon');
+
+var RedisStore = require('connect-redis')(session);
+
 var Wss = require('./ws_server');
-var jwt = require('jsonwebtoken');
-
-// // Redis
-// var redis = require('redis'),
-//     redis_client = redis.createClient();
-
-// Configuration
-var config = require('./config'); // get our config file
 
 // Routing
 var routes = require('./routes/index');
 var users = require('./routes/users');
 
-// MongoDB connection
-var mongoose = require('mongoose');
 // MongoDB Models
 var Session = require('./models/session');
 var User = require('./models/user');
@@ -286,50 +279,51 @@ app.get('/setup', function(req, res) {
 //   });
 
 // route middleware to verify a token
-apiRoutes.use(function(req, res, next) {
-
-  // console.log(req.body);
-  // console.log(req.query);
-  // console.log(req.headers);
-
-  // check header or url parameters or post parameters for token
-  try {
-    var token = req.headers.authorization.replace('Bearer ', '');
-  } catch (e) {
-    console.error(e);
-    var token = false;
-  }
-
-  // decode token
-  if (token) {
-
-    // verifies secret and checks exp
-    jwt.verify(token, app.get('superSecret'), function(err, decoded) {
-      if (err) {
-        return res.json({ success: false, message: 'Failed to authenticate token.' });
-      } else {
-        let now = Date.now()/1000;
-        console.log(decoded.iat, decoded.exp, (decoded.exp-now)/(60));
-        // if everything is good, save to request for use in other routes
-
-        if (decoded.iat <= now && decoded.exp >= now) {
-          req.decoded = decoded;
-          next();
-        }
-
-      }
-    });
-
-  } else {
-
-    // if there is no token
-    // return an error
-    return res.status(403).send({
-        success: false,
-        message: 'No token provided.'
-    });
-  }
-});
+// Temporarily turned off
+// apiRoutes.use(function(req, res, next) {
+//
+//   // console.log(req.body);
+//   // console.log(req.query);
+//   // console.log(req.headers);
+//
+//   // check header or url parameters or post parameters for token
+//   try {
+//     var token = req.headers.authorization.replace('Bearer ', '');
+//   } catch (e) {
+//     console.error(e);
+//     var token = false;
+//   }
+//
+//   // decode token
+//   if (token) {
+//
+//     // verifies secret and checks exp
+//     jwt.verify(token, app.get('superSecret'), function(err, decoded) {
+//       if (err) {
+//         return res.json({ success: false, message: 'Failed to authenticate token.' });
+//       } else {
+//         let now = Date.now()/1000;
+//         console.log(decoded.iat, decoded.exp, (decoded.exp-now)/(60));
+//         // if everything is good, save to request for use in other routes
+//
+//         if (decoded.iat <= now && decoded.exp >= now) {
+//           req.decoded = decoded;
+//           next();
+//         }
+//
+//       }
+//     });
+//
+//   } else {
+//
+//     // if there is no token
+//     // return an error
+//     return res.status(403).send({
+//         success: false,
+//         message: 'No token provided.'
+//     });
+//   }
+// });
 
 // test route to make sure everything is working (accessed at GET http://localhost:8080/api)
 // apiRoutes.use(jwtCheck);
