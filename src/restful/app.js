@@ -28,6 +28,14 @@ var Session = require('./models/session');
 var User = require('./models/user');
 var Group = require('./models/group');
 
+// LDAP client
+var ldap_client = ldap.createClient({
+  url: 'ldap://'+config.ldap_server+':1389'
+});
+ldap_client.bind('cn=root', function(err) {
+  assert.ifError(err);
+});
+
 // Email Configuration
 var smtp_transport = nodemailer.createTransport(smtpTransport({
   host: 'mailhost.anl.gov'
@@ -496,6 +504,13 @@ apiRoutes.route('/sessions/:session_id')
 // route to return all users (GET http://localhost:8080/api/users)
 apiRoutes.route('/users')
   .get(function(req, res) {
+
+    ldap_client.search('dc=ser,dc=aps,dc=anl,dc=gov', function(err, users) {
+      console.log(err);
+      console.log(users);
+    });
+
+
     User.
       find({}).
       populate('groups', 'groupname').
