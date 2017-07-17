@@ -18,7 +18,7 @@
     "express-session": "^1.14.0",
     "hbs": "~3.1.0",
     "jsonwebtoken": "^7.1.6",
-    "ldapjs": "^1.0.0",
+    "ldapjs": "^1.0.1",
     "mongoose": "^4.5.0",
     "morgan": "~1.6.1",
     "node-uuid": "^1.4.7",

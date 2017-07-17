@@ -6,6 +6,7 @@ var express = require('express');
 var session = require('express-session');
 var http = require('http');
 var jwt = require('jsonwebtoken');
+var ldap = require('ldapjs');
 var mongoose = require('mongoose');
 var morgan = require('morgan');
 var nodemailer = require('nodemailer');
