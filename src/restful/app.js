@@ -30,10 +30,10 @@ var Group = require('./models/group');
 
 // LDAP client
 var ldap_client = ldap.createClient({
-  url: 'ldap://'+config.ldap_server+':1389'
+  url: 'ldap://'+config.ldap_server+':389'
 });
 ldap_client.bind('cn=root', '', function(err) {
-  assert.ifError(err);
+  console.error(err);
 });
 
 // Email Configuration
