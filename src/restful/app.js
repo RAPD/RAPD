@@ -111,6 +111,12 @@ apiRoutes.post('/authenticate', function(req, res) {
   console.log('authenticate');
   console.log(req.body);
 
+  /*
+  client.bind('uid=schuerjp,ou=People,dc=ser,dc=aps,dc=anl,dc=gov', 'shallowkillerbeg', function(err) {
+... console.log(err);
+... });
+  */
+
   User.getAuthenticated(req.body.email, req.body.password, function(err, user, reason) {
 
     console.log(err);
@@ -510,9 +516,7 @@ apiRoutes.route('/users')
       filter:'objectclass=*'
     }, function(err, res) {
       res.on('searchEntry', function(entry) {
-        if (entry.uid === 'schuerjp') {
-          console.log('entry: ' + JSON.stringify(entry.object));
-        }
+        console.log('entry: ' + JSON.stringify(entry.object));
       });
       res.on('searchReference', function(referral) {
         console.log('referral: ' + referral.uris.join());
