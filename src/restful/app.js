@@ -108,12 +108,25 @@ apiRoutes.post('/authenticate', function(req, res) {
   console.log('authenticate');
   console.log(req.body);
 
-  /*
-  client.bind('uid=schuerjp,ou=People,dc=ser,dc=aps,dc=anl,dc=gov', 'shallowkillerbeg', function(err) {
-... console.log(err);
-... });
-  */
+  client.bind('uid='+req.body.uid+',ou=People,dc=ser,dc=aps,dc=anl,dc=gov', req.body.password, function(err) {
+    console.log(err);
+  });
 
+  // create a token
+  var token = jwt.sign(user, app.get('superSecret'), {
+    expiresIn: 86400 // expires in 24 hours
+  });
+
+  // return the information including token as JSON
+  console.log('returning token');
+  res.json({
+    success: true,
+    message: 'Enjoy your token!',
+    token: token,
+    pass_force_change: user.pass_force_change
+  });
+
+  /*
   User.getAuthenticated(req.body.email, req.body.password, function(err, user, reason) {
 
     console.log(err);
@@ -154,6 +167,7 @@ apiRoutes.post('/authenticate', function(req, res) {
       }
     }
   });
+  */
 });
 
 // route to authenticate a user (POST http://localhost:8080/api/requestpass)
