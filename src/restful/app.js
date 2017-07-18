@@ -505,7 +505,7 @@ apiRoutes.route('/sessions/:session_id')
 apiRoutes.route('/users')
   .get(function(req, res) {
 
-    client.search("dc=ser,dc=aps,dc=anl,dc=gov", {
+    ldap_client.search("dc=ser,dc=aps,dc=anl,dc=gov", {
       scope:'sub',
       filter:'objectclass=*'
     }, function(err, res) {
