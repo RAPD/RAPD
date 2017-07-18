@@ -592,7 +592,9 @@ apiRoutes.route('/users/populate')
 
       new_user.save(function(err) {
         console.log(err);
-      })
+      });
+
+      console.log(new_user);
     }
 
 
