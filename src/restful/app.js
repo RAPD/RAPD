@@ -20,8 +20,8 @@ var RedisStore = require('connect-redis')(session);
 var Wss = require('./ws_server');
 
 // Routing
-var routes = require('./routes/index');
-var users = require('./routes/users');
+// var routes = require('./routes/index');
+// var users = require('./routes/users');
 
 // MongoDB Models
 var Session = require('./models/session');
@@ -510,7 +510,9 @@ apiRoutes.route('/users')
       filter:'objectclass=*'
     }, function(err, res) {
       res.on('searchEntry', function(entry) {
-        console.log('entry: ' + JSON.stringify(entry.object));
+        if (entry.uid === 'schuerjp') {
+          console.log('entry: ' + JSON.stringify(entry.object));
+        }
       });
       res.on('searchReference', function(referral) {
         console.log('referral: ' + referral.uris.join());
