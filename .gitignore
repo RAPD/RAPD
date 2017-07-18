@@ -25,7 +25,6 @@ test_data
 *.log
 
 # Just there for local reference
-ui
 
 # Files that should be hidden
 *secret*
