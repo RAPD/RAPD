@@ -575,12 +575,7 @@ apiRoutes.route('/users/populate')
           uidNumber: ldap_user.uidNumber,
           gidNumber: ldap_user.gidNumber,
         });
-
-        new_user.save(function(err) {
-          console.log(err);
-        });
-
-        console.log(new_user);
+        new_user.save(function(err) {});
       });
       res.on('searchReference', function(referral) {
         console.log('referral: ' + referral.uris.join());
