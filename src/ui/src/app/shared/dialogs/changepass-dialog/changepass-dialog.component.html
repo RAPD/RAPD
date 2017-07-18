@@ -1,0 +1,37 @@
+<div>
+  <h1>
+    Change<br>Password
+  </h1>
+  <button md-icon-button class="button-dialog-top-right" (click)="exitChangepass()">
+    <md-icon>close</md-icon>
+  </button>
+  <form [formGroup]="changepass_form" (ngSubmit)="onSubmit()">
+    <table>
+      <tr><td>
+        <md-input-container>
+          <input mdInput
+            formControlName="password1"
+            required
+            minlength="8"
+            placeholder='password'
+            type='password'>
+        </md-input-container>
+      </td></tr>
+      <tr><td>
+        <md-input-container>
+          <input mdInput
+            formControlName="password2"
+            required
+            minlength="8"
+            placeholder='password'
+            type='password'>
+        </md-input-container>
+      </td></tr>
+    </table>
+    <button type="submit" [disabled]="!changepass_form.valid || !passMatch()" md-raised-button color="primary">Change</button>
+
+    <md-progress-spinner *ngIf='submitted' mode='indeterminate' style="height:30px;width:30px;"></md-progress-spinner>
+
+  </form>
+  <p>{{error_message}}</p>
+</div>

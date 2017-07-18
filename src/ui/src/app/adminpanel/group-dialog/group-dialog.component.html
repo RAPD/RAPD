@@ -1,0 +1,60 @@
+<h1 md-dialog-title>Group</h1>
+<button md-icon-button class="button-dialog-top-right" (click)="exitGroup()">
+  <md-icon>close</md-icon>
+</button>
+<form [formGroup]="group_form">
+  <div class="form-group">
+    <p>
+      <md-input-container>
+        <input mdInput
+          formControlName="groupname"
+          required
+          placeholder='groupname'
+          [(ngModel)]="model.groupname"
+          autofocus>
+      </md-input-container>
+    </p>
+    <p>
+      <md-input-container>
+        <input mdInput
+          placeholder="institution"
+          formControlName="institution"
+          required
+          [(ngModel)]="model.institution">
+      </md-input-container>
+    </p>
+    <p>
+      <md-input-container>
+      <input mdInput
+        placeholder="UID"
+        formControlName="uid"
+        [(ngModel)]="model.uid">
+      </md-input-container>
+    </p>
+    <p>
+      <md-input-container>
+        <input mdInput
+          placeholder="GID"
+          formControlName="gid"
+          [(ngModel)]="model.gid">
+      </md-input-container>
+    </p>
+    <p>
+      <md-select formControlName="status" placeholder="Role"
+              [(ngModel)]="model.status">
+        <md-option value="active">active</md-option>
+        <md-option value="inactive">inactive</md-option>
+      </md-select>
+    </p>
+  </div>
+  <p>
+    <md-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></md-progress-spinner>
+  </p>
+  <p>
+    {{error_message}}
+  </p>
+  <p>
+    <button *ngIf="model._id" type="button" md-button color="warn" (click)="deleteGroup()">Delete</button>
+    <button type="button" [disabled]="!group_form.valid" md-button (click)="submitGroup()">Save</button>
+  </p>
+</form>

@@ -1,0 +1,142 @@
+@font-face {
+  font-family: 'Chunkfive';
+  src: url('Chunkfive.otf');
+}
+
+html {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+  font-family: "Roboto","Helvetica Neue Light","Helvetica Neue",Helvetica,Arial,"Lucida Grande",sans-serif;
+  height:100%;
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+
+.child {
+
+}
+
+article.c-content {
+  width: 80%;
+  margin-left: 10%;
+  margin-top: 2em;
+}
+
+.l-content {
+  padding: 10px 96px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.l2-content {
+  padding: 10px 0 0 96px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+}
+
+.sessions-table {
+  margin-bottom: 32px;
+  box-shadow: 0 2px 5px 0 rgba(0,0,0,0.26);
+  border-radius: 2px;
+  background: #fff;
+}
+
+.sessions-table tbody th, .sessions-table tbody td {
+    border-bottom: 1px solid #ECEFF1;
+    color: #445A64;
+    padding: 16px 32px;
+    text-align: left;
+}
+
+.sessions-table thead th {
+    background: #EEEEEE;
+    border-bottom: 1px solid #ECEFF1;
+    color: black;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 32px;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+.is-full-width {
+  width: 100%;
+}
+
+.is-full-height {
+  height: 100%;
+}
+
+.main-toolbar {
+  background: #EEEEEE;
+  box-shadow: 3px 0 6px rgba(0,0,0,0.3);
+}
+
+.session-tab-group {
+  background: #E5E5E5;
+  /*box-shadow: 3px 0 6px rgba(0,0,0,0.3);*/
+  /*width: 232px;*/
+  /*overflow: auto;*/
+  /*margin: 0.25em 0 0.5em 0.25em;*/
+  /*min-height: calc(100vh - 4.75em);*/
+}
+
+.side-list {
+  background: #EEEEEE;
+  box-shadow: 3px 0 6px rgba(0,0,0,0.3);
+  width: 16em;
+  overflow: auto;
+  margin: 0.25em 0 0.5em 0.25em;
+  min-height: calc(100vh - 8em);
+}
+
+.result-panel {
+  background: #EEEEEE;
+  box-shadow: 3px 0 6px rgba(0,0,0,0.3);
+  overflow: auto;
+  margin: 0.25em 0 0.5em 0.25em;
+  min-width: calc(100vw - 17em);
+  min-height: calc(100vh - 7.75em);
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.md-list-item {
+  background-color: inherit;
+}
+
+.md-overlay-pane {
+  background: rgba(255,255,255,0.95);
+}
+
+/* Invalid ng form entries */
+input.ng-invalid:not(form)  {
+  /*border-bottom: 5px solid #a94442; /* red */
+  background: rgba(255,0,0,0.5);
+}
+
+/* A panel in the interface */
+div.panel {
+  background-color: #E5E5E5;
+  height: 100%;
+}
+
+
+.chunky {
+  font-family: 'ChunkFive', 'Georgia', serif;
+}
+
+.button-dialog-top-right {
+  float:right;
+  top: -5em;
+  right: -1em;
+}

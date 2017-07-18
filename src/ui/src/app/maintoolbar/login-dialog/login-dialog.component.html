@@ -1,0 +1,114 @@
+<button md-icon-button class="button-dialog-top-right" (click)="exitLogin()">
+  <md-icon>close</md-icon>
+</button>
+<div *ngIf="mode === 'login'">
+  <h1>
+    Login
+  </h1>
+  <!-- <button md-icon-button style="position:absolute; right:1em; top:1em;" (click)="exitLogin()">
+    <md-icon>close</md-icon>
+  </button> -->
+  <form [formGroup]="login_form" (ngSubmit)="onSubmitLogin()">
+    <table>
+      <tr><td>
+        <md-input-container>
+          <input mdInput
+            formControlName="email"
+            required
+            placeholder='email'
+            pattern='^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'>
+        </md-input-container>
+        <div class="md-errors-spacer" [hidden]="login_form.controls.email.valid || login_form.controls.email.untouched">
+          <div class="md-char-counter" *ngIf="login_form.controls.email.errors && login_form.controls.email.errors.required">
+            Email is required
+          </div>
+          <div class="md-char-counter" *ngIf="login_form.controls.email.errors && login_form.controls.email.errors.pattern">
+            Email is invalid
+          </div>
+        </div>
+      </td></tr>
+      <tr><td>
+        <md-input-container>
+          <input mdInput
+            formControlName="password"
+            required placeholder='password'
+            type='password'>
+        </md-input-container>
+        <div class="md-errors-spacer" [hidden]="login_form.controls.password.valid || login_form.controls.password.untouched">
+          <div class="md-char-counter" *ngIf="login_form.controls.password.errors && login_form.controls.password.errors.required">
+            Password is required
+          </div>
+          <div class="md-char-counter" *ngIf="login_form.controls.password.errors && login_form.controls.password.errors.pattern">
+            Password is invalid
+          </div>
+        </div>
+      </td></tr>
+    </table>
+
+    <button type="submit" [disabled]="!login_form.valid" md-raised-button color="primary">Login</button>
+
+    <md-progress-spinner *ngIf='submitted' mode='indeterminate' style="height:30px;width:30px;"></md-progress-spinner>
+
+  </form>
+  <p>{{error_message}}</p>
+  <button md-button (click)="mode='lostpass'">Forgot your password?</button>
+</div>
+<div *ngIf="mode === 'lostpass'">
+  <h1>
+    Password Recovery
+  </h1>
+  <!-- <button md-icon-button style="position:absolute; right:1em; top:1em;" (click)="exitLogin()">
+    <md-icon>close</md-icon>
+  </button> -->
+  <form [formGroup]="lostpass_form" (ngSubmit)="onSubmitLostpass()">
+    <table>
+      <tr><td>
+        <md-input-container>
+          <input mdInput
+            formControlName="email"
+            required
+            placeholder='email'
+            pattern='^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'>
+        </md-input-container>
+        <div class="md-errors-spacer" [hidden]="login_form.controls.email.valid || login_form.controls.email.untouched">
+          <div class="md-char-counter" *ngIf="lostpass_form.controls.email.errors && lostpass_form.controls.email.errors.required">
+            Email is required
+          </div>
+          <div class="md-char-counter" *ngIf="lostpass_form.controls.email.errors && lostpass_form.controls.email.errors.pattern">
+            Email is invalid
+          </div>
+        </div>
+      </td></tr>
+    </table>
+    <span>{{error_message}}</span>
+    <button type="submit" [disabled]="!lostpass_form.valid" md-raised-button color="primary">Submit</button>
+    <md-progress-spinner *ngIf='submitted' mode='indeterminate' style="height:30px;width:30px;"></md-progress-spinner>
+
+  </form>
+  <button md-button (click)="mode='login'">Already have a password?</button>
+</div>
+<div *ngIf="mode === 'signup'">
+  <h1>
+    Sign Up
+  </h1>
+</div>
+<div *ngIf="mode === 'show_login_success'">
+  <h1>
+    Success
+  </h1>
+  <!-- <button md-icon-button style="position:absolute; right:1em; top:1em;" (click)="exitLogin()">
+    <md-icon>close</md-icon>
+  </button> -->
+  Your login has been successful.
+</div>
+<div *ngIf="mode === 'show_request_success'">
+  <h1>
+    Success
+  </h1>
+  <!-- <button md-icon-button style="position:absolute; right:1em; top:1em;" (click)="exitLogin()">
+    <md-icon>close</md-icon>
+  </button> -->
+  Your request for a recovery password has been successful.
+  <br>
+  You should receive an email shortly.
+</div>

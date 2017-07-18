@@ -1,0 +1,7 @@
+<md-list dense class="side-list">
+  <md-list-item *ngIf="data_results.length == 0">No results</md-list-item>
+  <md-list-item *ngFor="let result of data_results" [myHighlight]="highlight_color" (click)="onClick(result)">
+  <!-- <md-list-item *ngFor="let result of data_results" [myHighlight]="highlight_color" (click)="onClick(result)"> -->
+    {{result.repr}}
+  </md-list-item>
+</md-list>
