@@ -568,6 +568,19 @@ apiRoutes.route('/users/populate')
       res.on('searchEntry', function(entry) {
         ldap_users.push(entry.object);
         // console.log('entry: ' + JSON.stringify(entry.object));
+        // create a group
+        var ldap_user = entry.object;
+        var new_user = new Group({
+          uid: ldap_user.uid,
+          uidNumber: ldap_user.uidNumber,
+          gidNumber: ldap_user.gidNumber,
+        });
+
+        new_user.save(function(err) {
+          console.log(err);
+        });
+
+        console.log(new_user);
       });
       res.on('searchReference', function(referral) {
         console.log('referral: ' + referral.uris.join());
@@ -578,12 +591,13 @@ apiRoutes.route('/users/populate')
       res.on('end', function(result) {
         console.log('status: ' + result.status);
       });
+
     });
 
     // Now process each user
     for (let ldap_user of ldap_users) {
       console.log(ldap_user);
-      
+
       // create a group
       var new_user = new Group({
         uid: ldap_user.uid,
