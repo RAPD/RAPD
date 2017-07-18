@@ -32,9 +32,9 @@ var Group = require('./models/group');
 var ldap_client = ldap.createClient({
   url: 'ldap://'+config.ldap_server+':389'
 });
-ldap_client.bind('cn=root', '', function(err) {
-  console.error(err);
-});
+// ldap_client.bind('cn=root', '', function(err) {
+//   console.error(err);
+// });
 
 // Email Configuration
 var smtp_transport = nodemailer.createTransport(smtpTransport({
@@ -505,11 +505,23 @@ apiRoutes.route('/sessions/:session_id')
 apiRoutes.route('/users')
   .get(function(req, res) {
 
-    ldap_client.search('dc=ser,dc=aps,dc=anl,dc=gov', function(err, users) {
-      console.log(err);
-      console.log(users);
+    client.search("dc=ser,dc=aps,dc=anl,dc=gov", {
+      scope:'sub',
+      filter:'objectclass=*'
+    }, function(err, res) {
+      res.on('searchEntry', function(entry) {
+        console.log('entry: ' + JSON.stringify(entry.object));
+      });
+      res.on('searchReference', function(referral) {
+        console.log('referral: ' + referral.uris.join());
+      });
+      res.on('error', function(err) {
+        console.error('error: ' + err.message);
+      });
+      res.on('end', function(result) {
+        console.log('status: ' + result.status);
+      });
     });
-
 
     User.
       find({}).
