@@ -38,9 +38,9 @@ tmp
 
 
 # From UI
-ui/dist
-ui/tmp
-ui/node_modules
+src/ui/dist
+src/ui/tmp
+src/ui/node_modules
 
 # IDEs and editors
 /.idea
