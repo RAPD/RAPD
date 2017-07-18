@@ -30,7 +30,7 @@ var Group = require('./models/group');
 
 // LDAP client
 var ldap_client = ldap.createClient({
-  url: 'ldap://'+config.ldap_server+':389'
+  url: 'ldap://'+config.ldap_server
 });
 // ldap_client.bind('cn=root', '', function(err) {
 //   console.error(err);
