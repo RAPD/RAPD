@@ -108,7 +108,7 @@ apiRoutes.post('/authenticate', function(req, res) {
   console.log('authenticate');
   console.log(req.body);
 
-  client.bind('uid='+req.body.uid+',ou=People,dc=ser,dc=aps,dc=anl,dc=gov', req.body.password, function(err) {
+  ldap_client.bind('uid='+req.body.uid+',ou=People,dc=ser,dc=aps,dc=anl,dc=gov', req.body.password, function(err) {
     console.log(err);
   });
 
