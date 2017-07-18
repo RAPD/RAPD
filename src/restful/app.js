@@ -585,9 +585,9 @@ apiRoutes.route('/users/populate')
 
       // create a group
       var new_user = new Group({
-        uid: ldap_user.uid
+        uid: ldap_user.uid,
         uidNumber: ldap_user.uidNumber,
-        gidNumber: ldap_user.gidNumber
+        gidNumber: ldap_user.gidNumber,
       });
 
       new_user.save(function(err) {
