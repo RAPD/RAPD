@@ -4,7 +4,7 @@ var Schema = mongoose.Schema;
 var GroupSchema = new Schema({
   groupname: {
     type: String,
-    required: true
+    default: 'unknown'
   },
   institution: {
     type: String,
@@ -16,12 +16,18 @@ var GroupSchema = new Schema({
     default: 'active'
   },
   uid: {
-    type: Number,
-    required: false
+    type: String,
+    required: true,
+    unique: true
   },
-  gid: {
+  uidNumber: {
     type: Number,
-    required: false
+    required: true,
+    unique: true
+  },
+  gidNumber: {
+    type: Number,
+    required: true
   },
   timestamp: {
     type: Date,

@@ -32,9 +32,6 @@ var Group = require('./models/group');
 var ldap_client = ldap.createClient({
   url: 'ldap://'+config.ldap_server
 });
-// ldap_client.bind('cn=root', '', function(err) {
-//   console.error(err);
-// });
 
 // Email Configuration
 var smtp_transport = nodemailer.createTransport(smtpTransport({
@@ -529,16 +526,111 @@ apiRoutes.route('/users')
       });
     });
 
-    User.
+    // SERCAT uses LDAP per group
+    // Get group data
+    Group.
       find({}).
-      populate('groups', 'groupname').
-      exec(function(err, users) {
-        console.log(users);
-        for (let user of users) {
-          user.password = undefined;
-        }
-        res.json(users);
+      exec(function(err, groups) {
+        console.log(groups);
+        res.json(groups);
       });
+
+
+    // SERCAT uses LDAP per group, so RAPD will use groups as users
+    // User.
+    //   find({}).
+    //   populate('groups', 'groupname').
+    //   exec(function(err, users) {
+    //     console.log(users);
+    //     for (let user of users) {
+    //       user.password = undefined;
+    //     }
+    //     res.json(users);
+    //   });
+  });
+
+/**
+ * @api {get} /users/populate Populate users into MongoDB from LDAP server
+ * @apiName PopulateUsers
+ * @apiGroup User
+ *
+ * @apiSuccess {Boolean} success or failure.
+ */
+apiRoutes.route('/users/populate')
+  .get(function(req, res) {
+
+    // Search for all users in LDAP
+    var ldap_users = [];
+    ldap_client.search("dc=ser,dc=aps,dc=anl,dc=gov", {
+      scope:'sub',
+      filter:'objectclass=*'
+    }, function(err, res) {
+      res.on('searchEntry', function(entry) {
+        ldap_users.push(entry.object);
+        console.log('entry: ' + JSON.stringify(entry.object));
+      });
+      res.on('searchReference', function(referral) {
+        console.log('referral: ' + referral.uris.join());
+      });
+      res.on('error', function(err) {
+        console.error('error: ' + err.message);
+      });
+      res.on('end', function(result) {
+        console.log('status: ' + result.status);
+      });
+    });
+
+    // Now process each user
+    for (let ldap_user of ldap_users) {
+
+      // create a group
+      var new_user = new Group({
+        uid: ldap_user.uid
+        uidNumber: ldap_user.uidNumber,
+        gidNumber: ldap_user.gidNumber
+      });
+
+      new_user.save(function(err) {
+        console.log(err);
+      })
+    }
+
+
+
+    // // save the sample user
+    // new_group.save(function(err, return_group, numAffected) {
+    //   if (err) throw err;
+    //
+    //   console.log('Group saved successfully');
+    //   res.json({
+    //     success: true,
+    //     operation: 'add',
+    //     group: return_group
+    //   });
+    // });
+    //
+    //
+    // // SERCAT uses LDAP per group
+    // // Get group data
+    // Group.
+    //   find({}).
+    //   exec(function(err, groups) {
+    //     console.log(groups);
+    //     res.json(groups);
+    //   });
+
+
+    // SERCAT uses LDAP per group, so RAPD will use groups as users
+    // User.
+    //   find({}).
+    //   populate('groups', 'groupname').
+    //   exec(function(err, users) {
+    //     console.log(users);
+    //     for (let user of users) {
+    //       user.password = undefined;
+    //     }
+    //     res.json(users);
+    //   });
   });
 
 apiRoutes.route('/users/:user_id')
