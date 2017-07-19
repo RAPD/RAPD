@@ -124,7 +124,7 @@ apiRoutes.post('/authenticate', function(req, res) {
       ldap_client.bind('uid='+req.body.uid+','+config.ldap_dn, req.body.password, function(err) {
         console.log(err);
         var reason = err.name.toString();
-        console.log(erreasonr);
+        console.log(reason);
         // switch (reason) {
         //     case reasons.NOT_FOUND:
         //         res.json({ success: false, message: 'Authentication failed. No such user.' });
