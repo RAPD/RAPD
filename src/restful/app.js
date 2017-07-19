@@ -108,6 +108,25 @@ apiRoutes.post('/authenticate', function(req, res) {
   console.log('authenticate');
   console.log(req.body);
 
+  // Fetch user
+  ldap_client.search('uid='+req.body.uid+',ou=People,dc=ser,dc=aps,dc=anl,dc=gov', {
+    scope:'sub',
+    filter:'objectclass=*'
+  }, function(err, res) {
+    res.on('searchEntry', function(entry) {
+      console.log('entry: ' + JSON.stringify(entry.object));
+    });
+    res.on('searchReference', function(referral) {
+      console.log('referral: ' + referral.uris.join());
+    });
+    res.on('error', function(err) {
+      console.error('error: ' + err.message);
+    });
+    res.on('end', function(result) {
+      console.log('status: ' + result.status);
+    });
+  });
+
   ldap_client.bind('uid='+req.body.uid+',ou=People,dc=ser,dc=aps,dc=anl,dc=gov', req.body.password, function(err) {
     console.log(err);
   });
