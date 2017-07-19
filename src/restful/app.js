@@ -108,50 +108,53 @@ apiRoutes.post('/authenticate', function(req, res) {
   console.log('authenticate');
   console.log(req.body);
 
-  // Fetch user
-  ldap_client.search('uid='+req.body.uid+',ou=People,dc=ser,dc=aps,dc=anl,dc=gov', {
-    scope:'sub',
-    filter:'objectclass=*',
-    sizeLimit:1
-  }, function(err, result) {
-
-    // LDAP error
+  // Authenticate
+  ldap_client.bind('uid='+req.body.uid+','+config.ldap_dn, req.body.password, function(err) {
+    // REJECTION
     if (err) {
       console.log(err);
-    }
+      var reason = err.name.toString();
+      console.log(reason);
+      switch (reason) {
+          // case reasons.NOT_FOUND:
+          //   res.json({ success: false, message: 'Authentication failed. No such user.' });
+          //   break;
+          case 'InvalidCredentialsError':
+            res.json({ success: false, message: 'Authentication failed. Wrong password.' });
+            // note: these cases are usually treated the same - don't tell
+            // the user *why* the login failed, only that it did
+            break;
+          default:
+            res.json({ success: false, message: 'Authentication failed. ' + reason });
+          // case reasons.MAX_ATTEMPTS:
+          //     res.json({ success: false, message: 'Authentication failed. Too many failed attempts' });
+          //     // send email or otherwise notify user that account is
+          //     // temporarily locked
+          //     break;
+      }
+    // AUTHENTICATED
+    } else {
 
-    result.on('searchEntry', function(entry) {
+      // Fetch user
+      ldap_client.search('uid='+req.body.uid+',ou=People,dc=ser,dc=aps,dc=anl,dc=gov', {
+        scope:'sub',
+        filter:'objectclass=*',
+        sizeLimit:1
+      }, function(err, result) {
 
-      // The user information
-      var user = entry.object;
-      console.log(user);
-
-      // Authenticate
-      ldap_client.bind('uid='+req.body.uid+','+config.ldap_dn, req.body.password, function(err) {
-        // REJECTION
+        // LDAP error
         if (err) {
           console.log(err);
-          var reason = err.name.toString();
-          console.log(reason);
-          switch (reason) {
-              // case reasons.NOT_FOUND:
-              //   res.json({ success: false, message: 'Authentication failed. No such user.' });
-              //   break;
-              case 'InvalidCredentialsError':
-                res.json({ success: false, message: 'Authentication failed. Wrong password.' });
-                // note: these cases are usually treated the same - don't tell
-                // the user *why* the login failed, only that it did
-                break;
-              default:
-                res.json({ success: false, message: 'Authentication failed. ' + reason });
-              // case reasons.MAX_ATTEMPTS:
-              //     res.json({ success: false, message: 'Authentication failed. Too many failed attempts' });
-              //     // send email or otherwise notify user that account is
-              //     // temporarily locked
-              //     break;
-          }
-        // AUTHENTICATED
-        } else {
+        }
+
+        var user = undefined;
+
+        result.on('searchEntry', function(entry) {
+
+          // The user information
+          user = entry.object;
+          console.log(user);
+
           // create a token
           var token = jwt.sign(user, app.get('superSecret'), {
             expiresIn: 86400 // expires in 24 hours
@@ -165,20 +168,25 @@ apiRoutes.post('/authenticate', function(req, res) {
             token: token,
             pass_force_change: user.pass_force_change
           });
-        }
-      });
-    });
-    result.on('searchReference', function(referral) {
-      console.log('referral: ' + referral.uris.join());
-    });
-    result.on('error', function(err) {
-      console.error('error: ' + err.message);
-    });
-    result.on('end', function(end) {
-      console.log('status: ' + end.status);
+        });
+        result.on('searchReference', function(referral) {
+          console.log('referral: ' + referral.uris.join());
+        });
+        result.on('error', function(err) {
+          console.error('error: ' + err.message);
+        });
+        result.on('end', function(end) {
+          console.log(user);
+          console.log('status: ' + end.status);
 
-    });
+        });
+      });
+
+
+    }
   });
+
+
 
   /*
   // This is the mongoose way - not used in SERCAT LDAP setup
