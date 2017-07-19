@@ -571,18 +571,18 @@ apiRoutes.route('/users')
     ldap_client.search(config.ldap_dn, {  //}"dc=ser,dc=aps,dc=anl,dc=gov", {
       scope:'sub',
       filter:'objectclass=*'
-    }, function(err, res) {
-      res.on('searchEntry', function(entry) {
+    }, function(err, ldap_result) {
+      ldap_result.on('searchEntry', function(entry) {
         console.log('entry: ' + JSON.stringify(entry.object));
         users.push(entry.object);
       });
-      res.on('searchReference', function(referral) {
+      ldap_result.on('searchReference', function(referral) {
         console.log('referral: ' + referral.uris.join());
       });
-      res.on('error', function(err) {
+      ldap_result.on('error', function(err) {
         console.error('error: ' + err.message);
       });
-      res.on('end', function(result) {
+      ldap_result.on('end', function(result) {
         console.log('status: ' + result.status);
         res.json(users);
       });
