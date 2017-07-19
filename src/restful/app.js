@@ -114,6 +114,12 @@ apiRoutes.post('/authenticate', function(req, res) {
     filter:'objectclass=*',
     sizeLimit:1
   }, function(err, result) {
+
+    // LDAP error
+    if (err) {
+      console.log(err);
+    }
+
     result.on('searchEntry', function(entry) {
 
       // The user information
@@ -170,6 +176,7 @@ apiRoutes.post('/authenticate', function(req, res) {
     });
     result.on('end', function(end) {
       console.log('status: ' + end.status);
+
     });
   });
 
