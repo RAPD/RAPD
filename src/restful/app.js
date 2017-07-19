@@ -121,8 +121,25 @@ apiRoutes.post('/authenticate', function(req, res) {
       console.log(user);
 
       // Authenticate
-      ldap_client.bind('uid='+req.body.uid+',ou=People,dc=ser,dc=aps,dc=anl,dc=gov', req.body.password, function(err) {
+      ldap_client.bind('uid='+req.body.uid+','+config.ldap_dn, req.body.password, function(err) {
         console.log(err);
+        var reason = err.name.toString();
+        console.log(erreasonr);
+        // switch (reason) {
+        //     case reasons.NOT_FOUND:
+        //         res.json({ success: false, message: 'Authentication failed. No such user.' });
+        //         break;
+        //     case reasons.PASSWORD_INCORRECT:
+        //         res.json({ success: false, message: 'Authentication failed. Wrong password.' });
+        //         // note: these cases are usually treated the same - don't tell
+        //         // the user *why* the login failed, only that it did
+        //         break;
+        //     case reasons.MAX_ATTEMPTS:
+        //         res.json({ success: false, message: 'Authentication failed. Too many failed attempts' });
+        //         // send email or otherwise notify user that account is
+        //         // temporarily locked
+        //         break;
+        // }
       });
 
       // create a token
@@ -151,15 +168,8 @@ apiRoutes.post('/authenticate', function(req, res) {
     });
   });
 
-
-
-
-
-
-
-
-
   /*
+  // This is the mongoose way - not used in SERCAT LDAP setup
   User.getAuthenticated(req.body.email, req.body.password, function(err, user, reason) {
 
     console.log(err);
