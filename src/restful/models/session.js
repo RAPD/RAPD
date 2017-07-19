@@ -21,10 +21,9 @@ var SessionSchema = new Schema({
     required: true,
     default: 'mx'
   },
-  group: {
-    type: Schema.Types.ObjectId,
+  user: {
+    type: String,
     required: true,
-    ref: 'Group'
   },
   timestamp: {
     type: Date,

@@ -106,7 +106,7 @@ apiRoutes.use(function(req, res, next) {
 apiRoutes.post('/authenticate', function(req, res) {
 
   console.log('authenticate');
-  console.log(req.body);
+  // console.log(req.body);
 
   // Authenticate
   ldap_client.bind('uid='+req.body.uid+','+config.ldap_dn, req.body.password, function(err) {
@@ -168,232 +168,7 @@ apiRoutes.post('/authenticate', function(req, res) {
       });
     }
   });
-
-  /*
-  // This is the mongoose way - not used in SERCAT LDAP setup
-  User.getAuthenticated(req.body.email, req.body.password, function(err, user, reason) {
-
-    console.log(err);
-    console.log(user);
-
-    // login was successful if we have a user
-    if (user) {
-      // create a token
-      var token = jwt.sign(user, app.get('superSecret'), {
-        expiresIn: 86400 // expires in 24 hours
-      });
-
-      // return the information including token as JSON
-      console.log('returning token');
-      res.json({
-        success: true,
-        message: 'Enjoy your token!',
-        token: token,
-        pass_force_change: user.pass_force_change
-      });
-    // otherwise we can determine why we failed
-    } else {
-      var reasons = User.failedLogin;
-      switch (reason) {
-          case reasons.NOT_FOUND:
-              res.json({ success: false, message: 'Authentication failed. No such user.' });
-              break;
-          case reasons.PASSWORD_INCORRECT:
-              res.json({ success: false, message: 'Authentication failed. Wrong password.' });
-              // note: these cases are usually treated the same - don't tell
-              // the user *why* the login failed, only that it did
-              break;
-          case reasons.MAX_ATTEMPTS:
-              res.json({ success: false, message: 'Authentication failed. Too many failed attempts' });
-              // send email or otherwise notify user that account is
-              // temporarily locked
-              break;
-      }
-    }
-  });
-  */
 });
-
-// route to authenticate a user (POST http://localhost:8080/api/requestpass)
-apiRoutes.post('/requestpass', function(req, res) {
-
-  console.log('requestpass');
-  console.log(req.body);
-
-  User.
-  findOne({email: req.body.email}).
-  exec(function(err, user) {
-    if (err)
-        res.send(err);
-
-    if (user) {
-      let new_pass_raw = randomstring.generate(12);
-      console.log('new_pass_raw', new_pass_raw);
-      user.password =  new_pass_raw;
-      // Expire in 60 minutes
-      user.pass_expire = Date.now() + 3600;
-      user.pass_force_change = true;
-      user.save(function(err, saved_user) {
-        if (err) {
-          res.send(err);
-        }
-        // Set up the email options
-        let mailOptions = {
-          from: 'fmurphy@anl.gov',
-          to: user.email,
-          cc: 'fmurphy@anl.gov',
-          subject: 'RAPD password recovery',
-          text: 'Your new temporary password is '+new_pass_raw+'\nIt is authorized for 60 minutes.'};
-        // Send the email
-        smtp_transport.sendMail(mailOptions);
-
-        res.json({success: true});
-      });
-    }
-    // res.json(sessions);
-  });
-
-  // User.getAuthenticated(req.body.email, req.body.password, function(err, user, reason) {
-  //
-  //   console.log(err);
-  //
-  //   // login was successful if we have a user
-  //   if (user) {
-  //     // create a token
-  //     var token = jwt.sign(user, app.get('superSecret'), {
-  //       expiresIn: 86400 // expires in 24 hours
-  //     });
-  //
-  //     // return the information including token as JSON
-  //     console.log('returning token');
-  //     res.json({
-  //       success: true,
-  //       message: 'Enjoy your token!',
-  //       token: token
-  //     });
-  //   // otherwise we can determine why we failed
-  //   } else {
-  //     var reasons = User.failedLogin;
-  //     switch (reason) {
-  //         case reasons.NOT_FOUND:
-  //             res.json({ success: false, message: 'Authentication failed. No such user.' });
-  //             break;
-  //         case reasons.PASSWORD_INCORRECT:
-  //             res.json({ success: false, message: 'Authentication failed. Wrong password.' });
-  //             // note: these cases are usually treated the same - don't tell
-  //             // the user *why* the login failed, only that it did
-  //             break;
-  //         case reasons.MAX_ATTEMPTS:
-  //             res.json({ success: false, message: 'Authentication failed. Too many failed attempts' });
-  //             // send email or otherwise notify user that account is
-  //             // temporarily locked
-  //             break;
-  //     }
-  //   }
-  // });
-});
-
-// Setup route
-app.get('/setup', function(req, res) {
-
-  // // create a sample user
-  // var fm = new User({
-  //   username: 'Frank Murphy',
-  //   password: 'groovylovebugbed',
-  //   role: 'root_admin',
-  //   group: null,
-  //   email: 'fmurphy@anl.gov',
-  //   status: 'active'
-  // });
-  //
-  // // save the sample user
-  // fm.save(function(err) {
-  //   if (err) throw err;
-  //
-  //   console.log('User saved successfully');
-  //   res.json({ success: true });
-  // });
-
-  // // create a sample group
-  var necat = new Group({
-    groupname: 'NECAT',
-    institution: 'Cornell University',
-    status: 'active'
-  });
-
-  // save the sample user
-  necat.save(function(err) {
-    if (err) throw err;
-
-    console.log('Group saved successfully');
-    res.json({ success: true });
-  });
-
-});
-
-// // User routes
-// apiRoutes.route('/user')
-//   // create a user (accessed at POST http://localhost:3000/api/user)
-//   .post(function(req, res) {
-//
-//       var session = new User(JSON.parse(req.body.user));     // create a new instance of the Session model
-//
-//       // save the bear and check for errors
-//       session.save(function(err) {
-//           if (err)
-//               res.send(err);
-//
-//           res.json({ message: 'User created!' });
-//       });
-//
-//   });
-
-// route middleware to verify a token
-// Temporarily turned off
-// apiRoutes.use(function(req, res, next) {
-//
-//   // console.log(req.body);
-//   // console.log(req.query);
-//   // console.log(req.headers);
-//
-//   // check header or url parameters or post parameters for token
-//   try {
-//     var token = req.headers.authorization.replace('Bearer ', '');
-//   } catch (e) {
-//     console.error(e);
-//     var token = false;
-//   }
-//
-//   // decode token
-//   if (token) {
-//
-//     // verifies secret and checks exp
-//     jwt.verify(token, app.get('superSecret'), function(err, decoded) {
-//       if (err) {
-//         return res.json({ success: false, message: 'Failed to authenticate token.' });
-//       } else {
-//         let now = Date.now()/1000;
-//         console.log(decoded.iat, decoded.exp, (decoded.exp-now)/(60));
-//         // if everything is good, save to request for use in other routes
-//
-//         if (decoded.iat <= now && decoded.exp >= now) {
-//           req.decoded = decoded;
-//           next();
-//         }
-//
-//       }
-//     });
-//
-//   } else {
-//
-//     // if there is no token
-//     // return an error
-//     return res.status(403).send({
-//         success: false,
-//         message: 'No token provided.'
-//     });
-//   }
-// });
 
 // test route to make sure everything is working (accessed at GET http://localhost:8080/api)
 // apiRoutes.use(jwtCheck);
@@ -402,163 +177,128 @@ apiRoutes.get('/', function(req, res) {
     res.json({ message: 'Welcome to the RAPD api!' });
 });
 
-// Route to handle changing password (POST http://localhost:8080/api/changepass)
-apiRoutes.post('/changepass', function(req, res) {
-
-  console.log('changepass');
-  console.log(req.body);
-
-  User.
-  findOne({email: req.body.email}).
-  exec(function(err, user) {
-    if (err)
-        res.send(err);
-    if (user) {
-      let new_pass_raw = req.body.password;
-      user.password =  new_pass_raw;
-      // Expire in 1 year
-      user.pass_expire = Date.now() + 31622240;
-      user.pass_force_change = false;
-      user.save(function(err, saved_user) {
-        if (err) {
-          res.send(err);
-        }
-        // Set up the email options
-        let mailOptions = {
-          from: 'fmurphy@anl.gov',
-          to: user.email,
-          cc: 'fmurphy@anl.gov',
-          subject: 'RAPD password change',
-          text: 'Your RAPD password has been updated.\nIf this is an unauthorized change, please contactthe RAPD administrator at XXX'};
-        // Send the email
-        smtp_transport.sendMail(mailOptions);
-
-        res.json({success: true});
-      });
-    }
-  });
-});
-
-
 // on routes that end in /sessions
 // ----------------------------------------------------
 apiRoutes.route('/sessions')
 
-    // create a session (accessed at POST http://localhost:3000/api/sessions)
-    .post(function(req, res) {
+  // get all the sessions (accessed at GET http://localhost:3000/api/sessions)
+  .get(function(req, res) {
 
-        var session = new Session(JSON.parse(req.body.session));     // create a new instance of the Session model
+    var find_search = { group: { $in: req.decoded._doc.groups}};
+    if (req.decoded._doc.role == 'site_admin') {
+      find_search = {}
+    }
 
-        // save the bear and check for errors
-        session.save(function(err) {
-            if (err)
-                res.send(err);
-
-            res.json({ message: 'Session created!' });
-        });
-
-    })
-
-    // get all the sessions (accessed at GET http://localhost:3000/api/sessions)
-    .get(function(req, res) {
-
-      var find_search = { group: { $in: req.decoded._doc.groups}};
-      if (req.decoded._doc.role == 'site_admin') {
-        find_search = {}
-      }
-
-      Session.
-        find(find_search).
-        populate('group', 'groupname').
-        sort({end: -1}).
-        exec(function(err, sessions) {
-          if (err)
-              res.send(err);
-          console.log(sessions);
+    Session.
+      find(find_search).
+      populate('group', 'groupname').
+      sort({end: -1}).
+      exec(function(err, sessions) {
+        if (err) {
+          res.send(err);
+        } else {
           res.json(sessions);
-        });
+        }
+      });
+  })
+
+  // create a session (accessed at POST http://localhost:3000/api/sessions)
+  .post(function(req, res) {
+
+    var session = new Session(JSON.parse(req.body.session));     // create a new instance of the Session model
+
+    // save the bear and check for errors
+    session.save(function(err) {
+      if (err) {
+        res.send(err);
+      } else {
+        res.json({ message: 'Session created!' });
+      }
     });
+
+  });
 
 // on routes that end in /sessions/:session_id
 // ----------------------------------------------------
 apiRoutes.route('/sessions/:session_id')
 
-    // get the session with that id (accessed at GET http://localhost:8080/api/sessinos/:session_id)
-    .get(function(req, res) {
-      Session.findById(req.params.session_id, function(err, session) {
-        if (err)
-          res.send(err);
-        res.json(session);
-      });
-    })
-
-    // update the bear with this id (accessed at PUT http://localhost:8080/api/sessions/:session_id)
-    .put(function(req, res) {
-
-      let session = req.body.session;
-
-      // Make sure group is only an _id
-      session.group = session.group._id;
-
-      // use our bear model to find the session we want
-      Session.findById(session._id, function(err, saved_session) {
-
-        if (err)
-          res.send(err);
-
-        // Update the document
-        saved_session.set(session);
-
-        // save the bear
-        saved_session.save(function(err) {
-          if (err) {
-            res.send(err);
-          }
-
-          Session.
-            findById(session._id).
-            populate('group', 'groupname').
-            exec(function(err, return_session) {
-              console.log(return_session);
-              let params = {
-                success: true,
-                operation: 'edit',
-                session: return_session
-              };
-              res.json(params);
-            });
-        });
-      });
-    })
-
-    // delete the session with this id (accessed at DELETE http://localhost:8080/api/sessions/:session_id)
-    .delete(function(req, res) {
-
-        console.log(req.params.session_id);
-
-        Session.remove({
-            _id: req.params.session_id
-        }, function(err, session) {
-            if (err)
-                res.send(err);
-
-            res.json({ message: 'Successfully deleted' });
-        });
+  // get the session with that id (accessed at GET http://localhost:8080/api/sessinos/:session_id)
+  .get(function(req, res) {
+    Session.findById(req.params.session_id, function(err, session) {
+      if (err)
+        res.send(err);
+      res.json(session);
     });
+  })
 
-  // on routes that end in /results
-  // ----------------------------------------------------
-  apiRoutes.route('/results/:session_id')
+  // update the bear with this id (accessed at PUT http://localhost:8080/api/sessions/:session_id)
+  .put(function(req, res) {
 
-      // get the session with that id (accessed at GET http://localhost:8080/api/bears/:bear_id)
-      .get(function(req, res) {
-          Session.find({session_id:req.params.session_id}, function(err, sessions) {
-              if (err)
-                  res.send(err);
-              console.log(sessions);
-              res.json(sessions);
+    let session = req.body.session;
+
+    // Make sure group is only an _id
+    session.group = session.group._id;
+
+    // use our bear model to find the session we want
+    Session.findById(session._id, function(err, saved_session) {
+
+      if (err)
+        res.send(err);
+
+      // Update the document
+      saved_session.set(session);
+
+      // save the bear
+      saved_session.save(function(err) {
+        if (err) {
+          res.send(err);
+        }
+
+        Session.
+          findById(session._id).
+          populate('group', 'groupname').
+          exec(function(err, return_session) {
+            console.log(return_session);
+            let params = {
+              success: true,
+              operation: 'edit',
+              session: return_session
+            };
+            res.json(params);
           });
       });
+    });
+  })
+
+  // delete the session with this id (accessed at DELETE http://localhost:8080/api/sessions/:session_id)
+  .delete(function(req, res) {
+
+    console.log(req.params.session_id);
+
+    Session.remove({
+      _id: req.params.session_id
+    }, function(err, session) {
+      if (err) {
+        res.send(err);
+      } else {
+        res.json({ message: 'Successfully deleted' });
+      }
+    });
+  });
+
+// on routes that end in /results
+// ----------------------------------------------------
+apiRoutes.route('/results/:session_id')
+
+    // get the session with that id (accessed at GET http://localhost:8080/api/bears/:bear_id)
+    .get(function(req, res) {
+        Session.find({session_id:req.params.session_id}, function(err, sessions) {
+            if (err)
+                res.send(err);
+            console.log(sessions);
+            res.json(sessions);
+        });
+    });
 
 // routes that end with users
 // ----------------------------------------------------
@@ -687,109 +427,6 @@ apiRoutes.route('/users/:uid')
       });
     });
   });
-
-// routes that end with groups
-// ----------------------------------------------------
-// route to return all groups (GET http://localhost:8080/api/groups)
-apiRoutes.route('/groups')
-
-  .get(function(req, res) {
-    Group.find({}, function(err, groups) {
-      console.log(groups);
-      res.json(groups);
-    });
-  });
-
-apiRoutes.route('/groups/:group_id')
-
-  // edit or add the group with _id (accessed ad PUT http://localhost:8080/api/groups/:group_id)
-  .put(function(req,res) {
-
-    console.log('PUT groups');
-
-    let group = req.body.group;
-
-    console.log(group);
-
-    // Updating
-    if (group._id) {
-
-      Group.findById(group._id, function(err, saved_group) {
-        if (err) {
-          console.log(err);
-          res.send(err);
-        }
-
-        console.log('saved_group', saved_group);
-
-        //
-        // Update the entry
-        saved_group.groupname = group.groupname;
-        saved_group.institution = group.institution;
-        saved_group.status = group.status;
-
-        //
-        saved_group.save(function(err, return_group, numAffected) {
-          if (err) {
-            res.send(err);
-          }
-
-          console.log('return_group', return_group);
-
-          let params = {
-                success: true,
-                operation: 'edit',
-                group: return_group
-              }
-          res.json(params);
-        });
-      });
-    } else {
-
-      console.log('New group');
-      // create a sample user
-      var new_group = new Group({
-        groupname: group.groupname,
-        institution: group.institution,
-        uid: group.uid,
-        gid: group.gid,
-        status: group.status
-      });
-
-      // save the sample user
-      new_group.save(function(err, return_group, numAffected) {
-        if (err) throw err;
-
-        console.log('Group saved successfully');
-        res.json({
-          success: true,
-          operation: 'add',
-          group: return_group
-        });
-      });
-    }
-  })
-
-  // delete the group with _id (accessed at DELETE http://localhost:8080/api/groups/:group_id)
-  .delete(function(req, res) {
-
-      console.log('DELETE group:',req.params.group_id);
-
-      Group.remove({
-          _id: req.params.group_id
-      }, function(err, group) {
-          if (err) {
-            res.send(err);
-          }
-
-          res.json({
-            operation: 'delete',
-            success: true,
-            _id: req.params.group_id,
-            message: 'Successfully deleted'});
-      });
-  });
-
 
 // REGISTER OUR ROUTES -------------------------------
 
