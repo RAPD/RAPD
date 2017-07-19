@@ -1,4 +1,4 @@
-FROM node:boron
+FROM node
 
 # Create app directory
 RUN mkdir -p /usr/src/app

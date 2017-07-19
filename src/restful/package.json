@@ -2,10 +2,10 @@
   "name": "backend",
   "version": "0.0.0",
   "author": "Frank Murphy <fmurphy@anl.gov>",
-  "main": "app.js",
+  "main": "app_ldap.js",
   "private": true,
   "scripts": {
-    "start": "node app.js"
+    "start": "node app_ldap.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.0",
