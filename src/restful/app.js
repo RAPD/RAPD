@@ -109,12 +109,14 @@ apiRoutes.post('/authenticate', function(req, res) {
   console.log(req.body);
 
   // Fetch user
+  var user;
   ldap_client.search('uid='+req.body.uid+',ou=People,dc=ser,dc=aps,dc=anl,dc=gov', {
     scope:'sub',
     filter:'objectclass=*'
   }, function(err, res) {
     res.on('searchEntry', function(entry) {
       console.log('entry: ' + JSON.stringify(entry.object));
+      user = entry.object;
     });
     res.on('searchReference', function(referral) {
       console.log('referral: ' + referral.uris.join());
@@ -126,6 +128,8 @@ apiRoutes.post('/authenticate', function(req, res) {
       console.log('status: ' + result.status);
     });
   });
+
+  console.log(user);
 
   ldap_client.bind('uid='+req.body.uid+',ou=People,dc=ser,dc=aps,dc=anl,dc=gov', req.body.password, function(err) {
     console.log(err);
