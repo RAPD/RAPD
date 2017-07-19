@@ -697,10 +697,64 @@ apiRoutes.route('/users/populate')
     //   });
   });
 
-apiRoutes.route('/users/:user_id')
+apiRoutes.route('/users/:uid')
+
+  // Retrieve user information by uid
+  .get(function(req, res) {
+    console.log('GET user');
+
+    console.log(req.params.uid);
+
+    // // Fetch user
+    // ldap_client.search('uid='+req.body.uid+',ou=People,dc=ser,dc=aps,dc=anl,dc=gov', {
+    //   scope:'sub',
+    //   filter:'objectclass=*',
+    //   sizeLimit:1
+    // }, function(err, result) {
+    //
+    //   // LDAP error
+    //   if (err) {
+    //     console.log(err);
+    //   }
+    //
+    //   var user = undefined;
+    //
+    //   result.on('searchEntry', function(entry) {
+    //
+    //     // The user information
+    //     user = entry.object;
+    //     console.log(user);
+    //
+    //     // create a token
+    //     var token = jwt.sign(user, app.get('superSecret'), {
+    //       expiresIn: 86400 // expires in 24 hours
+    //     });
+    //
+    //     // return the information including token as JSON
+    //     console.log('returning token');
+    //     res.json({
+    //       success: true,
+    //       message: 'Enjoy your token!',
+    //       token: token,
+    //       pass_force_change: user.pass_force_change
+    //     });
+    //   });
+    //   result.on('searchReference', function(referral) {
+    //     console.log('referral: ' + referral.uris.join());
+    //   });
+    //   result.on('error', function(err) {
+    //     console.error('error: ' + err.message);
+    //   });
+    //   result.on('end', function(end) {
+    //     console.log(user);
+    //     console.log('status: ' + end.status);
+    //
+    //   });
+  })
+
 
   // edit the user with _id (accessed ad PUT http://localhost:8080/api/users/:user_id)
-  .put(function(req,res) {
+  .put(function(req, res) {
 
     console.log('PUT users');
     // console.log(req.body.user);
