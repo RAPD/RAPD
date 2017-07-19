@@ -115,22 +115,7 @@ apiRoutes.post('/authenticate', function(req, res) {
       console.log(err);
       var reason = err.name.toString();
       console.log(reason);
-      switch (reason) {
-          // case reasons.NOT_FOUND:
-          //   res.json({ success: false, message: 'Authentication failed. No such user.' });
-          //   break;
-          case 'InvalidCredentialsError':
-            res.json({ success: false, message: 'Authentication failed. Wrong password.' });
-            // note: these cases are usually treated the same - don't tell
-            // the user *why* the login failed, only that it did
-            break;
-          default:
-            res.json({ success: false, message: 'Authentication failed. ' + reason });
-          // case reasons.MAX_ATTEMPTS:
-          //     res.json({ success: false, message: 'Authentication failed. Too many failed attempts' });
-          //     // send email or otherwise notify user that account is
-          //     // temporarily locked
-          //     break;
+      res.json({ success: false, message: 'Authentication failed. ' + reason});
       }
     // AUTHENTICATED
     } else {
@@ -181,12 +166,8 @@ apiRoutes.post('/authenticate', function(req, res) {
 
         });
       });
-
-
     }
   });
-
-
 
   /*
   // This is the mongoose way - not used in SERCAT LDAP setup
@@ -585,32 +566,27 @@ apiRoutes.route('/sessions/:session_id')
 apiRoutes.route('/users')
   .get(function(req, res) {
 
-    // ldap_client.search("dc=ser,dc=aps,dc=anl,dc=gov", {
-    //   scope:'sub',
-    //   filter:'objectclass=*'
-    // }, function(err, res) {
-    //   res.on('searchEntry', function(entry) {
-    //     console.log('entry: ' + JSON.stringify(entry.object));
-    //   });
-    //   res.on('searchReference', function(referral) {
-    //     console.log('referral: ' + referral.uris.join());
-    //   });
-    //   res.on('error', function(err) {
-    //     console.error('error: ' + err.message);
-    //   });
-    //   res.on('end', function(result) {
-    //     console.log('status: ' + result.status);
-    //   });
-    // });
-
     // SERCAT uses LDAP per group
-    // Get group data
-    Group.
-      find({}).
-      exec(function(err, groups) {
-        console.log(groups);
-        res.json(groups);
+    var users = [];
+    ldap_client.search(config.ldap_dn, {  //}"dc=ser,dc=aps,dc=anl,dc=gov", {
+      scope:'sub',
+      filter:'objectclass=*'
+    }, function(err, res) {
+      res.on('searchEntry', function(entry) {
+        console.log('entry: ' + JSON.stringify(entry.object));
+        users.push(entry.object);
       });
+      res.on('searchReference', function(referral) {
+        console.log('referral: ' + referral.uris.join());
+      });
+      res.on('error', function(err) {
+        console.error('error: ' + err.message);
+      });
+      res.on('end', function(result) {
+        console.log('status: ' + result.status);
+        res.json(users);
+      });
+    });
 
     // SERCAT uses LDAP per group, so RAPD will use groups as users
     // User.
