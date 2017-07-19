@@ -122,42 +122,45 @@ apiRoutes.post('/authenticate', function(req, res) {
 
       // Authenticate
       ldap_client.bind('uid='+req.body.uid+','+config.ldap_dn, req.body.password, function(err) {
-        console.log(err);
-        var reason = err.name.toString();
-        console.log(reason);
-        switch (reason) {
-            // case reasons.NOT_FOUND:
-            //   res.json({ success: false, message: 'Authentication failed. No such user.' });
-            //   break;
-            case 'InvalidCredentialsError':
-              res.json({ success: false, message: 'Authentication failed. Wrong password.' });
-              // note: these cases are usually treated the same - don't tell
-              // the user *why* the login failed, only that it did
-              break;
-            default:
-              res.json({ success: false, message: 'Authentication failed. ' + reason });
-            // case reasons.MAX_ATTEMPTS:
-            //     res.json({ success: false, message: 'Authentication failed. Too many failed attempts' });
-            //     // send email or otherwise notify user that account is
-            //     // temporarily locked
-            //     break;
+        // REJECTION
+        if (err) {
+          console.log(err);
+          var reason = err.name.toString();
+          console.log(reason);
+          switch (reason) {
+              // case reasons.NOT_FOUND:
+              //   res.json({ success: false, message: 'Authentication failed. No such user.' });
+              //   break;
+              case 'InvalidCredentialsError':
+                res.json({ success: false, message: 'Authentication failed. Wrong password.' });
+                // note: these cases are usually treated the same - don't tell
+                // the user *why* the login failed, only that it did
+                break;
+              default:
+                res.json({ success: false, message: 'Authentication failed. ' + reason });
+              // case reasons.MAX_ATTEMPTS:
+              //     res.json({ success: false, message: 'Authentication failed. Too many failed attempts' });
+              //     // send email or otherwise notify user that account is
+              //     // temporarily locked
+              //     break;
+          }
+        // AUTHENTICATED
+        } else {
+          // create a token
+          var token = jwt.sign(user, app.get('superSecret'), {
+            expiresIn: 86400 // expires in 24 hours
+          });
+
+          // return the information including token as JSON
+          console.log('returning token');
+          res.json({
+            success: true,
+            message: 'Enjoy your token!',
+            token: token,
+            pass_force_change: user.pass_force_change
+          });
         }
       });
-
-      // create a token
-      var token = jwt.sign(user, app.get('superSecret'), {
-        expiresIn: 86400 // expires in 24 hours
-      });
-
-      // return the information including token as JSON
-      console.log('returning token');
-      res.json({
-        success: true,
-        message: 'Enjoy your token!',
-        token: token,
-        pass_force_change: user.pass_force_change
-      });
-
     });
     result.on('searchReference', function(referral) {
       console.log('referral: ' + referral.uris.join());
