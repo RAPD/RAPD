@@ -116,7 +116,7 @@ apiRoutes.post('/authenticate', function(req, res) {
       var reason = err.name.toString();
       console.log(reason);
       res.json({ success: false, message: 'Authentication failed. ' + reason});
-      }
+
     // AUTHENTICATED
     } else {
 
