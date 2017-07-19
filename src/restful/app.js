@@ -125,21 +125,23 @@ apiRoutes.post('/authenticate', function(req, res) {
         console.log(err);
         var reason = err.name.toString();
         console.log(reason);
-        // switch (reason) {
-        //     case reasons.NOT_FOUND:
-        //         res.json({ success: false, message: 'Authentication failed. No such user.' });
-        //         break;
-        //     case reasons.PASSWORD_INCORRECT:
-        //         res.json({ success: false, message: 'Authentication failed. Wrong password.' });
-        //         // note: these cases are usually treated the same - don't tell
-        //         // the user *why* the login failed, only that it did
-        //         break;
-        //     case reasons.MAX_ATTEMPTS:
-        //         res.json({ success: false, message: 'Authentication failed. Too many failed attempts' });
-        //         // send email or otherwise notify user that account is
-        //         // temporarily locked
-        //         break;
-        // }
+        switch (reason) {
+            // case reasons.NOT_FOUND:
+            //   res.json({ success: false, message: 'Authentication failed. No such user.' });
+            //   break;
+            case 'InvalidCredentialsError':
+              res.json({ success: false, message: 'Authentication failed. Wrong password.' });
+              // note: these cases are usually treated the same - don't tell
+              // the user *why* the login failed, only that it did
+              break;
+            default:
+              res.json({ success: false, message: 'Authentication failed. ' + reason });
+            // case reasons.MAX_ATTEMPTS:
+            //     res.json({ success: false, message: 'Authentication failed. Too many failed attempts' });
+            //     // send email or otherwise notify user that account is
+            //     // temporarily locked
+            //     break;
+        }
       });
 
       // create a token
