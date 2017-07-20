@@ -37,7 +37,7 @@ import tempfile
 import utils.convert_hdf5_cbf as convert_hdf5_cbf
 
 
-DETECTOR = "dectris_eiger9m"
+DETECTOR = "dectris_eiger16m"
 VENDROTYPE = "DECTRIS"
 
 # Taken from Dectris data
