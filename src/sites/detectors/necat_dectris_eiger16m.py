@@ -205,7 +205,7 @@ def base_read_header(image,
             return d
 
     #item:(pattern,transform)
-    header_items = header_items = {
+    header_items = {
         "beam_x": ("^# Beam_xy\s*\(([\d\.]+)\,\s[\d\.]+\) pixels", lambda x: float(x)),
         "beam_y": ("^# Beam_xy\s*\([\d\.]+\,\s([\d\.]+)\) pixels", lambda x: float(x)),
         "count_cutoff": ("^# Count_cutoff\s*(\d+) counts", lambda x: int(x)),
@@ -227,13 +227,27 @@ def base_read_header(image,
         "transmission": ("^# Filter_transmission\s*([\d\.]+)", lambda x: float(x)),
         "trim_file": ("^#\sTrim_file\:\s*([\w\.]+)", lambda x:str(x).rstrip()),
         "twotheta": ("^# Detector_2theta\s*([\d\.]*)\s*deg", lambda x: float(x)),
-        "wavelength": ("^# Wavelength\s*([\d\.]+) A", lambda x: float(x))
+        "wavelength": ("^# Wavelength\s*([\d\.]+) A", lambda x: float(x)),
+        "size1": ("X-Binary-Size-Fastest-Dimension:\s*([\d\.]+)", lambda x: int(x)),
+        "size2": ("X-Binary-Size-Second-Dimension:\s*([\d\.]+)", lambda x: int(x)),
         }
 
-    rawdata = open(image,"rb").read(2048)
-    headeropen = 0
-    headerclose= rawdata.index("--CIF-BINARY-FORMAT-SECTION--")
-    header = rawdata[headeropen:headerclose]
+    count = 0
+    while (count < 10):
+        try:
+            # Use 'with' to make sure file closes properly. Only read header.
+            header = ""
+            with open(image, "rb") as raw:
+                for line in raw:
+                    header += line
+                    if line.count("X-Binary-Size-Padding"):
+                        break
+            break
+        except:
+            count +=1
+            if logger:
+                logger.exception('Error opening %s' % image)
+            time.sleep(0.1)
 
     # try:
     #tease out the info from the file name
