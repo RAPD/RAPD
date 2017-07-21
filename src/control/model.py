@@ -377,6 +377,7 @@ class Model(object):
 
         # Figure out if image in the current run...
         run_id, place_in_run = self.in_run(site_tag, fullname)
+        self.logger.debug("run_id: %s place_in_run:%d", run_id, place_in_run)
 
         # Image is in a run
         if isinstance(place_in_run, int) and isinstance(run_id, int):
@@ -509,8 +510,6 @@ class Model(object):
         minutes -- time window to look back into the data (default 0)
         boolean -- return just True if there is a or False
         """
-
-        self.logger.debug("query_in_run")
 
         # Query local runs in reverse chronological order
         for run_id, run in self.recent_runs.iteritems():
@@ -684,7 +683,7 @@ class Model(object):
             #         run_data=run_info)
 
             # Return the run position for this image
-            return run_info["_id"], run_position
+            return run_info["run_id"], run_position
 
     def new_data_image(self, header):
         """
