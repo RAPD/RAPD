@@ -377,7 +377,7 @@ class Model(object):
 
         # Figure out if image in the current run...
         run_id, place_in_run = self.in_run(site_tag, fullname)
-        self.logger.debug("run_id: %s place_in_run:%d", run_id, place_in_run)
+        self.logger.debug("run_id: %s place_in_run:%s", str(run_id), str(place_in_run))
 
         # Image is in a run
         if isinstance(place_in_run, int) and isinstance(run_id, int):

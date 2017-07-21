@@ -175,7 +175,7 @@ def create_image_fullname(directory,
                                    image_number)
     else:
         filename = "%s.%04d" % (image_prefix,
-                                   image_number)
+                                image_number)
 
     fullname = os.path.join(directory, filename)
 
