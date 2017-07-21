@@ -121,10 +121,12 @@ class Monitor(threading.Thread):
         # else:
 
         # Create a pool connection
+        """
         pool = redis.ConnectionPool(host=self.site.IMAGE_MONITOR_REDIS_HOST,
                                     port=self.site.IMAGE_MONITOR_REDIS_PORT,
                                     db=self.site.IMAGE_MONITOR_REDIS_DB)
-
+        """
+        
         # The connection
         self.redis = redis.Redis(connection_pool=pool)
 

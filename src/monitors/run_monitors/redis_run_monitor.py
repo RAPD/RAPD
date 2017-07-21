@@ -123,9 +123,14 @@ class Monitor(threading.Thread):
         #                                      master_name=settings["REDIS_MASTER_NAME"])
         # Using a standard redis server setup
         # else:
+        """
         pool = redis.ConnectionPool(host=self.site.IMAGE_MONITOR_REDIS_HOST,
                                     port=self.site.IMAGE_MONITOR_REDIS_PORT,
                                     db=self.site.IMAGE_MONITOR_REDIS_DB)
+        """
+        pool = redis.ConnectionPool(host=self.site.IMAGE_MONITOR_SETTINGS['SENTINEL_HOST'],
+                                    port=self.site.IMAGE_MONITOR_SETTINGS['SENTINEL_PORT'],
+                                    db=self.site.IMAGE_MONITOR_SETTINGS['SENTINEL_PORT'])
         self.redis = redis.Redis(connection_pool=pool)
 
     def run(self):

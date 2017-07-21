@@ -97,8 +97,10 @@ class Model(object):
         # Instance variables
         try:
             self.return_address = (get_ip_address(), SITE.CONTROL_PORT)
+            #self.return_address = (get_ip_address(), SITE.CORE_PORT)
         except socket.gaierror:
             self.return_address = ("127.0.0.1", SITE.CONTROL_PORT)
+            #self.return_address = ("127.0.0.1", SITE.CORE_PORT)
 
         self.logger.debug("self.return_address:%s", self.return_address)
 
@@ -164,10 +166,18 @@ class Model(object):
         """Connect to the redis instance"""
 
         # Create a pool connection
+        """
         pool = redis.ConnectionPool(host=self.site.CONTROL_REDIS_HOST,
                                     port=self.site.CONTROL_REDIS_PORT,
                                     db=self.site.CONTROL_REDIS_DB)
-
+        pool = redis.ConnectionPool(host=self.site.CONTROL_SETTINGS['SITE_REDIS_IP'],
+                                    port=self.site.CONTROL_SETTINGS['SITE_REDIS_PORT'],
+                                    db=self.site.CONTROL_SETTINGS['SITE_REDIS_DB'])
+        """
+        pool = redis.ConnectionPool(host=self.site.CONTROL_SETTINGS['REDIS_HOST'],
+                                    port=self.site.CONTROL_SETTINGS['REDIS_PORT'],
+                                    db=self.site.CONTROL_SETTINGS['REDIS_DB'])
+        
         # The connection
         self.redis = redis.Redis(connection_pool=pool)
 
@@ -182,10 +192,10 @@ class Model(object):
         site = self.site
 
         # Instantiate the database connection
-        self.database = database.Database(host=site.CONTROL_DATABASE_HOST,
-                                          port=site.CONTROL_DATABASE_PORT,
-                                          user=site.CONTROL_DATABASE_USER,
-                                          password=site.CONTROL_DATABASE_PASSWORD)
+        self.database = database.Database(host=site.CONTROL_DATABASE_SETTINGS['DATABASE_HOST'],
+                                          #port=site.DATABASE_SETTINGS['DB_PORT'],
+                                          user=site.CONTROL_DATABASE_SETTINGS['DATABASE_USER'],
+                                          password=site.CONTROL_DATABASE_SETTINGS['DATABASE_PASSWORD'])
 
     def start_server(self):
         """Start up the listening process for core"""
@@ -210,7 +220,8 @@ class Model(object):
 
         # A single detector
         if site.DETECTOR:
-            detector, suffix = site.DETECTOR
+            #detector, suffix = site.DETECTOR
+            detector = site.DETECTOR
             detector = detector.lower()
             self.detectors[self.site_ids[0].upper()] = load_module(
                 seek_module=detector,
@@ -238,10 +249,9 @@ class Model(object):
             image_monitor = importlib.import_module("%s" % site.IMAGE_MONITOR.lower())
 
             # Instantiate the monitor
-            self.image_monitor = image_monitor.Monitor(
-                site=site,
-                notify=self.receive,
-                overwatch_id=self.overwatch_id)
+            self.image_monitor = image_monitor.Monitor( site=site,
+                                                        notify=self.receive,
+                                                        overwatch_id=self.overwatch_id)
 
     def start_run_monitor(self):
         """Start up the run information listening process for core"""

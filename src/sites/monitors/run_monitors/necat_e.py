@@ -23,7 +23,8 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 # RAPD imports
-import redis_monitor
+#import redis_monitor
+import monitors.run_monitors.redis_run_monitor as redis_monitor
 
 class Monitor(redis_monitor.Monitor):
     """The standard run monitor based on redis"""

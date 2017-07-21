@@ -83,10 +83,14 @@ class ControllerServer(threading.Thread):
         """Connect to the redis instance"""
 
         # Create a pool connection
-        pool = redis.ConnectionPool(host=self.site.CONTROL_REDIS_HOST,
-                                    port=self.site.CONTROL_REDIS_PORT,
-                                    db=self.site.CONTROL_REDIS_DB)
-
+        """
+        pool = redis.ConnectionPool(host=self.site.CONTROL_SETTINGS['SITE_REDIS_IP'],
+                                    port=self.site.CONTROL_SETTINGS['SITE_REDIS_PORT'],
+                                    db=self.site.CONTROL_SETTINGS['SITE_REDIS_DB'])
+        """
+        pool = redis.ConnectionPool(host=self.site.CONTROL_SETTINGS['REDIS_HOST'],
+                                    port=self.site.CONTROL_SETTINGS['REDIS_PORT'],
+                                    db=self.site.CONTROL_SETTINGS['REDIS_DB'])
         # The connection
         self.redis = redis.Redis(connection_pool=pool)
 
