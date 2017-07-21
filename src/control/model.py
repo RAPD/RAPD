@@ -710,7 +710,7 @@ class Model(object):
         if header.get("collect_mode", None) == "SNAP":
 
             # Add the image to self.pair
-            self.pairs[site_tag].append((header["fullname"].lower(), header["image_id"]))
+            self.pairs[site_tag].append((header["fullname"].lower(), header["_id"]))
 
             work_dir, new_repr = self.get_work_dir(type_level="single",
                                                    image_data1=header)
@@ -728,12 +728,12 @@ class Model(object):
 
             # Add the process to the database to display as in-process
             plugin_process_id = self.database.add_plugin_process(plugin_type="index+strategy:single",
-                                                               request_type="original",
-                                                               representation=new_repr,
-                                                               status=1,
-                                                               display="show",
-                                                               session_id=session_id,
-                                                               data_root_dir=data_root_dir)
+                                                                 request_type="original",
+                                                                 representation=new_repr,
+                                                                 status=1,
+                                                                 display="show",
+                                                                 session_id=session_id,
+                                                                 data_root_dir=data_root_dir)
 
             # Add the ID entry to the header dict
             header.update({"repr":new_repr})
