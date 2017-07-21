@@ -333,9 +333,6 @@ def analyze_data_sources(sources,
     return_data = {}
 
     if mode == "index":
-
-        #h5_run = False
-        #counter = 1
         for source in sources:
             source_abspath = os.path.abspath(source)
             print "  source_abspath:", source_abspath
@@ -356,17 +353,6 @@ def analyze_data_sources(sources,
 
                         #prefix = os.path.basename(source).replace("_master.h5", "")
                         prefix = os.path.basename(source)[:os.path.basename(source).find('.')]
-                        """
-                        basename = os.path.basename(source)
-                        prefix = basename.replace("_master.h5", "").replace(".", "_")
-                        # print "  prefix:", prefix
-
-                        # Come up with a base h5 cbf name
-                        run = "_"+prefix[-3:]+"_"
-                        if not h5_run:
-                            h5_run = run
-                            # print "  h5_run:", h5_run
-                        """
 
                         converter = convert_hdf5_cbf.hdf5_to_cbf_converter(
                             master_file=source_abspath,
@@ -383,15 +369,7 @@ def analyze_data_sources(sources,
 
                         #source_abspath = os.path.abspath(converter.output_images[0])
                         source_abspath = os.path.abspath(converter.output_images[-1])
-                        """
-                        # If this is the second image of a pair, increment file number
-                        if counter > 1:
-                            target_abspath = source_abspath.replace("1.cbf", "%d.cbf" % counter).replace(run, h5_run)
-                            shutil.move(source_abspath, target_abspath)
-                            source_abspath = target_abspath
 
-                        # print "  final source_abspath:", source_abspath
-                        """
                     # 1st file of 1 or 2
                     if not "files" in return_data:
                         return_data["files"] = [source_abspath]
@@ -426,7 +404,8 @@ def analyze_data_sources(sources,
             else:
                 return_data["hdf5_files"].append(source_abspath)
 
-            prefix = os.path.basename(sources).replace("_master.h5", "")
+            #prefix = os.path.basename(sources).replace("_master.h5", "")
+            prefix = os.path.basename(sources).replace("_master.h5", "").replace('.', '_')
 
             if not start_image:
                 start_image = 1
@@ -502,7 +481,10 @@ def analyze_data_sources(sources,
 if __name__ == "__main__":
 
     print "commandline_utils.py"
-
+    s = ['/gpfs6/users/necat/Jon/RAPD_test/Output/IDP07311-5.002_master.h5']
+    analyze_data_sources(s, 'integrate', )
+    
+    """
     parser = argparse.ArgumentParser(parents=[dp_parser],
                                      description="Testing")
     returned_args = parser.parse_args()
@@ -515,3 +497,4 @@ if __name__ == "__main__":
 
     print "\nSites:"
     print_sites(left_buffer="  ")
+    """
