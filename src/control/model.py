@@ -718,7 +718,7 @@ class Model(object):
             # Now package directories into a dict for easy access by worker class
             directories = {"work":work_dir,
                            "data_root_dir":data_root_dir,
-                           "plugin_directories":self.site.RAPD_plugin_DIRECTORIES}
+                           "plugin_directories":self.site.RAPD_PLUGIN_DIRECTORIES}
 
             # Is the session information figured out by the image file name
             session_id = self.database.get_session_id(
