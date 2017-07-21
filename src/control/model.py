@@ -683,7 +683,7 @@ class Model(object):
             #         run_data=run_info)
 
             # Return the run position for this image
-            return run_info["run_id"], run_position
+            return run_info["_id"], run_position
 
     def new_data_image(self, header):
         """
