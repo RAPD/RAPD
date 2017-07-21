@@ -164,9 +164,12 @@ class Database(object):
 
         db = self.get_db_connection()
 
+        # Add timestamp
+        data["timestamp"] = datetime.datetime.utcnow()
+
         # Insert into db
         try:
-            result = db.images.insert_one(data.update({"timestamp":datetime.datetime.utcnow()}))
+            result = db.images.insert_one(data)
         # Image already entered
         except pymongo.errors.DuplicateKeyError:
             return False
