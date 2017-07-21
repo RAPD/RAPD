@@ -387,6 +387,7 @@ class Model(object):
 
         # Figure out if image in the current run...
         run_id, place_in_run = self.in_run(site_tag, fullname)
+        self.logger.debug("run_id: %s place_in_run:%s", str(run_id), str(place_in_run))
 
         # Image is in a run
         if isinstance(place_in_run, int) and isinstance(run_id, int):
@@ -519,8 +520,6 @@ class Model(object):
         minutes -- time window to look back into the data (default 0)
         boolean -- return just True if there is a or False
         """
-
-        self.logger.debug("query_in_run")
 
         # Query local runs in reverse chronological order
         for run_id, run in self.recent_runs.iteritems():
@@ -721,7 +720,7 @@ class Model(object):
         if header.get("collect_mode", None) == "SNAP":
 
             # Add the image to self.pair
-            self.pairs[site_tag].append((header["fullname"].lower(), header["image_id"]))
+            self.pairs[site_tag].append((header["fullname"].lower(), header["_id"]))
 
             work_dir, new_repr = self.get_work_dir(type_level="single",
                                                    image_data1=header)
@@ -729,7 +728,7 @@ class Model(object):
             # Now package directories into a dict for easy access by worker class
             directories = {"work":work_dir,
                            "data_root_dir":data_root_dir,
-                           "plugin_directories":self.site.RAPD_plugin_DIRECTORIES}
+                           "plugin_directories":self.site.RAPD_PLUGIN_DIRECTORIES}
 
             # Is the session information figured out by the image file name
             session_id = self.database.get_session_id(
@@ -739,12 +738,12 @@ class Model(object):
 
             # Add the process to the database to display as in-process
             plugin_process_id = self.database.add_plugin_process(plugin_type="index+strategy:single",
-                                                               request_type="original",
-                                                               representation=new_repr,
-                                                               status=1,
-                                                               display="show",
-                                                               session_id=session_id,
-                                                               data_root_dir=data_root_dir)
+                                                                 request_type="original",
+                                                                 representation=new_repr,
+                                                                 status=1,
+                                                                 display="show",
+                                                                 session_id=session_id,
+                                                                 data_root_dir=data_root_dir)
 
             # Add the ID entry to the header dict
             header.update({"repr":new_repr})

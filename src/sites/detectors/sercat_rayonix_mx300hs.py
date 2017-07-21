@@ -34,7 +34,8 @@ import math
 import os
 import pprint
 import pwd
-import sys
+import re
+# import sys
 
 # RAPD imports
 import detectors.rayonix.rayonix_mx300hs as detector
@@ -45,6 +46,7 @@ DETECTOR_SN = 101
 DETECTOR_SUFFIX = ""
 IMAGE_TEMPLATE = "%s.????"
 RUN_NUMBER_IN_TEMPLATE = False
+SNAP_IN_TEMPLATE = True
 HEADER_VERSION = 1
 
 # XDS information
@@ -85,20 +87,28 @@ def parse_file_name(fullname):
     Keyword arguments
     fullname -- the full path name of the image file
     """
-    print fullname
+    # print fullname
     directory = os.path.dirname(fullname)
-    print directory
+    # print directory
     basename = os.path.basename(fullname).rstrip(DETECTOR_SUFFIX)
-    print basename
+    # print basename
     sbase = basename.split(".")
-    print sbase
+    # print sbase
     prefix = ".".join(sbase[0:-1])
-    print prefix
+    # print prefix
     image_number = int(sbase[-1])
-    print image_number
+    # print image_number
     run_number = None
 
     return directory, basename, prefix, run_number, image_number
+
+def is_snap(fullname):
+    """Returns if image is a snap based on the filename"""
+    result = re.search("_s\.\d{4}$", fullname)
+    if result:
+        return True
+    else:
+        return False
 
 def create_image_template(image_prefix, run_number):
     """
@@ -175,7 +185,7 @@ def create_image_fullname(directory,
                                    image_number)
     else:
         filename = "%s.%04d" % (image_prefix,
-                                   image_number)
+                                image_number)
 
     fullname = os.path.join(directory, filename)
 

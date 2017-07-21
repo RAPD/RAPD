@@ -187,9 +187,9 @@ IMAGE_MONITOR = "monitors.image_monitors.redis_image_monitor"
 # Running in a cluster configuration - True || False
 # IMAGE_MONITOR_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER
 # Images collected into following directories will be ignored
-IMAGE_IGNORE_DIRECTORIES = ()
+IMAGE_IGNORE_DIRECTORIES = ("/var/sergui")
 # Images collected containing the following string will be ignored
-IMAGE_IGNORE_STRINGS = ("ignore", )
+IMAGE_IGNORE_STRINGS = ("ignore", "blankmar300hs")
 
 # Monitor for collected run information
 RUN_MONITOR = "monitors.run_monitors.redis_run_monitor"
