@@ -79,6 +79,7 @@ class ControllerServer(threading.Thread):
     def stop(self):
         self.logger.debug("Received signal to stop")
         self.Go = False
+        self.redis_database.close()
 
     def connect_to_redis(self):
         """Connect to the redis instance"""

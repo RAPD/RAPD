@@ -176,6 +176,12 @@ class Model(object):
         """
         # For a Redis sentinal connection
         self.redis = self.redis_database.connect_redis_manager_HA()
+        
+    def stop_redis(self):
+        """Make a clean Redis disconnection if using a pool connection."""
+        self.logger.debug("Close Redis")
+
+        self.redis_database.stop()
 
     def connect_to_database(self):
         """Set up database connection"""
@@ -248,6 +254,12 @@ class Model(object):
             self.image_monitor = image_monitor.Monitor( site=site,
                                                         notify=self.receive,
                                                         overwatch_id=self.overwatch_id)
+    def stop_image_monitor(self):
+        """Stop the image listening process for core"""
+
+        self.logger.debug("Stopping image monitor")
+        if site.IMAGE_MONITOR:
+            self.image_monitor.stop()
 
     def start_run_monitor(self):
         """Start up the run information listening process for core"""
@@ -265,6 +277,13 @@ class Model(object):
                                                    # Not using overwatch in run monitor
                                                    # could if we wanted to
                                                    overwatch_id=None)
+    
+    def stop_run_monitor(self):
+        """Stop the run information listening process for core"""
+
+        self.logger.debug("Stopping run monitor")
+        if site.RUN_MONITOR:
+            self.run_monitor.stop()
 
     def start_cloud_monitor(self):
         """Start up the cloud listening process for core"""
@@ -280,6 +299,11 @@ class Model(object):
                                                             settings=site.CLOUD_MONITOR_SETTINGS,
                                                             reply_settings=self.return_address,
                                                             interval=site.CLOUD_INTERVAL)
+
+    def stop_cloud_monitor(self):
+        """Stop the cloud listening process for core"""
+        if site.CLOUD_MONITOR:
+            self.cloud_monitor.stop()
 
     def init_site_adapter(self):
         """Initialize the connection to the site"""
@@ -350,6 +374,12 @@ class Model(object):
     def stop(self):
         """Stop the ImageMonitor,CloudMonitor and StatusRegistrar."""
         self.logger.info("Stopping")
+        
+        self.stop_redis()
+        self.stop_server()
+        self.stop_image_monitor()
+        self.stop_run_monitor()
+        #self.stop_cloud_monitor()
 
     def add_image(self, image_data):
         """

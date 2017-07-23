@@ -96,7 +96,7 @@ class Database(object):
     def connect_redis_manager_HA(self):
         return(Sentinel(self.sentinal_hosts).master_for(self.sentinal_name))
     
-    def close(self):
+    def stop(self):
         if self.pool:
             self.pool.close()
             

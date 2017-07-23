@@ -112,6 +112,7 @@ class Monitor(threading.Thread):
         self.logger.debug("Stopping")
 
         self.running = False
+        self.redis_database.stop()
 
     def connect_to_redis(self):
         """Connect to the redis instance"""

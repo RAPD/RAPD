@@ -99,10 +99,14 @@ def main():
     logger.debug("Commandline arguments:")
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s" % pair)
-
-    # Instantiate the model
-    MODEL = Model(SITE=SITE,
-                  overwatch_id=commandline_args.overwatch_id)
+    
+    try:
+        # Instantiate the model
+        MODEL = Model(SITE=SITE,
+                      overwatch_id=commandline_args.overwatch_id)
+    except KeyboardInterrupt:
+        # Close everything cleanly
+        MODEL.stop()
 
 
 if __name__ == "__main__":
