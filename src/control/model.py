@@ -726,18 +726,13 @@ class Model(object):
                            "data_root_dir":data_root_dir,
                            "plugin_directories":self.site.RAPD_PLUGIN_DIRECTORIES}
 
-            # Is the session information figured out by the image file name
-            session_id = self.database.get_session_id(
-                data_root_dir=data_root_dir,
-                group=header.get("rapd_group", None),
-                session_name=header.get("rapd_session_name", None))
+            # Get the session id
+            session_id = self.get_session(header)
 
             # Add the process to the database to display as in-process
-            plugin_process_id = self.database.add_plugin_process(plugin_type="index+strategy:single",
+            plugin_process_id = self.database.add_plugin_process(plugin_type="index",
                                                                  request_type="original",
                                                                  representation=new_repr,
-                                                                 status=1,
-                                                                 display="show",
                                                                  session_id=session_id,
                                                                  data_root_dir=data_root_dir)
 
@@ -745,7 +740,7 @@ class Model(object):
             header.update({"repr":new_repr})
 
             # Run autoindex and strategy plugin
-            LaunchAction(command={"command":"INDEX+STRATEGY",
+            LaunchAction(command={"command":"INDEX",
                                   "process":{"plugin_process_id":plugin_process_id,
                                              "session_id":session_id},
                                   "directories":directories,
@@ -787,20 +782,17 @@ class Model(object):
                                    "data_root_dir" : data_root_dir,
                                    "plugin_directories":self.site.RAPD_plugin_DIRECTORIES}
 
-                    # Is the session information figured out by the image file name
-                    session_id = self.database.get_session_id(
-                        data_root_dir=data_root_dir,
-                        group=header1.get("rapd_group", None),
-                        session_name=header1.get("rapd_session_name", None))
+                    # Get the session id
+                    session_id = self.get_session(header)
 
                     # Add the process to the database to display as in-process
                     plugin_process_id = self.database.add_plugin_process(plugin_type="index+strategy:pair",
-                                                                       request_type="original",
-                                                                       representation=new_repr,
-                                                                       status=1,
-                                                                       display="show",
-                                                                       session_id=session_id,
-                                                                       data_root_dir=data_root_dir)
+                                                                         request_type="original",
+                                                                         representation=new_repr,
+                                                                         status=1,
+                                                                         display="show",
+                                                                         session_id=session_id,
+                                                                         data_root_dir=data_root_dir)
 
                     # Add the ID entry to the header dict
                     header1.update({"plugin_process_id":plugin_process_id,
@@ -841,11 +833,8 @@ class Model(object):
             # If we are to integrate, do it
             try:
 
-                # Is the session information figured out by the image file name
-                session_id = self.database.get_session_id(
-                    data_root_dir=data_root_dir,
-                    group=header.get("rapd_group", None),
-                    session_name=header.get("rapd_session_name", None))
+                # Get the session id
+                session_id = self.get_session(header)
 
 
                 # Add the process to the database to display as in-process
@@ -876,6 +865,25 @@ class Model(object):
             except:
                 self.logger.exception("Exception when attempting to run RAPD \
                 integration pipeline")
+
+    def get_session(self, header):
+        """Get a session_id"""
+
+        # Is the session information figured out by the image file name
+        session_id = self.database.get_session_id(data_root_dir=header.get("data_root_dir", None))
+
+        if not session_id:
+
+            # Determine group_id
+            if self.site.GROUP_ID == "uid":
+                group_id = os.stat(header.get("data_root_dir")).st_uid
+
+            session_id = self.database.create_session(
+                data_root_dir=header.get("data_root_dir", None),
+                group_id=group_id
+            )
+
+        return session_id
 
     def get_work_dir(self, type_level, image_data1=False, image_data2=False):
         """

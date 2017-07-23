@@ -121,7 +121,7 @@ class Database(object):
     ############################################################################
     # Functions for sessions & users                                           #
     ############################################################################
-    def get_session_id(self, data_root_dir, group_name=None, session_name=None):
+    def get_session_id(self, data_root_dir):
         """
         Get the session _id for the input information. The entry will be made it does not yet exist.
         The data_root_dir must be input for this to work.
@@ -136,16 +136,33 @@ class Database(object):
         db = self.get_db_connection()
 
         # Retrieve the session id
-        session_id = db.sessions.find_one({"data_root_dir":data_root_dir},{"_id"}).get("_id", False)
+        session_id = db.sessions.find_one({"data_root_dir":data_root_dir}, {"_id"}).get("_id", False)
 
-        if not session_id:
-            result = db.sessions.insert({"data_root_dir":data_root_dir,
-                                         "group_name":group_name,
-                                         "session_name":session_name,
-                                         "timestamp":datetime.datetime.utcnow()})
-            session_id = result.inserted_id
+        if session_id:
+            session_id = str(session_id)
 
-        return str(session_id)
+        return session_id
+
+    def create_session(self, data_root_dir, group_id=None):
+        """
+        Get the session _id for the input information. The entry will be made it does not yet exist.
+        The data_root_dir must be input for this to work.
+
+        Keyword arguments
+        data_root_dir -- root of data for a session (ex. /raw/ID_16_05_25_uga_jjc)
+        group_id -- id for a group (default = None)
+        session_name -- name for a session (ex. ID_16_05_25_uga_jjc) (default = None)
+        """
+
+        # Connect
+        db = self.get_db_connection()
+
+        # Insert into the database
+        result = db.sessions.insert_one({"data_root_dir": data_root_dir,
+                                         "group_id": group_id,
+                                         "timestamp": datetime.datetime.utcnow()})
+
+        return str(result.inserted_id)
 
 
     ############################################################################
@@ -178,7 +195,7 @@ class Database(object):
         if return_type == "boolean":
             return True
         elif return_type == "id":
-            return str(db.find_one({"_id":result.inserted_id},{"_id":1}))
+            return str(result.inserted_id)
         elif return_type == "dict":
             result_dict = db.find_one({"_id":result.inserted_id})
             result_dict["_id"] = str(result_dict["_id"])
