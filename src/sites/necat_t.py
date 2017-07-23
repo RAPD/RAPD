@@ -66,7 +66,8 @@ BEAM_CENTER_Y = (155.1904879862,
                  -2.5709929645e-10)
 # Logging
 # Linux should be /var/log/
-LOGFILE_DIR = "/tmp/rapd2/logs"
+#LOGFILE_DIR = "/tmp/rapd2/logs"
+LOGFILE_DIR = "/share/apps/necat/tmp3"
 LOG_LEVEL = 50
 
 # Where files from UI are uploaded - should be visible by launch instance
@@ -168,23 +169,20 @@ REMOTE_ADAPTER = "sites.site_adapters.necat_remote"     # file name prefix for a
 ##
 ## Aggregators
 ## Be extra careful when modifying
-CONTROL_SETTINGS = { "ID":ID,
-                     #"SITE_REDIS_IP":SECRETS.SITE_REDIS_IP,
-                     #"SITE_REDIS_PORT":SECRETS.SITE_REDIS_PORT,
-                     #"SITE_REDIS_DB":SECRETS.SITE_REDIS_DB,
-                     "REDIS_HOST":SECRETS.REDIS_HOST,
-                     "REDIS_PORT":SECRETS.REDIS_PORT,
-                     "REDIS_DB":SECRETS.REDIS_DB,
-                     }
-
 CONTROL_DATABASE_SETTINGS = {"CONTROL_DATABASE":CONTROL_DATABASE,
                              'DATABASE_HOST':SECRETS.DB_HOST,
                              #'DATABASE_PORT':SECRETS.DB_PORT,
                              'DATABASE_USER':SECRETS.DB_USER,
                              'DATABASE_PASSWORD':SECRETS.DB_PASSWORD,
-                             'DB_NAME_DATA':"rapd_data",
-                             'DB_NAME_USERS':"rapd_users",
-                             'DB_NAME_CLOUD':"rapd_cloud"}
+                             'DATABASE_NAME_DATA':"rapd_data",
+                             'DATABASE_NAME_USERS':"rapd_users",
+                             'DATABASE_NAME_CLOUD':"rapd_cloud",
+                             "REDIS_HOST":SECRETS.REDIS_HOST,
+                             "REDIS_PORT":SECRETS.REDIS_PORT,
+                             "REDIS_DB":SECRETS.REDIS_DB,
+                             "REDIS_SENTINEL_HOSTS":SECRETS.SENTINEL_HOSTS,
+                             "REDIS_MASTER_NAME":SECRETS.REDIS_MASTER_NAME,
+                             }
 
 BEAM_SETTINGS = {"BEAM_FLUX":BEAM_FLUX,
                  "BEAM_SIZE_X":BEAM_SIZE_X,
@@ -198,8 +196,8 @@ BEAM_SETTINGS = {"BEAM_FLUX":BEAM_FLUX,
                  "BEAM_CENTER_Y":BEAM_CENTER_Y}
 
 IMAGE_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
-                          "SENTINEL_HOST" : SECRETS.SENTINEL_HOST,
-                          "SENTINEL_PORT" : SECRETS.SENTINEL_PORT,
+                          "REDIS_SENTINEL_HOSTS" : SECRETS.SENTINEL_HOSTS,
+                          #"SENTINEL_PORT" : SECRETS.SENTINEL_PORT,
                           "REDIS_MASTER_NAME" : SECRETS.REDIS_MASTER_NAME,
                           "REDIS_HOST":SECRETS.REDIS_HOST,
                           "REDIS_PORT":SECRETS.REDIS_PORT,
@@ -207,8 +205,8 @@ IMAGE_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
                           }
 
 RUN_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
-                          "SENTINEL_HOST" : SECRETS.SENTINEL_HOST,
-                          "SENTINEL_PORT" : SECRETS.SENTINEL_PORT,
+                          "REDIS_SENTINEL_HOSTS" : SECRETS.SENTINEL_HOSTS,
+                          #"SENTINEL_PORT" : SECRETS.SENTINEL_PORT,
                           "REDIS_MASTER_NAME" : SECRETS.REDIS_MASTER_NAME,
                           "REDIS_HOST":SECRETS.REDIS_HOST,
                           "REDIS_PORT":SECRETS.REDIS_PORT,
@@ -242,8 +240,8 @@ SITE_ADAPTER_SETTINGS = {"ID":ID,
 REMOTE_ADAPTER_SETTINGS = {"ID":ID,
                            "MONGO_CONNECTION_STRING":SECRETS.MONGO_CONNECTION_STRING,
                            "REDIS_CLUSTER":REDIS_CLUSTER,
-                           "SENTINEL_HOST":SECRETS.SENTINEL_HOST,
-                           "SENTINEL_PORT":SECRETS.SENTINEL_PORT,
+                           "REDIS_SENTINEL_HOSTS":SECRETS.SENTINEL_HOSTS,
+                           #"SENTINEL_PORT":SECRETS.SENTINEL_PORT,
                            "REDIS_MASTER_NAME":SECRETS.REDIS_MASTER_NAME}
 
 ## Aggregators

@@ -32,7 +32,8 @@ import logging
 import threading
 import time
 
-import redis
+#import redis
+import importlib
 
 # RAPD imports
 from utils.overwatch import Registrar
@@ -127,11 +128,22 @@ class Monitor(threading.Thread):
         pool = redis.ConnectionPool(host=self.site.IMAGE_MONITOR_REDIS_HOST,
                                     port=self.site.IMAGE_MONITOR_REDIS_PORT,
                                     db=self.site.IMAGE_MONITOR_REDIS_DB)
-        """
+        
         pool = redis.ConnectionPool(host=self.site.IMAGE_MONITOR_SETTINGS['SENTINEL_HOST'],
                                     port=self.site.IMAGE_MONITOR_SETTINGS['SENTINEL_PORT'],
                                     db=self.site.IMAGE_MONITOR_SETTINGS['SENTINEL_PORT'])
         self.redis = redis.Redis(connection_pool=pool)
+        """
+        # Create a pool connection
+        redis_database = importlib.import_module('database.rapd_redis_adapter')
+        
+        self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        """
+        # For a Redis pool connection
+        self.redis = self.redis_database.connect_redis()
+        """
+        # For a Redis sentinal connection
+        self.redis = self.redis_database.connect_redis_manager_HA()
 
     def run(self):
         self.logger.debug("Running")

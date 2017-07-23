@@ -28,7 +28,8 @@ __status__ = "Production"
 # Standard imports
 import json
 import logging
-import redis
+#import redis
+import importlib
 import socket
 import threading
 import time
@@ -84,15 +85,22 @@ class ControllerServer(threading.Thread):
 
         # Create a pool connection
         """
-        pool = redis.ConnectionPool(host=self.site.CONTROL_SETTINGS['SITE_REDIS_IP'],
-                                    port=self.site.CONTROL_SETTINGS['SITE_REDIS_PORT'],
-                                    db=self.site.CONTROL_SETTINGS['SITE_REDIS_DB'])
-        """
         pool = redis.ConnectionPool(host=self.site.CONTROL_SETTINGS['REDIS_HOST'],
                                     port=self.site.CONTROL_SETTINGS['REDIS_PORT'],
                                     db=self.site.CONTROL_SETTINGS['REDIS_DB'])
+        """
         # The connection
-        self.redis = redis.Redis(connection_pool=pool)
+        #self.redis = redis.Redis(connection_pool=pool)
+        
+        redis_database = importlib.import_module('database.rapd_redis_adapter')
+        
+        self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        """
+        # For a Redis pool connection
+        self.redis = self.redis_database.connect_redis()
+        """
+        # For a Redis sentinal connection
+        self.redis = self.redis_database.connect_redis_manager_HA()
 
 # class ControllerHandler(threading.Thread):
 #     """

@@ -41,6 +41,7 @@ import socket
 from control.control_server import LaunchAction, ControllerServer
 from utils.modules import load_module
 from utils.site import get_ip_address
+
 # from rapd_console import ConsoleFeeder
 # from rapd_site import TransferToUI, TransferToBeamline, CopyToUser
 
@@ -166,20 +167,15 @@ class Model(object):
         """Connect to the redis instance"""
 
         # Create a pool connection
-        """
-        pool = redis.ConnectionPool(host=self.site.CONTROL_REDIS_HOST,
-                                    port=self.site.CONTROL_REDIS_PORT,
-                                    db=self.site.CONTROL_REDIS_DB)
-        pool = redis.ConnectionPool(host=self.site.CONTROL_SETTINGS['SITE_REDIS_IP'],
-                                    port=self.site.CONTROL_SETTINGS['SITE_REDIS_PORT'],
-                                    db=self.site.CONTROL_SETTINGS['SITE_REDIS_DB'])
-        """
-        pool = redis.ConnectionPool(host=self.site.CONTROL_SETTINGS['REDIS_HOST'],
-                                    port=self.site.CONTROL_SETTINGS['REDIS_PORT'],
-                                    db=self.site.CONTROL_SETTINGS['REDIS_DB'])
+        redis_database = importlib.import_module('database.rapd_redis_adapter')
         
-        # The connection
-        self.redis = redis.Redis(connection_pool=pool)
+        self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        """
+        # For a Redis pool connection
+        self.redis = self.redis_database.connect_redis()
+        """
+        # For a Redis sentinal connection
+        self.redis = self.redis_database.connect_redis_manager_HA()
 
     def connect_to_database(self):
         """Set up database connection"""

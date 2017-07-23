@@ -83,7 +83,7 @@ def main():
     # print "Importing %s" % site_file
     SITE = importlib.import_module(site_file)
 
-	# Single process lock?
+    # Single process lock?
     utils.lock.file_lock(SITE.CONTROL_LOCK_FILE)
 
     # Set up logging
@@ -93,7 +93,8 @@ def main():
         log_level = SITE.LOG_LEVEL
     logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
                                   logfile_id="rapd_control",
-                                  level=log_level)
+                                  #level=log_level
+                                  )
 
     logger.debug("Commandline arguments:")
     for pair in commandline_args._get_kwargs():
