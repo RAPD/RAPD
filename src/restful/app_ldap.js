@@ -80,6 +80,7 @@ apiRoutes.use(function(req, res, next) {
     req.session.working = 'yes!';
     console.log('working =', req.session.working);
     console.log(req.session);
+    console.log(req.url);
 
     // do logging
     console.log('Something is happening.');
@@ -170,6 +171,47 @@ apiRoutes.post('/authenticate', function(req, res) {
   });
 });
 
+// route middleware to verify a token
+apiRoutes.use(function(req, res, next) {
+
+  console.log(req.body);
+  console.log(req.query);
+  console.log(req.headers);
+
+  // check header or url parameters or post parameters for token
+  var token = req.headers.authorization.replace('Bearer ', '');
+
+  // decode token
+  if (token) {
+
+    // verifies secret and checks exp
+    jwt.verify(token, app.get('superSecret'), function(err, decoded) {
+      if (err) {
+        return res.json({ success: false, message: 'Failed to authenticate token.' });
+      } else {
+        let now = Date.now()/1000;
+        console.log(decoded.iat, decoded.exp, (decoded.exp-now)/(60));
+        // if everything is good, save to request for use in other routes
+
+        if (decoded.iat <= now && decoded.exp >= now) {
+          req.decoded = decoded;
+          next();
+        }
+
+      }
+    });
+
+  } else {
+
+    // if there is no token
+    // return an error
+    return res.status(403).send({
+        success: false,
+        message: 'No token provided.'
+    });
+  }
+});
+
 // test route to make sure everything is working (accessed at GET http://localhost:8080/api)
 // apiRoutes.use(jwtCheck);
 
@@ -184,14 +226,15 @@ apiRoutes.route('/sessions')
   // get all the sessions (accessed at GET http://localhost:3000/api/sessions)
   .get(function(req, res) {
 
-    var find_search = { group: { $in: req.decoded._doc.groups}};
-    if (req.decoded._doc.role == 'site_admin') {
+    console.log(req.decoded);
+
+    var find_search = { group: req.decoded.gidNumber };
+    if (req.decoded.gidNumber == config.ldap_admin_gid) {
       find_search = {}
     }
 
     Session.
       find(find_search).
-      populate('group', 'groupname').
       sort({end: -1}).
       exec(function(err, sessions) {
         if (err) {

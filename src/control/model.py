@@ -335,12 +335,12 @@ class Model(object):
 
         # Add the process to the database to display as in-process
         plugin_process_id = self.database.add_plugin_process(plugin_type="echo",
-                                                            request_type="original",
-                                                            representation=new_repr,
-                                                            status=1,
-                                                            display="hide",
-                                                            session_id=None,
-                                                            data_root_dir=None)
+                                                             request_type="original",
+                                                             representation=new_repr,
+                                                             status=1,
+                                                             display="hide",
+                                                             session_id=None,
+                                                             data_root_dir=None)
 
         # Run autoindex and strategy plugin
         # LaunchAction(command={"command":"ECHO",
@@ -776,7 +776,7 @@ class Model(object):
                                              "session_id":session_id},
                                   "directories":directories,
                                   "header1":header,
-                                  "site_parameters":self.site.BEAM_INFO[header1["site_tag"]],
+                                  "site_parameters":self.site.BEAM_INFO[header["site_tag"]],
                                   "preferences":{},
                                   "return_address":self.return_address},
                          launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
