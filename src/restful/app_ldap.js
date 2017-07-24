@@ -228,14 +228,14 @@ apiRoutes.route('/sessions')
 
     console.log(req.decoded);
 
-    var find_search = { group: { $in: req.decoded._doc.groups}};
-    if (req.decoded._doc.role == 'site_admin') {
+    var find_search = { group: { $in: req.decoded.gidNumber}};
+    if (req.decoded.gidNumber == config.ldap_admin_gid) {
       find_search = {}
     }
 
     Session.
       find(find_search).
-      populate('group', 'groupname').
+      // populate('group', 'groupname').
       sort({end: -1}).
       exec(function(err, sessions) {
         if (err) {
