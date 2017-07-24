@@ -393,8 +393,10 @@ class Model(object):
                 # Right on time
                 if place_in_run == 1:
                     # Get all the image information
-                    header = detector.read_header(fullname=fullname,
-                                                  beam_settings=self.site.BEAM_INFO[site_tag.upper()])
+                    header = detector.read_header(
+                        fullname=fullname,
+                        beam_settings=self.site.BEAM_INFO[site_tag.upper()])
+
                     # Put data about run in the header object
                     header["collect_mode"] = "run"
                     header["run_id"] = run_id
