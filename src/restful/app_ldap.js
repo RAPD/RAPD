@@ -170,6 +170,47 @@ apiRoutes.post('/authenticate', function(req, res) {
   });
 });
 
+// route middleware to verify a token
+apiRoutes.use(function(req, res, next) {
+
+  console.log(req.body);
+  console.log(req.query);
+  console.log(req.headers);
+
+  // check header or url parameters or post parameters for token
+  var token = req.headers.authorization.replace('Bearer ', '');
+
+  // decode token
+  if (token) {
+
+    // verifies secret and checks exp
+    jwt.verify(token, app.get('superSecret'), function(err, decoded) {
+      if (err) {
+        return res.json({ success: false, message: 'Failed to authenticate token.' });
+      } else {
+        let now = Date.now()/1000;
+        console.log(decoded.iat, decoded.exp, (decoded.exp-now)/(60));
+        // if everything is good, save to request for use in other routes
+
+        if (decoded.iat <= now && decoded.exp >= now) {
+          req.decoded = decoded;
+          next();
+        }
+
+      }
+    });
+
+  } else {
+
+    // if there is no token
+    // return an error
+    return res.status(403).send({
+        success: false,
+        message: 'No token provided.'
+    });
+  }
+});
+
 // test route to make sure everything is working (accessed at GET http://localhost:8080/api)
 // apiRoutes.use(jwtCheck);
 
