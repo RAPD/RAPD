@@ -136,10 +136,10 @@ class Database(object):
         db = self.get_db_connection()
 
         # Retrieve the session id
-        session_id = db.sessions.find_one({"data_root_dir":data_root_dir}, {"_id":1}).get("_id", False)
+        session_id = db.sessions.find_one({"data_root_dir":data_root_dir}, {"_id":1})
 
         if session_id:
-            session_id = str(session_id)
+            session_id = str(session_id.get("_id", False))
 
         return session_id
 
