@@ -80,6 +80,7 @@ apiRoutes.use(function(req, res, next) {
     req.session.working = 'yes!';
     console.log('working =', req.session.working);
     console.log(req.session);
+    console.log(req.url);
 
     // do logging
     console.log('Something is happening.');
