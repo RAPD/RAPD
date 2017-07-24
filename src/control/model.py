@@ -739,7 +739,7 @@ class Model(object):
                                              "session_id":session_id},
                                   "directories":directories,
                                   "header1":header,
-                                  "site_parameters":self.site.BEAM_INFO[header1["site_tag"]],
+                                  "site_parameters":self.site.BEAM_INFO[header["site_tag"]],
                                   "preferences":{},
                                   "return_address":self.return_address},
                          launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
