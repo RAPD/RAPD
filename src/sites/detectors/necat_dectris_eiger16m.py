@@ -176,6 +176,45 @@ def get_data_root_dir(fullname):
     Keyword arguments
     fullname -- the full path name of the image file
     """
+    path_split    = fullname.split(os.path.sep)
+    data_root_dir = False
+
+    gpfs   = False
+    users  = False
+    inst   = False
+    group  = False
+    images = False
+    
+    for p in path_split:
+        if p.startswith('gpfs'):
+            st = path_split.index(p)
+    if path_split[st].startswith("gpfs"):
+        gpfs = path_split[st]
+        if path_split[st+1] == "users":
+            users = path_split[st+1]
+            if path_split[st+2]:
+                inst = path_split[st+2]
+                if path_split[st+3]:
+                    group = path_split[st+3]
+
+    if group:
+        data_root_dir = os.path.join("/",*path_split[1:st+4])
+    elif inst:
+        data_root_dir = os.path.join("/",*path_split[1:st+3])
+    else:
+        data_root_dir = False
+
+    #return the determined directory
+    return data_root_dir
+
+def get_data_root_dir_OLD(fullname):
+    """
+    Derive the data root directory from the user directory
+    The logic will most likely be unique for each site
+
+    Keyword arguments
+    fullname -- the full path name of the image file
+    """
 
     # Isolate distinct properties of the images path
     path_split = fullname.split(os.path.sep)
@@ -303,6 +342,7 @@ def read_header(input_file=False, beam_settings=False):
     # The image template for processing
     header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])
     header["run_number_in_template"] = RUN_NUMBER_IN_TEMPLATE
+    header['data_root_dir'] = get_data_root_dir(input_file)
 
     # Return the header
     return header

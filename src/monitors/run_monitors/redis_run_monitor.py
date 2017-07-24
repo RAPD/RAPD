@@ -138,13 +138,13 @@ class Monitor(threading.Thread):
         # Create a pool connection
         redis_database = importlib.import_module('database.rapd_redis_adapter')
         
-        self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        """
-        # For a Redis pool connection
-        self.redis = self.redis_database.connect_redis()
-        """
-        # For a Redis sentinal connection
-        self.redis = self.redis_database.connect_redis_manager_HA()
+        self.redis_database = redis_database.Database(settings=self.site.RUN_MONITOR_SETTINGS)
+        if self.site.RUN_MONITOR_SETTINGS['REDIS_CONNECTION'] == 'pool':
+            # For a Redis pool connection
+            self.redis = self.redis_database.connect_redis_pool()
+        else:
+            # For a Redis sentinal connection
+            self.redis = self.redis_database.connect_redis_manager_HA()
 
     def run(self):
         self.logger.debug("Running")

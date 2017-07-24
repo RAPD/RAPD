@@ -29,6 +29,7 @@ __status__ = "Production"
 import argparse
 import importlib
 import sys
+import time
 
 # RAPD imports
 import utils.commandline
@@ -99,11 +100,14 @@ def main():
     logger.debug("Commandline arguments:")
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s" % pair)
-    
+
+    # Instantiate the model
+    MODEL = Model(SITE=SITE,
+                  overwatch_id=commandline_args.overwatch_id)
+
     try:
-        # Instantiate the model
-        MODEL = Model(SITE=SITE,
-                      overwatch_id=commandline_args.overwatch_id)
+      while 1:
+        time.sleep(100)
     except KeyboardInterrupt:
         # Close everything cleanly
         MODEL.stop()

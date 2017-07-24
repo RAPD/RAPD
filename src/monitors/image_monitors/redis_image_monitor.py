@@ -134,14 +134,13 @@ class Monitor(threading.Thread):
         # Create a pool connection
         redis_database = importlib.import_module('database.rapd_redis_adapter')
         
-        self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        """
-        # For a Redis pool connection
-        self.redis = self.redis_database.connect_redis()
-        """
-        # For a Redis sentinal connection
-        self.redis = self.redis_database.connect_redis_manager_HA()
-        
+        self.redis_database = redis_database.Database(settings=self.site.IMAGE_MONITOR_SETTINGS)
+        if self.site.IMAGE_MONITOR_SETTINGS['REDIS_CONNECTION'] == 'pool':
+            # For a Redis pool connection
+            self.redis = self.redis_database.connect_redis_pool()
+        else:
+            # For a Redis sentinal connection
+            self.redis = self.redis_database.connect_redis_manager_HA()
 
     def run(self):
         """Orchestrate the monitoring for new images in redis db"""
@@ -161,6 +160,8 @@ class Monitor(threading.Thread):
 
         # Determine interval for overwatch update
         ow_round_interval = 50 # int((5 * len(self.image_lists)) / POLLING_REST)
+        
+        print self.redis.llen('images_collected:T')
 
         while self.running:
 
@@ -170,8 +171,8 @@ class Monitor(threading.Thread):
                 for tag in self.tags:
 
                     # Try to pop the oldest image off the list
-                    #new_image = self.redis.rpop("images_collected:%s" % tag)
-                    new_image = self.redis.rpop("images_collected_%s" % tag)
+                    new_image = self.redis.rpop("images_collected:%s" % tag)
+                    #new_image = self.redis.rpop("images_collected_%s" % tag)
 
                     # Have a new_image
                     if new_image:

@@ -140,7 +140,7 @@ class Model(object):
         # self.start_cloud_monitor()
 
         # Initialize the site adapter
-        # self.init_site_adapter()
+        self.init_site_adapter()
 
         # Initialize the remote adapter
         # self.init_remote_adapter()
@@ -170,12 +170,12 @@ class Model(object):
         redis_database = importlib.import_module('database.rapd_redis_adapter')
         
         self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        """
-        # For a Redis pool connection
-        self.redis = self.redis_database.connect_redis()
-        """
-        # For a Redis sentinal connection
-        self.redis = self.redis_database.connect_redis_manager_HA()
+        if self.site.CONTROL_DATABASE_SETTINGS['REDIS_CONNECTION'] == 'pool':
+            # For a Redis pool connection
+            self.redis = self.redis_database.connect_redis_pool()
+        else:
+            # For a Redis sentinal connection
+            self.redis = self.redis_database.connect_redis_manager_HA()
         
     def stop_redis(self):
         """Make a clean Redis disconnection if using a pool connection."""
@@ -258,7 +258,7 @@ class Model(object):
         """Stop the image listening process for core"""
 
         self.logger.debug("Stopping image monitor")
-        if site.IMAGE_MONITOR:
+        if self.site.IMAGE_MONITOR:
             self.image_monitor.stop()
 
     def start_run_monitor(self):
@@ -282,7 +282,7 @@ class Model(object):
         """Stop the run information listening process for core"""
 
         self.logger.debug("Stopping run monitor")
-        if site.RUN_MONITOR:
+        if self.site.RUN_MONITOR:
             self.run_monitor.stop()
 
     def start_cloud_monitor(self):
@@ -401,10 +401,10 @@ class Model(object):
         # Save some typing
         dirname = os.path.dirname(fullname)
 
-        # Directory is to be ignored
-        if dirname in self.site.IMAGE_IGNORE_DIRECTORIES:
-            self.logger.debug("Directory %s is marked to be ignored - skipping", dirname)
-            return True
+        for d in self.site.IMAGE_IGNORE_DIRECTORIES:
+            if dirname.startswith(d):
+                self.logger.debug("Directory %s is marked to be ignored - skipping", dirname)
+                return True
 
         # File contains an ingnore flag
         if any(ignore_string in fullname for ignore_string in self.site.IMAGE_IGNORE_STRINGS):
@@ -464,7 +464,7 @@ class Model(object):
 
             # Get all the image information
             try:
-                header = detector.read_header(fullname=fullname,
+                header = detector.read_header(input_file=fullname,
                                               beam_settings=self.site.BEAM_INFO[site_tag.upper()])
             except IOError:
                 self.logger.exception("Unable to access image")
@@ -737,6 +737,7 @@ class Model(object):
         """
 
         self.logger.debug(header["fullname"])
+        print header
 
         # Save some typing
         site = self.site

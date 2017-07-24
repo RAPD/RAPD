@@ -81,8 +81,10 @@ class Database(object):
 
         # A lock for troublesome fast-acting data entry
         self.LOCK = threading.Lock()
+        
+        self.pool = False
 
-    def connect_redis(self):
+    def connect_redis_pool(self):
         # Create a pool connection
         pool = redis.ConnectionPool(host=self.redis_host,
                                     port=self.redis_port,

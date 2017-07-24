@@ -228,7 +228,15 @@ CONTROL_DATABASE_SETTINGS = {
     "DATABASE_HOST":CONTROL_DATABASE_HOST,
     "DATABASE_PORT":CONTROL_DATABASE_PORT,
     "DATABASE_USER":CONTROL_DATABASE_USER,
-    "DATABASE_PASSWORD":CONTROL_DATABASE_PASSWORD
+    "DATABASE_PASSWORD":CONTROL_DATABASE_PASSWORD,
+    # Connection can be 'pool' for database on single computer, or
+    # 'sentinal' for high availability on redundant computers.
+    "REDIS_CONNECTION":"sentinel",
+    "REDIS_HOST":SECRETS.REDIS_HOST,
+    "REDIS_PORT":SECRETS.REDIS_PORT,
+    "REDIS_DB":SECRETS.REDIS_DB,
+    "REDIS_SENTINEL_HOSTS":SECRETS.SENTINEL_HOSTS,
+    "REDIS_MASTER_NAME":SECRETS.REDIS_MASTER_NAME,
 }
 
 
@@ -259,16 +267,21 @@ LAUNCH_SETTINGS = {
 
 IMAGE_MONITOR_SETTINGS = {"REDIS_HOST" : IMAGE_MONITOR_REDIS_HOST,
                           "REDIS_PORT" : IMAGE_MONITOR_REDIS_PORT,
-                        #   "REDIS_CLUSTER" : IMAGE_MONITOR_REDIS_CLUSTER,
+                          #   "REDIS_CLUSTER" : IMAGE_MONITOR_REDIS_CLUSTER,
                           "SENTINEL_HOST" : IMAGE_MONITOR_SENTINEL_HOST,
                           "SENTINEL_PORT" : IMAGE_MONITOR_SENTINEL_PORT,
-                          "REDIS_MASTER_NAME" : IMAGE_MONITOR_REDIS_MASTER_NAME}
+                          'REDIS_CONNECTION':"sentinel",
+                          "REDIS_MASTER_NAME" : IMAGE_MONITOR_REDIS_MASTER_NAME,
+                          "REDIS_SENTINEL_HOSTS" : SECRETS.SENTINEL_HOSTS,
+                          }
 
 RUN_MONITOR_SETTINGS = {"REDIS_HOST" : RUN_MONITOR_REDIS_HOST,
                         "REDIS_PORT" : RUN_MONITOR_REDIS_PORT,
                         # "REDIS_CLUSTER" : RUN_MONITOR_REDIS_CLUSTER,
                         "SENTINEL_HOST" : RUN_MONITOR_SENTINEL_HOST,
                         "SENTINEL_PORT" : RUN_MONITOR_SENTINEL_PORT,
+                        "REDIS_CONNECTION":"sentinel",
+                        "REDIS_SENTINEL_HOSTS" : SECRETS.SENTINEL_HOSTS,
                         "REDIS_MASTER_NAME" : RUN_MONITOR_REDIS_MASTER_NAME}
 
 CLOUD_MONITOR_SETTINGS = {
@@ -291,6 +304,8 @@ REMOTE_ADAPTER_SETTINGS = {"ID" : ID,
                         #    "REDIS_CLUSTER" : REMOTE_ADAPTER_REDIS_CLUSTER,
                            "SENTINEL_HOST" : REMOTE_ADAPTER_SENTINEL_HOST,
                            "SENTINEL_PORT" : REMOTE_ADAPTER_SENTINEL_PORT,
+                           "REDIS_CONNECTION":"sentinel",
+                           "REDIS_SENTINEL_HOSTS" : SECRETS.SENTINEL_HOSTS,
                            "REDIS_MASTER_NAME" : REMOTE_ADAPTER_REDIS_MASTER_NAME,
                            "REDIS_HOST" : REMOTE_ADAPTER_REDIS_HOST,
                            "REDIS_PORT" : REMOTE_ADAPTER_REDIS_PORT}
