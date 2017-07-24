@@ -226,6 +226,8 @@ apiRoutes.route('/sessions')
   // get all the sessions (accessed at GET http://localhost:3000/api/sessions)
   .get(function(req, res) {
 
+    console.log(req.decoded);
+
     var find_search = { group: { $in: req.decoded._doc.groups}};
     if (req.decoded._doc.role == 'site_admin') {
       find_search = {}
