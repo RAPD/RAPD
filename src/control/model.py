@@ -34,6 +34,7 @@ import importlib
 import json
 import logging
 import os
+from pprint import pprint
 import redis
 import socket
 
@@ -336,6 +337,7 @@ class Model(object):
         """Send a command over redis for processing"""
 
         print "send_command"
+        pprint(command)
 
         self.redis.lpush(channel, json.dumps(command))
 
