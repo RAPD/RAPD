@@ -32,6 +32,7 @@ sudo docker run --name mongodb -p 27017:27017 -d mongo:3.4
 """
 
 # Standard imports
+import copy
 import datetime
 import json
 import logging
@@ -177,16 +178,15 @@ class Database(object):
         return_type -- "boolean", "id", or "dict" (default = "id")
         """
 
-        self.logger.debug(data)
-
         db = self.get_db_connection()
 
         # Add timestamp
-        data["timestamp"] = datetime.datetime.utcnow()
+        data_copy = copy.deepcopy(data)
+        data_copy["timestamp"] = datetime.datetime.utcnow()
 
         # Insert into db
         try:
-            result = db.images.insert_one(data)
+            result = db.images.insert_one(data_copy)
         # Image already entered
         except pymongo.errors.DuplicateKeyError:
             return False

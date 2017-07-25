@@ -37,8 +37,8 @@ Running a full site installation requires both Redis and MongoDB. To understand 
 Using Docker to install the required databases is a workable approach.
 To install and run the databases using Docker:  
 1. Check if Docker is working `sudo docker run hello-world`  
-2. Start Redis server `sudo docker run --name redisdb -p 6379:6379 -d redis:3.2`  
-3. Start MongoDB server `sudo docker run --name mongodb -p 27017:27107 -d mongo:3.4`  
+2. Start Redis server `sudo docker run --name redisdb -p 6379:6379 -d redis redis-server --appendonly yes`  
+3. Start MongoDB server `sudo docker run --name mongodb -p 27017:27107 -d mongo`  
 
 # Crystallographic Software
 Required software that should be installed prior to RAPD2 install:  

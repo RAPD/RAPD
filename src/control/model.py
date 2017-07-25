@@ -34,6 +34,7 @@ import importlib
 import json
 import logging
 import os
+from pprint import pprint
 import redis
 import socket
 
@@ -328,8 +329,6 @@ class Model(object):
     def send_echo(self):
         """Send a test echo request to Launch"""
 
-        print "send_echo"
-
         # Construct a working directory and repr
         work_dir, new_repr = self.get_work_dir(type_level="echo")
 
@@ -368,6 +367,7 @@ class Model(object):
         """Send a command over redis for processing"""
 
         print "send_command"
+        pprint(command)
 
         self.redis.lpush(channel, json.dumps(command))
 
@@ -429,8 +429,10 @@ class Model(object):
                 # Right on time
                 if place_in_run == 1:
                     # Get all the image information
-                    header = detector.read_header(fullname=fullname,
-                                                  beam_settings=self.site.BEAM_INFO[site_tag.upper()])
+                    header = detector.read_header(
+                        fullname=fullname,
+                        beam_settings=self.site.BEAM_INFO[site_tag.upper()])
+
                     # Put data about run in the header object
                     header["collect_mode"] = "run"
                     header["run_id"] = run_id
@@ -466,6 +468,8 @@ class Model(object):
             try:
                 header = detector.read_header(input_file=fullname,
                                               beam_settings=self.site.BEAM_INFO[site_tag.upper()])
+                print "1"
+                pprint(header)
             except IOError:
                 self.logger.exception("Unable to access image")
                 return False
@@ -479,13 +483,19 @@ class Model(object):
             if self.site_adapter:
                 site_data = self.site_adapter.get_image_data()
                 header.update(site_data)
+                print "2"
+                pprint(header)
 
             # Add to database
-            image_status = self.database.add_image(data=header, return_type="boolean")
-
+            image_id = self.database.add_image(data=header, return_type="id")
+            if image_id:
+                header["_id"] = image_id
             # Duplicate entry
-            if image_status == False:
+            else:
                 return False
+
+            print "1"
+            pprint(header)
 
             # Update remote client
             if self.remote_adapter:
@@ -771,16 +781,18 @@ class Model(object):
             header.update({"repr":new_repr})
 
             # Run autoindex and strategy plugin
-            LaunchAction(command={"command":"INDEX",
-                                  "process":{"plugin_process_id":plugin_process_id,
-                                             "session_id":session_id},
-                                  "directories":directories,
-                                  "header1":header,
-                                  "site_parameters":self.site.BEAM_INFO[header["site_tag"]],
-                                  "preferences":{},
-                                  "return_address":self.return_address},
-                         launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
-                         settings=None)
+            command = {"command":"INDEX",
+                       "process":{
+                           "plugin_process_id":plugin_process_id,
+                           "session_id":session_id
+                       },
+                       "directories":directories,
+                       "header1":header,
+                       "site_parameters":self.site.BEAM_INFO[header["site_tag"]],
+                       "preferences":{}
+                      }
+
+            self.send_command(command, "RAPD_JOBS")
 
             # If the last two images have "pair" in their name - look more closely
             if ("pair" in self.pairs[site_tag][0][0]) and ("pair" in self.pairs[site_tag][1][0]):
@@ -788,8 +800,17 @@ class Model(object):
                 self.logger.debug("Potentially a pair of images")
 
                 # Break down the image name
-                directory1, basename1, prefix1, run_number1, image_number1 = detector.parse_file_name(self.pairs[site_tag][0][0])
-                directory2, basename2, prefix2, run_number2, image_number2 = detector.parse_file_name(self.pairs[site_tag][1][0])
+                directory1,
+                basename1,
+                prefix1,
+                run_number1,
+                image_number1 = detector.parse_file_name(self.pairs[site_tag][0][0])
+
+                directory2,
+                basename2,
+                prefix2,
+                run_number2,
+                image_number2 = detector.parse_file_name(self.pairs[site_tag][1][0])
 
                 # Everything matches up to the image number, which is incremented by 1
                 if (directory1, basename1, prefix1) == (directory2, basename2, prefix2) and (image_number1 == image_number2-1):
@@ -817,13 +838,14 @@ class Model(object):
                     session_id = self.get_session(header)
 
                     # Add the process to the database to display as in-process
-                    plugin_process_id = self.database.add_plugin_process(plugin_type="index+strategy:pair",
-                                                                         request_type="original",
-                                                                         representation=new_repr,
-                                                                         status=1,
-                                                                         display="show",
-                                                                         session_id=session_id,
-                                                                         data_root_dir=data_root_dir)
+                    plugin_process_id = self.database.add_plugin_process(
+                        plugin_type="index+strategy:pair",
+                        request_type="original",
+                        representation=new_repr,
+                        status=1,
+                        display="show",
+                        session_id=session_id,
+                        data_root_dir=data_root_dir)
 
                     # Add the ID entry to the header dict
                     header1.update({"plugin_process_id":plugin_process_id,
