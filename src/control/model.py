@@ -454,12 +454,12 @@ class Model(object):
             image_id = self.database.add_image(data=header, return_type="id")
             if image_id:
                 header["_id"] = image_id
+            # Duplicate entry
+            else:
+                return False
+
             print "1"
             pprint(header)
-
-            # Duplicate entry
-            if image_status == False:
-                return False
 
             # Update remote client
             if self.remote_adapter:
