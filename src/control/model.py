@@ -432,6 +432,8 @@ class Model(object):
             try:
                 header = detector.read_header(fullname=fullname,
                                               beam_settings=self.site.BEAM_INFO[site_tag.upper()])
+                print "1"
+                pprint(header)
             except IOError:
                 self.logger.exception("Unable to access image")
                 return False
@@ -445,9 +447,15 @@ class Model(object):
             if self.site_adapter:
                 site_data = self.site_adapter.get_image_data()
                 header.update(site_data)
+                print "2"
+                pprint(header)
 
             # Add to database
-            image_status = self.database.add_image(data=header, return_type="boolean")
+            image_id = self.database.add_image(data=header, return_type="id")
+            if image_id:
+                header["_id"] = image_id
+            print "1"
+            pprint(header)
 
             # Duplicate entry
             if image_status == False:
@@ -701,9 +709,6 @@ class Model(object):
         Keyword argument
         header -- dict containing lots of image information
         """
-
-        print "1"
-        pprint(header)
 
         # Save some typing
         site = self.site
