@@ -114,6 +114,7 @@ class Launcher(object):
                 self.ow_registrar.update({"site_id":self.site.ID})
 
             # Look for a new command
+            # This will trow a redis.exceptions.ConnectionError if redis is unreachable
             command = self.redis.brpop(["RAPD_JOBS",], 5)
 
             # Handle the message

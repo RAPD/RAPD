@@ -432,6 +432,7 @@ class Model(object):
             try:
                 header = detector.read_header(fullname=fullname,
                                               beam_settings=self.site.BEAM_INFO[site_tag.upper()])
+                pprint(header)
             except IOError:
                 self.logger.exception("Unable to access image")
                 return False
