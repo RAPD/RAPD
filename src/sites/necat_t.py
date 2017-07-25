@@ -29,8 +29,8 @@ import importlib
 #from utils.site import read_secrets
 
 # Site ID - limited to 12 characters by MySQL
-#ID = "NECAT_T"
-ID = ("T")
+ID = "NECAT_T"
+#ID = ("T")
 BEAMLINE="T"
 
 # The secrets file - do not put in github repo!

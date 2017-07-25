@@ -207,22 +207,6 @@ def get_data_root_dir(fullname):
     #return the determined directory
     return data_root_dir
 
-def get_data_root_dir_OLD(fullname):
-    """
-    Derive the data root directory from the user directory
-    The logic will most likely be unique for each site
-
-    Keyword arguments
-    fullname -- the full path name of the image file
-    """
-
-    # Isolate distinct properties of the images path
-    path_split = fullname.split(os.path.sep)
-    data_root_dir = os.path.join("/", *path_split[1:3])
-
-    # Return the determined directory
-    return data_root_dir
-
 def base_read_header(image,
                      logger=False):
     """
@@ -235,6 +219,8 @@ def base_read_header(image,
 
     # Make sure the image is a full path image
     image = os.path.abspath(image)
+    #tease out the info from the file name
+    base = os.path.basename(image).rstrip(".cbf")
 
     def mmorm(x):
         d = float(x)
@@ -268,15 +254,23 @@ def base_read_header(image,
         "twotheta": ("^# Detector_2theta\s*([\d\.]*)\s*deg", lambda x: float(x)),
         "wavelength": ("^# Wavelength\s*([\d\.]+) A", lambda x: float(x))
         }
-
-    rawdata = open(image,"rb").read(2048)
-    headeropen = 0
-    headerclose= rawdata.index("--CIF-BINARY-FORMAT-SECTION--")
-    header = rawdata[headeropen:headerclose]
-
-    # try:
-    #tease out the info from the file name
-    base = os.path.basename(image).rstrip(".cbf")
+    
+    count = 0
+    while (count < 10):
+        try:
+            # Use 'with' to make sure file closes properly. Only read header.
+            header = ""
+            with open(image, "rb") as raw:
+                for line in raw:
+                    header += line
+                    if line.count("X-Binary-Size-Padding"):
+                        break
+            break
+        except:
+            count +=1
+            if logger:
+                logger.exception('Error opening %s' % image)
+            time.sleep(0.1)
 
     parameters = {
         "fullname": image,

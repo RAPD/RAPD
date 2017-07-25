@@ -160,8 +160,6 @@ class Monitor(threading.Thread):
 
         # Determine interval for overwatch update
         ow_round_interval = 50 # int((5 * len(self.image_lists)) / POLLING_REST)
-        
-        print self.redis.llen('images_collected:T')
 
         while self.running:
 
