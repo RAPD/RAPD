@@ -211,7 +211,7 @@ CLOUD_INTERVAL = 10
 CLOUD_HANDLER_DIRECTORIES = ("cloud.handlers", )
 
 # For connecting to the site
-SITE_ADAPTER = False
+SITE_ADAPTER = "sites.site_adapters.necat"
 # Running in a cluster configuration - True || False
 SITE_ADAPTER_REDIS_CLUSTER = False
 

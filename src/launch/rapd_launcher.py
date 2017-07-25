@@ -123,7 +123,7 @@ class Launcher(object):
 
     def connect_to_redis(self):
         """Connect to the redis instance"""
-
+        """
         # Create a pool connection
         pool = redis.ConnectionPool(host=self.site.CONTROL_REDIS_HOST,
                                     port=self.site.CONTROL_REDIS_PORT,
@@ -131,6 +131,17 @@ class Launcher(object):
 
         # The connection
         self.redis = redis.Redis(connection_pool=pool)
+        """
+        # Create a pool connection
+        redis_database = importlib.import_module('database.rapd_redis_adapter')
+        
+        self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        if self.site.CONTROL_DATABASE_SETTINGS['REDIS_CONNECTION'] == 'pool':
+            # For a Redis pool connection
+            self.redis = self.redis_database.connect_redis_pool()
+        else:
+            # For a Redis sentinal connection
+            self.redis = self.redis_database.connect_redis_manager_HA()
 
     def handle_command(self, command):
         """
@@ -145,6 +156,7 @@ class Launcher(object):
         # Split up the command
         channel, message = command
         decoded_message = json.loads(message)
+        #decoded_message = message
 
         # Update preferences to be in server run mode
         if not decoded_message.get("preferences"):

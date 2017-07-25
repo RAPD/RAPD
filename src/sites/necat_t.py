@@ -26,7 +26,7 @@ import sys
 import importlib
 
 # RAPD imports
-#from utils.site import read_secrets
+from utils.site import read_secrets
 
 # Site ID - limited to 12 characters by MySQL
 ID = "NECAT_T"
@@ -34,11 +34,10 @@ ID = "NECAT_T"
 BEAMLINE="T"
 
 # The secrets file - do not put in github repo!
-SECRETS = importlib.import_module("sites.secrets_necat_t")
-
+SECRETS = "sites.secrets_necat_t"
 # Copy the secrets attribute to the local scope
 # Do not remove unless you know what you are doing!
-#read_secrets(SECRETS_FILE, sys.modules[__name__])
+read_secrets(SECRETS, sys.modules[__name__])
 
 # X-ray source characteristics
 # Flux of the beam
@@ -69,7 +68,7 @@ BEAM_CENTER_Y = (155.1904879862,
 """
 # Keyed to ID
 BEAM_INFO = {
-    "T": {# Flux of the beam
+    "NECAT_T": {# Flux of the beam
           "BEAM_FLUX":1.5E12,
           # Size of the beam in microns
           "BEAM_SIZE_X":50,
@@ -96,6 +95,11 @@ BEAM_INFO = {
           }
              }
           
+# Method RAPD uses to track groups
+#   uid -- the uid of data root directory corresponds to session.group_id
+#GROUP_ID = "uid"
+GROUP_ID = None
+
 # Logging
 # Linux should be /var/log/
 #LOGFILE_DIR = "/tmp/rapd2/logs"
@@ -108,9 +112,9 @@ UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"
 
 # RAPD cluster process settings
 # Port for cluster to listen on
-LAUNCHER_PORT = 50000
+#LAUNCHER_PORT = 50000
 # Aggregator - be careful when changing
-LAUNCHER_ADDRESS = (SECRETS.LAUNCHER_HOST, LAUNCHER_PORT)
+#LAUNCHER_ADDRESS = (LAUNCHER_HOST, LAUNCHER_PORT)
 
 # Launcher settings
 LAUNCHER_LOCK_FILE = "/tmp/rapd2/lock/launcher.lock"
@@ -235,65 +239,55 @@ REMOTE_ADAPTER_REDIS_CLUSTER = REDIS_CLUSTER
 ## Aggregators
 ## Be extra careful when modifying
 CONTROL_DATABASE_SETTINGS = {"CONTROL_DATABASE":CONTROL_DATABASE,
-                             'DATABASE_HOST':SECRETS.DB_HOST,
+                             'DATABASE_HOST':DB_HOST,
                              #'DATABASE_PORT':SECRETS.DB_PORT,
-                             'DATABASE_USER':SECRETS.DB_USER,
-                             'DATABASE_PASSWORD':SECRETS.DB_PASSWORD,
+                             'DATABASE_USER':DB_USER,
+                             'DATABASE_PASSWORD':DB_PASSWORD,
                              'DATABASE_NAME_DATA':"rapd_data",
                              'DATABASE_NAME_USERS':"rapd_users",
                              'DATABASE_NAME_CLOUD':"rapd_cloud",
                              # Connection can be 'pool' for database on single computer, or
                              # 'sentinal' for high availability on redundant computers.
                              'REDIS_CONNECTION':"sentinel",
-                             "REDIS_HOST":SECRETS.REDIS_HOST,
-                             "REDIS_PORT":SECRETS.REDIS_PORT,
-                             "REDIS_DB":SECRETS.REDIS_DB,
-                             "REDIS_SENTINEL_HOSTS":SECRETS.SENTINEL_HOSTS,
-                             "REDIS_MASTER_NAME":SECRETS.REDIS_MASTER_NAME,
+                             "REDIS_HOST":REDIS_HOST,
+                             "REDIS_PORT":REDIS_PORT,
+                             "REDIS_DB":REDIS_DB,
+                             "REDIS_SENTINEL_HOSTS":SENTINEL_HOSTS,
+                             "REDIS_MASTER_NAME":REDIS_MASTER_NAME,
                              }
-"""
-BEAM_SETTINGS = {"BEAM_FLUX":BEAM_FLUX,
-                 "BEAM_SIZE_X":BEAM_SIZE_X,
-                 "BEAM_SIZE_Y":BEAM_SIZE_Y,
-                 "BEAM_SHAPE":BEAM_SHAPE,
-                 "BEAM_APERTURE_SHAPE":BEAM_APERTURE_SHAPE,
-                 "BEAM_GAUSS_X":BEAM_GAUSS_X,
-                 "BEAM_GAUSS_Y":BEAM_GAUSS_Y,
-                 "BEAM_CENTER_DATE":BEAM_CENTER_DATE,
-                 "BEAM_CENTER_X":BEAM_CENTER_X,
-                 "BEAM_CENTER_Y":BEAM_CENTER_Y}
 
 LAUNCHER_SETTINGS = {
-    #"LAUNCHER_REGISTER":LAUNCHER_REGISTER,
-    #"LAUNCHER_SPECIFICATIONS":LAUNCHER_SPECIFICATIONS,
+    "LAUNCHER_REGISTER":LAUNCHER_REGISTER,
+    "LAUNCHER_SPECIFICATIONS":LAUNCHER_SPECIFICATIONS,
     "LOCK_FILE":LAUNCHER_LOCK_FILE,
     "RAPD_LAUNCHER_ADAPTER_DIRECTORIES":RAPD_LAUNCHER_ADAPTER_DIRECTORIES
 }
 
 LAUNCH_SETTINGS = {
     "RAPD_PLUGIN_DIRECTORIES":RAPD_PLUGIN_DIRECTORIES,
-    "LAUNCHER_ADDRESS":(LAUNCHER_SPECIFICATIONS[LAUNCHER_TARGET]["ip_address"],
-                        LAUNCHER_SPECIFICATIONS[LAUNCHER_TARGET]["port"])
+    #"LAUNCHER_ADDRESS":(LAUNCHER_SPECIFICATIONS[LAUNCHER_TARGET]["ip_address"],
+    #                    LAUNCHER_SPECIFICATIONS[LAUNCHER_TARGET]["port"])
+    "LAUNCHER_SPECIFICATIONS":LAUNCHER_SPECIFICATIONS,
 }
-"""
+
 IMAGE_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
                           'REDIS_CONNECTION':"sentinel",
-                          "REDIS_SENTINEL_HOSTS" : SECRETS.SENTINEL_HOSTS,
+                          "REDIS_SENTINEL_HOSTS" : SENTINEL_HOSTS,
                           #"SENTINEL_PORT" : SECRETS.SENTINEL_PORT,
-                          "REDIS_MASTER_NAME" : SECRETS.REDIS_MASTER_NAME,
-                          "REDIS_HOST":SECRETS.REDIS_HOST,
-                          "REDIS_PORT":SECRETS.REDIS_PORT,
-                          "REDIS_DB":SECRETS.REDIS_DB,
+                          "REDIS_MASTER_NAME" : REDIS_MASTER_NAME,
+                          "REDIS_HOST":REDIS_HOST,
+                          "REDIS_PORT":REDIS_PORT,
+                          "REDIS_DB":REDIS_DB,
                           }
 
 RUN_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
                         'REDIS_CONNECTION':"sentinel",
-                          "REDIS_SENTINEL_HOSTS" : SECRETS.SENTINEL_HOSTS,
+                          "REDIS_SENTINEL_HOSTS" : SENTINEL_HOSTS,
                           #"SENTINEL_PORT" : SECRETS.SENTINEL_PORT,
-                          "REDIS_MASTER_NAME" : SECRETS.REDIS_MASTER_NAME,
-                          "REDIS_HOST":SECRETS.REDIS_HOST,
-                          "REDIS_PORT":SECRETS.REDIS_PORT,
-                          "REDIS_DB":SECRETS.REDIS_DB,
+                          "REDIS_MASTER_NAME" : REDIS_MASTER_NAME,
+                          "REDIS_HOST":REDIS_HOST,
+                          "REDIS_PORT":REDIS_PORT,
+                          "REDIS_DB":REDIS_DB,
                           }
 
 CLOUD_MONITOR_SETTINGS = {
@@ -306,27 +300,27 @@ CLOUD_MONITOR_SETTINGS = {
         "CLOUD_MR_HANDLER":CLOUD_MR_HANDLER,
         "CLOUD_REINDEX_HANDLER":CLOUD_REINDEX_HANDLER,
         "CLOUD_REINTEGRATE_HANDLER":CLOUD_REINTEGRATE_HANDLER,
-        "LAUNCHER_ADDRESS":LAUNCHER_ADDRESS,
+        #"LAUNCHER_ADDRESS":LAUNCHER_ADDRESS,
         "DETECTOR_SUFFIX":DETECTOR_SUFFIX,
-        "UI_HOST":SECRETS.UI_HOST,
-        "UI_PORT":SECRETS.UI_PORT,
-        "UI_USER":SECRETS.UI_USER,
-        "UI_PASSWORD":SECRETS.UI_PASSWORD,
+        "UI_HOST":UI_HOST,
+        "UI_PORT":UI_PORT,
+        "UI_USER":UI_USER,
+        "UI_PASSWORD":UI_PASSWORD,
         "UPLOAD_DIR":UPLOAD_DIR
         }
 
 SITE_ADAPTER_SETTINGS = {"ID":ID,
-                         "REDIS_HOST":SECRETS.SITE_REDIS_IP,
-                         "REDIS_PORT":SECRETS.SITE_REDIS_PORT,
-                         "REDIS_DB":SECRETS.SITE_REDIS_DB}
+                         "REDIS_HOST":SITE_REDIS_IP,
+                         "REDIS_PORT":SITE_REDIS_PORT,
+                         "REDIS_DB":SITE_REDIS_DB}
 
 REMOTE_ADAPTER_SETTINGS = {"ID":ID,
-                           "MONGO_CONNECTION_STRING":SECRETS.MONGO_CONNECTION_STRING,
+                           "MONGO_CONNECTION_STRING":MONGO_CONNECTION_STRING,
                            "REDIS_CLUSTER":REDIS_CLUSTER,
                            'REDIS_CONNECTION':"sentinel",
-                           "REDIS_SENTINEL_HOSTS":SECRETS.SENTINEL_HOSTS,
+                           "REDIS_SENTINEL_HOSTS":SENTINEL_HOSTS,
                            #"SENTINEL_PORT":SECRETS.SENTINEL_PORT,
-                           "REDIS_MASTER_NAME":SECRETS.REDIS_MASTER_NAME}
+                           "REDIS_MASTER_NAME":REDIS_MASTER_NAME}
 
 ## Aggregators
 ## Be extra careful when modifying

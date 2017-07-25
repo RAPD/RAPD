@@ -130,7 +130,10 @@ class Model(object):
 
         # Import the detector
         self.init_detectors()
-
+        
+        # Start the job launcher
+        self.start_job_launcher()
+        
         # Start the run monitor
         self.start_run_monitor()
 
@@ -148,6 +151,7 @@ class Model(object):
 
         # Launch an echo
         self.send_echo()
+
 
     def init_site(self):
         """Process the site definitions to set up instance variables"""
@@ -239,6 +243,17 @@ class Model(object):
                     seek_module=detector,
                     directories=("sites.detectors", "detectors"))
 
+    def start_job_launcher(self):
+        """Start up the job launcher"""
+        self.logger.debug("Starting launcher")
+        
+        launcher = importlib.import_module("launch.rapd_launcher")
+        
+        self.launcher = launcher.Launcher(site=self.site,
+                                          tag="qsub",
+                                          logger=self.logger,
+                                          overwatch_id=self.overwatch_id)
+    
     def start_image_monitor(self):
         """Start up the image listening process for core"""
 
@@ -369,6 +384,7 @@ class Model(object):
         print "send_command"
         pprint(command)
 
+        # Why are we still encoding this? not send thru socket anymore...
         self.redis.lpush(channel, json.dumps(command))
 
     def stop(self):
@@ -747,7 +763,6 @@ class Model(object):
         """
 
         self.logger.debug(header["fullname"])
-        print header
 
         # Save some typing
         site = self.site
@@ -800,20 +815,22 @@ class Model(object):
                 self.logger.debug("Potentially a pair of images")
 
                 # Break down the image name
-                directory1,
+                (directory1,
                 basename1,
                 prefix1,
                 run_number1,
-                image_number1 = detector.parse_file_name(self.pairs[site_tag][0][0])
+                image_number1) = self.detectors[site_tag].parse_file_name(self.pairs[site_tag][0][0])
 
-                directory2,
+                (directory2,
                 basename2,
                 prefix2,
                 run_number2,
-                image_number2 = detector.parse_file_name(self.pairs[site_tag][1][0])
+                image_number2) = self.detectors[site_tag].parse_file_name(self.pairs[site_tag][1][0])
 
                 # Everything matches up to the image number, which is incremented by 1
-                if (directory1, basename1, prefix1) == (directory2, basename2, prefix2) and (image_number1 == image_number2-1):
+                #if (directory1, basename1, prefix1) == (directory2, basename2, prefix2) and (image_number1 == image_number2-1):
+                ### Have to modify for /epu/rdma since each image are in their own directory.
+                if (basename1, prefix1) == (basename2, prefix2) and (image_number1 == image_number2-1):
                     self.logger.info("This looks like a pair to me: %s, %s",
                                      self.pairs[site_tag][0][0],
                                      self.pairs[site_tag][1][0])
@@ -930,6 +947,8 @@ class Model(object):
             # Determine group_id
             if self.site.GROUP_ID == "uid":
                 group_id = os.stat(header.get("data_root_dir")).st_uid
+            else:
+                group_id = None
 
             session_id = self.database.create_session(
                 data_root_dir=header.get("data_root_dir", None),
