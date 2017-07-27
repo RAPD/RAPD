@@ -129,17 +129,18 @@ class RapdPlugin(Process):
 
     results = {}
 
-    def __init__(self, site, command, tprint=False, logger=False):
+    def __init__(self, command, tprint=False, logger=False):
         """
         Initialize the plugin
 
         Keyword arguments
-        site -- full site settings
         command -- dict of all information for this plugin to run
+        tprint -- terminal printer
+        logger -- logging instance
         """
 
-        # pprint(command)
-        # sys.exit()
+        pprint(command)
+        sys.exit()
 
         # Store tprint for use throughout
         if tprint:
