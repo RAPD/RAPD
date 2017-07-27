@@ -866,7 +866,7 @@ class Model(object):
             command = {
                 "command":"INTEGRATE",
                 "process":{
-                    "plugin_process_id":plugin_process_id,
+                    "process_id":plugin_process_id,
                     "session_id":session_id,
                     "status":0,
                     "type":"plugin"
