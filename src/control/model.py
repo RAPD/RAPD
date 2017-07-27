@@ -406,6 +406,11 @@ class Model(object):
                     header["place_in_run"] = 1
                     header["site_tag"] = site_tag
 
+                    # Add the image template to the run information
+                    header["run"]["image_template"] = detector.create_image_template(
+                        image_prefix=header["image_prefix"]
+                        )
+
                     # Add to the database
                     image_status = self.database.add_image(data=header, return_type="boolean")
 
