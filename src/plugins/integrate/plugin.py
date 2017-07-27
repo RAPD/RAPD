@@ -174,7 +174,7 @@ class RapdPlugin(Process):
         self.dirs = self.command["directories"]
         self.image_data = self.command.get("data").get("image_data")
         self.run_data = self.command.get("data").get("run_data")
-        self.process_id = self.command["process_id"]
+        self.process_id = self.command["process"]["process_id"]
 
         self.logger.debug("self.image_data = %s", self.image_data)
 
