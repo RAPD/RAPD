@@ -391,7 +391,7 @@ class Database(object):
             # Insert into db
             result = db.runs.insert_one(run_data)
 
-            self.logger.debug("Inserted run _id", str(result.inserted_id))
+            self.logger.debug(result.inserted_id)
 
             # Return the requested type
             if return_type == "boolean":
