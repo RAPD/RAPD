@@ -872,8 +872,10 @@ class Model(object):
                     "type":"plugin"
                     },
                 "directories":directories,
-                "image_data":header,
-                "run_data":run_data,
+                "data": {
+                    "image_data":header,
+                    "run_data":run_data
+                },
                 "site_parameters":self.site.BEAM_INFO[header["site_tag"]],
                 "preferences":{}
                 }
