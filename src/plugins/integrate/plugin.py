@@ -163,9 +163,13 @@ class RapdPlugin(Process):
 
         # Store into results
         self.results["command"] = command
-        self.results["process"] = {
-            "process_id": self.command.get("process_id"),
-            "status": 1}
+        self.results["process"] = command.get("process")
+        self.results["process"]["status"] = 1
+
+        #TODO
+        #{
+        #    "process_id": self.command.get("process_id"),
+        #    "status": 1}
 
         self.dirs = self.command["directories"]
         self.image_data = self.command.get("data").get("image_data")
