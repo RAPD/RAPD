@@ -246,7 +246,7 @@ def read_header(image,
         logger.debug("read_header %s", image)
 
     # Make sure the image name is a string for iotbx
-    image_str = unicodedata.encode('ascii','ignore')(image)
+    image_str = unicodedata.normalize("NFKD", image).encode("ascii", "ignore")
 
     m = MARImage(image_str)
     m.read()
