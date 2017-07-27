@@ -380,7 +380,7 @@ class Model(object):
         self.logger.debug("run_id: %s place_in_run:%s", str(run_id), str(place_in_run))
 
         # Image is in a run
-        if isinstance(place_in_run, int) and isinstance(run_id, int):
+        if isinstance(place_in_run, int) and isinstance(run_id, str):
 
             self.logger.debug("%s is in run %s at position %s", fullname, run_id, place_in_run)
 
