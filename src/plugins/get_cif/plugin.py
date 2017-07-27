@@ -42,7 +42,7 @@ import logging
 import multiprocessing
 import os
 import shutil
-import subprocess32
+import subprocess
 import time
 import urllib2
 
@@ -271,15 +271,15 @@ class RapdPlugin(multiprocessing.Process):
                     outfile.write(response)
 
             # Uncompress the gzipped file
-            unzip_proc = subprocess32.Popen(["gunzip", gzip_file])
+            unzip_proc = subprocess.Popen(["gunzip", gzip_file])
             unzip_proc.wait()
 
             # Convert from cif to pdb
             if self.command["preferences"]["pdb"]:
                 # Convert
-                conversion_proc = subprocess32.Popen(["phenix.cif_as_pdb", cif_file],
-                                                     stdout=subprocess32.PIPE,
-                                                     stderr=subprocess32.PIPE)
+                conversion_proc = subprocess.Popen(["phenix.cif_as_pdb", cif_file],
+                                                     stdout=subprocess.PIPE,
+                                                     stderr=subprocess.PIPE)
                 conversion_proc.wait()
                 # pdb_file = cif_file.replace(".cif", ".pdb")
 

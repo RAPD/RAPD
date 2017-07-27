@@ -45,7 +45,7 @@ import os
 from pprint import pprint
 import signal
 import shutil
-import subprocess32
+import subprocess
 import time
 import urllib2
 
@@ -711,7 +711,7 @@ class RapdPlugin(multiprocessing.Process):
                 outfile.write(response)
 
         # Uncompress the gzipped file
-        unzip_proc = subprocess32.Popen(["gunzip", gzip_file])
+        unzip_proc = subprocess.Popen(["gunzip", gzip_file])
         unzip_proc.wait()
 
         # If mmCIF, checks if file exists or if it is super structure with
@@ -726,9 +726,9 @@ class RapdPlugin(multiprocessing.Process):
         # Convert from cif to pdb
         # rpdb.cif_as_pdb((cif_file,))
         # time.sleep(0.1)
-        conversion_proc = subprocess32.Popen(["phenix.cif_as_pdb", cif_file],
-                                             stdout=subprocess32.PIPE,
-                                             stderr=subprocess32.PIPE)
+        conversion_proc = subprocess.Popen(["phenix.cif_as_pdb", cif_file],
+                                             stdout=subprocess.PIPE,
+                                             stderr=subprocess.PIPE)
         conversion_proc.wait()
         pdb_file = cif_file.replace(".cif", ".pdb")
 
@@ -827,24 +827,24 @@ class RapdPlugin(multiprocessing.Process):
                                     else:
                                         tar_options = "cf"
                                         append_tar = True
-                                    tar_process = subprocess32.Popen(
+                                    tar_process = subprocess.Popen(
                                         ["tar %s %s %s" % (
                                             tar_options,
                                             tar_file,
                                             my_file)
                                         ],
-                                        stdout=subprocess32.PIPE,
-                                        stderr=subprocess32.PIPE,
+                                        stdout=subprocess.PIPE,
+                                        stderr=subprocess.PIPE,
                                         shell=True)
                                     tar_process.wait()
 
                         # Compress the archive
                         if os.path.exists(tar_file):
                             # print "Compressing the archive"
-                            bzip_process = subprocess32.Popen(
+                            bzip_process = subprocess.Popen(
                                 ["bzip2", "-qf", tar_file],
-                                stdout=subprocess32.PIPE,
-                                stderr=subprocess32.PIPE)
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
                             bzip_process.wait()
 
                             check_bz2(tar_file)
