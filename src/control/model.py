@@ -408,7 +408,8 @@ class Model(object):
 
                     # Add the image template to the run information
                     header["run"]["image_template"] = detector.create_image_template(
-                        image_prefix=header["image_prefix"]
+                        image_prefix=header["image_prefix"],
+                        run_number=header["run_number"]
                         )
 
                     # Add to the database
