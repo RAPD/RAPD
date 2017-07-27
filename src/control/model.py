@@ -38,6 +38,8 @@ from pprint import pprint
 import redis
 import socket
 
+from bson import json_util
+
 # RAPD imports
 from control.control_server import LaunchAction, ControllerServer
 from utils.modules import load_module
@@ -339,7 +341,7 @@ class Model(object):
         print "send_command"
         pprint(command)
 
-        self.redis.lpush(channel, json.dumps(command))
+        self.redis.lpush(channel, json.dumps(command, default=json_util.default))
 
     def stop(self):
         """Stop the ImageMonitor,CloudMonitor and StatusRegistrar."""
@@ -833,7 +835,7 @@ class Model(object):
 
             # Make it easier to use run info
             run_position = header["place_in_run"]
-            run_dict = header["run"].copy()
+            run_data = header["run"].copy()
 
             # Derive  directory and repr
             work_dir, new_repr = self.get_work_dir(type_level="integrate",
@@ -871,7 +873,7 @@ class Model(object):
                     },
                 "directories":directories,
                 "image_data":header,
-                "run_data":run_dict,
+                "run_data":run_data,
                 "site_parameters":self.site.BEAM_INFO[header["site_tag"]],
                 "preferences":{}
                 }
