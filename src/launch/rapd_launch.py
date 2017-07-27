@@ -83,7 +83,7 @@ class Launch(object):
                                         tprint=False,
                                         logger=self.logger)
 
-        plugin.start()
+        # plugin.start()
 
     def load_command(self):
         """

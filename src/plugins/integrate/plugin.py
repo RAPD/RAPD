@@ -139,9 +139,6 @@ class RapdPlugin(Process):
         logger -- logging instance
         """
 
-        pprint(command)
-        sys.exit()
-
         # Store tprint for use throughout
         if tprint:
             self.tprint = tprint
@@ -159,10 +156,10 @@ class RapdPlugin(Process):
             self.logger.debug("__init__")
 
         # Store passed-in variables
-        self.site = site
         self.command = command
         self.preferences = self.command.get("preferences")
-        self.controller_address = self.command.get("return_address", False)
+        # This has advantage of removing site from command too
+        self.site = command.pop("site", None)
 
         # Store into results
         self.results["command"] = command
