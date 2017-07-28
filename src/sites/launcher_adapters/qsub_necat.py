@@ -52,7 +52,7 @@ class LauncherAdapter(object):
 
         Keyword arguments
         site -- imported site definition module
-        message -- command from the control process, encoded as JSON
+        message -- command from the control process
         settings --
         """
 
@@ -78,20 +78,22 @@ class LauncherAdapter(object):
         # Adjust the message to this site
         self.fix_command()
         
-        """
-
+        # Get the new working directory
+        work_dir = self.message["directories"]["work"]
+        
         # Get the launcher directory - in launcher specification
         # Add command_files to keep files isolated
         qsub_dir = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"]+"/command_files"
 
         # Put the message into a rapd-readable file
-        command_file = launch_tools.write_command_file(qsub_dir, self.decoded_message["command"], json.dumps(self.decoded_message))
-
+        #command_file = launch_tools.write_command_file(qsub_dir, self.message["command"], json.dumps(self.decoded_message))
+        command_file = launch_tools.write_command_file(qsub_dir, self.message["command"], self.message)
+        
         # The command has to come in the form of a script on the SERCAT install
         site_tag = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["site_tag"]
         command_line = "rapd.launch -vs %s %s" % (site_tag, command_file)
-        command_script = launch_tools.write_command_script(command_file.replace(".rapd", ".sh"), command_line)
-
+        #command_script = launch_tools.write_command_script(command_file.replace(".rapd", ".sh"), command_line)
+        """
         # Set the path for qsub
         qsub_path = "PATH=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
 /home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/bin:\
@@ -100,7 +102,7 @@ class LauncherAdapter(object):
 /home/schuerjp/Programs/RAPD/share/phenix-1.10.1-2155/build/bin:\
 /home/schuerjp/Programs/raddose-20-05-09-distribute-noexec/bin:\
 /usr/local/bin:/bin:/usr/bin"
-
+        """
         # Parse a label for qsub job from the command_file name
         qsub_label = os.path.basename(command_file).replace(".rapd", "")
 
@@ -126,109 +128,6 @@ class LauncherAdapter(object):
         self.logger.debug(qsub_command)
         p = Popen(qsub_command, shell=True)
         sts = os.waitpid(p.pid, 0)[1]
-        """
-    def processCluster(self,inp,output=False):
-      """
-      Submit job to cluster using DRMAA (when you are already on the cluster).
-      Main script should not end with os._exit() otherwise running jobs could be orphanned.
-      To eliminate this issue, setup self.running = multiprocessing.Event(), self.running.set() in main script,
-      then set it to False (self.running.clear()) during postprocess to kill running jobs smoothly.
-      """
-    
-      #if self.verbose:
-        #self.logger.debug('Utilities::processCluster')
-    
-      import drmaa,time
-      try:
-        s = False
-        jt = False
-        running = True
-        log = False
-        queue = False
-        smp = 1
-        name = False
-        #Check if self.running is setup... used for Best and Mosflm strategies
-        #because you can't kill child processes launched on cluster easily.
-        try:
-          temp = self.running
-        except AttributeError:
-          running = False
-    
-        if len(inp) == 1:
-          command = inp
-        elif len(inp) == 2:
-          command,log = inp
-        elif len(inp) == 3:
-          command,log,queue = inp
-        elif len(inp) == 4:
-          command,log,smp,queue = inp
-        else:
-          command,log,smp,queue,name = inp
-        if queue == False:
-          queue = 'all.q'
-        #smp,queue,name = inp2
-        #'-clear' can be added to the options to eliminate the general.q
-        options = '-clear -shell y -p -100 -q %s -pe smp %s'%(queue,smp)
-        s = drmaa.Session()
-        s.initialize()
-        jt = s.createJobTemplate()
-        jt.workingDirectory=os.getcwd()
-        jt.joinFiles=True
-        jt.nativeSpecification=options
-        jt.remoteCommand=command.split()[0]
-        if len(command.split()) > 1:
-          jt.args=command.split()[1:]
-        if log:
-          #the ':' is required!
-          jt.outputPath=':%s'%log
-        #submit the job to the cluster and get the job_id returned
-        job = s.runJob(jt)
-        #return job_id.
-        if output:
-          output.put(job)
-    
-        #cleanup the input script from the RAM.
-        s.deleteJobTemplate(jt)
-    
-        #If multiprocessing.event is set, then run loop to watch until job or script has finished.
-        if running:
-          #Returns True if job is still running or False if it is dead. Uses CPU to run loop!!!
-          decodestatus = {drmaa.JobState.UNDETERMINED: True,
-                          drmaa.JobState.QUEUED_ACTIVE: True,
-                          drmaa.JobState.SYSTEM_ON_HOLD: True,
-                          drmaa.JobState.USER_ON_HOLD: True,
-                          drmaa.JobState.USER_SYSTEM_ON_HOLD: True,
-                          drmaa.JobState.RUNNING: True,
-                          drmaa.JobState.SYSTEM_SUSPENDED: False,
-                          drmaa.JobState.USER_SUSPENDED: False,
-                          drmaa.JobState.DONE: False,
-                          drmaa.JobState.FAILED: False,
-                          }
-          #Loop to keep hold process while job is running or ends when self.running event ends.
-          while decodestatus[s.jobStatus(job)]:
-            if self.running.is_set() == False:
-              s.control(job,drmaa.JobControlAction.TERMINATE)
-              self.logger.debug('job:%s terminated since script is done'%job)
-              break
-            #time.sleep(0.2)
-            time.sleep(1)
-        #Otherwise just wait for it to complete.
-        else:
-          s.wait(job, drmaa.Session.TIMEOUT_WAIT_FOREVER)
-        #Exit cleanly, otherwise master node gets event client timeout errors after 600s.
-        s.exit()
-    
-      except:
-        self.logger.exception('**ERROR in Utils.processCluster**')
-        #Cleanup if error.
-        if s:
-          if jt:
-            s.deleteJobTemplate(jt)
-          s.exit()
-    
-      finally:
-        if name!= False:
-          self.red.lpush(name,1)
 
     def fix_command(self):
         """
@@ -254,6 +153,7 @@ class LauncherAdapter(object):
         # Modify command
         #self.decoded_message["directories"]["work"] = work_dir_candidate
         self.message["directories"]["work"] = work_dir_candidate
+        
         """
         # Filesystem is NOT shared
         # For header_1 & header_2
@@ -270,3 +170,129 @@ class LauncherAdapter(object):
                         if self.decoded_message[header_key][value_key].startswith(prepended_string):
                             self.decoded_message[header_key][value_key] = self.decoded_message[header_key][value_key].replace(prepended_string, "/panfs/panfs0.localdomain"+prepended_string)
         """
+def processCluster(command,
+                   work_dir,
+                   logfile=False,
+                   queue='all.q',
+                   nproc=1,
+                   logger=False,
+                   name=False,
+                   mp_event=False,
+                   timeout=False,
+                   output_jobID=False):
+    """
+    Submit job to cluster using DRMAA (when you are already on the cluster).
+    Main script should not end with os._exit() otherwise running jobs could be orphanned.
+    To eliminate this issue, setup self.running = multiprocessing.Event(), self.running.set() in main script,
+    then set it to False (self.running.clear()) during postprocess to kill running jobs smoothly.
+    
+    command - command to run
+    work_dir - working directory
+    logfile - print results of command to this file
+    queue - specify a queue on the cluster (options are all.q, phase1.q, phase2.q, phase3.q, 
+            index.q, general.q, high_mem.q, rosetta.q). If no queue is specified, it will run on any node.
+    nproc - number of processor to reserve for the job on a single node. If # of slots 
+            are not available, it will wait to launch until resources are free. 
+    logger - logger event to pass status reports.
+    mp_event - Pass in the Multiprocessing.Event() that the plugin in uses to signal termination. 
+               This way the job will be killed if the event() is cleared within the plugin.
+    timeout - max time (in seconds) to wait for job to complete before it is killed. (default=False waits forever)
+    name - Name of job as seen when running 'qstat' command.
+    output_jobID - pass back the jobIB through a multiprocessing.Queue()
+    """
+    def kill_job(session, job, logger=False):
+        """kill the job on the cluster."""
+        session.control(job, drmaa.JobControlAction.TERMINATE)
+        if logger:
+            logger.debug('job:%s terminated on cluster'%job)
+    
+    #try:
+    s = False
+    jt = False
+    counter = 0
+    #'-clear' can be added to the options to eliminate the general.q
+    options = '-clear -shell y -p -100 -q %s -pe smp %s'%(queue, nproc)
+    s = drmaa.Session()
+    s.initialize()
+    jt = s.createJobTemplate()
+    jt.workingDirectory=work_dir
+    jt.joinFiles=True
+    jt.nativeSpecification=options
+    # Path to the executable command
+    jt.remoteCommand=command.split()[0]
+    # Rest of command
+    if len(command.split()) > 1:
+        jt.args=command.split()[1:]
+    if logfile:
+        #the ':' is required!
+        jt.outputPath=':%s'%logfile
+    if name:
+        jt.jobName=name
+    #submit the job to the cluster and get the job_id returned
+    job = s.runJob(jt)
+    
+    #return job_id.
+    if output_jobID:
+        output_jobID.put(job)
+    #cleanup the input script from the RAM.
+    s.deleteJobTemplate(jt)
+
+    #If multiprocessing.event is set, then run loop to watch until job or script has finished.
+    #if mp_event:
+    #Returns True if job is still running or False if it is dead. Uses CPU to run loop!!!
+    decodestatus = {drmaa.JobState.UNDETERMINED: True,
+                    drmaa.JobState.QUEUED_ACTIVE: True,
+                    drmaa.JobState.SYSTEM_ON_HOLD: True,
+                    drmaa.JobState.USER_ON_HOLD: True,
+                    drmaa.JobState.USER_SYSTEM_ON_HOLD: True,
+                    drmaa.JobState.RUNNING: True,
+                    drmaa.JobState.SYSTEM_SUSPENDED: False,
+                    drmaa.JobState.USER_SUSPENDED: False,
+                    drmaa.JobState.DONE: False,
+                    drmaa.JobState.FAILED: False,
+                    }
+    #Loop to keep hold process while job is running or ends when self.running event ends.
+    while decodestatus[s.jobStatus(job)]:
+        if mp_event:
+            if mp_event.is_set() == False:
+                kill_job(s, job, logger)
+                break
+        if timeout:
+            if counter > timeout:
+                kill_job(s, job, logger)
+                break
+        #time.sleep(0.2)
+        time.sleep(1)
+        counter += 1
+    #Exit cleanly, otherwise master node gets event client timeout errors after 600s.
+    s.exit()
+    """
+    except:
+        
+        if logger:
+            logger.exception('**ERROR in Utils.processCluster**')
+        #Cleanup if error.
+        if s:
+            if jt:
+                s.deleteJobTemplate(jt)
+            s.exit()
+    """
+if __name__ == "__main__":
+    import multiprocessing
+    import threading
+    event = multiprocessing.Event()
+    event.set()
+    threading.Thread(target=run_job).start()
+    """
+    processCluster(command='sleep 10',
+                   work_dir='/gpfs6/users/necat/Jon/RAPD_test/Output',
+                   logfile='/gpfs6/users/necat/Jon/RAPD_test/Output/temp.log',
+                   queue='phase2.q',
+                   nproc=2,
+                   name='TEST',
+                   mp_event=event,
+                   timeout=False,)
+    """
+    time.sleep(2)
+    print 'event cleared'
+    event.clear()

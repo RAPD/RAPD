@@ -34,10 +34,11 @@ import json
 # import logging
 # import logging.handlers
 from pprint import pprint
-import redis
+import redis.exceptions
 import socket
 import sys
 import time
+import threading
 
 # RAPD imports
 from utils.commandline import base_parser
@@ -76,7 +77,6 @@ class Launcher(object):
         logger -- logger instance (default = None)
         overwatch_id -- id for optional overwatcher instance
         """
-
         # Get the logger Instance
         self.logger = logger
 
@@ -93,9 +93,11 @@ class Launcher(object):
 
         # Connect to Redis for communications
         self.connect_to_redis()
+        
+        self.running = True
 
-        # Start listening for commands
-        self.run()
+        # Start listening for commands through a thread for clean exit.
+        threading.Thread(target=self.run).start()
 
     def run(self):
         """The core process of the Launcher instance"""
@@ -108,19 +110,33 @@ class Launcher(object):
             self.ow_registrar.register({"site_id":self.site.ID})
 
         # This is the server portion of the code
-        while True:
+        while self.running:
             # Have Registrar update status
             if self.overwatch_id:
                 self.ow_registrar.update({"site_id":self.site.ID})
 
             # Look for a new command
             # This will trow a redis.exceptions.ConnectionError if redis is unreachable
-            command = self.redis.brpop(["RAPD_JOBS",], 5)
+            #command = self.redis.brpop(["RAPD_JOBS",], 5)
+            try:
+                while self.redis.llen("RAPD_JOBS") != 0:
+                    command = self.redis.rpop("RAPD_JOBS")
+                    # Handle the message
+                    if command:
+                        #self.handle_command("RAPD_JOBS", json.loads(command))
+                        self.handle_command(json.loads(command))
+                # sleep a little when jobs aren't coming in.
+                time.sleep(0.2)
+            except redis.exceptions.ConnectionError:
+                self.logger.exception("Remote Redis is not up. Waiting for Sentinal to switch to new host")
+                time.sleep(1)
 
-            # Handle the message
-            if command:
-                self.handle_command(command)
-
+    def stop(self):
+        """Stop everything smoothly."""
+        self.running = False
+        if self.site.CONTROL_DATABASE_SETTINGS['REDIS_CONNECTION'] == 'pool':
+            self.redis.close()
+    
     def connect_to_redis(self):
         """Connect to the redis instance"""
         """
@@ -154,9 +170,32 @@ class Launcher(object):
         pprint(command)
 
         # Split up the command
+        message = command
+
+        # Update preferences to be in server run mode
+        if not message.get("preferences"):
+            message["preferences"] = {}
+        message["preferences"]["run_mode"] = "server"
+
+        self.logger.debug("Command received channel:RAPD_JOBS  message: %s", message)
+
+        # Use the adapter to launch
+        self.adapter(self.site, message, self.specifications)
+
+    
+    def handle_command_OLD(self, command):
+        """
+        Handle an incoming command
+
+        Keyword arguments:
+        command -- command from redis
+        """
+        print "handle_command"
+        pprint(command)
+
+        # Split up the command
         channel, message = command
         decoded_message = json.loads(message)
-        #decoded_message = message
 
         # Update preferences to be in server run mode
         if not decoded_message.get("preferences"):
@@ -293,16 +332,22 @@ def main():
     # Instantiate the logger
     logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
                                   logfile_id="rapd_launcher",
-                                  level=log_level)
+                                  #level=log_level
+                                  )
 
     logger.debug("Commandline arguments:")
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s" % pair)
-
+    
     LAUNCHER = Launcher(site=SITE,
                         tag=tag,
                         logger=logger,
                         overwatch_id=commandline_args.overwatch_id)
+    
+    try:
+        time.sleep(100)
+    except KeyboardInterrupt:
+        LAUNCHER.stop()
 
 if __name__ == "__main__":
 

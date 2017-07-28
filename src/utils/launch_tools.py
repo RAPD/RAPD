@@ -39,7 +39,7 @@ def write_command_file(target_directory, command, message):
     Keyword arguments
     target_directory -- directory to write the command file in
     command -- command type
-    message -- contents of the commad file
+    message -- contents of the command file
 
     message will be the content of the file:
     target_directory/command_{random chars}.rapd

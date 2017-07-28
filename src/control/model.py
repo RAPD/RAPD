@@ -132,7 +132,7 @@ class Model(object):
         self.init_detectors()
         
         # Start the job launcher
-        self.start_job_launcher()
+        #self.start_job_launcher()
         
         # Start the run monitor
         self.start_run_monitor()
@@ -148,7 +148,7 @@ class Model(object):
 
         # Initialize the remote adapter
         # self.init_remote_adapter()
-
+        
         # Launch an echo
         self.send_echo()
 
@@ -243,7 +243,7 @@ class Model(object):
                     seek_module=detector,
                     directories=("sites.detectors", "detectors"))
 
-    def start_job_launcher(self):
+    def start_job_launcher_OLD(self):
         """Start up the job launcher"""
         self.logger.debug("Starting launcher")
         

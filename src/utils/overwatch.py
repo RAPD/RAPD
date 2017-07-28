@@ -95,7 +95,8 @@ class Registrar(object):
         """
 
         # Get connection
-        red = redis.Redis(connection_pool=self.redis_pool)
+        #red = redis.Redis(connection_pool=self.redis_pool)
+        red = self.redis
 
         # Create an entry
         entry = {"ow_type":self.ow_type,
@@ -139,7 +140,8 @@ class Registrar(object):
         """
 
         # Get connection
-        red = redis.Redis(connection_pool=self.redis_pool)
+        #red = redis.Redis(connection_pool=self.redis_pool)
+        red = self.redis
 
         # Create entry
         entry = {"ow_type":self.ow_type,
@@ -185,7 +187,17 @@ class Registrar(object):
     def connect(self):
         """Connect to the central redis Instance"""
 
-        self.redis_pool = redis.ConnectionPool(host=self.site.CONTROL_REDIS_HOST)
+        #self.redis_pool = redis.ConnectionPool(host=self.site.CONTROL_REDIS_HOST)
+        # Create a pool connection
+        redis_database = importlib.import_module('database.rapd_redis_adapter')
+        
+        self.redis_database = redis_database.Database(settings=self.site.RUN_MONITOR_SETTINGS)
+        if self.site.RUN_MONITOR_SETTINGS['REDIS_CONNECTION'] == 'pool':
+            # For a Redis pool connection
+            self.redis = self.redis_database.connect_redis_pool()
+        else:
+            # For a Redis sentinal connection
+            self.redis = self.redis_database.connect_redis_manager_HA()
 
 class Overwatcher(Registrar):
     """
@@ -336,7 +348,8 @@ class Overwatcher(Registrar):
         """
 
         # Get connection
-        red = redis.Redis(connection_pool=self.redis_pool)
+        #red = redis.Redis(connection_pool=self.redis_pool)
+        red = self.redis
 
         # What's the time?
         now = time.time()
@@ -365,7 +378,8 @@ class Overwatcher(Registrar):
         """
 
         # Get connection
-        red = redis.Redis(connection_pool=self.redis_pool)
+        #red = redis.Redis(connection_pool=self.redis_pool)
+        red = self.redis
 
         # Look for keys
         print "Looking for OW:*:%s" % self.uuid

@@ -89,7 +89,6 @@ class Database(object):
         pool = redis.ConnectionPool(host=self.redis_host,
                                     port=self.redis_port,
                                     db=self.redis_db)
-        
         # Save the pool for a clean exit.
         self.pool = redis.Redis(connection_pool=pool)
         # The return the connection
