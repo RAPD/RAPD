@@ -405,6 +405,7 @@ class Model(object):
                     header["run"] = self.recent_runs[run_id].copy()
                     header["place_in_run"] = 1
                     header["site_tag"] = site_tag
+                    header["xdsinp"] = detector.XDSINP
 
                     # Add the image template to the run information
                     header["run"]["image_template"] = detector.create_image_template(
@@ -455,8 +456,8 @@ class Model(object):
             if self.site_adapter:
                 site_data = self.site_adapter.get_image_data()
                 header.update(site_data)
-                print "2"
-                pprint(header)
+                # print "2"
+                # pprint(header)
 
             # Add to database
             image_id = self.database.add_image(data=header, return_type="id")
@@ -466,8 +467,8 @@ class Model(object):
             else:
                 return False
 
-            print "1"
-            pprint(header)
+            # print "1"
+            # pprint(header)
 
             # Update remote client
             if self.remote_adapter:
@@ -823,7 +824,7 @@ class Model(object):
                                     "repr":new_repr})
 
                     # Run autoindex and strategy plugin
-                    LaunchAction(command={"command":"INDEX+STRATEGY",
+                    LaunchAction(command={"command":"INDEX",
                                           "process":{"plugin_process_id":plugin_process_id,
                                                      "session_id":session_id},
                                           "directories":directories,
@@ -841,7 +842,6 @@ class Model(object):
 
             # Make it easier to use run info
             run_position = header["place_in_run"]
-            run_data = header["run"].copy()
 
             # Derive  directory and repr
             work_dir, new_repr = self.get_work_dir(type_level="integrate",
@@ -880,11 +880,13 @@ class Model(object):
                 "directories":directories,
                 "data": {
                     "image_data":header,
-                    "run_data":run_data
+                    "run_data":header.pop("run")
                 },
                 "site_parameters":self.site.BEAM_INFO[header["site_tag"]],
-                "preferences":{}
-                }
+                "preferences":{
+                    "xdsinp":header.pop("xdsinp")
+                },
+            }
             self.send_command(command, "RAPD_JOBS")
 
             # # Connect to the server and autoindex the single image
