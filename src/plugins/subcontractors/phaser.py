@@ -39,7 +39,7 @@ from pprint import pprint
 # import redis
 # import shutil
 import signal
-import subprocess32
+import subprocess
 # import sys
 # import time
 # import unittest
@@ -128,9 +128,9 @@ def run_phaser_pdbquery(command):
     phaser_com_file.close()
 
     # Run the phaser process
-    phaser_proc = subprocess32.Popen(["sh phaser.com"],
-                                     stdout=subprocess32.PIPE,
-                                     stderr=subprocess32.PIPE,
+    phaser_proc = subprocess.Popen(["sh phaser.com"],
+                                     stdout=subprocess.PIPE,
+                                     stderr=subprocess.PIPE,
                                      shell=True,
                                      preexec_fn=os.setsid)
     try:
@@ -146,7 +146,7 @@ def run_phaser_pdbquery(command):
                 "status": "COMPLETE"}
 
     # Run taking too long
-    except subprocess32.TimeoutExpired:
+    except subprocess.TimeoutExpired:
         print "  Timeout of %ds exceeded - killing %d" % (timeout, phaser_proc.pid)
         os.killpg(os.getpgid(phaser_proc.pid), signal.SIGTERM)
         return {"pdb_code": input_pdb.replace(".pdb", "").upper(),

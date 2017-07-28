@@ -39,7 +39,7 @@ import os
 # import redis
 import shutil
 import signal
-import subprocess32 as subprocess
+import subprocess as subprocess
 import sys
 import time
 # import unittest

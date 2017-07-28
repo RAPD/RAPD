@@ -38,6 +38,8 @@ from pprint import pprint
 import redis
 import socket
 
+from bson import json_util
+
 # RAPD imports
 from control.control_server import LaunchAction, ControllerServer
 from utils.modules import load_module
@@ -384,8 +386,7 @@ class Model(object):
         print "send_command"
         pprint(command)
 
-        # Why are we still encoding this? not send thru socket anymore...
-        self.redis.lpush(channel, json.dumps(command))
+        self.redis.lpush(channel, json.dumps(command, default=json_util.default))
 
     def stop(self):
         """Stop the ImageMonitor,CloudMonitor and StatusRegistrar."""
@@ -432,7 +433,7 @@ class Model(object):
         self.logger.debug("run_id: %s place_in_run:%s", str(run_id), str(place_in_run))
 
         # Image is in a run
-        if isinstance(place_in_run, int) and isinstance(run_id, int):
+        if isinstance(place_in_run, int) and isinstance(run_id, str):
 
             self.logger.debug("%s is in run %s at position %s", fullname, run_id, place_in_run)
 
@@ -455,6 +456,13 @@ class Model(object):
                     header["run"] = self.recent_runs[run_id].copy()
                     header["place_in_run"] = 1
                     header["site_tag"] = site_tag
+                    header["xdsinp"] = detector.XDSINP
+
+                    # Add the image template to the run information
+                    header["run"]["image_template"] = detector.create_image_template(
+                        image_prefix=header["image_prefix"],
+                        run_number=header["run_number"]
+                        )
 
                     # Add to the database
                     image_status = self.database.add_image(data=header, return_type="boolean")
@@ -499,8 +507,8 @@ class Model(object):
             if self.site_adapter:
                 site_data = self.site_adapter.get_image_data()
                 header.update(site_data)
-                print "2"
-                pprint(header)
+                # print "2"
+                # pprint(header)
 
             # Add to database
             image_id = self.database.add_image(data=header, return_type="id")
@@ -510,8 +518,8 @@ class Model(object):
             else:
                 return False
 
-            print "1"
-            pprint(header)
+            # print "1"
+            # pprint(header)
 
             # Update remote client
             if self.remote_adapter:
@@ -849,7 +857,7 @@ class Model(object):
                     # Now package directories into a dict for easy access by worker class
                     directories = {"work" : work_dir,
                                    "data_root_dir" : data_root_dir,
-                                   "plugin_directories":self.site.RAPD_plugin_DIRECTORIES}
+                                   "plugin_directories":self.site.RAPD_PLUGIN_DIRECTORIES}
 
                     # Get the session id
                     session_id = self.get_session(header)
@@ -871,7 +879,7 @@ class Model(object):
                                     "repr":new_repr})
 
                     # Run autoindex and strategy plugin
-                    LaunchAction(command={"command":"INDEX+STRATEGY",
+                    LaunchAction(command={"command":"INDEX",
                                           "process":{"plugin_process_id":plugin_process_id,
                                                      "session_id":session_id},
                                           "directories":directories,
@@ -889,7 +897,6 @@ class Model(object):
 
             # Make it easier to use run info
             run_position = header["place_in_run"]
-            run_dict = header["run"].copy()
 
             # Derive  directory and repr
             work_dir, new_repr = self.get_work_dir(type_level="integrate",
@@ -898,43 +905,57 @@ class Model(object):
             # Now package directories into a dict for easy access by worker class
             directories = {"work":work_dir,
                            "data_root_dir":data_root_dir,
-                           "plugin_directories":self.site.RAPD_plugin_DIRECTORIES}
+                           "plugin_directories":self.site.RAPD_PLUGIN_DIRECTORIES}
 
-            # If we are to integrate, do it
-            try:
+            # Get the session id
+            session_id = self.get_session(header)
 
-                # Get the session id
-                session_id = self.get_session(header)
+            # Add the process to the database to display as in-process
+            plugin_process_id = self.database.add_plugin_process(plugin_type="integrate",
+                                                                 request_type="original",
+                                                                 representation=new_repr,
+                                                                 status=1,
+                                                                 display="show",
+                                                                 session_id=session_id,
+                                                                 data_root_dir=data_root_dir)
 
+            # Add the ID entry to the header dict
+            header.update({"plugin_process_id":plugin_process_id,
+                           "repr":new_repr})
 
-                # Add the process to the database to display as in-process
-                plugin_process_id = self.database.add_plugin_process(plugin_type="integrate",
-                                                                   request_type="original",
-                                                                   representation=new_repr,
-                                                                   status=1,
-                                                                   display="show",
-                                                                   session_id=session_id,
-                                                                   data_root_dir=data_root_dir)
+            # Run an echo to make sure everything is up
+            command = {
+                "command":"INTEGRATE",
+                "process":{
+                    "process_id":plugin_process_id,
+                    "session_id":session_id,
+                    "status":0,
+                    "type":"plugin"
+                    },
+                "directories":directories,
+                "data": {
+                    "image_data":header,
+                    "run_data":header.pop("run")
+                },
+                "site_parameters":self.site.BEAM_INFO[header["site_tag"]],
+                "preferences":{
+                    "xdsinp":header.pop("xdsinp")
+                },
+            }
+            self.send_command(command, "RAPD_JOBS")
 
-                # Add the ID entry to the header dict
-                header.update({"plugin_process_id":plugin_process_id,
-                               "repr":new_repr})
-
-                # Connect to the server and autoindex the single image
-                LaunchAction(command={"command":"INTEGRATE",
-                                      "process":{"plugin_process_id":plugin_process_id,
-                                                 "session_id":session_id},
-                                      "directories":directories,
-                                      "image_data":header,
-                                      "run_data":run_dict,
-                                      "site_parameters":self.site.BEAM_INFO[header["site_tag"]],
-                                      "preferences":{},
-                                      "return_address":self.return_address},
-                             launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
-                             settings=None)
-            except:
-                self.logger.exception("Exception when attempting to run RAPD \
-                integration pipeline")
+            # # Connect to the server and autoindex the single image
+            # LaunchAction(command={"command":"INTEGRATE",
+            #                       "process":{"plugin_process_id":plugin_process_id,
+            #                                  "session_id":session_id},
+            #                       "directories":directories,
+            #                       "image_data":header,
+            #                       "run_data":run_dict,
+            #                       "site_parameters":self.site.BEAM_INFO[header["site_tag"]],
+            #                       "preferences":{},
+            #                       "return_address":self.return_address},
+            #              launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
+            #              settings=None)
 
     def get_session(self, header):
         """Get a session_id"""

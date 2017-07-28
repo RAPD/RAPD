@@ -44,6 +44,7 @@ class Launch(object):
     rapd plugin
     """
 
+    command = None
     plugin = None
     logger = None
 
@@ -73,15 +74,16 @@ class Launch(object):
         self.command["site"] = self.site
 
         self.logger.debug("command: %s", self.command.get("command", None))
-        self.logger.debug("return_address: %s", self.command.get("return_address", None))
 
         # Load the plugin for this command
         self.load_plugin(self.command.get("command"))
 
         # Run the plugin
-        self.plugin.RapdPlugin(command=self.command,
-                               tprint=False,
-                               logger=self.logger)
+        plugin = self.plugin.RapdPlugin(command=self.command,
+                                        tprint=False,
+                                        logger=self.logger)
+
+        plugin.start()
 
     def load_command(self):
         """

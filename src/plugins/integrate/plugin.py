@@ -129,17 +129,15 @@ class RapdPlugin(Process):
 
     results = {}
 
-    def __init__(self, site, command, tprint=False, logger=False):
+    def __init__(self, command, tprint=False, logger=False):
         """
         Initialize the plugin
 
         Keyword arguments
-        site -- full site settings
         command -- dict of all information for this plugin to run
+        tprint -- terminal printer
+        logger -- logging instance
         """
-
-        # pprint(command)
-        # sys.exit()
 
         # Store tprint for use throughout
         if tprint:
@@ -158,21 +156,25 @@ class RapdPlugin(Process):
             self.logger.debug("__init__")
 
         # Store passed-in variables
-        self.site = site
         self.command = command
         self.preferences = self.command.get("preferences")
-        self.controller_address = self.command.get("return_address", False)
+        # This has advantage of removing site from command too
+        self.site = command.pop("site", None)
 
         # Store into results
         self.results["command"] = command
-        self.results["process"] = {
-            "process_id": self.command.get("process_id"),
-            "status": 1}
+        self.results["process"] = command.get("process")
+        self.results["process"]["status"] = 1
+
+        #TODO
+        #{
+        #    "process_id": self.command.get("process_id"),
+        #    "status": 1}
 
         self.dirs = self.command["directories"]
         self.image_data = self.command.get("data").get("image_data")
         self.run_data = self.command.get("data").get("run_data")
-        self.process_id = self.command["process_id"]
+        self.process_id = self.command["process"]["process_id"]
 
         self.logger.debug("self.image_data = %s", self.image_data)
 
