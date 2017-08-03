@@ -21,7 +21,7 @@ var SessionSchema = new Schema({
     required: true,
     default: 'mx'
   },
-  user: {
+  group: {
     type: String,
     required: true,
   },
