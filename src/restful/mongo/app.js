@@ -475,11 +475,19 @@ apiRoutes.route('/sessions/:session_id')
             }
 
             console.log('Session saved successfully');
-            res.json({
-              success: true,
-              operation: 'add',
-              user: return_session
-            });
+
+            Session.
+              findById({_id: return_session._id}).
+              populate('groups', 'groupname').
+              exec(function(err, new_session) {
+                console.log(new_session);
+                let params = {
+                  success: true,
+                  operation: 'add',
+                  user: new_session
+                }
+                res.json(params);
+              });
           });
         }
       });
