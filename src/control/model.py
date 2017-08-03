@@ -132,10 +132,7 @@ class Model(object):
 
         # Import the detector
         self.init_detectors()
-        
-        # Start the job launcher
-        #self.start_job_launcher()
-        
+
         # Start the run monitor
         self.start_run_monitor()
 
@@ -414,6 +411,11 @@ class Model(object):
 
         # Shortcut to detector
         detector = self.detectors[site_tag]
+
+        # Check if it exists. May have been deleted from RAMDISK
+        if os.path.isfile(fullname) in (False, None):
+            if self.site.ALT_IMAGE_LOCATIONS:
+                fullname = detector.get_alt_path(fullname)
 
         # Save some typing
         dirname = os.path.dirname(fullname)

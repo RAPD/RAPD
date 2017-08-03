@@ -109,7 +109,6 @@ LOG_LEVEL = 50
 # Where files from UI are uploaded - should be visible by launch instance
 UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"
 
-
 # RAPD cluster process settings
 # Port for cluster to listen on
 #LAUNCHER_PORT = 50000
@@ -199,6 +198,9 @@ IMAGE_IGNORE_DIRECTORIES = (
     )
 # Images collected containing the following string will be ignored
 IMAGE_IGNORE_STRINGS = ("ignore", )
+
+# So if image is not present, look in long term storage location.
+ALT_IMAGE_LOCATIONS = True
 
 # Monitor for collected run information
 RUN_MONITOR = "sites.monitors.run_monitors.necat_e"

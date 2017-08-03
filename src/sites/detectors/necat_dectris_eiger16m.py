@@ -33,6 +33,7 @@ from collections import OrderedDict
 import os
 from pprint import pprint
 import re
+import time
 
 # RAPD imports
 # commandline_utils
@@ -207,6 +208,13 @@ def get_data_root_dir(fullname):
     #return the determined directory
     return data_root_dir
 
+def get_alt_path(image):
+    """Pass back the alternate path of image located in long term storage."""
+    dirname, imagename = os.path.split(image)
+    newdir = dirname.replace('/epu/rdma','')[:dirname.rfind('/')]
+    newpath = os.path.join(newdir[:newdir.rfind('/')], imagename)
+    return newpath
+
 def base_read_header(image,
                      logger=False):
     """
@@ -296,7 +304,7 @@ def base_read_header(image,
         else:
             parameters[label] = None
 
-    # pprint(parameters)
+    pprint(parameters)
 
     # Put beam center into RAPD format mm
     parameters["x_beam"] = parameters["beam_y"] * parameters["pixel_size"]
@@ -387,7 +395,8 @@ def main(args):
 if __name__ == "__main__":
 
     # Get the commandline args
-    commandline_args = get_commandline()
+    #commandline_args = get_commandline()
 
     # Execute code
-    main(args=commandline_args)
+    #main(args=commandline_args)
+    get_alt_path('/epu/rdma/gpfs2/users/wvu/robart_E_2985/images/robart/runs/F_2/F_2_1_000001/F_2_1_000287.cbf')

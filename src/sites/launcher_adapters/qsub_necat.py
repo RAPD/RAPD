@@ -36,6 +36,7 @@ import time
 
 # RAPD imports
 import utils.launch_tools as launch_tools
+from multiprocessing import Queue, Process
 
 class LauncherAdapter(object):
     """
@@ -66,7 +67,6 @@ class LauncherAdapter(object):
 
         # Decode message
         #self.decoded_message = json.loads(self.message)
-        
 
         self.run()
 
@@ -105,7 +105,32 @@ class LauncherAdapter(object):
         """
         # Parse a label for qsub job from the command_file name
         qsub_label = os.path.basename(command_file).replace(".rapd", "")
+        
+        # Determine the number of precessors to reserve for job
+        nproc = self.determine_nproc()
+        
+        # Determine which cluster queue to run
+        queue = self.determine_queue()
+        
+        q = Queue()
+        job = Process(processCluster(command=command_line,
+                                     work_dir=work_dir,
+                                     logfile=False,
+                                     queue=queue,
+                                     nproc=nproc,
+                                     logger=self.logger,
+                                     name=qsub_label,
+                                     mp_event=False,
+                                     timeout=False,
+                                     output_jobID=q))
+        job.start()
+        
+        # This will be passed back to a monitor that will watch the jobs and kill ones that run too long.
+        jobID = q.get()
+        print jobID
 
+        
+        """
         # Determine the processor specs to be used
         def determine_qsub_proc(command):
             #Determine the queue to use
@@ -123,11 +148,12 @@ class LauncherAdapter(object):
         #     qsub_dir, qsub_path, qsub_label, qsub_proc, command_script)
         qsub_command = "qsub -d %s -v %s -N %s -l %s %s" % (
             qsub_dir, qsub_path, qsub_label, qsub_proc, command_script)
-
+        
         # Launch it
         self.logger.debug(qsub_command)
         p = Popen(qsub_command, shell=True)
         sts = os.waitpid(p.pid, 0)[1]
+        """
 
     def fix_command(self):
         """
@@ -170,6 +196,23 @@ class LauncherAdapter(object):
                         if self.decoded_message[header_key][value_key].startswith(prepended_string):
                             self.decoded_message[header_key][value_key] = self.decoded_message[header_key][value_key].replace(prepended_string, "/panfs/panfs0.localdomain"+prepended_string)
         """
+    def determine_nproc(self):
+        """Determine how many processors to reserve on the cluster for a specific job type."""
+        nproc = 1
+        #if self.message['command'] in ('INDEX', 'INTEGRATE'):
+        if self.message['command'] in ('INDEX'):
+            nproc = 4
+        return nproc
+    
+    def determine_queue(self):
+        """Determine the cluster queue for the main job."""
+        if self.message['command'] == 'INDEX':
+            return('index.q')
+        if self.message['command'] == 'INTEGRATE':
+            return('phase2.q')
+        else:
+            return('phase1.q')
+    
 def processCluster(command,
                    work_dir,
                    logfile=False,
@@ -282,8 +325,7 @@ if __name__ == "__main__":
     import threading
     event = multiprocessing.Event()
     event.set()
-    threading.Thread(target=run_job).start()
-    """
+    #threading.Thread(target=run_job).start()
     processCluster(command='sleep 10',
                    work_dir='/gpfs6/users/necat/Jon/RAPD_test/Output',
                    logfile='/gpfs6/users/necat/Jon/RAPD_test/Output/temp.log',
@@ -292,7 +334,6 @@ if __name__ == "__main__":
                    name='TEST',
                    mp_event=event,
                    timeout=False,)
-    """
     time.sleep(2)
     print 'event cleared'
     event.clear()
