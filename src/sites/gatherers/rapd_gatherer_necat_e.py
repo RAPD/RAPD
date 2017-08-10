@@ -34,7 +34,7 @@ This server is used at 24ID-E with an ADSC Q315 detector
 If you are adapting rapd to your locality, you will need to check this 
 carefully.
 """
-
+"""
 import socket
 import os
 import threading 
@@ -43,12 +43,391 @@ import atexit
 import re
 import base64
 #import redis
-import pysent
+#import pysent
 import logging, logging.handlers
-from collections import deque
-from SimpleXMLRPCServer import SimpleXMLRPCServer
-import MySQLdb, _mysql_exceptions
+#from collections import deque
+#from SimpleXMLRPCServer import SimpleXMLRPCServer
+#import MySQLdb, _mysql_exceptions
+"""
+# Standard imports
+import argparse
+import datetime
+import importlib
+import json
+import logging
+import logging.handlers
+import os
+import pickle
+import shutil
+import socket
+import sys
+import time
+import uuid
 
+import redis
+# RAPD imports
+import utils.commandline
+import utils.lock
+import utils.log
+from utils.overwatch import Registrar
+import utils.site
+import utils.text as text
+
+# Monitor Beamlines
+#
+class Gatherer(object):
+    """
+    Watches the beamline and signals images and runs over redis
+    """
+
+    # For keeping track of file change times
+    run_time = 0
+    image_time = 0
+
+    # Host computer detail
+    ip_address = None
+
+    def __init__(self, site, overwatch_id=None):
+        """
+        Setup and start the NecatGatherer
+        """
+
+        # Get the logger Instance
+        self.logger = logging.getLogger("RAPDLogger")
+
+        # Passed-in variables
+        self.site = site
+        self.overwatch_id = overwatch_id
+
+        self.logger.info("NecatGatherer.__init__")
+
+        # Connect to redis
+        self.connect()
+
+        # Get our bearings
+        self.set_host()
+
+        # Running conditions
+        self.go = True
+
+        # Now run
+        self.run()
+    
+    """Used by both beamlines"""
+    def __init__(self,beamline="C",notify=None,logger=None):
+        if logger:
+            logger.info('ConsoleRedisMonitor.__init__')
+
+        #init the thread
+        threading.Thread.__init__(self)
+
+        self.beamline = beamline
+        self.notify = notify
+        self.logger = logger
+
+        self.Go = True
+
+        self.current_run   = None
+        self.current_dir   = None
+        self.current_cpreq = None
+        self.current_dpreq = None
+        self.cpreqs = []
+        self.dpreqs = []
+
+        self.start()
+
+    def run(self):
+
+        if self.logger:
+            self.logger.info('ConsoleRedisMonitor.run')
+
+        # Create redis connections
+        # Where beamline information is coming from
+        # Create a pool connection
+        redis_database = importlib.import_module('database.rapd_redis_adapter')
+        
+        bl_database = redis_database.Database(settings=self.site.SITE_ADAPTER_SETTINGS)
+        self.bl_redis = bl_database.connect_redis_pool()
+        pipe = self.bl_redis.pipeline()
+        
+        #self.red = redis.Redis(beamline_settings[self.beamline]['redis_ip'])
+        #pipe = self.red.pipeline()
+        
+        # Where information will be published to
+        """
+        self.pub = pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
+                                       sentinel_port=26379,
+                                       master_name="remote_master")
+        """
+        #self.pub = BLspec.connect_redis_manager_HA()
+        self.pub_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        self.pub = self.pub_database.connect_redis_manager_HA()
+        
+        # For beamline T
+        #self.pubsub = self.pub.pubsub()
+        #self.pubsub.subscribe('run_info_T')
+
+        try:
+            # Initial check of the db on startup
+            run_data = self.pub.hgetall("current_run_"+self.beamline)
+            if (run_data):
+                # alert the media
+                self.pub.publish('newdir:'+self.beamline,self.current_dir)
+                # save the info
+                self.pub.set('datadir_'+self.beamline,self.current_dir)
+
+            # Main loop
+            count = 1
+            saved_adsc_state = False
+            while(self.Go):
+
+                # Check the redis db for a new run
+                if self.beamline == "C":
+                    current_run, current_dir, current_adsc_state, test = pipe.get('RUN_INFO_SV').get("ADX_DIRECTORY_SV").get("ADSC_SV").set('RUN_INFO_SV','').execute()
+                elif self.beamline == "E":
+                    current_run, current_dir, current_adsc_state, test = pipe.get("RUN_INFO_SV").get("EIGER_DIRECTORY_SV").get("EIGER_SV").set('RUN_INFO_SV','').execute()
+                elif self.beamline == "T":
+                    #current_dir renamed below, but gets rid of error
+                    current_dir, current_adsc_state = pipe.get("EIGER_DIRECTORY_SV").get("EIGER_SV").execute()
+                    current_run = self.pub.rpop('run_info_T')
+                    #print self.pub.llen('run_info_T')
+                    #print self.pub.lrange('run_info_T', 0, -1)
+                    #current_run = self.pubsub.get_message()['data']
+                    #print current_run
+                    if current_run == None:
+                        current_run = ''
+                    
+                if (len(current_run) > 0):
+                    if self.beamline == "E":
+                        self.pub.lpush('run_info_T', current_run)
+                        #self.pub.publish('run_info_T', current_run)
+
+                    # Set variable
+                    self.current_run = current_run
+
+                    # Split it
+                    cur_run = current_run.split("_") #runid,first#,total#,dist,energy,transmission,omega_start,deltaomega,time,timestamp
+
+                    # Arbitrary wait for Console to update Redis database
+                    time.sleep(0.01)
+
+                    # Get extra run data
+                    extra_data = self.getRunData()
+                    
+                    if self.beamline == "T":
+                        current_dir = "/epu/rdma%s%s_%d_%06d" % (
+                                      current_dir,
+                                      extra_data['prefix'],
+                                      int(cur_run[0]),
+                                      int(cur_run[1]))
+
+                    # Compose the run_data object
+                    run_data = {'directory'   : current_dir,
+                                'prefix'      : extra_data['prefix'],
+                                'run_number'  : int(cur_run[0]),
+                                'start'       : int(cur_run[1]),
+                                'total'       : int(cur_run[2]),
+                                'distance'    : float(cur_run[3]),
+                                'twotheta'    : extra_data['twotheta'],
+                                'phi'         : extra_data['phi'],
+                                'kappa'       : extra_data['kappa'],
+                                'omega'       : float(cur_run[6]),
+                                'axis'        : 'omega',
+                                "width"       : float(cur_run[7]),
+                                "time"        : float(cur_run[8]),
+                                "beamline"    : self.beamline,
+                                "file_source" : beamline_settings[self.beamline]['file_source'],
+                                "status"      : "STARTED"}
+
+                    # Logging
+                    self.logger.info(run_data)
+
+                    #Save data into db
+                    self.pub.hmset('current_run_'+self.beamline,run_data)
+                    self.pub.publish('current_run_'+self.beamline,json.dumps(run_data))
+
+                    #Signal the main thread
+                    if (self.notify):
+                        self.notify(("%s RUN" % beamline_settings[self.beamline]['file_source'],run_data))
+
+                # Check if the data collection directory is new
+                if (self.current_dir != current_dir):
+
+                    self.logger.debug("New directory")
+
+                    #save the new dir
+                    self.current_dir = current_dir
+
+                    #alert the media
+                    self.logger.debug("Publish %s %s" % ('newdir:'+self.beamline,self.current_dir))
+                    self.pub.publish('newdir:'+self.beamline,self.current_dir)
+
+                    #save the info
+                    self.pub.set('datadir_'+self.beamline,current_dir)
+
+                # Watch for run aborting
+                if (current_adsc_state == "ABORTED" and current_adsc_state != saved_adsc_state):
+
+                    # Keep track of the detector state
+                    saved_adsc_state = current_adsc_state
+
+                    # Alert the media
+                    if (self.notify):
+                        self.notify(("%s_ABORT" % beamline_settings[self.beamline]['file_source'],None))
+                else:
+                    saved_adsc_state = current_adsc_state
+
+                """
+                #### Turned off, so I dont screw up IDE
+                #send test data for rastersnap heartbeat
+                if (count % 100 == 0):
+                    #reset the counter
+                    count = 1
+
+                    # Logging
+                    self.logger.info('Publishing filecreate:%s, %s' % (self.beamline, beamline_settings[self.beamline]['rastersnap_test_image']))
+
+                    # Publish the test image
+                    self.pub.publish('filecreate:%s'%self.beamline, beamline_settings[self.beamline]['rastersnap_test_image'])
+
+                # Watch the crystal & distl params
+                if (count % 60) == 0:
+                    try:
+                        crystal_request,distl_request,best_request = pipe.get("CP_REQUESTOR_SV").get("DP_REQUESTOR_SV").get("BEST_REQUESTOR_SV").execute()
+                        if (distl_request):
+                            #if (distl_request != self.current_dpreq):
+                            if (distl_request not in self.dpreqs):
+                                self.dpreqs.append(distl_request)
+                                self.logger.debug(self.dpreqs)
+                                self.current_dpreq = distl_request
+                                if self.logger:
+                                    self.logger.debug('ConsoleRedisMonitor New distl parameters request for %s' % distl_request)
+                                if (self.notify):
+                                    self.notify(("DISTL_PARMS_REQUEST",distl_request))
+                        if (crystal_request):
+                            #if (crystal_request != self.current_cpreq):
+                            if (crystal_request not in self.cpreqs):
+                                self.cpreqs.append(crystal_request)
+                                self.current_cpreq = crystal_request
+                                if self.logger:
+                                    self.logger.debug('ConsoleRedisMonitor New crystal parameters request for %s' % crystal_request)
+                                if (self.notify):
+                                    self.notify(("CRYSTAL_PARMS_REQUEST",crystal_request))
+                        if (best_request):
+                            if (best_request != self.current_breq):
+                                self.current_breq = best_request
+                                if self.logger:
+                                    self.logger.debug('ConsoleRedisMonitor New best parameters request')
+                                if (self.notify):
+                                    self.notify(("BEST_PARMS_REQUEST",best_request))
+                    except:
+                      self.logger.debug('ConsoleRedisMonitor Exception in querying for tracker requests')
+                """
+                # Increment the counter
+                count += 1
+
+                # Sleep before checking again
+                time.sleep(0.1)
+
+
+        except redis.exceptions.ConnectionError:
+            if self.logger:
+                self.logger.debug('ConsoleRedisMonitor failure to connect - will reconnect')
+            time.sleep(10)
+            reconnect_counter = 0
+            while (reconnect_counter < 1000):
+                try:
+                    try:
+                        self.red.ping()
+                    except:
+                        self.red = redis.Redis(beamline_settings[self.beamline]['redis_ip'])
+
+                    try:
+                        self.pub.ping()
+                    except:
+                        """
+                        #self.pub = redis.Redis(beamline_settings[self.beamline]['remote_redis_ip'])
+                        self.pub = pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
+                                sentinel_port=26379,
+                                master_name="remote_master")
+                        """
+                        self.pub = BLspec.connect_redis_manager_HA()
+
+                    #test connections
+                    self.red.ping()
+
+                    if self.logger:
+                        self.logger.debug('Reconnection to redis server successful')
+                    break
+
+                except:
+                    reconnect_counter += 1
+                    if self.logger:
+                        self.logger.debug('Reconnection attempt %d failed, will try again' % reconnect_counter)
+                    time.sleep(10)
+
+
+    def getRunData(self):
+        """
+        Get the extra information for a run from the redis db
+        """
+        self.logger.info("getRunData")
+
+        pipe = self.red.pipeline()
+        pipe.get("DETECTOR_SV")
+        #pipe.get({"C": "ADX_DIRECTORY_SV", "E": "EIGER_DIRECTORY_SV"}[self.beamline])
+        pipe.get({"C": "ADX_DIRECTORY_SV", "E": "EIGER_DIRECTORY_SV", "T": "EIGER_DIRECTORY_SV"}[self.beamline]) # not used!!
+        pipe.get("RUN_PREFIX_SV")
+        pipe.get("DET_THETA_SV")        #two theta
+        pipe.get("MD2_ALL_AXES_SV")     #for kappa and phi
+        return_array = pipe.execute()
+
+        # To handle E beamline "_5.1053_-_-" &
+        #           C beamline" 183.1158    0.0000    0.0000"
+        try:
+            if '_' in return_array[4]:
+                #print return_array[4]
+                axes = [return_array[4].split('_')[1],'0','0']
+            else:
+                axes = return_array[4].split()
+        except:
+            pass
+
+        if self.beamline == 'C':
+            my_dict = {"detector"  : return_array[0],
+                       "directory" : os.path.join(return_array[1],"0_0"),
+                       "prefix"    : return_array[2],
+                       "twotheta"  : float(return_array[3]),
+                       "kappa"     : float(axes[1]),
+                       "phi"       : float(axes[2])}
+        elif self.beamline == 'E':
+            my_dict = {"detector"  : return_array[0],
+                       "directory" : return_array[1],
+                       "prefix"    : return_array[2],
+                       "twotheta"  : float(return_array[3]),
+                       "kappa"     : 0.0,
+                       "phi"       : 0.0}
+        elif self.beamline == 'T':
+            my_dict = {"detector"  : return_array[0],
+                       #"directory" : os.path.join('/epu/rdma', return_array[1]),
+                       "directory" : '%s%s'%('/epu/rdma', return_array[1]), #not used anyway
+                       "prefix"    : return_array[2],
+                       "twotheta"  : float(return_array[3]),
+                       "kappa"     : 0.0,
+                       "phi"       : 0.0}
+
+        return(my_dict)
+
+    def Stop(self):
+        """
+        Used to stop the loop
+        """
+        self.logger.debug('ConsoleRedisMonitor.Stop')
+
+        self.Go = False
+        # Added for T
+        #if self.beamline == 'T':
+        #    self.pubsub.unsubscribe()
 
 # secrets = { #database information
 #             'db_host'         : 'rapd.nec.aps.anl.gov',
@@ -57,7 +436,7 @@ import MySQLdb, _mysql_exceptions
 #             'db_data_name'    : 'rapd_data',
 #             'db_users_name'   : 'rapd_users',
 #             'db_cloud_name'   : 'rapd_cloud'}
-
+"""
 settings = {
                #ID24-C 
                'nec-pid.nec.aps.anl.gov'  : ('/usr/local/ccd_dist_md2b_rpc/tmp/marcollect','/usr/local/ccd_dist_md2b_rpc/tmp/xf_status','C'),
@@ -66,9 +445,8 @@ settings = {
                #DEFAULT
                'default'                  : ('/tmp/marcollect','/tmp/xf_status','T')
            } 
-
-
-class RAPD_ADSC_Server(threading.Thread):
+"""
+class RAPD_ADSC_Server_OLD(threading.Thread):
     """
     Watches the beamline, updates the MySQL database and returns queries
     by the SimpleXMLRPCServer

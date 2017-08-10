@@ -584,7 +584,10 @@ class Model(object):
         """
 
         # Query local runs in reverse chronological order
+        print 'len recent runs: %s'%len(self.recent_runs)
         for run_id, run in self.recent_runs.iteritems():
+            print 'run_id:%s'%run_id
+            print 'run: %s'%run
 
             self.logger.debug("_id:%s run:%s" % (run_id, str(run)))
 

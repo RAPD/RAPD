@@ -131,9 +131,10 @@ RAPD_LAUNCHER_ADAPTER_DIRECTORIES = ("launch.launcher_adapters",
 GATHERER = "necat.py"
 GATHERER_LOCK_FILE = "/tmp/rapd2/lock/gatherer.lock"
 
-# Directories to look for rapd agents
-RAPD_PLUGIN_DIRECTORIES = ("sites.agents",
-                          "agents")
+# Directories to look for rapd plugins
+RAPD_PLUGIN_DIRECTORIES = ("sites.plugins",
+                           "plugins")
+
 # Queried in order, so a rapd_agent_echo.py in src/sites/agents will override
 # the same file in src/agents
 

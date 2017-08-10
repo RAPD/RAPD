@@ -92,6 +92,7 @@ class LauncherAdapter(object):
         # The command has to come in the form of a script on the SERCAT install
         site_tag = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["site_tag"]
         command_line = "rapd.launch -vs %s %s" % (site_tag, command_file)
+        #command_line = "tcsh\nrapd.launch -vs %s %s" % (site_tag, command_file)
         #command_script = launch_tools.write_command_script(command_file.replace(".rapd", ".sh"), command_line)
         """
         # Set the path for qsub
@@ -163,7 +164,6 @@ class LauncherAdapter(object):
         # Adjust the working directory for the launch computer
         work_dir_candidate = os.path.join(
             self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"],
-            #self.decoded_message["directories"]["work"])
             self.message["directories"]["work"])
 
         # Make sure this is an original directory
@@ -175,6 +175,9 @@ class LauncherAdapter(object):
                     break
                 else:
                     i += 1
+        # Now make the directory
+        if os.path.isdir(work_dir_candidate) == False:
+            os.makedirs(work_dir_candidate)
 
         # Modify command
         #self.decoded_message["directories"]["work"] = work_dir_candidate
@@ -206,13 +209,16 @@ class LauncherAdapter(object):
     
     def determine_queue(self):
         """Determine the cluster queue for the main job."""
+        """
         if self.message['command'] == 'INDEX':
             return('index.q')
         if self.message['command'] == 'INTEGRATE':
             return('phase2.q')
         else:
             return('phase1.q')
-    
+        """
+        return 'phase3.q'
+
 def processCluster(command,
                    work_dir,
                    logfile=False,
@@ -326,10 +332,11 @@ if __name__ == "__main__":
     event = multiprocessing.Event()
     event.set()
     #threading.Thread(target=run_job).start()
-    processCluster(command='sleep 10',
-                   work_dir='/gpfs6/users/necat/Jon/RAPD_test/Output',
+    processCluster(command='touch junk',
+                   #work_dir='/gpfs6/users/necat/Jon/RAPD_test/Output',
+                   work_dir='/gpfs5/users/necat/rapd/rapd2_t/single/2017-08-09/B_14:612',
                    logfile='/gpfs6/users/necat/Jon/RAPD_test/Output/temp.log',
-                   queue='phase2.q',
+                   queue='index.q',
                    nproc=2,
                    name='TEST',
                    mp_event=event,

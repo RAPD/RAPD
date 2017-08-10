@@ -223,6 +223,7 @@ class RapdPlugin(Process):
         # Some logging
         self.logger.info(site)
         self.logger.info(command)
+        #pprint(command)
 
         # Store passed-in variables
         self.site = site
@@ -231,7 +232,9 @@ class RapdPlugin(Process):
         self.results["process"] = {
             "process_id": self.command.get("process_id"),
             "status": 1}
-        self.reply_address = self.command["return_address"]
+        #self.reply_address = self.command["return_address"]
+        self.reply_address = False
+        
 
         # Setting up data input
         self.setup = self.command["directories"]
