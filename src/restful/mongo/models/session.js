@@ -22,7 +22,8 @@ var SessionSchema = new Schema({
     default: 'mx'
   },
   group: {
-    type: String,
+    type: Schema.Types.ObjectId,
+    ref: 'Group',
     required: true,
   },
   timestamp: {

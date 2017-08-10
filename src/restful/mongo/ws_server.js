@@ -118,6 +118,8 @@ function Wss (opt, callback) {
             // Get results
             case 'get_results':
 
+              console.log('get_results');
+
               var data_type,
                   data_class;
 
@@ -129,7 +131,7 @@ function Wss (opt, callback) {
 
                   Result.
                     find({'session_id':mongoose.Types.ObjectId(data.session_id)}).
-                    where('result_type').in(['mx:index+strategy', 'mx:integrate']).
+                    where('result_type').in(['mx:index', 'mx:integrate']).
                     sort('-timestamp').
                     exec(function(err, sessions) {
                         if (err)
@@ -168,6 +170,8 @@ function Wss (opt, callback) {
                                                 results:sessions}));
                     });
                 } else if (data_class === 'all') {
+
+                  console.log('data.session_id', data.session_id);
 
                   Result.
                     find({'session_id':mongoose.Types.ObjectId(data.session_id)}).

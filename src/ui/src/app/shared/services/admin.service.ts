@@ -110,7 +110,7 @@ export class AdminService {
 
   public getSessions(): Observable<Session[]> {
 
-    console.log('getSessions');
+    // console.log('getSessions');
 
     return this.auth_http.get(this.apiUrl + '/sessions')
       .map(this.extractSessions);
@@ -123,7 +123,7 @@ export class AdminService {
     let body = res.json();
 
     for (let session of body) {
-      console.log(session);
+      // console.log(session);
       session.start_display = moment(session.start).format('YYYY-MM-DD hh:mm:ss');
       session.end_display = moment(session.end).format('YYYY-MM-DD hh:mm:ss');
     }
