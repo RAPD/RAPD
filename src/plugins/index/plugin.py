@@ -241,7 +241,7 @@ class RapdPlugin(Process):
         self.preferences = self.command.get("preferences", {})
         self.controller_address = self.reply_address
 
-        # pprint(self.preferences)
+        #pprint(self.preferences)
 
         # Assumes that Core sent job if present. Overrides values for clean and test from top.
         if self.site_parameters != False:
