@@ -1935,12 +1935,14 @@ class RunLabelit(Process):
 
     labelit_pids = []
     labelit_jobs = {}
+    labelit_tracker = {}
 
     # Holder for results
     labelit_log = {}
 
     # For results passing
-    indexing_results_queue = multiprocessing.Queue()
+    #indexing_results_queue = multiprocessing.Queue()
+    indexing_results_queue = Queue()
 
     # For handling print_warning
     errors_printed = False
@@ -2295,13 +2297,15 @@ rerunning.\n" % spot_count)
 
         # If first labelit run errors because not happy with user specified cell or SG then
         # ignore user input in the rerun.
-        if not self.ignore_user_cell and overrides.get("ignore_user_cell"):
+        if not self.ignore_user_cell and not overrides.get("ignore_user_cell"):
             user_cell = self.preferences.get("unitcell", False)
             if user_cell:
                 command += 'known_cell=%s,%s,%s,%s,%s,%s ' % tuple(user_cell)
-        if not self.ignore_user_SG and overrides.get("ignore_user_SG"):
+        if not self.ignore_user_SG and not overrides.get("ignore_user_SG"):
             if self.spacegroup != False:
                 command += 'known_symmetry=%s ' % self.spacegroup
+        if overrides.get("ignore_sublattice"):
+            command += 'sublattice_allow=False '
 
         # For peptide crystals. Doesn't work that much.
         if self.sample_type == 'Peptide':
@@ -2365,6 +2369,12 @@ rerunning.\n" % spot_count)
             # print self.pids
             labelit_jobs[run] = iteration
             # labelit_jobs[iteration] = run
+            
+            # Save the number of times a job was run to stop a loop
+            if self.labelit_tracker.has_key(iteration):
+                self.labelit_tracker[iteration]+=1
+            else:
+                self.labelit_tracker[iteration]=1
 
         # return a dict with the job and iteration
         return labelit_jobs
@@ -2407,13 +2417,13 @@ rerunning.\n" % spot_count)
         # elif "No_Indexing_Solution: (couldn't find 3 good basis vectors)" in stdout:
         #     error = "No_Indexing_Solution: (couldn't find 3 good basis vectors)"
 
-        # Return if there is an error
+        # Return if there is an error not caught by parsing
         if error:
             self.labelit_log[iteration].append(error)
             self.labelit_results[iteration] = {"Labelit results": "ERROR"}
             return False
 
-        # No error
+        # No error or error caught by parsing
         else:
 
             parsed_result = labelit.parse_output(stdout, iteration)
@@ -2426,23 +2436,25 @@ rerunning.\n" % spot_count)
             potential_problems = {
                 "bad_input": {
                     "error": "Labelit did not like your input unit cell dimensions or SG.",
-                    "execute": functools.partial(self.process_labelit,
+                    "execute1": functools.partial(self.process_labelit,
+                                                  overrides={"ignore_sublattice": True}),
+                    "execute2": functools.partial(self.process_labelit,
                                                  overrides={"ignore_user_cell": True,
                                                             "ignore_user_SG": True})
                 },
                 "bumpiness": {
                     "error": "Labelit settings need to be adjusted.",
-                    "execute": functools.partial(self.process_labelit,
+                    "execute1": functools.partial(self.process_labelit,
                                                  overrides={"bumpiness": True})
                 },
                 "mosflm_error": {
                     "error": "Mosflm could not integrate your image.",
-                    "execute": functools.partial(self.process_labelit,
+                    "execute1": functools.partial(self.process_labelit,
                                                  overrides={"increase_mosflm_resolution": True})
                 },
                 "min_good_spots": {
                     "error": "Labelit did not have enough spots to find a solution",
-                    "execute": functools.partial(self.process_labelit,
+                    "execute1": functools.partial(self.process_labelit,
                                                  overrides={"min_good_spots": True})
                 },
                 "fix_labelit": {
@@ -2488,6 +2500,7 @@ rerunning.\n" % spot_count)
                         self.process_labelit(iteration, overrides={"min_spots": parsed_result[1]})
 
                 # Mulitple solutions possible
+                # Does this even work????
                 elif problem_flag == "fix_cell":
                     print "FIX CELL"
                     problem_action = potential_problems[problem_flag]
@@ -2506,14 +2519,21 @@ rerunning.\n" % spot_count)
                     # pprint(problem_actions)
 
                     # No recovery
-                    if "kill" in problem_actions:
-                        self.labelit_log[iteration].extend("\n%s\n" % error)
-                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                    #if "kill" in problem_actions:
+                    #    self.labelit_log[iteration].extend("\n%s\n" % problem_action['error'])
+                    #    self.labelit_results[iteration] = {"Labelit results": "FAILED"}
                     # Try to correct
+                    #else:
+                    #    if iteration <= self.iterations:
+                    #        if "execute" in problem_actions:
+                    #            problem_actions["execute"](iteration=iteration)
+
+                    # If there is a potential fix, run it. Otherwise fail gracefully
+                    if "execute%s"%self.labelit_tracker[iteration] in problem_actions:
+                        problem_actions["execute%s"%self.labelit_tracker[iteration]](iteration=iteration)
                     else:
-                        if iteration <= self.iterations:
-                            if "execute" in problem_actions:
-                                problem_actions["execute"](iteration=iteration)
+                        self.labelit_log[iteration].extend("\n%s\n" % problem_action['error'])
+                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
 
                 # No solution
                 else:
