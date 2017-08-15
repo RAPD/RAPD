@@ -1,3 +1,17 @@
-<p>
-  index-3b34-2-0-0 works!
-</p>
+<div class="result-panel child">
+  <md-card class="result-panel-card" style="order:3;">
+    <md-card-title>Image Data</md-card-title>
+    <md-card-content>
+      <table class="strategy-sub-table">
+        <tr><td class="rj-col">Name</td><td class="small-col">:</td><td class="lj-col">{{full_result.information.fullname}}</td></tr>
+        <tr><td class="rj-col">&Omega;</td><td class="small-col">:</td><td class="lj-col">{{full_result.information.osc_start}}&deg;</td></tr>
+        <tr><td class="rj-col">&Delta;&Omega;</td><td class="small-col">:</td><td class="lj-col">{{full_result.information.osc_range}}&deg;</td></tr>
+        <tr><td class="rj-col">Time</td><td class="small-col">:</td><td class="lj-col">{{full_result.information.time}}s</td></tr>
+        <tr><td class="rj-col">Transmission</td><td class="small-col">:</td><td class="lj-col">{{full_result.information.transmission}}%</td></tr>
+        <tr><td class="rj-col">Distance</td><td class="small-col">:</td><td>{{full_result.information.distance}}mm</td></tr>
+        <!-- <tr><td class="rj-col">Sample</td><td class="small-col">:</td><td class="lj-col">A1</td></tr> -->
+        <tr><td class="rj-col">Date</td><td class="small-col">:</td><td class="lj-col">{{full_result.information.date}}</td></tr>
+      </table>
+   </md-card-content>
+  </md-card>
+</div>

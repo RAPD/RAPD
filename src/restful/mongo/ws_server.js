@@ -222,7 +222,7 @@ function Wss (opt, callback) {
               // let ResultSchema = new mongoose.Schema({}, {strict:false});
               // let ResultModel = mongoose.model(data.result_type+'_result', ResultSchema);
               ResultModel.
-                find({'_id':mongoose.Types.ObjectId(data.result_id)}).
+                findOne({'_id':mongoose.Types.ObjectId(data.result_id)}).
                 // where('result_type').in(result_type_trans[data_type][data_class]).
                 // sort('-timestamp').
                 exec(function(err, result) {
