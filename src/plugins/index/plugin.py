@@ -33,8 +33,8 @@ DATA_TYPE = "MX"
 PLUGIN_TYPE = "INDEX"
 PLUGIN_SUBTYPE = "CORE"
 
-# A unique UUID for this handler (uuid.uuid1().hex)
-ID = "3b3448aee4a811e59c0aac87a3333966"
+# A unique ID for this handler (uuid.uuid1().hex[:4])
+ID = "3b34"
 VERSION = "2.0.0"
 
 # Standard imports

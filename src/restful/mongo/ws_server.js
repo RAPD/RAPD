@@ -198,12 +198,29 @@ function Wss (opt, callback) {
 
               // Create a model
               if (data.result_type.indexOf(':') !== -1) {
-                data.result_type = data.result_type.slice(data.result_type.indexOf(':')+1)
+                data.result_type = data.result_type.replace(/:/, '_');
+                // data.result_type = data.result_type.slice(data.result_type.indexOf(':')+1);
               }
 
               console.log('Looking in:', data.result_type+'_results');
-              let ResultSchema = new mongoose.Schema({}, {strict:false});
-              let ResultModel = mongoose.model(data.result_type+'_result', ResultSchema)
+
+              let name = data.result_type+'_result';
+              let collection_name = name.charAt(0).toUpperCase() + name.slice(1);
+              var ResultModel;
+
+              try {
+                if (mongoose.model(collection_name)) {
+                  ResultModel = mongoose.model(collection_name);
+                }
+              } catch(e) {
+                if (e.name === 'MissingSchemaError') {
+                   let schema = new mongoose.Schema({}, {strict:false});
+                   ResultModel = mongoose.model(collection_name, schema);
+                }
+              }
+
+              // let ResultSchema = new mongoose.Schema({}, {strict:false});
+              // let ResultModel = mongoose.model(data.result_type+'_result', ResultSchema);
               ResultModel.
                 find({'_id':mongoose.Types.ObjectId(data.result_id)}).
                 // where('result_type').in(result_type_trans[data_type][data_class]).
@@ -213,12 +230,12 @@ function Wss (opt, callback) {
                         return false;
                     console.log(result);
                     // Send back over the websocket
-                    // ws.send(JSON.stringify({msg_type:'results',
-                    //                         results:sessions}));
+                    ws.send(JSON.stringify({msg_type:'result_details',
+                                            results:result}));
                 });
 
-              ws.send(JSON.stringify({msg_type:'result_details',
-                                      results:'bar'}));
+              // ws.send(JSON.stringify({msg_type:'result_details',
+              //                         results:'bar'}));
 
               break;
           }

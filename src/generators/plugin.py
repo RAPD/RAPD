@@ -456,11 +456,12 @@ class FileGenerator(CommandlineFileGenerator):
         tags_lines = [
             "# This is an active RAPD plugin",
             "RAPD_PLUGIN = True\n",
-            "# This plugin's type",
+            "# This plugin's types",
+            "DATA_TYPE = \"MX\"  # MX, ?"
             "PLUGIN_TYPE = \"%s\"" % self.args.plugin_name.upper(),
             "PLUGIN_SUBTYPE = \"EXPERIMENTAL\"\n",
-            "# A unique UUID for this handler (uuid.uuid1().hex)",
-            "ID = \"%s\"" % uuid.uuid1().hex,
+            "# A unique ID for this handler (uuid.uuid1().hex[:4])",
+            "ID = \"%s\"" % uuid.uuid1().hex[:4],
             "VERSION = \"1.0.0\"\n"
         ]
         file_generator.output_function(tags_lines)
