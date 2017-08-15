@@ -28,7 +28,8 @@ __status__ = "Production"
 # This is an active rapd plugin
 RAPD_PLUGIN = True
 
-# This handler's request type
+# This plugin's types
+DATA_TYPE = "MX"
 PLUGIN_TYPE = "INDEX"
 PLUGIN_SUBTYPE = "CORE"
 

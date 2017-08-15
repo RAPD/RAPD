@@ -27,7 +27,7 @@ export class MxResultslistPanelComponent implements OnInit {
   incomingData$: ReplaySubject<string>;
 
   result_types = {
-    snap: 'mx:index+strategy',
+    snap: 'mx:index',
     sweep: 'mx:integrate',
     merge: 'mx:merge',
     mr: 'mx:mr',
