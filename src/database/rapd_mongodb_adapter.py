@@ -264,8 +264,8 @@ class Database(object):
                                                  "data_root_dir":data_root_dir,
                                                  "timestamp":datetime.datetime.utcnow()})
 
+        self.logger.debug(result)
         return str(result.inserted_id)
-        self.logger.debug("DONE")
 
     def update_plugin_process(self,
                               plugin_process_id,
