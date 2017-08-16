@@ -358,10 +358,10 @@ def calcTotResNumber(self, volume):
     checkVolume(self,volume)
     content = 1 - float(self.solvent_content)
     #Calculate number of residues based on solvent content in volume of cell.
-    if self.sample_type == 'Protein':
+    if self.sample_type == 'protein':
       #based on average MW of residue = 110 DA
       return(int((float(volume)*float(content))/135.3))
-    elif self.sample_type == 'DNA':
+    elif self.sample_type == 'dna':
       #based on average MW of residue = 330 DA
       return(int((float(volume)*float(content))/273.9))
     else:
@@ -631,7 +631,7 @@ def checkVolume(self,volume):
   try:
     #if float(volume) > 50000000.0: #For 70S
     if float(volume) > 25000000.0: #For 30S
-      self.sample_type = 'Ribosome'
+      self.sample_type = 'ribosome'
       self.solvent_content = 0.64
   except:
     self.logger.exception('**Error in Utils.checkVolume**')
@@ -1241,7 +1241,8 @@ def errorLabelit(self, iteration):
             preferences.write('distl.minimum_signal_height=4.3\n')
         preferences.close()
         self.labelit_log[str(iteration)] = ['\nLooking for long unit cell.\n']
-        self.tprint("\n    Looking for long unit cell", level=30, color="white", newline=False)
+        #self.tprint("\n    Looking for long unit cell", level=30, color="white", newline=False)
+        self.tprint("\n    Looking for long unit cell", level=30, color="white")
         self.logger.debug('Looking for long unit cell.')
 
     elif iteration == 2:
@@ -1249,7 +1250,8 @@ def errorLabelit(self, iteration):
         preferences.write('distl.minimum_spot_height=6\n')
         preferences.close()
         self.labelit_log[str(iteration)] = ['\nChanging settings to look for stronger peaks (ie. small molecule).\n']
-        self.tprint("\n    Looking for stronger peaks (ie. small molecule)", level=30, color="white", newline=False)
+        #self.tprint("\n    Looking for stronger peaks (ie. small molecule)", level=30, color="white", newline=False)
+        self.tprint("\n    Looking for stronger peaks (ie. small molecule)", level=30, color="white")
         self.logger.debug('Changing settings to look for stronger peaks (ie. small molecule).')
 
     elif iteration == 3:
@@ -1264,7 +1266,8 @@ def errorLabelit(self, iteration):
             preferences.write('distl.minimum_signal_height=1.2\n')
         preferences.close()
         self.labelit_log[str(iteration)] = ['\nLooking for weak diffraction.\n']
-        self.tprint("\n    Looking for weak diffraction", level=30, color="white", newline=False)
+        #self.tprint("\n    Looking for weak diffraction", level=30, color="white", newline=False)
+        self.tprint("\n    Looking for weak diffraction", level=30, color="white")
         self.logger.debug('Looking for weak diffraction.')
 
     elif iteration == 4:
@@ -1281,7 +1284,8 @@ def errorLabelit(self, iteration):
             self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 8.\n']
             area = 8
         preferences.close()
-        self.tprint("\n    Setting spot picking level to %d" % area, level=30, color="white", newline=False)
+        #self.tprint("\n    Setting spot picking level to %d" % area, level=30, color="white", newline=False)
+        self.tprint("\n    Setting spot picking level to %d" % area, level=30, color="white")
         self.logger.debug('Setting spot picking level to 3 or 8.')
 
     elif iteration == 5:
@@ -1301,7 +1305,8 @@ def errorLabelit(self, iteration):
             self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 6 and resolution to 5.\n']
             setting = (6, 5)
         preferences.close()
-        self.tprint("\n    Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white", newline=False)
+        #self.tprint("\n    Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white", newline=False)
+        self.tprint("\n    Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white")
         self.logger.debug('Setting spot picking level to 2 or 6.')
 
     return self.process_labelit(iteration)

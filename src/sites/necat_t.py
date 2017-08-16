@@ -68,31 +68,38 @@ BEAM_CENTER_Y = (155.1904879862,
 """
 # Keyed to ID
 BEAM_INFO = {
-    "NECAT_T": {# Flux of the beam
-          "BEAM_FLUX":1.5E12,
-          # Size of the beam in microns
-          "BEAM_SIZE_X":50,
-          "BEAM_SIZE_Y":20,
-          # Shape of the beam - ellipse, rectangle
-          "BEAM_SHAPE":"ellipse",
-          # Shape of the attenuated beam - circle or rectangle
-          "BEAM_APERTURE_SHAPE":"circle",
-          # Gaussian description of the beam for raddose
-          "BEAM_GAUSS_X":0.03,
-          "BEAM_GAUSS_Y":0.01,
-          # Beam center calibration
-          'BEAM_CENTER_DATE' : "2017-3-02",
-          # Beamcenter equation coefficients (b, m1, m2, m3, m4, m5, m6)
-          # Beamcenter equation coefficients (b, m1, m2, m3)
-          'BEAM_CENTER_X' : (163.2757684023,
-                           0.0003178917,
-                           -5.0236657815e-06,
-                           5.8164218288e-09),
-          'BEAM_CENTER_Y' : (155.1904879862,
-                           -0.0014631216,
-                           8.60559283424e-07,
-                           -2.5709929645e-10)
-          }
+    "NECAT_T": {# Detector distance limits
+                "DETECTOR_DIST_MIN": 150.0,
+                "DETECTOR_DIST_MAX": 1000.0,
+                # goniometer limit
+                "DELTA_OMEGA_MIN": 0.05,
+                # shortest exposure time
+                "EXPOSURE_TIME_MIN": 0.05,
+                # Flux of the beam
+                "BEAM_FLUX":1.5E12,
+                # Size of the beam in microns
+                "BEAM_SIZE_X":50,
+                "BEAM_SIZE_Y":20,
+                # Shape of the beam - ellipse, rectangle
+                "BEAM_SHAPE":"ellipse",
+                # Shape of the attenuated beam - circle or rectangle
+                "BEAM_APERTURE_SHAPE":"circle",
+                # Gaussian description of the beam for raddose
+                "BEAM_GAUSS_X":0.03,
+                "BEAM_GAUSS_Y":0.01,
+                # Beam center calibration
+                'BEAM_CENTER_DATE' : "2017-3-02",
+                # Beamcenter equation coefficients (b, m1, m2, m3, m4, m5, m6)
+                # Beamcenter equation coefficients (b, m1, m2, m3)
+                'BEAM_CENTER_X' : (163.2757684023,
+                                 0.0003178917,
+                                 -5.0236657815e-06,
+                                 5.8164218288e-09),
+                'BEAM_CENTER_Y' : (155.1904879862,
+                                 -0.0014631216,
+                                 8.60559283424e-07,
+                                 -2.5709929645e-10)
+                }
              }
           
 # Method RAPD uses to track groups

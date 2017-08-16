@@ -53,6 +53,7 @@ import signal
 import subprocess
 import sys
 import time
+import importlib
 
 # RAPD imports
 import info
@@ -60,7 +61,7 @@ import plugins.subcontractors.parse as Parse
 import plugins.subcontractors.labelit as labelit
 from plugins.subcontractors.xoalign import RunXOalign
 import utils.credits as rcredits
-from utils.communicate import rapd_send
+#from utils.communicate import rapd_send
 import utils.exceptions as exceptions
 import utils.global_vars as global_vars
 from utils.processes import local_subprocess
@@ -232,19 +233,15 @@ class RapdPlugin(Process):
         self.results["process"] = {
             "process_id": self.command.get("process_id"),
             "status": 1}
-        #self.reply_address = self.command["return_address"]
-        self.reply_address = False
-        
 
         # Setting up data input
         self.setup = self.command["directories"]
         self.header = self.command["header1"]
         self.header2 = self.command.get("header2", False)
+        # get the default preferences and update what was sent in...
+        self.preferences = info.DEFAULT_PREFERENCES#.update(self.command.get("preferences", {}))
+        self.preferences.update(self.command.get("preferences", {}))
         self.site_parameters = self.command.get("site_parameters", False)
-        self.preferences = self.command.get("preferences", {})
-        self.controller_address = self.reply_address
-
-        # pprint(self.preferences)
 
         # Assumes that Core sent job if present. Overrides values for clean and test from top.
         if self.site_parameters != False:
@@ -289,8 +286,8 @@ class RapdPlugin(Process):
         self.multiproc = self.preferences.get("multiprocessing", True)
 
 	    # Set for Eisenberg peptide work.
-        self.sample_type = self.preferences.get("sample_type", "Protein")
-        if self.sample_type == "Peptide":
+        self.sample_type = self.preferences.get("sample_type", "Protein").lower()
+        if self.sample_type == "peptide":
             self.peptide = True
         else:
             self.peptide = False
@@ -314,13 +311,13 @@ class RapdPlugin(Process):
 
         # Settings for all programs
         #self.beamline = self.header.get("beamline")
-        self.time = str(self.header.get("time", "1.0"))
-        self.wavelength = str(self.header.get("wavelength"))
-        self.transmission = str(self.header.get("transmission", 10))
+        self.time = self.header.get("time", 0.2)
+        self.wavelength = self.header.get("wavelength")
+        self.transmission = self.header.get("transmission", 10.0)
         # self.aperture = str(self.header.get("md2_aperture"))
         self.spacegroup = self.preferences.get("spacegroup", False)
-        self.flux = str(self.header.get("flux", '3E10'))
-        self.solvent_content = str(self.preferences.get("solvent_content", 0.55))
+        #self.flux = str(self.header.get("flux", '3E10'))
+        self.solvent_content = self.preferences.get("solvent_content", 0.55)
 
         Process.__init__(self, name="AutoindexingStrategy")
 
@@ -333,6 +330,9 @@ class RapdPlugin(Process):
 
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::run")
+        
+        # create a redis connection to send results
+        self.connect_to_redis()
 
         self.tprint(arg=0, level="progress")
         # Check if h5 file is input and convert to cbf's.
@@ -374,6 +374,19 @@ class RapdPlugin(Process):
             # Pass back results, and cleanup.
             self.postprocess()
 
+    def connect_to_redis(self):
+        """Connect to the redis instance"""
+        # Create a pool connection
+        redis_database = importlib.import_module('database.rapd_redis_adapter')
+        
+        self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        if self.site.CONTROL_DATABASE_SETTINGS['REDIS_CONNECTION'] == 'pool':
+            # For a Redis pool connection
+            self.redis = self.redis_database.connect_redis_pool()
+        else:
+            # For a Redis sentinal connection
+            self.redis = self.redis_database.connect_redis_manager_HA()
+    
     def preprocess(self):
         """
         Setup the working dir in the RAM and save the dir where the results will go at the end.
@@ -456,10 +469,11 @@ class RapdPlugin(Process):
             self.logger.debug("AutoindexingStrategy::preprocess_raddose")
 
         # try:
-        beam_size_x = False
-        beam_size_y = False
-        gauss_x = False
-        gauss_y = False
+        beam_size_x = self.site_parameters.get('BEAM_SIZE_X', False)
+        beam_size_y = self.site_parameters.get('BEAM_SIZE_Y', False)
+        gauss_x = self.site_parameters.get('BEAM_GAUSS_X', False)
+        gauss_y = self.site_parameters.get('BEAM_GAUSS_Y', False)
+        flux = self.site_parameters.get('BEAM_FLUX', 1E10 )
 
         # Get unit cell
         cell = xutils.getLabelitCell(self)
@@ -468,29 +482,25 @@ class RapdPlugin(Process):
         # Adding these typically does not change the Best strategy much, if it at all.
         patm = False
         satm = False
-        if self.sample_type == "Ribosome":
-            crystal_size_x = "1"
-            crystal_size_y = "0.5"
-            crystal_size_z = "0.5"
+        if self.sample_type == "ribosome":
+            crystal_size_x = 1.0
+            crystal_size_y = 0.5
+            crystal_size_z = 0.5
         else:
             # crystal dimensions (default 0.1 x 0.1 x 0.1 from rapd_site.py)
-            crystal_size_x = str(float(self.preferences.get("crystal_size_x", 100))/1000.0)
-            crystal_size_y = str(float(self.preferences.get("crystal_size_y", 100))/1000.0)
-            crystal_size_z = str(float(self.preferences.get("crystal_size_z", 100))/1000.0)
-        if self.header.has_key("flux"):
-            beam_size_x = str(self.header.get("beam_size_x"))
-            beam_size_y = str(self.header.get("beam_size_y"))
-            gauss_x = str(self.header.get("gauss_x"))
-            gauss_y = str(self.header.get("gauss_y"))
+            crystal_size_x = self.preferences.get("crystal_size_x", 100.0)/1000.0
+            crystal_size_y = self.preferences.get("crystal_size_y", 100.0)/1000.0
+            crystal_size_z = self.preferences.get("crystal_size_z", 100.0)/1000.0
+
         raddose = open("raddose.com", "w+")
         setup = "raddose << EOF\n"
         if beam_size_x and beam_size_y:
-            setup += "BEAM %s %s\n" % (beam_size_x, beam_size_y)
+            setup += "BEAM %d %d\n" % (beam_size_x, beam_size_y)
         # Full-width-half-max of the beam
         if gauss_x and gauss_y:
-            setup += "GAUSS %s %s\nIMAGES 1\n" % (gauss_x, gauss_y)
-        setup += "PHOSEC %s\n" % self.flux
-        setup += "EXPOSURE %s\n" % self.time
+            setup += "GAUSS %.2f %.2f\nIMAGES 1\n" % (gauss_x, gauss_y)
+        setup += "PHOSEC %d\n" % flux
+        setup += "EXPOSURE %.2f\n" % self.time
         if cell:
             setup += "CELL %s %s %s %s %s %s\n" % (cell[0],
                                                    cell[1],
@@ -502,29 +512,29 @@ class RapdPlugin(Process):
             self.logger.debug("Could not get unit cell from bestfile.par")
 
         # Set default solvent content based on sample type. User can override.
-        if self.solvent_content == "0.55":
-            if self.sample_type == "Protein":
+        if self.solvent_content == 0.55:
+            if self.sample_type == "protein":
                 setup += "SOLVENT 0.55\n"
             else:
                 setup += "SOLVENT 0.64\n"
         else:
-            setup += "SOLVENT %s\n"%self.solvent_content
+            setup += "SOLVENT %.2f\n"%self.solvent_content
         # Sets crystal dimensions. Input from dict (0.1 x 0.1 x 0.1 mm), but user can override.
         if crystal_size_x and crystal_size_y and crystal_size_z:
-            setup += "CRYSTAL %s %s %s\n" % (crystal_size_x, crystal_size_y, crystal_size_z)
+            setup += "CRYSTAL %.1f %.1f %.1f\n" % (crystal_size_x, crystal_size_y, crystal_size_z)
         if self.wavelength:
-            setup += "WAVELENGTH %s\n" % self.wavelength
+            setup += "WAVELENGTH %.4f\n" % self.wavelength
         setup += "NMON 1\n"
-        if self.sample_type == "Protein":
-            setup += "NRES %s\n" % nres
-        elif self.sample_type == "DNA":
-            setup += "NDNA %s\n" % nres
+        if self.sample_type == "protein":
+            setup += "NRES %d\n" % nres
+        elif self.sample_type == "dna":
+            setup += "NDNA %d\n" % nres
         else:
-            setup += "NRNA %s\n" % nres
+            setup += "NRNA %d\n" % nres
         if patm:
-            setup += "PATM %s\n" % patm
+            setup += "PATM %d\n" % patm
         if satm:
-            setup += "SATM %s\n" % satm
+            setup += "SATM %d\n" % satm
         setup += "END\nEOF\n"
         raddose.writelines(setup)
         raddose.close()
@@ -557,6 +567,7 @@ class RapdPlugin(Process):
         else:
             command = self.command.copy()
             command["directories"]["work"] = self.working_dir
+        command['preferences'] = self.preferences
 
         # Launch labelit
         Process(target=RunLabelit,
@@ -587,7 +598,7 @@ class RapdPlugin(Process):
             command += xutils.calcXDSbc(self)
             command += "DETECTOR_DISTANCE=%s\n" % self.header.get("distance")
             command += "OSCILLATION_RANGE=%s\n" % self.header.get("osc_range")
-            command += "X-RAY_WAVELENGTH=%s\n" % self.wavelength
+            command += "X-RAY_WAVELENGTH=%.4f\n" % self.wavelength
             command += "NAME_TEMPLATE_OF_DATA_FRAMES=%s\n" % new_name
             #command += "BACKGROUND_RANGE="+range+"\n"
             #command += "DATA_RANGE="+range+"\n"
@@ -756,7 +767,7 @@ class RapdPlugin(Process):
             image_number.append(image_number_format % self.header2["image_number"])
 
         # Tell Best if two-theta is being used.
-        if int(float(self.header.get("twotheta", 0))) != 0:
+        if int(self.header.get("twotheta", 0)) != 0:
             xutils.fixBestfile(self)
 
         # If Raddose failed, here are the defaults.
@@ -768,11 +779,11 @@ class RapdPlugin(Process):
                 exp_dose_lim = self.raddose_results.get("raddose_results").get('exp dose limit')
 
         # Set how many frames a crystal will last at current exposure time.
-        self.crystal_life = str(int(float(exp_dose_lim) / float(self.time)))
+        self.crystal_life = str(int(float(exp_dose_lim) / self.time))
         if self.crystal_life == '0':
             self.crystal_life = '1'
         # Adjust dose for ribosome crystals.
-        if self.sample_type == 'Ribosome':
+        if self.sample_type == 'ribosome':
             dose = 500001
         # If dose is too high, warns user and sets to reasonable amount and reruns Best but give
         # warning.
@@ -804,16 +815,16 @@ class RapdPlugin(Process):
         if str(self.header.get('binning')) == '2x2':
             command += '-2x'
         if self.high_dose:
-            command += ' -t 1.0'
+            command += ' -t 0.2'
         else:
-            command += " -t %s" % self.time
-        command += ' -e %s -sh %s -su %s' % (self.preferences.get('best_complexity', 'none'),\
-                                             self.preferences.get('shape', '2.0'), \
-                                             self.preferences.get('susceptibility', '1.0'))
+            command += " -t %.2f" % self.time
+        command += ' -e %s -sh %.1f -su %.1f' % (self.preferences.get('best_complexity', 'none'),\
+                                             self.preferences.get('shape', 2.0), \
+                                             self.preferences.get('susceptibility', 1.0))
         if self.preferences.get('aimed_res') != 0.0:
-            command += ' -r %s' % self.preferences.get('aimed_res')
+            command += ' -r %.1f' % self.preferences.get('aimed_res')
         if best_version >= "3.4":
-            command += ' -Trans %s' % self.transmission
+            command += ' -Trans %.1f' % self.transmission
         # Set minimum rotation width per frame. Different for PAR and CCD detectors.
         command += ' -w %s' % min_d_o
         # Set minimum exposure time per frame.
@@ -901,19 +912,19 @@ class RapdPlugin(Process):
         try:
             l = [("mosflm_strat", "", ""), ("mosflm_strat_anom", "_anom", "ANOMALOUS")]
             # Opens file from Labelit/Mosflm autoindexing and edit it to run a strategy.
-            mosflm_rot = str(self.preferences.get("mosflm_rot", "0.0"))
-            mosflm_seg = str(self.preferences.get("mosflm_seg", "1"))
-            mosflm_st = str(self.preferences.get("mosflm_start", "0.0"))
-            mosflm_end = str(self.preferences.get("mosflm_end", "360.0"))
+            mosflm_rot = self.preferences.get("mosflm_rot", 0.0)
+            mosflm_seg = self.preferences.get("mosflm_seg", 1)
+            mosflm_st = self.preferences.get("mosflm_start", 0.0)
+            mosflm_end = self.preferences.get("mosflm_end", 360.0)
 
             # Does the user request a start or end range?
             range1 = False
-            if mosflm_st != "0.0":
+            if mosflm_st != 0.0:
                 range1 = True
-            if mosflm_end != "360.0":
+            if mosflm_end != 360.0:
                 range1 = True
             if range1:
-                if mosflm_rot == "0.0":
+                if mosflm_rot == 0.0:
                     # mosflm_rot = str(360/float(xutils.symopsSG(self,xutils.getMosflmSG(self))))
                     mosflm_rot = str(360/float(xutils.symopsSG(self, xutils.getLabelitCell(self, "sym"))))
             # Save info from previous data collections.
@@ -952,15 +963,15 @@ class RapdPlugin(Process):
                         new_line += "MATRIX %s\nSTRATEGY start %s end %s PARTS %s\nGO\n" %  d(ref_data[x][0], ref_data[x][1], ref_data[x][2], len(ref_data)+1)
                     new_line += "MATRIX %s.mat\n"%self.index_number
                 if range1:
-                    new_line += "STRATEGY START %s END %s\nGO\n" % (mosflm_st, mosflm_end)
-                    new_line += "ROTATE %s SEGMENTS %s %s\n" % (mosflm_rot, mosflm_seg, l[i][2])
+                    new_line += "STRATEGY START %.2f END %.2f\nGO\n" % (mosflm_st, mosflm_end)
+                    new_line += "ROTATE %.2f SEGMENTS %d %s\n" % (mosflm_rot, mosflm_seg, l[i][2])
                 else:
                     if mosflm_rot == "0.0":
                         new_line += "STRATEGY AUTO %s\n"%l[i][2]
                     elif mosflm_seg != "1":
-                        new_line += "STRATEGY AUTO ROTATE %s SEGMENTS %s %s\n" % (mosflm_rot, mosflm_seg, l[i][2])
+                        new_line += "STRATEGY AUTO ROTATE %.2f SEGMENTS %d %s\n" % (mosflm_rot, mosflm_seg, l[i][2])
                     else:
-                        new_line += "STRATEGY AUTO ROTATE %s %s\n" % (mosflm_rot, l[i][2])
+                        new_line += "STRATEGY AUTO ROTATE %.2f %s\n" % (mosflm_rot, l[i][2])
                 new_line += "GO\nSTATS\nEXIT\neof\n"
                 if self.test == False:
                     new = open(l[i][0], "w")
@@ -1469,7 +1480,7 @@ class RapdPlugin(Process):
 
         # Run through all the results - compile them
         for iteration, result in self.labelit_results.iteritems():
-            if isinstance(result.get("Labelit results"), dict):
+            if isinstance(result["Labelit results"], dict):
                 labelit_result = result.get("Labelit results")
                 # Check for pseudotranslation in any Labelit run
                 if labelit_result.get("pseudotrans") == True:
@@ -1521,7 +1532,7 @@ class RapdPlugin(Process):
         sym = sg_dict[highest]
 
         # If there is a solution...
-        if sym != 0:
+        if sym != '0':
             self.logger.debug("The sorted labelit solution was #%s", highest)
 
             # Save best results in corect place.
@@ -1533,7 +1544,7 @@ class RapdPlugin(Process):
 
             # Set self.labelit_dir and go to it.
             self.labelit_dir = os.path.join(self.working_dir, str(highest))
-            # pprint(self.labelit_results)
+            pprint(self.labelit_results)
             self.index_number = self.labelit_results.get("Labelit results").get("mosflm_index")
             os.chdir(self.labelit_dir)
             if self.spacegroup != False:
@@ -1559,7 +1570,8 @@ class RapdPlugin(Process):
             self.tprint(arg="\nHighest symmetry Labelit result",
                         level=98,
                         color="blue",
-                        newline=False)
+                        #newline=False)
+                        )
             for line in self.labelit_results["Labelit results"]["output"][5:]:
                 self.tprint(arg="  %s" % line.rstrip(), level=98, color="white")
             # pprint.pprint(self.labelit_results["Labelit results"]["output"])
@@ -1835,9 +1847,14 @@ class RapdPlugin(Process):
             # json_output = json.dumps(self.results).replace("\\n", "")
             # if self.preferences.get("json", False):
             #     print json_output
+            del self.results['command']['site']
+            #pprint(self.results)
             self.write_json(self.results)
-            if self.controller_address:
-                rapd_send(self.controller_address, self.results)
+            json_results = json.dumps(self.results)
+            self.redis.lpush("RAPD_RESULTS", json_results)
+            self.redis.publish("RAPD_RESULTS", json_results)
+            #if self.controller_address:
+            #    rapd_send(self.controller_address, self.results)
             self.tprint(arg=100, level="progress")
         except:
             self.logger.exception("**Could not send results to pipe**")
@@ -1969,7 +1986,7 @@ class RunLabelit(Process):
       		     'c': 0.0,
       		     'gamma': 0.0,
       		     'multiprocessing': 'True',
-      		     'sample_type': 'Protein'},
+      		     'sample_type': 'protein'},
             'return_address': ('127.0.0.1', 50000)}
     	"""
 
@@ -1998,7 +2015,7 @@ class RunLabelit(Process):
         self.preferences = command["preferences"]
         self.site_parameters = command.get("site_parameters", {})
         #self.controller_address = command["return_address"]
-        self.controller_address = False
+        #self.controller_address = False
 
         # params
         self.test = params.get("test", False)
@@ -2052,7 +2069,7 @@ class RunLabelit(Process):
         if self.preferences.has_key("multiprocessing"):
             if self.preferences.get("multiprocessing") == "False":
                 self.multiproc = False
-        self.sample_type = self.preferences.get("sample_type", "Protein")
+        self.sample_type = self.preferences.get("sample_type", "protein").lower()
 
         self.spacegroup = self.preferences.get("spacegroup", False)
         if self.spacegroup != False:
@@ -2153,23 +2170,21 @@ class RunLabelit(Process):
 
         if self.verbose:
             self.logger.debug('RunLabelit::preprocess_labelit')
-        
-        print self.preferences
 
         # try:
-        twotheta = str(self.header.get("twotheta", "0"))
+        twotheta = self.header.get("twotheta", 0.0)
         #distance       = str(self.header.get('distance'))
         #x_beam         = str(self.preferences.get('x_beam', self.header.get('beam_center_x'))) #OLD
         #Once we figure out the beam center issue, I can switch to this.
 	      #x_beam         = str(self.header.get('beam_center_calc_x', self.header.get('beam_center_x')))
         #y_beam         = str(self.header.get('beam_center_calc_y', self.header.get('beam_center_y')))
-        x_beam = str(self.header.get("x_beam"))
-        y_beam = str(self.header.get("y_beam"))
+        x_beam = self.header.get("x_beam")
+        y_beam = self.header.get("y_beam")
         # x_beam         = str(self.header.get('beam_center_x'))
         # y_beam         = str(self.header.get('beam_center_y'))
 
         # If an override beam center is provided, use it
-        if self.preferences["x_beam"]:
+        if self.preferences.has_key("x_beam"):
             x_beam = self.preferences["x_beam"]
             y_beam = self.preferences["y_beam"]
             self.tprint("  Using override beam center %s, %s" % (x_beam, y_beam), 10, "white")
@@ -2192,27 +2207,27 @@ class RunLabelit(Process):
                 preferences.write('distl_maximum_number_spots_for_indexing=600\n')
 
             # If user wants to change the res limit for autoindexing.
-            if str(self.preferences.get('index_hi_res', '0.0')) != '0.0':
+            if self.preferences.get('index_hi_res', 0.0) != 0.0:
                 #preferences.write('distl.res.outer='+index_hi_res+'\n')
-                preferences.write('distl_highres_limit=%s\n' % self.preferences.get('index_hi_res'))
+                preferences.write('distl_highres_limit=%.2f\n' % self.preferences.get('index_hi_res'))
 
             # Always specify the beam center.
             # If Malcolm flips the beam center in the image header...
             if self.preferences.get("beam_flip", False) == True:
-                preferences.write("autoindex_override_beam=(%s, %s)\n" % (y_beam, x_beam))
+                preferences.write("autoindex_override_beam=(%.2f, %.2f)\n" % (y_beam, x_beam))
             else:
                 # print x_beam, y_beam
-                preferences.write("autoindex_override_beam=(%s, %s)\n" % (x_beam, y_beam))
+                preferences.write("autoindex_override_beam=(%.2f, %.2f)\n" % (x_beam, y_beam))
 
             # If two-theta is being used, specify the angle and distance correctly.
-            if twotheta.startswith('0'):
-                preferences.write('beam_search_scope=%f\n' %
+            if twotheta == 0.0:
+                preferences.write('beam_search_scope=%.2f\n' %
                                   self.preferences.get("beam_search", 0.2))
             else:
                 self.twotheta = True
-                preferences.write('beam_search_scope=%f\n' %
+                preferences.write('beam_search_scope=%.2f\n' %
                                   self.preferences.get("beam_search", 0.2))
-                preferences.write('autoindex_override_twotheta=%s\n'%twotheta)
+                preferences.write('autoindex_override_twotheta=%.2f\n'%twotheta)
                 # preferences.write('autoindex_override_distance='+distance+'\n')
             preferences.close()
 
@@ -2313,7 +2328,7 @@ rerunning.\n" % spot_count)
             command += 'sublattice_allow=False '
 
         # For peptide crystals. Doesn't work that much.
-        if self.sample_type == 'Peptide':
+        if self.sample_type == 'peptide':
             command += 'codecamp.maxcell=80 codecamp.minimum_spot_count=10 '
         if inp:
             command += '%s ' % inp

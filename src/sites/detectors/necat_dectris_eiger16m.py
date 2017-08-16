@@ -399,4 +399,5 @@ if __name__ == "__main__":
 
     # Execute code
     #main(args=commandline_args)
-    get_alt_path('/epu/rdma/gpfs2/users/wvu/robart_E_2985/images/robart/runs/F_2/F_2_1_000001/F_2_1_000287.cbf')
+    #get_alt_path('/epu/rdma/gpfs2/users/wvu/robart_E_2985/images/robart/runs/F_2/F_2_1_000001/F_2_1_000287.cbf')
+    base_read_header('/gpfs2/users/uw/butcher_E_3066/images/eric/snaps/7_5_PAIR_0_000008.cbf')
