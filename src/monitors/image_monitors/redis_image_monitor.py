@@ -49,7 +49,7 @@ class Monitor(threading.Thread):
 
     # Storage for where to look for information
     tags = []
-    image_lists = []
+    # image_lists = []
 
     # Overwatch
     ow_registrar = None
@@ -98,8 +98,8 @@ class Monitor(threading.Thread):
                 self.tags.append(site_id.upper())
 
         # Figure out where we are going to look
-        for tag in self.tags:
-            self.image_lists.append(("images_collected:"+tag, tag))
+        # for tag in self.tags:
+        #     self.image_lists.append(("images_collected:"+tag, tag))
 
     def stop(self):
         """Stop the process of polling the redis instance"""
@@ -154,10 +154,8 @@ class Monitor(threading.Thread):
 
                 for tag in self.tags:
 
-                    print "rpop images_collected_%s" % tag
-
                     # Try to pop the oldest image off the list
-                    new_image = self.redis.rpop("images_collected_%s" % tag)
+                    new_image = self.redis.rpop("images_collected:%s" % tag)
 
                     # Have a new_image
                     if new_image:
