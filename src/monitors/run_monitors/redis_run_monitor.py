@@ -169,8 +169,6 @@ class Monitor(threading.Thread):
                         self.notify({"message_type":"NEWRUN",
                                      "run_data":run_data,
                                      "site_tag":site_tag})
-                        # self.notify(("NEWRUN", {"run_data":run_data,
-                        #                         "site_tag":site_tag}))
 
                         self.logger.debug("New run data %s", raw_run_data)
 

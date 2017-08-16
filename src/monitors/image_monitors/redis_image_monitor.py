@@ -81,7 +81,7 @@ class Monitor(threading.Thread):
         self.get_tags()
 
         # Start the thread
-        self.daemon = True
+        # self.daemon = True
         self.start()
 
     def get_tags(self):
@@ -164,6 +164,8 @@ class Monitor(threading.Thread):
                         self.notify({"message_type":"NEWIMAGE",
                                      "fullname":new_image,
                                      "site_tag":tag})
+
+                        self.logger.debug("New image data %s", new_image)
 
                     # Slow it down a little
                     time.sleep(POLLING_REST)
