@@ -464,7 +464,9 @@ class Model(object):
                         )
 
                     # Add to the database
-                    image_status = self.database.add_image(data=header, return_type="boolean")
+                    image_id = self.database.add_image(data=header, return_type="id")
+
+                    header["_id"] = image_id
 
                     # Send to be processed
                     self.new_data_image(header=header)
@@ -922,8 +924,10 @@ class Model(object):
                                                                  data_root_dir=data_root_dir)
 
             # Add the ID entry to the header dict
-            header.update({"plugin_process_id":plugin_process_id,
-                           "repr":new_repr})
+            header.update({"repr":new_repr})
+
+            # Pop out the run data
+            run_data = header.pop("run")
 
             # Run an echo to make sure everything is up
             command = {
@@ -932,12 +936,15 @@ class Model(object):
                     "process_id":plugin_process_id,
                     "session_id":session_id,
                     "status":0,
-                    "type":"plugin"
+                    "type":"plugin",
+                    "image_id":header.get("_id"),
+                    "run_id":run_data.get("_id"),
+                    "session_id":session_id
                     },
                 "directories":directories,
                 "data": {
                     "image_data":header,
-                    "run_data":header.pop("run")
+                    "run_data":run_data
                 },
                 "site_parameters":self.site.BEAM_INFO[header["site_tag"]],
                 "preferences":{
