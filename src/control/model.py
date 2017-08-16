@@ -73,7 +73,7 @@ class Model(object):
     database = None
 
     server = None
-    return_address = None
+    # return_address = None
 
     image_monitor = None
     run_monitor = None
@@ -98,12 +98,11 @@ class Model(object):
         self.overwatch_id = overwatch_id
 
         # Instance variables
-        try:
-            self.return_address = (get_ip_address(), SITE.CONTROL_PORT)
-        except socket.gaierror:
-            self.return_address = ("127.0.0.1", SITE.CONTROL_PORT)
+        # try:
+        #     self.return_address = (get_ip_address(), SITE.CONTROL_PORT)
+        # except socket.gaierror:
+        #     self.return_address = ("127.0.0.1", SITE.CONTROL_PORT)
 
-        self.logger.debug("self.return_address:%s", self.return_address)
 
         # Start the process
         self.run()
@@ -275,7 +274,7 @@ class Model(object):
             cloud_monitor = importlib.import_module("%s" % site.CLOUD_MONITOR.lower())
             self.cloud_monitor = cloud_monitor.CloudMonitor(database=self.database,
                                                             settings=site.CLOUD_MONITOR_SETTINGS,
-                                                            reply_settings=self.return_address,
+                                                            reply_settings=False,
                                                             interval=site.CLOUD_INTERVAL)
 
     def init_site_adapter(self):
@@ -832,7 +831,7 @@ class Model(object):
                                           "header2":header2,
                                           "site_parameters":self.site.BEAM_INFO[header1["site_tag"]],
                                           "preferences":{},
-                                          "return_address":self.return_address},
+                                          "return_address":False},
                                  launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
                                  settings=None)
 
