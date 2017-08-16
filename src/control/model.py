@@ -889,18 +889,8 @@ class Model(object):
             }
             self.send_command(command, "RAPD_JOBS")
 
-            # # Connect to the server and autoindex the single image
-            # LaunchAction(command={"command":"INTEGRATE",
-            #                       "process":{"plugin_process_id":plugin_process_id,
-            #                                  "session_id":session_id},
-            #                       "directories":directories,
-            #                       "image_data":header,
-            #                       "run_data":run_dict,
-            #                       "site_parameters":self.site.BEAM_INFO[header["site_tag"]],
-            #                       "preferences":{},
-            #                       "return_address":self.return_address},
-            #              launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
-            #              settings=None)
+            # Set the run status
+            self.recent_runs[header["run_id"]]["status"] = "INTEGRATING"
 
     def get_session(self, header):
         """Get a session_id"""
