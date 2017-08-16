@@ -265,6 +265,7 @@ class Database(object):
                                                  "timestamp":datetime.datetime.utcnow()})
 
         return str(result.inserted_id)
+        self.logger.debug("DONE")
 
     def update_plugin_process(self,
                               plugin_process_id,

@@ -49,7 +49,6 @@ class Monitor(threading.Thread):
 
     # Storage for where to look for information
     tags = []
-    # image_lists = []
 
     # Overwatch
     ow_registrar = None
@@ -172,3 +171,5 @@ class Monitor(threading.Thread):
             # Have Registrar update status
             if self.overwatch_id:
                 self.ow_registrar.update()
+
+        self.logger.debug("Exit image monitor loop")
