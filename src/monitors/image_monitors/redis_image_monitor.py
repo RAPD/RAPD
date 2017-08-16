@@ -155,7 +155,7 @@ class Monitor(threading.Thread):
                 for tag in self.tags:
 
                     # Try to pop the oldest image off the list
-                    new_image = self.redis.rpop("images_collected:%s" % tag)
+                    new_image = self.redis.rpop("images_collected_%s" % tag)
 
                     # Have a new_image
                     if new_image:

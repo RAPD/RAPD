@@ -37,7 +37,7 @@ import tempfile
 import utils.convert_hdf5_cbf as convert_hdf5_cbf
 
 
-DETECTOR = "dectris_eiger9m"
+DETECTOR = "dectris_eiger16m"
 VENDROTYPE = "DECTRIS"
 
 # Taken from Dectris data
@@ -124,12 +124,27 @@ def read_header(image,
         "beam_y": ("^# Beam_xy\s*\([\d\.]+\,\s([\d\.]+)\) pixels", lambda x: float(x)),
         "osc_start": ("^# Start_angle\s*([\d\.]+)\s*deg", lambda x: float(x)),
         "osc_range": ("^# Angle_increment\s*([\d\.]*)\s*deg", lambda x: float(x)),
+        #"transmission": ("^# Filter_transmission\s*([\d\.]+)", lambda x: float(x)),
+        #"size1": ("X-Binary-Size-Fastest-Dimension:\s*([\d\.]+)", lambda x: int(x)),
+        #"size2": ("X-Binary-Size-Second-Dimension:\s*([\d\.]+)", lambda x: int(x)),
         }
 
-    rawdata = open(image,"rb").read(2048)
-    headeropen = 0
-    headerclose= rawdata.index("--CIF-BINARY-FORMAT-SECTION--")
-    header = rawdata[headeropen:headerclose]
+    count = 0
+    while (count < 10):
+        try:
+            # Use 'with' to make sure file closes properly. Only read header.
+            header = ""
+            with open(image, "rb") as raw:
+                for line in raw:
+                    header += line
+                    if line.count("X-Binary-Size-Padding"):
+                        break
+            break
+        except:
+            count +=1
+            if logger:
+                logger.exception('Error opening %s' % image)
+            time.sleep(0.1)
 
     # try:
     #tease out the info from the file name
@@ -158,6 +173,9 @@ def read_header(image,
             parameters[label] = pat[1](matches[-1])
         else:
             parameters[label] = None
+    if parameters.has_key('size1'):
+        if parameters['size1'] == 4150:
+            parameters['detector'] = 'Eiger-16M'
 
     pprint(parameters)
 
