@@ -890,7 +890,8 @@ class Model(object):
             self.send_command(command, "RAPD_JOBS")
 
             # Set the run status
-            self.recent_runs[header["run_id"]]["status"] = "INTEGRATING"
+            self.recent_runs[header["run_id"]]["rapd_status"] = "INTEGRATING"
+            # TODO - update database version of run as well
 
     def get_session(self, header):
         """Get a session_id"""
