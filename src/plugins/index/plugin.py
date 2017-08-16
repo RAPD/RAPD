@@ -28,12 +28,13 @@ __status__ = "Production"
 # This is an active rapd plugin
 RAPD_PLUGIN = True
 
-# This handler's request type
+# This plugin's types
+DATA_TYPE = "MX"
 PLUGIN_TYPE = "INDEX"
 PLUGIN_SUBTYPE = "CORE"
 
-# A unique UUID for this handler (uuid.uuid1().hex)
-ID = "3b3448aee4a811e59c0aac87a3333966"
+# A unique ID for this handler (uuid.uuid1().hex[:4])
+ID = "3b34"
 VERSION = "2.0.0"
 
 # Standard imports
@@ -995,6 +996,8 @@ class RapdPlugin(Process):
     def check_best_detector(self, detector):
         """Check that the detector we need is in the BEST configuration file"""
 
+        # print "check_best_detector", detector
+
         best_executable = subprocess.check_output(["which", "best"])
         detector_info = os.path.join(os.path.dirname(best_executable),
                                      "detector-inf.dat")
@@ -1004,7 +1007,6 @@ class RapdPlugin(Process):
         found = False
         for line in lines:
             # print line.rstrip()
-            #if line.startswith(detector):
             if line.startswith(detector+" "):
                 found = True
                 break
@@ -2395,7 +2397,6 @@ rerunning.\n" % spot_count)
             else:
                 self.labelit_tracker[iteration]=1
 
-
         # return a dict with the job and iteration
         return labelit_jobs
 
@@ -2457,7 +2458,7 @@ rerunning.\n" % spot_count)
                 "bad_input": {
                     "error": "Labelit did not like your input unit cell dimensions or SG.",
                     "execute1": functools.partial(self.process_labelit,
-                                                   overrides={"ignore_sublattice": True}),
+                                                  overrides={"ignore_sublattice": True}),
                     "execute2": functools.partial(self.process_labelit,
                                                  overrides={"ignore_user_cell": True,
                                                             "ignore_user_SG": True})
@@ -2539,21 +2540,19 @@ rerunning.\n" % spot_count)
                     # pprint(problem_actions)
                     # No recovery
                     #if "kill" in problem_actions:
-                    #    self.labelit_log[iteration].extend("\n%s\n" % error)
+                    #    self.labelit_log[iteration].extend("\n%s\n" % problem_action['error'])
                     #    self.labelit_results[iteration] = {"Labelit results": "FAILED"}
                     # Try to correct
                     #else:
                     #    if iteration <= self.iterations:
                     #        if "execute" in problem_actions:
                     #            problem_actions["execute"](iteration=iteration)
-                    
                     # If there is a potential fix, run it. Otherwise fail gracefully
                     if "execute%s"%self.labelit_tracker[iteration] in problem_actions:
                         problem_actions["execute%s"%self.labelit_tracker[iteration]](iteration=iteration)
                     else:
                          self.labelit_log[iteration].extend("\n%s\n" % problem_actions['error'])
                          self.labelit_results[iteration] = {"Labelit results": "FAILED"}
-
                 # No solution
                 else:
                     error = "Labelit failed to find solution."

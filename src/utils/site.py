@@ -202,4 +202,5 @@ if __name__ == "__main__":
 
     terminal_print = functools.partial(verbose_print, verbosity=2)
     determine_site()
-    determine_site("necat_C")
+    #determine_site("necat_C")
+    determine_site("necat_T")

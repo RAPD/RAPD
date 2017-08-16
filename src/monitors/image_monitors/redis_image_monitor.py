@@ -50,7 +50,6 @@ class Monitor(threading.Thread):
 
     # Storage for where to look for information
     tags = []
-    image_lists = []
 
     # Overwatch
     ow_registrar = None
@@ -83,7 +82,7 @@ class Monitor(threading.Thread):
         self.get_tags()
 
         # Start the thread
-        self.daemon = True
+        # self.daemon = True
         self.start()
 
     def get_tags(self):
@@ -99,8 +98,8 @@ class Monitor(threading.Thread):
                 self.tags.append(site_id.upper())
 
         # Figure out where we are going to look
-        for tag in self.tags:
-            self.image_lists.append(("images_collected:"+tag, tag))
+        # for tag in self.tags:
+        #     self.image_lists.append(("images_collected:"+tag, tag))
 
     def stop(self):
         """Stop the process of polling the redis instance"""
@@ -181,9 +180,13 @@ class Monitor(threading.Thread):
                                      "fullname":new_image,
                                      "site_tag":tag})
 
+                        self.logger.debug("New image data %s", new_image)
+
                     # Slow it down a little
                     time.sleep(POLLING_REST)
 
             # Have Registrar update status
             if self.overwatch_id:
                 self.ow_registrar.update()
+
+        self.logger.debug("Exit image monitor loop")

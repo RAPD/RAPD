@@ -26,6 +26,7 @@ import sys
 import importlib
 
 # RAPD imports
+
 from utils.site import read_secrets
 
 # Site ID - limited to 12 characters by MySQL
@@ -40,32 +41,6 @@ SECRETS = "sites.secrets_necat_t"
 read_secrets(SECRETS, sys.modules[__name__])
 
 # X-ray source characteristics
-# Flux of the beam
-"""
-BEAM_FLUX = 1.5E12
-# Size of the beam in microns
-BEAM_SIZE_X = 50
-BEAM_SIZE_Y = 20
-# Shape of the beam - ellipse, rectangle
-BEAM_SHAPE = "ellipse"
-# Shape of the attenuated beam - circle or rectangle
-BEAM_APERTURE_SHAPE = "circle"
-# Gaussian description of the beam for raddose
-BEAM_GAUSS_X = 0.03
-BEAM_GAUSS_Y = 0.01
-# Beam center calibration
-BEAM_CENTER_DATE = "2017-3-02"
-# Beamcenter equation coefficients (b, m1, m2, m3, m4, m5, m6)
-# Beamcenter equation coefficients (b, m1, m2, m3)
-BEAM_CENTER_X = (163.2757684023,
-                 0.0003178917,
-                 -5.0236657815e-06,
-                 5.8164218288e-09)
-BEAM_CENTER_Y = (155.1904879862,
-                 -0.0014631216,
-                 8.60559283424e-07,
-                 -2.5709929645e-10)
-"""
 # Keyed to ID
 BEAM_INFO = {
     "NECAT_T": {# Detector distance limits
@@ -152,7 +127,7 @@ CONTROL_LOCK_FILE = "/tmp/rapd2/lock/rapd_core.lock"
 # Control settings
 # Port for core process to listen on
 #CORE_PORT = 50001
-CONTROL_PORT = 50001
+#CONTROL_PORT = 50001
 
 # Database to use for control operations. Options: "mysql"
 #CONTROL_DATABASE = "mysql"
@@ -181,7 +156,6 @@ DETECTOR_SUFFIX = ".cbf"
 #IMAGE_MONITOR = "sites.image_monitors.necat_e"
 IMAGE_MONITOR = "sites.monitors.image_monitors.necat_e"
 
-
 # Redis databse
 # Running in a cluster configuration - True || False
 IMAGE_MONITOR_REDIS_CLUSTER = REDIS_CLUSTER
@@ -195,6 +169,7 @@ IMAGE_IGNORE_DIRECTORIES = (
     "/gpfs5/users/necat/phii_rastersnap_scan_data",
     "/gpfs5/users/necat/phii_dfa_scan_data",
     "/gpfs5/users/necat/phii_ova_scan_data",
+    "/gpfs5/users/necat/rapd/uranium/trunk/test_data",
     "/epu/rdma/gpfs5/users/necat/rapd/uranium/trunk/test_data",
     "/epu/rdma/gpfs5/users/necat/phii_dfa_1/in",
     "/epu/rdma/gpfs5/users/necat/phii_dfa_2/in",
@@ -299,6 +274,7 @@ RUN_MONITOR_SETTINGS = {"REDIS_CLUSTER" : REDIS_CLUSTER,
                           "REDIS_PORT":REDIS_PORT,
                           "REDIS_DB":REDIS_DB,
                           }
+
 
 CLOUD_MONITOR_SETTINGS = {
         "CLOUD_BINARY_MERGE_HANDLER":CLOUD_BINARY_MERGE_HANDLER,
@@ -807,4 +783,5 @@ REMOTE_ADAPTER_SETTINGS = {"ID" : ID,
 #                       }
 #
 #
+
 

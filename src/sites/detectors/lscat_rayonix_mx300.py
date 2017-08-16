@@ -43,8 +43,10 @@ DETECTOR = "rayonix_mx300"
 VENDORTYPE = "MARCCD"
 DETECTOR_SN = 0
 DETECTOR_SUFFIX = ""
-IMAGE_TEMPLATE = "%s_%d.???"
-RUN_NUMBER_IN_TEMPLATE = True
+#IMAGE_TEMPLATE = "%s_%d.???"
+#RUN_NUMBER_IN_TEMPLATE = True
+IMAGE_TEMPLATE = "%s.???"
+RUN_NUMBER_IN_TEMPLATE = False
 HEADER_VERSION = 1
 
 # XDS info
@@ -104,8 +106,10 @@ def create_image_template(image_prefix, run_number):
     """
     Create an image template for XDS
     """
-
-    image_template = IMAGE_TEMPLATE % (image_prefix, run_number)
+    if run_number:
+        image_template = IMAGE_TEMPLATE % (image_prefix, run_number)
+    else:
+        image_template = IMAGE_TEMPLATE % image_prefix
 
     return image_template
 
@@ -293,17 +297,25 @@ def read_header(fullname, beam_settings={}):
 
     # Add tag for module to header
     header["rapd_detector_id"] = "lscat_rayonix_mx300"
-
+    """
     print basename
     print basename.split(".")
     print basename.split(".")[-2].split("_")
     # print "_".join(basename.split(".")[-2].split("_")[:-1])
     header["image_prefix"] ="_".join(basename.split(".")[-2].split("_")[:-1])
     print basename.split(".")[-2].split("_")[-1]
-    header["run_number"] = int(basename.split(".")[-2].split("_")[-1])
-
+    #header["run_number"] = int(basename.split(".")[-2].split("_")[-1])
+    header["run_number"] = basename.split(".")[-2].split("_")[-1]
+    """
+    # Get rid of run number since it is not mandatory at LSCAT.
+    header["image_prefix"] = basename.split(".")[-2]
+    header["run_number"] = None
+    #if basename.split(".")[-2].split("_") == 'S':
+        
+    
     # The image template for processing
-    header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])
+    #header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])
+    header["image_template"] = IMAGE_TEMPLATE %header["image_prefix"]
     header["run_number_in_template"] = RUN_NUMBER_IN_TEMPLATE
 
     # Add some values HACK

@@ -50,10 +50,13 @@ VENDORTYPE = "Eiger-9M"
 DETECTOR_SN = "Dectris Eiger 9M S/N E-18-0101"
 # The detector suffix "" if there is no suffix
 DETECTOR_SUFFIX = ".cbf"
-# Template for image name generation ? for frame number places
-IMAGE_TEMPLATE = "%s.%03d_??????.cbf" # prefix & run number
 # Is there a run number in the template?
-RUN_NUMBER_IN_TEMPLATE = True
+RUN_NUMBER_IN_TEMPLATE = False
+# Template for image name generation ? for frame number places
+if RUN_NUMBER_IN_TEMPLATE:
+    IMAGE_TEMPLATE = "%s.%03d_??????.cbf" # prefix & run number
+else:
+    IMAGE_TEMPLATE = "%s_??????.cbf" # prefix
 # This is a version number for internal RAPD use
 # If the header changes, increment this number
 HEADER_VERSION = 1
@@ -124,7 +127,10 @@ def parse_file_name(fullname):
     sbase = basename.split("_")
     prefix = "_".join(sbase[0:-2])
     image_number = int(sbase[-1])
-    run_number = int(sbase[-2])
+    if RUN_NUMBER_IN_TEMPLATE:
+        run_number = int(sbase[-2])
+    else:
+        run_number = None
     return directory, basename, prefix, run_number, image_number
 
 def create_image_fullname(directory,
@@ -140,8 +146,10 @@ def create_image_fullname(directory,
     run_number -- number for the run
     image_number -- number for the image
     """
-
-    filename = IMAGE_TEMPLATE.replace("??????", "%06d") % (image_prefix, run_number, image_number)
+    if RUN_NUMBER_IN_TEMPLATE:
+        filename = IMAGE_TEMPLATE.replace("??????", "%06d") % (image_prefix, run_number, image_number)
+    else:
+        filename = IMAGE_TEMPLATE.replace("??????", "%06d") % (image_prefix, image_number)
 
     fullname = os.path.join(directory, filename)
 
@@ -153,8 +161,10 @@ def create_image_template(image_prefix, run_number):
     """
 
     # print "create_image_template %s %d" % (image_prefix, run_number)
-
-    image_template = IMAGE_TEMPLATE % (image_prefix, run_number)
+    if RUN_NUMBER_IN_TEMPLATE:
+        image_template = IMAGE_TEMPLATE % (image_prefix, run_number)
+    else:
+        image_template = IMAGE_TEMPLATE % image_prefix
 
     # print "image_template: %s" % image_template
 
@@ -194,14 +204,21 @@ def read_header(input_file=False, beam_settings=False):
         header = detector.read_header(input_file)
 
         basename = os.path.basename(input_file)
-        header["image_prefix"] = ".".join(basename.replace(".cbf", "").split(".")[:-1])
-        header["run_number"] = int(basename.replace(".cbf", "").split("_")[-1])
+
+        #header["image_prefix"] = ".".join(basename.replace(".cbf", "").split(".")[:-1])
+        header["image_prefix"] ="_".join(basename.replace(".cbf", "").split("_")[:-1])
+        
+        # Add run_number (if used) and image template for processing
+        if RUN_NUMBER_IN_TEMPLATE:
+            header["run_number"] = int(basename.replace(".cbf", "").split("_")[-1])
+            header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])
+        else:
+            header["run_number"] = None
+            header["image_template"] = IMAGE_TEMPLATE % header["image_prefix"]
 
         # Add tag for module to header
         header["rapd_detector_id"] = "lscat_dectris_eiger9m"
 
-        # The image template for processing
-        header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])
         header["run_number_in_template"] = RUN_NUMBER_IN_TEMPLATE
 
     # Return the header

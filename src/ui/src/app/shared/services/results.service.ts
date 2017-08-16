@@ -60,7 +60,7 @@ export class ResultsService {
         break;
 
       case 'result_details':
-        self.result_details_subject.next(data);
+        self.result_details_subject.next(data.results);
         break;
 
       default:

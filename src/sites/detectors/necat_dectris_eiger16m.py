@@ -238,7 +238,7 @@ def base_read_header(image,
             return d
 
     #item:(pattern,transform)
-    header_items = header_items = {
+    header_items = {
         "beam_x": ("^# Beam_xy\s*\(([\d\.]+)\,\s[\d\.]+\) pixels", lambda x: float(x)),
         "beam_y": ("^# Beam_xy\s*\([\d\.]+\,\s([\d\.]+)\) pixels", lambda x: float(x)),
         "count_cutoff": ("^# Count_cutoff\s*(\d+) counts", lambda x: int(x)),
@@ -260,9 +260,11 @@ def base_read_header(image,
         "transmission": ("^# Filter_transmission\s*([\d\.]+)", lambda x: float(x)),
         "trim_file": ("^#\sTrim_file\:\s*([\w\.]+)", lambda x:str(x).rstrip()),
         "twotheta": ("^# Detector_2theta\s*([\d\.]*)\s*deg", lambda x: float(x)),
-        "wavelength": ("^# Wavelength\s*([\d\.]+) A", lambda x: float(x))
+        "wavelength": ("^# Wavelength\s*([\d\.]+) A", lambda x: float(x)),
+        "size1": ("X-Binary-Size-Fastest-Dimension:\s*([\d\.]+)", lambda x: int(x)),
+        "size2": ("X-Binary-Size-Second-Dimension:\s*([\d\.]+)", lambda x: int(x)),
         }
-    
+
     count = 0
     while (count < 10):
         try:

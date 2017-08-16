@@ -85,7 +85,7 @@ class Monitor(threading.Thread):
         self.get_tags()
 
         # Start the thread
-        self.daemon = True
+        # self.daemon = True
         self.start()
 
     def get_tags(self):
@@ -187,8 +187,6 @@ class Monitor(threading.Thread):
                         self.notify({"message_type":"NEWRUN",
                                      "run_data":run_data,
                                      "site_tag":site_tag})
-                        # self.notify(("NEWRUN", {"run_data":run_data,
-                        #                         "site_tag":site_tag}))
 
                         self.logger.debug("New run data %s", raw_run_data)
 

@@ -14,7 +14,13 @@ class MARImage(DetectorImageBase):
     def __init__(self, filename):
         """Initialize the instance"""
 
-        DetectorImageBase.__init__(self, filename)
+        # Make sure the image name is a string for iotbx
+        try:
+            image_str = unicodedata.normalize("NFKD", filename).encode("ascii", "ignore")
+        except TypeError:
+            image_str = filename
+
+        DetectorImageBase.__init__(self, image_str)
         # self.vendortype = "MARCCD"
 
         byte_order = str(open(self.filename, "rb").read(2))
@@ -246,7 +252,10 @@ def read_header(image,
         logger.debug("read_header %s", image)
 
     # Make sure the image name is a string for iotbx
-    image_str = unicodedata.normalize("NFKD", image).encode("ascii", "ignore")
+    try:
+        image_str = unicodedata.normalize("NFKD", image).encode("ascii", "ignore")
+    except TypeError:
+        image_str = image
 
     m = MARImage(image_str)
     m.read()
