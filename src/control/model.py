@@ -44,6 +44,7 @@ from bson import json_util
 from control.control_server import LaunchAction, ControllerServer
 from utils.modules import load_module
 from utils.site import get_ip_address
+
 # from rapd_console import ConsoleFeeder
 # from rapd_site import TransferToUI, TransferToBeamline, CopyToUser
 
@@ -103,7 +104,6 @@ class Model(object):
         # except socket.gaierror:
         #     self.return_address = ("127.0.0.1", SITE.CONTROL_PORT)
 
-
         # Start the process
         self.run()
 
@@ -139,13 +139,14 @@ class Model(object):
         # self.start_cloud_monitor()
 
         # Initialize the site adapter
-        # self.init_site_adapter()
+        self.init_site_adapter()
 
         # Initialize the remote adapter
         # self.init_remote_adapter()
-
+        
         # Launch an echo
         self.send_echo()
+
 
     def init_site(self):
         """Process the site definitions to set up instance variables"""
@@ -166,12 +167,21 @@ class Model(object):
         """Connect to the redis instance"""
 
         # Create a pool connection
-        pool = redis.ConnectionPool(host=self.site.CONTROL_REDIS_HOST,
-                                    port=self.site.CONTROL_REDIS_PORT,
-                                    db=self.site.CONTROL_REDIS_DB)
+        redis_database = importlib.import_module('database.rapd_redis_adapter')
+        
+        self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        if self.site.CONTROL_DATABASE_SETTINGS['REDIS_CONNECTION'] == 'pool':
+            # For a Redis pool connection
+            self.redis = self.redis_database.connect_redis_pool()
+        else:
+            # For a Redis sentinal connection
+            self.redis = self.redis_database.connect_redis_manager_HA()
+        
+    def stop_redis(self):
+        """Make a clean Redis disconnection if using a pool connection."""
+        self.logger.debug("Close Redis")
 
-        # The connection
-        self.redis = redis.Redis(connection_pool=pool)
+        self.redis_database.stop()
 
     def connect_to_database(self):
         """Set up database connection"""
@@ -184,10 +194,10 @@ class Model(object):
         site = self.site
 
         # Instantiate the database connection
-        self.database = database.Database(host=site.CONTROL_DATABASE_HOST,
-                                          port=site.CONTROL_DATABASE_PORT,
-                                          user=site.CONTROL_DATABASE_USER,
-                                          password=site.CONTROL_DATABASE_PASSWORD)
+        self.database = database.Database(host=site.CONTROL_DATABASE_SETTINGS['DATABASE_HOST'],
+                                          #port=site.DATABASE_SETTINGS['DB_PORT'],
+                                          user=site.CONTROL_DATABASE_SETTINGS['DATABASE_USER'],
+                                          password=site.CONTROL_DATABASE_SETTINGS['DATABASE_PASSWORD'])
 
     def start_server(self):
         """Start up the listening process for core"""
@@ -212,7 +222,8 @@ class Model(object):
 
         # A single detector
         if site.DETECTOR:
-            detector, suffix = site.DETECTOR
+            #detector, suffix = site.DETECTOR
+            detector = site.DETECTOR
             detector = detector.lower()
             self.detectors[self.site_ids[0].upper()] = load_module(
                 seek_module=detector,
@@ -227,6 +238,17 @@ class Model(object):
                     seek_module=detector,
                     directories=("sites.detectors", "detectors"))
 
+    def start_job_launcher_OLD(self):
+        """Start up the job launcher"""
+        self.logger.debug("Starting launcher")
+        
+        launcher = importlib.import_module("launch.rapd_launcher")
+        
+        self.launcher = launcher.Launcher(site=self.site,
+                                          tag="qsub",
+                                          logger=self.logger,
+                                          overwatch_id=self.overwatch_id)
+    
     def start_image_monitor(self):
         """Start up the image listening process for core"""
 
@@ -240,10 +262,15 @@ class Model(object):
             image_monitor = importlib.import_module("%s" % site.IMAGE_MONITOR.lower())
 
             # Instantiate the monitor
-            self.image_monitor = image_monitor.Monitor(
-                site=site,
-                notify=self.receive,
-                overwatch_id=self.overwatch_id)
+            self.image_monitor = image_monitor.Monitor( site=site,
+                                                        notify=self.receive,
+                                                        overwatch_id=self.overwatch_id)
+    def stop_image_monitor(self):
+        """Stop the image listening process for core"""
+
+        self.logger.debug("Stopping image monitor")
+        if self.site.IMAGE_MONITOR:
+            self.image_monitor.stop()
 
     def start_run_monitor(self):
         """Start up the run information listening process for core"""
@@ -261,6 +288,13 @@ class Model(object):
                                                    # Not using overwatch in run monitor
                                                    # could if we wanted to
                                                    overwatch_id=None)
+    
+    def stop_run_monitor(self):
+        """Stop the run information listening process for core"""
+
+        self.logger.debug("Stopping run monitor")
+        if self.site.RUN_MONITOR:
+            self.run_monitor.stop()
 
     def start_cloud_monitor(self):
         """Start up the cloud listening process for core"""
@@ -276,6 +310,11 @@ class Model(object):
                                                             settings=site.CLOUD_MONITOR_SETTINGS,
                                                             reply_settings=False,
                                                             interval=site.CLOUD_INTERVAL)
+
+    def stop_cloud_monitor(self):
+        """Stop the cloud listening process for core"""
+        if site.CLOUD_MONITOR:
+            self.cloud_monitor.stop()
 
     def init_site_adapter(self):
         """Initialize the connection to the site"""
@@ -346,6 +385,12 @@ class Model(object):
     def stop(self):
         """Stop the ImageMonitor,CloudMonitor and StatusRegistrar."""
         self.logger.info("Stopping")
+        
+        self.stop_redis()
+        self.stop_server()
+        self.stop_image_monitor()
+        self.stop_run_monitor()
+        #self.stop_cloud_monitor()
 
     def add_image(self, image_data):
         """
@@ -364,13 +409,18 @@ class Model(object):
         # Shortcut to detector
         detector = self.detectors[site_tag]
 
+        # Check if it exists. May have been deleted from RAMDISK
+        if os.path.isfile(fullname) in (False, None):
+            if self.site.ALT_IMAGE_LOCATIONS:
+                fullname = detector.get_alt_path(fullname)
+
         # Save some typing
         dirname = os.path.dirname(fullname)
 
-        # Directory is to be ignored
-        if dirname in self.site.IMAGE_IGNORE_DIRECTORIES:
-            self.logger.debug("Directory %s is marked to be ignored - skipping", dirname)
-            return True
+        for d in self.site.IMAGE_IGNORE_DIRECTORIES:
+            if dirname.startswith(d):
+                self.logger.debug("Directory %s is marked to be ignored - skipping", dirname)
+                return True
 
         # File contains an ingnore flag
         if any(ignore_string in fullname for ignore_string in self.site.IMAGE_IGNORE_STRINGS):
@@ -441,7 +491,7 @@ class Model(object):
 
             # Get all the image information
             try:
-                header = detector.read_header(fullname=fullname,
+                header = detector.read_header(input_file=fullname,
                                               beam_settings=self.site.BEAM_INFO[site_tag.upper()])
                 print "1"
                 pprint(header)
@@ -533,7 +583,10 @@ class Model(object):
         """
 
         # Query local runs in reverse chronological order
+        print 'len recent runs: %s'%len(self.recent_runs)
         for run_id, run in self.recent_runs.iteritems():
+            print 'run_id:%s'%run_id
+            print 'run: %s'%run
 
             self.logger.debug("_id:%s run:%s" % (run_id, str(run)))
 
@@ -721,6 +774,8 @@ class Model(object):
         header -- dict containing lots of image information
         """
 
+        self.logger.debug(header["fullname"])
+
         # Save some typing
         site = self.site
         data_root_dir = header["data_root_dir"]
@@ -772,20 +827,22 @@ class Model(object):
                 self.logger.debug("Potentially a pair of images")
 
                 # Break down the image name
-                directory1,
+                (directory1,
                 basename1,
                 prefix1,
                 run_number1,
-                image_number1 = detector.parse_file_name(self.pairs[site_tag][0][0])
+                image_number1) = self.detectors[site_tag].parse_file_name(self.pairs[site_tag][0][0])
 
-                directory2,
+                (directory2,
                 basename2,
                 prefix2,
                 run_number2,
-                image_number2 = detector.parse_file_name(self.pairs[site_tag][1][0])
+                image_number2) = self.detectors[site_tag].parse_file_name(self.pairs[site_tag][1][0])
 
                 # Everything matches up to the image number, which is incremented by 1
-                if (directory1, basename1, prefix1) == (directory2, basename2, prefix2) and (image_number1 == image_number2-1):
+                #if (directory1, basename1, prefix1) == (directory2, basename2, prefix2) and (image_number1 == image_number2-1):
+                ### Have to modify for /epu/rdma since each image are in their own directory.
+                if (basename1, prefix1) == (basename2, prefix2) and (image_number1 == image_number2-1):
                     self.logger.info("This looks like a pair to me: %s, %s",
                                      self.pairs[site_tag][0][0],
                                      self.pairs[site_tag][1][0])
@@ -911,6 +968,8 @@ class Model(object):
             # Determine group_id
             if self.site.GROUP_ID == "uid":
                 group_id = os.stat(header.get("data_root_dir")).st_uid
+            else:
+                group_id = None
 
             session_id = self.database.create_session(
                 data_root_dir=header.get("data_root_dir", None),

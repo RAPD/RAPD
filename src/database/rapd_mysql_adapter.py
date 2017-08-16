@@ -120,27 +120,6 @@ class Database(object):
                 attempts += 1
                 time.sleep(10)
 
-    def get_db_connection(self):
-        """
-        Returns a connection and cursor for interaction with the database.
-        """
-        attempts = 0
-        while attempts < MYSQL_ATTEMPTS:
-            try:
-                # Connect
-                connection = pymysql.connect(host=self.db_host,
-                                             port=self.db_port,
-                                             db="rapd",
-                                             user=self.db_user,
-                                             password=self.db_password)
-                cursor = connection.cursor()
-                cursor.execute("SET AUTOCOMMIT=1")
-                return(connection, cursor)
-            except:
-                self.logger.exception("Error connecting to MySQL server")
-                attempts += 1
-                time.sleep(10)
-
     def connect_to_user(self):
         """
         Returns a connection and cursor for interaction with the database.

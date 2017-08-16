@@ -24,6 +24,7 @@ __status__ = "Development"
 
 import logging
 import redis
+#import database.rapd_redis_adapter as redis_DB
 
 class Adapter(object):
     """

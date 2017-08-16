@@ -33,6 +33,7 @@ from collections import OrderedDict
 import os
 from pprint import pprint
 import re
+import time
 
 # RAPD imports
 # commandline_utils
@@ -176,13 +177,43 @@ def get_data_root_dir(fullname):
     Keyword arguments
     fullname -- the full path name of the image file
     """
+    path_split    = fullname.split(os.path.sep)
+    data_root_dir = False
 
-    # Isolate distinct properties of the images path
-    path_split = fullname.split(os.path.sep)
-    data_root_dir = os.path.join("/", *path_split[1:3])
+    gpfs   = False
+    users  = False
+    inst   = False
+    group  = False
+    images = False
+    
+    for p in path_split:
+        if p.startswith('gpfs'):
+            st = path_split.index(p)
+    if path_split[st].startswith("gpfs"):
+        gpfs = path_split[st]
+        if path_split[st+1] == "users":
+            users = path_split[st+1]
+            if path_split[st+2]:
+                inst = path_split[st+2]
+                if path_split[st+3]:
+                    group = path_split[st+3]
 
-    # Return the determined directory
+    if group:
+        data_root_dir = os.path.join("/",*path_split[1:st+4])
+    elif inst:
+        data_root_dir = os.path.join("/",*path_split[1:st+3])
+    else:
+        data_root_dir = False
+
+    #return the determined directory
     return data_root_dir
+
+def get_alt_path(image):
+    """Pass back the alternate path of image located in long term storage."""
+    dirname, imagename = os.path.split(image)
+    newdir = dirname.replace('/epu/rdma','')[:dirname.rfind('/')]
+    newpath = os.path.join(newdir[:newdir.rfind('/')], imagename)
+    return newpath
 
 def base_read_header(image,
                      logger=False):
@@ -196,6 +227,8 @@ def base_read_header(image,
 
     # Make sure the image is a full path image
     image = os.path.abspath(image)
+    #tease out the info from the file name
+    base = os.path.basename(image).rstrip(".cbf")
 
     def mmorm(x):
         d = float(x)
@@ -249,10 +282,6 @@ def base_read_header(image,
                 logger.exception('Error opening %s' % image)
             time.sleep(0.1)
 
-    # try:
-    #tease out the info from the file name
-    base = os.path.basename(image).rstrip(".cbf")
-
     parameters = {
         "fullname": image,
         "detector": "Eiger-16M",
@@ -277,7 +306,7 @@ def base_read_header(image,
         else:
             parameters[label] = None
 
-    # pprint(parameters)
+    pprint(parameters)
 
     # Put beam center into RAPD format mm
     parameters["x_beam"] = parameters["beam_y"] * parameters["pixel_size"]
@@ -317,6 +346,7 @@ def read_header(input_file=False, beam_settings=False):
     # The image template for processing
     header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])
     header["run_number_in_template"] = RUN_NUMBER_IN_TEMPLATE
+    header['data_root_dir'] = get_data_root_dir(input_file)
 
     # Return the header
     return header
@@ -367,7 +397,9 @@ def main(args):
 if __name__ == "__main__":
 
     # Get the commandline args
-    commandline_args = get_commandline()
+    #commandline_args = get_commandline()
 
     # Execute code
-    main(args=commandline_args)
+    #main(args=commandline_args)
+    #get_alt_path('/epu/rdma/gpfs2/users/wvu/robart_E_2985/images/robart/runs/F_2/F_2_1_000001/F_2_1_000287.cbf')
+    base_read_header('/gpfs2/users/uw/butcher_E_3066/images/eric/snaps/7_5_PAIR_0_000008.cbf')

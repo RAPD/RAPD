@@ -79,11 +79,12 @@ class Launch(object):
         self.load_plugin(self.command.get("command"))
 
         # Run the plugin
-        plugin = self.plugin.RapdPlugin(command=self.command,
+        plugin = self.plugin.RapdPlugin(site=self.site,
+                                        command=self.command,
                                         tprint=False,
                                         logger=self.logger)
 
-        plugin.start()
+        #plugin.start()
 
     def load_command(self):
         """
@@ -103,7 +104,6 @@ class Launch(object):
         Keyword arguments
         command -- the command to be run (index+strategy for example)
         """
-
         # plugin directories we are looking for
         directories = []
         for directory in self.site.RAPD_PLUGIN_DIRECTORIES:
@@ -120,7 +120,8 @@ class Launch(object):
         """
 
         # Derive definitions for log file
-        logfile_dir = os.path.dirname(self.command_file)
+        # = os.path.dirname(self.command_file)
+        logfile_dir = self.site.LOGFILE_DIR
         logfile_id = os.path.basename(self.command_file).replace(".rapd", "")
 
         # Instantiate a logger at verbose level
@@ -191,7 +192,8 @@ def main():
 
     logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
                                   logfile_id="rapd_launch",
-                                  level=log_level)
+                                  #level=log_level
+                                  )
 
     logger.debug("Commandline arguments:")
     for pair in commandline_args._get_kwargs():

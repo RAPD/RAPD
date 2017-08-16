@@ -29,6 +29,7 @@ __status__ = "Production"
 import argparse
 import importlib
 import sys
+import time
 
 # RAPD imports
 import utils.commandline
@@ -83,7 +84,7 @@ def main():
     # print "Importing %s" % site_file
     SITE = importlib.import_module(site_file)
 
-	# Single process lock?
+    # Single process lock?
     utils.lock.file_lock(SITE.CONTROL_LOCK_FILE)
 
     # Set up logging
@@ -93,7 +94,8 @@ def main():
         log_level = SITE.LOG_LEVEL
     logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
                                   logfile_id="rapd_control",
-                                  level=log_level)
+                                  #level=log_level
+                                  )
 
     logger.debug("Commandline arguments:")
     for pair in commandline_args._get_kwargs():
@@ -102,6 +104,13 @@ def main():
     # Instantiate the model
     MODEL = Model(SITE=SITE,
                   overwatch_id=commandline_args.overwatch_id)
+
+    try:
+      while 1:
+        time.sleep(100)
+    except KeyboardInterrupt:
+        # Close everything cleanly
+        MODEL.stop()
 
 
 if __name__ == "__main__":

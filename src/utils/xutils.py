@@ -38,7 +38,8 @@ from iotbx import pdb as iotbx_pdb
 import iotbx.pdb.mmcif as iotbx_mmcif
 
 # RAPD imports
-import agents.subcontractors.parse as Parse
+#import plugins.subcontractors.parse as Parse
+
 
 bravais   = ['1', '5', '3', '22', '23', '21', '16', '79', '75', '143', '146', '196', '197', '195']
 
@@ -357,10 +358,10 @@ def calcTotResNumber(self, volume):
     checkVolume(self,volume)
     content = 1 - float(self.solvent_content)
     #Calculate number of residues based on solvent content in volume of cell.
-    if self.sample_type == 'Protein':
+    if self.sample_type == 'protein':
       #based on average MW of residue = 110 DA
       return(int((float(volume)*float(content))/135.3))
-    elif self.sample_type == 'DNA':
+    elif self.sample_type == 'dna':
       #based on average MW of residue = 330 DA
       return(int((float(volume)*float(content))/273.9))
     else:
@@ -504,11 +505,12 @@ def changeIns(self):
   except:
     self.logger.exception('**Error in Utils.ChangeIns**')
 
+"""
 def checkAnom(self):
-  """
-  Check to see if anomalous signal is present in data. Should modify to just
-  read the SHELXC results instead of running it before.
-  """
+  
+  #Check to see if anomalous signal is present in data. Should modify to just
+  #read the SHELXC results instead of running it before.
+  
   try:
     signal = False
     #cc_anom   = self.data.get('original').get('cc_anom')
@@ -520,20 +522,18 @@ def checkAnom(self):
         slope = line.split()[5]
       if line.startswith('  DelAnom correlation'):
         cc_anom = line.split()[4]
-      """
-      if line.startswith('  Multiplicity'):
-        mult = line.split()[1]
-      if line.startswith('  Anomalous completeness'):
-        comp_anom = line.split()[2]
-      if line.startswith('  Anomalous multiplicity'):
-        mult_anom = line.split()[2]
-      if line.startswith('  Rmerge    '):
-        r = line.split()[1]
-      if line.startswith('  Rpim (within'):
-        rpim_anom = line.split()[3]
-      if line.startswith('  Rpim (all'):
-        rpim = line.split()[5]
-      """
+      #if line.startswith('  Multiplicity'):
+      #  mult = line.split()[1]
+      #if line.startswith('  Anomalous completeness'):
+      #  comp_anom = line.split()[2]
+      #if line.startswith('  Anomalous multiplicity'):
+      #  mult_anom = line.split()[2]
+      #if line.startswith('  Rmerge    '):
+      #  r = line.split()[1]
+      #if line.startswith('  Rpim (within'):
+      #  rpim_anom = line.split()[3]
+      #if line.startswith('  Rpim (all'):
+      #  rpim = line.split()[5]
     if float(comp) > 70:
       if float(slope) > 1:
         if float(cc_anom) > 0.1:
@@ -566,7 +566,7 @@ def checkAnom(self):
     self.logger.exception('**ERROR in Utils.checkAnom**')
     Parse.setShelxResults(self)
     return(False)
-
+  """
 def checkInverse(self, inp):
     """
     Check if inverse SG is possible.
@@ -631,7 +631,7 @@ def checkVolume(self,volume):
   try:
     #if float(volume) > 50000000.0: #For 70S
     if float(volume) > 25000000.0: #For 30S
-      self.sample_type = 'Ribosome'
+      self.sample_type = 'ribosome'
       self.solvent_content = 0.64
   except:
     self.logger.exception('**Error in Utils.checkVolume**')
@@ -644,11 +644,11 @@ def check_volume(volume):
         solvent_content = 0.64
 
     return (sample_type, solvent_content)
-
+"""
 def checkXparm(self):
-  """
-  Check if XPARM.XDS has the same SG and similar cell to GXPARM.XDS. For multiruns.py.
-  """
+  
+  #Check if XPARM.XDS has the same SG and similar cell to GXPARM.XDS. For multiruns.py.
+  
   if self.verbose:
     self.logger.debug('Utilities::checkXparm')
 
@@ -660,7 +660,7 @@ def checkXparm(self):
         os.rename('GXPARM.XDS','GXPARM1.XDS')
       os.rename('XPARM.XDS','XPARM_orig.XDS')
       shutil.copy(self.gxparm,os.path.join(os.getcwd(),'XPARM.XDS'))
-
+"""
 def cleanPDB(self,inp):
   """
   Get rid of HETATM, ANISOU, and water lines in pdb file.
@@ -1241,7 +1241,8 @@ def errorLabelit(self, iteration):
             preferences.write('distl.minimum_signal_height=4.3\n')
         preferences.close()
         self.labelit_log[str(iteration)] = ['\nLooking for long unit cell.\n']
-        self.tprint("\n    Looking for long unit cell", level=30, color="white", newline=False)
+        #self.tprint("\n    Looking for long unit cell", level=30, color="white", newline=False)
+        self.tprint("\n    Looking for long unit cell", level=30, color="white")
         self.logger.debug('Looking for long unit cell.')
 
     elif iteration == 2:
@@ -1249,7 +1250,8 @@ def errorLabelit(self, iteration):
         preferences.write('distl.minimum_spot_height=6\n')
         preferences.close()
         self.labelit_log[str(iteration)] = ['\nChanging settings to look for stronger peaks (ie. small molecule).\n']
-        self.tprint("\n    Looking for stronger peaks (ie. small molecule)", level=30, color="white", newline=False)
+        #self.tprint("\n    Looking for stronger peaks (ie. small molecule)", level=30, color="white", newline=False)
+        self.tprint("\n    Looking for stronger peaks (ie. small molecule)", level=30, color="white")
         self.logger.debug('Changing settings to look for stronger peaks (ie. small molecule).')
 
     elif iteration == 3:
@@ -1264,7 +1266,8 @@ def errorLabelit(self, iteration):
             preferences.write('distl.minimum_signal_height=1.2\n')
         preferences.close()
         self.labelit_log[str(iteration)] = ['\nLooking for weak diffraction.\n']
-        self.tprint("\n    Looking for weak diffraction", level=30, color="white", newline=False)
+        #self.tprint("\n    Looking for weak diffraction", level=30, color="white", newline=False)
+        self.tprint("\n    Looking for weak diffraction", level=30, color="white")
         self.logger.debug('Looking for weak diffraction.')
 
     elif iteration == 4:
@@ -1281,7 +1284,8 @@ def errorLabelit(self, iteration):
             self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 8.\n']
             area = 8
         preferences.close()
-        self.tprint("\n    Setting spot picking level to %d" % area, level=30, color="white", newline=False)
+        #self.tprint("\n    Setting spot picking level to %d" % area, level=30, color="white", newline=False)
+        self.tprint("\n    Setting spot picking level to %d" % area, level=30, color="white")
         self.logger.debug('Setting spot picking level to 3 or 8.')
 
     elif iteration == 5:
@@ -1301,7 +1305,8 @@ def errorLabelit(self, iteration):
             self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 6 and resolution to 5.\n']
             setting = (6, 5)
         preferences.close()
-        self.tprint("\n    Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white", newline=False)
+        #self.tprint("\n    Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white", newline=False)
+        self.tprint("\n    Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white")
         self.logger.debug('Setting spot picking level to 2 or 6.')
 
     return self.process_labelit(iteration)
@@ -3350,31 +3355,29 @@ def set_phaser_res(res, large_cell, dres):
             elif 4.5 < res < 6.0:
               res = 4.5
     return res
-
+"""
 def setCellSymXDS(self):
-  """
-  Set the cell and sym from the GXPARM file to the XDS.INP.
-  """
+  
+  #Set the cell and sym from the GXPARM file to the XDS.INP.
+  
   if self.verbose:
     self.logger.debug('Utilities::setCellSymXDS')
   try:
     run = True
     #Check if GXPARM and XPARM have same SG. If not copy GXPARM over.
     gxparm = Parse.ParseOutputGxparm(self,open(self.gxparm,'r').readlines(),True)
-    """
-    if os.path.exists('XPARM.XDS'):
-      #local_gxparm = Parse.ParseOutputGxparm(self,open('GXPARM.XDS','r').readlines(),True)
-      xparm = Parse.ParseOutputGxparm(self,open('XPARM.XDS','r').readlines(),True)
-      #if int(gxparm[0]) != int(xparm[0]):
+    #if os.path.exists('XPARM.XDS'):
+    #  #local_gxparm = Parse.ParseOutputGxparm(self,open('GXPARM.XDS','r').readlines(),True)
+    #  xparm = Parse.ParseOutputGxparm(self,open('XPARM.XDS','r').readlines(),True)
+    #  #if int(gxparm[0]) != int(xparm[0]):
 
-      #Should not happen since cell and SG are input as below.
-      if int(gxparm[0]) != int(local_gxparm[0]):
-        print os.getcwd()
-        if os.path.exists('GXPARM.XDS'):
-          os.rename('GXPARM.XDS','GXPARM1.XDS')
-        os.rename('XPARM.XDS','XPARM_orig.XDS')
-        shutil.copy(self.gxparm,os.path.join(os.getcwd(),'XPARM.XDS'))
-    """
+    #  #Should not happen since cell and SG are input as below.
+    #  if int(gxparm[0]) != int(local_gxparm[0]):
+    #    print os.getcwd()
+    #    if os.path.exists('GXPARM.XDS'):
+    #      os.rename('GXPARM.XDS','GXPARM1.XDS')
+    #    os.rename('XPARM.XDS','XPARM_orig.XDS')
+    #    shutil.copy(self.gxparm,os.path.join(os.getcwd(),'XPARM.XDS'))
     inp = open('XDS.INP','r').readlines()
     for line in inp:
       if line.count('UNIT_CELL_CONSTANTS='):
@@ -3389,7 +3392,7 @@ def setCellSymXDS(self):
 
   except:
     self.logger.exception('**ERROR in Utils.setCellSymXDS**')
-
+"""
 def setRes(self,input,res):
   """
   Set the high res limit of mtz file to new limit.

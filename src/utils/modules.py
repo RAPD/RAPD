@@ -61,7 +61,9 @@ def load_module(seek_module, directories=False, logger=False):
                     logger.debug("Attempting to load module %s", directory+"."+seek_module)
                 module = importlib.import_module(directory+"."+seek_module)
                 break
-            except ImportError:
+            except ImportError as e:
+                #print e
+                #logger.debug("FAILED to load module %s", directory+"."+seek_module)
                 pass
             #     if logger:
             #         logger.error("Error loading %s", directory+"."+seek_module)
@@ -73,6 +75,6 @@ def load_module(seek_module, directories=False, logger=False):
             pass
 
     if module == None:
-        raise Exception("No module found for %s" % seek_module)
+        raise Exception("No module found for: '%s'" % seek_module)
     else:
         return module
