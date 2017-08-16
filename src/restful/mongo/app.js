@@ -57,7 +57,9 @@ var wss = new Wss({morgan:morgan,
                    server:server});
 
 // Connect to MongoDB
-mongoose.connect(config.database);
+mongoose.connect(config.database, {
+  useMongoClient: true,
+});
 app.set('superSecret', config.secret);
 
 // configure app to use bodyParser()
@@ -93,7 +95,7 @@ apiRoutes.use(function(req, res, next) {
     // intercepts OPTIONS method from http://johnzhang.io/options-request-in-express
     if ('OPTIONS' === req.method) {
       //respond with 200
-      res.send(200);
+      res.sendStatus(200);
     }
     else {
     //move on
@@ -246,7 +248,6 @@ app.get('/setup', function(req, res) {
     if (err) throw err;
 
     console.log('User saved successfully');
-    res.json({ success: true });
   });
 
   // // create a sample group
@@ -264,9 +265,16 @@ app.get('/setup', function(req, res) {
     if (err) throw err;
 
     console.log('Group saved successfully');
-    res.json({ success: true });
   });
 
+  res.json({ success: true });
+
+});
+
+// test route to make sure everything is working (accessed at GET http://localhost:8080/api)
+// apiRoutes.use(jwtCheck);
+apiRoutes.get('/', function(req, res) {
+    res.json({ message: 'Welcome to the RAPD api!' });
 });
 
 // // User routes
@@ -327,11 +335,7 @@ apiRoutes.use(function(req, res, next) {
   }
 });
 
-// test route to make sure everything is working (accessed at GET http://localhost:8080/api)
-// apiRoutes.use(jwtCheck);
-apiRoutes.get('/', function(req, res) {
-    res.json({ message: 'Welcome to the RAPD api!' });
-});
+
 
 // Route to handle changing password (POST http://localhost:8080/api/changepass)
 apiRoutes.post('/changepass', function(req, res) {

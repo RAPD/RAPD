@@ -32,7 +32,6 @@ import { MxSessionpanelComponent } from './mx-sessionpanel/mx-sessionpanel.compo
 import { MxResultContainerComponent } from './mx-sessionpanel/mx-result-container/mx-result-container.component';
 import { MxResultslistPanelComponent } from './mx-sessionpanel/mx-result-container/mx-resultslist-panel/mx-resultslist-panel.component';
 import { MxResultPanelComponent } from './mx-sessionpanel/mx-result-container/mx-result-panel/mx-result-panel.component';
-import { IndexstrategyAaaa1Component } from './agent_components/mx/indexstrategy-aaaa-1/indexstrategy-aaaa-1.component';
 import { Highlight } from './shared/directives/highlight.directive';
 // import { LoginComponent } from './login/login.component';
 import { LoginPanelComponent } from './login-panel/login-panel.component';
@@ -43,6 +42,9 @@ import { SessionDialogComponent } from './adminpanel/session-dialog/session-dial
 import { LoginDialogComponent } from './maintoolbar/login-dialog/login-dialog.component';
 import { ChangepassDialogComponent } from './shared/dialogs/changepass-dialog/changepass-dialog.component';
 import { CommunicateDialogComponent } from './shared/dialogs/communicate-dialog/communicate-dialog.component';
+
+import { IndexstrategyAaaa1Component } from './plugin_components/mx/indexstrategy-aaaa-1/indexstrategy-aaaa-1.component';
+import { Index3b34200Component } from './plugin_components/mx/index-3b34-2-0-0/index-3b34-2-0-0.component';
 
 export function authHttpServiceFactory(http: Http, options: RequestOptions) {
   return new AuthHttp( new AuthConfig({}), http, options);
@@ -62,7 +64,6 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     MxResultContainerComponent,
     MxResultslistPanelComponent,
     MxResultPanelComponent,
-    IndexstrategyAaaa1Component,
     Highlight,
     // LoginComponent,
     LoginPanelComponent,
@@ -72,7 +73,9 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     SessionDialogComponent,
     LoginDialogComponent,
     ChangepassDialogComponent,
-    CommunicateDialogComponent
+    CommunicateDialogComponent,
+    IndexstrategyAaaa1Component,
+    Index3b34200Component
   ],
   imports: [
     NgxDatatableModule,
