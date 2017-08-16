@@ -84,7 +84,7 @@ class Monitor(threading.Thread):
         self.get_tags()
 
         # Start the thread
-        self.daemon = True
+        # self.daemon = True
         self.start()
 
     def get_tags(self):
@@ -175,8 +175,6 @@ class Monitor(threading.Thread):
                     # Slow it down a little
                     time.sleep(POLLING_REST)
                 time.sleep(POLLING_REST)
-
-            print "run monitor running"
 
             # Have Registrar update status
             if self.overwatch_id:
