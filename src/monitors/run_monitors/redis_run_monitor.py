@@ -178,6 +178,8 @@ class Monitor(threading.Thread):
                     time.sleep(POLLING_REST)
                 time.sleep(POLLING_REST)
 
+            print "run monitor running"
+
             # Have Registrar update status
             if self.overwatch_id:
                 self.ow_registrar.update()
