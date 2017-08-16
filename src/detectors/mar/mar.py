@@ -14,7 +14,10 @@ class MARImage(DetectorImageBase):
     def __init__(self, filename):
         """Initialize the instance"""
 
-        DetectorImageBase.__init__(self, filename)
+        # Make sure the image name is a string for iotbx
+        image_str = unicodedata.normalize("NFKD", filename).encode("ascii", "ignore")
+
+        DetectorImageBase.__init__(self, image_str)
         # self.vendortype = "MARCCD"
 
         byte_order = str(open(self.filename, "rb").read(2))
