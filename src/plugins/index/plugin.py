@@ -1858,6 +1858,7 @@ class RapdPlugin(Process):
         self.write_json(self.results)
 
         if self.preferences.get("run_mode") == "server":
+            self.logger.debug("Sending back on redis")
             json_results = json.dumps(self.results)
             self.redis.lpush("RAPD_RESULTS", json_results)
             self.redis.publish("RAPD_RESULTS", json_results)
