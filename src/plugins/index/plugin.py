@@ -230,10 +230,6 @@ class RapdPlugin(Process):
         # Store passed-in variables
         self.site = site
         self.command = command
-        self.results["command"] = command
-        self.results["process"] = {
-            "process_id": self.command.get("process_id"),
-            "status": 1}
 
         # Setting up data input
         self.setup = self.command["directories"]
@@ -244,6 +240,13 @@ class RapdPlugin(Process):
         self.preferences.update(self.command.get("preferences", {}))
         self.site_parameters = self.command.get("site_parameters", False)
 
+        # Construct the results
+        self.results["command"] = command.get("command")
+        self.results["process"] = command.get("process", {})
+        self.results["preferences"] = command.get("preferences", {})
+        # Status is now 1 (starting)
+        self.results["process"]["status"] = 1
+
         # Assumes that Core sent job if present. Overrides values for clean and test from top.
         if self.site_parameters != False:
             self.gui = True
@@ -253,8 +256,7 @@ class RapdPlugin(Process):
             # If running from command line, site_parameters is not in there. Needed for BEST.
             if self.site:
                 self.site_parameters = self.site.BEAM_INFO.get(
-                    xutils.get_site(self.header['fullname'],
-                    False)[1])
+                    xutils.get_site(self.header['fullname'], False)[1])
             else:
                 self.site_parameters = self.preferences.get("site_parameters", False)
                 # Sets settings so I can view the HTML output on my machine (not in the RAPD GUI),
@@ -331,7 +333,7 @@ class RapdPlugin(Process):
 
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::run")
-        
+
         # create a redis connection to send results
         self.connect_to_redis()
 
@@ -379,7 +381,7 @@ class RapdPlugin(Process):
         """Connect to the redis instance"""
         # Create a pool connection
         redis_database = importlib.import_module('database.rapd_redis_adapter')
-        
+
         self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
         if self.site.CONTROL_DATABASE_SETTINGS['REDIS_CONNECTION'] == 'pool':
             # For a Redis pool connection
@@ -387,7 +389,7 @@ class RapdPlugin(Process):
         else:
             # For a Redis sentinal connection
             self.redis = self.redis_database.connect_redis_manager_HA()
-    
+
     def preprocess(self):
         """
         Setup the working dir in the RAM and save the dir where the results will go at the end.
