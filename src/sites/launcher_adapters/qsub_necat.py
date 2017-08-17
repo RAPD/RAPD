@@ -80,6 +80,7 @@ class LauncherAdapter(object):
         
         # Get the new working directory
         work_dir = self.message["directories"]["work"]
+        #self.logger.debug("work_dir: %s"%work_dir)
         
         # Get the launcher directory - in launcher specification
         # Add command_files to keep files isolated
@@ -94,6 +95,7 @@ class LauncherAdapter(object):
         command_line = "rapd.launch -vs %s %s" % (site_tag, command_file)
         #command_line = "tcsh\nrapd.launch -vs %s %s" % (site_tag, command_file)
         #command_script = launch_tools.write_command_script(command_file.replace(".rapd", ".sh"), command_line)
+        #self.logger.debug("command: %s"%command_line)
         """
         # Set the path for qsub
         qsub_path = "PATH=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
@@ -114,18 +116,17 @@ class LauncherAdapter(object):
         queue = self.determine_queue()
         
         q = Queue()
-        job = Process(processCluster(command=command_line,
-                                     work_dir=work_dir,
-                                     logfile=False,
-                                     queue=queue,
-                                     nproc=nproc,
-                                     logger=self.logger,
-                                     name=qsub_label,
-                                     mp_event=False,
-                                     timeout=False,
-                                     output_jobID=q))
+        job = Process(target=processCluster, kwargs={'command':command_line,
+                                                   'work_dir':work_dir,
+                                                   'logfile':False,
+                                                   'queue':queue,
+                                                   'nproc':nproc,
+                                                   'logger':self.logger,
+                                                   'name':qsub_label,
+                                                   'mp_event':False,
+                                                   'timeout':False,
+                                                   'output_jobID':q})
         job.start()
-        
         # This will be passed back to a monitor that will watch the jobs and kill ones that run too long.
         jobID = q.get()
         print jobID

@@ -493,8 +493,8 @@ class Model(object):
             try:
                 header = detector.read_header(input_file=fullname,
                                               beam_settings=self.site.BEAM_INFO[site_tag.upper()])
-                print "1"
-                pprint(header)
+                #print "1"
+                #pprint(header)
             except IOError:
                 self.logger.exception("Unable to access image")
                 return False
@@ -583,7 +583,6 @@ class Model(object):
         """
 
         # Query local runs in reverse chronological order
-        print 'len recent runs: %s'%len(self.recent_runs)
         for run_id, run in self.recent_runs.iteritems():
             print 'run_id:%s'%run_id
             print 'run: %s'%run
@@ -842,7 +841,8 @@ class Model(object):
                 # Everything matches up to the image number, which is incremented by 1
                 #if (directory1, basename1, prefix1) == (directory2, basename2, prefix2) and (image_number1 == image_number2-1):
                 ### Have to modify for /epu/rdma since each image are in their own directory.
-                if (basename1, prefix1) == (basename2, prefix2) and (image_number1 == image_number2-1):
+                #if (basename1, prefix1) == (basename2, prefix2) and (image_number1 == image_number2-1):
+                if basename1[0:basename1.rfind('_')] == basename2[0:basename2.rfind('_')] and (image_number1 == image_number2-1):
                     self.logger.info("This looks like a pair to me: %s, %s",
                                      self.pairs[site_tag][0][0],
                                      self.pairs[site_tag][1][0])
@@ -868,20 +868,20 @@ class Model(object):
 
                     # Add the process to the database to display as in-process
                     plugin_process_id = self.database.add_plugin_process(
-                        plugin_type="index+strategy:pair",
-                        request_type="original",
-                        representation=new_repr,
-                        status=1,
-                        display="show",
-                        session_id=session_id,
-                        data_root_dir=data_root_dir)
+                                                        plugin_type="index+strategy:pair",
+                                                        request_type="original",
+                                                        representation=new_repr,
+                                                        status=1,
+                                                        display="show",
+                                                        session_id=session_id,
+                                                        data_root_dir=data_root_dir)
 
                     # Add the ID entry to the header dict
                     header1.update({"plugin_process_id":plugin_process_id,
                                     "repr":new_repr})
                     header2.update({"plugin_process_id":plugin_process_id,
                                     "repr":new_repr})
-
+                    """
                     # Run autoindex and strategy plugin
                     LaunchAction(command={"command":"INDEX",
                                           "process":{"plugin_process_id":plugin_process_id,
@@ -894,7 +894,21 @@ class Model(object):
                                           "return_address":False},
                                  launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
                                  settings=None)
+                    """
+                    # Run autoindex and strategy plugin
+                    command = {"command":"INDEX",
+                               "process":{
+                                   "plugin_process_id":plugin_process_id,
+                                   "session_id":session_id
+                               },
+                               "directories":directories,
+                               "header1":header,
+                               "header2":header2,
+                               "site_parameters":self.site.BEAM_INFO[header1["site_tag"]],
+                               "preferences":{}
+                              }
 
+                    self.send_command(command, "RAPD_JOBS")
 
         # This is the runs portion of the data image handling
         else:

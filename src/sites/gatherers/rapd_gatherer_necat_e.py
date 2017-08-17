@@ -374,49 +374,29 @@ class Gatherer(object):
         self.logger.info("getRunData")
 
         pipe = self.red.pipeline()
-        pipe.get("DETECTOR_SV")
-        #pipe.get({"C": "ADX_DIRECTORY_SV", "E": "EIGER_DIRECTORY_SV"}[self.beamline])
-        pipe.get({"C": "ADX_DIRECTORY_SV", "E": "EIGER_DIRECTORY_SV", "T": "EIGER_DIRECTORY_SV"}[self.beamline]) # not used!!
         pipe.get("RUN_PREFIX_SV")
         pipe.get("DET_THETA_SV")        #two theta
         pipe.get("MD2_ALL_AXES_SV")     #for kappa and phi
         return_array = pipe.execute()
 
-        # To handle E beamline "_5.1053_-_-" &
-        #           C beamline" 183.1158    0.0000    0.0000"
-        try:
-            if '_' in return_array[4]:
-                #print return_array[4]
-                axes = [return_array[4].split('_')[1],'0','0']
-            else:
-                axes = return_array[4].split()
-        except:
-            pass
-
+        my_dict = {"prefix"    : return_array[0],
+                   "twotheta"  : float(return_array[1]),
+                   "kappa"     : 0.0,
+                   "phi"       : 0.0}
         if self.beamline == 'C':
-            my_dict = {"detector"  : return_array[0],
-                       "directory" : os.path.join(return_array[1],"0_0"),
-                       "prefix"    : return_array[2],
-                       "twotheta"  : float(return_array[3]),
-                       "kappa"     : float(axes[1]),
-                       "phi"       : float(axes[2])}
-        elif self.beamline == 'E':
-            my_dict = {"detector"  : return_array[0],
-                       "directory" : return_array[1],
-                       "prefix"    : return_array[2],
-                       "twotheta"  : float(return_array[3]),
-                       "kappa"     : 0.0,
-                       "phi"       : 0.0}
-        elif self.beamline == 'T':
-            my_dict = {"detector"  : return_array[0],
-                       #"directory" : os.path.join('/epu/rdma', return_array[1]),
-                       "directory" : '%s%s'%('/epu/rdma', return_array[1]), #not used anyway
-                       "prefix"    : return_array[2],
-                       "twotheta"  : float(return_array[3]),
-                       "kappa"     : 0.0,
-                       "phi"       : 0.0}
+            # To handle E beamline "_5.1053_-_-" &
+            #           C beamline" 183.1158    0.0000    0.0000"
+            try:
+                if '_' in return_array[2]:
+                    axes = [return_array[2].split('_')[1],'0','0']
+                else:
+                    axes = return_array[2].split()
+            except:
+                axes = [0.0, 0.0]
+            my_dict.update({"kappa"     : float(axes[1]),
+                            "phi"       : float(axes[2])})
 
-        return(my_dict)
+        return my_dict
 
     def Stop(self):
         """
@@ -428,6 +408,7 @@ class Gatherer(object):
         # Added for T
         #if self.beamline == 'T':
         #    self.pubsub.unsubscribe()
+
 
 # secrets = { #database information
 #             'db_host'         : 'rapd.nec.aps.anl.gov',

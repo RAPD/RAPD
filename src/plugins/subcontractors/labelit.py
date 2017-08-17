@@ -324,7 +324,6 @@ def get_labelit_stats(labelit_results, simple=False):
 
 #
 # Functions for modifying labelit runs
-#
 
 def increase_mosflm_resolution(iteration):
     """Increases resolution of mosflm run"""

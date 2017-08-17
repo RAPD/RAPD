@@ -139,15 +139,6 @@ class Launcher(object):
     
     def connect_to_redis(self):
         """Connect to the redis instance"""
-        """
-        # Create a pool connection
-        pool = redis.ConnectionPool(host=self.site.CONTROL_REDIS_HOST,
-                                    port=self.site.CONTROL_REDIS_PORT,
-                                    db=self.site.CONTROL_REDIS_DB)
-
-        # The connection
-        self.redis = redis.Redis(connection_pool=pool)
-        """
         # Create a pool connection
         redis_database = importlib.import_module('database.rapd_redis_adapter')
         
@@ -181,31 +172,6 @@ class Launcher(object):
 
         # Use the adapter to launch
         self.adapter(self.site, message, self.specifications)
-
-    
-    def handle_command_OLD(self, command):
-        """
-        Handle an incoming command
-
-        Keyword arguments:
-        command -- command from redis
-        """
-        print "handle_command"
-        pprint(command)
-
-        # Split up the command
-        channel, message = command
-        decoded_message = json.loads(message)
-
-        # Update preferences to be in server run mode
-        if not decoded_message.get("preferences"):
-            decoded_message["preferences"] = {}
-        decoded_message["preferences"]["run_mode"] = "server"
-
-        self.logger.debug("Command received  channel:%s  message: %s", channel, message)
-
-        # Use the adapter to launch
-        self.adapter(self.site, decoded_message, self.specifications)
 
     def get_settings(self):
         """
