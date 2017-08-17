@@ -214,7 +214,7 @@ class Database(object):
         db = self.get_db_connection()
 
         # Query and return, transform _id to string
-        return db.find_one({"_id":ObjectId(str(image_id))})
+        return db.images.find_one({"_id":ObjectId(str(image_id))})
 
     #
     # Functions for processes                                                                      #

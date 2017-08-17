@@ -183,23 +183,7 @@ class LauncherAdapter(object):
         # Modify command
         #self.decoded_message["directories"]["work"] = work_dir_candidate
         self.message["directories"]["work"] = work_dir_candidate
-        
-        """
-        # Filesystem is NOT shared
-        # For header_1 & header_2
-        for header_iter in ("1", "2"):
-            header_key = "header%s" % header_iter
-            if header_key in self.decoded_message:
-                # Values that need changed
-                for value_key in ("fullname", "directory"):
-                    # Store originals
-                    self.decoded_message[header_key][value_key+"_orig"] = self.decoded_message[header_key][value_key]
 
-                    # Change
-                    for prepended_string in ("/raw", "/archive"):
-                        if self.decoded_message[header_key][value_key].startswith(prepended_string):
-                            self.decoded_message[header_key][value_key] = self.decoded_message[header_key][value_key].replace(prepended_string, "/panfs/panfs0.localdomain"+prepended_string)
-        """
     def determine_nproc(self):
         """Determine how many processors to reserve on the cluster for a specific job type."""
         nproc = 1

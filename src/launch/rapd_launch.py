@@ -46,7 +46,7 @@ class Launch(object):
 
     command = None
     plugin = None
-    logger = None
+    new_logger = None
 
     def __init__(self, site, command_file):
         """
@@ -73,7 +73,7 @@ class Launch(object):
         # Put the site object into the command
         self.command["site"] = self.site
 
-        self.logger.debug("command: %s", self.command.get("command", None))
+        self.new_logger.debug("command: %s", self.command.get("command", None))
 
         # Load the plugin for this command
         self.load_plugin(self.command.get("command"))
@@ -82,7 +82,7 @@ class Launch(object):
         plugin = self.plugin.RapdPlugin(site=self.site,
                                         command=self.command,
                                         tprint=False,
-                                        logger=self.logger)
+                                        logger=self.new_logger)
 
         #plugin.start()
 
@@ -112,7 +112,7 @@ class Launch(object):
         # Load the plugin from directories defined in site file
         self.plugin = load_module(seek_module="plugin",
                                   directories=directories,
-                                  logger=self.logger)
+                                  logger=self.new_logger)
 
     def init_logger(self):
         """
@@ -125,9 +125,10 @@ class Launch(object):
         logfile_id = os.path.basename(self.command_file).replace(".rapd", "")
 
         # Instantiate a logger at verbose level
-        self.logger = utils.log.get_logger(logfile_dir=logfile_dir,
+        self.new_logger = utils.log.get_logger(logfile_dir=logfile_dir,
                                            logfile_id=logfile_id,
-                                           level=10)
+                                           #level=10)
+                                           )
 
 
 
@@ -183,26 +184,26 @@ def main():
 
     # Import the site settings
     SITE = importlib.import_module(site_file)
-
+    
+    """
     # Set up logging
     if commandline_args.verbose:
         log_level = 10
     else:
         log_level = SITE.LOG_LEVEL
 
-    logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
+    run_logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
                                   logfile_id="rapd_launch",
-                                  #level=log_level
-                                  )
+                                  level=log_level)
 
-    logger.debug("Commandline arguments:")
+    run_logger.debug("Commandline arguments:")
     for pair in commandline_args._get_kwargs():
-        logger.debug("  arg:%s  val:%s", pair[0], pair[1])
-
+        run_logger.debug("  arg:%s  val:%s", pair[0], pair[1])
+    """
     # Run command file[s]
     if commandline_args.command_files:
         for command_file in commandline_args.command_files:
-            logger.info("Launching %s", command_file)
+            #run_logger.info("Launching %s", command_file)
             Launch(SITE, command_file)
     else:
         raise Exception("Not sure what to do!")

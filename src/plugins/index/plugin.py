@@ -1851,7 +1851,8 @@ class RapdPlugin(Process):
             # json_output = json.dumps(self.results).replace("\\n", "")
             # if self.preferences.get("json", False):
             #     print json_output
-            del self.results['command']['site']
+            # reset site to a string
+            #self.results['command']['site'] = None
             #pprint(self.results)
             self.write_json(self.results)
             json_results = json.dumps(self.results)
