@@ -504,7 +504,7 @@ class Database(object):
         return_type -- "boolean", "id", "dict" (default = "boolean")
         """
 
-        self.logger.debug("query_in_run")
+        # self.logger.debug("query_in_run")
 
         # Order
         if order in ("descending", None):
@@ -535,23 +535,23 @@ class Database(object):
         else:
             projection = {}
 
-        self.logger.debug(query)
-        self.logger.debug(projection)
-        self.logger.debug(order_param)
+        # self.logger.debug(query)
+        # self.logger.debug(projection)
+        # self.logger.debug(order_param)
 
         results = db.runs.find(query).sort("file_ctime", order_param)
-        self.logger.debug(results.count())
+        # self.logger.debug(results.count())
 
         # Now filter for image_number inclusion
         filtered_results = []
         for result in results:
-            self.logger.debug(result)
+            # self.logger.debug(result)
             if image_number <= (result["start_image_number"]+result["number_images"]+1):
                 filtered_results.append(result)
 
         # If no return, return a False
         if len(filtered_results) == 0:
-            self.logger.debug("Returning False")
+            # self.logger.debug("Returning False")
             return False
         else:
             # boolean
