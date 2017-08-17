@@ -775,7 +775,7 @@ class RapdPlugin(Process):
             xutils.fixBestfile(self)
 
         # If Raddose failed, here are the defaults.
-        dose = 100000.0
+        dose = 100000
         exp_dose_lim = 300
         if self.raddose_results:
             if self.raddose_results.get("raddose_results") != 'FAILED':
@@ -795,6 +795,7 @@ class RapdPlugin(Process):
             dose = 500000
             exp_dose_lim = 100
             self.high_dose = True
+            """
             if iteration == 1:
                 dose = 100000.0
                 exp_dose_lim = 300
@@ -804,6 +805,7 @@ class RapdPlugin(Process):
             if iteration == 3:
                 dose = False
                 exp_dose_lim = False
+            """
 
         # Put together the command for labelit.index
         best_detector = DETECTOR_TO_BEST.get(self.header.get("detector"), False)
@@ -819,12 +821,11 @@ class RapdPlugin(Process):
         if str(self.header.get('binning')) == '2x2':
             command += '-2x'
         if self.high_dose:
-            command += ' -t 0.2'
+            command += ' -t 1.0'
         else:
             command += " -t %.2f" % self.time
-        command += ' -e %s -sh %.1f -su %.1f' % (self.preferences.get('best_complexity', 'none'),\
-                                             self.preferences.get('shape', 2.0), \
-                                             self.preferences.get('susceptibility', 1.0))
+        command += ' -e %s -sh %.1f' % (self.preferences.get('best_complexity', 'none'),\
+                                        self.preferences.get('shape', 2.0))
         if self.preferences.get('aimed_res') != 0.0:
             command += ' -r %.1f' % self.preferences.get('aimed_res')
         if best_version >= "3.4":
@@ -838,11 +839,16 @@ class RapdPlugin(Process):
             command += ' -DIS_MAX %s -DIS_MIN %s' % (max_dis, min_dis)
         # Fix bug in BEST for PAR detectors. Use the cumulative completeness of 99% instead of all
         # bin.
-        if self.vendortype in ('Pilatus-6M', 'ADSC-HF4M'):
-            command += ' -low never'
+        #if self.vendortype in ('Pilatus-6M', 'ADSC-HF4M'):
+        if best_detector in ('pilatus6m', 'hf4m', 'eiger9m', 'eiger16m'):
+            command += ' -low never -su %.1f'%self.preferences.get('susceptibility', 1.0)
+        else:
+            # Set the I/sigI to 0.75 like Mosflm res in Labelit.
+            command += ' -i2s 0.75 -su 1.5'
         # set dose  and limit, else set time
         if best_version >= "3.4" and dose:
-            command += ' -GpS %s -DMAX 30000000'%dose
+            #command += ' -GpS %s -DMAX 30000000'%dose
+            command += ' -GpS %s'%dose
         else:
             command += ' -T 185'
         if runbefore:

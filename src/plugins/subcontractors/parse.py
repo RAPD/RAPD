@@ -911,7 +911,7 @@ def ParseOutputBest(self, inp, anom=False):
                     t = float(line[line.find('>')+1:line.rfind('<')])
                     orig_time.append(t)
                     # if self.pilatus:
-                    if self.vendortype in ('Pilatus-6M','ADSC-HF4M'):
+                    if self.vendortype in ('Pilatus-6M','PILATUS','ADSC-HF4M', 'Dectris Eiger 9M', 'Eiger-9M', 'Dectris Eiger 16M', 'Eiger-16M' ):
                         new_trans.append(str(round(trans)))
                         time.append(str(round(t, 1)))
                     else:
@@ -1147,15 +1147,15 @@ def ParseOutputMosflm_strat(self, inp, anom=False):
             osc_range = '0.5'
         else:
             osc_range  = str(self.header.get('osc_range'))
-    distance   = str(self.header.get('distance'))
-    mosflm_seg = str(self.preferences.get("mosflm_seg", "1"))
+    distance   = self.header.get('distance')
+    mosflm_seg = self.preferences.get("mosflm_seg", 1)
 
     index = False
     index_res = False
     for x, line in enumerate(inp):
         # print mosflm_seg, seg, x, line.rstrip()
         temp.append(line)
-        if mosflm_seg != '1':
+        if mosflm_seg != 1:
             if line.startswith(' This may take some time......'):
                 index = x
                 seg = True
