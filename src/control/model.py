@@ -810,6 +810,7 @@ class Model(object):
             # Run autoindex and strategy plugin
             command = {"command":"INDEX",
                        "process":{
+                           "image1_id":header.get("_id"),
                            "plugin_process_id":plugin_process_id,
                            "session_id":session_id
                        },
@@ -884,7 +885,9 @@ class Model(object):
 
                     # Run autoindex and strategy plugin
                     LaunchAction(command={"command":"INDEX",
-                                          "process":{"plugin_process_id":plugin_process_id,
+                                          "process":{"image1_id":header1.get("_id"),
+                                                     "image2_id":header2.get("_id"),
+                                                     "plugin_process_id":plugin_process_id,
                                                      "session_id":session_id},
                                           "directories":directories,
                                           "header1":header1,
