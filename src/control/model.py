@@ -143,7 +143,7 @@ class Model(object):
 
         # Initialize the remote adapter
         # self.init_remote_adapter()
-        
+
         # Launch an echo
         self.send_echo()
 
@@ -168,7 +168,7 @@ class Model(object):
 
         # Create a pool connection
         redis_database = importlib.import_module('database.rapd_redis_adapter')
-        
+
         self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
         if self.site.CONTROL_DATABASE_SETTINGS['REDIS_CONNECTION'] == 'pool':
             # For a Redis pool connection
@@ -176,7 +176,7 @@ class Model(object):
         else:
             # For a Redis sentinal connection
             self.redis = self.redis_database.connect_redis_manager_HA()
-        
+
     def stop_redis(self):
         """Make a clean Redis disconnection if using a pool connection."""
         self.logger.debug("Close Redis")
@@ -241,14 +241,14 @@ class Model(object):
     def start_job_launcher_OLD(self):
         """Start up the job launcher"""
         self.logger.debug("Starting launcher")
-        
+
         launcher = importlib.import_module("launch.rapd_launcher")
-        
+
         self.launcher = launcher.Launcher(site=self.site,
                                           tag="qsub",
                                           logger=self.logger,
                                           overwatch_id=self.overwatch_id)
-    
+
     def start_image_monitor(self):
         """Start up the image listening process for core"""
 
@@ -288,7 +288,7 @@ class Model(object):
                                                    # Not using overwatch in run monitor
                                                    # could if we wanted to
                                                    overwatch_id=None)
-    
+
     def stop_run_monitor(self):
         """Stop the run information listening process for core"""
 
@@ -385,7 +385,7 @@ class Model(object):
     def stop(self):
         """Stop the ImageMonitor,CloudMonitor and StatusRegistrar."""
         self.logger.info("Stopping")
-        
+
         self.stop_redis()
         self.stop_server()
         self.stop_image_monitor()
@@ -491,7 +491,7 @@ class Model(object):
 
             # Get all the image information
             try:
-                header = detector.read_header(input_file=fullname,
+                header = detector.read_header(fullname=fullname,
                                               beam_settings=self.site.BEAM_INFO[site_tag.upper()])
                 print "1"
                 pprint(header)
