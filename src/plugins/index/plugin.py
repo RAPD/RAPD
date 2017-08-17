@@ -27,14 +27,13 @@ __status__ = "Production"
 
 # This is an active rapd plugin
 RAPD_PLUGIN = True
-
 # This plugin's types
 DATA_TYPE = "MX"
 PLUGIN_TYPE = "INDEX"
 PLUGIN_SUBTYPE = "CORE"
-
 # A unique ID for this handler (uuid.uuid1().hex[:4])
 ID = "3b34"
+# Version of this plugin
 VERSION = "2.0.0"
 
 # Standard imports
@@ -249,6 +248,14 @@ class RapdPlugin(Process):
         # Status is now 1 (starting)
         self.results["process"]["status"] = 1
         self.results["process"]["type"] = "plugin"
+
+        self.results["plugin"] = {
+            "data_type":DATA_TYPE,
+            "type":PLUGIN_TYPE,
+            "subtype":PLUGIN_SUBTYPE,
+            "id":ID,
+            "version":VERSION
+        }
 
         # Assign the text representation for this result
         if not self.header2:

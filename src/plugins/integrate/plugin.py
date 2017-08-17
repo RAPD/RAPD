@@ -28,12 +28,13 @@ __status__ = "Production"
 # This is an active rapd plugin
 RAPD_PLUGIN = True
 
-# This handler's request type
+# This plugin's types
+DATA_TYPE = "MX"
 PLUGIN_TYPE = "INTEGRATE"
 PLUGIN_SUBTYPE = "CORE"
 
-# A unique UUID for this handler (uuid.uuid1().hex)
-ID = "bd11f4401eaa11e697c3ac87a3333966"
+# A unique ID for this handler (uuid.uuid1().hex[:4])
+ID = "bd11"
 VERSION = "2.0.0"
 
 # Standard imports
@@ -167,10 +168,19 @@ class RapdPlugin(Process):
         self.preferences = self.command.get("preferences")
 
         # Store into results
-        self.results["command"] = command
-        self.results["process"] = command.get("process")
+        self.results["command"] = command.get("command")
+        self.results["process"] = command.get("process", {})
+        # Status is now 1 (starting)
         self.results["process"]["status"] = 1
         self.results["process"]["type"] = "plugin"
+
+        self.results["plugin"] = {
+            "data_type":DATA_TYPE,
+            "type":PLUGIN_TYPE,
+            "subtype":PLUGIN_SUBTYPE,
+            "id":ID,
+            "version":VERSION
+        }
 
         #TODO
         #{
