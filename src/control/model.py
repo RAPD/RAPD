@@ -493,11 +493,8 @@ class Model(object):
 
             # Get all the image information
             try:
-                #header = detector.read_header(fullname=fullname,
-                header = detector.read_header(input_file=fullname,
+                header = detector.read_header(fullname,
                                               beam_settings=self.site.BEAM_INFO[site_tag.upper()])
-                #print "1"
-                #pprint(header)
             except IOError:
                 self.logger.exception("Unable to access image")
                 return False
