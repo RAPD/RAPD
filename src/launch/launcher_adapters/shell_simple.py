@@ -27,7 +27,8 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 import logging
-import json
+# import json
+import os
 from subprocess import Popen
 
 # RAPD imports
@@ -69,7 +70,7 @@ class LauncherAdapter(object):
                                                        self.message)
 
         # Call the launch process on the command file
-        self.logger.debug("rapd.launch", "-s", self.site.SITE, command_file)
+        self.logger.debug("rapd.launch -s %s %s", self.site.SITE, command_file)
         Popen(["rapd.launch", "-s", self.site.SITE, command_file])
 
     def fix_command(self):
@@ -98,7 +99,3 @@ class LauncherAdapter(object):
         # Modify command
         #self.decoded_message["directories"]["work"] = work_dir_candidate
         self.message["directories"]["work"] = work_dir_candidate
-
-if __name__ == "__main__":
-
-    LauncherAdapter('["test1", "test2", "test3"]', {"launch_dir":"/tmp/log"})
