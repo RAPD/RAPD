@@ -34,7 +34,6 @@ import socket
 import threading
 import time
 
-BUFFER_SIZE = 8192
 
 class ControllerServer(threading.Thread):
     """
@@ -66,7 +65,6 @@ class ControllerServer(threading.Thread):
 
     def run(self):
 
-
         # This is the "server"
         while self.Go:
 
@@ -89,13 +87,13 @@ class ControllerServer(threading.Thread):
         pool = redis.ConnectionPool(host=self.site.CONTROL_SETTINGS['REDIS_HOST'],
                                     port=self.site.CONTROL_SETTINGS['REDIS_PORT'],
                                     db=self.site.CONTROL_SETTINGS['REDIS_DB'])
-        
+
         # The connection
         self.redis = redis.Redis(connection_pool=pool)
         """
         # Create a pool connection
         redis_database = importlib.import_module('database.rapd_redis_adapter')
-        
+
         self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
         if self.site.CONTROL_DATABASE_SETTINGS['REDIS_CONNECTION'] == 'pool':
             # For a Redis pool connection
@@ -103,52 +101,6 @@ class ControllerServer(threading.Thread):
         else:
             # For a Redis sentinal connection
             self.redis = self.redis_database.connect_redis_manager_HA()
-
-# class ControllerHandler(threading.Thread):
-#     """
-#     Handles the data that is received from the cluster via incoming client socket
-#     """
-#     def __init__(self, conn, addr, receiver, logger=None):
-#         """Initialize the handler"""
-#
-#         # Initialize the thread
-#         threading.Thread.__init__(self)
-#
-#         # Store the connection variable
-#         self.conn = conn
-#         self.addr = addr
-#         self.receiver = receiver
-#         self.logger = logger
-#
-#         # Start the thread
-#         self.start()
-#
-#     def run(self):
-#         """Main process of the handler"""
-#
-#         if self.logger:
-#             self.logger.debug("run!")
-#
-#         #Receive the output back from the cluster
-#         message = ""
-#         while not message.endswith("<rapd_end>"):
-#             data = self.conn.recv(BUFFER_SIZE)
-#             message += data
-#             time.sleep(0.001)
-#         self.conn.close()
-#
-#         # Strip off the start and end markers
-#         stripped = message.rstrip().replace("<rapd_start>", "").replace("<rapd_end>", "")
-#
-#         # Load the JSON
-#         decoded_received = json.loads(stripped)
-#
-#         # Feedback
-#         if self.logger:
-#             self.logger.debug(decoded_received)
-#
-#         # Assign the command
-#         self.receiver(decoded_received)
 
 class LaunchAction(threading.Thread):
     """

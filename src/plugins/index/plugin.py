@@ -1825,43 +1825,45 @@ class RapdPlugin(Process):
         output_files = {"Output files" : output}
 
         # Put all the result dicts from all the programs run into one resultant dict and pass back.
-        try:
-            results = {}
-            if self.labelit_results:
-                results.update(self.labelit_results)
-            if self.distl_results:
-                results.update(self.distl_results)
-            if self.raddose_results:
-                results.update(self.raddose_results)
-            if self.best_results:
-                results.update(self.best_results)
-            if self.best_anom_results:
-                results.update(self.best_anom_results)
-            if self.mosflm_strat_results:
-                results.update(self.mosflm_strat_results)
-            if self.mosflm_strat_anom_results:
-                results.update(self.mosflm_strat_anom_results)
-            results["plots"] = self.plots
-            # results.update(output_files)
-            # self.results.append(results)
-            # if self.gui:
-            self.results["results"] = results
-            self.logger.debug(self.results)
-            # Print results to screen in JSON format
-            # json_output = json.dumps(self.results).replace("\\n", "")
-            # if self.preferences.get("json", False):
-            #     print json_output
-            del self.results['command']['site']
-            #pprint(self.results)
-            self.write_json(self.results)
-            json_results = json.dumps(self.results)
-            self.redis.lpush("RAPD_RESULTS", json_results)
-            self.redis.publish("RAPD_RESULTS", json_results)
-            #if self.controller_address:
-            #    rapd_send(self.controller_address, self.results)
-            self.tprint(arg=100, level="progress")
-        except:
-            self.logger.exception("**Could not send results to pipe**")
+        # try:
+        results = {}
+        if self.labelit_results:
+            results.update(self.labelit_results)
+        if self.distl_results:
+            results.update(self.distl_results)
+        if self.raddose_results:
+            results.update(self.raddose_results)
+        if self.best_results:
+            results.update(self.best_results)
+        if self.best_anom_results:
+            results.update(self.best_anom_results)
+        if self.mosflm_strat_results:
+            results.update(self.mosflm_strat_results)
+        if self.mosflm_strat_anom_results:
+            results.update(self.mosflm_strat_anom_results)
+
+        results["plots"] = self.plots
+        # results.update(output_files)
+        # self.results.append(results)
+        # if self.gui:
+        self.results["results"] = results
+        self.logger.debug(self.results)
+        # Print results to screen in JSON format
+        # json_output = json.dumps(self.results).replace("\\n", "")
+        # if self.preferences.get("json", False):
+        #     print json_output
+        # del self.results['command']['site']
+        #pprint(self.results)
+        self.write_json(self.results)
+
+        json_results = json.dumps(self.results)
+        self.redis.lpush("RAPD_RESULTS", json_results)
+        self.redis.publish("RAPD_RESULTS", json_results)
+        #if self.controller_address:
+        #    rapd_send(self.controller_address, self.results)
+        self.tprint(arg=100, level="progress")
+        # except:
+        #     self.logger.exception("**Could not send results to pipe**")
 
         # Cleanup my mess.
         try:
