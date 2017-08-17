@@ -129,15 +129,23 @@ class RapdPlugin(Process):
 
     results = {}
 
-    def __init__(self, command, tprint=False, logger=False):
+    def __init__(self, site, command, tprint=False, logger=False):
         """
         Initialize the plugin
 
         Keyword arguments
+        site -- full site settings
         command -- dict of all information for this plugin to run
         tprint -- terminal printer
         logger -- logging instance
         """
+
+        # Get the logger Instance
+        if logger:
+            self.logger = logger
+        else:
+            self.logger = logging.getLogger("RAPDLogger")
+            self.logger.debug("__init__")
 
         # Store tprint for use throughout
         if tprint:
@@ -148,18 +156,15 @@ class RapdPlugin(Process):
                 pass
             self.tprint = func
 
-        # Get the logger Instance
-        if logger:
-            self.logger = logger
-        else:
-            self.logger = logging.getLogger("RAPDLogger")
-            self.logger.debug("__init__")
+        # Some logging
+        self.logger.info(site)
+        self.logger.info(command)
+        #pprint(command)
 
         # Store passed-in variables
+        self.site = site
         self.command = command
-        self.preferences = self.command.get("preferences")
-        # This has advantage of removing site from command too
-        self.site = command.pop("site", None)
+        self.preferences = self.command.get("preferences")        
 
         # Store into results
         self.results["command"] = command
