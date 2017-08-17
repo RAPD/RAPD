@@ -27,7 +27,8 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 import logging
-import json
+# import json
+import os
 from subprocess import Popen
 
 # RAPD imports
@@ -60,18 +61,41 @@ class LauncherAdapter(object):
         Orchestrate the adapter's actions
         """
 
-        # Decode message
-        command = self.message["command"]
+        # Adjust the message to this site
+        self.fix_command()
 
         # Put the command into a file
         command_file = launch_tools.write_command_file(self.settings["launch_dir"],
-                                                       command,
+                                                       self.message["command"],
                                                        self.message)
 
         # Call the launch process on the command file
-        self.logger.debug("rapd.launch", "-s", self.site.SITE, command_file)
+        self.logger.debug("rapd.launch -s %s %s", self.site.SITE, command_file)
         Popen(["rapd.launch", "-s", self.site.SITE, command_file])
 
-if __name__ == "__main__":
+    def fix_command(self):
+        """
+        Adjust the command passed in in install-specific ways
+        """
 
-    LauncherAdapter('["test1", "test2", "test3"]', {"launch_dir":"/tmp/log"})
+        # Adjust the working directory for the launch computer
+        work_dir_candidate = os.path.join(
+            self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"],
+            self.message["directories"]["work"])
+
+        # Make sure this is an original directory
+        if os.path.exists(work_dir_candidate):
+            # Already exists
+            for i in range(1, 1000):
+                if not os.path.exists("_".join((work_dir_candidate, str(i)))):
+                    work_dir_candidate = "_".join((work_dir_candidate, str(i)))
+                    break
+                else:
+                    i += 1
+        # Now make the directory
+        if os.path.isdir(work_dir_candidate) == False:
+            os.makedirs(work_dir_candidate)
+
+        # Modify command
+        #self.decoded_message["directories"]["work"] = work_dir_candidate
+        self.message["directories"]["work"] = work_dir_candidate

@@ -191,9 +191,11 @@ IMAGE_MONITOR = "monitors.image_monitors.redis_image_monitor"
 # Running in a cluster configuration - True || False
 # IMAGE_MONITOR_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER
 # Images collected into following directories will be ignored
-IMAGE_IGNORE_DIRECTORIES = ("/var/sergui")
+IMAGE_IGNORE_DIRECTORIES = ("/var/sergui",)
 # Images collected containing the following string will be ignored
 IMAGE_IGNORE_STRINGS = ("ignore", "blankmar300hs")
+# So if image is not present, look in long term storage location.
+ALT_IMAGE_LOCATIONS = False
 
 # Monitor for collected run information
 RUN_MONITOR = "monitors.run_monitors.redis_run_monitor"
@@ -231,12 +233,12 @@ CONTROL_DATABASE_SETTINGS = {
     "DATABASE_PASSWORD":CONTROL_DATABASE_PASSWORD,
     # Connection can be 'pool' for database on single computer, or
     # 'sentinal' for high availability on redundant computers.
-    "REDIS_CONNECTION":"sentinel",
-    "REDIS_HOST":SECRETS.REDIS_HOST,
-    "REDIS_PORT":SECRETS.REDIS_PORT,
-    "REDIS_DB":SECRETS.REDIS_DB,
-    "REDIS_SENTINEL_HOSTS":SECRETS.SENTINEL_HOSTS,
-    "REDIS_MASTER_NAME":SECRETS.REDIS_MASTER_NAME,
+    "REDIS_CONNECTION":"pool",
+    "REDIS_HOST":CONTROL_REDIS_HOST,
+    "REDIS_PORT":CONTROL_REDIS_PORT,
+    "REDIS_DB":CONTROL_REDIS_DB,
+    "REDIS_SENTINEL_HOSTS":CONTROL_SENTINEL_HOSTS,
+    "REDIS_MASTER_NAME":CONTROL_REDIS_MASTER_NAME,
 }
 
 
@@ -268,20 +270,20 @@ LAUNCH_SETTINGS = {
 IMAGE_MONITOR_SETTINGS = {"REDIS_HOST" : IMAGE_MONITOR_REDIS_HOST,
                           "REDIS_PORT" : IMAGE_MONITOR_REDIS_PORT,
                           #   "REDIS_CLUSTER" : IMAGE_MONITOR_REDIS_CLUSTER,
-                          "SENTINEL_HOST" : IMAGE_MONITOR_SENTINEL_HOST,
+                          "SENTINEL_HOST" : IMAGE_MONITOR_SENTINEL_HOSTS,
                           "SENTINEL_PORT" : IMAGE_MONITOR_SENTINEL_PORT,
-                          'REDIS_CONNECTION':"sentinel",
+                          'REDIS_CONNECTION':"pool",
                           "REDIS_MASTER_NAME" : IMAGE_MONITOR_REDIS_MASTER_NAME,
-                          "REDIS_SENTINEL_HOSTS" : SECRETS.SENTINEL_HOSTS,
+                          "REDIS_SENTINEL_HOSTS" : IMAGE_MONITOR_SENTINEL_HOSTS,
                           }
 
 RUN_MONITOR_SETTINGS = {"REDIS_HOST" : RUN_MONITOR_REDIS_HOST,
                         "REDIS_PORT" : RUN_MONITOR_REDIS_PORT,
                         # "REDIS_CLUSTER" : RUN_MONITOR_REDIS_CLUSTER,
-                        "SENTINEL_HOST" : RUN_MONITOR_SENTINEL_HOST,
+                        "SENTINEL_HOST" : RUN_MONITOR_SENTINEL_HOSTS,
                         "SENTINEL_PORT" : RUN_MONITOR_SENTINEL_PORT,
-                        "REDIS_CONNECTION":"sentinel",
-                        "REDIS_SENTINEL_HOSTS" : SECRETS.SENTINEL_HOSTS,
+                        "REDIS_CONNECTION":"pool",
+                        "REDIS_SENTINEL_HOSTS" : RUN_MONITOR_SENTINEL_HOSTS,
                         "REDIS_MASTER_NAME" : RUN_MONITOR_REDIS_MASTER_NAME}
 
 CLOUD_MONITOR_SETTINGS = {
@@ -302,10 +304,10 @@ SITE_ADAPTER_SETTINGS = {"ID" : ID,
 REMOTE_ADAPTER_SETTINGS = {"ID" : ID,
                            "MONGO_CONNECTION_STRING" : REMOTE_ADAPTER_MONGO_CONNECTION_STRING,
                         #    "REDIS_CLUSTER" : REMOTE_ADAPTER_REDIS_CLUSTER,
-                           "SENTINEL_HOST" : REMOTE_ADAPTER_SENTINEL_HOST,
+                           "SENTINEL_HOST" : REMOTE_ADAPTER_SENTINEL_HOSTS,
                            "SENTINEL_PORT" : REMOTE_ADAPTER_SENTINEL_PORT,
-                           "REDIS_CONNECTION":"sentinel",
-                           "REDIS_SENTINEL_HOSTS" : SECRETS.SENTINEL_HOSTS,
+                           "REDIS_CONNECTION":"pool",
+                           "REDIS_SENTINEL_HOSTS" : REMOTE_ADAPTER_SENTINEL_HOSTS,
                            "REDIS_MASTER_NAME" : REMOTE_ADAPTER_REDIS_MASTER_NAME,
                            "REDIS_HOST" : REMOTE_ADAPTER_REDIS_HOST,
                            "REDIS_PORT" : REMOTE_ADAPTER_REDIS_PORT}
