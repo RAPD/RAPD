@@ -194,6 +194,8 @@ IMAGE_MONITOR = "monitors.image_monitors.redis_image_monitor"
 IMAGE_IGNORE_DIRECTORIES = ("/var/sergui",)
 # Images collected containing the following string will be ignored
 IMAGE_IGNORE_STRINGS = ("ignore", "blankmar300hs")
+# So if image is not present, look in long term storage location.
+ALT_IMAGE_LOCATIONS = False
 
 # Monitor for collected run information
 RUN_MONITOR = "monitors.run_monitors.redis_run_monitor"
