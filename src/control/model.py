@@ -439,6 +439,8 @@ class Model(object):
             # Save some typing
             current_run = self.recent_runs[run_id]
 
+            self.logger.debug(current_run)
+
             # If not integrating trigger integration
             if not current_run.get("rapd_status", None) in ("INTEGRATING", "FINISHED"):
 
