@@ -439,6 +439,8 @@ class Model(object):
             # Save some typing
             current_run = self.recent_runs[run_id]
 
+            self.logger.debug(current_run)
+
             # If not integrating trigger integration
             if not current_run.get("rapd_status", None) in ("INTEGRATING", "FINISHED"):
 
@@ -446,7 +448,7 @@ class Model(object):
                 if place_in_run == 1:
                     # Get all the image information
                     header = detector.read_header(
-                        input_file=fullname,
+                        fullname,
                         beam_settings=self.site.BEAM_INFO[site_tag.upper()])
 
                     # Put data about run in the header object
@@ -491,11 +493,8 @@ class Model(object):
 
             # Get all the image information
             try:
-                #header = detector.read_header(fullname=fullname,
-                header = detector.read_header(input_file=fullname,
+                header = detector.read_header(fullname,
                                               beam_settings=self.site.BEAM_INFO[site_tag.upper()])
-                #print "1"
-                #pprint(header)
             except IOError:
                 self.logger.exception("Unable to access image")
                 return False
@@ -1031,8 +1030,7 @@ class Model(object):
 
         # Save the results for the plugin
         if message.get("results", False):
-            __ = self.database.save_plugin_result({"process":message["process"],
-                                                   "results":message["results"]})
+            __ = self.database.save_plugin_result(message)
 
     def receive(self, message):
         """

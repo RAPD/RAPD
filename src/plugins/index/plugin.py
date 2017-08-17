@@ -49,6 +49,7 @@ import multiprocessing
 import numpy
 import os
 from pprint import pprint
+import re
 import shutil
 import signal
 import subprocess
@@ -247,6 +248,14 @@ class RapdPlugin(Process):
         self.results["results"] = {}
         # Status is now 1 (starting)
         self.results["process"]["status"] = 1
+        self.results["process"]["type"] = "plugin"
+
+        # Assign the text representation for this result
+        if not self.header2:
+            self.results["process"]["repr"] = os.path.basename(self.header["fullname"])
+        else:
+            self.results["process"]["repr"] = re.sub(r"\?\?*", "?", self.header["image_template"])\
+                .replace("?", "%d+%d" % (self.header["image_number"], self.header2["image_number"]))
 
         # Assumes that Core sent job if present. Overrides values for clean and test from top.
         if self.site_parameters != False:

@@ -84,7 +84,7 @@ class Launch(object):
                                         tprint=False,
                                         logger=self.new_logger)
 
-        #plugin.start()
+        plugin.start()
 
     def load_command(self):
         """
@@ -184,7 +184,7 @@ def main():
 
     # Import the site settings
     SITE = importlib.import_module(site_file)
-    
+
     """
     # Set up logging
     if commandline_args.verbose:
