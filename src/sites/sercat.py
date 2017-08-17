@@ -232,11 +232,11 @@ CONTROL_DATABASE_SETTINGS = {
     # Connection can be 'pool' for database on single computer, or
     # 'sentinal' for high availability on redundant computers.
     "REDIS_CONNECTION":"sentinel",
-    "REDIS_HOST":REDIS_HOST,
-    "REDIS_PORT":REDIS_PORT,
-    "REDIS_DB":REDIS_DB,
-    "REDIS_SENTINEL_HOSTS":SENTINEL_HOSTS,
-    "REDIS_MASTER_NAME":REDIS_MASTER_NAME,
+    "REDIS_HOST":CONTROL_REDIS_HOST,
+    "REDIS_PORT":CONTROL_REDIS_PORT,
+    "REDIS_DB":CONTROL_REDIS_DB,
+    "REDIS_SENTINEL_HOSTS":CONTROL_SENTINEL_HOSTS,
+    "REDIS_MASTER_NAME":CONTROL_REDIS_MASTER_NAME,
 }
 
 
