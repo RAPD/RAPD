@@ -170,6 +170,7 @@ class RapdPlugin(Process):
         self.results["command"] = command
         self.results["process"] = command.get("process")
         self.results["process"]["status"] = 1
+        self.results["process"]["type"] = "plugin"
 
         #TODO
         #{

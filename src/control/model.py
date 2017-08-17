@@ -1031,8 +1031,7 @@ class Model(object):
 
         # Save the results for the plugin
         if message.get("results", False):
-            __ = self.database.save_plugin_result({"process":message["process"],
-                                                   "results":message["results"]})
+            __ = self.database.save_plugin_result(message)
 
     def receive(self, message):
         """

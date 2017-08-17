@@ -247,6 +247,7 @@ class RapdPlugin(Process):
         self.results["results"] = {}
         # Status is now 1 (starting)
         self.results["process"]["status"] = 1
+        self.results["process"]["type"] = "plugin"
 
         # Assumes that Core sent job if present. Overrides values for clean and test from top.
         if self.site_parameters != False:
