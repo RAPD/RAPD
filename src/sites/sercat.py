@@ -231,7 +231,7 @@ CONTROL_DATABASE_SETTINGS = {
     "DATABASE_PASSWORD":CONTROL_DATABASE_PASSWORD,
     # Connection can be 'pool' for database on single computer, or
     # 'sentinal' for high availability on redundant computers.
-    "REDIS_CONNECTION":"sentinel",
+    "REDIS_CONNECTION":"pool",
     "REDIS_HOST":CONTROL_REDIS_HOST,
     "REDIS_PORT":CONTROL_REDIS_PORT,
     "REDIS_DB":CONTROL_REDIS_DB,
