@@ -32,7 +32,7 @@ from pprint import pprint
 import sys
 
 # RAPD imports
-from utils.numbers import try_int, try_float
+from utils.r_numbers import try_int, try_float
 
 def setShelxResults(self, inp=False):
   """

@@ -50,7 +50,7 @@ import sys
 # import detectors.detector_utils as detector_utils
 # import utils
 # import utils.credits as credits
-from utils.numbers import try_int, try_float
+from utils.r_numbers import try_int, try_float
 
 # Import smartie.py from the installed CCP4 package
 # smartie.py is a python script for parsing log files from CCP4

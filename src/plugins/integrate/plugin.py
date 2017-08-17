@@ -62,7 +62,7 @@ from plugins.subcontractors.aimless import parse_aimless
 from plugins.subcontractors.xds import get_avg_mosaicity_from_integratelp, get_isa_from_correctlp
 from utils.communicate import rapd_send
 import utils.exceptions as exceptions
-# from utils.numbers import try_int, try_float
+# from utils.r_numbers import try_int, try_float
 import utils.credits as rcredits
 from utils.processes import local_subprocess
 import utils.text as text
