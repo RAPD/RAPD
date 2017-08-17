@@ -668,33 +668,6 @@ class Model(object):
 
         return True
 
-    # def in_past_run(self, fullname):
-    #     """
-    #     Determine the place in a past run the image is
-    #
-    #     Keyword argument
-    #     fullname -- the full path name for an image
-    #     """
-    #
-    #     self.logger.info("in_past_run %s", fullname)
-    #
-    #     # Check older runs
-    #     for run_info in reversed(self.recent_runs):
-    #         place, __ = self.in_run(fullname, run_info)
-    #         # Next
-    #         if place == "PAST_RUN":
-    #             continue
-    #         # Found the run
-    #         elif isinstance(place, int):
-    #             return place, run_info
-    #         # SNAP - unlikely
-    #         elif place == "SNAP":
-    #             return "SNAP", None
-    #
-    #     # Go through all runs and fail to find a run or snap
-    #     else:
-    #         return False, None
-
     def in_run(self, site_tag, fullname, run_info=None):
         """
         Determine if an image is in the currently active run - return
@@ -829,16 +802,16 @@ class Model(object):
 
                 # Break down the image name
                 (directory1,
-                basename1,
-                prefix1,
-                run_number1,
-                image_number1) = self.detectors[site_tag].parse_file_name(self.pairs[site_tag][0][0])
+                 basename1,
+                 prefix1,
+                 run_number1,
+                 image_number1) = self.detectors[site_tag].parse_file_name(self.pairs[site_tag][0][0])
 
                 (directory2,
-                basename2,
-                prefix2,
-                run_number2,
-                image_number2) = self.detectors[site_tag].parse_file_name(self.pairs[site_tag][1][0])
+                 basename2,
+                 prefix2,
+                 run_number2,
+                 image_number2) = self.detectors[site_tag].parse_file_name(self.pairs[site_tag][1][0])
 
                 # Everything matches up to the image number, which is incremented by 1
                 #if (directory1, basename1, prefix1) == (directory2, basename2, prefix2) and (image_number1 == image_number2-1):
