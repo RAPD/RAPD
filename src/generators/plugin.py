@@ -446,7 +446,7 @@ class FileGenerator(CommandlineFileGenerator):
             "    tprint(arg=\"  Plugin version: %s\" % plugin.VERSION, level=10, color=\"white\")",
             "    tprint(arg=\"  Plugin id:      %s\" % plugin.ID, level=10, color=\"white\")\n",
             "    # Run the plugin",
-            "    plugin.RapdPlugin(command, tprint, logger)\n",
+            "    plugin.RapdPlugin(site, command, tprint, logger)\n",
         ]
         file_generator.output_function(main_func_lines)
 

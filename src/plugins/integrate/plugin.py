@@ -164,7 +164,7 @@ class RapdPlugin(Process):
         # Store passed-in variables
         self.site = site
         self.command = command
-        self.preferences = self.command.get("preferences")        
+        self.preferences = self.command.get("preferences")
 
         # Store into results
         self.results["command"] = command
