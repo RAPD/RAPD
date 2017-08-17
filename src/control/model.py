@@ -448,7 +448,7 @@ class Model(object):
                 if place_in_run == 1:
                     # Get all the image information
                     header = detector.read_header(
-                        input_file=fullname,
+                        fullname,
                         beam_settings=self.site.BEAM_INFO[site_tag.upper()])
 
                     # Put data about run in the header object
