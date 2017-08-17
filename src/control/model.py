@@ -1036,9 +1036,10 @@ class Model(object):
         """
 
         # Update the plugin_process in the DB
-        self.database.update_plugin_process(
-            plugin_process_id=message["process"].get("plugin_process_id", None),
-            status=message["process"].get("status", 1))
+        if essage["process"].get("plugin_process_id", False):
+            self.database.update_plugin_process(
+                plugin_process_id=message["process"].get("plugin_process_id", None),
+                status=message["process"].get("status", 1))            
 
         # Save the results for the plugin
         if message.get("results", False):
