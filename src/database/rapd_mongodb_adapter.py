@@ -322,7 +322,7 @@ class Database(object):
 
     def save_plugin_result(self, plugin_result):
         """
-        Add and AUTOINDEX+STRATEGY result from the core plugin
+        Add a result from a plugin
 
         Keyword argument
         plugin_result -- dict of information from plugin - must have a process key pointing to a dict
@@ -337,22 +337,37 @@ class Database(object):
         plugin_result["timestamp"] = datetime.datetime.utcnow()
 
         # Add to results
-        result = db.plugin_results.update(
+        collection_name = "%s_%s_results" % (plugin_result["plugin"]["data_type"],
+                                             plugin_result["plugin"]["type"])
+        result1 = db[collection_name].update(
             {"process.plugin_process_id":plugin_result["process"]["plugin_process_id"]},
             {"$set":plugin_result},
             upsert=True)
 
-        self.logger.debug(result)
+        result2 = db.plugin_results.update(
+            {"result_id":result1["_id"]},
+            {"$set":{
+                "data_type":plugin_result["plugin"]["data_type"],
+                "plugin_id":ObjectId(plugin_result["plugin"]["id"]),
+                "plugin_type":plugin_result["plugin"]["type"],
+                "plugin_version":plugin_result["plugin"]["version"],
+                "session_id":ObjectId(plugin_result["process"]["session_id"]),
+                "repr":plugin_result["process"]["repr"],
+                "result_id":result1["_id"]
+                }
+            },
+            upsert=True)
 
         # Work out the _id for the result
         # update
-        if result.get("updatedExisting", True):
-            return str(db.plugin_results.find_one(
-                {"process.plugin_process_id":plugin_result["process"]["plugin_process_id"]},
-                {"_id":1})["_id"])
-        # upsert
-        else:
-            return str(result["upserted"])
+        return result1["_id"]
+        # if result.get("updatedExisting", True):
+        #     return str(db.plugin_results.find_one(
+        #         {"process.plugin_process_id":plugin_result["process"]["plugin_process_id"]},
+        #         {"_id":1})["_id"])
+        # # upsert
+        # else:
+        #     return str(result["upserted"])
 
     def getArrayStats(self,in_array,mode='float'):
         """
