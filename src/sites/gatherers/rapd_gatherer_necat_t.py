@@ -464,8 +464,9 @@ class Gatherer(object):
                 # Split it
                 #cur_run = current_run.split("_") #runid,first#,total#,dist,energy,transmission,omega_start,deltaomega,time,timestamp
                 #1_1_23_400.00_12661.90_30.00_45.12_0.20_0.50_
-                # Reset it back to an empty string
+                # Reset it back to an empty string if beamline is E.
                 #self.bl_redis.set("RUN_INFO_SV", "")
+                # get the additional beamline params and put into nice dict.
                 run_data = self.get_run_data(current_run)
                 self.logger.debug("run_data:%s %s", self.tag, run_data)
                 # Put into exchangable format

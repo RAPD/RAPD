@@ -1072,7 +1072,7 @@ class RapdPlugin(Process):
         self.logger.debug('last_frame = %s', last_frame)
         # print last_frame
         # self.logger.debug('detector_type = %s' % detector_type)
-        background_range = '%s %s' % (self.run_data["start_image_number"]),
+        background_range = '%s %s' % (self.run_data["start_image_number"],
                                       self.run_data["start_image_number"] + 4)
 
         x_beam = float(self.image_data['x_beam']) / float(self.image_data['pixel_size'])
