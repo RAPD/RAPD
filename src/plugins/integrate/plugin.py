@@ -203,10 +203,10 @@ class RapdPlugin(Process):
             self.image_data["total"] = self.preferences.get("end_frame") - \
                                        self.image_data["start"] + 1
         else:
-            self.image_data["total"] = self.run_data.get(":wq")
+            self.image_data["total"] = self.run_data.get("number_images")
         # print "self.image_data[\"total\"]", self.image_data["total"]
 
-        self.image_data['image_template'] = self.run_data['image_template']
+        self.image_data['image_template'] = self.run_data["image_template"]
 
         # Check for 2theta tilt:
         if 'twotheta' in self.run_data:
