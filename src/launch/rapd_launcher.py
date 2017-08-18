@@ -35,7 +35,6 @@ import json
 # import logging.handlers
 from pprint import pprint
 import redis.exceptions
-import socket
 import sys
 import time
 import threading
@@ -125,6 +124,9 @@ class Launcher(object):
                     if command:
                         #self.handle_command("RAPD_JOBS", json.loads(command))
                         self.handle_command(json.loads(command))
+
+                    if "ECHO" not in command:
+                        time.sleep(15)
                 # sleep a little when jobs aren't coming in.
                 time.sleep(0.2)
             except redis.exceptions.ConnectionError:
