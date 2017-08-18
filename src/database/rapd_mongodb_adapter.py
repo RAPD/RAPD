@@ -325,7 +325,7 @@ class Database(object):
         Add a result from a plugin
 
         Keyword argument
-        plugin_result -- dict of information from plugin - must have a process key pointing to a dict
+        plugin_result -- dict of information from plugin - must have a process key pointing to entry
         """
 
         self.logger.debug("save_plugin_result %s", plugin_result)
@@ -337,15 +337,15 @@ class Database(object):
         plugin_result["timestamp"] = datetime.datetime.utcnow()
 
         # Add to results
-        collection_name = "%s_%s_results" % (plugin_result["plugin"]["data_type"],
-                                             plugin_result["plugin"]["type"])
+        collection_name = ("%s_%s_results" % (plugin_result["plugin"]["data_type"],
+                                              plugin_result["plugin"]["type"])).lower()
         result1 = db[collection_name].update(
             {"process.plugin_process_id":plugin_result["process"]["plugin_process_id"]},
             {"$set":plugin_result},
             upsert=True)
 
         # Get the _id from updated entry
-        if result1.get("updatedExisting", True):
+        if result1.raw_result.get("updatedExisting", False):
             result1_id = db[collection_name].find_one(
                 {"process.plugin_process_id":plugin_result["process"]["plugin_process_id"]},
                 {"_id":1})["_id"]
@@ -368,7 +368,7 @@ class Database(object):
             upsert=True)
 
         # Get the _id from updated entry in plugin_results
-        if result2.get("updatedExisting", True):
+        if result2.raw_result.get("updatedExisting", False):
             result2_id = db.plugin_results.find_one(
                 {"result_id":result1_id},
                 {"_id":1})["_id"]
