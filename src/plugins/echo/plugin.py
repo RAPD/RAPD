@@ -140,7 +140,7 @@ class RapdPlugin(multiprocessing.Process):
                 "status": 1}
 
         multiprocessing.Process.__init__(self, name="echo")
-        self.start()
+        # self.start()
 
     def run(self):
         """Execution path of the plugin"""
