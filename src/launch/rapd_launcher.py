@@ -35,7 +35,6 @@ import json
 # import logging.handlers
 from pprint import pprint
 import redis.exceptions
-import socket
 import sys
 import time
 import threading
@@ -93,7 +92,7 @@ class Launcher(object):
 
         # Connect to Redis for communications
         self.connect_to_redis()
-        
+
         self.running = True
 
         # Start listening for commands through a thread for clean exit.
@@ -125,6 +124,10 @@ class Launcher(object):
                     if command:
                         #self.handle_command("RAPD_JOBS", json.loads(command))
                         self.handle_command(json.loads(command))
+
+                        # Only run 1 command
+                        self.running = False
+                        break
                 # sleep a little when jobs aren't coming in.
                 time.sleep(0.2)
             except redis.exceptions.ConnectionError:
@@ -136,12 +139,12 @@ class Launcher(object):
         self.running = False
         if self.site.CONTROL_DATABASE_SETTINGS['REDIS_CONNECTION'] == 'pool':
             self.redis.close()
-    
+
     def connect_to_redis(self):
         """Connect to the redis instance"""
         # Create a pool connection
         redis_database = importlib.import_module('database.rapd_redis_adapter')
-        
+
         self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
         if self.site.CONTROL_DATABASE_SETTINGS['REDIS_CONNECTION'] == 'pool':
             # For a Redis pool connection
@@ -205,8 +208,8 @@ class Launcher(object):
                 print text.error + "There is a launcher adapter registered for thi\
 s IP address (%s), but not for the input tag (%s)" % (self.ip_address, self.tag)
                 print "  Available tags for this IP address:"
-                for t in possible_tags:
-                    print "    %s" % t
+                for tag in possible_tags:
+                    print "    %s" % tag
                 print text.stop
 
             # Exit in error state
@@ -227,15 +230,6 @@ s IP address (%s), but not for the input tag (%s)" % (self.ip_address, self.tag)
             directories=self.site.LAUNCHER_SETTINGS["RAPD_LAUNCHER_ADAPTER_DIRECTORIES"]).LauncherAdapter
 
         self.logger.debug(self.adapter)
-
-    # def connect_to_database(self):
-    #     """Set up database connection"""
-    #
-    #     # Import the database adapter as database module
-    #     database = importlib.import_module('database.rapd_%s_adapter' % self.site.CONTROL_DATABASE)
-    #
-    #     # Instantiate the database connection
-    #     self.database = database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
 
 def get_commandline():
     """Get the commandline variables and handle them"""
@@ -297,19 +291,17 @@ def main():
 
     # Instantiate the logger
     logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
-                                  logfile_id="rapd_launcher",
-                                  #level=log_level
-                                  )
+                                  logfile_id="rapd_launcher")
 
     logger.debug("Commandline arguments:")
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s" % pair)
-    
+
     LAUNCHER = Launcher(site=SITE,
                         tag=tag,
                         logger=logger,
                         overwatch_id=commandline_args.overwatch_id)
-    
+
     try:
         time.sleep(100)
     except KeyboardInterrupt:

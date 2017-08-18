@@ -114,7 +114,8 @@ class RapdPlugin(multiprocessing.Process):
             self.tprint = tprint
         # Dead end if no tprint passed
         else:
-            def func(arg=False, level=False, verbosity=False, color=False):
+            def func(*args, **kwargs):
+                """Dummy function"""
                 pass
             self.tprint = func
 
@@ -140,7 +141,7 @@ class RapdPlugin(multiprocessing.Process):
                 "status": 1}
 
         multiprocessing.Process.__init__(self, name="echo")
-        self.start()
+        # self.start()
 
     def run(self):
         """Execution path of the plugin"""

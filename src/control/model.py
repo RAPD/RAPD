@@ -383,8 +383,6 @@ class Model(object):
         self.redis.lpush(channel, json.dumps(command, default=json_util.default))
         print "Command sent"
 
-        sys.exit(0)
-
     def stop(self):
         """Stop the ImageMonitor,CloudMonitor and StatusRegistrar."""
         self.logger.info("Stopping")
@@ -845,13 +843,13 @@ class Model(object):
 
                     # Add the process to the database to display as in-process
                     plugin_process_id = self.database.add_plugin_process(
-                                                        plugin_type="index+strategy:pair",
-                                                        request_type="original",
-                                                        representation=new_repr,
-                                                        status=1,
-                                                        display="show",
-                                                        session_id=session_id,
-                                                        data_root_dir=data_root_dir)
+                        plugin_type="index+strategy:pair",
+                        request_type="original",
+                        representation=new_repr,
+                        status=1,
+                        display="show",
+                        session_id=session_id,
+                        data_root_dir=data_root_dir)
 
                     # Add the ID entry to the header dict
                     header1.update({"plugin_process_id":plugin_process_id,
@@ -922,7 +920,7 @@ class Model(object):
             # Pop out the run data
             run_data = header.pop("run")
 
-            # Run an echo to make sure everything is up
+            # Construct and send command
             command = {
                 "command":"INTEGRATE",
                 "process":{
@@ -1032,8 +1030,9 @@ class Model(object):
                 status=message["process"].get("status", 1))
 
         # Save the results for the plugin
-        if message.get("results", False):
+        if "results" in message:
             __ = self.database.save_plugin_result(message)
+            self.logger.debug(__)
 
     def receive(self, message):
         """

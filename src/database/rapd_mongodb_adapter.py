@@ -325,7 +325,7 @@ class Database(object):
         Add a result from a plugin
 
         Keyword argument
-        plugin_result -- dict of information from plugin - must have a process key pointing to a dict
+        plugin_result -- dict of information from plugin - must have a process key pointing to entry
         """
 
         self.logger.debug("save_plugin_result %s", plugin_result)
@@ -337,37 +337,48 @@ class Database(object):
         plugin_result["timestamp"] = datetime.datetime.utcnow()
 
         # Add to results
-        collection_name = "%s_%s_results" % (plugin_result["plugin"]["data_type"],
-                                             plugin_result["plugin"]["type"])
-        result1 = db[collection_name].update(
+        collection_name = ("%s_%s_results" % (plugin_result["plugin"]["data_type"],
+                                              plugin_result["plugin"]["type"])).lower()
+        result1 = db[collection_name].update_one(
             {"process.plugin_process_id":plugin_result["process"]["plugin_process_id"]},
             {"$set":plugin_result},
             upsert=True)
 
-        result2 = db.plugin_results.update(
-            {"result_id":result1["_id"]},
+        # Get the _id from updated entry
+        if result1.raw_result.get("updatedExisting", False):
+            result1_id = db[collection_name].find_one(
+                {"process.plugin_process_id":ObjectId(plugin_result["process"]["plugin_process_id"])},
+                {"_id":1})["_id"]
+        # upsert
+        else:
+            result1_id = result1.upserted_id
+
+        result2 = db.plugin_results.update_one(
+            {"result_id":result1_id},
             {"$set":{
                 "data_type":plugin_result["plugin"]["data_type"],
-                "plugin_id":ObjectId(plugin_result["plugin"]["id"]),
+                "plugin_id":plugin_result["plugin"]["id"],
                 "plugin_type":plugin_result["plugin"]["type"],
                 "plugin_version":plugin_result["plugin"]["version"],
                 "session_id":ObjectId(plugin_result["process"]["session_id"]),
                 "repr":plugin_result["process"]["repr"],
-                "result_id":result1["_id"]
+                "result_id":result1_id
                 }
             },
             upsert=True)
 
-        # Work out the _id for the result
-        # update
-        return result1["_id"]
-        # if result.get("updatedExisting", True):
-        #     return str(db.plugin_results.find_one(
-        #         {"process.plugin_process_id":plugin_result["process"]["plugin_process_id"]},
-        #         {"_id":1})["_id"])
-        # # upsert
-        # else:
-        #     return str(result["upserted"])
+        # Get the _id from updated entry in plugin_results
+        if result2.raw_result.get("updatedExisting", False):
+            result2_id = db.plugin_results.find_one(
+                {"result_id":result1_id},
+                {"_id":1})["_id"]
+        # upsert
+        else:
+            result2_id = result2.upserted_id
+
+        # Return the _ids for the two collections
+        return {"plugin_results_id":result2_id,
+                "result_id":result1_id}
 
     def getArrayStats(self,in_array,mode='float'):
         """
