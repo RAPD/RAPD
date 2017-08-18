@@ -62,6 +62,7 @@ import plugins.subcontractors.parse as Parse
 import plugins.subcontractors.labelit as labelit
 from plugins.subcontractors.xoalign import RunXOalign
 import utils.credits as rcredits
+from utils.r_numbers import try_int, try_float
 #from utils.communicate import rapd_send
 import utils.exceptions as exceptions
 import utils.global_vars as global_vars
