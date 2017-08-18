@@ -1032,8 +1032,9 @@ class Model(object):
                 status=message["process"].get("status", 1))
 
         # Save the results for the plugin
-        if message.get("results", False):
+        if "results" in message:
             __ = self.database.save_plugin_result(message)
+            self.logger.debug(__)
 
     def receive(self, message):
         """
