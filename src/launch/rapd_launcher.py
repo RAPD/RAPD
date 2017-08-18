@@ -125,8 +125,8 @@ class Launcher(object):
                         #self.handle_command("RAPD_JOBS", json.loads(command))
                         self.handle_command(json.loads(command))
 
-                    # if "ECHO" not in command:
-                    #     time.sleep(15)
+                        # Only run 1 command
+                        break
                 # sleep a little when jobs aren't coming in.
                 time.sleep(0.2)
             except redis.exceptions.ConnectionError:
