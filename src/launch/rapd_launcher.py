@@ -295,7 +295,7 @@ def main():
 
     logger.debug("Commandline arguments:")
     for pair in commandline_args._get_kwargs():
-        logger.debug("  arg:%s  val:%s", pair)
+        logger.debug("  arg:%s  val:%s" % pair)
 
     LAUNCHER = Launcher(site=SITE,
                         tag=tag,

@@ -920,7 +920,7 @@ class Model(object):
             # Pop out the run data
             run_data = header.pop("run")
 
-            # Run an echo to make sure everything is up
+            # Construct and send command
             command = {
                 "command":"INTEGRATE",
                 "process":{
