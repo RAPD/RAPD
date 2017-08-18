@@ -339,7 +339,7 @@ class Database(object):
         # Add to results
         collection_name = ("%s_%s_results" % (plugin_result["plugin"]["data_type"],
                                               plugin_result["plugin"]["type"])).lower()
-        result1 = db[collection_name].update(
+        result1 = db[collection_name].update_one(
             {"process.plugin_process_id":plugin_result["process"]["plugin_process_id"]},
             {"$set":plugin_result},
             upsert=True)
@@ -353,7 +353,7 @@ class Database(object):
         else:
             result1_id = result1["upserted_id"]
 
-        result2 = db.plugin_results.update(
+        result2 = db.plugin_results.update_one(
             {"result_id":result1_id},
             {"$set":{
                 "data_type":plugin_result["plugin"]["data_type"],
