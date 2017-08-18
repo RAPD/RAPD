@@ -347,7 +347,7 @@ class Database(object):
         # Get the _id from updated entry
         if result1.raw_result.get("updatedExisting", False):
             result1_id = db[collection_name].find_one(
-                {"process.plugin_process_id":plugin_result["process"]["plugin_process_id"]},
+                {"process.plugin_process_id":ObjectId(plugin_result["process"]["plugin_process_id"])},
                 {"_id":1})["_id"]
         # upsert
         else:
@@ -357,7 +357,7 @@ class Database(object):
             {"result_id":result1_id},
             {"$set":{
                 "data_type":plugin_result["plugin"]["data_type"],
-                "plugin_id":ObjectId(plugin_result["plugin"]["id"]),
+                "plugin_id":plugin_result["plugin"]["id"],
                 "plugin_type":plugin_result["plugin"]["type"],
                 "plugin_version":plugin_result["plugin"]["version"],
                 "session_id":ObjectId(plugin_result["process"]["session_id"]),
