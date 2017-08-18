@@ -27,14 +27,13 @@ __status__ = "Production"
 
 # This is an active rapd plugin
 RAPD_PLUGIN = True
-
 # This plugin's types
 DATA_TYPE = "MX"
 PLUGIN_TYPE = "INTEGRATE"
 PLUGIN_SUBTYPE = "CORE"
-
 # A unique ID for this handler (uuid.uuid1().hex[:4])
 ID = "bd11"
+# Version of this plugin
 VERSION = "2.0.0"
 
 # Standard imports
@@ -1072,7 +1071,7 @@ class RapdPlugin(Process):
         self.logger.debug('last_frame = %s', last_frame)
         # print last_frame
         # self.logger.debug('detector_type = %s' % detector_type)
-        background_range = '%s %s' % (self.run_data["start_image_number"]),
+        background_range = '%s %s' % (self.run_data["start_image_number"],
                                       self.run_data["start_image_number"] + 4)
 
         x_beam = float(self.image_data['x_beam']) / float(self.image_data['pixel_size'])
