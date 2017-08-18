@@ -382,6 +382,8 @@ class Model(object):
         self.redis.lpush(channel, json.dumps(command, default=json_util.default))
         print "Command sent"
 
+        sys.exit(0)
+
     def stop(self):
         """Stop the ImageMonitor,CloudMonitor and StatusRegistrar."""
         self.logger.info("Stopping")
