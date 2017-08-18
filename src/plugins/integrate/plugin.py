@@ -152,7 +152,7 @@ class RapdPlugin(Process):
             self.tprint = tprint
         # Dead end if no tprint passed
         else:
-            def func(arg=False, level=False, verbosity=False, color=False):
+            def func(*arg):
                 pass
             self.tprint = func
 
@@ -203,7 +203,7 @@ class RapdPlugin(Process):
             self.image_data["total"] = self.preferences.get("end_frame") - \
                                        self.image_data["start"] + 1
         else:
-            self.image_data["total"] = self.run_data.get("number_images")
+            self.image_data["total"] = self.run_data.get(":wq")
         # print "self.image_data[\"total\"]", self.image_data["total"]
 
         self.image_data['image_template'] = self.run_data['image_template']
