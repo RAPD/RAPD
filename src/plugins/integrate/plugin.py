@@ -196,14 +196,14 @@ class RapdPlugin(Process):
         if self.preferences.get("start_frame", False):
             self.image_data["start"] = self.preferences.get("start_frame")
         else:
-            self.image_data["start"] = self.run_data.get("start")
+            self.image_data["start"] = self.run_data.get("start_image_number")
         # print "self.image_data[\"start\"]", self.image_data["start"]
 
         if self.preferences.get("end_frame", False):
             self.image_data["total"] = self.preferences.get("end_frame") - \
                                        self.image_data["start"] + 1
         else:
-            self.image_data["total"] = self.run_data.get("total")
+            self.image_data["total"] = self.run_data.get("number_images")
         # print "self.image_data[\"total\"]", self.image_data["total"]
 
         self.image_data['image_template'] = self.run_data['image_template']
@@ -1067,12 +1067,12 @@ class RapdPlugin(Process):
         # print self.image_data["start"]
         # print self.image_data["total"]
 
-        last_frame = self.run_data["start_image_number"] + self.run_data["number_images"] - 1
+        last_frame = self.image_data["start"] + self.image_data["total"] - 1
         self.logger.debug('last_frame = %s', last_frame)
         # print last_frame
         # self.logger.debug('detector_type = %s' % detector_type)
-        background_range = '%s %s' % (self.run_data["start_image_number"],
-                                      self.run_data["start_image_number"] + 4)
+        background_range = '%s %s' % (self.image_data["start"],
+                                      self.image_data["start"] + 4)
 
         x_beam = float(self.image_data['x_beam']) / float(self.image_data['pixel_size'])
         y_beam = float(self.image_data['y_beam']) / float(self.image_data['pixel_size'])
@@ -1095,7 +1095,7 @@ class RapdPlugin(Process):
     	# Remove the remaining '?'
         self.last_image = self.last_image.replace('?', '')
     	# Repeat the last two steps for the first image's filename.
-        self.first_image = file_template.replace('?', str(self.run_data["start_image_number"]).zfill(pad), 1)
+        self.first_image = file_template.replace('?', str(self.image_data["start"]).zfill(pad), 1)
         self.first_image = self.first_image.replace('?', '')
 
     	# Begin constructing the list that will represent the XDS.INP file.

@@ -341,7 +341,7 @@ class RapdPlugin(Process):
 
         Process.__init__(self, name="AutoindexingStrategy")
 
-        self.start()
+        # self.start()
 
     def run(self):
         """
