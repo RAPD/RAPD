@@ -126,6 +126,7 @@ class Launcher(object):
                         self.handle_command(json.loads(command))
 
                         # Only run 1 command
+                        self.running = False
                         break
                 # sleep a little when jobs aren't coming in.
                 time.sleep(0.2)
