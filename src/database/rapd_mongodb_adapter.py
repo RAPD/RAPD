@@ -362,7 +362,7 @@ class Database(object):
                 "plugin_version":plugin_result["plugin"]["version"],
                 "session_id":ObjectId(plugin_result["process"]["session_id"]),
                 "repr":plugin_result["process"]["repr"],
-                "result_id":result1["_id"]
+                "result_id":result1_id
                 }
             },
             upsert=True)

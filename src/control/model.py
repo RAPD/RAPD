@@ -843,13 +843,13 @@ class Model(object):
 
                     # Add the process to the database to display as in-process
                     plugin_process_id = self.database.add_plugin_process(
-                                                        plugin_type="index+strategy:pair",
-                                                        request_type="original",
-                                                        representation=new_repr,
-                                                        status=1,
-                                                        display="show",
-                                                        session_id=session_id,
-                                                        data_root_dir=data_root_dir)
+                        plugin_type="index+strategy:pair",
+                        request_type="original",
+                        representation=new_repr,
+                        status=1,
+                        display="show",
+                        session_id=session_id,
+                        data_root_dir=data_root_dir)
 
                     # Add the ID entry to the header dict
                     header1.update({"plugin_process_id":plugin_process_id,
