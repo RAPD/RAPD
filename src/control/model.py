@@ -35,8 +35,9 @@ import json
 import logging
 import os
 from pprint import pprint
-import redis
-import socket
+# import redis
+# import socket
+import sys
 
 from bson import json_util
 
