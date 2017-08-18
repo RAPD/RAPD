@@ -218,7 +218,8 @@ class RapdPlugin(Process):
             self.tprint = tprint
         # Dead end if no tprint passed
         else:
-            def func(arg=False, level=False, verbosity=False, color=False):
+            def func(*args, **kwargs):
+                """Dummy function"""
                 pass
             self.tprint = func
 
