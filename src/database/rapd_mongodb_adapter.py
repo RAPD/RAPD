@@ -351,7 +351,7 @@ class Database(object):
                 {"_id":1})["_id"]
         # upsert
         else:
-            result1_id = result1["upserted_id"]
+            result1_id = result1.upserted_id
 
         result2 = db.plugin_results.update_one(
             {"result_id":result1_id},
@@ -374,7 +374,7 @@ class Database(object):
                 {"_id":1})["_id"]
         # upsert
         else:
-            result2_id = result2["upserted_id"]
+            result2_id = result2.upserted_id
 
         # Return the _ids for the two collections
         return {"plugin_results_id":result2_id,
