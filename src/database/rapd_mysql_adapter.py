@@ -1614,10 +1614,10 @@ class Database(object):
             #The normal strategy results
             enter_norm_mosflm = False
             try:
-                if results.has_key('Best results'):
-                #if results['Best results']:
+                if results.has_key("best_results_norm"):
+                #if results["best_results_norm"]:
                     self.logger.debug('Best results is there')
-                    if results['Best results'] == 'FAILED':
+                    if results["best_results_norm"] == 'FAILED':
                         tmp_command_front = """,
                                                            best_norm_status"""
 
@@ -1676,21 +1676,21 @@ class Database(object):
 
                         tmp_insert_values = [settings['best_complexity'],
                                           'SUCCESS',
-                                          results['Best results']['strategy res limit'],
-                                          results['Best results']['strategy completeness'][:-1],
-                                          results['Best results']['strategy attenuation'],
-                                          results['Best results']['strategy rot range'],
-                                          results['Best results']['strategy phi end'],
-                                          results['Best results']['strategy total exposure time'],
-                                          results['Best results']['strategy redundancy'],
-                                          results['Best results']['strategy I/sig'].split(' ')[0],
-                                          results['Best results']['strategy I/sig'].split(' ')[1][1:-1],
-                                          results['Best results']['strategy R-factor'].split(' ')[0][:-1],
-                                          results['Best results']['strategy R-factor'].split(' ')[1][1:-2],
-                                          results['Best results']['strategy frac of unique in blind region'][:-1],
+                                          results["best_results_norm"]['strategy res limit'],
+                                          results["best_results_norm"]['strategy completeness'][:-1],
+                                          results["best_results_norm"]['strategy attenuation'],
+                                          results["best_results_norm"]['strategy rot range'],
+                                          results["best_results_norm"]['strategy phi end'],
+                                          results["best_results_norm"]['strategy total exposure time'],
+                                          results["best_results_norm"]['strategy redundancy'],
+                                          results["best_results_norm"]['strategy I/sig'].split(' ')[0],
+                                          results["best_results_norm"]['strategy I/sig'].split(' ')[1][1:-1],
+                                          results["best_results_norm"]['strategy R-factor'].split(' ')[0][:-1],
+                                          results["best_results_norm"]['strategy R-factor'].split(' ')[1][1:-2],
+                                          results["best_results_norm"]['strategy frac of unique in blind region'][:-1],
                                           'NONE' ]
 
-                #There is no entry in the results for 'Best results'
+                #There is no entry in the results for "best_results_norm"
                 else:
                     self.logger.debug('NO key Best results')
                     #BEST STRATEGY
@@ -1840,7 +1840,7 @@ class Database(object):
                                           results['Best ANOM results']['strategy anom frac of unique in blind region'][:-1],
                                           'NONE' ]
 
-                #There is no entry in the results for 'Best results'
+                #There is no entry in the results for "best_results_norm"
                 else:
                     self.logger.debug('NO key Best ANOM results')
                     #BEST STRATEGY
@@ -2003,7 +2003,7 @@ class Database(object):
                                        int_type = 'single',
                                        strategy_type = 'normal',
                                        strategy_program = 'best',
-                                       results = results['Best results'])
+                                       results = results["best_results_norm"])
             elif (norm_strat_type == 'mosflm') :
                 self.addStrategyWedges(id=single_result_dict['single_result_id'],
                                        int_type='single',
@@ -2459,10 +2459,10 @@ class Database(object):
             #The normal strategy results
             enter_norm_mosflm = False
             try:
-                if results.has_key('Best results'):
-                #if results['Best results']:
+                if results.has_key("best_results_norm"):
+                #if results["best_results_norm"]:
                     self.logger.debug('Best results is there')
-                    if results['Best results'] == 'FAILED':
+                    if results["best_results_norm"] == 'FAILED':
                         tmp_command_front = """,
                                                            best_norm_status"""
 
@@ -2521,21 +2521,21 @@ class Database(object):
 
                         tmp_insert_values = [settings['best_complexity'],
                                           'SUCCESS',
-                                          results['Best results']['strategy res limit'],
-                                          results['Best results']['strategy completeness'][:-1],
-                                          results['Best results']['strategy attenuation'],
-                                          results['Best results']['strategy rot range'],
-                                          results['Best results']['strategy phi end'],
-                                          results['Best results']['strategy total exposure time'],
-                                          results['Best results']['strategy redundancy'],
-                                          results['Best results']['strategy I/sig'].split(' ')[0],
-                                          results['Best results']['strategy I/sig'].split(' ')[1][1:-1],
-                                          results['Best results']['strategy R-factor'].split(' ')[0][:-1],
-                                          results['Best results']['strategy R-factor'].split(' ')[1][1:-2],
-                                          results['Best results']['strategy frac of unique in blind region'][:-1],
+                                          results["best_results_norm"]['strategy res limit'],
+                                          results["best_results_norm"]['strategy completeness'][:-1],
+                                          results["best_results_norm"]['strategy attenuation'],
+                                          results["best_results_norm"]['strategy rot range'],
+                                          results["best_results_norm"]['strategy phi end'],
+                                          results["best_results_norm"]['strategy total exposure time'],
+                                          results["best_results_norm"]['strategy redundancy'],
+                                          results["best_results_norm"]['strategy I/sig'].split(' ')[0],
+                                          results["best_results_norm"]['strategy I/sig'].split(' ')[1][1:-1],
+                                          results["best_results_norm"]['strategy R-factor'].split(' ')[0][:-1],
+                                          results["best_results_norm"]['strategy R-factor'].split(' ')[1][1:-2],
+                                          results["best_results_norm"]['strategy frac of unique in blind region'][:-1],
                                           'NONE' ]
 
-                #There is no entry in the results for 'Best results'
+                #There is no entry in the results for "best_results_norm"
                 else:
                     self.logger.debug('NO key Best results')
                     #BEST STRATEGY
@@ -2685,7 +2685,7 @@ class Database(object):
                                           results['Best ANOM results']['strategy anom frac of unique in blind region'][:-1],
                                           'NONE' ]
 
-                #There is no entry in the results for 'Best results'
+                #There is no entry in the results for "best_results_norm"
                 else:
                     self.logger.debug('NO key Best ANOM results')
                     #BEST STRATEGY
@@ -2849,7 +2849,7 @@ class Database(object):
                                        int_type = 'pair',
                                        strategy_type = 'normal',
                                        strategy_program = 'best',
-                                       results = results['Best results'])
+                                       results = results["best_results_norm"])
             elif (norm_strat_type == 'mosflm') :
                 self.addStrategyWedges(id = pair_result_dict['pair_result_id'],
                                        int_type = 'pair',

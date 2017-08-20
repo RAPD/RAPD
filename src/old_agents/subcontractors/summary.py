@@ -185,8 +185,8 @@ def summaryBest(self, anom=False):
         j1 = 'Best ANOM results'
         j2 = ' anom '
     else:
-        j  = self.best_results.get("Best results")
-        j1 = 'Best results'
+        j  = self.best_results.get("best_results_norm")
+        j1 = "best_results_norm"
         j2 = ' '
 
     run_number = j.get("strategy%srun number" % j2)
@@ -1357,8 +1357,8 @@ def summaryAutoCell(self,labelit=False):
     if labelit:
       """
       #Not as good res limit
-      if self.best_results.get('Best results') != 'FAILED':
-        mosflm_res = self.best_results.get('Best results').get('strategy res limit')
+      if self.best_results.get("best_results_norm") != 'FAILED':
+        mosflm_res = self.best_results.get("best_results_norm").get('strategy res limit')
       else:
         mosflm_res = self.labelit_results.get("labelit_results").get('mosflm_res')[0]
       """

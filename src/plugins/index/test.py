@@ -156,11 +156,11 @@ def compare_results(result1, result2, tprint):
            result2["results"]["labelit_results"]["mosflm_sg"]
 
     tprint("    Best standard strategy", 10, "white")
-    assert result1["results"]["Best results"]["strategy phi start"] == \
-           result2["results"]["Best results"]["strategy phi start"]
+    assert result1["results"]["best_results_norm"]["strategy phi start"] == \
+           result2["results"]["best_results_norm"]["strategy phi start"]
 
-    assert result1["results"]["Best results"]["strategy rot range"] == \
-           result2["results"]["Best results"]["strategy rot range"]
+    assert result1["results"]["best_results_norm"]["strategy rot range"] == \
+           result2["results"]["best_results_norm"]["strategy rot range"]
 
     tprint("    Best anomalous strategy", 10, "white")
     assert result1["results"]["Best ANOM results"]["strategy anom phi start"] == \

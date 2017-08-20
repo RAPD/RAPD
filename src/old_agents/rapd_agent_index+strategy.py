@@ -1134,7 +1134,7 @@ class RapdAgent(Process):
                 if anom:
                     self.best_anom_results = {"Best ANOM results":data}
                 else:
-                    self.best_results = {"Best results":data}
+                    self.best_results = {"best_results_norm":data}
 
                 # Print to terminal
                 # pprint.pprint(data)
@@ -1250,7 +1250,7 @@ class RapdAgent(Process):
                 # Set Best output if it failed after 3 tries
                 if i == 3:
                     if x == 0:
-                        self.best_results = {"Best results":"FAILED"}
+                        self.best_results = {"best_results_norm":"FAILED"}
                         self.best_failed = True
                     else:
                         self.best_anom_results = {"Best ANOM results":"FAILED"}
@@ -1784,7 +1784,7 @@ class RapdAgent(Process):
         run = True
         plot = False
         plotanom = False
-        dir1 = self.best_results.get("Best results").get("directory", False)
+        dir1 = self.best_results.get("best_results_norm").get("directory", False)
         dir2 = self.best_anom_results.get("Best ANOM results").get("directory", False)
 
         # Get the parsed results for reg and anom results and put them into a single dict.
