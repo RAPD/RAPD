@@ -181,8 +181,8 @@ def summaryBest(self, anom=False):
 
     # try:
     if anom:
-        j  = self.best_anom_results.get("Best ANOM results")
-        j1 = 'Best ANOM results'
+        j  = self.best_anom_results.get("best_results_anom")
+        j1 = "best_results_anom"
         j2 = ' anom '
     else:
         j  = self.best_results.get("best_results_norm")

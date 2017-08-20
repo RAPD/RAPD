@@ -1768,9 +1768,9 @@ class Database(object):
             #The anomalous strategy results
             enter_anom_mosflm = False
             try:
-                if results.has_key('Best ANOM results'):
+                if results.has_key("best_results_anom"):
                     self.logger.debug('Best ANOM results present')
-                    if results['Best ANOM results'] == 'FAILED':
+                    if results["best_results_anom"] == 'FAILED':
                         tmp_command_front = """,
                                                            best_anom_status"""
 
@@ -1826,18 +1826,18 @@ class Database(object):
                                                                     %s"""
 
                         tmp_insert_values = ['SUCCESS',
-                                          results['Best ANOM results']['strategy anom res limit'],
-                                          results['Best ANOM results']['strategy anom completeness'][:-1],
-                                          results['Best ANOM results']['strategy anom attenuation'],
-                                          results['Best ANOM results']['strategy anom rot range'],
-                                          results['Best ANOM results']['strategy anom phi end'],
-                                          results['Best ANOM results']['strategy anom total exposure time'],
-                                          results['Best ANOM results']['strategy anom redundancy'],
-                                          results['Best ANOM results']['strategy anom I/sig'].split(' ')[0],
-                                          results['Best ANOM results']['strategy anom I/sig'].split(' ')[1][1:-1],
-                                          results['Best ANOM results']['strategy anom R-factor'].split(' ')[0][:-1],
-                                          results['Best ANOM results']['strategy anom R-factor'].split(' ')[1][1:-2],
-                                          results['Best ANOM results']['strategy anom frac of unique in blind region'][:-1],
+                                          results["best_results_anom"]['strategy anom res limit'],
+                                          results["best_results_anom"]['strategy anom completeness'][:-1],
+                                          results["best_results_anom"]['strategy anom attenuation'],
+                                          results["best_results_anom"]['strategy anom rot range'],
+                                          results["best_results_anom"]['strategy anom phi end'],
+                                          results["best_results_anom"]['strategy anom total exposure time'],
+                                          results["best_results_anom"]['strategy anom redundancy'],
+                                          results["best_results_anom"]['strategy anom I/sig'].split(' ')[0],
+                                          results["best_results_anom"]['strategy anom I/sig'].split(' ')[1][1:-1],
+                                          results["best_results_anom"]['strategy anom R-factor'].split(' ')[0][:-1],
+                                          results["best_results_anom"]['strategy anom R-factor'].split(' ')[1][1:-2],
+                                          results["best_results_anom"]['strategy anom frac of unique in blind region'][:-1],
                                           'NONE' ]
 
                 #There is no entry in the results for "best_results_norm"
@@ -2016,7 +2016,7 @@ class Database(object):
                                        int_type='single',
                                        strategy_type='anomalous',
                                        strategy_program='best',
-                                       results=results['Best ANOM results'])
+                                       results=results["best_results_anom"])
             elif (anom_strat_type == 'mosflm') :
                 self.addStrategyWedges(id = single_result_dict['single_result_id'],
                                        int_type = 'single',
@@ -2613,9 +2613,9 @@ class Database(object):
             #The anomalous strategy results
             enter_anom_mosflm = False
             try:
-                if results.has_key('Best ANOM results'):
+                if results.has_key("best_results_anom"):
                     self.logger.debug('Best ANOM results present')
-                    if results['Best ANOM results'] == 'FAILED':
+                    if results["best_results_anom"] == 'FAILED':
                         tmp_command_front = """,
                                                            best_anom_status"""
 
@@ -2671,18 +2671,18 @@ class Database(object):
                                                                     %s"""
 
                         tmp_insert_values = ['SUCCESS',
-                                          results['Best ANOM results']['strategy anom res limit'],
-                                          results['Best ANOM results']['strategy anom completeness'][:-1],
-                                          results['Best ANOM results']['strategy anom attenuation'],
-                                          results['Best ANOM results']['strategy anom rot range'],
-                                          results['Best ANOM results']['strategy anom phi end'],
-                                          results['Best ANOM results']['strategy anom total exposure time'],
-                                          results['Best ANOM results']['strategy anom redundancy'],
-                                          results['Best ANOM results']['strategy anom I/sig'].split(' ')[0],
-                                          results['Best ANOM results']['strategy anom I/sig'].split(' ')[1][1:-1],
-                                          results['Best ANOM results']['strategy anom R-factor'].split(' ')[0][:-1],
-                                          results['Best ANOM results']['strategy anom R-factor'].split(' ')[1][1:-2],
-                                          results['Best ANOM results']['strategy anom frac of unique in blind region'][:-1],
+                                          results["best_results_anom"]['strategy anom res limit'],
+                                          results["best_results_anom"]['strategy anom completeness'][:-1],
+                                          results["best_results_anom"]['strategy anom attenuation'],
+                                          results["best_results_anom"]['strategy anom rot range'],
+                                          results["best_results_anom"]['strategy anom phi end'],
+                                          results["best_results_anom"]['strategy anom total exposure time'],
+                                          results["best_results_anom"]['strategy anom redundancy'],
+                                          results["best_results_anom"]['strategy anom I/sig'].split(' ')[0],
+                                          results["best_results_anom"]['strategy anom I/sig'].split(' ')[1][1:-1],
+                                          results["best_results_anom"]['strategy anom R-factor'].split(' ')[0][:-1],
+                                          results["best_results_anom"]['strategy anom R-factor'].split(' ')[1][1:-2],
+                                          results["best_results_anom"]['strategy anom frac of unique in blind region'][:-1],
                                           'NONE' ]
 
                 #There is no entry in the results for "best_results_norm"
@@ -2862,7 +2862,7 @@ class Database(object):
                                        int_type = 'pair',
                                        strategy_type = 'anomalous',
                                        strategy_program = 'best',
-                                       results = results['Best ANOM results'])
+                                       results = results["best_results_anom"])
             elif (anom_strat_type == 'mosflm') :
                 self.addStrategyWedges(id = pair_result_dict['pair_result_id'],
                                        int_type = 'pair',

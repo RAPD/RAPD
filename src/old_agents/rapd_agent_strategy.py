@@ -890,7 +890,7 @@ class RapdAgent(Process):
       if type(data) == dict:
         data.update({'directory':os.path.dirname(inp)})
         if anom:
-          self.best_anom_results = {'Best ANOM results':data}
+          self.best_anom_results = {"best_results_anom":data}
         else:
           self.best_results = {"best_results_norm":data}
         return('OK')
@@ -945,7 +945,7 @@ class RapdAgent(Process):
             self.best_results = { "best_results_norm" : 'FAILED'}
             self.best_failed = True
           else:
-            self.best_anom_results = { 'Best ANOM results' : 'FAILED'}
+            self.best_anom_results = { "best_results_anom" : 'FAILED'}
             self.best_anom_failed = True
 
       st = 0
@@ -1450,7 +1450,7 @@ class RapdAgent(Process):
       plot = False
       plotanom = False
       dir1 = self.best_results.get("best_results_norm").get('directory',False)
-      dir2 = self.best_anom_results.get('Best ANOM results').get('directory',False)
+      dir2 = self.best_anom_results.get("best_results_anom").get('directory',False)
 
       #Get the parsed results for reg and anom results and put them into a single dict.
       if dir1:
@@ -1544,7 +1544,7 @@ class RapdAgent(Process):
               best_plot.write("%4smark.push([%s,i]);\n"%('',self.best_results.get("best_results_norm").get('strategy phi start')[0]))
             if i == 1:
               best_plot.write("%4sfor (var i = 0; i < %s; i += 5)\n"%('',max(l2)))
-              best_plot.write("%4smarkanom.push([%s,i]);\n"%('',self.best_anom_results.get('Best ANOM results').get('strategy anom phi start')[0]))
+              best_plot.write("%4smarkanom.push([%s,i]);\n"%('',self.best_anom_results.get("best_results_anom").get('strategy anom phi start')[0]))
         for i in range(len(l)):
           best_plot.write('%4svar plot%s = $.plot($("#chart%s_div"),\n'%('',i,i))
           for line in l[i][-1]:
@@ -1657,7 +1657,7 @@ class RapdAgent(Process):
       if self.best_anom_summary_long:
         jon_summary.writelines(self.best_anom_summary_long)
       if self.best_anom_results:
-        if self.best_anom_results.get('Best ANOM results') == 'FAILED':
+        if self.best_anom_results.get("best_results_anom") == 'FAILED':
           jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
           jon_summary.write('%7s<br><h4 class="results">Best Failed. Trying Mosflm ANOMALOUS strategy.</h3>\n'%'')
           jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',)))
@@ -1927,7 +1927,7 @@ class RapdAgent(Process):
         jon_summary.writelines('%4s<br>\n'%'')
         jon_summary.writelines(self.best1_anom_summary)
       if self.best_anom_results:
-        if self.best_anom_results.get('Best ANOM results') == 'FAILED':
+        if self.best_anom_results.get("best_results_anom") == 'FAILED':
           jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
           jon_summary.write('%7s<h4 class="results">Best Failed. Trying Mosflm ANOMALOUS strategy.</h3>\n'%'')
           jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',)))

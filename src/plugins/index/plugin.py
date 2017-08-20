@@ -1274,7 +1274,7 @@ class RapdPlugin(Process):
             if type(data) == dict:
                 data.update({"directory":os.path.dirname(inp)})
                 if anom:
-                    self.best_anom_results = {"Best ANOM results":data}
+                    self.best_anom_results = {"best_results_anom":data}
                 else:
                     self.best_results = {"best_results_norm":data}
 
@@ -1400,7 +1400,7 @@ class RapdPlugin(Process):
                     self.best_results = {"best_results_norm":"FAILED"}
                     self.best_failed = True
                 else:
-                    self.best_anom_results = {"Best ANOM results":"FAILED"}
+                    self.best_anom_results = {"best_results_anom":"FAILED"}
                     self.best_anom_failed = True
 
         st = 0
@@ -1946,7 +1946,7 @@ class RapdPlugin(Process):
         plot = False
         plotanom = False
         dir1 = self.best_results.get("best_results_norm").get("directory", False)
-        dir2 = self.best_anom_results.get("Best ANOM results").get("directory", False)
+        dir2 = self.best_anom_results.get("best_results_anom").get("directory", False)
 
         # Get the parsed results for reg and anom results and put them into a single dict.
         if dir1:
