@@ -38,7 +38,11 @@
         <tr>
           <td>
             <table class="strategy-sub-table">
-              <tr *ngFor="let n of full_result.results.best_results_norm['run_number']"><td>{{n}}</td></tr>
+              <tr *ngFor="let n of full_result.results.best_results_norm['run_numbers']">
+                <td>{{n}}</td>
+                <!-- <td>{{n-1}}</td> -->
+                <td>{{full_result.results.best_results_norm["omega_start"][n-1]}}&deg;</td>
+              </tr>
               <!-- <tr><td class="rj-col">&Omega;<sub>Start</sub></td><td class="small-col">:</td><td class="lj-col">{{full_result.results.best_results_norm["omega_start"][0]}}&deg;</td></tr>
               <tr><td class="rj-col">&Omega;<sub>End</sub></td><td class="small-col">:</td><td class="lj-col">287.0&deg;</td></tr>
               <tr><td class="rj-col">&Delta;&Omega;</td><td class="small-col">:</td><td class="lj-col">0.25&deg;</td></tr>
