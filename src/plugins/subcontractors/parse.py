@@ -863,78 +863,84 @@ def ParseOutputBest(self, inp, anom=False):
                     version = line.split("'")[3].split(" ")[0]
                     # print ">>>>", line, version
                 if line.count('"resolution"'):
-                    res = line[line.find('>')+1:line.rfind('<')]
+                    res = try_float(line[line.find('>')+1:line.rfind('<')])
                 if line.count('"distance"'):
-                    dis = round(float(line[line.find('>')+1:line.rfind('<')]),-1)
+                    dis = round(float(line[line.find('>')+1:line.rfind('<')]), -1)
                     if dis > 1200:
-                        dis = '1200.0'
+                        dis = 1200.0
                 if line.count('"i_sigma"'):
-                    h_isig.append(line[line.find('>')+1:line.rfind('<')])
+                    h_isig.append(try_float(line[line.find('>')+1:line.rfind('<')]))
                 if line.count('"average_i_over_sigma"'):
-                    isig = line[line.find('>')+1:line.rfind('<')]
+                    isig = try_float(line[line.find('>')+1:line.rfind('<')])
                 if line.count('"completeness"'):
-                    com.append(line[line.find('>')+1:line.rfind('<')])
+                    com.append(try_float(line[line.find('>')+1:line.rfind('<')]))
                 if line.count('"redundancy"'):
-                    red.append(line[line.find('>')+1:line.rfind('<')])
+                    red.append(try_float(line[line.find('>')+1:line.rfind('<')]))
                 # Version 3.4.4 Linux
                 if line.count('"transmission"'):
-                    trans = float(line[line.find('>')+1:line.rfind('<')])
-                    attenuation = str(100 - trans).zfill(3)
+                    trans = try_float(line[line.find('>')+1:line.rfind('<')])
+                    attenuation = 100. - trans
                 # Version 3.2.0.z Mac OS X
                 if line.count('"attenuation"'):
-                    attenuation = float(line[line.find('>')+1:line.rfind('<')])
+                    attenuation = try_float(line[line.find('>')+1:line.rfind('<')])
                     trans = attenuation # str(100 - trans).zfill(3)
                 # NOT correct when I modify time and flux for efficency
                 if line.count('"total_exposure_time"'):
-                    tot_exp_time = line[line.find('>')+1:line.rfind('<')]
+                    tot_exp_time = try_float(line[line.find('>')+1:line.rfind('<')])
                 if line.count('"total_data_collection_time"'):
-                    tot_data_col_time = line[line.find('>')+1:line.rfind('<')]
+                    tot_data_col_time = try_float(line[line.find('>')+1:line.rfind('<')])
                 if line.count('"R_factor"'):
-                    r_fac.append(line[line.find('>')+1:line.rfind('<')])
+                    r_fac.append(try_float(line[line.find('>')+1:line.rfind('<')]))
                 if line.count('"fraction_achievable_%"'):
-                    blind = str(100.0-float(line[line.find('>')+1:line.rfind('<')]))
+                    blind = 100.0-try_float(line[line.find('>')+1:line.rfind('<')])
                 if line.count('"phi_start"'):
-                    phi_start.append(line[line.find('>')+1:line.rfind('<')])
+                    phi_start.append(try_float(line[line.find('>')+1:line.rfind('<')]))
                 if line.count('"phi_end">'):
-                    phi_end = line[line.find('>')+1:line.rfind('<')]
+                    phi_end = try_float(line[line.find('>')+1:line.rfind('<')])
                 if line.count('"number_of_images"'):
-                    num_images.append(line[line.find('>')+1:line.rfind('<')])
+                    num_images.append(try_int(line[line.find('>')+1:line.rfind('<')]))
                     #For every range, save a distance for the html summary.
-                    distance.append(str(dis))
+                    distance.append(dis)
                 if line.count('"phi_width"'):
-                    delta_phi.append(line[line.find('>')+1:line.rfind('<')])
+                    delta_phi.append(try_float(line[line.find('>')+1:line.rfind('<')]))
                 if line.count('"overlaps"'):
-                    overlap.append(line[line.find('>')+1:line.rfind('<')])
+                    overlap.append(try_int(line[line.find('>')+1:line.rfind('<')]))
                 if line.count('"collection_run"'):
-                    run_num.append(line[line.rfind('=')+2:line.rfind('"')])
+                    run_num.append(try_int(line[line.rfind('=')+2:line.rfind('"')]))
                 if line.count('"exposure_time"'):
-                    t = float(line[line.find('>')+1:line.rfind('<')])
+                    t = try_float(line[line.find('>')+1:line.rfind('<')])
                     orig_time.append(t)
                     # if self.pilatus:
-                    if self.vendortype in ('Pilatus-6M','PILATUS','ADSC-HF4M', 'Dectris Eiger 9M', 'Eiger-9M', 'Dectris Eiger 16M', 'Eiger-16M' ):
-                        new_trans.append(str(round(trans)))
-                        time.append(str(round(t, 1)))
+                    if self.vendortype in ('Pilatus-6M',
+                                           'PILATUS',
+                                           'ADSC-HF4M',
+                                           'Dectris Eiger 9M',
+                                           'Eiger-9M',
+                                           'Dectris Eiger 16M',
+                                           'Eiger-16M'):
+                        new_trans.append(round(trans))
+                        time.append(round(t, 1))
                     else:
                         # Set time and transmission to minimize data collection time
                         nt = t * trans
                         if trans == 100.0:
                             if t > 1:
-                                new_trans.append(str(trans))
-                                time.append(str(round(t,1)))
+                                new_trans.append(trans)
+                                time.append(round(t, 1))
                             else:
-                                new_trans.append(str(round(nt)))
-                                time.append('1.0')
+                                new_trans.append(round(nt))
+                                time.append(1.0)
                         else:
                             if nt > 100:
-                                new_trans.append('100.0')
-                                time.append(str(round(nt/100)))
+                                new_trans.append(100.0)
+                                time.append(round(nt/100))
                             elif nt < 1:
                                 new_trans.append(str(trans))
                                 #time.append(str(t))
-                                time.append(str(round(t,1)))
+                                time.append(round(t, 1))
                             else:
-                                new_trans.append(str(round(nt)))
-                                time.append('1.0')
+                                new_trans.append(round(nt))
+                                time.append(1.0)
 
         # If best did not give strat...
         # if nbr:
@@ -951,9 +957,9 @@ def ParseOutputBest(self, inp, anom=False):
         #     return ('isotropic B')
 
         # Check for Best strategy giving multiple continuous runs (Bug in Best)
-        if len(phi_start)> 1:
-            if all(i==delta_phi[0] for i in delta_phi):
-                if all(i==orig_time[0] for i in orig_time):
+        if len(phi_start) > 1:
+            if all(i == delta_phi[0] for i in delta_phi):
+                if all(i == orig_time[0] for i in orig_time):
                     phi = float(phi_start[0])
                     i = 0
                     for x in range(len(num_images)):
@@ -968,32 +974,56 @@ def ParseOutputBest(self, inp, anom=False):
                         new_trans = [new_trans[0]]
                         overlap = [overlap[0]]
                         run_num = [run_num[0]]
-        if anom:
-            j1 = " anom "
-        else:
-            j1 = " "
+        # if anom:
+        #     j1 = " anom "
+        # else:
+        #     j1 = " "
+        # data = {
+        #     'strategy'+j1+'best_version': version,
+        #     'strategy'+j1+'run number': run_num,
+        #     'strategy'+j1+'phi start': phi_start,
+        #     'strategy'+j1+'num of images': num_images,
+        #     'strategy'+j1+'delta phi': delta_phi,
+        #     'strategy'+j1+'image exp time': time,
+        #     'strategy'+j1+'distance': distance,
+        #     'strategy'+j1+'overlap': overlap,
+        #     'strategy'+j1+'res limit': res,
+        #     'strategy'+j1+'anom flag': str(anom),
+        #     'strategy'+j1+'phi end': phi_end,
+        #     'strategy'+j1+'rot range': rot_range,
+        #     'strategy'+j1+'completeness': com[0],
+        #     'strategy'+j1+'redundancy': red[0],
+        #     'strategy'+j1+'R-factor': r_fac[-1]+' ('+r_fac[-2]+')',
+        #     'strategy'+j1+'I/sig': isig+' ('+h_isig[0]+')',
+        #     'strategy'+j1+'total exposure time': tot_exp_time,
+        #     'strategy'+j1+'data collection time': tot_data_col_time,
+        #     'strategy'+j1+'frac of unique in blind region': blind,
+        #     'strategy'+j1+'attenuation': attenuation,
+        #     'strategy'+j1+'new transmission': new_trans
+        #     }
+
         data = {
-            'strategy'+j1+'best_version': version,
-            'strategy'+j1+'run number': run_num,
-            'strategy'+j1+'phi start': phi_start,
-            'strategy'+j1+'num of images': num_images,
-            'strategy'+j1+'delta phi': delta_phi,
-            'strategy'+j1+'image exp time': time,
-            'strategy'+j1+'distance': distance,
-            'strategy'+j1+'overlap': overlap,
-            'strategy'+j1+'res limit': res,
-            'strategy'+j1+'anom flag': str(anom),
-            'strategy'+j1+'phi end': phi_end,
-            'strategy'+j1+'rot range': rot_range,
-            'strategy'+j1+'completeness': com[0],
-            'strategy'+j1+'redundancy': red[0],
-            'strategy'+j1+'R-factor': r_fac[-1]+' ('+r_fac[-2]+')',
-            'strategy'+j1+'I/sig': isig+' ('+h_isig[0]+')',
-            'strategy'+j1+'total exposure time': tot_exp_time,
-            'strategy'+j1+'data collection time': tot_data_col_time,
-            'strategy'+j1+'frac of unique in blind region': blind,
-            'strategy'+j1+'attenuation': attenuation,
-            'strategy'+j1+'new transmission': new_trans
+            'best_version': version,
+            'run_number': run_num,
+            'omega_start': phi_start,
+            'number_images': num_images,
+            'omega_delta': delta_phi,
+            'exposure_time': time,
+            'distance': distance,
+            'overlap': overlap,
+            'res_limit': res,
+            'anom_flag': str(anom),
+            'ommega_end': phi_end,
+            'rot_range': rot_range,
+            'completeness': com[0],
+            'redundancy': red[0],
+            'r_factor': r_fac[-1]+' ('+r_fac[-2]+')',
+            'i_sig': isig+' ('+h_isig[0]+')',
+            'total_exposure_time': tot_exp_time,
+            'data_collection_time': tot_data_col_time,
+            'frac_unique_in_blind': blind,
+            'attenuation': attenuation,
+            'new_transmission': new_trans
             }
 
         return data
