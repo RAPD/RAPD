@@ -1126,7 +1126,7 @@ class RapdAgent(Process):
         data = Parse.ParseOutputBest(self, (log, xml), anom)
         # print data.get("strategy res limit")
 
-        if self.labelit_results["Labelit results"] != "FAILED":
+        if self.labelit_results["labelit_results"] != "FAILED":
             # Best error checking. Most errors caused by B-factor calculation problem.
             # If no errors...
             if type(data) == dict:
@@ -1365,9 +1365,9 @@ class RapdAgent(Process):
         self.labelit_log = self.labelitQueue.get()
 
         for run in self.labelit_results.keys():
-            if type(self.labelit_results[run].get("Labelit results")) == dict:
+            if type(self.labelit_results[run].get("labelit_results")) == dict:
                 #Check for pseudotranslation in any Labelit run
-                if self.labelit_results[run].get("Labelit results").get("pseudotrans") == True:
+                if self.labelit_results[run].get("labelit_results").get("pseudotrans") == True:
                     self.pseudotrans = True
                 s, r, m, v = Utils.getLabelitStats(self, inp=run, simple=True)
                 sg = Utils.convertSG(self, s)
@@ -1415,7 +1415,7 @@ class RapdAgent(Process):
 
             # Set self.labelit_dir and go to it.
             self.labelit_dir = os.path.join(self.working_dir, highest)
-            self.index_number = self.labelit_results.get("Labelit results").get("mosflm_index")
+            self.index_number = self.labelit_results.get("labelit_results").get("mosflm_index")
             os.chdir(self.labelit_dir)
             if self.spacegroup != False:
                 check_lg = Utils.checkSG(self, sym)
@@ -1433,16 +1433,16 @@ class RapdAgent(Process):
 
             # Print Labelit results to commandline
             self.tprint(arg="Highest symmetry Labelit result", level=99, color="blue")
-            for line in self.labelit_results["Labelit results"]["output"][5:]:
+            for line in self.labelit_results["labelit_results"]["output"][5:]:
                 self.tprint(arg="  %s" % line.rstrip(), level=99, color="white")
-            # pprint.pprint(self.labelit_results["Labelit results"]["output"])
+            # pprint.pprint(self.labelit_results["labelit_results"]["output"])
 
         # No Labelit solution
         else:
             self.logger.debug("No solution was found when sorting Labelit results.")
             self.tprint(arg="Labelit failed to index", level=30, color="red")
             self.labelit_failed = True
-            self.labelit_results = {"Labelit results":"FAILED"}
+            self.labelit_results = {"labelit_results":"FAILED"}
             self.labelit_dir = os.path.join(self.working_dir, "0")
             os.chdir(self.labelit_dir)
             self.processDistl()
@@ -2149,10 +2149,10 @@ class RunLabelit(Process):
                 data = Parse.ParseOutputLabelit(self,log,iteration)
                 if self.short:
                     #data = Parse.ParseOutputLabelitNoMosflm(self,log,iteration)
-                    self.labelit_results = { 'Labelit results' : data }
+                    self.labelit_results = { "labelit_results" : data }
                 else:
                     #data = Parse.ParseOutputLabelit(self,log,iteration)
-                    self.labelit_results[str(iteration)] = { 'Labelit results' : data }
+                    self.labelit_results[str(iteration)] = { "labelit_results" : data }
         except:
             self.logger.exception('**ERROR in RunLabelit.postprocessLabelit**')
 
@@ -2293,7 +2293,7 @@ class RunLabelit(Process):
                         i = self.labelit_jobs[job]
                         if i >= 10:
                             i -=10
-                        self.labelit_results[str(i)] = {'Labelit results': 'FAILED'}
+                        self.labelit_results[str(i)] = {"labelit_results": 'FAILED'}
                         if self.cluster_use:
                             # Utils.killChildrenCluster(self,self.pids[str(i)])
                             self.cluster_adapter.killChildrenCluster(self,self.pids[str(i)])

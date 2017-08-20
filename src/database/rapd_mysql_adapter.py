@@ -1486,7 +1486,7 @@ class Database(object):
 
             #LABELIT
             try:
-                if results['Labelit results'] == 'FAILED':
+                if results["labelit_results"] == 'FAILED':
                     command_front += """,
                                                        labelit_status"""
 
@@ -1535,22 +1535,22 @@ class Database(object):
                                                                 %s"""
 
                     tmp_insert_values = ['SUCCESS',
-                                      results['Labelit results']['labelit_iteration'],
-                                      results['Labelit results']['mosflm_res'][0],
-                                      results['Labelit results']['labelit_spots_fit'][0],
-                                      results['Labelit results']['labelit_metric'][0],
-                                      results['Labelit results']['mosflm_sg'][0],
-                                      results['Labelit results']['mosflm_distance'][0],
-                                      results['Labelit results']['mosflm_beam_x'][0],
-                                      results['Labelit results']['mosflm_beam_y'][0],
-                                      results['Labelit results']['labelit_cell'][0][0],
-                                      results['Labelit results']['labelit_cell'][0][1],
-                                      results['Labelit results']['labelit_cell'][0][2],
-                                      results['Labelit results']['labelit_cell'][0][3],
-                                      results['Labelit results']['labelit_cell'][0][4],
-                                      results['Labelit results']['labelit_cell'][0][5],
-                                      results['Labelit results']['mosflm_mos'][0],
-                                      results['Labelit results']['labelit_rmsd'][0]]
+                                      results["labelit_results"]['labelit_iteration'],
+                                      results["labelit_results"]['mosflm_res'][0],
+                                      results["labelit_results"]['labelit_spots_fit'][0],
+                                      results["labelit_results"]['labelit_metric'][0],
+                                      results["labelit_results"]['mosflm_sg'][0],
+                                      results["labelit_results"]['mosflm_distance'][0],
+                                      results["labelit_results"]['mosflm_beam_x'][0],
+                                      results["labelit_results"]['mosflm_beam_y'][0],
+                                      results["labelit_results"]['labelit_cell'][0][0],
+                                      results["labelit_results"]['labelit_cell'][0][1],
+                                      results["labelit_results"]['labelit_cell'][0][2],
+                                      results["labelit_results"]['labelit_cell'][0][3],
+                                      results["labelit_results"]['labelit_cell'][0][4],
+                                      results["labelit_results"]['labelit_cell'][0][5],
+                                      results["labelit_results"]['mosflm_mos'][0],
+                                      results["labelit_results"]['labelit_rmsd'][0]]
 
                     #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
                     command_front += tmp_command_front
@@ -2332,7 +2332,7 @@ class Database(object):
 
             #LABELIT
             try:
-                if results['Labelit results'] == 'FAILED':
+                if results["labelit_results"] == 'FAILED':
                     command_front += """,
                                                        labelit_status"""
 
@@ -2381,22 +2381,22 @@ class Database(object):
                                                                             %s"""
 
                     tmp_insert_values = ['SUCCESS',
-                                      results['Labelit results']['labelit_iteration'],
-                                      results['Labelit results']['mosflm_res'][0],
-                                      results['Labelit results']['labelit_spots_fit'][0],
-                                      results['Labelit results']['labelit_metric'][0],
-                                      results['Labelit results']['mosflm_sg'][0],
-                                      results['Labelit results']['mosflm_distance'][0],
-                                      results['Labelit results']['mosflm_beam_x'][0],
-                                      results['Labelit results']['mosflm_beam_y'][0],
-                                      results['Labelit results']['labelit_cell'][0][0],
-                                      results['Labelit results']['labelit_cell'][0][1],
-                                      results['Labelit results']['labelit_cell'][0][2],
-                                      results['Labelit results']['labelit_cell'][0][3],
-                                      results['Labelit results']['labelit_cell'][0][4],
-                                      results['Labelit results']['labelit_cell'][0][5],
-                                      results['Labelit results']['mosflm_mos'][0],
-                                      results['Labelit results']['labelit_rmsd'][0]]
+                                      results["labelit_results"]['labelit_iteration'],
+                                      results["labelit_results"]['mosflm_res'][0],
+                                      results["labelit_results"]['labelit_spots_fit'][0],
+                                      results["labelit_results"]['labelit_metric'][0],
+                                      results["labelit_results"]['mosflm_sg'][0],
+                                      results["labelit_results"]['mosflm_distance'][0],
+                                      results["labelit_results"]['mosflm_beam_x'][0],
+                                      results["labelit_results"]['mosflm_beam_y'][0],
+                                      results["labelit_results"]['labelit_cell'][0][0],
+                                      results["labelit_results"]['labelit_cell'][0][1],
+                                      results["labelit_results"]['labelit_cell'][0][2],
+                                      results["labelit_results"]['labelit_cell'][0][3],
+                                      results["labelit_results"]['labelit_cell'][0][4],
+                                      results["labelit_results"]['labelit_cell'][0][5],
+                                      results["labelit_results"]['mosflm_mos'][0],
+                                      results["labelit_results"]['labelit_rmsd'][0]]
 
                     #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
                     command_front += tmp_command_front

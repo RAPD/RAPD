@@ -149,11 +149,11 @@ def compare_results(result1, result2, tprint):
            result2["results"]["distl_results"]["good Bragg spots"]
 
     tprint("    Labelit", 10, "white")
-    assert result1["results"]["Labelit results"]["labelit_cell"][0] == \
-           result2["results"]["Labelit results"]["labelit_cell"][0]
+    assert result1["results"]["labelit_results"]["labelit_cell"][0] == \
+           result2["results"]["labelit_results"]["labelit_cell"][0]
 
-    assert result1["results"]["Labelit results"]["mosflm_sg"] == \
-           result2["results"]["Labelit results"]["mosflm_sg"]
+    assert result1["results"]["labelit_results"]["mosflm_sg"] == \
+           result2["results"]["labelit_results"]["mosflm_sg"]
 
     tprint("    Best standard strategy", 10, "white")
     assert result1["results"]["Best results"]["strategy phi start"] == \

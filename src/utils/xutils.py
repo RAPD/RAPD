@@ -1191,7 +1191,7 @@ def errorLabelitPost(self, iteration, error, run_before=False):
         if self.verbose:
           self.logger.debug(error)
         self.labelit_log[str(iteration)].extend('\n%s\n'%error)
-        self.labelit_results[str(iteration)] = { 'Labelit results'  : 'FAILED'}
+        self.labelit_results[str(iteration)] = { "labelit_results"  : 'FAILED'}
       else:
         self.labelit_log[str(iteration)].extend('\n%s Retrying Labelit\n'%error)
     else:
@@ -2436,23 +2436,23 @@ def getLabelitStats(self,inp=False,simple=False):
       x = 1
     else:
       x = 2
-    if type(eval('self.labelit_results%s'%j1).get('Labelit results')) == dict:
+    if type(eval('self.labelit_results%s'%j1).get("labelit_results")) == dict:
       for i in range(0,x):
         if i == 0:
-          ind = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_face').index(':)')
-          sg   = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_sg')[ind]
-          sol  = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_solution')[ind]
+          ind = eval('self.labelit_results%s'%j1).get("labelit_results").get('mosflm_face').index(':)')
+          sg   = eval('self.labelit_results%s'%j1).get("labelit_results").get('mosflm_sg')[ind]
+          sol  = eval('self.labelit_results%s'%j1).get("labelit_results").get('mosflm_solution')[ind]
         else:
           #P1 stats
-          ind = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_solution').index('1')
+          ind = eval('self.labelit_results%s'%j1).get("labelit_results").get('mosflm_solution').index('1')
           sol = '1'
-        mos_rms = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_rms')[ind]
-        mos_x = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_beam_x')[ind]
-        mos_y = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_beam_y')[ind]
-        ind1  = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_solution').index(sol)
-        met  = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_metric')[ind1]
-        rmsd = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_rmsd')[ind1]
-        vol = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_volume')[ind1]
+        mos_rms = eval('self.labelit_results%s'%j1).get("labelit_results").get('mosflm_rms')[ind]
+        mos_x = eval('self.labelit_results%s'%j1).get("labelit_results").get('mosflm_beam_x')[ind]
+        mos_y = eval('self.labelit_results%s'%j1).get("labelit_results").get('mosflm_beam_y')[ind]
+        ind1  = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_solution').index(sol)
+        met  = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_metric')[ind1]
+        rmsd = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_rmsd')[ind1]
+        vol = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_volume')[ind1]
         if i == 0:
           output['best'] = {'SG':sg, 'mos_rms':mos_rms, 'mos_x':mos_x, 'mos_y':mos_y, 'metric':met, 'rmsd':rmsd, 'sol':sol}
         else:
@@ -2482,29 +2482,29 @@ def getLabelitStatsNoMosflm(self,inp=False,simple=False):
     else:
       x = 2
     l = [':)',':(','xx']
-    if type(eval('self.labelit_results%s'%j1).get('Labelit results')) == dict:
+    if type(eval('self.labelit_results%s'%j1).get("labelit_results")) == dict:
       for i in range(0,x):
         if i == 0:
           for z in range(len(l)):
             try:
-              ind = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_face').index(l[z])
+              ind = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_face').index(l[z])
               break
             except(ValueError):
               continue
-          sg   = primaries[eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_system')[ind][1]]
-          sol  = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_solution')[ind]
+          sg   = primaries[eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_system')[ind][1]]
+          sol  = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_solution')[ind]
         else:
           #P1 stats
-          ind = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_solution').index('1')
+          ind = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_solution').index('1')
           sol = '1'
-        #mos_rms = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_rms')[ind]
-        #mos_x = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_beam_x')[ind]
-        #mos_y = eval('self.labelit_results%s'%j1).get('Labelit results').get('mosflm_beam_y')[ind]
-        ind1  = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_solution').index(sol)
-        met  = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_metric')[ind1]
-        rmsd = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_rmsd')[ind1]
-        cell = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_cell')[ind1]
-        vol = eval('self.labelit_results%s'%j1).get('Labelit results').get('labelit_volume')[ind1]
+        #mos_rms = eval('self.labelit_results%s'%j1).get("labelit_results").get('mosflm_rms')[ind]
+        #mos_x = eval('self.labelit_results%s'%j1).get("labelit_results").get('mosflm_beam_x')[ind]
+        #mos_y = eval('self.labelit_results%s'%j1).get("labelit_results").get('mosflm_beam_y')[ind]
+        ind1  = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_solution').index(sol)
+        met  = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_metric')[ind1]
+        rmsd = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_rmsd')[ind1]
+        cell = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_cell')[ind1]
+        vol = eval('self.labelit_results%s'%j1).get("labelit_results").get('labelit_volume')[ind1]
         if i == 0:
           #output['best'] = {'SG':sg, 'mos_rms':mos_rms, 'mos_x':mos_x, 'mos_y':mos_y, 'metric':met, 'rmsd':rmsd, 'sol':sol}
           output['best'] = {'SG':sg, 'metric':met, 'rmsd':rmsd, 'sol':sol, 'cell':cell}

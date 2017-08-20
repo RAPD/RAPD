@@ -39,25 +39,25 @@ def summaryLabelit(self):
   if self.verbose:
     self.logger.debug('Summary::summaryLabelit')
   try:
-    labelit_face      = self.labelit_results.get('Labelit results').get('labelit_face')
-    labelit_solution  = self.labelit_results.get('Labelit results').get('labelit_solution')
-    labelit_metric    = self.labelit_results.get('Labelit results').get('labelit_metric')
-    labelit_rmsd      = self.labelit_results.get('Labelit results').get('labelit_rmsd')
-    labelit_spots_fit = self.labelit_results.get('Labelit results').get('labelit_spots_fit')
-    labelit_system    = self.labelit_results.get('Labelit results').get('labelit_system')
-    labelit_cell      = self.labelit_results.get('Labelit results').get('labelit_cell')
-    labelit_volume    = self.labelit_results.get('Labelit results').get('labelit_volume')
-    mosflm_face       = self.labelit_results.get('Labelit results').get('mosflm_face')
-    mosflm_solution   = self.labelit_results.get('Labelit results').get('mosflm_solution')
-    mosflm_sg         = self.labelit_results.get('Labelit results').get('mosflm_sg')
-    mosflm_beam_x     = self.labelit_results.get('Labelit results').get('mosflm_beam_x')
-    mosflm_beam_y     = self.labelit_results.get('Labelit results').get('mosflm_beam_y')
-    mosflm_distance   = self.labelit_results.get('Labelit results').get('mosflm_distance')
-    mosflm_res        = self.labelit_results.get('Labelit results').get('mosflm_res')
-    mosflm_mos        = self.labelit_results.get('Labelit results').get('mosflm_mos')
-    mosflm_rms        = self.labelit_results.get('Labelit results').get('mosflm_rms')
-    #output            = self.labelit_results.get('Labelit results').get('output')
-    #mosaicity      = str(self.labelit_results.get('Labelit results').get('mosaicity'))
+    labelit_face      = self.labelit_results.get("labelit_results").get('labelit_face')
+    labelit_solution  = self.labelit_results.get("labelit_results").get('labelit_solution')
+    labelit_metric    = self.labelit_results.get("labelit_results").get('labelit_metric')
+    labelit_rmsd      = self.labelit_results.get("labelit_results").get('labelit_rmsd')
+    labelit_spots_fit = self.labelit_results.get("labelit_results").get('labelit_spots_fit')
+    labelit_system    = self.labelit_results.get("labelit_results").get('labelit_system')
+    labelit_cell      = self.labelit_results.get("labelit_results").get('labelit_cell')
+    labelit_volume    = self.labelit_results.get("labelit_results").get('labelit_volume')
+    mosflm_face       = self.labelit_results.get("labelit_results").get('mosflm_face')
+    mosflm_solution   = self.labelit_results.get("labelit_results").get('mosflm_solution')
+    mosflm_sg         = self.labelit_results.get("labelit_results").get('mosflm_sg')
+    mosflm_beam_x     = self.labelit_results.get("labelit_results").get('mosflm_beam_x')
+    mosflm_beam_y     = self.labelit_results.get("labelit_results").get('mosflm_beam_y')
+    mosflm_distance   = self.labelit_results.get("labelit_results").get('mosflm_distance')
+    mosflm_res        = self.labelit_results.get("labelit_results").get('mosflm_res')
+    mosflm_mos        = self.labelit_results.get("labelit_results").get('mosflm_mos')
+    mosflm_rms        = self.labelit_results.get("labelit_results").get('mosflm_rms')
+    #output            = self.labelit_results.get("labelit_results").get('output')
+    #mosaicity      = str(self.labelit_results.get("labelit_results").get('mosaicity'))
 
     l = [('Mosflm Integration Results','mosflm',
           ['&nbsp','Solution','Spacegroup','Beam X','Beam Y','Distance','Resolution','Mosaicity','RMS'],
@@ -1360,10 +1360,10 @@ def summaryAutoCell(self,labelit=False):
       if self.best_results.get('Best results') != 'FAILED':
         mosflm_res = self.best_results.get('Best results').get('strategy res limit')
       else:
-        mosflm_res = self.labelit_results.get('Labelit results').get('mosflm_res')[0]
+        mosflm_res = self.labelit_results.get("labelit_results").get('mosflm_res')[0]
       """
-      mosflm_res = self.labelit_results.get('Labelit results').get('mosflm_res')[0]
-      mosflm_mos = self.labelit_results.get('Labelit results').get('mosflm_mos')
+      mosflm_res = self.labelit_results.get("labelit_results").get('mosflm_res')[0]
+      mosflm_mos = self.labelit_results.get("labelit_results").get('mosflm_mos')
       l1.extend(['mosaicity','resolution'])
       l2.extend([mosflm_mos[0],mosflm_res])
       auto  ='%7s<table cellpadding="0" cellspacing="0" border="1" class="display" id="auto">\n'%''
@@ -1625,15 +1625,15 @@ def summaryLabelitBC(self):
       else:
         j = "['best']"
         labelit +='    <div id="container">\n'
-      labelit_face      = eval("self.labelit_results"+j+".get('Labelit results').get('labelit_face')")
-      labelit_solution  = eval("self.labelit_results"+j+".get('Labelit results').get('labelit_solution')")
-      labelit_metric    = eval("self.labelit_results"+j+".get('Labelit results').get('labelit_metric')")
-      labelit_fit       = eval("self.labelit_results"+j+".get('Labelit results').get('labelit_fit')")
-      labelit_rmsd      = eval("self.labelit_results"+j+".get('Labelit results').get('labelit_rmsd')")
-      labelit_spots_fit = eval("self.labelit_results"+j+".get('Labelit results').get('labelit_spots_fit')")
-      labelit_system    = eval("self.labelit_results"+j+".get('Labelit results').get('labelit_system')")
-      labelit_cell      = eval("self.labelit_results"+j+".get('Labelit results').get('labelit_cell')")
-      labelit_volume    = eval("self.labelit_results"+j+".get('Labelit results').get('labelit_volume')")
+      labelit_face      = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_face')")
+      labelit_solution  = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_solution')")
+      labelit_metric    = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_metric')")
+      labelit_fit       = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_fit')")
+      labelit_rmsd      = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_rmsd')")
+      labelit_spots_fit = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_spots_fit')")
+      labelit_system    = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_system')")
+      labelit_cell      = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_cell')")
+      labelit_volume    = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_volume')")
       x_beam            = eval("self.labelit_results"+j+".get('beam_X')")
       y_beam            = eval("self.labelit_results"+j+".get('beam_Y')")
       labelit +='    <div class="full_width big">\n'
@@ -1723,7 +1723,7 @@ def summaryLabelitBC(self):
     runs = self.labelit_results.keys()
     for run in runs:
       if run.startswith('bc'):
-        if type(self.labelit_results[run].get('Labelit results')) == dict:
+        if type(self.labelit_results[run].get("labelit_results")) == dict:
           metric = self.labelit_results[run].get('labelit_stats').get('best').get('metric')
           sg = self.labelit_results[run].get('labelit_stats').get('best').get('SG')
           p1_rmsd = self.labelit_results[run].get('labelit_stats').get('P1').get('rmsd')
@@ -1734,8 +1734,8 @@ def summaryLabelitBC(self):
           mos_y = self.labelit_results[run].get('labelit_stats').get('P1').get('mos_y')
           mos_x2 = self.labelit_results[run].get('labelit_stats').get('best').get('mos_x')
           mos_y2 = self.labelit_results[run].get('labelit_stats').get('best').get('mos_y')
-          labelit_x = self.labelit_results[run].get('Labelit results').get('labelit_bc').get('labelit_x_beam')
-          labelit_y = self.labelit_results[run].get('Labelit results').get('labelit_bc').get('labelit_y_beam')
+          labelit_x = self.labelit_results[run].get("labelit_results").get('labelit_bc').get('labelit_x_beam')
+          labelit_y = self.labelit_results[run].get("labelit_results").get('labelit_bc').get('labelit_y_beam')
           input_x = self.labelit_results[run].get('beam_X')
           input_y = self.labelit_results[run].get('beam_Y')
           if self.mosflm_sg == sg:
