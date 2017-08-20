@@ -1541,7 +1541,7 @@ class RapdAgent(Process):
           if len(l2) > 0:
             if i == 0:
               best_plot.write("%4sfor (var i = 0; i < %s; i += 5)\n"%('',max(l2)))
-              best_plot.write("%4smark.push([%s,i]);\n"%('',self.best_results.get("best_results_norm").get('strategy phi start')[0]))
+              best_plot.write("%4smark.push([%s,i]);\n"%('',self.best_results.get("best_results_norm").get('omega_start')[0]))
             if i == 1:
               best_plot.write("%4sfor (var i = 0; i < %s; i += 5)\n"%('',max(l2)))
               best_plot.write("%4smarkanom.push([%s,i]);\n"%('',self.best_anom_results.get("best_results_anom").get('strategy anom phi start')[0]))

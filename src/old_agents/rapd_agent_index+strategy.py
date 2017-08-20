@@ -1201,7 +1201,7 @@ class RapdAgent(Process):
 
         # Print to terminal
         # pprint.pprint(data)
-        if "strategy run number" in data:
+        if "run_number" in data:
             flag = "strategy "
             self.tprint(arg="\nMosflm strategy standard", level=99, color="blue")
         else:

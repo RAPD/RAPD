@@ -140,7 +140,7 @@ def compare_results(result1, result2, tprint):
             strategy anom phi start [0]
             strategy anom rot range
         Best results
-            strategy phi start
+            omega_start
             strategy rot range
     """
 
@@ -156,8 +156,8 @@ def compare_results(result1, result2, tprint):
            result2["results"]["labelit_results"]["mosflm_sg"]
 
     tprint("    Best standard strategy", 10, "white")
-    assert result1["results"]["best_results_norm"]["strategy phi start"] == \
-           result2["results"]["best_results_norm"]["strategy phi start"]
+    assert result1["results"]["best_results_norm"]["omega_start"] == \
+           result2["results"]["best_results_norm"]["omega_start"]
 
     assert result1["results"]["best_results_norm"]["strategy rot range"] == \
            result2["results"]["best_results_norm"]["strategy rot range"]

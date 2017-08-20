@@ -31,4 +31,55 @@
    </md-card-content>
   </md-card>
 
+  <md-card class="result-panel-strategy-card" style="order:1;">
+    <md-card-title>Strategy - Normal</md-card-title>
+    <md-card-content>
+      <table class="strategy-table">
+        <tr>
+          <td>
+            <table class="strategy-sub-table">
+              <tr *ngFor="let n of full_result.results.best_results_norm['run_number']"><td>{{n}}</td></tr>
+              <!-- <tr><td class="rj-col">&Omega;<sub>Start</sub></td><td class="small-col">:</td><td class="lj-col">{{full_result.results.best_results_norm["omega_start"][0]}}&deg;</td></tr>
+              <tr><td class="rj-col">&Omega;<sub>End</sub></td><td class="small-col">:</td><td class="lj-col">287.0&deg;</td></tr>
+              <tr><td class="rj-col">&Delta;&Omega;</td><td class="small-col">:</td><td class="lj-col">0.25&deg;</td></tr>
+              <tr><td class="rj-col">&Omega; range</td><td class="small-col">:</td><td class="lj-col">125.0&deg;</td></tr>
+              <tr><td class="rj-col"># Images</td><td class="small-col">:</td><td class="lj-col">500</td></tr>
+              <tr><td class="rj-col">Exposure time</td><td class="small-col">:</td><td class="lj-col">0.2s</td></tr>
+              <tr><td class="rj-col">Distance</td><td class="small-col">:</td><td class="lj-col">390.0mm</td></tr>
+              <tr><td class="rj-col">Transmission</td><td class="small-col">:</td><td class="lj-col">4.0%</td></tr> -->
+           </table>
+          </td>
+          <td>
+            <table>
+              <tr>
+                <td>
+                    <!-- <base-chart class="chart" style="display:block;width:30em;"
+                                [datasets]="lineChartData"
+                                [labels]="lineChartLabels"
+                                [options]="lineChartOptions"
+                                [colors]="lineChartColours"
+                                [legend]="lineChartLegend"
+                                [chartType]="lineChartType"
+                                (chartHover)="chartHovered($event)"
+                                (chartClick)="chartClicked($event)">
+                    </base-chart> -->
+                </td>
+                <td>
+                  <table>
+                    <tr>
+                      <td><button md-mini-fab (click)="plotOmegaStart()">&Omega;</button></td>
+                    </tr>
+                    <tr>
+                      <td><button md-mini-fab (click)="plotDeltaOmega()">&Delta;&Omega;</button></td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </md-card-content>
+  </md-card>
+
 </div>

@@ -833,25 +833,25 @@ def ParseOutputBest(self, inp, anom=False):
               nbr = True
             """
             if line.count('***any data cannot be measured for the given time!'):
-                return ('dosage too high')
+                return 'dosage too high'
             if line.count('no data can be measured with requested'):
-                return ('dosage too high')
+                return 'dosage too high'
             if line.count('ERROR: radiation damage exceeds 99.9%'):
-                return ('dosage too high')
+                return 'dosage too high'
             """
             if line.count('Anisotropic B-factor can not be determined'):
               iso_B = True
             """
             if line.count('ERROR: negative B-factors'):
-                return('neg B')
+                return 'neg B'
             if line.count('Determination of B-factor failed'):
-                return('neg B')
+                return 'neg B'
             if line.count('ERROR: the deretmination of'):
-                return('neg B')
+                return 'neg B'
             if line.count('ERROR: unknown spacegroup'):
-                return('sg')
+                return 'sg'
             if line.count('ERROR: Detector pixel'):
-                return('bin')
+                return 'bin'
 
         if xml == 'None':
             return 'None'
