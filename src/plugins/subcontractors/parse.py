@@ -800,237 +800,296 @@ def ParseOutputBest(self, inp, anom=False):
     passes info back to caller
     """
 
-    if self.verbose:
-        self.logger.debug('Parse::ParseOutputBest')
+    sweeps = []
+    overall = {}
+    sweep = False
 
     temp = []
-    run_num = []
-    phi_start = []
-    num_images = []
-    delta_phi = []
-    time = []
-    orig_time = []
-    distance = []
-    overlap = []
-    new_trans = []
-    h_isig = []
-    r_fac = []
-    red = []
+    # run_num = []
+    # phi_start = []
+    # num_images = []
+    # delta_phi = []
+    # time = []
+    # orig_time = []
+    # distance = []
+    # overlap = []
+    # new_trans = []
+    # h_isig = []
+    # r_fac = []
+    # red = []
     # pos = []
-    com = []
+    # com = []
     # iso_B = False
     # nbr = False
-    dis = False
+    # dis = False
     # frac_unique_blind = '0.0'
 
-    try:
-        log, xml = inp
+    # try:
+    log, xml = inp
+    # print log
+    # print xml
 
-        # Check for errors in the log
-        for line in log:
-            """
-            if line.count('ERROR: scaling error > 100%'):
-              nbr = True
-            """
-            if line.count('***any data cannot be measured for the given time!'):
-                return 'dosage too high'
-            if line.count('no data can be measured with requested'):
-                return 'dosage too high'
-            if line.count('ERROR: radiation damage exceeds 99.9%'):
-                return 'dosage too high'
-            """
-            if line.count('Anisotropic B-factor can not be determined'):
-              iso_B = True
-            """
-            if line.count('ERROR: negative B-factors'):
-                return 'neg B'
-            if line.count('Determination of B-factor failed'):
-                return 'neg B'
-            if line.count('ERROR: the deretmination of'):
-                return 'neg B'
-            if line.count('ERROR: unknown spacegroup'):
-                return 'sg'
-            if line.count('ERROR: Detector pixel'):
-                return 'bin'
+    # Check for errors in the log
+    for line in log:
+        """
+        if line.count('ERROR: scaling error > 100%'):
+          nbr = True
+        """
+        if line.count('***any data cannot be measured for the given time!'):
+            return 'dosage too high'
+        if line.count('no data can be measured with requested'):
+            return 'dosage too high'
+        if line.count('ERROR: radiation damage exceeds 99.9%'):
+            return 'dosage too high'
+        """
+        if line.count('Anisotropic B-factor can not be determined'):
+          iso_B = True
+        """
+        if line.count('ERROR: negative B-factors'):
+            return 'neg B'
+        if line.count('Determination of B-factor failed'):
+            return 'neg B'
+        if line.count('ERROR: the deretmination of'):
+            return 'neg B'
+        if line.count('ERROR: unknown spacegroup'):
+            return 'sg'
+        if line.count('ERROR: Detector pixel'):
+            return 'bin'
 
-        if xml == 'None':
-            return 'None'
-        else:
-            # Parse the xml
-            for i, line in enumerate(xml):
-                temp.append(line)
-                if line.count("program=") and line.count("version="):
-                    version = line.split("'")[3].split(" ")[0]
-                    # print ">>>>", line, version
-                if line.count('"resolution"'):
-                    res = try_float(line[line.find('>')+1:line.rfind('<')])
-                if line.count('"distance"'):
-                    dis = round(float(line[line.find('>')+1:line.rfind('<')]), -1)
-                    if dis > 1200:
-                        dis = 1200.0
-                if line.count('"i_sigma"'):
-                    h_isig.append(try_float(line[line.find('>')+1:line.rfind('<')]))
-                if line.count('"average_i_over_sigma"'):
-                    isig = try_float(line[line.find('>')+1:line.rfind('<')])
-                if line.count('"completeness"'):
-                    com.append(try_float(line[line.find('>')+1:line.rfind('<')]))
-                if line.count('"redundancy"'):
-                    red.append(try_float(line[line.find('>')+1:line.rfind('<')]))
-                # Version 3.4.4 Linux
-                if line.count('"transmission"'):
-                    trans = try_float(line[line.find('>')+1:line.rfind('<')])
-                    attenuation = 100. - trans
-                # Version 3.2.0.z Mac OS X
-                if line.count('"attenuation"'):
-                    attenuation = try_float(line[line.find('>')+1:line.rfind('<')])
-                    trans = attenuation # str(100 - trans).zfill(3)
-                # NOT correct when I modify time and flux for efficency
-                if line.count('"total_exposure_time"'):
-                    tot_exp_time = try_float(line[line.find('>')+1:line.rfind('<')])
-                if line.count('"total_data_collection_time"'):
-                    tot_data_col_time = try_float(line[line.find('>')+1:line.rfind('<')])
-                if line.count('"R_factor"'):
-                    r_fac.append(try_float(line[line.find('>')+1:line.rfind('<')]))
-                if line.count('"fraction_achievable_%"'):
-                    blind = 100.0-try_float(line[line.find('>')+1:line.rfind('<')])
-                if line.count('"phi_start"'):
-                    phi_start.append(try_float(line[line.find('>')+1:line.rfind('<')]))
-                if line.count('"phi_end">'):
-                    phi_end = try_float(line[line.find('>')+1:line.rfind('<')])
-                if line.count('"number_of_images"'):
-                    num_images.append(try_int(line[line.find('>')+1:line.rfind('<')]))
-                    #For every range, save a distance for the html summary.
-                    distance.append(dis)
-                if line.count('"phi_width"'):
-                    delta_phi.append(try_float(line[line.find('>')+1:line.rfind('<')]))
-                if line.count('"overlaps"'):
-                    overlap.append(try_int(line[line.find('>')+1:line.rfind('<')]))
-                if line.count('"collection_run"'):
-                    run_num.append(try_int(line[line.rfind('=')+2:line.rfind('"')]))
-                if line.count('"exposure_time"'):
-                    t = try_float(line[line.find('>')+1:line.rfind('<')])
-                    orig_time.append(t)
-                    # if self.pilatus:
-                    if self.vendortype in ('Pilatus-6M',
-                                           'PILATUS',
-                                           'ADSC-HF4M',
-                                           'Dectris Eiger 9M',
-                                           'Eiger-9M',
-                                           'Dectris Eiger 16M',
-                                           'Eiger-16M'):
-                        new_trans.append(round(trans))
-                        time.append(round(t, 1))
-                    else:
-                        # Set time and transmission to minimize data collection time
-                        nt = t * trans
-                        if trans == 100.0:
-                            if t > 1:
-                                new_trans.append(trans)
-                                time.append(round(t, 1))
-                            else:
-                                new_trans.append(round(nt))
-                                time.append(1.0)
-                        else:
-                            if nt > 100:
-                                new_trans.append(100.0)
-                                time.append(round(nt/100))
-                            elif nt < 1:
-                                new_trans.append(str(trans))
-                                #time.append(str(t))
-                                time.append(round(t, 1))
-                            else:
-                                new_trans.append(round(nt))
-                                time.append(1.0)
-
-        # If best did not give strat...
-        # if nbr:
-        if dis == False:
-            return "neg B"
-
-        # Remove the last line in starting phi
-        phi_start = phi_start[:-1]
-        rot_range = str(float(phi_end) - float(phi_start[0]))
-
-        # Removes thin sliced erroronious strategy when B-factor calc tanks.
-        # if iso_B:
-        #   if float(min(delta_phi)) < 0.3:
-        #     return ('isotropic B')
-
-        # Check for Best strategy giving multiple continuous runs (Bug in Best)
-        if len(phi_start) > 1:
-            if all(i == delta_phi[0] for i in delta_phi):
-                if all(i == orig_time[0] for i in orig_time):
-                    phi = float(phi_start[0])
-                    i = 0
-                    for x in range(len(num_images)):
-                        phi += float(num_images[x])*float(delta_phi[x])
-                        i += int(num_images[x])
-                    if phi == float(phi_end):
-                        phi_start = [phi_start[0]]
-                        num_images = [str(i)]
-                        time = [time[0]]
-                        delta_phi = [delta_phi[0]]
-                        distance = [distance[0]]
-                        new_trans = [new_trans[0]]
-                        overlap = [overlap[0]]
-                        run_num = [run_num[0]]
-        # if anom:
-        #     j1 = " anom "
-        # else:
-        #     j1 = " "
-        # data = {
-        #     'strategy'+j1+'best_version': version,
-        #     'strategy'+j1+'run number': run_num,
-        #     'strategy'+j1+'phi start': phi_start,
-        #     'strategy'+j1+'num of images': num_images,
-        #     'strategy'+j1+'delta phi': delta_phi,
-        #     'strategy'+j1+'image exp time': time,
-        #     'strategy'+j1+'distance': distance,
-        #     'strategy'+j1+'overlap': overlap,
-        #     'strategy'+j1+'res limit': res,
-        #     'strategy'+j1+'anom flag': str(anom),
-        #     'strategy'+j1+'phi end': phi_end,
-        #     'strategy'+j1+'rot range': rot_range,
-        #     'strategy'+j1+'completeness': com[0],
-        #     'strategy'+j1+'redundancy': red[0],
-        #     'strategy'+j1+'R-factor': r_fac[-1]+' ('+r_fac[-2]+')',
-        #     'strategy'+j1+'I/sig': isig+' ('+h_isig[0]+')',
-        #     'strategy'+j1+'total exposure time': tot_exp_time,
-        #     'strategy'+j1+'data collection time': tot_data_col_time,
-        #     'strategy'+j1+'frac of unique in blind region': blind,
-        #     'strategy'+j1+'attenuation': attenuation,
-        #     'strategy'+j1+'new transmission': new_trans
-        #     }
-
-        data = {
-            'best_version': version,
-            'run_number': run_num,
-            'omega_start': phi_start,
-            'number_images': num_images,
-            'omega_delta': delta_phi,
-            'exposure_time': time,
-            'distance': distance,
-            'overlap': overlap,
-            'res_limit': res,
-            'anom_flag': str(anom),
-            'ommega_end': phi_end,
-            'rot_range': rot_range,
-            'completeness': com[0],
-            'redundancy': red[0],
-            'r_factor': r_fac[-1]+' ('+r_fac[-2]+')',
-            'i_sig': isig+' ('+h_isig[0]+')',
-            'total_exposure_time': tot_exp_time,
-            'data_collection_time': tot_data_col_time,
-            'frac_unique_in_blind': blind,
-            'attenuation': attenuation,
-            'new_transmission': new_trans
-            }
-
-        return data
-
-    except:
-        self.logger.exception('**Error in Parse.ParseOutputBest**')
+    if xml == 'None':
         return 'None'
+    else:
+        # Parse the xml
+        in_gi_table = False
+        in_dcs_table = False
+        in_sp_table = False
+        sp_list = []
+        prev_sp_list = []
+        run_number = 0
+        for i, line in enumerate(xml):
+            temp.append(line)
+            # print line
+            # GLOBALS
+            if " program=" in line:
+                overall["best_version"] = line.split("'")[3] #.split(" ")[0]
+
+            elif "<table name=\"general_inform\"" in line:
+                in_gi_table = True
+
+            elif in_gi_table:
+
+                if "<item name=\"fraction_achievable_%\">" in line:
+                    overall["fraction_achievable"] = try_float(line[line.find('>')+1:line.rfind('<')])
+
+                elif "</table>" in line:
+                    in_gi_table = False
+
+            # PER SWEEP VARS
+            elif "<table name=\"data_collection_strategy\" index=\"" in line:
+                run_number += 1
+                sweep = {"run_number": run_number}
+                in_dcs_table = True
+
+            # Strategy table
+            elif in_dcs_table:
+                if "<item name=\"resolution\">" in line:
+                    sweep["resolution"] = try_float(line[line.find('>')+1:line.rfind('<')])
+
+                elif "<item name=\"resolution_reasoning\">" in line:
+                    sweep["resolution_reasoning"] = line[line.find('>')+1:line.rfind('<')]
+
+                elif "<item name=\"i_sigma\">" in line:
+                    sweep["i_sigma"] = try_float(line[line.find('>')+1:line.rfind('<')])
+
+                elif "<item name=\"completeness\">" in line:
+                    sweep["completeness"] = try_float(line[line.find('>')+1:line.rfind('<')])
+
+                elif "<item name=\"redundancy\">" in line:
+                    sweep["redundancy"] = try_float(line[line.find('>')+1:line.rfind('<')])
+
+                # Version 3.2.0.z Mac OS X
+                elif "<item name=\"attenuation\">" in line:
+                    sweep["attenuation"] = try_float(line[line.find('>')+1:line.rfind('<')])
+                    sweep["transmission"] = 100.0 - try_float(line[line.find('>')+1:line.rfind('<')])
+
+                # Version 3.4.4 Linux
+                elif "<item name=\"transmission\">" in line:
+                    sweep["transmission"] = try_float(line[line.find('>')+1:line.rfind('<')])
+                    sweep["attenuation"] = 100.0 - try_float(line[line.find('>')+1:line.rfind('<')])
+
+                elif "<item name=\"total_exposure_time\">" in line:
+                    sweep["total_exposure_time"] = try_float(line[line.find('>')+1:line.rfind('<')])
+
+                elif "<item name=\"total_data_collection_time\">" in line:
+                    sweep["total_data_collection_time"] = try_float(line[line.find('>')+1:line.rfind('<')])
+
+                elif "<item name=\"phi_start\">" in line:
+                    sweep["phi_start"] = try_float(line[line.find('>')+1:line.rfind('<')])
+
+                elif "<item name=\"number_of_images\">" in line:
+                    sweep["number_of_images"] = try_int(line[line.find('>')+1:line.rfind('<')])
+
+                elif "<item name=\"phi_width\">" in line:
+                    sweep["phi_width"] = try_float(line[line.find('>')+1:line.rfind('<')])
+
+                elif "<item name=\"exposure_time\">" in line:
+                    sweep["exposure_time"] = try_float(line[line.find('>')+1:line.rfind('<')])
+
+                elif "<item name=\"distance\">" in line:
+                    sweep["distance"] = try_float(line[line.find('>')+1:line.rfind('<')])
+
+                elif "<item name=\"overlaps\">" in line:
+                    sweep["overlaps"] = {"Yes":True, "No":False}[line[line.find('>')+1:line.rfind('<')]]
+
+                elif "</table>" in line:
+                    in_dcs_table = False
+                    sweeps.append(sweep)
+
+            elif "<table name=\"statistical_prediction\" index=\"" in line:
+                in_sp_table = True
+
+            elif in_sp_table:
+
+                if "<list name=\"resolution_bin\" index=\"" in line:
+                    prev_sp_list = sp_list
+                    sp_list = []
+
+                elif "</list>" in line:
+                    pass
+
+                # Done with sp_table
+                elif "</table>" in line:
+                    in_sp_table = False
+
+                    # Parse the high resolution list
+                    for my_sp_list, tag in ((prev_sp_list, "outer"), (sp_list, "overall")):
+                        for line in my_sp_list:
+                            if "<item name=\"min_resolution\">" in line:
+                                overall["min_resolution_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
+                            elif "<item name=\"max_resolution\">" in line:
+                                overall["max_resolution_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
+                            elif "<item name=\"completeness\">" in line:
+                                overall["completeness_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
+                            elif "<item name=\"redundancy\">" in line:
+                                overall["redundancy_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
+                            elif "<item name=\"average_intensity\">" in line:
+                                overall["average_intensity_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
+                            elif "<item name=\"average_error\">" in line:
+                                overall["average_error_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
+                            elif "<item name=\"average_i_over_sigma\">" in line:
+                                overall["average_i_over_sigma_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
+                            elif "<item name=\"R_factor\">" in line:
+                                overall["R_factor_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
+                            elif "<item name=\"Ranom\">" in line:
+                                overall["Ranom_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
+                            elif "<item name=\"fract_overload\">" in line:
+                                overall["fract_overload_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
+
+                else:
+                    sp_list.append(line)
+
+            # if line.count('"exposure_time"'):
+            #     t = try_float(line[line.find('>')+1:line.rfind('<')])
+            #     orig_time.append(t)
+            #     # if self.pilatus:
+            #     if self.vendortype in ('Pilatus-6M',
+            #                            'PILATUS',
+            #                            'ADSC-HF4M',
+            #                            'Dectris Eiger 9M',
+            #                            'Eiger-9M',
+            #                            'Dectris Eiger 16M',
+            #                            'Eiger-16M'):
+            #         new_trans.append(round(trans))
+            #         time.append(round(t, 1))
+            #     else:
+            #         # Set time and transmission to minimize data collection time
+            #         nt = t * trans
+            #         if trans == 100.0:
+            #             if t > 1:
+            #                 new_trans.append(trans)
+            #                 time.append(round(t, 1))
+            #             else:
+            #                 new_trans.append(round(nt))
+            #                 time.append(1.0)
+            #         else:
+            #             if nt > 100:
+            #                 new_trans.append(100.0)
+            #                 time.append(round(nt/100))
+            #             elif nt < 1:
+            #                 new_trans.append(str(trans))
+            #                 #time.append(str(t))
+            #                 time.append(round(t, 1))
+            #             else:
+            #                 new_trans.append(round(nt))
+            #                 time.append(1.0)
+
+    # If best did not give strat...
+    # if nbr:
+    # if dis == False:
+    #     return "neg B"
+
+    # Remove the last line in starting phi
+    # phi_start = phi_start[:-1]
+    # rot_range = str(float(phi_end) - float(phi_start[0]))
+
+    # Removes thin sliced erroronious strategy when B-factor calc tanks.
+    # if iso_B:
+    #   if float(min(delta_phi)) < 0.3:
+    #     return ('isotropic B')
+
+    # Check for Best strategy giving multiple continuous runs (Bug in Best)
+    # if len(sweeps) > 1:
+    #     if all(i == sweeps[0]["phi_width"] for i in )
+    # if len(phi_start) > 1:
+    #     if all(i == delta_phi[0] for i in delta_phi):
+    #         if all(i == orig_time[0] for i in orig_time):
+    #             phi = float(phi_start[0])
+    #             i = 0
+    #             for x in range(len(num_images)):
+    #                 phi += float(num_images[x])*float(delta_phi[x])
+    #                 i += int(num_images[x])
+    #             if phi == float(phi_end):
+    #                 omega_start = phi_start[0]
+    #                 num_images = i
+    #                 time = time[0]
+    #                 delta_phi = delta_phi[0]
+    #                 distance = distance[0]
+    #                 new_trans = new_trans[0]
+    #                 overlap = overlap[0]
+    #                 run_num = run_num[0]
+
+    # data = {
+        # 'best_version': version,
+        # 'run_number': run_num,
+        # 'omega_start': phi_start,
+        # 'number_images': num_images,
+        # 'omega_delta': delta_phi,
+        # 'exposure_time': time,
+        # 'distance': distance,
+        # 'overlap': overlap,
+        # 'res_limit': res,
+        # 'anom_flag': anom,
+        # 'ommega_end': phi_end,
+        # 'rot_range': rot_range,
+        # 'completeness': com[0],
+        # 'redundancy': red[0],
+        # 'r_factor': r_fac[-1], # r_fac[-1]+' ('+r_fac[-2]+')',
+        # "r_factor_outer": r_fac[-2],
+        # 'i_sigi': isig, # +' ('+h_isig[0]+')',
+        # "i_sigi_outer": h_isig[0],
+        # 'total_exposure_time': tot_exp_time,
+        # 'data_collection_time': tot_data_col_time,
+        # 'frac_unique_in_blind': blind,
+        # 'attenuation': attenuation,
+        # 'new_transmission': new_trans
+        # }
+
+    return {"sweeps": sweeps,
+            "overall": overall}
+
+    # except:
+    #     self.logger.exception('**Error in Parse.ParseOutputBest**')
+    #     return 'None'
 
 def ParseOutputBestPlots(self, inp):
     """Parse Best plots file for plots"""

@@ -66,7 +66,7 @@ def try_float(number, default="NO DEFAULT"):
 def try_int(number, default="NO DEFAULT"):
     """Attempt to cast to an int, but return string if not"""
     try:
-        return float(number)
+        return int(number)
     except ValueError:
         if default != "NO DEFAULT":
             return default
