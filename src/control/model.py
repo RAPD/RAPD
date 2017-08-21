@@ -431,11 +431,10 @@ class Model(object):
         # Figure out if image in the current run...
         run_id, place_in_run = self.in_run(site_tag, fullname)
         self.logger.debug("run_id: %s place_in_run:%s", str(run_id), str(place_in_run))
-        print 'run_id: %s'%type(run_id)
-        print 'place_in_run: %s'%type(place_in_run)
 
         # Image is in a run
-        if isinstance(place_in_run, int) and isinstance(run_id, str):
+        #if isinstance(place_in_run, int) and isinstance(run_id, str):
+        if isinstance(place_in_run, int):
 
             self.logger.debug("%s is in run %s at position %s", fullname, run_id, place_in_run)
 
@@ -446,6 +445,7 @@ class Model(object):
 
             # If not integrating trigger integration
             if not current_run.get("rapd_status", None) in ("INTEGRATING", "FINISHED"):
+            #if True:
 
                 # Right on time
                 if place_in_run == 1:
