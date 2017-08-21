@@ -119,6 +119,9 @@ class RapdPlugin(Process):
     }
     """
 
+    # Connection to redis
+    redis = None
+
     # For testing individual modules (Will not run in Test mode on cluster!! Can be set at end of
     # __init__.)
     test = False
@@ -352,9 +355,6 @@ class RapdPlugin(Process):
 
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::run")
-
-        # create a redis connection to send results
-        self.connect_to_redis()
 
         self.tprint(arg=0, level="progress")
         # Check if h5 file is input and convert to cbf's.
@@ -759,16 +759,15 @@ class RapdPlugin(Process):
         Best versions known 3.2.0, 3.4.4
         """
 
-        # print "processBest"
-
-        if self.verbose:
-            self.logger.debug("AutoindexingStrategy::processBest %s", best_version)
+        self.logger.debug("AutoindexingStrategy::processBest %s", best_version)
 
         # try:
         max_dis = self.site_parameters.get("DETECTOR_DISTANCE_MAX")
         min_dis = self.site_parameters.get("DETECTOR_DISTANCE_MIN")
         min_d_o = self.site_parameters.get("DIFFRACTOMETER_OSC_MIN")
         min_e_t = self.site_parameters.get("DETECTOR_TIME_MIN")
+
+        # print max_dis, min_dis, min_d_o, min_e_t
 
         # Get image numbers
         try:
@@ -859,7 +858,9 @@ class RapdPlugin(Process):
         # bin.
         #if self.vendortype in ('Pilatus-6M', 'ADSC-HF4M'):
         if best_detector in ('pilatus6m', 'hf4m', 'eiger9m', 'eiger16m'):
-            command += ' -low never -su %.1f'%self.preferences.get('susceptibility', 1.0)
+            if best_version != "3.2.0":
+                command += " -low never"
+            command += " -su %.1f" % self.preferences.get("susceptibility", 1.0)
         else:
             # Set the I/sigI to 0.75 like Mosflm res in Labelit.
             command += ' -i2s 0.75 -su 1.5'
@@ -886,6 +887,7 @@ class RapdPlugin(Process):
             end += '%s_%s.hkl' % (self.index_number, image_number[1])
         command += end
         command1 += end
+
         d = {}
         jobs = {}
         l = [(command, ''), (command1, '_anom')]
@@ -1243,35 +1245,36 @@ class RapdPlugin(Process):
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::postprocessBest")
 
-        # print inp
+        print inp
 
-        try:
-            xml = "None"
-            anom = False
-            if inp.count("anom"):
-                anom = True
-            log = open(inp, "r").readlines()
-            if os.path.exists(inp.replace("log", "xml")):
-                xml = open(inp.replace("log", "xml"), "r").readlines()
-            iteration = os.path.dirname(inp)[-1]
-            if anom:
-                self.best_anom_log.extend(log)
-            else:
-                self.best_log.extend(log)
+        # try:
+        xml = "None"
+        anom = False
+        if inp.count("anom"):
+            anom = True
+        log = open(inp, "r").readlines()
+        if os.path.exists(inp.replace("log", "xml")):
+            xml = open(inp.replace("log", "xml"), "r").readlines()
+        iteration = os.path.dirname(inp)[-1]
+        if anom:
+            self.best_anom_log.extend(log)
+        else:
+            self.best_log.extend(log)
 
-        except:
-            self.logger.exception("**Error in postprocessBest.**")
+        # except:
+        #     self.logger.exception("**Error in postprocessBest.**")
 
-        # print log
-        # print xml
-        # print anom
+        # print ">>", log
+        # print ">>", xml
+        # print ">>", anom
         data = Parse.ParseOutputBest(self, (log, xml), anom)
+        pprint(data)
         # print data.get("strategy res limit")
 
         if self.labelit_results["labelit_results"] != "FAILED":
             # Best error checking. Most errors caused by B-factor calculation problem.
             # If no errors...
-            if type(data) == dict:
+            if isinstance(data, dict):
                 data.update({"directory":os.path.dirname(inp)})
                 if anom:
                     self.best_anom_results = {"best_results_anom":data}
@@ -1288,25 +1291,25 @@ class RapdPlugin(Process):
                     self.tprint(arg="\nBEST strategy ANOMALOUS", level=98, color="blue")
                 # Header lines
                 self.tprint(arg="  " + "-" * 85, level=98, color="white")
-                self.tprint(arg="  " + " N |  Omega_start |  N.of.images | Rot.width |  Exposure | Distance | % Transmission", level=98, color="white")
+                self.tprint(arg="  " + " N |  Omega_start |  N.of.images | Rot.width |  Exposure | \
+Distance | % Transmission", level=98, color="white")
                 self.tprint(arg="  " + "-" * 85, level=98, color="white")
-                for i in range(len(data[flag+"run number"])):
+                for sweep in data["sweeps"]:
                     self.tprint(
-                        arg="  %2d |    %6.2f    |   %6d     |   %5.2f   |   %5.2f   | %7s  |     %3.2f      |" %
-                            (
-                                int(data[flag+"run number"][i]),
-                                float(data[flag+"phi start"][i]),
-                                int(data[flag+"num of images"][i]),
-                                float(data[flag+"delta phi"][i]),
-                                float(data[flag+"image exp time"][i]),
-                                str(data[flag+"distance"][i]),
-                                float(data[flag+"new transmission"][i])
+                        arg="  %2d |    %6.2f    |   %6d     |   %5.2f   |   %5.2f   | %5.1f  |     %3.2f      |" %
+                            (sweep["run_number"],
+                             sweep["phi_start"],
+                             sweep["number_of_images"],
+                             sweep["phi_width"],
+                             sweep["exposure_time"],
+                             sweep["distance"],
+                             sweep["transmission"]
                             ),
                         level=98,
                         color="white")
                 self.tprint(arg="  " + "-" * 85, level=98, color="white")
 
-                return("OK")
+                return "OK"
             # BEST has failed
             else:
                 if self.multiproc == False:
@@ -1314,7 +1317,7 @@ class RapdPlugin(Process):
                            "neg B":"Adjusting resolution",
                            "isotropic B":"Isotropic B detected"}
                     if out.has_key(data):
-                        self.error_best_post(iteration, out[data],anom)
+                        self.error_best_post(iteration, out[data], anom)
                 self.tprint(arg="BEST unable to calculate a strategy", level=30, color="red")
 
                 # print data
@@ -1882,6 +1885,8 @@ class RapdPlugin(Process):
         self.write_json(self.results)
 
         if self.preferences.get("run_mode") == "server":
+            if not self.redis:
+                self.connect_to_redis()
             self.logger.debug("Sending back on redis")
             json_results = json.dumps(self.results)
             self.redis.lpush("RAPD_RESULTS", json_results)
@@ -2828,6 +2833,7 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
         self.logger.debug("RunLabelit::LabelitLog")
 
         for iteration in range(0, self.iterations):
+            # pprint(self.labelit_log[iteration])
             if iteration in self.labelit_log:
                 header_line = "-------------------------\nLABELIT ITERATION %s\n-------------------\
 ------\n" % iteration
@@ -2847,9 +2853,12 @@ def BestAction(inp, logger=False, output=False):
         logger.debug("BestAction")
         logger.debug(inp)
 
-    # print inp
     # try:
     command, log = inp
+    print command
+    print log
+    print os.getcwd()
+
     # Have to do this otherwise command is written to bottom of file??
     f = open(log, 'w')
     f.write('\n\n' + command + '\n')
