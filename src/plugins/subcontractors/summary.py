@@ -27,6 +27,7 @@ __status__ = "Production"
 
 # Standard imports
 import os
+from pprint import pprint
 
 # RAPD imports
 import utils.xutils as Utils
@@ -1613,6 +1614,9 @@ def summaryLabelitBC(self):
   """
   if self.verbose:
     self.logger.debug('Summary::summaryLabelitBC')
+
+  pprint(self.labelit_results)
+
   try:
     if self.labelit_results.has_key('best'):
       x = 2
@@ -1625,17 +1629,17 @@ def summaryLabelitBC(self):
       else:
         j = "['best']"
         labelit +='    <div id="container">\n'
-      labelit_face      = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_face')")
-      labelit_solution  = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_solution')")
-      labelit_metric    = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_metric')")
-      labelit_fit       = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_fit')")
-      labelit_rmsd      = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_rmsd')")
-      labelit_spots_fit = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_spots_fit')")
-      labelit_system    = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_system')")
-      labelit_cell      = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_cell')")
-      labelit_volume    = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_volume')")
-      x_beam            = eval("self.labelit_results"+j+".get('beam_X')")
-      y_beam            = eval("self.labelit_results"+j+".get('beam_Y')")
+    #   labelit_face      = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_face')")
+    #   labelit_solution  = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_solution')")
+    #   labelit_metric    = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_metric')")
+    #   labelit_fit       = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_fit')")
+    #   labelit_rmsd      = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_rmsd')")
+    #   labelit_spots_fit = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_spots_fit')")
+    #   labelit_system    = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_system')")
+    #   labelit_cell      = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_cell')")
+    #   labelit_volume    = eval("self.labelit_results"+j+".get("labelit_results").get('labelit_volume')")
+    #   x_beam            = eval("self.labelit_results"+j+".get('beam_X')")
+    #   y_beam            = eval("self.labelit_results"+j+".get('beam_Y')")
       labelit +='    <div class="full_width big">\n'
       labelit +='      <div id="demo">\n'
       if i == 0:

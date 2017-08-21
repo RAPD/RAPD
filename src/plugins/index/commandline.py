@@ -37,6 +37,7 @@ import uuid
 # RAPD imports
 import utils.log
 from utils.modules import load_module
+from utils.r_numbers import try_float, try_int
 import utils.text as text
 import utils.commandline_utils as commandline_utils
 import detectors.detector_utils as detector_utils
@@ -122,7 +123,7 @@ def construct_command(image_headers, commandline_args, detector_module):
     #command["preferences"]["alpha"] = 0.0
     #command["preferences"]["beta"] = 0.0
     #command["preferences"]["gamma"] = 0.0
-    command["preferences"]["index_hi_res"] = str(commandline_args.hires)
+    command["preferences"]["index_hi_res"] = try_float(commandline_args.hires, 0.0)
     command["preferences"]["x_beam"] = commandline_args.beamcenter[0]
     command["preferences"]["y_beam"] = commandline_args.beamcenter[1]
     command["preferences"]["beam_search"] = commandline_args.beam_search
@@ -152,9 +153,9 @@ def construct_command(image_headers, commandline_args, detector_module):
     #                   ],#MOSFLM
 
     # Raddose
-    command["preferences"]["crystal_size_x"] = "100"
-    command["preferences"]["crystal_size_y"] = "100"
-    command["preferences"]["crystal_size_z"] = "100"
+    command["preferences"]["crystal_size_x"] = 100.0
+    command["preferences"]["crystal_size_y"] = 100.0
+    command["preferences"]["crystal_size_z"] = 100.0
     command["preferences"]["solvent_content"] = commandline_args.solvent
 
     # Unknown
@@ -525,7 +526,8 @@ def main():
     tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
-    plugin.RapdPlugin(None, command, tprint, logger)
+    plugin_instance = plugin.RapdPlugin(None, command, tprint, logger)
+    plugin_instance.start()
 
 if __name__ == "__main__":
 

@@ -119,6 +119,9 @@ class RapdPlugin(Process):
     }
     """
 
+    # Connection to redis
+    redis = None
+
     # For testing individual modules (Will not run in Test mode on cluster!! Can be set at end of
     # __init__.)
     test = False
@@ -352,9 +355,6 @@ class RapdPlugin(Process):
 
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::run")
-
-        # create a redis connection to send results
-        self.connect_to_redis()
 
         self.tprint(arg=0, level="progress")
         # Check if h5 file is input and convert to cbf's.
@@ -1882,6 +1882,8 @@ class RapdPlugin(Process):
         self.write_json(self.results)
 
         if self.preferences.get("run_mode") == "server":
+            if not self.redis:
+                self.connect_to_redis()
             self.logger.debug("Sending back on redis")
             json_results = json.dumps(self.results)
             self.redis.lpush("RAPD_RESULTS", json_results)
@@ -2828,6 +2830,7 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
         self.logger.debug("RunLabelit::LabelitLog")
 
         for iteration in range(0, self.iterations):
+            pprint(self.labelit_log[iteration])
             if iteration in self.labelit_log:
                 header_line = "-------------------------\nLABELIT ITERATION %s\n-------------------\
 ------\n" % iteration
