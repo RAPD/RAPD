@@ -431,6 +431,8 @@ class Model(object):
         # Figure out if image in the current run...
         run_id, place_in_run = self.in_run(site_tag, fullname)
         self.logger.debug("run_id: %s place_in_run:%s", str(run_id), str(place_in_run))
+        print 'run_id: %s'%type(run_id)
+        print 'place_in_run: %s'%type(place_in_run)
 
         # Image is in a run
         if isinstance(place_in_run, int) and isinstance(run_id, str):
@@ -588,7 +590,7 @@ class Model(object):
             print 'run_id:%s'%run_id
             print 'run: %s'%run
 
-            self.logger.debug("_id:%s run:%s" % (run_id, str(run)))
+            #self.logger.debug("_id:%s run:%s" % (run_id, str(run)))
 
             if run.get("site_tag", None) == site_tag and \
                run.get("directory", None) == directory and \
@@ -624,7 +626,7 @@ class Model(object):
             elif return_type == "dict":
                 # Update the local store
                 for run in identified_runs:
-                    self.recent_runs[run["_id"]] = run
+                    self.recent_runs[str(run["_id"])] = run
                 # Return runs
                 return identified_runs
 

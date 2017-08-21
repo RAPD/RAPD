@@ -459,8 +459,6 @@ class Gatherer(object):
             #current_run = self.bl_redis.get("RUN_INFO_SV")
             current_run = self.redis.rpop('run_info_T')
             if current_run not in (None, ""):
-                print current_run
-                print type(current_run)
                 # Split it
                 #cur_run = current_run.split("_") #runid,first#,total#,dist,energy,transmission,omega_start,deltaomega,time,timestamp
                 #1_1_23_400.00_12661.90_30.00_45.12_0.20_0.50_
@@ -468,6 +466,11 @@ class Gatherer(object):
                 #self.bl_redis.set("RUN_INFO_SV", "")
                 # get the additional beamline params and put into nice dict.
                 run_data = self.get_run_data(current_run)
+                # Get rid of trailing slash from beamline Redis.
+                dir = run_data['directory']
+                if dir[-1] == '/':
+                    run_data['directory'] = dir[:-1]
+                
                 self.logger.debug("run_data:%s %s", self.tag, run_data)
                 # Put into exchangable format
                 run_data_json = json.dumps(run_data)

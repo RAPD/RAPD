@@ -73,6 +73,8 @@ import utils.spacegroup as spacegroup
 import plugins.analysis.commandline
 import plugins.analysis.plugin
 
+import info
+
 # Software dependencies
 VERSIONS = {
     "aimless": (
@@ -191,6 +193,8 @@ class RapdPlugin(Process):
         self.image_data = self.command.get("data").get("image_data")
         self.run_data = self.command.get("data").get("run_data")
         self.process_id = self.command["process"]["process_id"]
+        self.preferences = info.DEFAULT_PREFERENCES
+        self.preferences.update(self.command.get("preferences", {}))
 
         self.logger.debug("self.image_data = %s", self.image_data)
 
@@ -215,32 +219,35 @@ class RapdPlugin(Process):
             # self.image_data['start'] = self.preferences['request']['frame_start']
             # self.image_data['total'] = str( int(self.preferences['request']['frame_start'])
             #                         + int(self.preferences['request']['frame_finish']) - 1)
-        if self.preferences.get('spacegroup', False):
-            self.spacegroup = self.preferences['spacegroup']
-
-        if self.preferences.get("hi_res", False):
-            self.hi_res = self.preferences.get("hi_res")
-
-        if self.preferences.get("low_res", False):
-            self.low_res = self.preferences.get("low_res")
-
-        if 'multiprocessing' in self.preferences:
-            self.cluster_use = self.preferences['multiprocessing']
-            if self.cluster_use == 'True':
-                self.cluster_use = True
-            elif self.cluster_use == 'False':
-                self.cluster_use = False
-        else:
-            self.cluster_use = False
-
-        if 'ram_integrate' in self.preferences:
-            self.ram_use = self.preferences['ram_integrate']
-            if self.ram_use == 'True':
-                self.ram_use = True
-            elif self.ram_use == 'False':
-                self.ram_use = False
-            if self.ram_use == True:
-                self.ram_nodes = self.preferences['ram_nodes']
+        self.spacegroup = self.preferences.get('spacegroup', False)
+        #if self.preferences.get('spacegroup', False):
+        #    self.spacegroup = self.preferences['spacegroup']
+        self.hi_res = self.preferences.get("hi_res", False)
+        #if self.preferences.get("hi_res", False):
+        #    self.hi_res = self.preferences.get("hi_res")
+        self.low_res = self.preferences.get("low_res", False)
+        #if self.preferences.get("low_res", False):
+        #    self.low_res = self.preferences.get("low_res")
+        self.cluster_use = self.preferences.get('multiprocessing', False)
+        #if 'multiprocessing' in self.preferences:
+        #    self.cluster_use = self.preferences['multiprocessing']
+        #    if self.cluster_use == 'True':
+        #        self.cluster_use = True
+        #    elif self.cluster_use == 'False':
+        #        self.cluster_use = False
+        #else:
+        #    self.cluster_use = False
+        self.ram_use = self.preferences.get('ram_integrate', False)
+        if self.ram_use == True:
+            self.ram_nodes = self.preferences['ram_nodes']
+        #if 'ram_integrate' in self.preferences:
+        #    self.ram_use = self.preferences['ram_integrate']
+        #    if self.ram_use == 'True':
+        #        self.ram_use = True
+        #    elif self.ram_use == 'False':
+        #        self.ram_use = False
+        #    if self.ram_use == True:
+        #        self.ram_nodes = self.preferences['ram_nodes']
             # ram_nodes is a list containing three lists.
             # ram_nodes[0] is a list containing the name of the nodes where
             # data was distributed to.
@@ -248,31 +255,35 @@ class RapdPlugin(Process):
             # of images copied to the corresponding node.
             # ram_nodes[2] is a list of the last frame number for the wedge
             # of images copied to the corresponding node.
-            else:
-                self.ram_nodes = None
-        else:
-            self.ram_use = False
-            self.ram_nodes = None
-
-        if 'standalone' in self.preferences:
-            self.standalone = self.preferences['standalone']
-            if self.standalone == 'True':
-                self.standalone = True
-            elif self.standalone == 'False':
-                self.standalone = False
-        else:
-            self.standalone = False
-
-        if 'work_dir_override' in self.preferences:
-            if (self.preferences['work_dir_override'] == True
-                    or self.preferences['work_dir_override'] == 'True'):
-                self.dirs['work'] = self.preferences['work_directory']
-
-        if 'beam_center_override' in self.preferences:
-            if (self.preferences['beam_center_override'] == True
-                    or self.preferences['beam_center_override'] == 'True'):
-                self.image_data['x_beam'] = self.preferences['x_beam']
-                self.image_data['y_beam'] = self.preferences['y_beam']
+            #else:
+            #    self.ram_nodes = None
+        #else:
+        #    self.ram_use = False
+        #    self.ram_nodes = None
+        
+        self.standalone = self.preferences.get('standalone', False)
+        #if 'standalone' in self.preferences:
+        #    self.standalone = self.preferences['standalone']
+        #    if self.standalone == 'True':
+        #        self.standalone = True
+        #    elif self.standalone == 'False':
+        #        self.standalone = False
+        #else:
+        #    self.standalone = False
+        if self.preferences.get('work_dir_override', False):
+            self.dirs['work'] = self.preferences['work_directory']
+        #if 'work_dir_override' in self.preferences:
+        #    if (self.preferences['work_dir_override'] == True
+        #            or self.preferences['work_dir_override'] == 'True'):
+        #        self.dirs['work'] = self.preferences['work_directory']
+        if self.preferences.get('beam_center_override', False):
+            self.image_data['x_beam'] = self.preferences['x_beam']
+            self.image_data['y_beam'] = self.preferences['y_beam']
+        #if 'beam_center_override' in self.preferences:
+        #    if (self.preferences['beam_center_override'] == True
+        #            or self.preferences['beam_center_override'] == 'True'):
+        #        self.image_data['x_beam'] = self.preferences['x_beam']
+        #        self.image_data['y_beam'] = self.preferences['y_beam']
 
         # Some detectord need flipped for XDS
         if self.preferences.get('flip_beam', False):
