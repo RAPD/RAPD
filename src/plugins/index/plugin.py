@@ -759,16 +759,15 @@ class RapdPlugin(Process):
         Best versions known 3.2.0, 3.4.4
         """
 
-        # print "processBest"
-
-        if self.verbose:
-            self.logger.debug("AutoindexingStrategy::processBest %s", best_version)
+        self.logger.debug("AutoindexingStrategy::processBest %s", best_version)
 
         # try:
         max_dis = self.site_parameters.get("DETECTOR_DISTANCE_MAX")
         min_dis = self.site_parameters.get("DETECTOR_DISTANCE_MIN")
         min_d_o = self.site_parameters.get("DIFFRACTOMETER_OSC_MIN")
         min_e_t = self.site_parameters.get("DETECTOR_TIME_MIN")
+
+        # print max_dis, min_dis, min_d_o, min_e_t
 
         # Get image numbers
         try:
@@ -859,7 +858,9 @@ class RapdPlugin(Process):
         # bin.
         #if self.vendortype in ('Pilatus-6M', 'ADSC-HF4M'):
         if best_detector in ('pilatus6m', 'hf4m', 'eiger9m', 'eiger16m'):
-            command += ' -low never -su %.1f'%self.preferences.get('susceptibility', 1.0)
+            if best_version != "3.2.0":
+                command += " -low never"
+            command += " -su %.1f" % self.preferences.get("susceptibility", 1.0)
         else:
             # Set the I/sigI to 0.75 like Mosflm res in Labelit.
             command += ' -i2s 0.75 -su 1.5'
@@ -886,6 +887,8 @@ class RapdPlugin(Process):
             end += '%s_%s.hkl' % (self.index_number, image_number[1])
         command += end
         command1 += end
+        print command
+        sys.exit()
         d = {}
         jobs = {}
         l = [(command, ''), (command1, '_anom')]
@@ -1243,24 +1246,24 @@ class RapdPlugin(Process):
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::postprocessBest")
 
-        # print inp
+        print inp
 
-        try:
-            xml = "None"
-            anom = False
-            if inp.count("anom"):
-                anom = True
-            log = open(inp, "r").readlines()
-            if os.path.exists(inp.replace("log", "xml")):
-                xml = open(inp.replace("log", "xml"), "r").readlines()
-            iteration = os.path.dirname(inp)[-1]
-            if anom:
-                self.best_anom_log.extend(log)
-            else:
-                self.best_log.extend(log)
+        # try:
+        xml = "None"
+        anom = False
+        if inp.count("anom"):
+            anom = True
+        log = open(inp, "r").readlines()
+        if os.path.exists(inp.replace("log", "xml")):
+            xml = open(inp.replace("log", "xml"), "r").readlines()
+        iteration = os.path.dirname(inp)[-1]
+        if anom:
+            self.best_anom_log.extend(log)
+        else:
+            self.best_log.extend(log)
 
-        except:
-            self.logger.exception("**Error in postprocessBest.**")
+        # except:
+        #     self.logger.exception("**Error in postprocessBest.**")
 
         # print log
         # print xml
@@ -2830,7 +2833,7 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
         self.logger.debug("RunLabelit::LabelitLog")
 
         for iteration in range(0, self.iterations):
-            pprint(self.labelit_log[iteration])
+            # pprint(self.labelit_log[iteration])
             if iteration in self.labelit_log:
                 header_line = "-------------------------\nLABELIT ITERATION %s\n-------------------\
 ------\n" % iteration

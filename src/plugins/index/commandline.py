@@ -107,8 +107,8 @@ def construct_command(image_headers, commandline_args, detector_module):
 
     # Best
     command["preferences"]["best_complexity"] = commandline_args.best_complexity
-    command["preferences"]["shape"] = "2.0"
-    command["preferences"]["susceptibility"] = "1.0"
+    command["preferences"]["shape"] = 2.0
+    command["preferences"]["susceptibility"] = 1.0
     command["preferences"]["aimed_res"] = 0.0
 
     # Best & Labelit
