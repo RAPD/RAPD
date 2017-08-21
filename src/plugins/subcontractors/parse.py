@@ -803,31 +803,12 @@ def ParseOutputBest(self, inp, anom=False):
     sweeps = []
     overall = {}
     sweep = False
-
     temp = []
-    # run_num = []
-    # phi_start = []
-    # num_images = []
-    # delta_phi = []
-    # time = []
-    # orig_time = []
-    # distance = []
-    # overlap = []
-    # new_trans = []
-    # h_isig = []
-    # r_fac = []
-    # red = []
-    # pos = []
-    # com = []
-    # iso_B = False
-    # nbr = False
-    # dis = False
-    # frac_unique_blind = '0.0'
 
     # try:
     log, xml = inp
-    # print log
-    # print xml
+    # pprint(log)
+    # pprint(xml)
 
     # Check for errors in the log
     for line in log:
@@ -835,6 +816,8 @@ def ParseOutputBest(self, inp, anom=False):
         if line.count('ERROR: scaling error > 100%'):
           nbr = True
         """
+        if "Anomalous data              :" in line:
+            overall["anomalous"] = {"Yes":True, "No":False}[line.split(":")[-1].strip()]
         if line.count('***any data cannot be measured for the given time!'):
             return 'dosage too high'
         if line.count('no data can be measured with requested'):

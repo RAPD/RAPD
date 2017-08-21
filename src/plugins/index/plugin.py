@@ -1245,7 +1245,7 @@ class RapdPlugin(Process):
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::postprocessBest")
 
-        print inp
+        # print inp
 
         # try:
         xml = "None"
@@ -1268,7 +1268,7 @@ class RapdPlugin(Process):
         # print ">>", xml
         # print ">>", anom
         data = Parse.ParseOutputBest(self, (log, xml), anom)
-        pprint(data)
+        # pprint(data)
         # print data.get("strategy res limit")
 
         if self.labelit_results["labelit_results"] != "FAILED":
@@ -1282,13 +1282,10 @@ class RapdPlugin(Process):
                     self.best_results = {"best_results_norm":data}
 
                 # Print to terminal
-                # pprint.pprint(data)
-                if "strategy anom flag" in data:
-                    flag = "strategy "
-                    self.tprint(arg="\nBEST strategy standard", level=98, color="blue")
-                else:
-                    flag = "strategy anom "
+                if data["overall"]["anomalous"]:
                     self.tprint(arg="\nBEST strategy ANOMALOUS", level=98, color="blue")
+                else:
+                    self.tprint(arg="\nBEST strategy NORMAL", level=98, color="blue")
                 # Header lines
                 self.tprint(arg="  " + "-" * 85, level=98, color="white")
                 self.tprint(arg="  " + " N |  Omega_start |  N.of.images | Rot.width |  Exposure | \
@@ -1576,7 +1573,7 @@ Distance | % Transmission", level=98, color="white")
 
             # Set self.labelit_dir and go to it.
             self.labelit_dir = os.path.join(self.working_dir, str(highest))
-            pprint(self.labelit_results)
+            # pprint(self.labelit_results)
             self.index_number = self.labelit_results.get("labelit_results").get("mosflm_index")
             os.chdir(self.labelit_dir)
             if self.spacegroup != False:
@@ -2855,9 +2852,9 @@ def BestAction(inp, logger=False, output=False):
 
     # try:
     command, log = inp
-    print command
-    print log
-    print os.getcwd()
+    # print command
+    # print log
+    # print os.getcwd()
 
     # Have to do this otherwise command is written to bottom of file??
     f = open(log, 'w')
