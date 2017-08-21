@@ -1275,7 +1275,7 @@ class RapdPlugin(Process):
             # Best error checking. Most errors caused by B-factor calculation problem.
             # If no errors...
             if isinstance(data, dict):
-                data.update({"directory":os.path.dirname(inp)})
+                # data.update({"directory":os.path.dirname(inp)})
                 if anom:
                     self.best_anom_results = {"best_results_anom":data}
                 else:
