@@ -327,10 +327,10 @@ class FindBeamCenter(Process):
       for i in range(0,2):
         for run in self.labelit_results.keys():
           if run.startswith('bc_'):
-            if type(self.labelit_results[run].get('Labelit results')) == dict:
+            if type(self.labelit_results[run].get("labelit_results")) == dict:
 	      if i == 0:
                 #Check for pseudotranslation, meaning bad snap!!!
-                if self.labelit_results[run].get('Labelit results').get('pseudotrans'):
+                if self.labelit_results[run].get("labelit_results").get('pseudotrans'):
                   #passed = False
                   pass
                 #Get Labelit stats and SG#
@@ -400,8 +400,8 @@ class FindBeamCenter(Process):
           x = []
           y = []
           for run in li2:
-            x.append(float(self.labelit_results[run].get('Labelit results').get('labelit_bc').get('labelit_x_beam')))
-            y.append(float(self.labelit_results[run].get('Labelit results').get('labelit_bc').get('labelit_y_beam')))
+            x.append(float(self.labelit_results[run].get("labelit_results").get('labelit_bc').get('labelit_x_beam')))
+            y.append(float(self.labelit_results[run].get("labelit_results").get('labelit_bc').get('labelit_y_beam')))
           stats[ls[z][1]] = {'avg_x': numpy.average(x), 'std_x': numpy.std(x), 'avg_y': numpy.average(y), 'std_y': numpy.std(y),
                              'sum_std': numpy.std(x)+numpy.std(y), 'j1': ls[z][0], 'top': top1}
         #Sort all results by lowest sum of std dev (x+y) and save the best.

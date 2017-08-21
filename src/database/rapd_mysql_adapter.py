@@ -1486,7 +1486,7 @@ class Database(object):
 
             #LABELIT
             try:
-                if results['Labelit results'] == 'FAILED':
+                if results["labelit_results"] == 'FAILED':
                     command_front += """,
                                                        labelit_status"""
 
@@ -1535,22 +1535,22 @@ class Database(object):
                                                                 %s"""
 
                     tmp_insert_values = ['SUCCESS',
-                                      results['Labelit results']['labelit_iteration'],
-                                      results['Labelit results']['mosflm_res'][0],
-                                      results['Labelit results']['labelit_spots_fit'][0],
-                                      results['Labelit results']['labelit_metric'][0],
-                                      results['Labelit results']['mosflm_sg'][0],
-                                      results['Labelit results']['mosflm_distance'][0],
-                                      results['Labelit results']['mosflm_beam_x'][0],
-                                      results['Labelit results']['mosflm_beam_y'][0],
-                                      results['Labelit results']['labelit_cell'][0][0],
-                                      results['Labelit results']['labelit_cell'][0][1],
-                                      results['Labelit results']['labelit_cell'][0][2],
-                                      results['Labelit results']['labelit_cell'][0][3],
-                                      results['Labelit results']['labelit_cell'][0][4],
-                                      results['Labelit results']['labelit_cell'][0][5],
-                                      results['Labelit results']['mosflm_mos'][0],
-                                      results['Labelit results']['labelit_rmsd'][0]]
+                                      results["labelit_results"]['labelit_iteration'],
+                                      results["labelit_results"]['mosflm_res'][0],
+                                      results["labelit_results"]['labelit_spots_fit'][0],
+                                      results["labelit_results"]['labelit_metric'][0],
+                                      results["labelit_results"]['mosflm_sg'][0],
+                                      results["labelit_results"]['mosflm_distance'][0],
+                                      results["labelit_results"]['mosflm_beam_x'][0],
+                                      results["labelit_results"]['mosflm_beam_y'][0],
+                                      results["labelit_results"]['labelit_cell'][0][0],
+                                      results["labelit_results"]['labelit_cell'][0][1],
+                                      results["labelit_results"]['labelit_cell'][0][2],
+                                      results["labelit_results"]['labelit_cell'][0][3],
+                                      results["labelit_results"]['labelit_cell'][0][4],
+                                      results["labelit_results"]['labelit_cell'][0][5],
+                                      results["labelit_results"]['mosflm_mos'][0],
+                                      results["labelit_results"]['labelit_rmsd'][0]]
 
                     #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
                     command_front += tmp_command_front
@@ -1614,10 +1614,10 @@ class Database(object):
             #The normal strategy results
             enter_norm_mosflm = False
             try:
-                if results.has_key('Best results'):
-                #if results['Best results']:
+                if results.has_key("best_results_norm"):
+                #if results["best_results_norm"]:
                     self.logger.debug('Best results is there')
-                    if results['Best results'] == 'FAILED':
+                    if results["best_results_norm"] == 'FAILED':
                         tmp_command_front = """,
                                                            best_norm_status"""
 
@@ -1676,21 +1676,21 @@ class Database(object):
 
                         tmp_insert_values = [settings['best_complexity'],
                                           'SUCCESS',
-                                          results['Best results']['strategy res limit'],
-                                          results['Best results']['strategy completeness'][:-1],
-                                          results['Best results']['strategy attenuation'],
-                                          results['Best results']['strategy rot range'],
-                                          results['Best results']['strategy phi end'],
-                                          results['Best results']['strategy total exposure time'],
-                                          results['Best results']['strategy redundancy'],
-                                          results['Best results']['strategy I/sig'].split(' ')[0],
-                                          results['Best results']['strategy I/sig'].split(' ')[1][1:-1],
-                                          results['Best results']['strategy R-factor'].split(' ')[0][:-1],
-                                          results['Best results']['strategy R-factor'].split(' ')[1][1:-2],
-                                          results['Best results']['strategy frac of unique in blind region'][:-1],
+                                          results["best_results_norm"]['strategy res limit'],
+                                          results["best_results_norm"]['strategy completeness'][:-1],
+                                          results["best_results_norm"]['strategy attenuation'],
+                                          results["best_results_norm"]['strategy rot range'],
+                                          results["best_results_norm"]['strategy phi end'],
+                                          results["best_results_norm"]['strategy total exposure time'],
+                                          results["best_results_norm"]['strategy redundancy'],
+                                          results["best_results_norm"]['strategy I/sig'].split(' ')[0],
+                                          results["best_results_norm"]['strategy I/sig'].split(' ')[1][1:-1],
+                                          results["best_results_norm"]['strategy R-factor'].split(' ')[0][:-1],
+                                          results["best_results_norm"]['strategy R-factor'].split(' ')[1][1:-2],
+                                          results["best_results_norm"]['strategy frac of unique in blind region'][:-1],
                                           'NONE' ]
 
-                #There is no entry in the results for 'Best results'
+                #There is no entry in the results for "best_results_norm"
                 else:
                     self.logger.debug('NO key Best results')
                     #BEST STRATEGY
@@ -1768,9 +1768,9 @@ class Database(object):
             #The anomalous strategy results
             enter_anom_mosflm = False
             try:
-                if results.has_key('Best ANOM results'):
+                if results.has_key("best_results_anom"):
                     self.logger.debug('Best ANOM results present')
-                    if results['Best ANOM results'] == 'FAILED':
+                    if results["best_results_anom"] == 'FAILED':
                         tmp_command_front = """,
                                                            best_anom_status"""
 
@@ -1826,21 +1826,21 @@ class Database(object):
                                                                     %s"""
 
                         tmp_insert_values = ['SUCCESS',
-                                          results['Best ANOM results']['strategy anom res limit'],
-                                          results['Best ANOM results']['strategy anom completeness'][:-1],
-                                          results['Best ANOM results']['strategy anom attenuation'],
-                                          results['Best ANOM results']['strategy anom rot range'],
-                                          results['Best ANOM results']['strategy anom phi end'],
-                                          results['Best ANOM results']['strategy anom total exposure time'],
-                                          results['Best ANOM results']['strategy anom redundancy'],
-                                          results['Best ANOM results']['strategy anom I/sig'].split(' ')[0],
-                                          results['Best ANOM results']['strategy anom I/sig'].split(' ')[1][1:-1],
-                                          results['Best ANOM results']['strategy anom R-factor'].split(' ')[0][:-1],
-                                          results['Best ANOM results']['strategy anom R-factor'].split(' ')[1][1:-2],
-                                          results['Best ANOM results']['strategy anom frac of unique in blind region'][:-1],
+                                          results["best_results_anom"]['strategy anom res limit'],
+                                          results["best_results_anom"]['strategy anom completeness'][:-1],
+                                          results["best_results_anom"]['strategy anom attenuation'],
+                                          results["best_results_anom"]['strategy anom rot range'],
+                                          results["best_results_anom"]['strategy anom phi end'],
+                                          results["best_results_anom"]['strategy anom total exposure time'],
+                                          results["best_results_anom"]['strategy anom redundancy'],
+                                          results["best_results_anom"]['strategy anom I/sig'].split(' ')[0],
+                                          results["best_results_anom"]['strategy anom I/sig'].split(' ')[1][1:-1],
+                                          results["best_results_anom"]['strategy anom R-factor'].split(' ')[0][:-1],
+                                          results["best_results_anom"]['strategy anom R-factor'].split(' ')[1][1:-2],
+                                          results["best_results_anom"]['strategy anom frac of unique in blind region'][:-1],
                                           'NONE' ]
 
-                #There is no entry in the results for 'Best results'
+                #There is no entry in the results for "best_results_norm"
                 else:
                     self.logger.debug('NO key Best ANOM results')
                     #BEST STRATEGY
@@ -2003,7 +2003,7 @@ class Database(object):
                                        int_type = 'single',
                                        strategy_type = 'normal',
                                        strategy_program = 'best',
-                                       results = results['Best results'])
+                                       results = results["best_results_norm"])
             elif (norm_strat_type == 'mosflm') :
                 self.addStrategyWedges(id=single_result_dict['single_result_id'],
                                        int_type='single',
@@ -2016,7 +2016,7 @@ class Database(object):
                                        int_type='single',
                                        strategy_type='anomalous',
                                        strategy_program='best',
-                                       results=results['Best ANOM results'])
+                                       results=results["best_results_anom"])
             elif (anom_strat_type == 'mosflm') :
                 self.addStrategyWedges(id = single_result_dict['single_result_id'],
                                        int_type = 'single',
@@ -2332,7 +2332,7 @@ class Database(object):
 
             #LABELIT
             try:
-                if results['Labelit results'] == 'FAILED':
+                if results["labelit_results"] == 'FAILED':
                     command_front += """,
                                                        labelit_status"""
 
@@ -2381,22 +2381,22 @@ class Database(object):
                                                                             %s"""
 
                     tmp_insert_values = ['SUCCESS',
-                                      results['Labelit results']['labelit_iteration'],
-                                      results['Labelit results']['mosflm_res'][0],
-                                      results['Labelit results']['labelit_spots_fit'][0],
-                                      results['Labelit results']['labelit_metric'][0],
-                                      results['Labelit results']['mosflm_sg'][0],
-                                      results['Labelit results']['mosflm_distance'][0],
-                                      results['Labelit results']['mosflm_beam_x'][0],
-                                      results['Labelit results']['mosflm_beam_y'][0],
-                                      results['Labelit results']['labelit_cell'][0][0],
-                                      results['Labelit results']['labelit_cell'][0][1],
-                                      results['Labelit results']['labelit_cell'][0][2],
-                                      results['Labelit results']['labelit_cell'][0][3],
-                                      results['Labelit results']['labelit_cell'][0][4],
-                                      results['Labelit results']['labelit_cell'][0][5],
-                                      results['Labelit results']['mosflm_mos'][0],
-                                      results['Labelit results']['labelit_rmsd'][0]]
+                                      results["labelit_results"]['labelit_iteration'],
+                                      results["labelit_results"]['mosflm_res'][0],
+                                      results["labelit_results"]['labelit_spots_fit'][0],
+                                      results["labelit_results"]['labelit_metric'][0],
+                                      results["labelit_results"]['mosflm_sg'][0],
+                                      results["labelit_results"]['mosflm_distance'][0],
+                                      results["labelit_results"]['mosflm_beam_x'][0],
+                                      results["labelit_results"]['mosflm_beam_y'][0],
+                                      results["labelit_results"]['labelit_cell'][0][0],
+                                      results["labelit_results"]['labelit_cell'][0][1],
+                                      results["labelit_results"]['labelit_cell'][0][2],
+                                      results["labelit_results"]['labelit_cell'][0][3],
+                                      results["labelit_results"]['labelit_cell'][0][4],
+                                      results["labelit_results"]['labelit_cell'][0][5],
+                                      results["labelit_results"]['mosflm_mos'][0],
+                                      results["labelit_results"]['labelit_rmsd'][0]]
 
                     #now add the tmps to the more permenant variables - this should avoid some funkiness on wierd failures
                     command_front += tmp_command_front
@@ -2459,10 +2459,10 @@ class Database(object):
             #The normal strategy results
             enter_norm_mosflm = False
             try:
-                if results.has_key('Best results'):
-                #if results['Best results']:
+                if results.has_key("best_results_norm"):
+                #if results["best_results_norm"]:
                     self.logger.debug('Best results is there')
-                    if results['Best results'] == 'FAILED':
+                    if results["best_results_norm"] == 'FAILED':
                         tmp_command_front = """,
                                                            best_norm_status"""
 
@@ -2521,21 +2521,21 @@ class Database(object):
 
                         tmp_insert_values = [settings['best_complexity'],
                                           'SUCCESS',
-                                          results['Best results']['strategy res limit'],
-                                          results['Best results']['strategy completeness'][:-1],
-                                          results['Best results']['strategy attenuation'],
-                                          results['Best results']['strategy rot range'],
-                                          results['Best results']['strategy phi end'],
-                                          results['Best results']['strategy total exposure time'],
-                                          results['Best results']['strategy redundancy'],
-                                          results['Best results']['strategy I/sig'].split(' ')[0],
-                                          results['Best results']['strategy I/sig'].split(' ')[1][1:-1],
-                                          results['Best results']['strategy R-factor'].split(' ')[0][:-1],
-                                          results['Best results']['strategy R-factor'].split(' ')[1][1:-2],
-                                          results['Best results']['strategy frac of unique in blind region'][:-1],
+                                          results["best_results_norm"]['strategy res limit'],
+                                          results["best_results_norm"]['strategy completeness'][:-1],
+                                          results["best_results_norm"]['strategy attenuation'],
+                                          results["best_results_norm"]['strategy rot range'],
+                                          results["best_results_norm"]['strategy phi end'],
+                                          results["best_results_norm"]['strategy total exposure time'],
+                                          results["best_results_norm"]['strategy redundancy'],
+                                          results["best_results_norm"]['strategy I/sig'].split(' ')[0],
+                                          results["best_results_norm"]['strategy I/sig'].split(' ')[1][1:-1],
+                                          results["best_results_norm"]['strategy R-factor'].split(' ')[0][:-1],
+                                          results["best_results_norm"]['strategy R-factor'].split(' ')[1][1:-2],
+                                          results["best_results_norm"]['strategy frac of unique in blind region'][:-1],
                                           'NONE' ]
 
-                #There is no entry in the results for 'Best results'
+                #There is no entry in the results for "best_results_norm"
                 else:
                     self.logger.debug('NO key Best results')
                     #BEST STRATEGY
@@ -2613,9 +2613,9 @@ class Database(object):
             #The anomalous strategy results
             enter_anom_mosflm = False
             try:
-                if results.has_key('Best ANOM results'):
+                if results.has_key("best_results_anom"):
                     self.logger.debug('Best ANOM results present')
-                    if results['Best ANOM results'] == 'FAILED':
+                    if results["best_results_anom"] == 'FAILED':
                         tmp_command_front = """,
                                                            best_anom_status"""
 
@@ -2671,21 +2671,21 @@ class Database(object):
                                                                     %s"""
 
                         tmp_insert_values = ['SUCCESS',
-                                          results['Best ANOM results']['strategy anom res limit'],
-                                          results['Best ANOM results']['strategy anom completeness'][:-1],
-                                          results['Best ANOM results']['strategy anom attenuation'],
-                                          results['Best ANOM results']['strategy anom rot range'],
-                                          results['Best ANOM results']['strategy anom phi end'],
-                                          results['Best ANOM results']['strategy anom total exposure time'],
-                                          results['Best ANOM results']['strategy anom redundancy'],
-                                          results['Best ANOM results']['strategy anom I/sig'].split(' ')[0],
-                                          results['Best ANOM results']['strategy anom I/sig'].split(' ')[1][1:-1],
-                                          results['Best ANOM results']['strategy anom R-factor'].split(' ')[0][:-1],
-                                          results['Best ANOM results']['strategy anom R-factor'].split(' ')[1][1:-2],
-                                          results['Best ANOM results']['strategy anom frac of unique in blind region'][:-1],
+                                          results["best_results_anom"]['strategy anom res limit'],
+                                          results["best_results_anom"]['strategy anom completeness'][:-1],
+                                          results["best_results_anom"]['strategy anom attenuation'],
+                                          results["best_results_anom"]['strategy anom rot range'],
+                                          results["best_results_anom"]['strategy anom phi end'],
+                                          results["best_results_anom"]['strategy anom total exposure time'],
+                                          results["best_results_anom"]['strategy anom redundancy'],
+                                          results["best_results_anom"]['strategy anom I/sig'].split(' ')[0],
+                                          results["best_results_anom"]['strategy anom I/sig'].split(' ')[1][1:-1],
+                                          results["best_results_anom"]['strategy anom R-factor'].split(' ')[0][:-1],
+                                          results["best_results_anom"]['strategy anom R-factor'].split(' ')[1][1:-2],
+                                          results["best_results_anom"]['strategy anom frac of unique in blind region'][:-1],
                                           'NONE' ]
 
-                #There is no entry in the results for 'Best results'
+                #There is no entry in the results for "best_results_norm"
                 else:
                     self.logger.debug('NO key Best ANOM results')
                     #BEST STRATEGY
@@ -2849,7 +2849,7 @@ class Database(object):
                                        int_type = 'pair',
                                        strategy_type = 'normal',
                                        strategy_program = 'best',
-                                       results = results['Best results'])
+                                       results = results["best_results_norm"])
             elif (norm_strat_type == 'mosflm') :
                 self.addStrategyWedges(id = pair_result_dict['pair_result_id'],
                                        int_type = 'pair',
@@ -2862,7 +2862,7 @@ class Database(object):
                                        int_type = 'pair',
                                        strategy_type = 'anomalous',
                                        strategy_program = 'best',
-                                       results = results['Best ANOM results'])
+                                       results = results["best_results_anom"])
             elif (anom_strat_type == 'mosflm') :
                 self.addStrategyWedges(id = pair_result_dict['pair_result_id'],
                                        int_type = 'pair',

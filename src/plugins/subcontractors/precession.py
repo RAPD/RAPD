@@ -474,9 +474,9 @@ class LabelitPP(Process):
         sym = "0"
         try:
             for run in self.labelit_results.keys():
-                if type(self.labelit_results[run].get("Labelit results")) == dict:
+                if type(self.labelit_results[run].get("labelit_results")) == dict:
                     # Check for pseudotranslation
-                    if self.labelit_results[run].get("Labelit results").get("pseudotrans") == True:
+                    if self.labelit_results[run].get("labelit_results").get("pseudotrans") == True:
                         self.pseudotrans = True
                     Utils.getLabelitStats(self, inp=run, simple=False)
                     rms_list1.append(float(self.labelit_results[run].get("labelit_stats").get("best").get("mos_rms")))
@@ -527,7 +527,7 @@ class LabelitPP(Process):
                 if failed:
                     self.logger.debug("No solution was found when sorting Labelit results.")
                     self.labelit_failed = True
-                    self.labelit_results = {"Labelit results":"FAILED"}
+                    self.labelit_results = {"labelit_results":"FAILED"}
 
         except:
             self.logger.exception("**ERROR in LabelitPP.labelit_sort**")

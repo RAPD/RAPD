@@ -4,14 +4,14 @@
     <md-card-title>Image Data</md-card-title>
     <md-card-content>
       <table class="strategy-sub-table">
-        <tr><td class="rj-col">Name</td><td class="small-col">:</td><td class="lj-col">{{full_result.information.fullname}}</td></tr>
-        <tr><td class="rj-col">&Omega;</td><td class="small-col">:</td><td class="lj-col">{{full_result.information.osc_start}}&deg;</td></tr>
-        <tr><td class="rj-col">&Delta;&Omega;</td><td class="small-col">:</td><td class="lj-col">{{full_result.information.osc_range}}&deg;</td></tr>
-        <tr><td class="rj-col">Time</td><td class="small-col">:</td><td class="lj-col">{{full_result.information.time}}s</td></tr>
-        <tr><td class="rj-col">Transmission</td><td class="small-col">:</td><td class="lj-col">{{full_result.information.transmission}}%</td></tr>
-        <tr><td class="rj-col">Distance</td><td class="small-col">:</td><td>{{full_result.information.distance}}mm</td></tr>
+        <tr><td class="rj-col">Name</td><td class="small-col">:</td><td class="lj-col">{{full_result.header1.basename}}</td></tr>
+        <tr><td class="rj-col">&Omega;</td><td class="small-col">:</td><td class="lj-col">{{full_result.header1.osc_start}}&deg;</td></tr>
+        <tr><td class="rj-col">&Delta;&Omega;</td><td class="small-col">:</td><td class="lj-col">{{full_result.header1.osc_range}}&deg;</td></tr>
+        <tr><td class="rj-col">Time</td><td class="small-col">:</td><td class="lj-col">{{full_result.header1.time}}s</td></tr>
+        <tr><td class="rj-col">Transmission</td><td class="small-col">:</td><td class="lj-col">{{full_result.header1.transmission}}%</td></tr>
+        <tr><td class="rj-col">Distance</td><td class="small-col">:</td><td>{{full_result.header1.distance}}mm</td></tr>
         <!-- <tr><td class="rj-col">Sample</td><td class="small-col">:</td><td class="lj-col">A1</td></tr> -->
-        <tr><td class="rj-col">Date</td><td class="small-col">:</td><td class="lj-col">{{full_result.information.date}}</td></tr>
+        <tr><td class="rj-col">Date</td><td class="small-col">:</td><td class="lj-col">{{full_result.header1.date}}</td></tr>
       </table>
    </md-card-content>
   </md-card>
@@ -21,7 +21,7 @@
     <md-card-content>
       <table class="strategy-sub-table">
         <!-- <tr><td class="rj-col">Spacegroup</td><td class="small-col">:</td><td class="lj-col">P2<sub>1</sub>2<sub>1</sub>2<sub>1</sub> (19)</td></tr> -->
-        <tr><td class="rj-col">Spacegroup</td><td class="small-col">:</td><td class="lj-col">P2<sub>1</sub>2<sub>1</sub>2<sub>1</sub> (19)</td></tr>
+        <tr><td class="rj-col">Spacegroup</td><td class="small-col">:</td><td class="lj-col">{{full_result.results.labelit_results.mosflm_sg[0]}}</td></tr>
         <tr><td class="rj-col">Cell</td><td class="small-col">:</td><td class="lj-col">120.2&Aring; 120.2&Aring; 120.2&Aring;</td></tr>
         <tr><td class="rj-col"></td><td class="small-col"></td><td class="lj-col">90.0&deg;, 90.0&deg;, 90.0&deg;</td></tr>
         <tr><td class="rj-col">Mosaicity</td><td class="small-col">:</td><td class="lj-col">0.03&deg;</td></tr>
@@ -29,6 +29,61 @@
         <tr><td class="rj-col">Overloads</td><td class="small-col">:</td><td class="lj-col">0</td></tr>
       </table>
    </md-card-content>
+  </md-card>
+
+  <md-card class="result-panel-strategy-card" style="order:1;">
+    <md-card-title>Strategy - Normal</md-card-title>
+    <md-card-content>
+      <table class="strategy-table">
+        <tr>
+          <td>
+            <table class="strategy-sub-table">
+              <tr *ngFor="let n of full_result.results.best_results_norm['run_numbers']">
+                <td>{{n}}</td>
+                <!-- <td>{{n-1}}</td> -->
+                <td>{{full_result.results.best_results_norm["omega_start"][n-1]}}&deg;</td>
+              </tr>
+              <!-- <tr><td class="rj-col">&Omega;<sub>Start</sub></td><td class="small-col">:</td><td class="lj-col">{{full_result.results.best_results_norm["omega_start"][0]}}&deg;</td></tr>
+              <tr><td class="rj-col">&Omega;<sub>End</sub></td><td class="small-col">:</td><td class="lj-col">287.0&deg;</td></tr>
+              <tr><td class="rj-col">&Delta;&Omega;</td><td class="small-col">:</td><td class="lj-col">0.25&deg;</td></tr>
+              <tr><td class="rj-col">&Omega; range</td><td class="small-col">:</td><td class="lj-col">125.0&deg;</td></tr>
+              <tr><td class="rj-col"># Images</td><td class="small-col">:</td><td class="lj-col">500</td></tr>
+              <tr><td class="rj-col">Exposure time</td><td class="small-col">:</td><td class="lj-col">0.2s</td></tr>
+              <tr><td class="rj-col">Distance</td><td class="small-col">:</td><td class="lj-col">390.0mm</td></tr>
+              <tr><td class="rj-col">Transmission</td><td class="small-col">:</td><td class="lj-col">4.0%</td></tr> -->
+           </table>
+          </td>
+          <td>
+            <table>
+              <tr>
+                <td>
+                    <!-- <base-chart class="chart" style="display:block;width:30em;"
+                                [datasets]="lineChartData"
+                                [labels]="lineChartLabels"
+                                [options]="lineChartOptions"
+                                [colors]="lineChartColours"
+                                [legend]="lineChartLegend"
+                                [chartType]="lineChartType"
+                                (chartHover)="chartHovered($event)"
+                                (chartClick)="chartClicked($event)">
+                    </base-chart> -->
+                </td>
+                <td>
+                  <table>
+                    <tr>
+                      <td><button md-mini-fab (click)="plotOmegaStart()">&Omega;</button></td>
+                    </tr>
+                    <tr>
+                      <td><button md-mini-fab (click)="plotDeltaOmega()">&Delta;&Omega;</button></td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </md-card-content>
   </md-card>
 
 </div>

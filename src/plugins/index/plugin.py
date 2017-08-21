@@ -62,6 +62,7 @@ import plugins.subcontractors.parse as Parse
 import plugins.subcontractors.labelit as labelit
 from plugins.subcontractors.xoalign import RunXOalign
 import utils.credits as rcredits
+from utils.r_numbers import try_int, try_float
 #from utils.communicate import rapd_send
 import utils.exceptions as exceptions
 import utils.global_vars as global_vars
@@ -1267,15 +1268,15 @@ class RapdPlugin(Process):
         data = Parse.ParseOutputBest(self, (log, xml), anom)
         # print data.get("strategy res limit")
 
-        if self.labelit_results["Labelit results"] != "FAILED":
+        if self.labelit_results["labelit_results"] != "FAILED":
             # Best error checking. Most errors caused by B-factor calculation problem.
             # If no errors...
             if type(data) == dict:
                 data.update({"directory":os.path.dirname(inp)})
                 if anom:
-                    self.best_anom_results = {"Best ANOM results":data}
+                    self.best_anom_results = {"best_results_anom":data}
                 else:
-                    self.best_results = {"Best results":data}
+                    self.best_results = {"best_results_norm":data}
 
                 # Print to terminal
                 # pprint.pprint(data)
@@ -1345,7 +1346,7 @@ class RapdPlugin(Process):
 
         # Print to terminal
         # pprint.pprint(data)
-        if "strategy run number" in data:
+        if "run_number" in data:
             flag = "strategy "
             self.tprint(arg="\nMosflm strategy standard", level=98, color="blue")
         else:
@@ -1396,10 +1397,10 @@ class RapdPlugin(Process):
             # Set Best output if it failed after 3 tries
             if i == 3:
                 if x == 0:
-                    self.best_results = {"Best results":"FAILED"}
+                    self.best_results = {"best_results_norm":"FAILED"}
                     self.best_failed = True
                 else:
-                    self.best_anom_results = {"Best ANOM results":"FAILED"}
+                    self.best_anom_results = {"best_results_anom":"FAILED"}
                     self.best_anom_failed = True
 
         st = 0
@@ -1500,7 +1501,7 @@ class RapdPlugin(Process):
         for iteration, result in self.labelit_results.iteritems():
             # print "RESULT"
             # pprint(result)
-            if result["Labelit results"] in ("ERROR", "TIMEOUT"):
+            if result["labelit_results"] in ("ERROR", "TIMEOUT"):
                 error_count += 1
         if error_count == len(self.labelit_results):
             # print "Unsuccessful indexing run. Exiting."
@@ -1508,8 +1509,8 @@ class RapdPlugin(Process):
 
         # Run through all the results - compile them
         for iteration, result in self.labelit_results.iteritems():
-            if isinstance(result["Labelit results"], dict):
-                labelit_result = result.get("Labelit results")
+            if isinstance(result["labelit_results"], dict):
+                labelit_result = result.get("labelit_results")
                 # Check for pseudotranslation in any Labelit run
                 if labelit_result.get("pseudotrans") == True:
                     self.pseudotrans = True
@@ -1573,7 +1574,7 @@ class RapdPlugin(Process):
             # Set self.labelit_dir and go to it.
             self.labelit_dir = os.path.join(self.working_dir, str(highest))
             pprint(self.labelit_results)
-            self.index_number = self.labelit_results.get("Labelit results").get("mosflm_index")
+            self.index_number = self.labelit_results.get("labelit_results").get("mosflm_index")
             os.chdir(self.labelit_dir)
             if self.spacegroup != False:
                 check_lg = xutils.checkSG(self, sym)
@@ -1600,16 +1601,16 @@ class RapdPlugin(Process):
                         color="blue",
                         #newline=False)
                         )
-            for line in self.labelit_results["Labelit results"]["output"][5:]:
+            for line in self.labelit_results["labelit_results"]["output"][5:]:
                 self.tprint(arg="  %s" % line.rstrip(), level=98, color="white")
-            # pprint.pprint(self.labelit_results["Labelit results"]["output"])
+            # pprint.pprint(self.labelit_results["labelit_results"]["output"])
 
         # No Labelit solution
         else:
             self.logger.debug("No solution was found when sorting Labelit results.")
             self.tprint(arg="Labelit failed to index", level=30, color="red")
             self.labelit_failed = True
-            self.labelit_results = {"Labelit results":"FAILED"}
+            self.labelit_results = {"labelit_results":"FAILED"}
             self.labelit_dir = os.path.join(self.working_dir, "0")
             os.chdir(self.labelit_dir)
             self.processDistl()
@@ -1944,8 +1945,8 @@ class RapdPlugin(Process):
         run = True
         plot = False
         plotanom = False
-        dir1 = self.best_results.get("Best results").get("directory", False)
-        dir2 = self.best_anom_results.get("Best ANOM results").get("directory", False)
+        dir1 = self.best_results.get("best_results_norm").get("directory", False)
+        dir2 = self.best_anom_results.get("best_results_anom").get("directory", False)
 
         # Get the parsed results for reg and anom results and put them into a single dict.
         if dir1:
@@ -2468,7 +2469,7 @@ rerunning.\n" % spot_count)
         # Return if there is an error not caught by parsing
         if error:
             self.labelit_log[iteration].append(error)
-            self.labelit_results[iteration] = {"Labelit results": "ERROR"}
+            self.labelit_results[iteration] = {"labelit_results": "ERROR"}
             return False
 
         # No error or error caught by parsing
@@ -2476,7 +2477,7 @@ rerunning.\n" % spot_count)
 
             parsed_result = labelit.parse_output(stdout, iteration)
             # Save the return into the shared var
-            self.labelit_results[iteration] = {"Labelit results": parsed_result}
+            self.labelit_results[iteration] = {"labelit_results": parsed_result}
             # pprint(data)
             # sys.exit()
 
@@ -2542,7 +2543,7 @@ rerunning.\n" % spot_count)
                     # Failed
                     if spot_count < 25:
                         self.labelit_log[iteration].append("\nNot enough spots to autoindex!\n")
-                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                        self.labelit_results[iteration] = {"labelit_results": "FAILED"}
                     # Try again
                     else:
                         self.process_labelit(iteration, overrides={"min_spots": parsed_result[1]})
@@ -2568,7 +2569,7 @@ rerunning.\n" % spot_count)
                     # No recovery
                     #if "kill" in problem_actions:
                     #    self.labelit_log[iteration].extend("\n%s\n" % problem_action['error'])
-                    #    self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                    #    self.labelit_results[iteration] = {"labelit_results": "FAILED"}
                     # Try to correct
                     #else:
                     #    if iteration <= self.iterations:
@@ -2579,12 +2580,12 @@ rerunning.\n" % spot_count)
                         problem_actions["execute%s"%self.labelit_tracker[iteration]](iteration=iteration)
                     else:
                          self.labelit_log[iteration].extend("\n%s\n" % problem_actions['error'])
-                         self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                         self.labelit_results[iteration] = {"labelit_results": "FAILED"}
                 # No solution
                 else:
                     error = "Labelit failed to find solution."
                     self.labelit_log[iteration].append("\n%s\n" % error)
-                    self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                    self.labelit_results[iteration] = {"labelit_results": "FAILED"}
 
     def print_warning(self, warn_type):
         """ """
@@ -2623,10 +2624,10 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
             data = Parse.ParseOutputLabelit(self, log, iteration)
             if self.short:
                 #data = Parse.ParseOutputLabelitNoMosflm(self,log,iteration)
-                self.labelit_results = {'Labelit results': data}
+                self.labelit_results = {"labelit_results": data}
             else:
                 #data = Parse.ParseOutputLabelit(self,log,iteration)
-                self.labelit_results[iteration] = {'Labelit results': data}
+                self.labelit_results[iteration] = {"labelit_results": data}
         # except:
         #     self.logger.exception('**ERROR in RunLabelit.postprocess_labelit**')
 
@@ -2740,7 +2741,7 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
                 # print "Killing iteration:%d pid:%d" % (iteration, pid)
                 os.kill(pid, signal.SIGKILL)
                 self.labelit_pids.remove(pid)
-                self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                self.labelit_results[iteration] = {"labelit_results": "FAILED"}
 
         # pprint(self.labelit_results)
 
@@ -2807,7 +2808,7 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
                     i = self.labelit_jobs[job]
                     if i >= 10:
                         i -=10
-                    self.labelit_results[str(i)] = {'Labelit results': 'FAILED'}
+                    self.labelit_results[str(i)] = {"labelit_results": 'FAILED'}
                     if self.cluster_use:
                         # xutils.killChildrenCluster(self,self.pids[str(i)])
                         self.cluster_adapter.killChildrenCluster(self, self.pids[str(i)])

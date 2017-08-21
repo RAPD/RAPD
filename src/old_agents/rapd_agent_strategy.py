@@ -884,15 +884,15 @@ class RapdAgent(Process):
 
     data = Parse.ParseOutputBest(self,(log,xml),anom)
     #print data.get('strategy res limit')
-    if self.labelit_results['Labelit results'] != 'FAILED':
+    if self.labelit_results["labelit_results"] != 'FAILED':
       #Best error checking. Most errors caused by B-factor calculation problem.
       #If no errors...
       if type(data) == dict:
         data.update({'directory':os.path.dirname(inp)})
         if anom:
-          self.best_anom_results = {'Best ANOM results':data}
+          self.best_anom_results = {"best_results_anom":data}
         else:
-          self.best_results = {'Best results':data}
+          self.best_results = {"best_results_norm":data}
         return('OK')
       else:
         if self.multiproc == False:
@@ -942,10 +942,10 @@ class RapdAgent(Process):
         #Set Best output if it failed after 3 tries
         if i == 3:
           if x == 0:
-            self.best_results = { 'Best results' : 'FAILED'}
+            self.best_results = { "best_results_norm" : 'FAILED'}
             self.best_failed = True
           else:
-            self.best_anom_results = { 'Best ANOM results' : 'FAILED'}
+            self.best_anom_results = { "best_results_anom" : 'FAILED'}
             self.best_anom_failed = True
 
       st = 0
@@ -1030,9 +1030,9 @@ class RapdAgent(Process):
       self.labelit_log = self.labelitQueue.get()
 
       for run in self.labelit_results.keys():
-        if type(self.labelit_results[run].get('Labelit results')) == dict:
+        if type(self.labelit_results[run].get("labelit_results")) == dict:
           #Check for pseudotranslation in any Labelit run
-          if self.labelit_results[run].get('Labelit results').get('pseudotrans') == True:
+          if self.labelit_results[run].get("labelit_results").get('pseudotrans') == True:
               self.pseudotrans = True
           s,r,m,v = Utils.getLabelitStats(self,inp=run,simple=True)
           sg = Utils.convertSG(self,s)
@@ -1074,7 +1074,7 @@ class RapdAgent(Process):
         self.volume = vol[int(highest)]
         #Set self.labelit_dir and go to it.
         self.labelit_dir = os.path.join(self.working_dir,highest)
-        self.index_number = self.labelit_results.get('Labelit results').get('mosflm_index')
+        self.index_number = self.labelit_results.get("labelit_results").get('mosflm_index')
         os.chdir(self.labelit_dir)
         if self.spacegroup != 'None':
           check_lg = Utils.checkSG(self,sym)
@@ -1094,7 +1094,7 @@ class RapdAgent(Process):
       else:
         self.logger.debug('No solution was found when sorting Labelit results.')
         self.labelit_failed = True
-        self.labelit_results = { 'Labelit results'  : 'FAILED'}
+        self.labelit_results = { "labelit_results"  : 'FAILED'}
         self.labelit_dir = os.path.join(self.working_dir,'0')
         os.chdir(self.labelit_dir)
         self.processDistl()
@@ -1449,8 +1449,8 @@ class RapdAgent(Process):
       run = True
       plot = False
       plotanom = False
-      dir1 = self.best_results.get('Best results').get('directory',False)
-      dir2 = self.best_anom_results.get('Best ANOM results').get('directory',False)
+      dir1 = self.best_results.get("best_results_norm").get('directory',False)
+      dir2 = self.best_anom_results.get("best_results_anom").get('directory',False)
 
       #Get the parsed results for reg and anom results and put them into a single dict.
       if dir1:
@@ -1541,10 +1541,10 @@ class RapdAgent(Process):
           if len(l2) > 0:
             if i == 0:
               best_plot.write("%4sfor (var i = 0; i < %s; i += 5)\n"%('',max(l2)))
-              best_plot.write("%4smark.push([%s,i]);\n"%('',self.best_results.get('Best results').get('strategy phi start')[0]))
+              best_plot.write("%4smark.push([%s,i]);\n"%('',self.best_results.get("best_results_norm").get('omega_start')[0]))
             if i == 1:
               best_plot.write("%4sfor (var i = 0; i < %s; i += 5)\n"%('',max(l2)))
-              best_plot.write("%4smarkanom.push([%s,i]);\n"%('',self.best_anom_results.get('Best ANOM results').get('strategy anom phi start')[0]))
+              best_plot.write("%4smarkanom.push([%s,i]);\n"%('',self.best_anom_results.get("best_results_anom").get('strategy anom phi start')[0]))
         for i in range(len(l)):
           best_plot.write('%4svar plot%s = $.plot($("#chart%s_div"),\n'%('',i,i))
           for line in l[i][-1]:
@@ -1639,7 +1639,7 @@ class RapdAgent(Process):
       if self.best_summary_long:
         jon_summary.writelines(self.best_summary_long)
       if self.best_results:
-        if self.best_results.get('Best results') == 'FAILED':
+        if self.best_results.get("best_results_norm") == 'FAILED':
           jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
           jon_summary.write('%7s<h4 class="results">Best Failed. Trying Mosflm strategy.</h3>\n'%'')
           jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',)))
@@ -1657,7 +1657,7 @@ class RapdAgent(Process):
       if self.best_anom_summary_long:
         jon_summary.writelines(self.best_anom_summary_long)
       if self.best_anom_results:
-        if self.best_anom_results.get('Best ANOM results') == 'FAILED':
+        if self.best_anom_results.get("best_results_anom") == 'FAILED':
           jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
           jon_summary.write('%7s<br><h4 class="results">Best Failed. Trying Mosflm ANOMALOUS strategy.</h3>\n'%'')
           jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',)))
@@ -1680,7 +1680,7 @@ class RapdAgent(Process):
       if self.labelit_summary:
         jon_summary.writelines(self.labelit_summary)
       if self.labelit_results:
-        if self.labelit_results.get('Labelit results') == 'FAILED':
+        if self.labelit_results.get("labelit_results") == 'FAILED':
           jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
           jon_summary.write('%7s<h3 class="results">Autoindexing FAILED</h3>\n'%'')
           if self.header2:
@@ -1712,7 +1712,7 @@ class RapdAgent(Process):
         for line in self.distl_log:
           jon_summary.write(line)
       #Don't write error messages from programs that did not run.
-      if self.labelit_results.get('Labelit results') != 'FAILED':
+      if self.labelit_results.get("labelit_results") != 'FAILED':
         jon_summary.write('\n---------------Raddose RESULTS---------------\n\n')
         if self.raddose_log:
           for line in self.raddose_log:
@@ -1897,7 +1897,7 @@ class RapdAgent(Process):
       if self.auto_summary:
         jon_summary.writelines(self.auto_summary)
       if self.labelit_results:
-        if self.labelit_results.get('Labelit results') == 'FAILED':
+        if self.labelit_results.get("labelit_results") == 'FAILED':
           jon_summary.write('%7s<h3 class="results">Autoindexing FAILED.</h3>\n'%'')
           if self.header2:
             jon_summary.write('%7s<h4 class="results">Pair of snapshots did not autoindex. Possibly not from same crystal.</h3>\n'%'')
@@ -1909,7 +1909,7 @@ class RapdAgent(Process):
       if self.best1_summary:
         jon_summary.writelines(self.best1_summary)
       if self.best_results:
-        if self.best_results.get('Best results') == 'FAILED':
+        if self.best_results.get("best_results_norm") == 'FAILED':
           jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
           jon_summary.write('%7s<h4 class="results">Best Failed. Trying Mosflm strategy.</h3>\n'%'')
           jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',)))
@@ -1927,7 +1927,7 @@ class RapdAgent(Process):
         jon_summary.writelines('%4s<br>\n'%'')
         jon_summary.writelines(self.best1_anom_summary)
       if self.best_anom_results:
-        if self.best_anom_results.get('Best ANOM results') == 'FAILED':
+        if self.best_anom_results.get("best_results_anom") == 'FAILED':
           jon_summary.write('%4s<div id="container">\n%5s<div class="full_width big">\n%6s<div id="demo">\n'%(3*('',)))
           jon_summary.write('%7s<h4 class="results">Best Failed. Trying Mosflm ANOMALOUS strategy.</h3>\n'%'')
           jon_summary.write("%6s</div>\n%5s</div>\n%4s</div>\n"%(3*('',)))
@@ -2340,10 +2340,10 @@ class RunLabelit(Process):
         data = Parse.ParseOutputLabelit(self,log,iteration)
         if self.short:
           #data = Parse.ParseOutputLabelitNoMosflm(self,log,iteration)
-          self.labelit_results = { 'Labelit results' : data }
+          self.labelit_results = { "labelit_results" : data }
         else:
           #data = Parse.ParseOutputLabelit(self,log,iteration)
-          self.labelit_results[str(iteration)] = { 'Labelit results' : data }
+          self.labelit_results[str(iteration)] = { "labelit_results" : data }
     except:
       self.logger.exception('**ERROR in RunLabelit.postprocessLabelit**')
 
@@ -2484,7 +2484,7 @@ class RunLabelit(Process):
             i = self.labelit_jobs[job]
             if i >= 10:
               i -=10
-            self.labelit_results[str(i)] = {'Labelit results': 'FAILED'}
+            self.labelit_results[str(i)] = {"labelit_results": 'FAILED'}
             if self.cluster_use:
               #Utils.killChildrenCluster(self,self.pids[str(i)])
               self.cluster_adapter.killChildrenCluster(self,self.pids[str(i)])
