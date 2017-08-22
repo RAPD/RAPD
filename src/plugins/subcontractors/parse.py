@@ -702,7 +702,7 @@ def ParseOutputDistl(self, inp):
         elif "Remove Ice :" in line:
             result_dict["spots_remove_ice"] = try_int(line.split()[3])
         elif "In-Resolution Total :" in line:
-            result_dict["spots_in_resolution"] = try_int(line.split()[3])
+            result_dict["spots_in_res"] = try_int(line.split()[3])
         elif "Good Bragg Candidates :" in line:
             result_dict["spots_good_bragg"] = try_int(line.split()[4])
         elif "Ice Rings :" in line:
@@ -716,7 +716,7 @@ def ParseOutputDistl(self, inp):
         elif "<Spot model eccentricity> :" in line:
             result_dict["spot_eccentricity"] = try_float(line.split()[4])
         elif "%Saturation, Top 50 Peaks :" in line:
-            result_dict["saturation_top_50"] = try_float(line.split()[5])
+            result_dict["sat_top_50"] = try_float(line.split()[5])
         elif "In-Resolution Ovrld Spots :" in line:
             result_dict["overloads"] = try_int(line.split()[4])
         elif "Total integrated signal" in line:
@@ -726,9 +726,9 @@ def ParseOutputDistl(self, inp):
             result_dict["signal_max"] = try_float(line.split()[5])
             result_dict["signal_mean"] = try_float(line.split()[10])
         elif "Saturations range from" in line:
-            result_dict["saturation_min"] = try_float(line.split()[3].replace("%", ""))
-            result_dict["saturation_max"] = try_float(line.split()[5].replace("%", ""))
-            result_dict["saturation_mean"] = try_float(line.split()[9].replace("%", ""))
+            result_dict["sat_min"] = try_float(line.split()[3].replace("%", ""))
+            result_dict["sat_max"] = try_float(line.split()[5].replace("%", ""))
+            result_dict["sat_mean"] = try_float(line.split()[9].replace("%", ""))
 
     # pprint(result_dict)
     return result_dict
@@ -783,12 +783,12 @@ def ParseOutputBest(self, inp, anom=False):
     sweeps = []
     overall = {}
     sweep = False
-    temp = []
+    # temp = []
 
-    # try:
     log, xml = inp
     # pprint(log)
     # pprint(xml)
+    # sys.exit()
 
     # Check for errors in the log
     for line in log:
@@ -829,8 +829,8 @@ def ParseOutputBest(self, inp, anom=False):
         sp_list = []
         prev_sp_list = []
         run_number = 0
-        for i, line in enumerate(xml):
-            temp.append(line)
+        for line in xml:
+            # temp.append(line)
             # print line
             # GLOBALS
             if " program=" in line:
@@ -942,7 +942,7 @@ def ParseOutputBest(self, inp, anom=False):
                             elif "<item name=\"average_i_over_sigma\">" in line:
                                 overall["average_i_over_sigma_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
                             elif "<item name=\"R_factor\">" in line:
-                                overall["R_factor_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
+                                overall["r_factor_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
                             elif "<item name=\"Ranom\">" in line:
                                 overall["Ranom_%s" % tag] = try_float(line[line.find('>')+1:line.rfind('<')])
                             elif "<item name=\"fract_overload\">" in line:
@@ -1049,10 +1049,6 @@ def ParseOutputBest(self, inp, anom=False):
 
     return {"sweeps": sweeps,
             "overall": overall}
-
-    # except:
-    #     self.logger.exception('**Error in Parse.ParseOutputBest**')
-    #     return 'None'
 
 def ParseOutputBestPlots(self, inp):
     """Parse Best plots file for plots"""

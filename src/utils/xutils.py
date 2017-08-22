@@ -1156,24 +1156,24 @@ def denzo2mosflm(self):
   except:
     self.logger.exception('**Error in Utils.denzo2mosflm**')
 
-def distlComb(self):
-  """
-  Combine distl results into 1 inp.
-  """
-  try:
-    if len(self.distl_results.keys()) == 1:
-      self.distl_results = self.distl_results['0']
-    else:
-      d = {}
-      for key in self.distl_results.get('0').get("distl_results").keys():
-        temp = self.distl_results.get('0').get("distl_results")[key]
-        temp.extend(self.distl_results.get('1').get("distl_results")[key])
-        d[key] = temp
-      self.distl_results = {"distl_results" : d}
-      # pprint.pprint(self.distl_results)
-
-  except:
-    self.logger.exception('**Error in Utils.distlComb**')
+# def distlComb(self):
+#   """
+#   Combine distl results into 1 inp.
+#   """
+#   try:
+#     if len(self.distl_results.keys()) == 1:
+#       self.distl_results = self.distl_results['0']
+#     else:
+#       d = {}
+#       for key in self.distl_results.get('0').get("distl_results").keys():
+#         temp = self.distl_results.get('0').get("distl_results")[key]
+#         temp.extend(self.distl_results.get('1').get("distl_results")[key])
+#         d[key] = temp
+#       self.distl_results = {"distl_results" : d}
+#       # pprint.pprint(self.distl_results)
+#
+#   except:
+#     self.logger.exception('**Error in Utils.distlComb**')
 
 #Moved Labelit stuff here because it is used by rapd_agent_strategy.py and rapd_agent_beamcenter.py
 def errorLabelitPost(self, iteration, error, run_before=False):

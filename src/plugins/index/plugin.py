@@ -151,7 +151,7 @@ class RapdPlugin(Process):
     labelit_summary = False
     labelit_failed = False
     distl_log = []
-    distl_results = {}
+    distl_results = []
     distl_summary = False
     raddose_results = False
     raddose_summary = False
@@ -1129,80 +1129,84 @@ class RapdPlugin(Process):
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::postprocessDistl")
 
-        try:
-            timer = 0
-            while len(self.distl_output) != 0:
-                for job in self.distl_output:
-                    if job.is_alive() == False:
-                        self.distl_output.remove(job)
-                time.sleep(0.2)
-                timer += 0.2
-                if self.verbose:
-                    number = round(timer % 1, 1)
-                    if number in (0.0, 1.0):
-                        pass
-                        # print "Waiting for Distl to finish %s seconds" % timer
-                if self.distl_timer:
-                    if timer >= self.distl_timer:
-                        job.terminate()
-                        self.distl_output.remove(job)
-                        self.distl_log.append("Distl timed out\n")
-                        if self.verbose:
-                            self.tprint(arg="Distl timed out", level=30, color="red")
-                            self.logger.error("Distl timed out.")
+        # try:
+        timer = 0
+        while len(self.distl_output) != 0:
+            for job in self.distl_output:
+                if job.is_alive() == False:
+                    self.distl_output.remove(job)
+            time.sleep(0.2)
+            timer += 0.2
+            if self.verbose:
+                number = round(timer % 1, 1)
+                if number in (0.0, 1.0):
+                    pass
+                    # print "Waiting for Distl to finish %s seconds" % timer
+            if self.distl_timer:
+                if timer >= self.distl_timer:
+                    job.terminate()
+                    self.distl_output.remove(job)
+                    self.distl_log.append("Distl timed out\n")
+                    if self.verbose:
+                        self.tprint(arg="Distl timed out", level=30, color="red")
+                        self.logger.error("Distl timed out.")
 
-            os.chdir(self.labelit_dir)
-            f = 1
-            if self.header2:
-                f = 2
-            for x in range(0, f):
-                log = open("distl%s.log" % x, "r").readlines()
-                self.distl_log.extend(log)
-                distl = Parse.ParseOutputDistl(self, log)
-                if distl == None:
-                    self.distl_results = {"distl_results":"FAILED"}
-                    self.tprint(arg="  DISTL analysis failed", level=30, color="red")
-                else:
-                    self.distl_results[str(x)] = {"distl_results": distl}
+        # Get into the labelit directory
+        os.chdir(self.labelit_dir)
 
-            xutils.distlComb(self)
+        # Count frames
+        if self.header2:
+            frame_count = 2
+        else:
+            frame_count = 1
 
-            # pprint.pprint(self.distl_results)
+        # Parse out distl results for the frame(s)
+        for frame_number in range(0, frame_count):
+            # Read in the log
+            log = open("distl%s.log" % frame_number, "r").readlines()
+            # Store the logs in one
+            self.distl_log.extend(log)
+            # Parse and put the distl results into storage
+            self.distl_results.append(Parse.ParseOutputDistl(self, log))
 
-            # Print DISTL results to commandline - verbose only
-            self.tprint(arg="\nDISTL analysis results", level=30, color="blue")
-            distl_results = self.distl_results["distl_results"]
-            if len(distl_results["distl res"]) == 2:
-                self.tprint(arg="  %21s  %6s %6s" % ("", "image 1", "image 2"), level=30, color="white")
-                format_string = "  %21s: %6s  %6s"
-                default_result = ["-", "-"]
-            else:
-                format_string = "  %21s: %s"
-                default_result = ["-",]
+        # Debugging
+        # pprint(self.distl_results)
 
-            distl_labels = OrderedDict([
-                ("total spots", "Total Spots"),
-                ("spots in res", "Spots in Resolution"),
-                ("good Bragg spots", "Good Bragg Spots"),
-                ("overloads", "Overloaded Spots"),
-                ("distl res", "DISTL Resolution"),
-                ("labelit res", "Labelit Resolution"),
-                ("max cell", "Max Cell"),
-                ("ice rings", "Ice Rings"),
-                ("min signal strength", "Min Signal Strength"),
-                ("max signal strength", "Max Signal Strength"),
-                ("mean int signal", "Mean Intensity Signal"),
-                ])
+        # Print DISTL results to commandline - verbose only
+        self.tprint(arg="\nDISTL analysis results", level=30, color="blue")
+        if len(self.distl_results) == 2:
+            self.tprint(arg="  %21s  %8s  %8s" % ("", "image 1", "image 2"), level=30, color="white")
+            format_string = "  %21s: %8s  %8s"
+            default_result = ["-", "-"]
+        else:
+            format_string = "  %21s: %s"
+            default_result = ["-",]
 
-            for key, val in distl_labels.iteritems():
-                result = distl_results.get(key)
-                if not result:
-                    result = default_result
-                vals = tuple([val] + result)
-                self.tprint(arg=format_string % vals, level=30, color="white")
+        distl_labels = OrderedDict([
+            ("spots_total", "Total Spots"),
+            ("spots_in_res", "Spots in Resolution"),
+            ("spots_good_bragg", "Good Bragg Spots"),
+            ("overloads", "Overloaded Spots"),
+            ("distl_res", "DISTL Resolution"),
+            ("labelit_res", "Labelit Resolution"),
+            ("max_cell", "Max Cell"),
+            ("ice_rings", "Ice Rings"),
+            ("signal_min", "Min Signal Strength"),
+            ("signal_max", "Max Signal Strength"),
+            ("signal_mean", "Mean Intensity Signal"),
+            ])
 
-        except:
-            self.logger.exception("**Error in postprocessDistl**")
+        for key, val in distl_labels.iteritems():
+            result = []
+            for distl_result in self.distl_results:
+                result.append(distl_result.get(key))
+            if not result:
+                result = default_result
+            vals = tuple([val] + result)
+            self.tprint(arg=format_string % vals, level=30, color="white")
+
+        # except:
+        #     self.logger.exception("**Error in postprocessDistl**")
 
     def error_best_post(self, iteration, error, anom=False):
         """
@@ -1247,7 +1251,7 @@ class RapdPlugin(Process):
 
         # print inp
 
-        # try:
+        # Read in log files
         xml = "None"
         anom = False
         if inp.count("anom"):
@@ -1261,15 +1265,11 @@ class RapdPlugin(Process):
         else:
             self.best_log.extend(log)
 
-        # except:
-        #     self.logger.exception("**Error in postprocessBest.**")
-
-        # print ">>", log
-        # print ">>", xml
-        # print ">>", anom
+        # Parse the best results
         data = Parse.ParseOutputBest(self, (log, xml), anom)
-        # pprint(data)
-        # print data.get("strategy res limit")
+
+        # Set directory for future use
+        data["directory"] = os.path.dirname(inp)
 
         if self.labelit_results["labelit_results"] != "FAILED":
             # Best error checking. Most errors caused by B-factor calculation problem.
@@ -1345,7 +1345,7 @@ Distance | % Transmission", level=98, color="white")
         data = Parse.ParseOutputMosflm_strat(self, out, inp.count("anom"))
 
         # Print to terminal
-        # pprint.pprint(data)
+        # pprint(data)
         if "run_number" in data:
             flag = "strategy "
             self.tprint(arg="\nMosflm strategy standard", level=98, color="blue")
@@ -1566,7 +1566,7 @@ Distance | % Transmission", level=98, color="white")
 
             # Save best results in corect place.
             self.labelit_results = self.labelit_results[highest]
-            # pprint.pprint(self.labelit_results)
+            # pprint(self.labelit_results)
 
             # Set self.volume for best solution
             self.volume = volumes[highest]
@@ -1585,11 +1585,11 @@ Distance | % Transmission", level=98, color="white")
                 # print user_sg
                 # sys.exit()
                 if user_sg != sym:
-                    fixSG = False
+                    fix_spacegroup = False
                     for line in check_lg:
                         if line == user_sg:
-                            fixSG = True
-                    if fixSG:
+                            fix_spacegroup = True
+                    if fix_spacegroup:
                         xutils.fixMosflmSG(self)
                         xutils.fixBestSG(self)
                     else:
@@ -1599,16 +1599,16 @@ Distance | % Transmission", level=98, color="white")
             self.tprint(arg="\nHighest symmetry Labelit result",
                         level=98,
                         color="blue",
-                        #newline=False)
-                        )
+                        newline=False)
+
             for line in self.labelit_results["labelit_results"]["output"][5:]:
                 self.tprint(arg="  %s" % line.rstrip(), level=98, color="white")
-            # pprint.pprint(self.labelit_results["labelit_results"]["output"])
+            # pprint(self.labelit_results["labelit_results"]["output"])
 
         # No Labelit solution
         else:
             self.logger.debug("No solution was found when sorting Labelit results.")
-            self.tprint(arg="Labelit failed to index", level=30, color="red")
+            self.tprint(arg="\n  Labelit failed to index", level=30, color="red")
             self.labelit_failed = True
             self.labelit_results = {"labelit_results":"FAILED"}
             self.labelit_dir = os.path.join(self.working_dir, "0")
@@ -1854,7 +1854,7 @@ Distance | % Transmission", level=98, color="white")
         if self.labelit_results:
             results.update(self.labelit_results)
         if self.distl_results:
-            results.update(self.distl_results)
+            results["distl_results"] = self.distl_results
         if self.raddose_results:
             results.update(self.raddose_results)
         if self.best_results:
@@ -1941,7 +1941,8 @@ Distance | % Transmission", level=98, color="white")
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::htmlBestPlots")
 
-        # pprint.pprint(self.best_results)
+        # Debugging
+        # pprint(self.best_results)
 
         # try:
         run = True
