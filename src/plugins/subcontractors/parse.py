@@ -691,67 +691,47 @@ def ParseOutputDistl(self, inp):
         self.logger.debug('Parse::ParseOutputDistl')
 
     # print "ParseOutputDistl"
-    # print inp
+    # pprint(inp)
 
-    try:
-        spot_total   = []
-        spot_inres   = []
-        good_spots   = []
-        labelit_res  = []
-        distl_res    = []
-        max_cell     = []
-        ice_rings    = []
-        overloads    = []
-        min1         = []
-        max1         = []
-        mean1        = []
-        signal_strength = False
-        for line in inp:
-            if line.count('Spot Total'):
-                spot_total.append(line.split()[3])
-            if line.count('In-Resolution Total'):
-                spot_inres.append(line.split()[3])
-            if line.count('Good Bragg'):
-                good_spots.append(line.split()[4])
-            if line.count('Method 1'):
-                labelit_res.append(line.split()[4])
-            if line.count('Method 2'):
-                distl_res.append(line.split()[4])
-            if line.count('Maximum unit cell'):
-                max_cell.append(line.split()[4])
-            if line.count('Ice Rings'):
-                ice_rings.append(line.split()[3])
-            if line.count('In-Resolution Ovrld Spots'):
-                overloads.append(line.split()[4])
-            if line.count('Signals range'):
-                signal_strength = True
-                min1.append(str(int(float(line.split()[3]))))
-                max1.append(str(int(float(line.split()[5]))))
-                mean1.append(str(int(float(line.split()[10]))))
-        if signal_strength == False:
-            min1.append('0')
-            max1.append('0')
-            mean1.append('0')
-        distl = {
-            'total spots': spot_total,
-            'spots in res': spot_inres,
-            'good Bragg spots': good_spots,
-            'distl res': distl_res,
-            'labelit res': labelit_res,
-            'max cell': max_cell,
-            'ice rings': ice_rings,
-            'overloads': overloads,
-            'min signal strength': min1,
-            'max signal strength': max1,
-            'mean int signal': mean1,
-            }
+    result_dict = {}
+    for line in inp:
+        if "File :" in line:
+            result_dict["file"] = line.split()[2]
+        elif "Spot Total :" in line:
+            result_dict["spots_total"] = try_int(line.split()[3])
+        elif "Remove Ice :" in line:
+            result_dict["spots_remove_ice"] = try_int(line.split()[3])
+        elif "In-Resolution Total :" in line:
+            result_dict["spots_in_resolution"] = try_int(line.split()[3])
+        elif "Good Bragg Candidates :" in line:
+            result_dict["spots_good_bragg"] = try_int(line.split()[4])
+        elif "Ice Rings :" in line:
+            result_dict["ice_rings"] = try_int(line.split()[3])
+        elif "Method 1 Resolution :" in line:
+            result_dict["labelit_res"] = try_float(line.split()[4])
+        elif "Method 2 Resolution " in line:
+            result_dict["distl_res"] = try_float(line.split()[4])
+        elif "Maximum unit cell :" in line:
+            result_dict["max_cell"] = try_float(line.split()[4])
+        elif "<Spot model eccentricity> :" in line:
+            result_dict["spot_eccentricity"] = try_float(line.split()[4])
+        elif "%Saturation, Top 50 Peaks :" in line:
+            result_dict["saturation_top_50"] = try_float(line.split()[5])
+        elif "In-Resolution Ovrld Spots :" in line:
+            result_dict["overloads"] = try_int(line.split()[4])
+        elif "Total integrated signal" in line:
+            result_dict["signal_total"] = try_float(line.split()[13])
+        elif "Signals range from" in line:
+            result_dict["signal_min"] = try_float(line.split()[3])
+            result_dict["signal_max"] = try_float(line.split()[5])
+            result_dict["signal_mean"] = try_float(line.split()[10])
+        elif "Saturations range from" in line:
+            result_dict["saturation_min"] = try_float(line.split()[3].replace("%", ""))
+            result_dict["saturation_max"] = try_float(line.split()[5].replace("%", ""))
+            result_dict["saturation_mean"] = try_float(line.split()[9].replace("%", ""))
 
-        # pprint.pprint(distl)
-        return distl
-
-    except:
-        self.logger.exception('**Error in Parse.ParseOutputDistl**')
-        return None
+    # pprint(result_dict)
+    return result_dict
 
 def ParseOutputRaddose(self, inp):
     """
