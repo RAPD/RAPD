@@ -1573,9 +1573,22 @@ Distance | % Transmission", level=98, color="white")
 
             # Set self.labelit_dir and go to it.
             self.labelit_dir = os.path.join(self.working_dir, str(highest))
-            # pprint(self.labelit_results)
             self.index_number = self.labelit_results.get("labelit_results").get("mosflm_index")
             os.chdir(self.labelit_dir)
+
+            # Parse out additional information from labelit-created files
+            bestfile_lines = open("bestfile.par", "r").readlines()
+            mat_lines = open("%s.mat" % self.index_number, "r").readlines()
+            sub_lines = open("%s" % self.index_number, "r").readlines()
+            # Parse the file for unit cell information
+            labelit_cell, labelit_sym = labelit.parse_labelit_files(bestfile_lines,
+                                                                    mat_lines,
+                                                                    sub_lines)
+            self.labelit_results["labelit_results"]["best_cell"] = labelit_cell
+            self.labelit_results["labelit_results"]["best_sym"] = labelit_sym
+            # pprint(self.labelit_results)
+
+            # Handle the user-set spacegroup
             if self.spacegroup != False:
                 check_lg = xutils.checkSG(self, sym)
                 # print check_lg
@@ -1984,7 +1997,6 @@ Distance | % Transmission", level=98, color="white")
 
 
 class RunLabelit(Process):
-
 
     labelit_pids = []
     labelit_jobs = {}
@@ -2479,6 +2491,7 @@ rerunning.\n" % spot_count)
         else:
 
             parsed_result = labelit.parse_output(stdout, iteration)
+
             # Save the return into the shared var
             self.labelit_results[iteration] = {"labelit_results": parsed_result}
             # pprint(data)
@@ -2600,83 +2613,93 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
                         level=50,
                         color="red")
 
-    def postprocess_labelit(self, iteration=0, run_before=False, blank=False):
-        """
-        Sends Labelit log for parsing and error checking for rerunning Labelit. Save output dicts.
-        """
-        # print "postprocess_labelit", iteration, run_before, blank
-        self.logger.debug('RunLabelit::postprocess_labelit')
-
-        # try:
-        xutils.foldersLabelit(self, iteration)
-
-        # print "cwd", os.getcwd()
-        #labelit_failed = False
-        if blank:
-            error = 'Not enough spots for autoindexing.'
-            if self.verbose:
-                self.logger.debug(error)
-            self.labelit_log[iteration].append(error+'\n')
-            return None
-        else:
-            log = open('labelit.log', 'r').readlines()
-            # for line in log:
-                # print line.rstrip()
-            self.labelit_log[iteration].extend('\n\n')
-            self.labelit_log[iteration].extend(log)
-            data = Parse.ParseOutputLabelit(self, log, iteration)
-            if self.short:
-                #data = Parse.ParseOutputLabelitNoMosflm(self,log,iteration)
-                self.labelit_results = {"labelit_results": data}
-            else:
-                #data = Parse.ParseOutputLabelit(self,log,iteration)
-                self.labelit_results[iteration] = {"labelit_results": data}
-        # except:
-        #     self.logger.exception('**ERROR in RunLabelit.postprocess_labelit**')
-
-        # Do error checking and send to correct place according to iteration.
-        out = {'bad input': {'error':'Labelit did not like your input unit cell dimensions or SG.','run':'xutils.errorLabelitCellSG(self,iteration)'},
-               'bumpiness': {'error':'Labelit settings need to be adjusted.','run':'xutils.errorLabelitBump(self,iteration)'},
-               'mosflm error': {'error':'Mosflm could not integrate your image.','run':'xutils.errorLabelitMosflm(self,iteration)'},
-               'min good spots': {'error':'Labelit did not have enough spots to find a solution','run':'xutils.errorLabelitGoodSpots(self,iteration)'},
-               'no index': {'error':'No solutions found in Labelit.','run':'xutils.errorLabelit(self,iteration)'},
-               'fix labelit': {'error':'Distance is not getting read correctly from the image header.','kill':True},
-               'no pair': {'error':'Images are not a pair.','kill':True},
-               'failed': {'error':'Autoindexing Failed to find a solution','kill':True},
-               'min spots': {'error':'Labelit did not have enough spots to find a solution.','run1':'xutils.errorLabelitMin(self,iteration,data[1])',
-                             'run2':'xutils.errorLabelit(self,iteration)'},
-               'fix_cell': {'error':'Labelit had multiple choices for user SG and failed.','run1':'xutils.errorLabelitFixCell(self,iteration,data[1],data[2])',
-                            'run2':'xutils.errorLabelitCellSG(self,iteration)'},
-               }
-        # If Labelit results are OK, then...
-        if type(data) == dict:
-            d = False
-        # Otherwise deal with fixing and rerunning Labelit
-        elif type(data) == tuple:
-            d = data[0]
-        else:
-            d = data
-        if d:
-            if out.has_key(d):
-                if out[d].has_key('kill'):
-                    if self.multiproc:
-                        xutils.errorLabelitPost(self,iteration,out[d].get('error'),True)
-                    else:
-                        xutils.errorLabelitPost(self,self.iterations,out[d].get('error'))
-                else:
-                    xutils.errorLabelitPost(self,iteration,out[d].get('error'),run_before)
-                    if self.multiproc:
-                        if run_before == False:
-                            return(eval(out[d].get('run',out[d].get('run1'))))
-                    else:
-                        if iteration <= self.iterations:
-                            return(eval(out[d].get('run', out[d].get('run2'))))
-            else:
-                error = 'Labelit failed to find solution.'
-                xutils.errorLabelitPost(self,iteration,error,run_before)
-                if self.multiproc == False:
-                    if iteration <= self.iterations:
-                        return (xutils.errorLabelit(self,iteration))
+    # def postprocess_labelit(self, iteration=0, run_before=False, blank=False):
+    #     """
+    #     Sends Labelit log for parsing and error checking for rerunning Labelit. Save output dicts.
+    #     """
+    #     # print "postprocess_labelit", iteration, run_before, blank
+    #     self.logger.debug('RunLabelit::postprocess_labelit')
+    #
+    #     # try:
+    #     xutils.foldersLabelit(self, iteration)
+    #
+    #     # print "cwd", os.getcwd()
+    #     #labelit_failed = False
+    #     if blank:
+    #         error = 'Not enough spots for autoindexing.'
+    #         if self.verbose:
+    #             self.logger.debug(error)
+    #         self.labelit_log[iteration].append(error+'\n')
+    #         return None
+    #     else:
+    #         # Read in the labelit log file
+    #         log = open('labelit.log', 'r').readlines()
+    #         # Store the log file lines
+    #         self.labelit_log[iteration].extend('\n\n')
+    #         self.labelit_log[iteration].extend(log)
+    #         # Parse the labelit log file
+    #         data = Parse.ParseOutputLabelit(self, log, iteration)
+    #
+    #         # Read in the bestfile.par
+    #         bestfile_lines = open("bestfile.par", "r").readlines()
+    #         mat_lines = open("%s.mat" % self.index_number, "r").readlines()
+    #         sub_lines = open("%s" % self.index_number, "r").readlines()
+    #         # Parse the file for unit cell information
+    #         labelit_info = Parse.ParseBestfilePar(bestfile_lines, mat_lines, sub_lines)
+    #         pprint(labelit_info)
+    #         sys.exit()
+    #         if self.short:
+    #             #data = Parse.ParseOutputLabelitNoMosflm(self,log,iteration)
+    #             self.labelit_results = {"labelit_results": data}
+    #         else:
+    #             #data = Parse.ParseOutputLabelit(self,log,iteration)
+    #             self.labelit_results[iteration] = {"labelit_results": data}
+    #     # except:
+    #     #     self.logger.exception('**ERROR in RunLabelit.postprocess_labelit**')
+    #
+    #     # Do error checking and send to correct place according to iteration.
+    #     out = {'bad input': {'error':'Labelit did not like your input unit cell dimensions or SG.','run':'xutils.errorLabelitCellSG(self,iteration)'},
+    #            'bumpiness': {'error':'Labelit settings need to be adjusted.','run':'xutils.errorLabelitBump(self,iteration)'},
+    #            'mosflm error': {'error':'Mosflm could not integrate your image.','run':'xutils.errorLabelitMosflm(self,iteration)'},
+    #            'min good spots': {'error':'Labelit did not have enough spots to find a solution','run':'xutils.errorLabelitGoodSpots(self,iteration)'},
+    #            'no index': {'error':'No solutions found in Labelit.','run':'xutils.errorLabelit(self,iteration)'},
+    #            'fix labelit': {'error':'Distance is not getting read correctly from the image header.','kill':True},
+    #            'no pair': {'error':'Images are not a pair.','kill':True},
+    #            'failed': {'error':'Autoindexing Failed to find a solution','kill':True},
+    #            'min spots': {'error':'Labelit did not have enough spots to find a solution.','run1':'xutils.errorLabelitMin(self,iteration,data[1])',
+    #                          'run2':'xutils.errorLabelit(self,iteration)'},
+    #            'fix_cell': {'error':'Labelit had multiple choices for user SG and failed.','run1':'xutils.errorLabelitFixCell(self,iteration,data[1],data[2])',
+    #                         'run2':'xutils.errorLabelitCellSG(self,iteration)'},
+    #            }
+    #     # If Labelit results are OK, then...
+    #     if type(data) == dict:
+    #         d = False
+    #     # Otherwise deal with fixing and rerunning Labelit
+    #     elif type(data) == tuple:
+    #         d = data[0]
+    #     else:
+    #         d = data
+    #     if d:
+    #         if out.has_key(d):
+    #             if out[d].has_key('kill'):
+    #                 if self.multiproc:
+    #                     xutils.errorLabelitPost(self,iteration,out[d].get('error'),True)
+    #                 else:
+    #                     xutils.errorLabelitPost(self,self.iterations,out[d].get('error'))
+    #             else:
+    #                 xutils.errorLabelitPost(self,iteration,out[d].get('error'),run_before)
+    #                 if self.multiproc:
+    #                     if run_before == False:
+    #                         return(eval(out[d].get('run',out[d].get('run1'))))
+    #                 else:
+    #                     if iteration <= self.iterations:
+    #                         return(eval(out[d].get('run', out[d].get('run2'))))
+    #         else:
+    #             error = 'Labelit failed to find solution.'
+    #             xutils.errorLabelitPost(self,iteration,error,run_before)
+    #             if self.multiproc == False:
+    #                 if iteration <= self.iterations:
+    #                     return (xutils.errorLabelit(self,iteration))
 
     def postprocess(self):
         """

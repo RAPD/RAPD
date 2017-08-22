@@ -241,214 +241,265 @@ def setMosflmFailed(inp):
               'strategy'+inp+'delta phi'             : 'skip'}
   return(data)
 
-def ParseOutputLabelit(self,inp,iteration=0):
+def ParseOutputLabelit(self, inp, iteration=0):
     """
-    Parses Labelit results and filters for specific errors. Cleans up the output AND looks for best solution
-    then passes info back to caller.
+    Parses Labelit results and filters for specific errors. Cleans up the output AND looks for best
+    solution then passes info back to caller.
     """
+
     if self.verbose:
         self.logger.debug('Parse::ParseOutputLabelit')
 
-    tmp                = []
-    junk               = []
-    labelit_sol        = []
-    pseudotrans        = False
-    multi_sg           = False
-    few_spots          = False
-    min_spots          = False
-    spot_problem       = False
-    labelit_face       = []
-    labelit_solution   = []
-    labelit_metric     = []
-    labelit_fit        = []
-    labelit_rmsd       = []
-    labelit_spots_fit  = []
-    labelit_system     = []
-    labelit_cell       = []
-    labelit_volume     = []
-    labelit_bc         = {}
-    #mosflm_sol         = []
-    mosflm_face        = []
-    mosflm_solution    = []
-    mosflm_sg          = []
-    mosflm_beam_x      = []
-    mosflm_beam_y      = []
-    mosflm_distance    = []
-    mosflm_res         = []
-    mosflm_mos         = []
-    mosflm_rms         = []
+    tmp = []
+    junk = []
+    labelit_sol = []
+    pseudotrans = False
+    multi_sg = False
+    few_spots = False
+    min_spots = False
+    spot_problem = False
+    labelit_face = []
+    labelit_solution = []
+    labelit_metric = []
+    labelit_fit = []
+    labelit_rmsd = []
+    labelit_spots_fit = []
+    labelit_system = []
+    labelit_cell = []
+    labelit_volume = []
+    labelit_bc = {}
+    #mosflm_sol = []
+    mosflm_face = []
+    mosflm_solution = []
+    mosflm_sg = []
+    mosflm_beam_x = []
+    mosflm_beam_y = []
+    mosflm_distance = []
+    mosflm_res = []
+    mosflm_mos = []
+    mosflm_rms = []
 
-    try:
-        #If results empty, then fail
-        if len(inp) == 0:
-            return 'failed'
-        #Check for errors
-        for x,line in enumerate(inp):
-            tmp.append(line)
-            if len(line) > 1:
-                if line.startswith('distl_minimum_number_spots'):
-                    min_spots = line
-                if line.startswith('RuntimeError:'):
-                    return ('failed')
-                if line.startswith('ValueError:'):
-                    return ('failed')
-                if line.startswith('Labelit finds no reasonable solution'):
-                    if self.multiproc:
-                        return ('failed')
-                    else:
-                        return ('no index')
-                if line.startswith('No_Indexing_Solution: Unreliable model'):
-                    if self.multiproc:
-                        return ('failed')
-                    else:
-                        return ('no index')
-                if line.startswith("No_Indexing_Solution: (couldn't find 3 good basis vectors)"):
-                    if self.multiproc:
-                        return ('failed')
-                    else:
-                        return ('no index')
-                if line.startswith('MOSFLM_Warning: MOSFLM logfile declares FATAL ERROR'):
-                    if self.multiproc:
-                        return ('failed')
-                    else:
-                        return ('no index')
-                if line.startswith('ValueError: min()'):
-                    if self.multiproc:
-                        return ('failed')
-                    else:
-                        return ('no index')
-                if line.startswith('Spotfinder Problem:'):
-                    spot_problem = True
-                if line.startswith('InputFileError: Input error: File header must contain the sample-to-detector distance in mm; value is 0.'):
-                    return ('fix labelit')
-                if line.startswith('InputFileError: Input error:'):
-                    return ('no pair')
-                if line.startswith('Have '):
-                    self.min_good_spots = line.split()[1].rstrip(';')
-                    few_spots = True
-                if line.startswith('UnboundLocalError'):
-                    return ('bad input')
-                if line.startswith('divide by zero'):
-                    return ('bumpiness')
-                # Could give error is too many choices with close cell dimensions, but...
-                if line.startswith('No_Lattice_Selection: In this case'):
-                    multi_sg = True
-                    error_lg = line.split()[11]
-                if line.startswith('No_Lattice_Selection: The known_symmetry'):
-                    return ('bad input')
-                if line.startswith('MOSFLM_Warning: MOSFLM does not give expected results on r_'):
-                    return ('mosflm error')
-                # Save the beam center
-                if line.startswith('Beam center'):
-                    labelit_bc['labelit_x_beam'] = line.split()[3][:-3]
-                    labelit_bc['labelit_y_beam'] = line.split()[5][:-3]
-                # Now save line numbers for parsing Labelit and Mosflm results
-                if line.startswith('Solution'):
-                    junk.append(x)
-                # Find lines for Labelit's pseudotrans
-                if line.startswith('Analysis'):
-                    pseudotrans = True
-                    junk.append(x)
-                if line.startswith('Transforming the lattice'):
-                    pseudotrans = True
+    # try:
+    # If results empty, then fail
+    if len(inp) == 0:
+        return 'failed'
 
-        if len(junk) == 0:
-            if spot_problem:
-                if min_spots:
-                    return (('min spots', line))
+    # Check for errors
+    for line_number, line in enumerate(inp):
+        tmp.append(line)
+        print line
+
+        if len(line) > 1:
+            if line.startswith('distl_minimum_number_spots'):
+                min_spots = line
+            if line.startswith('RuntimeError:'):
+                return "failed"
+            if line.startswith('ValueError:'):
+                return "failed"
+            if line.startswith('Labelit finds no reasonable solution'):
+                if self.multiproc:
+                    return "failed"
                 else:
-                    if self.multiproc:
-                        return ('failed')
-                    else:
-                        return ('no index')
+                    return "no index"
+            if line.startswith('No_Indexing_Solution: Unreliable model'):
+                if self.multiproc:
+                    return "failed"
+                else:
+                    return "no index"
+            if line.startswith("No_Indexing_Solution: (couldn't find 3 good basis vectors)"):
+                if self.multiproc:
+                    return "failed"
+                else:
+                    return "no index"
+            if line.startswith('MOSFLM_Warning: MOSFLM logfile declares FATAL ERROR'):
+                if self.multiproc:
+                    return "failed"
+                else:
+                    return "no index"
+            if line.startswith('ValueError: min()'):
+                if self.multiproc:
+                    return "failed"
+                else:
+                    return "no index"
+            if line.startswith('Spotfinder Problem:'):
+                spot_problem = True
+            if line.startswith('InputFileError: Input error: File header must contain the sample-to-detector distance in mm; value is 0.'):
+                return "fix labelit"
+            if line.startswith('InputFileError: Input error:'):
+                return "no pair"
+            if line.startswith('Have '):
+                self.min_good_spots = line.split()[1].rstrip(';')
+                few_spots = True
+            if line.startswith('UnboundLocalError'):
+                return "bad input"
+            if line.startswith('divide by zero'):
+                return "bumpiness"
+            # Could give error is too many choices with close cell dimensions, but...
+            if line.startswith('No_Lattice_Selection: In this case'):
+                multi_sg = True
+                error_lg = line.split()[11]
+            if line.startswith('No_Lattice_Selection: The known_symmetry'):
+                return "bad input"
+            if line.startswith('MOSFLM_Warning: MOSFLM does not give expected results on r_'):
+                return "mosflm error"
+            # Save the beam center
+            if line.startswith('Beam center'):
+                labelit_bc['labelit_x_beam'] = line.split()[3][:-3]
+                labelit_bc['labelit_y_beam'] = line.split()[5][:-3]
+            # Now save line numbers for parsing Labelit and Mosflm results
+            if line.startswith('Solution'):
+                junk.append(line_number)
+            # Find lines for Labelit's pseudotrans
+            if line.startswith('Analysis'):
+                pseudotrans = True
+                junk.append(line_number)
+            if line.startswith('Transforming the lattice'):
+                pseudotrans = True
+
+    if len(junk) == 0:
+        if spot_problem:
+            if min_spots:
+                return (('min spots', line))
             else:
                 if self.multiproc:
-                    return ('failed')
+                    return "failed"
                 else:
-                    return ('no index')
-
-        # Parse Labelit results
-        for line in tmp[junk[0]:]:
-            if len(line.split()) == 15:
-                labelit_sol.append(line.split())
-                labelit_face.append(line.split()[0])
-                labelit_solution.append(line.split()[1])
-                labelit_metric.append(line.split()[2])
-                labelit_fit.append(line.split()[3])
-                labelit_rmsd.append(line.split()[4])
-                labelit_spots_fit.append(line.split()[5])
-                labelit_system.append(line.split()[6:8])
-                labelit_cell.append(line.split()[8:14])
-                labelit_volume.append(line.split()[14])
-        # If multiple indexing choice for same SG... taking care of it.
-        if multi_sg:
-            return(('fix_cell',error_lg,labelit_sol))
-        # Getting Mosflm results with Labelit pseudotrans present
-        if len(junk) == 3:
-            self.logger.debug(junk)
-            tmp2 = tmp[junk[1]+1:junk[2]-1]
-        # If no pseudotrans...
+                    return "no index"
         else:
-            self.logger.debug(junk)
-            self.logger.debug(tmp)
-            tmp2 = tmp[junk[1]+1:]
-        #  Parse Mosflm results
-        for line in tmp2:
-            run = True
-            if len(line.split()) == 9:
-                x = 1
-                mosflm_face.append(line.split()[0])
-                if line.split()[0].startswith(':)'):
-                    mosflm_index = 'index'+line.split()[1].zfill(2)
-            elif len(line.split()) == 8:
-                x = 0
-                mosflm_face.append(' ')
+            if self.multiproc:
+                return "failed"
             else:
-                run = False
-            if run:
-                mosflm_solution.append(line.split()[0+x])
-                mosflm_sg.append(line.split()[1+x])
-                mosflm_beam_x.append(line.split()[2+x])
-                mosflm_beam_y.append(line.split()[3+x])
-                mosflm_distance.append(line.split()[4+x])
-                mosflm_res.append(line.split()[5+x])
-                mosflm_mos.append(line.split()[6+x])
-                mosflm_rms.append(line.split()[7+x])
-        # Sometimes Labelit works with few spots, sometimes it doesn't...
-        if few_spots:
-            if os.path.exists(mosflm_index) == False:
-                return ('min good spots')
+                return "no index"
 
-        data = { 'labelit_face'     : labelit_face,
-                 'labelit_solution' : labelit_solution,
-                 'labelit_metric'   : labelit_metric,
-                 'labelit_fit'      : labelit_fit,
-                 'labelit_rmsd'     : labelit_rmsd,
-                 'labelit_spots_fit': labelit_spots_fit,
-                 'labelit_system'   : labelit_system,
-                 'labelit_cell'     : labelit_cell,
-                 'labelit_volume'   : labelit_volume,
-                 'labelit_iteration': str(iteration),
-                 'labelit_bc'       : labelit_bc,
-                 'pseudotrans'      : pseudotrans,
-                 'mosflm_face'      : mosflm_face,
-                 'mosflm_solution'  : mosflm_solution,
-                 'mosflm_sg'        : mosflm_sg,
-                 'mosflm_beam_x'    : mosflm_beam_x,
-                 'mosflm_beam_y'    : mosflm_beam_y,
-                 'mosflm_distance'  : mosflm_distance,
-                 'mosflm_res'       : mosflm_res,
-                 'mosflm_mos'       : mosflm_mos,
-                 'mosflm_rms'       : mosflm_rms,
-                 'mosflm_index'     : mosflm_index,
-                 'output'           : tmp}
+    # Parse Labelit results
+    for line in tmp[junk[0]:]:
+        if len(line.split()) == 15:
+            labelit_sol.append(line.split())
+            labelit_face.append(line.split()[0])
+            labelit_solution.append(line.split()[1])
+            labelit_metric.append(line.split()[2])
+            labelit_fit.append(line.split()[3])
+            labelit_rmsd.append(line.split()[4])
+            labelit_spots_fit.append(line.split()[5])
+            labelit_system.append(line.split()[6:8])
+            labelit_cell.append(line.split()[8:14])
+            labelit_volume.append(line.split()[14])
 
-        # Utils.pp(self,data)
-        return(data)
+    # If multiple indexing choice for same SG... taking care of it.
+    if multi_sg:
+        return(('fix_cell', error_lg, labelit_sol))
 
-    except:
-        self.logger.exception('**Error in Parse.ParseOutputLabelit**')
-        return None
+    # Getting Mosflm results with Labelit pseudotrans present
+    if len(junk) == 3:
+        self.logger.debug(junk)
+        tmp2 = tmp[junk[1]+1:junk[2]-1]
+
+    # If no pseudotrans...
+    else:
+        self.logger.debug(junk)
+        self.logger.debug(tmp)
+        tmp2 = tmp[junk[1]+1:]
+
+    #  Parse Mosflm results
+    for line in tmp2:
+        run = True
+        if len(line.split()) == 9:
+            x = 1
+            mosflm_face.append(line.split()[0])
+            if line.split()[0].startswith(':)'):
+                mosflm_index = 'index'+line.split()[1].zfill(2)
+        elif len(line.split()) == 8:
+            x = 0
+            mosflm_face.append(' ')
+        else:
+            run = False
+        if run:
+            mosflm_solution.append(line.split()[0+x])
+            mosflm_sg.append(line.split()[1+x])
+            mosflm_beam_x.append(line.split()[2+x])
+            mosflm_beam_y.append(line.split()[3+x])
+            mosflm_distance.append(line.split()[4+x])
+            mosflm_res.append(line.split()[5+x])
+            mosflm_mos.append(line.split()[6+x])
+            mosflm_rms.append(line.split()[7+x])
+
+    # Sometimes Labelit works with few spots, sometimes it doesn't...
+    if few_spots:
+        if os.path.exists(mosflm_index) == False:
+            return 'min good spots'
+
+    data = {'labelit_face': labelit_face,
+            'labelit_solution': labelit_solution,
+            'labelit_metric': labelit_metric,
+            'labelit_fit': labelit_fit,
+            'labelit_rmsd': labelit_rmsd,
+            'labelit_spots_fit': labelit_spots_fit,
+            'labelit_system': labelit_system,
+            'labelit_cell': labelit_cell,
+            'labelit_volume': labelit_volume,
+            'labelit_iteration': str(iteration),
+            'labelit_bc': labelit_bc,
+            'pseudotrans': pseudotrans,
+            'mosflm_face': mosflm_face,
+            'mosflm_solution': mosflm_solution,
+            'mosflm_sg': mosflm_sg,
+            'mosflm_beam_x': mosflm_beam_x,
+            'mosflm_beam_y': mosflm_beam_y,
+            'mosflm_distance': mosflm_distance,
+            'mosflm_res': mosflm_res,
+            'mosflm_mos': mosflm_mos,
+            'mosflm_rms': mosflm_rms,
+            'mosflm_index': mosflm_index,
+            'output': tmp}
+
+    # Utils.pp(self,data)
+    return data
+
+    # except:
+    #     self.logger.exception('**Error in Parse.ParseOutputLabelit**')
+    #     return None
+
+def ParseBestfilePar(bestfile_lines, mat_lines, sub_lines, mode="all"):
+    """
+    Parse the lines from bestfile.par
+    Transplant from xutils.getLabelitCell
+    """
+
+    run2 = False
+    run3 = False
+    cell = False
+    sym = False
+    for line in bestfile_lines:
+        if line.startswith('CELL'):
+            if len(line.split()) == 7:
+                cell = line.split()[1:]
+            else:
+                run2 = True
+        if line.startswith('SYMMETRY'):
+            if len(line.split()) == 2:
+                sym = line.split()[1]
+            else:
+                run3 = True
+    # Sometimes bestfile.par is corrupt so I have backups to get cell and sym.
+    if run2:
+        for line in mat_lines:
+            if len(line.split()) == 6:
+                cell = line.split()
+
+    if run3:
+        for line in sub_lines:
+            if line.startswith('SYMMETRY'):
+                sym = line.split()[1]
+
+    pprint(cell)
+    pprint(sym)
+
+    if mode == 'all':
+        return (cell, sym)
+    elif mode == 'sym':
+        return sym
+    else:
+        return cell
 
 def ParseOutputLabelitNoMosflm(self,inp,iteration=0):
   """
@@ -506,27 +557,27 @@ def ParseOutputLabelitNoMosflm(self,inp,iteration=0):
           if self.multiproc:
             return ('failed')
           else:
-            return ('no index')
+            return "no index"
         if line.startswith('No_Indexing_Solution: Unreliable model'):
           if self.multiproc:
             return ('failed')
           else:
-            return ('no index')
+            return "no index"
         if line.startswith("No_Indexing_Solution: (couldn't find 3 good basis vectors)"):
           if self.multiproc:
             return ('failed')
           else:
-            return ('no index')
+            return "no index"
         if line.startswith('MOSFLM_Warning: MOSFLM logfile declares FATAL ERROR'):
           if self.multiproc:
             return ('failed')
           else:
-            return ('no index')
+            return "no index"
         if line.startswith('ValueError: min()'):
           if self.multiproc:
             return ('failed')
           else:
-            return ('no index')
+            return "no index"
         if line.startswith('Spotfinder Problem:'):
           spot_problem = True
         if line.startswith('InputFileError: Input error: File header must contain the sample-to-detector distance in mm; value is 0.'):
@@ -570,12 +621,12 @@ def ParseOutputLabelitNoMosflm(self,inp,iteration=0):
           if self.multiproc:
             return ('failed')
           else:
-            return ('no index')
+            return "no index"
       else:
         if self.multiproc:
           return ('failed')
         else:
-          return ('no index')
+          return "no index"
 
     #Parse Labelit results
     for line in tmp[junk[0]:]:

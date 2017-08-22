@@ -1,7 +1,9 @@
 <div class="result-panel child">
 
-  <md-card class="result-panel-card" style="order:3;">
-    <md-card-title>Image Data</md-card-title>
+  <md-card> <!-- class="result-panel-card" style="order:3;">-->
+    <md-card-header>
+      <md-card-title>Image Data</md-card-title>
+    </md-card-header>
     <md-card-content>
       <table class="strategy-sub-table">
         <tr><td class="rj-col">Name</td><td class="small-col">:</td><td class="lj-col">{{full_result.header1.basename}}</td></tr>
@@ -10,17 +12,20 @@
         <tr><td class="rj-col">Time</td><td class="small-col">:</td><td class="lj-col">{{full_result.header1.time}}s</td></tr>
         <tr><td class="rj-col">Transmission</td><td class="small-col">:</td><td class="lj-col">{{full_result.header1.transmission}}%</td></tr>
         <tr><td class="rj-col">Distance</td><td class="small-col">:</td><td>{{full_result.header1.distance}}mm</td></tr>
-        <!-- <tr><td class="rj-col">Sample</td><td class="small-col">:</td><td class="lj-col">A1</td></tr> -->
         <tr><td class="rj-col">Date</td><td class="small-col">:</td><td class="lj-col">{{full_result.header1.date}}</td></tr>
       </table>
    </md-card-content>
+   <md-card-actions>
+    <button md-button>Show Header</button>
+  </md-card-actions>
   </md-card>
 
   <md-card class="result-panel-card" style="order:4;">
-    <md-card-title>Indexing</md-card-title>
+    <md-card-header>
+      <md-card-title>Indexing</md-card-title>
+    </md-card-header>
     <md-card-content>
       <table class="strategy-sub-table">
-        <!-- <tr><td class="rj-col">Spacegroup</td><td class="small-col">:</td><td class="lj-col">P2<sub>1</sub>2<sub>1</sub>2<sub>1</sub> (19)</td></tr> -->
         <tr><td class="rj-col">Spacegroup</td><td class="small-col">:</td><td class="lj-col">{{full_result.results.labelit_results.mosflm_sg[0]}}</td></tr>
         <tr><td class="rj-col">Cell</td><td class="small-col">:</td><td class="lj-col">120.2&Aring; 120.2&Aring; 120.2&Aring;</td></tr>
         <tr><td class="rj-col"></td><td class="small-col"></td><td class="lj-col">90.0&deg;, 90.0&deg;, 90.0&deg;</td></tr>
@@ -31,32 +36,108 @@
    </md-card-content>
   </md-card>
 
-  <md-card class="result-panel-strategy-card" style="order:1;">
-    <md-card-title>Strategy - Normal</md-card-title>
+  <md-card> <!-- class="result-panel-strategy-card" style="order:1;"> -->
+    <md-card-header>
+      <md-card-title>Strategies</md-card-title>
+    </md-card-header>
     <md-card-content>
-      <table class="strategy-table">
-        <tr>
-          <td>
-            <table class="strategy-sub-table">
-              <tr *ngFor="let n of full_result.results.best_results_norm['run_numbers']">
-                <td>{{n}}</td>
-                <!-- <td>{{n-1}}</td> -->
-                <td>{{full_result.results.best_results_norm["omega_start"][n-1]}}&deg;</td>
-              </tr>
-              <!-- <tr><td class="rj-col">&Omega;<sub>Start</sub></td><td class="small-col">:</td><td class="lj-col">{{full_result.results.best_results_norm["omega_start"][0]}}&deg;</td></tr>
-              <tr><td class="rj-col">&Omega;<sub>End</sub></td><td class="small-col">:</td><td class="lj-col">287.0&deg;</td></tr>
-              <tr><td class="rj-col">&Delta;&Omega;</td><td class="small-col">:</td><td class="lj-col">0.25&deg;</td></tr>
-              <tr><td class="rj-col">&Omega; range</td><td class="small-col">:</td><td class="lj-col">125.0&deg;</td></tr>
-              <tr><td class="rj-col"># Images</td><td class="small-col">:</td><td class="lj-col">500</td></tr>
-              <tr><td class="rj-col">Exposure time</td><td class="small-col">:</td><td class="lj-col">0.2s</td></tr>
-              <tr><td class="rj-col">Distance</td><td class="small-col">:</td><td class="lj-col">390.0mm</td></tr>
-              <tr><td class="rj-col">Transmission</td><td class="small-col">:</td><td class="lj-col">4.0%</td></tr> -->
-           </table>
-          </td>
+      <h3>Normal</h3>
+          <ngx-datatable
+            class="material"
+            [rows]="full_result.results.best_results_norm.sweeps"
+            [loadingIndicator]="loadingIndicator"
+            [columnMode]="'standard'"
+            [headerHeight]="50"
+            [footerHeight]="50"
+            [rowHeight]="'auto'"
+            [reorderable]="reorderable"
+            [selectionType]="'single'"
+            (select)='editUser($event)'>
+            <ngx-datatable-column name="&Omega; Start" prop="phi_start">
+              <ng-template let-value="value" ngx-datatable-cell-template>
+                {{value}}&deg;
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="&Delta;&Omega;" prop="phi_width">
+              <ng-template let-value="value" ngx-datatable-cell-template>
+                {{value}}&deg;
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="# Images" prop="number_of_images">
+              <ng-template let-value="value" ngx-datatable-cell-template>
+                {{value}}&deg;
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="Exposure time" prop="exposure_time">
+              <ng-template let-value="value" ngx-datatable-cell-template>
+                {{value}}s
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="Distance" prop="distance">
+              <ng-template let-value="value" ngx-datatable-cell-template>
+                {{value}}mm
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="% Transmission" prop="transmission">
+              <ng-template let-value="value" ngx-datatable-cell-template>
+                {{value}}
+              </ng-template>
+            </ngx-datatable-column>
+          </ngx-datatable>
+
+      <!-- <md-card-title>Strategy - Anomalous</md-card-title> -->
+      <!-- <md-card-content> -->
+      <h3>Anomalous</h3>
+          <ngx-datatable md-line
+            class="material"
+            [rows]="full_result.results.best_results_anom.sweeps"
+            [loadingIndicator]="loadingIndicator"
+            [columnMode]="'standard'"
+            [headerHeight]="50"
+            [footerHeight]="50"
+            [rowHeight]="'auto'"
+            [reorderable]="reorderable"
+            [selectionType]="'single'"
+            (select)='editUser($event)'>
+            <ngx-datatable-column name="&Omega; Start" prop="phi_start">
+              <ng-template let-value="value" ngx-datatable-cell-template>
+                {{value}}&deg;
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="&Delta;&Omega;" prop="phi_width">
+              <ng-template let-value="value" ngx-datatable-cell-template>
+                {{value}}&deg;
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="# Images" prop="number_of_images">
+              <ng-template let-value="value" ngx-datatable-cell-template>
+                {{value}}&deg;
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="Exposure time" prop="exposure_time">
+              <ng-template let-value="value" ngx-datatable-cell-template>
+                {{value}}s
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="Distance" prop="distance">
+              <ng-template let-value="value" ngx-datatable-cell-template>
+                {{value}}mm
+              </ng-template>
+            </ngx-datatable-column>
+            <ngx-datatable-column name="% Transmission" prop="transmission">
+              <ng-template let-value="value" ngx-datatable-cell-template>
+                {{value}}
+              </ng-template>
+            </ngx-datatable-column>
+          </ngx-datatable>
+
+    </md-card-content>
+  </md-card>
+          <!-- </td>
           <td>
             <table>
               <tr>
-                <td>
+                <td> -->
                     <!-- <base-chart class="chart" style="display:block;width:30em;"
                                 [datasets]="lineChartData"
                                 [labels]="lineChartLabels"
@@ -67,7 +148,7 @@
                                 (chartHover)="chartHovered($event)"
                                 (chartClick)="chartClicked($event)">
                     </base-chart> -->
-                </td>
+                <!-- </td>
                 <td>
                   <table>
                     <tr>
@@ -82,8 +163,7 @@
             </table>
           </td>
         </tr>
-      </table>
-    </md-card-content>
-  </md-card>
+      </table> -->
+
 
 </div>
