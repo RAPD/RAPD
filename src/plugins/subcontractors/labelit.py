@@ -161,6 +161,7 @@ def parse_output(labelit_output, iteration=0):
             if line.startswith("Beam center"):
                 labelit_bc["labelit_x_beam"] = line.split()[3][:-3]
                 labelit_bc["labelit_y_beam"] = line.split()[5][:-3]
+
             # Now save line numbers for parsing Labelit and Mosflm results
             if line.startswith("Solution"):
                 result_lines.append(index)
@@ -229,8 +230,8 @@ def parse_output(labelit_output, iteration=0):
             mosflm_beam_x.append(line.split()[2+result_line])
             mosflm_beam_y.append(line.split()[3+result_line])
             mosflm_distance.append(line.split()[4+result_line])
-            mosflm_res.append(line.split()[5+result_line])
-            mosflm_mos.append(line.split()[6+result_line])
+            mosflm_res.append(try_float(line.split()[5+result_line]))
+            mosflm_mos.append(try_float(line.split()[6+result_line]))
             mosflm_rms.append(line.split()[7+result_line])
 
     # Sometimes Labelit works with few spots, sometimes it doesn"t...
@@ -275,6 +276,7 @@ def parse_labelit_files(bestfile_lines, mat_lines, sub_lines, mode="all"):
     cell = False
     sym = False
     for line in bestfile_lines:
+        print line
         if line.startswith('CELL'):
             if len(line.split()) == 7:
                 cell = [try_float(item) for item in line.split()[1:]]

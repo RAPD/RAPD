@@ -16,7 +16,7 @@
       </table>
    </md-card-content>
    <md-card-actions>
-    <button md-button>Show Header</button>
+    <button md-raised-button>Show Header</button>
   </md-card-actions>
   </md-card>
 
@@ -26,12 +26,32 @@
     </md-card-header>
     <md-card-content>
       <table class="strategy-sub-table">
-        <tr><td class="rj-col">Spacegroup</td><td class="small-col">:</td><td class="lj-col">{{full_result.results.labelit_results.mosflm_sg[0]}}</td></tr>
-        <tr><td class="rj-col">Cell</td><td class="small-col">:</td><td class="lj-col">120.2&Aring; 120.2&Aring; 120.2&Aring;</td></tr>
-        <tr><td class="rj-col"></td><td class="small-col"></td><td class="lj-col">90.0&deg;, 90.0&deg;, 90.0&deg;</td></tr>
-        <tr><td class="rj-col">Mosaicity</td><td class="small-col">:</td><td class="lj-col">0.03&deg;</td></tr>
-        <tr><td class="rj-col">Resolution</td><td class="small-col">:</td><td class="lj-col">2.2&Aring;</td></tr>
-        <tr><td class="rj-col">Overloads</td><td class="small-col">:</td><td class="lj-col">0</td></tr>
+        <tr><td class="rj-col">Spacegroup</td><td class="small-col">:</td><td class="lj-col">{{full_result.results.labelit_results.best_sym}}</td></tr>
+        <tr><td class="rj-col">Cell</td><td class="small-col">:</td>
+          <td class="lj-col">
+            {{full_result.results.labelit_results.best_cell[0]}}&Aring;,
+            {{full_result.results.labelit_results.best_cell[1]}}&Aring;,
+            {{full_result.results.labelit_results.best_cell[2]}}&Aring;
+          </td>
+        </tr>
+        <tr>
+          <td class="rj-col"></td>
+          <td class="small-col"></td>
+          <td class="lj-col">
+            {{full_result.results.labelit_results.best_cell[3]}}&deg;,
+            {{full_result.results.labelit_results.best_cell[4]}}&deg;,
+            {{full_result.results.labelit_results.best_cell[5]}}&deg;
+          </td>
+        </tr>
+        <tr>
+          <td class="rj-col">Mosaicity</td>
+          <td class="small-col">:</td>
+          <td class="lj-col">{{full_result.results.labelit_results.mosflm_mos[0]}}&deg;</td></tr>
+        <tr>
+          <td class="rj-col">Resolution</td>
+          <td class="small-col">:</td>
+          <td class="lj-col">{{full_result.results.labelit_results.mosflm_res[0]}}&Aring;</td>
+        </tr>
       </table>
    </md-card-content>
   </md-card>
@@ -41,96 +61,124 @@
       <md-card-title>Strategies</md-card-title>
     </md-card-header>
     <md-card-content>
-      <h3>Normal</h3>
-          <ngx-datatable
-            class="material"
-            [rows]="full_result.results.best_results_norm.sweeps"
-            [loadingIndicator]="loadingIndicator"
-            [columnMode]="'standard'"
-            [headerHeight]="50"
-            [footerHeight]="50"
-            [rowHeight]="'auto'"
-            [reorderable]="reorderable"
-            [selectionType]="'single'"
-            (select)='editUser($event)'>
-            <ngx-datatable-column name="&Omega; Start" prop="phi_start">
-              <ng-template let-value="value" ngx-datatable-cell-template>
-                {{value}}&deg;
-              </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="&Delta;&Omega;" prop="phi_width">
-              <ng-template let-value="value" ngx-datatable-cell-template>
-                {{value}}&deg;
-              </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="# Images" prop="number_of_images">
-              <ng-template let-value="value" ngx-datatable-cell-template>
-                {{value}}&deg;
-              </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="Exposure time" prop="exposure_time">
-              <ng-template let-value="value" ngx-datatable-cell-template>
-                {{value}}s
-              </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="Distance" prop="distance">
-              <ng-template let-value="value" ngx-datatable-cell-template>
-                {{value}}mm
-              </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="% Transmission" prop="transmission">
-              <ng-template let-value="value" ngx-datatable-cell-template>
-                {{value}}
-              </ng-template>
-            </ngx-datatable-column>
-          </ngx-datatable>
-
-      <!-- <md-card-title>Strategy - Anomalous</md-card-title> -->
-      <!-- <md-card-content> -->
-      <h3>Anomalous</h3>
-          <ngx-datatable md-line
-            class="material"
-            [rows]="full_result.results.best_results_anom.sweeps"
-            [loadingIndicator]="loadingIndicator"
-            [columnMode]="'standard'"
-            [headerHeight]="50"
-            [footerHeight]="50"
-            [rowHeight]="'auto'"
-            [reorderable]="reorderable"
-            [selectionType]="'single'"
-            (select)='editUser($event)'>
-            <ngx-datatable-column name="&Omega; Start" prop="phi_start">
-              <ng-template let-value="value" ngx-datatable-cell-template>
-                {{value}}&deg;
-              </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="&Delta;&Omega;" prop="phi_width">
-              <ng-template let-value="value" ngx-datatable-cell-template>
-                {{value}}&deg;
-              </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="# Images" prop="number_of_images">
-              <ng-template let-value="value" ngx-datatable-cell-template>
-                {{value}}&deg;
-              </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="Exposure time" prop="exposure_time">
-              <ng-template let-value="value" ngx-datatable-cell-template>
-                {{value}}s
-              </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="Distance" prop="distance">
-              <ng-template let-value="value" ngx-datatable-cell-template>
-                {{value}}mm
-              </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="% Transmission" prop="transmission">
-              <ng-template let-value="value" ngx-datatable-cell-template>
-                {{value}}
-              </ng-template>
-            </ngx-datatable-column>
-          </ngx-datatable>
-
+      <table>
+        <tr>
+          <td>
+            <h3>Normal</h3>
+            <ngx-datatable
+              class="material"
+              [rows]="full_result.results.best_results_norm.sweeps"
+              [loadingIndicator]="loadingIndicator"
+              [columnMode]="'standard'"
+              [headerHeight]="50"
+              [footerHeight]="50"
+              [rowHeight]="'auto'"
+              [reorderable]="reorderable"
+              [selectionType]="'single'"
+              (select)='editUser($event)'>
+              <ngx-datatable-column name="N" prop="run_number">
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  {{value}}
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="&Omega; Start" prop="phi_start">
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  {{value}}&deg;
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="&Delta;&Omega;" prop="phi_width">
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  {{value}}&deg;
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="# Images" prop="number_of_images">
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  {{value}}&deg;
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="Exposure time" prop="exposure_time">
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  {{value}}s
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="Distance" prop="distance">
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  {{value}}mm
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="% Transmission" prop="transmission">
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  {{value}}
+                </ng-template>
+              </ngx-datatable-column>
+            </ngx-datatable>
+          </td>
+        </tr>
+        <tr>
+          <td>
+              <button md-raised-button (click)="plotOmegaStartNorm()">Osc Range Plot</button>
+              <button md-raised-button (click)="plotDeltaOmegaNorm()">Osc Width Plot</button>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <h3>Anomalous</h3>
+            <ngx-datatable md-line
+              class="material"
+              [rows]="full_result.results.best_results_anom.sweeps"
+              [loadingIndicator]="loadingIndicator"
+              [columnMode]="'standard'"
+              [headerHeight]="50"
+              [footerHeight]="50"
+              [rowHeight]="'auto'"
+              [reorderable]="reorderable"
+              [selectionType]="'single'"
+              (select)='editUser($event)'>
+              <ngx-datatable-column name="N" prop="run_number">
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  {{value}}
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="&Omega; Start" prop="phi_start">
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  {{value}}&deg;
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="&Delta;&Omega;" prop="phi_width">
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  {{value}}&deg;
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="# Images" prop="number_of_images">
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  {{value}}&deg;
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="Exposure time" prop="exposure_time">
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  {{value}}s
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="Distance" prop="distance">
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  {{value}}mm
+                </ng-template>
+              </ngx-datatable-column>
+              <ngx-datatable-column name="% Transmission" prop="transmission">
+                <ng-template let-value="value" ngx-datatable-cell-template>
+                  {{value}}
+                </ng-template>
+              </ngx-datatable-column>
+            </ngx-datatable>
+          </td>
+        </tr>
+        <tr>
+          <td>
+              <button md-raised-button (click)="plotOmegaStart()">Osc Range Plot</button>
+              <button md-raised-button (click)="plotDeltaOmega()">Osc Width Plot</button>
+          </td>
+        </tr>
+      </table>
     </md-card-content>
   </md-card>
           <!-- </td>

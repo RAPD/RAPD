@@ -2,6 +2,8 @@ import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { ReplaySubject }   from 'rxjs/Rx';
 import { ResultsService } from '../../../shared/services/results.service';
 
+import { PlotOmegaStartComponent } from './plot-omega-start/plot-omega-start.component'
+
 @Component({
   selector: 'app-index-3b34-2-0-0',
   templateUrl: './index-3b34-2-0-0.component.html',

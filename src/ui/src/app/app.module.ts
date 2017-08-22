@@ -45,6 +45,7 @@ import { CommunicateDialogComponent } from './shared/dialogs/communicate-dialog/
 
 import { IndexstrategyAaaa1Component } from './plugin_components/mx/indexstrategy-aaaa-1/indexstrategy-aaaa-1.component';
 import { Index3b34200Component } from './plugin_components/mx/index-3b34-2-0-0/index-3b34-2-0-0.component';
+import { PlotOmegaStartComponent } from './plugin_components/mx/index-3b34-2-0-0/plot-omega-start/plot-omega-start.component';
 
 export function authHttpServiceFactory(http: Http, options: RequestOptions) {
   return new AuthHttp( new AuthConfig({}), http, options);
@@ -75,7 +76,8 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     ChangepassDialogComponent,
     CommunicateDialogComponent,
     IndexstrategyAaaa1Component,
-    Index3b34200Component
+    Index3b34200Component,
+    PlotOmegaStartComponent
   ],
   imports: [
     NgxDatatableModule,
