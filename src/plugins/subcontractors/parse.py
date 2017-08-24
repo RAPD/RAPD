@@ -1107,6 +1107,8 @@ def ParseOutputBestPlots(self, inp):
     if self.verbose:
         self.logger.debug("Parse::ParseOutputBestPlots")
 
+    print "ParseOutputBestPlots"
+
     res = []
     com = []
     ws = []
@@ -1120,63 +1122,84 @@ def ParseOutputBestPlots(self, inp):
     # Definitions for the expected values
     cast_vals = {
         "Relative Error and Intensity Plot": {
-            "Rel.Error": {"x": (lambda x: try_float(x)), "y": (lambda x: try_float(x))},
-            "Rel.Intensity": {"x": (lambda x: try_float(x)), "y": (lambda x: try_float(x))}
+            "Rel.Error": {"x": try_float, "y": try_float},
+            "Rel.Intensity": {"x": try_float, "y": try_float}
         },
         "Wilson Plot": {
-            "Theory": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))},
-            "Experiment": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))},
-            "Pred.low errors": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))},
-            "Pred.high errors": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))}
+            "Theory": {"x": try_float, "y": try_float},
+            "Experiment": {"x": try_float, "y": try_float},
+            "Pred.low errors": {"x": try_float, "y": try_float},
+            "Pred.high errors": {"x": try_float, "y": try_float}
         },
         "Maximal oscillation width": {
-            "resol": {"x": (lambda x:  try_int(x)), "y": (lambda x: try_float(x))}
+            "resol": {"x": try_int, "y": try_float}
         },
         "Minimal oscillation ranges for different completenesses": {
-            "compl": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_int(x))}
+            "compl": {"x": try_float, "y": try_int}
         },
+        # "Minimal oscillation ranges for different completenesses": {
+        #     "compl": {"x": try_float, "y": try_int}
+        # },
         "Total exposure time vs resolution": {
-            "Expon.trend": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))},
-            "Predictions": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))}
+            "Expon.trend": {"x": try_float, "y": try_float},
+            "Predictions": {"x": try_float, "y": try_float}
         },
         "Average background intensity per second": {
-            "Background": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))},
-            "Predictions": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))}
+            "Background": {"x": try_float, "y": try_float},
+            "Predictions": {"x": try_float, "y": try_float}
         },
         "Intensity decrease due to radiation damage": {
-            "Rel.Intensity": {"x": (lambda x: try_float(x)), "y": (lambda x: try_float(x))},
-            "resol": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))}
+            "Rel.Intensity": {"x": try_float, "y": try_float},
+            "resol": {"x": try_float, "y": try_float}
         },
         "Rdamage vs.cumulative exposure time": {
-            "R-factor": {"x": (lambda x: try_float(x)), "y": (lambda x: try_float(x))},
-            "resol": {"x": (lambda x:  try_float(x)), "y": (lambda x: try_float(x))}
+            "R-factor": {"x": try_float, "y": try_float},
+            "resol": {"x": try_float, "y": try_float}
         }
     }
 
-    parsed_plots = {}
+
+    new_parsed_plots = {}
+    new_plot = False
+    new_curve = False
     in_curve = False
+    parsed_plots = {}
     plot = False
     curve = False
     for line in inp:
 
         line = line.strip()
 
+        print line
+
         if line.startswith("$"):
             if plot:
                 parsed_plots[plot["parameters"]["toplabel"]] = plot
+                new_parsed_plots[plot["parameters"]["toplabel"]] = new_plot
             if curve:
                 plot["data"].append(curve)
                 # pprint.pprint(plot)
                 curve = False
+                new_curve_y = False
+                new_curve_x = False
+
             in_curve = False
             plot = {"parameters": {}, "data": []}
+            new_plot = {"y_data": [],
+                        "x_data": False,
+                        "parameters": False}
             # print line
         elif line.startswith("#"):
             if curve:
                 plot["data"].append(curve)
+                new_plot["y_data"].append(new_curve_y)
+                if not new_plot["x_data"]:
+                    new_plot["x_data"] = new_curve_x
             in_curve = True
             # print line
             curve = {"parameters": {}, "series": [{"xs": [], "ys": []}]}
+            new_curve_y = {"data": [], "label": False}
+            new_curve_x = []
         elif line.startswith("%"):
             # print in_curve, line
             strip_line = line[1:].strip()
@@ -1219,6 +1242,9 @@ def ParseOutputBestPlots(self, inp):
             #   "rad_damage_int_decr": rad_damage_int_decr,
             #   "rad_damage_rfactor_incr": rad_damage_rfactor_incr,
               "osc_range": parsed_plots.get("Minimal oscillation ranges for different completenesses", False)}
+
+    pprint(output["osc_range"])
+    sys.exit()
     return output
 
 def ParseOutputMosflm_strat(self, inp, anom=False):
