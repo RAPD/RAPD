@@ -1,6 +1,8 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { async,
+         ComponentFixture,
+         TestBed } from '@angular/core/testing';
 
-import { PlotOmegaStartComponent } from './plot-omega-start.component';
+// import { PlotOmegaStartComponent } from './plot-omega-start.component';
 
 describe('PlotOmegaStartComponent', () => {
   let component: PlotOmegaStartComponent;

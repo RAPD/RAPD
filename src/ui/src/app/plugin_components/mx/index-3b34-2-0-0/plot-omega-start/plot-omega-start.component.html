@@ -1,3 +1,12 @@
-<p>
+<h2 md-dialog-title>
   plot-omega-start works!
-</p>
+</h2>
+<md-dialog-actions>
+  <button md-button md-dialog-close>No</button>
+  <!-- Can optionally provide a result for the closing dialog. -->
+  <button md-button [md-dialog-close]="true">Yes</button>
+</md-dialog-actions>
+
+<button md-icon-button class="button-dialog-top-right" (click)="exitPlot()">
+  <md-icon>close</md-icon>
+</button>

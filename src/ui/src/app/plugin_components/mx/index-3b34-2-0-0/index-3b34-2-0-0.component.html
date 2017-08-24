@@ -1,6 +1,6 @@
 <div class="result-panel child">
 
-  <md-card> <!-- class="result-panel-card" style="order:3;">-->
+  <md-card *ngIf="full_result"> <!-- class="result-panel-card" style="order:3;">-->
     <md-card-header>
       <md-card-title>Image Data</md-card-title>
     </md-card-header>
@@ -20,7 +20,7 @@
   </md-card-actions>
   </md-card>
 
-  <md-card class="result-panel-card" style="order:4;">
+  <md-card *ngIf="full_result" class="result-panel-card" style="order:4;">
     <md-card-header>
       <md-card-title>Indexing</md-card-title>
     </md-card-header>
@@ -56,7 +56,7 @@
    </md-card-content>
   </md-card>
 
-  <md-card> <!-- class="result-panel-strategy-card" style="order:1;"> -->
+  <md-card *ngIf="full_result"> <!-- class="result-panel-strategy-card" style="order:1;"> -->
     <md-card-header>
       <md-card-title>Strategies</md-card-title>
     </md-card-header>

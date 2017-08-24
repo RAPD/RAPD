@@ -11,8 +11,10 @@ import { AppRoutingModule,
 
 import 'hammerjs';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MaterialModule } from '@angular/material';
+import { MaterialModule,
+         MdDialogModule } from '@angular/material';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { ChartsModule } from 'ng2-charts/ng2-charts';
 
 import { LoginGuard } from './shared/guards/login-guard';
 import { AuthService } from './shared/services/auth.service';
@@ -80,7 +82,6 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     PlotOmegaStartComponent
   ],
   imports: [
-    NgxDatatableModule,
     BrowserModule,
     CommonModule,
     FormsModule,
@@ -88,7 +89,10 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     AppRoutingModule,
     HttpModule,
     BrowserAnimationsModule,
-    MaterialModule
+    MaterialModule,
+    MdDialogModule,
+    NgxDatatableModule,
+    ChartsModule
   ],
   providers: [ appRoutingProviders,
                LoginGuard,
@@ -112,7 +116,8 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     GroupDialogComponent,
     SessionDialogComponent,
     LoginDialogComponent,
-    ChangepassDialogComponent
+    ChangepassDialogComponent,
+    PlotOmegaStartComponent
   ],
   bootstrap: [AppComponent]
 })

@@ -94,11 +94,11 @@ export class AuthService implements CanActivate {
       // Save raw token
       localStorage.setItem('id_token', token);
 
-      // console.log(
-      //   this.jwtHelper.decodeToken(token),
-      //   this.jwtHelper.getTokenExpirationDate(token),
-      //   this.jwtHelper.isTokenExpired(token)
-      // );
+      console.log(
+        this.jwtHelper.decodeToken(token),
+        this.jwtHelper.getTokenExpirationDate(token),
+        this.jwtHelper.isTokenExpired(token)
+      );
 
       // Save user information
       // this.profile = this.jwtHelper.decodeToken(token)._doc;

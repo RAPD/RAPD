@@ -51,7 +51,6 @@ export class AdminpanelComponent implements OnInit {
     // Get the user profile
     this.user = JSON.parse(localStorage.getItem('profile'));
     console.log(this.user);
-
   }
 
   getUsers() {
