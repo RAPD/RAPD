@@ -41,6 +41,21 @@ export class Index3b34200Component implements OnInit {
   }
 
   plotOmegaStartNorm(event) {
-    let dialogRef = this.dialog.open(PlotOmegaStartComponent);
+
+    console.log(this.full_result.results.plots.osc_range.data[0]);
+
+    let config = {
+      width: '800px',
+      height: '800px',
+      data:{
+        dialog_label: 'Starting Point',
+        ys: [{
+          data: this.full_result.results.plots.osc_range.data[0].series[0].ys,
+          label: 'foo'
+        }],
+        xs: this.full_result.results.plots.osc_range.data[0].series[0].xs
+      }
+    };
+    let dialogRef = this.dialog.open(PlotOmegaStartComponent, config);
   }
 }
