@@ -1101,23 +1101,12 @@ def ParseOutputBest(self, inp, anom=False):
     return {"sweeps": sweeps,
             "overall": overall}
 
-def ParseOutputBestPlots(self, inp):
+def ParseOutputBestPlots(inp):
     """Parse Best plots file for plots"""
 
-    if self.verbose:
-        self.logger.debug("Parse::ParseOutputBestPlots")
+    # self.logger.debug("Parse::ParseOutputBestPlots")
 
     print "ParseOutputBestPlots"
-
-    res = []
-    com = []
-    ws = []
-    we = []
-    wilson = []
-    max_delta_omega = []
-    rad_damage_int_decr = []
-    rad_damage_rfactor_incr = []
-    osc_range = []
 
     # Definitions for the expected values
     cast_vals = {
@@ -1167,18 +1156,14 @@ def ParseOutputBestPlots(self, inp):
     plot = False
     curve = False
     for line in inp:
-
         line = line.strip()
-
         print line
-
         if line.startswith("$"):
             if plot:
                 parsed_plots[plot["parameters"]["toplabel"]] = plot
                 new_parsed_plots[plot["parameters"]["toplabel"]] = new_plot
             if curve:
                 plot["data"].append(curve)
-                # pprint.pprint(plot)
                 curve = False
                 new_curve_y = False
                 new_curve_x = False
@@ -1187,8 +1172,21 @@ def ParseOutputBestPlots(self, inp):
             plot = {"parameters": {}, "data": []}
             new_plot = {"y_data": [],
                         "x_data": False,
-                        "parameters": False}
-            # print line
+                        "parameters": {}}
+
+        elif line.startswith("%"):
+            strip_line = line[1:].strip()
+            key = strip_line[:strip_line.index("=")].strip()
+            val = strip_line[strip_line.index("=")+1:].replace("'", "").strip()
+            if in_curve:
+                curve["parameters"][key] = val
+                if key == "linelabel":
+                    new_curve_y["label"] = val
+                    print val
+            else:
+                plot["parameters"][key] = val
+                new_plot["parameters"][key] = val
+
         elif line.startswith("#"):
             if curve:
                 plot["data"].append(curve)
@@ -1196,19 +1194,11 @@ def ParseOutputBestPlots(self, inp):
                 if not new_plot["x_data"]:
                     new_plot["x_data"] = new_curve_x
             in_curve = True
-            # print line
             curve = {"parameters": {}, "series": [{"xs": [], "ys": []}]}
             new_curve_y = {"data": [], "label": False}
             new_curve_x = []
-        elif line.startswith("%"):
-            # print in_curve, line
-            strip_line = line[1:].strip()
-            key = strip_line[:strip_line.index("=")].strip()
-            val = strip_line[strip_line.index("=")+1:].replace("'", "").strip()
-            if in_curve:
-                curve["parameters"][key] = val
-            else:
-                plot["parameters"][key] = val
+
+
         elif len(line) > 0:
             # print line
 
@@ -1225,27 +1215,48 @@ def ParseOutputBestPlots(self, inp):
                 x = cast_vals[plot["parameters"]["toplabel"]][curve["parameters"]["linelabel"]]["x"](split_line[0].strip())
                 y = cast_vals[plot["parameters"]["toplabel"]][curve["parameters"]["linelabel"]]["y"](split_line[1].strip())
 
-            # print x, y
-            # curve["series"].append({"name":x, "value":y})
             curve["series"][0]["xs"].append(x)
             curve["series"][0]["ys"].append(y)
+            new_curve_x.append(x)
+            new_curve_y["data"].append(y)
 
     plot["data"].append(curve)
+    # pprint(plot)
+
+    new_plot["y_data"].append(new_curve_y)
+    if not new_plot["x_data"]:
+        new_plot["x_data"] = new_curve_x
+    # pprint(new_plot)
+    # sys.exit()
+
     parsed_plots[plot["parameters"]["toplabel"]] = plot
+    new_parsed_plots[new_plot["parameters"]["toplabel"]] = new_plot
     # pprint.pprint(parsed_plots)
 
-    output = {"wilson": parsed_plots["Wilson Plot"],
-              "max_delta_omega": parsed_plots.get("Maximal oscillation width", False),
-              "rad_damage": parsed_plots.get("Relative Error and Intensity Plot", False),
-              "exposure": parsed_plots.get("Total exposure time vs resolution", False),
-              "background": parsed_plots.get("Average background intensity per second", False),
-            #   "rad_damage_int_decr": rad_damage_int_decr,
-            #   "rad_damage_rfactor_incr": rad_damage_rfactor_incr,
-              "osc_range": parsed_plots.get("Minimal oscillation ranges for different completenesses", False)}
+    output = {
+        "wilson": parsed_plots["Wilson Plot"],
+        "max_delta_omega": parsed_plots.get("Maximal oscillation width", False),
+        "rad_damage": parsed_plots.get("Relative Error and Intensity Plot", False),
+        "exposure": parsed_plots.get("Total exposure time vs resolution", False),
+        "background": parsed_plots.get("Average background intensity per second", False),
+        #   "rad_damage_int_decr": rad_damage_int_decr,
+        #   "rad_damage_rfactor_incr": rad_damage_rfactor_incr,
+        "osc_range": parsed_plots.get("Minimal oscillation ranges for different completenesses", False)}
 
-    pprint(output["osc_range"])
-    sys.exit()
-    return output
+    new_output = {
+        "wilson": new_parsed_plots["Wilson Plot"],
+        "max_delta_omega": new_parsed_plots.get("Maximal oscillation width", False),
+        "rad_damage": new_parsed_plots.get("Relative Error and Intensity Plot", False),
+        "exposure": new_parsed_plots.get("Total exposure time vs resolution", False),
+        "background": new_parsed_plots.get("Average background intensity per second", False),
+        #   "rad_damage_int_decr": rad_damage_int_decr,
+        #   "rad_damage_rfactor_incr": rad_damage_rfactor_incr,
+        "osc_range": new_parsed_plots.get("Minimal oscillation ranges for different completenesses", False)}
+
+    # pprint(output["osc_range"])
+    # pprint(new_output["osc_range"])
+    # sys.exit()
+    return output, new_output
 
 def ParseOutputMosflm_strat(self, inp, anom=False):
     """
@@ -1255,13 +1266,13 @@ def ParseOutputMosflm_strat(self, inp, anom=False):
         self.logger.debug('Parse::ParseOutputMosflm_strat')
 
     # try:
-    temp  = []
+    temp = []
     strat = []
-    res   = []
+    res = []
     start = []
-    end   = []
-    ni    = []
-    rn    = []
+    end = []
+    ni = []
+    rn = []
     seg = False
 
     # osc_range  = str(self.header.get('osc_range'))
