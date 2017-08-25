@@ -59,6 +59,7 @@ import importlib
 # RAPD imports
 import info
 import plugins.subcontractors.parse as Parse
+import plugins.subcontractors.best as best
 import plugins.subcontractors.labelit as labelit
 from plugins.subcontractors.xoalign import RunXOalign
 import utils.credits as rcredits
@@ -1750,9 +1751,11 @@ Distance | % Transmission", level=98, color="white")
                     tag = {"osc_range":"standard", "osc_range_anom":"ANOMALOUS"}[plot_type]
 
                     plot_data = self.plots[plot_type]
+                    pprint(plot_data)
 
                     # Determine y max
-                    y_array = numpy.array(plot_data["data"][0]["series"][0]["ys"])
+                    y_array = numpy.array(plot_data["y_data"][0]["data"])
+                    # y_array = numpy.array(plot_data["data"][0]["series"][0]["ys"])
                     y_max = y_array.max() + 10
                     y_min = 0 #max(0, (y_array.min() - 10))
 
@@ -1767,20 +1770,28 @@ Distance | % Transmission", level=98, color="white")
 
                     # Create the plot string
                     plot_string = "plot [0:180] [%d:%d] " % (y_min, y_max)
-                    for i in range(min(5, len(plot_data["data"]))):
+                    for i in range(min(5, len(plot_data["y_data"]))):
                         plot_string += "'-' using 1:2 title '%s' with lines," % \
                         plot_data["data"][i]["parameters"]["linelabel"].replace("compl -", "")
+                        plot_data["y_data"][i]["label"]
                     plot_string = plot_string.rstrip(",") + "\n"
                     gnuplot.stdin.write(plot_string)
 
                     # Run through the data and add to gnuplot
                     for i in range(min(5, len(plot_data["data"]))):
-                        plot = plot_data["data"][i]
-                        x_series = plot["series"][0]["xs"]
-                        y_series = plot["series"][0]["ys"]
+                        # plot = plot_data["data"][i]
+                        y_series = plot_data["y_data"][i]["data"]
+                        x_series = plot_data["x_data"]
                         for i, j in zip(x_series, y_series):
                             gnuplot.stdin.write("%f %f\n" % (i, j))
                         gnuplot.stdin.write("e\n")
+                    # for i in range(min(5, len(plot_data["data"]))):
+                    #     plot = plot_data["data"][i]
+                    #     x_series = plot["series"][0]["xs"]
+                    #     y_series = plot["series"][0]["ys"]
+                    #     for i, j in zip(x_series, y_series):
+                    #         gnuplot.stdin.write("%f %f\n" % (i, j))
+                    #     gnuplot.stdin.write("e\n")
 
                     # Now plot!
                     gnuplot.stdin.flush()
@@ -1967,25 +1978,25 @@ Distance | % Transmission", level=98, color="white")
         # Get the parsed results for reg and anom results and put them into a single dict.
         if dir1:
             # print ">>>", os.path.join(dir1, "best.plt")
-            plot, new_plot = Parse.ParseOutputBestPlots(open(os.path.join(dir1, "best.plt"), "r").readlines())
+            plot, new_plot = best.parse_best_plots(open(os.path.join(dir1, "best.plt"), "r").readlines())
             if dir2:
                 # print ">>>", os.path.join(dir2, "best_anom.plt")
-                plotanom, new_plotanom = Parse.ParseOutputBestPlots(open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
-                plot.update({"osc_range_anom": plotanom.get("osc_range")})
+                plotanom, new_plotanom = best.parse_best_plots(open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
+                plot.update({"osc_range_anom": new_plotanom.get("osc_range")})
         elif dir2:
             # print ">>>", os.path.join(dir2, "best_anom.plt")
-            plot, new_plot = Parse.ParseOutputBestPlots(open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
+            plot, new_plot = best.parse_best_plots(open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
             plot.update({"osc_range_anom": plot.pop("osc_range")})
         else:
             run = False
 
         # Best failed?
         if self.best_failed:
-            best_plots = False
+            self.plots = False
 
         # Best success
         else:
-            self.plots = plot
+            self.plots = new_plot
 
         # except:
         #     self.logger.exception("**ERROR in htmlBestPlots**")
@@ -2227,7 +2238,10 @@ class RunLabelit(Process):
         if self.preferences.has_key("x_beam"):
             x_beam = self.preferences["x_beam"]
             y_beam = self.preferences["y_beam"]
-            self.tprint("  Using override beam center %s, %s" % (x_beam, y_beam), 10, "white")
+            self.tprint("  Using override beam center %s, %s" % (x_beam, y_beam),
+                        10,
+                        "white",
+                        newline=False)
 
         binning = True
         if self.header.has_key('binning'):

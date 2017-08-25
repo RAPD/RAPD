@@ -1121,10 +1121,12 @@ def ParseOutputBestPlots(inp):
             "Pred.high errors": {"x": try_float, "y": try_float}
         },
         "Maximal oscillation width": {
-            "resol": {"x": try_int, "y": try_float}
+            "resol": {"x": try_int, "y": try_float},
+            "linelabel": (lambda x: x.replace("resol.  ", "")+"A")
         },
         "Minimal oscillation ranges for different completenesses": {
-            "compl": {"x": try_float, "y": try_int}
+            "compl": {"x": try_float, "y": try_int},
+            "linelabel": (lambda x: x.replace("compl -", "").replace(".%", "%"))
         },
         # "Minimal oscillation ranges for different completenesses": {
         #     "compl": {"x": try_float, "y": try_int}
@@ -1147,7 +1149,6 @@ def ParseOutputBestPlots(inp):
         }
     }
 
-
     new_parsed_plots = {}
     new_plot = False
     new_curve = False
@@ -1157,11 +1158,11 @@ def ParseOutputBestPlots(inp):
     curve = False
     for line in inp:
         line = line.strip()
-        print line
+        # print line
         if line.startswith("$"):
             if plot:
                 parsed_plots[plot["parameters"]["toplabel"]] = plot
-                new_parsed_plots[plot["parameters"]["toplabel"]] = new_plot
+                new_parsed_plots[new_plot["parameters"]["toplabel"]] = new_plot
             if curve:
                 plot["data"].append(curve)
                 curve = False
@@ -1181,8 +1182,12 @@ def ParseOutputBestPlots(inp):
             if in_curve:
                 curve["parameters"][key] = val
                 if key == "linelabel":
-                    new_curve_y["label"] = val
-                    print val
+                    # print new_plot["parameters"]["toplabel"], "cast_vals keys", cast_vals[new_plot["parameters"]["toplabel"]].keys()
+                    if "linelabel" in cast_vals[new_plot["parameters"]["toplabel"]]:
+                        new_curve_y["label"] = cast_vals[new_plot["parameters"]["toplabel"]]["linelabel"](val)
+                    else:
+                        new_curve_y["label"] = val
+                    # print val, ">>>", new_curve_y["label"]
             else:
                 plot["parameters"][key] = val
                 new_plot["parameters"][key] = val
