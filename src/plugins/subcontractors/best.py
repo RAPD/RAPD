@@ -33,7 +33,7 @@ __status__ = "Development"
 # import logging
 # import multiprocessing
 # import os
-# import pprint
+from pprint import pprint
 # import pymongo
 # import re
 # import redis
@@ -51,10 +51,6 @@ from utils.r_numbers import try_int, try_float
 
 def parse_best_plots(inp):
     """Parse Best plots file for plots"""
-
-    # self.logger.debug("Parse::ParseOutputBestPlots")
-
-    print "ParseOutputBestPlots"
 
     # Definitions for the expected values
     cast_vals = {
@@ -76,9 +72,6 @@ def parse_best_plots(inp):
             "compl": {"x": try_float, "y": try_int},
             "linelabel": (lambda x: x.replace("compl -", "").replace(".%", "%"))
         },
-        # "Minimal oscillation ranges for different completenesses": {
-        #     "compl": {"x": try_float, "y": try_int}
-        # },
         "Total exposure time vs resolution": {
             "Expon.trend": {"x": try_float, "y": try_float},
             "Predictions": {"x": try_float, "y": try_float}
@@ -97,94 +90,112 @@ def parse_best_plots(inp):
         }
     }
 
-    new_parsed_plots = {}
-    new_plot = False
-    new_curve = False
-    in_curve = False
+    # The final product
     parsed_plots = {}
+    # Each plot in the file
     plot = False
-    curve = False
+    # Each curve
+    curve_x = False
+    curve_y = False
+    # Is the loop in a curve?
+    in_curve = False
+
+    # Go through the lines
     for line in inp:
         line = line.strip()
-        # print line
-        if line.startswith("$"):
-            if plot:
-                parsed_plots[plot["parameters"]["toplabel"]] = plot
-                new_parsed_plots[new_plot["parameters"]["toplabel"]] = new_plot
-            if curve:
-                plot["data"].append(curve)
-                curve = False
-                new_curve_y = False
-                new_curve_x = False
 
+        # Start of a plot
+        if line.startswith("$"):
+            # print line
+            # Save the plot is we are transitioning to a new plot
+            if plot:
+                # If this is not the first plot, the curve needs to be saved
+                if curve_x:
+                    # print "  save curve"
+                    # Remove the raw_label from the curve parameters
+                    __ = curve_y.pop("raw_label", None)
+                    # Save the y data
+                    plot["y_data"].append(curve_y)
+                    # Save the x data
+                    if not plot["x_data"]:
+                        plot["x_data"] = curve_x
+                # print "  save plot"
+                parsed_plots[plot["parameters"]["toplabel"]] = plot
+
+            # Not in a curve
             in_curve = False
-            plot = {"parameters": {}, "data": []}
-            new_plot = {"y_data": [],
-                        "x_data": False,
-                        "parameters": {}}
+            curve_y = False
+            curve_x = False
+
+            # Create a new plot
+            plot = {"y_data": [],
+                    "x_data": False,
+                    "parameters": {}}
 
         elif line.startswith("%"):
+            # print line
             strip_line = line[1:].strip()
             key = strip_line[:strip_line.index("=")].strip()
             val = strip_line[strip_line.index("=")+1:].replace("'", "").strip()
+
+            # If in a curve, then these are curve parameters
             if in_curve:
-                curve["parameters"][key] = val
+                # linelabel is a special label because it is displayed to users
                 if key == "linelabel":
-                    # print new_plot["parameters"]["toplabel"], "cast_vals keys", cast_vals[new_plot["parameters"]["toplabel"]].keys()
-                    if "linelabel" in cast_vals[new_plot["parameters"]["toplabel"]]:
-                        new_curve_y["label"] = cast_vals[new_plot["parameters"]["toplabel"]]["linelabel"](val)
+                    curve_y["raw_label"] = val
+                    # If the label is massaged, do so
+                    if "linelabel" in cast_vals[plot["parameters"]["toplabel"]]:
+                        curve_y["label"] = cast_vals[plot["parameters"]["toplabel"]]["linelabel"](val)
                     else:
-                        new_curve_y["label"] = val
-                    # print val, ">>>", new_curve_y["label"]
+                        curve_y["label"] = val
+            # Not in a curve, so plot parameters
             else:
                 plot["parameters"][key] = val
-                new_plot["parameters"][key] = val
 
+        # A new curve has been found
         elif line.startswith("#"):
-            if curve:
-                plot["data"].append(curve)
-                new_plot["y_data"].append(new_curve_y)
-                if not new_plot["x_data"]:
-                    new_plot["x_data"] = new_curve_x
+            # print line
+            # If this is not the first curve for the plot, save the curve now
+            if curve_x:
+                # print "  save curve"
+                # Remove the raw_label from the curve parameters
+                __ = curve_y.pop("raw_label", None)
+                # Save the y data
+                plot["y_data"].append(curve_y)
+                # Save the x data
+                if not plot["x_data"]:
+                    plot["x_data"] = curve_x
             in_curve = True
-            curve = {"parameters": {}, "series": [{"xs": [], "ys": []}]}
-            new_curve_y = {"data": [], "label": False}
-            new_curve_x = []
+            # curve = {"parameters": {}, "series": [{"xs": [], "ys": []}]}
+            curve_y = {"data": [], "label": False}
+            curve_x = []
 
 
         elif len(line) > 0:
-            # print line
-
             split_line = line.split()
 
-            # print curve["parameters"]["linelabel"]
-            if curve["parameters"]["linelabel"].startswith("resol"):
+            # print curve_y["raw_label"]
+            if curve_y["raw_label"].startswith("resol"):
                 x = cast_vals[plot["parameters"]["toplabel"]]["resol"]["x"](split_line[0].strip())
                 y = cast_vals[plot["parameters"]["toplabel"]]["resol"]["y"](split_line[1].strip())
-            elif curve["parameters"]["linelabel"].startswith("compl"):
+            elif curve_y["raw_label"].startswith("compl"):
                 x = cast_vals[plot["parameters"]["toplabel"]]["compl"]["x"](split_line[0].strip())
                 y = cast_vals[plot["parameters"]["toplabel"]]["compl"]["y"](split_line[1].strip())
             else:
-                x = cast_vals[plot["parameters"]["toplabel"]][curve["parameters"]["linelabel"]]["x"](split_line[0].strip())
-                y = cast_vals[plot["parameters"]["toplabel"]][curve["parameters"]["linelabel"]]["y"](split_line[1].strip())
+                x = cast_vals[plot["parameters"]["toplabel"]][curve_y["raw_label"]]["x"](split_line[0].strip())
+                y = cast_vals[plot["parameters"]["toplabel"]][curve_y["raw_label"]]["y"](split_line[1].strip())
 
-            curve["series"][0]["xs"].append(x)
-            curve["series"][0]["ys"].append(y)
-            new_curve_x.append(x)
-            new_curve_y["data"].append(y)
+            curve_x.append(x)
+            curve_y["data"].append(y)
 
-    plot["data"].append(curve)
-    # pprint(plot)
-
-    new_plot["y_data"].append(new_curve_y)
-    if not new_plot["x_data"]:
-        new_plot["x_data"] = new_curve_x
-    # pprint(new_plot)
-    # sys.exit()
-
+    # Run to the end of the file
+    # print "  save curve"
+    __ = curve_y.pop("raw_label", None)
+    plot["y_data"].append(curve_y)
+    if not plot["x_data"]:
+        plot["x_data"] = curve_x
+        # print "  save plot"
     parsed_plots[plot["parameters"]["toplabel"]] = plot
-    new_parsed_plots[new_plot["parameters"]["toplabel"]] = new_plot
-    # pprint.pprint(parsed_plots)
 
     output = {
         "wilson": parsed_plots["Wilson Plot"],
@@ -196,17 +207,5 @@ def parse_best_plots(inp):
         #   "rad_damage_rfactor_incr": rad_damage_rfactor_incr,
         "osc_range": parsed_plots.get("Minimal oscillation ranges for different completenesses", False)}
 
-    new_output = {
-        "wilson": new_parsed_plots["Wilson Plot"],
-        "max_delta_omega": new_parsed_plots.get("Maximal oscillation width", False),
-        "rad_damage": new_parsed_plots.get("Relative Error and Intensity Plot", False),
-        "exposure": new_parsed_plots.get("Total exposure time vs resolution", False),
-        "background": new_parsed_plots.get("Average background intensity per second", False),
-        #   "rad_damage_int_decr": rad_damage_int_decr,
-        #   "rad_damage_rfactor_incr": rad_damage_rfactor_incr,
-        "osc_range": new_parsed_plots.get("Minimal oscillation ranges for different completenesses", False)}
-
-    # pprint(output["osc_range"])
-    # pprint(new_output["osc_range"])
-    # sys.exit()
-    return output, new_output
+    # pprint(output)
+    return output

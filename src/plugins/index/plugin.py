@@ -1743,7 +1743,8 @@ Distance | % Transmission", level=98, color="white")
         """Display plots on the commandline"""
 
         # Plot as long as JSON output is not selected
-        if self.preferences.get("show_plots", True) and (not self.preferences.get("json", False)):
+        if self.preferences.get("show_plots", True) and \
+           (not self.preferences.get("json", False)):
 
             # Determine the open terminal size
             term_size = os.popen('stty size', 'r').read().split()
@@ -1755,52 +1756,48 @@ Distance | % Transmission", level=98, color="white")
                 if plot_type in self.plots:
 
                     if not titled:
-                        self.tprint(arg="\nPlots from BEST", level=98, color="blue")
+                        self.tprint(arg="\nPlots from BEST",
+                                    level=98,
+                                    color="blue")
                         titled = True
 
-                    tag = {"osc_range":"standard", "osc_range_anom":"ANOMALOUS"}[plot_type]
+                    tag = {"osc_range":"standard",
+                           "osc_range_anom":"ANOMALOUS"}[plot_type]
 
                     plot_data = self.plots[plot_type]
 
                     # Determine y max
                     y_array = numpy.array(plot_data["y_data"][0]["data"])
-                    # y_array = numpy.array(plot_data["data"][0]["series"][0]["ys"])
                     y_max = y_array.max() + 10
-                    y_min = 0 #max(0, (y_array.min() - 10))
+                    y_min = 0
 
-                    gnuplot = subprocess.Popen(["gnuplot"], stdin=subprocess.PIPE)
+                    gnuplot = subprocess.Popen(["gnuplot"],
+                                               stdin=subprocess.PIPE)
                     gnuplot.stdin.write(
                         """set term dumb %d,%d
                            set key outside
                            set title 'Minimal Oscillation Ranges %s'
                            set xlabel 'Starting Angle'
                            set ylabel 'Rotation Range' rotate by 90 \n""" % \
-                           (min(180, int(term_size[1])), max(30, int(int(term_size[0])/3)), tag))
+                           (min(180, int(term_size[1])),
+                            max(30, int(int(term_size[0])/3)),
+                            tag))
 
                     # Create the plot string
                     plot_string = "plot [0:180] [%d:%d] " % (y_min, y_max)
                     for i in range(min(5, len(plot_data["y_data"]))):
                         plot_string += "'-' using 1:2 title '%s' with lines," % \
                         plot_data["y_data"][i]["label"]
-                        # plot_data["data"][i]["parameters"]["linelabel"].replace("compl -", "")
                     plot_string = plot_string.rstrip(",") + "\n"
                     gnuplot.stdin.write(plot_string)
 
                     # Run through the data and add to gnuplot
                     for i in range(min(5, len(plot_data["y_data"]))):
-                        # plot = plot_data["data"][i]
                         y_series = plot_data["y_data"][i]["data"]
                         x_series = plot_data["x_data"]
                         for i, j in zip(x_series, y_series):
                             gnuplot.stdin.write("%f %f\n" % (i, j))
                         gnuplot.stdin.write("e\n")
-                    # for i in range(min(5, len(plot_data["data"]))):
-                    #     plot = plot_data["data"][i]
-                    #     x_series = plot["series"][0]["xs"]
-                    #     y_series = plot["series"][0]["ys"]
-                    #     for i, j in zip(x_series, y_series):
-                    #         gnuplot.stdin.write("%f %f\n" % (i, j))
-                    #     gnuplot.stdin.write("e\n")
 
                     # Now plot!
                     gnuplot.stdin.flush()
@@ -1992,20 +1989,20 @@ Distance | % Transmission", level=98, color="white")
             # Read the raw best plots output
             raw = open(os.path.join(norm_res_dir, "best.plt"), "r").readlines()
             # Parse the plot file
-            plot, new_plot = best.parse_best_plots(raw)
+            new_plot = best.parse_best_plots(raw)
 
             if anom_res_dir:
                 # Read the raw best plots output
                 raw = open(os.path.join(anom_res_dir, "best_anom.plt"), "r").readlines()
                 # Parse the plot file
-                plotanom, new_plotanom = best.parse_best_plots(raw)
+                new_plotanom = best.parse_best_plots(raw)
                 new_plot.update({"osc_range_anom": new_plotanom.get("osc_range")})
 
         elif anom_res_dir:
             # Read the raw best plots output
             raw = open(os.path.join(anom_res_dir, "best.plt"), "r").readlines()
             # Parse the plot file
-            plotanom, new_plotanom = best.parse_best_plots(raw)
+            new_plotanom = best.parse_best_plots(raw)
             new_plot.update({"osc_range_anom": new_plotanom.pop("osc_range")})
         else:
             run = False
