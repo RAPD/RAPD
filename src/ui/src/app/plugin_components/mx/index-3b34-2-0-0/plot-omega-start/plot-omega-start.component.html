@@ -6,32 +6,14 @@
 </button>
 
 <md-dialog-content>
-<div class="row">
-  <div class="col-md-6">
-    <div style="display: block;">
-    <canvas baseChart width="800" height="800"
+  <canvas baseChart
                 [datasets]="data.ys"
                 [labels]="data.xs"
-                [options]="lineChartOptions"
-                [colors]="lineChartColors"
+                [options]="data.lineChartOptions"
                 [legend]="lineChartLegend"
-                [chartType]="lineChartType"
+                [chartType]="data.lineChartType"
                 (chartHover)="chartHovered($event)"
                 (chartClick)="chartClicked($event)"></canvas>
-    </div>
-  </div>
-  <div class="col-md-6" style="margin-bottom: 10px">
-    <table class="table table-responsive table-condensed">
-      <tr>
-        <th *ngFor="let label of lineChartLabels">{{label}}</th>
-      </tr>
-      <tr *ngFor="let d of lineChartData">
-        <td *ngFor="let label of lineChartLabels; let j=index">{{d && d.data[j]}}</td>
-      </tr>
-    </table>
-    <button (click)="randomize()">CLICK</button>
-  </div>
-</div>
 </md-dialog-content>
 
 <!-- <md-dialog-actions>

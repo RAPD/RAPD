@@ -1,9 +1,12 @@
 import { Component,
          Inject,
-         OnInit } from '@angular/core';
+         OnInit,
+         ViewChild } from '@angular/core';
 import { MdDialogRef,
          MdDialog,
          MD_DIALOG_DATA } from '@angular/material';
+import { BaseChartDirective } from 'ng2-charts';
+
 @Component({
   selector: 'app-plot-omega-start',
   templateUrl: './plot-omega-start.component.html',
@@ -11,22 +14,23 @@ import { MdDialogRef,
 })
 export class PlotOmegaStartComponent implements OnInit {
 
+  // @ViewChild(BaseChartDirective) private Chart: BaseChartDirective;
+
   constructor(public dialogRef: MdDialogRef<PlotOmegaStartComponent>,
               @Inject(MD_DIALOG_DATA) public data: any) { }
 
   ngOnInit() {
     console.log(this.data);
+    // console.log(this.Chart);
   }
 
   // lineChart
-  public lineChartData:Array<any> = [
-    {data: [65, 59, 80, 81, 56, 55, 40], label: 'Series A'},
-    {data: [28, 48, 40, 19, 86, 27, 90], label: 'Series B'},
-    {data: [18, 48, 77, 9, 100, 27, 40], label: 'Series C'}
-  ];
-  public lineChartLabels:Array<any> = ['January', 'February', 'March', 'April', 'May', 'June', 'July'];
   public lineChartOptions:any = {
-    responsive: true
+    responsive: true,
+    legend: {
+      display: true,
+      position: 'right',
+    }
   };
   public lineChartColors:Array<any> = [
     { // grey
@@ -57,16 +61,6 @@ export class PlotOmegaStartComponent implements OnInit {
   public lineChartLegend:boolean = true;
   public lineChartType:string = 'line';
 
-  public randomize():void {
-    let _lineChartData:Array<any> = new Array(this.lineChartData.length);
-    for (let i = 0; i < this.lineChartData.length; i++) {
-      _lineChartData[i] = {data: new Array(this.lineChartData[i].data.length), label: this.lineChartData[i].label};
-      for (let j = 0; j < this.lineChartData[i].data.length; j++) {
-        _lineChartData[i].data[j] = Math.floor((Math.random() * 100) + 1);
-      }
-    }
-    this.lineChartData = _lineChartData;
-  }
 
   exitPlot() {
     this.dialogRef.close();
