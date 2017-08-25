@@ -10,14 +10,8 @@
                 [datasets]="data.ys"
                 [labels]="data.xs"
                 [options]="data.lineChartOptions"
-                [legend]="lineChartLegend"
                 [chartType]="data.lineChartType"
+                [colors]="lineChartColors"
                 (chartHover)="chartHovered($event)"
                 (chartClick)="chartClicked($event)"></canvas>
 </md-dialog-content>
-
-<!-- <md-dialog-actions>
-  <button md-button md-dialog-close>No</button>
-  <!-- Can optionally provide a result for the closing dialog. -->
-<!--  <button md-button [md-dialog-close]="true">Yes</button>
-</md-dialog-actions> -->

@@ -53,15 +53,22 @@ export class Index3b34200Component implements OnInit {
           var o = Object.assign({}, el);
           console.log(o);
           o.pointRadius = 0;
+          o.backgroundColor = 'rgba(0,0,0,0)';
           return o;
         }),
         xs: this.full_result.results.plots.osc_range.x_data,
         lineChartType: 'line',
         lineChartOptions: {
           responsive: true,
+          // colors: {
+          //    backgroundColor: 'rgba(0,0,0,0)',
+          // },
           legend: {
             display: true,
             position: 'right',
+            labels: {
+              boxWidth: 20,
+            },
           },
           scales: {
             yAxes: [{
