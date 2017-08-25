@@ -1286,7 +1286,7 @@ class RapdPlugin(Process):
                 if data["overall"]["anomalous"]:
                     self.tprint(arg="\nBEST strategy ANOMALOUS", level=98, color="blue")
                 else:
-                    self.tprint(arg="\nBEST strategy NORMAL", level=98, color="blue")
+                    self.tprint(arg="\n\nBEST strategy NORMAL", level=98, color="blue")
                 # Header lines
                 self.tprint(arg="  " + "-" * 85, level=98, color="white")
                 self.tprint(arg="  " + " N |  Omega_start |  N.of.images | Rot.width |  Exposure | \
@@ -1410,6 +1410,7 @@ Distance | % Transmission", level=98, color="white")
         # dict = {}
         # Run twice for regular(0) and anomalous(1) strategies
         l = ["", "_anom"]
+        first_print = False
         for x in range(0, 2):
             for i in range(st, 5):
                 timed_out = False
@@ -1428,9 +1429,17 @@ Distance | % Transmission", level=98, color="white")
                     if self.verbose:
                         number = round(timer % 1, 1)
                         if number in (0.0, 1.0):
-                            self.tprint(arg="    Waiting for strategy to finish %s seconds" % timer,
-                                        level=10,
-                                        color="white")
+                            if first_print:
+                                self.tprint(arg=".",
+                                            level=10,
+                                            color="white",
+                                            newline=False)
+                            else:
+                                first_print = True
+                                self.tprint(arg="    Waiting for strategy to finish",
+                                            level=10,
+                                            color="white",
+                                            newline=False)
                     if self.strategy_timer:
                         if timer >= self.strategy_timer:
                             timed_out = True
@@ -1740,6 +1749,7 @@ Distance | % Transmission", level=98, color="white")
             term_size = os.popen('stty size', 'r').read().split()
 
             titled = False
+
             for plot_type in ("osc_range", "osc_range_anom"):
 
                 if plot_type in self.plots:
@@ -1751,7 +1761,6 @@ Distance | % Transmission", level=98, color="white")
                     tag = {"osc_range":"standard", "osc_range_anom":"ANOMALOUS"}[plot_type]
 
                     plot_data = self.plots[plot_type]
-                    pprint(plot_data)
 
                     # Determine y max
                     y_array = numpy.array(plot_data["y_data"][0]["data"])
@@ -1772,13 +1781,13 @@ Distance | % Transmission", level=98, color="white")
                     plot_string = "plot [0:180] [%d:%d] " % (y_min, y_max)
                     for i in range(min(5, len(plot_data["y_data"]))):
                         plot_string += "'-' using 1:2 title '%s' with lines," % \
-                        plot_data["data"][i]["parameters"]["linelabel"].replace("compl -", "")
                         plot_data["y_data"][i]["label"]
+                        # plot_data["data"][i]["parameters"]["linelabel"].replace("compl -", "")
                     plot_string = plot_string.rstrip(",") + "\n"
                     gnuplot.stdin.write(plot_string)
 
                     # Run through the data and add to gnuplot
-                    for i in range(min(5, len(plot_data["data"]))):
+                    for i in range(min(5, len(plot_data["y_data"]))):
                         # plot = plot_data["data"][i]
                         y_series = plot_data["y_data"][i]["data"]
                         x_series = plot_data["x_data"]
@@ -1969,31 +1978,41 @@ Distance | % Transmission", level=98, color="white")
         # pprint(self.best_results)
 
         # try:
-        run = True
-        plot = False
-        plotanom = False
-        dir1 = self.best_results.get("best_results_norm").get("directory", False)
-        dir2 = self.best_anom_results.get("best_results_anom").get("directory", False)
+        # run = True
+        plot = {}
+        plotanom = {}
+        new_plot = {}
+        new_plotanom = {}
+
+        norm_res_dir = self.best_results.get("best_results_norm").get("directory", False)
+        anom_res_dir = self.best_anom_results.get("best_results_anom").get("directory", False)
 
         # Get the parsed results for reg and anom results and put them into a single dict.
-        if dir1:
-            # print ">>>", os.path.join(dir1, "best.plt")
-            plot, new_plot = best.parse_best_plots(open(os.path.join(dir1, "best.plt"), "r").readlines())
-            if dir2:
-                # print ">>>", os.path.join(dir2, "best_anom.plt")
-                plotanom, new_plotanom = best.parse_best_plots(open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
-                plot.update({"osc_range_anom": new_plotanom.get("osc_range")})
-        elif dir2:
-            # print ">>>", os.path.join(dir2, "best_anom.plt")
-            plot, new_plot = best.parse_best_plots(open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
-            plot.update({"osc_range_anom": plot.pop("osc_range")})
+        if norm_res_dir:
+            # Read the raw best plots output
+            raw = open(os.path.join(norm_res_dir, "best.plt"), "r").readlines()
+            # Parse the plot file
+            plot, new_plot = best.parse_best_plots(raw)
+
+            if anom_res_dir:
+                # Read the raw best plots output
+                raw = open(os.path.join(anom_res_dir, "best_anom.plt"), "r").readlines()
+                # Parse the plot file
+                plotanom, new_plotanom = best.parse_best_plots(raw)
+                new_plot.update({"osc_range_anom": new_plotanom.get("osc_range")})
+
+        elif anom_res_dir:
+            # Read the raw best plots output
+            raw = open(os.path.join(anom_res_dir, "best.plt"), "r").readlines()
+            # Parse the plot file
+            plotanom, new_plotanom = best.parse_best_plots(raw)
+            new_plot.update({"osc_range_anom": new_plotanom.pop("osc_range")})
         else:
             run = False
 
         # Best failed?
         if self.best_failed:
             self.plots = False
-
         # Best success
         else:
             self.plots = new_plot

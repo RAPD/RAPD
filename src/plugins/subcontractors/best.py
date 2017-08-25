@@ -47,6 +47,7 @@ __status__ = "Development"
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
+from utils.r_numbers import try_int, try_float
 
 def parse_best_plots(inp):
     """Parse Best plots file for plots"""
