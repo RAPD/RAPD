@@ -5,13 +5,13 @@
   <md-icon>close</md-icon>
 </button>
 
-<md-dialog-content>
+<md-dialog-content style="margin:0">
   <canvas baseChart
-                [datasets]="data.ys"
-                [labels]="data.xs"
-                [options]="data.lineChartOptions"
-                [chartType]="data.lineChartType"
-                [colors]="lineChartColors"
-                (chartHover)="chartHovered($event)"
-                (chartClick)="chartClicked($event)"></canvas>
+    [datasets]="data.ys"
+    [labels]="data.xs"
+    [options]="data.lineChartOptions"
+    [chartType]="data.lineChartType"
+    [colors]="lineChartColors"
+    (chartHover)="chartHovered($event)"
+    (chartClick)="chartClicked($event)"></canvas>
 </md-dialog-content>
