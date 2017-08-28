@@ -2,7 +2,6 @@ import { Component,
          Inject,
          OnInit } from '@angular/core';
 import { MdDialogRef,
-         MdDialog,
          MD_DIALOG_DATA } from '@angular/material';
 
 @Component({
@@ -18,9 +17,4 @@ export class HeaderDialogComponent implements OnInit {
   ngOnInit() {
     console.log(this.data);
   }
-
-  exitDialog() {
-    this.dialogRef.close();
-  }
-
 }

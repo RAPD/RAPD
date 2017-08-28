@@ -1,0 +1,38 @@
+<div md-dialog-title>
+  <button md-icon-button md-dialog-close class="button-dialog-top-right">
+    <md-icon>close</md-icon>
+  </button>
+  <h2>Reindex</h2>
+  <h3>{{data.header1.basename}}</h3>
+</div>
+
+<md-dialog-content>
+  <form>  <!-- [formGroup]="reindex_form"> -->
+    <table >
+      <thead>
+        <tr>
+          <th scope="col" style="width:50%;"></th>
+          <th scope="col" style="width:50%;"></th>
+        </tr>
+      </thead>
+      <tr>
+        <td>
+      <tbody>
+        <tr>
+          <td class="manual-table-rj">Spacegroup Override</td>
+          <td>
+            <md-select placeholder="None" [(ngModel)]="selectedValue" name="food">
+              <md-option *ngFor="let sg of globals_service.sgs_in_order" [value]="sg">
+                {{sg}}
+              </md-option>
+            </md-select>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </form>
+</md-dialog-content>
+
+<md-dialog-actions>
+  <button md-button-raised md-dialog-close>Execute</button>
+</md-dialog-actions>

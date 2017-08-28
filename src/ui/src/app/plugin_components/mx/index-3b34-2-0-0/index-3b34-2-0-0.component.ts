@@ -11,6 +11,7 @@ import { ReplaySubject }   from 'rxjs/Rx';
 import { ResultsService } from '../../../shared/services/results.service';
 import { PlotOmegaStartComponent } from './plot-omega-start/plot-omega-start.component';
 import { HeaderDialogComponent } from './header-dialog/header-dialog.component';
+import { ReindexDialogComponent } from './reindex-dialog/reindex-dialog.component';
 
 @Component({
   selector: 'app-index-3b34-2-0-0',
@@ -229,8 +230,14 @@ export class Index3b34200Component implements OnInit {
     };
     let dialogRef = this.dialog.open(PlotOmegaStartComponent, config);
   }
-}
 
+  openReindexDialog() {
+    let config = {data: this.full_result};
+
+    let dialogRef = this.dialog.open(ReindexDialogComponent, config);
+  }
+
+}
 /*
  * Raise the value exponentially
  * Takes an exponent argument that defaults to 1.

@@ -50,6 +50,7 @@ import { IndexstrategyAaaa1Component } from './plugin_components/mx/indexstrateg
 import { Index3b34200Component } from './plugin_components/mx/index-3b34-2-0-0/index-3b34-2-0-0.component';
 import { PlotOmegaStartComponent } from './plugin_components/mx/index-3b34-2-0-0/plot-omega-start/plot-omega-start.component';
 import { HeaderDialogComponent } from './plugin_components/mx/index-3b34-2-0-0/header-dialog/header-dialog.component';
+import { ReindexDialogComponent } from './plugin_components/mx/index-3b34-2-0-0/reindex-dialog/reindex-dialog.component';
 
 export function authHttpServiceFactory(http: Http, options: RequestOptions) {
   return new AuthHttp( new AuthConfig({}), http, options);
@@ -82,7 +83,8 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     IndexstrategyAaaa1Component,
     Index3b34200Component,
     PlotOmegaStartComponent,
-    HeaderDialogComponent
+    HeaderDialogComponent,
+    ReindexDialogComponent
   ],
   imports: [
     BrowserModule,
@@ -122,7 +124,8 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     LoginDialogComponent,
     ChangepassDialogComponent,
     PlotOmegaStartComponent,
-    HeaderDialogComponent
+    HeaderDialogComponent,
+    ReindexDialogComponent
   ],
   bootstrap: [AppComponent]
 })
