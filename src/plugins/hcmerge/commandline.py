@@ -49,9 +49,8 @@ import uuid
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
-# import utils.credits as credits
 import utils.credits as credits
-import utils.globals as rglobals
+#import utils.globals as rglobals
 import utils.log
 import utils.modules as modules
 import utils.text as text
@@ -98,14 +97,6 @@ def construct_command(commandline_args, logger):
         "work": work_dir
         }
 
-    # # Work directory
-    # command["directories"] = {
-    #     "work": os.path.join(os.path.abspath(os.path.curdir), "hcmerge")
-    #     }
-
-    # Check the work directory
-    commandline_utils.check_work_dir(command["directories"]["work"], True)
-
     # Information on input
     command["input_data"] = {
         "datasets": commandline_args.datasets
@@ -138,6 +129,11 @@ def get_commandline():
                         dest="all_clusters",
                         default=False,
                         help="make all agglomerative clusters greater than cutoff value")
+    # parser.add_argument("--cell",
+    #                     dest="cell",
+    #                     nargs="6",
+    #                     default=(50, 100, 150, 90, 90, 90),
+    #                     help="provide unit cell dimensions")
     parser.add_argument("-c", "--cutoff",
                         dest="cutoff",
                         type=float,
@@ -214,6 +210,7 @@ def get_commandline():
     # Clean
     parser.add_argument("--clean",
                         action="store_true",
+                        default="store_true",
                         dest="clean",
                         help="Clean up intermediate files")
 
@@ -282,6 +279,9 @@ def get_commandline():
     # Check to see if the user has set a spacegroup.  If so, then change from symbol to IUCR number.
     if args.spacegroup:
         args.spacegroup = space_group_symbols(args.spacegroup).number()
+    # Turn cell into a tuple
+    # if args.cell:
+    #     args.cell=tuple(args.cell)
     try:
         method_list = ['single', 'complete', 'average', 'weighted']
         if [i for i in method_list if i in args.method]:

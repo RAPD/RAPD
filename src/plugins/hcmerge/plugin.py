@@ -193,6 +193,12 @@ class RapdPlugin(multiprocessing.Process):
         else:
             self.user_spacegroup = 0 # Default to None
 
+        # Check for unit cell
+        if self.settings.has_key('cell'):
+            self.cell = self.settings['cell']
+        else:
+            self.cell = False
+
         # Check for user-defined high resolution cutoff
         if self.settings.has_key('resolution'):
             self.resolution = self.settings['resolution']
@@ -279,9 +285,6 @@ class RapdPlugin(multiprocessing.Process):
         self.print_credits()
 
     def preprocess(self):
-        """Set up for plugin action"""
-
-        self.tprint("preprocess")
         """
         Before running the main process
         - change to the current directory
@@ -290,7 +293,7 @@ class RapdPlugin(multiprocessing.Process):
         - test reflection files for acceptable format (XDS and unmerged mtz only)
         - ensure all files are the same format
         """
-
+        self.tprint("Preprocess: Prechecking files")
         self.logger.debug('HCMerge::Prechecking files: %s' % str(self.datasets))
 
         if self.precheck:
@@ -302,13 +305,15 @@ class RapdPlugin(multiprocessing.Process):
                 types.append(reflection_file.file_type()) # Get types for format test
                 hashset[dataset] = hashlib.md5(open(dataset, 'rb').read()).hexdigest() # hash for duplicates test
                 # Test for SCA format
-                if reflection_file.file_type() == 'scalepack_no_merge_original_index' or reflection_file.file_type() == 'scalepack_merge':
-                    self.logger.error('HCMerge::Scalepack format. Aborted')
-                    raise ValueError("Scalepack Format. Unmerged mtz format required.")
-                # Test reflection files to make sure they are XDS or MTZ format
-                elif reflection_file.file_type() != 'xds_ascii' and reflection_file.file_type() != 'ccp4_mtz':
-                    self.logger.error('HCMerge::%s Reflection Check Failed.  Not XDS format.' % reflection_file.file_name())
-                    raise ValueError("%s has incorrect file format. Unmerged reflections in XDS format only." % reflection_file.file_name())
+                if reflection_file.file_type() == 'scalepack_no_merge_original_index' and self.cell == False:
+                    self.logger.error('HCMerge::Unit Cell required for scalepack no merge original index format.')
+                # if reflection_file.file_type() == 'scalepack_no_merge_original_index' or reflection_file.file_type() == 'scalepack_merge':
+                #     self.logger.error('HCMerge::Scalepack format. Aborted')
+                #     raise ValueError("Scalepack Format. Unmerged mtz format required.")
+                # # Test reflection files to make sure they are XDS or MTZ format
+                # elif reflection_file.file_type() != 'xds_ascii' and reflection_file.file_type() != 'ccp4_mtz':
+                #     self.logger.error('HCMerge::%s Reflection Check Failed.  Not XDS or MTZ format.' % reflection_file.file_name())
+                #     raise ValueError("%s has incorrect file format. Unmerged reflections in XDS format only." % reflection_file.file_name())
                 # Test for all the same format
                 elif len(set(types)) > 1:
                     self.logger.error('HCMerge::Too Many File Types')
@@ -320,10 +325,14 @@ class RapdPlugin(multiprocessing.Process):
                 elif ((reflection_file.file_type() == 'ccp4_mtz') and (reflection_file.file_content().n_reflections() == 0)):
                     self.logger.error('HCMerge::%s Reflection Check Failed.  No Observations.' % reflection_file.file_name())
                     raise ValueError("%s Reflection Check Failed. No Observations." % reflection_file.file_name())
+                elif (((reflection_file.file_type() == 'scalepack_no_merge_original_index') or (reflection_file.file_type() == 'scalepack_merge')) and (reflection_file.file_content().i_obs.size() == 0)):
+                    self.logger.error('HCMerge::%s Reflection Check Failed.  No Observations.' % reflection_file.file_name())
+                    raise ValueError("%s Reflection Check Failed. No Observations." % reflection_file.file_name())
                 # Test reflection file if mtz and make sure it isn't merged by checking for amplitude column
-                elif ((reflection_file.file_type() == 'ccp4_mtz') and ('F' in reflection_file.file_content().column_labels())):
-                    self.logger.error('HCMerge::%s Reflection Check Failed.  Must be unmerged reflections.' % reflection_file.file_name())
-                    raise ValueError("%s Reflection Check Failed. Must be unmerged reflections." % reflection_file.file_name())
+                # Pointless 1.10.23 now accepts merged files, so this check is no longer necessary
+                # elif ((reflection_file.file_type() == 'ccp4_mtz') and ('F' in reflection_file.file_content().column_labels())):
+                #     self.logger.error('HCMerge::%s Reflection Check Failed.  Must be unmerged reflections.' % reflection_file.file_name())
+                #     raise ValueError("%s Reflection Check Failed. Must be unmerged reflections." % reflection_file.file_name())
             # Test reflection files to make sure there are no duplicates
             combos_temp =  self.make_combinations(self.datasets,2)
             for combo in combos_temp:
@@ -332,11 +341,11 @@ class RapdPlugin(multiprocessing.Process):
                     self.logger.error('HCMerge::Same file Entered Twice. %s deleted from list.' % combo[1])
 
         # Make and move to the work directory
-        if os.path.isdir(self.dirs['work']) == False:
-            os.makedirs(self.dirs['work'])
-            os.chdir(self.dirs['work'])
-        else:
-            os.chdir(self.dirs['work'])
+        # if os.path.isdir(self.dirs['work']) == False:
+        #     os.makedirs(self.dirs['work'])
+        #     os.chdir(self.dirs['work'])
+        # else:
+        os.chdir(self.dirs['work'])
         # convert all files to mtz format
         # copy the files to be merged to the work directory
         for count, dataset in enumerate(self.datasets):
@@ -370,15 +379,11 @@ class RapdPlugin(multiprocessing.Process):
             self.data_files.append(hkl_filename)
 
     def process(self):
-        """Run plugin action"""
-
-        self.tprint("process")
-
         """
         Make 1x1 combinations, combine using pointless, scale, determine CC, make matrix and select dataset
         over CC cutoff
         """
-
+        self.tprint("Process: Data Merging Started.")
         self.logger.debug('HCMerge::Data Merging Started.')
 
         # Make 1 x 1 combinations
@@ -536,7 +541,6 @@ class RapdPlugin(multiprocessing.Process):
         """
 
         self.logger.debug('HCMerge::Pair-wise joining of %s using pointless.' % str(in_files))
-#        command = ['#!/bin/csh \n']
         command = []
         command.append('pointless hklout '+out_file+'_pointless.mtz> '+out_file+'_pointless.log <<eof \n')
 
@@ -1105,10 +1109,10 @@ class RapdPlugin(multiprocessing.Process):
     def write_json(self, results):
         """Write a file with the JSON version of the results"""
 
-        json_string = json.dumps(results) #.replace("\\n", "")
+        json_string = json.dumps(results)
 
         # Output to terminal?
-        if self.settings.get("json", False):
+        if self.settings.get("json", True):
             print json_string
 
         # Always write a file
