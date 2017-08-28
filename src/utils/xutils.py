@@ -1156,24 +1156,24 @@ def denzo2mosflm(self):
   except:
     self.logger.exception('**Error in Utils.denzo2mosflm**')
 
-def distlComb(self):
-  """
-  Combine distl results into 1 inp.
-  """
-  try:
-    if len(self.distl_results.keys()) == 1:
-      self.distl_results = self.distl_results['0']
-    else:
-      d = {}
-      for key in self.distl_results.get('0').get("distl_results").keys():
-        temp = self.distl_results.get('0').get("distl_results")[key]
-        temp.extend(self.distl_results.get('1').get("distl_results")[key])
-        d[key] = temp
-      self.distl_results = {"distl_results" : d}
-      # pprint.pprint(self.distl_results)
-
-  except:
-    self.logger.exception('**Error in Utils.distlComb**')
+# def distlComb(self):
+#   """
+#   Combine distl results into 1 inp.
+#   """
+#   try:
+#     if len(self.distl_results.keys()) == 1:
+#       self.distl_results = self.distl_results['0']
+#     else:
+#       d = {}
+#       for key in self.distl_results.get('0').get("distl_results").keys():
+#         temp = self.distl_results.get('0').get("distl_results")[key]
+#         temp.extend(self.distl_results.get('1').get("distl_results")[key])
+#         d[key] = temp
+#       self.distl_results = {"distl_results" : d}
+#       # pprint.pprint(self.distl_results)
+#
+#   except:
+#     self.logger.exception('**Error in Utils.distlComb**')
 
 #Moved Labelit stuff here because it is used by rapd_agent_strategy.py and rapd_agent_beamcenter.py
 def errorLabelitPost(self, iteration, error, run_before=False):
@@ -1241,7 +1241,7 @@ def errorLabelit(self, iteration):
             preferences.write('distl.minimum_signal_height=4.3\n')
         preferences.close()
         self.labelit_log[str(iteration)] = ['\nLooking for long unit cell.\n']
-        self.tprint("\n    Looking for long unit cell", level=30, color="white", newline=False)
+        self.tprint("\n  Looking for long unit cell", level=30, color="white", newline=False)
         self.logger.debug('Looking for long unit cell.')
 
     elif iteration == 2:
@@ -1249,8 +1249,8 @@ def errorLabelit(self, iteration):
         preferences.write('distl.minimum_spot_height=6\n')
         preferences.close()
         self.labelit_log[str(iteration)] = ['\nChanging settings to look for stronger peaks (ie. small molecule).\n']
-        self.tprint("\n    Looking for stronger peaks (ie. small molecule)", level=30, color="white", newline=False)
-        self.logger.debug('Changing settings to look for stronger peaks (ie. small molecule).')
+        self.tprint("\n  Looking for stronger peaks (ie. small molecule)", level=30, color="white", newline=False)
+        self.logger.debug("Changing settings to look for stronger peaks (ie. small molecule).")
 
     elif iteration == 3:
         if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
@@ -1264,7 +1264,7 @@ def errorLabelit(self, iteration):
             preferences.write('distl.minimum_signal_height=1.2\n')
         preferences.close()
         self.labelit_log[str(iteration)] = ['\nLooking for weak diffraction.\n']
-        self.tprint("\n    Looking for weak diffraction", level=30, color="white", newline=False)
+        self.tprint("\n  Looking for weak diffraction", level=30, color="white", newline=False)
         self.logger.debug('Looking for weak diffraction.')
 
     elif iteration == 4:
@@ -1281,7 +1281,7 @@ def errorLabelit(self, iteration):
             self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 8.\n']
             area = 8
         preferences.close()
-        self.tprint("\n    Setting spot picking level to %d" % area, level=30, color="white", newline=False)
+        self.tprint("\n  Setting spot picking level to %d" % area, level=30, color="white", newline=False)
         self.logger.debug('Setting spot picking level to 3 or 8.')
 
     elif iteration == 5:
@@ -1301,7 +1301,7 @@ def errorLabelit(self, iteration):
             self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 6 and resolution to 5.\n']
             setting = (6, 5)
         preferences.close()
-        self.tprint("\n    Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white", newline=False)
+        self.tprint("\n  Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white", newline=False)
         self.logger.debug('Setting spot picking level to 2 or 6.')
 
     return self.process_labelit(iteration)

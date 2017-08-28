@@ -40,7 +40,8 @@ export class ResultsService {
 
       // What to do with the message
       self.ws.onmessage = function(error: MessageEvent) {
-          self.handleWebsocketMessage(error.data);
+        console.log(error);
+        self.handleWebsocketMessage(error.data);
       };
     };
   }

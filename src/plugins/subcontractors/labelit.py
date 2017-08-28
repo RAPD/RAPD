@@ -50,6 +50,7 @@ import sys
 # import detectors.detector_utils as detector_utils
 # import utils
 # import utils.credits as credits
+from utils.r_numbers import try_float, try_int
 
 # Software dependencies
 VERSIONS = {
@@ -65,6 +66,8 @@ def parse_output(labelit_output, iteration=0):
     """
 
     labelit_output = labelit_output.split("\n")
+
+    # pprint(labelit_output)
 
     # Holders for parsed data
     result_lines = []
@@ -158,6 +161,7 @@ def parse_output(labelit_output, iteration=0):
             if line.startswith("Beam center"):
                 labelit_bc["labelit_x_beam"] = line.split()[3][:-3]
                 labelit_bc["labelit_y_beam"] = line.split()[5][:-3]
+
             # Now save line numbers for parsing Labelit and Mosflm results
             if line.startswith("Solution"):
                 result_lines.append(index)
@@ -226,8 +230,8 @@ def parse_output(labelit_output, iteration=0):
             mosflm_beam_x.append(line.split()[2+result_line])
             mosflm_beam_y.append(line.split()[3+result_line])
             mosflm_distance.append(line.split()[4+result_line])
-            mosflm_res.append(line.split()[5+result_line])
-            mosflm_mos.append(line.split()[6+result_line])
+            mosflm_res.append(try_float(line.split()[5+result_line]))
+            mosflm_mos.append(try_float(line.split()[6+result_line]))
             mosflm_rms.append(line.split()[7+result_line])
 
     # Sometimes Labelit works with few spots, sometimes it doesn"t...
@@ -260,6 +264,49 @@ def parse_output(labelit_output, iteration=0):
             "output": labelit_output}
 
     return data
+
+def parse_labelit_files(bestfile_lines, mat_lines, sub_lines, mode="all"):
+    """
+    Parse the lines from bestfile.par
+    Transplant from xutils.getLabelitCell
+    """
+
+    run2 = False
+    run3 = False
+    cell = False
+    sym = False
+    for line in bestfile_lines:
+        print line
+        if line.startswith('CELL'):
+            if len(line.split()) == 7:
+                cell = [try_float(item) for item in line.split()[1:]]
+            else:
+                run2 = True
+        if line.startswith('SYMMETRY'):
+            if len(line.split()) == 2:
+                sym = line.split()[1]
+            else:
+                run3 = True
+    # Sometimes bestfile.par is corrupt so I have backups to get cell and sym.
+    if run2:
+        for line in mat_lines:
+            if len(line.split()) == 6:
+                cell = [try_float(item) for item in line.split()]
+
+    if run3:
+        for line in sub_lines:
+            if line.startswith('SYMMETRY'):
+                sym = line.split()[1]
+
+    # pprint(cell)
+    # pprint(sym)
+
+    if mode == 'all':
+        return (cell, sym)
+    elif mode == 'sym':
+        return sym
+    else:
+        return cell
 
 def get_labelit_stats(labelit_results, simple=False):
     """

@@ -1,0 +1,17 @@
+<h2 md-dialog-title>
+  {{this.data.dialog_title}}
+</h2>
+<button md-icon-button class="button-dialog-top-right" (click)="exitPlot()">
+  <md-icon>close</md-icon>
+</button>
+
+<md-dialog-content style="margin:0">
+  <canvas baseChart
+    [datasets]="data.ys"
+    [labels]="data.xs"
+    [options]="data.lineChartOptions"
+    [chartType]="data.lineChartType"
+    [colors]="lineChartColors"
+    (chartHover)="chartHovered($event)"
+    (chartClick)="chartClicked($event)"></canvas>
+</md-dialog-content>

@@ -520,7 +520,7 @@ class FileGenerator(CommandlineFileGenerator):
             "            self.tprint = tprint",
             "        # Dead end if no tprint passed",
             "        else:",
-            "            def func(arg=False, level=False, verbosity=False, color=False):",
+            "            def func(*args, *kwargs):",
             "                pass",
             "            self.tprint = func\n",
             "        # Some logging",

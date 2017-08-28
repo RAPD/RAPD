@@ -14,20 +14,19 @@ export class AdminService {
 
   private apiUrl = 'http://localhost:3000/api';
 
-  constructor(private auth_http: AuthHttp) { }
+  constructor(private authHttp: AuthHttp) { }
 
   public getUsers(): Observable<User[]> {
 
     console.log('getUsers');
 
-    return this.auth_http.get(this.apiUrl + '/users')
+    return this.authHttp.get(this.apiUrl + '/users')
       .map(this.extractUsers);
       // .catch(this.handleError);
   }
 
   private extractUsers(res: Response, error) {
-
-    // console.log('error', error);
+    console.log('error', error);
     let body = res.json();
     console.log(body);
     return body || {};
@@ -41,7 +40,7 @@ export class AdminService {
     let header = new Headers();
     header.append('Content-Type', 'application/json'); // 'application/x-www-form-urlencoded'
 
-    return this.auth_http.put(
+    return this.authHttp.put(
       this.apiUrl + '/users/' + user._id,
       JSON.stringify({user: user}),
       {headers: header}
@@ -59,14 +58,14 @@ export class AdminService {
 
     console.log('deleteUser', _id);
 
-    return this.auth_http.delete(this.apiUrl + '/users/' + _id).map(res => res.json());
+    return this.authHttp.delete(this.apiUrl + '/users/' + _id).map(res => res.json());
   }
 
   public getGroups(): Observable<Group[]> {
 
     console.log('getGroups');
 
-    return this.auth_http.get(this.apiUrl + '/groups')
+    return this.authHttp.get(this.apiUrl + '/groups')
       .map(this.extractGroups);
       // .catch(this.handleError);
   }
@@ -92,7 +91,7 @@ export class AdminService {
     let header = new Headers();
     header.append('Content-Type', 'application/json'); // 'application/x-www-form-urlencoded'
 
-    return this.auth_http.put(
+    return this.authHttp.put(
       this.apiUrl + '/groups/' + group._id,
       JSON.stringify({group: group}),
       {headers: header}
@@ -105,14 +104,14 @@ export class AdminService {
 
     console.log('deleteGroup', _id);
 
-    return this.auth_http.delete(this.apiUrl + '/groups/' + _id).map(res => res.json());
+    return this.authHttp.delete(this.apiUrl + '/groups/' + _id).map(res => res.json());
   }
 
   public getSessions(): Observable<Session[]> {
 
     // console.log('getSessions');
 
-    return this.auth_http.get(this.apiUrl + '/sessions')
+    return this.authHttp.get(this.apiUrl + '/sessions')
       .map(this.extractSessions);
       // .catch(this.handleError);
   }
@@ -138,7 +137,7 @@ export class AdminService {
     let header = new Headers();
     header.append('Content-Type', 'application/json'); // 'application/x-www-form-urlencoded'
 
-    return this.auth_http.put(
+    return this.authHttp.put(
       this.apiUrl + '/sessions/' + session._id,
       JSON.stringify({session: session}),
       {headers: header}

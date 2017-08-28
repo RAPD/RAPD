@@ -59,6 +59,7 @@ import importlib
 # RAPD imports
 import info
 import plugins.subcontractors.parse as Parse
+import plugins.subcontractors.best as best
 import plugins.subcontractors.labelit as labelit
 from plugins.subcontractors.xoalign import RunXOalign
 import utils.credits as rcredits
@@ -151,7 +152,7 @@ class RapdPlugin(Process):
     labelit_summary = False
     labelit_failed = False
     distl_log = []
-    distl_results = {}
+    distl_results = []
     distl_summary = False
     raddose_results = False
     raddose_summary = False
@@ -1129,80 +1130,84 @@ class RapdPlugin(Process):
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::postprocessDistl")
 
-        try:
-            timer = 0
-            while len(self.distl_output) != 0:
-                for job in self.distl_output:
-                    if job.is_alive() == False:
-                        self.distl_output.remove(job)
-                time.sleep(0.2)
-                timer += 0.2
-                if self.verbose:
-                    number = round(timer % 1, 1)
-                    if number in (0.0, 1.0):
-                        pass
-                        # print "Waiting for Distl to finish %s seconds" % timer
-                if self.distl_timer:
-                    if timer >= self.distl_timer:
-                        job.terminate()
-                        self.distl_output.remove(job)
-                        self.distl_log.append("Distl timed out\n")
-                        if self.verbose:
-                            self.tprint(arg="Distl timed out", level=30, color="red")
-                            self.logger.error("Distl timed out.")
+        # try:
+        timer = 0
+        while len(self.distl_output) != 0:
+            for job in self.distl_output:
+                if job.is_alive() == False:
+                    self.distl_output.remove(job)
+            time.sleep(0.2)
+            timer += 0.2
+            if self.verbose:
+                number = round(timer % 1, 1)
+                if number in (0.0, 1.0):
+                    pass
+                    # print "Waiting for Distl to finish %s seconds" % timer
+            if self.distl_timer:
+                if timer >= self.distl_timer:
+                    job.terminate()
+                    self.distl_output.remove(job)
+                    self.distl_log.append("Distl timed out\n")
+                    if self.verbose:
+                        self.tprint(arg="Distl timed out", level=30, color="red")
+                        self.logger.error("Distl timed out.")
 
-            os.chdir(self.labelit_dir)
-            f = 1
-            if self.header2:
-                f = 2
-            for x in range(0, f):
-                log = open("distl%s.log" % x, "r").readlines()
-                self.distl_log.extend(log)
-                distl = Parse.ParseOutputDistl(self, log)
-                if distl == None:
-                    self.distl_results = {"distl_results":"FAILED"}
-                    self.tprint(arg="  DISTL analysis failed", level=30, color="red")
-                else:
-                    self.distl_results[str(x)] = {"distl_results": distl}
+        # Get into the labelit directory
+        os.chdir(self.labelit_dir)
 
-            xutils.distlComb(self)
+        # Count frames
+        if self.header2:
+            frame_count = 2
+        else:
+            frame_count = 1
 
-            # pprint.pprint(self.distl_results)
+        # Parse out distl results for the frame(s)
+        for frame_number in range(0, frame_count):
+            # Read in the log
+            log = open("distl%s.log" % frame_number, "r").readlines()
+            # Store the logs in one
+            self.distl_log.extend(log)
+            # Parse and put the distl results into storage
+            self.distl_results.append(Parse.ParseOutputDistl(self, log))
 
-            # Print DISTL results to commandline - verbose only
-            self.tprint(arg="\nDISTL analysis results", level=30, color="blue")
-            distl_results = self.distl_results["distl_results"]
-            if len(distl_results["distl res"]) == 2:
-                self.tprint(arg="  %21s  %6s %6s" % ("", "image 1", "image 2"), level=30, color="white")
-                format_string = "  %21s: %6s  %6s"
-                default_result = ["-", "-"]
-            else:
-                format_string = "  %21s: %s"
-                default_result = ["-",]
+        # Debugging
+        # pprint(self.distl_results)
 
-            distl_labels = OrderedDict([
-                ("total spots", "Total Spots"),
-                ("spots in res", "Spots in Resolution"),
-                ("good Bragg spots", "Good Bragg Spots"),
-                ("overloads", "Overloaded Spots"),
-                ("distl res", "DISTL Resolution"),
-                ("labelit res", "Labelit Resolution"),
-                ("max cell", "Max Cell"),
-                ("ice rings", "Ice Rings"),
-                ("min signal strength", "Min Signal Strength"),
-                ("max signal strength", "Max Signal Strength"),
-                ("mean int signal", "Mean Intensity Signal"),
-                ])
+        # Print DISTL results to commandline - verbose only
+        self.tprint(arg="\nDISTL analysis results", level=30, color="blue")
+        if len(self.distl_results) == 2:
+            self.tprint(arg="  %21s  %8s  %8s" % ("", "image 1", "image 2"), level=30, color="white")
+            format_string = "  %21s: %8s  %8s"
+            default_result = ["-", "-"]
+        else:
+            format_string = "  %21s: %s"
+            default_result = ["-",]
 
-            for key, val in distl_labels.iteritems():
-                result = distl_results.get(key)
-                if not result:
-                    result = default_result
-                vals = tuple([val] + result)
-                self.tprint(arg=format_string % vals, level=30, color="white")
+        distl_labels = OrderedDict([
+            ("spots_total", "Total Spots"),
+            ("spots_in_res", "Spots in Resolution"),
+            ("spots_good_bragg", "Good Bragg Spots"),
+            ("overloads", "Overloaded Spots"),
+            ("distl_res", "DISTL Resolution"),
+            ("labelit_res", "Labelit Resolution"),
+            ("max_cell", "Max Cell"),
+            ("ice_rings", "Ice Rings"),
+            ("signal_min", "Min Signal Strength"),
+            ("signal_max", "Max Signal Strength"),
+            ("signal_mean", "Mean Intensity Signal"),
+            ])
 
-        except:
-            self.logger.exception("**Error in postprocessDistl**")
+        for key, val in distl_labels.iteritems():
+            result = []
+            for distl_result in self.distl_results:
+                result.append(distl_result.get(key))
+            if not result:
+                result = default_result
+            vals = tuple([val] + result)
+            self.tprint(arg=format_string % vals, level=30, color="white")
+
+        # except:
+        #     self.logger.exception("**Error in postprocessDistl**")
 
     def error_best_post(self, iteration, error, anom=False):
         """
@@ -1247,7 +1252,7 @@ class RapdPlugin(Process):
 
         # print inp
 
-        # try:
+        # Read in log files
         xml = "None"
         anom = False
         if inp.count("anom"):
@@ -1261,15 +1266,11 @@ class RapdPlugin(Process):
         else:
             self.best_log.extend(log)
 
-        # except:
-        #     self.logger.exception("**Error in postprocessBest.**")
-
-        # print ">>", log
-        # print ">>", xml
-        # print ">>", anom
+        # Parse the best results
         data = Parse.ParseOutputBest(self, (log, xml), anom)
-        # pprint(data)
-        # print data.get("strategy res limit")
+
+        # Set directory for future use
+        data["directory"] = os.path.dirname(inp)
 
         if self.labelit_results["labelit_results"] != "FAILED":
             # Best error checking. Most errors caused by B-factor calculation problem.
@@ -1285,7 +1286,7 @@ class RapdPlugin(Process):
                 if data["overall"]["anomalous"]:
                     self.tprint(arg="\nBEST strategy ANOMALOUS", level=98, color="blue")
                 else:
-                    self.tprint(arg="\nBEST strategy NORMAL", level=98, color="blue")
+                    self.tprint(arg="\n\nBEST strategy NORMAL", level=98, color="blue")
                 # Header lines
                 self.tprint(arg="  " + "-" * 85, level=98, color="white")
                 self.tprint(arg="  " + " N |  Omega_start |  N.of.images | Rot.width |  Exposure | \
@@ -1345,7 +1346,7 @@ Distance | % Transmission", level=98, color="white")
         data = Parse.ParseOutputMosflm_strat(self, out, inp.count("anom"))
 
         # Print to terminal
-        # pprint.pprint(data)
+        # pprint(data)
         if "run_number" in data:
             flag = "strategy "
             self.tprint(arg="\nMosflm strategy standard", level=98, color="blue")
@@ -1409,6 +1410,7 @@ Distance | % Transmission", level=98, color="white")
         # dict = {}
         # Run twice for regular(0) and anomalous(1) strategies
         l = ["", "_anom"]
+        first_print = False
         for x in range(0, 2):
             for i in range(st, 5):
                 timed_out = False
@@ -1427,9 +1429,17 @@ Distance | % Transmission", level=98, color="white")
                     if self.verbose:
                         number = round(timer % 1, 1)
                         if number in (0.0, 1.0):
-                            self.tprint(arg="    Waiting for strategy to finish %s seconds" % timer,
-                                        level=10,
-                                        color="white")
+                            if first_print:
+                                self.tprint(arg=".",
+                                            level=10,
+                                            color="white",
+                                            newline=False)
+                            else:
+                                first_print = True
+                                self.tprint(arg="    Waiting for strategy to finish",
+                                            level=10,
+                                            color="white",
+                                            newline=False)
                     if self.strategy_timer:
                         if timer >= self.strategy_timer:
                             timed_out = True
@@ -1566,16 +1576,29 @@ Distance | % Transmission", level=98, color="white")
 
             # Save best results in corect place.
             self.labelit_results = self.labelit_results[highest]
-            # pprint.pprint(self.labelit_results)
+            # pprint(self.labelit_results)
 
             # Set self.volume for best solution
             self.volume = volumes[highest]
 
             # Set self.labelit_dir and go to it.
             self.labelit_dir = os.path.join(self.working_dir, str(highest))
-            # pprint(self.labelit_results)
             self.index_number = self.labelit_results.get("labelit_results").get("mosflm_index")
             os.chdir(self.labelit_dir)
+
+            # Parse out additional information from labelit-created files
+            bestfile_lines = open("bestfile.par", "r").readlines()
+            mat_lines = open("%s.mat" % self.index_number, "r").readlines()
+            sub_lines = open("%s" % self.index_number, "r").readlines()
+            # Parse the file for unit cell information
+            labelit_cell, labelit_sym = labelit.parse_labelit_files(bestfile_lines,
+                                                                    mat_lines,
+                                                                    sub_lines)
+            self.labelit_results["labelit_results"]["best_cell"] = labelit_cell
+            self.labelit_results["labelit_results"]["best_sym"] = labelit_sym
+            # pprint(self.labelit_results)
+
+            # Handle the user-set spacegroup
             if self.spacegroup != False:
                 check_lg = xutils.checkSG(self, sym)
                 # print check_lg
@@ -1585,11 +1608,11 @@ Distance | % Transmission", level=98, color="white")
                 # print user_sg
                 # sys.exit()
                 if user_sg != sym:
-                    fixSG = False
+                    fix_spacegroup = False
                     for line in check_lg:
                         if line == user_sg:
-                            fixSG = True
-                    if fixSG:
+                            fix_spacegroup = True
+                    if fix_spacegroup:
                         xutils.fixMosflmSG(self)
                         xutils.fixBestSG(self)
                     else:
@@ -1599,16 +1622,16 @@ Distance | % Transmission", level=98, color="white")
             self.tprint(arg="\nHighest symmetry Labelit result",
                         level=98,
                         color="blue",
-                        #newline=False)
-                        )
+                        newline=False)
+
             for line in self.labelit_results["labelit_results"]["output"][5:]:
                 self.tprint(arg="  %s" % line.rstrip(), level=98, color="white")
-            # pprint.pprint(self.labelit_results["labelit_results"]["output"])
+            # pprint(self.labelit_results["labelit_results"]["output"])
 
         # No Labelit solution
         else:
             self.logger.debug("No solution was found when sorting Labelit results.")
-            self.tprint(arg="Labelit failed to index", level=30, color="red")
+            self.tprint(arg="\n  Labelit failed to index", level=30, color="red")
             self.labelit_failed = True
             self.labelit_results = {"labelit_results":"FAILED"}
             self.labelit_dir = os.path.join(self.working_dir, "0")
@@ -1720,51 +1743,58 @@ Distance | % Transmission", level=98, color="white")
         """Display plots on the commandline"""
 
         # Plot as long as JSON output is not selected
-        if self.preferences.get("show_plots", True) and (not self.preferences.get("json", False)):
+        if self.preferences.get("show_plots", True) and \
+           (not self.preferences.get("json", False)):
 
             # Determine the open terminal size
             term_size = os.popen('stty size', 'r').read().split()
 
             titled = False
+
             for plot_type in ("osc_range", "osc_range_anom"):
 
                 if plot_type in self.plots:
 
                     if not titled:
-                        self.tprint(arg="\nPlots from BEST", level=98, color="blue")
+                        self.tprint(arg="\nPlots from BEST",
+                                    level=98,
+                                    color="blue")
                         titled = True
 
-                    tag = {"osc_range":"standard", "osc_range_anom":"ANOMALOUS"}[plot_type]
+                    tag = {"osc_range":"standard",
+                           "osc_range_anom":"ANOMALOUS"}[plot_type]
 
                     plot_data = self.plots[plot_type]
 
                     # Determine y max
-                    y_array = numpy.array(plot_data["data"][0]["series"][0]["ys"])
+                    y_array = numpy.array(plot_data["y_data"][0]["data"])
                     y_max = y_array.max() + 10
-                    y_min = 0 #max(0, (y_array.min() - 10))
+                    y_min = 0
 
-                    gnuplot = subprocess.Popen(["gnuplot"], stdin=subprocess.PIPE)
+                    gnuplot = subprocess.Popen(["gnuplot"],
+                                               stdin=subprocess.PIPE)
                     gnuplot.stdin.write(
                         """set term dumb %d,%d
                            set key outside
                            set title 'Minimal Oscillation Ranges %s'
                            set xlabel 'Starting Angle'
                            set ylabel 'Rotation Range' rotate by 90 \n""" % \
-                           (min(180, int(term_size[1])), max(30, int(int(term_size[0])/3)), tag))
+                           (min(180, int(term_size[1])),
+                            max(30, int(int(term_size[0])/3)),
+                            tag))
 
                     # Create the plot string
                     plot_string = "plot [0:180] [%d:%d] " % (y_min, y_max)
-                    for i in range(min(5, len(plot_data["data"]))):
+                    for i in range(min(5, len(plot_data["y_data"]))):
                         plot_string += "'-' using 1:2 title '%s' with lines," % \
-                        plot_data["data"][i]["parameters"]["linelabel"].replace("compl -", "")
+                        plot_data["y_data"][i]["label"]
                     plot_string = plot_string.rstrip(",") + "\n"
                     gnuplot.stdin.write(plot_string)
 
                     # Run through the data and add to gnuplot
-                    for i in range(min(5, len(plot_data["data"]))):
-                        plot = plot_data["data"][i]
-                        x_series = plot["series"][0]["xs"]
-                        y_series = plot["series"][0]["ys"]
+                    for i in range(min(5, len(plot_data["y_data"]))):
+                        y_series = plot_data["y_data"][i]["data"]
+                        x_series = plot_data["x_data"]
                         for i, j in zip(x_series, y_series):
                             gnuplot.stdin.write("%f %f\n" % (i, j))
                         gnuplot.stdin.write("e\n")
@@ -1854,7 +1884,7 @@ Distance | % Transmission", level=98, color="white")
         if self.labelit_results:
             results.update(self.labelit_results)
         if self.distl_results:
-            results.update(self.distl_results)
+            results["distl_results"] = self.distl_results
         if self.raddose_results:
             results.update(self.raddose_results)
         if self.best_results:
@@ -1941,49 +1971,54 @@ Distance | % Transmission", level=98, color="white")
         if self.verbose:
             self.logger.debug("AutoindexingStrategy::htmlBestPlots")
 
-        # pprint.pprint(self.best_results)
+        # Debugging
+        # pprint(self.best_results)
 
         # try:
-        run = True
-        plot = False
-        plotanom = False
-        dir1 = self.best_results.get("best_results_norm").get("directory", False)
-        dir2 = self.best_anom_results.get("best_results_anom").get("directory", False)
+        # run = True
+        plot = {}
+        plotanom = {}
+        new_plot = {}
+        new_plotanom = {}
+
+        norm_res_dir = self.best_results.get("best_results_norm").get("directory", False)
+        anom_res_dir = self.best_anom_results.get("best_results_anom").get("directory", False)
 
         # Get the parsed results for reg and anom results and put them into a single dict.
-        if dir1:
-            # print ">>>", os.path.join(dir1, "best.plt")
-            plot = Parse.ParseOutputBestPlots(self,
-                                              open(os.path.join(dir1, "best.plt"), "r").readlines())
-            if dir2:
-                # print ">>>", os.path.join(dir2, "best_anom.plt")
-                plotanom = Parse.ParseOutputBestPlots(
-                    self,
-                    open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
-                plot.update({"osc_range_anom": plotanom.get("osc_range")})
-        elif dir2:
-            # print ">>>", os.path.join(dir2, "best_anom.plt")
-            plot = Parse.ParseOutputBestPlots(
-                self,
-                open(os.path.join(dir2, "best_anom.plt"), "r").readlines())
-            plot.update({"osc_range_anom": plot.pop("osc_range")})
+        if norm_res_dir:
+            # Read the raw best plots output
+            raw = open(os.path.join(norm_res_dir, "best.plt"), "r").readlines()
+            # Parse the plot file
+            new_plot = best.parse_best_plots(raw)
+
+            if anom_res_dir:
+                # Read the raw best plots output
+                raw = open(os.path.join(anom_res_dir, "best_anom.plt"), "r").readlines()
+                # Parse the plot file
+                new_plotanom = best.parse_best_plots(raw)
+                new_plot.update({"osc_range_anom": new_plotanom.get("osc_range")})
+
+        elif anom_res_dir:
+            # Read the raw best plots output
+            raw = open(os.path.join(anom_res_dir, "best.plt"), "r").readlines()
+            # Parse the plot file
+            new_plotanom = best.parse_best_plots(raw)
+            new_plot.update({"osc_range_anom": new_plotanom.pop("osc_range")})
         else:
             run = False
 
         # Best failed?
         if self.best_failed:
-            best_plots = False
-
+            self.plots = False
         # Best success
         else:
-            self.plots = plot
+            self.plots = new_plot
 
         # except:
         #     self.logger.exception("**ERROR in htmlBestPlots**")
 
 
 class RunLabelit(Process):
-
 
     labelit_pids = []
     labelit_jobs = {}
@@ -2219,7 +2254,10 @@ class RunLabelit(Process):
         if self.preferences.has_key("x_beam"):
             x_beam = self.preferences["x_beam"]
             y_beam = self.preferences["y_beam"]
-            self.tprint("  Using override beam center %s, %s" % (x_beam, y_beam), 10, "white")
+            self.tprint("  Using override beam center %s, %s" % (x_beam, y_beam),
+                        10,
+                        "white",
+                        newline=False)
 
         binning = True
         if self.header.has_key('binning'):
@@ -2478,6 +2516,7 @@ rerunning.\n" % spot_count)
         else:
 
             parsed_result = labelit.parse_output(stdout, iteration)
+
             # Save the return into the shared var
             self.labelit_results[iteration] = {"labelit_results": parsed_result}
             # pprint(data)
@@ -2599,83 +2638,93 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
                         level=50,
                         color="red")
 
-    def postprocess_labelit(self, iteration=0, run_before=False, blank=False):
-        """
-        Sends Labelit log for parsing and error checking for rerunning Labelit. Save output dicts.
-        """
-        # print "postprocess_labelit", iteration, run_before, blank
-        self.logger.debug('RunLabelit::postprocess_labelit')
-
-        # try:
-        xutils.foldersLabelit(self, iteration)
-
-        # print "cwd", os.getcwd()
-        #labelit_failed = False
-        if blank:
-            error = 'Not enough spots for autoindexing.'
-            if self.verbose:
-                self.logger.debug(error)
-            self.labelit_log[iteration].append(error+'\n')
-            return None
-        else:
-            log = open('labelit.log', 'r').readlines()
-            # for line in log:
-                # print line.rstrip()
-            self.labelit_log[iteration].extend('\n\n')
-            self.labelit_log[iteration].extend(log)
-            data = Parse.ParseOutputLabelit(self, log, iteration)
-            if self.short:
-                #data = Parse.ParseOutputLabelitNoMosflm(self,log,iteration)
-                self.labelit_results = {"labelit_results": data}
-            else:
-                #data = Parse.ParseOutputLabelit(self,log,iteration)
-                self.labelit_results[iteration] = {"labelit_results": data}
-        # except:
-        #     self.logger.exception('**ERROR in RunLabelit.postprocess_labelit**')
-
-        # Do error checking and send to correct place according to iteration.
-        out = {'bad input': {'error':'Labelit did not like your input unit cell dimensions or SG.','run':'xutils.errorLabelitCellSG(self,iteration)'},
-               'bumpiness': {'error':'Labelit settings need to be adjusted.','run':'xutils.errorLabelitBump(self,iteration)'},
-               'mosflm error': {'error':'Mosflm could not integrate your image.','run':'xutils.errorLabelitMosflm(self,iteration)'},
-               'min good spots': {'error':'Labelit did not have enough spots to find a solution','run':'xutils.errorLabelitGoodSpots(self,iteration)'},
-               'no index': {'error':'No solutions found in Labelit.','run':'xutils.errorLabelit(self,iteration)'},
-               'fix labelit': {'error':'Distance is not getting read correctly from the image header.','kill':True},
-               'no pair': {'error':'Images are not a pair.','kill':True},
-               'failed': {'error':'Autoindexing Failed to find a solution','kill':True},
-               'min spots': {'error':'Labelit did not have enough spots to find a solution.','run1':'xutils.errorLabelitMin(self,iteration,data[1])',
-                             'run2':'xutils.errorLabelit(self,iteration)'},
-               'fix_cell': {'error':'Labelit had multiple choices for user SG and failed.','run1':'xutils.errorLabelitFixCell(self,iteration,data[1],data[2])',
-                            'run2':'xutils.errorLabelitCellSG(self,iteration)'},
-               }
-        # If Labelit results are OK, then...
-        if type(data) == dict:
-            d = False
-        # Otherwise deal with fixing and rerunning Labelit
-        elif type(data) == tuple:
-            d = data[0]
-        else:
-            d = data
-        if d:
-            if out.has_key(d):
-                if out[d].has_key('kill'):
-                    if self.multiproc:
-                        xutils.errorLabelitPost(self,iteration,out[d].get('error'),True)
-                    else:
-                        xutils.errorLabelitPost(self,self.iterations,out[d].get('error'))
-                else:
-                    xutils.errorLabelitPost(self,iteration,out[d].get('error'),run_before)
-                    if self.multiproc:
-                        if run_before == False:
-                            return(eval(out[d].get('run',out[d].get('run1'))))
-                    else:
-                        if iteration <= self.iterations:
-                            return(eval(out[d].get('run', out[d].get('run2'))))
-            else:
-                error = 'Labelit failed to find solution.'
-                xutils.errorLabelitPost(self,iteration,error,run_before)
-                if self.multiproc == False:
-                    if iteration <= self.iterations:
-                        return (xutils.errorLabelit(self,iteration))
+    # def postprocess_labelit(self, iteration=0, run_before=False, blank=False):
+    #     """
+    #     Sends Labelit log for parsing and error checking for rerunning Labelit. Save output dicts.
+    #     """
+    #     # print "postprocess_labelit", iteration, run_before, blank
+    #     self.logger.debug('RunLabelit::postprocess_labelit')
+    #
+    #     # try:
+    #     xutils.foldersLabelit(self, iteration)
+    #
+    #     # print "cwd", os.getcwd()
+    #     #labelit_failed = False
+    #     if blank:
+    #         error = 'Not enough spots for autoindexing.'
+    #         if self.verbose:
+    #             self.logger.debug(error)
+    #         self.labelit_log[iteration].append(error+'\n')
+    #         return None
+    #     else:
+    #         # Read in the labelit log file
+    #         log = open('labelit.log', 'r').readlines()
+    #         # Store the log file lines
+    #         self.labelit_log[iteration].extend('\n\n')
+    #         self.labelit_log[iteration].extend(log)
+    #         # Parse the labelit log file
+    #         data = Parse.ParseOutputLabelit(self, log, iteration)
+    #
+    #         # Read in the bestfile.par
+    #         bestfile_lines = open("bestfile.par", "r").readlines()
+    #         mat_lines = open("%s.mat" % self.index_number, "r").readlines()
+    #         sub_lines = open("%s" % self.index_number, "r").readlines()
+    #         # Parse the file for unit cell information
+    #         labelit_info = Parse.ParseBestfilePar(bestfile_lines, mat_lines, sub_lines)
+    #         pprint(labelit_info)
+    #         sys.exit()
+    #         if self.short:
+    #             #data = Parse.ParseOutputLabelitNoMosflm(self,log,iteration)
+    #             self.labelit_results = {"labelit_results": data}
+    #         else:
+    #             #data = Parse.ParseOutputLabelit(self,log,iteration)
+    #             self.labelit_results[iteration] = {"labelit_results": data}
+    #     # except:
+    #     #     self.logger.exception('**ERROR in RunLabelit.postprocess_labelit**')
+    #
+    #     # Do error checking and send to correct place according to iteration.
+    #     out = {'bad input': {'error':'Labelit did not like your input unit cell dimensions or SG.','run':'xutils.errorLabelitCellSG(self,iteration)'},
+    #            'bumpiness': {'error':'Labelit settings need to be adjusted.','run':'xutils.errorLabelitBump(self,iteration)'},
+    #            'mosflm error': {'error':'Mosflm could not integrate your image.','run':'xutils.errorLabelitMosflm(self,iteration)'},
+    #            'min good spots': {'error':'Labelit did not have enough spots to find a solution','run':'xutils.errorLabelitGoodSpots(self,iteration)'},
+    #            'no index': {'error':'No solutions found in Labelit.','run':'xutils.errorLabelit(self,iteration)'},
+    #            'fix labelit': {'error':'Distance is not getting read correctly from the image header.','kill':True},
+    #            'no pair': {'error':'Images are not a pair.','kill':True},
+    #            'failed': {'error':'Autoindexing Failed to find a solution','kill':True},
+    #            'min spots': {'error':'Labelit did not have enough spots to find a solution.','run1':'xutils.errorLabelitMin(self,iteration,data[1])',
+    #                          'run2':'xutils.errorLabelit(self,iteration)'},
+    #            'fix_cell': {'error':'Labelit had multiple choices for user SG and failed.','run1':'xutils.errorLabelitFixCell(self,iteration,data[1],data[2])',
+    #                         'run2':'xutils.errorLabelitCellSG(self,iteration)'},
+    #            }
+    #     # If Labelit results are OK, then...
+    #     if type(data) == dict:
+    #         d = False
+    #     # Otherwise deal with fixing and rerunning Labelit
+    #     elif type(data) == tuple:
+    #         d = data[0]
+    #     else:
+    #         d = data
+    #     if d:
+    #         if out.has_key(d):
+    #             if out[d].has_key('kill'):
+    #                 if self.multiproc:
+    #                     xutils.errorLabelitPost(self,iteration,out[d].get('error'),True)
+    #                 else:
+    #                     xutils.errorLabelitPost(self,self.iterations,out[d].get('error'))
+    #             else:
+    #                 xutils.errorLabelitPost(self,iteration,out[d].get('error'),run_before)
+    #                 if self.multiproc:
+    #                     if run_before == False:
+    #                         return(eval(out[d].get('run',out[d].get('run1'))))
+    #                 else:
+    #                     if iteration <= self.iterations:
+    #                         return(eval(out[d].get('run', out[d].get('run2'))))
+    #         else:
+    #             error = 'Labelit failed to find solution.'
+    #             xutils.errorLabelitPost(self,iteration,error,run_before)
+    #             if self.multiproc == False:
+    #                 if iteration <= self.iterations:
+    #                     return (xutils.errorLabelit(self,iteration))
 
     def postprocess(self):
         """

@@ -56,7 +56,7 @@ function Wss (opt, callback) {
       // console.log(ws);
 
       // Create a session object
-      ws.session = {foo:'bar'};
+      ws.session = {};
 
       // Mark the ws and save to list
       ws.id = uuid.v1();
@@ -82,16 +82,17 @@ function Wss (opt, callback) {
           jwt.verify(data.token, 'ilovescotchyscotch', function(err, decoded) {
             if (err) {
               console.log(err);
-              // return res.json({ success: false, message: 'Failed to authenticate token.' });
+              return res.json({ success: false, message: 'Failed to authenticate token.' });
             } else {
-              // console.log(decoded);
+              console.log(decoded);
 
               let now = Date.now()/1000;
-              // console.log(decoded.iat, decoded.exp, (decoded.exp-now)/(60));
+              console.log(now, decoded.iat, decoded.exp, (decoded.exp-now)/(60));
               // The token is valid
               if (decoded.iat <= now && decoded.exp >= now) {
-                // console.log(ws.session);
+                // Add token to websocket session
                 ws.session.token = decoded;
+                console.log(ws.session);
               }
             }
           });

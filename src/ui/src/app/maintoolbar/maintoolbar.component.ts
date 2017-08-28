@@ -44,7 +44,7 @@ export class MaintoolbarComponent implements OnInit {
     this.loginDialogRef = this.dialog.open(LoginDialogComponent, config);
 
     this.loginDialogRef.afterClosed().subscribe(result => {
-      console.log('closed', result);
+      // console.log('closed', result);
       this.loginDialogRef = null;
       if (result) {
         if (result.pass_force_change == true) {
