@@ -439,14 +439,15 @@ class Model(object):
             self.logger.debug("%s is in run %s at position %s", fullname, run_id, place_in_run)
 
             # Save some typing
-            current_run = self.recent_runs[run_id]
+            current_run = self.recent_runs[str(run_id)]
 
             self.logger.debug(current_run)
 
             # If not integrating trigger integration
+            
             if not current_run.get("rapd_status", None) in ("INTEGRATING", "FINISHED"):
             #if True:
-
+                #print 'run_status: %s'%current_run.get("rapd_status", None)
                 # Right on time
                 if place_in_run == 1:
                     # Get all the image information
@@ -456,8 +457,8 @@ class Model(object):
 
                     # Put data about run in the header object
                     header["collect_mode"] = "run"
-                    header["run_id"] = run_id
-                    header["run"] = self.recent_runs[run_id].copy()
+                    header["run_id"] = str(run_id)
+                    header["run"] = self.recent_runs[str(run_id)].copy()
                     header["place_in_run"] = 1
                     header["site_tag"] = site_tag
                     header["xdsinp"] = detector.XDSINP
@@ -490,7 +491,7 @@ class Model(object):
                                     "fullname": first_image_fullname})
 
         # Image is a snap
-        elif run_id == "SNAP":
+        elif str(run_id) == "SNAP":
 
             self.logger.debug("%s is a snap", fullname)
 
