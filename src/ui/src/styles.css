@@ -7,4 +7,5 @@
 @import '~@swimlane/ngx-datatable/release/assets/icons.css';
 
 /* My custom */
+@import 'app/shared/css/normalize.css';
 @import 'app/shared/css/main.css';

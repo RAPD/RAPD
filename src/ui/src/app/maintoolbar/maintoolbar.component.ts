@@ -10,6 +10,7 @@ import { MdDialogRef,
 import { LoginDialogComponent } from './login-dialog/login-dialog.component';
 import { ChangepassDialogComponent } from '../shared/dialogs/changepass-dialog/changepass-dialog.component';
 import { AuthService } from '../shared/services/auth.service';
+import { GlobalsService } from '../shared/services/globals.service';
 
 @Component({
   selector: 'app-maintoolbar',
@@ -24,6 +25,7 @@ export class MaintoolbarComponent implements OnInit {
   changepassDialogRef: MdDialogRef<ChangepassDialogComponent>;
 
   constructor(private auth_service: AuthService,
+              private globals_service: GlobalsService,
               public dialog: MdDialog,
               public viewContainerRef: ViewContainerRef) {}
 
