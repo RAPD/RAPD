@@ -9,7 +9,8 @@ import { MdDialog,
          MdSnackBar } from '@angular/material';
 import { ReplaySubject }   from 'rxjs/Rx';
 import { ResultsService } from '../../../shared/services/results.service';
-import { PlotOmegaStartComponent } from './plot-omega-start/plot-omega-start.component'
+import { PlotOmegaStartComponent } from './plot-omega-start/plot-omega-start.component';
+import { HeaderDialogComponent } from './header-dialog/header-dialog.component';
 
 @Component({
   selector: 'app-index-3b34-2-0-0',
@@ -53,7 +54,13 @@ export class Index3b34200Component implements OnInit {
 
   // Display the header information
   displayHeader(header) {
-    console.log(header);
+
+    let config = {
+      width: '450px',
+      height: '500px',
+      data: header };
+
+    let dialogRef = this.dialog.open(HeaderDialogComponent, config);
   }
 
   plotOmegaStart(mode) {
@@ -70,7 +77,7 @@ export class Index3b34200Component implements OnInit {
 
     let config = {
       width: '800px',
-      height: '450px',
+      height: '475px',
       data: {
         dialog_title: 'Sweep Width to Achieve Completeness - '+tag,
         ys: y_data.slice(0,5).map(function(el) {

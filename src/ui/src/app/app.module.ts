@@ -49,6 +49,7 @@ import { CommunicateDialogComponent } from './shared/dialogs/communicate-dialog/
 import { IndexstrategyAaaa1Component } from './plugin_components/mx/indexstrategy-aaaa-1/indexstrategy-aaaa-1.component';
 import { Index3b34200Component } from './plugin_components/mx/index-3b34-2-0-0/index-3b34-2-0-0.component';
 import { PlotOmegaStartComponent } from './plugin_components/mx/index-3b34-2-0-0/plot-omega-start/plot-omega-start.component';
+import { HeaderDialogComponent } from './plugin_components/mx/index-3b34-2-0-0/header-dialog/header-dialog.component';
 
 export function authHttpServiceFactory(http: Http, options: RequestOptions) {
   return new AuthHttp( new AuthConfig({}), http, options);
@@ -80,7 +81,8 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     CommunicateDialogComponent,
     IndexstrategyAaaa1Component,
     Index3b34200Component,
-    PlotOmegaStartComponent
+    PlotOmegaStartComponent,
+    HeaderDialogComponent
   ],
   imports: [
     BrowserModule,
@@ -119,7 +121,8 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     SessionDialogComponent,
     LoginDialogComponent,
     ChangepassDialogComponent,
-    PlotOmegaStartComponent
+    PlotOmegaStartComponent,
+    HeaderDialogComponent
   ],
   bootstrap: [AppComponent]
 })

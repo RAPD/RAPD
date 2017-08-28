@@ -1,28 +1,28 @@
 <div class="result-panel child">
   <div class="result-panel-main-results">
-    <table>
-      <tr>
-        <td>Labelit Indexing Solution</td>
-      </tr>
-      <tr>
-        <td>
-          <span>{{full_result.header1.fullname}}</span>
-          <span><md-icon (click)="displayHeader(full_result.header1)">info_outline</md-icon></span>
-        </td>
-      </tr>
-      <tr>
-        <td>
+    <md-card *ngIf="full_result"> <!-- class="result-panel-strategy-card" style="order:1;"> -->
+      <md-card-header>
+        <md-card-title>
+          <h2>Labelit Indexing Solution</h2>
+        </md-card-title>
+      </md-card-header>
+      <md-card-content>
+          <h3>
+            <span style="padding-left:2em;">Image</span>
+            <span *ngIf="full_result.header2">s</span>
+            <span>{{full_result.header1.basename}}</span>
+            <span style="color:blue;"><md-icon (click)="displayHeader(full_result.header1)">info_outline</md-icon></span>
+          </h3>
           <ngx-datatable
             class="material"
             [rows]="index_result"
             [loadingIndicator]="loadingIndicator"
             [columnMode]="'standard'"
             [headerHeight]="50"
-            [footerHeight]="50"
+            [footerHeight]="0"
             [rowHeight]="'auto'"
             [reorderable]="reorderable"
-            [selectionType]="'single'"
-            (select)='editUser($event)'>
+            [selectionType]="0">
             <ngx-datatable-column name="Spacegroup" prop="spacegroup" width="100">
               <ng-template let-value="value" ngx-datatable-cell-template>
                 {{value}}
@@ -69,49 +69,28 @@
               </ng-template>
             </ngx-datatable-column>
           </ngx-datatable>
-        </td>
-      </tr>
-    </table>
-    <!-- <md-card *ngIf="full_result">
-      <md-card-header>
-        <md-card-title>Image Data</md-card-title>
-      </md-card-header>
-      <md-card-content>
-        <table class="strategy-sub-table">
-          <tr><td class="rj-col">Name</td><td class="small-col">:</td><td class="lj-col">{{full_result.header1.basename}}</td></tr>
-          <tr><td class="rj-col">&Omega;</td><td class="small-col">:</td><td class="lj-col">{{full_result.header1.osc_start}}&deg;</td></tr>
-          <tr><td class="rj-col">&Delta;&Omega;</td><td class="small-col">:</td><td class="lj-col">{{full_result.header1.osc_range}}&deg;</td></tr>
-          <tr><td class="rj-col">Time</td><td class="small-col">:</td><td class="lj-col">{{full_result.header1.time}}s</td></tr>
-          <tr><td class="rj-col">Transmission</td><td class="small-col">:</td><td class="lj-col">{{full_result.header1.transmission}}%</td></tr>
-          <tr><td class="rj-col">Distance</td><td class="small-col">:</td><td>{{full_result.header1.distance}}mm</td></tr>
-          <tr><td class="rj-col">Date</td><td class="small-col">:</td><td class="lj-col">{{full_result.header1.date}}</td></tr>
-        </table>
-     </md-card-content>
-     <md-card-actions>
-      <button md-raised-button>Show Header</button>
-    </md-card-actions>
-    </md-card> -->
+      </md-card-content>
+    </md-card>
 
-    <md-card *ngIf="full_result"> <!-- class="result-panel-strategy-card" style="order:1;"> -->
+    <md-card *ngIf="full_result" style="margin-top:0.5em;"> <!-- class="result-panel-strategy-card" style="order:1;"> -->
       <md-card-header>
-        <md-card-title>Strategies</md-card-title>
+        <md-card-title><h2>Data Collection Strategies From Best</h2></md-card-title>
       </md-card-header>
       <md-card-content>
         <table>
           <tr>
             <td>
-              <h3>Normal</h3>
+              <h3 style="padding-left:2em;">Normal</h3>
               <ngx-datatable
                 class="material"
                 [rows]="full_result.results.best_results_norm.sweeps"
                 [loadingIndicator]="loadingIndicator"
                 [columnMode]="'standard'"
                 [headerHeight]="50"
-                [footerHeight]="50"
+                [footerHeight]="0"
                 [rowHeight]="'auto'"
                 [reorderable]="reorderable"
-                [selectionType]="'single'"
-                (select)='editUser($event)'>
+                [selectionType]="0">
                 <ngx-datatable-column name="N" prop="run_number">
                   <ng-template let-value="value" ngx-datatable-cell-template>
                     {{value}}
@@ -158,18 +137,17 @@
           </tr>
           <tr>
             <td>
-              <h3>Anomalous</h3>
+              <h3 style="padding-left:2em;">Anomalous</h3>
               <ngx-datatable md-line
                 class="material"
                 [rows]="full_result.results.best_results_anom.sweeps"
                 [loadingIndicator]="loadingIndicator"
                 [columnMode]="'standard'"
                 [headerHeight]="50"
-                [footerHeight]="50"
+                [footerHeight]="0"
                 [rowHeight]="'auto'"
                 [reorderable]="reorderable"
-                [selectionType]="'single'"
-                (select)='editUser($event)'>
+                [selectionType]="0">
                 <ngx-datatable-column name="N" prop="run_number">
                   <ng-template let-value="value" ngx-datatable-cell-template>
                     {{value}}
@@ -218,7 +196,8 @@
       </md-card-content>
     </md-card>
   </div>
-<md-toolbar class="result-panel-action-bar">
-  Hello toolbar!
-</md-toolbar>
+  <md-toolbar *ngIf="full_result" class="result-panel-action-bar">
+    <button md-raised-button>Reindex</button>
+    <button md-raised-button>Print</button>
+  </md-toolbar>
 </div>

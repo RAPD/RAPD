@@ -111,14 +111,14 @@ article.c-content {
 }
 
 .result-panel-main-results {
-  height: calc(100vh - 10.5em);
+  height: calc(100vh - 10.em);
   overflow: scroll;
 }
 
 .result-panel-action-bar {
   box-shadow: 3px 0 6px rgba(0,0,0,0.3);
-  height: 3em;
-  margin: 0.25em 0 0.5em 0;
+  height: 4em;
+  margin: 0.25em -1em 0.5em 0;
   min-width: calc(100vw - 17em);
   /*border: 2px solid black;*/
 }
@@ -143,13 +143,12 @@ div.panel {
   height: 100%;
 }
 
-
 .chunky {
   font-family: 'ChunkFive', 'Georgia', serif;
 }
 
-.button-dialog-top-right {
-  float:right;
-  top: -5em;
-  right: -1em;
+button.button-dialog-top-right.mat-icon-button {
+  float: right;
+  margin-top: -30px;
+  background-color: rgba(0,0,0,0.1);
 }
