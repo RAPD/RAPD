@@ -151,21 +151,16 @@ export class Index3b34200Component implements OnInit {
 
   plotDeltaOmega(mode) {
 
-    if (mode === 'norm') {
-      var tag = 'NORMAL',
-          y_data = this.full_result.results.plots.osc_range.y_data,
-          x_data = this.full_result.results.plots.osc_range.x_data;
-    } else {
-      var tag = 'ANOMALOUS',
-          y_data = this.full_result.results.plots.osc_range_anom.y_data,
-          x_data = this.full_result.results.plots.osc_range_anom.x_data;
-    }
+    console.log(this.full_result.results.plots);
+
+    let x_data = this.full_result.results.plots.max_delta_omega.x_data,
+        y_data = this.full_result.results.plots.max_delta_omega.y_data;
 
     let config = {
       width: '800px',
-      height: '450px',
+      height: '475px',
       data: {
-        dialog_title: 'Sweep Width to Achieve Completeness - '+tag,
+        dialog_title: 'Max Delta Omega With No Overlaps',
         ys: y_data.slice(0,5).map(function(el) {
           var o = Object.assign({}, el);
           o.pointRadius = 0;
@@ -191,7 +186,7 @@ export class Index3b34200Component implements OnInit {
             yAxes: [{
               scaleLabel: {
                 display: true,
-                labelString: 'Required Sweep Width',
+                labelString: 'Omega Step',
               },
               ticks: {
                 beginAtZero:true
@@ -206,11 +201,11 @@ export class Index3b34200Component implements OnInit {
                             xLabels[i] = '';
                         }
                     });
-                    xLabels.push('360');
+                    xLabels.push('180');
               },
               scaleLabel: {
                 display: true,
-                labelString: 'Starting Omega',
+                labelString: 'Omega',
               },
               // ticks: {
               //   autoSkipPadding:4
@@ -220,12 +215,12 @@ export class Index3b34200Component implements OnInit {
           tooltips: {
             callbacks: {
               label: function(tooltipItem, data) {
-                return tooltipItem.yLabel+'° width';
+                return tooltipItem.yLabel+'° step';
               },
               title: function(tooltipItem, data) {
                 console.log(tooltipItem);
                 console.log(data);
-                return data.labels[tooltipItem[0].index]+'° start';
+                return data.labels[tooltipItem[0].index]+'°';
               },
             },
           },
