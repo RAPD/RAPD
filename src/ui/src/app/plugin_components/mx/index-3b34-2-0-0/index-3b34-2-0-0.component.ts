@@ -232,7 +232,11 @@ export class Index3b34200Component implements OnInit {
   }
 
   openReindexDialog() {
-    let config = {data: this.full_result};
+    let config = {
+      height: '800px',
+      width: '500px',
+      data: this.full_result
+    };
 
     let dialogRef = this.dialog.open(ReindexDialogComponent, config);
   }

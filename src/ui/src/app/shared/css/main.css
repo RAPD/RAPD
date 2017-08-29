@@ -156,3 +156,7 @@ button.button-dialog-top-right.mat-icon-button {
 .active-result {
   background-color: yellow;
 }
+
+.hidden {
+  display: none;
+}
