@@ -160,3 +160,7 @@ button.button-dialog-top-right.mat-icon-button {
 .hidden {
   display: none;
 }
+
+.overlay-grey {
+  opacity: 0.5;
+}

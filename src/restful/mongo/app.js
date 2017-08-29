@@ -818,11 +818,85 @@ apiRoutes.route('/groups/:group_id')
 apiRoutes.route('/requests')
 
   .get(function(req, res) {
-
+    // redis_client.
     // Group.find({}, function(err, groups) {
     //   console.log(groups);
     //   res.json(groups);
     // });
+  })
+
+  // add a request for a process to launch (accessed at PUT http://localhost:3000/api/requests)
+  .put(function(req,res) {
+
+    console.log('PUT request');
+
+    let request = req.body.request;
+
+    console.log(request);
+
+    let params = {
+      success: true,
+      operation: 'request'
+    };
+    res.json(params);
+
+    // // Updating
+    // if (group._id) {
+    //
+    //   Group.findById(group._id, function(err, saved_group) {
+    //     if (err) {
+    //       console.log(err);
+    //       res.send(err);
+    //     }
+    //
+    //     console.log('saved_group', saved_group);
+    //
+    //     //
+    //     // Update the entry
+    //     saved_group.groupname = group.groupname;
+    //     saved_group.institution = group.institution;
+    //     saved_group.status = group.status;
+    //
+    //     //
+    //     saved_group.save(function(err, return_group, numAffected) {
+    //       if (err) {
+    //         res.send(err);
+    //       }
+    //
+    //       console.log('return_group', return_group);
+    //
+    //       let params = {
+    //             success: true,
+    //             operation: 'edit',
+    //             group: return_group
+    //           }
+    //       res.json(params);
+    //     });
+    //   });
+    // } else {
+    //
+    //   console.log('New group');
+    //   // create a sample user
+    //   var new_group = new Group({
+    //     groupname: group.groupname,
+    //     institution: group.institution,
+    //     uid: group.uid,
+    //     gid: group.gid,
+    //     status: group.status
+    //   });
+    //
+    //   // save the sample user
+    //   new_group.save(function(err, return_group, numAffected) {
+    //     if (err) throw err;
+    //
+    //     console.log('Group saved successfully');
+    //     res.json({
+    //       success: true,
+    //       operation: 'add',
+    //       group: return_group
+    //     });
+    //   });
+    // }
   });
 
 

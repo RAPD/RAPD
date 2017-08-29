@@ -229,11 +229,17 @@ export class Index3b34200Component implements OnInit {
       },
     };
     let dialogRef = this.dialog.open(PlotOmegaStartComponent, config);
+
+    // Handle the close
+    // dialogRef.afterClosed().subscribe(result => {
+    //   console.log(result);
+    //   this.requests_service.submit_request(result);
+    // });
   }
 
   openReindexDialog() {
     let config = {
-      height: '800px',
+      height: '600px',
       width: '500px',
       data: this.full_result
     };

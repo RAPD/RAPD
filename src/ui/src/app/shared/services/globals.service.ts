@@ -3,6 +3,8 @@ import { Injectable, OnInit } from '@angular/core';
 @Injectable()
 export class GlobalsService implements OnInit {
 
+  public apiUrl = 'http://localhost:3000/api';
+
   public site = "SERCAT";
   public site_color = '#EE0000';
 

@@ -6,7 +6,7 @@
   <h3>{{data.header1.basename}}</h3>
 </div>
 
-<md-dialog-content>
+<md-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
   <form [formGroup]="reindex_form">
     <div class="form-group">
       <table>
@@ -129,6 +129,7 @@
   </form>
 </md-dialog-content>
 
-<md-dialog-actions>
+<md-dialog-actions align="end">
+  <md-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></md-progress-spinner>
   <button md-raised-button (click)="submitReindex()">Execute</button>
 </md-dialog-actions>

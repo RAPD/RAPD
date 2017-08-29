@@ -6,6 +6,7 @@ import { FormGroup,
 import { MdDialogRef,
          MD_DIALOG_DATA } from '@angular/material';
 
+import { RequestsService } from '../../../../shared/services/requests.service';
 import { GlobalsService } from '../../../../shared/services/globals.service';
 
 @Component({
@@ -34,12 +35,13 @@ export class ReindexDialogComponent implements OnInit {
     mosflm_segs = [1,2,3,4,5];
 
     constructor(private globals_service: GlobalsService,
-              public dialogRef: MdDialogRef<ReindexDialogComponent>,
-              @Inject(MD_DIALOG_DATA) public data: any) { }
+                private requests_service: RequestsService,
+                public dialogRef: MdDialogRef<ReindexDialogComponent>,
+                @Inject(MD_DIALOG_DATA) public data: any) { }
 
   ngOnInit() {
 
-    console.log(this.data);
+    // console.log(this.data);
 
     this.model = {
       spacegroup: this.data.preferences.spacegroup,
@@ -72,7 +74,39 @@ export class ReindexDialogComponent implements OnInit {
   }
 
   submitReindex() {
-    console.log(this.reindex_form.value);
+
+    // Start to make the request object
+    let request: any = {};
+    request.parent_result_id = this.data._id;
+    request.image1_id = this.data.header1._id;
+
+    // 2nd image?
+    if (this.data.header2) {
+      request.image2_id = this.data.header2._id;
+    } else {
+      request.image2_id = false;
+    }
+
+    // Update the preferences with the form values
+    request.preferences = Object.assign(this.data.preferences, this.reindex_form.value);
+
+    // Debugging
+    // console.log(this.reindex_form.value);
+
+    this.submitted = true;
+    this.requests_service.submitRequest(request).subscribe(params => {
+      console.log(params);
+      this.submitted = false;
+      if (params.success === true) {
+        this.dialogRef.close();
+      }
+      // } else {
+      //   this.error_message = params;
+      // }
+    });
+
+      // this.dialogRef.close(this.reindex_form.value);
+
   }
 
 }
