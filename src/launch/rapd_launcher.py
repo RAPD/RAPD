@@ -238,12 +238,13 @@ def get_commandline():
     commandline_description = """The Launch process for handling calls for
     computation"""
     parser = argparse.ArgumentParser(parents=[base_parser],
-                                     description=commandline_description)
+                                     description=commandline_description,
+                                     conflict_handler='resolve')
 
     # Add the possibility to tag the Launcher
     # This will make it possible to run multiple Launcher configurations
     # on one machine
-    parser.add_argument("--tag", "-t",
+    parser.add_argument("-t", "--tag",
                         action="store",
                         dest="tag",
                         default="",

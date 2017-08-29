@@ -97,6 +97,9 @@ UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"
 # Aggregator - be careful when changing
 #LAUNCHER_ADDRESS = (LAUNCHER_HOST, LAUNCHER_PORT)
 
+# Launcher Manager to sort out where to send jobs
+LAUNCHER_MANAGER_LOCK_FILE = "/tmp/rapd2/lock/launcher_manager.lock"
+
 # Launcher settings
 LAUNCHER_LOCK_FILE = "/tmp/rapd2/lock/launcher.lock"
 # Launcher to send jobs to
@@ -110,7 +113,8 @@ RAPD_LAUNCHER_ADAPTER_DIRECTORIES = ("launch.launcher_adapters",
 
 # Data gatherer settings
 # The data gatherer for this site, in the src/sites/gatherers directory
-GATHERER = "necat.py"
+#GATHERER = "necat.py"
+GATHERER = "necat_t.py"
 GATHERER_LOCK_FILE = "/tmp/rapd2/lock/gatherer.lock"
 
 # Directories to look for rapd plugins
