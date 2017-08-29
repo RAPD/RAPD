@@ -834,6 +834,11 @@ apiRoutes.route('/requests')
 
     console.log(request);
 
+    redis_client.lpush('RAPD_CLIENT_REQUESTS', JSON.stringify(request), function(err, replies) {
+      console.log(err);
+      console.log(replies);
+    });
+
     let params = {
       success: true,
       operation: 'request'
