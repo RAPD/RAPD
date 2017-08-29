@@ -1,9 +1,10 @@
-<h2 md-dialog-title>
-  {{this.data.dialog_title}}
-</h2>
-<button md-icon-button class="button-dialog-top-right" (click)="exitPlot()">
-  <md-icon>close</md-icon>
-</button>
+<div md-dialog-title>
+  <button md-icon-button md-dialog-close class="button-dialog-top-right">
+    <md-icon>close</md-icon>
+  </button>
+  <h3>{{this.data.dialog_title}}</h3>
+</div>
+
 
 <md-dialog-content style="margin:0">
   <canvas baseChart

@@ -21,6 +21,8 @@ import { AuthService } from './shared/services/auth.service';
 import { AdminService } from './shared/services/admin.service';
 import { ResultsService } from './shared/services/results.service';
 import { SessionService } from './shared/services/session.service';
+import { RequestsService } from './shared/services/requests.service';
+import { GlobalsService } from './shared/services/globals.service';
 import { provideAuth, AuthHttp, AuthConfig } from 'angular2-jwt';
 
 import { MaintoolbarComponent } from './maintoolbar/maintoolbar.component';
@@ -48,6 +50,8 @@ import { CommunicateDialogComponent } from './shared/dialogs/communicate-dialog/
 import { IndexstrategyAaaa1Component } from './plugin_components/mx/indexstrategy-aaaa-1/indexstrategy-aaaa-1.component';
 import { Index3b34200Component } from './plugin_components/mx/index-3b34-2-0-0/index-3b34-2-0-0.component';
 import { PlotOmegaStartComponent } from './plugin_components/mx/index-3b34-2-0-0/plot-omega-start/plot-omega-start.component';
+import { HeaderDialogComponent } from './plugin_components/mx/index-3b34-2-0-0/header-dialog/header-dialog.component';
+import { ReindexDialogComponent } from './plugin_components/mx/index-3b34-2-0-0/reindex-dialog/reindex-dialog.component';
 
 export function authHttpServiceFactory(http: Http, options: RequestOptions) {
   return new AuthHttp( new AuthConfig({}), http, options);
@@ -79,7 +83,9 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     CommunicateDialogComponent,
     IndexstrategyAaaa1Component,
     Index3b34200Component,
-    PlotOmegaStartComponent
+    PlotOmegaStartComponent,
+    HeaderDialogComponent,
+    ReindexDialogComponent
   ],
   imports: [
     BrowserModule,
@@ -100,6 +106,8 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
                AdminService,
                ResultsService,
                SessionService,
+               RequestsService,
+               GlobalsService,
                // Replacement for AUTH_PROVIDERS
                {
                  provide: AuthHttp,
@@ -117,7 +125,9 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     SessionDialogComponent,
     LoginDialogComponent,
     ChangepassDialogComponent,
-    PlotOmegaStartComponent
+    PlotOmegaStartComponent,
+    HeaderDialogComponent,
+    ReindexDialogComponent
   ],
   bootstrap: [AppComponent]
 })

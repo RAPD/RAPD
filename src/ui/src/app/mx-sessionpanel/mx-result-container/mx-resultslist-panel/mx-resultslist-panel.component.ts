@@ -15,6 +15,9 @@ export class MxResultslistPanelComponent implements OnInit {
   highlight_color = 'white';
   message: string;
 
+  // The currently active result
+  active_result: string;
+
   // Arrays for holding result thumbnail data structures
   data_results: Array<any> = [];
   index_results: Array<any> = [];
@@ -66,6 +69,13 @@ export class MxResultslistPanelComponent implements OnInit {
 
   private onClick(result: any) {
     console.log(result);
+    // console.log(event);
+    // event.target
+
+    // Save the current result as the active result
+    this.active_result = result._id;
+
+    // Use the result to call for full results
     this.resultSelect.emit({
       value: result
     });

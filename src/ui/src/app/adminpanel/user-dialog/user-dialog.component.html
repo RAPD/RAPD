@@ -85,6 +85,6 @@
   </p>
   <p>
     <button *ngIf="model._id" type="button" md-button color="warn" (click)="deleteUser()">Delete</button>
-    <button type="button" [disabled]="!user_form.valid" md-button (click)="submitUser()">Save</button>
+    <button style="float:right;" type="button" [disabled]="!user_form.valid" md-button (click)="submitUser()">Save</button>
   </p>
 </form>

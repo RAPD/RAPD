@@ -90,9 +90,6 @@ export class ResultsService {
       }, 5);
   }
 
-
-
-
   // Inform the server what session this client is interested in
   setSession(session_id: string, session_type: string) {
 

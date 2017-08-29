@@ -1,0 +1,60 @@
+<div md-dialog-title>
+  <button md-icon-button md-dialog-close class="button-dialog-top-right">
+    <md-icon>close</md-icon>
+  </button>
+  <h2>Image Details</h2>
+</div>
+
+<md-dialog-content>
+  <h3>{{data.basename}}</h3>
+  <table class="manual-table">
+    <thead>
+      <tr>
+        <th scope="col" style="width:50%;"></th>
+        <th scope="col" style="width:50%;"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="manual-table-rj">Oscillation Start</td><td>{{data.osc_start}}&deg;</td>
+      </tr>
+      <tr>
+        <td class="manual-table-rj">Oscillation Range</td><td>{{data.osc_range}}&deg;</td>
+      </tr>
+      <tr>
+        <td class="manual-table-rj">Exposure Time</td><td>{{data.time}} s</td>
+      </tr>
+      <tr>
+        <td class="manual-table-rj">Transmission</td><td>{{data.transmission}}%</td>
+      </tr>
+      <tr>
+        <td class="manual-table-rj">Wavelength</td><td>{{data.wavelength}} &Aring;</td>
+      </tr>
+      <tr>
+        <td class="manual-table-rj">Distance</td><td>{{data.distance}} mm</td>
+      </tr>
+      <tr *ngIf="data.twotheta">
+        <td class="manual-table-rj">Two Theta</td><td>{{data.twotheta}}&deg;</td>
+      </tr>
+      <tr>
+        <td class="manual-table-rj">Beam Center X</td><td>{{data.x_beam}} mm</td>
+      </tr>
+      <tr>
+        <td class="manual-table-rj">Y</td><td>{{data.y_beam}} mm</td>
+      </tr>
+      <tr>
+        <td class="manual-table-rj">Date</td><td>{{data.date.slice(0,10)}}</td>
+      </tr>
+      <tr>
+        <td class="manual-table-rj">Time</td><td>{{data.date.slice(11,19)}}</td>
+      </tr>
+      <!-- <tr>
+        <td class="manual-table-rj">Directory</td><td>{{data.directory}}</td>
+      </tr> -->
+    </tbody>
+  </table>
+</md-dialog-content>
+
+<!-- <md-dialog-actions>
+  <button md-button-raised md-dialog-close>Close</button>
+</md-dialog-actions> -->

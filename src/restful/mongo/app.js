@@ -27,6 +27,10 @@ var config = require('./config'); // get our config file
 var routes = require('./routes/index');
 var users = require('./routes/users');
 
+// Redis
+var redis = require('redis');
+var redis_client = redis.createClient(config.redis_host);
+
 // MongoDB connection
 var mongoose = require('mongoose');
 // MongoDB Models
@@ -805,6 +809,99 @@ apiRoutes.route('/groups/:group_id')
             _id: req.params.group_id,
             message: 'Successfully deleted'});
       });
+  });
+
+// routes that end with requests
+// ----------------------------------------------------
+// These are redis-based queries
+// route to return all current requests (GET http://localhost:3000/api/requests)
+apiRoutes.route('/requests')
+
+  .get(function(req, res) {
+    // redis_client.
+    // Group.find({}, function(err, groups) {
+    //   console.log(groups);
+    //   res.json(groups);
+    // });
+  })
+
+  // add a request for a process to launch (accessed at PUT http://localhost:3000/api/requests)
+  .put(function(req,res) {
+
+    console.log('PUT request');
+
+    let request = req.body.request;
+
+    console.log(request);
+
+    redis_client.lpush('RAPD_CLIENT_REQUESTS', JSON.stringify(request), function(err, replies) {
+      console.log(err);
+      console.log(replies);
+    });
+
+    let params = {
+      success: true,
+      operation: 'request'
+    };
+    res.json(params);
+
+    // // Updating
+    // if (group._id) {
+    //
+    //   Group.findById(group._id, function(err, saved_group) {
+    //     if (err) {
+    //       console.log(err);
+    //       res.send(err);
+    //     }
+    //
+    //     console.log('saved_group', saved_group);
+    //
+    //     //
+    //     // Update the entry
+    //     saved_group.groupname = group.groupname;
+    //     saved_group.institution = group.institution;
+    //     saved_group.status = group.status;
+    //
+    //     //
+    //     saved_group.save(function(err, return_group, numAffected) {
+    //       if (err) {
+    //         res.send(err);
+    //       }
+    //
+    //       console.log('return_group', return_group);
+    //
+    //       let params = {
+    //             success: true,
+    //             operation: 'edit',
+    //             group: return_group
+    //           }
+    //       res.json(params);
+    //     });
+    //   });
+    // } else {
+    //
+    //   console.log('New group');
+    //   // create a sample user
+    //   var new_group = new Group({
+    //     groupname: group.groupname,
+    //     institution: group.institution,
+    //     uid: group.uid,
+    //     gid: group.gid,
+    //     status: group.status
+    //   });
+    //
+    //   // save the sample user
+    //   new_group.save(function(err, return_group, numAffected) {
+    //     if (err) throw err;
+    //
+    //     console.log('Group saved successfully');
+    //     res.json({
+    //       success: true,
+    //       operation: 'add',
+    //       group: return_group
+    //     });
+    //   });
+    // }
   });
 
 

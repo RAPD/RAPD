@@ -11,8 +11,7 @@ var jwt = require('jsonwebtoken');
 var uuid = require('node-uuid');
 
 // Redis
-// var redis = require('redis');
-// var redis_client = redis.createClient();
+var redis = require('redis');
 
 // Import models
 var Result = require('./models/result');
@@ -29,11 +28,45 @@ var result_type_trans = {
     }
   };
 
-// All the websocket_connections
-var websocket_connections = {}
+// All the ws_connections
+var ws_connections = {};
 
 // Subscribe to redis updates
+var sub = redis.createClient(config.redis_host);
 
+sub.on("message", function (channel, message) {
+  console.log("sub channel " + channel + ": " + message);
+  let parsed_message = JSON.parse(message);
+  console.log(parsed_message);
+
+  let session_id = false;
+  if (parsed_message.process) {
+    if (parsed_message.process.session_id) {
+      session_id = parsed_message.process.session_id;
+    }
+  }
+
+  if (session_id) {
+    Object.keys(ws_connections).forEach(function(socket_id) {
+      console.log(ws_connections[socket_id].session.session_id);
+      if (ws_connections[socket_id].session.session_id === session_id) {
+        console.log('Have a live one!');
+        ws_connections[socket_id].send(JSON.stringify({msg_type:'result',
+                                                       result:parsed_message}));
+      }
+    });
+  }
+
+
+  // msg_count += 1;
+  // if (msg_count === 3) {
+  //     sub.unsubscribe();
+  //     sub.quit();
+  //     pub.quit();
+  // }
+});
+
+sub.subscribe("RAPD_RESULTS");
 
 // The websocket code
 function Wss (opt, callback) {
@@ -51,6 +84,7 @@ function Wss (opt, callback) {
 
 
     wss.on('connection', function connection(ws) {
+
       console.log('Connected');
 
       // console.log(ws);
@@ -60,39 +94,39 @@ function Wss (opt, callback) {
 
       // Mark the ws and save to list
       ws.id = uuid.v1();
-      websocket_connections[ws.id] = ws;
+      ws_connections[ws.id] = ws;
 
       // Websocket has closed
       ws.on('close', function() {
 
         console.log('websocket closed');
 
-        // Remove the websocket from the list
-        delete websocket_connections[ws.id];
+        // Remove the websocket from the storage objects
+        delete ws_connections[ws.id];
       });
 
       // Message incoming from the client
       ws.on('message', function(message) {
 
         var data = JSON.parse(message);
-        console.log(data);
+        // console.log(data);
 
         // Initializing the websocket
         if (data.request_type === 'initialize' ) {
           jwt.verify(data.token, 'ilovescotchyscotch', function(err, decoded) {
             if (err) {
-              console.log(err);
+              // console.log(err);
               return res.json({ success: false, message: 'Failed to authenticate token.' });
             } else {
-              console.log(decoded);
+              // console.log(decoded);
 
               let now = Date.now()/1000;
-              console.log(now, decoded.iat, decoded.exp, (decoded.exp-now)/(60));
+              // console.log(now, decoded.iat, decoded.exp, (decoded.exp-now)/(60));
               // The token is valid
               if (decoded.iat <= now && decoded.exp >= now) {
                 // Add token to websocket session
                 ws.session.token = decoded;
-                console.log(ws.session);
+                // console.log(ws.session);
               }
             }
           });
@@ -107,13 +141,12 @@ function Wss (opt, callback) {
 
             // Set the session id for the connected websocket
             case 'set_session':
+              console.log('Session set to '+data.session_id);
               this.session.session_id = data.session_id;
-
               break;
 
             case 'unset_session':
               this.session.session_id = undefined;
-
               break;
 
             // Get results
