@@ -406,7 +406,7 @@ class Gatherer(object):
 
     def __init__(self, site, overwatch_id=None):
         """
-        Setup and start the SercatGatherer
+        Setup and start the NecatGatherer
         """
 
         # Get the logger Instance
@@ -416,7 +416,7 @@ class Gatherer(object):
         self.site = site
         self.overwatch_id = overwatch_id
 
-        self.logger.info("SercatGatherer.__init__")
+        self.logger.info("NecatGatherer.__init__")
 
         # Connect to redis
         self.connect()

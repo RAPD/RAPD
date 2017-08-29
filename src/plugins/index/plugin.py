@@ -2471,7 +2471,7 @@ rerunning.\n" % spot_count)
         # except:
         #     self.logger.exception('**Error in RunLabelit.process_labelit**')
 
-    def new_postprocess_labelit(self, raw_result): # iteration=0, run_before=False, blank=False):
+    def postprocess_labelit(self, raw_result): # iteration=0, run_before=False, blank=False):
         """
         Sends Labelit log for parsing and error checking for rerunning Labelit. Save output dicts.
         """
@@ -2775,7 +2775,7 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
                 # Add result to labelit_results
                 # self.labelit_results[result["tag"]] = result
                 # Postprocess the labelit job
-                self.new_postprocess_labelit(raw_result=result)
+                self.postprocess_labelit(raw_result=result)
                 # All jobs have finished
                 if not len(self.labelit_pids):
                     # print "All jobs done"

@@ -285,6 +285,8 @@ class Overwatcher(Registrar):
         Start the managed process with the passed in flags and the current
         environment. If the process exits immediately, the overwatcher will exit
         """
+        py_path = sys.executable
+        print 'python: %s'%py_path
 
         # The environmental_vars
         path = os.environ.copy()
@@ -295,6 +297,7 @@ class Overwatcher(Registrar):
         command.insert(0, "rapd.python")
         command.append("--overwatch_id")
         command.append(self.uuid)
+        print 'command: %s'%command
 
         # Run the input command
         self.managed_process = subprocess.Popen(command, env=path)
@@ -395,9 +398,6 @@ class Overwatcher(Registrar):
             return None
         else:
             return keys[0].split(":")[1]
-
-
-
 
 def get_commandline():
     """

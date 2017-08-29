@@ -90,7 +90,8 @@ def main():
         # Compose the command
         command = raw_args[:]
         command.insert(0, "%s/src/sites/gatherers/" % environmental_vars["RAPD_HOME"] + SITE.GATHERER)
-        command.insert(0, "%s/bin/rapd.python" % environmental_vars["RAPD_HOME"])
+        #command.insert(0, "%s/bin/rapd.python" % environmental_vars["RAPD_HOME"])
+        command.insert(0, "rapd.python")
 
         # Run it
         print command
