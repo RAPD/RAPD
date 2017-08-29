@@ -16,7 +16,7 @@ export class DashboardComponent implements OnInit {
 
   // changepassDialogRef: MdDialogRef<ChangepassDialogComponent>
   user: User;
-  master_on: boolean = true;
+  master_on: boolean = false;
 
   constructor(/*public dialog: MdDialog,
               public viewContainerRef: ViewContainerRef*/) { }

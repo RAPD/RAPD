@@ -1,7 +1,10 @@
 <div class="panel" *ngIf="user.role === 'site_admin'">
   <md-tab-group class="session-tab-group">
     <md-tab label="Overview">
-      <md-slide-toggle>Master On/Off</md-slide-toggle>
+      <md-slide-toggle
+        [checked]="master_on ? 'checked' : ''">
+        Master On/Off
+      </md-slide-toggle>
     </md-tab>
     <md-tab label="Components">
     </md-tab>
