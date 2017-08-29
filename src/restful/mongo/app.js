@@ -27,6 +27,10 @@ var config = require('./config'); // get our config file
 var routes = require('./routes/index');
 var users = require('./routes/users');
 
+// Redis
+var redis = require('redis');
+var redis_client = redis.createClient(config.redis_host);
+
 // MongoDB connection
 var mongoose = require('mongoose');
 // MongoDB Models
@@ -805,6 +809,20 @@ apiRoutes.route('/groups/:group_id')
             _id: req.params.group_id,
             message: 'Successfully deleted'});
       });
+  });
+
+// routes that end with requests
+// ----------------------------------------------------
+// These are redis-based queries
+// route to return all current requests (GET http://localhost:3000/api/requests)
+apiRoutes.route('/requests')
+
+  .get(function(req, res) {
+
+    // Group.find({}, function(err, groups) {
+    //   console.log(groups);
+    //   res.json(groups);
+    // });
   });
 
 

@@ -241,24 +241,12 @@ export class Index3b34200Component implements OnInit {
     let dialogRef = this.dialog.open(ReindexDialogComponent, config);
   }
 
+  printPage() {
+    // var doc = jsPDF();
+    //
+    // doc.text(20, 20, 'Hello world!');
+    // doc.text(20, 30, 'This is client-side Javascript, pumping out a PDF.');
+    // doc.save('Test.pdf');
+  }
+
 }
-/*
- * Raise the value exponentially
- * Takes an exponent argument that defaults to 1.
- * Usage:
- *   value | exponentialStrength:exponent
- * Example:
- *   {{ 2 | exponentialStrength:10 }}
- *   formats to: 1024
-*/
-// @Pipe({name: 'fullToIndexResult'})
-// export class FullToIndexResultPipe implements PipeTransform {
-//   transform(full_result: any): any {
-//     return [{
-//       spacegroup: full_result.results.labelit_results.best_sym,
-//       unit_cell: full_result.results.labelit_results.best_cell,
-//       mosaicity: full_result.results.labelit_results.mosflm_mos[0],
-//       resolution: full_result.results.labelit_results.mosflm_res[0]
-//     }];
-//   }
-// }
