@@ -7,32 +7,45 @@
 </div>
 
 <md-dialog-content>
-  <form>  <!-- [formGroup]="reindex_form"> -->
-    <table >
-      <thead>
-        <tr>
-          <th scope="col" style="width:50%;"></th>
-          <th scope="col" style="width:50%;"></th>
-        </tr>
-      </thead>
-      <tr>
-        <td>
-      <tbody>
-        <tr>
-          <td class="manual-table-rj">Spacegroup Override</td>
-          <td>
-            <md-select placeholder="None" [(ngModel)]="selectedValue" name="food">
-              <md-option *ngFor="let sg of globals_service.sgs_in_order" [value]="sg">
-                {{sg}}
-              </md-option>
-            </md-select>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <form [formGroup]="reindex_form">
+    <div class="form-group">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col" style="width:50%;"></th>
+            <th scope="col" style="width:50%;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="manual-table-rj">Spacegroup Override</td>
+            <td>
+              <md-select [(ngModel)]="model.spacegroup"
+                         formControlName="spacegroup">
+                <md-option [value]="0">None</md-option>
+                <md-option *ngFor="let sg of globals_service.sgs_in_order" [value]="sg">
+                  {{globals_service.intl2std[sg]}}
+                </md-option>
+              </md-select>
+            </td>
+          </tr>
+          <tr>
+            <td class="manual-table-rj">Sample Type</td>
+            <td>
+              <md-select [(ngModel)]="model.sample_type"
+                         formControlName="sample_type">
+                <md-option *ngFor="let sample_type of sample_types" [value]="sample_type.val">
+                  {{sample_type.label}}
+                </md-option>
+              </md-select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </form>
 </md-dialog-content>
 
 <md-dialog-actions>
-  <button md-button-raised md-dialog-close>Execute</button>
+  <button md-button-raised md-dialog-close (click)="submitReindex()">Execute</button>
 </md-dialog-actions>
