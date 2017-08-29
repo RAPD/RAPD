@@ -1,11 +1,17 @@
 <md-list dense class="side-list">
   <md-list-item *ngIf="data_results.length == 0">No results</md-list-item>
-  <ng-container *ngFor="let result of data_results">
-    <md-list-item [attr.id]=result._id
+  <ng-container *ngFor="let id of data_results">
+    <md-list-item [attr.id]=id
                   [myHighlight]="highlight_color"
-                  (click)="onClick(result)"
-                  [ngClass]="result._id == active_result ? 'active-result': ''">
-    {{result.repr}}
+                  (click)="onClick(id)"
+                  [ngClass]="id == active_result ? 'active-result': ''">
+    {{data_results_object[id].repr}}
+    <!-- <md-progress-spinner
+      [color]="primary"
+      [mode]="determinate"
+      [value]="50"
+      style="height:2em;width:2em;">
+    </md-progress-spinner> -->
     </md-list-item>
 </ng-container>
 </md-list>

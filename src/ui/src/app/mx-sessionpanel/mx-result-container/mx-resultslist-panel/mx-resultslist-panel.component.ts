@@ -1,7 +1,9 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-
+import { Component,
+         OnInit,
+         Input,
+         Output,
+         EventEmitter } from '@angular/core';
 import { ReplaySubject } from 'rxjs/Rx';
-
 import { Highlight } from '../../../shared/directives/highlight.directive';
 import { ResultsService } from '../../../shared/services/results.service';
 
@@ -20,6 +22,7 @@ export class MxResultslistPanelComponent implements OnInit {
 
   // Arrays for holding result thumbnail data structures
   data_results: Array<any> = [];
+  data_results_object: any = {};
   index_results: Array<any> = [];
   integrate_results: Array<any> = [];
   merge_results: Array<any> = [];
@@ -53,9 +56,13 @@ export class MxResultslistPanelComponent implements OnInit {
     let self = this;
     if (data.msg_type === 'results') {
       for (let result of data.results) {
-        console.log(result);
         if (result.result_type === this.result_types[this.result_type]) {
-          self.data_results.push(result);
+          console.log(result);
+          // New result
+          if (self.data_results.indexOf(result._id) === -1) {
+            self.data_results.push(result._id);
+          }
+          self.data_results_object[result._id] = result;
         }
 
         // if (result.result_type === 'mx:index+strategy') {
@@ -67,17 +74,17 @@ export class MxResultslistPanelComponent implements OnInit {
     }
   }
 
-  private onClick(result: any) {
-    console.log(result);
+  private onClick(id: string) {
+    console.log(id);
     // console.log(event);
     // event.target
 
     // Save the current result as the active result
-    this.active_result = result._id;
+    this.active_result = id;
 
     // Use the result to call for full results
     this.resultSelect.emit({
-      value: result
+      value: this.data_results_object[id]
     });
   }
 }
