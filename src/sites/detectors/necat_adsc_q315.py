@@ -159,8 +159,12 @@ def calculate_flux(input_header, beam_settings=BEAM_SETTINGS):
     raw_flux = beam_settings["BEAM_FLUX"] * input_header["transmission"] / 100.0
 
     # Calculate the size of the beam incident on the sample in mm
-    beam_size_x = min(beam_size_raw_x, aperture_size)
-    beam_size_y = min(beam_size_raw_y, aperture_size)
+    if aperture_size != None:
+        beam_size_x = min(beam_size_raw_x, aperture_size)
+        beam_size_y = min(beam_size_raw_y, aperture_size)
+    else:
+        beam_size_x = beam_size_raw_x
+        beam_size_y = beam_size_raw_y
 
     # Calculate the raw beam area
     if beam_settings["BEAM_SHAPE"] == "ellipse":

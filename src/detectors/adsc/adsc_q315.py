@@ -214,6 +214,7 @@ def read_header(image, run_id=None, place_in_run=None):
 
     # Tease out the info from the file name
     base = os.path.basename(image).rstrip(".img")
+    
     # The parameters
     parameters = {"fullname" : image,
                   "detector" : "ADSC-Q315",
@@ -223,6 +224,7 @@ def read_header(image, run_id=None, place_in_run=None):
                   "basename" : base,
                   # image name without directory, run_number, image_number or image suffix
                   "image_prefix" : "_".join(base.split("_")[0:-2]),
+                  #"run_number" : False,
                   "run_number" : int(base.split("_")[-2]),
                   "image_number" : int(base.split("_")[-1]),
                   "axis" : "omega",

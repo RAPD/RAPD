@@ -2457,6 +2457,10 @@ rerunning.\n" % spot_count)
                     "execute1": functools.partial(self.process_labelit,
                                                  overrides={"min_good_spots": True})
                 },
+                "fix_cell": {
+                    "error": "Labelit had multiple choices for user SG and failed.",
+                    "execute1": True,
+                },
                 "fix_labelit": {
                     "error": "Distance is not getting read correctly from the image header.",
                     "kill": True
@@ -2469,9 +2473,7 @@ rerunning.\n" % spot_count)
                     "error": "Autoindexing Failed to find a solution",
                     "kill": True
                 },
-                "fix_cell": {
-                    "error": "Labelit had multiple choices for user SG and failed."
-                },
+                
             }
 
             # If Labelit results are OK, then...
@@ -2485,7 +2487,7 @@ rerunning.\n" % spot_count)
                 problem_flag = parsed_result
 
             if problem_flag:
-
+                print problem_flag
                 # Failure to index due to too few spots
                 if problem_flag == "min spots":
                     # print "MIN SPOTS"
@@ -2498,19 +2500,52 @@ rerunning.\n" % spot_count)
                     # Try again
                     else:
                         self.process_labelit(iteration, overrides={"min_spots": parsed_result[1]})
-
-                # Mulitple solutions possible
-                # Does this even work????
+                # Multiple solutions possible
                 elif problem_flag == "fix_cell":
                     print "FIX CELL"
-                    problem_action = potential_problems[problem_flag]
+                    problem_actions = potential_problems[problem_flag]
+                    # If there is a potential fix, run it. Otherwise fail gracefully
+                    if "execute%s"%self.labelit_tracker[iteration] in problem_actions:
+                        functools.partial(self.process_labelit,
+                                           iteration=iteration,
+                                           overrides={"fix_cell": True,
+                                                      "lattice_group": parsed_result[1],
+                                                      "labelit_solution": parsed_result[2]})
+                # Rest of the problems
+                elif problem_flag in potential_problems:
+                    problem_actions = potential_problems[problem_flag]
 
-                    problem_action(iteration=iteration,
-                                   overrides={
-                                       "fix_cell": True,
-                                       "lattice_group": parsed_result[1],
-                                       "labelit_solution": parsed_result[2]
-                                   })
+                    # If there is a potential fix, run it. Otherwise fail gracefully
+                    if "execute%s"%self.labelit_tracker[iteration] in problem_actions:
+                        problem_actions["execute%s"%self.labelit_tracker[iteration]](iteration=iteration)
+                    else:
+                        self.labelit_log[iteration].extend("\n%s\n" % problem_actions['error'])
+                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+
+                # No solution
+                else:
+                    error = "Labelit failed to find solution."
+                    self.labelit_log[iteration].append("\n%s\n" % error)
+                    self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                """
+                # Mulitple solutions possible
+                elif problem_flag == "fix_cell":
+                    print "FIX CELL"
+                    problem_actions = potential_problems[problem_flag]
+
+                    #problem_actions(iteration=iteration,
+                    #              overrides={
+                    #                   "fix_cell": True,
+                    #                   "lattice_group": parsed_result[1],
+                    #                   "labelit_solution": parsed_result[2]
+                    #               })
+
+                    # If there is a potential fix, run it. Otherwise fail gracefully
+                    if "execute%s"%self.labelit_tracker[iteration] in problem_actions:
+                        problem_actions["execute%s"%self.labelit_tracker[iteration]](iteration=iteration)
+                    else:
+                        self.labelit_log[iteration].extend("\n%s\n" % problem_actions['error'])
+                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
 
                 # Rest of the problems
                 elif problem_flag in potential_problems:
@@ -2532,15 +2567,9 @@ rerunning.\n" % spot_count)
                     if "execute%s"%self.labelit_tracker[iteration] in problem_actions:
                         problem_actions["execute%s"%self.labelit_tracker[iteration]](iteration=iteration)
                     else:
-                        self.labelit_log[iteration].extend("\n%s\n" % problem_action['error'])
+                        self.labelit_log[iteration].extend("\n%s\n" % problem_actions['error'])
                         self.labelit_results[iteration] = {"Labelit results": "FAILED"}
-
-                # No solution
-                else:
-                    error = "Labelit failed to find solution."
-                    self.labelit_log[iteration].append("\n%s\n" % error)
-                    self.labelit_results[iteration] = {"Labelit results": "FAILED"}
-
+                """
     def print_warning(self, warn_type):
         """ """
 
