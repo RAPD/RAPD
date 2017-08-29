@@ -5,7 +5,7 @@ import { MdDialogRef,
          MdDialog,
          MdDialogConfig } from '@angular/material';
 
-import { ChangepassDialogComponent } from '../shared/dialogs/changepass-dialog/changepass-dialog.component';
+import { User } from '../shared/classes/user';
 
 @Component({
   selector: 'app-dashboard',
@@ -15,17 +15,19 @@ import { ChangepassDialogComponent } from '../shared/dialogs/changepass-dialog/c
 export class DashboardComponent implements OnInit {
 
   // changepassDialogRef: MdDialogRef<ChangepassDialogComponent>
+  user: User;
+  master_on: boolean = true;
 
   constructor(/*public dialog: MdDialog,
               public viewContainerRef: ViewContainerRef*/) { }
 
   ngOnInit() {
+
+    // Get the user profile
+    this.user = JSON.parse(localStorage.getItem('profile'));
+
   }
 
-  // changePass() {
-  //   let config = new MdDialogConfig();
-  //   config.viewContainerRef = this.viewContainerRef;
-  //   this.changepassDialogRef = this.dialog.open(ChangepassDialogComponent, config);
-  // }
+
 
 }
