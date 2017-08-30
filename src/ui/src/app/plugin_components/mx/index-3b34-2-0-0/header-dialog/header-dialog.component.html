@@ -7,7 +7,9 @@
 
 <md-dialog-content>
   <h3>{{data.basename}}</h3>
-  <table class="manual-table">
+  <md-card style="box-shadow:none;">
+    <md-card-content>
+  <table class="manual-table ngx-datatable material">
     <thead>
       <tr>
         <th scope="col" style="width:50%;"></th>
@@ -53,6 +55,8 @@
       </tr> -->
     </tbody>
   </table>
+</md-card-content>
+</md-card>
 </md-dialog-content>
 
 <!-- <md-dialog-actions>
