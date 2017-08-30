@@ -267,7 +267,7 @@ class Database(object):
         return str(result.inserted_id)
 
     def update_plugin_process(self,
-                              plugin_process_id,
+                              process_id,
                               status=False,
                               display=False):
         """
@@ -275,13 +275,13 @@ class Database(object):
         launched processes and their state
 
         Keyword arguments
-        plugin_process_id -- unique identifier for process
+        process_id -- unique identifier for process
         status -- progress from 0 to 100 (default = 0) 1 = started,
                   100 = finished, -1 = error
         display -- display state of this process (default = show)
         """
 
-        self.logger.debug("update_plugin_process %s %s %s", plugin_process_id, status, display)
+        self.logger.debug("update_plugin_process %s %s %s", process_id, status, display)
 
         # Connect to the database
         db = self.get_db_connection()
@@ -294,7 +294,7 @@ class Database(object):
         if display:
             set_dict["display"] = display
 
-        db.plugin_processes.update({"_id":ObjectId(str(plugin_process_id))},
+        db.plugin_processes.update({"_id":ObjectId(str(process_id))},
                                    {"$set":set_dict})
 
         return True
@@ -340,14 +340,14 @@ class Database(object):
         collection_name = ("%s_%s_results" % (plugin_result["plugin"]["data_type"],
                                               plugin_result["plugin"]["type"])).lower()
         result1 = db[collection_name].update_one(
-            {"process.plugin_process_id":plugin_result["process"]["plugin_process_id"]},
+            {"process.process_id":plugin_result["process"]["process_id"]},
             {"$set":plugin_result},
             upsert=True)
 
         # Get the _id from updated entry
         if result1.raw_result.get("updatedExisting", False):
             result1_id = db[collection_name].find_one(
-                {"process.plugin_process_id":ObjectId(plugin_result["process"]["plugin_process_id"])},
+                {"process.process_id":ObjectId(plugin_result["process"]["process_id"])},
                 {"_id":1})["_id"]
         # upsert
         else:

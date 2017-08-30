@@ -37,6 +37,7 @@ ID = "3b34"
 VERSION = "2.0.0"
 
 # Standard imports
+from bson.objectid import ObjectId
 from collections import OrderedDict
 from distutils.spawn import find_executable
 import functools
@@ -208,7 +209,7 @@ class RapdPlugin(Process):
         command -- dict of all information for this plugin to run
         """
         # Save the start time
-        self.st = time.time()
+        self.start_time= time.time()
 
         # If the logging instance is passed in...
         if logger:
@@ -247,28 +248,7 @@ class RapdPlugin(Process):
         self.site_parameters = self.command.get("site_parameters", False)
 
         # Construct the results
-        self.results["command"] = command.get("command")
-        self.results["process"] = command.get("process", {})
-        self.results["preferences"] = command.get("preferences", {})
-        self.results["results"] = {}
-        # Status is now 1 (starting)
-        self.results["process"]["status"] = 1
-        self.results["process"]["type"] = "plugin"
-
-        self.results["plugin"] = {
-            "data_type":DATA_TYPE,
-            "type":PLUGIN_TYPE,
-            "subtype":PLUGIN_SUBTYPE,
-            "id":ID,
-            "version":VERSION
-        }
-
-        # Assign the text representation for this result
-        if not self.header2:
-            self.results["process"]["repr"] = os.path.basename(self.header["fullname"])
-        else:
-            self.results["process"]["repr"] = re.sub(r"\?\?*", "?", self.header["image_template"])\
-                .replace("?", "%d+%d" % (self.header["image_number"], self.header2["image_number"]))
+        self.construct_results()
 
         # Assumes that Core sent job if present. Overrides values for clean and test from top.
         if self.site_parameters != False:
@@ -349,6 +329,39 @@ class RapdPlugin(Process):
 
         # self.start()
 
+    def construct_results(self):
+        """Create the self.results dict"""
+
+        # Create an _id - will be placed in the results table as _id
+        self.results["_id"] = ObjectId()
+
+        # Copy over details of this run
+        self.results["command"] = self.command.get("command")
+        self.results["preferences"] = self.command.get("preferences", {})
+        self.results["results"] = {}
+
+        # Describe the process
+        self.results["process"] = self.command.get("process", {})
+        # Status is now 1 (starting)
+        self.results["process"]["status"] = 1
+        # Process type is plugin
+        self.results["process"]["type"] = "plugin"
+        # Assign the text representation for this result
+        if not self.header2:
+            self.results["process"]["repr"] = os.path.basename(self.header["fullname"])
+        else:
+            self.results["process"]["repr"] = re.sub(r"\?\?*", "?", self.header["image_template"])\
+                .replace("?", "%d+%d" % (self.header["image_number"], self.header2["image_number"]))
+
+        # Describe plugin
+        self.results["plugin"] = {
+            "data_type":DATA_TYPE,
+            "type":PLUGIN_TYPE,
+            "subtype":PLUGIN_SUBTYPE,
+            "id":ID,
+            "version":VERSION
+        }
+
     def run(self):
         """
         Convoluted path of modules to run.
@@ -415,6 +428,15 @@ class RapdPlugin(Process):
         Setup the working dir in the RAM and save the dir where the results will go at the end.
         """
         self.logger.debug("AutoindexingStrategy::preprocess")
+
+        # Let everyone know we are working on this
+        if self.preferences.get("run_mode") == "server":
+            if not self.redis:
+                self.connect_to_redis()
+            self.logger.debug("Sending back on redis")
+            json_results = json.dumps(self.results)
+            self.redis.lpush("RAPD_RESULTS", json_results)
+            self.redis.publish("RAPD_RESULTS", json_results)
 
         # Determine detector vendortype
         self.vendortype = xutils.getVendortype(self, self.header)
@@ -2058,7 +2080,7 @@ class RunLabelit(Process):
     	"""
 
         self.cluster_adapter = False
-        self.st = time.time()
+        self.start_time= time.time()
 
         # Passed-in vars
         self.command = command

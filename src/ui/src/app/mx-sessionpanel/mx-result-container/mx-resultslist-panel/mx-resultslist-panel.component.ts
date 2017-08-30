@@ -59,10 +59,11 @@ export class MxResultslistPanelComponent implements OnInit {
         if (result.result_type === this.result_types[this.result_type]) {
           console.log(result);
           // New result
-          if (self.data_results.indexOf(result._id) === -1) {
-            self.data_results.push(result._id);
+          let id = result._id; // result.process.process_id;
+          if (self.data_results.indexOf(id) === -1) {
+            self.data_results.push(id);
           }
-          self.data_results_object[result._id] = result;
+          self.data_results_object[id] = result;
         }
 
         // if (result.result_type === 'mx:index+strategy') {

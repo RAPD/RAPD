@@ -344,27 +344,19 @@ class Model(object):
         work_dir, new_repr = self.get_work_dir(type_level="echo")
 
         # Add the process to the database to display as in-process
-        plugin_process_id = self.database.add_plugin_process(plugin_type="echo",
-                                                             request_type="original",
-                                                             representation=new_repr,
-                                                             status=1,
-                                                             display="hide",
-                                                             session_id=None,
-                                                             data_root_dir=None)
-
-        # Run autoindex and strategy plugin
-        # LaunchAction(command={"command":"ECHO",
-        #                       "process":{"plugin_process_id":plugin_process_id},
-        #                       "directories":{"work":work_dir},
-        #                       "return_address":self.return_address},
-        #              launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
-        #              settings=None)
+        process_id = self.database.add_plugin_process(plugin_type="echo",
+                                                      request_type="original",
+                                                      representation=new_repr,
+                                                      status=1,
+                                                      display="hide",
+                                                      session_id=None,
+                                                      data_root_dir=None)
 
         # Run an echo to make sure everything is up
         command = {
             "command":"ECHO",
             "process":{
-                "plugin_process_id":plugin_process_id,
+                "process_id":process_id,
                 "status":0,
                 "type":"plugin"
                 },
@@ -444,7 +436,7 @@ class Model(object):
             self.logger.debug(current_run)
 
             # If not integrating trigger integration
-            
+
             if not current_run.get("rapd_status", None) in ("INTEGRATING", "FINISHED"):
             #if True:
                 #print 'run_status: %s'%current_run.get("rapd_status", None)
@@ -774,11 +766,11 @@ class Model(object):
             session_id = self.get_session(header)
 
             # Add the process to the database to display as in-process
-            plugin_process_id = self.database.add_plugin_process(plugin_type="index",
-                                                                 request_type="original",
-                                                                 representation=new_repr,
-                                                                 session_id=session_id,
-                                                                 data_root_dir=data_root_dir)
+            process_id = self.database.add_plugin_process(plugin_type="index",
+                                                          request_type="original",
+                                                          representation=new_repr,
+                                                          session_id=session_id,
+                                                          data_root_dir=data_root_dir)
 
             # Add the ID entry to the header dict
             header.update({"repr":new_repr})
@@ -787,7 +779,7 @@ class Model(object):
             command = {"command":"INDEX",
                        "process":{
                            "image1_id":header.get("_id"),
-                           "plugin_process_id":plugin_process_id,
+                           "process_id":process_id,
                            "session_id":session_id
                        },
                        "directories":directories,
@@ -845,7 +837,7 @@ class Model(object):
                     session_id = self.get_session(header)
 
                     # Add the process to the database to display as in-process
-                    plugin_process_id = self.database.add_plugin_process(
+                    process_id = self.database.add_plugin_process(
                         plugin_type="index+strategy:pair",
                         request_type="original",
                         representation=new_repr,
@@ -854,31 +846,10 @@ class Model(object):
                         session_id=session_id,
                         data_root_dir=data_root_dir)
 
-                    # Add the ID entry to the header dict
-                    header1.update({"plugin_process_id":plugin_process_id,
-                                    "repr":new_repr})
-                    header2.update({"plugin_process_id":plugin_process_id,
-                                    "repr":new_repr})
-                    """
-                    # Run autoindex and strategy plugin
-                    LaunchAction(command={"command":"INDEX",
-                                          "process":{"image1_id":header1.get("_id"),
-                                                     "image2_id":header2.get("_id"),
-                                                     "plugin_process_id":plugin_process_id,
-                                                     "session_id":session_id},
-                                          "directories":directories,
-                                          "header1":header1,
-                                          "header2":header2,
-                                          "site_parameters":self.site.BEAM_INFO[header1["site_tag"]],
-                                          "preferences":{},
-                                          "return_address":False},
-                                 launcher_address=self.site.LAUNCH_SETTINGS["LAUNCHER_ADDRESS"],
-                                 settings=None)
-                    """
                     # Run autoindex and strategy plugin
                     command = {"command":"INDEX",
                                "process":{
-                                   "plugin_process_id":plugin_process_id,
+                                   "process_id":process_id,
                                    "session_id":session_id
                                },
                                "directories":directories,
@@ -909,16 +880,16 @@ class Model(object):
             session_id = self.get_session(header)
 
             # Add the process to the database to display as in-process
-            plugin_process_id = self.database.add_plugin_process(plugin_type="integrate",
-                                                                 request_type="original",
-                                                                 representation=new_repr,
-                                                                 status=1,
-                                                                 display="show",
-                                                                 session_id=session_id,
-                                                                 data_root_dir=data_root_dir)
+            process_id = self.database.add_plugin_process(plugin_type="integrate",
+                                                          request_type="original",
+                                                          representation=new_repr,
+                                                          status=1,
+                                                          display="show",
+                                                          session_id=session_id,
+                                                          data_root_dir=data_root_dir)
 
             # Add the ID entry to the header dict
-            header.update({"repr":new_repr})
+            # header.update({"repr":new_repr})
 
             # Pop out the run data
             run_data = header.pop("run")
@@ -927,7 +898,7 @@ class Model(object):
             command = {
                 "command":"INTEGRATE",
                 "process":{
-                    "process_id":plugin_process_id,
+                    "process_id":process_id,
                     "session_id":session_id,
                     "status":0,
                     "type":"plugin",
@@ -1019,7 +990,7 @@ class Model(object):
 
         Keyword arguments
         message -- dict of pertinent information. Needs to at least contain
-                       a dict under the key process with entries for plugin_process_id
+                       a dict under the key process with entries for process_id
                        and status
 
         This form of handling returns from plugins is soon to be discontinued. To
@@ -1027,9 +998,9 @@ class Model(object):
         """
 
         # Update the plugin_process in the DB
-        if message["process"].get("plugin_process_id", False):
+        if message["process"].get("process_id", False):
             self.database.update_plugin_process(
-                plugin_process_id=message["process"].get("plugin_process_id", None),
+                process_id=message["process"].get("process_id", None),
                 status=message["process"].get("status", 1))
 
         # Save the results for the plugin
