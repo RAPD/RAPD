@@ -35,17 +35,27 @@ var ws_connections = {};
 var sub = redis.createClient(config.redis_host);
 
 sub.on("message", function (channel, message) {
+
   console.log("sub channel " + channel + ": " + message);
+
+  // Decode into oject
   let parsed_message = JSON.parse(message);
   console.log(parsed_message);
 
+  // Grab out the session_id
   let session_id = false;
-  if (parsed_message.process) {
-    if (parsed_message.process.session_id) {
-      session_id = parsed_message.process.session_id;
-    }
+  try {
+    let session_id = parsed_message.process.session_id;
   }
+  catch (e) {
+    if (e instanceof TypeError) {
+      console.error('Result has no session_id');
+    } else {
+      console.error(e);
+    }
+}
 
+  // Look for websockets that are watching the same session
   if (session_id) {
     Object.keys(ws_connections).forEach(function(socket_id) {
       console.log(ws_connections[socket_id].session.session_id);
@@ -56,14 +66,6 @@ sub.on("message", function (channel, message) {
       }
     });
   }
-
-
-  // msg_count += 1;
-  // if (msg_count === 3) {
-  //     sub.unsubscribe();
-  //     sub.quit();
-  //     pub.quit();
-  // }
 });
 
 sub.subscribe("RAPD_RESULTS");
