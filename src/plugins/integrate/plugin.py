@@ -54,6 +54,8 @@ import sys
 import threading
 import time
 
+# Nonstandard imports
+from bson.objectid import ObjectId
 import numpy
 
 # RAPD imports
@@ -112,7 +114,7 @@ class RapdPlugin(Process):
 
     command format
     {
-        "command":"INDEX+STRATEGY",
+        "command":"INDTEGRATE",
         "directories":
             {
                 "data_root_dir":""                  # Root directory for the data session
@@ -121,7 +123,6 @@ class RapdPlugin(Process):
         "image_data":{},                            # Image information
         ["header2":{},]                             # 2nd image information
         "preferences":{}                            # Settings for calculations
-        "return_address":("127.0.0.1", 50000)       # Location of control process
     }
     """
 
@@ -129,7 +130,11 @@ class RapdPlugin(Process):
     low_res = False
     hi_res = False
 
-    results = {}
+    # Connection to redis database
+    redis = None
+
+    # Dict for holding results
+    results = {"_id": ObjectId()}
 
     def __init__(self, site, command, tprint=False, logger=False):
         """
@@ -168,21 +173,6 @@ class RapdPlugin(Process):
         self.site = site
         self.command = command
         self.preferences = self.command.get("preferences")
-
-        # Store into results
-        self.results["command"] = command.get("command")
-        self.results["process"] = command.get("process", {})
-        # Status is now 1 (starting)
-        self.results["process"]["status"] = 1
-        self.results["process"]["type"] = "plugin"
-
-        self.results["plugin"] = {
-            "data_type":DATA_TYPE,
-            "type":PLUGIN_TYPE,
-            "subtype":PLUGIN_SUBTYPE,
-            "id":ID,
-            "version":VERSION
-        }
 
         #TODO
         #{
@@ -260,7 +250,7 @@ class RapdPlugin(Process):
         #else:
         #    self.ram_use = False
         #    self.ram_nodes = None
-        
+
         self.standalone = self.preferences.get('standalone', False)
         #if 'standalone' in self.preferences:
         #    self.standalone = self.preferences['standalone']
@@ -334,7 +324,23 @@ class RapdPlugin(Process):
         2. Read in detector specific parameters.
         """
         self.logger.debug('FastIntegration::preprocess')
+
+        # Register progress
         self.tprint(0, "progress")
+
+        # Construct the results object
+        self.construct_results()
+
+        # Let everyone know we are working on this
+        if self.preferences.get("run_mode") == "server":
+            if not self.redis:
+                self.connect_to_redis()
+            self.logger.debug("Sending back on redis")
+            json_results = json.dumps(self.results)
+            self.redis.lpush("RAPD_RESULTS", json_results)
+            self.redis.publish("RAPD_RESULTS", json_results)
+
+        # Create directories
         if os.path.isdir(self.dirs['work']) == False:
             os.makedirs(self.dirs['work'])
         os.chdir(self.dirs['work'])
@@ -342,6 +348,32 @@ class RapdPlugin(Process):
         self.xds_default = self.create_xds_input(self.preferences['xdsinp'])
 
         self.check_dependencies()
+
+    def construct_results(self):
+        """Create the self.results dict"""
+
+        # Container for actual results
+        self.results["results"] = {}
+
+        # Copy over details of this run
+        self.results["command"] = self.command.get("command")
+        self.results["preferences"] = self.command.get("preferences", {})
+
+        # Describe the process
+        self.results["process"] = self.command.get("process", {})
+        # Status is now 1 (starting)
+        self.results["process"]["status"] = 1
+        # Process type is plugin
+        self.results["process"]["type"] = "plugin"
+
+        # Describe plugin
+        self.results["plugin"] = {
+            "data_type":DATA_TYPE,
+            "type":PLUGIN_TYPE,
+            "subtype":PLUGIN_SUBTYPE,
+            "id":ID,
+            "version":VERSION
+        }
 
     def check_dependencies(self):
         """Make sure dependencies are all available"""
@@ -411,6 +443,7 @@ class RapdPlugin(Process):
         self.results['results'] = final_results
 
         self.logger.debug(self.results)
+
         #self.sendBack2(results)
 
         self.write_json(self.results)

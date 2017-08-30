@@ -198,7 +198,7 @@ class RapdPlugin(Process):
     jobs = {}
 
     # The results of the plugin
-    results = {}
+    results = {"_id":ObjectId()}
 
     def __init__(self, site, command, tprint=False, logger=False):
         """
@@ -246,9 +246,6 @@ class RapdPlugin(Process):
         self.preferences = info.DEFAULT_PREFERENCES#.update(self.command.get("preferences", {}))
         self.preferences.update(self.command.get("preferences", {}))
         self.site_parameters = self.command.get("site_parameters", False)
-
-        # Construct the results
-        self.construct_results()
 
         # Assumes that Core sent job if present. Overrides values for clean and test from top.
         if self.site_parameters != False:
@@ -332,13 +329,12 @@ class RapdPlugin(Process):
     def construct_results(self):
         """Create the self.results dict"""
 
-        # Create an _id - will be placed in the results table as _id
-        self.results["_id"] = ObjectId()
+        # Container for actual results
+        self.results["results"] = {}
 
         # Copy over details of this run
         self.results["command"] = self.command.get("command")
         self.results["preferences"] = self.command.get("preferences", {})
-        self.results["results"] = {}
 
         # Describe the process
         self.results["process"] = self.command.get("process", {})
@@ -428,6 +424,9 @@ class RapdPlugin(Process):
         Setup the working dir in the RAM and save the dir where the results will go at the end.
         """
         self.logger.debug("AutoindexingStrategy::preprocess")
+
+        # Construct the results
+        self.construct_results()
 
         # Let everyone know we are working on this
         if self.preferences.get("run_mode") == "server":
