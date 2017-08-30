@@ -10,7 +10,7 @@ import { MdDialog,
 import { ReplaySubject }   from 'rxjs/Rx';
 import { ResultsService } from '../../../shared/services/results.service';
 import { PlotOmegaStartComponent } from './plot-omega-start/plot-omega-start.component';
-import { HeaderDialogComponent } from './header-dialog/header-dialog.component';
+import { HeaderDialogComponent } from '../header-dialog/header-dialog.component';
 import { ReindexDialogComponent } from './reindex-dialog/reindex-dialog.component';
 
 @Component({
