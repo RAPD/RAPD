@@ -211,6 +211,7 @@ def parse_aimless(logfile):
                 },
             ],
             "parameters": {
+                "selectlabel": "R<sub>merge</sub>",
                 "toplabel": "Rmerge vs Batch for all Runs",
                 "xlabel": "Image Number",
             },
@@ -239,6 +240,7 @@ def parse_aimless(logfile):
                 }
             ],
             "parameters": {
+                "selectlabel": "I<sub>mean</sub> / RMS",
                 "toplabel": "Imean / RMS scatter",
                 "xlabel": "Image Number",
             }
@@ -284,6 +286,7 @@ def parse_aimless(logfile):
                 }
             ],
             "parameters": {
+                "selectlabel": "CC",
                 "toplabel": "Anomalous & Imean CCs vs. Resolution",
                 "xlabel": "Dmid (Angstroms)"
             }
@@ -313,6 +316,7 @@ def parse_aimless(logfile):
                 }
             ],
             "parameters": {
+                "selectlabel": "RCR",
                 "toplabel": "RMS correlation ratio",
                 "xlabel": "Dmid (Angstroms)",
             }
@@ -358,6 +362,7 @@ def parse_aimless(logfile):
                 }
             ],
             "parameters": {
+                "selectlabel": "I/&sigma;I",
                 "toplabel": "I/sigma, Mean Mn(I)/sd(Mn(I))",
                 "xlabel": "Dmid (Angstroms)"
             }
@@ -367,7 +372,7 @@ def parse_aimless(logfile):
         plots["I/sigma, Mean Mn(I)/sd(Mn(I))"] = None
 
     try:
-        plots["Rmerge, Rfull, Rmeas, Rpim vs. Resolution"] = {
+        plots["rs_vs_res"] = {
             "data": [
                 {
                     "parameters": {
@@ -435,13 +440,14 @@ def parse_aimless(logfile):
                 }
             ],
             "parameters": {
+                "selectlabel": "R Factors",
                 "toplabel": "Rmerge, Rfull, Rmeas, Rpim vs. Resolution",
                 "xlabel": "Dmid (Angstroms)"
             }
         }
     # Plot not present
     except IndexError:
-        plots["Rmerge, Rfull, Rmeas, Rpim vs. Resolution"] = None
+        plots["rs_vs_res"] = None
 
     try:
         plots["Average I, RMS deviation, and Sd"] = {
@@ -495,6 +501,7 @@ def parse_aimless(logfile):
                 }
             ],
             "parameters": {
+                "selectlabel": "I vs Res",
                 "toplabel": "Average I, RMS dev., and std. dev.",
                 "xlabel": "Dmid (Ansgstroms)"
             }
@@ -572,6 +579,7 @@ def parse_aimless(logfile):
                 }
             ],
             "parameters": {
+                "selectlabel": "Completeness",
                 "toplabel": "Completeness vs. Resolution",
                 "xlabel": "Dmid (Angstroms)"
             }
@@ -617,6 +625,7 @@ def parse_aimless(logfile):
                 }
             ],
             "parameters": {
+                "selectlabel": "Redundancy",
                 "toplabel": "Redundancy",
                 "xlabel": "Dmid (Angstroms)"
             }
@@ -644,6 +653,7 @@ def parse_aimless(logfile):
                 }
             ],
             "parameters": {
+                "selectlabel": "RCP",
                 "toplabel": "Rcp vs. Batch",
                 "xlabel": "Relative frame difference"
             }

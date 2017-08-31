@@ -148,6 +148,8 @@ def get_run_data(detector_module, image_0_data, image_n_data, commandline_args):
         run_data["start"] = commandline_args.start_image
     else:
         run_data["start"] = image_0_data.get("image_number")
+    # Working toward unity
+    run_data["start_image_number"] = run_data["start"]
 
     # Set end image and total number of images
     if commandline_args.end_image:
@@ -157,6 +159,8 @@ def get_run_data(detector_module, image_0_data, image_n_data, commandline_args):
     else:
         run_data["end"] = image_n_data.get("image_number")
         run_data["total"] = image_n_data.get("image_number") - run_data["start"] + 1
+    # Working toward unity
+    run_data["number_images"] = run_data["total"]
 
     # The repr for the run
     run_data["repr"] = detector_module.create_image_template(image_0_data.get("image_prefix"), image_0_data.get("run_number")).rstrip(detector_module.DETECTOR_SUFFIX).replace("?", "") + ("%d-%d" % (run_data.get("start"), run_data.get("end")))
@@ -171,7 +175,7 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
     # The task to be carried out
     command = {
         "command": "XDS", #"INTEGRATE",
-        "process_id": uuid.uuid1().get_hex()
+        "process": {"process_id": uuid.uuid1().get_hex()}
         }
 
     work_dir = commandline_utils.check_work_dir(

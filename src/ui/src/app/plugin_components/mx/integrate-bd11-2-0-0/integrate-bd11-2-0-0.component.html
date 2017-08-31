@@ -1,3 +1,170 @@
-<p>
-  integrate-bd11-2-0-0 works!
-</p>
+<div class="result-panel child">
+  <div class="result-panel-main-results">
+    <md-card *ngIf="full_result"> <!-- class="result-panel-strategy-card" style="order:1;"> -->
+      <md-card-header>
+        <md-card-title>
+          <h2>Integration Results for</h2>
+        </md-card-title>
+      </md-card-header>
+      <md-card-content>
+        <table>
+          <tr>
+            <td>
+              <table>
+                <tr>
+                  <td>
+                    <table class="manual-table ngx-datatable material">
+                      <thead>
+                        <tr>
+                          <th>Spacegroup</th>
+                          <th>Unit Cell</th>
+                          <th>Mosaicity</th>
+                          <th>ISA</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>{{full_result.results.summary.scaling_spacegroup}}</td>
+                          <td>
+                            {{full_result.results.summary.scaling_unit_cell[0]}} &Aring;
+                            {{full_result.results.summary.scaling_unit_cell[1]}} &Aring;
+                            {{full_result.results.summary.scaling_unit_cell[2]}} &Aring;
+                            {{full_result.results.summary.scaling_unit_cell[3]}}&deg;
+                            {{full_result.results.summary.scaling_unit_cell[4]}}&deg;
+                            {{full_result.results.summary.scaling_unit_cell[5]}}&deg;
+                          </td>
+                          <td>{{full_result.results.summary.mosaicity}}&deg;</td>
+                          <td>{{full_result.results.summary.ISa}}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <table class="manual-table  ngx-datatable material" style="margin-top:10px">
+                      <thead>
+                        <tr>
+                          <th></th>
+                          <th>Overall</th>
+                          <th>Inner Shell</th>
+                          <th>Outer Shell</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>Res Limits (&Aring;)</td>
+                          <td>{{full_result.results.summary.bins_low[0]}}-{{full_result.results.summary.bins_high[0]}}</td>
+                          <td>{{full_result.results.summary.bins_low[1]}}-{{full_result.results.summary.bins_high[1]}}</td>
+                          <td>{{full_result.results.summary.bins_low[2]}}-{{full_result.results.summary.bins_high[2]}}</td>
+                        </tr>
+                        <tr>
+                          <td>Completeness (%)</td>
+                          <td *ngFor="let val of full_result.results.summary.completeness">{{val}}</td>
+                        </tr>
+                        <tr>
+                          <td>Multiplicity</td>
+                          <td *ngFor="let val of full_result.results.summary.multiplicity">{{val}}</td>
+                        </tr>
+                        <tr>
+                          <td><I/&sigma;(I)></td>
+                          <td *ngFor="let val of full_result.results.summary.isigi">{{val}}</td>
+                        </tr>
+                        <tr>
+                          <td>CC<sub>1/2</sub></td>
+                          <td *ngFor="let val of full_result.results.summary['cc-half']">{{val}}</td>
+                        </tr>
+                        <tr>
+                          <td>R<sub>merge</sub></td>
+                          <td *ngFor="let val of full_result.results.summary.rmerge_norm">{{val}}</td>
+                        </tr>
+                        <tr>
+                          <td>R<sub>merge</sub> (anom)</td>
+                          <td *ngFor="let val of full_result.results.summary.rmerge_anom">{{val}}</td>
+                        </tr>
+                        <tr>
+                          <td>R<sub>meas</sub></td>
+                          <td *ngFor="let val of full_result.results.summary.rmeas_norm">{{val}}</td>
+                        </tr>
+                        <tr>
+                          <td>R<sub>meas</sub> Anomalous</td>
+                          <td *ngFor="let val of full_result.results.summary.rmeas_anom">{{val}}</td>
+                        </tr>
+                        <tr>
+                          <td>R<sub>pim</sub></td>
+                          <td *ngFor="let val of full_result.results.summary.rpim_norm">{{val}}</td>
+                        </tr>
+                        <tr>
+                          <td>R<sub>pim</sub> Anomalous</td>
+                          <td *ngFor="let val of full_result.results.summary.rpim_anom">{{val}}</td>
+                        </tr>
+                        <tr>
+                          <td>Anomalous Completeness</td>
+                          <td *ngFor="let val of full_result.results.summary.anom_completeness">{{val}}</td>
+                        </tr>
+                        <tr>
+                          <td>Anomalous Multiplicity</td>
+                          <td *ngFor="let val of full_result.results.summary.anom_multiplicity">{{val}}</td>
+                        </tr>
+                        <tr>
+                          <td>Anomalous Correlation</td>
+                          <td *ngFor="let val of full_result.results.summary.anom_correlation">{{val}}</td>
+                        </tr>
+                        <tr>
+                          <td>Anomalous Slope</td>
+                          <td>{{full_result.results.summary.anom_slope[0]}}</td>
+                        </tr>
+                        <tr>
+                          <td>Number Observations</td>
+                          <td *ngFor="let val of full_result.results.summary.total_obs">{{val}}</td>
+                        </tr>
+                        <tr>
+                          <td>Number Unique</td>
+                          <td *ngFor="let val of full_result.results.summary.unique_obs">{{val}}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+            <td>
+              <table>
+                <tr>
+                  <td>
+                    <md-select placeholder="Select plot" [(ngModel)]="selected_plot" name="plot">
+                      <md-option *ngFor="let key of objectKeys(full_result.results.plots)" [value]="key">{{full_result.results.plots[key].parameters.selectlabel}}</md-option>
+                    </md-select>
+                    <p>Selected plot: {{selected_plot}}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <!-- <canvas baseChart
+                      [datasets]="data.ys"
+                      [labels]="data.xs"
+                      [options]="data.lineChartOptions"
+                      [chartType]="data.lineChartType"
+                      [colors]="lineChartColors"
+                      (chartHover)="chartHovered($event)"
+                      (chartClick)="chartClicked($event)">
+                    </canvas> -->
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </md-card-content>
+    </md-card>
+    <md-toolbar *ngIf="full_result" class="result-panel-action-bar">
+      <h2 style="margin-right:1em;">Actions</h2>
+      <button md-raised-button (click)="openReintegrateDialog()">Reintegrate</button>
+      <button md-raised-button (click)="openMergeDialog()">Merge</button>
+      <button md-raised-button (click)="openMrDialog()">MR</button>
+      <button md-raised-button (click)="openSadDialog()">SAD</button>
+      <button md-raised-button (click)="openMadDialog()">MAD</button>
+      <button md-raised-button (click)="printPage()">Print</button>
+    </md-toolbar>
+  </div>
+</div>

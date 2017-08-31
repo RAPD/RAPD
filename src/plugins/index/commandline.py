@@ -49,8 +49,8 @@ def construct_command(image_headers, commandline_args, detector_module):
 
     # The task to be carried out
     command = {
-        "command":"INDEX",
-        "process_id": uuid.uuid1().get_hex()
+        "command": "INDEX",
+        "process": {"process_id": uuid.uuid1().get_hex()}
         }
 
     # Working directory

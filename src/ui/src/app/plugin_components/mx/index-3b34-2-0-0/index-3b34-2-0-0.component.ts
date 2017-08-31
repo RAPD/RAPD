@@ -1,12 +1,9 @@
 import { Component,
          Input,
          OnDestroy,
-         OnInit,
-         Pipe,
-         PipeTransform } from '@angular/core';
+         OnInit } from '@angular/core';
 import { MdDialog,
-         MD_DIALOG_DATA,
-         MdSnackBar } from '@angular/material';
+         MD_DIALOG_DATA } from '@angular/material';
 import { ReplaySubject }   from 'rxjs/Rx';
 import { ResultsService } from '../../../shared/services/results.service';
 import { PlotOmegaStartComponent } from './plot-omega-start/plot-omega-start.component';

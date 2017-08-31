@@ -134,7 +134,7 @@ class RapdPlugin(Process):
     redis = None
 
     # Dict for holding results
-    results = {"_id": ObjectId()}
+    results = {"_id": str(ObjectId())}
 
     def __init__(self, site, command, tprint=False, logger=False):
         """
@@ -167,21 +167,16 @@ class RapdPlugin(Process):
         # Some logging
         self.logger.info(site)
         self.logger.info(command)
-        #pprint(command)
+        # pprint(command)
 
         # Store passed-in variables
         self.site = site
         self.command = command
         self.preferences = self.command.get("preferences")
 
-        #TODO
-        #{
-        #    "process_id": self.command.get("process_id"),
-        #    "status": 1}
-
         self.dirs = self.command["directories"]
-        self.image_data = self.command.get("data").get("image_data")
-        self.run_data = self.command.get("data").get("run_data")
+        self.image_data = self.command.get("data", {}).get("image_data")
+        self.run_data = self.command.get("data", {}).get("run_data")
         self.process_id = self.command["process"]["process_id"]
         self.preferences = info.DEFAULT_PREFERENCES
         self.preferences.update(self.command.get("preferences", {}))
@@ -192,14 +187,12 @@ class RapdPlugin(Process):
             self.image_data["start"] = self.preferences.get("start_frame")
         else:
             self.image_data["start"] = self.run_data.get("start_image_number")
-        # print "self.image_data[\"start\"]", self.image_data["start"]
 
         if self.preferences.get("end_frame", False):
             self.image_data["total"] = self.preferences.get("end_frame") - \
                                        self.image_data["start"] + 1
         else:
             self.image_data["total"] = self.run_data.get("number_images")
-        # print "self.image_data[\"total\"]", self.image_data["total"]
 
         self.image_data['image_template'] = self.run_data["image_template"]
 
@@ -443,8 +436,6 @@ class RapdPlugin(Process):
         self.results['results'] = final_results
 
         self.logger.debug(self.results)
-
-        #self.sendBack2(results)
 
         self.write_json(self.results)
 
@@ -1672,10 +1663,6 @@ class RapdPlugin(Process):
         self.results['results'] = results
         self.logger.debug(self.results)
 
-        # self.sendBack2(tmp)
-        if self.controller_address:
-            rapd_send(self.controller_address, self.results)
-
         return results
 
     def aimless(self, mtzin, resolution=False):
@@ -2072,7 +2059,7 @@ class RapdPlugin(Process):
             'Completeness',
             'RMS correlation ration',
             'Imean/RMS scatter',
-            'Rmerge, Rfull, Rmeas, Rpim vs. Resolution',
+            'rs_vs_res',
             'Radiation Damage',
             'Rmerge vs Frame',
             'Redundancy',

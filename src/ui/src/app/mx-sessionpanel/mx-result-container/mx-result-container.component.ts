@@ -19,7 +19,6 @@ for (let key in mx) {
   mx_components[key.toLowerCase()] = mx[key];
 }
 
-
 @Component({
   selector: 'app-mx-result-container',
   templateUrl: './mx-result-container.component.html',
@@ -55,7 +54,8 @@ export class MxResultContainerComponent implements OnInit {
     const component_name = this.current_result.plugin_type + this.current_result.plugin_id + this.current_result.plugin_version.replace(/\./g, '') + 'component';
 
     console.log(component_name);
-
+    console.log(mx_components);
+    
     // Create a componentfactoryResolver instance
     const factory = this.componentfactoryResolver.resolveComponentFactory(mx_components[component_name]);
     // const factory = this.componentfactoryResolver.resolveComponentFactory(mx_components['indexstrategyaaaa1component']);

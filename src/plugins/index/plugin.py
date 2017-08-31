@@ -198,7 +198,7 @@ class RapdPlugin(Process):
     jobs = {}
 
     # The results of the plugin
-    results = {"_id":ObjectId()}
+    results = {"_id":str(ObjectId())}
 
     def __init__(self, site, command, tprint=False, logger=False):
         """
