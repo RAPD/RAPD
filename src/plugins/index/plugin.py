@@ -208,6 +208,11 @@ class RapdPlugin(Process):
         site -- full site settings
         command -- dict of all information for this plugin to run
         """
+
+        # For debugging
+        pprint(command)
+        # sys.exit()
+
         # Save the start time
         self.start_time= time.time()
 
@@ -244,7 +249,7 @@ class RapdPlugin(Process):
         self.header2 = self.command.get("header2", False)
         # get the default preferences and update what was sent in...
         self.preferences = info.DEFAULT_PREFERENCES#.update(self.command.get("preferences", {}))
-        self.preferences.update(self.command.get("preferences", {}))
+        self.preferences.update(self.command.pop("preferences", {}))
         self.site_parameters = self.command.get("site_parameters", False)
 
         # Assumes that Core sent job if present. Overrides values for clean and test from top.
@@ -333,8 +338,16 @@ class RapdPlugin(Process):
         self.results["results"] = {}
 
         # Copy over details of this run
-        self.results["command"] = self.command.get("command")
-        self.results["preferences"] = self.command.get("preferences", {})
+        self.results["command"] = self.command #.get("command")
+        self.results["header1"] = self.header
+        self.results["header2"] = self.header2
+
+        # Temporary cover for missing basename
+        for version in (1, 2):
+            if self.results["header%d" % version]:
+                self.results["header%d" % version]["basename"] = \
+                    os.path.basename(self.results["header%d" % version]["fullname"])
+        self.results["preferences"] = self.preferences
 
         # Describe the process
         self.results["process"] = self.command.get("process", {})
@@ -1974,7 +1987,7 @@ Distance | % Transmission", level=98, color="white")
         self.print_credits()
 
         # Say job is complete.
-        t = round(time.time() - self.st)
+        t = round(time.time() - self.start_time)
         self.logger.debug("-------------------------------------")
         self.logger.debug("RAPD autoindexing/strategy complete.")
         self.logger.debug("Total elapsed time: %s seconds", t)

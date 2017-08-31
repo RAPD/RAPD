@@ -173,11 +173,7 @@ def construct_command(image_headers, commandline_args, detector_module):
     command["preferences"]["site_parameters"]["DETECTOR_TIME_MIN"] = \
         commandline_args.site_det_time_min
 
-    # Return address
-    command["return_address"] = None
-
     return command
-
 
 def get_commandline():
     """Get the commandline variables and handle them"""
