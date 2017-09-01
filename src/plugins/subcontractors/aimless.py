@@ -178,6 +178,22 @@ def parse_aimless(logfile):
     plots = {}
     try:
         plots["Rmerge vs Frame"] = {
+            "x_data": [int(x) for x in \
+                       log.tables(rfactor)[0].col("Batch")],
+            "y_data": [
+                {
+                    "data": [try_float(x, 0.0) for x in \
+                             log.tables(rfactor)[0].col("Rmerge")],
+                    "label": "Rmerge",
+                    "pointRadius": 0
+                },
+                {
+                    "data": [try_float(x, 0.0) for x in \
+                             log.tables(rfactor)[0].col("SmRmerge")],
+                    "label": "Smoothed",
+                    "pointRadius": 0
+                }
+            ],
             "data": [
                 {
                     "parameters": {
@@ -188,7 +204,8 @@ def parse_aimless(logfile):
                     },
                     "series": [
                         {
-                            "xs": [int(x) for x in log.tables(rfactor)[0].col("Batch")],
+                            "xs": [int(x) for x in \
+                                  log.tables(rfactor)[0].col("Batch")],
                             "ys": [try_float(x, 0.0) for x in \
                                   log.tables(rfactor)[0].col("Rmerge")]
                             }
@@ -203,17 +220,51 @@ def parse_aimless(logfile):
                         },
                     "series": [
                         {
-                            "xs": [try_int(x) for x in log.tables(rfactor)[0].col("Batch")],
-                            "ys": [try_float(x, 0.0) for x in log.tables(rfactor)[0].\
-                                   col("SmRmerge")]
+                            "xs": [try_int(x) for x in \
+                                  log.tables(rfactor)[0].col("Batch")],
+                            "ys": [try_float(x, 0.0) for x in \
+                                  log.tables(rfactor)[0].col("SmRmerge")]
+                        }
+                    ]
+                },
+                {
+                    "parameters": {
+                        "linecolor": "3",
+                        "linelabel": "Rmerge",
+                        "linetype": "11",
+                        "linewidth": "3"
+                    },
+                    "series": [
+                        {
+                            "xs": [int(x) for x in \
+                                  log.tables(rfactor)[0].col("Batch")],
+                            "ys": [try_float(x, 0.0) for x in \
+                                  log.tables(rfactor)[0].col("Rmerge")]
+                            }
+                        ]
+                },
+                {
+                    "parameters": {
+                        "linecolor": "4",
+                        "linelabel": "SmRmerge",
+                        "linetype": "11",
+                        "linewidth": "3",
+                        },
+                    "series": [
+                        {
+                            "xs": [try_int(x) for x in \
+                                  log.tables(rfactor)[0].col("Batch")],
+                            "ys": [try_float(x, 0.0) for x in \
+                                  log.tables(rfactor)[0].col("SmRmerge")]
                         }
                     ]
                 },
             ],
             "parameters": {
-                "selectlabel": "R<sub>merge</sub>",
+                "selectlabel": "Rmerge",
                 "toplabel": "Rmerge vs Batch for all Runs",
-                "xlabel": "Image Number",
+                "xlabel": "Batch #",
+                "ylabel": "Rmerge",
             },
         }
     # Plot not present
@@ -222,27 +273,37 @@ def parse_aimless(logfile):
 
     try:
         plots["Imean/RMS scatter"] = {
-            "data": [
+            "x_data": [int(x) for x in log.tables(rfactor)[0].col("N")],
+            "y_data": [
                 {
-                    "parameters": {
-                        "linecolor": "3",
-                        "linelabel": "I/rms",
-                        "linetype": "11",
-                        "linewidth": "3",
-                    },
-                    "series": [
-                        {
-                            "xs" : [int(x) for x in log.tables(rfactor)[0].col("N")],
-                            "ys" : [try_float(x, 0.0) for x in \
-                                   log.tables(rfactor)[0].col("I/rms")],
-                        }
-                    ]
+                    "data": [try_float(x, 0.0) for x in \
+                             log.tables(rfactor)[0].col("I/rms")],
+                    "label": "I/rms",
+                    "pointRadius": 0
                 }
             ],
+            # "data": [
+            #     {
+            #         "parameters": {
+            #             "linecolor": "3",
+            #             "linelabel": "I/rms",
+            #             "linetype": "11",
+            #             "linewidth": "3",
+            #         },
+            #         "series": [
+            #             {
+            #                 "xs" : [int(x) for x in log.tables(rfactor)[0].col("N")],
+            #                 "ys" : [try_float(x, 0.0) for x in \
+            #                        log.tables(rfactor)[0].col("I/rms")],
+            #             }
+            #         ]
+            #     }
+            # ],
             "parameters": {
-                "selectlabel": "I<sub>mean</sub> / RMS",
+                "selectlabel": "Imean/RMS",
                 "toplabel": "Imean / RMS scatter",
                 "xlabel": "Image Number",
+                "ylabel": "|I|/RMS"
             }
         }
     # Plot not present

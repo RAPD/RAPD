@@ -7,9 +7,9 @@
         </md-card-title>
       </md-card-header>
       <md-card-content>
-        <table>
+        <table style="width:100%;">
           <tr>
-            <td>
+            <td style="width:41em;">
               <table>
                 <tr>
                   <td>
@@ -129,18 +129,17 @@
               </table>
             </td>
             <td>
-              <table>
+              <table style="width:100%;height:100%;">
                 <tr>
                   <td>
-                    <md-select placeholder="Select plot" [(ngModel)]="selected_plot" name="plot">
-                      <md-option *ngFor="let key of objectKeys(full_result.results.plots)" [value]="key">{{full_result.results.plots[key].parameters.selectlabel}}</md-option>
-                    </md-select>
-                    <p>Selected plot: {{selected_plot}}</p>
+                    <h3>{{selected_plot}}</h3>
                   </td>
                 </tr>
                 <tr>
                   <td>
-                    <!-- <canvas baseChart
+                    <canvas
+                      *ngIf="data"
+                      baseChart
                       [datasets]="data.ys"
                       [labels]="data.xs"
                       [options]="data.lineChartOptions"
@@ -148,7 +147,19 @@
                       [colors]="lineChartColors"
                       (chartHover)="chartHovered($event)"
                       (chartClick)="chartClicked($event)">
-                    </canvas> -->
+                    </canvas>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <md-select
+                      placeholder="Select plot"
+                      (change)="onPlotSelect(selected_plot)"
+                      [(ngModel)]="selected_plot"
+                      name="plot">
+                      <md-option *ngFor="let key of objectKeys(full_result.results.plots)" [value]="key">{{full_result.results.plots[key].parameters.selectlabel}}</md-option>
+                    </md-select>
+                    <p>Selected plot: {{selected_plot}}</p>
                   </td>
                 </tr>
               </table>
