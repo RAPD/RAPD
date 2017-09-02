@@ -302,8 +302,8 @@ def parse_aimless(logfile):
             "parameters": {
                 "selectlabel": "Imean/RMS",
                 "toplabel": "Imean / RMS scatter",
-                "xlabel": "Image Number",
-                "ylabel": "|I|/RMS"
+                "xlabel": "Batch Number",
+                "ylabel": "Imean/RMS"
             }
         }
     # Plot not present

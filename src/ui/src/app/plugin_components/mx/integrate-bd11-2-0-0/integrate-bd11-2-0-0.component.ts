@@ -1,15 +1,35 @@
 import { Component,
          Input,
-         OnInit } from '@angular/core';
+         OnInit,
+         ViewChild,
+         trigger,
+         transition,
+         style,
+         animate } from '@angular/core';
 import { MdDialog,
         MD_DIALOG_DATA } from '@angular/material';
 import { ReplaySubject }   from 'rxjs/Rx';
+import { BaseChartDirective } from 'ng2-charts';
 import { ResultsService } from '../../../shared/services/results.service';
 
 @Component({
   selector: 'app-integrate-bd11-2-0-0',
   templateUrl: './integrate-bd11-2-0-0.component.html',
-  styleUrls: ['./integrate-bd11-2-0-0.component.css']
+  styleUrls: ['./integrate-bd11-2-0-0.component.css'],
+  animations: [
+    trigger(
+      'enterAnimation', [
+        transition(':enter', [
+          style({transform: 'translateX(100%)', opacity: 0}),
+          animate('100ms', style({transform: 'translateX(0)', opacity: 1}))
+        ]),
+        transition(':leave', [
+          style({transform: 'translateX(0)', opacity: 1}),
+          animate('500ms', style({transform: 'translateX(100%)', opacity: 0}))
+        ])
+      ]
+    )
+  ],
 })
 export class IntegrateBd11200Component implements OnInit {
 
@@ -20,6 +40,8 @@ export class IntegrateBd11200Component implements OnInit {
   full_result: any;
   selected_plot: string;
   data: any;
+
+  @ViewChild(BaseChartDirective) private _chart;
 
   constructor(private results_service: ResultsService,
               public dialog: MdDialog) { }
@@ -90,63 +112,16 @@ export class IntegrateBd11200Component implements OnInit {
     this.full_result = data;
 
     // Select the default plot to show
-    if ('Rmerge vs Frame' in data.results.plots) {
-      this.selected_plot = 'Rmerge vs Frame';
-      this.data = {
-        xs: this.full_result.results.plots['Rmerge vs Frame'].x_data,
-        ys: this.full_result.results.plots['Rmerge vs Frame'].y_data,
-        lineChartType: 'line',
-        lineChartOptions: {
-          animation: {
-            duration: 500,
-          },
-          elements: {
-            line: {
-              tension: 0, // disables bezier curves
-            },
-          },
-          legend: {
-            display: true,
-            position: 'right',
-            labels: {
-              boxWidth: 3,
-            },
-          },
-          responsive: true,
-          scales: {
-            yAxes: [{
-              scaleLabel: {
-                display: true,
-                labelString: this.full_result.results.plots['Rmerge vs Frame'].parameters.ylabel,
-              },
-              ticks: {
-                beginAtZero:true
-              },
-            }],
-            xAxes: [{
-              // afterTickToLabelConversion: function(data){
-              //       var xLabels = data.ticks;
-              //
-              //       xLabels.forEach(function (labels, i) {
-              //           if (i % 10 !== 0){
-              //               xLabels[i] = '';
-              //           }
-              //       });
-              //       xLabels.push('360');
-              // },
-              scaleLabel: {
-                display: true,
-                labelString: this.full_result.results.plots['Rmerge vs Frame'].parameters.xlabel,
-              },
-              // ticks: {
-              //   autoSkipPadding:4
-              // },
-            }],
-          },
+    // if ('Rmerge vs Frame' in data.results.plots) {
+    //   this.selected_plot = 'Rmerge vs Frame';
+    //   this.setPlot('Rmerge vs Frame');
+    // }
 
-        },
-      };
+    if ('Imean/RMS scatter' in data.results.plots) {
+      this.selected_plot = 'Imean/RMS scatter';
+      this.setPlot('Imean/RMS scatter');
     }
+
 
     console.log(this.selected_plot);
   }
@@ -154,13 +129,15 @@ export class IntegrateBd11200Component implements OnInit {
   onPlotSelect(plot_key:string) {
 
     console.log('onPlotSelect', plot_key);
-
+    // console.log(this.baseChart);
     this.setPlot(plot_key);
 
   }
 
   // Set up the plot
   setPlot(plot_key:string) {
+
+    console.log('setPlot', plot_key);
 
     switch (plot_key) {
 
@@ -220,9 +197,72 @@ export class IntegrateBd11200Component implements OnInit {
         };
         break;
 
+      case 'Imean/RMS scatter':
+        this.data = {
+          xs: this.full_result.results.plots['Imean/RMS scatter'].x_data,
+          ys: this.full_result.results.plots['Imean/RMS scatter'].y_data,
+          lineChartType: 'line',
+          lineChartOptions: {
+            animation: {
+              duration: 500,
+            },
+            elements: {
+              line: {
+                tension: 0, // disables bezier curves
+              },
+            },
+            legend: {
+              display: true,
+              position: 'right',
+              labels: {
+                boxWidth: 3,
+              },
+            },
+            responsive: true,
+            scales: {
+              yAxes: [{
+                scaleLabel: {
+                  display: true,
+                  labelString: this.full_result.results.plots['Imean/RMS scatter'].parameters.ylabel,
+                },
+                ticks: {
+                  beginAtZero:true
+                },
+              }],
+              xAxes: [{
+                // afterTickToLabelConversion: function(data){
+                //       var xLabels = data.ticks;
+                //
+                //       xLabels.forEach(function (labels, i) {
+                //           if (i % 10 !== 0){
+                //               xLabels[i] = '';
+                //           }
+                //       });
+                //       xLabels.push('360');
+                // },
+                scaleLabel: {
+                  display: true,
+                  labelString: this.full_result.results.plots['Imean/RMS scatter'].parameters.xlabel,
+                },
+                // ticks: {
+                //   autoSkipPadding:4
+                // },
+              }],
+            },
+          },
+        };
+        break;
+
       default:
         this.data = false;
     }
+
+    // console.log(this.data.ys);
+    //
+    // if (this._chart) {
+    //   this._chart.chart.update();
+    // }
+    // console.log(this._chart); //.chart.update();
   }
 
 }
