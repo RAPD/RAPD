@@ -312,6 +312,22 @@ def parse_aimless(logfile):
 
     try:
         plots["Anomalous & Imean CCs vs Resolution"] = {
+            "x_data": [try_float(x, 0.0) for x in \
+                       log.tables(cchalf)[0].col("1/d^2")],
+            "y_data": [
+                {
+                    "data": [try_float(x, 0.0) for x in \
+                             log.tables(cchalf)[0].col("CCanom")],
+                    "label": "CCanom",
+                    "pointRadius": 0
+                },
+                {
+                    "data": [try_float(x, 0.0) for x in \
+                             log.tables(cchalf)[0].col("CC1/2")],
+                    "label": "CC1/2",
+                    "pointRadius": 0
+                }
+            ],
             "data": [
                 {
                     "parameters": {
@@ -349,7 +365,8 @@ def parse_aimless(logfile):
             "parameters": {
                 "selectlabel": "CC",
                 "toplabel": "Anomalous & Imean CCs vs. Resolution",
-                "xlabel": "Dmid (Angstroms)"
+                "xlabel": "Dmid (Angstroms)",
+                "ylabel": "CC"
             }
         }
     # Plot not present
@@ -357,7 +374,17 @@ def parse_aimless(logfile):
         plots["Anomalous & Imean CCs vs Resolution"] = None
 
     try:
-        plots["RMS correlation ration"] = {
+        plots["RMS correlation ratio"] = {
+            "x_data": [try_float(x, 0.0) for x in \
+                      log.tables(cchalf)[0].col("1/d^2")],
+            "y_data": [
+                {
+                    "data": [try_float(x, 0.0) for x in \
+                            log.tables(cchalf)[0].col("RCRanom")],
+                    "label": "RCRanom",
+                    "pointRadius": 0
+                }
+            ],
             "data": [
                 {
                     "parameters": {
@@ -379,15 +406,32 @@ def parse_aimless(logfile):
             "parameters": {
                 "selectlabel": "RCR",
                 "toplabel": "RMS correlation ratio",
-                "xlabel": "Dmid (Angstroms)",
+                "xlabel": "1/d^2",
+                "ylabel": "RCR"
             }
         }
     # Plot not present
     except IndexError:
-        plots["RMS correlation ration"] = None
+        plots["RMS correlation ratio"] = None
 
     try:
         plots["I/sigma, Mean Mn(I)/sd(Mn(I))"] = {
+            "x_data": [try_float(x, 0.0) for x in \
+                       log.tables(vresolution)[0].col("1/d^2")],
+            "y_data": [
+                {
+                    "data": [try_float(x, 0.0) for x in \
+                             log.tables(vresolution)[0].col("Mn(I/sd)")],
+                    "label": "Mn(I/sd)",
+                    "pointRadius": 0
+                },
+                {
+                    "data": [try_float(x, 0.0) for x in \
+                             log.tables(vresolution)[0].col("I/RMS")],
+                    "label": "I/RMS",
+                    "pointRadius": 0
+                }
+            ],
             "data": [
                 {
                     "parameters": {
@@ -425,7 +469,8 @@ def parse_aimless(logfile):
             "parameters": {
                 "selectlabel": "I/&sigma;I",
                 "toplabel": "I/sigma, Mean Mn(I)/sd(Mn(I))",
-                "xlabel": "Dmid (Angstroms)"
+                "xlabel": "1/d^2",
+                "ylabel": ""
             }
         }
     # Plot not present
@@ -434,6 +479,34 @@ def parse_aimless(logfile):
 
     try:
         plots["rs_vs_res"] = {
+            "x_data": [try_float(x, 0.0) for x in \
+                       log.tables(vresolution)[0].col("1/d^2")],
+            "y_data": [
+                {
+                    "data": [try_float(x, 0.0) for x in \
+                             log.tables(vresolution)[0].col("Rmrg")],
+                    "label": "Rmerge",
+                    "pointRadius": 0
+                },
+                {
+                    "data": [try_float(x, 0.0) for x in \
+                             log.tables(vresolution)[0].col("Rfull")],
+                    "label": "Rfull",
+                    "pointRadius": 0
+                },
+                {
+                    "data": [try_float(x, 0.0) for x in \
+                             log.tables(vresolution)[0].col("Rmeas")],
+                    "label": "Rmeas",
+                    "pointRadius": 0
+                },
+                {
+                    "data": [try_float(x, 0.0) for x in \
+                             log.tables(vresolution)[0].col("Rpim")],
+                    "label": "Rpim",
+                    "pointRadius": 0
+                },
+            ],
             "data": [
                 {
                     "parameters": {
@@ -503,7 +576,8 @@ def parse_aimless(logfile):
             "parameters": {
                 "selectlabel": "R Factors",
                 "toplabel": "Rmerge, Rfull, Rmeas, Rpim vs. Resolution",
-                "xlabel": "Dmid (Angstroms)"
+                "xlabel": "Dmid (Angstroms)",
+                "ylabel": ""
             }
         }
     # Plot not present
