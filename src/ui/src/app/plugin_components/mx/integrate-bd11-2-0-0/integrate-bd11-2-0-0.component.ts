@@ -203,120 +203,12 @@ export class IntegrateBd11200Component implements OnInit {
         this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['Imean/RMS scatter'].parameters.ylabel;
         this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['Imean/RMS scatter'].parameters.xlabel;
         break;
-        // this.data = {
-        //   xs: this.full_result.results.plots['Imean/RMS scatter'].x_data,
-        //   ys: this.full_result.results.plots['Imean/RMS scatter'].y_data,
-        //   lineChartType: 'line',
-        //   lineChartOptions: {
-        //     animation: {
-        //       duration: 500,
-        //     },
-        //     elements: {
-        //       line: {
-        //         tension: 0, // disables bezier curves
-        //       },
-        //     },
-        //     legend: {
-        //       display: true,
-        //       position: 'right',
-        //       labels: {
-        //         boxWidth: 3,
-        //       },
-        //     },
-        //     responsive: true,
-        //     scales: {
-        //       yAxes: [{
-        //         scaleLabel: {
-        //           display: true,
-        //           labelString: this.full_result.results.plots['Imean/RMS scatter'].parameters.ylabel,
-        //         },
-        //         ticks: {
-        //           beginAtZero:true
-        //         },
-        //       }],
-        //       xAxes: [{
-        //         // afterTickToLabelConversion: function(data){
-        //         //       var xLabels = data.ticks;
-        //         //
-        //         //       xLabels.forEach(function (labels, i) {
-        //         //           if (i % 10 !== 0){
-        //         //               xLabels[i] = '';
-        //         //           }
-        //         //       });
-        //         //       xLabels.push('360');
-        //         // },
-        //         scaleLabel: {
-        //           display: true,
-        //           labelString: this.full_result.results.plots['Imean/RMS scatter'].parameters.xlabel,
-        //         },
-        //         // ticks: {
-        //         //   autoSkipPadding:4
-        //         // },
-        //       }],
-        //     },
-        //   },
-        // };
-        // break;
 
       case 'Anomalous & Imean CCs vs Resolution':
         this.data.xs = this.full_result.results.plots['Anomalous & Imean CCs vs Resolution'].x_data;
         this.data.ys = this.full_result.results.plots['Anomalous & Imean CCs vs Resolution'].y_data;
         this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['Anomalous & Imean CCs vs Resolution'].parameters.ylabel;
         this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['Anomalous & Imean CCs vs Resolution'].parameters.xlabel;
-
-        // this.data = {
-        //   xs: this.full_result.results.plots['Anomalous & Imean CCs vs Resolution'].x_data,
-        //   ys: this.full_result.results.plots['Anomalous & Imean CCs vs Resolution'].y_data,
-        //   lineChartType: 'line',
-        //   lineChartOptions: {
-        //     animation: {
-        //       duration: 500,
-        //     },
-        //     elements: {
-        //       line: {
-        //         tension: 0, // disables bezier curves
-        //       },
-        //     },
-        //     legend: {
-        //       display: true,
-        //       position: 'right',
-        //       labels: {
-        //         boxWidth: 3,
-        //       },
-        //     },
-        //     responsive: true,
-        //     scales: {
-        //       yAxes: [{
-        //         scaleLabel: {
-        //           display: true,
-        //           labelString: this.full_result.results.plots['Anomalous & Imean CCs vs Resolution'].parameters.ylabel,
-        //         },
-        //         ticks: {
-        //           beginAtZero:true
-        //         },
-        //       }],
-        //       xAxes: [{
-        //         // afterTickToLabelConversion: function(data){
-        //         //       var xLabels = data.ticks;
-        //         //
-        //         //       xLabels.forEach(function (labels, i) {
-        //         //           if (i % 10 !== 0){
-        //         //               xLabels[i] = '';
-        //         //           }
-        //         //       });
-        //         //       xLabels.push('360');
-        //         // },
-        //         scaleLabel: {
-        //           display: true,
-        //           labelString: this.full_result.results.plots['Anomalous & Imean CCs vs Resolution'].parameters.xlabel,
-        //         },
-        //         // ticks: {
-        //         //   autoSkipPadding:4
-        //         // },
-        //       }],
-        //     },
-        //   },
-        // };
         break;
 
       case 'RMS correlation ratio':
@@ -340,9 +232,40 @@ export class IntegrateBd11200Component implements OnInit {
         this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['rs_vs_res'].parameters.xlabel;
         break;
 
+      case "Average I, RMS deviation, and Sd":
+        this.data.xs = this.full_result.results.plots['Average I, RMS deviation, and Sd'].x_data;
+        this.data.ys = this.full_result.results.plots['Average I, RMS deviation, and Sd'].y_data;
+        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['Average I, RMS deviation, and Sd'].parameters.ylabel;
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['Average I, RMS deviation, and Sd'].parameters.xlabel;
+        break;
+
+      case 'Completeness':
+        this.data.xs = this.full_result.results.plots['Completeness'].x_data;
+        this.data.ys = this.full_result.results.plots['Completeness'].y_data;
+        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['Completeness'].parameters.ylabel;
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['Completeness'].parameters.xlabel;
+        break;
+
+      case 'Redundancy':
+        this.data.xs = this.full_result.results.plots['Redundancy'].x_data;
+        this.data.ys = this.full_result.results.plots['Redundancy'].y_data;
+        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['Redundancy'].parameters.ylabel;
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['Redundancy'].parameters.xlabel;
+        break;
+
+      case 'Radiation Damage':
+        this.data.xs = this.full_result.results.plots['Radiation Damage'].x_data;
+        this.data.ys = this.full_result.results.plots['Radiation Damage'].y_data;
+        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['Radiation Damage'].parameters.ylabel;
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['Radiation Damage'].parameters.xlabel;
+        break;
+
       default:
         this.data = false;
+
     }
+
+    console.log(this.data);
   }
 
 }

@@ -214,6 +214,58 @@
                       (chartClick)="chartClicked($event)">
                     </canvas>
                   </td>
+                  <td *ngIf="selected_plot=='Average I, RMS deviation, and Sd'" [@enterAnimation]>
+                    <canvas
+                      *ngIf="data"
+                      baseChart
+                      [datasets]="data.ys"
+                      [labels]="data.xs"
+                      [options]="data.lineChartOptions"
+                      [chartType]="data.lineChartType"
+                      [colors]="lineChartColors"
+                      (chartHover)="chartHovered($event)"
+                      (chartClick)="chartClicked($event)">
+                    </canvas>
+                  </td>
+                  <td *ngIf="selected_plot=='Completeness'" [@enterAnimation]>
+                    <canvas
+                      *ngIf="data"
+                      baseChart
+                      [datasets]="data.ys"
+                      [labels]="data.xs"
+                      [options]="data.lineChartOptions"
+                      [chartType]="data.lineChartType"
+                      [colors]="lineChartColors"
+                      (chartHover)="chartHovered($event)"
+                      (chartClick)="chartClicked($event)">
+                    </canvas>
+                  </td>
+                  <td *ngIf="selected_plot=='Redundancy'" [@enterAnimation]>
+                    <canvas
+                      *ngIf="data"
+                      baseChart
+                      [datasets]="data.ys"
+                      [labels]="data.xs"
+                      [options]="data.lineChartOptions"
+                      [chartType]="data.lineChartType"
+                      [colors]="lineChartColors"
+                      (chartHover)="chartHovered($event)"
+                      (chartClick)="chartClicked($event)">
+                    </canvas>
+                  </td>
+                  <td *ngIf="selected_plot=='Radiation Damage'" [@enterAnimation]>
+                    <canvas
+                      *ngIf="data"
+                      baseChart
+                      [datasets]="data.ys"
+                      [labels]="data.xs"
+                      [options]="data.lineChartOptions"
+                      [chartType]="data.lineChartType"
+                      [colors]="lineChartColors"
+                      (chartHover)="chartHovered($event)"
+                      (chartClick)="chartClicked($event)">
+                    </canvas>
+                  </td>
                 </tr>
                 <tr>
                   <td>

@@ -586,6 +586,28 @@ def parse_aimless(logfile):
 
     try:
         plots["Average I, RMS deviation, and Sd"] = {
+            "x_data": [try_float(x, 0.0) for x in \
+                       log.tables(vresolution)[0].col("1/d^2")],
+            "y_data": [
+                {
+                    "data": [try_float(x, 0.0) for x in \
+                             log.tables(vresolution)[0].col("RMSdev")],
+                    "label": "RMSdev",
+                    "pointRadius": 0
+                },
+                {
+                    "data": [try_int(x, 0) for x in \
+                             log.tables(vresolution)[0].col("AvI")],
+                    "label": "AvgI",
+                    "pointRadius": 0
+                },
+                {
+                    "data": [try_float(x, 0.0) for x in \
+                             log.tables(vresolution)[0].col("sd")],
+                    "label": "SD",
+                    "pointRadius": 0
+                }
+            ],
             "data": [
                 {
                     "parameters": {
@@ -638,7 +660,8 @@ def parse_aimless(logfile):
             "parameters": {
                 "selectlabel": "I vs Res",
                 "toplabel": "Average I, RMS dev., and std. dev.",
-                "xlabel": "Dmid (Ansgstroms)"
+                "xlabel": "Dmid (Ansgstroms)",
+                "ylabel": ""
             }
         }
     # Plot not present
@@ -647,6 +670,34 @@ def parse_aimless(logfile):
 
     try:
         plots["Completeness"] = {
+            "x_data": [try_float(x, 0.0) for x in \
+                       log.tables(completeness)[0].col("1/d^2")],
+            "y_data": [
+                {
+                    "data": [try_float(x, 0.0) for x in \
+                             log.tables(completeness)[0].col("%poss")],
+                    "label": "All",
+                    "pointRadius": 0
+                },
+                {
+                    "data": [try_float(x, 0.0) for x in \
+                          log.tables(completeness)[0].col("C%poss")],
+                    "label": "C%poss",
+                    "pointRadius": 0
+                },
+                {
+                    "data": [try_float(x, 0.0) for x in \
+                             log.tables(completeness)[0].col("AnoCmp")],
+                    "label": "AnoCmp",
+                    "pointRadius": 0
+                },
+                {
+                    "data": [try_float(x, 0.0) for x in \
+                             log.tables(completeness)[0].col("AnoFrc")],
+                    "label": "AnoFrc",
+                    "pointRadius": 0
+                }
+            ],
             "data": [
                 {
                     "parameters": {
@@ -716,7 +767,8 @@ def parse_aimless(logfile):
             "parameters": {
                 "selectlabel": "Completeness",
                 "toplabel": "Completeness vs. Resolution",
-                "xlabel": "Dmid (Angstroms)"
+                "xlabel": "Dmid (Angstroms)",
+                "ylabel": "Percent"
             }
         }
     # Plot not present
@@ -725,6 +777,22 @@ def parse_aimless(logfile):
 
     try:
         plots["Redundancy"] = {
+            "x_data": [try_float(x, 0.0) for x in \
+                       log.tables(completeness)[0].col("1/d^2")],
+            "y_data": [
+                {
+                    "data": [try_float(x, 0.0) for x in \
+                             log.tables(completeness)[0].col("Mlplct")],
+                    "label": "All",
+                    "pointRadius": 0
+                },
+                {
+                    "data": [try_float(x, 0.0) for x in \
+                             log.tables(completeness)[0].col("AnoMlt")],
+                    "label": "Anomalous",
+                    "pointRadius": 0
+                },
+            ],
             "data": [
                 {
                     "parameters": {
@@ -762,7 +830,8 @@ def parse_aimless(logfile):
             "parameters": {
                 "selectlabel": "Redundancy",
                 "toplabel": "Redundancy",
-                "xlabel": "Dmid (Angstroms)"
+                "xlabel": "Dmid (Angstroms)",
+                "ylabel": ""
             }
         }
     # Plot not present
@@ -771,6 +840,16 @@ def parse_aimless(logfile):
 
     try:
         plots["Radiation Damage"] = {
+            "x_data": [int(x) for x in \
+                       log.tables(rcp)[0].col("Batch")],
+            "y_data": [
+                {
+                    "data": [try_float(x, 0.0) for x in \
+                             log.tables(rcp)[0].col("Rcp")],
+                    "label": "RCP",
+                    "pointRadius": 0
+                }
+            ],
             "data": [
                 {
                     "parameters": {
@@ -790,7 +869,8 @@ def parse_aimless(logfile):
             "parameters": {
                 "selectlabel": "RCP",
                 "toplabel": "Rcp vs. Batch",
-                "xlabel": "Relative frame difference"
+                "xlabel": "Relative frame difference",
+                "ylabel": ""
             }
         }
     # Plot not present
