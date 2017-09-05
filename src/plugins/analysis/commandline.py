@@ -78,6 +78,10 @@ def construct_command(commandline_args):
         "test": commandline_args.test,
     }
 
+    # Interprocess communication
+    if commandline_args.queue:
+        command["queue"] = commandline_args.queue
+
     return command
 
 def get_commandline():

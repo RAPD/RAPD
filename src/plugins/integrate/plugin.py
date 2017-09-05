@@ -43,7 +43,7 @@ import logging
 import logging.handlers
 import math
 import multiprocessing
-from multiprocessing import Process
+from multiprocessing import Process, Queue
 import os
 # import os.path
 from pprint import pprint
@@ -449,6 +449,9 @@ class RapdPlugin(Process):
         self.logger.debug("Setting up analysis plugin")
         self.tprint("\nLaunching ANALYSIS plugin", level=30, color="blue")
 
+        # Queue to exchange information
+        plugin_queue = Queue()
+
         # Construct the pdbquery plugin command
         class AnalysisArgs(object):
             """Object containing settings for plugin command construction"""
@@ -459,6 +462,7 @@ class RapdPlugin(Process):
             nproc = self.preferences["nproc"]
             pdbquery = False  #TODO
             progress = self.preferences["progress"]
+            queue = plugin_queue
             run_mode = "subprocess-interactive"
             sample_type = "default"
             show_plots = self.preferences["show_plots"]
@@ -481,7 +485,11 @@ class RapdPlugin(Process):
                                             self.tprint,
                                             self.logger)
 
-        analysis_result = plugin_instance.start()
+        plugin_instance.start()
+
+        analysis_result = plugin_queue.get()
+
+        pprint(analysis_result);
 
         self.results["results"]["analysis"] = analysis_result
 
