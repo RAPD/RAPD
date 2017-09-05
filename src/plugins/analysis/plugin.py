@@ -149,7 +149,6 @@ class RapdPlugin(Process):
 
         # Start up processing
         Process.__init__(self, name="analysis")
-        self.start()
 
     def run(self):
         """Execution path of the plugin"""

@@ -346,7 +346,7 @@ class RapdPlugin(Process):
         """Create the self.results dict"""
 
         # Container for actual results
-        self.results["results"] = {}
+        self.results["results"] = {"analysis":False}
 
         # Copy over details of this run
         self.results["command"] = self.command.get("command")
@@ -443,24 +443,6 @@ class RapdPlugin(Process):
 
         self.run_analysis_plugin()
 
-        # return
-        #
-        # # Skip this for now
-        # analysis = self.run_analysis(final_results['files']['mtzfile'], self.dirs['work'])
-        # analysis = 'Success'
-        # if analysis == 'Failed':
-        #     self.logger.debug(analysis)
-        #     # Add method for dealing with a failure by run_analysis.
-        # elif analysis == 'Success':
-        #     self.logger.debug(analysis)
-        #     self.results["status"] = "SUCCESS"
-        #     self.logger.debug(self.results)
-        #     # self.sendBack2(results)
-        #     if self.controller_address:
-        #         rapd_send(self.controller_address, self.results)
-        #
-        # return
-
     def run_analysis_plugin(self):
         """Set up and run the analysis plugin"""
 
@@ -495,14 +477,19 @@ class RapdPlugin(Process):
         self.tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
         # Run the plugin
-        analysis_result = plugin.RapdPlugin(analysis_command,
+        plugin_instance = plugin.RapdPlugin(analysis_command,
                                             self.tprint,
                                             self.logger)
 
-        self.results["analysis"] = analysis_result
+        analysis_result = plugin_instance.start()
+
+        self.results["results"]["analysis"] = analysis_result
 
     def postprocess(self):
         """After it's all done"""
+
+        # Write the output JSON again
+        self.write_json(self.results)
 
         self.tprint(100, "progress")
 
@@ -2141,6 +2128,8 @@ class RapdPlugin(Process):
     def write_json(self, results):
         """Write a file with the JSON version of the results"""
 
+        pprint(results);
+
         json_string = json.dumps(results)
 
         # Output to terminal?
@@ -2148,7 +2137,7 @@ class RapdPlugin(Process):
             print json_string
 
         # Write a file
-        with open("result.json", 'w') as outfile:
+        with open("result.json", "w") as outfile:
             outfile.writelines(json_string)
 
 

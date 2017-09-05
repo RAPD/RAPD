@@ -39,6 +39,7 @@ export class IntegrateBd11200Component implements OnInit {
 
   full_result: any;
   selected_plot: string;
+  view_mode: string = 'summary';
   data: any;
 
   // @ViewChild(BaseChartDirective) private _chart;
@@ -169,21 +170,12 @@ export class IntegrateBd11200Component implements OnInit {
                   display: true,
                   labelString: this.full_result.results.plots['Rmerge vs Frame'].parameters.ylabel,
                 },
-                ticks: {
-                  beginAtZero:true
-                },
+                // ticks: {
+                  // beginAtZero:true
+                // },
               }],
               xAxes: [{
-                // afterTickToLabelConversion: function(data){
-                //       var xLabels = data.ticks;
-                //
-                //       xLabels.forEach(function (labels, i) {
-                //           if (i % 10 !== 0){
-                //               xLabels[i] = '';
-                //           }
-                //       });
-                //       xLabels.push('360');
-                // },
+                afterTickToLabelConversion: undefined,
                 scaleLabel: {
                   display: true,
                   labelString: this.full_result.results.plots['Rmerge vs Frame'].parameters.xlabel,
@@ -202,6 +194,7 @@ export class IntegrateBd11200Component implements OnInit {
         this.data.ys = this.full_result.results.plots['Imean/RMS scatter'].y_data;
         this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['Imean/RMS scatter'].parameters.ylabel;
         this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['Imean/RMS scatter'].parameters.xlabel;
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
         break;
 
       case 'Anomalous & Imean CCs vs Resolution':
@@ -209,6 +202,11 @@ export class IntegrateBd11200Component implements OnInit {
         this.data.ys = this.full_result.results.plots['Anomalous & Imean CCs vs Resolution'].y_data;
         this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['Anomalous & Imean CCs vs Resolution'].parameters.ylabel;
         this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['Anomalous & Imean CCs vs Resolution'].parameters.xlabel;
+        // Y-axis does not begin at 0
+        // this.data.lineChartOptions.scales.yAxes[0].ticks.beginAtZero = false;
+        // this.data.lineChartOptions.scaleBeginAtZero = false;
+        // this.data.lineChartOptions.scaleStartValue = -1;
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
         break;
 
       case 'RMS correlation ratio':
@@ -216,6 +214,7 @@ export class IntegrateBd11200Component implements OnInit {
         this.data.ys = this.full_result.results.plots['RMS correlation ratio'].y_data;
         this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['RMS correlation ratio'].parameters.ylabel;
         this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['RMS correlation ratio'].parameters.xlabel;
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
         break;
 
       case "I/sigma, Mean Mn(I)/sd(Mn(I))":
@@ -223,6 +222,13 @@ export class IntegrateBd11200Component implements OnInit {
         this.data.ys = this.full_result.results.plots['I/sigma, Mean Mn(I)/sd(Mn(I))'].y_data;
         this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['I/sigma, Mean Mn(I)/sd(Mn(I))'].parameters.ylabel;
         this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['I/sigma, Mean Mn(I)/sd(Mn(I))'].parameters.xlabel;
+        // Make the x labels in 1/A
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = function(data){
+              var xLabels = data.ticks;
+              xLabels.forEach(function (labels, i) {
+                xLabels[i] = '1/'+(1.0/xLabels[i]).toFixed(2).toString();
+              });
+        };
         break;
 
       case "rs_vs_res":
@@ -230,6 +236,13 @@ export class IntegrateBd11200Component implements OnInit {
         this.data.ys = this.full_result.results.plots['rs_vs_res'].y_data;
         this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['rs_vs_res'].parameters.ylabel;
         this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['rs_vs_res'].parameters.xlabel;
+        // Make the x labels in A
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = function(data){
+              var xLabels = data.ticks;
+              xLabels.forEach(function (labels, i) {
+                xLabels[i] = (1.0/xLabels[i]).toFixed(2);
+              });
+        };
         break;
 
       case "Average I, RMS deviation, and Sd":
@@ -237,6 +250,7 @@ export class IntegrateBd11200Component implements OnInit {
         this.data.ys = this.full_result.results.plots['Average I, RMS deviation, and Sd'].y_data;
         this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['Average I, RMS deviation, and Sd'].parameters.ylabel;
         this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['Average I, RMS deviation, and Sd'].parameters.xlabel;
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
         break;
 
       case 'Completeness':
@@ -244,6 +258,7 @@ export class IntegrateBd11200Component implements OnInit {
         this.data.ys = this.full_result.results.plots['Completeness'].y_data;
         this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['Completeness'].parameters.ylabel;
         this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['Completeness'].parameters.xlabel;
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
         break;
 
       case 'Redundancy':
@@ -251,6 +266,7 @@ export class IntegrateBd11200Component implements OnInit {
         this.data.ys = this.full_result.results.plots['Redundancy'].y_data;
         this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['Redundancy'].parameters.ylabel;
         this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['Redundancy'].parameters.xlabel;
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
         break;
 
       case 'Radiation Damage':
@@ -258,6 +274,7 @@ export class IntegrateBd11200Component implements OnInit {
         this.data.ys = this.full_result.results.plots['Radiation Damage'].y_data;
         this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['Radiation Damage'].parameters.ylabel;
         this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['Radiation Damage'].parameters.xlabel;
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
         break;
 
       default:
@@ -266,6 +283,12 @@ export class IntegrateBd11200Component implements OnInit {
     }
 
     console.log(this.data);
+  }
+
+  onViewModeSelect(view_mode:string) {
+
+    console.log(view_mode);
+
   }
 
 }
