@@ -52,6 +52,7 @@ import { PlotOmegaStartComponent } from './plugin_components/mx/index-3b34-2-0-0
 import { ReindexDialogComponent } from './plugin_components/mx/index-3b34-2-0-0/reindex-dialog/reindex-dialog.component';
 import { HeaderDialogComponent } from './plugin_components/mx/header-dialog/header-dialog.component';
 import { IntegrateBd11200Component } from './plugin_components/mx/integrate-bd11-2-0-0/integrate-bd11-2-0-0.component';
+import { AnalysisF068200Component } from './plugin_components/mx/analysis-f068-2-0-0/analysis-f068-2-0-0.component';
 
 export function authHttpServiceFactory(http: Http, options: RequestOptions) {
   return new AuthHttp( new AuthConfig({}), http, options);
@@ -85,7 +86,8 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     PlotOmegaStartComponent,
     HeaderDialogComponent,
     ReindexDialogComponent,
-    IntegrateBd11200Component
+    IntegrateBd11200Component,
+    AnalysisF068200Component
   ],
   imports: [
     BrowserModule,

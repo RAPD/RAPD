@@ -11,6 +11,7 @@ import { MdDialog,
 import { ReplaySubject }   from 'rxjs/Rx';
 // import { BaseChartDirective } from 'ng2-charts';
 import { ResultsService } from '../../../shared/services/results.service';
+import { AnalysisF068200Component } from '../analysis-f068-2-0-0/analysis-f068-2-0-0.component';
 
 @Component({
   selector: 'app-integrate-bd11-2-0-0',
