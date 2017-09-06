@@ -155,17 +155,19 @@
                 </tr>
                 <tr>
                   <td *ngIf="selected_plot=='Rmerge vs Frame'" [@enterAnimation]>
-                    <canvas
-                      *ngIf="data"
-                      baseChart
-                      [datasets]="data.ys"
-                      [labels]="data.xs"
-                      [options]="data.lineChartOptions"
-                      [chartType]="data.lineChartType"
-                      [colors]="lineChartColors"
-                      (chartHover)="chartHovered($event)"
-                      (chartClick)="chartClicked($event)">
-                    </canvas>
+                    <div class="chart-container" style="position: relative;">
+                      <canvas
+                        *ngIf="data"
+                        baseChart
+                        [datasets]="data.ys"
+                        [labels]="data.xs"
+                        [options]="data.lineChartOptions"
+                        [chartType]="data.lineChartType"
+                        [colors]="lineChartColors"
+                        (chartHover)="chartHovered($event)"
+                        (chartClick)="chartClicked($event)">
+                      </canvas>
+                    </div>
                   </td>
                   <td *ngIf="selected_plot=='Imean/RMS scatter'" [@enterAnimation]>
                     <canvas
