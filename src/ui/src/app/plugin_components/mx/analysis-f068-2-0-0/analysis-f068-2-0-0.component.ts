@@ -10,7 +10,8 @@ import { Component,
 export class AnalysisF068200Component implements OnInit {
 
   @Input() result: any;
-
+  objectKeys = Object.keys;
+  
   constructor() { }
 
   ngOnInit() {

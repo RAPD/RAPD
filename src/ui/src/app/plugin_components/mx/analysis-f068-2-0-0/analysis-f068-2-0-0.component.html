@@ -3,32 +3,81 @@
     <table>
       <tr>
         <td>
-          <h3>Unit Cell</h3>
+          <table  style="width:35em;">
+            <tr>
+              <td>
+                <h3>Unit Cell</h3>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <table class="manual-table ngx-datatable material">
+                  <thead>
+                    <tr>
+                      <th>Spacegroup</th>
+                      <th>Unit Cell</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>{{result.parsed.xtriage.spacegroup.text}} ({{result.parsed.xtriage.spacegroup.number}})</td>
+                      <td>
+                        {{result.parsed.xtriage.unit_cell.a}} &Aring;
+                        {{result.parsed.xtriage.unit_cell.b}} &Aring;
+                        {{result.parsed.xtriage.unit_cell.c}} &Aring;
+                        {{result.parsed.xtriage.unit_cell.alpha}}&deg;
+                        {{result.parsed.xtriage.unit_cell.beta}}&deg;
+                        {{result.parsed.xtriage.unit_cell.gamma}}&deg;
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <h3>Patterson Analysis</h3>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <table class="manual-table ngx-datatable material">
+                  <thead>
+                    <tr>
+                      <!-- <th>Peak #</th> -->
+                      <th>% Origin</th>
+                      <th>p Value</th>
+                      <th>X</th>
+                      <th>Y</th>
+                      <th>Z</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let key of objectKeys(this.result.parsed.xtriage['Patterson peaks'])">
+                      <td>{{result.parsed.xtriage["Patterson peaks"][key].peak}}</td>
+                      <td>{{result.parsed.xtriage["Patterson peaks"][key]["p-val"]}}</td>
+                      <td>{{result.parsed.xtriage["Patterson peaks"][key]["frac x"]}}</td>
+                      <td>{{result.parsed.xtriage["Patterson peaks"][key]["frac y"]}}</td>
+                      <td>{{result.parsed.xtriage["Patterson peaks"][key]["frac z"]}}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <h3>Xtriage Summary</h3>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <span *ngFor="let line of this.result.parsed.xtriage.verdict_text">{{line}}</span>
+              </td>
+            </tr>
+          </table>
         </td>
-      </tr>
-      <tr>
         <td>
-          Table
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <h3>Patterson Analysis</h3>
-        </td>
-      </tr>
-      <tr>
-        <td>
-          Table
-        </td>
-      </tr>
-      <tr>
-        <td>
-          <h3>Xtriage Summary</h3>
-        </td>
-      </tr>
-      <tr>
-        <td>
-          Table
+          Plots
         </td>
       </tr>
     </table>
