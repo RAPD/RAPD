@@ -116,35 +116,10 @@ class Monitor(threading.Thread):
 
     def connect_to_redis(self):
         """Connect to the redis instance"""
-
-        # Using a redis cluster setup
-        # if settings["REDIS_CLUSTER"]:
-        #     self.logger.debug(settings)
-        #     self.redis = pysent.RedisManager(sentinel_host=settings["SENTINEL_HOST"],
-        #                                      sentinel_port=settings["SENTINEL_PORT"],
-        #                                      master_name=settings["REDIS_MASTER_NAME"])
-        # Using a standard redis server setup
-        # else:
-        """
-        pool = redis.ConnectionPool(host=self.site.IMAGE_MONITOR_REDIS_HOST,
-                                    port=self.site.IMAGE_MONITOR_REDIS_PORT,
-                                    db=self.site.IMAGE_MONITOR_REDIS_DB)
-        
-        pool = redis.ConnectionPool(host=self.site.IMAGE_MONITOR_SETTINGS['SENTINEL_HOST'],
-                                    port=self.site.IMAGE_MONITOR_SETTINGS['SENTINEL_PORT'],
-                                    db=self.site.IMAGE_MONITOR_SETTINGS['SENTINEL_PORT'])
-        self.redis = redis.Redis(connection_pool=pool)
-        """
-        # Create a pool connection
         redis_database = importlib.import_module('database.rapd_redis_adapter')
         
         self.redis_database = redis_database.Database(settings=self.site.RUN_MONITOR_SETTINGS)
-        if self.site.RUN_MONITOR_SETTINGS['REDIS_CONNECTION'] == 'pool':
-            # For a Redis pool connection
-            self.redis = self.redis_database.connect_redis_pool()
-        else:
-            # For a Redis sentinal connection
-            self.redis = self.redis_database.connect_redis_manager_HA()
+        self.redis = self.redis_database.connect_to_redis()
 
     def run(self):
         self.logger.debug("Running")

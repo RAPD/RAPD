@@ -79,10 +79,18 @@ class Database(object):
         self.sentinal_hosts = settings.get('REDIS_SENTINEL_HOSTS', False)
         self.sentinal_name = settings.get('REDIS_MASTER_NAME', False)
 
-        # A lock for troublesome fast-acting data entry
-        self.LOCK = threading.Lock()
+        if settings.get('REDIS_CONNECTION', False) == 'pool':
+            self.pool = True
+        else:
+            self.pool = False
         
-        self.pool = False
+        # A lock for troublesome fast-acting data entry
+        #self.LOCK = threading.Lock()
+    def connect_to_redis(self):
+        if self.pool:
+            return self.connect_redis_pool()
+        else:
+            return self.connect_redis_manager_HA()
 
     def connect_redis_pool(self):
         # Create a pool connection
@@ -92,10 +100,10 @@ class Database(object):
         # Save the pool for a clean exit.
         self.pool = redis.Redis(connection_pool=pool)
         # The return the connection
-        return(self.pool)
+        return self.pool
     
     def connect_redis_manager_HA(self):
-        return(Sentinel(self.sentinal_hosts).master_for(self.sentinal_name))
+        return (Sentinel(self.sentinal_hosts).master_for(self.sentinal_name))
     
     def stop(self):
         if self.pool:

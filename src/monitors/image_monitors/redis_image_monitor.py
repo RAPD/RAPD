@@ -108,15 +108,8 @@ class Monitor(threading.Thread):
 
     def connect_to_redis(self):
         """Connect to the redis instance"""
-
-        # Create a pool connection
         self.redis_database = redis_database.Database(settings=self.site.IMAGE_MONITOR_SETTINGS)
-        if self.site.IMAGE_MONITOR_SETTINGS['REDIS_CONNECTION'] == 'pool':
-            # For a Redis pool connection
-            self.redis = self.redis_database.connect_redis_pool()
-        else:
-            # For a Redis sentinal connection
-            self.redis = self.redis_database.connect_redis_manager_HA()
+        self.redis = self.redis_database.connect_to_redis()
 
     def run(self):
         """Orchestrate the monitoring for new images in redis db"""

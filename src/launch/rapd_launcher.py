@@ -50,7 +50,7 @@ import utils.text as text
 
 BUFFER_SIZE = 8192
 
-class Launcher(object):
+class Launcher(threading.Thread, object):
     """
     Connects to Redis instance, listens for jobs, and spawns new threads using defined
     launcher_adapter
@@ -76,6 +76,7 @@ class Launcher(object):
         logger -- logger instance (default = None)
         overwatch_id -- id for optional overwatcher instance
         """
+        threading.Thread.__init__ (self)
         # Get the logger Instance
         self.logger = logger
 
@@ -96,7 +97,8 @@ class Launcher(object):
         self.running = True
 
         # Start listening for commands through a thread for clean exit.
-        threading.Thread(target=self.run).start()
+        #threading.Thread(target=self.run).start()
+        self.start()
 
     def run(self):
         """The core process of the Launcher instance"""
@@ -118,6 +120,7 @@ class Launcher(object):
             # This will trow a redis.exceptions.ConnectionError if redis is unreachable
             #command = self.redis.brpop(["RAPD_JOBS",], 5)
             try:
+                """
                 while self.redis.llen("RAPD_JOBS") != 0:
                     command = self.redis.rpop("RAPD_JOBS")
                     # Handle the message
@@ -128,6 +131,7 @@ class Launcher(object):
                         # Only run 1 command
                         # self.running = False
                         # break
+                """
                 # sleep a little when jobs aren't coming in.
                 time.sleep(0.2)
             except redis.exceptions.ConnectionError:
@@ -137,22 +141,16 @@ class Launcher(object):
     def stop(self):
         """Stop everything smoothly."""
         self.running = False
-        if self.site.CONTROL_DATABASE_SETTINGS['REDIS_CONNECTION'] == 'pool':
-            self.redis.close()
+        self.ow_registrar.stop()
+        self.redis_database.stop()
 
     def connect_to_redis(self):
         """Connect to the redis instance"""
-        # Create a pool connection
         redis_database = importlib.import_module('database.rapd_redis_adapter')
 
         self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        if self.site.CONTROL_DATABASE_SETTINGS['REDIS_CONNECTION'] == 'pool':
-            # For a Redis pool connection
-            self.redis = self.redis_database.connect_redis_pool()
-        else:
-            # For a Redis sentinal connection
-            self.redis = self.redis_database.connect_redis_manager_HA()
-
+        self.redis = self.redis_database.connect_to_redis()
+        
     def handle_command(self, command):
         """
         Handle an incoming command

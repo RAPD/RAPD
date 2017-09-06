@@ -285,19 +285,23 @@ def processCluster(command,
                     drmaa.JobState.DONE: False,
                     drmaa.JobState.FAILED: False,
                     }
-    #Loop to keep hold process while job is running or ends when self.running event ends.
-    while decodestatus[s.jobStatus(job)]:
-        if mp_event:
-            if mp_event.is_set() == False:
-                kill_job(s, job, logger)
-                break
-        if timeout:
-            if counter > timeout:
-                kill_job(s, job, logger)
-                break
-        #time.sleep(0.2)
-        time.sleep(1)
-        counter += 1
+    try:
+        #Loop to keep hold process while job is running or ends when self.running event ends.
+        while decodestatus[s.jobStatus(job)]:
+            if mp_event:
+                if mp_event.is_set() == False:
+                    kill_job(s, job, logger)
+                    break
+            if timeout:
+                if counter > timeout:
+                    kill_job(s, job, logger)
+                    break
+            #time.sleep(0.2)
+            time.sleep(1)
+            counter += 1
+    except:
+        if logger:
+            logger.debug('qsub_necat.py was killed')
     #Exit cleanly, otherwise master node gets event client timeout errors after 600s.
     s.exit()
     """

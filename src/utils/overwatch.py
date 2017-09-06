@@ -186,18 +186,14 @@ class Registrar(object):
 
     def connect(self):
         """Connect to the central redis Instance"""
-
-        #self.redis_pool = redis.ConnectionPool(host=self.site.CONTROL_REDIS_HOST)
-        # Create a pool connection
         redis_database = importlib.import_module('database.rapd_redis_adapter')
-        
-        self.redis_database = redis_database.Database(settings=self.site.RUN_MONITOR_SETTINGS)
-        if self.site.RUN_MONITOR_SETTINGS['REDIS_CONNECTION'] == 'pool':
-            # For a Redis pool connection
-            self.redis = self.redis_database.connect_redis_pool()
-        else:
-            # For a Redis sentinal connection
-            self.redis = self.redis_database.connect_redis_manager_HA()
+
+        self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        self.redis = self.redis_database.connect_to_redis()
+
+    def stop(self):
+        """Stop the running process cleanly"""
+        self.redis_database.stop()
 
 class Overwatcher(Registrar):
     """
@@ -309,7 +305,6 @@ class Overwatcher(Registrar):
             print text.error+"Managed process exited on start. Exiting."+text.stop
             sys.exit(9)
 
-
     def listen_and_update(self):
         """
         Listen for information on the managed process and maintain updates on
@@ -317,33 +312,34 @@ class Overwatcher(Registrar):
         """
 
         connection_errors = 0
-
-        while True:
-            time.sleep(5)
-
-            # Get the managed process ow_id if unknown
-            if self.ow_managed_id == None:
-                self.ow_managed_id = self.get_managed_id()
-
-            # Check the managed process status if a managed process is found
-            if not self.ow_managed_id == None:
-                status = self.check_managed_process()
-
-                # Watched process has failed
-                if status == False:
-                    self.restart_managed_process()
-
-            # Update the overwatcher status
-            try:
-                self.update()
-                connection_errors = 0
-            # Redis is down
-            except redis.exceptions.ConnectionError:
-                connection_errors += 1
-                if connection_errors > 12:
-                    print "Too many connection errors. Exiting."
-                    break
-
+        try:
+            while True:
+                time.sleep(5)
+    
+                # Get the managed process ow_id if unknown
+                if self.ow_managed_id == None:
+                    self.ow_managed_id = self.get_managed_id()
+    
+                # Check the managed process status if a managed process is found
+                if not self.ow_managed_id == None:
+                    status = self.check_managed_process()
+    
+                    # Watched process has failed
+                    if status == False:
+                        self.restart_managed_process()
+    
+                # Update the overwatcher status
+                try:
+                    self.update()
+                    connection_errors = 0
+                # Redis is down
+                except redis.exceptions.ConnectionError:
+                    connection_errors += 1
+                    if connection_errors > 12:
+                        print "Too many connection errors. Exiting."
+                        break
+        except KeyboardInterrupt:
+            pass
 
     def check_managed_process(self):
         """

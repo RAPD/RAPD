@@ -434,7 +434,7 @@ class Gatherer(object):
         """
         The while loop for watching the files
         """
-        self.logger.info("SercatGatherer.run")
+        self.logger.info("NecatGatherer.run")
 
         # Set up overwatcher
         self.ow_registrar = Registrar(site=self.site,
@@ -516,7 +516,7 @@ class Gatherer(object):
         """
         Stop the loop
         """
-        self.logger.debug("SercatGatherer.stop")
+        self.logger.debug("NecatGatherer.stop")
 
         self.go = False
         self.redis_database.stop()
@@ -524,18 +524,12 @@ class Gatherer(object):
 
     def connect(self):
         """Connect to redis host"""
-
         # Connect to control redis for publishing run data info
         redis_database = importlib.import_module('database.rapd_redis_adapter')
         
         self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        if self.site.CONTROL_DATABASE_SETTINGS['REDIS_CONNECTION'] == 'pool':
-            # For a Redis pool connection
-            self.redis = self.redis_database.connect_redis_pool()
-        else:
-            # For a Redis sentinal connection
-            self.redis = self.redis_database.connect_redis_manager_HA()
-        
+        self.redis = self.redis_database.connect_to_redis()
+
         # Connect to beamline Redis to monitor if run is launched
         self.bl_database = redis_database.Database(settings=self.site.SITE_ADAPTER_SETTINGS)
         self.bl_redis = self.bl_database.connect_redis_pool()
@@ -640,7 +634,7 @@ class Gatherer(object):
                         image_name = sline[1]
                         break
 
-            self.logger.debug("SercatGatherer.parse_image_line - %s", image_name)
+            self.logger.debug("NecatGatherer.parse_image_line - %s", image_name)
             return image_name
         except:
             self.logger.exception("Failure to parse image data file - error in format?")
