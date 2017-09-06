@@ -1,0 +1,117 @@
+<md-tab-group>
+  <md-tab label="Analysis">
+    <table>
+      <tr>
+        <td>
+          <table  style="width:35em;">
+            <tr>
+              <td>
+                <h3>Unit Cell</h3>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <table class="manual-table ngx-datatable material">
+                  <thead>
+                    <tr>
+                      <th>Spacegroup</th>
+                      <th>Unit Cell</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>{{result.parsed.xtriage.spacegroup.text}} ({{result.parsed.xtriage.spacegroup.number}})</td>
+                      <td>
+                        {{result.parsed.xtriage.unit_cell.a}} &Aring;
+                        {{result.parsed.xtriage.unit_cell.b}} &Aring;
+                        {{result.parsed.xtriage.unit_cell.c}} &Aring;
+                        {{result.parsed.xtriage.unit_cell.alpha}}&deg;
+                        {{result.parsed.xtriage.unit_cell.beta}}&deg;
+                        {{result.parsed.xtriage.unit_cell.gamma}}&deg;
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <h3>Patterson Analysis</h3>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <table class="manual-table ngx-datatable material">
+                  <thead>
+                    <tr>
+                      <!-- <th>Peak #</th> -->
+                      <th>% Origin</th>
+                      <th>p Value</th>
+                      <th>X</th>
+                      <th>Y</th>
+                      <th>Z</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let key of objectKeys(this.result.parsed.xtriage['Patterson peaks'])">
+                      <td>{{result.parsed.xtriage["Patterson peaks"][key].peak}}</td>
+                      <td>{{result.parsed.xtriage["Patterson peaks"][key]["p-val"]}}</td>
+                      <td>{{result.parsed.xtriage["Patterson peaks"][key]["frac x"]}}</td>
+                      <td>{{result.parsed.xtriage["Patterson peaks"][key]["frac y"]}}</td>
+                      <td>{{result.parsed.xtriage["Patterson peaks"][key]["frac z"]}}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <h3>Xtriage Summary</h3>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <span *ngFor="let line of this.result.parsed.xtriage.verdict_text">{{line}}</span>
+              </td>
+            </tr>
+          </table>
+        </td>
+        <td>
+          Plots
+        </td>
+      </tr>
+    </table>
+  </md-tab>
+  <md-tab label="Plots">
+    <table>
+      <tr>
+        <td>
+          <md-select
+            placeholder="Select Plot"
+            (change)="onPlotSelect(plot)"
+            [(ngModel)]="selected_plot"
+            name="selected_plot"
+            value="intensity">
+            <md-option value="intensity">Summary</md-option>
+            <md-option value="anomalous">Anomalous Signal</md-option>
+            <md-option value="nz_test">NZ Test</md-option>
+            <md-option value="l_test">L Test</md-option>
+            <md-option value="cid0">CID 0</md-option>
+            <md-option value="cid1">CID 1</md-option>
+          </md-select>
+        </td>
+        <td>
+          <h2>Integration Results for</h2>
+        </td>
+      </tr>
+    </table>
+  </md-tab>
+  <md-tab label="PDBQuery">
+  </md-tab>
+  <md-tab label="Self-Rotation">
+  </md-tab>
+  <md-tab label="Precessions">
+  </md-tab>
+  <md-tab label="Raw">
+  </md-tab>
+</md-tab-group>

@@ -1,7 +1,5 @@
 import { Component,
-         ComponentFactory,
          ComponentFactoryResolver,
-        //  ComponentResolver,
          Input,
          OnInit,
          ViewChild,
@@ -51,11 +49,11 @@ export class MxResultContainerComponent implements OnInit {
     this.current_result = event.value;
 
     // Construct the component name from the result
-    const component_name = this.current_result.plugin_type + this.current_result.plugin_id + this.current_result.plugin_version.replace(/\./g, '') + 'component';
+    const component_name = (this.current_result.plugin_type + this.current_result.plugin_id + this.current_result.plugin_version.replace(/\./g, '') + 'component').toLowerCase();
 
-    console.log(component_name);
-    console.log(mx_components);
-    
+    // console.log(component_name);
+    // console.log(mx_components);
+
     // Create a componentfactoryResolver instance
     const factory = this.componentfactoryResolver.resolveComponentFactory(mx_components[component_name]);
     // const factory = this.componentfactoryResolver.resolveComponentFactory(mx_components['indexstrategyaaaa1component']);

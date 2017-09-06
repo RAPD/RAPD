@@ -3,17 +3,25 @@
     <md-card *ngIf="full_result"> <!-- class="result-panel-strategy-card" style="order:1;"> -->
       <md-card-header>
         <md-card-title>
-          <h2>Integration Results for</h2>
-          <md-select
-            placeholder="View mode"
-            (change)="onViewModeSelect(view_mode)"
-            [(ngModel)]="view_mode"
-            name="view_mode"
-            value="summary">
-            <md-option value="summary">Summary</md-option>
-            <md-option value="analysis">Analysis</md-option>
-            <md-option value="raw">Raw</md-option>
-          </md-select>
+          <table>
+            <tr>
+              <td>
+                <md-select
+                  placeholder="View mode"
+                  (change)="onViewModeSelect(view_mode)"
+                  [(ngModel)]="view_mode"
+                  name="view_mode"
+                  value="summary">
+                  <md-option value="summary">Summary</md-option>
+                  <md-option value="analysis">Analysis</md-option>
+                  <md-option value="raw">Raw</md-option>
+                </md-select>
+              </td>
+              <td>
+                <h2>Integration Results for</h2>
+              </td>
+            </tr>
+          </table>
         </md-card-title>
       </md-card-header>
       <md-card-content *ngIf="view_mode === 'summary'">
@@ -295,7 +303,7 @@
         </table>
       </md-card-content>
       <md-card-content *ngIf="view_mode === 'analysis'">
-        Analysis
+        <div #analysistarget></div>
       </md-card-content>
       <md-card-content *ngIf="view_mode === 'raw'">
         Raw

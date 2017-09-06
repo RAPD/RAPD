@@ -26,14 +26,14 @@ __status__ = "Development"
 
 # This is an active RAPD plugin
 RAPD_PLUGIN = True
-
 # This plugin's type
+DATA_TYPE = "MX"
 PLUGIN_TYPE = "ANALYSIS"
-PLUGIN_SUBTYPE = "EXPERIMENTAL"
-
-# A unique UUID for this handler (uuid.uuid1().hex)
-ID = "f06818cf1b0f11e79232ac87a3333966"
-VERSION = "1.0.0"
+PLUGIN_SUBTYPE = "CORE"
+# A unique UUID for this handler (uuid.uuid1().hex[:4])
+ID = "f068"
+# Version of this plugin
+VERSION = "2.0.0"
 
 # Standard imports
 from distutils.spawn import find_executable
@@ -41,7 +41,7 @@ import json
 import logging
 from multiprocessing import Process, Queue
 import os
-# from pprint import pprint
+from pprint import pprint
 import shutil
 import subprocess
 # import sys
@@ -134,15 +134,12 @@ class RapdPlugin(Process):
 
         # Some logging
         self.logger.info(command)
-        # pprint(command)
+        pprint(command)
 
         # Store passed-in variables
         self.command = command
         self.preferences = command.get("preferences", {})
-        self.results["command"] = command
 
-        # Store into results
-        self.results["command"] = command
         self.results["process"] = {
             "process_id": self.command.get("process_id"),
             "status": 1}
@@ -200,6 +197,9 @@ class RapdPlugin(Process):
         self.command["preferences"]["sample_type"] = self.sample_type
         self.command["preferences"]["solvent_content"] = self.solvent_content
 
+        # Construct the results object
+        self.construct_results()
+
         if self.test:
             self.logger.debug("TEST IS SET \"ON\"")
 
@@ -241,6 +241,29 @@ calculation",
                         level=30,
                         color="red")
             self.do_phaser = False
+
+    def construct_results(self):
+        """Create the self.results dict"""
+
+        # Copy over details of this run
+        self.results["command"] = self.command.get("command")
+        self.results["preferences"] = self.command.get("preferences", {})
+
+        # Describe the process
+        self.results["process"] = self.command.get("process", {})
+        # Status is now 1 (starting)
+        self.results["process"]["status"] = 1
+        # Process type is plugin
+        self.results["process"]["type"] = "plugin"
+
+        # Describe plugin
+        self.results["plugin"] = {
+            "data_type":DATA_TYPE,
+            "type":PLUGIN_TYPE,
+            "subtype":PLUGIN_SUBTYPE,
+            "id":ID,
+            "version":VERSION
+        }
 
     def process(self):
         """Run plugin action"""
@@ -480,9 +503,12 @@ installed",
         elif run_mode == "subprocess":
             return self.results
         elif run_mode == "subprocess-interactive":
+            print "handle_return >> subprocess-interactive"
             # self.print_results()
             # self.print_credits()
-            return self.results
+            # return self.results
+            if self.command["queue"]:
+                self.command["queue"].put(self.results)
 
     def print_results(self):
         """Print the results to the commandline"""
