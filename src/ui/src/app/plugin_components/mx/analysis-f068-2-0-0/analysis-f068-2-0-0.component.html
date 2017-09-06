@@ -1,6 +1,6 @@
 <md-tab-group>
-  <md-tab label="Analysis">
-    <table>
+  <md-tab label="Summary">
+    <table style="width:100%;">
       <tr>
         <td>
           <table  style="width:35em;">
@@ -71,37 +71,100 @@
             </tr>
             <tr>
               <td>
-                <span *ngFor="let line of this.result.parsed.xtriage.verdict_text">{{line}}</span>
+                <span *ngFor="let line of result.parsed.xtriage.verdict_text">{{line}}</span>
               </td>
             </tr>
           </table>
         </td>
         <td>
-          Plots
-        </td>
-      </tr>
-    </table>
-  </md-tab>
-  <md-tab label="Plots">
-    <table>
-      <tr>
-        <td>
-          <md-select
-            placeholder="Select Plot"
-            (change)="onPlotSelect(plot)"
-            [(ngModel)]="selected_plot"
-            name="selected_plot"
-            value="intensity">
-            <md-option value="intensity">Summary</md-option>
-            <md-option value="anomalous">Anomalous Signal</md-option>
-            <md-option value="nz_test">NZ Test</md-option>
-            <md-option value="l_test">L Test</md-option>
-            <md-option value="cid0">CID 0</md-option>
-            <md-option value="cid1">CID 1</md-option>
-          </md-select>
-        </td>
-        <td>
-          <h2>Integration Results for</h2>
+          <table style="width:100%;height:100%;">
+            <tr>
+              <td>
+                <h3>{{selected_plot}}</h3>
+              </td>
+            </tr>
+            <tr style="height:500px;">
+              <td *ngIf="selected_plot=='Intensity plots'">
+                <div class="chart-container" style="position: relative;">
+                  <canvas
+                    *ngIf="data"
+                    baseChart
+                    [datasets]="data.ys"
+                    [labels]="data.xs"
+                    [options]="data.lineChartOptions"
+                    [chartType]="data.lineChartType"
+                    [colors]="lineChartColors"
+                    (chartHover)="chartHovered($event)"
+                    (chartClick)="chartClicked($event)">
+                  </canvas>
+                </div>
+              </td>
+              <td *ngIf="selected_plot=='Measurability of Anomalous signal'">
+                <div class="chart-container" style="position: relative;">
+                  <canvas
+                  *ngIf="data"
+                  baseChart
+                  [datasets]="data.ys"
+                  [labels]="data.xs"
+                  [options]="data.lineChartOptions"
+                  [chartType]="data.lineChartType"
+                  [colors]="lineChartColors"
+                  (chartHover)="chartHovered($event)"
+                  (chartClick)="chartClicked($event)">
+                </canvas>
+              </div>
+              </td>
+              <td *ngIf="selected_plot=='NZ test'">
+                <div class="chart-container" style="position: relative;">
+                <canvas
+                  *ngIf="data"
+                  baseChart
+                  [datasets]="data.ys"
+                  [labels]="data.xs"
+                  [options]="data.lineChartOptions"
+                  [chartType]="data.lineChartType"
+                  [colors]="lineChartColors"
+                  (chartHover)="chartHovered($event)"
+                  (chartClick)="chartClicked($event)">
+                </canvas>
+              </div>
+              </td>
+              <td *ngIf="selected_plot=='L test, acentric data'">
+                <div class="chart-container" style="position: relative;">
+                <canvas
+                  *ngIf="data"
+                  baseChart
+                  [datasets]="data.ys"
+                  [labels]="data.xs"
+                  [options]="data.lineChartOptions"
+                  [chartType]="data.lineChartType"
+                  [colors]="lineChartColors"
+                  (chartHover)="chartHovered($event)"
+                  (chartClick)="chartClicked($event)">
+                </canvas>
+              </div>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <md-select
+                  placeholder="Select Plot"
+                  (change)="setPlot(selected_plot)"
+                  [(ngModel)]="selected_plot"
+                  name="selected_plot"
+                  value="intensity">
+                  <md-option *ngFor="let key of objectKeys(result.parsed.xtriage.plots)" [value]="key">{{key}}</md-option>
+                  <!-- <md-option value="intensity">Summary</md-option>
+                  <md-option value="anomalous">Anomalous Signal</md-option>
+                  <md-option value="nz_test">NZ Test</md-option>
+                  <md-option value="l_test">L Test</md-option>
+                  <md-option value="cid0">CID 0</md-option>
+                  <md-option value="cid1">CID 1</md-option> -->
+                </md-select>
+                <p>Selected plot: {{selected_plot}}</p>
+              </td>
+            </tr>
+          </table>
         </td>
       </tr>
     </table>

@@ -50,6 +50,7 @@ import numpy
 
 # RAPD imports
 import plugins.subcontractors.parse as parse
+import plugins.subcontractors.xtriage as xtriage
 import utils.credits as rcredits
 import utils.exceptions as exceptions
 import utils.xutils as xutils
@@ -327,7 +328,7 @@ self.command["input_data"]["datafile"]
         shutil.move("logfile.log", "xtriage.log")
 
         self.results["parsed"]["xtriage"] = \
-            parse.parse_xtriage_output(self.results["raw"]["xtriage"])
+            xtriage.parse_raw_output(self.results["raw"]["xtriage"])
 
         return True
 

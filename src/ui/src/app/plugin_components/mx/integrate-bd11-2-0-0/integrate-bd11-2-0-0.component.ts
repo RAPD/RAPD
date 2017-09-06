@@ -83,13 +83,13 @@ export class IntegrateBd11200Component implements OnInit, OnChanges {
   }
 
   // lineChart
-  public lineChartOptions:any = {
-    responsive: true,
-    legend: {
-      display: true,
-      position: 'right',
-    }
-  };
+  // public lineChartOptions:any = {
+  //   responsive: true,
+  //   legend: {
+  //     display: true,
+  //     position: 'right',
+  //   }
+  // };
   public lineChartColors:Array<any> = [
     { // green
       backgroundColor: 'rgba(0,0,0,0)',
@@ -132,8 +132,8 @@ export class IntegrateBd11200Component implements OnInit, OnChanges {
       pointHoverBorderColor: 'rgba(139, 0, 0, 1)'
     }
   ];
-  public lineChartLegend:boolean = true;
-  public lineChartType:string = 'line';
+  // public lineChartLegend:boolean = true;
+  // public lineChartType:string = 'line';
 
   public handleIncomingData(data: any) {
     console.log('handleIncomingData', data);
@@ -149,7 +149,6 @@ export class IntegrateBd11200Component implements OnInit, OnChanges {
   onPlotSelect(plot_key:string) {
 
     console.log('onPlotSelect', plot_key);
-    // console.log(this.baseChart);
     this.setPlot(plot_key);
 
   }

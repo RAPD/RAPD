@@ -289,7 +289,7 @@
                   <td>
                     <md-select
                       placeholder="Select plot"
-                      (change)="onPlotSelect(selected_plot)"
+                      (change)="setPlot(selected_plot)"
                       [(ngModel)]="selected_plot"
                       name="plot">
                       <md-option *ngFor="let key of objectKeys(full_result.results.plots)" [value]="key">{{full_result.results.plots[key].parameters.selectlabel}}</md-option>
