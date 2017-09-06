@@ -1,17 +1,36 @@
 import { Component,
+         ComponentFactory,
+         ComponentFactoryResolver,
          Input,
+         OnChanges,
          OnInit,
+         SimpleChanges,
          ViewChild,
+         ViewContainerRef,
          trigger,
          transition,
          style,
          animate } from '@angular/core';
 import { MdDialog,
-        MD_DIALOG_DATA } from '@angular/material';
+         MD_DIALOG_DATA } from '@angular/material';
 import { ReplaySubject }   from 'rxjs/Rx';
 // import { BaseChartDirective } from 'ng2-charts';
 import { ResultsService } from '../../../shared/services/results.service';
-import { AnalysisF068200Component } from '../analysis-f068-2-0-0/analysis-f068-2-0-0.component';
+// import { AnalysisF068200Component } from '../analysis-f068-2-0-0/analysis-f068-2-0-0.component';
+
+// Import analysis plugin components here
+
+import * as mx from '../';
+var analysis_values = [];
+var analysis_components = {};
+for (let key in mx) {
+  console.log(key);
+  if (key.match('Analysis')) {
+    console.log('YES');
+    analysis_values.push(mx[key]);
+    analysis_components[key.toLowerCase()] = mx[key];
+  }
+}
 
 @Component({
   selector: 'app-integrate-bd11-2-0-0',
@@ -32,7 +51,7 @@ import { AnalysisF068200Component } from '../analysis-f068-2-0-0/analysis-f068-2
     )
   ],
 })
-export class IntegrateBd11200Component implements OnInit {
+export class IntegrateBd11200Component implements OnInit, OnChanges {
 
   objectKeys = Object.keys;
   @Input() current_result: any;
@@ -44,8 +63,11 @@ export class IntegrateBd11200Component implements OnInit {
   data: any;
 
   // @ViewChild(BaseChartDirective) private _chart;
+  @ViewChild('analysistarget', { read: ViewContainerRef }) analysistarget;
+  analysis_component: any;
 
-  constructor(private results_service: ResultsService,
+  constructor(private componentfactoryResolver: ComponentFactoryResolver,
+              private results_service: ResultsService,
               public dialog: MdDialog) { }
 
   ngOnInit() {
@@ -54,6 +76,10 @@ export class IntegrateBd11200Component implements OnInit {
       this.current_result.result_type,
       this.current_result.result_id);
     this.incomingData$.subscribe(x => this.handleIncomingData(x));
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    console.log(changes);
   }
 
   // lineChart
@@ -118,14 +144,6 @@ export class IntegrateBd11200Component implements OnInit {
       this.selected_plot = 'Rmerge vs Frame';
       this.setPlot('Rmerge vs Frame');
     }
-
-    // if ('Imean/RMS scatter' in data.results.plots) {
-    //   this.selected_plot = 'Imean/RMS scatter';
-    //   this.setPlot('Imean/RMS scatter');
-    // }
-
-
-    console.log(this.selected_plot);
   }
 
   onPlotSelect(plot_key:string) {
@@ -280,15 +298,40 @@ export class IntegrateBd11200Component implements OnInit {
 
       default:
         this.data = false;
-
     }
-
-    console.log(this.data);
+    // console.log(this.data);
   }
 
   onViewModeSelect(view_mode:string) {
 
+    var self = this;
+
     console.log(view_mode);
+
+    setTimeout(function() {
+      if (view_mode === 'analysis') {
+        // If there is analysis data, determine the component to use
+        if (self.full_result.results.analysis) {
+
+          let plugin = self.full_result.results.analysis.plugin;
+          const component_name = (plugin.type + plugin.id + plugin.version.replace(/\./g, '') + 'component').toLowerCase();
+          console.log(component_name);
+          console.log(analysis_components);
+
+          // Create a componentfactoryResolver instance
+          const factory = self.componentfactoryResolver.resolveComponentFactory(analysis_components[component_name]);
+
+          // Create the component
+          self.analysis_component = self.analysistarget.createComponent(factory);
+          console.log(self.analysistarget);
+          // Set the component current_result value
+          // component.instance.current_result = event.value;
+          self.analysis_component.instance.result = self.full_result.results.analysis;
+        }
+      }
+    }, 100);
+
+
 
   }
 

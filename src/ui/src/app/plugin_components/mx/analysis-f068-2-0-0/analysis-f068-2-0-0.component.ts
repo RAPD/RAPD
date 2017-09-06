@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component,
+         Input,
+         OnInit } from '@angular/core';
 
 @Component({
   selector: 'app-analysis-f068-2-0-0',
@@ -7,9 +9,14 @@ import { Component, OnInit } from '@angular/core';
 })
 export class AnalysisF068200Component implements OnInit {
 
+  @Input() result: any;
+
   constructor() { }
 
   ngOnInit() {
+
+    console.log(this.result);
+
   }
 
 }
