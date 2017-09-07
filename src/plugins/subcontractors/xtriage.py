@@ -593,6 +593,11 @@ def parse_raw_output(raw_output):
             "L test, acentric data": "|L|",
         }
 
+        # Labels to make things better
+        override_labels = {
+            "<I>_smooth_approximation": "<I> Smoothed",
+        }
+
         x_columns = {
             "Intensity plots": "resol",
             "Measurability of Anomalous signal": "resol",
@@ -646,6 +651,9 @@ def parse_raw_output(raw_output):
                             "ys": table_data[column_label]
                         }]
                     })
+                    if column_label in override_labels:
+                        column_label = override_labels[column_label]
+
                     plots[table_label]["y_data"].append({
                         "data": table_data[column_label],
                         "label": column_label,

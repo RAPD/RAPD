@@ -2,7 +2,7 @@
   <md-tab label="Summary">
     <table style="width:100%;">
       <tr>
-        <td>
+        <td style="vertical-align:top;">
           <table  style="width:35em;">
             <tr>
               <td>
@@ -77,13 +77,13 @@
           </table>
         </td>
         <td>
-          <table style="width:100%;height:100%;">
+          <table style="width:100%;">
             <tr>
               <td>
                 <h3>{{selected_plot}}</h3>
               </td>
             </tr>
-            <tr style="height:500px;">
+            <tr>
               <td *ngIf="selected_plot=='Intensity plots'">
                 <div class="chart-container" style="position: relative;">
                   <canvas
