@@ -36,6 +36,7 @@ ID = "f068"
 VERSION = "2.0.0"
 
 # Standard imports
+import base64
 from distutils.spawn import find_executable
 import json
 import logging
@@ -44,13 +45,15 @@ import os
 from pprint import pprint
 import shutil
 import subprocess
-# import sys
+import sys
 import time
 import numpy
 
 # RAPD imports
+import plugins.subcontractors.molrep as molrep
 import plugins.subcontractors.parse as parse
 import plugins.subcontractors.xtriage as xtriage
+
 import utils.credits as rcredits
 import utils.exceptions as exceptions
 import utils.xutils as xutils
@@ -135,7 +138,7 @@ class RapdPlugin(Process):
 
         # Some logging
         self.logger.info(command)
-        pprint(command)
+        # pprint(command)
 
         # Store passed-in variables
         self.command = command
@@ -305,7 +308,12 @@ calculation",
         self.handle_return()
 
     def run_xtriage(self):
-        """Run Xtriage and the parse the output"""
+        """
+        Run Xtriage and the parse the output
+
+        Xtriage has to be run and the log file read in as the log file has more information than
+        reported to STDOUT
+        """
 
         self.tprint("  Running xtriage", level=30, color="white")
 
@@ -317,8 +325,6 @@ self.command["input_data"]["datafile"]
                                         stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE,
                                         shell=True)
-        # stdout, _ = xtriage_proc.communicate()
-        # xtriage_output_raw = stdout
         xtriage_proc.wait()
 
         # Store raw output
@@ -352,38 +358,64 @@ self.command["input_data"]["datafile"]
             molrep_output_raw = stdout
 
             # Store raw output
-            self.results["raw"]["molrep"] = molrep_output_raw
+            self.results["raw"]["molrep"] = molrep_output_raw.split("\n")
 
             # Save the output in log form
             with open("molrep_selfrf.log", "w") as out_file:
                 out_file.write(stdout)
 
             # Parse the Molrep log
-            parsed_molrep_results = parse.parse_molrep_output(molrep_output_raw)
+            parsed_molrep_results = molrep.parse_raw_output(self.results["raw"]["molrep"])
 
             # Convert the Molrep postscript file to JPEG, if convert is available
-            if find_executable("convert"):
-                convert_proc = subprocess.Popen(["convert",
-                                                 "molrep_rf.ps",
-                                                 "molrep_rf.jpg"],
-                                                stdout=subprocess.PIPE,
-                                                stderr=subprocess.PIPE,
-                                                shell=False)
-                _, stderr = convert_proc.communicate()
-                if stderr:
+            crop_sizes = {
+                "60": "254x305+265+410",
+                "90": "254x305+265+110",
+                "120": "256x305+10+410",
+                "180": "256x305+10+110",
+            }
+
+            convert_executables = ("convert", "/usr/local/bin/convert")
+            for convert_executable in convert_executables:
+                # print "Trying %s" % convert_executable
+                if find_executable(convert_executable):
+                    for label, size in crop_sizes.iteritems():
+                        convert_proc = subprocess.Popen([convert_executable,
+                                                         "molrep_rf.ps",
+                                                         "-crop",
+                                                         size,
+                                                         "-quality",
+                                                         "50",
+                                                         "molrep_rf_%s.jpg" % label],
+                                                        stdout=subprocess.PIPE,
+                                                        stderr=subprocess.PIPE,
+                                                        shell=False)
+                        _, stderr = convert_proc.communicate()
+                        # print _
+                        # print stderr
+                        if stderr:
+                            self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be installed",
+                                        level=30,
+                                        color="red")
+                            parsed_molrep_results["self_rotation_images"] = False
+                            break
+                        else:
+                            parsed_molrep_results["self_rotation_images"] = True
+                            parsed_molrep_results["self_rotation_imagefile_%s" % label] = os.path.abspath("molrep_rf_%s.jpg" % label)
+                            # read in the image and encode
+                            with open("molrep_rf_%s.jpg" % label, "rb") as image_file:
+                                encoded_string = base64.b64encode(image_file.read())
+                                parsed_molrep_results["self_rotation_image_%s" % label] = "data:image/jpeg;base64,"+encoded_string
+
+                    # Break out of the loop trying multiple convert executables
+                    if parsed_molrep_results["self_rotation_images"]:
+                        break;
+                else:
                     self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be \
-installed",
+    installed",
                                 level=30,
                                 color="red")
                     parsed_molrep_results["self_rotation_image"] = False
-                else:
-                    parsed_molrep_results["self_rotation_image"] = os.path.abspath("molrep_rf.jpg")
-            else:
-                self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be \
-installed",
-                            level=30,
-                            color="red")
-                parsed_molrep_results["self_rotation_image"] = False
 
             self.results["parsed"]["molrep"] = parsed_molrep_results
 
@@ -409,7 +441,7 @@ installed",
             phaser_output_raw = stdout
 
             # Store raw output
-            self.results["raw"]["phaser"] = phaser_output_raw
+            self.results["raw"]["phaser"] = phaser_output_raw.split("\n")
 
             # Save the output in log form
             with open("phaser_ncs.log", "w") as out_file:

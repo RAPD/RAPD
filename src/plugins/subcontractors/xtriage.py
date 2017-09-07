@@ -118,7 +118,6 @@ def parse_raw_output(raw_output):
         "---",
     )
 
-
     for index, line in enumerate(raw_output):
         # print index, line
 
@@ -570,7 +569,7 @@ def parse_raw_output(raw_output):
                        + unlabeled_table_labels \
                        + loggraph_table_labels:
 
-        print table_label
+        # print table_label
 
         top_labels = {
             "Intensity plots": "Intensities",
@@ -651,8 +650,8 @@ def parse_raw_output(raw_output):
                             "ys": table_data[column_label]
                         }]
                     })
-                    if column_label in override_labels:
-                        column_label = override_labels[column_label]
+                    # if column_label in override_labels:
+                    #     column_label = override_labels[column_label]
 
                     plots[table_label]["y_data"].append({
                         "data": table_data[column_label],
