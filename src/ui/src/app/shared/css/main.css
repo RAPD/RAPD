@@ -167,20 +167,13 @@ button.button-dialog-top-right.mat-icon-button {
 
 
 
+/* Manual table to look like ngx-datatable */
+
 table.manual-table {
   table-layout: fixed;
   /*width: 100%;*/
   border-collapse: collapse;
 }
-
-
-/*thead th:nth-child(1) {
-  width: 30%;
-}
-
-thead th:nth-child(2) {
-  width: 70%;
-}*/
 
 .manual-table th, td {
   padding: 0 10px 0px 10px;
@@ -198,7 +191,6 @@ thead th:nth-child(2) {
 }
 .manual-table thead tr {
   border-bottom: 1px solid rgba(0,0,0,0.1);
-
 }
 
 .manual-table tbody {
@@ -222,8 +214,19 @@ thead th:nth-child(2) {
   border-top: 1px solid rgba(200,200,200,0);
 }
 
-/* Entries for showing raw output from programs */
+/* div that holds a select that looks separate */
+.rapd-select-panel {
+  border-radius: 2px;
+  /*box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
+              0 8px 10px 1px rgba(0, 0, 0, 0.14),
+              0 3px 14px 2px rgba(0, 0, 0, 0.12);*/
+  box-shadow: 0 3px 1px -2px rgba(0,0,0,.2),
+              0 2px 2px 0 rgba(0,0,0,.14),
+              0 1px 5px 0 rgba(0,0,0,.12);
+  padding: 10px;
+}
 
+/* Entries for showing raw output from programs */
 .raw-output-card {
   margin: 0.5em;
 }
