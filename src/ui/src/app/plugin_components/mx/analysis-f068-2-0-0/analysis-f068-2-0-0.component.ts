@@ -14,6 +14,10 @@ export class AnalysisF068200Component implements OnInit {
   selected_plot: string;
   data: any;
 
+  raw_xtriage_collapsed: boolean = true;
+  raw_molrep_collapsed: boolean = true;
+  raw_phaser_collapsed: boolean = true;
+
   public lineChartColors:Array<any> = [
     { // green
       backgroundColor: 'rgba(0,0,0,0)',

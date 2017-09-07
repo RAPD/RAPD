@@ -221,3 +221,25 @@ thead th:nth-child(2) {
   border-bottom: 1px solid rgba(200,200,200,0);
   border-top: 1px solid rgba(200,200,200,0);
 }
+
+/* Entries for showing raw output from programs */
+
+.raw-output-card {
+  margin: 0.5em;
+}
+
+.raw-output {
+  font-family: 'Roboto Mono', monospace;
+  overflow: scroll;
+  line-height: 0.1;
+}
+
+.raw-collapsed {
+  height: 10em;
+}
+
+.raw-output-toggle {
+  float: left;
+  top: 2.0em;
+  left: -1.4em;
+}

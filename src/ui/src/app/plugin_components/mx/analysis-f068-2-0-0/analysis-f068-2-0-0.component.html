@@ -66,6 +66,40 @@
             </tr>
             <tr>
               <td>
+                <h3>Twinning Analysis</h3>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <p *ngIf="! result.parsed.xtriage.twin">No twinning suspected</p>
+                <table *ngIf="result.parsed.xtriage.twin" class="manual-table ngx-datatable material">
+                  <thead>
+                    <tr>
+                      <!-- <th>Peak #</th> -->
+                      <th>Operator</th>
+                      <th>Type</th>
+                      <th>Axis</th>
+                      <th>Apparent SG</th>
+                      <th>R<sub>obs</sub></th>
+                      <th>Britton &alpha;</th>
+                      <th>H-test &alpha;</th>
+                      <th>ML &alpha;</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let key of objectKeys(this.result.parsed.xtriage['Patterson peaks'])">
+                      <!-- <td>{{result.parsed.xtriage["Patterson peaks"][key].peak}}</td>
+                      <td>{{result.parsed.xtriage["Patterson peaks"][key]["p-val"]}}</td>
+                      <td>{{result.parsed.xtriage["Patterson peaks"][key]["frac x"]}}</td>
+                      <td>{{result.parsed.xtriage["Patterson peaks"][key]["frac y"]}}</td>
+                      <td>{{result.parsed.xtriage["Patterson peaks"][key]["frac z"]}}</td> -->
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td>
                 <h3>Xtriage Summary</h3>
               </td>
             </tr>
@@ -84,65 +118,61 @@
               </td>
             </tr>
             <tr>
-              <td *ngIf="selected_plot=='Intensity plots'">
+              <td >
                 <div class="chart-container" style="position: relative;">
-                  <canvas
-                    *ngIf="data"
-                    baseChart
-                    [datasets]="data.ys"
-                    [labels]="data.xs"
-                    [options]="data.lineChartOptions"
-                    [chartType]="data.lineChartType"
-                    [colors]="lineChartColors"
-                    (chartHover)="chartHovered($event)"
-                    (chartClick)="chartClicked($event)">
-                  </canvas>
+                  <div *ngIf="selected_plot=='Intensity plots'">
+                    <canvas
+                      *ngIf="data"
+                      baseChart
+                      [datasets]="data.ys"
+                      [labels]="data.xs"
+                      [options]="data.lineChartOptions"
+                      [chartType]="data.lineChartType"
+                      [colors]="lineChartColors"
+                      (chartHover)="chartHovered($event)"
+                      (chartClick)="chartClicked($event)">
+                    </canvas>
+                  </div>
+                  <div *ngIf="selected_plot=='Measurability of Anomalous signal'">
+                    <canvas
+                      *ngIf="data"
+                      baseChart
+                      [datasets]="data.ys"
+                      [labels]="data.xs"
+                      [options]="data.lineChartOptions"
+                      [chartType]="data.lineChartType"
+                      [colors]="lineChartColors"
+                      (chartHover)="chartHovered($event)"
+                      (chartClick)="chartClicked($event)">
+                    </canvas>
+                  </div>
+                  <div *ngIf="selected_plot=='NZ test'">
+                    <canvas
+                      *ngIf="data"
+                      baseChart
+                      [datasets]="data.ys"
+                      [labels]="data.xs"
+                      [options]="data.lineChartOptions"
+                      [chartType]="data.lineChartType"
+                      [colors]="lineChartColors"
+                      (chartHover)="chartHovered($event)"
+                      (chartClick)="chartClicked($event)">
+                    </canvas>
+                  </div>
+                  <div *ngIf="selected_plot=='L test, acentric data'">
+                    <canvas
+                      *ngIf="data"
+                      baseChart
+                      [datasets]="data.ys"
+                      [labels]="data.xs"
+                      [options]="data.lineChartOptions"
+                      [chartType]="data.lineChartType"
+                      [colors]="lineChartColors"
+                      (chartHover)="chartHovered($event)"
+                      (chartClick)="chartClicked($event)">
+                    </canvas>
+                  </div>
                 </div>
-              </td>
-              <td *ngIf="selected_plot=='Measurability of Anomalous signal'">
-                <div class="chart-container" style="position: relative;">
-                  <canvas
-                  *ngIf="data"
-                  baseChart
-                  [datasets]="data.ys"
-                  [labels]="data.xs"
-                  [options]="data.lineChartOptions"
-                  [chartType]="data.lineChartType"
-                  [colors]="lineChartColors"
-                  (chartHover)="chartHovered($event)"
-                  (chartClick)="chartClicked($event)">
-                </canvas>
-              </div>
-              </td>
-              <td *ngIf="selected_plot=='NZ test'">
-                <div class="chart-container" style="position: relative;">
-                <canvas
-                  *ngIf="data"
-                  baseChart
-                  [datasets]="data.ys"
-                  [labels]="data.xs"
-                  [options]="data.lineChartOptions"
-                  [chartType]="data.lineChartType"
-                  [colors]="lineChartColors"
-                  (chartHover)="chartHovered($event)"
-                  (chartClick)="chartClicked($event)">
-                </canvas>
-              </div>
-              </td>
-              <td *ngIf="selected_plot=='L test, acentric data'">
-                <div class="chart-container" style="position: relative;">
-                <canvas
-                  *ngIf="data"
-                  baseChart
-                  [datasets]="data.ys"
-                  [labels]="data.xs"
-                  [options]="data.lineChartOptions"
-                  [chartType]="data.lineChartType"
-                  [colors]="lineChartColors"
-                  (chartHover)="chartHovered($event)"
-                  (chartClick)="chartClicked($event)">
-                </canvas>
-              </div>
               </td>
             </tr>
             <tr>
@@ -154,12 +184,6 @@
                   name="selected_plot"
                   value="intensity">
                   <md-option *ngFor="let key of objectKeys(result.parsed.xtriage.plots)" [value]="key">{{key}}</md-option>
-                  <!-- <md-option value="intensity">Summary</md-option>
-                  <md-option value="anomalous">Anomalous Signal</md-option>
-                  <md-option value="nz_test">NZ Test</md-option>
-                  <md-option value="l_test">L Test</md-option>
-                  <md-option value="cid0">CID 0</md-option>
-                  <md-option value="cid1">CID 1</md-option> -->
                 </md-select>
                 <p>Selected plot: {{selected_plot}}</p>
               </td>
@@ -177,26 +201,73 @@
     <img src={{result.parsed.molrep.self_rotation_image_120}}/>
     <img src={{result.parsed.molrep.self_rotation_image_180}}/>
   </md-tab>
-  <md-tab label="Precessions">
-  </md-tab>
+  <!-- <md-tab label="Precessions">
+  </md-tab> -->
   <md-tab label="Raw">
-    <md-card>
-      <button md-mini-fab>
-        <md-icon class="md-24">keyboard_arrow_down</md-icon>
-      </button>
+    <md-card class="raw-output-card">
       <md-card-title>
         Xtriage
       </md-card-title>
-      <md-card-content>
+      <button md-mini-fab class="raw-output-toggle" color="primary">
+        <md-icon
+          *ngIf="raw_xtriage_collapsed"
+          class="md-24"
+          (click)="raw_xtriage_collapsed=false">
+          keyboard_arrow_down
+        </md-icon>
+        <md-icon
+          *ngIf="! raw_xtriage_collapsed"
+          class="md-24"
+          (click)="raw_xtriage_collapsed=true">
+          keyboard_arrow_up
+        </md-icon>
+      </button>
+      <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':raw_xtriage_collapsed}">
         <p *ngFor="let line of result.raw.xtriage">{{line}}</p>
       </md-card-content>
     </md-card>
-    <md-card>
+    <md-card class="raw-output-card">
       <md-card-title>
         Molrep
       </md-card-title>
-      <md-card-content>
-        {{result.raw.molrep}}
+      <button md-mini-fab class="raw-output-toggle" color="primary">
+        <md-icon
+          *ngIf="raw_molrep_collapsed"
+          class="md-24"
+          (click)="raw_molrep_collapsed=false">
+          keyboard_arrow_down
+        </md-icon>
+        <md-icon
+          *ngIf="! raw_molrep_collapsed"
+          class="md-24"
+          (click)="raw_molrep_collapsed=true">
+          keyboard_arrow_up
+        </md-icon>
+      </button>
+      <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':raw_molrep_collapsed}">
+        <p *ngFor="let line of result.raw.molrep">{{line}}</p>
+      </md-card-content>
+    </md-card>
+    <md-card class="raw-output-card">
+      <md-card-title>
+        Phaser
+      </md-card-title>
+      <button md-mini-fab class="raw-output-toggle" color="primary">
+        <md-icon
+          *ngIf="raw_phaser_collapsed"
+          class="md-24"
+          (click)="raw_phaser_collapsed=false">
+          keyboard_arrow_down
+        </md-icon>
+        <md-icon
+          *ngIf="! raw_phaser_collapsed"
+          class="md-24"
+          (click)="raw_phaser_collapsed=true">
+          keyboard_arrow_up
+        </md-icon>
+      </button>
+      <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':raw_phaser_collapsed}">
+        <p *ngFor="let line of result.raw.phaser">{{line}}</p>
       </md-card-content>
     </md-card>
   </md-tab>

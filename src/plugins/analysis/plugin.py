@@ -52,6 +52,7 @@ import numpy
 # RAPD imports
 import plugins.subcontractors.molrep as molrep
 import plugins.subcontractors.parse as parse
+# import plugins.subcontractors.precession as precession
 import plugins.subcontractors.xtriage as xtriage
 
 import utils.credits as rcredits
@@ -138,7 +139,7 @@ class RapdPlugin(Process):
 
         # Some logging
         self.logger.info(command)
-        # pprint(command)
+        pprint(command)
 
         # Store passed-in variables
         self.command = command
@@ -280,6 +281,8 @@ calculation",
         self.tprint(arg=20, level="progress")
         self.run_phaser_ncs()
         self.tprint(arg=30, level="progress")
+        # self.run_labelit_precession()
+        # self.tprint(arg=40, level="progress")
 
         # Output to terminal
         self.print_xtriage_results()
@@ -450,6 +453,14 @@ self.command["input_data"]["datafile"]
             self.results["parsed"]["phaser"] = parse.parse_phaser_ncs_output(phaser_output_raw)
 
         return True
+
+    # def run_labelit_precession(self):
+    #     """Run labelit to make precession photos"""
+    #
+    #     precession.LabelitPP(input=[
+    #         {
+    #             "run":
+    #         }], output=None, logger=self.logger)
 
     def process_pdb_query(self):
         """Prepare and run PDBQuery"""
