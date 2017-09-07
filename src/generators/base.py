@@ -200,6 +200,7 @@ class BaseFileGenerator(object):
                             "glob",
                             "json",
                             "logging",
+                            "math",
                             "multiprocessing",
                             "os",
                             "pprint",

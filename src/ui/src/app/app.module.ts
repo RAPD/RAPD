@@ -6,6 +6,8 @@ import { HttpModule, Http, RequestOptions } from '@angular/http';
 import { AppComponent } from './app.component';
 import { Router } from '@angular/router';
 
+import { FlexLayoutModule } from '@angular/flex-layout';
+
 import { AppRoutingModule,
          appRoutingProviders } from './app.routing';
 
@@ -97,6 +99,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     AppRoutingModule,
     HttpModule,
     BrowserAnimationsModule,
+    FlexLayoutModule,
     MaterialModule,
     MdDialogModule,
     NgxDatatableModule,
