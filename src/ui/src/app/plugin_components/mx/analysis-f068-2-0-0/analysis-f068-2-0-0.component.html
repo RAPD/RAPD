@@ -176,5 +176,24 @@
   <md-tab label="Precessions">
   </md-tab>
   <md-tab label="Raw">
+    <md-card>
+      <button md-mini-fab>
+        <md-icon class="md-24">keyboard_arrow_down</md-icon>
+      </button>
+      <md-card-title>
+        Xtriage
+      </md-card-title>
+      <md-card-content>
+        <p *ngFor="let line of result.raw.xtriage">{{line}}</p>
+      </md-card-content>
+    </md-card>
+    <md-card>
+      <md-card-title>
+        Molrep
+      </md-card-title>
+      <md-card-content>
+        {{result.raw.molrep}}
+      </md-card-content>
+    </md-card>
   </md-tab>
 </md-tab-group>
