@@ -104,7 +104,7 @@ LAUNCHER_MANAGER_LOCK_FILE = "/tmp/rapd2/lock/launcher_manager.lock"
 LAUNCHER_LOCK_FILE = "/tmp/rapd2/lock/launcher.lock"
 # Launcher to send jobs to
 # The value should be the key of the launcher to select in LAUNCHER_SPECIFICATIONS
-LAUNCHER_TARGET = 1
+#LAUNCHER_TARGET = 1
 # Directories to look for launcher adapters
 RAPD_LAUNCHER_ADAPTER_DIRECTORIES = ("launch.launcher_adapters",
                                      "sites.launcher_adapters")
@@ -246,7 +246,7 @@ CONTROL_DATABASE_SETTINGS = {"CONTROL_DATABASE":CONTROL_DATABASE,
                              }
 
 LAUNCHER_SETTINGS = {
-    "LAUNCHER_REGISTER":LAUNCHER_REGISTER,
+    #"LAUNCHER_REGISTER":LAUNCHER_REGISTER,
     "LAUNCHER_SPECIFICATIONS":LAUNCHER_SPECIFICATIONS,
     "LOCK_FILE":LAUNCHER_LOCK_FILE,
     "RAPD_LAUNCHER_ADAPTER_DIRECTORIES":RAPD_LAUNCHER_ADAPTER_DIRECTORIES

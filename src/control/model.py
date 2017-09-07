@@ -213,6 +213,8 @@ class Model(object):
 
         # Shorten variable names
         site = self.site
+        
+        import sites.detectors.necat_dectris_eiger16m
 
         # A single detector
         if site.DETECTOR:
@@ -221,7 +223,8 @@ class Model(object):
             detector = detector.lower()
             self.detectors[self.site_ids[0].upper()] = load_module(
                 seek_module=detector,
-                directories=("sites.detectors", "detectors"))
+                directories=("sites.detectors", "detectors"),
+                logger=self.logger)
 
         # Multiple detectors
         elif site.DETECTORS:
@@ -231,17 +234,6 @@ class Model(object):
                 self.detectors[site_id.upper()] = load_module(
                     seek_module=detector,
                     directories=("sites.detectors", "detectors"))
-
-    def start_job_launcher_OLD(self):
-        """Start up the job launcher"""
-        self.logger.debug("Starting launcher")
-
-        launcher = importlib.import_module("launch.rapd_launcher")
-
-        self.launcher = launcher.Launcher(site=self.site,
-                                          tag="qsub",
-                                          logger=self.logger,
-                                          overwatch_id=self.overwatch_id)
 
     def start_image_monitor(self):
         """Start up the image listening process for core"""

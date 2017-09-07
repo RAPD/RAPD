@@ -81,27 +81,11 @@ class ControllerServer(threading.Thread):
 
     def connect_to_redis(self):
         """Connect to the redis instance"""
-
-        # Create a pool connection
-        """
-        pool = redis.ConnectionPool(host=self.site.CONTROL_SETTINGS['REDIS_HOST'],
-                                    port=self.site.CONTROL_SETTINGS['REDIS_PORT'],
-                                    db=self.site.CONTROL_SETTINGS['REDIS_DB'])
-
-        # The connection
-        self.redis = redis.Redis(connection_pool=pool)
-        """
-        # Create a pool connection
         redis_database = importlib.import_module('database.rapd_redis_adapter')
 
         self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        if self.site.CONTROL_DATABASE_SETTINGS['REDIS_CONNECTION'] == 'pool':
-            # For a Redis pool connection
-            self.redis = self.redis_database.connect_redis_pool()
-        else:
-            # For a Redis sentinal connection
-            self.redis = self.redis_database.connect_redis_manager_HA()
-
+        self.redis = self.redis_database.connect_to_redis()
+        
 class LaunchAction(threading.Thread):
     """
     Manages the dispatch of jobs to the cluster process

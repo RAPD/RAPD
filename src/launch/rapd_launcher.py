@@ -108,13 +108,18 @@ class Launcher(threading.Thread, object):
             self.ow_registrar = Registrar(site=self.site,
                                           ow_type="launcher",
                                           ow_id=self.overwatch_id)
-            self.ow_registrar.register({"site_id":self.site.ID})
+            self.ow_registrar.register({"site_id":self.site.ID,
+                                        "job_list":self.job_list})
+            
+        # send message to launcher manager to say I am ready!
+        #self.redis.publish('RAPD_JOB_RESPONSE', json.dumps(self.job_list))
 
         # This is the server portion of the code
         while self.running:
             # Have Registrar update status
             if self.overwatch_id:
-                self.ow_registrar.update({"site_id":self.site.ID})
+                self.ow_registrar.update({"site_id":self.site.ID,
+                                          "job_list":self.job_list})
 
             # Look for a new command
             # This will trow a redis.exceptions.ConnectionError if redis is unreachable
@@ -132,6 +137,17 @@ class Launcher(threading.Thread, object):
                         # self.running = False
                         # break
                 """
+                #print self.job_list
+                while self.redis.llen(self.job_list) != 0:
+                    command = self.redis.rpop(self.job_list)
+                    # Handle the message
+                    if command:
+                        #self.handle_command("RAPD_JOBS", json.loads(command))
+                        self.handle_command(json.loads(command))
+
+                        # Only run 1 command
+                        # self.running = False
+                        # break
                 # sleep a little when jobs aren't coming in.
                 time.sleep(0.2)
             except redis.exceptions.ConnectionError:
@@ -150,7 +166,7 @@ class Launcher(threading.Thread, object):
 
         self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
         self.redis = self.redis_database.connect_to_redis()
-        
+
     def handle_command(self, command):
         """
         Handle an incoming command
@@ -163,16 +179,21 @@ class Launcher(threading.Thread, object):
 
         # Split up the command
         message = command
-
+        
+        # Handle the test meassage by sending back response
+        #if message == 'TEST':
+        #    self.redis.publish('RAPD_JOB_RESPONSE', json.dumps(self.job_list))
+        #else:
         # Update preferences to be in server run mode
-        if not message.get("preferences"):
-            message["preferences"] = {}
-        message["preferences"]["run_mode"] = "server"
+        #if not message.get("preferences"):
+        #    message["preferences"] = {}
+        #message["preferences"]["run_mode"] = "server"
 
         self.logger.debug("Command received channel:RAPD_JOBS  message: %s", message)
 
         # Use the adapter to launch
-        self.adapter(self.site, message, self.specifications)
+        #self.adapter(self.site, message, self.specifications)
+        #self.adapter(self.site, message, self.launcher)
 
     def get_settings(self):
         """
@@ -180,12 +201,12 @@ class Launcher(threading.Thread, object):
         """
 
         # Save typing
-        launchers = self.site.LAUNCHER_SETTINGS["LAUNCHER_REGISTER"]
+        #launchers = self.site.LAUNCHER_SETTINGS["LAUNCHER_REGISTER"]
 
         # Get IP Address
         self.ip_address = utils.site.get_ip_address()
         self.logger.debug("Found ip address to be %s", self.ip_address)
-
+        """
         # Look for the launcher matching this ip_address and the input tag
         possible_tags = []
         for launcher in launchers:
@@ -194,7 +215,21 @@ class Launcher(threading.Thread, object):
                 break
             elif launcher[0] == self.ip_address:
                 possible_tags.append(launcher[1])
-
+        """
+        
+        # Save typing
+        launchers = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"]
+        
+        # Look for the launcher matching this ip_address and the input tag
+        possible_tags = []
+        for launcher in launchers:
+            print launcher
+            if launcher.get('ip_address') == self.ip_address and launcher.get('tag') == self.tag:
+                self.launcher = launcher
+                break
+            elif launcher.get('ip_address') == self.ip_address:
+                possible_tags.append(launcher.get('tag'))
+        
         # No launcher adapter
         if self.launcher is None:
 
@@ -213,18 +248,25 @@ s IP address (%s), but not for the input tag (%s)" % (self.ip_address, self.tag)
             # Exit in error state
             sys.exit(9)
         else:
+            """
             # Unpack address
             self.ip_address, self.tag, self.launcher_id = self.launcher
             self.specifications = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.launcher_id]
+            # This is the job list on Redis to listen to for incoming jobs
+            self.job_list = self.specifications.get('job_list')
             # Tag launcher in self.site
             self.site.LAUNCHER_ID = self.launcher_id
+            """
+            # Unpack address
+            self.job_list = self.launcher.get('job_list')
 
     def load_adapter(self):
         """Find and load the adapter"""
 
         # Import the database adapter as database module
         self.adapter = load_module(
-            seek_module=self.specifications["adapter"],
+            #seek_module=self.specifications["adapter"],
+            seek_module=self.launcher["adapter"],
             directories=self.site.LAUNCHER_SETTINGS["RAPD_LAUNCHER_ADAPTER_DIRECTORIES"]).LauncherAdapter
 
         self.logger.debug(self.adapter)

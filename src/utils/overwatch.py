@@ -107,6 +107,9 @@ class Registrar(object):
         # If custom_vars have been passed, add them
         entry.update(custom_vars)
 
+        # Check for launchers
+        launcher = entry.get('job_list', False)
+
         # Wrap potential redis down
         try:
             # Put entry in the redis db
@@ -125,6 +128,14 @@ class Registrar(object):
 
                 # Expire the current entry in N seconds
                 red.expire("OW:"+self.uuid+":"+self.ow_id, OVERWATCH_TIMEOUT)
+            
+            # Used to monitor which launchers are running.
+            if launcher:
+                # Put entry in the redis db
+                red.set("OW:"+launcher, 1)
+                
+                # Expire the current entry in N seconds
+                red.expire("OW:"+launcher, OVERWATCH_TIMEOUT)
 
         # Redis is down
         except redis.exceptions.ConnectionError:
@@ -152,6 +163,9 @@ class Registrar(object):
         # If custom_vars have been passed, add them
         entry.update(custom_vars)
 
+        # Check for launchers
+        launcher = entry.get('job_list', False)
+
         # Wrap potential redis down
         try:
             # Update timestamp
@@ -178,6 +192,14 @@ class Registrar(object):
 
                 # Expire the current entry in N seconds
                 red.expire("OW:"+self.uuid+":"+self.ow_id, OVERWATCH_TIMEOUT)
+            
+            # Used to monitor which launchers are running.
+            if launcher:
+                # Put entry in the redis db
+                red.set("OW:"+launcher, 1)
+                
+                # Expire the current entry in N seconds
+                red.expire("OW:"+launcher, OVERWATCH_TIMEOUT)
 
         # Redis is down
         except redis.exceptions.ConnectionError:
