@@ -154,155 +154,139 @@
                   </td>
                 </tr>
                 <tr>
-                  <td *ngIf="selected_plot=='Rmerge vs Frame'">
+                  <td>
                     <div class="chart-container" style="position: relative;">
-                      <canvas
-                        *ngIf="data"
-                        baseChart
-                        [datasets]="data.ys"
-                        [labels]="data.xs"
-                        [options]="data.lineChartOptions"
-                        [chartType]="data.lineChartType"
-                        [colors]="lineChartColors"
-                        (chartHover)="chartHovered($event)"
-                        (chartClick)="chartClicked($event)">
-                      </canvas>
-                    </div>
-                  </td>
-                  <td *ngIf="selected_plot=='Imean/RMS scatter'">
-                    <div class="chart-container" style="position: relative;">
-                      <canvas
-                        *ngIf="data"
-                        baseChart
-                        [datasets]="data.ys"
-                        [labels]="data.xs"
-                        [options]="data.lineChartOptions"
-                        [chartType]="data.lineChartType"
-                        [colors]="lineChartColors"
-                        (chartHover)="chartHovered($event)"
-                        (chartClick)="chartClicked($event)">
-                      </canvas>
-                    </div>
-                  </td>
-                  <td *ngIf="selected_plot=='Anomalous & Imean CCs vs Resolution'" [@enterAnimation]>
-                    <div class="chart-container" style="position: relative;">
-                      <canvas
-                        *ngIf="data"
-                        baseChart
-                        [datasets]="data.ys"
-                        [labels]="data.xs"
-                        [options]="data.lineChartOptions"
-                        [chartType]="data.lineChartType"
-                        [colors]="lineChartColors"
-                        (chartHover)="chartHovered($event)"
-                        (chartClick)="chartClicked($event)">
-                      </canvas>
-                    </div>
-                  </td>
-                  <td *ngIf="selected_plot=='RMS correlation ratio'" [@enterAnimation]>
-                    <div class="chart-container" style="position: relative;">
-                      <canvas
-                        *ngIf="data"
-                        baseChart
-                        [datasets]="data.ys"
-                        [labels]="data.xs"
-                        [options]="data.lineChartOptions"
-                        [chartType]="data.lineChartType"
-                        [colors]="lineChartColors"
-                        (chartHover)="chartHovered($event)"
-                        (chartClick)="chartClicked($event)">
-                      </canvas>
-                    </div>
-                  </td>
-                  <td *ngIf="selected_plot=='I/sigma, Mean Mn(I)/sd(Mn(I))'" [@enterAnimation]>
-                    <div class="chart-container" style="position: relative;">
-                      <canvas
-                        *ngIf="data"
-                        baseChart
-                        [datasets]="data.ys"
-                        [labels]="data.xs"
-                        [options]="data.lineChartOptions"
-                        [chartType]="data.lineChartType"
-                        [colors]="lineChartColors"
-                        (chartHover)="chartHovered($event)"
-                        (chartClick)="chartClicked($event)">
-                      </canvas>
-                    </div>
-                  </td>
-                  <td *ngIf="selected_plot=='rs_vs_res'" [@enterAnimation]>
-                    <div class="chart-container" style="position: relative;">
-                      <canvas
-                        *ngIf="data"
-                        baseChart
-                        [datasets]="data.ys"
-                        [labels]="data.xs"
-                        [options]="data.lineChartOptions"
-                        [chartType]="data.lineChartType"
-                        [colors]="lineChartColors"
-                        (chartHover)="chartHovered($event)"
-                        (chartClick)="chartClicked($event)">
-                      </canvas>
-                    </div>
-                  </td>
-                  <td *ngIf="selected_plot=='Average I, RMS deviation, and Sd'" [@enterAnimation]>
-                    <div class="chart-container" style="position: relative;">
-                      <canvas
-                        *ngIf="data"
-                        baseChart
-                        [datasets]="data.ys"
-                        [labels]="data.xs"
-                        [options]="data.lineChartOptions"
-                        [chartType]="data.lineChartType"
-                        [colors]="lineChartColors"
-                        (chartHover)="chartHovered($event)"
-                        (chartClick)="chartClicked($event)">
-                      </canvas>
-                    </div>
-                  </td>
-                  <td *ngIf="selected_plot=='Completeness'" [@enterAnimation]>
-                    <div class="chart-container" style="position: relative;">
-                      <canvas
-                        *ngIf="data"
-                        baseChart
-                        [datasets]="data.ys"
-                        [labels]="data.xs"
-                        [options]="data.lineChartOptions"
-                        [chartType]="data.lineChartType"
-                        [colors]="lineChartColors"
-                        (chartHover)="chartHovered($event)"
-                        (chartClick)="chartClicked($event)">
-                      </canvas>
-                    </div>
-                  </td>
-                  <td *ngIf="selected_plot=='Redundancy'" [@enterAnimation]>
-                    <div class="chart-container" style="position: relative;">
-                      <canvas
-                        *ngIf="data"
-                        baseChart
-                        [datasets]="data.ys"
-                        [labels]="data.xs"
-                        [options]="data.lineChartOptions"
-                        [chartType]="data.lineChartType"
-                        [colors]="lineChartColors"
-                        (chartHover)="chartHovered($event)"
-                        (chartClick)="chartClicked($event)">
-                      </canvas>
-                    </div>
-                  </td>
-                  <td *ngIf="selected_plot=='Radiation Damage'" [@enterAnimation]>
-                    <div class="chart-container" style="position: relative;">
-                      <canvas
-                        *ngIf="data"
-                        baseChart
-                        [datasets]="data.ys"
-                        [labels]="data.xs"
-                        [options]="data.lineChartOptions"
-                        [chartType]="data.lineChartType"
-                        [colors]="lineChartColors"
-                        (chartHover)="chartHovered($event)"
-                        (chartClick)="chartClicked($event)">
-                      </canvas>
-                    </div>
+                      <div *ngIf="selected_plot=='Rmerge vs Frame'">
+                        <canvas
+                          *ngIf="data"
+                          baseChart
+                          [datasets]="data.ys"
+                          [labels]="data.xs"
+                          [options]="data.lineChartOptions"
+                          [chartType]="data.lineChartType"
+                          [colors]="lineChartColors"
+                          (chartHover)="chartHovered($event)"
+                          (chartClick)="chartClicked($event)">
+                        </canvas>
+                      </div>
+                      <div *ngIf="selected_plot=='Imean/RMS scatter'">
+                        <canvas
+                          *ngIf="data"
+                          baseChart
+                          [datasets]="data.ys"
+                          [labels]="data.xs"
+                          [options]="data.lineChartOptions"
+                          [chartType]="data.lineChartType"
+                          [colors]="lineChartColors"
+                          (chartHover)="chartHovered($event)"
+                          (chartClick)="chartClicked($event)">
+                        </canvas>
+                      </div>
+                      <div *ngIf="selected_plot=='Anomalous & Imean CCs vs Resolution'">
+                        <canvas
+                          *ngIf="data"
+                          baseChart
+                          [datasets]="data.ys"
+                          [labels]="data.xs"
+                          [options]="data.lineChartOptions"
+                          [chartType]="data.lineChartType"
+                          [colors]="lineChartColors"
+                          (chartHover)="chartHovered($event)"
+                          (chartClick)="chartClicked($event)">
+                        </canvas>
+                      </div>
+                      <div *ngIf="selected_plot=='RMS correlation ratio'">
+                        <canvas
+                          *ngIf="data"
+                          baseChart
+                          [datasets]="data.ys"
+                          [labels]="data.xs"
+                          [options]="data.lineChartOptions"
+                          [chartType]="data.lineChartType"
+                          [colors]="lineChartColors"
+                          (chartHover)="chartHovered($event)"
+                          (chartClick)="chartClicked($event)">
+                        </canvas>
+                      </div>
+                      <div *ngIf="selected_plot=='I/sigma, Mean Mn(I)/sd(Mn(I))'">
+                        <canvas
+                          *ngIf="data"
+                          baseChart
+                          [datasets]="data.ys"
+                          [labels]="data.xs"
+                          [options]="data.lineChartOptions"
+                          [chartType]="data.lineChartType"
+                          [colors]="lineChartColors"
+                          (chartHover)="chartHovered($event)"
+                          (chartClick)="chartClicked($event)">
+                        </canvas>
+                      </div>
+                      <div *ngIf="selected_plot=='rs_vs_res'">
+                        <canvas
+                          *ngIf="data"
+                          baseChart
+                          [datasets]="data.ys"
+                          [labels]="data.xs"
+                          [options]="data.lineChartOptions"
+                          [chartType]="data.lineChartType"
+                          [colors]="lineChartColors"
+                          (chartHover)="chartHovered($event)"
+                          (chartClick)="chartClicked($event)">
+                        </canvas>
+                      </div>
+                      <div *ngIf="selected_plot=='Average I, RMS deviation, and Sd'">
+                        <canvas
+                          *ngIf="data"
+                          baseChart
+                          [datasets]="data.ys"
+                          [labels]="data.xs"
+                          [options]="data.lineChartOptions"
+                          [chartType]="data.lineChartType"
+                          [colors]="lineChartColors"
+                          (chartHover)="chartHovered($event)"
+                          (chartClick)="chartClicked($event)">
+                        </canvas>
+                      </div>
+                      <div *ngIf="selected_plot=='Completeness'">
+                        <canvas
+                          *ngIf="data"
+                          baseChart
+                          [datasets]="data.ys"
+                          [labels]="data.xs"
+                          [options]="data.lineChartOptions"
+                          [chartType]="data.lineChartType"
+                          [colors]="lineChartColors"
+                          (chartHover)="chartHovered($event)"
+                          (chartClick)="chartClicked($event)">
+                        </canvas>
+                      </div>
+                      <div *ngIf="selected_plot=='Redundancy'">
+                        <canvas
+                          *ngIf="data"
+                          baseChart
+                          [datasets]="data.ys"
+                          [labels]="data.xs"
+                          [options]="data.lineChartOptions"
+                          [chartType]="data.lineChartType"
+                          [colors]="lineChartColors"
+                          (chartHover)="chartHovered($event)"
+                          (chartClick)="chartClicked($event)">
+                        </canvas>
+                      </div>
+                      <div *ngIf="selected_plot=='Radiation Damage'">
+                        <canvas
+                          *ngIf="data"
+                          baseChart
+                          [datasets]="data.ys"
+                          [labels]="data.xs"
+                          [options]="data.lineChartOptions"
+                          [chartType]="data.lineChartType"
+                          [colors]="lineChartColors"
+                          (chartHover)="chartHovered($event)"
+                          (chartClick)="chartClicked($event)">
+                        </canvas>
+                      </div>
+                    </div>  
                   </td>
                 </tr>
                 <tr>
