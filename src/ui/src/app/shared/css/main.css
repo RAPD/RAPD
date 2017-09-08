@@ -243,7 +243,8 @@ table.rapd-table {
 
 md-card.rapd-result {
   /*background-color: rgba(0,0,0,0.1);*/
-  width:100%;
+    overflow: scroll;
+    width:100%;
 }
 
 md-card-header.rapd-result {
@@ -283,20 +284,21 @@ md-card-actions.rapd-result {
 /* Entries for showing raw output from programs */
 .raw-output-card {
   margin: 0.5em;
+  overflow-y: hidden;
+  overflow-x:visible;
 }
 
 .raw-output {
   font-family: 'Roboto Mono', monospace;
-  overflow: scroll;
-  line-height: 0.1;
+  font-size: 0.75;
 }
 
 .raw-collapsed {
   height: 10em;
 }
 
-.raw-output-toggle {
+/*.raw-output-toggle {
   float: left;
   top: 2.0em;
   left: -1.4em;
-}
+}*/

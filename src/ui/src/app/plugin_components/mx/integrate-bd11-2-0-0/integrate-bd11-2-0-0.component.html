@@ -23,7 +23,7 @@
       </md-card-header>
       <md-card-content *ngIf="view_mode === 'summary'" class="rapd-result">
         <div fxLayout="row" fxLayoutGap="10px" *ngIf="view_mode === 'summary'">
-          <div fxFlex fxLayout="column" fxLayoutGap="10px">
+          <div fxFlex="nogrow" fxLayout="column" fxLayoutGap="10px">
             <div fxFlex="none">
               <table class="rapd-table">
                 <thead>
@@ -295,111 +295,141 @@
       </md-card-content>
       <md-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
         <md-card class="raw-output-card">
-          <md-card-title>
-            XDS Idxref
-          </md-card-title>
-          <button md-mini-fab class="raw-output-toggle" color="primary">
-            <md-icon
-              *ngIf="log_xds_idxref_collapsed"
-              class="md-24"
-              (click)="log_xds_idxref_collapsed=false">
-              keyboard_arrow_down
-            </md-icon>
-            <md-icon
-              *ngIf="! log_xds_idxref_collapsed"
-              class="md-24"
-              (click)="log_xds_idxref_collapsed=true">
-              keyboard_arrow_up
-            </md-icon>
-          </button>
+          <md-card-header>
+            <div style="width:100%">
+              <div style="float:left;">
+                <h3>XDS Idxref</h3>
+              </div>
+              <div style="float:right">
+                <button md-mini-fab class="raw-output-toggle" color="primary">
+                  <md-icon
+                    *ngIf="log_xds_idxref_collapsed"
+                    class="md-24"
+                    (click)="log_xds_idxref_collapsed=false">
+                    keyboard_arrow_down
+                  </md-icon>
+                  <md-icon
+                    *ngIf="! log_xds_idxref_collapsed"
+                    class="md-24"
+                    (click)="log_xds_idxref_collapsed=true">
+                    keyboard_arrow_up
+                  </md-icon>
+                </button>
+              </div>
+            </div>
+          </md-card-header>
           <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':log_xds_idxref_collapsed}">
             <p *ngFor="let line of full_result.results.logs.xds_idxref">{{line}}</p>
           </md-card-content>
         </md-card>
         <md-card class="raw-output-card">
-          <md-card-title>
-            XDS Integrate
-          </md-card-title>
-          <button md-mini-fab class="raw-output-toggle" color="primary">
-            <md-icon
-              *ngIf="log_xds_integrate_collapsed"
-              class="md-24"
-              (click)="log_xds_integrate_collapsed=false">
-              keyboard_arrow_down
-            </md-icon>
-            <md-icon
-              *ngIf="! log_xds_integrate_collapsed"
-              class="md-24"
-              (click)="log_xds_integrate_collapsed=true">
-              keyboard_arrow_up
-            </md-icon>
-          </button>
+          <md-card-header>
+            <div style="width:100%">
+              <div style="float:left;">
+                <h3>XDS Integrate</h3>
+              </div>
+              <div style="float:right">
+                <button md-mini-fab class="raw-output-toggle" color="primary">
+                  <md-icon
+                    *ngIf="log_xds_integrate_collapsed"
+                    class="md-24"
+                    (click)="log_xds_integrate_collapsed=false">
+                    keyboard_arrow_down
+                  </md-icon>
+                  <md-icon
+                    *ngIf="! log_xds_integrate_collapsed"
+                    class="md-24"
+                    (click)="log_xds_integrate_collapsed=true">
+                    keyboard_arrow_up
+                  </md-icon>
+                </button>
+              </div>
+            </div>
+          </md-card-header>
           <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':log_xds_integrate_collapsed}">
             <p *ngFor="let line of full_result.results.logs.xds_integrate">{{line}}</p>
           </md-card-content>
         </md-card>
         <md-card class="raw-output-card">
-          <md-card-title>
-            XDS Correct
-          </md-card-title>
-          <button md-mini-fab class="raw-output-toggle" color="primary">
-            <md-icon
-              *ngIf="log_xds_correct_collapsed"
-              class="md-24"
-              (click)="log_xds_correct_collapsed=false">
-              keyboard_arrow_down
-            </md-icon>
-            <md-icon
-              *ngIf="! log_xds_correct_collapsed"
-              class="md-24"
-              (click)="log_xds_correct_collapsed=true">
-              keyboard_arrow_up
-            </md-icon>
-          </button>
+          <md-card-header>
+            <div style="width:100%">
+              <div style="float:left;">
+                <h3>XDS Correct</h3>
+              </div>
+              <div style="float:right">
+                <button md-mini-fab class="raw-output-toggle" color="primary">
+                  <md-icon
+                    *ngIf="log_xds_correct_collapsed"
+                    class="md-24"
+                    (click)="log_xds_correct_collapsed=false">
+                    keyboard_arrow_down
+                  </md-icon>
+                  <md-icon
+                    *ngIf="! log_xds_correct_collapsed"
+                    class="md-24"
+                    (click)="log_xds_correct_collapsed=true">
+                    keyboard_arrow_up
+                  </md-icon>
+                </button>
+              </div>
+            </div>
+          </md-card-header>
           <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':log_xds_correct_collapsed}">
             <p *ngFor="let line of full_result.results.logs.xds_correct">{{line}}</p>
           </md-card-content>
         </md-card>
         <md-card class="raw-output-card">
-          <md-card-title>
-            Aimless
-          </md-card-title>
-          <button md-mini-fab class="raw-output-toggle" color="primary">
-            <md-icon
-              *ngIf="log_aimless_collapsed"
-              class="md-24"
-              (click)="log_aimless_collapsed=false">
-              keyboard_arrow_down
-            </md-icon>
-            <md-icon
-              *ngIf="! log_aimless_collapsed"
-              class="md-24"
-              (click)="log_aimless_collapsed=true">
-              keyboard_arrow_up
-            </md-icon>
-          </button>
+          <md-card-header>
+            <div style="width:100%">
+              <div style="float:left;">
+                <h3>Aimless</h3>
+              </div>
+              <div style="float:right">
+                <button md-mini-fab class="raw-output-toggle" color="primary">
+                  <md-icon
+                    *ngIf="log_aimless_collapsed"
+                    class="md-24"
+                    (click)="log_aimless_collapsed=false">
+                    keyboard_arrow_down
+                  </md-icon>
+                  <md-icon
+                    *ngIf="! log_aimless_collapsed"
+                    class="md-24"
+                    (click)="log_aimless_collapsed=true">
+                    keyboard_arrow_up
+                  </md-icon>
+                </button>
+              </div>
+            </div>
+          </md-card-header>
           <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':log_aimless_collapsed}">
             <p *ngFor="let line of full_result.results.logs.aimless">{{line}}</p>
           </md-card-content>
         </md-card>
         <md-card class="raw-output-card">
-          <md-card-title>
-            Aimless
-          </md-card-title>
-          <button md-mini-fab class="raw-output-toggle" color="primary">
-            <md-icon
-              *ngIf="log_pointless_collapsed"
-              class="md-24"
-              (click)="log_pointless_collapsed=false">
-              keyboard_arrow_down
-            </md-icon>
-            <md-icon
-              *ngIf="! log_pointless_collapsed"
-              class="md-24"
-              (click)="log_pointless_collapsed=true">
-              keyboard_arrow_up
-            </md-icon>
-          </button>
+          <md-card-header>
+            <div style="width:100%">
+              <div style="float:left;">
+                <h3>Pointless</h3>
+              </div>
+              <div style="float:right">
+                <button md-mini-fab class="raw-output-toggle" color="primary">
+                  <md-icon
+                    *ngIf="log_pointless_collapsed"
+                    class="md-24"
+                    (click)="log_pointless_collapsed=false">
+                    keyboard_arrow_down
+                  </md-icon>
+                  <md-icon
+                    *ngIf="! log_pointless_collapsed"
+                    class="md-24"
+                    (click)="log_pointless_collapsed=true">
+                    keyboard_arrow_up
+                  </md-icon>
+                </button>
+              </div>
+            </div>
+          </md-card-header>
           <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':log_pointless_collapsed}">
             <p *ngFor="let line of full_result.results.logs.pointless">{{line}}</p>
           </md-card-content>
