@@ -296,6 +296,72 @@
       <md-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
         <md-card class="raw-output-card">
           <md-card-title>
+            XDS Idxref
+          </md-card-title>
+          <button md-mini-fab class="raw-output-toggle" color="primary">
+            <md-icon
+              *ngIf="log_xds_idxref_collapsed"
+              class="md-24"
+              (click)="log_xds_idxref_collapsed=false">
+              keyboard_arrow_down
+            </md-icon>
+            <md-icon
+              *ngIf="! log_xds_idxref_collapsed"
+              class="md-24"
+              (click)="log_xds_idxref_collapsed=true">
+              keyboard_arrow_up
+            </md-icon>
+          </button>
+          <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':log_xds_idxref_collapsed}">
+            <p *ngFor="let line of full_result.results.logs.xds_idxref">{{line}}</p>
+          </md-card-content>
+        </md-card>
+        <md-card class="raw-output-card">
+          <md-card-title>
+            XDS Integrate
+          </md-card-title>
+          <button md-mini-fab class="raw-output-toggle" color="primary">
+            <md-icon
+              *ngIf="log_xds_integrate_collapsed"
+              class="md-24"
+              (click)="log_xds_integrate_collapsed=false">
+              keyboard_arrow_down
+            </md-icon>
+            <md-icon
+              *ngIf="! log_xds_integrate_collapsed"
+              class="md-24"
+              (click)="log_xds_integrate_collapsed=true">
+              keyboard_arrow_up
+            </md-icon>
+          </button>
+          <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':log_xds_integrate_collapsed}">
+            <p *ngFor="let line of full_result.results.logs.xds_integrate">{{line}}</p>
+          </md-card-content>
+        </md-card>
+        <md-card class="raw-output-card">
+          <md-card-title>
+            XDS Correct
+          </md-card-title>
+          <button md-mini-fab class="raw-output-toggle" color="primary">
+            <md-icon
+              *ngIf="log_xds_correct_collapsed"
+              class="md-24"
+              (click)="log_xds_correct_collapsed=false">
+              keyboard_arrow_down
+            </md-icon>
+            <md-icon
+              *ngIf="! log_xds_correct_collapsed"
+              class="md-24"
+              (click)="log_xds_correct_collapsed=true">
+              keyboard_arrow_up
+            </md-icon>
+          </button>
+          <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':log_xds_correct_collapsed}">
+            <p *ngFor="let line of full_result.results.logs.xds_correct">{{line}}</p>
+          </md-card-content>
+        </md-card>
+        <md-card class="raw-output-card">
+          <md-card-title>
             Aimless
           </md-card-title>
           <button md-mini-fab class="raw-output-toggle" color="primary">
@@ -314,6 +380,28 @@
           </button>
           <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':log_aimless_collapsed}">
             <p *ngFor="let line of full_result.results.logs.aimless">{{line}}</p>
+          </md-card-content>
+        </md-card>
+        <md-card class="raw-output-card">
+          <md-card-title>
+            Aimless
+          </md-card-title>
+          <button md-mini-fab class="raw-output-toggle" color="primary">
+            <md-icon
+              *ngIf="log_pointless_collapsed"
+              class="md-24"
+              (click)="log_pointless_collapsed=false">
+              keyboard_arrow_down
+            </md-icon>
+            <md-icon
+              *ngIf="! log_pointless_collapsed"
+              class="md-24"
+              (click)="log_pointless_collapsed=true">
+              keyboard_arrow_up
+            </md-icon>
+          </button>
+          <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':log_pointless_collapsed}">
+            <p *ngFor="let line of full_result.results.logs.pointless">{{line}}</p>
           </md-card-content>
         </md-card>
       </md-card-content>

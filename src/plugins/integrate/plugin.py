@@ -1580,11 +1580,16 @@ class RapdPlugin(Process):
 
         orig_rescut = False
 
+        # Open up xds log files for saving
+        xds_idxref_log = open("IDXREF.LP", "r").readlines()
+        xds_integrate_log = open("INTEGRATE.LP", "r").readlines()
+        xds_correct_log = open("CORRECT.LP", "r").readlines()
+
         # Open up the GXPARM for info
         xparm = self.parse_xparm()
 
         # Run pointless to convert XDS_ASCII.HKL to mtz format.
-        mtzfile = self.pointless()
+        mtzfile, pointless_log = self.pointless()
 
         # Run dummy run of aimless to generate various stats and plots.
         # i.e. We don't use aimless for actual scaling, it's already done by XDS.
@@ -1648,7 +1653,11 @@ class RapdPlugin(Process):
             "plots": graphs,
             "summary": summary,
             "logs": {
-                "aimless": aimlog
+                "aimless": aimlog,
+                "pointless": pointless_log,
+                "xds_idxref": xds_idxref_log,
+                "xds_integrate": xds_integrate_log,
+                "xds_correct": xds_correct_log
                 },
             "mtzfile": scalamtz,
             "xparm": xparm,
@@ -1716,13 +1725,13 @@ class RapdPlugin(Process):
         p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.wait()
         # sts = os.waitpid(p.pid, 0)[1]
-        tmp = open(logfile, "r").readlines()
+        log = open(logfile, "r").readlines()
         return_value = "Failed"
         for i in range(-10, -1):
-            if tmp[i].startswith('P.R.Evans'):
+            if log[i].startswith('P.R.Evans'):
                 return_value = mtzfile
                 break
-        return return_value
+        return return_value, log
 
     def finish_data(self, results):
         """
