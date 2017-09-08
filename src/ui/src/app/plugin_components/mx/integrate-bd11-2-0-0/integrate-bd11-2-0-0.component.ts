@@ -62,6 +62,8 @@ export class IntegrateBd11200Component implements OnInit, OnChanges {
   view_mode: string = 'summary';
   data: any;
 
+  log_aimless_collapsed: boolean = true;
+
   // @ViewChild(BaseChartDirective) private _chart;
   @ViewChild('analysistarget', { read: ViewContainerRef }) analysistarget;
   analysis_component: any;

@@ -43,6 +43,30 @@ article.c-content {
 
 }
 
+.main-toolbar {
+  width: 100%;
+  background: #E5E5E5;
+}
+
+.main-title {
+  position: absolute;
+  margin-top:1em;
+}
+
+.main-title h1 {
+    /*padding: 0;*/
+    float: left;
+    color: #b31b1b;
+    font-family: 'ChunkFive', 'Georgia', serif;
+    font-size: 3em;
+}
+
+.main-toolbar .main-buttons {
+  position: absolute;
+  right: 1em;
+  margin-top: 12px;
+}
+
 .sessions-table {
   margin-bottom: 32px;
   box-shadow: 0 2px 5px 0 rgba(0,0,0,0.26);
@@ -58,7 +82,7 @@ article.c-content {
 }
 
 .sessions-table thead th {
-    background: #EEEEEE;
+    background: #E5E5E5;
     border-bottom: 1px solid #ECEFF1;
     color: black;
     font-size: 12px;
@@ -77,7 +101,7 @@ article.c-content {
 }
 
 .main-toolbar {
-  background: #EEEEEE;
+  background: #E5E5E5;
   box-shadow: 3px 0 6px rgba(0,0,0,0.3);
 }
 
@@ -91,7 +115,7 @@ article.c-content {
 }
 
 .side-list {
-  background: #EEEEEE;
+  background: #E5E5E5;
   box-shadow: 3px 0 6px rgba(0,0,0,0.3);
   width: 16em;
   overflow: auto;
@@ -100,7 +124,7 @@ article.c-content {
 }
 
 .result-panel {
-  background: #EEEEEE;
+  background: #E5E5E5;
   box-shadow: 3px 0 6px rgba(0,0,0,0.3);
   overflow: hidden;
   margin: 0.25em 0 0.5em 0.25em;
@@ -111,8 +135,8 @@ article.c-content {
 }
 
 .result-panel-main-results {
-  height: calc(100vh - 10.em);
-  overflow: scroll;
+  /*height: calc(100vh - 10.em);*/
+  /*overflow: scroll;*/
 }
 
 .result-panel-action-bar {
@@ -169,49 +193,78 @@ button.button-dialog-top-right.mat-icon-button {
 
 /* Manual table to look like ngx-datatable */
 
-table.manual-table {
+table.rapd-table {
   table-layout: fixed;
   /*width: 100%;*/
+  border: 1px solid rgba(0,0,0,0.2);
   border-collapse: collapse;
+  border-radius: 2px;
 }
 
-.manual-table th, td {
+.rapd-table th, td {
   padding: 0 10px 0px 10px;
 }
 
-.manual-table tr {
+.rapd-table tr {
   padding: 10px 10px 10px 10px;
   height: 30px;
 }
 
-.manual-table thead th {
+.rapd-table thead th {
   color: rgba(0,0,0,0.54);
   font-weight: 500;
-  font-size: 12px;
+  font-size: 1;
 }
-.manual-table thead tr {
+.rapd-table thead tr {
   border-bottom: 1px solid rgba(0,0,0,0.1);
 }
 
-.manual-table tbody {
+.rapd-table tbody {
   color: rgba(0,0,0,1);
   font-weight: 400;
   font-size: 1em;
 }
 
-.manual-table tbody tr {
+.rapd-table tbody tr {
   border-bottom: 1px solid rgba(0,0,0,0.1);
   border-top: 1px solid rgba(0,0,0,0.1);
+  text-align: center;
 }
 
-.manual-table tbody tr:first-child {
+.rapd-table tbody tr:first-child {
   border-bottom: 1px solid rgba(0,0,0,0.1);
   border-top: 1px solid rgba(200,200,200,0);
 }
 
-.manual-table tbody tr:last-child {
-  border-bottom: 1px solid rgba(200,200,200,0);
+.rapd-table tbody tr:last-child {
+  border-bottom: 1px solid rgba(0,0,0,0.1);
   border-top: 1px solid rgba(200,200,200,0);
+}
+
+md-card.rapd-result {
+  /*background-color: rgba(0,0,0,0.1);*/
+  width:100%;
+}
+
+md-card-header.rapd-result {
+  /*background-color: rgba(0,0,0,0.1);*/
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 2px;
+  padding:5px;
+}
+
+md-card-content.rapd-result {
+  /*background-color: rgba(255,255,255,1);*/
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 2px;
+  margin-top: 10px;
+  padding: 5px;
+}
+
+md-card-actions.rapd-result {
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 2px;
+  margin: 4px;
 }
 
 /* div that holds a select that looks separate */
@@ -220,10 +273,11 @@ table.manual-table {
   /*box-shadow: 0 5px 5px -3px rgba(0, 0, 0, 0.2),
               0 8px 10px 1px rgba(0, 0, 0, 0.14),
               0 3px 14px 2px rgba(0, 0, 0, 0.12);*/
-  box-shadow: 0 3px 1px -2px rgba(0,0,0,.2),
+  /*box-shadow: 0 3px 1px -2px rgba(0,0,0,.2),
               0 2px 2px 0 rgba(0,0,0,.14),
-              0 1px 5px 0 rgba(0,0,0,.12);
-  padding: 10px;
+              0 1px 5px 0 rgba(0,0,0,.12);*/
+  float:right;
+  padding: 5px;
 }
 
 /* Entries for showing raw output from programs */

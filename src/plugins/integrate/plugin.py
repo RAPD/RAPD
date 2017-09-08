@@ -167,7 +167,7 @@ class RapdPlugin(Process):
         # Some logging
         self.logger.info(site)
         self.logger.info(command)
-        # pprint(command)
+        pprint(command)
 
         # Store passed-in variables
         self.site = site
@@ -358,6 +358,10 @@ class RapdPlugin(Process):
         self.results["process"]["status"] = 1
         # Process type is plugin
         self.results["process"]["type"] = "plugin"
+        # The repr
+        self.results["process"]["repr"] = self.run_data["image_template"].replace(\
+            "?"*self.run_data["image_template"].count("?"), "[%d-%d]" % (self.run_data["start"], \
+            self.run_data["end"]))
 
         # Describe plugin
         self.results["plugin"] = {
@@ -431,11 +435,10 @@ class RapdPlugin(Process):
             final_results = self.finish_data(integration_results)
 
         # Set up the results for return
-        self.results['process'] = {'plugin_process_id': self.process_id,
-                                   'status': 100}
-        self.results['results'] = final_results
+        self.results["process"]["status"] = 100
+        self.results["results"] = final_results
 
-        self.logger.debug(self.results)
+        # self.logger.debug(self.results)
 
         self.write_json(self.results)
 
@@ -1640,21 +1643,22 @@ class RapdPlugin(Process):
         scalamtz = mtzfile.replace('pointless', 'aimless')
         _ = scalamtz.replace('mtz', 'log')
 
-        results = {'status': 'WORKING',
-                   'plots': graphs,
-                   'summary': summary,
-                   'mtzfile': scalamtz,
-                   'xparm': xparm,
-                   'dir': directory,
-                  }
+        results = {
+            "status": "WORKING",
+            "plots": graphs,
+            "summary": summary,
+            "logs": {
+                "aimless": aimlog
+                },
+            "mtzfile": scalamtz,
+            "xparm": xparm,
+            "dir": directory,
+            }
         self.logger.debug("Returning results!")
         self.logger.debug(results)
 
          # Set up the results for return
-        self.results['process'] = {
-            'plugin_process_id':self.process_id,
-            'status':50
-            }
+        self.results["process"]["status"] = 50
         self.results['results'] = results
         self.logger.debug(self.results)
 
