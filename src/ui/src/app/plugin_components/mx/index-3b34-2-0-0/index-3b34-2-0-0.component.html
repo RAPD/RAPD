@@ -61,62 +61,6 @@
                 </tr>
               </tbody>
             </table>
-            <!-- <ngx-datatable
-              class="material"
-              [rows]="index_result"
-              [loadingIndicator]="loadingIndicator"
-              [columnMode]="'standard'"
-              [headerHeight]="50"
-              [footerHeight]="0"
-              [rowHeight]="'auto'"
-              [reorderable]="reorderable"
-              [selectionType]="0">
-              <ngx-datatable-column name="Spacegroup" prop="spacegroup" width="100">
-                <ng-template let-value="value" ngx-datatable-cell-template>
-                  {{value}}
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column name="a" prop="unit_cell" width="100">
-                <ng-template let-value="value" ngx-datatable-cell-template>
-                  {{value[0]}}&Aring;
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column name="b" prop="unit_cell" width="100">
-                <ng-template let-value="value" ngx-datatable-cell-template>
-                  {{value[1]}}&Aring;
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column name="c" prop="unit_cell" width="100">
-                <ng-template let-value="value" ngx-datatable-cell-template>
-                  {{value[2]}}&Aring;
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column name="&alpha;" prop="unit_cell" width="100">
-                <ng-template let-value="value" ngx-datatable-cell-template>
-                  {{value[3]}}&deg;
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column name="&beta;" prop="unit_cell" width="100">
-                <ng-template let-value="value" ngx-datatable-cell-template>
-                  {{value[4]}}&deg;
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column name="&gamma;" prop="unit_cell" width="100">
-                <ng-template let-value="value" ngx-datatable-cell-template>
-                  {{value[5]}}&deg;
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column name="Mosaicity" prop="mosaicity" width="100">
-                <ng-template let-value="value" ngx-datatable-cell-template>
-                  {{value}}&deg;
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column name="Resolution" prop="resolution" width="100">
-                <ng-template let-value="value" ngx-datatable-cell-template>
-                  {{value}}&Aring;
-                </ng-template>
-              </ngx-datatable-column>
-            </ngx-datatable> -->
           </div>
           <div fxFlex>
             <h2>Data Collection Strategies</h2>
@@ -146,52 +90,6 @@
                   </tr>
                 </tbody>
               </table>
-              <!-- <ngx-datatable
-              class="material"
-              [rows]="full_result.results.best_results_norm.sweeps"
-              [loadingIndicator]="loadingIndicator"
-              [columnMode]="'standard'"
-              [headerHeight]="50"
-              [footerHeight]="0"
-              [rowHeight]="'auto'"
-              [reorderable]="reorderable"
-              [selectionType]="0">
-              <ngx-datatable-column name="N" prop="run_number">
-                <ng-template let-value="value" ngx-datatable-cell-template>
-                  {{value}}
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column name="&Omega; Start" prop="phi_start">
-                <ng-template let-value="value" ngx-datatable-cell-template>
-                  {{value}}&deg;
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column name="&Delta;&Omega;" prop="phi_width">
-                <ng-template let-value="value" ngx-datatable-cell-template>
-                  {{value}}&deg;
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column name="# Images" prop="number_of_images">
-                <ng-template let-value="value" ngx-datatable-cell-template>
-                  {{value}}&deg;
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column name="Exposure time" prop="exposure_time">
-                <ng-template let-value="value" ngx-datatable-cell-template>
-                  {{value}}s
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column name="Distance" prop="distance">
-                <ng-template let-value="value" ngx-datatable-cell-template>
-                  {{value}}mm
-                </ng-template>
-              </ngx-datatable-column>
-              <ngx-datatable-column name="% Transmission" prop="transmission">
-                <ng-template let-value="value" ngx-datatable-cell-template>
-                  {{value}}
-                </ng-template>
-              </ngx-datatable-column>
-              </ngx-datatable> -->
               <button md-raised-button (click)="plotOmegaStart('norm')">Osc Range Plot</button>
               <button md-raised-button (click)="plotDeltaOmega('norm')">Osc Width Plot</button>
             </div>
