@@ -1,5 +1,8 @@
 /* You can add global styles to this file, and also import other style files */
 @import '~@angular/material/prebuilt-themes/deeppurple-amber.css';
+/*@import '~@angular/material/prebuilt-themes/indigo-pink.css';*/
+/*@import '~@angular/material/prebuilt-themes/pink-bluegrey.css';*/
+/*@import '~@angular/material/prebuilt-themes/purple-green.css';*/
 
 /* For the tables */
 @import '~@swimlane/ngx-datatable/release/index.css';
@@ -7,5 +10,5 @@
 @import '~@swimlane/ngx-datatable/release/assets/icons.css';
 
 /* My custom */
-@import 'app/shared/css/normalize.css';
+/*@import 'app/shared/css/normalize.css';*/
 @import 'app/shared/css/main.css';

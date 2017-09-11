@@ -860,8 +860,10 @@ def parse_aimless(logfile):
                     },
                     "series": [
                         {
-                            "xs": [int(x) for x in log.tables(rcp)[0].col("Batch")],
-                            "ys": [try_float(x, 0.0) for x in log.tables(rcp)[0].col("Rcp")]
+                            "xs": [int(x) for x in \
+                                   log.tables(rcp)[0].col("Batch")],
+                            "ys": [try_float(x, 0.0) for x in \
+                                   log.tables(rcp)[0].col("Rcp")]
                         }
                     ]
                 }
@@ -876,8 +878,6 @@ def parse_aimless(logfile):
     # Plot not present
     except IndexError:
         plots["Radiation Damage"] = None
-
-    # pprint(plots)
 
     # Return to the main program.
     return (plots, int_results)

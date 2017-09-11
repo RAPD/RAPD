@@ -167,7 +167,7 @@ class RapdPlugin(Process):
         # Some logging
         self.logger.info(site)
         self.logger.info(command)
-        # pprint(command)
+        pprint(command)
 
         # Store passed-in variables
         self.site = site
@@ -358,6 +358,10 @@ class RapdPlugin(Process):
         self.results["process"]["status"] = 1
         # Process type is plugin
         self.results["process"]["type"] = "plugin"
+        # The repr
+        self.results["process"]["repr"] = self.run_data["image_template"].replace(\
+            "?"*self.run_data["image_template"].count("?"), "[%d-%d]" % (self.run_data["start"], \
+            self.run_data["end"]))
 
         # Describe plugin
         self.results["plugin"] = {
@@ -431,11 +435,10 @@ class RapdPlugin(Process):
             final_results = self.finish_data(integration_results)
 
         # Set up the results for return
-        self.results['process'] = {'plugin_process_id': self.process_id,
-                                   'status': 100}
-        self.results['results'] = final_results
+        self.results["process"]["status"] = 100
+        self.results["results"] = final_results
 
-        self.logger.debug(self.results)
+        # self.logger.debug(self.results)
 
         self.write_json(self.results)
 
@@ -1577,11 +1580,16 @@ class RapdPlugin(Process):
 
         orig_rescut = False
 
+        # Open up xds log files for saving
+        xds_idxref_log = open("IDXREF.LP", "r").readlines()
+        xds_integrate_log = open("INTEGRATE.LP", "r").readlines()
+        xds_correct_log = open("CORRECT.LP", "r").readlines()
+
         # Open up the GXPARM for info
         xparm = self.parse_xparm()
 
         # Run pointless to convert XDS_ASCII.HKL to mtz format.
-        mtzfile = self.pointless()
+        mtzfile, pointless_log = self.pointless()
 
         # Run dummy run of aimless to generate various stats and plots.
         # i.e. We don't use aimless for actual scaling, it's already done by XDS.
@@ -1640,21 +1648,26 @@ class RapdPlugin(Process):
         scalamtz = mtzfile.replace('pointless', 'aimless')
         _ = scalamtz.replace('mtz', 'log')
 
-        results = {'status': 'WORKING',
-                   'plots': graphs,
-                   'summary': summary,
-                   'mtzfile': scalamtz,
-                   'xparm': xparm,
-                   'dir': directory,
-                  }
+        results = {
+            "status": "WORKING",
+            "plots": graphs,
+            "summary": summary,
+            "logs": {
+                "aimless": aimlog,
+                "pointless": pointless_log,
+                "xds_idxref": xds_idxref_log,
+                "xds_integrate": xds_integrate_log,
+                "xds_correct": xds_correct_log
+                },
+            "mtzfile": scalamtz,
+            "xparm": xparm,
+            "dir": directory,
+            }
         self.logger.debug("Returning results!")
         self.logger.debug(results)
 
          # Set up the results for return
-        self.results['process'] = {
-            'plugin_process_id':self.process_id,
-            'status':50
-            }
+        self.results["process"]["status"] = 50
         self.results['results'] = results
         self.logger.debug(self.results)
 
@@ -1712,13 +1725,13 @@ class RapdPlugin(Process):
         p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         p.wait()
         # sts = os.waitpid(p.pid, 0)[1]
-        tmp = open(logfile, "r").readlines()
+        log = open(logfile, "r").readlines()
         return_value = "Failed"
         for i in range(-10, -1):
-            if tmp[i].startswith('P.R.Evans'):
+            if log[i].startswith('P.R.Evans'):
                 return_value = mtzfile
                 break
-        return return_value
+        return return_value, log
 
     def finish_data(self, results):
         """

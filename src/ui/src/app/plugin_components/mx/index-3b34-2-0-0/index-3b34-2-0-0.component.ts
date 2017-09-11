@@ -20,8 +20,10 @@ export class Index3b34200Component implements OnInit {
   @Input() current_result: any;
   full_result: any;
   index_result: any;
-
+  view_mode: string = 'summary';
   incomingData$: ReplaySubject<string>;
+
+  objectKeys = Object.keys;
 
   constructor(private results_service: ResultsService,
               public dialog: MdDialog) { }

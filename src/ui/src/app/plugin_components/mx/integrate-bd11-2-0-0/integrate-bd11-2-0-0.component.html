@@ -1,278 +1,149 @@
 <div class="result-panel child">
-  <div class="result-panel-main-results">
-    <md-card *ngIf="full_result"> <!-- class="result-panel-strategy-card" style="order:1;"> -->
-      <md-card-content>
-        <div fxLayout="column" fxLayoutGap="10px">
-          <div fxLayout="row" fxLayoutGap="10px">
-            <div class="rapd-select-panel">
-              <md-select
-                placeholder="View mode"
-                (change)="onViewModeSelect(view_mode)"
-                [(ngModel)]="view_mode"
-                name="view_mode"
-                value="summary">
-                <md-option value="summary">Summary</md-option>
-                <md-option value="analysis">Analysis</md-option>
-                <md-option value="raw">Raw</md-option>
-              </md-select>
+  <!-- <div class="result-panel-main-results"> -->
+    <md-card *ngIf="full_result" class="rapd-result">
+      <md-card-header class="rapd-result">
+        <div style="width:100%">
+          <div style="float:left;">
+            <h3>Integration Results for {{full_result.process.repr}}</h3>
+          </div>
+          <div class="rapd-select-panel">
+            <md-select
+              placeholder="View mode"
+              floatPlaceholder="auto"
+              (change)="onViewModeSelect(view_mode)"
+              [(ngModel)]="view_mode"
+              name="view_mode"
+              value="summary">
+              <md-option value="summary">Summary</md-option>
+              <md-option value="analysis">Analysis</md-option>
+              <md-option value="logs">Logs</md-option>
+            </md-select>
+          </div>
+        </div>
+      </md-card-header>
+      <md-card-content *ngIf="view_mode === 'summary'" class="rapd-result">
+        <div fxLayout="row" fxLayoutGap="10px" *ngIf="view_mode === 'summary'">
+          <div fxFlex="nogrow" fxLayout="column" fxLayoutGap="10px">
+            <div fxFlex="none">
+              <table class="rapd-table">
+                <thead>
+                  <tr>
+                    <th>Spacegroup</th>
+                    <th>Unit Cell</th>
+                    <th>Mosaicity</th>
+                    <th>ISA</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>{{full_result.results.summary.scaling_spacegroup}}</td>
+                    <td>
+                      {{full_result.results.summary.scaling_unit_cell[0]}} &Aring;
+                      {{full_result.results.summary.scaling_unit_cell[1]}} &Aring;
+                      {{full_result.results.summary.scaling_unit_cell[2]}} &Aring;
+                      {{full_result.results.summary.scaling_unit_cell[3]}}&deg;
+                      {{full_result.results.summary.scaling_unit_cell[4]}}&deg;
+                      {{full_result.results.summary.scaling_unit_cell[5]}}&deg;
+                    </td>
+                    <td>{{full_result.results.summary.mosaicity}}&deg;</td>
+                    <td>{{full_result.results.summary.ISa}}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            <div>
-              <h2>Integration Results for</h2>
+            <div fxFlex="none">
+              <table class="rapd-table" style="margin-top:10px;">
+                <thead>
+                  <tr>
+                    <th></th>
+                    <th>Overall</th>
+                    <th>Inner Shell</th>
+                    <th>Outer Shell</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Res Limits (&Aring;)</td>
+                    <td>{{full_result.results.summary.bins_low[0]}}-{{full_result.results.summary.bins_high[0]}}</td>
+                    <td>{{full_result.results.summary.bins_low[1]}}-{{full_result.results.summary.bins_high[1]}}</td>
+                    <td>{{full_result.results.summary.bins_low[2]}}-{{full_result.results.summary.bins_high[2]}}</td>
+                  </tr>
+                  <tr>
+                    <td>Completeness (%)</td>
+                    <td *ngFor="let val of full_result.results.summary.completeness">{{val}}</td>
+                  </tr>
+                  <tr>
+                    <td>Multiplicity</td>
+                    <td *ngFor="let val of full_result.results.summary.multiplicity">{{val}}</td>
+                  </tr>
+                  <tr>
+                    <td><I/&sigma;(I)></td>
+                    <td *ngFor="let val of full_result.results.summary.isigi">{{val}}</td>
+                  </tr>
+                  <tr>
+                    <td>CC<sub>1/2</sub></td>
+                    <td *ngFor="let val of full_result.results.summary['cc-half']">{{val}}</td>
+                  </tr>
+                  <tr>
+                    <td>R<sub>merge</sub></td>
+                    <td *ngFor="let val of full_result.results.summary.rmerge_norm">{{val}}</td>
+                  </tr>
+                  <tr>
+                    <td>R<sub>merge</sub> (anom)</td>
+                    <td *ngFor="let val of full_result.results.summary.rmerge_anom">{{val}}</td>
+                  </tr>
+                  <tr>
+                    <td>R<sub>meas</sub></td>
+                    <td *ngFor="let val of full_result.results.summary.rmeas_norm">{{val}}</td>
+                  </tr>
+                  <tr>
+                    <td>R<sub>meas</sub> Anomalous</td>
+                    <td *ngFor="let val of full_result.results.summary.rmeas_anom">{{val}}</td>
+                  </tr>
+                  <tr>
+                    <td>R<sub>pim</sub></td>
+                    <td *ngFor="let val of full_result.results.summary.rpim_norm">{{val}}</td>
+                  </tr>
+                  <tr>
+                    <td>R<sub>pim</sub> Anomalous</td>
+                    <td *ngFor="let val of full_result.results.summary.rpim_anom">{{val}}</td>
+                  </tr>
+                  <tr>
+                    <td>Anomalous Completeness</td>
+                    <td *ngFor="let val of full_result.results.summary.anom_completeness">{{val}}</td>
+                  </tr>
+                  <tr>
+                    <td>Anomalous Multiplicity</td>
+                    <td *ngFor="let val of full_result.results.summary.anom_multiplicity">{{val}}</td>
+                  </tr>
+                  <tr>
+                    <td>Anomalous Correlation</td>
+                    <td *ngFor="let val of full_result.results.summary.anom_correlation">{{val}}</td>
+                  </tr>
+                  <tr>
+                    <td>Anomalous Slope</td>
+                    <td>{{full_result.results.summary.anom_slope[0]}}</td>
+                    <td></td>
+                    <td></td>
+                  </tr>
+                  <tr>
+                    <td>Number Observations</td>
+                    <td *ngFor="let val of full_result.results.summary.total_obs">{{val}}</td>
+                  </tr>
+                  <tr>
+                    <td>Number Unique</td>
+                    <td *ngFor="let val of full_result.results.summary.unique_obs">{{val}}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
-          <div fxLayout="row" fxLayout.sm="column" fxLayoutGap="10px" *ngIf="view_mode === 'summary'">
-            <div fxLayout="column" fxLayoutGap="10px" fxFlex="none">
-              <div>
-                <table class="manual-table ngx-datatable material">
-                  <thead>
-                    <tr>
-                      <th>Spacegroup</th>
-                      <th>Unit Cell</th>
-                      <th>Mosaicity</th>
-                      <th>ISA</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>{{full_result.results.summary.scaling_spacegroup}}</td>
-                      <td>
-                        {{full_result.results.summary.scaling_unit_cell[0]}} &Aring;
-                        {{full_result.results.summary.scaling_unit_cell[1]}} &Aring;
-                        {{full_result.results.summary.scaling_unit_cell[2]}} &Aring;
-                        {{full_result.results.summary.scaling_unit_cell[3]}}&deg;
-                        {{full_result.results.summary.scaling_unit_cell[4]}}&deg;
-                        {{full_result.results.summary.scaling_unit_cell[5]}}&deg;
-                      </td>
-                      <td>{{full_result.results.summary.mosaicity}}&deg;</td>
-                      <td>{{full_result.results.summary.ISa}}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div>
-                <table class="manual-table ngx-datatable material" style="margin-top:10px">
-                  <thead>
-                    <tr>
-                      <th></th>
-                      <th>Overall</th>
-                      <th>Inner Shell</th>
-                      <th>Outer Shell</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Res Limits (&Aring;)</td>
-                      <td>{{full_result.results.summary.bins_low[0]}}-{{full_result.results.summary.bins_high[0]}}</td>
-                      <td>{{full_result.results.summary.bins_low[1]}}-{{full_result.results.summary.bins_high[1]}}</td>
-                      <td>{{full_result.results.summary.bins_low[2]}}-{{full_result.results.summary.bins_high[2]}}</td>
-                    </tr>
-                    <tr>
-                      <td>Completeness (%)</td>
-                      <td *ngFor="let val of full_result.results.summary.completeness">{{val}}</td>
-                    </tr>
-                    <tr>
-                      <td>Multiplicity</td>
-                      <td *ngFor="let val of full_result.results.summary.multiplicity">{{val}}</td>
-                    </tr>
-                    <tr>
-                      <td><I/&sigma;(I)></td>
-                      <td *ngFor="let val of full_result.results.summary.isigi">{{val}}</td>
-                    </tr>
-                    <tr>
-                      <td>CC<sub>1/2</sub></td>
-                      <td *ngFor="let val of full_result.results.summary['cc-half']">{{val}}</td>
-                    </tr>
-                    <tr>
-                      <td>R<sub>merge</sub></td>
-                      <td *ngFor="let val of full_result.results.summary.rmerge_norm">{{val}}</td>
-                    </tr>
-                    <tr>
-                      <td>R<sub>merge</sub> (anom)</td>
-                      <td *ngFor="let val of full_result.results.summary.rmerge_anom">{{val}}</td>
-                    </tr>
-                    <tr>
-                      <td>R<sub>meas</sub></td>
-                      <td *ngFor="let val of full_result.results.summary.rmeas_norm">{{val}}</td>
-                    </tr>
-                    <tr>
-                      <td>R<sub>meas</sub> Anomalous</td>
-                      <td *ngFor="let val of full_result.results.summary.rmeas_anom">{{val}}</td>
-                    </tr>
-                    <tr>
-                      <td>R<sub>pim</sub></td>
-                      <td *ngFor="let val of full_result.results.summary.rpim_norm">{{val}}</td>
-                    </tr>
-                    <tr>
-                      <td>R<sub>pim</sub> Anomalous</td>
-                      <td *ngFor="let val of full_result.results.summary.rpim_anom">{{val}}</td>
-                    </tr>
-                    <tr>
-                      <td>Anomalous Completeness</td>
-                      <td *ngFor="let val of full_result.results.summary.anom_completeness">{{val}}</td>
-                    </tr>
-                    <tr>
-                      <td>Anomalous Multiplicity</td>
-                      <td *ngFor="let val of full_result.results.summary.anom_multiplicity">{{val}}</td>
-                    </tr>
-                    <tr>
-                      <td>Anomalous Correlation</td>
-                      <td *ngFor="let val of full_result.results.summary.anom_correlation">{{val}}</td>
-                    </tr>
-                    <tr>
-                      <td>Anomalous Slope</td>
-                      <td>{{full_result.results.summary.anom_slope[0]}}</td>
-                    </tr>
-                    <tr>
-                      <td>Number Observations</td>
-                      <td *ngFor="let val of full_result.results.summary.total_obs">{{val}}</td>
-                    </tr>
-                    <tr>
-                      <td>Number Unique</td>
-                      <td *ngFor="let val of full_result.results.summary.unique_obs">{{val}}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            <div fxLayout="column" fxLayoutGap="10px" fxFlex="grow">
-              <div>
+          <div fxFlex fxLayout="column" fxLayoutGap="10px">
+            <div fxFlex="none" style="width:80%;">
+              <div style="float:left;">
                 <h3>{{selected_plot}}</h3>
               </div>
-              <div>
-                <div class="chart-container" style="position: relative;">
-                  <div *ngIf="selected_plot=='Rmerge vs Frame'">
-                    <canvas
-                      *ngIf="data"
-                      baseChart
-                      [datasets]="data.ys"
-                      [labels]="data.xs"
-                      [options]="data.lineChartOptions"
-                      [chartType]="data.lineChartType"
-                      [colors]="lineChartColors"
-                      (chartHover)="chartHovered($event)"
-                      (chartClick)="chartClicked($event)">
-                    </canvas>
-                  </div>
-                  <div *ngIf="selected_plot=='Imean/RMS scatter'">
-                    <canvas
-                      *ngIf="data"
-                      baseChart
-                      [datasets]="data.ys"
-                      [labels]="data.xs"
-                      [options]="data.lineChartOptions"
-                      [chartType]="data.lineChartType"
-                      [colors]="lineChartColors"
-                      (chartHover)="chartHovered($event)"
-                      (chartClick)="chartClicked($event)">
-                    </canvas>
-                  </div>
-                  <div *ngIf="selected_plot=='Anomalous & Imean CCs vs Resolution'">
-                    <canvas
-                      *ngIf="data"
-                      baseChart
-                      [datasets]="data.ys"
-                      [labels]="data.xs"
-                      [options]="data.lineChartOptions"
-                      [chartType]="data.lineChartType"
-                      [colors]="lineChartColors"
-                      (chartHover)="chartHovered($event)"
-                      (chartClick)="chartClicked($event)">
-                    </canvas>
-                  </div>
-                  <div *ngIf="selected_plot=='RMS correlation ratio'">
-                    <canvas
-                      *ngIf="data"
-                      baseChart
-                      [datasets]="data.ys"
-                      [labels]="data.xs"
-                      [options]="data.lineChartOptions"
-                      [chartType]="data.lineChartType"
-                      [colors]="lineChartColors"
-                      (chartHover)="chartHovered($event)"
-                      (chartClick)="chartClicked($event)">
-                    </canvas>
-                  </div>
-                  <div *ngIf="selected_plot=='I/sigma, Mean Mn(I)/sd(Mn(I))'">
-                    <canvas
-                      *ngIf="data"
-                      baseChart
-                      [datasets]="data.ys"
-                      [labels]="data.xs"
-                      [options]="data.lineChartOptions"
-                      [chartType]="data.lineChartType"
-                      [colors]="lineChartColors"
-                      (chartHover)="chartHovered($event)"
-                      (chartClick)="chartClicked($event)">
-                    </canvas>
-                  </div>
-                  <div *ngIf="selected_plot=='rs_vs_res'">
-                    <canvas
-                      *ngIf="data"
-                      baseChart
-                      [datasets]="data.ys"
-                      [labels]="data.xs"
-                      [options]="data.lineChartOptions"
-                      [chartType]="data.lineChartType"
-                      [colors]="lineChartColors"
-                      (chartHover)="chartHovered($event)"
-                      (chartClick)="chartClicked($event)">
-                    </canvas>
-                  </div>
-                  <div *ngIf="selected_plot=='Average I, RMS deviation, and Sd'">
-                    <canvas
-                      *ngIf="data"
-                      baseChart
-                      [datasets]="data.ys"
-                      [labels]="data.xs"
-                      [options]="data.lineChartOptions"
-                      [chartType]="data.lineChartType"
-                      [colors]="lineChartColors"
-                      (chartHover)="chartHovered($event)"
-                      (chartClick)="chartClicked($event)">
-                    </canvas>
-                  </div>
-                  <div *ngIf="selected_plot=='Completeness'">
-                    <canvas
-                      *ngIf="data"
-                      baseChart
-                      [datasets]="data.ys"
-                      [labels]="data.xs"
-                      [options]="data.lineChartOptions"
-                      [chartType]="data.lineChartType"
-                      [colors]="lineChartColors"
-                      (chartHover)="chartHovered($event)"
-                      (chartClick)="chartClicked($event)">
-                    </canvas>
-                  </div>
-                  <div *ngIf="selected_plot=='Redundancy'">
-                    <canvas
-                      *ngIf="data"
-                      baseChart
-                      [datasets]="data.ys"
-                      [labels]="data.xs"
-                      [options]="data.lineChartOptions"
-                      [chartType]="data.lineChartType"
-                      [colors]="lineChartColors"
-                      (chartHover)="chartHovered($event)"
-                      (chartClick)="chartClicked($event)">
-                    </canvas>
-                  </div>
-                  <div *ngIf="selected_plot=='Radiation Damage'">
-                    <canvas
-                      *ngIf="data"
-                      baseChart
-                      [datasets]="data.ys"
-                      [labels]="data.xs"
-                      [options]="data.lineChartOptions"
-                      [chartType]="data.lineChartType"
-                      [colors]="lineChartColors"
-                      (chartHover)="chartHovered($event)"
-                      (chartClick)="chartClicked($event)">
-                    </canvas>
-                  </div>
-                </div>
-              </div>
-              <div>
+              <div style="float:right;">
                 <md-select
                   placeholder="Select plot"
                   (change)="setPlot(selected_plot)"
@@ -282,304 +153,300 @@
                 </md-select>
               </div>
             </div>
+            <div fxFlex="grow">
+              <div class="chart-container" style="position: relative;">
+                <div *ngIf="selected_plot=='Rmerge vs Frame'">
+                  <canvas
+                    *ngIf="data"
+                    baseChart
+                    [datasets]="data.ys"
+                    [labels]="data.xs"
+                    [options]="data.lineChartOptions"
+                    [chartType]="data.lineChartType"
+                    [colors]="lineChartColors"
+                    (chartHover)="chartHovered($event)"
+                    (chartClick)="chartClicked($event)">
+                  </canvas>
+                </div>
+                <div *ngIf="selected_plot=='Imean/RMS scatter'">
+                  <canvas
+                    *ngIf="data"
+                    baseChart
+                    [datasets]="data.ys"
+                    [labels]="data.xs"
+                    [options]="data.lineChartOptions"
+                    [chartType]="data.lineChartType"
+                    [colors]="lineChartColors"
+                    (chartHover)="chartHovered($event)"
+                    (chartClick)="chartClicked($event)">
+                  </canvas>
+                </div>
+                <div *ngIf="selected_plot=='Anomalous & Imean CCs vs Resolution'">
+                  <canvas
+                    *ngIf="data"
+                    baseChart
+                    [datasets]="data.ys"
+                    [labels]="data.xs"
+                    [options]="data.lineChartOptions"
+                    [chartType]="data.lineChartType"
+                    [colors]="lineChartColors"
+                    (chartHover)="chartHovered($event)"
+                    (chartClick)="chartClicked($event)">
+                  </canvas>
+                </div>
+                <div *ngIf="selected_plot=='RMS correlation ratio'">
+                  <canvas
+                    *ngIf="data"
+                    baseChart
+                    [datasets]="data.ys"
+                    [labels]="data.xs"
+                    [options]="data.lineChartOptions"
+                    [chartType]="data.lineChartType"
+                    [colors]="lineChartColors"
+                    (chartHover)="chartHovered($event)"
+                    (chartClick)="chartClicked($event)">
+                  </canvas>
+                </div>
+                <div *ngIf="selected_plot=='I/sigma, Mean Mn(I)/sd(Mn(I))'">
+                  <canvas
+                    *ngIf="data"
+                    baseChart
+                    [datasets]="data.ys"
+                    [labels]="data.xs"
+                    [options]="data.lineChartOptions"
+                    [chartType]="data.lineChartType"
+                    [colors]="lineChartColors"
+                    (chartHover)="chartHovered($event)"
+                    (chartClick)="chartClicked($event)">
+                  </canvas>
+                </div>
+                <div *ngIf="selected_plot=='rs_vs_res'">
+                  <canvas
+                    *ngIf="data"
+                    baseChart
+                    [datasets]="data.ys"
+                    [labels]="data.xs"
+                    [options]="data.lineChartOptions"
+                    [chartType]="data.lineChartType"
+                    [colors]="lineChartColors"
+                    (chartHover)="chartHovered($event)"
+                    (chartClick)="chartClicked($event)">
+                  </canvas>
+                </div>
+                <div *ngIf="selected_plot=='Average I, RMS deviation, and Sd'">
+                  <canvas
+                    *ngIf="data"
+                    baseChart
+                    [datasets]="data.ys"
+                    [labels]="data.xs"
+                    [options]="data.lineChartOptions"
+                    [chartType]="data.lineChartType"
+                    [colors]="lineChartColors"
+                    (chartHover)="chartHovered($event)"
+                    (chartClick)="chartClicked($event)">
+                  </canvas>
+                </div>
+                <div *ngIf="selected_plot=='Completeness'">
+                  <canvas
+                    *ngIf="data"
+                    baseChart
+                    [datasets]="data.ys"
+                    [labels]="data.xs"
+                    [options]="data.lineChartOptions"
+                    [chartType]="data.lineChartType"
+                    [colors]="lineChartColors"
+                    (chartHover)="chartHovered($event)"
+                    (chartClick)="chartClicked($event)">
+                  </canvas>
+                </div>
+                <div *ngIf="selected_plot=='Redundancy'">
+                  <canvas
+                    *ngIf="data"
+                    baseChart
+                    [datasets]="data.ys"
+                    [labels]="data.xs"
+                    [options]="data.lineChartOptions"
+                    [chartType]="data.lineChartType"
+                    [colors]="lineChartColors"
+                    (chartHover)="chartHovered($event)"
+                    (chartClick)="chartClicked($event)">
+                  </canvas>
+                </div>
+                <div *ngIf="selected_plot=='Radiation Damage'">
+                  <canvas
+                    *ngIf="data"
+                    baseChart
+                    [datasets]="data.ys"
+                    [labels]="data.xs"
+                    [options]="data.lineChartOptions"
+                    [chartType]="data.lineChartType"
+                    [colors]="lineChartColors"
+                    (chartHover)="chartHovered($event)"
+                    (chartClick)="chartClicked($event)">
+                  </canvas>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <!-- <table style="width:100%;">
-          <tr>
-            <td style="width:35em;">
-              <table>
-                <tr>
-                  <td>
-                    <table class="manual-table ngx-datatable material">
-                      <thead>
-                        <tr>
-                          <th>Spacegroup</th>
-                          <th>Unit Cell</th>
-                          <th>Mosaicity</th>
-                          <th>ISA</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td>{{full_result.results.summary.scaling_spacegroup}}</td>
-                          <td>
-                            {{full_result.results.summary.scaling_unit_cell[0]}} &Aring;
-                            {{full_result.results.summary.scaling_unit_cell[1]}} &Aring;
-                            {{full_result.results.summary.scaling_unit_cell[2]}} &Aring;
-                            {{full_result.results.summary.scaling_unit_cell[3]}}&deg;
-                            {{full_result.results.summary.scaling_unit_cell[4]}}&deg;
-                            {{full_result.results.summary.scaling_unit_cell[5]}}&deg;
-                          </td>
-                          <td>{{full_result.results.summary.mosaicity}}&deg;</td>
-                          <td>{{full_result.results.summary.ISa}}</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <table class="manual-table  ngx-datatable material" style="margin-top:10px">
-                      <thead>
-                        <tr>
-                          <th></th>
-                          <th>Overall</th>
-                          <th>Inner Shell</th>
-                          <th>Outer Shell</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td>Res Limits (&Aring;)</td>
-                          <td>{{full_result.results.summary.bins_low[0]}}-{{full_result.results.summary.bins_high[0]}}</td>
-                          <td>{{full_result.results.summary.bins_low[1]}}-{{full_result.results.summary.bins_high[1]}}</td>
-                          <td>{{full_result.results.summary.bins_low[2]}}-{{full_result.results.summary.bins_high[2]}}</td>
-                        </tr>
-                        <tr>
-                          <td>Completeness (%)</td>
-                          <td *ngFor="let val of full_result.results.summary.completeness">{{val}}</td>
-                        </tr>
-                        <tr>
-                          <td>Multiplicity</td>
-                          <td *ngFor="let val of full_result.results.summary.multiplicity">{{val}}</td>
-                        </tr>
-                        <tr>
-                          <td><I/&sigma;(I)></td>
-                          <td *ngFor="let val of full_result.results.summary.isigi">{{val}}</td>
-                        </tr>
-                        <tr>
-                          <td>CC<sub>1/2</sub></td>
-                          <td *ngFor="let val of full_result.results.summary['cc-half']">{{val}}</td>
-                        </tr>
-                        <tr>
-                          <td>R<sub>merge</sub></td>
-                          <td *ngFor="let val of full_result.results.summary.rmerge_norm">{{val}}</td>
-                        </tr>
-                        <tr>
-                          <td>R<sub>merge</sub> (anom)</td>
-                          <td *ngFor="let val of full_result.results.summary.rmerge_anom">{{val}}</td>
-                        </tr>
-                        <tr>
-                          <td>R<sub>meas</sub></td>
-                          <td *ngFor="let val of full_result.results.summary.rmeas_norm">{{val}}</td>
-                        </tr>
-                        <tr>
-                          <td>R<sub>meas</sub> Anomalous</td>
-                          <td *ngFor="let val of full_result.results.summary.rmeas_anom">{{val}}</td>
-                        </tr>
-                        <tr>
-                          <td>R<sub>pim</sub></td>
-                          <td *ngFor="let val of full_result.results.summary.rpim_norm">{{val}}</td>
-                        </tr>
-                        <tr>
-                          <td>R<sub>pim</sub> Anomalous</td>
-                          <td *ngFor="let val of full_result.results.summary.rpim_anom">{{val}}</td>
-                        </tr>
-                        <tr>
-                          <td>Anomalous Completeness</td>
-                          <td *ngFor="let val of full_result.results.summary.anom_completeness">{{val}}</td>
-                        </tr>
-                        <tr>
-                          <td>Anomalous Multiplicity</td>
-                          <td *ngFor="let val of full_result.results.summary.anom_multiplicity">{{val}}</td>
-                        </tr>
-                        <tr>
-                          <td>Anomalous Correlation</td>
-                          <td *ngFor="let val of full_result.results.summary.anom_correlation">{{val}}</td>
-                        </tr>
-                        <tr>
-                          <td>Anomalous Slope</td>
-                          <td>{{full_result.results.summary.anom_slope[0]}}</td>
-                        </tr>
-                        <tr>
-                          <td>Number Observations</td>
-                          <td *ngFor="let val of full_result.results.summary.total_obs">{{val}}</td>
-                        </tr>
-                        <tr>
-                          <td>Number Unique</td>
-                          <td *ngFor="let val of full_result.results.summary.unique_obs">{{val}}</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </td>
-            <td>
-              <table style="width:100%;height:100%;">
-                <tr>
-                  <td>
-                    <h3>{{selected_plot}}</h3>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <div class="chart-container" style="position: relative;">
-                      <div *ngIf="selected_plot=='Rmerge vs Frame'">
-                        <canvas
-                          *ngIf="data"
-                          baseChart
-                          [datasets]="data.ys"
-                          [labels]="data.xs"
-                          [options]="data.lineChartOptions"
-                          [chartType]="data.lineChartType"
-                          [colors]="lineChartColors"
-                          (chartHover)="chartHovered($event)"
-                          (chartClick)="chartClicked($event)">
-                        </canvas>
-                      </div>
-                      <div *ngIf="selected_plot=='Imean/RMS scatter'">
-                        <canvas
-                          *ngIf="data"
-                          baseChart
-                          [datasets]="data.ys"
-                          [labels]="data.xs"
-                          [options]="data.lineChartOptions"
-                          [chartType]="data.lineChartType"
-                          [colors]="lineChartColors"
-                          (chartHover)="chartHovered($event)"
-                          (chartClick)="chartClicked($event)">
-                        </canvas>
-                      </div>
-                      <div *ngIf="selected_plot=='Anomalous & Imean CCs vs Resolution'">
-                        <canvas
-                          *ngIf="data"
-                          baseChart
-                          [datasets]="data.ys"
-                          [labels]="data.xs"
-                          [options]="data.lineChartOptions"
-                          [chartType]="data.lineChartType"
-                          [colors]="lineChartColors"
-                          (chartHover)="chartHovered($event)"
-                          (chartClick)="chartClicked($event)">
-                        </canvas>
-                      </div>
-                      <div *ngIf="selected_plot=='RMS correlation ratio'">
-                        <canvas
-                          *ngIf="data"
-                          baseChart
-                          [datasets]="data.ys"
-                          [labels]="data.xs"
-                          [options]="data.lineChartOptions"
-                          [chartType]="data.lineChartType"
-                          [colors]="lineChartColors"
-                          (chartHover)="chartHovered($event)"
-                          (chartClick)="chartClicked($event)">
-                        </canvas>
-                      </div>
-                      <div *ngIf="selected_plot=='I/sigma, Mean Mn(I)/sd(Mn(I))'">
-                        <canvas
-                          *ngIf="data"
-                          baseChart
-                          [datasets]="data.ys"
-                          [labels]="data.xs"
-                          [options]="data.lineChartOptions"
-                          [chartType]="data.lineChartType"
-                          [colors]="lineChartColors"
-                          (chartHover)="chartHovered($event)"
-                          (chartClick)="chartClicked($event)">
-                        </canvas>
-                      </div>
-                      <div *ngIf="selected_plot=='rs_vs_res'">
-                        <canvas
-                          *ngIf="data"
-                          baseChart
-                          [datasets]="data.ys"
-                          [labels]="data.xs"
-                          [options]="data.lineChartOptions"
-                          [chartType]="data.lineChartType"
-                          [colors]="lineChartColors"
-                          (chartHover)="chartHovered($event)"
-                          (chartClick)="chartClicked($event)">
-                        </canvas>
-                      </div>
-                      <div *ngIf="selected_plot=='Average I, RMS deviation, and Sd'">
-                        <canvas
-                          *ngIf="data"
-                          baseChart
-                          [datasets]="data.ys"
-                          [labels]="data.xs"
-                          [options]="data.lineChartOptions"
-                          [chartType]="data.lineChartType"
-                          [colors]="lineChartColors"
-                          (chartHover)="chartHovered($event)"
-                          (chartClick)="chartClicked($event)">
-                        </canvas>
-                      </div>
-                      <div *ngIf="selected_plot=='Completeness'">
-                        <canvas
-                          *ngIf="data"
-                          baseChart
-                          [datasets]="data.ys"
-                          [labels]="data.xs"
-                          [options]="data.lineChartOptions"
-                          [chartType]="data.lineChartType"
-                          [colors]="lineChartColors"
-                          (chartHover)="chartHovered($event)"
-                          (chartClick)="chartClicked($event)">
-                        </canvas>
-                      </div>
-                      <div *ngIf="selected_plot=='Redundancy'">
-                        <canvas
-                          *ngIf="data"
-                          baseChart
-                          [datasets]="data.ys"
-                          [labels]="data.xs"
-                          [options]="data.lineChartOptions"
-                          [chartType]="data.lineChartType"
-                          [colors]="lineChartColors"
-                          (chartHover)="chartHovered($event)"
-                          (chartClick)="chartClicked($event)">
-                        </canvas>
-                      </div>
-                      <div *ngIf="selected_plot=='Radiation Damage'">
-                        <canvas
-                          *ngIf="data"
-                          baseChart
-                          [datasets]="data.ys"
-                          [labels]="data.xs"
-                          [options]="data.lineChartOptions"
-                          [chartType]="data.lineChartType"
-                          [colors]="lineChartColors"
-                          (chartHover)="chartHovered($event)"
-                          (chartClick)="chartClicked($event)">
-                        </canvas>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td>
-                    <md-select
-                      placeholder="Select plot"
-                      (change)="setPlot(selected_plot)"
-                      [(ngModel)]="selected_plot"
-                      name="plot">
-                      <md-option *ngFor="let key of objectKeys(full_result.results.plots)" [value]="key">{{full_result.results.plots[key].parameters.selectlabel}}</md-option>
-                    </md-select>
-                    <p>Selected plot: {{selected_plot}}</p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table> -->
       </md-card-content>
-      <md-card-content *ngIf="view_mode === 'analysis'">
+      <md-card-content *ngIf="view_mode === 'analysis'" class="rapd-result">
         <div #analysistarget></div>
       </md-card-content>
-      <md-card-content *ngIf="view_mode === 'raw'">
-        Raw
+      <md-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
+        <md-card class="raw-output-card">
+          <md-card-header>
+            <div style="width:100%">
+              <div style="float:left;">
+                <h3>XDS Idxref</h3>
+              </div>
+              <div style="float:right">
+                <button md-mini-fab class="raw-output-toggle" color="primary">
+                  <md-icon
+                    *ngIf="log_xds_idxref_collapsed"
+                    class="md-24"
+                    (click)="log_xds_idxref_collapsed=false">
+                    keyboard_arrow_down
+                  </md-icon>
+                  <md-icon
+                    *ngIf="! log_xds_idxref_collapsed"
+                    class="md-24"
+                    (click)="log_xds_idxref_collapsed=true">
+                    keyboard_arrow_up
+                  </md-icon>
+                </button>
+              </div>
+            </div>
+          </md-card-header>
+          <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':log_xds_idxref_collapsed}">
+            <p *ngFor="let line of full_result.results.logs.xds_idxref">{{line}}</p>
+          </md-card-content>
+        </md-card>
+        <md-card class="raw-output-card">
+          <md-card-header>
+            <div style="width:100%">
+              <div style="float:left;">
+                <h3>XDS Integrate</h3>
+              </div>
+              <div style="float:right">
+                <button md-mini-fab class="raw-output-toggle" color="primary">
+                  <md-icon
+                    *ngIf="log_xds_integrate_collapsed"
+                    class="md-24"
+                    (click)="log_xds_integrate_collapsed=false">
+                    keyboard_arrow_down
+                  </md-icon>
+                  <md-icon
+                    *ngIf="! log_xds_integrate_collapsed"
+                    class="md-24"
+                    (click)="log_xds_integrate_collapsed=true">
+                    keyboard_arrow_up
+                  </md-icon>
+                </button>
+              </div>
+            </div>
+          </md-card-header>
+          <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':log_xds_integrate_collapsed}">
+            <p *ngFor="let line of full_result.results.logs.xds_integrate">{{line}}</p>
+          </md-card-content>
+        </md-card>
+        <md-card class="raw-output-card">
+          <md-card-header>
+            <div style="width:100%">
+              <div style="float:left;">
+                <h3>XDS Correct</h3>
+              </div>
+              <div style="float:right">
+                <button md-mini-fab class="raw-output-toggle" color="primary">
+                  <md-icon
+                    *ngIf="log_xds_correct_collapsed"
+                    class="md-24"
+                    (click)="log_xds_correct_collapsed=false">
+                    keyboard_arrow_down
+                  </md-icon>
+                  <md-icon
+                    *ngIf="! log_xds_correct_collapsed"
+                    class="md-24"
+                    (click)="log_xds_correct_collapsed=true">
+                    keyboard_arrow_up
+                  </md-icon>
+                </button>
+              </div>
+            </div>
+          </md-card-header>
+          <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':log_xds_correct_collapsed}">
+            <p *ngFor="let line of full_result.results.logs.xds_correct">{{line}}</p>
+          </md-card-content>
+        </md-card>
+        <md-card class="raw-output-card">
+          <md-card-header>
+            <div style="width:100%">
+              <div style="float:left;">
+                <h3>Aimless</h3>
+              </div>
+              <div style="float:right">
+                <button md-mini-fab class="raw-output-toggle" color="primary">
+                  <md-icon
+                    *ngIf="log_aimless_collapsed"
+                    class="md-24"
+                    (click)="log_aimless_collapsed=false">
+                    keyboard_arrow_down
+                  </md-icon>
+                  <md-icon
+                    *ngIf="! log_aimless_collapsed"
+                    class="md-24"
+                    (click)="log_aimless_collapsed=true">
+                    keyboard_arrow_up
+                  </md-icon>
+                </button>
+              </div>
+            </div>
+          </md-card-header>
+          <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':log_aimless_collapsed}">
+            <p *ngFor="let line of full_result.results.logs.aimless">{{line}}</p>
+          </md-card-content>
+        </md-card>
+        <md-card class="raw-output-card">
+          <md-card-header>
+            <div style="width:100%">
+              <div style="float:left;">
+                <h3>Pointless</h3>
+              </div>
+              <div style="float:right">
+                <button md-mini-fab class="raw-output-toggle" color="primary">
+                  <md-icon
+                    *ngIf="log_pointless_collapsed"
+                    class="md-24"
+                    (click)="log_pointless_collapsed=false">
+                    keyboard_arrow_down
+                  </md-icon>
+                  <md-icon
+                    *ngIf="! log_pointless_collapsed"
+                    class="md-24"
+                    (click)="log_pointless_collapsed=true">
+                    keyboard_arrow_up
+                  </md-icon>
+                </button>
+              </div>
+            </div>
+          </md-card-header>
+          <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':log_pointless_collapsed}">
+            <p *ngFor="let line of full_result.results.logs.pointless">{{line}}</p>
+          </md-card-content>
+        </md-card>
       </md-card-content>
+      <md-card-actions class="rapd-result">
+        <!-- <md-toolbar *ngIf="full_result" class="result-panel-action-bar"> -->
+        <div style="margin:5px;">
+          <button md-raised-button color="primary" (click)="openReintegrateDialog()">Reintegrate</button>
+          <button md-raised-button color="accent" (click)="openMergeDialog()">Merge</button>
+          <button md-button color="primary" (click)="openMrDialog()">MR</button>
+          <button md-button color="primary" (click)="openSadDialog()">SAD</button>
+          <button md-raised-button (click)="openMadDialog()">MAD</button>
+          <button md-raised-button (click)="printPage()">Print</button>
+        </div>
+        <!-- </md-toolbar> -->
+      </md-card-actions>
     </md-card>
-    <md-toolbar *ngIf="full_result" class="result-panel-action-bar">
-      <h2 style="margin-right:1em;">Actions</h2>
-      <button md-raised-button (click)="openReintegrateDialog()">Reintegrate</button>
-      <button md-raised-button (click)="openMergeDialog()">Merge</button>
-      <button md-raised-button (click)="openMrDialog()">MR</button>
-      <button md-raised-button (click)="openSadDialog()">SAD</button>
-      <button md-raised-button (click)="openMadDialog()">MAD</button>
-      <button md-raised-button (click)="printPage()">Print</button>
-    </md-toolbar>
-  </div>
+  <!-- </div> -->
 </div>

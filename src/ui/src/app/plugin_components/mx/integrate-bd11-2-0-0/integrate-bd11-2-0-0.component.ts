@@ -62,6 +62,13 @@ export class IntegrateBd11200Component implements OnInit, OnChanges {
   view_mode: string = 'summary';
   data: any;
 
+  // Variables for coordinating the collapsible cards
+  log_xds_idxref_collapsed: boolean = true;
+  log_xds_integrate_collapsed: boolean = true;
+  log_xds_correct_collapsed: boolean = true;
+  log_aimless_collapsed: boolean = true;
+  log_pointless_collapsed: boolean = true;
+
   // @ViewChild(BaseChartDirective) private _chart;
   @ViewChild('analysistarget', { read: ViewContainerRef }) analysistarget;
   analysis_component: any;
