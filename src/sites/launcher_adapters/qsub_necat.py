@@ -84,14 +84,24 @@ class LauncherAdapter(object):
         
         # Get the launcher directory - in launcher specification
         # Add command_files to keep files isolated
-        qsub_dir = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"]+"/command_files"
+        #qsub_dir = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"]+"/command_files"
+        qsub_dir = self.message["directories"]["launch_dir"]+"/command_files"
 
         # Put the message into a rapd-readable file
         #command_file = launch_tools.write_command_file(qsub_dir, self.message["command"], json.dumps(self.decoded_message))
         command_file = launch_tools.write_command_file(qsub_dir, self.message["command"], self.message)
         
+        # Set the site tag
+        site_tag = False
+        # Find site_tag from SNAP
+        if self.message.get('header1', False):
+            site_tag = self.message['header1'].get('site_tag')
+        # Find site_tag from INTEGRATE
+        elif self.message.get('data', False):
+            site_tag = self.message['data']['image_data'].get('site_tag')
+        
         # The command has to come in the form of a script on the SERCAT install
-        site_tag = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["site_tag"]
+        #site_tag = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["site_tag"]
         command_line = "rapd.launch -vs %s %s" % (site_tag, command_file)
         #command_line = "tcsh\nrapd.launch -vs %s %s" % (site_tag, command_file)
         #command_script = launch_tools.write_command_script(command_file.replace(".rapd", ".sh"), command_line)
@@ -161,10 +171,11 @@ class LauncherAdapter(object):
         """
         Adjust the command passed in in install-specific ways
         """
-
+        
         # Adjust the working directory for the launch computer
         work_dir_candidate = os.path.join(
-            self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"],
+            #self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"],
+            self.message["directories"]["launch_dir"],
             self.message["directories"]["work"])
 
         # Make sure this is an original directory

@@ -129,6 +129,9 @@ class Model(object):
 
         # Import the detector
         self.init_detectors()
+        
+        # start launcher manager
+        #self.start_launcher_manager()
 
         # Start the run monitor
         self.start_run_monitor()
@@ -234,6 +237,19 @@ class Model(object):
                 self.detectors[site_id.upper()] = load_module(
                     seek_module=detector,
                     directories=("sites.detectors", "detectors"))
+
+    def start_launcher_manager(self):
+        """Start up the launcher manager to hand off jobs"""
+        self.logger.debug("Starting launcher monitor")
+        launcher_manager = importlib.import_module("launch.rapd_launcher_manager")
+        self.launcher_manager = launcher_manager.Launcher_Manager(site=site,
+                                                                  logger=self.logger,
+                                                                  overwatch_id=self.overwatch_id)
+        
+    def stop_launcher_manager(self):
+        """Stop the launcher manager"""
+        self.logger.debug("Stopping launcher manager")
+        self.launcher_manager.stop()
 
     def start_image_monitor(self):
         """Start up the image listening process for core"""

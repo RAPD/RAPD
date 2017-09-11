@@ -244,6 +244,11 @@ class Overwatcher(Registrar):
         self.managed_file = managed_file
         self.managed_file_flags = managed_file_flags
 
+        # remove and save Python command
+        i = self.managed_file_flags.index('--python')
+        self.managed_file_flags.remove('--python')
+        self.python_command = self.managed_file_flags.pop(i)
+
         print site
         print managed_file
         print managed_file_flags
@@ -303,16 +308,13 @@ class Overwatcher(Registrar):
         Start the managed process with the passed in flags and the current
         environment. If the process exits immediately, the overwatcher will exit
         """
-        py_path = sys.executable
-        print 'python: %s'%py_path
-
         # The environmental_vars
         path = os.environ.copy()
 
         # Put together the command
         command = self.managed_file_flags[:]
         command.insert(0, self.managed_file)
-        command.insert(0, "rapd.python")
+        command.insert(0, self.python_command)
         command.append("--overwatch_id")
         command.append(self.uuid)
         print 'command: %s'%command
@@ -431,6 +433,11 @@ def get_commandline():
                         action="store",
                         dest="managed_file",
                         help="File to be overwatched")
+    parser.add_argument("--python", "-p",
+                        action="store",
+                        default="rapd.python",
+                        dest="python",
+                        help="Which python to launch managed file")
     parsed_args = parser.parse_args()
 
     return parsed_args

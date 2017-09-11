@@ -189,11 +189,11 @@ class Launcher(threading.Thread, object):
         #    message["preferences"] = {}
         #message["preferences"]["run_mode"] = "server"
 
-        self.logger.debug("Command received channel:RAPD_JOBS  message: %s", message)
+        self.logger.debug("Command received channel:%s  message: %s", self.job_list, message)
 
         # Use the adapter to launch
         #self.adapter(self.site, message, self.specifications)
-        #self.adapter(self.site, message, self.launcher)
+        self.adapter(self.site, message, self.launcher)
 
     def get_settings(self):
         """
@@ -259,6 +259,7 @@ s IP address (%s), but not for the input tag (%s)" % (self.ip_address, self.tag)
             """
             # Unpack address
             self.job_list = self.launcher.get('job_list')
+            
 
     def load_adapter(self):
         """Find and load the adapter"""

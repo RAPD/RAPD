@@ -29,10 +29,14 @@ import importlib
 
 from utils.site import read_secrets
 
-# Site ID - limited to 12 characters by MySQL
-ID = "NECAT_T"
+# Site
+SITE = 'NECAT'
+
+#ID = "NECAT_T"
+ID = ("NECAT_T", 'NECAT_E')
+
 #ID = ("T")
-BEAMLINE="T"
+#BEAMLINE="T"
 
 # The secrets file - do not put in github repo!
 SECRETS = "sites.secrets_necat_t"
@@ -43,7 +47,7 @@ read_secrets(SECRETS, sys.modules[__name__])
 # X-ray source characteristics
 # Keyed to ID
 BEAM_INFO = {
-    "NECAT_T": {# Detector distance limits
+    "NECAT_E": {# Detector distance limits
                 "DETECTOR_DIST_MIN": 150.0,
                 "DETECTOR_DIST_MAX": 1000.0,
                 # goniometer limit
@@ -74,9 +78,10 @@ BEAM_INFO = {
                                  -0.0014631216,
                                  8.60559283424e-07,
                                  -2.5709929645e-10)
-                }
+                },
+    #"NECAT_T": BEAM_INFO["NECAT_E"],
              }
-          
+BEAM_INFO.update({"NECAT_T": BEAM_INFO["NECAT_E"]})
 # Method RAPD uses to track groups
 #   uid -- the uid of data root directory corresponds to session.group_id
 #GROUP_ID = "uid"
