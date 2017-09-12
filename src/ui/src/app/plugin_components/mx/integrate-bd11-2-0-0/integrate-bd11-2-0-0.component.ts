@@ -24,9 +24,9 @@ import * as mx from '../';
 var analysis_values = [];
 var analysis_components = {};
 for (let key in mx) {
-  console.log(key);
+  // console.log(key);
   if (key.match('Analysis')) {
-    console.log('YES');
+    // console.log('YES');
     analysis_values.push(mx[key]);
     analysis_components[key.toLowerCase()] = mx[key];
   }

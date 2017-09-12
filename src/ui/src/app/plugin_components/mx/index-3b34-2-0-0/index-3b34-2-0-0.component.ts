@@ -20,13 +20,70 @@ export class Index3b34200Component implements OnInit {
   @Input() current_result: any;
   full_result: any;
   index_result: any;
+
   view_mode: string = 'summary';
+  selected_plot: string;
+  selected_plot_label: string;
+  plot_select_labels: any = {
+    'background':'Background',
+    'exposure':'Exposure',
+    'max_delta_omega':'Max Oscillation',
+    'osc_range':'Osc Range NORM',
+    'osc_range_anom':'Osc Range ANOM',
+    'rad_damage':'Radiation Damage',
+    'wilson':'Wilson'
+  };
+  data: any;
+
   incomingData$: ReplaySubject<string>;
 
   objectKeys = Object.keys;
 
   constructor(private results_service: ResultsService,
               public dialog: MdDialog) { }
+
+  public lineChartColors:Array<any> = [
+    { // green
+      backgroundColor: 'rgba(0,0,0,0)',
+      borderColor: 'rgba(0, 128, 128, 1)',
+      pointBackgroundColor: 'rgba(0, 128, 128, 1)',
+      pointBorderColor: 'rgba(0, 128, 128, 1)',
+      pointHoverBackgroundColor: 'rgba(0, 128, 128, 1)',
+      pointHoverBorderColor: 'rgba(0, 128, 128, 1)'
+    },
+    { // dark grey
+      backgroundColor: 'rgba(0,0,0,0)',
+      borderColor: 'rgba(122, 198, 150, 1)',
+      pointBackgroundColor: 'rgba(122, 198, 150, 1)',
+      pointBorderColor: 'rgba(122, 198, 150, 1)',
+      pointHoverBackgroundColor: 'rgba(122, 198, 150, 1)',
+      pointHoverBorderColor: 'rgba(122, 198, 150, 1)'
+    },
+    { // grey
+      backgroundColor: 'rgba(0,0,0,0)',
+      borderColor: 'rgba(125, 125, 114, 1)',
+      pointBackgroundColor: 'rgba(125, 125, 114, 1)',
+      pointBorderColor: 'rgba(125, 125, 114, 1)',
+      pointHoverBackgroundColor: 'rgba(125, 125, 114, 1)',
+      pointHoverBorderColor: 'rgba(125, 125, 114, 1)'
+    },
+    { // grey
+      backgroundColor: 'rgba(0,0,0,0)',
+      borderColor: 'rgba(239, 115, 139, 1)',
+      pointBackgroundColor: 'rgba(239, 115, 139, 1)',
+      pointBorderColor: 'rgba(239, 115, 139, 1)',
+      pointHoverBackgroundColor: 'rgba(239, 115, 139, 1)',
+      pointHoverBorderColor: 'rgba(239, 115, 139, 1)'
+    },
+    { // grey
+      backgroundColor: 'rgba(0,0,0,0)',
+      borderColor: 'rgba(139, 0, 0, 1)',
+      pointBackgroundColor: 'rgba(139, 0, 0, 1)',
+      pointBorderColor: 'rgba(139, 0, 0, 1)',
+      pointHoverBackgroundColor: 'rgba(139, 0, 0, 1)',
+      pointHoverBorderColor: 'rgba(139, 0, 0, 1)'
+    }
+  ];
 
   ngOnInit() {
     // console.log(this.current_result);
@@ -44,12 +101,17 @@ export class Index3b34200Component implements OnInit {
     console.log('handleIncomingData', data);
     this.full_result = data;
 
-    this.index_result = [{
-      spacegroup: this.full_result.results.labelit_results.best_sym,
-      unit_cell: this.full_result.results.labelit_results.best_cell,
-      mosaicity: this.full_result.results.labelit_results.mosflm_mos[0],
-      resolution: this.full_result.results.labelit_results.mosflm_res[0],
-    },];
+    // this.index_result = [{
+    //   spacegroup: this.full_result.results.labelit_results.best_sym,
+    //   unit_cell: this.full_result.results.labelit_results.best_cell,
+    //   mosaicity: this.full_result.results.labelit_results.mosflm_mos[0],
+    //   resolution: this.full_result.results.labelit_results.mosflm_res[0],
+    // },];
+
+    if (this.full_result.results.plots.osc_range) {
+      this.selected_plot = 'osc_range';
+      this.setPlot('osc_range');
+    }
   }
 
   // Display the header information
@@ -63,90 +125,144 @@ export class Index3b34200Component implements OnInit {
     let dialogRef = this.dialog.open(HeaderDialogComponent, config);
   }
 
-  plotOmegaStart(mode) {
+  // Set up the plot
+  setPlot(plot_key:string) {
 
-    if (mode === 'norm') {
-      var tag = 'NORMAL',
-          y_data = this.full_result.results.plots.osc_range.y_data,
-          x_data = this.full_result.results.plots.osc_range.x_data;
-    } else {
-      var tag = 'ANOMALOUS',
-          y_data = this.full_result.results.plots.osc_range_anom.y_data,
-          x_data = this.full_result.results.plots.osc_range_anom.x_data;
-    }
+    console.log('setPlot', plot_key);
 
-    let config = {
-      width: '800px',
-      height: '475px',
-      data: {
-        dialog_title: 'Sweep Width to Achieve Completeness - '+tag,
-        ys: y_data.slice(0,5).map(function(el) {
+    let plot_result = this.full_result.results.plots[plot_key];
+    console.log(plot_result);
+    this.selected_plot_label = plot_result.parameters.toplabel;
+
+    switch (plot_key) {
+
+      case 'background':
+        this.data.ys = plot_result.y_data;
+        this.data.xs = plot_result.x_data;
+        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = plot_result.parameters.ylabel;
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = plot_result.parameters.xlabel;
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
+        break;
+
+      case 'exposure':
+        this.data.ys = plot_result.y_data;
+        this.data.xs = plot_result.x_data;
+        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = plot_result.parameters.ylabel;
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = plot_result.parameters.xlabel;
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
+        break;
+
+      case 'osc_range':
+        this.data = {
+          ys: this.full_result.results.plots.osc_range.y_data.slice(0,5).map(function(el) {
+            var o = Object.assign({}, el);
+            o.pointRadius = 0;
+            o.backgroundColor = 'rgba(0,0,0,0)';
+            // o.showLine = false;
+            return o;
+          }),
+          xs: this.full_result.results.plots.osc_range.x_data,
+          lineChartType: 'line',
+          lineChartOptions: {
+            animation: {
+              duration: 500,
+            },
+            responsive: true,
+            legend: {
+              display: true,
+              position: 'right',
+              labels: {
+                boxWidth: 3,
+              },
+            },
+            scales: {
+              yAxes: [{
+                scaleLabel: {
+                  display: true,
+                  labelString: 'Required Sweep Width',
+                },
+                ticks: {
+                  beginAtZero:true
+                },
+              }],
+              xAxes: [{
+                afterTickToLabelConversion: function(data){
+                      var xLabels = data.ticks;
+
+                      xLabels.forEach(function (labels, i) {
+                          if (i % 10 !== 0){
+                              xLabels[i] = '';
+                          }
+                      });
+                      xLabels.push('360');
+                },
+                scaleLabel: {
+                  display: true,
+                  labelString: 'Starting Omega',
+                },
+                // ticks: {
+                //   autoSkipPadding:4
+                // },
+              }],
+            },
+            tooltips: {
+              callbacks: {
+                label: function(tooltipItem, data) {
+                  return tooltipItem.yLabel+'° width';
+                },
+                title: function(tooltipItem, data) {
+                  console.log(tooltipItem);
+                  console.log(data);
+                  return data.labels[tooltipItem[0].index]+'° start';
+                },
+              },
+            },
+          }
+        };
+        break;
+
+      case 'osc_range_anom':
+        this.data.ys = this.full_result.results.plots.osc_range_anom.y_data.slice(0,5).map(function(el) {
           var o = Object.assign({}, el);
           o.pointRadius = 0;
           o.backgroundColor = 'rgba(0,0,0,0)';
           // o.showLine = false;
           return o;
-        }),
-        xs: x_data,
-        lineChartType: 'line',
-        lineChartOptions: {
-          animation: {
-            duration: 500,
-          },
-          responsive: true,
-          legend: {
-            display: true,
-            position: 'right',
-            labels: {
-              boxWidth: 3,
-            },
-          },
-          scales: {
-            yAxes: [{
-              scaleLabel: {
-                display: true,
-                labelString: 'Required Sweep Width',
-              },
-              ticks: {
-                beginAtZero:true
-              },
-            }],
-            xAxes: [{
-              afterTickToLabelConversion: function(data){
-                    var xLabels = data.ticks;
+        });
+        this.data.xs = this.full_result.results.plots.osc_range_anom.x_data;
+        break;
 
-                    xLabels.forEach(function (labels, i) {
-                        if (i % 10 !== 0){
-                            xLabels[i] = '';
-                        }
-                    });
-                    xLabels.push('360');
-              },
-              scaleLabel: {
-                display: true,
-                labelString: 'Starting Omega',
-              },
-              // ticks: {
-              //   autoSkipPadding:4
-              // },
-            }],
-          },
-          tooltips: {
-            callbacks: {
-              label: function(tooltipItem, data) {
-                return tooltipItem.yLabel+'° width';
-              },
-              title: function(tooltipItem, data) {
-                console.log(tooltipItem);
-                console.log(data);
-                return data.labels[tooltipItem[0].index]+'° start';
-              },
-            },
-          },
-        },
-      },
-    };
-    let dialogRef = this.dialog.open(PlotOmegaStartComponent, config);
+      case 'max_delta_omega':
+        this.data.ys = this.full_result.results.plots.max_delta_omega.y_data.slice(0,5).map(function(el) {
+          var o = Object.assign({}, el);
+          o.pointRadius = 0;
+          o.backgroundColor = 'rgba(0,0,0,0)';
+          // o.showLine = false;
+          return o;
+        });
+        this.data.xs = plot_result.x_data;
+        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = plot_result.parameters.ylabel;
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = plot_result.parameters.xlabel;
+        break;
+
+      case 'wilson':
+        this.data.ys = plot_result.y_data;
+        this.data.xs = plot_result.x_data;
+        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = plot_result.parameters.ylabel;
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = plot_result.parameters.xlabel;
+        break;
+
+      case 'rad_damage':
+        this.data.ys = plot_result.y_data;
+        this.data.xs = plot_result.x_data;
+        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = plot_result.parameters.ylabel;
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = plot_result.parameters.xlabel;
+        break;
+
+      default:
+        break;
+    }
+
   }
 
   plotDeltaOmega(mode) {

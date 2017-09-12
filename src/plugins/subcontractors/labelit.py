@@ -276,7 +276,7 @@ def parse_labelit_files(bestfile_lines, mat_lines, sub_lines, mode="all"):
     cell = False
     sym = False
     for line in bestfile_lines:
-        print line
+        # print line
         if line.startswith('CELL'):
             if len(line.split()) == 7:
                 cell = [try_float(item) for item in line.split()[1:]]

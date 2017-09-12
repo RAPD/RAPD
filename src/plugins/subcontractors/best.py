@@ -56,21 +56,21 @@ def parse_best_plots(inp):
     cast_vals = {
         "Relative Error and Intensity Plot": {
             "Rel.Error": {"x": try_float, "y": try_float},
-            "Rel.Intensity": {"x": try_float, "y": try_float}
+            "Rel.Intensity": {"x": try_float, "y": try_float},
         },
         "Wilson Plot": {
             "Theory": {"x": try_float, "y": try_float},
             "Experiment": {"x": try_float, "y": try_float},
             "Pred.low errors": {"x": try_float, "y": try_float},
-            "Pred.high errors": {"x": try_float, "y": try_float}
+            "Pred.high errors": {"x": try_float, "y": try_float},
         },
         "Maximal oscillation width": {
             "resol": {"x": try_int, "y": try_float},
-            "linelabel": (lambda x: x.replace("resol.  ", "")+"A")
+            "linelabel": (lambda x: x.replace("resol.  ", "")+"A"),
         },
         "Minimal oscillation ranges for different completenesses": {
             "compl": {"x": try_float, "y": try_int},
-            "linelabel": (lambda x: x.replace("compl -", "").replace(".%", "%"))
+            "linelabel": (lambda x: x.replace("compl -", "").replace(".%", "%")),
         },
         "Total exposure time vs resolution": {
             "Expon.trend": {"x": try_float, "y": try_float},
@@ -130,7 +130,8 @@ def parse_best_plots(inp):
             # Create a new plot
             plot = {"y_data": [],
                     "x_data": False,
-                    "parameters": {}}
+                    "parameters": {},
+                   }
 
         elif line.startswith("%"):
             # print line
@@ -151,6 +152,7 @@ def parse_best_plots(inp):
             # Not in a curve, so plot parameters
             else:
                 plot["parameters"][key] = val
+                print key, val
 
         # A new curve has been found
         elif line.startswith("#"):

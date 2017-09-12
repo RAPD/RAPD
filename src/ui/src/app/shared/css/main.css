@@ -192,13 +192,13 @@ button.button-dialog-top-right.mat-icon-button {
 
 
 /* Manual table to look like ngx-datatable */
-
 table.rapd-table {
   table-layout: fixed;
   /*width: 100%;*/
   border: 1px solid rgba(0,0,0,0.2);
   border-collapse: collapse;
   border-radius: 2px;
+  margin: 10px;
 }
 
 .rapd-table th, td {
@@ -231,7 +231,7 @@ table.rapd-table {
   text-align: center;
 }
 
-.rapd-table tbody tr:first-child {
+/*.rapd-table tbody tr:first-child {
   border-bottom: 1px solid rgba(0,0,0,0.1);
   border-top: 1px solid rgba(200,200,200,0);
 }
@@ -239,7 +239,7 @@ table.rapd-table {
 .rapd-table tbody tr:last-child {
   border-bottom: 1px solid rgba(0,0,0,0.1);
   border-top: 1px solid rgba(200,200,200,0);
-}
+}*/
 
 md-card.rapd-result {
   /*background-color: rgba(0,0,0,0.1);*/
@@ -268,6 +268,14 @@ md-card-actions.rapd-result {
   margin: 4px;
 }
 
+/* Container for results */
+div.rapd-result {
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 2px;
+  margin: 4px;
+  padding: 5px;
+}
+
 /* div that holds a select that looks separate */
 .rapd-select-panel {
   border-radius: 2px;
@@ -288,6 +296,19 @@ md-card-actions.rapd-result {
   overflow-x:visible;
 }
 
+/* CSS for plots and their containers */
+div.rapd-plot-header {
+  margin-left: 30px;
+  width: 90%;
+}
+
+div.chart-container {
+  position: relative;
+  width:95%;
+}
+
+
+/* CSS for log file displays */
 .raw-output {
   font-family: 'Roboto Mono', monospace;
   font-size: 0.75;

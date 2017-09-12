@@ -1,40 +1,34 @@
 <div class="result-panel child">
-  <div class="result-panel-main-results">
-    <md-card *ngIf="full_result"> <!-- class="result-panel-strategy-card" style="order:1;"> -->
-      <!-- <md-card-header>
-        <md-card-title>
-          <h2>Labelit Indexing Solution</h2>
-        </md-card-title>
-      </md-card-header> -->
-      <md-card-header class="rapd-result">
-        <div style="width:100%">
-          <div style="float:left;">
-            <h3>
-              Indexing Results for
-              <span>{{full_result.header1.basename}}</span>
-              <span style="color:blue;"><md-icon (click)="displayHeader(full_result.header1)">info_outline</md-icon></span>
-              <span *ngIf="full_result.header2"> & {{full_result.command.header2.basename}}</span>
-              <span *ngIf="full_result.header2" style="color:blue;"><md-icon (click)="displayHeader(full_result.header2)">info_outline</md-icon></span>
-            </h3>
-          </div>
-          <div class="rapd-select-panel">
-            <md-select
-              placeholder="View mode"
-              floatPlaceholder="auto"
-              (change)="onViewModeSelect(view_mode)"
-              [(ngModel)]="view_mode"
-              name="view_mode"
-              value="summary">
-              <md-option value="summary">Summary</md-option>
-              <md-option value="analysis">Details</md-option>
-              <md-option value="logs">Logs</md-option>
-            </md-select>
-          </div>
+  <md-card *ngIf="full_result" class="rapd-result">
+    <md-card-header class="rapd-result">
+      <div style="width:100%">
+        <div style="float:left;">
+          <h3>
+            Indexing Results for
+            <span>{{full_result.header1.basename}}</span>
+            <span style="color:blue;"><md-icon (click)="displayHeader(full_result.header1)">info_outline</md-icon></span>
+            <span *ngIf="full_result.header2"> & {{full_result.command.header2.basename}}</span>
+            <span *ngIf="full_result.header2" style="color:blue;"><md-icon (click)="displayHeader(full_result.header2)">info_outline</md-icon></span>
+          </h3>
         </div>
-      </md-card-header>
-      <md-card-content *ngIf="view_mode === 'summary'" class="rapd-result">
-        <div fxLayout="column" fxLayoutGap="10px">
-          <div fxFlex="none">
+        <div class="rapd-select-panel">
+          <md-select
+            placeholder="View mode"
+            floatPlaceholder="auto"
+            [(ngModel)]="view_mode"
+            name="view_mode"
+            value="summary">
+            <md-option value="summary">Summary</md-option>
+            <md-option value="details">Details</md-option>
+            <md-option value="logs">Logs</md-option>
+          </md-select>
+        </div>
+      </div>
+    </md-card-header>
+    <md-card-content *ngIf="view_mode === 'summary'" class="rapd-result">
+      <div fxLayout="row" fxLayoutGap="10px">
+        <div fxFlex="none">
+          <div>
             <h3>Indexing Solution</h3>
             <table class="rapd-table">
               <thead>
@@ -62,7 +56,7 @@
               </tbody>
             </table>
           </div>
-          <div fxFlex>
+          <div>
             <h2>Data Collection Strategies</h2>
             <div>
               <h3>Normal</h3>
@@ -90,8 +84,6 @@
                   </tr>
                 </tbody>
               </table>
-              <button md-raised-button (click)="plotOmegaStart('norm')">Osc Range Plot</button>
-              <button md-raised-button (click)="plotDeltaOmega('norm')">Osc Width Plot</button>
             </div>
             <div>
               <h3>Anomalous</h3>
@@ -109,70 +101,290 @@
                 </thead>
                 <tbody>
                   <tr *ngFor="let key of objectKeys(full_result.results.best_results_anom.sweeps)">
-                    <td>{{full_result.results.best_results_norm.sweeps[key].run_number}}</td>
-                    <td>{{full_result.results.best_results_norm.sweeps[key].phi_start}}&deg;</td>
-                    <td>{{full_result.results.best_results_norm.sweeps[key].phi_width}}&deg;</td>
-                    <td>{{full_result.results.best_results_norm.sweeps[key].number_of_images}}</td>
-                    <td>{{full_result.results.best_results_norm.sweeps[key].exposure_time}}s</td>
-                    <td>{{full_result.results.best_results_norm.sweeps[key].distance.toFixed(0)}}mm</td>
-                    <td>{{full_result.results.best_results_norm.sweeps[key].transmission.toFixed(1)}}%</td>
+                    <td>{{full_result.results.best_results_anom.sweeps[key].run_number}}</td>
+                    <td>{{full_result.results.best_results_anom.sweeps[key].phi_start}}&deg;</td>
+                    <td>{{full_result.results.best_results_anom.sweeps[key].phi_width}}&deg;</td>
+                    <td>{{full_result.results.best_results_anom.sweeps[key].number_of_images}}</td>
+                    <td>{{full_result.results.best_results_anom.sweeps[key].exposure_time}}s</td>
+                    <td>{{full_result.results.best_results_anom.sweeps[key].distance.toFixed(0)}}mm</td>
+                    <td>{{full_result.results.best_results_anom.sweeps[key].transmission.toFixed(1)}}%</td>
                   </tr>
                 </tbody>
               </table>
-              <!-- <ngx-datatable md-line
-                class="material"
-                [rows]="full_result.results.best_results_anom.sweeps"
-                [loadingIndicator]="loadingIndicator"
-                [columnMode]="'standard'"
-                [headerHeight]="50"
-                [footerHeight]="0"
-                [rowHeight]="'auto'"
-                [reorderable]="reorderable"
-                [selectionType]="0">
-                <ngx-datatable-column name="N" prop="run_number">
-                  <ng-template let-value="value" ngx-datatable-cell-template>
-                    {{value}}
-                  </ng-template>
-                </ngx-datatable-column>
-                <ngx-datatable-column name="&Omega; Start" prop="phi_start">
-                  <ng-template let-value="value" ngx-datatable-cell-template>
-                    {{value}}&deg;
-                  </ng-template>
-                </ngx-datatable-column>
-                <ngx-datatable-column name="&Delta;&Omega;" prop="phi_width">
-                  <ng-template let-value="value" ngx-datatable-cell-template>
-                    {{value}}&deg;
-                  </ng-template>
-                </ngx-datatable-column>
-                <ngx-datatable-column name="# Images" prop="number_of_images">
-                  <ng-template let-value="value" ngx-datatable-cell-template>
-                    {{value}}&deg;
-                  </ng-template>
-                </ngx-datatable-column>
-                <ngx-datatable-column name="Exposure time" prop="exposure_time">
-                  <ng-template let-value="value" ngx-datatable-cell-template>
-                    {{value}}s
-                  </ng-template>
-                </ngx-datatable-column>
-                <ngx-datatable-column name="Distance" prop="distance">
-                  <ng-template let-value="value" ngx-datatable-cell-template>
-                    {{value}}mm
-                  </ng-template>
-                </ngx-datatable-column>
-                <ngx-datatable-column name="% Transmission" prop="transmission">
-                  <ng-template let-value="value" ngx-datatable-cell-template>
-                    {{value}}
-                  </ng-template>
-                </ngx-datatable-column>
-              </ngx-datatable> -->
-              <button md-raised-button (click)="plotOmegaStart('anom')">Osc Range Plot</button>
-              <button md-raised-button (click)="plotDeltaOmega('anom')">Osc Width Plot</button>
             </div>
           </div>
         </div>
-      </md-card-content>
-    </md-card>
-  </div>
+        <div fxFlex fxLayout="column" fxLayoutGap="10px" class="rapd-result">
+          <div fxFlex="none" class="rapd-plot-header">
+            <div style="float:left;">
+              <h3>{{selected_plot_label}}</h3>
+            </div>
+            <div style="float:right;">
+              <md-select
+                placeholder="Select plot"
+                (change)="setPlot(selected_plot)"
+                [(ngModel)]="selected_plot"
+                name="plot"
+                style="width:12em;">
+                <md-option *ngFor="let key of objectKeys(full_result.results.plots)" [value]="key">{{plot_select_labels[key]}}</md-option>
+              </md-select>
+            </div>
+          </div>
+          <div fxFlex="grow">
+            <div class="chart-container" style="position: relative;">
+              <div *ngIf="selected_plot=='background'">
+                <canvas baseChart
+                  [datasets]="data.ys"
+                  [labels]="data.xs"
+                  [options]="data.lineChartOptions"
+                  [chartType]="data.lineChartType"
+                  [colors]="lineChartColors"
+                  (chartHover)="chartHovered($event)"
+                  (chartClick)="chartClicked($event)">
+                </canvas>
+              </div>
+              <div *ngIf="selected_plot=='exposure'">
+                <canvas baseChart
+                  [datasets]="data.ys"
+                  [labels]="data.xs"
+                  [options]="data.lineChartOptions"
+                  [chartType]="data.lineChartType"
+                  [colors]="lineChartColors"
+                  (chartHover)="chartHovered($event)"
+                  (chartClick)="chartClicked($event)">
+                </canvas>
+              </div>
+              <div *ngIf="selected_plot=='max_delta_omega'">
+                <canvas baseChart
+                  [datasets]="data.ys"
+                  [labels]="data.xs"
+                  [options]="data.lineChartOptions"
+                  [chartType]="data.lineChartType"
+                  [colors]="lineChartColors"
+                  (chartHover)="chartHovered($event)"
+                  (chartClick)="chartClicked($event)">
+                </canvas>
+              </div>
+              <div *ngIf="selected_plot=='osc_range'">
+                <canvas baseChart
+                  [datasets]="data.ys"
+                  [labels]="data.xs"
+                  [options]="data.lineChartOptions"
+                  [chartType]="data.lineChartType"
+                  [colors]="lineChartColors"
+                  (chartHover)="chartHovered($event)"
+                  (chartClick)="chartClicked($event)">
+                </canvas>
+              </div>
+              <div *ngIf="selected_plot=='osc_range_anom'">
+                <canvas baseChart
+                  [datasets]="data.ys"
+                  [labels]="data.xs"
+                  [options]="data.lineChartOptions"
+                  [chartType]="data.lineChartType"
+                  [colors]="lineChartColors"
+                  (chartHover)="chartHovered($event)"
+                  (chartClick)="chartClicked($event)">
+                </canvas>
+              </div>
+              <div *ngIf="selected_plot=='rad_damage'">
+                <canvas baseChart
+                  [datasets]="data.ys"
+                  [labels]="data.xs"
+                  [options]="data.lineChartOptions"
+                  [chartType]="data.lineChartType"
+                  [colors]="lineChartColors"
+                  (chartHover)="chartHovered($event)"
+                  (chartClick)="chartClicked($event)">
+                </canvas>
+              </div>
+              <div *ngIf="selected_plot=='wilson'">
+                <canvas baseChart
+                  [datasets]="data.ys"
+                  [labels]="data.xs"
+                  [options]="data.lineChartOptions"
+                  [chartType]="data.lineChartType"
+                  [colors]="lineChartColors"
+                  (chartHover)="chartHovered($event)"
+                  (chartClick)="chartClicked($event)">
+                </canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </md-card-content>
+    <md-card-content *ngIf="view_mode === 'details'" class="rapd-result">
+      <div *ngIf="full_result.results.best_results_norm" class="rapd-result">
+        <h3>Data Collection Strategy from Best Normal</h3>
+        <table class="rapd-table">
+          <thead>
+            <tr>
+              <th>N</th>
+              <th>&Omega; Start</th>
+              <th>&Delta;&Omega;</th>
+              <th># Images</th>
+              <th>Exposure time</th>
+              <th>Distance</th>
+              <th>Transmission</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let key of objectKeys(full_result.results.best_results_norm.sweeps)">
+              <td>{{full_result.results.best_results_norm.sweeps[key].run_number}}</td>
+              <td>{{full_result.results.best_results_norm.sweeps[key].phi_start}}&deg;</td>
+              <td>{{full_result.results.best_results_norm.sweeps[key].phi_width}}&deg;</td>
+              <td>{{full_result.results.best_results_norm.sweeps[key].number_of_images}}</td>
+              <td>{{full_result.results.best_results_norm.sweeps[key].exposure_time}}s</td>
+              <td>{{full_result.results.best_results_norm.sweeps[key].distance.toFixed(0)}}mm</td>
+              <td>{{full_result.results.best_results_norm.sweeps[key].transmission.toFixed(1)}}%</td>
+            </tr>
+          </tbody>
+        </table>
+        <table class="rapd-table">
+          <tbody>
+            <tr>
+              <td>Resolution Limit</td>
+              <td>{{full_result.results.best_results_norm.overall.max_resolution_outer}} &Aring;</td>
+            </tr>
+            <tr>
+              <td>&Omega;<sub>start</sub> - &Omega;<sub>finish</sub></td>
+              <td>{{full_result.results.best_results_norm.overall.omega_start}}&deg; - {{full_result.results.best_results_norm.overall.omega_end}}&deg;</td>
+            </tr>
+            <tr>
+              <td>Rotation Range</td>
+              <td>{{(full_result.results.best_results_norm.overall.omega_end - full_result.results.best_results_norm.overall.omega_start).toFixed(1)}}&deg;</td>
+            </tr>
+            <tr>
+              <td>Number of Images</td>
+              <td>{{full_result.results.best_results_norm.overall.number_images}}</td>
+            </tr>
+            <tr>
+              <td>Completeness (outer)</td>
+              <td>{{full_result.results.best_results_norm.overall.completeness_overall}} ({{full_result.results.best_results_norm.overall.completeness_outer}})</td>
+            </tr>
+            <tr>
+              <td>Redundancy (outer)</td>
+              <td>{{full_result.results.best_results_norm.overall.redundancy_overall}} ({{full_result.results.best_results_norm.overall.redundancy_outer}})</td>
+            </tr>
+            <tr>
+              <td>R factor (outer)</td>
+              <td>{{full_result.results.best_results_norm.overall.r_factor_overall}} ({{full_result.results.best_results_norm.overall.r_factor_outer}})</td>
+            </tr>
+            <tr>
+              <td>I/&sigma;I (outer)</td>
+              <td>{{full_result.results.best_results_norm.overall.average_i_over_sigma_overall}} ({{full_result.results.best_results_norm.overall.average_i_over_sigma_outer}})</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div *ngIf="full_result.results.best_results_anom" class="rapd-result">
+        <h3>Data Collection Strategy from Best ANOMALOUS</h3>
+        <table class="rapd-table">
+          <thead>
+            <tr>
+              <th>N</th>
+              <th>&Omega; Start</th>
+              <th>&Delta;&Omega;</th>
+              <th># Images</th>
+              <th>Exposure time</th>
+              <th>Distance</th>
+              <th>Transmission</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let key of objectKeys(full_result.results.best_results_anom.sweeps)">
+              <td>{{full_result.results.best_results_anom.sweeps[key].run_number}}</td>
+              <td>{{full_result.results.best_results_anom.sweeps[key].phi_start}}&deg;</td>
+              <td>{{full_result.results.best_results_anom.sweeps[key].phi_width}}&deg;</td>
+              <td>{{full_result.results.best_results_anom.sweeps[key].number_of_images}}</td>
+              <td>{{full_result.results.best_results_anom.sweeps[key].exposure_time}}s</td>
+              <td>{{full_result.results.best_results_anom.sweeps[key].distance.toFixed(0)}}mm</td>
+              <td>{{full_result.results.best_results_anom.sweeps[key].transmission.toFixed(1)}}%</td>
+            </tr>
+          </tbody>
+        </table>
+        <table class="rapd-table">
+          <tbody>
+            <tr>
+              <td>Resolution Limit</td>
+              <td>{{full_result.results.best_results_anom.overall.max_resolution_outer}} &Aring;</td>
+            </tr>
+            <tr>
+              <td>&Omega;<sub>start</sub> - &Omega;<sub>finish</sub></td>
+              <td>{{full_result.results.best_results_anom.overall.omega_start}}&deg; - {{full_result.results.best_results_anom.overall.omega_end}}&deg;</td>
+            </tr>
+            <tr>
+              <td>Rotation Range</td>
+              <td>{{full_result.results.best_results_anom.overall.omega_end - full_result.results.best_results_anom.overall.omega_start}}&deg;</td>
+            </tr>
+            <tr>
+              <td>Number of Images</td>
+              <td>{{full_result.results.best_results_anom.overall.number_images}}</td>
+            </tr>
+            <tr>
+              <td>Completeness (outer)</td>
+              <td>{{full_result.results.best_results_anom.overall.completeness_overall}} ({{full_result.results.best_results_anom.overall.completeness_outer}})</td>
+            </tr>
+            <tr>
+              <td>Redundancy (outer)</td>
+              <td>{{full_result.results.best_results_anom.overall.redundancy_overall}} ({{full_result.results.best_results_anom.overall.redundancy_outer}})</td>
+            </tr>
+            <tr>
+              <td>R factor (outer)</td>
+              <td>{{full_result.results.best_results_anom.overall.r_factor_overall}} ({{full_result.results.best_results_anom.overall.r_factor_outer}})</td>
+            </tr>
+            <tr>
+              <td>I/&sigma;I (outer)</td>
+              <td>{{full_result.results.best_results_anom.overall.average_i_over_sigma_overall}} ({{full_result.results.best_results_anom.overall.average_i_over_sigma_outer}})</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div *ngIf="full_result.results.raddose_results" class="rapd-result">
+        <h3>Raddose Analysis</h3>
+      </div>
+      <div class="rapd-result">
+        <h3>Mosflm Integration</h3>
+        <table class="rapd-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Solution</th>
+              <th>Spacegroup</th>
+              <th>X Beam</th>
+              <th>Y Beam</th>
+              <th>Distance</th>
+              <th>Resolution</th>
+              <th>Mosaicity</th>
+              <th>RMS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of full_result.results.labelit_results.mosflm_face; let i = index">
+              <td>{{full_result.results.labelit_results.mosflm_face[i]}}</td>
+              <td>{{full_result.results.labelit_results.mosflm_solution[i]}}</td>
+              <td>{{full_result.results.labelit_results.mosflm_sg[i]}}</td>
+              <td>{{full_result.results.labelit_results.mosflm_beam_x[i]}}</td>
+              <td>{{full_result.results.labelit_results.mosflm_beam_y[i]}}</td>
+              <td>{{full_result.results.labelit_results.mosflm_distance[i]}}</td>
+              <td>{{full_result.results.labelit_results.mosflm_res[i]}}</td>
+              <td>{{full_result.results.labelit_results.mosflm_mos[i]}}</td>
+              <td>{{full_result.results.labelit_results.mosflm_rms[i]}}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="rapd-result">
+        <h3>Labelit Indexing</h3>
+      </div>
+      <div class="rapd-result">
+        <h3>DISTL Peak Picking</h3>
+      </div>
+    </md-card-content>
+    <md-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
+    </md-card-content>
+  </md-card>
   <md-toolbar *ngIf="full_result" class="result-panel-action-bar">
     <h2 style="margin-right:1em;">Actions</h2>
     <button md-raised-button (click)="openReindexDialog()">Reindex</button>
