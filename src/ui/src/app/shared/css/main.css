@@ -126,7 +126,7 @@ article.c-content {
 .result-panel {
   background: #E5E5E5;
   box-shadow: 3px 0 6px rgba(0,0,0,0.3);
-  overflow: hidden;
+  overflow: scroll;
   margin: 0.25em 0 0.5em 0.25em;
   min-width: calc(100vw - 17em);
   height: calc(100vh - 7.75em);
@@ -215,8 +215,16 @@ table.rapd-table {
   font-weight: 500;
   font-size: 1;
 }
+
 .rapd-table thead tr {
   border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+/* A colspan header */
+.rapd-table-span {
+  background: rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 2px;
 }
 
 .rapd-table tbody {
@@ -241,6 +249,9 @@ table.rapd-table {
   border-top: 1px solid rgba(200,200,200,0);
 }*/
 
+
+
+
 md-card.rapd-result {
   /*background-color: rgba(0,0,0,0.1);*/
     overflow: scroll;
@@ -259,6 +270,7 @@ md-card-content.rapd-result {
   border: 1px solid rgba(0,0,0,0.2);
   border-radius: 2px;
   margin-top: 10px;
+  overflow-y: scroll;
   padding: 5px;
 }
 
