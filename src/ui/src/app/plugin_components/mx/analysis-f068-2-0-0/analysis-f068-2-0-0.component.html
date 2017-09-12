@@ -204,7 +204,7 @@
   <!-- <md-tab label="Precessions">
   </md-tab> -->
   <md-tab label="Raw">
-    <md-card class="raw-output-card">
+    <md-card class="rapd-raw-output-card">
       <md-card-title>
         Xtriage
       </md-card-title>
@@ -222,11 +222,11 @@
           keyboard_arrow_up
         </md-icon>
       </button>
-      <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':raw_xtriage_collapsed}">
+      <md-card-content class="rapd-raw-output" [ngClass]="{'raw-collapsed':raw_xtriage_collapsed}">
         <p *ngFor="let line of result.raw.xtriage">{{line}}</p>
       </md-card-content>
     </md-card>
-    <md-card class="raw-output-card">
+    <md-card class="rapd-raw-output-card">
       <md-card-title>
         Molrep
       </md-card-title>
@@ -244,11 +244,11 @@
           keyboard_arrow_up
         </md-icon>
       </button>
-      <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':raw_molrep_collapsed}">
+      <md-card-content class="rapd-raw-output" [ngClass]="{'raw-collapsed':raw_molrep_collapsed}">
         <p *ngFor="let line of result.raw.molrep">{{line}}</p>
       </md-card-content>
     </md-card>
-    <md-card class="raw-output-card">
+    <md-card class="rapd-raw-output-card">
       <md-card-title>
         Phaser
       </md-card-title>
@@ -266,7 +266,7 @@
           keyboard_arrow_up
         </md-icon>
       </button>
-      <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':raw_phaser_collapsed}">
+      <md-card-content class="rapd-raw-output" [ngClass]="{'raw-collapsed':raw_phaser_collapsed}">
         <p *ngFor="let line of result.raw.phaser">{{line}}</p>
       </md-card-content>
     </md-card>

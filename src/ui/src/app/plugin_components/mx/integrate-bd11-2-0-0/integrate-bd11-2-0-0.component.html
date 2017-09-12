@@ -294,7 +294,7 @@
         <div #analysistarget></div>
       </md-card-content>
       <md-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
-        <md-card class="raw-output-card">
+        <md-card class="rapd-raw-output-card">
           <md-card-header>
             <div style="width:100%">
               <div style="float:left;">
@@ -318,11 +318,11 @@
               </div>
             </div>
           </md-card-header>
-          <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':log_xds_idxref_collapsed}">
+          <md-card-content class="rapd-raw-output" [ngClass]="{'raw-collapsed':log_xds_idxref_collapsed}">
             <p *ngFor="let line of full_result.results.logs.xds_idxref">{{line}}</p>
           </md-card-content>
         </md-card>
-        <md-card class="raw-output-card">
+        <md-card class="rapd-raw-output-card">
           <md-card-header>
             <div style="width:100%">
               <div style="float:left;">
@@ -346,11 +346,11 @@
               </div>
             </div>
           </md-card-header>
-          <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':log_xds_integrate_collapsed}">
+          <md-card-content class="rapd-raw-output" [ngClass]="{'raw-collapsed':log_xds_integrate_collapsed}">
             <p *ngFor="let line of full_result.results.logs.xds_integrate">{{line}}</p>
           </md-card-content>
         </md-card>
-        <md-card class="raw-output-card">
+        <md-card class="rapd-raw-output-card">
           <md-card-header>
             <div style="width:100%">
               <div style="float:left;">
@@ -374,11 +374,11 @@
               </div>
             </div>
           </md-card-header>
-          <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':log_xds_correct_collapsed}">
+          <md-card-content class="rapd-raw-output" [ngClass]="{'raw-collapsed':log_xds_correct_collapsed}">
             <p *ngFor="let line of full_result.results.logs.xds_correct">{{line}}</p>
           </md-card-content>
         </md-card>
-        <md-card class="raw-output-card">
+        <md-card class="rapd-raw-output-card">
           <md-card-header>
             <div style="width:100%">
               <div style="float:left;">
@@ -402,11 +402,11 @@
               </div>
             </div>
           </md-card-header>
-          <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':log_aimless_collapsed}">
+          <md-card-content class="rapd-raw-output" [ngClass]="{'raw-collapsed':log_aimless_collapsed}">
             <p *ngFor="let line of full_result.results.logs.aimless">{{line}}</p>
           </md-card-content>
         </md-card>
-        <md-card class="raw-output-card">
+        <md-card class="rapd-raw-output-card">
           <md-card-header>
             <div style="width:100%">
               <div style="float:left;">
@@ -430,7 +430,7 @@
               </div>
             </div>
           </md-card-header>
-          <md-card-content class="raw-output" [ngClass]="{'raw-collapsed':log_pointless_collapsed}">
+          <md-card-content class="rapd-raw-output" [ngClass]="{'raw-collapsed':log_pointless_collapsed}">
             <p *ngFor="let line of full_result.results.logs.pointless">{{line}}</p>
           </md-card-content>
         </md-card>

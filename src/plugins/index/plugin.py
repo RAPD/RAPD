@@ -1292,6 +1292,7 @@ class RapdPlugin(Process):
         if inp.count("anom"):
             anom = True
         log = open(inp, "r").readlines()
+        
         if os.path.exists(inp.replace("log", "xml")):
             xml = open(inp.replace("log", "xml"), "r").readlines()
         iteration = os.path.dirname(inp)[-1]

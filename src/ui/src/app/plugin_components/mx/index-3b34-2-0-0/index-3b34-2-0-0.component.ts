@@ -39,6 +39,9 @@ export class Index3b34200Component implements OnInit {
 
   objectKeys = Object.keys;
 
+  log_best_normal_collapsed: boolean = true;
+  log_best_anomalous_collapsed: boolean = true;
+
   constructor(private results_service: ResultsService,
               public dialog: MdDialog) { }
 

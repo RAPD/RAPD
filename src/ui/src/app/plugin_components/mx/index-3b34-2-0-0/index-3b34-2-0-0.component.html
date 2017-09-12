@@ -457,6 +457,62 @@
       </div>
     </md-card-content>
     <md-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
+      <md-card class="rapd-raw-output-card">
+        <md-card-header>
+          <div style="width:100%">
+            <div style="float:left;">
+              <h3>Best Strategy Normal</h3>
+            </div>
+            <div style="float:right">
+              <button md-mini-fab class="raw-output-toggle" color="primary">
+                <md-icon
+                  *ngIf="log_best_normal_collapsed"
+                  class="md-24"
+                  (click)="log_best_normal_collapsed=false">
+                  keyboard_arrow_down
+                </md-icon>
+                <md-icon
+                  *ngIf="! log_best_normal_collapsed"
+                  class="md-24"
+                  (click)="log_best_normal_collapsed=true">
+                  keyboard_arrow_up
+                </md-icon>
+              </button>
+            </div>
+          </div>
+        </md-card-header>
+        <md-card-content class="rapd-raw-output" [ngClass]="{'raw-collapsed':log_best_normal_collapsed}">
+          <p *ngFor="let line of full_result.results.best_results_norm.log">{{line}}</p>
+        </md-card-content>
+      </md-card>
+      <md-card class="rapd-raw-output-card">
+        <md-card-header>
+          <div style="width:100%">
+            <div style="float:left;">
+              <h3>Best Strategy Normal</h3>
+            </div>
+            <div style="float:right">
+              <button md-mini-fab class="raw-output-toggle" color="primary">
+                <md-icon
+                  *ngIf="log_best_anomalous_collapsed"
+                  class="md-24"
+                  (click)="log_best_anomalous_collapsed=false">
+                  keyboard_arrow_down
+                </md-icon>
+                <md-icon
+                  *ngIf="! log_best_anomalous_collapsed"
+                  class="md-24"
+                  (click)="log_best_anomalous_collapsed=true">
+                  keyboard_arrow_up
+                </md-icon>
+              </button>
+            </div>
+          </div>
+        </md-card-header>
+        <md-card-content class="rapd-raw-output" [ngClass]="{'raw-collapsed':log_best_anomalous_collapsed}">
+          <p *ngFor="let line of full_result.results.best_results_anom.log">{{line}}</p>
+        </md-card-content>
+      </md-card>
     </md-card-content>
   </md-card>
   <md-toolbar *ngIf="full_result" class="result-panel-action-bar">

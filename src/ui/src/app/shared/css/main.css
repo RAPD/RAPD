@@ -302,7 +302,7 @@ div.rapd-result {
 }
 
 /* Entries for showing raw output from programs */
-.raw-output-card {
+.rapd-raw-output-card {
   margin: 0.5em;
   overflow-y: hidden;
   overflow-x:visible;
@@ -321,7 +321,7 @@ div.chart-container {
 
 
 /* CSS for log file displays */
-.raw-output {
+.rapd-raw-output {
   font-family: 'Roboto Mono', monospace;
   font-size: 0.75;
 }
