@@ -1,6 +1,6 @@
 <div class="result-panel child">
-  <div class="result-panel-main-results">
-    <md-card *ngIf="full_result">
+  <!-- <div class="result-panel-main-results"> -->
+    <md-card *ngIf="full_result" class="rapd-result">
       <md-card-header class="rapd-result">
         <div style="width:100%">
           <div style="float:left;">
@@ -21,7 +21,7 @@
               name="view_mode"
               value="summary">
               <md-option value="summary">Summary</md-option>
-              <md-option value="analysis">Details</md-option>
+              <md-option value="details">Details</md-option>
               <md-option value="logs">Logs</md-option>
             </md-select>
           </div>
@@ -29,7 +29,7 @@
       </md-card-header>
       <md-card-content *ngIf="view_mode === 'summary'" class="rapd-result">
         <div fxLayout="row" fxLayoutGap="10px">
-          <div fxFlex fxLayout="column" fxLayoutGap="10px">
+          <div fxFlex="nogrow" fxLayout="column" fxLayoutGap="10px">
             <div fxFlex="none">
               <h3>Indexing Solution</h3>
               <table class="rapd-table">
@@ -86,8 +86,6 @@
                     </tr>
                   </tbody>
                 </table>
-                <button md-raised-button (click)="plotOmegaStart('norm')">Osc Range Plot</button>
-                <button md-raised-button (click)="plotDeltaOmega('norm')">Osc Width Plot</button>
               </div>
               <div>
                 <h3>Anomalous</h3>
@@ -115,28 +113,60 @@
                     </tr>
                   </tbody>
                 </table>
-                <button md-raised-button (click)="plotOmegaStart('anom')">Osc Range Plot</button>
-                <button md-raised-button (click)="plotDeltaOmega('anom')">Osc Width Plot</button>
               </div>
             </div>
           </div>
           <div fxFlex fxLayout="column" fxLayoutGap="10px" class="rapd-result">
-            <div fxFlex="none" style="width:80%;">
+            <div fxFlex="none" class="rapd-plot-header">
               <div style="float:left;">
-                <h3>{{selected_plot}}</h3>
+                <h3>{{selected_plot_label}}</h3>
               </div>
               <div style="float:right;">
                 <md-select
                   placeholder="Select plot"
                   (change)="setPlot(selected_plot)"
                   [(ngModel)]="selected_plot"
-                  name="plot">
-                  <md-option *ngFor="let key of objectKeys(full_result.results.plots)" [value]="key">{{key}}</md-option>
+                  name="plot"
+                  style="width:12em;">
+                  <md-option *ngFor="let key of objectKeys(full_result.results.plots)" [value]="key">{{plot_select_labels[key]}}</md-option>
                 </md-select>
               </div>
             </div>
             <div fxFlex="grow">
               <div class="chart-container" style="position: relative;">
+                <div *ngIf="selected_plot=='background'">
+                  <canvas baseChart
+                    [datasets]="data.ys"
+                    [labels]="data.xs"
+                    [options]="data.lineChartOptions"
+                    [chartType]="data.lineChartType"
+                    [colors]="lineChartColors"
+                    (chartHover)="chartHovered($event)"
+                    (chartClick)="chartClicked($event)">
+                  </canvas>
+                </div>
+                <div *ngIf="selected_plot=='exposure'">
+                  <canvas baseChart
+                    [datasets]="data.ys"
+                    [labels]="data.xs"
+                    [options]="data.lineChartOptions"
+                    [chartType]="data.lineChartType"
+                    [colors]="lineChartColors"
+                    (chartHover)="chartHovered($event)"
+                    (chartClick)="chartClicked($event)">
+                  </canvas>
+                </div>
+                <div *ngIf="selected_plot=='max_delta_omega'">
+                  <canvas baseChart
+                    [datasets]="data.ys"
+                    [labels]="data.xs"
+                    [options]="data.lineChartOptions"
+                    [chartType]="data.lineChartType"
+                    [colors]="lineChartColors"
+                    (chartHover)="chartHovered($event)"
+                    (chartClick)="chartClicked($event)">
+                  </canvas>
+                </div>
                 <div *ngIf="selected_plot=='osc_range'">
                   <canvas baseChart
                     [datasets]="data.ys"
@@ -159,7 +189,7 @@
                     (chartClick)="chartClicked($event)">
                   </canvas>
                 </div>
-                <div *ngIf="selected_plot=='max_delta_omega'">
+                <div *ngIf="selected_plot=='rad_damage'">
                   <canvas baseChart
                     [datasets]="data.ys"
                     [labels]="data.xs"
@@ -181,24 +211,17 @@
                     (chartClick)="chartClicked($event)">
                   </canvas>
                 </div>
-                <div *ngIf="selected_plot=='rad_damage'">
-                  <canvas baseChart
-                    [datasets]="data.ys"
-                    [labels]="data.xs"
-                    [options]="data.lineChartOptions"
-                    [chartType]="data.lineChartType"
-                    [colors]="lineChartColors"
-                    (chartHover)="chartHovered($event)"
-                    (chartClick)="chartClicked($event)">
-                  </canvas>
-                </div>
               </div>
             </div>
           </div>
         </div>
       </md-card-content>
+      <md-card-content *ngIf="view_mode === 'details'" class="rapd-result">
+      </md-card-content>
+      <md-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
+      </md-card-content>
     </md-card>
-  </div>
+  <!-- </div> -->
   <md-toolbar *ngIf="full_result" class="result-panel-action-bar">
     <h2 style="margin-right:1em;">Actions</h2>
     <button md-raised-button (click)="openReindexDialog()">Reindex</button>

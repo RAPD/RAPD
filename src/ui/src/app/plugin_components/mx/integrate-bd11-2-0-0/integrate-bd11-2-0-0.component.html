@@ -22,7 +22,7 @@
         </div>
       </md-card-header>
       <md-card-content *ngIf="view_mode === 'summary'" class="rapd-result">
-        <div fxLayout="row" fxLayoutGap="10px" *ngIf="view_mode === 'summary'">
+        <div fxLayout="row" fxLayoutGap="10px">
           <div fxFlex="nogrow" fxLayout="column" fxLayoutGap="10px">
             <div fxFlex="none">
               <table class="rapd-table">
@@ -138,8 +138,8 @@
               </table>
             </div>
           </div>
-          <div fxFlex fxLayout="column" fxLayoutGap="10px">
-            <div fxFlex="none" style="width:80%;">
+          <div fxFlex fxLayout="column" fxLayoutGap="10px" class="rapd-result">
+            <div fxFlex="none" class="rapd-plot-header">
               <div style="float:left;">
                 <h3>{{selected_plot}}</h3>
               </div>

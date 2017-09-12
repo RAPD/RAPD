@@ -296,6 +296,14 @@ div.rapd-result {
   overflow-x:visible;
 }
 
+/* CSS for plots and their containers */
+div.rapd-plot-header {
+  margin-left: 30px;
+  width: 90%;
+}
+
+
+/* CSS for log file displays */
 .raw-output {
   font-family: 'Roboto Mono', monospace;
   font-size: 0.75;

@@ -1106,7 +1106,7 @@ def ParseOutputBestPlots(inp):
 
     # self.logger.debug("Parse::ParseOutputBestPlots")
 
-    print "ParseOutputBestPlots"
+    # print "ParseOutputBestPlots"
 
     # Definitions for the expected values
     cast_vals = {

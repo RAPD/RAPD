@@ -23,6 +23,16 @@ export class Index3b34200Component implements OnInit {
 
   view_mode: string = 'summary';
   selected_plot: string;
+  selected_plot_label: string;
+  plot_select_labels: any = {
+    'background':'Background',
+    'exposure':'Exposure',
+    'max_delta_omega':'Max Oscillation',
+    'osc_range':'Osc Range NORM',
+    'osc_range_anom':'Osc Range ANOM',
+    'rad_damage':'Radiation Damage',
+    'wilson':'Wilson',
+  }
   data: any;
 
   incomingData$: ReplaySubject<string>;
@@ -121,8 +131,26 @@ export class Index3b34200Component implements OnInit {
     console.log('setPlot', plot_key);
 
     let plot_result = this.full_result.results.plots[plot_key];
+    console.log(plot_result);
+    this.selected_plot_label = plot_result.parameters.toplabel;
 
     switch (plot_key) {
+
+      case 'background':
+        this.data.ys = plot_result.y_data;
+        this.data.xs = plot_result.x_data;
+        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = plot_result.parameters.ylabel;
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = plot_result.parameters.xlabel;
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
+        break;
+
+      case 'exposure':
+        this.data.ys = plot_result.y_data;
+        this.data.xs = plot_result.x_data;
+        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = plot_result.parameters.ylabel;
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = plot_result.parameters.xlabel;
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
+        break;
 
       case 'osc_range':
         this.data = {
@@ -212,23 +240,23 @@ export class Index3b34200Component implements OnInit {
           // o.showLine = false;
           return o;
         });
-        this.data.xs = this.full_result.results.plots.max_delta_omega.x_data;
-        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = 'Omega Step';
-        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = 'Omega';
+        this.data.xs = plot_result.x_data;
+        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = plot_result.parameters.ylabel;
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = plot_result.parameters.xlabel;
         break;
 
       case 'wilson':
         this.data.ys = plot_result.y_data;
         this.data.xs = plot_result.x_data;
-        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = plot_result.parameters.yLabel;
-        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = plot_result.parameters.xLabel;
+        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = plot_result.parameters.ylabel;
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = plot_result.parameters.xlabel;
         break;
 
       case 'rad_damage':
         this.data.ys = plot_result.y_data;
         this.data.xs = plot_result.x_data;
-        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = plot_result.parameters.yLabel;
-        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = plot_result.parameters.xLabel;
+        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = plot_result.parameters.ylabel;
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = plot_result.parameters.xlabel;
         break;
 
       default:

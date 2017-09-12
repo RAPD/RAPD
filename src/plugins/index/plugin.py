@@ -2626,7 +2626,7 @@ rerunning.\n" % spot_count)
                 # Mulitple solutions possible
                 # Frank, Does this even work????
                 elif problem_flag == "fix_cell":
-                    print "FIX CELL"
+                    # print "FIX CELL"
                     problem_action = potential_problems[problem_flag]
 
                     problem_action(iteration=iteration,
