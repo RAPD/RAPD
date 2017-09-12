@@ -840,6 +840,11 @@ def ParseOutputBest(self, inp, anom=False):
     # pprint(log)
     # pprint(xml)
     # sys.exit()
+    omega_starts = []
+    delta_omegas = []
+    number_images = []
+    exposure_times = []
+    collection_times = []
 
     # Check for errors in the log
     for line in log:
@@ -933,18 +938,23 @@ def ParseOutputBest(self, inp, anom=False):
 
                 elif "<item name=\"total_exposure_time\">" in line:
                     sweep["total_exposure_time"] = try_float(line[line.find('>')+1:line.rfind('<')])
+                    exposure_times.append(sweep["total_exposure_time"])
 
                 elif "<item name=\"total_data_collection_time\">" in line:
                     sweep["total_data_collection_time"] = try_float(line[line.find('>')+1:line.rfind('<')])
+                    collection_times.append(sweep["total_data_collection_time"])
 
                 elif "<item name=\"phi_start\">" in line:
                     sweep["phi_start"] = try_float(line[line.find('>')+1:line.rfind('<')])
+                    omega_starts.append(sweep["phi_start"])
 
                 elif "<item name=\"number_of_images\">" in line:
                     sweep["number_of_images"] = try_int(line[line.find('>')+1:line.rfind('<')])
+                    number_images.append(sweep["number_of_images"])
 
                 elif "<item name=\"phi_width\">" in line:
                     sweep["phi_width"] = try_float(line[line.find('>')+1:line.rfind('<')])
+                    delta_omegas.append(sweep["phi_width"])
 
                 elif "<item name=\"exposure_time\">" in line:
                     sweep["exposure_time"] = try_float(line[line.find('>')+1:line.rfind('<')])
@@ -1002,101 +1012,10 @@ def ParseOutputBest(self, inp, anom=False):
                 else:
                     sp_list.append(line)
 
-            # if line.count('"exposure_time"'):
-            #     t = try_float(line[line.find('>')+1:line.rfind('<')])
-            #     orig_time.append(t)
-            #     # if self.pilatus:
-            #     if self.vendortype in ('Pilatus-6M',
-            #                            'PILATUS',
-            #                            'ADSC-HF4M',
-            #                            'Dectris Eiger 9M',
-            #                            'Eiger-9M',
-            #                            'Dectris Eiger 16M',
-            #                            'Eiger-16M'):
-            #         new_trans.append(round(trans))
-            #         time.append(round(t, 1))
-            #     else:
-            #         # Set time and transmission to minimize data collection time
-            #         nt = t * trans
-            #         if trans == 100.0:
-            #             if t > 1:
-            #                 new_trans.append(trans)
-            #                 time.append(round(t, 1))
-            #             else:
-            #                 new_trans.append(round(nt))
-            #                 time.append(1.0)
-            #         else:
-            #             if nt > 100:
-            #                 new_trans.append(100.0)
-            #                 time.append(round(nt/100))
-            #             elif nt < 1:
-            #                 new_trans.append(str(trans))
-            #                 #time.append(str(t))
-            #                 time.append(round(t, 1))
-            #             else:
-            #                 new_trans.append(round(nt))
-            #                 time.append(1.0)
-
-    # If best did not give strat...
-    # if nbr:
-    # if dis == False:
-    #     return "neg B"
-
-    # Remove the last line in starting phi
-    # phi_start = phi_start[:-1]
-    # rot_range = str(float(phi_end) - float(phi_start[0]))
-
-    # Removes thin sliced erroronious strategy when B-factor calc tanks.
-    # if iso_B:
-    #   if float(min(delta_phi)) < 0.3:
-    #     return ('isotropic B')
-
-    # Check for Best strategy giving multiple continuous runs (Bug in Best)
-    # if len(sweeps) > 1:
-    #     if all(i == sweeps[0]["phi_width"] for i in )
-    # if len(phi_start) > 1:
-    #     if all(i == delta_phi[0] for i in delta_phi):
-    #         if all(i == orig_time[0] for i in orig_time):
-    #             phi = float(phi_start[0])
-    #             i = 0
-    #             for x in range(len(num_images)):
-    #                 phi += float(num_images[x])*float(delta_phi[x])
-    #                 i += int(num_images[x])
-    #             if phi == float(phi_end):
-    #                 omega_start = phi_start[0]
-    #                 num_images = i
-    #                 time = time[0]
-    #                 delta_phi = delta_phi[0]
-    #                 distance = distance[0]
-    #                 new_trans = new_trans[0]
-    #                 overlap = overlap[0]
-    #                 run_num = run_num[0]
-
-    # data = {
-        # 'best_version': version,
-        # 'run_number': run_num,
-        # 'omega_start': phi_start,
-        # 'number_images': num_images,
-        # 'omega_delta': delta_phi,
-        # 'exposure_time': time,
-        # 'distance': distance,
-        # 'overlap': overlap,
-        # 'res_limit': res,
-        # 'anom_flag': anom,
-        # 'ommega_end': phi_end,
-        # 'rot_range': rot_range,
-        # 'completeness': com[0],
-        # 'redundancy': red[0],
-        # 'r_factor': r_fac[-1], # r_fac[-1]+' ('+r_fac[-2]+')',
-        # "r_factor_outer": r_fac[-2],
-        # 'i_sigi': isig, # +' ('+h_isig[0]+')',
-        # "i_sigi_outer": h_isig[0],
-        # 'total_exposure_time': tot_exp_time,
-        # 'data_collection_time': tot_data_col_time,
-        # 'frac_unique_in_blind': blind,
-        # 'attenuation': attenuation,
-        # 'new_transmission': new_trans
-        # }
+    # Now accumulate the sweep data into overall
+    overall["number_images"] = sum(number_images)
+    overall["omega_start"] = omega_starts[0]
+    overall["omega_end"] = omega_starts[-1] + number_images[-1] * delta_omegas[-1]
 
     return {"sweeps": sweeps,
             "overall": overall}

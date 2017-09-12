@@ -754,7 +754,7 @@ class RapdPlugin(Process):
         raddose = Parse.ParseOutputRaddose(self, self.raddose_log)
         self.raddose_results = {"raddose_results":raddose}
         if self.raddose_results["raddose_results"] == None:
-            self.raddose_results = {"raddose_results":"FAILED"}
+            self.raddose_results = {"raddose_results":False}
             if self.verbose:
                 self.logger.debug("Raddose failed")
 
@@ -830,7 +830,7 @@ class RapdPlugin(Process):
         dose = 100000
         exp_dose_lim = 300
         if self.raddose_results:
-            if self.raddose_results.get("raddose_results") != 'FAILED':
+            if self.raddose_results.get("raddose_results"):
                 dose = self.raddose_results.get("raddose_results").get('dose per image')
                 exp_dose_lim = self.raddose_results.get("raddose_results").get('exp dose limit')
 

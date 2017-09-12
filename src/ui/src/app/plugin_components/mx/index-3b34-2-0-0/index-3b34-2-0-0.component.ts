@@ -31,8 +31,8 @@ export class Index3b34200Component implements OnInit {
     'osc_range':'Osc Range NORM',
     'osc_range_anom':'Osc Range ANOM',
     'rad_damage':'Radiation Damage',
-    'wilson':'Wilson',
-  }
+    'wilson':'Wilson'
+  };
   data: any;
 
   incomingData$: ReplaySubject<string>;
