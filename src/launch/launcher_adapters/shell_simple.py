@@ -69,9 +69,12 @@ class LauncherAdapter(object):
                                                        self.message["command"],
                                                        self.message)
 
+        # Set the site tag from input
+        site_tag = launch_tools.get_site_tag(self.message)
+
         # Call the launch process on the command file
-        self.logger.debug("rapd.launch -s %s %s", self.site.SITE, command_file)
-        Popen(["rapd.launch", "-s", self.site.SITE, command_file])
+        self.logger.debug("rapd.launch -s %s %s", site_tag, command_file)
+        Popen(["rapd.launch", "-s",site_tag, command_file])
 
     def fix_command(self):
         """
@@ -80,7 +83,7 @@ class LauncherAdapter(object):
 
         # Adjust the working directory for the launch computer
         work_dir_candidate = os.path.join(
-            self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"],
+            self.message["directories"]["launch_dir"],
             self.message["directories"]["work"])
 
         # Make sure this is an original directory

@@ -505,8 +505,8 @@ class Model(object):
             if self.site_adapter:
                 site_data = self.site_adapter.get_image_data()
                 header.update(site_data)
-                # print "2"
-                # pprint(header)
+                #print "2"
+                #pprint(header)
 
             # Add to database
             image_id = self.database.add_image(data=header, return_type="id")

@@ -352,7 +352,7 @@ class Adapter(object):
 
         return_dict = {"id"              : self.settings["ID"],
                        "ring_current"    : ring_current,
-                       "ring_mode"       : ring_mode,
+                       #"ring_mode"       : ring_mode,
                        "energy"          : energy,
                        "flux"            : flux,
                        "md2_aperture"    : md2_aperture,

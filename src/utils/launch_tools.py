@@ -85,3 +85,14 @@ def write_command_script(target_file, command_line, shell="/bin/tcsh"):
     os.chmod(target_file, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     return target_file
+
+def get_site_tag(message):
+    """Find and return the site_tag from the image header"""
+    # Find site_tag from SNAP
+    site_tag = False
+    if message.get('header1', False):
+        site_tag = message['header1'].get('site_tag')
+    # Find site_tag from INTEGRATE
+    elif message.get('data', False):
+        site_tag = message['data']['image_data'].get('site_tag')
+    return site_tag

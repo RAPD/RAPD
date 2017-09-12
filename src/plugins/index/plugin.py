@@ -440,6 +440,7 @@ class RapdPlugin(Process):
 
         # Construct the results
         self.construct_results()
+        pprint(self.results)
 
         # Let everyone know we are working on this
         if self.preferences.get("run_mode") == "server":
@@ -1302,14 +1303,17 @@ class RapdPlugin(Process):
 
         # Parse the best results
         data = Parse.ParseOutputBest(self, (log, xml), anom)
-
+            
         # Set directory for future use
-        data["directory"] = os.path.dirname(inp)
+        #data["directory"] = os.path.dirname(inp)
 
         if self.labelit_results["labelit_results"] != "FAILED":
             # Best error checking. Most errors caused by B-factor calculation problem.
             # If no errors...
             if isinstance(data, dict):
+                # Set directory for future use
+                data["directory"] = os.path.dirname(inp)
+                
                 # data.update({"directory":os.path.dirname(inp)})
                 if anom:
                     self.best_anom_results = {"best_results_anom":data}
@@ -1368,20 +1372,23 @@ Distance | % Transmission", level=98, color="white")
         # print "postprocessMosflm"
 
         try:
-            if inp.count("anom"):
+            if os.path.basename(inp).count("anom"):
+                anom = True
                 l = ["ANOM", "self.mosflm_strat_anom", "Mosflm ANOM strategy results"]
             else:
+                anom = False
                 l = ["", "self.mosflm_strat", "Mosflm strategy results"]
             out = open(inp, "r").readlines()
             eval("%s_log" % l[1]).extend(out)
         except:
             self.logger.exception("**ERROR in postprocessMosflm**")
 
-        data = Parse.ParseOutputMosflm_strat(self, out, inp.count("anom"))
+        data = Parse.ParseOutputMosflm_strat(self, out, anom)
 
         # Print to terminal
-        # pprint(data)
-        if "run_number" in data:
+        #pprint(data)
+        #if "run_number" in data:
+        if anom == False:
             flag = "strategy "
             self.tprint(arg="\nMosflm strategy standard", level=98, color="blue")
         else:
@@ -1391,6 +1398,7 @@ Distance | % Transmission", level=98, color="white")
         self.tprint(arg="  " + "-" * 69, level=98, color="white")
         self.tprint(arg="  " + " N |  Omega_start |  N.of.images | Rot.width |  Exposure | Distance ", level=98, color="white")
         self.tprint(arg="  " + "-" * 69, level=98, color="white")
+
         for i in range(len(data[flag+"run number"])):
             self.tprint(
                 arg="  %2d |    %6.2f    |   %6d     |   %5s   |   %5.2f   | %7s  " %

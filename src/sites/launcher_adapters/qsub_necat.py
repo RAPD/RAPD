@@ -33,10 +33,10 @@ import os
 from subprocess import Popen
 import drmaa
 import time
+from multiprocessing import Queue, Process
 
 # RAPD imports
 import utils.launch_tools as launch_tools
-from multiprocessing import Queue, Process
 
 class LauncherAdapter(object):
     """
@@ -65,9 +65,6 @@ class LauncherAdapter(object):
         self.message = message
         self.settings = settings
 
-        # Decode message
-        #self.decoded_message = json.loads(self.message)
-
         self.run()
 
     def run(self):
@@ -77,55 +74,37 @@ class LauncherAdapter(object):
 
         # Adjust the message to this site
         self.fix_command()
-        
+
         # Get the new working directory
         work_dir = self.message["directories"]["work"]
-        #self.logger.debug("work_dir: %s"%work_dir)
-        
-        # Get the launcher directory - in launcher specification
-        # Add command_files to keep files isolated
-        #qsub_dir = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"]+"/command_files"
+
+        # Get the launcher directory - Add command_files to keep files isolated
         qsub_dir = self.message["directories"]["launch_dir"]+"/command_files"
 
         # Put the message into a rapd-readable file
         #command_file = launch_tools.write_command_file(qsub_dir, self.message["command"], json.dumps(self.decoded_message))
         command_file = launch_tools.write_command_file(qsub_dir, self.message["command"], self.message)
-        
-        # Set the site tag
-        site_tag = False
-        # Find site_tag from SNAP
-        if self.message.get('header1', False):
-            site_tag = self.message['header1'].get('site_tag')
-        # Find site_tag from INTEGRATE
-        elif self.message.get('data', False):
-            site_tag = self.message['data']['image_data'].get('site_tag')
-        
-        # The command has to come in the form of a script on the SERCAT install
-        #site_tag = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["site_tag"]
+
+        # Set the site tag from input
+        site_tag = launch_tools.get_site_tag(self.message)
+
+        # The command to launch the job
         command_line = "rapd.launch -vs %s %s" % (site_tag, command_file)
-        #command_line = "tcsh\nrapd.launch -vs %s %s" % (site_tag, command_file)
-        #command_script = launch_tools.write_command_script(command_file.replace(".rapd", ".sh"), command_line)
         #self.logger.debug("command: %s"%command_line)
-        """
-        # Set the path for qsub
-        qsub_path = "PATH=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
-/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/bin:\
-/home/schuerjp/Programs/best:\
-/home/schuerjp/Programs/RAPD/bin:\
-/home/schuerjp/Programs/RAPD/share/phenix-1.10.1-2155/build/bin:\
-/home/schuerjp/Programs/raddose-20-05-09-distribute-noexec/bin:\
-/usr/local/bin:/bin:/usr/bin"
-        """
+
         # Parse a label for qsub job from the command_file name
         qsub_label = os.path.basename(command_file).replace(".rapd", "")
-        
-        # Determine the number of precessors to reserve for job
+
+        # Determine the number of precessors to request for job
         nproc = self.determine_nproc()
-        
+
         # Determine which cluster queue to run
         queue = self.determine_queue()
-        
+
+        # Setup a Queue to retreive the jobID.
         q = Queue()
+
+        # Setup the job and launch it.
         job = Process(target=processCluster, kwargs={'command':command_line,
                                                    'work_dir':work_dir,
                                                    'logfile':False,
@@ -141,40 +120,12 @@ class LauncherAdapter(object):
         jobID = q.get()
         print jobID
 
-        
-        """
-        # Determine the processor specs to be used
-        def determine_qsub_proc(command):
-            #Determine the queue to use
-            if command.startswith("index"):
-                qsub_proc = "nodes=1:ppn=4"
-            else:
-                qsub_proc = "nodes=1:ppn=1"
-            return qsub_proc
-        qsub_proc = determine_qsub_proc(self.decoded_message["command"])
-
-        # Call the launch process on the command file
-        # qsub_command = "qsub -cwd -V -b y -N %s %s rapd.python %s %s" %
-        #       (qsub_label, qsub_queue, command_file_path, command_file)
-        # qsub_command = "qsub -d %s -v %s -N %s -l %s %s" % (
-        #     qsub_dir, qsub_path, qsub_label, qsub_proc, command_script)
-        qsub_command = "qsub -d %s -v %s -N %s -l %s %s" % (
-            qsub_dir, qsub_path, qsub_label, qsub_proc, command_script)
-        
-        # Launch it
-        self.logger.debug(qsub_command)
-        p = Popen(qsub_command, shell=True)
-        sts = os.waitpid(p.pid, 0)[1]
-        """
-
     def fix_command(self):
         """
         Adjust the command passed in in install-specific ways
         """
-        
         # Adjust the working directory for the launch computer
         work_dir_candidate = os.path.join(
-            #self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"],
             self.message["directories"]["launch_dir"],
             self.message["directories"]["work"])
 
@@ -198,8 +149,8 @@ class LauncherAdapter(object):
     def determine_nproc(self):
         """Determine how many processors to reserve on the cluster for a specific job type."""
         nproc = 1
-        #if self.message['command'] in ('INDEX', 'INTEGRATE'):
-        if self.message['command'] in ('INDEX'):
+        #if self.message['command'] in ('INDEX'):
+        if self.message['command'] in ('INDEX', 'INTEGRATE'):
             nproc = 4
         return nproc
     
@@ -250,8 +201,7 @@ def processCluster(command,
         session.control(job, drmaa.JobControlAction.TERMINATE)
         if logger:
             logger.debug('job:%s terminated on cluster'%job)
-    
-    #try:
+
     s = False
     jt = False
     counter = 0
@@ -279,6 +229,7 @@ def processCluster(command,
     #return job_id.
     if output_jobID:
         output_jobID.put(job)
+
     #cleanup the input script from the RAM.
     s.deleteJobTemplate(jt)
 
@@ -312,20 +263,12 @@ def processCluster(command,
             counter += 1
     except:
         if logger:
-            logger.debug('qsub_necat.py was killed')
+            logger.debug('qsub_necat.py was killed, but the launched job will continue to run')
+
     #Exit cleanly, otherwise master node gets event client timeout errors after 600s.
-    s.exit()
-    """
-    except:
-        
-        if logger:
-            logger.exception('**ERROR in Utils.processCluster**')
-        #Cleanup if error.
-        if s:
-            if jt:
-                s.deleteJobTemplate(jt)
-            s.exit()
-    """
+    if s:
+        s.exit()
+
 if __name__ == "__main__":
     import multiprocessing
     import threading
