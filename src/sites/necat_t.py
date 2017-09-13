@@ -98,11 +98,8 @@ LOG_LEVEL = 50
 # Where files from UI are uploaded - should be visible by launch instance
 UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"
 
-# RAPD cluster process settings
-# Port for cluster to listen on
-#LAUNCHER_PORT = 50000
-# Aggregator - be careful when changing
-#LAUNCHER_ADDRESS = (LAUNCHER_HOST, LAUNCHER_PORT)
+# RAPD cluster adapter location
+CLUSTER_ADAPTER = 'sites.cluster.necat'
 
 # Launcher Manager to sort out where to send jobs
 LAUNCHER_MANAGER_LOCK_FILE = "/tmp/rapd2/lock/launcher_manager.lock"

@@ -271,6 +271,7 @@ class RapdPlugin(Process):
 	    # Load the appropriate cluster adapter or set to False
         if self.cluster_use:
             self.cluster_adapter = xutils.load_cluster_adapter(self)
+            # Based on the command, pick a batch queue on the cluster. 
             self.cluster_queue = self.cluster_adapter.check_queue(self.command["command"])
         else:
             self.cluster_adapter = False
@@ -714,7 +715,7 @@ class RapdPlugin(Process):
                 job = Process(target=xutils.processLocal, args=(inp, self.logger))
             else:
                 command = "distl.signal_strength %s" % eval("self.header%s" % l[i]).get("fullname")
-                job = multiprocessing.Process(target=local_subprocess,
+                job = Process(target=local_subprocess,
                                               args=({"command": command,
                                                      "logfile": "distl%s.log" % i,
                                                      "pid_queue": False,
@@ -943,7 +944,11 @@ class RapdPlugin(Process):
             if self.test == False:
                 if self.cluster_use:
                     jobs[str(i)] = Process(target=self.cluster_adapter.processCluster,
-                                           args=(self, (l[i][0], log, self.cluster_queue)))
+                                           #args=(self, (l[i][0], log, self.cluster_queue)))
+                                           kwargs= {'command': l[i][0],
+                                                    'work_dir': os.getcwd(),
+                                                    'logfile': log,
+                                                    'queue': self.cluster_queue})
                 else:
                     jobs[str(i)] = Process(target=BestAction,
                                            args=((l[i][0], log), self.logger))
@@ -1048,9 +1053,13 @@ class RapdPlugin(Process):
                     inp = "tcsh %s" % l[i][0]
                     if self.cluster_adapter:
                         Process(target=self.cluster_adapter.processCluster,
-                                args=(self,
-                                      (inp, log, self.cluster_queue)
-                                      )
+                                kwargs= {'command': inp,
+                                         'work_dir': os.getcwd(),
+                                         'logfile': log,
+                                         'queue': self.cluster_queue}
+                                #args=(self,
+                                 #     (inp, log, self.cluster_queue)
+                                 #     )
                                 ).start()
                     else:
                         Process(target=xutils.processLocal, args=(inp, self.logger)).start()
@@ -2474,11 +2483,13 @@ rerunning.\n" % spot_count)
                 # will append to it.
                 if os.path.exists(log):
                     os.unlink(log)
-                run = Process(target=self.cluster_adapter.process_cluster_beorun,
-	                          args=({'command': command,
-                                     'log': log,
-                                     'queue': self.cluster_queue,
-                                     'pid': pid_queue},) )
+                #run = Process(target=self.cluster_adapter.process_cluster_beorun,
+                run = Process(target=self.cluster_adapter.processCluster,
+  	                          kwargs={'command': command,
+                                      'work_dir': os.getcwd(),
+                                      'log': log,
+                                      'queue': self.cluster_queue,
+                                      'jobID': pid_queue}, )
             else:
                 # Run in another thread
                 run = multiprocessing.Process(target=local_subprocess,
@@ -2553,16 +2564,15 @@ rerunning.\n" % spot_count)
         # Return if there is an error not caught by parsing
         if error:
             self.labelit_log[iteration].append(error)
-            self.labelit_results[iteration] = {"labelit_results": "ERROR"}
+            self.labelit_results[iteration] = {"Labelit results": "ERROR"}
             return False
 
         # No error or error caught by parsing
         else:
 
             parsed_result = labelit.parse_output(stdout, iteration)
-
             # Save the return into the shared var
-            self.labelit_results[iteration] = {"labelit_results": parsed_result}
+            self.labelit_results[iteration] = {"Labelit results": parsed_result}
             # pprint(data)
             # sys.exit()
 
@@ -2591,6 +2601,10 @@ rerunning.\n" % spot_count)
                     "execute1": functools.partial(self.process_labelit,
                                                  overrides={"min_good_spots": True})
                 },
+                "fix_cell": {
+                    "error": "Labelit had multiple choices for user SG and failed.",
+                    "execute1": True,
+                },
                 "fix_labelit": {
                     "error": "Distance is not getting read correctly from the image header.",
                     "kill": True
@@ -2603,9 +2617,7 @@ rerunning.\n" % spot_count)
                     "error": "Autoindexing Failed to find a solution",
                     "kill": True
                 },
-                "fix_cell": {
-                    "error": "Labelit had multiple choices for user SG and failed."
-                },
+                
             }
 
             # If Labelit results are OK, then...
@@ -2619,7 +2631,7 @@ rerunning.\n" % spot_count)
                 problem_flag = parsed_result
 
             if problem_flag:
-
+                print problem_flag
                 # Failure to index due to too few spots
                 if problem_flag == "min spots":
                     # print "MIN SPOTS"
@@ -2628,49 +2640,83 @@ rerunning.\n" % spot_count)
                     # Failed
                     if spot_count < 25:
                         self.labelit_log[iteration].append("\nNot enough spots to autoindex!\n")
-                        self.labelit_results[iteration] = {"labelit_results": "FAILED"}
+                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
                     # Try again
                     else:
                         self.process_labelit(iteration, overrides={"min_spots": parsed_result[1]})
-
-                # Mulitple solutions possible
-                # Frank, Does this even work????
+                # Multiple solutions possible
                 elif problem_flag == "fix_cell":
-                    # print "FIX CELL"
-                    problem_action = potential_problems[problem_flag]
+                    print "FIX CELL"
+                    problem_actions = potential_problems[problem_flag]
+                    # If there is a potential fix, run it. Otherwise fail gracefully
+                    if "execute%s"%self.labelit_tracker[iteration] in problem_actions:
+                        functools.partial(self.process_labelit,
+                                           iteration=iteration,
+                                           overrides={"fix_cell": True,
+                                                      "lattice_group": parsed_result[1],
+                                                      "labelit_solution": parsed_result[2]})
+                    else:
+                        self.labelit_log[iteration].extend("\n%s\n" % problem_actions['error'])
+                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                # Rest of the problems
+                elif problem_flag in potential_problems:
+                    problem_actions = potential_problems[problem_flag]
 
-                    problem_action(iteration=iteration,
-                                   overrides={
-                                       "fix_cell": True,
-                                       "lattice_group": parsed_result[1],
-                                       "labelit_solution": parsed_result[2]
-                                   })
+                    # If there is a potential fix, run it. Otherwise fail gracefully
+                    if "execute%s"%self.labelit_tracker[iteration] in problem_actions:
+                        problem_actions["execute%s"%self.labelit_tracker[iteration]](iteration=iteration)
+                    else:
+                        self.labelit_log[iteration].extend("\n%s\n" % problem_actions['error'])
+                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+
+                # No solution
+                else:
+                    error = "Labelit failed to find solution."
+                    self.labelit_log[iteration].append("\n%s\n" % error)
+                    self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                """
+                # Mulitple solutions possible
+                elif problem_flag == "fix_cell":
+                    print "FIX CELL"
+                    problem_actions = potential_problems[problem_flag]
+
+                    #problem_actions(iteration=iteration,
+                    #              overrides={
+                    #                   "fix_cell": True,
+                    #                   "lattice_group": parsed_result[1],
+                    #                   "labelit_solution": parsed_result[2]
+                    #               })
+
+                    # If there is a potential fix, run it. Otherwise fail gracefully
+                    if "execute%s"%self.labelit_tracker[iteration] in problem_actions:
+                        problem_actions["execute%s"%self.labelit_tracker[iteration]](iteration=iteration)
+                    else:
+                        self.labelit_log[iteration].extend("\n%s\n" % problem_actions['error'])
+                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
 
                 # Rest of the problems
                 elif problem_flag in potential_problems:
 
                     problem_actions = potential_problems[problem_flag]
                     # pprint(problem_actions)
+
                     # No recovery
                     #if "kill" in problem_actions:
                     #    self.labelit_log[iteration].extend("\n%s\n" % problem_action['error'])
-                    #    self.labelit_results[iteration] = {"labelit_results": "FAILED"}
+                    #    self.labelit_results[iteration] = {"Labelit results": "FAILED"}
                     # Try to correct
                     #else:
                     #    if iteration <= self.iterations:
                     #        if "execute" in problem_actions:
                     #            problem_actions["execute"](iteration=iteration)
+
                     # If there is a potential fix, run it. Otherwise fail gracefully
                     if "execute%s"%self.labelit_tracker[iteration] in problem_actions:
                         problem_actions["execute%s"%self.labelit_tracker[iteration]](iteration=iteration)
                     else:
-                         self.labelit_log[iteration].extend("\n%s\n" % problem_actions['error'])
-                         self.labelit_results[iteration] = {"labelit_results": "FAILED"}
-                # No solution
-                else:
-                    error = "Labelit failed to find solution."
-                    self.labelit_log[iteration].append("\n%s\n" % error)
-                    self.labelit_results[iteration] = {"labelit_results": "FAILED"}
+                        self.labelit_log[iteration].extend("\n%s\n" % problem_actions['error'])
+                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                """
 
     def print_warning(self, warn_type):
         """ """
