@@ -3,7 +3,7 @@ import { FormGroup, FormControl } from '@angular/forms';
 
 import { MdDialogRef } from '@angular/material';
 
-import { AdminService } from '../../shared/services/admin.service';
+import { RestService } from '../../shared/services/rest.service';
 import { Group } from '../../shared/classes/group';
 
 @Component({
@@ -19,7 +19,7 @@ export class GroupDialogComponent implements OnInit {
   model: Group;
   group_form: FormGroup;
 
-  constructor(private admin_service: AdminService,
+  constructor(private admin_service: RestService,
               public dialogRef: MdDialogRef<GroupDialogComponent>) { }
 
   ngOnInit() {

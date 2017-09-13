@@ -9,14 +9,18 @@ import { Component,
 })
 export class LogCardComponent implements OnInit {
 
-  @Input() log: any;
-  @Input() header: string;
+  @Input()
+  log: any = [];
+  
+  @Input()
+  header: string = "";
+
   log_collapsed: boolean = true;
 
   constructor() { }
 
   ngOnInit() {
-    console.log(this.log);
+
   }
 
 }

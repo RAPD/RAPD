@@ -15,7 +15,7 @@ import { MdDialog,
          MD_DIALOG_DATA } from '@angular/material';
 import { ReplaySubject }   from 'rxjs/Rx';
 // import { BaseChartDirective } from 'ng2-charts';
-import { ResultsService } from '../../../shared/services/results.service';
+import { WebsocketService } from '../../../shared/services/websocket.service';
 // import { AnalysisF068200Component } from '../analysis-f068-2-0-0/analysis-f068-2-0-0.component';
 
 // Import analysis plugin components here
@@ -74,12 +74,12 @@ export class IntegrateBd11200Component implements OnInit, OnChanges {
   analysis_component: any;
 
   constructor(private componentfactoryResolver: ComponentFactoryResolver,
-              private results_service: ResultsService,
+              private websocket_service: WebsocketService,
               public dialog: MdDialog) { }
 
   ngOnInit() {
     // Subscribe to results for the displayed result
-    this.incomingData$ = this.results_service.subscribeResultDetails(
+    this.incomingData$ = this.websocket_service.subscribeResultDetails(
       this.current_result.result_type,
       this.current_result.result_id);
     this.incomingData$.subscribe(x => this.handleIncomingData(x));

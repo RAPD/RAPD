@@ -6,7 +6,7 @@ import { Router,
        /* ROUTER_DIRECTIVES */ } from '@angular/router';
 
 import { MxResultContainerComponent } from './mx-result-container';
-import { ResultsService } from '../shared/services/results.service';
+import { WebsocketService } from '../shared/services/websocket.service';
 
 @Component({
   selector: 'app-mx-sessionpanel',
@@ -29,13 +29,13 @@ export class MxSessionpanelComponent implements OnInit, OnDestroy {
 
   constructor(private router: Router,
               private route: ActivatedRoute,
-              private results_service: ResultsService) { }
+              private websocket_service: WebsocketService) { }
 
   ngOnInit() {
     this.sub = this.route.params.subscribe(params => {
       console.log('ngOnInit >>', params);
       this.session_id = params['session_id'];
-      this.results_service.setSession(this.session_id, 'mx');
+      this.websocket_service.setSession(this.session_id, 'mx');
     });
   }
 

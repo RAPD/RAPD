@@ -5,7 +5,7 @@ import { Component,
          EventEmitter } from '@angular/core';
 import { ReplaySubject } from 'rxjs/Rx';
 import { Highlight } from '../../../shared/directives/highlight.directive';
-import { ResultsService } from '../../../shared/services/results.service';
+import { WebsocketService } from '../../../shared/services/websocket.service';
 
 @Component({
   selector: 'app-mx-resultslist-panel',
@@ -45,10 +45,10 @@ export class MxResultslistPanelComponent implements OnInit {
   @Input() result_type: string;
   @Output() resultSelect = new EventEmitter();
 
-  constructor(private results_service: ResultsService) { }
+  constructor(private websocket_service: WebsocketService) { }
 
   ngOnInit() {
-    this.incomingData$ = this.results_service.subscribeResults(this.session_id);
+    this.incomingData$ = this.websocket_service.subscribeResults(this.session_id);
     this.incomingData$.subscribe(x => this.handleIncomingData(x));
   }
 

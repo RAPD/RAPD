@@ -10,7 +10,7 @@ import { Router } from '@angular/router';
 
 import { CommunicateDialogComponent } from '../../shared/dialogs/communicate-dialog/communicate-dialog.component';
 import { AuthService } from '../../shared/services/auth.service';
-import { ResultsService } from '../../shared/services/results.service';
+import { WebsocketService } from '../../shared/services/websocket.service';
 
 @Component({
   selector: 'app-login-dialog',
@@ -27,7 +27,7 @@ export class LoginDialogComponent implements OnInit {
   public error_message = '';
 
   constructor(private auth_service: AuthService,
-              private results_service: ResultsService,
+              private websocket_service: WebsocketService,
               private router: Router,
               public dialogRef: MdDialogRef<LoginDialogComponent>) { }
 
@@ -55,7 +55,7 @@ export class LoginDialogComponent implements OnInit {
       // console.log('onSubmit >>', params);
       if (params.success === true) {
         // Initialize the websocket connection
-        this.results_service.initializeWebsocket();
+        this.websocket_service.initializeWebsocket();
         // Navigate to the dashboard
         this.router.navigate(['dashboard']);
         this.mode = 'show_login_success';

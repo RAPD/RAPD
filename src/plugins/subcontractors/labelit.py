@@ -67,8 +67,6 @@ def parse_output(labelit_output, iteration=0):
 
     labelit_output = labelit_output.split("\n")
 
-    # pprint(labelit_output)
-
     # Holders for parsed data
     result_lines = []
     labelit_sol = []

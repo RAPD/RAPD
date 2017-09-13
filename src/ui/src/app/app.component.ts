@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { AuthService } from './shared/services/auth.service';
-import { ResultsService } from './shared/services/results.service';
+import { WebsocketService } from './shared/services/websocket.service';
 
 @Component({
   selector: 'app-root',
@@ -15,11 +15,11 @@ export class AppComponent {
 
   constructor(private router: Router,
               private auth_service: AuthService,
-              private results_service: ResultsService) {}
+              private websocket_service: WebsocketService) {}
 
   ngOnInit() {
     if (this.auth_service.authenticated()) {
-      this.results_service.initializeWebsocket();
+      this.websocket_service.initializeWebsocket();
     }
   }
 

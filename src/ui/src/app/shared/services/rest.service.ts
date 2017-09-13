@@ -10,7 +10,7 @@ import { Group } from '../classes/group';
 import { Session } from '../classes/session';
 
 @Injectable()
-export class AdminService {
+export class RestService {
 
   private apiUrl = 'http://localhost:3000/api';
 
