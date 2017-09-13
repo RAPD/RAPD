@@ -4,6 +4,10 @@
 /*@import '~@angular/material/prebuilt-themes/pink-bluegrey.css';*/
 /*@import '~@angular/material/prebuilt-themes/purple-green.css';*/
 
+/* To use Material Icons */
+@import '~material-design-icons/iconfont/material-icons.css';
+@import '~roboto-fontface/css/roboto/roboto-fontface.css';
+
 /* For the tables */
 @import '~@swimlane/ngx-datatable/release/index.css';
 @import '~@swimlane/ngx-datatable/release/themes/material.css';

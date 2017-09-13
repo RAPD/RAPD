@@ -1,4 +1,4 @@
-<md-card class="rapd-raw-output-card">
+<md-card *ngIf="log" class="rapd-raw-output-card">
   <md-card-header>
     <div style="width:100%">
       <div style="float:left;">
@@ -10,13 +10,13 @@
             *ngIf="log_collapsed"
             class="md-24"
             (click)="log_collapsed=false">
-            keyboard_arrow_down
+            expand_more
           </md-icon>
           <md-icon
             *ngIf="! log_collapsed"
             class="md-24"
             (click)="log_collapsed=true">
-            keyboard_arrow_up
+            expand_less
           </md-icon>
         </button>
       </div>

@@ -294,146 +294,26 @@
         <div #analysistarget></div>
       </md-card-content>
       <md-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
-        <md-card class="rapd-raw-output-card">
-          <md-card-header>
-            <div style="width:100%">
-              <div style="float:left;">
-                <h3>XDS Idxref</h3>
-              </div>
-              <div style="float:right">
-                <button md-mini-fab class="raw-output-toggle" color="primary">
-                  <md-icon
-                    *ngIf="log_xds_idxref_collapsed"
-                    class="md-24"
-                    (click)="log_xds_idxref_collapsed=false">
-                    keyboard_arrow_down
-                  </md-icon>
-                  <md-icon
-                    *ngIf="! log_xds_idxref_collapsed"
-                    class="md-24"
-                    (click)="log_xds_idxref_collapsed=true">
-                    keyboard_arrow_up
-                  </md-icon>
-                </button>
-              </div>
-            </div>
-          </md-card-header>
-          <md-card-content class="rapd-raw-output" [ngClass]="{'raw-collapsed':log_xds_idxref_collapsed}">
-            <p *ngFor="let line of full_result.results.logs.xds_idxref">{{line}}</p>
-          </md-card-content>
-        </md-card>
-        <md-card class="rapd-raw-output-card">
-          <md-card-header>
-            <div style="width:100%">
-              <div style="float:left;">
-                <h3>XDS Integrate</h3>
-              </div>
-              <div style="float:right">
-                <button md-mini-fab class="raw-output-toggle" color="primary">
-                  <md-icon
-                    *ngIf="log_xds_integrate_collapsed"
-                    class="md-24"
-                    (click)="log_xds_integrate_collapsed=false">
-                    keyboard_arrow_down
-                  </md-icon>
-                  <md-icon
-                    *ngIf="! log_xds_integrate_collapsed"
-                    class="md-24"
-                    (click)="log_xds_integrate_collapsed=true">
-                    keyboard_arrow_up
-                  </md-icon>
-                </button>
-              </div>
-            </div>
-          </md-card-header>
-          <md-card-content class="rapd-raw-output" [ngClass]="{'raw-collapsed':log_xds_integrate_collapsed}">
-            <p *ngFor="let line of full_result.results.logs.xds_integrate">{{line}}</p>
-          </md-card-content>
-        </md-card>
-        <md-card class="rapd-raw-output-card">
-          <md-card-header>
-            <div style="width:100%">
-              <div style="float:left;">
-                <h3>XDS Correct</h3>
-              </div>
-              <div style="float:right">
-                <button md-mini-fab class="raw-output-toggle" color="primary">
-                  <md-icon
-                    *ngIf="log_xds_correct_collapsed"
-                    class="md-24"
-                    (click)="log_xds_correct_collapsed=false">
-                    keyboard_arrow_down
-                  </md-icon>
-                  <md-icon
-                    *ngIf="! log_xds_correct_collapsed"
-                    class="md-24"
-                    (click)="log_xds_correct_collapsed=true">
-                    keyboard_arrow_up
-                  </md-icon>
-                </button>
-              </div>
-            </div>
-          </md-card-header>
-          <md-card-content class="rapd-raw-output" [ngClass]="{'raw-collapsed':log_xds_correct_collapsed}">
-            <p *ngFor="let line of full_result.results.logs.xds_correct">{{line}}</p>
-          </md-card-content>
-        </md-card>
-        <md-card class="rapd-raw-output-card">
-          <md-card-header>
-            <div style="width:100%">
-              <div style="float:left;">
-                <h3>Aimless</h3>
-              </div>
-              <div style="float:right">
-                <button md-mini-fab class="raw-output-toggle" color="primary">
-                  <md-icon
-                    *ngIf="log_aimless_collapsed"
-                    class="md-24"
-                    (click)="log_aimless_collapsed=false">
-                    keyboard_arrow_down
-                  </md-icon>
-                  <md-icon
-                    *ngIf="! log_aimless_collapsed"
-                    class="md-24"
-                    (click)="log_aimless_collapsed=true">
-                    keyboard_arrow_up
-                  </md-icon>
-                </button>
-              </div>
-            </div>
-          </md-card-header>
-          <md-card-content class="rapd-raw-output" [ngClass]="{'raw-collapsed':log_aimless_collapsed}">
-            <p *ngFor="let line of full_result.results.logs.aimless">{{line}}</p>
-          </md-card-content>
-        </md-card>
-        <md-card class="rapd-raw-output-card">
-          <md-card-header>
-            <div style="width:100%">
-              <div style="float:left;">
-                <h3>Pointless</h3>
-              </div>
-              <div style="float:right">
-                <button md-mini-fab class="raw-output-toggle" color="primary">
-                  <md-icon
-                    *ngIf="log_pointless_collapsed"
-                    class="md-24"
-                    (click)="log_pointless_collapsed=false">
-                    keyboard_arrow_down
-                  </md-icon>
-                  <md-icon
-                    *ngIf="! log_pointless_collapsed"
-                    class="md-24"
-                    (click)="log_pointless_collapsed=true">
-                    keyboard_arrow_up
-                  </md-icon>
-                </button>
-              </div>
-            </div>
-          </md-card-header>
-          <md-card-content class="rapd-raw-output" [ngClass]="{'raw-collapsed':log_pointless_collapsed}">
-            <p *ngFor="let line of full_result.results.logs.pointless">{{line}}</p>
-          </md-card-content>
-        </md-card>
+        <app-log-card
+          [log]="full_result.results.logs.xds_idxref"
+          header="XDS Idxref">
+        </app-log-card>
+        <app-log-card
+          [log]="full_result.results.logs.xds_integrate"
+          header="XDS Integrate">
+        </app-log-card>
+        <app-log-card
+          [log]="full_result.results.logs.xds_correct"
+          header="XDS Corect">
+        </app-log-card>
+        <app-log-card
+          [log]="full_result.results.logs.aimless"
+          header="Aimless">
+        </app-log-card>
+        <app-log-card
+          [log]="full_result.results.logs.pointless"
+          header="Pointless">
+        </app-log-card>
       </md-card-content>
       <md-card-actions class="rapd-result">
         <!-- <md-toolbar *ngIf="full_result" class="result-panel-action-bar"> -->

@@ -1,3 +1,4 @@
+/* The characteristic RAPD font for "branding"*/
 @font-face {
   font-family: 'Chunkfive';
   src: url('Chunkfive.otf');
@@ -13,6 +14,8 @@ body {
   font-family: "Roboto","Helvetica Neue Light","Helvetica Neue",Helvetica,Arial,"Lucida Grande",sans-serif;
   height:100%;
 }
+
+
 
 .container {
   display: flex;
@@ -140,11 +143,11 @@ article.c-content {
 }
 
 .result-panel-action-bar {
-  box-shadow: 3px 0 6px rgba(0,0,0,0.3);
-  /*height: 4em;*/
+  background: rgba(0,0,0,0);
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 2px;
   margin: 0.25em -1em 0.5em 0;
   min-width: calc(100vw - 17em);
-  /*border: 2px solid black;*/
 }
 
 .md-list-item {

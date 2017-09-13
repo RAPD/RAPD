@@ -1292,7 +1292,7 @@ class RapdPlugin(Process):
         if inp.count("anom"):
             anom = True
         log = open(inp, "r").readlines()
-        
+
         if os.path.exists(inp.replace("log", "xml")):
             xml = open(inp.replace("log", "xml"), "r").readlines()
         iteration = os.path.dirname(inp)[-1]
@@ -1307,7 +1307,7 @@ class RapdPlugin(Process):
         # Set directory for future use
         data["directory"] = os.path.dirname(inp)
 
-        if self.labelit_results["labelit_results"] != "FAILED":
+        if self.labelit_results["labelit_results"]:
             # Best error checking. Most errors caused by B-factor calculation problem.
             # If no errors...
             if isinstance(data, dict):
@@ -1531,7 +1531,6 @@ Distance | % Transmission", level=98, color="white")
         sol_dict = {}
         sym = "0"
 
-        # try:
         # Get the results and logs
         self.labelit_results = self.labelitQueue.get()
         self.labelit_log = self.labelitQueue.get()
@@ -1550,6 +1549,7 @@ Distance | % Transmission", level=98, color="white")
                 error_count += 1
         if error_count == len(self.labelit_results):
             # print "Unsuccessful indexing run. Exiting."
+            # TODO
             sys.exit(9)
 
         # Run through all the results - compile them
@@ -1597,7 +1597,8 @@ Distance | % Transmission", level=98, color="white")
 
         # Best Labelit_results key
         highest = sol_dict[sol_dict_keys[0]]
-        # Since iter 5 cuts res, it is often the best. Only choose if its the only solution.
+        # Since iter 5 cuts res, it is often the best. Only choose if its the
+        # only solution.
         if len(sol_dict_keys) > 1:
             if highest == 5:
                 highest = sol_dict[sol_dict_keys[1]]
@@ -1668,7 +1669,7 @@ Distance | % Transmission", level=98, color="white")
             self.logger.debug("No solution was found when sorting Labelit results.")
             self.tprint(arg="\n  Labelit failed to index", level=30, color="red")
             self.labelit_failed = True
-            self.labelit_results = {"labelit_results":"FAILED"}
+            self.labelit_results = {"labelit_results":False}
             self.labelit_dir = os.path.join(self.working_dir, "0")
             os.chdir(self.labelit_dir)
             self.processDistl()
