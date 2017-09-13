@@ -31,13 +31,10 @@ __status__ = "Production"
 import argparse
 import importlib
 import json
-# import logging
-# import logging.handlers
 from pprint import pprint
 import redis.exceptions
 import sys
 import time
-import threading
 
 # RAPD imports
 from utils.commandline import base_parser
@@ -50,20 +47,20 @@ import utils.text as text
 
 BUFFER_SIZE = 8192
 
-class Launcher(threading.Thread, object):
+class Launcher(object):
     """
     Connects to Redis instance, listens for jobs, and spawns new threads using defined
     launcher_adapter
     """
 
     adapter = None
-    adapter_file = None
-    database = None
+    #adapter_file = None
+    #database = None
     # address = None
     ip_address = None
-    job_types = None
+    #job_types = None
     launcher = None
-    port = None
+    #port = None
     tag = None
 
     def __init__(self, site, tag="", logger=None, overwatch_id=False):
@@ -76,7 +73,6 @@ class Launcher(threading.Thread, object):
         logger -- logger instance (default = None)
         overwatch_id -- id for optional overwatcher instance
         """
-        threading.Thread.__init__ (self)
         # Get the logger Instance
         self.logger = logger
 
@@ -94,11 +90,10 @@ class Launcher(threading.Thread, object):
         # Connect to Redis for communications
         self.connect_to_redis()
 
+        # For loop in self.run
         self.running = True
 
-        # Start listening for commands through a thread for clean exit.
-        #threading.Thread(target=self.run).start()
-        self.start()
+        self.run()
 
     def run(self):
         """The core process of the Launcher instance"""
@@ -108,40 +103,45 @@ class Launcher(threading.Thread, object):
             self.ow_registrar = Registrar(site=self.site,
                                           ow_type="launcher",
                                           ow_id=self.overwatch_id)
-            self.ow_registrar.register({"site_id":self.site.ID})
+            self.ow_registrar.register({"site_id":self.site.ID,
+                                        "job_list":self.job_list})
 
-        # This is the server portion of the code
-        while self.running:
-            # Have Registrar update status
-            if self.overwatch_id:
-                self.ow_registrar.update({"site_id":self.site.ID})
+        try:
+            # This is the server portion of the code
+            while self.running:
+                # Have Registrar update status
+                if self.overwatch_id:
+                    self.ow_registrar.update({"site_id":self.site.ID,
+                                              "job_list":self.job_list})
+    
+                # Look for a new command
+                # This will trow a redis.exceptions.ConnectionError if redis is unreachable
+                #command = self.redis.brpop(["RAPD_JOBS",], 5)
+                try:
+                    while self.redis.llen(self.job_list) != 0:
+                        command = self.redis.rpop(self.job_list)
+                        # Handle the message
+                        if command:
+                            self.handle_command(json.loads(command))
+    
+                            # Only run 1 command
+                            # self.running = False
+                            # break
+                    # sleep a little when jobs aren't coming in.
+                    time.sleep(0.2)
+                except redis.exceptions.ConnectionError:
+                    if self.logger:
+                        self.logger.exception("Remote Redis is not up. Waiting for Sentinal to switch to new host")
+                    time.sleep(1)
 
-            # Look for a new command
-            # This will trow a redis.exceptions.ConnectionError if redis is unreachable
-            #command = self.redis.brpop(["RAPD_JOBS",], 5)
-            try:
-                """
-                while self.redis.llen("RAPD_JOBS") != 0:
-                    command = self.redis.rpop("RAPD_JOBS")
-                    # Handle the message
-                    if command:
-                        #self.handle_command("RAPD_JOBS", json.loads(command))
-                        self.handle_command(json.loads(command))
-
-                        # Only run 1 command
-                        # self.running = False
-                        # break
-                """
-                # sleep a little when jobs aren't coming in.
-                time.sleep(0.2)
-            except redis.exceptions.ConnectionError:
-                self.logger.exception("Remote Redis is not up. Waiting for Sentinal to switch to new host")
-                time.sleep(1)
+        except KeyboardInterrupt:
+            self.stop()
 
     def stop(self):
         """Stop everything smoothly."""
         self.running = False
-        self.ow_registrar.stop()
+        if self.overwatch_id:
+            self.ow_registrar.stop()
         self.redis_database.stop()
 
     def connect_to_redis(self):
@@ -150,7 +150,7 @@ class Launcher(threading.Thread, object):
 
         self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
         self.redis = self.redis_database.connect_to_redis()
-        
+
     def handle_command(self, command):
         """
         Handle an incoming command
@@ -163,16 +163,11 @@ class Launcher(threading.Thread, object):
 
         # Split up the command
         message = command
-
-        # Update preferences to be in server run mode
-        if not message.get("preferences"):
-            message["preferences"] = {}
-        message["preferences"]["run_mode"] = "server"
-
-        self.logger.debug("Command received channel:RAPD_JOBS  message: %s", message)
+        if self.logger:
+            self.logger.debug("Command received channel:%s  message: %s", self.job_list, message)
 
         # Use the adapter to launch
-        self.adapter(self.site, message, self.specifications)
+        self.adapter(self.site, message, self.launcher)
 
     def get_settings(self):
         """
@@ -180,12 +175,14 @@ class Launcher(threading.Thread, object):
         """
 
         # Save typing
-        launchers = self.site.LAUNCHER_SETTINGS["LAUNCHER_REGISTER"]
+        #launchers = self.site.LAUNCHER_SETTINGS["LAUNCHER_REGISTER"]
 
         # Get IP Address
         self.ip_address = utils.site.get_ip_address()
-        self.logger.debug("Found ip address to be %s", self.ip_address)
-
+        print self.ip_address
+        if self.logger:
+            self.logger.debug("Found ip address to be %s", self.ip_address)
+        """
         # Look for the launcher matching this ip_address and the input tag
         possible_tags = []
         for launcher in launchers:
@@ -194,7 +191,20 @@ class Launcher(threading.Thread, object):
                 break
             elif launcher[0] == self.ip_address:
                 possible_tags.append(launcher[1])
-
+        """
+        
+        # Save typing
+        launchers = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"]
+        
+        # Look for the launcher matching this ip_address and the input tag
+        possible_tags = []
+        for launcher in launchers:
+            if launcher.get('ip_address') == self.ip_address and launcher.get('tag') == self.tag:
+                self.launcher = launcher
+                break
+            elif launcher.get('ip_address') == self.ip_address:
+                possible_tags.append(launcher.get('tag'))
+        
         # No launcher adapter
         if self.launcher is None:
 
@@ -213,21 +223,19 @@ s IP address (%s), but not for the input tag (%s)" % (self.ip_address, self.tag)
             # Exit in error state
             sys.exit(9)
         else:
-            # Unpack address
-            self.ip_address, self.tag, self.launcher_id = self.launcher
-            self.specifications = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.launcher_id]
-            # Tag launcher in self.site
-            self.site.LAUNCHER_ID = self.launcher_id
+            # Get the job_list to watch for this launcher
+            self.job_list = self.launcher.get('job_list')
+            
 
     def load_adapter(self):
         """Find and load the adapter"""
 
         # Import the database adapter as database module
         self.adapter = load_module(
-            seek_module=self.specifications["adapter"],
+            seek_module=self.launcher["adapter"],
             directories=self.site.LAUNCHER_SETTINGS["RAPD_LAUNCHER_ADAPTER_DIRECTORIES"]).LauncherAdapter
-
-        self.logger.debug(self.adapter)
+        if self.logger:
+            self.logger.debug(self.adapter)
 
 def get_commandline():
     """Get the commandline variables and handle them"""
@@ -246,7 +254,7 @@ def get_commandline():
                         action="store",
                         dest="tag",
                         default="",
-                        help="Specify a tag for the Launcher")
+                        help="Specify a tag for the Launcher. Found in sites.LAUNCHER_SPECIFICATIONS")
 
     return parser.parse_args()
 
@@ -300,11 +308,6 @@ def main():
                         tag=tag,
                         logger=logger,
                         overwatch_id=commandline_args.overwatch_id)
-
-    try:
-        time.sleep(100)
-    except KeyboardInterrupt:
-        LAUNCHER.stop()
 
 if __name__ == "__main__":
 

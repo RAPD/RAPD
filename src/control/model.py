@@ -129,6 +129,9 @@ class Model(object):
 
         # Import the detector
         self.init_detectors()
+        
+        # start launcher manager
+        self.start_launcher_manager()
 
         # Start the run monitor
         self.start_run_monitor()
@@ -213,6 +216,8 @@ class Model(object):
 
         # Shorten variable names
         site = self.site
+        
+        import sites.detectors.necat_dectris_eiger16m
 
         # A single detector
         if site.DETECTOR:
@@ -221,7 +226,8 @@ class Model(object):
             detector = detector.lower()
             self.detectors[self.site_ids[0].upper()] = load_module(
                 seek_module=detector,
-                directories=("sites.detectors", "detectors"))
+                directories=("sites.detectors", "detectors"),
+                logger=self.logger)
 
         # Multiple detectors
         elif site.DETECTORS:
@@ -232,16 +238,17 @@ class Model(object):
                     seek_module=detector,
                     directories=("sites.detectors", "detectors"))
 
-    def start_job_launcher_OLD(self):
-        """Start up the job launcher"""
-        self.logger.debug("Starting launcher")
+    def start_launcher_manager(self):
+        """Start up the launcher manager to hand off jobs"""
+        self.logger.debug("Starting launcher monitor")
+        launcher_manager = importlib.import_module("launch.rapd_launcher_manager")
+        self.launcher_manager = launcher_manager.Launcher_Manager(site=self.site,
+                                                                  overwatch_id=None)
 
-        launcher = importlib.import_module("launch.rapd_launcher")
-
-        self.launcher = launcher.Launcher(site=self.site,
-                                          tag="qsub",
-                                          logger=self.logger,
-                                          overwatch_id=self.overwatch_id)
+    def stop_launcher_manager(self):
+        """Stop the launcher manager"""
+        self.logger.debug("Stopping launcher manager")
+        self.launcher_manager.stop()
 
     def start_image_monitor(self):
         """Start up the image listening process for core"""
@@ -374,6 +381,7 @@ class Model(object):
 
         self.stop_redis()
         self.stop_server()
+        self.stop_launcher_manager()
         self.stop_image_monitor()
         self.stop_run_monitor()
         #self.stop_cloud_monitor()
@@ -497,8 +505,8 @@ class Model(object):
             if self.site_adapter:
                 site_data = self.site_adapter.get_image_data()
                 header.update(site_data)
-                # print "2"
-                # pprint(header)
+                #print "2"
+                #pprint(header)
 
             # Add to database
             image_id = self.database.add_image(data=header, return_type="id")

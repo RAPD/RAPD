@@ -41,6 +41,7 @@ import time
 # utils
 
 # Dectris Pilatus 6M
+import detectors
 import detectors.dectris.dectris_eiger16m as detector
 import detectors.detector_utils as utils
 

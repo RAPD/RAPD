@@ -67,6 +67,7 @@ def load_module(seek_module, directories=False, logger=False):
                 pass
             #     if logger:
             #         logger.error("Error loading %s", directory+"."+seek_module)
+            
     else:
         try:
             # module = importlib.import_module(directory+"."+seek_module)

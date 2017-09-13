@@ -107,6 +107,9 @@ class Registrar(object):
         # If custom_vars have been passed, add them
         entry.update(custom_vars)
 
+        # Check for launchers
+        launcher = entry.get('job_list', False)
+
         # Wrap potential redis down
         try:
             # Put entry in the redis db
@@ -125,6 +128,14 @@ class Registrar(object):
 
                 # Expire the current entry in N seconds
                 red.expire("OW:"+self.uuid+":"+self.ow_id, OVERWATCH_TIMEOUT)
+            
+            # Used to monitor which launchers are running.
+            if launcher:
+                # Put entry in the redis db
+                red.set("OW:"+launcher, 1)
+                
+                # Expire the current entry in N seconds
+                red.expire("OW:"+launcher, OVERWATCH_TIMEOUT)
 
         # Redis is down
         except redis.exceptions.ConnectionError:
@@ -152,6 +163,9 @@ class Registrar(object):
         # If custom_vars have been passed, add them
         entry.update(custom_vars)
 
+        # Check for launchers
+        launcher = entry.get('job_list', False)
+
         # Wrap potential redis down
         try:
             # Update timestamp
@@ -178,6 +192,14 @@ class Registrar(object):
 
                 # Expire the current entry in N seconds
                 red.expire("OW:"+self.uuid+":"+self.ow_id, OVERWATCH_TIMEOUT)
+            
+            # Used to monitor which launchers are running.
+            if launcher:
+                # Put entry in the redis db
+                red.set("OW:"+launcher, 1)
+                
+                # Expire the current entry in N seconds
+                red.expire("OW:"+launcher, OVERWATCH_TIMEOUT)
 
         # Redis is down
         except redis.exceptions.ConnectionError:
@@ -221,6 +243,11 @@ class Overwatcher(Registrar):
         self.site = site
         self.managed_file = managed_file
         self.managed_file_flags = managed_file_flags
+
+        # remove and save Python command
+        i = self.managed_file_flags.index('--python')
+        self.managed_file_flags.remove('--python')
+        self.python_command = self.managed_file_flags.pop(i)
 
         print site
         print managed_file
@@ -281,16 +308,13 @@ class Overwatcher(Registrar):
         Start the managed process with the passed in flags and the current
         environment. If the process exits immediately, the overwatcher will exit
         """
-        py_path = sys.executable
-        print 'python: %s'%py_path
-
         # The environmental_vars
         path = os.environ.copy()
 
         # Put together the command
         command = self.managed_file_flags[:]
         command.insert(0, self.managed_file)
-        command.insert(0, "rapd.python")
+        command.insert(0, self.python_command)
         command.append("--overwatch_id")
         command.append(self.uuid)
         print 'command: %s'%command
@@ -315,7 +339,7 @@ class Overwatcher(Registrar):
         try:
             while True:
                 time.sleep(5)
-    
+
                 # Get the managed process ow_id if unknown
                 if self.ow_managed_id == None:
                     self.ow_managed_id = self.get_managed_id()
@@ -327,7 +351,7 @@ class Overwatcher(Registrar):
                     # Watched process has failed
                     if status == False:
                         self.restart_managed_process()
-    
+
                 # Update the overwatcher status
                 try:
                     self.update()
@@ -377,7 +401,6 @@ class Overwatcher(Registrar):
         """
 
         # Get connection
-        #red = redis.Redis(connection_pool=self.redis_pool)
         red = self.redis
 
         # Look for keys
@@ -393,6 +416,7 @@ class Overwatcher(Registrar):
         elif len(keys) > 1:
             return None
         else:
+            print "Found it!"
             return keys[0].split(":")[1]
 
 def get_commandline():
@@ -409,6 +433,11 @@ def get_commandline():
                         action="store",
                         dest="managed_file",
                         help="File to be overwatched")
+    parser.add_argument("--python", "-p",
+                        action="store",
+                        default="rapd.python",
+                        dest="python",
+                        help="Which python to launch managed file")
     parsed_args = parser.parse_args()
 
     return parsed_args

@@ -108,8 +108,3 @@ class Database(object):
     def stop(self):
         if self.pool:
             self.pool.close()
-            
-    
-    
-    
-
