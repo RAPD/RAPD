@@ -274,6 +274,8 @@ export class Index3b34200Component implements OnInit {
   // change the current result's display status to 'junked'
   junkResult(result) {
     result.display = 'junked';
+
+    this.websocket_service.updateResult(result);
   }
 
   printPage() {

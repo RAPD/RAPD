@@ -68,6 +68,7 @@ sub.on("message", function (channel, message) {
   }
 });
 
+// Subscribe to updates
 sub.subscribe("RAPD_RESULTS");
 
 // The websocket code
@@ -89,8 +90,6 @@ function Wss (opt, callback) {
 
       console.log('Connected');
 
-      // console.log(ws);
-
       // Create a session object
       ws.session = {};
 
@@ -111,7 +110,7 @@ function Wss (opt, callback) {
       ws.on('message', function(message) {
 
         var data = JSON.parse(message);
-        // console.log(data);
+        console.log(data);
 
         // Initializing the websocket
         if (data.request_type === 'initialize' ) {

@@ -120,6 +120,18 @@ export class WebsocketService {
     });
   }
 
+  // Change the display mode for a result
+  updateResult(result:any) {
+
+    console.log('setDisplayMode', result);
+
+    // Request to update result
+    this.ws.send(JSON.stringify({
+      request_type: 'update_result',
+      result: result
+    }));
+  }
+
   // Get all results for a session
   subscribeResults(session_id: string): ReplaySubject<string> {
 
@@ -127,6 +139,7 @@ export class WebsocketService {
 
     // Return the observable
     return this.results_subject;
+
   }
 
   // Get details for a result
