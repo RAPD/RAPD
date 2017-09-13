@@ -271,6 +271,7 @@ class RapdPlugin(Process):
 	    # Load the appropriate cluster adapter or set to False
         if self.cluster_use:
             self.cluster_adapter = xutils.load_cluster_adapter(self)
+            # Based on the command, pick a batch queue on the cluster. 
             self.cluster_queue = self.cluster_adapter.check_queue(self.command["command"])
         else:
             self.cluster_adapter = False
@@ -714,7 +715,7 @@ class RapdPlugin(Process):
                 job = Process(target=xutils.processLocal, args=(inp, self.logger))
             else:
                 command = "distl.signal_strength %s" % eval("self.header%s" % l[i]).get("fullname")
-                job = multiprocessing.Process(target=local_subprocess,
+                job = Process(target=local_subprocess,
                                               args=({"command": command,
                                                      "logfile": "distl%s.log" % i,
                                                      "pid_queue": False,
@@ -943,7 +944,11 @@ class RapdPlugin(Process):
             if self.test == False:
                 if self.cluster_use:
                     jobs[str(i)] = Process(target=self.cluster_adapter.processCluster,
-                                           args=(self, (l[i][0], log, self.cluster_queue)))
+                                           #args=(self, (l[i][0], log, self.cluster_queue)))
+                                           kwargs= {'command': l[i][0],
+                                                    'work_dir': os.getcwd(),
+                                                    'logfile': log,
+                                                    'queue': self.cluster_queue})
                 else:
                     jobs[str(i)] = Process(target=BestAction,
                                            args=((l[i][0], log), self.logger))
@@ -1048,9 +1053,13 @@ class RapdPlugin(Process):
                     inp = "tcsh %s" % l[i][0]
                     if self.cluster_adapter:
                         Process(target=self.cluster_adapter.processCluster,
-                                args=(self,
-                                      (inp, log, self.cluster_queue)
-                                      )
+                                kwargs= {'command': inp,
+                                         'work_dir': os.getcwd(),
+                                         'logfile': log,
+                                         'queue': self.cluster_queue}
+                                #args=(self,
+                                 #     (inp, log, self.cluster_queue)
+                                 #     )
                                 ).start()
                     else:
                         Process(target=xutils.processLocal, args=(inp, self.logger)).start()
@@ -2473,11 +2482,13 @@ rerunning.\n" % spot_count)
                 # will append to it.
                 if os.path.exists(log):
                     os.unlink(log)
-                run = Process(target=self.cluster_adapter.process_cluster_beorun,
-	                          args=({'command': command,
-                                     'log': log,
-                                     'queue': self.cluster_queue,
-                                     'pid': pid_queue},) )
+                #run = Process(target=self.cluster_adapter.process_cluster_beorun,
+                run = Process(target=self.cluster_adapter.processCluster,
+  	                          kwargs={'command': command,
+                                      'work_dir': os.getcwd(),
+                                      'log': log,
+                                      'queue': self.cluster_queue,
+                                      'jobID': pid_queue}, )
             else:
                 # Run in another thread
                 run = multiprocessing.Process(target=local_subprocess,

@@ -37,6 +37,7 @@ from multiprocessing import Queue, Process
 
 # RAPD imports
 import utils.launch_tools as launch_tools
+import sites.cluster.necat as cluster
 
 class LauncherAdapter(object):
     """
@@ -44,7 +45,7 @@ class LauncherAdapter(object):
 
     Will launch requested job via qsub on current machine.
 
-    NB - this adapter is highly specific to SERCAT install.
+    NB - this adapter is highly specific to NECAT install.
     """
 
     def __init__(self, site, message, settings):
@@ -105,16 +106,17 @@ class LauncherAdapter(object):
         q = Queue()
 
         # Setup the job and launch it.
-        job = Process(target=processCluster, kwargs={'command':command_line,
-                                                   'work_dir':work_dir,
-                                                   'logfile':False,
-                                                   'queue':queue,
-                                                   'nproc':nproc,
-                                                   'logger':self.logger,
-                                                   'name':qsub_label,
-                                                   'mp_event':False,
-                                                   'timeout':False,
-                                                   'output_jobID':q})
+        job = Process(target=cluster.processCluster,
+                      kwargs={'command':command_line,
+                              'work_dir':work_dir,
+                              'logfile':False,
+                              'queue':queue,
+                              'nproc':nproc,
+                              'logger':self.logger,
+                              'name':qsub_label,
+                              'mp_event':False,
+                              'timeout':False,
+                              'jobID':q})
         job.start()
         # This will be passed back to a monitor that will watch the jobs and kill ones that run too long.
         jobID = q.get()
@@ -165,109 +167,6 @@ class LauncherAdapter(object):
             return('phase1.q')
         """
         return 'phase3.q'
-
-def processCluster(command,
-                   work_dir,
-                   logfile=False,
-                   queue='all.q',
-                   nproc=1,
-                   logger=False,
-                   name=False,
-                   mp_event=False,
-                   timeout=False,
-                   output_jobID=False):
-    """
-    Submit job to cluster using DRMAA (when you are already on the cluster).
-    Main script should not end with os._exit() otherwise running jobs could be orphanned.
-    To eliminate this issue, setup self.running = multiprocessing.Event(), self.running.set() in main script,
-    then set it to False (self.running.clear()) during postprocess to kill running jobs smoothly.
-    
-    command - command to run
-    work_dir - working directory
-    logfile - print results of command to this file
-    queue - specify a queue on the cluster (options are all.q, phase1.q, phase2.q, phase3.q, 
-            index.q, general.q, high_mem.q, rosetta.q). If no queue is specified, it will run on any node.
-    nproc - number of processor to reserve for the job on a single node. If # of slots 
-            are not available, it will wait to launch until resources are free. 
-    logger - logger event to pass status reports.
-    mp_event - Pass in the Multiprocessing.Event() that the plugin in uses to signal termination. 
-               This way the job will be killed if the event() is cleared within the plugin.
-    timeout - max time (in seconds) to wait for job to complete before it is killed. (default=False waits forever)
-    name - Name of job as seen when running 'qstat' command.
-    output_jobID - pass back the jobIB through a multiprocessing.Queue()
-    """
-    def kill_job(session, job, logger=False):
-        """kill the job on the cluster."""
-        session.control(job, drmaa.JobControlAction.TERMINATE)
-        if logger:
-            logger.debug('job:%s terminated on cluster'%job)
-
-    s = False
-    jt = False
-    counter = 0
-    #'-clear' can be added to the options to eliminate the general.q
-    options = '-clear -shell y -p -100 -q %s -pe smp %s'%(queue, nproc)
-    s = drmaa.Session()
-    s.initialize()
-    jt = s.createJobTemplate()
-    jt.workingDirectory=work_dir
-    jt.joinFiles=True
-    jt.nativeSpecification=options
-    # Path to the executable command
-    jt.remoteCommand=command.split()[0]
-    # Rest of command
-    if len(command.split()) > 1:
-        jt.args=command.split()[1:]
-    if logfile:
-        #the ':' is required!
-        jt.outputPath=':%s'%logfile
-    if name:
-        jt.jobName=name
-    #submit the job to the cluster and get the job_id returned
-    job = s.runJob(jt)
-    
-    #return job_id.
-    if output_jobID:
-        output_jobID.put(job)
-
-    #cleanup the input script from the RAM.
-    s.deleteJobTemplate(jt)
-
-    #If multiprocessing.event is set, then run loop to watch until job or script has finished.
-    #if mp_event:
-    #Returns True if job is still running or False if it is dead. Uses CPU to run loop!!!
-    decodestatus = {drmaa.JobState.UNDETERMINED: True,
-                    drmaa.JobState.QUEUED_ACTIVE: True,
-                    drmaa.JobState.SYSTEM_ON_HOLD: True,
-                    drmaa.JobState.USER_ON_HOLD: True,
-                    drmaa.JobState.USER_SYSTEM_ON_HOLD: True,
-                    drmaa.JobState.RUNNING: True,
-                    drmaa.JobState.SYSTEM_SUSPENDED: False,
-                    drmaa.JobState.USER_SUSPENDED: False,
-                    drmaa.JobState.DONE: False,
-                    drmaa.JobState.FAILED: False,
-                    }
-    try:
-        #Loop to keep hold process while job is running or ends when self.running event ends.
-        while decodestatus[s.jobStatus(job)]:
-            if mp_event:
-                if mp_event.is_set() == False:
-                    kill_job(s, job, logger)
-                    break
-            if timeout:
-                if counter > timeout:
-                    kill_job(s, job, logger)
-                    break
-            #time.sleep(0.2)
-            time.sleep(1)
-            counter += 1
-    except:
-        if logger:
-            logger.debug('qsub_necat.py was killed, but the launched job will continue to run')
-
-    #Exit cleanly, otherwise master node gets event client timeout errors after 600s.
-    if s:
-        s.exit()
 
 if __name__ == "__main__":
     import multiprocessing

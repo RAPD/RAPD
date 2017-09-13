@@ -96,7 +96,7 @@ class Launcher_Manager(threading.Thread):
             self.ow_registrar.register()
 
         # Get the initial possible jobs lists
-        full_job_list = self.get_full_job_list()
+        full_job_list = [x.get('job_list') for x in self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"]]
 
         try:
             # This is the server portion of the code
@@ -165,13 +165,6 @@ class Launcher_Manager(threading.Thread):
         if self.overwatch_id:
             self.ow_registrar.stop()
         self.redis_db.stop()
-
-    def get_full_job_list(self):
-        """Get all possible running launchers"""
-        jlist = []
-        for x in self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"]:
-            jlist.append(x.get('job_list'))
-        return jlist
 
     def set_launcher(self, command=False, site_tag=False):
         """Find the correct running launcher to launch a specific job COMMAND"""
