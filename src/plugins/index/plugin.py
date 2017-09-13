@@ -2683,6 +2683,198 @@ rerunning.\n" % spot_count)
                     self.labelit_log[iteration].append("\n%s\n" % error)
                     self.labelit_results[iteration] = {"labelit_results": "FAILED"}
 
+    def new_postprocess_labelit(self, raw_result): # iteration=0, run_before=False, blank=False):
+        """
+        Sends Labelit log for parsing and error checking for rerunning Labelit. Save output dicts.
+        """
+        # print "new_postprocess_labelit"
+
+        # Move to proper directory
+        # xutils.create_folders_labelit(working_dir=self.working_dir, iteration=raw_result["tag"])
+
+        # print "cwd", os.getcwd()
+
+        # pprint(raw_result)
+
+        iteration = raw_result["tag"]
+        stdout = raw_result["stdout"]
+
+        # There is an error
+        # if raw_result["returncode"] != 0:
+        error = False
+
+        # Add to log
+        self.labelit_log[iteration].append("\n\n")
+        self.labelit_log[iteration].extend(stdout.split("\n"))
+
+        # Look for labelit problem with Eiger CBFs
+        if "TypeError: unsupported operand type(s) for %: 'NoneType' and 'int'" in stdout:
+            error = "IOTBX needs patched for Eiger CBF files\n"
+            if not self.errors_printed:
+                self.print_warning("Eiger CBF")
+                self.errors_printed = True
+
+        # Couldn't index
+        # elif "No_Indexing_Solution: (couldn't find 3 good basis vectors)" in stdout:
+        #     error = "No_Indexing_Solution: (couldn't find 3 good basis vectors)"
+
+        # Return if there is an error not caught by parsing
+        if error:
+            self.labelit_log[iteration].append(error)
+            self.labelit_results[iteration] = {"Labelit results": "ERROR"}
+            return False
+
+        # No error or error caught by parsing
+        else:
+
+            parsed_result = labelit.parse_output(stdout, iteration)
+            # Save the return into the shared var
+            self.labelit_results[iteration] = {"Labelit results": parsed_result}
+            # pprint(data)
+            # sys.exit()
+
+            # Do error checking and send to correct place according to iteration.
+            potential_problems = {
+                "bad_input": {
+                    "error": "Labelit did not like your input unit cell dimensions or SG.",
+                    "execute1": functools.partial(self.process_labelit,
+                                                  overrides={"ignore_sublattice": True}),
+                    "execute2": functools.partial(self.process_labelit,
+                                                 overrides={"ignore_user_cell": True,
+                                                            "ignore_user_SG": True})
+                },
+                "bumpiness": {
+                    "error": "Labelit settings need to be adjusted.",
+                    "execute1": functools.partial(self.process_labelit,
+                                                 overrides={"bumpiness": True})
+                },
+                "mosflm_error": {
+                    "error": "Mosflm could not integrate your image.",
+                    "execute1": functools.partial(self.process_labelit,
+                                                 overrides={"increase_mosflm_resolution": True})
+                },
+                "min_good_spots": {
+                    "error": "Labelit did not have enough spots to find a solution",
+                    "execute1": functools.partial(self.process_labelit,
+                                                 overrides={"min_good_spots": True})
+                },
+                "fix_cell": {
+                    "error": "Labelit had multiple choices for user SG and failed.",
+                    "execute1": True,
+                },
+                "fix_labelit": {
+                    "error": "Distance is not getting read correctly from the image header.",
+                    "kill": True
+                },
+                "no_pair": {
+                    "error": "Images are not a pair.",
+                    "kill": True
+                },
+                "failed": {
+                    "error": "Autoindexing Failed to find a solution",
+                    "kill": True
+                },
+                
+            }
+
+            # If Labelit results are OK, then...
+            if isinstance(parsed_result, dict):
+                problem_flag = False
+
+            # Otherwise deal with fixing and rerunning Labelit
+            elif isinstance(parsed_result, tuple):
+                problem_flag = parsed_result[0]
+            else:
+                problem_flag = parsed_result
+
+            if problem_flag:
+                print problem_flag
+                # Failure to index due to too few spots
+                if problem_flag == "min spots":
+                    # print "MIN SPOTS"
+                    # pprint(parsed_result)
+                    spot_count = parsed_result[1]
+                    # Failed
+                    if spot_count < 25:
+                        self.labelit_log[iteration].append("\nNot enough spots to autoindex!\n")
+                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                    # Try again
+                    else:
+                        self.process_labelit(iteration, overrides={"min_spots": parsed_result[1]})
+                # Multiple solutions possible
+                elif problem_flag == "fix_cell":
+                    print "FIX CELL"
+                    problem_actions = potential_problems[problem_flag]
+                    # If there is a potential fix, run it. Otherwise fail gracefully
+                    if "execute%s"%self.labelit_tracker[iteration] in problem_actions:
+                        functools.partial(self.process_labelit,
+                                           iteration=iteration,
+                                           overrides={"fix_cell": True,
+                                                      "lattice_group": parsed_result[1],
+                                                      "labelit_solution": parsed_result[2]})
+                    else:
+                        self.labelit_log[iteration].extend("\n%s\n" % problem_actions['error'])
+                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                # Rest of the problems
+                elif problem_flag in potential_problems:
+                    problem_actions = potential_problems[problem_flag]
+
+                    # If there is a potential fix, run it. Otherwise fail gracefully
+                    if "execute%s"%self.labelit_tracker[iteration] in problem_actions:
+                        problem_actions["execute%s"%self.labelit_tracker[iteration]](iteration=iteration)
+                    else:
+                        self.labelit_log[iteration].extend("\n%s\n" % problem_actions['error'])
+                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+
+                # No solution
+                else:
+                    error = "Labelit failed to find solution."
+                    self.labelit_log[iteration].append("\n%s\n" % error)
+                    self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                """
+                # Mulitple solutions possible
+                elif problem_flag == "fix_cell":
+                    print "FIX CELL"
+                    problem_actions = potential_problems[problem_flag]
+
+                    #problem_actions(iteration=iteration,
+                    #              overrides={
+                    #                   "fix_cell": True,
+                    #                   "lattice_group": parsed_result[1],
+                    #                   "labelit_solution": parsed_result[2]
+                    #               })
+
+                    # If there is a potential fix, run it. Otherwise fail gracefully
+                    if "execute%s"%self.labelit_tracker[iteration] in problem_actions:
+                        problem_actions["execute%s"%self.labelit_tracker[iteration]](iteration=iteration)
+                    else:
+                        self.labelit_log[iteration].extend("\n%s\n" % problem_actions['error'])
+                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+
+                # Rest of the problems
+                elif problem_flag in potential_problems:
+
+                    problem_actions = potential_problems[problem_flag]
+                    # pprint(problem_actions)
+
+                    # No recovery
+                    #if "kill" in problem_actions:
+                    #    self.labelit_log[iteration].extend("\n%s\n" % problem_action['error'])
+                    #    self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                    # Try to correct
+                    #else:
+                    #    if iteration <= self.iterations:
+                    #        if "execute" in problem_actions:
+                    #            problem_actions["execute"](iteration=iteration)
+
+                    # If there is a potential fix, run it. Otherwise fail gracefully
+                    if "execute%s"%self.labelit_tracker[iteration] in problem_actions:
+                        problem_actions["execute%s"%self.labelit_tracker[iteration]](iteration=iteration)
+                    else:
+                        self.labelit_log[iteration].extend("\n%s\n" % problem_actions['error'])
+                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                """
+
     def print_warning(self, warn_type):
         """ """
 
