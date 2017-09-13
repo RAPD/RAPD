@@ -830,7 +830,7 @@ def ParseOutputBest(self, inp, anom=False):
     cleans up the output and looks for errors to pass back for fixing and rerunning.
     passes info back to caller
     """
-
+    raw = []
     sweeps = []
     overall = {}
     sweep = False
@@ -848,6 +848,7 @@ def ParseOutputBest(self, inp, anom=False):
 
     # Check for errors in the log
     for line in log:
+        raw.append(line.rstrip())
         """
         if line.count('ERROR: scaling error > 100%'):
           nbr = True
@@ -1017,8 +1018,10 @@ def ParseOutputBest(self, inp, anom=False):
     overall["omega_start"] = omega_starts[0]
     overall["omega_end"] = omega_starts[-1] + number_images[-1] * delta_omegas[-1]
 
-    return {"sweeps": sweeps,
-            "overall": overall}
+
+    return {"log": raw,
+            "overall": overall,
+            "sweeps": sweeps}
 
 def ParseOutputBestPlots(inp):
     """Parse Best plots file for plots"""
