@@ -457,62 +457,16 @@
       </div>
     </md-card-content>
     <md-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
-      <md-card class="rapd-raw-output-card">
-        <md-card-header>
-          <div style="width:100%">
-            <div style="float:left;">
-              <h3>Best Strategy Normal</h3>
-            </div>
-            <div style="float:right">
-              <button md-mini-fab class="raw-output-toggle" color="primary">
-                <md-icon
-                  *ngIf="log_best_normal_collapsed"
-                  class="md-24"
-                  (click)="log_best_normal_collapsed=false">
-                  keyboard_arrow_down
-                </md-icon>
-                <md-icon
-                  *ngIf="! log_best_normal_collapsed"
-                  class="md-24"
-                  (click)="log_best_normal_collapsed=true">
-                  keyboard_arrow_up
-                </md-icon>
-              </button>
-            </div>
-          </div>
-        </md-card-header>
-        <md-card-content class="rapd-raw-output" [ngClass]="{'raw-collapsed':log_best_normal_collapsed}">
-          <p *ngFor="let line of full_result.results.best_results_norm.log">{{line}}</p>
-        </md-card-content>
-      </md-card>
-      <md-card class="rapd-raw-output-card">
-        <md-card-header>
-          <div style="width:100%">
-            <div style="float:left;">
-              <h3>Best Strategy Normal</h3>
-            </div>
-            <div style="float:right">
-              <button md-mini-fab class="raw-output-toggle" color="primary">
-                <md-icon
-                  *ngIf="log_best_anomalous_collapsed"
-                  class="md-24"
-                  (click)="log_best_anomalous_collapsed=false">
-                  keyboard_arrow_down
-                </md-icon>
-                <md-icon
-                  *ngIf="! log_best_anomalous_collapsed"
-                  class="md-24"
-                  (click)="log_best_anomalous_collapsed=true">
-                  keyboard_arrow_up
-                </md-icon>
-              </button>
-            </div>
-          </div>
-        </md-card-header>
-        <md-card-content class="rapd-raw-output" [ngClass]="{'raw-collapsed':log_best_anomalous_collapsed}">
-          <p *ngFor="let line of full_result.results.best_results_anom.log">{{line}}</p>
-        </md-card-content>
-      </md-card>
+      <app-log-card
+        *ngIf="full_result.results.best_results_norm.log"
+        [log]="full_result.results.best_results_norm.log"
+        header="Best Strategy Normal">
+      </app-log-card>
+      <app-log-card
+        *ngIf="full_result.results.best_results_anom.log"
+        [log]="full_result.results.best_results_anom.log"
+        header="Best Strategy ANOMALOUS">
+      </app-log-card>
     </md-card-content>
   </md-card>
   <md-toolbar *ngIf="full_result" class="result-panel-action-bar">
@@ -521,26 +475,3 @@
     <button md-raised-button (click)="printPage()">Print</button>
   </md-toolbar>
 </div>
-
-<!--
-[{u'distl_res': 1.44,
-  u'file': u'thaum1_PAIR_0_0001.cbf',
-  u'ice_rings': 0,
-  u'labelit_res': 1.49,
-  u'max_cell': 219.0,
-  u'overloads': 0,
-  u'sat_max': 3.2,
-  u'sat_mean': 0.1,
-  u'sat_min': 0.0,
-  u'sat_top_50': 0.55,
-  u'signal_max': 54372.7,
-  u'signal_mean': 1485.2,
-  u'signal_min': 38.4,
-  u'signal_total': 637707.0,
-  u'spot_eccentricity': 0.709,
-  u'spots_good_bragg': 543,
-  u'spots_in_res': 553,
-  u'spots_remove_ice': 579,
-  u'spots_total': 581}]
-
--->

@@ -55,6 +55,7 @@ import { ReindexDialogComponent } from './plugin_components/mx/index-3b34-2-0-0/
 import { HeaderDialogComponent } from './plugin_components/mx/header-dialog/header-dialog.component';
 import { IntegrateBd11200Component } from './plugin_components/mx/integrate-bd11-2-0-0/integrate-bd11-2-0-0.component';
 import { AnalysisF068200Component } from './plugin_components/mx/analysis-f068-2-0-0/analysis-f068-2-0-0.component';
+import { LogCardComponent } from './shared/components/log-card/log-card.component';
 
 export function authHttpServiceFactory(http: Http, options: RequestOptions) {
   return new AuthHttp( new AuthConfig({}), http, options);
@@ -89,7 +90,8 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     HeaderDialogComponent,
     ReindexDialogComponent,
     IntegrateBd11200Component,
-    AnalysisF068200Component
+    AnalysisF068200Component,
+    LogCardComponent
   ],
   imports: [
     BrowserModule,
