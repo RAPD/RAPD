@@ -339,7 +339,7 @@ class Overwatcher(Registrar):
         try:
             while True:
                 time.sleep(5)
-    
+
                 # Get the managed process ow_id if unknown
                 if self.ow_managed_id == None:
                     self.ow_managed_id = self.get_managed_id()
@@ -351,7 +351,7 @@ class Overwatcher(Registrar):
                     # Watched process has failed
                     if status == False:
                         self.restart_managed_process()
-    
+
                 # Update the overwatcher status
                 try:
                     self.update()
@@ -401,7 +401,6 @@ class Overwatcher(Registrar):
         """
 
         # Get connection
-        #red = redis.Redis(connection_pool=self.redis_pool)
         red = self.redis
 
         # Look for keys
@@ -417,6 +416,7 @@ class Overwatcher(Registrar):
         elif len(keys) > 1:
             return None
         else:
+            print "Found it!"
             return keys[0].split(":")[1]
 
 def get_commandline():

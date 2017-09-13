@@ -29,11 +29,13 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
+import logging
 import importlib
 import json
 from pprint import pprint
 import redis.exceptions
 import time
+import threading
 
 # RAPD imports
 import utils.launch_tools as launch_tools
@@ -41,16 +43,17 @@ from utils.commandline import base_parser
 from utils.lock import file_lock
 import utils.site
 import utils.log
+from utils.overwatch import Registrar
 
-# Timer (s) for sending jobs to make sure launchers are alive.
-ALIVE_TIMER = 5
+# Timer (s) for checking which launchers are alive.
+TIMER = 5
 
-class Launcher_Manager(object):
+class Launcher_Manager(threading.Thread):
     """
     Listens to the 'RAPD_JOBS'list and sends jobs to proper
     launcher. 
     """
-    def __init__(self, site, logger=None, overwatch_id=False):
+    def __init__(self, site, logger=False, overwatch_id=False):
         """
         Initialize the Launcher instance
 
@@ -60,8 +63,15 @@ class Launcher_Manager(object):
         logger -- logger instance (default = None)
         overwatch_id -- id for optional overwatcher instance
         """
-        # Get the logger Instance
-        self.logger = logger
+        # If logger is passed in from main use that...
+        if logger:
+            self.logger = logger
+        else:
+            # Otherwise, get the rapd logger
+            self.logger = logging.getLogger("RAPDLogger")
+
+        # Initialize the thread
+        threading.Thread.__init__(self)
 
         # Save passed-in variables
         self.site = site
@@ -73,7 +83,7 @@ class Launcher_Manager(object):
 
         self.connect_to_redis()
 
-        self.run()
+        self.start()
 
     def run(self):
         """The core process of the Launcher instance"""
@@ -81,9 +91,9 @@ class Launcher_Manager(object):
         # Set up overwatcher
         if self.overwatch_id:
             self.ow_registrar = Registrar(site=self.site,
-                                          ow_type="launcher_manager",
+                                          ow_type="control",
                                           ow_id=self.overwatch_id)
-            self.ow_registrar.register({"site_id":self.site.ID})
+            self.ow_registrar.register()
 
         # Get the initial possible jobs lists
         full_job_list = self.get_full_job_list()
@@ -93,11 +103,11 @@ class Launcher_Manager(object):
             while self.running:
                 # Have Registrar update status
                 if self.overwatch_id:
-                    self.ow_registrar.update({"site_id":self.site.ID})
+                    self.ow_registrar.update()
                 
-                # Get updated job list by checking if launchers are running
+                # Get updated job list by checking which launchers are running
                 # Reassign jobs if launcher(s) status changes
-                if round(self.timer%ALIVE_TIMER,1) == 1.0:
+                if round(self.timer%TIMER,1) == 1.0:
                     try:
                         # Check which launchers are running
                         temp = [l for l in full_job_list if self.redis.get("OW:"+l)]
@@ -110,7 +120,7 @@ class Launcher_Manager(object):
                                 while self.redis.llen(_l) != 0:
                                     self.redis.rpoplpush(_l, 'RAPD_JOBS')
 
-                        # Determine which launcher(s) came online
+                        # Determine which launcher(s) came online (Also runs at startup!)
                         online = [line for line in temp if self.job_list.count(line) == False]
                         if len(online) > 0:
                             # Pop jobs off RAPD_JOBS_WAITING and push back onto RAPD_JOBS for reassignment.
@@ -123,7 +133,7 @@ class Launcher_Manager(object):
                     except redis.exceptions.ConnectionError:
                         if self.logger:
                             self.logger.exception("Remote Redis is not up. Waiting for Sentinal to switch to new host")
-                        #time.sleep(1)
+                        time.sleep(1)
 
                 # Look for a new command
                 # This will throw a redis.exceptions.ConnectionError if redis is unreachable
@@ -133,7 +143,7 @@ class Launcher_Manager(object):
                         command = self.redis.rpop("RAPD_JOBS")
                         # Handle the message
                         if command:
-                            self.handle_command(json.loads(command))
+                            self.push_command(json.loads(command))
                             # Only run 1 command
                             # self.running = False
                             # break
@@ -144,9 +154,10 @@ class Launcher_Manager(object):
                     if self.logger:
                         self.logger.exception("Remote Redis is not up. Waiting for Sentinal to switch to new host")
                     time.sleep(1)
+
         except KeyboardInterrupt:
             self.stop()
-        
+
     def stop(self):
         if self.logger:
             self.logger.debug('shutting down launcher manager')
@@ -154,14 +165,14 @@ class Launcher_Manager(object):
         if self.overwatch_id:
             self.ow_registrar.stop()
         self.redis_db.stop()
-    
+
     def get_full_job_list(self):
         """Get all possible running launchers"""
         jlist = []
         for x in self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"]:
             jlist.append(x.get('job_list'))
         return jlist
-    
+
     def set_launcher(self, command=False, site_tag=False):
         """Find the correct running launcher to launch a specific job COMMAND"""
         # list of commands to look for in the 'job_types'
@@ -169,7 +180,7 @@ class Launcher_Manager(object):
         search = ['ALL']
         if command:
             search.append(command)
-        
+
         # Search through launchers
         for x in self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"]:
             # Is launcher running?
@@ -183,57 +194,55 @@ class Launcher_Manager(object):
                                 return (x.get('job_list'), x.get('launch_dir'))
                         else:
                             return (x.get('job_list'), x.get('launch_dir'))
-        
+
         # Return False if no running launchers are appropriate
         return (False, False)
 
-    def handle_command(self, command):
+    def push_command(self, command):
         """
         Handle an incoming command
 
         Keyword arguments:
         command -- command from redis
         """
-        print "handle_command"
+        print "push_command"
         #pprint(command)
 
         # Split up the command
         message = command
         if self.logger:
             self.logger.debug("Command received channel:RAPD_JOBS  message: %s", message)
-        
+
         # get the site_tag from the image header to determine beamline where is was collected.
         site_tag = launch_tools.get_site_tag(message)
-        
+
         # get the correct running launcher and launch_dir
         launcher, launch_dir = self.set_launcher(message['command'], site_tag)
-        print launcher
-        
+
         if launcher:
             # Update preferences to be in server run mode
             if not message.get("preferences"):
                 message["preferences"] = {}
             message["preferences"]["run_mode"] = "server"
-    
+
             # Pass along the Launch directory
             if not message.get("directories"):
                 message["directories"] = {}
             message["directories"]["launch_dir"] = launch_dir
-            
+
             # Push the job on the correct launcher job list
             self.redis.lpush(launcher, json.dumps(message))
             if self.logger:
                 self.logger.debug("Command sent channel:%s  message: %s", launcher, message)
         else:
             self.redis.lpush('RAPD_JOBS_WAITING', json.dumps(message))
-            print 'len(RAPD_JOBS_WAITING): %s'%self.redis.llen('RAPD_JOBS_WAITING')
             if self.logger:
                 self.logger.debug("Could not find a running launcher for this job. Putting job on RAPD_JOBS_WAITING list")
 
     def connect_to_redis(self):
         """Connect to the redis instance"""
         redis_database = importlib.import_module('database.rapd_redis_adapter')
-    
+
         self.redis_db = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
         self.redis = self.redis_db.connect_to_redis()
 
@@ -291,6 +300,10 @@ def main():
                                         logger=logger,
                                         overwatch_id=commandline_args.overwatch_id)
 
-if __name__ == "__main__":
+    try:
+        time.sleep(100)
+    except KeyboardInterrupt:
+        LAUNCHER_MANAGER.stop()
 
+if __name__ == "__main__":
     main()

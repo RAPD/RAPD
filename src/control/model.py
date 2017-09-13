@@ -131,7 +131,7 @@ class Model(object):
         self.init_detectors()
         
         # start launcher manager
-        #self.start_launcher_manager()
+        self.start_launcher_manager()
 
         # Start the run monitor
         self.start_run_monitor()
@@ -242,10 +242,9 @@ class Model(object):
         """Start up the launcher manager to hand off jobs"""
         self.logger.debug("Starting launcher monitor")
         launcher_manager = importlib.import_module("launch.rapd_launcher_manager")
-        self.launcher_manager = launcher_manager.Launcher_Manager(site=site,
-                                                                  logger=self.logger,
-                                                                  overwatch_id=self.overwatch_id)
-        
+        self.launcher_manager = launcher_manager.Launcher_Manager(site=self.site,
+                                                                  overwatch_id=None)
+
     def stop_launcher_manager(self):
         """Stop the launcher manager"""
         self.logger.debug("Stopping launcher manager")
@@ -382,6 +381,7 @@ class Model(object):
 
         self.stop_redis()
         self.stop_server()
+        self.stop_launcher_manager()
         self.stop_image_monitor()
         self.stop_run_monitor()
         #self.stop_cloud_monitor()
