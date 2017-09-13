@@ -12,7 +12,7 @@ import { SessionDialogComponent } from './session-dialog/session-dialog.componen
 import { ChangepassDialogComponent } from '../shared/dialogs/changepass-dialog/changepass-dialog.component';
 
 
-import { AdminService } from '../shared/services/admin.service';
+import { RestService } from '../shared/services/rest.service';
 import { User } from '../shared/classes/user';
 import { Group } from '../shared/classes/group';
 import { Session } from '../shared/classes/session';
@@ -36,7 +36,7 @@ export class AdminpanelComponent implements OnInit {
   sessions: Session[];
   errorMessage: string;
 
-  constructor(private admin_service: AdminService,
+  constructor(private admin_service: RestService,
               public dialog: MdDialog,
               public viewContainerRef: ViewContainerRef) { }
 

@@ -475,8 +475,10 @@
     <md-toolbar *ngIf="full_result" class="result-panel-action-bar">
       <button md-button color="primary" (click)="openReindexDialog()"><md-icon>refresh</md-icon>Reindex</button>
       <button md-button color="primary" (click)="addToProject()"><md-icon>add</md-icon>Project</button>
-      <button md-button color="primary" (click)="openReindexDialog()"><md-icon>priority_high</md-icon>Pin</button>
-      <button md-button color="primary"><md-icon>delete</md-icon>Junk</button>
+      <button md-button *ngIf="current_result.display !== 'pinned'" color="primary" (click)="pinResult(current_result)"><md-icon>arrow_upward</md-icon>Pin</button>
+      <button md-button *ngIf="current_result.display == 'pinned'" color="primary" (click)="undefResult(current_result)"><md-icon>undo</md-icon>UnPin</button>
+      <button md-button *ngIf="current_result.display !== 'junked'" color="primary" (click)="junkResult(current_result)"><md-icon>delete</md-icon>Junk</button>
+      <button md-button *ngIf="current_result.display == 'junked'" color="primary" (click)="undefResult(current_result)"><md-icon>undo</md-icon>UnJunk</button>
       <!-- <button md-button (click)="printPage()">Print</button> -->
     </md-toolbar>
   </md-card>

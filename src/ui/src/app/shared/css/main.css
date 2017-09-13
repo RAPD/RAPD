@@ -117,13 +117,18 @@ article.c-content {
   /*min-height: calc(100vh - 4.75em);*/
 }
 
-.side-list {
+.rapd-side-list {
   background: #E5E5E5;
   box-shadow: 3px 0 6px rgba(0,0,0,0.3);
   width: 16em;
   overflow: auto;
   margin: 0.25em 0 0.5em 0.25em;
   min-height: calc(100vh - 8em);
+}
+
+/* Divider between pinned/normal/trashed results */
+md-divider.rapd-side-list-divider {
+  border-top: 2px dashed rgba(0,0,0,0.2);
 }
 
 .result-panel {

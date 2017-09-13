@@ -2,7 +2,7 @@ import { Component, Input, OnInit, OnDestroy } from '@angular/core';
 
 import { ReplaySubject }   from 'rxjs/Rx';
 
-import { ResultsService } from '../../../shared/services/results.service';
+import { WebsocketService } from '../../../shared/services/websocket.service';
 
 @Component({
   selector: 'app-indexstrategy-aaaa-1',
@@ -95,11 +95,11 @@ export class IndexstrategyAaaa1Component implements OnInit, OnDestroy {
     }
   };
 
-  constructor(private results_service: ResultsService) { }
+  constructor(private websocket_service: WebsocketService) { }
 
   ngOnInit() {
     console.log(this.current_result);
-    this.incomingData$ = this.results_service.subscribeResultDetails(
+    this.incomingData$ = this.websocket_service.subscribeResultDetails(
       this.current_result.result_type,
       this.current_result.result_id);
     this.incomingData$.subscribe(x => this.handleIncomingData(x));

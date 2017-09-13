@@ -20,8 +20,8 @@ import { ChartsModule } from 'ng2-charts/ng2-charts';
 
 import { LoginGuard } from './shared/guards/login-guard';
 import { AuthService } from './shared/services/auth.service';
-import { AdminService } from './shared/services/admin.service';
-import { ResultsService } from './shared/services/results.service';
+import { RestService } from './shared/services/rest.service';
+import { WebsocketService } from './shared/services/websocket.service';
 import { SessionService } from './shared/services/session.service';
 import { RequestsService } from './shared/services/requests.service';
 import { GlobalsService } from './shared/services/globals.service';
@@ -110,8 +110,8 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
   providers: [ appRoutingProviders,
                LoginGuard,
                AuthService,
-               AdminService,
-               ResultsService,
+               RestService,
+               WebsocketService,
                SessionService,
                RequestsService,
                GlobalsService,
