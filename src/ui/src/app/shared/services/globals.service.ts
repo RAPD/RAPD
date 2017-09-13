@@ -8,8 +8,51 @@ export class GlobalsService implements OnInit {
   public site = "SERCAT";
   public site_color = '#EE0000';
 
+  public lineChartColors:Array<Object> = [
+    { // green
+      backgroundColor: 'rgba(0,0,0,0)',
+      borderColor: 'rgba(0, 128, 128, 1)',
+      pointBackgroundColor: 'rgba(0, 128, 128, 1)',
+      pointBorderColor: 'rgba(0, 128, 128, 1)',
+      pointHoverBackgroundColor: 'rgba(0, 128, 128, 1)',
+      pointHoverBorderColor: 'rgba(0, 128, 128, 1)'
+    },
+    { // dark grey
+      backgroundColor: 'rgba(0,0,0,0)',
+      borderColor: 'rgba(122, 198, 150, 1)',
+      pointBackgroundColor: 'rgba(122, 198, 150, 1)',
+      pointBorderColor: 'rgba(122, 198, 150, 1)',
+      pointHoverBackgroundColor: 'rgba(122, 198, 150, 1)',
+      pointHoverBorderColor: 'rgba(122, 198, 150, 1)'
+    },
+    { // grey
+      backgroundColor: 'rgba(0,0,0,0)',
+      borderColor: 'rgba(125, 125, 114, 1)',
+      pointBackgroundColor: 'rgba(125, 125, 114, 1)',
+      pointBorderColor: 'rgba(125, 125, 114, 1)',
+      pointHoverBackgroundColor: 'rgba(125, 125, 114, 1)',
+      pointHoverBorderColor: 'rgba(125, 125, 114, 1)'
+    },
+    { // grey
+      backgroundColor: 'rgba(0,0,0,0)',
+      borderColor: 'rgba(239, 115, 139, 1)',
+      pointBackgroundColor: 'rgba(239, 115, 139, 1)',
+      pointBorderColor: 'rgba(239, 115, 139, 1)',
+      pointHoverBackgroundColor: 'rgba(239, 115, 139, 1)',
+      pointHoverBorderColor: 'rgba(239, 115, 139, 1)'
+    },
+    { // grey
+      backgroundColor: 'rgba(0,0,0,0)',
+      borderColor: 'rgba(139, 0, 0, 1)',
+      pointBackgroundColor: 'rgba(139, 0, 0, 1)',
+      pointBorderColor: 'rgba(139, 0, 0, 1)',
+      pointHoverBackgroundColor: 'rgba(139, 0, 0, 1)',
+      pointHoverBorderColor: 'rgba(139, 0, 0, 1)'
+    }
+  ];
+
   // Spacegroup data
-  public sgs_in_order = [
+  public sgs_in_order:Array<string>  = [
     '1',
     '5',
     '3',
@@ -75,8 +118,8 @@ export class GlobalsService implements OnInit {
     '208',
     '212',
     '213' ];
-  public bravais = ['1','5','3','22','23','21','16','79','75','143','146','196','197','195'];
-  public subgroups = {
+  public bravais:Array<string> = ['1','5','3','22','23','21','16','79','75','143','146','196','197','195'];
+  public subgroups:Object = {
     '1':[],
     '5':[],
     '3':['4'],
@@ -92,7 +135,7 @@ export class GlobalsService implements OnInit {
     '197':['199','211','214'],
     '195':['198','207','208','212','213']
   };
-  public intl2std = {
+  public intl2std:Object = {
     '1':'P1',
     '5':'C2',
     '3':'P2',

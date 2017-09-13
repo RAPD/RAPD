@@ -4,7 +4,10 @@
       <md-card-header class="rapd-result">
         <div style="width:100%">
           <div style="float:left;">
-            <h3>Integration Results for {{full_result.process.repr}}</h3>
+            <h3>Integration Results for
+              {{full_result.process.repr}}
+              <span style="color:blue;"><md-icon (click)="displayRunInfo()">info_outline</md-icon></span>
+            </h3>
           </div>
           <div class="rapd-select-panel">
             <md-select
@@ -23,8 +26,9 @@
       </md-card-header>
       <md-card-content *ngIf="view_mode === 'summary'" class="rapd-result">
         <div fxLayout="row" fxLayoutGap="10px">
-          <div fxFlex="nogrow" fxLayout="column" fxLayoutGap="10px">
-            <div fxFlex="none">
+          <div fxFlex="none">
+            <div>
+              <h3>Indexing Solution</h3>
               <table class="rapd-table">
                 <thead>
                   <tr>
@@ -51,7 +55,8 @@
                 </tbody>
               </table>
             </div>
-            <div fxFlex="none">
+            <div>
+              <h3>Table 1</h3>
               <table class="rapd-table" style="margin-top:10px;">
                 <thead>
                   <tr>
@@ -148,7 +153,8 @@
                   placeholder="Select plot"
                   (change)="setPlot(selected_plot)"
                   [(ngModel)]="selected_plot"
-                  name="plot">
+                  name="plot"
+                  style="width:12em;">
                   <md-option *ngFor="let key of objectKeys(full_result.results.plots)" [value]="key">{{full_result.results.plots[key].parameters.selectlabel}}</md-option>
                 </md-select>
               </div>
@@ -315,18 +321,17 @@
           header="Pointless">
         </app-log-card>
       </md-card-content>
-      <md-card-actions class="rapd-result">
-        <!-- <md-toolbar *ngIf="full_result" class="result-panel-action-bar"> -->
-        <div style="margin:5px;">
-          <button md-raised-button color="primary" (click)="openReintegrateDialog()">Reintegrate</button>
-          <button md-raised-button color="accent" (click)="openMergeDialog()">Merge</button>
-          <button md-button color="primary" (click)="openMrDialog()">MR</button>
-          <button md-button color="primary" (click)="openSadDialog()">SAD</button>
-          <button md-raised-button (click)="openMadDialog()">MAD</button>
-          <button md-raised-button (click)="printPage()">Print</button>
-        </div>
-        <!-- </md-toolbar> -->
-      </md-card-actions>
+      <md-toolbar *ngIf="full_result" class="result-panel-action-bar">
+        <button md-button color="primary" (click)="openReintegrateDialog()"><md-icon>refresh</md-icon>Reintegrate</button>
+        <button md-button color="primary" (click)="openMergeDialog()"><md-icon>call_merge</md-icon>Merge</button>
+        <button md-button color="primary" (click)="openMrDialog()"><md-icon>search</md-icon>MR</button>
+        <button md-button color="primary" (click)="openSadDialog()"><md-icon>search</md-icon>SAD</button>
+        <button md-button color="primary" (click)="openMadDialog()"><md-icon>search</md-icon>MAD</button>
+        <button md-button color="primary"><md-icon>add</md-icon>Project</button>
+        <button md-button color="primary"><md-icon>priority_high</md-icon>Pin</button>
+        <button md-button color="primary"><md-icon>delete</md-icon>Junk</button>
+        <!-- <button md-button (click)="printPage()">Print</button> -->
+      </md-toolbar>
     </md-card>
   <!-- </div> -->
 </div>

@@ -127,7 +127,7 @@
                   [(ngModel)]="selected_plot"
                   name="plot"
                   style="width:12em;">
-                  <md-option *ngFor="let key of objectKeys(full_result.results.plots)" [value]="key">{{plot_select_labels[key]}}</md-option>
+                  <md-option *ngFor="let key of objectKeys(plot_select_labels)" [value]="key">{{plot_select_labels[key]}}</md-option>
                 </md-select>
               </div>
             </div>
@@ -137,9 +137,9 @@
                   <canvas baseChart
                     [datasets]="data.ys"
                     [labels]="data.xs"
-                    [options]="data.lineChartOptions"
+                    [options]="globals_service.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="lineChartColors"
+                    [colors]="globals_service.lineChartColors"
                     (chartHover)="chartHovered($event)"
                     (chartClick)="chartClicked($event)">
                   </canvas>
@@ -150,7 +150,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="lineChartColors"
+                    [colors]="gloabls_service.lineChartColors"
                     (chartHover)="chartHovered($event)"
                     (chartClick)="chartClicked($event)">
                   </canvas>
@@ -161,7 +161,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="lineChartColors"
+                    [colors]="globals_service.lineChartColors"
                     (chartHover)="chartHovered($event)"
                     (chartClick)="chartClicked($event)">
                   </canvas>
@@ -172,7 +172,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="lineChartColors"
+                    [colors]="globals_service.lineChartColors"
                     (chartHover)="chartHovered($event)"
                     (chartClick)="chartClicked($event)">
                   </canvas>
@@ -183,7 +183,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="lineChartColors"
+                    [colors]="globals_service.lineChartColors"
                     (chartHover)="chartHovered($event)"
                     (chartClick)="chartClicked($event)">
                   </canvas>
@@ -194,7 +194,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="lineChartColors"
+                    [colors]="globals_service.lineChartColors"
                     (chartHover)="chartHovered($event)"
                     (chartClick)="chartClicked($event)">
                   </canvas>
@@ -205,7 +205,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="lineChartColors"
+                    [colors]="globals_service.lineChartColors"
                     (chartHover)="chartHovered($event)"
                     (chartClick)="chartClicked($event)">
                   </canvas>
@@ -473,10 +473,10 @@
       </md-card-content>
     </div>
     <md-toolbar *ngIf="full_result" class="result-panel-action-bar">
-      <button md-button color="primary" (click)="openReindexDialog()">Reindex</button>
+      <button md-button color="primary" (click)="openReindexDialog()"><md-icon>refresh</md-icon>Reindex</button>
+      <button md-button color="primary" (click)="addToProject()"><md-icon>add</md-icon>Project</button>
       <button md-button color="primary" (click)="openReindexDialog()"><md-icon>priority_high</md-icon>Pin</button>
       <button md-button color="primary"><md-icon>delete</md-icon>Junk</button>
-      <button md-button color="primary" (click)="addToProject()">+Project</button>
       <!-- <button md-button (click)="printPage()">Print</button> -->
     </md-toolbar>
   </md-card>
