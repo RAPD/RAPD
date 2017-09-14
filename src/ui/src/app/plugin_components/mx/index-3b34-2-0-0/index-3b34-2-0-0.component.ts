@@ -34,13 +34,19 @@ export class Index3b34200Component implements OnInit {
     'rad_damage':'Radiation Damage',
     'wilson':'Wilson'
   };
+
+  Chart: any;
   data:any = {
     lineChartType: 'line',
     lineChartOptions: {
       animation: {
         duration: 500,
       },
-      responsive: true,
+      elements: {
+        line: {
+          tension: 0, // disables bezier curves
+        },
+      },
       legend: {
         display: true,
         position: 'right',
@@ -48,6 +54,7 @@ export class Index3b34200Component implements OnInit {
           boxWidth: 3,
         },
       },
+      responsive: true,
       scales: {
         yAxes: [{
           scaleLabel: {
@@ -65,7 +72,7 @@ export class Index3b34200Component implements OnInit {
         }],
       },
       tooltips: {
-        callbacks: {},
+        callbacks: {}
       },
     }
   };
@@ -269,7 +276,7 @@ export class Index3b34200Component implements OnInit {
 
   // Change the current result's display to undefined
   undefResult(result) {
-    result.display = undefined;
+    result.display = '';
     this.websocket_service.updateResult(result);
   }
 

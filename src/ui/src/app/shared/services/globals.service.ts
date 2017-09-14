@@ -8,7 +8,7 @@ export class GlobalsService implements OnInit {
   public site = "SERCAT";
   public site_color = '#EE0000';
 
-  public lineChartColors:Array<Object> = [
+  public LineChartColors:Array<Object> = [
     { // green
       backgroundColor: 'rgba(0,0,0,0)',
       borderColor: 'rgba(0, 128, 128, 1)',
