@@ -264,17 +264,18 @@ export class Index3b34200Component implements OnInit {
   // Change the current result's display to 'pinned'
   pinResult(result) {
     result.display = 'pinned';
+    this.websocket_service.updateResult(result);
   }
 
   // Change the current result's display to undefined
   undefResult(result) {
     result.display = undefined;
+    this.websocket_service.updateResult(result);
   }
 
   // change the current result's display status to 'junked'
   junkResult(result) {
     result.display = 'junked';
-
     this.websocket_service.updateResult(result);
   }
 

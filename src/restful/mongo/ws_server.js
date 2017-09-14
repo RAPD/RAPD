@@ -226,6 +226,19 @@ function Wss (opt, callback) {
 
               break;
 
+            case 'update_result':
+
+              console.log('update_result');
+
+              Result.
+                update(data.result).
+                exec(function(err, res) {
+                  console.log(err);
+                  console.log(res);
+                });
+
+              break;
+
             // Get result details
             case 'get_result_details':
               console.log('get_result_details');
