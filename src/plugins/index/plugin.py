@@ -210,7 +210,7 @@ class RapdPlugin(Process):
         """
 
         # For debugging
-        pprint(command)
+        # pprint(command)
         # sys.exit()
 
         # Save the start time
@@ -441,7 +441,7 @@ class RapdPlugin(Process):
 
         # Construct the results
         self.construct_results()
-        pprint(self.results)
+        # pprint(self.results)
 
         # Let everyone know we are working on this
         if self.preferences.get("run_mode") == "server":
@@ -1560,8 +1560,8 @@ Distance | % Transmission", level=98, color="white")
         # All runs in error state
         error_count = 0
         for iteration, result in self.labelit_results.iteritems():
-            print "RESULT"
-            pprint(result)
+            # print "RESULT"
+            # pprint(result)
             if result["labelit_results"] in ("ERROR", "TIMEOUT"):
                 error_count += 1
         if error_count == len(self.labelit_results):

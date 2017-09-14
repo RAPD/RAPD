@@ -35,7 +35,6 @@ export class Index3b34200Component implements OnInit {
     'wilson':'Wilson'
   };
 
-  Chart: any;
   data:any = {
     lineChartType: 'line',
     lineChartOptions: {
@@ -86,14 +85,11 @@ export class Index3b34200Component implements OnInit {
               public dialog: MdDialog) { }
 
   ngOnInit() {
-    // console.log(this.current_result);
-    this.incomingData$ = this.websocket_service.subscribeResultDetails(
-      this.current_result.result_type,
-      this.current_result.result_id);
+    this.incomingData$ = this.websocket_service.subscribeResultDetails(this.current_result.result_type, this.current_result.result_id);
     this.incomingData$.subscribe(x => this.handleIncomingData(x));
   }
 
-  public handleIncomingData(data: any) {
+  public handleIncomingData(data:any) {
     // console.log('handleIncomingData', data);
     this.full_result = data;
 

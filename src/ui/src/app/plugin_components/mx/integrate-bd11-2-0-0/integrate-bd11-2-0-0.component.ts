@@ -120,93 +120,43 @@ export class IntegrateBd11200Component implements OnInit {
 
     console.log('setPlot', plot_key);
 
-    let plot_data = this.full_result.results.plots[plot_key];
+    let plot_result = this.full_result.results.plots[plot_key];
 
-    this.data.xs = plot_data.x_data;
-    this.data.ys = plot_data.y_data;
+    // Consistent features
+    this.data.xs = plot_result.x_data;
+    this.data.ys = plot_result.y_data;
+    this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = plot_result.parameters.ylabel;
+    this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = plot_result.parameters.xlabel;
 
     switch (plot_key) {
 
       case 'Rmerge vs Frame':
-        this.data = {
-          xs: this.full_result.results.plots['Rmerge vs Frame'].x_data,
-          ys: this.full_result.results.plots['Rmerge vs Frame'].y_data,
-          lineChartType: 'line',
-          lineChartOptions: {
-            animation: {
-              duration: 500,
-            },
-            elements: {
-              line: {
-                tension: 0, // disables bezier curves
-              },
-            },
-            legend: {
-              display: true,
-              position: 'right',
-              labels: {
-                boxWidth: 3,
-              },
-            },
-            responsive: true,
-            scales: {
-              yAxes: [{
-                scaleLabel: {
-                  display: true,
-                  labelString: this.full_result.results.plots['Rmerge vs Frame'].parameters.ylabel,
-                },
-                // ticks: {
-                  // beginAtZero:true
-                // },
-              }],
-              xAxes: [{
-                afterTickToLabelConversion: undefined,
-                scaleLabel: {
-                  display: true,
-                  labelString: this.full_result.results.plots['Rmerge vs Frame'].parameters.xlabel,
-                },
-                // ticks: {
-                //   autoSkipPadding:4
-                // },
-              }],
-            },
-          },
-        };
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
+        // Axis options
+        // this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = function(data){
+        //   var xLabels = data.ticks;
+        //   xLabels.forEach(function (labels, i) {
+        //       if (i % 10 !== 0){
+        //           xLabels[i] = '';
+        //       }
+        //   });
+        //   // xLabels.push('360');
+        // };
         break;
 
       case 'Imean/RMS scatter':
-        this.data.xs = this.full_result.results.plots['Imean/RMS scatter'].x_data;
-        this.data.ys = this.full_result.results.plots['Imean/RMS scatter'].y_data;
-        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['Imean/RMS scatter'].parameters.ylabel;
-        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['Imean/RMS scatter'].parameters.xlabel;
         this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
         break;
 
       case 'Anomalous & Imean CCs vs Resolution':
-        this.data.xs = this.full_result.results.plots['Anomalous & Imean CCs vs Resolution'].x_data;
-        this.data.ys = this.full_result.results.plots['Anomalous & Imean CCs vs Resolution'].y_data;
-        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['Anomalous & Imean CCs vs Resolution'].parameters.ylabel;
-        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['Anomalous & Imean CCs vs Resolution'].parameters.xlabel;
-        // Y-axis does not begin at 0
-        // this.data.lineChartOptions.scales.yAxes[0].ticks.beginAtZero = false;
-        // this.data.lineChartOptions.scaleBeginAtZero = false;
-        // this.data.lineChartOptions.scaleStartValue = -1;
         this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
         break;
 
       case 'RMS correlation ratio':
-        this.data.xs = this.full_result.results.plots['RMS correlation ratio'].x_data;
-        this.data.ys = this.full_result.results.plots['RMS correlation ratio'].y_data;
-        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['RMS correlation ratio'].parameters.ylabel;
-        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['RMS correlation ratio'].parameters.xlabel;
         this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
         break;
 
       case "I/sigma, Mean Mn(I)/sd(Mn(I))":
-        this.data.xs = this.full_result.results.plots['I/sigma, Mean Mn(I)/sd(Mn(I))'].x_data;
-        this.data.ys = this.full_result.results.plots['I/sigma, Mean Mn(I)/sd(Mn(I))'].y_data;
-        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['I/sigma, Mean Mn(I)/sd(Mn(I))'].parameters.ylabel;
-        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['I/sigma, Mean Mn(I)/sd(Mn(I))'].parameters.xlabel;
         // Make the x labels in 1/A
         this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = function(data){
               var xLabels = data.ticks;
@@ -217,10 +167,6 @@ export class IntegrateBd11200Component implements OnInit {
         break;
 
       case "rs_vs_res":
-        this.data.xs = this.full_result.results.plots['rs_vs_res'].x_data;
-        this.data.ys = this.full_result.results.plots['rs_vs_res'].y_data;
-        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['rs_vs_res'].parameters.ylabel;
-        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['rs_vs_res'].parameters.xlabel;
         // Make the x labels in A
         this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = function(data){
               var xLabels = data.ticks;
@@ -231,41 +177,25 @@ export class IntegrateBd11200Component implements OnInit {
         break;
 
       case "Average I, RMS deviation, and Sd":
-        this.data.xs = this.full_result.results.plots['Average I, RMS deviation, and Sd'].x_data;
-        this.data.ys = this.full_result.results.plots['Average I, RMS deviation, and Sd'].y_data;
-        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['Average I, RMS deviation, and Sd'].parameters.ylabel;
-        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['Average I, RMS deviation, and Sd'].parameters.xlabel;
         this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
         break;
 
       case 'Completeness':
-        this.data.xs = this.full_result.results.plots['Completeness'].x_data;
-        this.data.ys = this.full_result.results.plots['Completeness'].y_data;
-        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['Completeness'].parameters.ylabel;
-        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['Completeness'].parameters.xlabel;
         this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
         break;
 
       case 'Redundancy':
-        this.data.xs = this.full_result.results.plots['Redundancy'].x_data;
-        this.data.ys = this.full_result.results.plots['Redundancy'].y_data;
-        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['Redundancy'].parameters.ylabel;
-        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['Redundancy'].parameters.xlabel;
         this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
         break;
 
       case 'Radiation Damage':
-        this.data.xs = this.full_result.results.plots['Radiation Damage'].x_data;
-        this.data.ys = this.full_result.results.plots['Radiation Damage'].y_data;
-        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = this.full_result.results.plots['Radiation Damage'].parameters.ylabel;
-        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = this.full_result.results.plots['Radiation Damage'].parameters.xlabel;
         this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
         break;
 
       default:
         this.data = false;
     }
-    // console.log(this.data);
+    console.log(this.data);
   }
 
   onViewModeSelect(view_mode:string) {
