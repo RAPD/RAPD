@@ -155,7 +155,7 @@
                   [(ngModel)]="selected_plot"
                   name="plot"
                   style="width:12em;">
-                  <md-option *ngFor="let key of objectKeys(full_result.results.plots)" [value]="key">{{full_result.results.plots[key].parameters.selectlabel}}</md-option>
+                  <md-option *ngFor="let key of objectKeys(plot_select_labels)" [value]="key">{{plot_select_labels[key]}}</md-option>
                 </md-select>
               </div>
             </div>

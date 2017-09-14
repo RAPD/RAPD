@@ -19,6 +19,8 @@ import { ReindexDialogComponent } from './reindex-dialog/reindex-dialog.componen
 export class Index3b34200Component implements OnInit {
 
   @Input() current_result: any;
+  incomingData$: ReplaySubject<string>;
+
   full_result: any;
 
   view_mode: string = 'summary';
@@ -76,7 +78,7 @@ export class Index3b34200Component implements OnInit {
     }
   };
 
-  incomingData$: ReplaySubject<string>;
+
 
   objectKeys = Object.keys;
 
