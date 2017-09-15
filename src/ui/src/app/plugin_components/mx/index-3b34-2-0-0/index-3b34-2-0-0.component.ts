@@ -3,6 +3,7 @@ import { Component,
          OnInit } from '@angular/core';
 import { MdDialog,
          MD_DIALOG_DATA } from '@angular/material';
+
 import { ReplaySubject }   from 'rxjs/Rx';
 
 import { WebsocketService } from '../../../shared/services/websocket.service';
