@@ -48,17 +48,26 @@
               </md-input-container>
             </td>
           </tr>
-          <!-- <tr>
-            <td class="manual-table-rj">Sample Type</td>
+          <tr>
+            <td class="manual-table-rj">Resolution Range</td>
             <td>
-              <md-select [(ngModel)]="model.sample_type"
-                         formControlName="sample_type">
-                <md-option *ngFor="let sample_type of sample_types" [value]="sample_type.val">
-                  {{sample_type.label}}
-                </md-option>
-              </md-select>
+              <md-input-container style="width:5em;">
+                <input mdInput
+                       style="text-align:center;"
+                       placeholder="Low"
+                       formControlName="low_res"
+                       [(ngModel)]="model.low_res">
+              </md-input-container>
+              -
+              <md-input-container style="width:5em;">
+                <input mdInput
+                       style="text-align:center;"
+                       placeholder="Hi"
+                       formControlName="hi_res"
+                       [(ngModel)]="model.hi_res">
+              </md-input-container>
             </td>
-          </tr> -->
+          </tr>
           <tr>
             <td class="manual-table-rj">Spacegroup Decider</td>
             <td>
@@ -83,67 +92,6 @@
               </md-select>
             </td>
           </tr>
-          <!-- <tr [ngClass]="model.strategy_type == 'mosflm' ? 'hidden': ''">
-            <td class="manual-table-rj">Best Complexity</td>
-            <td>
-              <md-select [(ngModel)]="model.best_complexity"
-                         formControlName="best_complexity">
-                <md-option *ngFor="let best_complex of best_complexity" [value]="best_complex">
-                  {{best_complex}}
-                </md-option>
-              </md-select>
-            </td>
-          </tr>
-          <tr [ngClass]="model.strategy_type == 'best' ? 'hidden': ''">
-            <td class="manual-table-rj">Segments & Range</td>
-            <td>
-              <table>
-                <tr>
-                  <td>
-                    <md-select [(ngModel)]="model.mosflm_seg"
-                               formControlName="mosflm_seg">
-                      <md-option *ngFor="let mosflm_seg of mosflm_segs" [value]="mosflm_seg">
-                        {{mosflm_seg}}
-                      </md-option>
-                    </md-select>
-                  </td>
-                  <td>
-                    <md-input-container class="example-full-width">
-                      <input mdInput
-                             placeholder=""
-                             formControlName="mosflm_rot"
-                             [(ngModel)]="model.mosflm_rot">
-                    </md-input-container>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr [ngClass]="model.strategy_type == 'best' ? 'hidden': ''">
-            <td class="manual-table-rj">Start-End</td>
-            <td>
-              <table>
-                <tr>
-                  <td>
-                    <md-input-container class="example-full-width">
-                      <input mdInput
-                             placeholder=""
-                             formControlName="mosflm_start"
-                             [(ngModel)]="model.mosflm_start">
-                      </md-input-container>
-                  </td>
-                  <td>
-                    <md-input-container class="example-full-width">
-                      <input mdInput
-                             placeholder=""
-                             formControlName="mosflm_end"
-                             [(ngModel)]="model.mosflm_end">
-                    </md-input-container>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr> -->
         </tbody>
       </table>
     </div>
