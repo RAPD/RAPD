@@ -39,6 +39,7 @@ import iotbx.pdb.mmcif as iotbx_mmcif
 
 # RAPD imports
 #import plugins.subcontractors.parse as Parse
+from utils.modules import load_module
 
 
 bravais   = ['1', '5', '3', '22', '23', '21', '16', '79', '75', '143', '146', '196', '197', '195']
@@ -2562,6 +2563,8 @@ def get_site(image, load=False):
 
     d = {('MARCCD', 7) : ('sercat', 'SERCAT_BM'),
          ('MARCCD', 101) : ('sercat', 'SERCAT_ID'),
+         #('Eiger-16M', 'Dectris Eiger 16M S/N E-32-0108') : ('necat', 'NECAT_E'),
+         ('Eiger-16M', 'Dectris Eiger 16M S/N E-32-0108') : ('necat', 'NECAT_T'),
          }
 
     i = ImageFactory(image)
@@ -2614,15 +2617,16 @@ def load_cluster_adapter(self):
   """Load the appropriate cluster adapter.
      Need self.site set so it knows which cluster to import.
   """
-  try:
-    if self.site.CLUSTER_ADAPTER:
-      return (load_module(self.site.CLUSTER_ADAPTER))
-    else:
-      return (False)
+  #try:
+  if self.site.CLUSTER_ADAPTER:
+    return (load_module(self.site.CLUSTER_ADAPTER))
+  else:
+    return (False)
+  """
   except:
     # If self.site is not set.
     return (False)
-
+  """
 def killChildren(self,pid):
   """
   Kills the parent process, the children, and the children's children.

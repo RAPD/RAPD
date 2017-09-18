@@ -946,7 +946,7 @@ class RapdPlugin(Process):
                     jobs[str(i)] = Process(target=self.cluster_adapter.processCluster,
                                            #args=(self, (l[i][0], log, self.cluster_queue)))
                                            kwargs= {'command': l[i][0],
-                                                    'work_dir': os.getcwd(),
+                                                    #'work_dir': os.getcwd(),
                                                     'logfile': log,
                                                     'queue': self.cluster_queue})
                 else:
@@ -1054,7 +1054,7 @@ class RapdPlugin(Process):
                     if self.cluster_adapter:
                         Process(target=self.cluster_adapter.processCluster,
                                 kwargs= {'command': inp,
-                                         'work_dir': os.getcwd(),
+                                         #'work_dir': os.getcwd(),
                                          'logfile': log,
                                          'queue': self.cluster_queue}
                                 #args=(self,
@@ -1562,7 +1562,7 @@ Distance | % Transmission", level=98, color="white")
         for iteration, result in self.labelit_results.iteritems():
             # print "RESULT"
             # pprint(result)
-            if result["labelit_results"] in ("ERROR", "TIMEOUT"):
+            if result["Labelit results"] in ("ERROR", "TIMEOUT", "FAILED"):
                 error_count += 1
         if error_count == len(self.labelit_results):
             # print "Unsuccessful indexing run. Exiting."
@@ -2110,7 +2110,6 @@ class RunLabelit(Process):
             'return_address': ('127.0.0.1', 50000)}
     	"""
 
-        self.cluster_adapter = False
         self.start_time= time.time()
 
         # Passed-in vars
@@ -2140,9 +2139,10 @@ class RunLabelit(Process):
         # params
         self.test = params.get("test", False)
 
-        # Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Adds
+        # Will not use RAM if cluster=True since runs would be on separate nodes. Adds
         # 1-3s to total run time.
-        self.cluster_use = params.get("cluster", False)
+        # If using the cluster, get the correct module (already loaded)
+        self.cluster_adapter = params.get("cluster", False)
 
         # If self.cluster_use == True, you can specify a batch queue on your cluster. False to not
         # specify.
@@ -2160,10 +2160,6 @@ class RunLabelit(Process):
         # If limiting number of LABELIT run on cluster.
         # self.red = params.get("redis", False)
         self.short = False
-
-    	# If using the cluster, get the correct module (already loaded)
-        if params.get("cluster", False):
-            self.cluster_adapter = params.get("cluster", False)
 
     	# Make decisions based on input params
         if self.iterations != 6:
@@ -2485,25 +2481,27 @@ rerunning.\n" % spot_count)
                     os.unlink(log)
                 #run = Process(target=self.cluster_adapter.process_cluster_beorun,
                 run = Process(target=self.cluster_adapter.processCluster,
+                              name=iteration,
   	                          kwargs={'command': command,
                                       'work_dir': os.getcwd(),
-                                      'log': log,
+                                      'logfile': log,
                                       'queue': self.cluster_queue,
-                                      'jobID': pid_queue}, )
+                                      'pid_queue': pid_queue}, )
             else:
                 # Run in another thread
-                run = multiprocessing.Process(target=local_subprocess,
-                                              args=({"command": command,
-                                                     "logfile": log,
-                                                     "pid_queue": pid_queue,
-                                                     "result_queue": self.indexing_results_queue,
-                                                     "tag": iteration
-                                                    },
-                                                   )
-                                             )
+                run = Process(target=local_subprocess,
+                              args=({"command": command,
+                                     "logfile": log,
+                                     "pid_queue": pid_queue,
+                                     "result_queue": self.indexing_results_queue,
+                                     "tag": iteration
+                                    },
+                                   )
+                             )
 
             # Start the subprocess
             run.start()
+            #print iteration, run, run.pid
 
             # Save the PID for killing the job later if needed.
             pid = pid_queue.get()
@@ -2849,6 +2847,11 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
         timed_out = False
         timer = 0
         start_time = time.time()
+        
+        #print self.labelit_jobs
+        #print multiprocessing.active_children()
+        #for x in multiprocessing.active_children():
+        #    print x, x.pid, x.name
 
         ellapsed_time = time.time() - start_time
         current_progress = 0

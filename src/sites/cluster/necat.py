@@ -64,7 +64,7 @@ def checkClusterConn(self):
 
 def check_queue(inp):
     """
-    Returns which cluster queue should be used with the pipeline.
+    Returns which cluster batch queue should be used with the plugin.
     """
     d = {#"INDEX+STRATEGY" : 'phase3.q',
          "INDEX"          : 'phase3.q',
@@ -107,7 +107,7 @@ def connectCluster(inp, job=True):
   client.close()
 
 def processCluster(command,
-                   work_dir,
+                   work_dir=False,
                    logfile=False,
                    queue='all.q',
                    nproc=1,
@@ -115,7 +115,7 @@ def processCluster(command,
                    name=False,
                    mp_event=False,
                    timeout=False,
-                   jobID=False):
+                   pid_queue=False):
     """
     Submit job to cluster using DRMAA (when you are already on the cluster).
     Main script should not end with os._exit() otherwise running jobs could be orphanned.
@@ -144,7 +144,10 @@ def processCluster(command,
 
     s = False
     jt = False
+    if work_dir == False:
+        work_dir = os.getcwd()
     counter = 0
+
     #'-clear' can be added to the options to eliminate the general.q
     options = '-clear -shell y -p -100 -q %s -pe smp %s'%(queue, nproc)
     s = drmaa.Session()
@@ -167,8 +170,8 @@ def processCluster(command,
     job = s.runJob(jt)
     
     #return job_id.
-    if jobID:
-        jobID.put(job)
+    if pid_queue:
+        pid_queue.put(job)
 
     #cleanup the input script from the RAM.
     s.deleteJobTemplate(jt)
