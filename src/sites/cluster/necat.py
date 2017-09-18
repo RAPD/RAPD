@@ -32,6 +32,7 @@ import os
 import redis
 import subprocess
 import time
+import tempfile
 
 def checkCluster():
     """
@@ -109,13 +110,14 @@ def connectCluster(inp, job=True):
 def processCluster(command,
                    work_dir=False,
                    logfile=False,
-                   queue='all.q',
+                   batch_queue='all.q',
                    nproc=1,
                    logger=False,
                    name=False,
                    mp_event=False,
                    timeout=False,
-                   pid_queue=False):
+                   pid_queue=False,
+                   result_queue=False):
     """
     Submit job to cluster using DRMAA (when you are already on the cluster).
     Main script should not end with os._exit() otherwise running jobs could be orphanned.
@@ -125,16 +127,17 @@ def processCluster(command,
     command - command to run
     work_dir - working directory
     logfile - print results of command to this file
-    queue - specify a queue on the cluster (options are all.q, phase1.q, phase2.q, phase3.q, 
+    batch_queue - specify a batch queue on the cluster (options are all.q, phase1.q, phase2.q, phase3.q, 
             index.q, general.q, high_mem.q, rosetta.q). If no queue is specified, it will run on any node.
     nproc - number of processor to reserve for the job on a single node. If # of slots 
             are not available, it will wait to launch until resources are free. 
     logger - logger event to pass status reports.
+    name - Name of job as seen when running 'qstat' command.
     mp_event - Pass in the Multiprocessing.Event() that the plugin in uses to signal termination. 
                This way the job will be killed if the event() is cleared within the plugin.
     timeout - max time (in seconds) to wait for job to complete before it is killed. (default=False waits forever)
-    name - Name of job as seen when running 'qstat' command.
-    output_jobID - pass back the jobIB through a multiprocessing.Queue()
+    pid_queue - pass back the jobIB through a multiprocessing.Queue()
+    result_queue - pass back the results in a multiprocessing.Queue()
     """
     def kill_job(session, job, logger=False):
         """kill the job on the cluster."""
@@ -144,8 +147,14 @@ def processCluster(command,
 
     s = False
     jt = False
+    fd = False
     if work_dir == False:
         work_dir = os.getcwd()
+    if result_queue:
+        if logfile == False:
+            fd = tempfile.NamedTemporaryFile(dir=work_dir, delete=False)
+            logfile = fd.name
+        
     counter = 0
 
     #'-clear' can be added to the options to eliminate the general.q
@@ -204,6 +213,16 @@ def processCluster(command,
             #time.sleep(0.2)
             time.sleep(1)
             counter += 1
+        else:
+            # Used for passing back results to queue
+            
+            if result_queue:
+                header = ""
+                with open(logfile, 'rb') as raw:
+                    for line in raw:
+                        header += line
+                        if line.count("X-Binary-Size-Padding"):
+                            break
     except:
         if logger:
             logger.debug('qsub_necat.py was killed, but the launched job will continue to run')

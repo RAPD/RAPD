@@ -948,7 +948,7 @@ class RapdPlugin(Process):
                                            kwargs= {'command': l[i][0],
                                                     #'work_dir': os.getcwd(),
                                                     'logfile': log,
-                                                    'queue': self.cluster_queue})
+                                                    'batch_queue': self.cluster_queue})
                 else:
                     jobs[str(i)] = Process(target=BestAction,
                                            args=((l[i][0], log), self.logger))
@@ -1056,7 +1056,7 @@ class RapdPlugin(Process):
                                 kwargs= {'command': inp,
                                          #'work_dir': os.getcwd(),
                                          'logfile': log,
-                                         'queue': self.cluster_queue}
+                                         'batch_queue': self.cluster_queue}
                                 #args=(self,
                                  #     (inp, log, self.cluster_queue)
                                  #     )
@@ -1562,7 +1562,7 @@ Distance | % Transmission", level=98, color="white")
         for iteration, result in self.labelit_results.iteritems():
             # print "RESULT"
             # pprint(result)
-            if result["Labelit results"] in ("ERROR", "TIMEOUT", "FAILED"):
+            if result["labelit_results"] in ("ERROR", "TIMEOUT", "FAILED"):
                 error_count += 1
         if error_count == len(self.labelit_results):
             # print "Unsuccessful indexing run. Exiting."
@@ -2483,20 +2483,24 @@ rerunning.\n" % spot_count)
                 run = Process(target=self.cluster_adapter.processCluster,
                               name=iteration,
   	                          kwargs={'command': command,
-                                      'work_dir': os.getcwd(),
+                                      #'work_dir': os.getcwd(),
                                       'logfile': log,
-                                      'queue': self.cluster_queue,
-                                      'pid_queue': pid_queue}, )
+                                      'pid_queue': pid_queue,
+                                      'batch_queue': self.cluster_queue,
+                                      "result_queue": self.indexing_results_queue,
+                                      "tag": iteration
+                                      }, )
             else:
                 # Run in another thread
                 run = Process(target=local_subprocess,
+                              name=iteration,
+                              # Should be switched to kwargs
                               args=({"command": command,
                                      "logfile": log,
                                      "pid_queue": pid_queue,
                                      "result_queue": self.indexing_results_queue,
                                      "tag": iteration
-                                    },
-                                   )
+                                    },)
                              )
 
             # Start the subprocess
