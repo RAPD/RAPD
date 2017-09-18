@@ -210,7 +210,7 @@ class RapdPlugin(Process):
         """
 
         # For debugging
-        pprint(command)
+        # pprint(command)
         # sys.exit()
 
         # Save the start time
@@ -271,7 +271,7 @@ class RapdPlugin(Process):
 	    # Load the appropriate cluster adapter or set to False
         if self.cluster_use:
             self.cluster_adapter = xutils.load_cluster_adapter(self)
-            # Based on the command, pick a batch queue on the cluster. 
+            # Based on the command, pick a batch queue on the cluster.
             self.cluster_queue = self.cluster_adapter.check_queue(self.command["command"])
         else:
             self.cluster_adapter = False
@@ -441,7 +441,7 @@ class RapdPlugin(Process):
 
         # Construct the results
         self.construct_results()
-        pprint(self.results)
+        # pprint(self.results)
 
         # Let everyone know we are working on this
         if self.preferences.get("run_mode") == "server":
@@ -1313,7 +1313,7 @@ class RapdPlugin(Process):
 
         # Parse the best results
         data = Parse.ParseOutputBest(self, (log, xml), anom)
-            
+
         # Set directory for future use
         #data["directory"] = os.path.dirname(inp)
 
@@ -1323,7 +1323,7 @@ class RapdPlugin(Process):
             if isinstance(data, dict):
                 # Set directory for future use
                 data["directory"] = os.path.dirname(inp)
-                
+
                 # data.update({"directory":os.path.dirname(inp)})
                 if anom:
                     self.best_anom_results = {"best_results_anom":data}
@@ -1686,7 +1686,7 @@ Distance | % Transmission", level=98, color="white")
             self.logger.debug("No solution was found when sorting Labelit results.")
             self.tprint(arg="\n  Labelit failed to index", level=30, color="red")
             self.labelit_failed = True
-            self.labelit_results = {"labelit_results":False}
+            self.labelit_results = {"labelit_results":"FAILED"}
             self.labelit_dir = os.path.join(self.working_dir, "0")
             os.chdir(self.labelit_dir)
             self.processDistl()
@@ -2562,7 +2562,7 @@ rerunning.\n" % spot_count)
         # Return if there is an error not caught by parsing
         if error:
             self.labelit_log[iteration].append(error)
-            self.labelit_results[iteration] = {"Labelit results": "ERROR"}
+            self.labelit_results[iteration] = {"labelit_results": "ERROR"}
             return False
 
         # No error or error caught by parsing
@@ -2570,7 +2570,7 @@ rerunning.\n" % spot_count)
 
             parsed_result = labelit.parse_output(stdout, iteration)
             # Save the return into the shared var
-            self.labelit_results[iteration] = {"Labelit results": parsed_result}
+            self.labelit_results[iteration] = {"labelit_results": parsed_result}
             # pprint(data)
             # sys.exit()
 
@@ -2615,7 +2615,7 @@ rerunning.\n" % spot_count)
                     "error": "Autoindexing Failed to find a solution",
                     "kill": True
                 },
-                
+
             }
 
             # If Labelit results are OK, then...
@@ -2638,7 +2638,7 @@ rerunning.\n" % spot_count)
                     # Failed
                     if spot_count < 25:
                         self.labelit_log[iteration].append("\nNot enough spots to autoindex!\n")
-                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                        self.labelit_results[iteration] = {"labelit_results": "FAILED"}
                     # Try again
                     else:
                         self.process_labelit(iteration, overrides={"min_spots": parsed_result[1]})
@@ -2655,7 +2655,7 @@ rerunning.\n" % spot_count)
                                                       "labelit_solution": parsed_result[2]})
                     else:
                         self.labelit_log[iteration].extend("\n%s\n" % problem_actions['error'])
-                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                        self.labelit_results[iteration] = {"labelit_results": "FAILED"}
                 # Rest of the problems
                 elif problem_flag in potential_problems:
                     problem_actions = potential_problems[problem_flag]
@@ -2665,13 +2665,13 @@ rerunning.\n" % spot_count)
                         problem_actions["execute%s"%self.labelit_tracker[iteration]](iteration=iteration)
                     else:
                         self.labelit_log[iteration].extend("\n%s\n" % problem_actions['error'])
-                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                        self.labelit_results[iteration] = {"labelit_results": "FAILED"}
 
                 # No solution
                 else:
                     error = "Labelit failed to find solution."
                     self.labelit_log[iteration].append("\n%s\n" % error)
-                    self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                    self.labelit_results[iteration] = {"labelit_results": "FAILED"}
                 """
                 # Mulitple solutions possible
                 elif problem_flag == "fix_cell":
@@ -2690,7 +2690,7 @@ rerunning.\n" % spot_count)
                         problem_actions["execute%s"%self.labelit_tracker[iteration]](iteration=iteration)
                     else:
                         self.labelit_log[iteration].extend("\n%s\n" % problem_actions['error'])
-                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                        self.labelit_results[iteration] = {"labelit_results": "FAILED"}
 
                 # Rest of the problems
                 elif problem_flag in potential_problems:
@@ -2701,7 +2701,7 @@ rerunning.\n" % spot_count)
                     # No recovery
                     #if "kill" in problem_actions:
                     #    self.labelit_log[iteration].extend("\n%s\n" % problem_action['error'])
-                    #    self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                    #    self.labelit_results[iteration] = {"labelit_results": "FAILED"}
                     # Try to correct
                     #else:
                     #    if iteration <= self.iterations:
@@ -2713,7 +2713,7 @@ rerunning.\n" % spot_count)
                         problem_actions["execute%s"%self.labelit_tracker[iteration]](iteration=iteration)
                     else:
                         self.labelit_log[iteration].extend("\n%s\n" % problem_actions['error'])
-                        self.labelit_results[iteration] = {"Labelit results": "FAILED"}
+                        self.labelit_results[iteration] = {"labelit_results": "FAILED"}
                 """
 
     def print_warning(self, warn_type):

@@ -152,7 +152,7 @@ def parse_best_plots(inp):
             # Not in a curve, so plot parameters
             else:
                 plot["parameters"][key] = val
-                print key, val
+                # print key, val
 
         # A new curve has been found
         elif line.startswith("#"):

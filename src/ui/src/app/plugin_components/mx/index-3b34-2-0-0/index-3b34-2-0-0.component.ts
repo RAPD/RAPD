@@ -3,6 +3,7 @@ import { Component,
          OnInit } from '@angular/core';
 import { MdDialog,
          MD_DIALOG_DATA } from '@angular/material';
+
 import { ReplaySubject }   from 'rxjs/Rx';
 
 import { WebsocketService } from '../../../shared/services/websocket.service';
@@ -34,13 +35,18 @@ export class Index3b34200Component implements OnInit {
     'rad_damage':'Radiation Damage',
     'wilson':'Wilson'
   };
+
   data:any = {
     lineChartType: 'line',
     lineChartOptions: {
       animation: {
         duration: 500,
       },
-      responsive: true,
+      elements: {
+        line: {
+          tension: 0, // disables bezier curves
+        },
+      },
       legend: {
         display: true,
         position: 'right',
@@ -48,6 +54,7 @@ export class Index3b34200Component implements OnInit {
           boxWidth: 3,
         },
       },
+      responsive: true,
       scales: {
         yAxes: [{
           scaleLabel: {
@@ -65,7 +72,7 @@ export class Index3b34200Component implements OnInit {
         }],
       },
       tooltips: {
-        callbacks: {},
+        callbacks: {}
       },
     }
   };
@@ -79,14 +86,11 @@ export class Index3b34200Component implements OnInit {
               public dialog: MdDialog) { }
 
   ngOnInit() {
-    // console.log(this.current_result);
-    this.incomingData$ = this.websocket_service.subscribeResultDetails(
-      this.current_result.result_type,
-      this.current_result.result_id);
+    this.incomingData$ = this.websocket_service.subscribeResultDetails(this.current_result.result_type, this.current_result.result_id);
     this.incomingData$.subscribe(x => this.handleIncomingData(x));
   }
 
-  public handleIncomingData(data: any) {
+  public handleIncomingData(data:any) {
     // console.log('handleIncomingData', data);
     this.full_result = data;
 
@@ -264,16 +268,19 @@ export class Index3b34200Component implements OnInit {
   // Change the current result's display to 'pinned'
   pinResult(result) {
     result.display = 'pinned';
+    this.websocket_service.updateResult(result);
   }
 
   // Change the current result's display to undefined
   undefResult(result) {
-    result.display = undefined;
+    result.display = '';
+    this.websocket_service.updateResult(result);
   }
 
   // change the current result's display status to 'junked'
   junkResult(result) {
     result.display = 'junked';
+    this.websocket_service.updateResult(result);
   }
 
   printPage() {

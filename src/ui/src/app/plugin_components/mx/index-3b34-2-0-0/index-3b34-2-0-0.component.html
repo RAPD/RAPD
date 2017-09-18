@@ -133,13 +133,13 @@
             </div>
             <div fxFlex="grow">
               <div class="chart-container" style="position: relative;">
-                <div *ngIf="selected_plot=='background'">
+                <!-- <div *ngIf="selected_plot=='background'">
                   <canvas baseChart
                     [datasets]="data.ys"
                     [labels]="data.xs"
-                    [options]="globals_service.lineChartOptions"
+                    [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="globals_service.lineChartColors"
+                    [colors]="globals_service.LineChartColors"
                     (chartHover)="chartHovered($event)"
                     (chartClick)="chartClicked($event)">
                   </canvas>
@@ -150,18 +150,18 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="gloabls_service.lineChartColors"
+                    [colors]="globals_service.LineChartColors"
                     (chartHover)="chartHovered($event)"
                     (chartClick)="chartClicked($event)">
                   </canvas>
-                </div>
+                </div> -->
                 <div *ngIf="selected_plot=='max_delta_omega'">
                   <canvas baseChart
                     [datasets]="data.ys"
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="globals_service.lineChartColors"
+                    [colors]="globals_service.LineChartColors"
                     (chartHover)="chartHovered($event)"
                     (chartClick)="chartClicked($event)">
                   </canvas>
@@ -172,7 +172,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="globals_service.lineChartColors"
+                    [colors]="globals_service.LineChartColors"
                     (chartHover)="chartHovered($event)"
                     (chartClick)="chartClicked($event)">
                   </canvas>
@@ -183,7 +183,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="globals_service.lineChartColors"
+                    [colors]="globals_service.LineChartColors"
                     (chartHover)="chartHovered($event)"
                     (chartClick)="chartClicked($event)">
                   </canvas>
@@ -194,7 +194,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="globals_service.lineChartColors"
+                    [colors]="globals_service.LineChartColors"
                     (chartHover)="chartHovered($event)"
                     (chartClick)="chartClicked($event)">
                   </canvas>
@@ -205,7 +205,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="globals_service.lineChartColors"
+                    [colors]="globals_service.LineChartColors"
                     (chartHover)="chartHovered($event)"
                     (chartClick)="chartClicked($event)">
                   </canvas>

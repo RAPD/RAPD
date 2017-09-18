@@ -56,6 +56,8 @@ import { HeaderDialogComponent } from './plugin_components/mx/header-dialog/head
 import { IntegrateBd11200Component } from './plugin_components/mx/integrate-bd11-2-0-0/integrate-bd11-2-0-0.component';
 import { AnalysisF068200Component } from './plugin_components/mx/analysis-f068-2-0-0/analysis-f068-2-0-0.component';
 import { LogCardComponent } from './shared/components/log-card/log-card.component';
+import { RunDialogComponent } from './plugin_components/mx/run-dialog/run-dialog.component';
+import { ReintegrateDialogComponent } from './plugin_components/mx/reintegrate-dialog/reintegrate-dialog.component';
 
 export function authHttpServiceFactory(http: Http, options: RequestOptions) {
   return new AuthHttp( new AuthConfig({}), http, options);
@@ -91,7 +93,9 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     ReindexDialogComponent,
     IntegrateBd11200Component,
     AnalysisF068200Component,
-    LogCardComponent
+    LogCardComponent,
+    RunDialogComponent,
+    ReintegrateDialogComponent
   ],
   imports: [
     BrowserModule,
@@ -134,7 +138,9 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     ChangepassDialogComponent,
     PlotOmegaStartComponent,
     HeaderDialogComponent,
-    ReindexDialogComponent
+    RunDialogComponent,
+    ReindexDialogComponent,
+    ReintegrateDialogComponent
   ],
   bootstrap: [AppComponent]
 })
