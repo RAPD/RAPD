@@ -716,14 +716,12 @@ class RapdPlugin(Process):
             else:
                 command = "distl.signal_strength %s" % eval("self.header%s" % l[i]).get("fullname")
                 job = Process(target=local_subprocess,
-                                              args=({"command": command,
-                                                     "logfile": "distl%s.log" % i,
+                                              kwargs={"command": command,
+                                                     "logfile": os.path.join(os.getcwd(), "distl%s.log" % i),
                                                      "pid_queue": False,
                                                      "result_queue": False,
                                                      "tag": i
-                                                    },
-                                                   )
-                                             )
+                                                    },)
                 # job = Process(target=xutils.processLocal,
                 #               args=((inp, "distl%s.log" % i), self.logger))
             job.start()
@@ -950,8 +948,11 @@ class RapdPlugin(Process):
                                                     'logfile': log,
                                                     'batch_queue': self.cluster_queue})
                 else:
-                    jobs[str(i)] = Process(target=BestAction,
-                                           args=((l[i][0], log), self.logger))
+                    #jobs[str(i)] = Process(target=BestAction,
+                    #                       args=((l[i][0], log), self.logger))
+                    jobs[str(i)] = Process(target=local_subprocess,
+                                           kwargs={'command': l[i][0],
+                                                   'logfile': log} )
                 jobs[str(i)].start()
 
         # Check if Best should rerun since original Best strategy is too long for Pilatus using
@@ -1062,7 +1063,11 @@ class RapdPlugin(Process):
                                  #     )
                                 ).start()
                     else:
-                        Process(target=xutils.processLocal, args=(inp, self.logger)).start()
+                        #Process(target=xutils.processLocal, args=(inp, self.logger)).start()
+                        Process(target=local_subprocess,
+                                kwargs={'command': inp,
+                                        'logfile': log}
+                                ).start()
 
         except:
             self.logger.exception("**Error in processMosflm**")
@@ -1128,8 +1133,8 @@ class RapdPlugin(Process):
 
         for i in range(st, end):
             # Print for 1st BEST run
-            if i == 1:
-                self.tprint(arg="  Starting BEST runs", level=98, color="white")
+            #if i == 1:
+            #    self.tprint(arg="  Starting BEST runs", level=98, color="white")
             # Run Mosflm for strategy
             if i == 4:
                 self.tprint(arg="  Starting Mosflm runs", level=98, color="white")
@@ -1140,6 +1145,7 @@ class RapdPlugin(Process):
                 # print "Starting %d" % i
                 xutils.foldersStrategy(self, os.path.join(os.path.basename(self.labelit_dir), str(i)))
                 # Reduces resolution and reruns Mosflm to calc new files, then runs Best.
+                #job = multiprocessing.Process(target=self.errorBest, name="best%s" % i, args=(i, best_version))
                 job = multiprocessing.Process(target=self.errorBest, name="best%s" % i, args=(i, best_version))
             job.start()
             self.jobs[str(i)] = job
@@ -1313,6 +1319,7 @@ class RapdPlugin(Process):
 
         # Parse the best results
         data = Parse.ParseOutputBest(self, (log, xml), anom)
+        #pprint(data)
 
         # Set directory for future use
         #data["directory"] = os.path.dirname(inp)
@@ -1331,7 +1338,7 @@ class RapdPlugin(Process):
                     self.best_results = {"best_results_norm":data}
 
                 # Print to terminal
-                if data["overall"]["anomalous"]:
+                if anom:
                     self.tprint(arg="\nBEST strategy ANOMALOUS", level=98, color="blue")
                 else:
                     self.tprint(arg="\n\nBEST strategy NORMAL", level=98, color="blue")
@@ -2289,18 +2296,11 @@ class RunLabelit(Process):
 
         # try:
         twotheta = self.header.get("twotheta", 0.0)
-        #distance       = str(self.header.get('distance'))
-        #x_beam         = str(self.preferences.get('x_beam', self.header.get('beam_center_x'))) #OLD
-        #Once we figure out the beam center issue, I can switch to this.
-	      #x_beam         = str(self.header.get('beam_center_calc_x', self.header.get('beam_center_x')))
-        #y_beam         = str(self.header.get('beam_center_calc_y', self.header.get('beam_center_y')))
         x_beam = self.header.get("x_beam")
         y_beam = self.header.get("y_beam")
-        # x_beam         = str(self.header.get('beam_center_x'))
-        # y_beam         = str(self.header.get('beam_center_y'))
 
         # If an override beam center is provided, use it
-        if self.preferences.has_key("x_beam"):
+        if self.preferences.get("x_beam", False):
             x_beam = self.preferences["x_beam"]
             y_beam = self.preferences["y_beam"]
             self.tprint("  Using override beam center %s, %s" % (x_beam, y_beam),
@@ -2483,7 +2483,6 @@ rerunning.\n" % spot_count)
                 run = Process(target=self.cluster_adapter.processCluster,
                               name=iteration,
   	                          kwargs={'command': command,
-                                      #'work_dir': os.getcwd(),
                                       'logfile': log,
                                       'pid_queue': pid_queue,
                                       'batch_queue': self.cluster_queue,
@@ -2495,13 +2494,13 @@ rerunning.\n" % spot_count)
                 run = Process(target=local_subprocess,
                               name=iteration,
                               # Should be switched to kwargs
-                              args=({"command": command,
-                                     "logfile": log,
-                                     "pid_queue": pid_queue,
-                                     "result_queue": self.indexing_results_queue,
-                                     "tag": iteration
+                              #args=({"command": command,
+                              kwargs={'command': command,
+                                      "logfile": log,
+                                      "pid_queue": pid_queue,
+                                      "result_queue": self.indexing_results_queue,
+                                      "tag": iteration
                                     },)
-                             )
 
             # Start the subprocess
             run.start()

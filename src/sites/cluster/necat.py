@@ -117,6 +117,7 @@ def processCluster(command,
                    mp_event=False,
                    timeout=False,
                    pid_queue=False,
+                   tag=False,
                    result_queue=False):
     """
     Submit job to cluster using DRMAA (when you are already on the cluster).
@@ -137,7 +138,8 @@ def processCluster(command,
                This way the job will be killed if the event() is cleared within the plugin.
     timeout - max time (in seconds) to wait for job to complete before it is killed. (default=False waits forever)
     pid_queue - pass back the jobIB through a multiprocessing.Queue()
-    result_queue - pass back the results in a multiprocessing.Queue()
+    tag - used by RAPD to keep track of iterations of jobs. (required for result_queue, if used)
+    result_queue - pass back the results in a multiprocessing.Queue() (requires tag)
     """
     def kill_job(session, job, logger=False):
         """kill the job on the cluster."""
@@ -158,7 +160,7 @@ def processCluster(command,
     counter = 0
 
     #'-clear' can be added to the options to eliminate the general.q
-    options = '-clear -shell y -p -100 -q %s -pe smp %s'%(queue, nproc)
+    options = '-clear -shell y -p -100 -q %s -pe smp %s'%(batch_queue, nproc)
     s = drmaa.Session()
     s.initialize()
     jt = s.createJobTemplate()
@@ -213,19 +215,29 @@ def processCluster(command,
             #time.sleep(0.2)
             time.sleep(1)
             counter += 1
-        else:
-            # Used for passing back results to queue
-            
-            if result_queue:
-                header = ""
-                with open(logfile, 'rb') as raw:
-                    for line in raw:
-                        header += line
-                        if line.count("X-Binary-Size-Padding"):
-                            break
     except:
         if logger:
             logger.debug('qsub_necat.py was killed, but the launched job will continue to run')
+    
+    # Used for passing back results to queue
+    if result_queue:
+        # stdout and stderr are joined
+        stderr = ""
+        stdout = ""
+        if os.path.isfile(logfile):
+            with open(logfile, 'rb') as raw:
+                for line in raw:
+                    stdout += line
+            # Delete logile if it was not asked to be saved
+            if fd:
+                os.unlink(logfile)
+        # Setup the result dict to pass back
+        result = {'pid': job,
+                  #"returncode": proc.returncode,
+                  "stdout": stdout,
+                  "stderr": stderr,
+                  "tag": tag}
+        result_queue.put(result)
 
     #Exit cleanly, otherwise master node gets event client timeout errors after 600s.
     if s:
