@@ -140,8 +140,8 @@ export class IntegrateBd11200Component implements OnInit {
     //                    error => console.error(error));
 
     let config = {
-      width: '450px',
-      height: '500px',
+      // width: '600px',
+      // height: '500px',
       data: {
         run_id:this.full_result.process.run_id,
         image_id:this.full_result.process.image_id

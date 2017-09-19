@@ -7,15 +7,13 @@
 
 <md-dialog-content>
   <h3>{{data.basename}}</h3>
-  <md-card style="box-shadow:none;">
-    <md-card-content>
-  <table class="manual-table ngx-datatable material">
-    <thead>
+  <table class="rapd-table">
+    <!-- <thead>
       <tr>
         <th scope="col" style="width:50%;"></th>
         <th scope="col" style="width:50%;"></th>
       </tr>
-    </thead>
+    </thead> -->
     <tbody>
       <tr>
         <td class="manual-table-rj">Oscillation Start</td><td>{{data.osc_start}}&deg;</td>
@@ -27,7 +25,7 @@
         <td class="manual-table-rj">Exposure Time</td><td>{{data.time}} s</td>
       </tr>
       <tr>
-        <td class="manual-table-rj">Transmission</td><td>{{data.transmission}}%</td>
+        <td class="manual-table-rj">Transmission</td><td>{{data.transmission.toFixed(2)}}%</td>
       </tr>
       <tr>
         <td class="manual-table-rj">Wavelength</td><td>{{data.wavelength}} &Aring;</td>
@@ -39,10 +37,10 @@
         <td class="manual-table-rj">Two Theta</td><td>{{data.twotheta}}&deg;</td>
       </tr>
       <tr>
-        <td class="manual-table-rj">Beam Center X</td><td>{{data.x_beam}} mm</td>
+        <td class="manual-table-rj">Beam Center X</td><td>{{data.x_beam.toFixed(2)}} mm</td>
       </tr>
       <tr>
-        <td class="manual-table-rj">Y</td><td>{{data.y_beam}} mm</td>
+        <td class="manual-table-rj">Y</td><td>{{data.y_beam.toFixed(2)}} mm</td>
       </tr>
       <tr>
         <td class="manual-table-rj">Date</td><td>{{data.date.slice(0,10)}}</td>
@@ -50,13 +48,8 @@
       <tr>
         <td class="manual-table-rj">Time</td><td>{{data.date.slice(11,19)}}</td>
       </tr>
-      <!-- <tr>
-        <td class="manual-table-rj">Directory</td><td>{{data.directory}}</td>
-      </tr> -->
     </tbody>
   </table>
-</md-card-content>
-</md-card>
 </md-dialog-content>
 
 <!-- <md-dialog-actions>

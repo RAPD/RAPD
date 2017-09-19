@@ -106,8 +106,8 @@ export class Index3b34200Component implements OnInit {
   displayHeader(header) {
 
     let config = {
-      width: '450px',
-      height: '500px',
+      // width: '450px',
+      // height: '600px',
       data: header };
 
     let dialogRef = this.dialog.open(HeaderDialogComponent, config);

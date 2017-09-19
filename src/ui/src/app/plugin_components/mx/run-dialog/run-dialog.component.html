@@ -1,58 +1,75 @@
-<div *ngIf="run_data">
-  <p *ngFor="let key of objectKeys(run_data)">{{key}}:{{run_data[key]}}</p>
-</div>
 <div md-dialog-title>
   <button md-icon-button md-dialog-close class="button-dialog-top-right">
     <md-icon>close</md-icon>
   </button>
   <h2>Run Details</h2>
 </div>
-
 <md-dialog-content>
-  <div *ngIf="image_data">
-    <h3>{{image_data.basename}}</h3>
-    <table class="rapd-table">
-      <thead>
-        <tr>
-          <th scope="col" style="width:25%;"></th>
-          <th scope="col" style="width:25%;"></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="manual-table-rj">Oscillation Start</td><td>{{image_data.osc_start}}&deg;</td>
-        </tr>
-        <tr>
-          <td class="manual-table-rj">Oscillation Range</td><td>{{image_data.osc_range}}&deg;</td>
-        </tr>
-        <tr>
-          <td class="manual-table-rj">Exposure Time</td><td>{{image_data.time}} s</td>
-        </tr>
-        <tr>
-          <td class="manual-table-rj">Transmission</td><td>{{image_data.transmission}}%</td>
-        </tr>
-        <tr>
-          <td class="manual-table-rj">Wavelength</td><td>{{image_data.wavelength}} &Aring;</td>
-        </tr>
-        <tr>
-          <td class="manual-table-rj">Distance</td><td>{{image_data.distance}} mm</td>
-        </tr>
-        <tr *ngIf="data.twotheta">
-          <td class="manual-table-rj">Two Theta</td><td>{{image_data.twotheta}}&deg;</td>
-        </tr>
-        <tr>
-          <td class="manual-table-rj">Beam Center X</td><td>{{image_data.x_beam}} mm</td>
-        </tr>
-        <tr>
-          <td class="manual-table-rj">Y</td><td>{{image_data.y_beam}} mm</td>
-        </tr>
-        <tr>
-          <td class="manual-table-rj">Date</td><td>{{image_data.date.slice(0,10)}}</td>
-        </tr>
-        <tr>
-          <td class="manual-table-rj">Time</td><td>{{image_data.date.slice(11,19)}}</td>
-        </tr>
-      </tbody>
-    </table>
+  <div fxLayout="row" fxLayoutGap="10px">
+    <div fxFlex *ngIf="run_data">
+      <h3>Run {{run_data.repr}}</h3>
+      <table class="rapd-table">
+        <!-- <thead>
+          <tr>
+            <th scope="col" style="width:50%;"></th>
+            <th scope="col" style="width:50%;"></th>
+          </tr>
+        </thead> -->
+        <tbody>
+          <tr>
+            <td class="manual-table-rj">Starting Image</td><td>{{run_data.start_image_number}}</td>
+          </tr>
+          <tr>
+            <td class="manual-table-rj">Final Image</td><td>{{run_data.start_image_number + run_data.number_images - 1}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div fxFlex *ngIf="image_data">
+      <h3>First Image {{image_data.basename}}</h3>
+      <table class="rapd-table">
+        <!-- <thead>
+          <tr>
+            <th scope="col" style="width:50%;"></th>
+            <th scope="col" style="width:50%;"></th>
+          </tr>
+        </thead> -->
+        <tbody>
+          <tr>
+            <td class="manual-table-rj">Oscillation Start</td><td>{{image_data.osc_start}}&deg;</td>
+          </tr>
+          <tr>
+            <td class="manual-table-rj">Oscillation Range</td><td>{{image_data.osc_range}}&deg;</td>
+          </tr>
+          <tr>
+            <td class="manual-table-rj">Exposure Time</td><td>{{image_data.time}} s</td>
+          </tr>
+          <tr>
+            <td class="manual-table-rj">Transmission</td><td>{{image_data.transmission}}%</td>
+          </tr>
+          <tr>
+            <td class="manual-table-rj">Wavelength</td><td>{{image_data.wavelength}} &Aring;</td>
+          </tr>
+          <tr>
+            <td class="manual-table-rj">Distance</td><td>{{image_data.distance}} mm</td>
+          </tr>
+          <tr *ngIf="data.twotheta">
+            <td class="manual-table-rj">Two Theta</td><td>{{image_data.twotheta}}&deg;</td>
+          </tr>
+          <tr>
+            <td class="manual-table-rj">Beam Center X</td><td>{{image_data.x_beam.toFixed(2)}} mm</td>
+          </tr>
+          <tr>
+            <td class="manual-table-rj">Y</td><td>{{image_data.y_beam.toFixed(2)}} mm</td>
+          </tr>
+          <tr>
+            <td class="manual-table-rj">Date</td><td>{{image_data.date.slice(0,10)}}</td>
+          </tr>
+          <tr>
+            <td class="manual-table-rj">Time</td><td>{{image_data.date.slice(11,19)}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </md-dialog-content>
