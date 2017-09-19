@@ -137,14 +137,9 @@ md-divider.rapd-side-list-divider {
   overflow: scroll;
   margin: 0.25em 0 0.5em 0.25em;
   min-width: calc(100vw - 17em);
-  height: calc(100vh - 7.75em);
+  /*height: calc(100vh - 7.75em);*/
   display: flex;
   flex-wrap: wrap;
-}
-
-.result-panel-main-results {
-  /*height: calc(100vh - 10.em);*/
-  /*overflow: scroll;*/
 }
 
 .result-panel-action-bar {

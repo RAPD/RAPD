@@ -6,7 +6,7 @@ import { FormGroup,
 import { MdDialogRef,
          MD_DIALOG_DATA } from '@angular/material';
 
-import { RequestsService } from '../../../shared/services/requests.service';
+import { RestService } from '../../../shared/services/rest.service';
 import { GlobalsService } from '../../../shared/services/globals.service';
 
 @Component({
@@ -17,6 +17,7 @@ import { GlobalsService } from '../../../shared/services/globals.service';
 export class ReintegrateDialogComponent implements OnInit {
 
   submitted: boolean = false;
+  submit_error: string = '';
   model: any;
   reintegrate_form: FormGroup;
 
@@ -33,7 +34,7 @@ export class ReintegrateDialogComponent implements OnInit {
   ]
 
   constructor(private globals_service: GlobalsService,
-              private requests_service: RequestsService,
+              private rest_service: RestService,
               public dialogRef: MdDialogRef<ReintegrateDialogComponent>,
               @Inject(MD_DIALOG_DATA) public data: any) { }
 
@@ -77,8 +78,8 @@ export class ReintegrateDialogComponent implements OnInit {
   submitReintegrate() {
 
     // Start to make the request object
-    let request: any = {};
-    // request.parent_result_id = this.data._id;
+    let request: any = {command:'INTEGRATE'};
+    request.parent_result_id = this.data._id;
     // request.image1_id = this.data.header1._id;
     //
     // // 2nd image?
@@ -89,26 +90,24 @@ export class ReintegrateDialogComponent implements OnInit {
     // }
 
     // Update the preferences with the form values
-    // request.preferences = Object.assign(this.data.preferences, this.reindex_form.value);
+    request.preferences = Object.assign(this.data.preferences, this.reintegrate_form.value);
 
     // Debugging
-    // console.log(this.reindex_form.value);
+    console.log(request);
 
     this.submitted = true;
-    // this.requests_service.submitRequest(request).subscribe(params => {
-    //   console.log(params);
-    //   this.submitted = false;
-    //   if (params.success === true) {
-    //     this.dialogRef.close();
-    //   }
-    //   // } else {
-    //   //   this.error_message = params;
-    //   // }
-    // });
-
-      // this.dialogRef.close(this.reindex_form.value);
+    this.rest_service.submitJob(request)
+                     .subscribe(
+                       parameters => {
+                         console.log(parameters);
+                         // A problem connecting to REST server
+                         // Submitted is over
+                         this.submitted = false;
+                         this.submit_error = parameters.error;
+                         if (parameters.success) {
+                           this.dialogRef.close();
+                         }
+                       });
 
   }
-
-
 }

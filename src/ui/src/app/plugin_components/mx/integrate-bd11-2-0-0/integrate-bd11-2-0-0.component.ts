@@ -140,8 +140,6 @@ export class IntegrateBd11200Component implements OnInit {
     //                    error => console.error(error));
 
     let config = {
-      // width: '600px',
-      // height: '500px',
       data: {
         run_id:this.full_result.process.run_id,
         image_id:this.full_result.process.image_id
@@ -289,8 +287,6 @@ export class IntegrateBd11200Component implements OnInit {
   openReintegrateDialog() {
 
     let config = {
-      width: '450px',
-      height: '500px',
       data: this.full_result };
 
     let dialogRef = this.dialog.open(ReintegrateDialogComponent, config);
@@ -299,8 +295,6 @@ export class IntegrateBd11200Component implements OnInit {
 
   openProjectDialog() {
     let config = {
-      width: '450px',
-      height: '500px',
       data: this.full_result };
 
     let dialogRef = this.dialog.open(DialogSelectProjectComponent, config);

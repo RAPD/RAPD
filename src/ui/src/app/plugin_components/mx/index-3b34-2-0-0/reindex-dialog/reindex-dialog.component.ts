@@ -99,6 +99,9 @@ export class ReindexDialogComponent implements OnInit {
                          // Submitted is over
                          this.submitted = false;
                          this.submit_error = parameters.error;
+                         if (parameters.success) {
+                           this.dialogRef.close();
+                         }
                        });
   }
 }
