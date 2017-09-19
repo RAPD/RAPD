@@ -60,6 +60,7 @@ import { RunDialogComponent } from './plugin_components/mx/run-dialog/run-dialog
 import { ReintegrateDialogComponent } from './plugin_components/mx/reintegrate-dialog/reintegrate-dialog.component';
 import { DialogSelectProjectComponent } from './shared/components/dialog-select-project/dialog-select-project.component';
 import { DialogNewProjectComponent } from './shared/components/dialog-new-project/dialog-new-project.component';
+import { DialogErrorComponent } from './shared/components/dialog-error/dialog-error.component';
 
 export function authHttpServiceFactory(http: Http, options: RequestOptions) {
   return new AuthHttp( new AuthConfig({}), http, options);
@@ -99,7 +100,8 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     RunDialogComponent,
     ReintegrateDialogComponent,
     DialogSelectProjectComponent,
-    DialogNewProjectComponent
+    DialogNewProjectComponent,
+    DialogErrorComponent
   ],
   imports: [
     BrowserModule,

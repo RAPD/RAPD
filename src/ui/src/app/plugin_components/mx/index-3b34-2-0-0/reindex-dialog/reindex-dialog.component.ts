@@ -3,7 +3,8 @@ import { Component,
          OnInit } from '@angular/core';
 import { FormGroup,
          FormControl } from '@angular/forms';
-import { MdDialogRef,
+import { MdDialog,
+         MdDialogRef,
          MD_DIALOG_DATA } from '@angular/material';
 
 import { RestService } from '../../../../shared/services/rest.service';
@@ -17,6 +18,7 @@ import { GlobalsService } from '../../../../shared/services/globals.service';
 export class ReindexDialogComponent implements OnInit {
 
   submitted: boolean = false;
+  submit_error:string = '';
   model: any;
   reindex_form: FormGroup;
 
@@ -92,9 +94,11 @@ export class ReindexDialogComponent implements OnInit {
     this.rest_service.submitJob(request)
                      .subscribe(
                        parameters => {
-                        //  console.log(parameters);
-                         this.dialogRef.close();
+                         console.log(parameters);
+                         // A problem connecting to REST server
+                         // Submitted is over
+                         this.submitted = false;
+                         this.submit_error = parameters.error;
                        });
   }
-
 }

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { Headers, Response } from '@angular/http';
 
 import { Observable } from 'rxjs/Observable';
+import { Subscriber } from 'rxjs/Subscriber';
 import { AuthHttp } from 'angular2-jwt';
 import * as moment from 'moment';
 
@@ -211,7 +212,13 @@ export class RestService {
       JSON.stringify({request: request}),
       {headers: header}
     )
-    .map(res => res.json());
+    .map(res => res.json())
+    .catch(err => {
+      return Observable.of({
+        success:false,
+        error:err
+      })
+    });
   }
 
 
