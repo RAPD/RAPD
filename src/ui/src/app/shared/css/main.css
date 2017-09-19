@@ -197,9 +197,31 @@ button.button-dialog-top-right.mat-icon-button {
   opacity: 0.5;
 }
 
+/* Table for settings input */
+table.rapd-form-table {
+  table-layout: fixed;
+  /*width: 100%;*/
+  /*border: 1px solid rgba(0,0,0,0.2);*/
+  border-collapse: collapse;
+  /*border-radius: 2px;*/
+  margin: 10px;
+}
 
+td.rapd-form-table-rj {
+  padding: 10px 10px 0 10px;
+  text-align: right;
+}
 
-/* Manual table to look like ngx-datatable */
+td.rapd-form-table-rji {
+  padding: 0px 10px 5px 10px;
+  text-align: right;
+}
+
+td.rapd-form-table-select {
+  padding-bottom: 7px;
+}
+
+/* Table for data display */
 table.rapd-table {
   table-layout: fixed;
   /*width: 100%;*/

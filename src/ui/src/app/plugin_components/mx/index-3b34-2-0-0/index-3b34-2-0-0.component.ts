@@ -79,8 +79,6 @@ export class Index3b34200Component implements OnInit {
     }
   };
 
-
-
   objectKeys = Object.keys;
 
   constructor(private websocket_service: WebsocketService,
@@ -259,8 +257,8 @@ export class Index3b34200Component implements OnInit {
 
   openReindexDialog() {
     let config = {
-      height: '600px',
-      width: '500px',
+      // height: '600px',
+      // width: '500px',
       data: this.full_result
     };
 

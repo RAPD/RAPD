@@ -194,4 +194,25 @@ export class RestService {
     console.log(body);
     return body || {};
   }
+
+
+  //
+  // JOB methods
+  //
+  public submitJob(request:any): Observable<any>{
+
+    console.log('submitJob', request);
+
+    let header = new Headers();
+    header.append('Content-Type', 'application/json'); // 'application/x-www-form-urlencoded'
+
+    return this.authHttp.put(
+      this.apiUrl + '/requests',
+      JSON.stringify({request: request}),
+      {headers: header}
+    )
+    .map(res => res.json());
+  }
+
+
 }

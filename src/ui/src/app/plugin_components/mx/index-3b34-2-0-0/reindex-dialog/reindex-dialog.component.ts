@@ -6,7 +6,7 @@ import { FormGroup,
 import { MdDialogRef,
          MD_DIALOG_DATA } from '@angular/material';
 
-import { RequestsService } from '../../../../shared/services/requests.service';
+import { RestService } from '../../../../shared/services/rest.service';
 import { GlobalsService } from '../../../../shared/services/globals.service';
 
 @Component({
@@ -35,13 +35,11 @@ export class ReindexDialogComponent implements OnInit {
     mosflm_segs = [1,2,3,4,5];
 
     constructor(private globals_service: GlobalsService,
-                private requests_service: RequestsService,
+                private rest_service: RestService,
                 public dialogRef: MdDialogRef<ReindexDialogComponent>,
                 @Inject(MD_DIALOG_DATA) public data: any) { }
 
   ngOnInit() {
-
-    // console.log(this.data);
 
     this.model = {
       spacegroup: this.data.preferences.spacegroup,
@@ -76,7 +74,7 @@ export class ReindexDialogComponent implements OnInit {
   submitReindex() {
 
     // Start to make the request object
-    let request: any = {};
+    let request: any = {command:'INDEX'};
     request.parent_result_id = this.data._id;
     request.image1_id = this.data.header1._id;
 
@@ -90,23 +88,13 @@ export class ReindexDialogComponent implements OnInit {
     // Update the preferences with the form values
     request.preferences = Object.assign(this.data.preferences, this.reindex_form.value);
 
-    // Debugging
-    // console.log(this.reindex_form.value);
-
     this.submitted = true;
-    this.requests_service.submitRequest(request).subscribe(params => {
-      console.log(params);
-      this.submitted = false;
-      if (params.success === true) {
-        this.dialogRef.close();
-      }
-      // } else {
-      //   this.error_message = params;
-      // }
-    });
-
-      // this.dialogRef.close(this.reindex_form.value);
-
+    this.rest_service.submitJob(request)
+                     .subscribe(
+                       parameters => {
+                        //  console.log(parameters);
+                         this.dialogRef.close();
+                       });
   }
 
 }

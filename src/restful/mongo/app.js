@@ -828,19 +828,11 @@ apiRoutes.route('/projects')
   });
 
 
-// routes that end with requests
+// routes that end with jobs
 // ----------------------------------------------------
 // These are redis-based queries
 // route to return all current requests (GET http://localhost:3000/api/requests)
 apiRoutes.route('/requests')
-
-  .get(function(req, res) {
-    // redis_client.
-    // Group.find({}, function(err, groups) {
-    //   console.log(groups);
-    //   res.json(groups);
-    // });
-  })
 
   // add a request for a process to launch (accessed at PUT http://localhost:3000/api/requests)
   .put(function(req,res) {
@@ -849,18 +841,26 @@ apiRoutes.route('/requests')
 
     let request = req.body.request;
 
-    console.log(request);
-
-    redis_client.lpush('RAPD_CLIENT_REQUESTS', JSON.stringify(request), function(err, replies) {
-      console.log(err);
-      console.log(replies);
+    redis_client.lpush('RAPD_CLIENT_REQUESTS', JSON.stringify(request), function(err, queue_length) {
+      if (err) {
+        console.error(err);
+        let params = {
+          success: false,
+          error: err
+        };
+        res.json(params);
+      } else {
+        console.log('queue length:', queue_length);
+        let params = {
+          success: true,
+          queue_length: queue_length
+        };
+        res.json(params);
+      }
     });
+  }); // End .put(function(req,res) {
 
-    let params = {
-      success: true,
-      operation: 'request'
-    };
-    res.json(params);
+
 
     // // Updating
     // if (group._id) {
@@ -919,7 +919,7 @@ apiRoutes.route('/requests')
     //     });
     //   });
     // }
-  });
+  // });
 
 
 // REGISTER OUR ROUTES -------------------------------
