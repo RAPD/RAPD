@@ -8,6 +8,7 @@ import * as moment from 'moment';
 import { User } from '../classes/user';
 import { Group } from '../classes/group';
 import { Session } from '../classes/session';
+import { Project } from '../classes/project';
 
 @Injectable()
 export class RestService {
