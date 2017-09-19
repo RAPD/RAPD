@@ -99,7 +99,7 @@ LOG_LEVEL = 50
 UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"
 
 # RAPD cluster adapter location
-CLUSTER_ADAPTER = 'sites.cluster.necat'
+CLUSTER_ADAPTER = "sites.cluster.necat"
 
 # Launcher Manager to sort out where to send jobs
 LAUNCHER_MANAGER_LOCK_FILE = "/tmp/rapd2/lock/launcher_manager.lock"

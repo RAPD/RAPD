@@ -160,7 +160,10 @@ def construct_command(image_headers, commandline_args, detector_module):
 
     # Unknown
     command["preferences"]["beam_flip"] = False
-    command["preferences"]["multiprocessing"] = False
+    #command["preferences"]["multiprocessing"] = False
+    
+    # Launches jobs at same time using more cores. Much Faster!!
+    command["preferences"]["multiprocessing"] = True
 
     # Site parameters
     command["preferences"]["site_parameters"] = {}
@@ -433,7 +436,8 @@ def main():
     # Get site - commandline wins over the environmental variable
     site = False
     site_module = False
-    detector = {}
+    #detector = {}
+    detector = False
     detector_module = False
     if commandline_args.site:
         site = commandline_args.site
@@ -446,13 +450,28 @@ def main():
         detector_module = detector_utils.load_detector(detector)
 
     # If no site or detector, try to figure out the detector
-    if not (site or detector):
+    # if not (site or detector):
+    """
+    if site or detector == False:
         detector = detector_utils.get_detector_file(data_files["files"][0])
         if isinstance(detector, dict):
             if detector.has_key("site"):
                 site_target = detector.get("site")
                 site_file = utils.site.determine_site(site_arg=site_target)
-                # print site_file
+                site_module = importlib.import_module(site_file)
+                detector_target = site_module.DETECTOR.lower()
+                detector_module = detector_utils.load_detector(detector_target)
+            elif detector.has_key("detector"):
+                site_module = False
+                detector_target = detector.get("detector")
+                detector_module = detector_utils.load_detector(detector_target)
+    """
+    if not detector:
+        detector = detector_utils.get_detector_file(data_files["files"][0])
+        if isinstance(detector, dict):
+            if detector.has_key("site"):
+                site_target = detector.get("site")
+                site_file = utils.site.determine_site(site_arg=site_target)
                 site_module = importlib.import_module(site_file)
                 detector_target = site_module.DETECTOR.lower()
                 detector_module = detector_utils.load_detector(detector_target)
@@ -461,13 +480,19 @@ def main():
                 detector_target = detector.get("detector")
                 detector_module = detector_utils.load_detector(detector_target)
 
+    # If someone specifies the site or found in env.
+    if site and not site_module:
+        site_file = utils.site.determine_site(site_arg=site)
+        site_module = importlib.import_module(site_file)
+    
     # Have a detector - read in file data
     if detector_module:
         image_headers = {}
         for index, data_file in enumerate(data_files["files"]):
             if site_module:
                 image_headers[data_file] = detector_module.read_header(data_file,
-                                                                       site_module.BEAM_SETTINGS)
+                                                                       #site_module.BEAM_SETTINGS)
+                                                                       site_module.BEAM_INFO.get(site))
             else:
                 image_headers[data_file] = detector_module.read_header(data_file)
             # If this image is derived from an hdf5 master file, tag it
@@ -475,7 +500,7 @@ def main():
                 image_headers[data_file]["hdf5_source"] = data_files["hdf5_files"][index]
 
         logger.debug("Image headers: %s", image_headers)
-        print_headers(tprint, image_headers)
+        # print_headers(tprint, image_headers)
 
         command = construct_command(image_headers=image_headers,
                                     commandline_args=commandline_args,
@@ -522,7 +547,8 @@ def main():
     tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
-    plugin_instance = plugin.RapdPlugin(None, command, tprint, logger)
+    #plugin_instance = plugin.RapdPlugin(None, command, tprint, logger)
+    plugin_instance = plugin.RapdPlugin(site_module, command, tprint, logger)
     plugin_instance.start()
 
 if __name__ == "__main__":

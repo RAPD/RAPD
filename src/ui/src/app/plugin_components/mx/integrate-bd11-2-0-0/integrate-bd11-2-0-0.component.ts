@@ -7,10 +7,14 @@ import { Component,
          ViewContainerRef } from '@angular/core';
 import { MdDialog,
          MD_DIALOG_DATA } from '@angular/material';
+
 import { ReplaySubject }   from 'rxjs/Rx';
 
 import { WebsocketService } from '../../../shared/services/websocket.service';
 import { GlobalsService } from '../../../shared/services/globals.service';
+
+import { RunDialogComponent } from '../run-dialog/run-dialog.component';
+import { ReintegrateDialogComponent } from '../reintegrate-dialog/reintegrate-dialog.component';
 
 // Import analysis plugin components here
 import * as mx from '../';
@@ -124,6 +128,47 @@ export class IntegrateBd11200Component implements OnInit {
     }
   }
 
+  // Display the header information
+  displayRunInfo() {
+
+    let config = {
+      width: '450px',
+      height: '500px',
+      data: this.full_result };
+
+    let dialogRef = this.dialog.open(RunDialogComponent, config);
+  }
+
+  onViewModeSelect(view_mode:string) {
+
+    var self = this;
+
+    console.log(view_mode);
+
+    setTimeout(function() {
+      if (view_mode === 'analysis') {
+        // If there is analysis data, determine the component to use
+        if (self.full_result.results.analysis) {
+
+          let plugin = self.full_result.results.analysis.plugin;
+          const component_name = (plugin.type + plugin.id + plugin.version.replace(/\./g, '') + 'component').toLowerCase();
+          console.log(component_name);
+          console.log(analysis_components);
+
+          // Create a componentfactoryResolver instance
+          const factory = self.componentfactoryResolver.resolveComponentFactory(analysis_components[component_name]);
+
+          // Create the component
+          self.analysis_component = self.analysistarget.createComponent(factory);
+          console.log(self.analysistarget);
+          // Set the component current_result value
+          // component.instance.current_result = event.value;
+          self.analysis_component.instance.result = self.full_result.results.analysis;
+        }
+      }
+    }, 100);
+  }
+
   onPlotSelect(plot_key:string) {
 
     console.log('onPlotSelect', plot_key);
@@ -229,34 +274,15 @@ export class IntegrateBd11200Component implements OnInit {
     console.log(this.data);
   }
 
-  onViewModeSelect(view_mode:string) {
+  openReintegrateDialog() {
 
-    var self = this;
+    let config = {
+      width: '450px',
+      height: '500px',
+      data: this.full_result };
 
-    console.log(view_mode);
+    let dialogRef = this.dialog.open(ReintegrateDialogComponent, config);
 
-    setTimeout(function() {
-      if (view_mode === 'analysis') {
-        // If there is analysis data, determine the component to use
-        if (self.full_result.results.analysis) {
-
-          let plugin = self.full_result.results.analysis.plugin;
-          const component_name = (plugin.type + plugin.id + plugin.version.replace(/\./g, '') + 'component').toLowerCase();
-          console.log(component_name);
-          console.log(analysis_components);
-
-          // Create a componentfactoryResolver instance
-          const factory = self.componentfactoryResolver.resolveComponentFactory(analysis_components[component_name]);
-
-          // Create the component
-          self.analysis_component = self.analysistarget.createComponent(factory);
-          console.log(self.analysistarget);
-          // Set the component current_result value
-          // component.instance.current_result = event.value;
-          self.analysis_component.instance.result = self.full_result.results.analysis;
-        }
-      }
-    }, 100);
   }
 
   // Change the current result's display to 'pinned'
