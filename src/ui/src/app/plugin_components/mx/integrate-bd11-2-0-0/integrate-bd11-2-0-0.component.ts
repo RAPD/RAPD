@@ -15,6 +15,7 @@ import { GlobalsService } from '../../../shared/services/globals.service';
 
 import { RunDialogComponent } from '../run-dialog/run-dialog.component';
 import { ReintegrateDialogComponent } from '../reintegrate-dialog/reintegrate-dialog.component';
+import { DialogSelectProjectComponent } from '../../../shared/components/dialog-select-project/dialog-select-project.component';
 
 // Import analysis plugin components here
 import * as mx from '../';
@@ -283,6 +284,15 @@ export class IntegrateBd11200Component implements OnInit {
 
     let dialogRef = this.dialog.open(ReintegrateDialogComponent, config);
 
+  }
+
+  openProjectDialog() {
+    let config = {
+      width: '450px',
+      height: '500px',
+      data: this.full_result };
+
+    let dialogRef = this.dialog.open(DialogSelectProjectComponent, config);
   }
 
   // Change the current result's display to 'pinned'

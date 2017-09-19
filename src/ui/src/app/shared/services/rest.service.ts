@@ -145,4 +145,32 @@ export class RestService {
     .map(res => res.json());
   }
 
+
+  // PROJECT methods
+  public getProjects(): Observable<Project[]> {
+
+    console.log('getProject');
+
+    return this.authHttp.get(this.apiUrl + '/projects')
+      .map(this.extractProjects);
+      // .catch(this.handleError);
+
+    // let header = new Headers();
+    // header.append('Content-Type', 'application/json'); // 'application/x-www-form-urlencoded'
+    //
+    // return this.authHttp.get(
+    //   this.apiUrl + '/projects/' + session._id,
+    //   JSON.stringify({session: session}),
+    //   {headers: header}
+    // )
+    // .map(res => res.json());
+
+  }
+
+  private extractProjects(res: Response, error) {
+    console.log('error', error);
+    let body = res.json();
+    console.log(body);
+    return body || {};
+  }
 }
