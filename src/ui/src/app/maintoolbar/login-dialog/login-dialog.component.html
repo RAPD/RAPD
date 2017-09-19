@@ -1,6 +1,12 @@
-<button md-icon-button class="button-dialog-top-right" (click)="exitLogin()">
+<div md-dialog-title>
+  <button md-icon-button md-dialog-close class="button-dialog-top-right">
+    <md-icon>close</md-icon>
+  </button>
+  <!-- <h2>Image Details</h2> -->
+</div>
+<!-- <button md-icon-button class="button-dialog-top-right" (click)="exitLogin()">
   <md-icon>close</md-icon>
-</button>
+</button> -->
 <div *ngIf="mode === 'login'">
   <h1>
     Login
