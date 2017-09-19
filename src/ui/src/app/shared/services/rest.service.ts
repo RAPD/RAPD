@@ -9,6 +9,8 @@ import { User } from '../classes/user';
 import { Group } from '../classes/group';
 import { Session } from '../classes/session';
 import { Project } from '../classes/project';
+import { Image } from '../classes/image';
+import { Run } from '../classes/run';
 
 @Injectable()
 export class RestService {
@@ -144,6 +146,24 @@ export class RestService {
       {headers: header}
     )
     .map(res => res.json());
+  }
+
+  // IMAGE methods
+  public getImageData(_id:string): Observable<Image> {
+
+    console.log('getImageData _id:', _id);
+
+    return this.authHttp.get(this.apiUrl + '/images/' + _id)
+                        .map(res => res.json());
+  }
+
+  // RUN methods
+  public getRunData(_id:string): Observable<Run> {
+
+    console.log('getRunData _id:', _id);
+
+    return this.authHttp.get(this.apiUrl + '/runs/' + _id)
+                        .map(res => res.json());
   }
 
 

@@ -37,6 +37,8 @@ var mongoose = require('mongoose');
 var Session = require('./models/session');
 var User = require('./models/user');
 var Group = require('./models/group');
+var Image = require('./models/image');
+var Run = require('./models/run');
 
 // Email Configuration
 var smtp_transport = nodemailer.createTransport(smtpTransport({
@@ -82,9 +84,9 @@ var apiRoutes = express.Router();              // get an instance of the express
 apiRoutes.use(function(req, res, next) {
 
     // Testing sessions
-    req.session.working = 'yes!';
-    console.log('working =', req.session.working);
-    console.log(req.session);
+    // req.session.working = 'yes!';
+    // console.log('working =', req.session.working);
+    // console.log(req.session);
 
     // do logging
     console.log('Something is happening.');
@@ -158,8 +160,8 @@ apiRoutes.post('/authenticate', function(req, res) {
 // route to authenticate a user (POST http://localhost:8080/api/requestpass)
 apiRoutes.post('/requestpass', function(req, res) {
 
-  console.log('requestpass');
-  console.log(req.body);
+  // console.log('requestpass');
+  // console.log(req.body);
 
   User.
   findOne({email: req.body.email}).
@@ -193,45 +195,6 @@ apiRoutes.post('/requestpass', function(req, res) {
     }
     // res.json(sessions);
   });
-
-  // User.getAuthenticated(req.body.email, req.body.password, function(err, user, reason) {
-  //
-  //   console.log(err);
-  //
-  //   // login was successful if we have a user
-  //   if (user) {
-  //     // create a token
-  //     var token = jwt.sign(user, app.get('superSecret'), {
-  //       expiresIn: 86400 // expires in 24 hours
-  //     });
-  //
-  //     // return the information including token as JSON
-  //     console.log('returning token');
-  //     res.json({
-  //       success: true,
-  //       message: 'Enjoy your token!',
-  //       token: token
-  //     });
-  //   // otherwise we can determine why we failed
-  //   } else {
-  //     var reasons = User.failedLogin;
-  //     switch (reason) {
-  //         case reasons.NOT_FOUND:
-  //             res.json({ success: false, message: 'Authentication failed. No such user.' });
-  //             break;
-  //         case reasons.PASSWORD_INCORRECT:
-  //             res.json({ success: false, message: 'Authentication failed. Wrong password.' });
-  //             // note: these cases are usually treated the same - don't tell
-  //             // the user *why* the login failed, only that it did
-  //             break;
-  //         case reasons.MAX_ATTEMPTS:
-  //             res.json({ success: false, message: 'Authentication failed. Too many failed attempts' });
-  //             // send email or otherwise notify user that account is
-  //             // temporarily locked
-  //             break;
-  //     }
-  //   }
-  // });
 });
 
 // Setup route
@@ -811,22 +774,58 @@ apiRoutes.route('/groups/:group_id')
       });
   });
 
-  // routes that end with projects
-  // ----------------------------------------------------
-  // route to return all users (GET http://localhost:8080/api/users)
-  apiRoutes.route('/projects')
+// Routes that end with images
+// -----------------------------------------------------------------------------
+// route to return image data given an id (GET http://localhost:8080/api/images/:image_id)
+apiRoutes.route('/images/:image_id')
+  .get(function(req, res) {
+
+    console.log('GET image:', req.params.image_id);
+
+    Image.
+      findOne({_id:req.params.image_id}).
+      exec(function(err, image) {
+        console.log(image);
+        res.json(image);
+      })
+
+  });
+
+
+  // Routes that end with runs
+  // -----------------------------------------------------------------------------
+  // route to return image data given an id (GET http://localhost:8080/api/runs/:run_id)
+  apiRoutes.route('/runs/:run_id')
     .get(function(req, res) {
-      Project.
-        find({}).
-        populate('groups', 'groupname').
-        exec(function(err, users) {
-          console.log(users);
-          for (let user of users) {
-            user.password = undefined;
-          }
-          res.json(users);
-        });
+
+      console.log('GET run:', req.params.run_id);
+
+      Run.
+        findOne({_id:req.params.run_id}).
+        exec(function(err, run) {
+          console.log(run);
+          res.json(run);
+        })
+
     });
+
+
+// Routes that end with projects
+// ----------------------------------------------------
+// route to return all users (GET http://localhost:8080/api/users)
+apiRoutes.route('/projects')
+  .get(function(req, res) {
+    Project.
+      find({}).
+      populate('groups', 'groupname').
+      exec(function(err, users) {
+        console.log(users);
+        for (let user of users) {
+          user.password = undefined;
+        }
+        res.json(users);
+      });
+  });
 
 
 // routes that end with requests

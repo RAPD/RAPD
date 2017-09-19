@@ -10,6 +10,7 @@ import { MdDialog,
 
 import { ReplaySubject }   from 'rxjs/Rx';
 
+import { RestService } from '../../../shared/services/rest.service';
 import { WebsocketService } from '../../../shared/services/websocket.service';
 import { GlobalsService } from '../../../shared/services/globals.service';
 
@@ -106,6 +107,7 @@ export class IntegrateBd11200Component implements OnInit {
   objectKeys = Object.keys;
 
   constructor(private componentfactoryResolver: ComponentFactoryResolver,
+              private rest_service: RestService,
               private websocket_service: WebsocketService,
               private globals_service: GlobalsService,
               public dialog: MdDialog) { }
@@ -132,10 +134,19 @@ export class IntegrateBd11200Component implements OnInit {
   // Display the header information
   displayRunInfo() {
 
+    // this.rest_service.getImageData(this.full_result.process.image_id)
+    //                  .subscribe(
+    //                    image_data => console.log(image_data),
+    //                    error => console.error(error));
+
     let config = {
       width: '450px',
       height: '500px',
-      data: this.full_result };
+      data: {
+        run_id:this.full_result.process.run_id,
+        image_id:this.full_result.process.image_id
+      }
+    };
 
     let dialogRef = this.dialog.open(RunDialogComponent, config);
   }
