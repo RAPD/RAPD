@@ -2,6 +2,8 @@ import { Component,
          Input,
          OnInit } from '@angular/core';
 
+import { GlobalsService } from '../../../shared/services/globals.service';
+
 @Component({
   selector: 'app-analysis-f068-2-0-0',
   templateUrl: './analysis-f068-2-0-0.component.html',
@@ -14,54 +16,7 @@ export class AnalysisF068200Component implements OnInit {
   selected_plot: string;
   data: any;
 
-  raw_xtriage_collapsed: boolean = true;
-  raw_molrep_collapsed: boolean = true;
-  raw_phaser_collapsed: boolean = true;
-
-  public lineChartColors:Array<any> = [
-    { // green
-      backgroundColor: 'rgba(0,0,0,0)',
-      borderColor: 'rgba(0, 128, 128, 1)',
-      pointBackgroundColor: 'rgba(0, 128, 128, 1)',
-      pointBorderColor: 'rgba(0, 128, 128, 1)',
-      pointHoverBackgroundColor: 'rgba(0, 128, 128, 1)',
-      pointHoverBorderColor: 'rgba(0, 128, 128, 1)'
-    },
-    { // dark grey
-      backgroundColor: 'rgba(0,0,0,0)',
-      borderColor: 'rgba(122, 198, 150, 1)',
-      pointBackgroundColor: 'rgba(122, 198, 150, 1)',
-      pointBorderColor: 'rgba(122, 198, 150, 1)',
-      pointHoverBackgroundColor: 'rgba(122, 198, 150, 1)',
-      pointHoverBorderColor: 'rgba(122, 198, 150, 1)'
-    },
-    { // grey
-      backgroundColor: 'rgba(0,0,0,0)',
-      borderColor: 'rgba(125, 125, 114, 1)',
-      pointBackgroundColor: 'rgba(125, 125, 114, 1)',
-      pointBorderColor: 'rgba(125, 125, 114, 1)',
-      pointHoverBackgroundColor: 'rgba(125, 125, 114, 1)',
-      pointHoverBorderColor: 'rgba(125, 125, 114, 1)'
-    },
-    { // grey
-      backgroundColor: 'rgba(0,0,0,0)',
-      borderColor: 'rgba(239, 115, 139, 1)',
-      pointBackgroundColor: 'rgba(239, 115, 139, 1)',
-      pointBorderColor: 'rgba(239, 115, 139, 1)',
-      pointHoverBackgroundColor: 'rgba(239, 115, 139, 1)',
-      pointHoverBorderColor: 'rgba(239, 115, 139, 1)'
-    },
-    { // grey
-      backgroundColor: 'rgba(0,0,0,0)',
-      borderColor: 'rgba(139, 0, 0, 1)',
-      pointBackgroundColor: 'rgba(139, 0, 0, 1)',
-      pointBorderColor: 'rgba(139, 0, 0, 1)',
-      pointHoverBackgroundColor: 'rgba(139, 0, 0, 1)',
-      pointHoverBorderColor: 'rgba(139, 0, 0, 1)'
-    }
-  ];
-
-  constructor() { }
+  constructor(private globals_service: GlobalsService) { }
 
   ngOnInit() {
 
