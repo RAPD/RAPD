@@ -132,14 +132,13 @@ md-divider.rapd-side-list-divider {
 }
 
 .result-panel {
-  background: #E5E5E5;
-  box-shadow: 3px 0 6px rgba(0,0,0,0.3);
+  /*background: #E5E5E5;*/
+  /*box-shadow: 3px 0 6px rgba(0,0,0,0.3);*/
   overflow: scroll;
   margin: 0.25em 0 0.5em 0.25em;
-  min-width: calc(100vw - 17em);
-  /*height: calc(100vh - 7.75em);*/
-  display: flex;
-  flex-wrap: wrap;
+  /*min-width: calc(100vw - 17em);*/
+  /*display: flex;*/
+  /*flex-wrap: wrap;*/
 }
 
 .result-panel-action-bar {
@@ -264,23 +263,8 @@ table.rapd-table {
   text-align: center;
 }
 
-/*.rapd-table tbody tr:first-child {
-  border-bottom: 1px solid rgba(0,0,0,0.1);
-  border-top: 1px solid rgba(200,200,200,0);
-}
-
-.rapd-table tbody tr:last-child {
-  border-bottom: 1px solid rgba(0,0,0,0.1);
-  border-top: 1px solid rgba(200,200,200,0);
-}*/
-
-
-
-
 md-card.rapd-result {
-  /*background-color: rgba(0,0,0,0.1);*/
-    overflow: scroll;
-    width:100%;
+  overflow: scroll;
 }
 
 md-card-header.rapd-result {
@@ -311,6 +295,10 @@ div.rapd-result {
   border-radius: 2px;
   margin: 4px;
   padding: 5px;
+}
+
+div.rapd-result-paragraph {
+  margin-left: 10px;
 }
 
 /* div that holds a select that looks separate */
