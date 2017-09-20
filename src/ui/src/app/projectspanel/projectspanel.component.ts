@@ -10,9 +10,22 @@ import { Project } from '../shared/classes/project';
 })
 export class ProjectspanelComponent implements OnInit {
 
+  projects: Project[];
+
   constructor(private rest_service: RestService) { }
 
   ngOnInit() {
+    this.getProjects();
+  }
+
+  getProjects() {
+    this.rest_service.getProjects()
+      .subscribe(
+        parameters => {
+          console.log(parameters);
+          this.projects = parameters;
+        }
+      )
   }
 
 }

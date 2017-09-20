@@ -1,39 +1,41 @@
-<article class="c-content">
-  <ngx-datatable
-    class="material"
-    [rows]="sessions"
-    [loadingIndicator]="loadingIndicator"
-    [columnMode]="'force'"
-    [headerHeight]="50"
-    [footerHeight]="50"
-    [rowHeight]="'auto'"
-    [reorderable]="reorderable"
-    [selectionType]="'single'"
-    (select)='selectSession($event)'>
-    <ngx-datatable-column name="Site" prop="site">
-      <ng-template let-value="value" ngx-datatable-cell-template>
-        {{value}}
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="Group" prop="group.groupname">
-      <ng-template let-value="value" ngx-datatable-cell-template>
-        {{value}}
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="Start" prop="start_display">
-      <ng-template let-value="value" ngx-datatable-cell-template>
-        {{value}}
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="End" prop="end_display">
-      <ng-template let-value="value" ngx-datatable-cell-template>
-        {{value}}
-      </ng-template>
-    </ngx-datatable-column>
-    <ngx-datatable-column name="Directory" prop="data_root_directory">
-      <ng-template let-value="value" ngx-datatable-cell-template>
-        {{value}}
-      </ng-template>
-    </ngx-datatable-column>
-  </ngx-datatable>
-</article>
+<div class="rapd-main-panel">
+  <article class="c-content">
+    <ngx-datatable
+      class="material"
+      [rows]="sessions"
+      [loadingIndicator]="loadingIndicator"
+      [columnMode]="'force'"
+      [headerHeight]="50"
+      [footerHeight]="50"
+      [rowHeight]="'auto'"
+      [reorderable]="reorderable"
+      [selectionType]="'single'"
+      (select)='selectSession($event)'>
+      <ngx-datatable-column name="Site" prop="site">
+        <ng-template let-value="value" ngx-datatable-cell-template>
+          {{value}}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Group" prop="group.groupname">
+        <ng-template let-value="value" ngx-datatable-cell-template>
+          {{value}}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Start" prop="start_display">
+        <ng-template let-value="value" ngx-datatable-cell-template>
+          {{value}}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="End" prop="end_display">
+        <ng-template let-value="value" ngx-datatable-cell-template>
+          {{value}}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Directory" prop="data_root_directory">
+        <ng-template let-value="value" ngx-datatable-cell-template>
+          {{value}}
+        </ng-template>
+      </ngx-datatable-column>
+    </ngx-datatable>
+  </article>
+</div>

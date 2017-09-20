@@ -168,32 +168,16 @@ export class RestService {
   }
 
 
+  //
   // PROJECT methods
+  //
   public getProjects(): Observable<Project[]> {
 
-    console.log('getProject');
+    console.log('getProjects');
 
     return this.authHttp.get(this.apiUrl + '/projects')
-      .map(this.extractProjects);
-      // .catch(this.handleError);
-
-    // let header = new Headers();
-    // header.append('Content-Type', 'application/json'); // 'application/x-www-form-urlencoded'
-    //
-    // return this.authHttp.get(
-    //   this.apiUrl + '/projects/' + session._id,
-    //   JSON.stringify({session: session}),
-    //   {headers: header}
-    // )
-    // .map(res => res.json());
-
-  }
-
-  private extractProjects(res: Response, error) {
-    console.log('error', error);
-    let body = res.json();
-    console.log(body);
-    return body || {};
+      .map(res => res.json())
+      .catch(error => this.handleError(error));
   }
 
 
@@ -202,24 +186,26 @@ export class RestService {
   //
   public submitJob(request:any): Observable<any>{
 
-    console.log('submitJob', request);
+    // console.log('submitJob', request);
 
     let header = new Headers();
     header.append('Content-Type', 'application/json'); // 'application/x-www-form-urlencoded'
 
     return this.authHttp.put(
       this.apiUrl + '/requests',
-      JSON.stringify({request: request}),
-      {headers: header}
+      JSON.stringify({request:request}),
+      {headers:header}
     )
     .map(res => res.json())
-    .catch(err => {
-      return Observable.of({
-        success:false,
-        error:err
-      })
-    });
+    .catch(error => this.handleError(error));
   }
 
+  // Generic error handler for connection problems
+  private handleError(error) {
+    return Observable.of({
+      success:false,
+      error:error
+    });
+  }
 
 }

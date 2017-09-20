@@ -244,6 +244,9 @@ apiRoutes.get('/', function(req, res) {
     res.json({ message: 'Welcome to the RAPD api!' });
 });
 
+
+
+
 // // User routes
 // apiRoutes.route('/user')
 //   // create a user (accessed at POST http://localhost:3000/api/user)
@@ -810,22 +813,22 @@ apiRoutes.route('/images/:image_id')
     });
 
 
-// Routes that end with projects
-// ----------------------------------------------------
-// route to return all users (GET http://localhost:8080/api/users)
-apiRoutes.route('/projects')
-  .get(function(req, res) {
-    Project.
-      find({}).
-      populate('groups', 'groupname').
-      exec(function(err, users) {
-        console.log(users);
-        for (let user of users) {
-          user.password = undefined;
-        }
-        res.json(users);
-      });
-  });
+// // Routes that end with projects
+// // ----------------------------------------------------
+// // route to return all users (GET http://localhost:8080/api/users)
+// apiRoutes.route('/projects')
+//   .get(function(req, res) {
+//     Project.
+//       find({}).
+//       populate('groups', 'groupname').
+//       exec(function(err, users) {
+//         console.log(users);
+//         for (let user of users) {
+//           user.password = undefined;
+//         }
+//         res.json(users);
+//       });
+//   });
 
 
 // routes that end with jobs
@@ -933,6 +936,10 @@ app.get('/', function(req, res) {
 
 // all of our routes will be prefixed with /api
 app.use('/api', apiRoutes);
+
+// Imported routes
+app.use('/api', require('./routes/projects'));
+
 
 module.exports = app;
 
