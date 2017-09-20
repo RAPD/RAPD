@@ -107,6 +107,7 @@ export class AnalysisF068200Component implements OnInit {
         break;
 
         case 'NZ test':
+
           // No tick conversion
           this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
           break;
@@ -117,9 +118,11 @@ export class AnalysisF068200Component implements OnInit {
           break;
 
       default:
-        this.data = false;
+        break;
+        // this.data = false;
     }
 
+    console.log(this.data.ys);
   }
 
 }

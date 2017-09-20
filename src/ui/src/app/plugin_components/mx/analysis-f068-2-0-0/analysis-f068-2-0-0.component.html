@@ -135,7 +135,7 @@
                 [labels]="data.xs"
                 [options]="data.lineChartOptions"
                 [chartType]="data.lineChartType"
-                [colors]="lineChartColors"
+                [colors]="globals_service.LineChartColors"
                 (chartHover)="chartHovered($event)"
                 (chartClick)="chartClicked($event)">
               </canvas>
