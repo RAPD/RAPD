@@ -43,7 +43,6 @@ export class DialogNewProjectComponent implements OnInit {
       description: new FormControl(),
       group: new FormControl(),
     });
-
   }
 
   submitNewProject() {
@@ -55,7 +54,7 @@ export class DialogNewProjectComponent implements OnInit {
       form_value.group = this.profile.groups[0]._id;
     }
 
-    console.log(form_value);
+    // console.log(form_value);
 
     this.submitted = true;
     this.rest_service.newProject(form_value)
@@ -67,7 +66,7 @@ export class DialogNewProjectComponent implements OnInit {
                          this.submitted = false;
                          this.submit_error = parameters.error;
                          if (parameters.success) {
-                           this.dialogRef.close();
+                           this.dialogRef.close(parameters.project);
                          }
                        });
   }

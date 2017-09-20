@@ -2,7 +2,7 @@ import { Component,
          Inject,
          OnInit } from '@angular/core';
 import { FormGroup,
-        FormControl } from '@angular/forms';
+         FormControl } from '@angular/forms';
 import { MdDialogRef,
          MD_DIALOG_DATA } from '@angular/material';
 

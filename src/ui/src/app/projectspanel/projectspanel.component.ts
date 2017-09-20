@@ -34,6 +34,12 @@ export class ProjectspanelComponent implements OnInit {
 
   openNewProjectDialog() {
     let dialogRef = this.dialog.open(DialogNewProjectComponent);
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.projects.push(result);
+      }
+    });
   }
 
 }
