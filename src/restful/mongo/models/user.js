@@ -129,7 +129,9 @@ var reasons = UserSchema.statics.failedLogin = {
 
 UserSchema.statics.getAuthenticated = function(email, password, cb) {
 
-    this.findOne({ email: email }, function(err, user) {
+    this.findOne({ email: email }).
+         populate('groups', 'groupname').
+         exec(function(err, user) {
 
         if (err) {
           console.log(err);

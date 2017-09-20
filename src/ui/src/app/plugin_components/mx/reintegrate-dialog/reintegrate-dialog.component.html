@@ -99,4 +99,11 @@
   </md-dialog-actions>
 </div>
 <div *ngIf="submit_error">
+  <md-dialog-content>
+    <h2>Error</h2>
+    {{submit_error}}
+  </md-dialog-content>
+  <md-dialog-actions align="end">
+    <button md-raised-button color="primary" md-dialog-close>Ok</button>
+  </md-dialog-actions>
 </div>

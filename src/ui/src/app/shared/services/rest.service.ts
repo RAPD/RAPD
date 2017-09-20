@@ -180,6 +180,22 @@ export class RestService {
       .catch(error => this.handleError(error));
   }
 
+  public newProject(project): Observable<any> {
+
+    console.log('newProject');
+
+    let header: Headers = new Headers();
+    header.append('Content-Type', 'application/json');
+
+    return this.authHttp.put(
+      this.apiUrl + '/projects',
+      JSON.stringify({project:project}),
+      {headers:header}
+    )
+    .map(res => res.json())
+    .catch(error => this.handleError(error));
+  }
+
 
   //
   // JOB methods

@@ -113,12 +113,12 @@ apiRoutes.use(function(req, res, next) {
 apiRoutes.post('/authenticate', function(req, res) {
 
   console.log('authenticate');
-  console.log(req.body);
+  // console.log(req.body);
 
   User.getAuthenticated(req.body.email, req.body.password, function(err, user, reason) {
 
-    console.log(err);
-    console.log(user);
+    // console.log(err);
+    console.log('2>>>>>', user);
 
     // login was successful if we have a user
     if (user) {
@@ -452,9 +452,9 @@ apiRoutes.route('/sessions/:session_id')
 
             Session.
               findById({_id: return_session._id}).
-              populate('groups', 'groupname').
+              populate('group', 'groupname').
               exec(function(err, new_session) {
-                console.log(new_session);
+                // console.log(new_session);
                 let params = {
                   success: true,
                   operation: 'add',
