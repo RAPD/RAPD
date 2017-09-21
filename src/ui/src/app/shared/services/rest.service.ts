@@ -25,8 +25,8 @@ export class RestService {
     console.log('getUsers');
 
     return this.authHttp.get(this.apiUrl + '/users')
-      .map(this.extractUsers);
-      // .catch(this.handleError);
+      .map(this.extractUsers)
+      .catch(this.handleError);
   }
 
   private extractUsers(res: Response, error) {
@@ -236,6 +236,7 @@ export class RestService {
 
   // Generic error handler for connection problems
   private handleError(error) {
+    console.error(error);
     return Observable.of({
       success:false,
       error:error
