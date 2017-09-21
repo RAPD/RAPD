@@ -57,14 +57,14 @@ import json
 import logging
 import logging.handlers
 import os
-import pickle
-import shutil
+#import pickle
+#import shutil
 import socket
 import sys
 import time
 import uuid
-
 import redis
+
 # RAPD imports
 import utils.commandline
 import utils.lock
@@ -556,122 +556,6 @@ class Gatherer(object):
             self.tag = "test"
             # sys.exit(9)
 
-    """
-    Collected Image Information
-    """
-    def get_image_data_OLD(self):
-        """
-        Coordinates the retrieval of image data
-        Called if image information file modification time is newer than the time in memory
-        """
-
-        # Get the image data line(s)
-        image_lines = self.get_image_line()
-
-        # Parse the lines
-        image_data = self.parse_image_line(image_lines)
-
-        # Return the parsed data
-        return image_data
-
-    def check_for_image_collected_OLD(self):
-        """
-        Returns True if image information file has new timestamp, False if not
-        """
-        tries = 0
-        while tries < 5:
-            try:
-                statinfo = os.stat(self.image_data_file)
-                break
-            except:
-                if tries == 4:
-                    return False
-                time.sleep(0.01)
-                tries += 1
-
-        # The modification time has not changed
-        if self.image_time == statinfo.st_mtime:
-            return False
-        # The file has changed
-        else:
-            self.image_time = statinfo.st_mtime
-            return True
-
-    def get_image_line_OLD(self):
-        """
-        return contents of xf_status
-        """
-        # Copy the file to prevent conflicts with other programs
-        # HACK
-        tmp_file = "/tmp/"+uuid.uuid4().hex
-        shutil.copyfile(self.image_data_file, tmp_file)
-
-        # Read in the lines of the file
-        in_lines = open(tmp_file, "r").readlines()
-
-        # Remove the temporary file
-        os.unlink(tmp_file)
-
-        return in_lines
-
-    def parse_image_line_OLD(self, lines):
-        """
-        Parse the lines from the image information file and return a dict that
-        is somewhat intelligible. Expect the file to look something like:
-        8288 /data/BM_Emory_jrhorto.raw/xdc5/x13/x13_015/XDC-5_Pn13_r1_1.0400
-        """
-
-        try:
-            for i in range(len(lines)):
-                sline = lines[i].split()
-                if len(sline) == 2:
-                    if sline[1].strip() == "<none>":
-                        self.logger.debug("image_data_file empty")
-                        image_name = False
-                        break
-                    else:
-                        # image_name = os.path.realpath(sline[1])
-                        image_name = sline[1]
-                        break
-
-            self.logger.debug("NecatGatherer.parse_image_line - %s", image_name)
-            return image_name
-        except:
-            self.logger.exception("Failure to parse image data file - error in format?")
-            return False
-
-    """
-    Run information methods
-    """
-    def check_for_run_info_OLD(self):
-        """
-        Returns True if run_data_file has been changed, False if not
-        """
-
-        # Make sure we have a file to check
-        if self.run_data_file:
-            tries = 0
-            while tries < 5:
-                try:
-                    statinfo = os.stat(self.run_data_file)
-                    break
-                except:
-                    if tries == 4:
-                        return False
-                    time.sleep(0.01)
-                    tries += 1
-
-            # The modification time has not changed
-            if self.run_time == statinfo.st_ctime:
-                return False
-
-            # The file has changed
-            else:
-                self.run_time = statinfo.st_ctime
-                return True
-        else:
-            return False
-    
     def get_run_data(self, run_info):
         """Put together info from run and pass it back."""
         # Split it
@@ -869,8 +753,3 @@ def main():
 if __name__ == '__main__':
 
     main()
-
-
-
-
-

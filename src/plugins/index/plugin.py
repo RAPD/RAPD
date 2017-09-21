@@ -269,13 +269,23 @@ class RapdPlugin(Process):
                 self.gui = False
 
         # Load the appropriate cluster adapter or set to False
+        #if self.cluster_use:
+        #    self.cluster_adapter = xutils.load_cluster_adapter(self)
+        #    # Based on the command, pick a batch queue on the cluster.
+        #    self.batch_queue = self.cluster_adapter.check_queue(self.command["command"])
+        #else:
+        #    self.cluster_adapter = False
+        #    self.batch_queue = False
+        
+        # Setup the appropriate launcher
         if self.cluster_use:
-            self.cluster_adapter = xutils.load_cluster_adapter(self)
-            # Based on the command, pick a batch queue on the cluster.
-            self.cluster_queue = self.cluster_adapter.check_queue(self.command["command"])
+            cluster_launcher = xutils.load_cluster_adapter(self)
+            self.launcher = cluster_launcher.processCluster
+            # Based on the command, pick a batch queue on the cluster. Added to input kwargs
+            self.batch_queue = {'batch_queue': cluster_launcher.check_queue(self.command["command"])}
         else:
-            self.cluster_adapter = False
-            self.cluster_queue = False
+            self.launcher = local_subprocess
+            self.batch_queue = {}
 
         # Set timer for distl. "False" will disable.
         if self.header2:
@@ -467,7 +477,7 @@ class RapdPlugin(Process):
 
         # Setup event for job control on cluster (Only works at NE-CAT using DRMAA for
         # job submission)
-        if self.cluster_adapter:
+        if self.cluster_use:
             self.running = Event()
             self.running.set()
 
@@ -528,12 +538,21 @@ class RapdPlugin(Process):
             self.logger.debug("AutoindexingStrategy::preprocess_raddose")
 
         # try:
-        print self.site_parameters
+        #print self.site_parameters
         beam_size_x = self.site_parameters.get('BEAM_SIZE_X', False)
         beam_size_y = self.site_parameters.get('BEAM_SIZE_Y', False)
         gauss_x = self.site_parameters.get('BEAM_GAUSS_X', False)
         gauss_y = self.site_parameters.get('BEAM_GAUSS_Y', False)
         flux = self.site_parameters.get('BEAM_FLUX', 1E10 )
+        
+        #pprint(self.header)
+        # Calculate how much flux is hitting crystal
+        #flux = self.site_parameters.get('BEAM_FLUX', 1E10 )
+        #if self.header.get('transmission', False):
+            # Check if in percent or already fraction
+            #if self.header.get('transmission') > 1.0:
+                #crystal_flux = self.header.get('transmission') / 100.0
+            #crystal_flux = 
 
         # Get unit cell
         cell = xutils.getLabelitCell(self)
@@ -618,9 +637,9 @@ class RapdPlugin(Process):
         self.labelitQueue = Queue()
         params = {}
         params["test"] = self.test
-        params["cluster"] = self.cluster_adapter
+        params["launcher"] = self.launcher
         params["verbose"] = self.verbose
-        params["cluster_queue"] = self.cluster_queue
+        params["batch_queue"] = self.batch_queue
         params["vendortype"] = self.vendortype
         if self.working_dir == self.dest_dir:
             command = self.command
@@ -740,6 +759,7 @@ class RapdPlugin(Process):
 
         self.raddose_log = []
         try:
+            # Need to fix for other environments!!
             self.raddose_log.append("tcsh raddose.com\n")
             output = subprocess.Popen("tcsh raddose.com",
                                       shell=True,
@@ -941,19 +961,29 @@ class RapdPlugin(Process):
             # Save the path of the log
             d.update({'log'+l[i][1]:log})
             if self.test == False:
+                inp_kwargs = {'command': l[i][0],
+                              'logfile': log}
+                # Update batch queue info if using a compute cluster
+                inp_kwargs.update(self.batch_queue)
+                
+                #Launch the job
+                jobs[str(i)] = Process(target=self.launcher,
+                                       kwargs=inp_kwargs)
+                """
                 if self.cluster_use:
                     jobs[str(i)] = Process(target=self.cluster_adapter.processCluster,
-                                           #args=(self, (l[i][0], log, self.cluster_queue)))
+                                           #args=(self, (l[i][0], log, self.batch_queue)))
                                            kwargs= {'command': l[i][0],
                                                     #'work_dir': os.getcwd(),
                                                     'logfile': log,
-                                                    'batch_queue': self.cluster_queue})
+                                                    'batch_queue': self.batch_queue})
                 else:
                     #jobs[str(i)] = Process(target=BestAction,
                     #                       args=((l[i][0], log), self.logger))
                     jobs[str(i)] = Process(target=local_subprocess,
                                            kwargs={'command': l[i][0],
                                                    'logfile': log} )
+                """
                 jobs[str(i)].start()
 
         # Check if Best should rerun since original Best strategy is too long for Pilatus using
@@ -1053,22 +1083,14 @@ class RapdPlugin(Process):
                     new.close()
                     log = os.path.join(os.getcwd(), l[i][0]+".out")
                     inp = "tcsh %s" % l[i][0]
-                    if self.cluster_adapter:
-                        Process(target=self.cluster_adapter.processCluster,
-                                kwargs= {'command': inp,
-                                         #'work_dir': os.getcwd(),
-                                         'logfile': log,
-                                         'batch_queue': self.cluster_queue}
-                                #args=(self,
-                                 #     (inp, log, self.cluster_queue)
-                                 #     )
-                                ).start()
-                    else:
-                        #Process(target=xutils.processLocal, args=(inp, self.logger)).start()
-                        Process(target=local_subprocess,
-                                kwargs={'command': inp,
-                                        'logfile': log}
-                                ).start()
+                    inp_kwargs = {'command': inp,
+                                  'logfile': log}
+                    # Update batch queue info if using a compute cluster
+                    inp_kwargs.update(self.batch_queue)
+                    
+                    #Launch the job
+                    Process(target=self.launcher,
+                            kwargs=inp_kwargs).start()
 
         except:
             self.logger.exception("**Error in processMosflm**")
@@ -1147,7 +1169,7 @@ class RapdPlugin(Process):
                 xutils.foldersStrategy(self, os.path.join(os.path.basename(self.labelit_dir), str(i)))
                 # Reduces resolution and reruns Mosflm to calc new files, then runs Best.
                 #job = multiprocessing.Process(target=self.errorBest, name="best%s" % i, args=(i, best_version))
-                job = multiprocessing.Process(target=self.errorBest, name="best%s" % i, args=(i, best_version))
+                job = Process(target=self.errorBest, name="best%s" % i, args=(i, best_version))
             job.start()
             self.jobs[str(i)] = job
 
@@ -1527,7 +1549,7 @@ Distance | % Transmission", level=98, color="white")
 
         if self.test == False:
             if self.multiproc:
-                if self.cluster_adapter:
+                if self.cluster_use:
                     # kill child process on DRMAA job causes error on cluster.
                     # turn off multiprocessing.event so any jobs still running on cluster are terminated.
                     self.running.clear()
@@ -2141,20 +2163,17 @@ class RunLabelit(Process):
         self.header2 = command.get("header2", False)
         self.preferences = command["preferences"]
         self.site_parameters = command.get("site_parameters", {})
-        #self.controller_address = command["return_address"]
-        #self.controller_address = False
 
         # params
         self.test = params.get("test", False)
-
-        # Will not use RAM if cluster=True since runs would be on separate nodes. Adds
-        # 1-3s to total run time.
-        # If using the cluster, get the correct module (already loaded)
-        self.cluster_adapter = params.get("cluster", False)
-
-        # If self.cluster_use == True, you can specify a batch queue on your cluster. False to not
-        # specify.
-        self.cluster_queue = params.get("cluster_queue", False)
+        
+        # Get the correct laucher, (already loaded)
+        # Will not use RAM if cluster_use=True since runs would be on separate nodes. Adds
+        # overhead of 1-3s to total run time if all nodes same speed.
+        self.launcher = params.get("launcher", local_subprocess)
+        
+        # If self.cluster_use == True, you can specify a batch queue on your cluster. 
+        self.batch_queue = params.get("batch_queue", {})
 
         # Get detector vendortype for settings. Defaults to ADSC.
         self.vendortype = params.get("vendortype", "ADSC")
@@ -2188,11 +2207,9 @@ class RunLabelit(Process):
             self.labelit_timer = 120
         # Turns on multiprocessing for everything
         # Turns on all iterations of Labelit running at once, sorts out highest symmetry solution,
-        # then continues...(much better!!)
-        self.multiproc = True
-        if self.preferences.has_key("multiprocessing"):
-            if self.preferences.get("multiprocessing") == "False":
-                self.multiproc = False
+        # then continues...(much better and faster!!)
+        self.multiproc = self.preferences.get("multiprocessing", True)
+
         self.sample_type = self.preferences.get("sample_type", "protein").lower()
 
         self.spacegroup = self.preferences.get("spacegroup", False)
@@ -2475,38 +2492,24 @@ rerunning.\n" % spot_count)
 
             # queue to retrieve the PID or JobIB once submitted.
             pid_queue = Queue()
-            if self.cluster_adapter:
-                # Delete the previous log still in the folder, otherwise the cluster jobs
-                # will append to it.
-                if os.path.exists(log):
-                    os.unlink(log)
-                #run = Process(target=self.cluster_adapter.process_cluster_beorun,
-                run = Process(target=self.cluster_adapter.processCluster,
-                              name=iteration,
-  	                          kwargs={'command': command,
-                                      'logfile': log,
-                                      'pid_queue': pid_queue,
-                                      'batch_queue': self.cluster_queue,
-                                      "result_queue": self.indexing_results_queue,
-                                      "tag": iteration
-                                      }, )
-            else:
-                # Run in another thread
-                run = Process(target=local_subprocess,
-                              name=iteration,
-                              # Should be switched to kwargs
-                              #args=({"command": command,
-                              kwargs={'command': command,
-                                      "logfile": log,
-                                      "pid_queue": pid_queue,
-                                      "result_queue": self.indexing_results_queue,
-                                      "tag": iteration
-                                    },)
-
-            # Start the subprocess
+            
+            # setup input kwargs
+            inp_kwargs = {"command": command,
+                          "logfile": log,
+                          "pid_queue": pid_queue,
+                          "result_queue": self.indexing_results_queue,
+                          "tag": iteration}
+            # Add batch queue info if launching on cluster
+            inp_kwargs.update(self.batch_queue)
+            
+            # Launch the job
+            run = Process(target=self.launcher,
+                          name=iteration,
+                          kwargs=inp_kwargs)
             run.start()
-            #print iteration, run, run.pid
 
+            #print iteration, run, run.pid
+            
             # Save the PID for killing the job later if needed.
             pid = pid_queue.get()
             self.pids[iteration] = pid
@@ -2988,7 +2991,7 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
             else:
                 self.labelit_log["run1"].append("\nLabelit iteration %s FAILED\n" % iteration)
 
-def BestAction(inp, logger=False, output=False):
+def BestAction_OLD(inp, logger=False, output=False):
     """
     Run Best.
     """
