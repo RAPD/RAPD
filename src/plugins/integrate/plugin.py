@@ -655,7 +655,6 @@ class RapdPlugin(Process):
                     color="white",
                     newline=False)
         self.xds_run(xdsdir)
-        sys.exit()
 
         # Index
         xdsinp[-2] = ("JOB=IDXREF \n\n")
