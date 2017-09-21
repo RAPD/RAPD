@@ -2,24 +2,24 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var ProjectSchema = new Schema({
-  project_type: {
-    type: String,
+  creator: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
     required: true,
-    default: 'mx'
+  },
+  created: {
+    type: Date,
+    required: true,
+    default: Date.now
+  },
+  description: {
+    type: String,
+    required: false
   },
   group: {
     type: Schema.Types.ObjectId,
     ref: 'Group',
     required: true,
-  },
-  title: {
-    type: String,
-    required: true,
-    default: 'None'
-  },
-  description: {
-    type: String,
-    required: false
   },
   last_action: {
     type: Schema.Types.ObjectId,
@@ -31,15 +31,21 @@ var ProjectSchema = new Schema({
     required: true,
     default: Date.now
   },
-  creator: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
+  project_type: {
+    type: String,
     required: true,
+    default: 'mx'
   },
-  created: {
-    type: Date,
+  results: {
+    type: [Schema.Types.ObjectId],
+    required: false,
+    default: [],
+    ref: 'Result'
+  },
+  title: {
+    type: String,
     required: true,
-    default: Date.now
+    default: 'None'
   },
 }, {strict:false});
 

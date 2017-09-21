@@ -13,6 +13,7 @@ import { RestService } from '../../services/rest.service';
   styleUrls: ['./dialog-new-project.component.css']
 })
 export class DialogNewProjectComponent implements OnInit {
+
   private profile: any;
   private submit_error:string;
   private submitted:boolean = false;
@@ -29,12 +30,9 @@ export class DialogNewProjectComponent implements OnInit {
 
   ngOnInit() {
 
-    // Debugging
+    // Get the user profile
     this.profile = JSON.parse(localStorage.getItem('profile'));
-    console.log(this.profile);
-
-    // Group
-    this.model.group = this.profile.groups[0]._id;
+    // this.model.group = this.profile.groups[0]._id;
 
     // Create the form group
     this.project_form = new FormGroup({

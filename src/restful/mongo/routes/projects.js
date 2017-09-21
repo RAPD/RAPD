@@ -3,6 +3,7 @@ var router = express.Router();
 
 // MongoDB Models
 var Project = require('../models/project');
+var Result = require('../models/result');
 
 // Routes that end with projects
 // ----------------------------------------------------
@@ -69,6 +70,47 @@ router.route('/projects')
         }
       });
     }
+  });
+
+// /projects/add_result
+router.route('/projects/add_result')
+  // route to add or modify project
+  .put(function(req, res) {
+    console.log('PUT /projects/add_result');
+
+    let project_id = req.body.project_id,
+        result = req.body.result;
+
+    // console.log(project_id);
+    console.log(result);
+
+    // Make sure project._id is in results.projects for result._id
+    Result.update({_id:result._id}, {$addToSet:{projects:project_id}}, function(err1, res1) {
+      // console.log(err);
+      // console.log(result);
+      if (err1) {
+        res.json({
+          success:false,
+          error:err1
+        });
+      // 1st update was successful
+      } else {
+        // Now make sure the result is in the project.results
+        Project.update({_id:project_id}, {$addToSet:{results:result._id}}, function(err2, res2) {
+          // console.log(err2);
+          // console.log(res2);
+          if (err2) {
+            res.json({
+              success:false,
+              error:err2
+            });
+          } else {
+            res.json({success:true});
+          }
+        });
+      }
+    });
+
   });
 
 module.exports = router;

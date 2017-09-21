@@ -196,6 +196,24 @@ export class RestService {
     .catch(error => this.handleError(error));
   }
 
+  public addResultToProject(data:any): Observable<any> {
+
+    console.log('addResultToProject');
+
+    let header: Headers = new Headers();
+    header.append('Content-Type', 'application/json');
+
+    return this.authHttp.put(
+      this.apiUrl + '/projects/add_result',
+      JSON.stringify({
+        project_id:data._id,
+        result:data.result
+      }),
+      {headers:header}
+    )
+    .map(res => res.json())
+    .catch(error => this.handleError(error));
+  }
 
   //
   // JOB methods
