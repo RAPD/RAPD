@@ -238,6 +238,7 @@ def main():
 
     # Get the commandline args
     commandline_args = get_commandline()
+    print commandline_args
 
     # Output log file is always verbose
     log_level = 10

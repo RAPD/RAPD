@@ -1254,9 +1254,9 @@ class RapdPlugin(Process):
                                args=(self, (xds_command, 'XDS.LOG', '8', 'phase2.q')))
         else:
             xds_proc = multiprocessing.Process(target=local_subprocess,
-                                               args=(({"command": xds_command,
+                                               kwargs={"command": xds_command,
                                                        "logfile": "XDS.LOG",
-                                                      },)))
+                                                      },)
         xds_proc.start()
         while xds_proc.is_alive():
             time.sleep(1)
