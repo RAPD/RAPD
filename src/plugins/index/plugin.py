@@ -268,7 +268,7 @@ class RapdPlugin(Process):
                 # and does not send results to database.
                 self.gui = False
 
-	    # Load the appropriate cluster adapter or set to False
+        # Load the appropriate cluster adapter or set to False
         if self.cluster_use:
             self.cluster_adapter = xutils.load_cluster_adapter(self)
             # Based on the command, pick a batch queue on the cluster.
@@ -528,6 +528,7 @@ class RapdPlugin(Process):
             self.logger.debug("AutoindexingStrategy::preprocess_raddose")
 
         # try:
+        print self.site_parameters
         beam_size_x = self.site_parameters.get('BEAM_SIZE_X', False)
         beam_size_y = self.site_parameters.get('BEAM_SIZE_Y', False)
         gauss_x = self.site_parameters.get('BEAM_GAUSS_X', False)
