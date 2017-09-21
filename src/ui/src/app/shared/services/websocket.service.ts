@@ -10,6 +10,9 @@ export class WebsocketService {
   public results_subject: ReplaySubject<string>;
   public result_details_subject: ReplaySubject<string>;
 
+  private timed_out: boolean = false;
+  private connecting: boolean = false;
+
   constructor() {
     // this.newResultsSubject();
   }
@@ -25,25 +28,62 @@ export class WebsocketService {
     let token = localStorage.getItem('id_token');
     let self = this;
 
-    // No previous websocket
-    // if (! this.ws) {
+    // Track state
+    this.connecting = true;
+
+    // Connect the websocket
     this.ws = new WebSocket('ws://' + window.location.hostname + ':3000');
 
+    var connection_timeout = setTimeout(function () {
+      self.timed_out = true;
+      self.ws.close();
+      self.timed_out = false;
+    }, 2000);
+
     this.ws.onopen = function(e: MessageEvent) {
-      console.log('Websocket connected');
+
+      console.log('Websocket onopen');
+
+      // Track state
+      self.connecting = false;
+
+      // Clear the connection timeout
+      clearTimeout(connection_timeout);
 
       // Connected - now ask for all available results
-      // console.log('Sending token', token);
       self.ws.send(JSON.stringify({request_type: 'initialize',
                                    token: token}));
-      console.log('Websocket sent');
-
-      // What to do with the message
-      self.ws.onmessage = function(error: MessageEvent) {
-        console.log(error);
-        self.handleWebsocketMessage(error.data);
-      };
     };
+
+    // What to do with the message
+    this.ws.onmessage = function(message: MessageEvent) {
+      self.handleWebsocketMessage(message.data);
+    };
+
+    this.ws.onerror = function(ev: MessageEvent) {
+      console.error(ev);
+    };
+
+    this.ws.onclose = function(ev: CloseEvent) {
+
+      console.log('Websocket connection closed');
+      console.error(ev);
+
+      // Clear the connection timeout
+      clearTimeout(connection_timeout);
+
+      // Delete the websocket
+      self.ws = null;
+
+      setTimeout(function () {
+        self.reconnect();
+      }, 2000);
+    };
+  }
+
+  reconnect() {
+    console.log("attempting reconnect");
+    this.initializeWebsocket();
   }
 
   handleWebsocketMessage(message: string) {
