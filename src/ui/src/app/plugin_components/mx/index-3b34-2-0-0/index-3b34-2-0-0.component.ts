@@ -11,6 +11,8 @@ import { GlobalsService } from '../../../shared/services/globals.service';
 
 import { HeaderDialogComponent } from '../header-dialog/header-dialog.component';
 import { ReindexDialogComponent } from './reindex-dialog/reindex-dialog.component';
+import { DialogSelectProjectComponent } from '../../../shared/components/dialog-select-project/dialog-select-project.component';
+
 
 @Component({
   selector: 'app-index-3b34-2-0-0',
@@ -263,6 +265,12 @@ export class Index3b34200Component implements OnInit {
     };
 
     let dialogRef = this.dialog.open(ReindexDialogComponent, config);
+  }
+
+  // Open the add to project dialog
+  openProjectDialog() {
+    let config = {data:this.current_result};
+    let dialogRef = this.dialog.open(DialogSelectProjectComponent, config);
   }
 
   // Change the current result's display to 'pinned'

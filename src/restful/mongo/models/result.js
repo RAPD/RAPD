@@ -20,6 +20,12 @@ var ResultSchema = new Schema({
     type: String,
     required: true
   },
+  projects: {
+    type: [Schema.Types.ObjectId],
+    required: false,
+    default: [],
+    ref: 'Project'
+  },
   repr: {
     type: String,
     required: true
