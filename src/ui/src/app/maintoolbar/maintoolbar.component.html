@@ -5,9 +5,8 @@
   </span>
   <span class="main-buttons">
     <button md-raised-button class="r-button" (click)="changeMode('admin')">Admin</button>
-    <button md-raised-button class="r-button" (click)="changeMode('tasks')">Tasks</button>
+    <!-- <button md-raised-button class="r-button" (click)="changeMode('tasks')">Tasks</button> -->
     <button md-raised-button class="r-button" (click)="changeMode('projects')">Projects</button>
-    <!-- <button md-raised-button class="r-button" (click)="changeMode('bundles')">Bundles</button> -->
     <button md-raised-button class="r-button" (click)="changeMode('sessions')">Sessions</button>
     <button md-raised-button class="r-button" (click)="changeMode('dashboard')">Dashboard</button>
     <button md-raised-button style="background-color:green;" class="r-button" (click)="openLoginDialog()" *ngIf="!auth_service.authenticated()">Log In</button>

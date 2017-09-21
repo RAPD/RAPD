@@ -306,7 +306,9 @@ table.rapd-table {
 
 
 md-card.rapd-result {
+  margin: 1px;
   overflow: scroll;
+  width: 97%;
 }
 
 md-card-header.rapd-result {
