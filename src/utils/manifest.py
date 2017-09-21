@@ -26,7 +26,7 @@ __status__ = "Development"
 
 # Standard imports
 # import argparse
-# import from collections import OrderedDict
+from collections import OrderedDict
 # import datetime
 import glob
 import hashlib
@@ -34,7 +34,7 @@ import hashlib
 # import logging
 # import multiprocessing
 import os
-# import pprint
+from pprint import pprint
 # import pymongo
 # import re
 # import redis
@@ -54,12 +54,29 @@ def create_manifest(directory, write=True):
     Creates a manifest for all files in a directory
     If write is True, will write files.sha in the dirctory
     """
+    # Storage for results of hash
+    records = OrderedDict()
 
-    globfiles = glob.glob(directory+"/*")
+    # Retrieve files in the directory and sort alphabetically
+    globfiles = glob.glob(directory + "/*")
+    globfiles.sort()
+
+    # Run through files
     for globfile in globfiles:
+        # It's a file
         if os.path.isfile(globfile):
+            # Compute hash
             file_hash = hashlib.sha1(open(globfile, "r").read()).hexdigest()
-            print file_hash, globfile
+            # Store hash
+            records[globfile] = file_hash
+
+    if write:
+        with open("files.sha", "w") as output_file:
+            for key, val in records.iteritems():
+                output_file.write("%s  %s\n" % (val, key))
+
+    # Return the dict
+    return records
 
 if __name__ == "__main__":
-    create_manifest("./", False)
+    create_manifest("./", True)
