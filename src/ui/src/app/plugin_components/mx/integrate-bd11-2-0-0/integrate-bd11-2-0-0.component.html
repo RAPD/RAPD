@@ -1,340 +1,336 @@
-<div class="result-panel child">
-  <!-- <div class="result-panel-main-results"> -->
-    <md-card *ngIf="full_result" class="rapd-result">
-      <md-card-header class="rapd-result">
-        <div style="width:100%">
+<md-card *ngIf="full_result" class="rapd-result">
+  <md-card-header class="rapd-result">
+    <div style="width:100%">
+      <div style="float:left;">
+        <h3>Integration Results for
+          {{full_result.process.repr}}
+          <span style="color:blue;"><md-icon (click)="displayRunInfo()">info_outline</md-icon></span>
+        </h3>
+      </div>
+      <div class="rapd-select-panel">
+        <md-select
+          placeholder="View mode"
+          floatPlaceholder="auto"
+          (change)="onViewModeSelect(view_mode)"
+          [(ngModel)]="view_mode"
+          name="view_mode"
+          value="summary">
+          <md-option value="summary">Summary</md-option>
+          <md-option value="analysis">Analysis</md-option>
+          <md-option value="logs">Logs</md-option>
+        </md-select>
+      </div>
+    </div>
+  </md-card-header>
+  <md-card-content *ngIf="view_mode === 'summary'" class="rapd-result">
+    <div fxLayout="row" fxLayoutGap="10px">
+      <div fxFlex="none">
+        <div>
+          <h3>Indexing Solution</h3>
+          <table class="rapd-table">
+            <thead>
+              <tr>
+                <th>Spacegroup</th>
+                <th>Unit Cell</th>
+                <th>Mosaicity</th>
+                <th>ISA</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>{{full_result.results.summary.scaling_spacegroup}}</td>
+                <td>
+                  {{full_result.results.summary.scaling_unit_cell[0]}} &Aring;
+                  {{full_result.results.summary.scaling_unit_cell[1]}} &Aring;
+                  {{full_result.results.summary.scaling_unit_cell[2]}} &Aring;
+                  {{full_result.results.summary.scaling_unit_cell[3]}}&deg;
+                  {{full_result.results.summary.scaling_unit_cell[4]}}&deg;
+                  {{full_result.results.summary.scaling_unit_cell[5]}}&deg;
+                </td>
+                <td>{{full_result.results.summary.mosaicity}}&deg;</td>
+                <td>{{full_result.results.summary.ISa}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div>
+          <h3>Table 1</h3>
+          <table class="rapd-table" style="margin-top:10px;">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Overall</th>
+                <th>Inner Shell</th>
+                <th>Outer Shell</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Res Limits (&Aring;)</td>
+                <td>{{full_result.results.summary.bins_low[0]}}-{{full_result.results.summary.bins_high[0]}}</td>
+                <td>{{full_result.results.summary.bins_low[1]}}-{{full_result.results.summary.bins_high[1]}}</td>
+                <td>{{full_result.results.summary.bins_low[2]}}-{{full_result.results.summary.bins_high[2]}}</td>
+              </tr>
+              <tr>
+                <td>Completeness (%)</td>
+                <td *ngFor="let val of full_result.results.summary.completeness">{{val}}</td>
+              </tr>
+              <tr>
+                <td>Multiplicity</td>
+                <td *ngFor="let val of full_result.results.summary.multiplicity">{{val}}</td>
+              </tr>
+              <tr>
+                <td><I/&sigma;(I)></td>
+                <td *ngFor="let val of full_result.results.summary.isigi">{{val}}</td>
+              </tr>
+              <tr>
+                <td>CC<sub>1/2</sub></td>
+                <td *ngFor="let val of full_result.results.summary['cc-half']">{{val}}</td>
+              </tr>
+              <tr>
+                <td>R<sub>merge</sub></td>
+                <td *ngFor="let val of full_result.results.summary.rmerge_norm">{{val}}</td>
+              </tr>
+              <tr>
+                <td>R<sub>merge</sub> (anom)</td>
+                <td *ngFor="let val of full_result.results.summary.rmerge_anom">{{val}}</td>
+              </tr>
+              <tr>
+                <td>R<sub>meas</sub></td>
+                <td *ngFor="let val of full_result.results.summary.rmeas_norm">{{val}}</td>
+              </tr>
+              <tr>
+                <td>R<sub>meas</sub> Anomalous</td>
+                <td *ngFor="let val of full_result.results.summary.rmeas_anom">{{val}}</td>
+              </tr>
+              <tr>
+                <td>R<sub>pim</sub></td>
+                <td *ngFor="let val of full_result.results.summary.rpim_norm">{{val}}</td>
+              </tr>
+              <tr>
+                <td>R<sub>pim</sub> Anomalous</td>
+                <td *ngFor="let val of full_result.results.summary.rpim_anom">{{val}}</td>
+              </tr>
+              <tr>
+                <td>Anomalous Completeness</td>
+                <td *ngFor="let val of full_result.results.summary.anom_completeness">{{val}}</td>
+              </tr>
+              <tr>
+                <td>Anomalous Multiplicity</td>
+                <td *ngFor="let val of full_result.results.summary.anom_multiplicity">{{val}}</td>
+              </tr>
+              <tr>
+                <td>Anomalous Correlation</td>
+                <td *ngFor="let val of full_result.results.summary.anom_correlation">{{val}}</td>
+              </tr>
+              <tr>
+                <td>Anomalous Slope</td>
+                <td>{{full_result.results.summary.anom_slope[0]}}</td>
+                <td></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Number Observations</td>
+                <td *ngFor="let val of full_result.results.summary.total_obs">{{val}}</td>
+              </tr>
+              <tr>
+                <td>Number Unique</td>
+                <td *ngFor="let val of full_result.results.summary.unique_obs">{{val}}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div fxFlex fxLayout="column" fxLayoutGap="10px" class="rapd-result">
+        <div fxFlex="none" class="rapd-plot-header">
           <div style="float:left;">
-            <h3>Integration Results for
-              {{full_result.process.repr}}
-              <span style="color:blue;"><md-icon (click)="displayRunInfo()">info_outline</md-icon></span>
-            </h3>
+            <h3>{{selected_plot}}</h3>
           </div>
-          <div class="rapd-select-panel">
+          <div style="float:right;">
             <md-select
-              placeholder="View mode"
-              floatPlaceholder="auto"
-              (change)="onViewModeSelect(view_mode)"
-              [(ngModel)]="view_mode"
-              name="view_mode"
-              value="summary">
-              <md-option value="summary">Summary</md-option>
-              <md-option value="analysis">Analysis</md-option>
-              <md-option value="logs">Logs</md-option>
+              placeholder="Select plot"
+              (change)="setPlot(selected_plot)"
+              [(ngModel)]="selected_plot"
+              name="plot"
+              style="width:12em;">
+              <md-option *ngFor="let key of objectKeys(plot_select_labels)" [value]="key">{{plot_select_labels[key]}}</md-option>
             </md-select>
           </div>
         </div>
-      </md-card-header>
-      <md-card-content *ngIf="view_mode === 'summary'" class="rapd-result">
-        <div fxLayout="row" fxLayoutGap="10px">
-          <div fxFlex="none">
-            <div>
-              <h3>Indexing Solution</h3>
-              <table class="rapd-table">
-                <thead>
-                  <tr>
-                    <th>Spacegroup</th>
-                    <th>Unit Cell</th>
-                    <th>Mosaicity</th>
-                    <th>ISA</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>{{full_result.results.summary.scaling_spacegroup}}</td>
-                    <td>
-                      {{full_result.results.summary.scaling_unit_cell[0]}} &Aring;
-                      {{full_result.results.summary.scaling_unit_cell[1]}} &Aring;
-                      {{full_result.results.summary.scaling_unit_cell[2]}} &Aring;
-                      {{full_result.results.summary.scaling_unit_cell[3]}}&deg;
-                      {{full_result.results.summary.scaling_unit_cell[4]}}&deg;
-                      {{full_result.results.summary.scaling_unit_cell[5]}}&deg;
-                    </td>
-                    <td>{{full_result.results.summary.mosaicity}}&deg;</td>
-                    <td>{{full_result.results.summary.ISa}}</td>
-                  </tr>
-                </tbody>
-              </table>
+        <div fxFlex="grow">
+          <div class="chart-container" style="position: relative;">
+            <div *ngIf="selected_plot=='Rmerge vs Frame'">
+              <canvas
+                *ngIf="data"
+                baseChart
+                [datasets]="data.ys"
+                [labels]="data.xs"
+                [options]="data.lineChartOptions"
+                [chartType]="data.lineChartType"
+                [colors]="globals_service.LineChartColors"
+                (chartHover)="chartHovered($event)"
+                (chartClick)="chartClicked($event)">
+              </canvas>
             </div>
-            <div>
-              <h3>Table 1</h3>
-              <table class="rapd-table" style="margin-top:10px;">
-                <thead>
-                  <tr>
-                    <th></th>
-                    <th>Overall</th>
-                    <th>Inner Shell</th>
-                    <th>Outer Shell</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Res Limits (&Aring;)</td>
-                    <td>{{full_result.results.summary.bins_low[0]}}-{{full_result.results.summary.bins_high[0]}}</td>
-                    <td>{{full_result.results.summary.bins_low[1]}}-{{full_result.results.summary.bins_high[1]}}</td>
-                    <td>{{full_result.results.summary.bins_low[2]}}-{{full_result.results.summary.bins_high[2]}}</td>
-                  </tr>
-                  <tr>
-                    <td>Completeness (%)</td>
-                    <td *ngFor="let val of full_result.results.summary.completeness">{{val}}</td>
-                  </tr>
-                  <tr>
-                    <td>Multiplicity</td>
-                    <td *ngFor="let val of full_result.results.summary.multiplicity">{{val}}</td>
-                  </tr>
-                  <tr>
-                    <td><I/&sigma;(I)></td>
-                    <td *ngFor="let val of full_result.results.summary.isigi">{{val}}</td>
-                  </tr>
-                  <tr>
-                    <td>CC<sub>1/2</sub></td>
-                    <td *ngFor="let val of full_result.results.summary['cc-half']">{{val}}</td>
-                  </tr>
-                  <tr>
-                    <td>R<sub>merge</sub></td>
-                    <td *ngFor="let val of full_result.results.summary.rmerge_norm">{{val}}</td>
-                  </tr>
-                  <tr>
-                    <td>R<sub>merge</sub> (anom)</td>
-                    <td *ngFor="let val of full_result.results.summary.rmerge_anom">{{val}}</td>
-                  </tr>
-                  <tr>
-                    <td>R<sub>meas</sub></td>
-                    <td *ngFor="let val of full_result.results.summary.rmeas_norm">{{val}}</td>
-                  </tr>
-                  <tr>
-                    <td>R<sub>meas</sub> Anomalous</td>
-                    <td *ngFor="let val of full_result.results.summary.rmeas_anom">{{val}}</td>
-                  </tr>
-                  <tr>
-                    <td>R<sub>pim</sub></td>
-                    <td *ngFor="let val of full_result.results.summary.rpim_norm">{{val}}</td>
-                  </tr>
-                  <tr>
-                    <td>R<sub>pim</sub> Anomalous</td>
-                    <td *ngFor="let val of full_result.results.summary.rpim_anom">{{val}}</td>
-                  </tr>
-                  <tr>
-                    <td>Anomalous Completeness</td>
-                    <td *ngFor="let val of full_result.results.summary.anom_completeness">{{val}}</td>
-                  </tr>
-                  <tr>
-                    <td>Anomalous Multiplicity</td>
-                    <td *ngFor="let val of full_result.results.summary.anom_multiplicity">{{val}}</td>
-                  </tr>
-                  <tr>
-                    <td>Anomalous Correlation</td>
-                    <td *ngFor="let val of full_result.results.summary.anom_correlation">{{val}}</td>
-                  </tr>
-                  <tr>
-                    <td>Anomalous Slope</td>
-                    <td>{{full_result.results.summary.anom_slope[0]}}</td>
-                    <td></td>
-                    <td></td>
-                  </tr>
-                  <tr>
-                    <td>Number Observations</td>
-                    <td *ngFor="let val of full_result.results.summary.total_obs">{{val}}</td>
-                  </tr>
-                  <tr>
-                    <td>Number Unique</td>
-                    <td *ngFor="let val of full_result.results.summary.unique_obs">{{val}}</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div *ngIf="selected_plot=='Imean/RMS scatter'">
+              <canvas
+                *ngIf="data"
+                baseChart
+                [datasets]="data.ys"
+                [labels]="data.xs"
+                [options]="data.lineChartOptions"
+                [chartType]="data.lineChartType"
+                [colors]="globals_service.LineChartColors"
+                (chartHover)="chartHovered($event)"
+                (chartClick)="chartClicked($event)">
+              </canvas>
             </div>
-          </div>
-          <div fxFlex fxLayout="column" fxLayoutGap="10px" class="rapd-result">
-            <div fxFlex="none" class="rapd-plot-header">
-              <div style="float:left;">
-                <h3>{{selected_plot}}</h3>
-              </div>
-              <div style="float:right;">
-                <md-select
-                  placeholder="Select plot"
-                  (change)="setPlot(selected_plot)"
-                  [(ngModel)]="selected_plot"
-                  name="plot"
-                  style="width:12em;">
-                  <md-option *ngFor="let key of objectKeys(full_result.results.plots)" [value]="key">{{full_result.results.plots[key].parameters.selectlabel}}</md-option>
-                </md-select>
-              </div>
+            <div *ngIf="selected_plot=='Anomalous & Imean CCs vs Resolution'">
+              <canvas
+                *ngIf="data"
+                baseChart
+                [datasets]="data.ys"
+                [labels]="data.xs"
+                [options]="data.lineChartOptions"
+                [chartType]="data.lineChartType"
+                [colors]="globals_service.LineChartColors"
+                (chartHover)="chartHovered($event)"
+                (chartClick)="chartClicked($event)">
+              </canvas>
             </div>
-            <div fxFlex="grow">
-              <div class="chart-container" style="position: relative;">
-                <div *ngIf="selected_plot=='Rmerge vs Frame'">
-                  <canvas
-                    *ngIf="data"
-                    baseChart
-                    [datasets]="data.ys"
-                    [labels]="data.xs"
-                    [options]="data.lineChartOptions"
-                    [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors"
-                    (chartHover)="chartHovered($event)"
-                    (chartClick)="chartClicked($event)">
-                  </canvas>
-                </div>
-                <div *ngIf="selected_plot=='Imean/RMS scatter'">
-                  <canvas
-                    *ngIf="data"
-                    baseChart
-                    [datasets]="data.ys"
-                    [labels]="data.xs"
-                    [options]="data.lineChartOptions"
-                    [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors"
-                    (chartHover)="chartHovered($event)"
-                    (chartClick)="chartClicked($event)">
-                  </canvas>
-                </div>
-                <div *ngIf="selected_plot=='Anomalous & Imean CCs vs Resolution'">
-                  <canvas
-                    *ngIf="data"
-                    baseChart
-                    [datasets]="data.ys"
-                    [labels]="data.xs"
-                    [options]="data.lineChartOptions"
-                    [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors"
-                    (chartHover)="chartHovered($event)"
-                    (chartClick)="chartClicked($event)">
-                  </canvas>
-                </div>
-                <div *ngIf="selected_plot=='RMS correlation ratio'">
-                  <canvas
-                    *ngIf="data"
-                    baseChart
-                    [datasets]="data.ys"
-                    [labels]="data.xs"
-                    [options]="data.lineChartOptions"
-                    [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors"
-                    (chartHover)="chartHovered($event)"
-                    (chartClick)="chartClicked($event)">
-                  </canvas>
-                </div>
-                <div *ngIf="selected_plot=='I/sigma, Mean Mn(I)/sd(Mn(I))'">
-                  <canvas
-                    *ngIf="data"
-                    baseChart
-                    [datasets]="data.ys"
-                    [labels]="data.xs"
-                    [options]="data.lineChartOptions"
-                    [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors"
-                    (chartHover)="chartHovered($event)"
-                    (chartClick)="chartClicked($event)">
-                  </canvas>
-                </div>
-                <div *ngIf="selected_plot=='rs_vs_res'">
-                  <canvas
-                    *ngIf="data"
-                    baseChart
-                    [datasets]="data.ys"
-                    [labels]="data.xs"
-                    [options]="data.lineChartOptions"
-                    [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors"
-                    (chartHover)="chartHovered($event)"
-                    (chartClick)="chartClicked($event)">
-                  </canvas>
-                </div>
-                <div *ngIf="selected_plot=='Average I, RMS deviation, and Sd'">
-                  <canvas
-                    *ngIf="data"
-                    baseChart
-                    [datasets]="data.ys"
-                    [labels]="data.xs"
-                    [options]="data.lineChartOptions"
-                    [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors"
-                    (chartHover)="chartHovered($event)"
-                    (chartClick)="chartClicked($event)">
-                  </canvas>
-                </div>
-                <div *ngIf="selected_plot=='Completeness'">
-                  <canvas
-                    *ngIf="data"
-                    baseChart
-                    [datasets]="data.ys"
-                    [labels]="data.xs"
-                    [options]="data.lineChartOptions"
-                    [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors"
-                    (chartHover)="chartHovered($event)"
-                    (chartClick)="chartClicked($event)">
-                  </canvas>
-                </div>
-                <div *ngIf="selected_plot=='Redundancy'">
-                  <canvas
-                    *ngIf="data"
-                    baseChart
-                    [datasets]="data.ys"
-                    [labels]="data.xs"
-                    [options]="data.lineChartOptions"
-                    [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors"
-                    (chartHover)="chartHovered($event)"
-                    (chartClick)="chartClicked($event)">
-                  </canvas>
-                </div>
-                <div *ngIf="selected_plot=='Radiation Damage'">
-                  <canvas
-                    *ngIf="data"
-                    baseChart
-                    [datasets]="data.ys"
-                    [labels]="data.xs"
-                    [options]="data.lineChartOptions"
-                    [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors"
-                    (chartHover)="chartHovered($event)"
-                    (chartClick)="chartClicked($event)">
-                  </canvas>
-                </div>
-              </div>
+            <div *ngIf="selected_plot=='RMS correlation ratio'">
+              <canvas
+                *ngIf="data"
+                baseChart
+                [datasets]="data.ys"
+                [labels]="data.xs"
+                [options]="data.lineChartOptions"
+                [chartType]="data.lineChartType"
+                [colors]="globals_service.LineChartColors"
+                (chartHover)="chartHovered($event)"
+                (chartClick)="chartClicked($event)">
+              </canvas>
+            </div>
+            <div *ngIf="selected_plot=='I/sigma, Mean Mn(I)/sd(Mn(I))'">
+              <canvas
+                *ngIf="data"
+                baseChart
+                [datasets]="data.ys"
+                [labels]="data.xs"
+                [options]="data.lineChartOptions"
+                [chartType]="data.lineChartType"
+                [colors]="globals_service.LineChartColors"
+                (chartHover)="chartHovered($event)"
+                (chartClick)="chartClicked($event)">
+              </canvas>
+            </div>
+            <div *ngIf="selected_plot=='rs_vs_res'">
+              <canvas
+                *ngIf="data"
+                baseChart
+                [datasets]="data.ys"
+                [labels]="data.xs"
+                [options]="data.lineChartOptions"
+                [chartType]="data.lineChartType"
+                [colors]="globals_service.LineChartColors"
+                (chartHover)="chartHovered($event)"
+                (chartClick)="chartClicked($event)">
+              </canvas>
+            </div>
+            <div *ngIf="selected_plot=='Average I, RMS deviation, and Sd'">
+              <canvas
+                *ngIf="data"
+                baseChart
+                [datasets]="data.ys"
+                [labels]="data.xs"
+                [options]="data.lineChartOptions"
+                [chartType]="data.lineChartType"
+                [colors]="globals_service.LineChartColors"
+                (chartHover)="chartHovered($event)"
+                (chartClick)="chartClicked($event)">
+              </canvas>
+            </div>
+            <div *ngIf="selected_plot=='Completeness'">
+              <canvas
+                *ngIf="data"
+                baseChart
+                [datasets]="data.ys"
+                [labels]="data.xs"
+                [options]="data.lineChartOptions"
+                [chartType]="data.lineChartType"
+                [colors]="globals_service.LineChartColors"
+                (chartHover)="chartHovered($event)"
+                (chartClick)="chartClicked($event)">
+              </canvas>
+            </div>
+            <div *ngIf="selected_plot=='Redundancy'">
+              <canvas
+                *ngIf="data"
+                baseChart
+                [datasets]="data.ys"
+                [labels]="data.xs"
+                [options]="data.lineChartOptions"
+                [chartType]="data.lineChartType"
+                [colors]="globals_service.LineChartColors"
+                (chartHover)="chartHovered($event)"
+                (chartClick)="chartClicked($event)">
+              </canvas>
+            </div>
+            <div *ngIf="selected_plot=='Radiation Damage'">
+              <canvas
+                *ngIf="data"
+                baseChart
+                [datasets]="data.ys"
+                [labels]="data.xs"
+                [options]="data.lineChartOptions"
+                [chartType]="data.lineChartType"
+                [colors]="globals_service.LineChartColors"
+                (chartHover)="chartHovered($event)"
+                (chartClick)="chartClicked($event)">
+              </canvas>
             </div>
           </div>
         </div>
-      </md-card-content>
-      <md-card-content *ngIf="view_mode === 'analysis'" class="rapd-result">
-        <div #analysistarget></div>
-      </md-card-content>
-      <md-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
-        <app-log-card
-          [log]="full_result.results.logs.xds_idxref"
-          header="XDS Idxref">
-        </app-log-card>
-        <app-log-card
-          [log]="full_result.results.logs.xds_integrate"
-          header="XDS Integrate">
-        </app-log-card>
-        <app-log-card
-          [log]="full_result.results.logs.xds_correct"
-          header="XDS Corect">
-        </app-log-card>
-        <app-log-card
-          [log]="full_result.results.logs.aimless"
-          header="Aimless">
-        </app-log-card>
-        <app-log-card
-          [log]="full_result.results.logs.pointless"
-          header="Pointless">
-        </app-log-card>
-      </md-card-content>
-      <md-toolbar *ngIf="full_result" class="result-panel-action-bar">
-        <button md-button color="primary" (click)="openReintegrateDialog()"><md-icon>refresh</md-icon>Reintegrate</button>
-        <button md-button color="primary" (click)="openMergeDialog()"><md-icon>call_merge</md-icon>Merge</button>
-        <button md-button color="primary" (click)="openMrDialog()"><md-icon>search</md-icon>MR</button>
-        <button md-button color="primary" (click)="openSadDialog()"><md-icon>search</md-icon>SAD</button>
-        <button md-button color="primary" (click)="openMadDialog()"><md-icon>search</md-icon>MAD</button>
-        <button md-button color="primary"><md-icon>add</md-icon>Project</button>
-        <button md-button *ngIf="current_result.display !== 'pinned'" color="primary" (click)="pinResult(current_result)"><md-icon>arrow_upward</md-icon>Pin</button>
-        <button md-button *ngIf="current_result.display == 'pinned'" color="primary" (click)="undefResult(current_result)"><md-icon>undo</md-icon>UnPin</button>
-        <button md-button *ngIf="current_result.display !== 'junked'" color="primary" (click)="junkResult(current_result)"><md-icon>delete</md-icon>Junk</button>
-        <button md-button *ngIf="current_result.display == 'junked'" color="primary" (click)="undefResult(current_result)"><md-icon>undo</md-icon>UnJunk</button>
+      </div>
+    </div>
+  </md-card-content>
+  <md-card-content *ngIf="view_mode === 'analysis'" class="rapd-result">
+    <div #analysistarget></div>
+  </md-card-content>
+  <md-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
+    <app-log-card
+      [log]="full_result.results.logs.xds_idxref"
+      header="XDS Idxref">
+    </app-log-card>
+    <app-log-card
+      [log]="full_result.results.logs.xds_integrate"
+      header="XDS Integrate">
+    </app-log-card>
+    <app-log-card
+      [log]="full_result.results.logs.xds_correct"
+      header="XDS Corect">
+    </app-log-card>
+    <app-log-card
+      [log]="full_result.results.logs.aimless"
+      header="Aimless">
+    </app-log-card>
+    <app-log-card
+      [log]="full_result.results.logs.pointless"
+      header="Pointless">
+    </app-log-card>
+  </md-card-content>
+  <md-toolbar *ngIf="full_result" class="result-panel-action-bar">
+    <button md-button color="primary" (click)="openReintegrateDialog()"><md-icon>refresh</md-icon>Reintegrate</button>
+    <button md-button color="primary" (click)="openMergeDialog()"><md-icon>call_merge</md-icon>Merge</button>
+    <button md-button color="primary" (click)="openMrDialog()"><md-icon>search</md-icon>MR</button>
+    <button md-button color="primary" (click)="openSadDialog()"><md-icon>search</md-icon>SAD</button>
+    <button md-button color="primary" (click)="openMadDialog()"><md-icon>search</md-icon>MAD</button>
+    <button md-button color="primary" (click)="openProjectDialog()"><md-icon>add</md-icon>Project</button>
+    <button md-button *ngIf="current_result.display !== 'pinned'" color="primary" (click)="pinResult(current_result)"><md-icon>arrow_upward</md-icon>Pin</button>
+    <button md-button *ngIf="current_result.display == 'pinned'" color="primary" (click)="undefResult(current_result)"><md-icon>undo</md-icon>UnPin</button>
+    <button md-button *ngIf="current_result.display !== 'junked'" color="primary" (click)="junkResult(current_result)"><md-icon>delete</md-icon>Junk</button>
+    <button md-button *ngIf="current_result.display == 'junked'" color="primary" (click)="undefResult(current_result)"><md-icon>undo</md-icon>UnJunk</button>
 
-        <!-- <button md-button (click)="printPage()">Print</button> -->
-      </md-toolbar>
-    </md-card>
-  <!-- </div> -->
-</div>
+    <!-- <button md-button (click)="printPage()">Print</button> -->
+  </md-toolbar>
+</md-card>

@@ -20,6 +20,8 @@ import { ReindexDialogComponent } from './reindex-dialog/reindex-dialog.componen
 export class Index3b34200Component implements OnInit {
 
   @Input() current_result: any;
+  incomingData$: ReplaySubject<string>;
+
   full_result: any;
 
   view_mode: string = 'summary';
@@ -77,8 +79,6 @@ export class Index3b34200Component implements OnInit {
     }
   };
 
-  incomingData$: ReplaySubject<string>;
-
   objectKeys = Object.keys;
 
   constructor(private websocket_service: WebsocketService,
@@ -104,8 +104,8 @@ export class Index3b34200Component implements OnInit {
   displayHeader(header) {
 
     let config = {
-      width: '450px',
-      height: '500px',
+      // width: '450px',
+      // height: '600px',
       data: header };
 
     let dialogRef = this.dialog.open(HeaderDialogComponent, config);
@@ -257,8 +257,8 @@ export class Index3b34200Component implements OnInit {
 
   openReindexDialog() {
     let config = {
-      height: '600px',
-      width: '500px',
+      // height: '600px',
+      // width: '500px',
       data: this.full_result
     };
 

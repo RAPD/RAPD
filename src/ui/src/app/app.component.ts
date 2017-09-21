@@ -10,6 +10,7 @@ import { WebsocketService } from './shared/services/websocket.service';
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent {
+
   title = 'RAPD2';
   mode = 'sessions';
 
@@ -24,7 +25,7 @@ export class AppComponent {
   }
 
   changeMode(event) {
-    console.log(event.value);
+    // console.log(event.value);
     this.router.navigate(['/' + event.value], { queryParams: {} });
   }
 }

@@ -1,3 +1,39 @@
-<p>
-  projectspanel works!
-</p>
+<div class="rapd-main-panel">
+  <article class="c-content">
+    <ngx-datatable
+      class="material"
+      [rows]="projects"
+      [loadingIndicator]="loadingIndicator"
+      [columnMode]="'force'"
+      [headerHeight]="50"
+      [footerHeight]="50"
+      [rowHeight]="'auto'"
+      [reorderable]="reorderable"
+      [selectionType]="'single'"
+      (select)='selectSession($event)'>
+      <ngx-datatable-column name="Type" prop="project_type">
+        <ng-template let-value="value" ngx-datatable-cell-template>
+          {{value}}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Title" prop="title">
+        <ng-template let-value="value" ngx-datatable-cell-template>
+          {{value}}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Description" prop="description">
+        <ng-template let-value="value" ngx-datatable-cell-template>
+          {{value}}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Last Action" prop="last_action">
+        <ng-template let-value="value" ngx-datatable-cell-template>
+          {{value}}
+        </ng-template>
+      </ngx-datatable-column>
+    </ngx-datatable>
+  </article>
+  <md-toolbar class="rapd-main-panel-action-bar">
+    <button md-button color="primary" (click)="openNewProjectDialog()"><md-icon>add</md-icon>New Project</button>
+  </md-toolbar>
+</div>

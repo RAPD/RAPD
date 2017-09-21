@@ -1,135 +1,135 @@
-<div md-dialog-title>
-  <button md-icon-button md-dialog-close class="button-dialog-top-right">
-    <md-icon>close</md-icon>
-  </button>
-  <h2>Reindex</h2>
-  <h3>{{data.header1.basename}}</h3>
+<div *ngIf="! submit_error">
+  <div md-dialog-title>
+    <button md-icon-button md-dialog-close class="button-dialog-top-right">
+      <md-icon>close</md-icon>
+    </button>
+    <h2>Reindex</h2>
+    <h3>{{data.header1.basename}}</h3>
+  </div>
+
+  <md-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
+    <form [formGroup]="reindex_form">
+      <div class="form-group">
+        <table class="rapd-form-table">
+          <tbody>
+            <tr>
+              <td class="rapd-form-table-rj">Spacegroup Override</td>
+              <td class="rapd-form-table-select">
+                <md-select [(ngModel)]="model.spacegroup"
+                           formControlName="spacegroup">
+                  <md-option [value]="0">None</md-option>
+                  <md-option *ngFor="let sg of globals_service.sgs_in_order" [value]="sg">
+                    {{globals_service.intl2std[sg]}}
+                  </md-option>
+                </md-select>
+              </td>
+            </tr>
+            <tr>
+              <td class="rapd-form-table-rj">Sample Type</td>
+              <td class="rapd-form-table-select">
+                <md-select [(ngModel)]="model.sample_type"
+                           formControlName="sample_type">
+                  <md-option *ngFor="let sample_type of sample_types" [value]="sample_type.val">
+                    {{sample_type.label}}
+                  </md-option>
+                </md-select>
+              </td>
+            </tr>
+            <tr>
+              <td class="rapd-form-table-rji">Solvent Content</td>
+              <td>
+                <md-input-container class="example-full-width">
+                  <input mdInput
+                         placeholder=""
+                         formControlName="solvent_content"
+                         [(ngModel)]="model.solvent_content">
+                </md-input-container>
+              </td>
+            </tr>
+            <tr>
+              <td class="rapd-form-table-rj">Strategy Type</td>
+              <td class="rapd-form-table-select">
+                <md-select [(ngModel)]="model.strategy_type"
+                           formControlName="strategy_type">
+                  <md-option *ngFor="let strategy_type of strategy_types" [value]="strategy_type.val">
+                    {{strategy_type.label}}
+                  </md-option>
+                </md-select>
+              </td>
+            </tr>
+            <tr [ngClass]="model.strategy_type == 'mosflm' ? 'hidden': ''">
+              <td class="rapd-form-table-rj">Best Complexity</td>
+              <td class="rapd-form-table-select">
+                <md-select [(ngModel)]="model.best_complexity"
+                           formControlName="best_complexity">
+                  <md-option *ngFor="let best_complex of best_complexity" [value]="best_complex">
+                    {{best_complex}}
+                  </md-option>
+                </md-select>
+              </td>
+            </tr>
+            <tr [ngClass]="model.strategy_type == 'best' ? 'hidden': ''">
+              <td class="rapd-form-table-rj"># Segments</td>
+              <td class="rapd-form-table-select">
+                <md-select [(ngModel)]="model.mosflm_seg"
+                           formControlName="mosflm_seg"
+                           width="4em">
+                  <md-option *ngFor="let mosflm_seg of mosflm_segs" [value]="mosflm_seg">
+                    {{mosflm_seg}}
+                  </md-option>
+                </md-select>
+              </td>
+            </tr>
+            <tr [ngClass]="model.strategy_type == 'best' ? 'hidden': ''">
+              <td class="rapd-form-table-rj">Range of Segment</td>
+              <td>
+                <md-input-container class="example-full-width">
+                  <input mdInput
+                         placeholder=""
+                         formControlName="mosflm_rot"
+                         [(ngModel)]="model.mosflm_rot">
+                </md-input-container>
+              </td>
+            </tr>
+            <tr [ngClass]="model.strategy_type == 'best' ? 'hidden': ''">
+              <td class="rapd-form-table-rji">Start Angle</td>
+              <td>
+                <md-input-container class="example-full-width">
+                  <input mdInput
+                         placeholder=""
+                         formControlName="mosflm_start"
+                         [(ngModel)]="model.mosflm_start">
+                </md-input-container>
+              </td>
+            </tr>
+            <tr [ngClass]="model.strategy_type == 'best' ? 'hidden': ''">
+              <td class="rapd-form-table-rji">End Angle</td>
+              <td>
+                <md-input-container class="example-full-width">
+                  <input mdInput
+                         placeholder=""
+                         formControlName="mosflm_end"
+                         [(ngModel)]="model.mosflm_end">
+                </md-input-container>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </form>
+  </md-dialog-content>
+  <md-dialog-actions align="end">
+    <md-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></md-progress-spinner>
+    <button md-raised-button *ngIf="submit_error" color="primary" (click)="submitReindex()">Ok</button>
+    <button md-raised-button *ngIf="! submit_error" color="primary" (click)="submitReindex()">Execute</button>
+  </md-dialog-actions>
 </div>
-
-<md-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
-  <form [formGroup]="reindex_form">
-    <div class="form-group">
-      <table>
-        <thead>
-          <tr>
-            <th scope="col" style="width:50%;"></th>
-            <th scope="col" style="width:50%;"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="manual-table-rj">Spacegroup Override</td>
-            <td>
-              <md-select [(ngModel)]="model.spacegroup"
-                         formControlName="spacegroup">
-                <md-option [value]="0">None</md-option>
-                <md-option *ngFor="let sg of globals_service.sgs_in_order" [value]="sg">
-                  {{globals_service.intl2std[sg]}}
-                </md-option>
-              </md-select>
-            </td>
-          </tr>
-          <tr>
-            <td class="manual-table-rj">Sample Type</td>
-            <td>
-              <md-select [(ngModel)]="model.sample_type"
-                         formControlName="sample_type">
-                <md-option *ngFor="let sample_type of sample_types" [value]="sample_type.val">
-                  {{sample_type.label}}
-                </md-option>
-              </md-select>
-            </td>
-          </tr>
-          <tr>
-            <td class="manual-table-rj">Solvent Content</td>
-            <td>
-              <md-input-container class="example-full-width">
-                <input mdInput
-                       placeholder=""
-                       formControlName="solvent_content"
-                       [(ngModel)]="model.solvent_content">
-              </md-input-container>
-            </td>
-          </tr>
-          <tr>
-            <td class="manual-table-rj">Strategy Type</td>
-            <td>
-              <md-select [(ngModel)]="model.strategy_type"
-                         formControlName="strategy_type">
-                <md-option *ngFor="let strategy_type of strategy_types" [value]="strategy_type.val">
-                  {{strategy_type.label}}
-                </md-option>
-              </md-select>
-            </td>
-          </tr>
-          <tr [ngClass]="model.strategy_type == 'mosflm' ? 'hidden': ''">
-            <td class="manual-table-rj">Best Complexity</td>
-            <td>
-              <md-select [(ngModel)]="model.best_complexity"
-                         formControlName="best_complexity">
-                <md-option *ngFor="let best_complex of best_complexity" [value]="best_complex">
-                  {{best_complex}}
-                </md-option>
-              </md-select>
-            </td>
-          </tr>
-          <tr [ngClass]="model.strategy_type == 'best' ? 'hidden': ''">
-            <td class="manual-table-rj">Segments & Range</td>
-            <td>
-              <table>
-                <tr>
-                  <td>
-                    <md-select [(ngModel)]="model.mosflm_seg"
-                               formControlName="mosflm_seg">
-                      <md-option *ngFor="let mosflm_seg of mosflm_segs" [value]="mosflm_seg">
-                        {{mosflm_seg}}
-                      </md-option>
-                    </md-select>
-                  </td>
-                  <td>
-                    <md-input-container class="example-full-width">
-                      <input mdInput
-                             placeholder=""
-                             formControlName="mosflm_rot"
-                             [(ngModel)]="model.mosflm_rot">
-                    </md-input-container>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr [ngClass]="model.strategy_type == 'best' ? 'hidden': ''">
-            <td class="manual-table-rj">Start-End</td>
-            <td>
-              <table>
-                <tr>
-                  <td>
-                    <md-input-container class="example-full-width">
-                      <input mdInput
-                             placeholder=""
-                             formControlName="mosflm_start"
-                             [(ngModel)]="model.mosflm_start">
-                      </md-input-container>
-                  </td>
-                  <td>
-                    <md-input-container class="example-full-width">
-                      <input mdInput
-                             placeholder=""
-                             formControlName="mosflm_end"
-                             [(ngModel)]="model.mosflm_end">
-                    </md-input-container>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </form>
-</md-dialog-content>
-
-<md-dialog-actions align="end">
-  <md-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></md-progress-spinner>
-  <button md-raised-button (click)="submitReindex()">Execute</button>
-</md-dialog-actions>
+<div *ngIf="submit_error">
+  <md-dialog-content>
+    <h2>Error</h2>
+    {{submit_error}}
+  </md-dialog-content>
+  <md-dialog-actions align="end">
+    <button md-raised-button color="primary" md-dialog-close>Ok</button>
+  </md-dialog-actions>
+</div>

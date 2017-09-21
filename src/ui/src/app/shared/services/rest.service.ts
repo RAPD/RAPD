@@ -2,12 +2,16 @@ import { Injectable } from '@angular/core';
 import { Headers, Response } from '@angular/http';
 
 import { Observable } from 'rxjs/Observable';
+import { Subscriber } from 'rxjs/Subscriber';
 import { AuthHttp } from 'angular2-jwt';
 import * as moment from 'moment';
 
 import { User } from '../classes/user';
 import { Group } from '../classes/group';
 import { Session } from '../classes/session';
+import { Project } from '../classes/project';
+import { Image } from '../classes/image';
+import { Run } from '../classes/run';
 
 @Injectable()
 export class RestService {
@@ -143,6 +147,81 @@ export class RestService {
       {headers: header}
     )
     .map(res => res.json());
+  }
+
+  // IMAGE methods
+  public getImageData(_id:string): Observable<Image> {
+
+    console.log('getImageData _id:', _id);
+
+    return this.authHttp.get(this.apiUrl + '/images/' + _id)
+                        .map(res => res.json());
+  }
+
+  // RUN methods
+  public getRunData(_id:string): Observable<Run> {
+
+    console.log('getRunData _id:', _id);
+
+    return this.authHttp.get(this.apiUrl + '/runs/' + _id)
+                        .map(res => res.json());
+  }
+
+
+  //
+  // PROJECT methods
+  //
+  public getProjects(): Observable<Project[]> {
+
+    console.log('getProjects');
+
+    return this.authHttp.get(this.apiUrl + '/projects')
+      .map(res => res.json())
+      .catch(error => this.handleError(error));
+  }
+
+  public newProject(project): Observable<any> {
+
+    console.log('newProject');
+
+    let header: Headers = new Headers();
+    header.append('Content-Type', 'application/json');
+
+    return this.authHttp.put(
+      this.apiUrl + '/projects',
+      JSON.stringify({project:project}),
+      {headers:header}
+    )
+    .map(res => res.json())
+    .catch(error => this.handleError(error));
+  }
+
+
+  //
+  // JOB methods
+  //
+  public submitJob(request:any): Observable<any>{
+
+    // console.log('submitJob', request);
+
+    let header = new Headers();
+    header.append('Content-Type', 'application/json'); // 'application/x-www-form-urlencoded'
+
+    return this.authHttp.put(
+      this.apiUrl + '/requests',
+      JSON.stringify({request:request}),
+      {headers:header}
+    )
+    .map(res => res.json())
+    .catch(error => this.handleError(error));
+  }
+
+  // Generic error handler for connection problems
+  private handleError(error) {
+    return Observable.of({
+      success:false,
+      error:error
+    });
   }
 
 }

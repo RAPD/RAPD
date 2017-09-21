@@ -10,11 +10,13 @@ import { MdDialog,
 
 import { ReplaySubject }   from 'rxjs/Rx';
 
+import { RestService } from '../../../shared/services/rest.service';
 import { WebsocketService } from '../../../shared/services/websocket.service';
 import { GlobalsService } from '../../../shared/services/globals.service';
 
 import { RunDialogComponent } from '../run-dialog/run-dialog.component';
 import { ReintegrateDialogComponent } from '../reintegrate-dialog/reintegrate-dialog.component';
+import { DialogSelectProjectComponent } from '../../../shared/components/dialog-select-project/dialog-select-project.component';
 
 // Import analysis plugin components here
 import * as mx from '../';
@@ -36,13 +38,27 @@ for (let key in mx) {
 })
 export class IntegrateBd11200Component implements OnInit {
 
-  objectKeys = Object.keys;
   @Input() current_result: any;
+
   incomingData$: ReplaySubject<string>;
 
   full_result: any;
-  selected_plot: string;
+
   view_mode: string = 'summary';
+
+  selected_plot: string;
+  selected_plot_label:string;
+  plot_select_labels:any = {
+    'Rmerge vs Frame': 'Rmerge vs Batch',
+    'I/sigma, Mean Mn(I)/sd(Mn(I))': 'I / sigma I',
+    'Average I, RMS deviation, and Sd': 'I vs Resolution',
+    'Imean/RMS scatter': 'I / RMS',
+    'rs_vs_res': 'R Factors',
+    'Redundancy': 'Redundancy',
+    'Completeness': 'Completeness',
+    'Radiation Damage': 'Radiation Damage',
+  };
+
   data:any = {
     lineChartType: 'line',
     lineChartOptions: {
@@ -88,7 +104,10 @@ export class IntegrateBd11200Component implements OnInit {
   @ViewChild('analysistarget', { read: ViewContainerRef }) analysistarget;
   analysis_component: any;
 
+  objectKeys = Object.keys;
+
   constructor(private componentfactoryResolver: ComponentFactoryResolver,
+              private rest_service: RestService,
               private websocket_service: WebsocketService,
               private globals_service: GlobalsService,
               public dialog: MdDialog) { }
@@ -115,10 +134,17 @@ export class IntegrateBd11200Component implements OnInit {
   // Display the header information
   displayRunInfo() {
 
+    // this.rest_service.getImageData(this.full_result.process.image_id)
+    //                  .subscribe(
+    //                    image_data => console.log(image_data),
+    //                    error => console.error(error));
+
     let config = {
-      width: '450px',
-      height: '500px',
-      data: this.full_result };
+      data: {
+        run_id:this.full_result.process.run_id,
+        image_id:this.full_result.process.image_id
+      }
+    };
 
     let dialogRef = this.dialog.open(RunDialogComponent, config);
   }
@@ -222,15 +248,30 @@ export class IntegrateBd11200Component implements OnInit {
         break;
 
       case "Average I, RMS deviation, and Sd":
-        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = function(data){
+          var xLabels = data.ticks;
+          xLabels.forEach(function (labels, i) {
+            xLabels[i] = (1.0/xLabels[i]).toFixed(2);
+          });
+        };
         break;
 
       case 'Completeness':
-        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = function(data){
+          var xLabels = data.ticks;
+          xLabels.forEach(function (labels, i) {
+            xLabels[i] = (1.0/xLabels[i]).toFixed(2);
+          });
+        };
         break;
 
       case 'Redundancy':
-        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = undefined;
+        this.data.lineChartOptions.scales.xAxes[0].afterTickToLabelConversion = function(data){
+          var xLabels = data.ticks;
+          xLabels.forEach(function (labels, i) {
+            xLabels[i] = (1.0/xLabels[i]).toFixed(2);
+          });
+        };
         break;
 
       case 'Radiation Damage':
@@ -246,12 +287,17 @@ export class IntegrateBd11200Component implements OnInit {
   openReintegrateDialog() {
 
     let config = {
-      width: '450px',
-      height: '500px',
       data: this.full_result };
 
     let dialogRef = this.dialog.open(ReintegrateDialogComponent, config);
 
+  }
+
+  openProjectDialog() {
+    let config = {
+      data: this.full_result };
+
+    let dialogRef = this.dialog.open(DialogSelectProjectComponent, config);
   }
 
   // Change the current result's display to 'pinned'

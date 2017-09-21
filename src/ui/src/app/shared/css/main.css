@@ -1,18 +1,32 @@
-/* The characteristic RAPD font for "branding"*/
+/*
+ * Resets
+ */
+ html {
+     height: 100%;
+     margin: 0;
+     padding: 0;
+ }
+
+
+
+/*
+ * Font controls
+ */
+
+/* Roboto is Material Design default */
+body {
+  font-family: "Roboto","Helvetica Neue Light","Helvetica Neue",Helvetica,Arial,"Lucida Grande",sans-serif;
+  height:100%;
+}
+
+/* Chinkfive is the font for RAPD "branding" */
 @font-face {
   font-family: 'Chunkfive';
   src: url('Chunkfive.otf');
 }
 
-html {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-}
-
-body {
-  font-family: "Roboto","Helvetica Neue Light","Helvetica Neue",Helvetica,Arial,"Lucida Grande",sans-serif;
-  height:100%;
+.chunky {
+  font-family: 'ChunkFive', 'Georgia', serif;
 }
 
 
@@ -27,11 +41,7 @@ body {
 
 }
 
-article.c-content {
-  width: 80%;
-  margin-left: 10%;
-  margin-top: 2em;
-}
+
 
 .l-content {
   padding: 10px 96px;
@@ -44,11 +54,6 @@ article.c-content {
   max-width: 1200px;
   margin: 0 auto;
 
-}
-
-.main-toolbar {
-  width: 100%;
-  background: #E5E5E5;
 }
 
 .main-title {
@@ -70,6 +75,40 @@ article.c-content {
   margin-top: 12px;
 }
 
+/*
+ * Items in the top-level UI
+ */
+.main-toolbar {
+  background: rgba(229, 229, 229, 1.0);
+  border-radius: 5px;
+  box-shadow: none;
+  width: 100%;
+}
+
+div.rapd-main-panel {
+  background-color: rgba(229, 229, 229, 1.0);
+  border-radius: 5px;
+  height: 100%;
+  margin: 5px 0 5px 0;
+  padding-top: 2em;
+  text-align: center;
+  width: 100%;
+ }
+
+article.c-content {
+  width: 80%;
+  margin-left: 10%;
+}
+
+md-toolbar.rapd-main-panel-action-bar {
+  background-color: rgba(229, 229, 229, 1.0);
+  border: 1px solid rgba(0,0,0,0.2);
+  border-radius: 2px;
+  margin: 10px 0 0 10%;
+  width: 80%;
+  margin-left: 10%;
+}
+
 .sessions-table {
   margin-bottom: 32px;
   box-shadow: 0 2px 5px 0 rgba(0,0,0,0.26);
@@ -85,7 +124,7 @@ article.c-content {
 }
 
 .sessions-table thead th {
-    background: #E5E5E5;
+    background: rgba(229, 229, 229, 1.0);
     border-bottom: 1px solid #ECEFF1;
     color: black;
     font-size: 12px;
@@ -103,13 +142,8 @@ article.c-content {
   height: 100%;
 }
 
-.main-toolbar {
-  background: #E5E5E5;
-  box-shadow: 3px 0 6px rgba(0,0,0,0.3);
-}
-
 .session-tab-group {
-  background: #E5E5E5;
+  background: rgba(229, 229, 229, 1.0);
   /*box-shadow: 3px 0 6px rgba(0,0,0,0.3);*/
   /*width: 232px;*/
   /*overflow: auto;*/
@@ -118,7 +152,7 @@ article.c-content {
 }
 
 .rapd-side-list {
-  background: #E5E5E5;
+  background: rgba(229, 229, 229, 1.0);
   box-shadow: 3px 0 6px rgba(0,0,0,0.3);
   width: 16em;
   overflow: auto;
@@ -132,19 +166,13 @@ md-divider.rapd-side-list-divider {
 }
 
 .result-panel {
-  background: #E5E5E5;
-  box-shadow: 3px 0 6px rgba(0,0,0,0.3);
+  /*background: rgba(229, 229, 229, 1.0);*/
+  /*box-shadow: 3px 0 6px rgba(0,0,0,0.3);*/
   overflow: scroll;
   margin: 0.25em 0 0.5em 0.25em;
-  min-width: calc(100vw - 17em);
-  height: calc(100vh - 7.75em);
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.result-panel-main-results {
-  /*height: calc(100vh - 10.em);*/
-  /*overflow: scroll;*/
+  /*min-width: calc(100vw - 17em);*/
+  /*display: flex;*/
+  /*flex-wrap: wrap;*/
 }
 
 .result-panel-action-bar {
@@ -171,13 +199,11 @@ input.ng-invalid:not(form)  {
 
 /* A panel in the interface */
 div.panel {
-  background-color: #E5E5E5;
+  background-color: rgba(229, 229, 229, 1.0);
   height: 100%;
 }
 
-.chunky {
-  font-family: 'ChunkFive', 'Georgia', serif;
-}
+
 
 button.button-dialog-top-right.mat-icon-button {
   float: right;
@@ -199,7 +225,37 @@ button.button-dialog-top-right.mat-icon-button {
 
 
 
-/* Manual table to look like ngx-datatable */
+/*
+ * Table for settings input
+ */
+table.rapd-form-table {
+  table-layout: fixed;
+  /*width: 100%;*/
+  /*border: 1px solid rgba(0,0,0,0.2);*/
+  border-collapse: collapse;
+  /*border-radius: 2px;*/
+  margin: 10px;
+}
+
+td.rapd-form-table-rj {
+  padding: 10px 10px 0 10px;
+  text-align: right;
+}
+
+td.rapd-form-table-rji {
+  padding: 0px 10px 5px 10px;
+  text-align: right;
+}
+
+td.rapd-form-table-select {
+  padding-bottom: 7px;
+}
+
+
+
+/*
+ * Table for data display
+ */
 table.rapd-table {
   table-layout: fixed;
   /*width: 100%;*/
@@ -247,23 +303,12 @@ table.rapd-table {
   text-align: center;
 }
 
-/*.rapd-table tbody tr:first-child {
-  border-bottom: 1px solid rgba(0,0,0,0.1);
-  border-top: 1px solid rgba(200,200,200,0);
-}
-
-.rapd-table tbody tr:last-child {
-  border-bottom: 1px solid rgba(0,0,0,0.1);
-  border-top: 1px solid rgba(200,200,200,0);
-}*/
-
-
 
 
 md-card.rapd-result {
-  /*background-color: rgba(0,0,0,0.1);*/
-    overflow: scroll;
-    width:100%;
+  margin: 1px;
+  overflow: scroll;
+  width: 97%;
 }
 
 md-card-header.rapd-result {
@@ -294,6 +339,10 @@ div.rapd-result {
   border-radius: 2px;
   margin: 4px;
   padding: 5px;
+}
+
+div.rapd-result-paragraph {
+  margin-left: 10px;
 }
 
 /* div that holds a select that looks separate */

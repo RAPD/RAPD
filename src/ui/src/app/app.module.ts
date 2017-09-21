@@ -58,6 +58,9 @@ import { AnalysisF068200Component } from './plugin_components/mx/analysis-f068-2
 import { LogCardComponent } from './shared/components/log-card/log-card.component';
 import { RunDialogComponent } from './plugin_components/mx/run-dialog/run-dialog.component';
 import { ReintegrateDialogComponent } from './plugin_components/mx/reintegrate-dialog/reintegrate-dialog.component';
+import { DialogSelectProjectComponent } from './shared/components/dialog-select-project/dialog-select-project.component';
+import { DialogNewProjectComponent } from './shared/components/dialog-new-project/dialog-new-project.component';
+import { DialogErrorComponent } from './shared/components/dialog-error/dialog-error.component';
 
 export function authHttpServiceFactory(http: Http, options: RequestOptions) {
   return new AuthHttp( new AuthConfig({}), http, options);
@@ -95,7 +98,10 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     AnalysisF068200Component,
     LogCardComponent,
     RunDialogComponent,
-    ReintegrateDialogComponent
+    ReintegrateDialogComponent,
+    DialogSelectProjectComponent,
+    DialogNewProjectComponent,
+    DialogErrorComponent
   ],
   imports: [
     BrowserModule,
@@ -140,7 +146,9 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     HeaderDialogComponent,
     RunDialogComponent,
     ReindexDialogComponent,
-    ReintegrateDialogComponent
+    ReintegrateDialogComponent,
+    DialogNewProjectComponent,
+    DialogSelectProjectComponent
   ],
   bootstrap: [AppComponent]
 })

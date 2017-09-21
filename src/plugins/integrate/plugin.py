@@ -362,6 +362,8 @@ class RapdPlugin(Process):
         self.results["process"]["repr"] = self.run_data["image_template"].replace(\
             "?"*self.run_data["image_template"].count("?"), "[%d-%d]" % (self.run_data["start"], \
             self.run_data["end"]))
+        # The run _id
+
 
         # Describe plugin
         self.results["plugin"] = {
@@ -653,6 +655,7 @@ class RapdPlugin(Process):
                     color="white",
                     newline=False)
         self.xds_run(xdsdir)
+        sys.exit()
 
         # Index
         xdsinp[-2] = ("JOB=IDXREF \n\n")
@@ -1239,11 +1242,10 @@ class RapdPlugin(Process):
         """
         Launches the running of xds.
         """
-        self.logger.debug('FastIntegration::xds_run')
-        self.logger.debug('     directory = %s', directory)
-        self.logger.debug('     detector = %s', self.image_data['detector'])
+        self.logger.debug("directory = %s", directory)
+        self.logger.debug("detector = %s", self.image_data["detector"])
 
-        xds_command = 'xds_par'
+        xds_command = "xds_par"
 
         os.chdir(directory)
         # TODO skip processing for now

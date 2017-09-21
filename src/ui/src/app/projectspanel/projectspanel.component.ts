@@ -1,4 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component,
+         OnInit } from '@angular/core';
+import { MdDialog } from '@angular/material';
+
+import { RestService } from '../shared/services/rest.service';
+import { Project } from '../shared/classes/project';
+import { DialogNewProjectComponent } from '../shared/components/dialog-new-project/dialog-new-project.component';
 
 @Component({
   selector: 'app-projectspanel',
@@ -7,9 +13,33 @@ import { Component, OnInit } from '@angular/core';
 })
 export class ProjectspanelComponent implements OnInit {
 
-  constructor() { }
+  projects: Project[];
+
+  constructor(private rest_service: RestService,
+              public dialog: MdDialog) { }
 
   ngOnInit() {
+    this.getProjects();
+  }
+
+  getProjects() {
+    this.rest_service.getProjects()
+      .subscribe(
+        parameters => {
+          console.log(parameters);
+          this.projects = parameters;
+        }
+      )
+  }
+
+  openNewProjectDialog() {
+    let dialogRef = this.dialog.open(DialogNewProjectComponent);
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        this.projects.push(result);
+      }
+    });
   }
 
 }
