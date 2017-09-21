@@ -71,4 +71,53 @@ router.route('/projects')
     }
   });
 
+  // /projects/add_result
+  router.route('/projects/add_result')
+  // route to add or modify project
+  .put(function(req, res) {
+    console.log('PUT /projects/add_result');
+
+    let project_id = req.body.project_id,
+        result = req.body.result;
+
+    console.log(project_id);
+    console.log(result);
+
+    // Updating
+    // if (project._id) {
+    //   res.json({
+    //     success:false,
+    //     error:'Project updating not currently supported'
+    //   });
+    // // New
+    // } else {
+    //
+    //   // Create a new project
+    //   let new_project = new Project({
+    //     project_type:project.project_type,
+    //     title:project.title,
+    //     description:project.description,
+    //     group:project.group,
+    //     creator:req.decoded._doc._id,
+    //   });
+    //
+    //   // Save the project
+    //   new_project.save(function(err, return_project, numAffected) {
+    //     if (err) {
+    //       res.json({
+    //         success:false,
+    //         error:err
+    //       });
+    //     } else {
+    //       console.log('Project saved successfully');
+    //       res.json({
+    //         success: true,
+    //         operation: 'add',
+    //         project: return_project
+    //       });
+    //     }
+    //   });
+    // }
+  });
+
 module.exports = router;

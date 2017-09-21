@@ -38,7 +38,8 @@ for (let key in mx) {
 })
 export class IntegrateBd11200Component implements OnInit {
 
-  @Input() current_result: any;
+  @Input()
+  current_result: any;
 
   incomingData$: ReplaySubject<string>;
 
@@ -294,8 +295,7 @@ export class IntegrateBd11200Component implements OnInit {
   }
 
   openProjectDialog() {
-    let config = {
-      data: this.full_result };
+    let config = {data:this.current_result};
 
     let dialogRef = this.dialog.open(DialogSelectProjectComponent, config);
   }
