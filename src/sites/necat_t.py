@@ -58,9 +58,9 @@ BEAM_INFO = {
                 "DETECTOR_TIME_MIN": 0.05,
                 # Flux of the beam
                 "BEAM_FLUX":1.5E12,
-                # Size of the beam in microns
-                "BEAM_SIZE_X":50,
-                "BEAM_SIZE_Y":20,
+                # Size of the beam in mm
+                "BEAM_SIZE_X":0.05,
+                "BEAM_SIZE_Y":0.02,
                 # Shape of the beam - ellipse, rectangle
                 "BEAM_SHAPE":"ellipse",
                 # Shape of the attenuated beam - circle or rectangle

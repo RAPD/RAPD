@@ -117,12 +117,6 @@ def construct_command(image_headers, commandline_args, detector_module):
     command["preferences"]["unitcell"] = commandline_args.unitcell
 
     # Labelit
-    #command["preferences"]["a"] = 0.0
-    #command["preferences"]["b"] = 0.0
-    #command["preferences"]["c"] = 0.0
-    #command["preferences"]["alpha"] = 0.0
-    #command["preferences"]["beta"] = 0.0
-    #command["preferences"]["gamma"] = 0.0
     command["preferences"]["index_hi_res"] = try_float(commandline_args.hires, 0.0)
     command["preferences"]["x_beam"] = commandline_args.beamcenter[0]
     command["preferences"]["y_beam"] = commandline_args.beamcenter[1]
