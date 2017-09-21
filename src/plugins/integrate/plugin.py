@@ -74,6 +74,7 @@ import utils.spacegroup as spacegroup
 # Import RAPD plugins
 import plugins.analysis.commandline
 import plugins.analysis.plugin
+import utils.xutils as xutils
 
 import info
 
@@ -211,15 +212,8 @@ class RapdPlugin(Process):
         self.low_res = self.preferences.get("low_res", False)
         #if self.preferences.get("low_res", False):
         #    self.low_res = self.preferences.get("low_res")
-        self.cluster_use = self.preferences.get('multiprocessing', False)
-        #if 'multiprocessing' in self.preferences:
-        #    self.cluster_use = self.preferences['multiprocessing']
-        #    if self.cluster_use == 'True':
-        #        self.cluster_use = True
-        #    elif self.cluster_use == 'False':
-        #        self.cluster_use = False
-        #else:
-        #    self.cluster_use = False
+        
+        # Are ram_nodes needed anymore with RDMA??
         self.ram_use = self.preferences.get('ram_integrate', False)
         if self.ram_use == True:
             self.ram_nodes = self.preferences['ram_nodes']
@@ -243,6 +237,38 @@ class RapdPlugin(Process):
         #else:
         #    self.ram_use = False
         #    self.ram_nodes = None
+        
+        self.cluster_use = self.preferences.get('cluster_use', False)
+        #self.cluster_use = True
+        if self.cluster_use:
+            # Load the cluster adapter
+            cluster_launcher = xutils.load_cluster_adapter(self)
+            self.launcher = cluster_launcher.processCluster
+            # Based on the command, pick a batch queue on the cluster. Added to input kwargs
+            self.batch_queue = {'batch_queue': cluster_launcher.check_queue(self.command["command"])}
+            if self.ram_use == True:
+                self.jobs = len(self.ram_nodes[0])
+                self.procs = 8
+            else:
+                # Set self.jobs and self.procs based on available cluster resources
+                self.procs, self.jobs = cluster_launcher.get_nproc_njobs()
+                #self.jobs = 20
+                #self.procs = 8
+        else:
+            # Load the subprocess adapter
+            self.launcher = local_subprocess
+            self.batch_queue = {}
+            self.jobs = 1
+            self.procs = 4
+        #if 'multiprocessing' in self.preferences:
+        #    self.cluster_use = self.preferences['multiprocessing']
+        #    if self.cluster_use == 'True':
+        #        self.cluster_use = True
+        #    elif self.cluster_use == 'False':
+        #        self.cluster_use = False
+        #else:
+        #    self.cluster_use = False
+        
 
         self.standalone = self.preferences.get('standalone', False)
         #if 'standalone' in self.preferences:
@@ -286,20 +312,20 @@ class RapdPlugin(Process):
         # Values are beamline specific, depending on computing resources.
         # self.jobs is number of nodes XDS can use for colspot and/or integration.
         # self.procs is number of procesors XDS can use per job.
-        if self.cluster_use == True:
-            if self.ram_use == True:
-                self.jobs = len(self.ram_nodes[0])
-                self.procs = 8
-            else:
-                # Set self.jobs and self.procs based on available cluster resources
-                self.jobs = 20
-                self.procs = 8
-        else:
+        #if self.cluster_use == True:
+        #    if self.ram_use == True:
+        #        self.jobs = len(self.ram_nodes[0])
+        #        self.procs = 8
+        #    else:
+        #        # Set self.jobs and self.procs based on available cluster resources
+        #        self.jobs = 20
+        #        self.procs = 8
+        #else:
             # Setting self.jobs > 1 provides some speed up on
             # multiprocessor machines.
             # Should be set based on computer used for processing
-            self.jobs = 1
-            self.procs = 4
+        #    self.jobs = 1
+        #    self.procs = 4
 
         Process.__init__(self, name="FastIntegration")
         # self.start()
@@ -1248,6 +1274,12 @@ class RapdPlugin(Process):
 
         os.chdir(directory)
         # TODO skip processing for now
+        
+        xds_proc = Process(target=self.launcher,
+                           kwargs={"command": xds_command,
+                                   "logfile": "XDS.LOG"})
+        
+        """
         if self.cluster_use == True:
             xds_proc = Process(target=BLspec.processCluster,
                                args=(self, (xds_command, 'XDS.LOG', '8', 'phase2.q')))
@@ -1255,7 +1287,8 @@ class RapdPlugin(Process):
             xds_proc = multiprocessing.Process(target=local_subprocess,
                                                kwargs={"command": xds_command,
                                                        "logfile": "XDS.LOG",
-                                                      },)
+                                                      })
+        """
         xds_proc.start()
         while xds_proc.is_alive():
             time.sleep(1)

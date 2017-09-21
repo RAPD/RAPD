@@ -70,9 +70,13 @@ def check_queue(inp):
     d = {#"INDEX+STRATEGY" : 'phase3.q',
          "INDEX"          : 'phase3.q',
          "BEAMCENTER"     : 'all.q',
-         "INTEGRATE"      : 'phase3.q',
+         "XDS"      : 'all.q',
          }
     return(d[inp])
+  
+def get_nproc_njobs():
+    """Return the nproc and njobs for an XDS integrate job"""
+    return (4, 20)
 
 def connectCluster(inp, job=True):
   """

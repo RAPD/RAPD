@@ -25,28 +25,9 @@ __email__ = "Your email"
 __status__ = "Development"
 
 # Standard imports
-# import argparse
-# import from collections import OrderedDict
-# import datetime
-# import glob
-# import json
-# import logging
-# import multiprocessing
-# import os
 from pprint import pprint
-# import pymongo
-# import re
-# import redis
-# import shutil
 import subprocess
-# import sys
-# import time
-# import unittest
 
-# RAPD imports
-# import commandline_utils
-# import detectors.detector_utils as detector_utils
-# import utils
 def local_subprocess(command,
                      logfile=False,
                      pid_queue=False,
@@ -64,12 +45,6 @@ def local_subprocess(command,
         tag - an identifying tag to be useful to the caller
     """
     # pprint(commands)
-    #command = commands.get("command", False)
-    #logfile = commands.get("logfile", False)
-    #pid_queue = commands.get("pid_queue", False)
-    #result_queue = commands.get("result_queue", False)
-    #tag = commands.get("tag", False)
-
     # Run the process
     proc = subprocess.Popen(command,
                             shell=True,
@@ -82,8 +57,6 @@ def local_subprocess(command,
 
     # Get the stdout and stderr from process
     stdout, stderr = proc.communicate()
-    # print stdout
-    # print stderr
 
     # Put results on a Queue, if given
     if result_queue:
