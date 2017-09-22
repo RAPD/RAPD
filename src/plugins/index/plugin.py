@@ -474,6 +474,9 @@ class RapdPlugin(Process):
         if os.path.exists(self.working_dir) == False:
             os.makedirs(self.working_dir)
         os.chdir(self.working_dir)
+        
+        # Add flux info to header
+        #self.header = 
 
         # Setup event for job control on cluster (Only works at NE-CAT using DRMAA for
         # job submission)
@@ -543,16 +546,7 @@ class RapdPlugin(Process):
         beam_size_y = self.site_parameters.get('BEAM_SIZE_Y', False)
         gauss_x = self.site_parameters.get('BEAM_GAUSS_X', False)
         gauss_y = self.site_parameters.get('BEAM_GAUSS_Y', False)
-        flux = self.site_parameters.get('BEAM_FLUX', 1E10 )
-        
-        #pprint(self.header)
-        # Calculate how much flux is hitting crystal
-        #flux = self.site_parameters.get('BEAM_FLUX', 1E10 )
-        #if self.header.get('transmission', False):
-            # Check if in percent or already fraction
-            #if self.header.get('transmission') > 1.0:
-                #crystal_flux = self.header.get('transmission') / 100.0
-            #crystal_flux = 
+        flux = self.header.get('flux', self.site_parameters.get('BEAM_FLUX', 1E10 ))
 
         # Get unit cell
         cell = xutils.getLabelitCell(self)
@@ -574,7 +568,7 @@ class RapdPlugin(Process):
         raddose = open("raddose.com", "w+")
         setup = "raddose << EOF\n"
         if beam_size_x and beam_size_y:
-            setup += "BEAM %d %d\n" % (beam_size_x, beam_size_y)
+            setup += "BEAM %s %s\n" % (beam_size_x, beam_size_y)
         # Full-width-half-max of the beam
         if gauss_x and gauss_y:
             setup += "GAUSS %.2f %.2f\nIMAGES 1\n" % (gauss_x, gauss_y)

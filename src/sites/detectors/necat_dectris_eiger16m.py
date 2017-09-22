@@ -34,6 +34,7 @@ import os
 from pprint import pprint
 import re
 import time
+import numpy
 
 # RAPD imports
 # commandline_utils
@@ -170,6 +171,30 @@ def create_image_template(image_prefix, run_number):
 
     return image_template
 
+def calculate_flux(header, site_params):
+    """
+    Determine beam information from the header information and return in the header dict
+    """
+    beam_size_x = site_params.get('BEAM_SIZE_X')
+    beam_size_y = site_params.get('BEAM_SIZE_Y')
+    aperture = header.get('md2_aperture')
+
+    # Calculate area of full beam used to calculate the beamline flux
+    # Assume ellipse, but same equation works for circle.
+    # Assume beam is uniform
+    full_beam_area = numpy.pi*(beam_size_x/2)*(beam_size_y/2)
+
+    # Since aperture is round, it will be cutting off edges of x length until it matches beam height,
+    # then it would switch to circle
+    if beam_size_y <= aperture:
+        # ellipse
+        ratio = (numpy.pi*(aperture/2)*(beam_size_y/2)) / full_beam_area
+    else:
+        # circle
+        ratio = (numpy.pi*(aperture/2)**2) / full_beam_area
+    # Calculate the new_beam_area ratio to full_beam_area
+    return int(round(site_params.get('BEAM_FLUX') * header.get('transmission') * ratio))
+
 def get_data_root_dir(fullname):
     """
     Derive the data root directory from the user directory
@@ -240,6 +265,7 @@ def base_read_header(image,
 
     #item:(pattern,transform)
     header_items = {
+        "md2_aperture": ("^# MD2_aperture_size\s*(\d+) microns", lambda x: int(x)/1000),
         "beam_x": ("^# Beam_xy\s*\(([\d\.]+)\,\s[\d\.]+\) pixels", lambda x: float(x)),
         "beam_y": ("^# Beam_xy\s*\([\d\.]+\,\s([\d\.]+)\) pixels", lambda x: float(x)),
         "count_cutoff": ("^# Count_cutoff\s*(\d+) counts", lambda x: int(x)),
@@ -258,10 +284,12 @@ def base_read_header(image,
         "tau": ("^#\sTau\s\=\s*([\d\.]+e\-09) s", lambda x: float(x)),
         "threshold": ("^#\sThreshold_setting\:\s*([\d\.]+)\seV", lambda x: float(x)),
         "time": ("^# Exposure_time\s*([\d\.]+) s", lambda x: float(x)),
-        "transmission": ("^# Filter_transmission\s*([\d\.]+)", lambda x: float(x)),
+        "transmission": ("^# Filter_transmission\s*([\d\.]+)", lambda x: float(x)/100),
         "trim_file": ("^#\sTrim_file\:\s*([\w\.]+)", lambda x:str(x).rstrip()),
         "twotheta": ("^# Detector_2theta\s*([\d\.]*)\s*deg", lambda x: float(x)),
         "wavelength": ("^# Wavelength\s*([\d\.]+) A", lambda x: float(x)),
+        "ring_current": ("^# Ring_current\s*([\d\.]*)\s*mA", lambda x: float(x)),
+        "sample_mounter_position": ("^#\sSample_mounter_position\s*([\w\.]+)", lambda x:str(x).rstrip()),
         "size1": ("X-Binary-Size-Fastest-Dimension:\s*([\d\.]+)", lambda x: int(x)),
         "size2": ("X-Binary-Size-Second-Dimension:\s*([\d\.]+)", lambda x: int(x)),
         }
@@ -337,6 +365,10 @@ def read_header(input_file=False, beam_settings=False):
         header = base_read_header(input_file)
         # header = detector.read_header(input_file)
 
+    # Calculate flux and add it to header
+    if beam_settings:
+        header['flux'] = calculate_flux(header, beam_settings)
+
     basename = os.path.basename(input_file)
     header["image_prefix"] = "_".join(basename.replace(".cbf", "").split("_")[:-2])
     header["run_number"] = int(basename.replace(".cbf", "").split("_")[-2])
@@ -403,4 +435,25 @@ if __name__ == "__main__":
     # Execute code
     #main(args=commandline_args)
     #get_alt_path('/epu/rdma/gpfs2/users/wvu/robart_E_2985/images/robart/runs/F_2/F_2_1_000001/F_2_1_000287.cbf')
-    base_read_header('/gpfs2/users/cornell/rcerione_E_3084/images/ygao/snaps/L1_0_000001.cbf')
+    header = base_read_header('/gpfs2/users/mskcc/patel_E_2891/images/juncheng/snaps/chengwI5_PAIR_0_000005.cbf')
+    site_params = {'BEAM_APERTURE_SHAPE': 'circle',
+                     'BEAM_CENTER_DATE': '2017-3-02',
+                     'BEAM_CENTER_X': (163.2757684023,
+                                       0.0003178917,
+                                       -5.0236657815e-06,
+                                       5.8164218288e-09),
+                     'BEAM_CENTER_Y': (155.1904879862,
+                                       -0.0014631216,
+                                       8.60559283424e-07,
+                                       -2.5709929645e-10),
+                     'BEAM_FLUX': 1500000000000.0,
+                     'BEAM_GAUSS_X': 0.03,
+                     'BEAM_GAUSS_Y': 0.01,
+                     'BEAM_SHAPE': 'ellipse',
+                     'BEAM_SIZE_X': 0.05,
+                     'BEAM_SIZE_Y': 0.02,
+                     'DELTA_OMEGA_MIN': 0.05,
+                     'DETECTOR_DIST_MAX': 1000.0,
+                     'DETECTOR_DIST_MIN': 150.0,
+                     'EXPOSURE_TIME_MIN': 0.05}
+    calculate_flux(header, site_params)

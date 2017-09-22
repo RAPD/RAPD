@@ -272,6 +272,71 @@ class Adapter(object):
         self.logger.debug("get_image_data - Have redis connection")
 
         try:
+            energy = float(connection.get("ENERGY_SV"))
+        except:
+            energy = 0.0
+            self.logger.debug("Energy exception")
+
+        try:
+            md2_angles = connection.get("MD2_ALL_AXES_SV").split()
+        except:
+            beam_vals = [0.0, 0.0, 0.0]
+            self.logger.debug("Axes exception")
+
+        try:
+            phi = float(md2_angles[2])
+        except:
+            phi = 0.0
+            self.logger.debug("Phi exception")
+
+        try:
+            kappa = float(md2_angles[1])
+        except:
+            kappa = 0.0
+            self.logger.debug("Kappa exception")
+
+        try:
+            md2_pos = connection.get("MD2_CENTERING_TABLE_XYZ_SV").replace("_", " ").split()
+        except:
+            md2_pos = [0.0, 0.0, 0.0]
+            self.logger.debug("MD2 Position exception")
+
+      # Scrub out problems with offest
+        try:
+            self.logger.debug("Getting vertical offset")
+            vertical_offset = float(get("SEGMENT_OFFSET_SV"))
+        except:
+            vertical_offset = 0
+            self.logger.debug("Vertical offset exception")
+
+        self.logger.debug("get_image_data - making dict")
+
+        return_dict = {"id"              : self.settings["ID"],
+                       "energy"          : energy,
+                       "phi"             : phi,
+                       "kappa"           : kappa,
+                       "md2_x"           : float(md2_pos[0]),
+                       "md2_y"           : float(md2_pos[1]),
+                       "md2_z"           : float(md2_pos[2]),
+                       "vertical_offset" : vertical_offset}
+
+        self.logger.debug("%s", return_dict)
+
+        # Return the data
+        return return_dict
+
+    def get_image_data_OLD(self):
+        """
+        Returns a dict of beamline data for storage with the image
+        """
+
+        self.logger.debug("get_image_data")
+
+        # Get redis connection
+        connection = self.get_redis_connection()
+        self.logger.debug("get_image_data - Have redis connection")
+
+        try:
             self.logger.debug("Getting Ring current")
             ring_current = float(connection.get("RING_CUR_SV"))
         except:
