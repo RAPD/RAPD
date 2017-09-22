@@ -47,7 +47,7 @@ from multiprocessing import Process, Queue
 import os
 # import os.path
 from pprint import pprint
-# import shutil
+import shutil
 import stat
 import subprocess
 import sys
@@ -62,10 +62,11 @@ import numpy
 from plugins.subcontractors.xdsme.xds2mos import Xds2Mosflm
 from plugins.subcontractors.aimless import parse_aimless
 from plugins.subcontractors.xds import get_avg_mosaicity_from_integratelp, get_isa_from_correctlp
+import utils.archive as archive
 from utils.communicate import rapd_send
+import utils.credits as rcredits
 import utils.exceptions as exceptions
 # from utils.r_numbers import try_int, try_float
-import utils.credits as rcredits
 from utils.processes import local_subprocess
 import utils.text as text
 import utils.xutils as Utils
@@ -212,7 +213,7 @@ class RapdPlugin(Process):
         self.low_res = self.preferences.get("low_res", False)
         #if self.preferences.get("low_res", False):
         #    self.low_res = self.preferences.get("low_res")
-        
+
         # Are ram_nodes needed anymore with RDMA??
         self.ram_use = self.preferences.get('ram_integrate', False)
         if self.ram_use == True:
@@ -237,7 +238,7 @@ class RapdPlugin(Process):
         #else:
         #    self.ram_use = False
         #    self.ram_nodes = None
-        
+
         self.cluster_use = self.preferences.get('cluster_use', False)
         #self.cluster_use = True
         if self.cluster_use:
@@ -268,7 +269,7 @@ class RapdPlugin(Process):
         #        self.cluster_use = False
         #else:
         #    self.cluster_use = False
-        
+
 
         self.standalone = self.preferences.get('standalone', False)
         #if 'standalone' in self.preferences:
@@ -1274,11 +1275,11 @@ class RapdPlugin(Process):
 
         os.chdir(directory)
         # TODO skip processing for now
-        
+
         xds_proc = Process(target=self.launcher,
                            kwargs={"command": xds_command,
                                    "logfile": "XDS.LOG"})
-        
+
         """
         if self.cluster_use == True:
             xds_proc = Process(target=BLspec.processCluster,
@@ -1772,9 +1773,44 @@ class RapdPlugin(Process):
         Final creation of various files (e.g. an mtz file with R-flag added,
         .sca files with native or anomalous data treatment)
         """
+
+        """
+         'files': {'ANOM_sca': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_ANOM.sca',
+                       'NATIVE_sca': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_NATIVE.sca',
+                       'downloadable': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1.tar.bz2',
+                       'mergable': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_mergable.mtz',
+                       'mtzfile': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_free.mtz',
+                       'scala_com': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_scala.com',
+                       'scala_log': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_scala.log',
+                       'xds_com': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_XDS.INP',
+                       'xds_data': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_XDS.HKL',
+                       'xds_log': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_XDS.LOG'},
+        """
+
+        # Set up the method
+        # Archive directory name
+        archive_dirname = '_'.join([self.image_data['image_prefix'],
+                                   str(self.image_data['run_number'])])
+        # Full path location of the archive
+        archive_dir = os.path.join(self.dirs['work'], archive_dirname)
+        if not os.path.isdir(archive_dir):
+            os.mkdir(archive_dir)
+        # Full path prefix for archive files
+        archive_files_prefix = "%s/%s_%d" %(archive_dir,
+                                            self.image_data["image_prefix"],
+                                            self.image_data["run_number"])
+
+        # Flags for file creation
+        scalepack = False
+        mosflm = False
+
+        # Holder for afiles to be archived
+        files_to_archive = []
+
+        # Create the free-R-flagged data
+        # The source file
         in_file = os.path.join(results['dir'], results['mtzfile'])
         self.logger.debug('FastIntegration::finish_data - in_file = %s', in_file)
-
         # Truncate the data.
         comfile = ['#!/bin/csh\n',
                    'truncate hklin %s hklout truncated.mtz << eof > truncate.log\n'
@@ -1788,7 +1824,6 @@ class RapdPlugin(Process):
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
         p.wait()
-
         # Set the free R flag.
         comfile = ['#!/bin/csh\n',
                    'freerflag hklin truncated.mtz hklout freer.mtz <<eof > freer.log\n',
@@ -1801,46 +1836,59 @@ class RapdPlugin(Process):
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
         p.wait()
+        # Move to archive
+        shutil.copyfile("freer.mtz", "%s_free.mtz" % archive_files_prefix)
+        files_to_archive.append("%s_free.mtz" % archive_files_prefix)
 
-        # Create the merged scalepack format file.
-        comfile = ['#!/bin/csh\n',
-                   'mtz2various hklin truncated.mtz hklout NATIVE.sca ',
-                   '<< eof > mtz2scaNAT.log\n',
-                   'OUTPUT SCALEPACK\n',
-                   'labin I=IMEAN SIGI=SIGIMEAN\n',
-                   'END\n',
-                   'eof']
-        self.write_file('mtz2scaNAT.sh', comfile)
-        os.chmod('mtz2scaNAT.sh', stat.S_IRWXU)
-        p = subprocess.Popen('./mtz2scaNAT.sh',
-                             shell=True,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
-        p.wait()
-        self.fixMtz2Sca('NATIVE.sca')
-        Utils.fixSCA(self, 'NATIVE.sca')
+        if scalepack:
+            # Create the merged scalepack format file.
+            comfile = ['#!/bin/csh\n',
+                       'mtz2various hklin truncated.mtz hklout NATIVE.sca ',
+                       '<< eof > mtz2scaNAT.log\n',
+                       'OUTPUT SCALEPACK\n',
+                       'labin I=IMEAN SIGI=SIGIMEAN\n',
+                       'END\n',
+                       'eof']
+            self.write_file('mtz2scaNAT.sh', comfile)
+            os.chmod('mtz2scaNAT.sh', stat.S_IRWXU)
+            p = subprocess.Popen('./mtz2scaNAT.sh',
+                                 shell=True,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE)
+            p.wait()
+            self.fixMtz2Sca('NATIVE.sca')
+            Utils.fixSCA(self, 'NATIVE.sca')
+            # Move to archive
+            shutil.copyfile("NATIVE.sca", "%s_NATIVE.sca" % archive_files_prefix)
+            files_to_archive.append("%s_NATIVE.sca" % archive_files_prefix)
 
-        # Create the unmerged scalepack format file.
-        comfile = ['#!/bin/csh\n',
-                   'mtz2various hklin truncated.mtz hklout ANOM.sca ',
-                   '<< eof > mtz2scaANOM.log\n',
-                   'OUTPUT SCALEPACK\n',
-                   'labin I(+)=I(+) SIGI(+)=SIGI(+) I(-)=I(-) SIGI(-)=SIGI(-)\n',
-                   'END\n',
-                   'eof']
-        self.write_file('mtz2scaANOM.sh', comfile)
-        os.chmod('mtz2scaANOM.sh', stat.S_IRWXU)
-        p = subprocess.Popen('./mtz2scaANOM.sh',
-                             shell=True,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
-        p.wait()
-        self.fixMtz2Sca('ANOM.sca')
-        Utils.fixSCA(self, 'ANOM.sca')
+            # Create the unmerged scalepack format file.
+            comfile = ['#!/bin/csh\n',
+                       'mtz2various hklin truncated.mtz hklout ANOM.sca ',
+                       '<< eof > mtz2scaANOM.log\n',
+                       'OUTPUT SCALEPACK\n',
+                       'labin I(+)=I(+) SIGI(+)=SIGI(+) I(-)=I(-) SIGI(-)=SIGI(-)\n',
+                       'END\n',
+                       'eof']
+            self.write_file('mtz2scaANOM.sh', comfile)
+            os.chmod('mtz2scaANOM.sh', stat.S_IRWXU)
+            p = subprocess.Popen('./mtz2scaANOM.sh',
+                                 shell=True,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE)
+            p.wait()
+            self.fixMtz2Sca("ANOM.sca")
+            Utils.fixSCA(self, "ANOM.sca")
+            # Move to archive
+            shutil.copyfile("ANOM.sca", "%s_ANOM.sca" % archive_files_prefix)
+            files_to_archive.append("%s_ANOM.sca" % archive_files_prefix)
 
-        # Create a mosflm matrix file
-        correct_file = os.path.join(results['dir'], 'CORRECT.LP')
-        Xds2Mosflm(xds_file=correct_file, mat_file="reference.mat")
+        if mosflm:
+            # Create a mosflm matrix file
+            correct_file = os.path.join(results['dir'], 'CORRECT.LP')
+            Xds2Mosflm(xds_file=correct_file, mat_file="reference.mat")
+
+
 
         # Clean up the filesystem.
         # Move some files around
@@ -1848,31 +1896,36 @@ class RapdPlugin(Process):
             os.mkdir('%s/xds_lp_files' % self.dirs['work'])
         os.system('cp %s/*.LP %s/xds_lp_files/' % (results['dir'], self.dirs['work']))
 
-        tar_name = '_'.join([self.image_data['image_prefix'], str(self.image_data['run_number'])])
-        results_dir = os.path.join(self.dirs['work'], tar_name)
-        if os.path.isdir(results_dir) == False:
-            os.mkdir(results_dir)
-        prefix = '%s/%s_%s' %(results_dir, self.image_data['image_prefix'],
-                              self.image_data['run_number'])
-        os.system('cp freer.mtz %s_free.mtz' % prefix)
-        os.system('cp NATIVE.sca %s_NATIVE.sca' % prefix)
-        os.system('cp ANOM.sca %s_ANOM.sca' % prefix)
-        os.system('cp %s/*aimless.log %s_aimless.log' %(results['dir'], prefix))
-        os.system('cp %s/*aimless.com %s_aimless.com' %(results['dir'], prefix))
-        os.system('cp %s/*pointless.mtz %s_mergable.mtz' %(results['dir'], prefix))
-        os.system('cp %s/*pointless.log %s_pointless.log' %(results['dir'], prefix))
-        os.system('cp %s/XDS.LOG %s_XDS.LOG' %(results['dir'], prefix))
-        os.system('cp %s/XDS.INP %s_XDS.INP' %(results['dir'], prefix))
-        os.system('cp %s/CORRECT.LP %s_CORRECT.LP' %(results['dir'], prefix))
-        os.system('cp %s/INTEGRATE.LP %s_INTEGRATE.LP' %(results['dir'], prefix))
+        # tar_name = '_'.join([self.image_data['image_prefix'], str(self.image_data['run_number'])])
+        # results_dir = os.path.join(self.dirs['work'], tar_name)
+        # if os.path.isdir(results_dir) == False:
+        #     os.mkdir(results_dir)
+        # prefix = '%s/%s_%s' %(results_dir, self.image_data['image_prefix'],
+        #                       self.image_data['run_number'])
+
+        # os.system('cp freer.mtz %s_free.mtz' % prefix)
+        # os.system('cp NATIVE.sca %s_NATIVE.sca' % prefix)
+        # os.system('cp ANOM.sca %s_ANOM.sca' % prefix)
+        # os.system('cp %s/*aimless.log %s_aimless.log' %(results['dir'], prefix))
+        # os.system('cp %s/*aimless.com %s_aimless.com' %(results['dir'], prefix))
+        # os.system('cp %s/*pointless.mtz %s_mergable.mtz' %(results['dir'], prefix))
+        # os.system('cp %s/*pointless.log %s_pointless.log' %(results['dir'], prefix))
+        # os.system('cp %s/XDS.LOG %s_XDS.LOG' %(results['dir'], prefix))
+        # os.system('cp %s/XDS.INP %s_XDS.INP' %(results['dir'], prefix))
+        # os.system('cp %s/CORRECT.LP %s_CORRECT.LP' %(results['dir'], prefix))
+        # os.system('cp %s/INTEGRATE.LP %s_INTEGRATE.LP' %(results['dir'], prefix))
         # os.system('cp %s/XDSSTAT.LP %s_XDSSTAT.LP' %(results['dir'], prefix))
-        os.system('cp %s/XDS_ASCII.HKL %s_XDS.HKL' %(results['dir'], prefix))
+        # os.system('cp %s/XDS_ASCII.HKL %s_XDS.HKL' %(results['dir'], prefix))
 
         # Remove any integration directories.
-        os.system('rm -rf wedge_*')
+        for wedge_dir in glob.glob("wedge_*"):
+            os.remove(wedge_dir)
 
         # Remove extra files in working directory.
         os.system('rm -f *.mtz *.sca *.sh *.log junk_*')
+
+        # Create an archive
+        
 
         # Create a downloadable tar file.
         tar_dir = tar_name
@@ -1902,8 +1955,7 @@ class RapdPlugin(Process):
                 p.wait()
 
         tmp = results
-        #if shelxc_results != None:
-        #    tmp['shelxc_results'] = shelxc_results
+
         files = {'mergable' : '%s_mergable.mtz' % prefix,
                  'mtzfile' : '%s_free.mtz' % prefix,
                  'ANOM_sca' : '%s_ANOM.sca' % prefix,

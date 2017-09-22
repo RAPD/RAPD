@@ -49,6 +49,12 @@ from pprint import pprint
 # import detectors.detector_utils as detector_utils
 # import utils
 
+def create_archive(directory, archive_prefix="rapd"):
+    """
+    Creates an archive file for the input directory
+    """
+    pass
+
 def create_manifest(directory, write=True):
     """
     Creates a manifest for all files in a directory
@@ -77,6 +83,8 @@ def create_manifest(directory, write=True):
 
     # Return the dict
     return records
+
+
 
 if __name__ == "__main__":
     create_manifest("./", True)
