@@ -1,12 +1,12 @@
 <div *ngIf="! submit_error">
-  <div md-dialog-title>
-    <button md-icon-button md-dialog-close class="button-dialog-top-right">
-      <md-icon>close</md-icon>
+  <div MdDialogTitle>
+    <button mat-icon-button MdDialogClose class="button-dialog-top-right">
+      <mat-icon>close</mat-icon>
     </button>
     <h2>Reintegrate</h2>
     <h3>{{data.process.repr}}</h3>
   </div>
-  <md-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
+  <mat-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
     <form [formGroup]="reintegrate_form">
       <div class="form-group">
         <table class="rapd-form-table">
@@ -14,96 +14,96 @@
             <tr>
               <td class="rapd-form-table-rj">Spacegroup Override</td>
               <td class="rapd-form-table-select">
-                <md-select [(ngModel)]="model.spacegroup"
+                <mat-select [(ngModel)]="model.spacegroup"
                            formControlName="spacegroup">
-                  <md-option [value]="0">None</md-option>
-                  <md-option *ngFor="let sg of globals_service.sgs_in_order" [value]="sg">
+                  <mat-option [value]="0">None</mat-option>
+                  <mat-option *ngFor="let sg of globals_service.sgs_in_order" [value]="sg">
                     {{globals_service.intl2std[sg]}}
-                  </md-option>
-                </md-select>
+                  </mat-option>
+                </mat-select>
               </td>
             </tr>
             <tr>
               <td class="rapd-form-table-rji">Frame Range</td>
               <td>
-                <md-input-container style="width:5em;">
-                  <input mdInput
+                <mat-form-field style="width:5em;">
+                  <input matInput
                          style="text-align:center;"
                          placeholder=""
                          formControlName="start_frame"
                          [(ngModel)]="model.start_frame">
-                </md-input-container>
+                </mat-form-field>
                 -
-                <md-input-container style="width:5em;">
-                  <input mdInput
+                <mat-form-field style="width:5em;">
+                  <input matInput
                          style="text-align:center;"
                          placeholder=""
                          formControlName="end_frame"
                          [(ngModel)]="model.end_frame">
-                </md-input-container>
+                </mat-form-field>
               </td>
             </tr>
             <tr>
               <td class="rapd-form-table-rji">Resolution Range</td>
               <td>
-                <md-input-container style="width:5em;">
-                  <input mdInput
+                <mat-form-field style="width:5em;">
+                  <input matInput
                          style="text-align:center;"
                          placeholder="Low"
                          formControlName="low_res"
                          [(ngModel)]="model.low_res">
-                </md-input-container>
+                </mat-form-field>
                 -
-                <md-input-container style="width:5em;">
-                  <input mdInput
+                <mat-form-field style="width:5em;">
+                  <input matInput
                          style="text-align:center;"
                          placeholder="Hi"
                          formControlName="hi_res"
                          [(ngModel)]="model.hi_res">
-                </md-input-container>
+                </mat-form-field>
               </td>
             </tr>
             <tr>
               <td class="rapd-form-table-rj">Spacegroup Decider</td>
               <td class="rapd-form-table-select">
-                <md-select [(ngModel)]="model.spacegroup_decider"
+                <mat-select [(ngModel)]="model.spacegroup_decider"
                            formControlName="spacegroup_decider">
-                  <md-option *ngFor="let spacegroup_decider of spacegroup_deciders" [value]="spacegroup_decider.val">
+                  <mat-option *ngFor="let spacegroup_decider of spacegroup_deciders" [value]="spacegroup_decider.val">
                     {{spacegroup_decider.label}}
-                  </md-option>
-                </md-select>
+                  </mat-option>
+                </mat-select>
               </td>
             </tr>
             <tr>
               <td class="rapd-form-table-rj">Polishing Rounds</td>
               <td class="rapd-form-table-select">
-                <md-select [(ngModel)]="model.rounds_polishing"
+                <mat-select [(ngModel)]="model.rounds_polishing"
                            formControlName="rounds_polishing">
-                  <md-option [value]=1>1</md-option>
-                  <md-option [value]=2>2</md-option>
-                  <md-option [value]=3>3</md-option>
-                  <md-option [value]=4>4</md-option>
-                  <md-option [value]=5>5</md-option>
-                </md-select>
+                  <mat-option [value]=1>1</mat-option>
+                  <mat-option [value]=2>2</mat-option>
+                  <mat-option [value]=3>3</mat-option>
+                  <mat-option [value]=4>4</mat-option>
+                  <mat-option [value]=5>5</mat-option>
+                </mat-select>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
     </form>
-  </md-dialog-content>
+  </mat-dialog-content>
 
-  <md-dialog-actions align="end">
-    <md-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></md-progress-spinner>
-    <button md-raised-button color="primary" (click)="submitReintegrate()">Execute</button>
-  </md-dialog-actions>
+  <mat-dialog-actions align="end">
+    <mat-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></mat-progress-spinner>
+    <button mat-raised-button color="primary" (click)="submitReintegrate()">Execute</button>
+  </mat-dialog-actions>
 </div>
 <div *ngIf="submit_error">
-  <md-dialog-content>
+  <mat-dialog-content>
     <h2>Error</h2>
     {{submit_error}}
-  </md-dialog-content>
-  <md-dialog-actions align="end">
-    <button md-raised-button color="primary" md-dialog-close>Ok</button>
-  </md-dialog-actions>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-raised-button color="primary" MdDialogClose>Ok</button>
+  </mat-dialog-actions>
 </div>

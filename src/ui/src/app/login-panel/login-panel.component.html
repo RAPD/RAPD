@@ -1,38 +1,38 @@
-<md-card>
-  <md-card-subtitle>Subtitle first</md-card-subtitle>
-  <md-card-title>RAPD Login</md-card-title>
-  <md-card-content>
+<mat-card>
+  <mat-card-subtitle>Subtitle first</mat-card-subtitle>
+  <mat-card-title>RAPD Login</mat-card-title>
+  <mat-card-content>
     <form [formGroup]="login_form" (ngSubmit)="onSubmit()">
-      <md-input-container formControlName="email"
+      <mat-form-field formControlName="email"
                 required
                 placeholder='email'
-                pattern='^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'></md-input-container>
-      <div class="md-errors-spacer" [hidden]="login_form.controls.email.valid || login_form.controls.email.untouched">
-          <div class="md-char-counter" *ngIf="login_form.controls.email.errors && login_form.controls.email.errors.required">
+                pattern='^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'></mat-form-field>
+      <div class="mat-errors-spacer" [hidden]="login_form.controls.email.valid || login_form.controls.email.untouched">
+          <div class="mat-char-counter" *ngIf="login_form.controls.email.errors && login_form.controls.email.errors.required">
               Email is required
           </div>
-          <div class="md-char-counter" *ngIf="login_form.controls.email.errors && login_form.controls.email.errors.pattern">
+          <div class="mat-char-counter" *ngIf="login_form.controls.email.errors && login_form.controls.email.errors.pattern">
               Email is invalid
           </div>
       </div>
 
-      <md-input-container formControlName="password"
+      <mat-form-field formControlName="password"
                 required placeholder='password'
-                type='password'></md-input-container>
-      <div class="md-errors-spacer" [hidden]="login_form.controls.password.valid || login_form.controls.password.untouched">
-          <div class="md-char-counter" *ngIf="login_form.controls.password.errors && login_form.controls.password.errors.required">
+                type='password'></mat-form-field>
+      <div class="mat-errors-spacer" [hidden]="login_form.controls.password.valid || login_form.controls.password.untouched">
+          <div class="mat-char-counter" *ngIf="login_form.controls.password.errors && login_form.controls.password.errors.required">
               Password is required
           </div>
-          <div class="md-char-counter" *ngIf="login_form.controls.password.errors && login_form.controls.password.errors.pattern">
+          <div class="mat-char-counter" *ngIf="login_form.controls.password.errors && login_form.controls.password.errors.pattern">
               Password is invalid
           </div>
       </div>
 
       <span>{{error_message}}</span>
 
-      <button type="submit" [disabled]="!login_form.valid" md-raised-button color="primary">Login</button>
+      <button type="submit" [disabled]="!login_form.valid" mat-raised-button color="primary">Login</button>
 
-      <md-progress-spinner *ngIf='submitted' mode='indeterminate' style="height:30px;width:30px;"></md-progress-spinner>
+      <mat-progress-spinner *ngIf='submitted' mode='indeterminate' style="height:30px;width:30px;"></mat-progress-spinner>
 
     </form>
 
@@ -42,10 +42,10 @@
     </div>
 
      <!-- <form *ngIf="!submitted" [formGroup]="form" (ngSubmit)="onSubmit()" #loginForm="ngForm">
-       <md-input-container formControlName="username" required placeholder="Username"></md-input-container>
-       <md-input-container formControlName="password" required placeholder="Password" type="password"></md-input-container>
-       <button type="submit" [disabled]="!loginForm.form.valid" md-raised-button color="primary">Login</button>
+       <mat-form-field formControlName="username" required placeholder="Username"></mat-form-field>
+       <mat-form-field formControlName="password" required placeholder="Password" type="password"></mat-form-field>
+       <button type="submit" [disabled]="!loginForm.form.valid" mat-raised-button color="primary">Login</button>
      </form> -->
-   </md-card-content>
+   </mat-card-content>
 
-</md-card>
+</mat-card>

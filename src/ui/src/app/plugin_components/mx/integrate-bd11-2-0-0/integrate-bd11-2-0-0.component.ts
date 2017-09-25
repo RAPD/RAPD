@@ -5,8 +5,11 @@ import { Component,
          OnInit,
          ViewChild,
          ViewContainerRef } from '@angular/core';
-import { MdDialog,
-         MD_DIALOG_DATA } from '@angular/material';
+
+import { MatSnackBar,
+         MatDialog,
+         MAT_DIALOG_DATA,
+         MatToolbarModule } from '@angular/material';
 
 import { ReplaySubject }   from 'rxjs/Rx';
 
@@ -111,7 +114,8 @@ export class IntegrateBd11200Component implements OnInit {
               private rest_service: RestService,
               private websocket_service: WebsocketService,
               private globals_service: GlobalsService,
-              public dialog: MdDialog) { }
+              public dialog: MatDialog,
+              public snackBar: MatSnackBar) { }
 
   ngOnInit() {
     // Subscribe to results for the displayed result
@@ -318,4 +322,8 @@ export class IntegrateBd11200Component implements OnInit {
     this.websocket_service.updateResult(result);
   }
 
+  // Start the download of data
+  initDownload() {
+    let snackBarRef = this.snackBar.open('Message archived');
+  }
 }

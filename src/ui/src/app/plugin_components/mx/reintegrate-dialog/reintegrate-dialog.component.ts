@@ -4,7 +4,7 @@ import { Component,
 import { FormGroup,
          FormControl } from '@angular/forms';
 import { MdDialogRef,
-         MD_DIALOG_DATA } from '@angular/material';
+         MAT_DIALOG_DATA } from '@angular/material';
 
 import { RestService } from '../../../shared/services/rest.service';
 import { GlobalsService } from '../../../shared/services/globals.service';
@@ -36,7 +36,7 @@ export class ReintegrateDialogComponent implements OnInit {
   constructor(private globals_service: GlobalsService,
               private rest_service: RestService,
               public dialogRef: MdDialogRef<ReintegrateDialogComponent>,
-              @Inject(MD_DIALOG_DATA) public data: any) { }
+              @Inject(MAT_DIALOG_DATA) public data: any) { }
 
   ngOnInit() {
     console.log(this.data);

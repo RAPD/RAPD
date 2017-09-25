@@ -1,14 +1,14 @@
-  <h1 md-dialog-title>Session</h1>
-  <button md-icon-button class="button-dialog-top-right" (click)="exitSession()">
-    <md-icon>close</md-icon>
+  <h1 MdDialogTitle>Session</h1>
+  <button mat-icon-button class="button-dialog-top-right" (click)="exitSession()">
+    <mat-icon>close</mat-icon>
   </button>
 <form [formGroup]="session_form">
   <div class="form-group">
     <p>
-      <md-select formControlName="site" [(ngModel)]="model.site" placeholder="Site">
+      <mat-select formControlName="site" [(ngModel)]="model.site" placeholder="Site">
         <!-- <option value="">Unknown</option> -->
-        <md-option *ngFor="let s of sites" [value]="s">{{s}}</md-option>
-      </md-select>
+        <mat-option *ngFor="let s of sites" [value]="s">{{s}}</mat-option>
+      </mat-select>
     </p>
     <!-- <p>
       Type:
@@ -18,30 +18,30 @@
       </select>
     </p> -->
     <p>
-      <md-select formControlName="group" [(ngModel)]="model.group._id" placeholder="Group">
-        <md-option value="">Unknown</md-option>
-        <md-option *ngFor="let g of groups" [value]="g._id">{{g.groupname}}</md-option>
-      </md-select>
+      <mat-select formControlName="group" [(ngModel)]="model.group._id" placeholder="Group">
+        <mat-option value="">Unknown</mat-option>
+        <mat-option *ngFor="let g of groups" [value]="g._id">{{g.groupname}}</mat-option>
+      </mat-select>
     </p>
     <p>
-      <md-input-container>
-        <input mdInput
+      <mat-form-field>
+        <input matInput
           formControlName="data_root_directory"
           required
           placeholder="directory"
           style="width:17em;"
           [(ngModel)]="model.data_root_directory">
-      </md-input-container>
+      </mat-form-field>
     </p>
   </div>
   <p>
-    <md-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></md-progress-spinner>
+    <mat-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></mat-progress-spinner>
   </p>
   <p>
     {{error_message}}
   </p>
   <p style="text-align:center;">
-    <button *ngIf="model._id" type="button" md-button color="warn" (click)="deleteSession()">Delete</button>
-    <button type="button" [disabled]="!session_form.valid" md-button (click)="submitSession()">Save</button>
+    <button *ngIf="model._id" type="button" mat-button color="warn" (click)="deleteSession()">Delete</button>
+    <button type="button" [disabled]="!session_form.valid" mat-button (click)="submitSession()">Save</button>
   </p>
 </form>

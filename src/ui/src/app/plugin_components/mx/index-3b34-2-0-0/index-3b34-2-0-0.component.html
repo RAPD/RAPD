@@ -1,32 +1,32 @@
 <div class="result-panel child">
-  <md-card *ngIf="full_result" class="rapd-result">
-    <md-card-header class="rapd-result">
+  <mat-card *ngIf="full_result" class="rapd-result">
+    <mat-card-header class="rapd-result">
       <div style="width:100%">
         <div style="float:left;">
           <h3>
             Indexing Results for
             <span>{{full_result.header1.basename}}</span>
-            <span style="color:blue;"><md-icon (click)="displayHeader(full_result.header1)">info_outline</md-icon></span>
+            <span style="color:blue;"><mat-icon (click)="displayHeader(full_result.header1)">info_outline</mat-icon></span>
             <span *ngIf="full_result.header2"> & {{full_result.command.header2.basename}}</span>
-            <span *ngIf="full_result.header2" style="color:blue;"><md-icon (click)="displayHeader(full_result.header2)">info_outline</md-icon></span>
+            <span *ngIf="full_result.header2" style="color:blue;"><mat-icon (click)="displayHeader(full_result.header2)">info_outline</mat-icon></span>
           </h3>
         </div>
         <div class="rapd-select-panel">
-          <md-select
+          <mat-select
             placeholder="View mode"
             floatPlaceholder="auto"
             [(ngModel)]="view_mode"
             name="view_mode"
             value="summary">
-            <md-option value="summary">Summary</md-option>
-            <md-option value="details">Details</md-option>
-            <md-option value="logs">Logs</md-option>
-          </md-select>
+            <mat-option value="summary">Summary</mat-option>
+            <mat-option value="details">Details</mat-option>
+            <mat-option value="logs">Logs</mat-option>
+          </mat-select>
         </div>
       </div>
-    </md-card-header>
+    </mat-card-header>
     <div>
-      <md-card-content *ngIf="view_mode === 'summary'" class="rapd-result">
+      <mat-card-content *ngIf="view_mode === 'summary'" class="rapd-result">
         <div fxLayout="row" fxLayoutGap="10px">
           <div fxFlex="none">
             <div>
@@ -121,14 +121,14 @@
                 <h3>{{selected_plot_label}}</h3>
               </div>
               <div style="float:right;">
-                <md-select
+                <mat-select
                   placeholder="Select plot"
                   (change)="setPlot(selected_plot)"
                   [(ngModel)]="selected_plot"
                   name="plot"
                   style="width:12em;">
-                  <md-option *ngFor="let key of objectKeys(plot_select_labels)" [value]="key">{{plot_select_labels[key]}}</md-option>
-                </md-select>
+                  <mat-option *ngFor="let key of objectKeys(plot_select_labels)" [value]="key">{{plot_select_labels[key]}}</mat-option>
+                </mat-select>
               </div>
             </div>
             <div fxFlex="grow">
@@ -214,8 +214,8 @@
             </div>
           </div>
         </div>
-      </md-card-content>
-      <md-card-content *ngIf="view_mode === 'details'" class="rapd-result">
+      </mat-card-content>
+      <mat-card-content *ngIf="view_mode === 'details'" class="rapd-result">
         <div>
           <div *ngIf="full_result.results.best_results_norm" class="rapd-result">
             <h3>Data Collection Strategy from Best Normal</h3>
@@ -456,8 +456,8 @@
             </table>
           </div>
         </div>
-      </md-card-content>
-      <md-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
+      </mat-card-content>
+      <mat-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
         <app-log-card
           [log]="full_result.results.best_results_norm.log"
           header="Best Strategy Normal">
@@ -470,16 +470,16 @@
           [log]="full_result.results.labelit_results.output"
           header="Labelit Indexing">
         </app-log-card>
-      </md-card-content>
+      </mat-card-content>
     </div>
-    <md-toolbar *ngIf="full_result" class="result-panel-action-bar">
-      <button md-button color="primary" (click)="openReindexDialog()"><md-icon>refresh</md-icon>Reindex</button>
-      <button md-button color="primary" (click)="openProjectDialog()"><md-icon>add</md-icon>Project</button>
-      <button md-button *ngIf="current_result.display !== 'pinned'" color="primary" (click)="pinResult(current_result)"><md-icon>arrow_upward</md-icon>Pin</button>
-      <button md-button *ngIf="current_result.display == 'pinned'" color="primary" (click)="undefResult(current_result)"><md-icon>undo</md-icon>UnPin</button>
-      <button md-button *ngIf="current_result.display !== 'junked'" color="primary" (click)="junkResult(current_result)"><md-icon>delete</md-icon>Junk</button>
-      <button md-button *ngIf="current_result.display == 'junked'" color="primary" (click)="undefResult(current_result)"><md-icon>undo</md-icon>UnJunk</button>
-      <!-- <button md-button (click)="printPage()">Print</button> -->
-    </md-toolbar>
-  </md-card>
+    <mat-toolbar *ngIf="full_result" class="result-panel-action-bar">
+      <button mat-button color="primary" (click)="openReindexDialog()"><mat-icon>refresh</mat-icon>Reindex</button>
+      <button mat-button color="primary" (click)="openProjectDialog()"><mat-icon>add</mat-icon>Project</button>
+      <button mat-button *ngIf="current_result.display !== 'pinned'" color="primary" (click)="pinResult(current_result)"><mat-icon>arrow_upward</mat-icon>Pin</button>
+      <button mat-button *ngIf="current_result.display == 'pinned'" color="primary" (click)="undefResult(current_result)"><mat-icon>undo</mat-icon>UnPin</button>
+      <button mat-button *ngIf="current_result.display !== 'junked'" color="primary" (click)="junkResult(current_result)"><mat-icon>delete</mat-icon>Junk</button>
+      <button mat-button *ngIf="current_result.display == 'junked'" color="primary" (click)="undefResult(current_result)"><mat-icon>undo</mat-icon>UnJunk</button>
+      <!-- <button mat-button (click)="printPage()">Print</button> -->
+    </mat-toolbar>
+  </mat-card>
 </div>

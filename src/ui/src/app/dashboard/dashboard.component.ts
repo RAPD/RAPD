@@ -1,9 +1,6 @@
 import { Component,
          OnInit,
          ViewContainerRef } from '@angular/core';
-import { MdDialogRef,
-         MdDialog,
-         MdDialogConfig } from '@angular/material';
 
 import { User } from '../shared/classes/user';
 

@@ -3,9 +3,9 @@ import { Component,
          ViewContainerRef } from '@angular/core';
 import { FormGroup,
          FormControl } from '@angular/forms';
-import { MdDialogRef,
-         MdDialog,
-         MdDialogConfig } from '@angular/material';
+import { MdDialogRef } from '@angular/material';
+//          MdDialog,
+//          MdDialogConfig
 import { Router } from '@angular/router';
 
 import { CommunicateDialogComponent } from '../../shared/dialogs/communicate-dialog/communicate-dialog.component';

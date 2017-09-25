@@ -1,28 +1,28 @@
-<md-card *ngIf="full_result" class="rapd-result">
-  <md-card-header class="rapd-result">
+<mat-card *ngIf="full_result" class="rapd-result">
+  <mat-card-header class="rapd-result">
     <div style="width:100%">
       <div style="float:left;">
         <h3>Integration Results for
           {{full_result.process.repr}}
-          <span style="color:blue;"><md-icon (click)="displayRunInfo()">info_outline</md-icon></span>
+          <span style="color:blue;"><mat-icon (click)="displayRunInfo()">info_outline</mat-icon></span>
         </h3>
       </div>
       <div class="rapd-select-panel">
-        <md-select
+        <mat-select
           placeholder="View mode"
           floatPlaceholder="auto"
           (change)="onViewModeSelect(view_mode)"
           [(ngModel)]="view_mode"
           name="view_mode"
           value="summary">
-          <md-option value="summary">Summary</md-option>
-          <md-option value="analysis">Analysis</md-option>
-          <md-option value="logs">Logs</md-option>
-        </md-select>
+          <mat-option value="summary">Summary</mat-option>
+          <mat-option value="analysis">Analysis</mat-option>
+          <mat-option value="logs">Logs</mat-option>
+        </mat-select>
       </div>
     </div>
-  </md-card-header>
-  <md-card-content *ngIf="view_mode === 'summary'" class="rapd-result">
+  </mat-card-header>
+  <mat-card-content *ngIf="view_mode === 'summary'" class="rapd-result">
     <div fxLayout="row" fxLayoutGap="10px">
       <div fxFlex="none">
         <div>
@@ -147,14 +147,14 @@
             <h3>{{selected_plot}}</h3>
           </div>
           <div style="float:right;">
-            <md-select
+            <mat-select
               placeholder="Select plot"
               (change)="setPlot(selected_plot)"
               [(ngModel)]="selected_plot"
               name="plot"
               style="width:12em;">
-              <md-option *ngFor="let key of objectKeys(plot_select_labels)" [value]="key">{{plot_select_labels[key]}}</md-option>
-            </md-select>
+              <mat-option *ngFor="let key of objectKeys(plot_select_labels)" [value]="key">{{plot_select_labels[key]}}</mat-option>
+            </mat-select>
           </div>
         </div>
         <div fxFlex="grow">
@@ -293,11 +293,11 @@
         </div>
       </div>
     </div>
-  </md-card-content>
-  <md-card-content *ngIf="view_mode === 'analysis'" class="rapd-result">
+  </mat-card-content>
+  <mat-card-content *ngIf="view_mode === 'analysis'" class="rapd-result">
     <div #analysistarget></div>
-  </md-card-content>
-  <md-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
+  </mat-card-content>
+  <mat-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
     <app-log-card
       [log]="full_result.results.logs.xds_idxref"
       header="XDS Idxref">
@@ -318,19 +318,19 @@
       [log]="full_result.results.logs.pointless"
       header="Pointless">
     </app-log-card>
-  </md-card-content>
-  <md-toolbar *ngIf="full_result" class="result-panel-action-bar">
-    <button md-button color="primary" (click)="openReintegrateDialog()"><md-icon>refresh</md-icon>Reintegrate</button>
-    <button md-button color="primary" (click)="openMergeDialog()"><md-icon>call_merge</md-icon>Merge</button>
-    <button md-button color="primary" (click)="openMrDialog()"><md-icon>search</md-icon>MR</button>
-    <button md-button color="primary" (click)="openSadDialog()"><md-icon>search</md-icon>SAD</button>
-    <button md-button color="primary" (click)="openMadDialog()"><md-icon>search</md-icon>MAD</button>
-    <button md-button color="primary" (click)="openProjectDialog()"><md-icon>add</md-icon>Project</button>
-    <button md-button *ngIf="current_result.display !== 'pinned'" color="primary" (click)="pinResult(current_result)"><md-icon>arrow_upward</md-icon>Pin</button>
-    <button md-button *ngIf="current_result.display == 'pinned'" color="primary" (click)="undefResult(current_result)"><md-icon>undo</md-icon>UnPin</button>
-    <button md-button *ngIf="current_result.display !== 'junked'" color="primary" (click)="junkResult(current_result)"><md-icon>delete</md-icon>Junk</button>
-    <button md-button *ngIf="current_result.display == 'junked'" color="primary" (click)="undefResult(current_result)"><md-icon>undo</md-icon>UnJunk</button>
-
-    <!-- <button md-button (click)="printPage()">Print</button> -->
-  </md-toolbar>
-</md-card>
+  </mat-card-content>
+  <mat-toolbar *ngIf="full_result" class="result-panel-action-bar">
+    <button mat-button color="primary" (click)="openReintegrateDialog()"><mat-icon>refresh</mat-icon>Reintegrate</button>
+    <button mat-button color="primary" (click)="openMergeDialog()"><mat-icon>call_merge</mat-icon>Merge</button>
+    <button mat-button color="primary" (click)="openMrDialog()"><mat-icon>search</mat-icon>MR</button>
+    <button mat-button color="primary" (click)="openSadDialog()"><mat-icon>search</mat-icon>SAD</button>
+    <button mat-button color="primary" (click)="openMadDialog()"><mat-icon>search</mat-icon>MAD</button>
+    <button mat-button color="primary" (click)="openProjectDialog()"><mat-icon>add</mat-icon>Project</button>
+    <button mat-button *ngIf="current_result.display !== 'pinned'" color="primary" (click)="pinResult(current_result)"><mat-icon>arrow_upward</mat-icon>Pin</button>
+    <button mat-button *ngIf="current_result.display == 'pinned'" color="primary" (click)="undefResult(current_result)"><mat-icon>undo</mat-icon>UnPin</button>
+    <button mat-button *ngIf="current_result.display !== 'junked'" color="primary" (click)="junkResult(current_result)"><mat-icon>delete</mat-icon>Junk</button>
+    <button mat-button *ngIf="current_result.display == 'junked'" color="primary" (click)="undefResult(current_result)"><mat-icon>undo</mat-icon>UnJunk</button>
+    <button mat-button color="primary" (click)="initDownload()"><mat-icon>file_download</mat-icon>Download</button>
+    <!-- <button mat-button (click)="printPage()">Print</button> -->
+  </mat-toolbar>
+</mat-card>

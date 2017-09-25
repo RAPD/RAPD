@@ -1,28 +1,28 @@
-<md-card *ngIf="log" class="rapd-raw-output-card">
-  <md-card-header>
+<mat-card *ngIf="log" class="rapd-raw-output-card">
+  <mat-card-header>
     <div style="width:100%">
       <div style="float:left;">
         <h3>{{header}}</h3>
       </div>
       <div style="float:right">
-        <button md-mini-fab class="raw-output-toggle" color="primary">
-          <md-icon
+        <button mat-mini-fab class="raw-output-toggle" color="primary">
+          <mat-icon
             *ngIf="log_collapsed"
-            class="md-24"
+            class="mat-24"
             (click)="log_collapsed=false">
             expand_more
-          </md-icon>
-          <md-icon
+          </mat-icon>
+          <mat-icon
             *ngIf="! log_collapsed"
-            class="md-24"
+            class="mat-24"
             (click)="log_collapsed=true">
             expand_less
-          </md-icon>
+          </mat-icon>
         </button>
       </div>
     </div>
-  </md-card-header>
-  <md-card-content class="rapd-raw-output" [ngClass]="{'raw-collapsed':log_collapsed}">
+  </mat-card-header>
+  <mat-card-content class="rapd-raw-output" [ngClass]="{'raw-collapsed':log_collapsed}">
     <p *ngFor="let line of log">{{line}}</p>
-  </md-card-content>
-</md-card>
+  </mat-card-content>
+</mat-card>

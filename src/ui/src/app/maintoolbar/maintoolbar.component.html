@@ -1,16 +1,14 @@
-<md-toolbar class="main-toolbar">
-  <!-- <nav class="main-nav"> -->
+<mat-toolbar class="main-toolbar">
   <span class="main-title">
     <h1 [style.color]= "globals_service.site_color ? globals_service.site_color : '#445A64'">RAPD @ {{globals_service.site}}</h1>
   </span>
   <span class="main-buttons">
-    <button md-raised-button class="r-button" (click)="changeMode('admin')">Admin</button>
-    <!-- <button md-raised-button class="r-button" (click)="changeMode('tasks')">Tasks</button> -->
-    <button md-raised-button class="r-button" (click)="changeMode('projects')">Projects</button>
-    <button md-raised-button class="r-button" (click)="changeMode('sessions')">Sessions</button>
-    <button md-raised-button class="r-button" (click)="changeMode('dashboard')">Dashboard</button>
-    <button md-raised-button style="background-color:green;" class="r-button" (click)="openLoginDialog()" *ngIf="!auth_service.authenticated()">Log In</button>
-    <button md-raised-button style="background-color:red;" class="r-button" (click)="auth_service.logout()" *ngIf="auth_service.authenticated()">Log Out</button>
+    <button mat-raised-button class="r-button" (click)="changeMode('admin')">Admin</button>
+    <!-- <button mat-raised-button class="r-button" (click)="changeMode('tasks')">Tasks</button> -->
+    <button mat-raised-button class="r-button" (click)="changeMode('projects')">Projects</button>
+    <button mat-raised-button class="r-button" (click)="changeMode('sessions')">Sessions</button>
+    <button mat-raised-button class="r-button" (click)="changeMode('dashboard')">Dashboard</button>
+    <button mat-raised-button style="background-color:green;" class="r-button" (click)="openLoginDialog()" *ngIf="!auth_service.authenticated()">Log In</button>
+    <button mat-raised-button style="background-color:red;" class="r-button" (click)="auth_service.logout()" *ngIf="auth_service.authenticated()">Log Out</button>
   </span>
-  <!-- </nav> -->
-</md-toolbar>
+</mat-toolbar>

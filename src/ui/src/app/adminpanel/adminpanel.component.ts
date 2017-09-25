@@ -2,9 +2,9 @@ import { Component,
          OnInit,
          ViewContainerRef } from '@angular/core';
 
-import { MdDialogRef,
-         MdDialog,
-         MdDialogConfig } from '@angular/material';
+import { MatDialog,
+         MatDialogRef,
+         MatDialogConfig } from '@angular/material';
 
 import { UserDialogComponent } from './user-dialog/user-dialog.component';
 import { GroupDialogComponent } from './group-dialog/group-dialog.component';
@@ -24,10 +24,10 @@ import { Session } from '../shared/classes/session';
 })
 export class AdminpanelComponent implements OnInit {
 
-  userDialogRef: MdDialogRef<UserDialogComponent>;
-  changepassDialogRef: MdDialogRef<ChangepassDialogComponent>;
-  groupDialogRef: MdDialogRef<GroupDialogComponent>;
-  sessionDialogRef: MdDialogRef<SessionDialogComponent>;
+  userDialogRef: MatDialogRef<UserDialogComponent>;
+  changepassDialogRef: MatDialogRef<ChangepassDialogComponent>;
+  groupDialogRef: MatDialogRef<GroupDialogComponent>;
+  sessionDialogRef: MatDialogRef<SessionDialogComponent>;
 
   user: User;
   users: User[];
@@ -37,7 +37,7 @@ export class AdminpanelComponent implements OnInit {
   errorMessage: string;
 
   constructor(private admin_service: RestService,
-              public dialog: MdDialog,
+              public dialog: MatDialog,
               public viewContainerRef: ViewContainerRef) { }
 
   ngOnInit() {
@@ -110,7 +110,7 @@ export class AdminpanelComponent implements OnInit {
 
     let user = event.selected[0];
 
-    let config = new MdDialogConfig();
+    let config = new MatDialogConfig();
     config.viewContainerRef = this.viewContainerRef;
 
     this.userDialogRef = this.dialog.open(UserDialogComponent, config);
@@ -133,7 +133,7 @@ export class AdminpanelComponent implements OnInit {
   }
 
   changePass() {
-    let config = new MdDialogConfig();
+    let config = new MatDialogConfig();
     config.viewContainerRef = this.viewContainerRef;
     this.changepassDialogRef = this.dialog.open(ChangepassDialogComponent, config);
   }
@@ -184,7 +184,7 @@ export class AdminpanelComponent implements OnInit {
       group.status = 'active';
     }
 
-    let config = new MdDialogConfig();
+    let config = new MatDialogConfig();
     config.viewContainerRef = this.viewContainerRef;
 
     this.groupDialogRef = this.dialog.open(GroupDialogComponent, config);
@@ -255,7 +255,7 @@ export class AdminpanelComponent implements OnInit {
       session.session_type = 'mx';
     }
 
-    let config = new MdDialogConfig();
+    let config = new MatDialogConfig();
     config.viewContainerRef = this.viewContainerRef;
 
     this.sessionDialogRef = this.dialog.open(SessionDialogComponent, config);

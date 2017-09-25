@@ -13,8 +13,8 @@ import { AppRoutingModule,
 
 import 'hammerjs';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MaterialModule,
-         MdDialogModule } from '@angular/material';
+import { NoConflictStyleCompatibilityMode } from '@angular/material';
+import { RapdMaterialModule } from './rapd.module';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ChartsModule } from 'ng2-charts/ng2-charts';
 
@@ -111,9 +111,9 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     AppRoutingModule,
     HttpModule,
     BrowserAnimationsModule,
+    NoConflictStyleCompatibilityMode,
+    RapdMaterialModule,
     FlexLayoutModule,
-    MaterialModule,
-    MdDialogModule,
     NgxDatatableModule,
     ChartsModule
   ],

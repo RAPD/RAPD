@@ -1,60 +1,60 @@
-<h1 md-dialog-title>Group</h1>
-<button md-icon-button class="button-dialog-top-right" (click)="exitGroup()">
-  <md-icon>close</md-icon>
+<h1 MdDialogTitle>Group</h1>
+<button mat-icon-button class="button-dialog-top-right" (click)="exitGroup()">
+  <mat-icon>close</mat-icon>
 </button>
 <form [formGroup]="group_form">
   <div class="form-group">
     <p>
-      <md-input-container>
-        <input mdInput
+      <mat-form-field>
+        <input matInput
           formControlName="groupname"
           required
           placeholder='groupname'
           [(ngModel)]="model.groupname"
           autofocus>
-      </md-input-container>
+      </mat-form-field>
     </p>
     <p>
-      <md-input-container>
-        <input mdInput
+      <mat-form-field>
+        <input matInput
           placeholder="institution"
           formControlName="institution"
           required
           [(ngModel)]="model.institution">
-      </md-input-container>
+      </mat-form-field>
     </p>
     <p>
-      <md-input-container>
-      <input mdInput
+      <mat-form-field>
+      <input matInput
         placeholder="UID"
         formControlName="uid"
         [(ngModel)]="model.uid">
-      </md-input-container>
+      </mat-form-field>
     </p>
     <p>
-      <md-input-container>
-        <input mdInput
+      <mat-form-field>
+        <input matInput
           placeholder="GID"
           formControlName="gid"
           [(ngModel)]="model.gid">
-      </md-input-container>
+      </mat-form-field>
     </p>
     <p>
-      <md-select formControlName="status" placeholder="Role"
+      <mat-select formControlName="status" placeholder="Role"
               [(ngModel)]="model.status">
-        <md-option value="active">active</md-option>
-        <md-option value="inactive">inactive</md-option>
-      </md-select>
+        <mat-option value="active">active</mat-option>
+        <mat-option value="inactive">inactive</mat-option>
+      </mat-select>
     </p>
   </div>
   <p>
-    <md-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></md-progress-spinner>
+    <mat-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></mat-progress-spinner>
   </p>
   <p>
     {{error_message}}
   </p>
   <p>
-    <button *ngIf="model._id" type="button" md-button color="warn" (click)="deleteGroup()">Delete</button>
-    <button type="button" [disabled]="!group_form.valid" md-button (click)="submitGroup()">Save</button>
+    <button *ngIf="model._id" type="button" mat-button color="warn" (click)="deleteGroup()">Delete</button>
+    <button type="button" [disabled]="!group_form.valid" mat-button (click)="submitGroup()">Save</button>
   </p>
 </form>

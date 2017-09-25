@@ -3,9 +3,9 @@ import { Component,
          OnInit,
          Output,
          ViewContainerRef } from '@angular/core';
-import { MdDialogRef,
-         MdDialog,
-         MdDialogConfig } from '@angular/material';
+import { MatDialog,
+         MatDialogRef,
+         MatDialogConfig } from '@angular/material';
 
 import { LoginDialogComponent } from './login-dialog/login-dialog.component';
 import { ChangepassDialogComponent } from '../shared/dialogs/changepass-dialog/changepass-dialog.component';
@@ -21,12 +21,12 @@ export class MaintoolbarComponent implements OnInit {
 
   @Output() modeChange = new EventEmitter();
 
-  loginDialogRef: MdDialogRef<LoginDialogComponent>;
-  changepassDialogRef: MdDialogRef<ChangepassDialogComponent>;
+  loginDialogRef: MatDialogRef<LoginDialogComponent>;
+  changepassDialogRef: MatDialogRef<ChangepassDialogComponent>;
 
   constructor(private auth_service: AuthService,
               private globals_service: GlobalsService,
-              public dialog: MdDialog,
+              public dialog: MatDialog,
               public viewContainerRef: ViewContainerRef) {}
 
   ngOnInit() {
@@ -40,7 +40,7 @@ export class MaintoolbarComponent implements OnInit {
 
   openLoginDialog() {
 
-    let config = new MdDialogConfig();
+    let config = new MatDialogConfig();
     config.viewContainerRef = this.viewContainerRef;
 
     this.loginDialogRef = this.dialog.open(LoginDialogComponent, config);
@@ -50,7 +50,7 @@ export class MaintoolbarComponent implements OnInit {
       this.loginDialogRef = null;
       if (result) {
         if (result.pass_force_change == true) {
-          let config = new MdDialogConfig();
+          let config = new MatDialogConfig();
           config.viewContainerRef = this.viewContainerRef;
           this.changepassDialogRef = this.dialog.open(ChangepassDialogComponent, config);
         }

@@ -3,7 +3,7 @@ import { Component,
 import { FormGroup,
          FormControl } from '@angular/forms';
 import { MdDialogRef,
-         MD_DIALOG_DATA } from '@angular/material';
+         MAT_DIALOG_DATA } from '@angular/material';
 
 import { RestService } from '../../services/rest.service';
 
