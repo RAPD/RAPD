@@ -486,7 +486,7 @@ def main():
             if site_module:
                 image_headers[data_file] = detector_module.read_header(data_file,
                                                                        #site_module.BEAM_SETTINGS)
-                                                                       site_module.BEAM_INFO.get(site))
+                                                                       site_module.BEAM_INFO.get(site.upper()))
             else:
                 image_headers[data_file] = detector_module.read_header(data_file)
             # If this image is derived from an hdf5 master file, tag it

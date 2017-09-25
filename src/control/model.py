@@ -142,7 +142,7 @@ class Model(object):
         # Start the cloud monitor
         # self.start_cloud_monitor()
 
-        # Initialize the site adapter
+        # Initialize the site adapter (communicating with beamline)
         self.init_site_adapter()
 
         # Initialize the remote adapter
