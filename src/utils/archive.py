@@ -49,7 +49,7 @@ from pprint import pprint
 # import detectors.detector_utils as detector_utils
 # import utils
 
-def create_archive(directory, archive_prefix="rapd"):
+def create_archive(directory, archive_name=False):
     """
     Creates an archive file for the input directory
     """
