@@ -160,8 +160,8 @@ apiRoutes.post('/authenticate', function(req, res) {
 // route to authenticate a user (POST http://localhost:8080/api/requestpass)
 apiRoutes.post('/requestpass', function(req, res) {
 
-  // console.log('requestpass');
-  // console.log(req.body);
+  console.log('requestpass');
+  console.log(req.body);
 
   User.
   findOne({email: req.body.email}).

@@ -16,7 +16,8 @@ import { Run } from '../classes/run';
 @Injectable()
 export class RestService {
 
-  private apiUrl = 'http://localhost:3000/api';
+  // private apiUrl = 'http://localhost:3000/api';
+  private apiUrl = 'http://kona.nec.aps.anl.gov:3000/api';
 
   constructor(private authHttp: AuthHttp) { }
 

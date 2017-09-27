@@ -3,7 +3,7 @@ import { Component,
          ViewContainerRef } from '@angular/core';
 import { FormGroup,
          FormControl } from '@angular/forms';
-import { MdDialogRef } from '@angular/material';
+import { MatDialogRef } from '@angular/material';
 //          MdDialog,
 //          MdDialogConfig
 import { Router } from '@angular/router';
@@ -29,7 +29,7 @@ export class LoginDialogComponent implements OnInit {
   constructor(private auth_service: AuthService,
               private websocket_service: WebsocketService,
               private router: Router,
-              public dialogRef: MdDialogRef<LoginDialogComponent>) { }
+              public dialogRef: MatDialogRef<LoginDialogComponent>) { }
 
   ngOnInit() {
 

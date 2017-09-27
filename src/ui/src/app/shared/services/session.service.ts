@@ -10,7 +10,8 @@ import { Session } from '../classes/session';
 @Injectable()
 export class SessionService {
 
-  private apiUrl = 'http://localhost:3000/api';
+  // private apiUrl = 'http://localhost:3000/api';
+  private apiUrl = 'http://kona.nec.aps.anl.gov:3000/api';
 
   constructor(public auth_http: AuthHttp) { }
 

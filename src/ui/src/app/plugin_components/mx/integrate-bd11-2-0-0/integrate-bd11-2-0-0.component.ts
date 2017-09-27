@@ -250,6 +250,8 @@ export class IntegrateBd11200Component implements OnInit {
                 xLabels[i] = (1.0/xLabels[i]).toFixed(2);
               });
         };
+        // X-axis label
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = 'Dmid (\u00C5)';
         break;
 
       case "Average I, RMS deviation, and Sd":
@@ -259,6 +261,10 @@ export class IntegrateBd11200Component implements OnInit {
             xLabels[i] = (1.0/xLabels[i]).toFixed(2);
           });
         };
+        // X-axis label
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = 'Dmid (\u00C5)';
+        // Y-axis label
+        this.data.lineChartOptions.scales.yAxes[0].scaleLabel.labelString = 'Intensity';
         break;
 
       case 'Completeness':
@@ -268,6 +274,8 @@ export class IntegrateBd11200Component implements OnInit {
             xLabels[i] = (1.0/xLabels[i]).toFixed(2);
           });
         };
+        // X-axis label
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = 'Dmid (\u00C5)';
         break;
 
       case 'Redundancy':
@@ -277,6 +285,8 @@ export class IntegrateBd11200Component implements OnInit {
             xLabels[i] = (1.0/xLabels[i]).toFixed(2);
           });
         };
+        // X-axis label
+        this.data.lineChartOptions.scales.xAxes[0].scaleLabel.labelString = 'Dmid (\u00C5)';
         break;
 
       case 'Radiation Damage':

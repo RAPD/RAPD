@@ -9,7 +9,8 @@ import { AuthHttp, JwtHelper } from 'angular2-jwt';
 @Injectable()
 export class AuthService implements CanActivate {
 
-  private apiUrl: string = 'http://localhost:3000/api/';
+  // private apiUrl: string = 'http://localhost:3000/api/';
+  private apiUrl: string = 'http://kona.nec.aps.anl.gov:3000/api/';
   // private profile: any;
   jwtHelper: JwtHelper = new JwtHelper();
 
@@ -244,6 +245,7 @@ getAuth(): Observable<any> {
 
     // this.userProfile = undefined;
     // Redirect to home
-    window.location.href = 'http://localhost:4200';
+    // window.location.href = 'http://localhost:4200';
+    window.location.href = 'http://kona.nec.aps.anl.gov:4200';
   }
 }
