@@ -9,7 +9,8 @@ import { MatButtonModule,
          MatProgressSpinnerModule,
          MatSelectModule,
          MatTabsModule,
-         MatToolbarModule, } from '@angular/material';
+         MatToolbarModule,
+         MatSnackBarModule, } from '@angular/material';
 
 @NgModule({
   imports: [
@@ -23,6 +24,7 @@ import { MatButtonModule,
     MatSelectModule,
     MatTabsModule,
     MatToolbarModule,
+    MatSnackBarModule,
   ],
   exports: [
     MatButtonModule,
@@ -35,6 +37,7 @@ import { MatButtonModule,
     MatSelectModule,
     MatTabsModule,
     MatToolbarModule,
+    MatSnackBarModule, 
   ]
 })
 export class RapdMaterialModule { }

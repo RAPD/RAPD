@@ -3,7 +3,8 @@ import { Component,
          OnInit } from '@angular/core';
 import { FormGroup,
          FormControl } from '@angular/forms';
-import { MdDialogRef,
+import { MatSnackBar,
+         MatDialogRef,
          MAT_DIALOG_DATA } from '@angular/material';
 
 import { RestService } from '../../../shared/services/rest.service';
@@ -35,8 +36,9 @@ export class ReintegrateDialogComponent implements OnInit {
 
   constructor(private globals_service: GlobalsService,
               private rest_service: RestService,
-              public dialogRef: MdDialogRef<ReintegrateDialogComponent>,
-              @Inject(MAT_DIALOG_DATA) public data: any) { }
+              public dialogRef: MatDialogRef<ReintegrateDialogComponent>,
+              @Inject(MAT_DIALOG_DATA) public data: any,
+              public snackBar: MatSnackBar) { }
 
   ngOnInit() {
     console.log(this.data);
@@ -105,6 +107,9 @@ export class ReintegrateDialogComponent implements OnInit {
                          this.submitted = false;
                          this.submit_error = parameters.error;
                          if (parameters.success) {
+                           let snackBarRef = this.snackBar.open('Reintegrate request submitted', 'Ok', {
+                             duration: 2000,
+                           });
                            this.dialogRef.close();
                          }
                        });

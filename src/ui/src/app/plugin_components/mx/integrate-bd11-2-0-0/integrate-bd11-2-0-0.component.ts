@@ -6,7 +6,7 @@ import { Component,
          ViewChild,
          ViewContainerRef } from '@angular/core';
 
-import { // MdSnackBar,
+import { MatSnackBar,
          MatDialog,
          MAT_DIALOG_DATA,
          MatToolbarModule } from '@angular/material';
@@ -115,7 +115,7 @@ export class IntegrateBd11200Component implements OnInit {
               private websocket_service: WebsocketService,
               private globals_service: GlobalsService,
               public dialog: MatDialog,
-            /*public snackBar: MdSnackBar*/) { }
+              public snackBar: MatSnackBar) { }
 
   ngOnInit() {
     // Subscribe to results for the displayed result
@@ -324,6 +324,8 @@ export class IntegrateBd11200Component implements OnInit {
 
   // Start the download of data
   initDownload() {
-    // let snackBarRef = this.snackBar.open('Message archived');
+    let snackBarRef = this.snackBar.open('Download request submitted', 'Ok', {
+      duration: 2000,
+    });
   }
 }
