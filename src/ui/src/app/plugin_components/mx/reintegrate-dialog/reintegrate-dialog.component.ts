@@ -3,9 +3,9 @@ import { Component,
          OnInit } from '@angular/core';
 import { FormGroup,
          FormControl } from '@angular/forms';
-import { MatSnackBar,
-         MatDialogRef,
-         MAT_DIALOG_DATA } from '@angular/material';
+import { MatDialogRef,
+         MAT_DIALOG_DATA,
+         MatSnackBar } from '@angular/material';
 
 import { RestService } from '../../../shared/services/rest.service';
 import { GlobalsService } from '../../../shared/services/globals.service';

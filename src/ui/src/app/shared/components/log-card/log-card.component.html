@@ -22,7 +22,9 @@
       </div>
     </div>
   </mat-card-header>
-  <mat-card-content class="rapd-raw-output" [ngClass]="{'raw-collapsed':log_collapsed}">
-    <p *ngFor="let line of log">{{line}}</p>
+  <mat-card-content class="rapd-raw-output">
+    <div [ngClass]="{'raw-collapsed':log_collapsed}">
+      <p *ngFor="let line of log">{{line}}</p>
+    </div>
   </mat-card-content>
 </mat-card>
