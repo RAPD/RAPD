@@ -173,17 +173,25 @@ def create_image_template(image_prefix, run_number):
 
 def calculate_flux(header, site_params):
     """
-    Determine beam information from the header information and return in the header dict
+    Calculate the flux as a function of transmission and aperture size.
     """
     beam_size_x = site_params.get('BEAM_SIZE_X')
     beam_size_y = site_params.get('BEAM_SIZE_Y')
     aperture = header.get('md2_aperture')
+    new_x = beam_size_x
+    new_y = beam_size_y
+    
+    if aperture < beam_size_x:
+        new_x = aperture
+    if aperture < beam_size_y:
+        new_y = aperture
 
     # Calculate area of full beam used to calculate the beamline flux
     # Assume ellipse, but same equation works for circle.
     # Assume beam is uniform
     full_beam_area = numpy.pi*(beam_size_x/2)*(beam_size_y/2)
 
+    # Calculate the new beam area (with aperture) divided by the full_beam_area.
     # Since aperture is round, it will be cutting off edges of x length until it matches beam height,
     # then it would switch to circle
     if beam_size_y <= aperture:
@@ -192,8 +200,12 @@ def calculate_flux(header, site_params):
     else:
         # circle
         ratio = (numpy.pi*(aperture/2)**2) / full_beam_area
+
     # Calculate the new_beam_area ratio to full_beam_area
-    return int(round(site_params.get('BEAM_FLUX') * header.get('transmission') * ratio))
+    flux = int(round(site_params.get('BEAM_FLUX') * header.get('transmission') * ratio))
+    
+    # Return the flux and beam size
+    return (flux, new_x, new_y)
 
 def get_data_root_dir(fullname):
     """
@@ -365,9 +377,12 @@ def read_header(input_file=False, beam_settings=False):
         header = base_read_header(input_file)
         # header = detector.read_header(input_file)
 
-    # Calculate flux and add it to header
+    # Calculate flux, new beam size and add them to header
     if beam_settings:
-        header['flux'] = calculate_flux(header, beam_settings)
+        flux, x_size, y_size = calculate_flux(header, beam_settings)
+        header['flux'] = flux
+        header['x_beam_size'] = x_size
+        header['y_beam_size'] = y_size
 
     basename = os.path.basename(input_file)
     header["image_prefix"] = "_".join(basename.replace(".cbf", "").split("_")[:-2])

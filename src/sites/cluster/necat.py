@@ -70,7 +70,7 @@ def check_queue(inp):
     d = {#"INDEX+STRATEGY" : 'phase3.q',
          "INDEX"          : 'phase3.q',
          "BEAMCENTER"     : 'all.q',
-         "XDS"      : 'all.q',
+         "XDS"            : 'all.q',
          }
     return(d[inp])
   
@@ -352,25 +352,28 @@ def processCluster_OLD(self, inp, output=False):
         if name!= False:
             self.red.lpush(name,1)
 
-def killChildrenCluster(self,inp):
+def kill_job(inp, logger=False):
   """
   Kill jobs on cluster. The JobID is sent in and job is killed. Must be launched from
   a compute node on the cluster. Used in pipelines to kill jobs when timed out or if
   a solution in Phaser is found in the first round and the second round jobs are not needed.
   """
-  if self.verbose:
-    self.logger.debug('Utilities::killChildrenCluster')
+  if logger:
+      logger.debug('Utilities::killChildrenCluster')
   try:
-    command = 'qdel %s'%inp
-    self.logger.debug(command)
-    os.system(command)
+      command = 'qdel %s'%inp
+      if logger:
+          logger.debug(command)
+      os.system(command)
   except:
-    self.logger.exception('**Could not kill the jobs on the cluster**')
+      if logger:
+          logger.exception('**Could not kill the jobs on the cluster**')
 
 def stillRunningCluster(self,jobid):
   """
   Check to see if process and/or its children and/or children's children are still running. Must
-  be launched from compute node.
+  be launched from compute node. 
+  OBSOLETE if using DRMAA for job submission
   """
   try:
     running = False

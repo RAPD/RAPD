@@ -301,7 +301,8 @@ class Overwatcher(Registrar):
         Kill the managed process
         """
 
-        self.managed_process.kill()
+        #self.managed_process.kill()
+        os.kill(self.managed_process.pid)
 
     def start_managed_process(self):
         """

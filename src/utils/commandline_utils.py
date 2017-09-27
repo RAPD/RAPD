@@ -147,7 +147,7 @@ dp_parser.add_argument("--sample_type",
                        action="store",
                        dest="sample_type",
                        default="protein",
-                       choices=["protein", "dna", "rna", "peptide"],
+                       choices=["protein", "dna", "rna", "peptide", "ribosome"],
                        help="The type of sample")
 
 # Solvent fraction

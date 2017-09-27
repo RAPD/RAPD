@@ -68,7 +68,7 @@ from utils.r_numbers import try_int, try_float
 #from utils.communicate import rapd_send
 import utils.exceptions as exceptions
 import utils.global_vars as global_vars
-from utils.processes import local_subprocess
+from utils.processes import local_subprocess, mp_pool
 import utils.xutils as xutils
 
 DETECTOR_TO_BEST = {
@@ -147,10 +147,10 @@ class RapdPlugin(Process):
 
     # This is where I place my overall folder settings.
     working_dir = False
-    auto_summary = False
+    #auto_summary = False
     labelit_log = {}
     labelit_results = {}
-    labelit_summary = False
+    #labelit_summary = False
     labelit_failed = False
     distl_log = []
     distl_results = []
@@ -283,9 +283,15 @@ class RapdPlugin(Process):
             self.launcher = cluster_launcher.processCluster
             # Based on the command, pick a batch queue on the cluster. Added to input kwargs
             self.batch_queue = {'batch_queue': cluster_launcher.check_queue(self.command["command"])}
+            self.kill_job = cluster_launcher.kill_job
         else:
             self.launcher = local_subprocess
             self.batch_queue = {}
+            self.kill_job = xutils.kill_children
+        
+        # Setup a multiprocessing.Pool for running jobs (8 will be full speed)
+        # If set to 1, then everything is run sequentially
+        #self.pool = mp_pool(self.preferences.get('nproc', 8))
 
         # Set timer for distl. "False" will disable.
         if self.header2:
@@ -339,8 +345,6 @@ class RapdPlugin(Process):
         self.solvent_content = self.preferences.get("solvent_content", 0.55)
 
         Process.__init__(self, name="AutoindexingStrategy")
-
-        # self.start()
 
     def construct_results(self):
         """Create the self.results dict"""
@@ -407,10 +411,10 @@ class RapdPlugin(Process):
 
             # Run Labelit
             self.start_labelit()
-
+            
       	    # Sorts labelit results by highest symmetry.
             self.labelitSort()
-
+            """
             # If there is a solution, then calculate a strategy.
             if self.labelit_failed == False:
 
@@ -429,7 +433,7 @@ class RapdPlugin(Process):
 
             # Pass back results, and cleanup.
             self.postprocess()
-
+            """
     def connect_to_redis(self):
         """Connect to the redis instance"""
         # Create a pool connection
@@ -542,8 +546,10 @@ class RapdPlugin(Process):
 
         # try:
         #print self.site_parameters
-        beam_size_x = self.site_parameters.get('BEAM_SIZE_X', False)
-        beam_size_y = self.site_parameters.get('BEAM_SIZE_Y', False)
+        beam_size_x = self.header.get('x_beam_size', self.site_parameters.get('BEAM_SIZE_X', False))
+        beam_size_y = self.header.get('y_beam_size', self.site_parameters.get('BEAM_SIZE_Y', False))
+        #beam_size_x = self.site_parameters.get('BEAM_SIZE_X', False)
+        #beam_size_y = self.site_parameters.get('BEAM_SIZE_Y', False)
         gauss_x = self.site_parameters.get('BEAM_GAUSS_X', False)
         gauss_y = self.site_parameters.get('BEAM_GAUSS_Y', False)
         flux = self.header.get('flux', self.site_parameters.get('BEAM_FLUX', 1E10 ))
@@ -569,7 +575,7 @@ class RapdPlugin(Process):
         setup = "raddose << EOF\n"
         if beam_size_x and beam_size_y:
             setup += "BEAM %s %s\n" % (beam_size_x, beam_size_y)
-        # Full-width-half-max of the beam
+        # Full-width-half-max of the beam (for non-uniform beams)
         if gauss_x and gauss_y:
             setup += "GAUSS %.2f %.2f\nIMAGES 1\n" % (gauss_x, gauss_y)
         setup += "PHOSEC %d\n" % flux
@@ -635,6 +641,7 @@ class RapdPlugin(Process):
         params["verbose"] = self.verbose
         params["batch_queue"] = self.batch_queue
         params["vendortype"] = self.vendortype
+        params['kill_job'] = self.kill_job
         if self.working_dir == self.dest_dir:
             command = self.command
         else:
@@ -846,7 +853,7 @@ class RapdPlugin(Process):
         exp_dose_lim = 300
         if self.raddose_results:
             if self.raddose_results.get("raddose_results"):
-                dose = self.raddose_results.get("raddose_results").get('dose per image')
+                dose = self.raddose_results.get("raddose_results").get('dose')
                 exp_dose_lim = self.raddose_results.get("raddose_results").get('exp dose limit')
 
         # Set how many frames a crystal will last at current exposure time.
@@ -963,21 +970,6 @@ class RapdPlugin(Process):
                 #Launch the job
                 jobs[str(i)] = Process(target=self.launcher,
                                        kwargs=inp_kwargs)
-                """
-                if self.cluster_use:
-                    jobs[str(i)] = Process(target=self.cluster_adapter.processCluster,
-                                           #args=(self, (l[i][0], log, self.batch_queue)))
-                                           kwargs= {'command': l[i][0],
-                                                    #'work_dir': os.getcwd(),
-                                                    'logfile': log,
-                                                    'batch_queue': self.batch_queue})
-                else:
-                    #jobs[str(i)] = Process(target=BestAction,
-                    #                       args=((l[i][0], log), self.logger))
-                    jobs[str(i)] = Process(target=local_subprocess,
-                                           kwargs={'command': l[i][0],
-                                                   'logfile': log} )
-                """
                 jobs[str(i)].start()
 
         # Check if Best should rerun since original Best strategy is too long for Pilatus using
@@ -2006,7 +1998,7 @@ Distance | % Transmission", level=98, color="white")
                     if self.verbose:
                         self.logger.debug("Cleaning up files and folders")
                     os.system("rm -rf labelit_iteration* dataset_preferences.py")
-                    for i in range(0, self.iterations):
+                    for i in range(0, self.nrun):
                         os.system("rm -rf %s" % i)
         except:
             self.logger.exception("**Could not cleanup**")
@@ -2098,7 +2090,9 @@ Distance | % Transmission", level=98, color="white")
 class RunLabelit(Process):
 
     labelit_pids = []
-    labelit_jobs = {}
+    jobids = {}
+    #labelit_jobs = {}
+    jobs = {}
     labelit_tracker = {}
 
     # Holder for results
@@ -2160,7 +2154,10 @@ class RunLabelit(Process):
 
         # params
         self.test = params.get("test", False)
-        
+
+        # Pass int the multiprocessing.Pool for job submission
+        self.kill_job = params.get("kill_job")
+
         # Get the correct laucher, (already loaded)
         # Will not use RAM if cluster_use=True since runs would be on separate nodes. Adds
         # overhead of 1-3s to total run time if all nodes same speed.
@@ -2175,16 +2172,21 @@ class RunLabelit(Process):
         # Turn on verbose output
         self.verbose = params.get("verbose", False)
 
-        # Number of Labelit iteration to run.
-        self.iterations = params.get("iterations", 6)
+        # 'all' means run all the Labelit runs
+        # an int would say to just run that particular run.
+        self.nrun = params.get("iterations", 'all')
+        if isinstance(self.nrun, int):
+            self.tot_runs = 1
+        else:
+            # Get the total number of Labelit runs
+            self.tot_runs = xutils.get_labelit_settings(self, 'total')
 
         # If limiting number of LABELIT run on cluster.
-        # self.red = params.get("redis", False)
-        self.short = False
+        #self.short = False
 
     	# Make decisions based on input params
-        if self.iterations != 6:
-            self.short = True
+        #if self.nrun != 'all':
+        #    self.short = True
         # Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does
         # not send results to database.
         #******BEAMLINE SPECIFIC*****
@@ -2244,40 +2246,58 @@ class RunLabelit(Process):
 
         # Make the initial dataset_prefernces.py file
         self.preprocess_labelit()
-
-        if self.short:
-
+        
+        if self.tot_runs == 1:
+            # This is used for beam center plugin
             self.labelit_timer = 300
-            xutils.foldersLabelit(self, self.iterations)
+            #self.labelit_jobs[xutils.get_labelit_settings(self, self.nrun)] = self.nrun
+            # Sets the dataset_preferences.py and launches Labelit
+            xutils.get_labelit_settings(self, self.nrun)
+        else:
+            # Normal mode: running all the Labelit runs
+            for i in range(self.tot_runs):
+                xutils.get_labelit_settings(self, i)
+                #self.labelit_jobs[xutils.get_labelit_settings(self, i)] = i
+        
+        """
+        if self.nrun != 'all':
+            # This is used for beam center plugin
+            self.labelit_timer = 300
+            self.labelit_jobs[xutils.get_labelit_settings(self, self.nrun)] = self.nrun
 
             # if a specific iteration is sent in then it only runs that one
-            if self.iterations == 0:
-                self.labelit_jobs[self.process_labelit().keys()[0]] = 0
-            else:
-                self.labelit_jobs[xutils.errorLabelit(self, self.iterations).keys()[0]] = \
-                    self.iterations
+            #if self.nrun == 0:
+            #    self.labelit_jobs[self.process_labelit().keys()[0]] = 0
+            #else:
+            #    self.labelit_jobs[xutils.get_labelit_settings(self, self.nrun).keys()[0]] = \
+            #        self.nrun
 
-        # NOT short
+        # Normal mode
         else:
+            for i in range():
+                self.labelit_jobs[xutils.get_labelit_settings(self, i)] = i
 
             # Create the separate folders for the labelit runs, modify the dataset_preferences.py
             # file, and launch for each iteration.
-            for iteration in range(self.iterations, -1, -1):
-                xutils.create_folders_labelit(self.working_dir, iteration)
+            # THIS IS DONE IN get_labelit_settings already
+            #for iteration in range(self.nrun, -1, -1):
+            #    xutils.create_folders_labelit(self.working_dir, iteration)
 
             # Launch first job
-            self.process_labelit(iteration=0)
+            #self.process_labelit(iteration=0)
             # self.labelit_jobs[self.process_labelit().keys()[0]] = 0
 
             # If self.multiproc == True runs all labelits at the same time.
-            if self.multiproc:
-                for index in range(1, self.iterations):
-                    self.labelit_jobs[xutils.errorLabelit(self, index).keys()[0]] = index
+            # NEED TO SET TOTAL NUMBER OF ITERATIONS
+            #if self.multiproc:
+            #    for index in range(1, self.nrun):
+            #        self.labelit_jobs[xutils.get_labelit_settings(self, index).keys()[0]] = index
+        """
 
         # Watch for returns
         self.labelit_run_queue()
 
-        if self.short == False:
+        if self.nrun == 'all':
             # Put the logs together
             self.condense_logs()
 
@@ -2293,7 +2313,7 @@ class RunLabelit(Process):
             os.makedirs(self.working_dir)
         os.chdir(self.working_dir)
         if self.test:
-            if self.short == False:
+            if self.nrun == 'all':
                 self.logger.debug("TEST IS ON")
                 self.tprint(arg="TEST IS ON", level=10, color="white")
 
@@ -2325,6 +2345,7 @@ class RunLabelit(Process):
             binning = self.header.get('binning')
 
         if self.test == False:
+            # Setup the dataset_preferences.py file for Labelit.
             preferences = open('dataset_preferences.py', 'w')
             preferences.write('#####Base Labelit settings#####\n')
             preferences.write('best_support=True\n')
@@ -2344,10 +2365,9 @@ class RunLabelit(Process):
 
             # Always specify the beam center.
             # If Malcolm flips the beam center in the image header...
-            if self.preferences.get("beam_flip", False) == True:
+            if self.preferences.get("beam_flip", False):
                 preferences.write("autoindex_override_beam=(%.2f, %.2f)\n" % (y_beam, x_beam))
             else:
-                # print x_beam, y_beam
                 preferences.write("autoindex_override_beam=(%.2f, %.2f)\n" % (x_beam, y_beam))
 
             # If two-theta is being used, specify the angle and distance correctly.
@@ -2355,15 +2375,12 @@ class RunLabelit(Process):
                 preferences.write('beam_search_scope=%.2f\n' %
                                   self.preferences.get("beam_search", 0.2))
             else:
+                # Have to increase the beam_search_scope when 2theta is in use.
                 self.twotheta = True
-                preferences.write('beam_search_scope=%.2f\n' %
-                                  self.preferences.get("beam_search", 0.2))
+                preferences.write('beam_search_scope=0.5\n')
                 preferences.write('autoindex_override_twotheta=%.2f\n'%twotheta)
                 # preferences.write('autoindex_override_distance='+distance+'\n')
             preferences.close()
-
-        # except:
-        #     self.logger.exception('**ERROR in RunLabelit.preprocess_labelit**')
 
     def correct_labelit(self, iteration, overrides):
         """
@@ -2475,11 +2492,12 @@ rerunning.\n" % spot_count)
             self.labelit_log[iteration] = labelit_input
         else:
             self.labelit_log[iteration].extend(labelit_input)
-        labelit_jobs = {}
+        #labelit_jobs = {}
 
         # Don't launch job if self.test = True
         if self.test:
-            labelit_jobs["junk%s" % iteration] = iteration
+            run = "junk%s" % iteration
+            #labelit_jobs["junk%s" % iteration] = iteration
         # Not testing
         else:
             log = os.path.join(os.getcwd(), "labelit.log")
@@ -2502,17 +2520,17 @@ rerunning.\n" % spot_count)
                           kwargs=inp_kwargs)
             run.start()
 
-            #print iteration, run, run.pid
+            #print iteration, run.pid
+            
+            # Save the jobs for monitoring status
+            self.jobs[iteration] = run
             
             # Save the PID for killing the job later if needed.
             pid = pid_queue.get()
-            self.pids[iteration] = pid
-            self.labelit_pids.append(pid)
-            self.labelit_jobs[pid] = iteration
+            print iteration, run.pid, pid
+            #self.labelit_pids.append(pid)
+            self.jobids[iteration] = pid
 
-            # print self.pids
-            labelit_jobs[run] = iteration
-            # labelit_jobs[iteration] = run
             # Save the number of times a job was run to stop a loop
             if self.labelit_tracker.has_key(iteration):
                 self.labelit_tracker[iteration]+=1
@@ -2520,10 +2538,7 @@ rerunning.\n" % spot_count)
                 self.labelit_tracker[iteration]=1
 
         # return a dict with the job and iteration
-        return labelit_jobs
-
-        # except:
-        #     self.logger.exception('**Error in RunLabelit.process_labelit**')
+        return run
 
     def postprocess_labelit(self, raw_result): # iteration=0, run_before=False, blank=False):
         """
@@ -2705,7 +2720,7 @@ rerunning.\n" % spot_count)
                     #    self.labelit_results[iteration] = {"labelit_results": "FAILED"}
                     # Try to correct
                     #else:
-                    #    if iteration <= self.iterations:
+                    #    if iteration <= self.nrun:
                     #        if "execute" in problem_actions:
                     #            problem_actions["execute"](iteration=iteration)
 
@@ -2772,18 +2787,18 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
     #     #     self.logger.exception('**ERROR in RunLabelit.postprocess_labelit**')
     #
     #     # Do error checking and send to correct place according to iteration.
-    #     out = {'bad input': {'error':'Labelit did not like your input unit cell dimensions or SG.','run':'xutils.errorLabelitCellSG(self,iteration)'},
-    #            'bumpiness': {'error':'Labelit settings need to be adjusted.','run':'xutils.errorLabelitBump(self,iteration)'},
-    #            'mosflm error': {'error':'Mosflm could not integrate your image.','run':'xutils.errorLabelitMosflm(self,iteration)'},
-    #            'min good spots': {'error':'Labelit did not have enough spots to find a solution','run':'xutils.errorLabelitGoodSpots(self,iteration)'},
-    #            'no index': {'error':'No solutions found in Labelit.','run':'xutils.errorLabelit(self,iteration)'},
+    #     out = {'bad input': {'error':'Labelit did not like your input unit cell dimensions or SG.','run':'xutils.get_labelit_settingsCellSG(self,iteration)'},
+    #            'bumpiness': {'error':'Labelit settings need to be adjusted.','run':'xutils.get_labelit_settingsBump(self,iteration)'},
+    #            'mosflm error': {'error':'Mosflm could not integrate your image.','run':'xutils.get_labelit_settingsMosflm(self,iteration)'},
+    #            'min good spots': {'error':'Labelit did not have enough spots to find a solution','run':'xutils.get_labelit_settingsGoodSpots(self,iteration)'},
+    #            'no index': {'error':'No solutions found in Labelit.','run':'xutils.get_labelit_settings(self,iteration)'},
     #            'fix labelit': {'error':'Distance is not getting read correctly from the image header.','kill':True},
     #            'no pair': {'error':'Images are not a pair.','kill':True},
     #            'failed': {'error':'Autoindexing Failed to find a solution','kill':True},
-    #            'min spots': {'error':'Labelit did not have enough spots to find a solution.','run1':'xutils.errorLabelitMin(self,iteration,data[1])',
-    #                          'run2':'xutils.errorLabelit(self,iteration)'},
-    #            'fix_cell': {'error':'Labelit had multiple choices for user SG and failed.','run1':'xutils.errorLabelitFixCell(self,iteration,data[1],data[2])',
-    #                         'run2':'xutils.errorLabelitCellSG(self,iteration)'},
+    #            'min spots': {'error':'Labelit did not have enough spots to find a solution.','run1':'xutils.get_labelit_settingsMin(self,iteration,data[1])',
+    #                          'run2':'xutils.get_labelit_settings(self,iteration)'},
+    #            'fix_cell': {'error':'Labelit had multiple choices for user SG and failed.','run1':'xutils.get_labelit_settingsFixCell(self,iteration,data[1],data[2])',
+    #                         'run2':'xutils.get_labelit_settingsCellSG(self,iteration)'},
     #            }
     #     # If Labelit results are OK, then...
     #     if type(data) == dict:
@@ -2797,23 +2812,23 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
     #         if out.has_key(d):
     #             if out[d].has_key('kill'):
     #                 if self.multiproc:
-    #                     xutils.errorLabelitPost(self,iteration,out[d].get('error'),True)
+    #                     xutils.get_labelit_settingsPost(self,iteration,out[d].get('error'),True)
     #                 else:
-    #                     xutils.errorLabelitPost(self,self.iterations,out[d].get('error'))
+    #                     xutils.get_labelit_settingsPost(self,self.nrun,out[d].get('error'))
     #             else:
-    #                 xutils.errorLabelitPost(self,iteration,out[d].get('error'),run_before)
+    #                 xutils.get_labelit_settingsPost(self,iteration,out[d].get('error'),run_before)
     #                 if self.multiproc:
     #                     if run_before == False:
     #                         return(eval(out[d].get('run',out[d].get('run1'))))
     #                 else:
-    #                     if iteration <= self.iterations:
+    #                     if iteration <= self.nrun:
     #                         return(eval(out[d].get('run', out[d].get('run2'))))
     #         else:
     #             error = 'Labelit failed to find solution.'
-    #             xutils.errorLabelitPost(self,iteration,error,run_before)
+    #             xutils.get_labelit_settingsPost(self,iteration,error,run_before)
     #             if self.multiproc == False:
-    #                 if iteration <= self.iterations:
-    #                     return (xutils.errorLabelit(self,iteration))
+    #                 if iteration <= self.nrun:
+    #                     return (xutils.get_labelit_settings(self,iteration))
 
     def postprocess(self):
         """
@@ -2832,14 +2847,65 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
 
         # Pass back output
         self.output.put(self.labelit_results)
-
-        if self.short == False:
+        
+        if self.nrun == 'all':
             self.output.put(self.labelit_log)
 
         # except:
         #     self.logger.exception("**ERROR in RunLabelit.postprocess**")
 
     def labelit_run_queue(self):
+        """
+        Run Queue for Labelit.
+        """
+        self.logger.debug('RunLabelit::run_queue')
+
+        kill_jobs = True
+        timer = 0
+        start_time = time.time()
+
+        ellapsed_time = time.time() - start_time
+        current_progress = 0
+        try:
+            while ellapsed_time < global_vars.LABELIT_TIMEOUT:
+                prog = int(7*ellapsed_time / 50)
+                if prog > current_progress:
+                    self.tprint(prog*10, "progress")
+                    current_progress = prog
+                if not self.indexing_results_queue.empty():
+                    result = self.indexing_results_queue.get(False)
+                    # pprint(result)
+                    # join the Process
+                    self.jobs[result["tag"]].join(None)
+                    # Remove jobid from running jobs
+                    del self.jobids[result["tag"]]
+                    # Postprocess the labelit job
+                    self.postprocess_labelit(raw_result=result)
+                    # All jobs have finished
+                    #if not len(self.labelit_pids):
+                    if not len(self.jobids.keys()):
+                        # print "All jobs done"
+                        kill_jobs = False
+                        break
+                # sys.stdout.write(".")
+                # sys.stdout.flush()
+                if self.tot_runs == 1:
+                    # For beam center plugin, slow it down
+                    time.sleep(1)
+                else:
+                    time.sleep(0.1)
+                ellapsed_time = time.time() - start_time
+        except KeyboardInterrupt:
+            # Kill jobs smoothly
+            pass
+  
+        if kill_jobs:
+            # Make sure all jobs are killed
+            for i, pid in self.jobids.iteritems():
+                self.labelit_results[i] = {"labelit_results": "FAILED"}
+                self.kill_job(pid, self.logger)
+
+    def labelit_run_queue_OLD(self):
         """
         Run Queue for Labelit.
         """
@@ -2861,6 +2927,7 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
             if prog > current_progress:
                 self.tprint(prog*10, "progress")
                 current_progress = prog
+            # THE JOBS ARE NEVER JOINED THIS WAY!!! 
             if not self.indexing_results_queue.empty():
                 result = self.indexing_results_queue.get(False)
                 # pprint(result)
@@ -2884,6 +2951,7 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
                 iteration = self.labelit_jobs[pid]
                 #TODO
                 # print "Killing iteration:%d pid:%d" % (iteration, pid)
+                # COULD BE JOBID ON CLUSTER!!! THIS WONT WORK
                 os.kill(pid, signal.SIGKILL)
                 self.labelit_pids.remove(pid)
                 self.labelit_results[iteration] = {"labelit_results": "FAILED"}
@@ -2942,8 +3010,8 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
                             break
                         else:
                             iteration += 1
-                            if iteration <= self.iterations:
-                                xutils.errorLabelit(self, iteration)
+                            if iteration <= self.nrun:
+                                xutils.get_labelit_settings(self, iteration)
                             else:
                                 timed_out = True
                                 break
@@ -2970,9 +3038,10 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
     def condense_logs(self):
         """Put the Labelit logs together"""
 
-        self.logger.debug("RunLabelit::LabelitLog")
+        self.logger.debug("RunLabelit::condense_logs")
 
-        for iteration in range(0, self.iterations):
+        #for iteration in range(0, self.nrun):
+        for iteration in range(self.tot_runs):
             # pprint(self.labelit_log[iteration])
             if iteration in self.labelit_log:
                 header_line = "-------------------------\nLABELIT ITERATION %s\n-------------------\
@@ -2984,31 +3053,3 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
                 self.labelit_log["run1"].append("\n")
             else:
                 self.labelit_log["run1"].append("\nLabelit iteration %s FAILED\n" % iteration)
-
-def BestAction_OLD(inp, logger=False, output=False):
-    """
-    Run Best.
-    """
-    if logger:
-        logger.debug("BestAction")
-        logger.debug(inp)
-
-    # try:
-    command, log = inp
-    # print command
-    # print log
-    # print os.getcwd()
-
-    # Have to do this otherwise command is written to bottom of file??
-    f = open(log, 'w')
-    f.write('\n\n' + command + '\n')
-    f.close()
-    f = open(log, 'a')
-    job = subprocess.Popen(command, shell=True, stdout=f, stderr=f)
-    if output:
-        output.put(job.pid)
-    job.wait()
-    f.close()
-    # except:
-    #     if logger:
-    #         logger.exception('**Error in BestAction**')

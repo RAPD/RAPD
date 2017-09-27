@@ -151,13 +151,15 @@ def construct_command(image_headers, commandline_args, detector_module):
     command["preferences"]["crystal_size_y"] = 100.0
     command["preferences"]["crystal_size_z"] = 100.0
     command["preferences"]["solvent_content"] = commandline_args.solvent
+    #command["preferences"][]
 
     # Unknown
     command["preferences"]["beam_flip"] = False
     #command["preferences"]["multiprocessing"] = False
     
     # Launches jobs at same time using more cores. Much Faster!!
-    command["preferences"]["multiprocessing"] = True
+    #command["preferences"]["multiprocessing"] = True
+    command["preferences"]["nproc"] = commandline_args.nproc
 
     # Site parameters
     command["preferences"]["site_parameters"] = {}
