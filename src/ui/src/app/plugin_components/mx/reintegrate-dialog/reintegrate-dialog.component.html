@@ -1,6 +1,6 @@
 <div *ngIf="! submit_error">
   <div MdDialogTitle>
-    <button mat-icon-button MdDialogClose class="button-dialog-top-right">
+    <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
       <mat-icon>close</mat-icon>
     </button>
     <h2>Reintegrate</h2>
@@ -104,6 +104,6 @@
     {{submit_error}}
   </mat-dialog-content>
   <mat-dialog-actions align="end">
-    <button mat-raised-button color="primary" MdDialogClose>Ok</button>
+    <button mat-raised-button color="primary" mat-dialog-close>Ok</button>
   </mat-dialog-actions>
 </div>
