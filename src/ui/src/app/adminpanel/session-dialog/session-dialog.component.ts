@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { FormGroup, FormControl } from '@angular/forms';
 
-import { MdDialogRef } from '@angular/material';
+import { MatDialogRef } from '@angular/material';
 
 import { RestService } from '../../shared/services/rest.service';
 import { Group } from '../../shared/classes/group';
@@ -31,7 +31,7 @@ export class SessionDialogComponent implements OnInit {
   // ]
 
   constructor(private admin_service: RestService,
-              public dialogRef: MdDialogRef<SessionDialogComponent>) { }
+              public dialogRef: MatDialogRef<SessionDialogComponent>) { }
 
   ngOnInit() {
 

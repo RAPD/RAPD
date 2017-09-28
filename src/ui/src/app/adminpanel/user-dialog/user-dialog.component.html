@@ -1,9 +1,9 @@
-<h1 MdDialogTitle>User</h1>
-
-<button mat-icon-button class="button-dialog-top-right" (click)="exitUser()">
-  <mat-icon>close</mat-icon>
-</button>
-
+<div MatDialogTitle>
+  <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
+    <mat-icon>close</mat-icon>
+  </button>
+  <h2>User</h2>
+</div>
 <form [formGroup]="user_form">
   <div class="form-group">
     <p>

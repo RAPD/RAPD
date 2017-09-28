@@ -1,7 +1,7 @@
 import { Component,
          Inject,
          OnInit } from '@angular/core';
-import { MdDialogRef,
+import { MatDialogRef,
          MAT_DIALOG_DATA } from '@angular/material';
 
 @Component({
@@ -11,7 +11,7 @@ import { MdDialogRef,
 })
 export class HeaderDialogComponent implements OnInit {
 
-  constructor(public dialogRef: MdDialogRef<HeaderDialogComponent>,
+  constructor(public dialogRef: MatDialogRef<HeaderDialogComponent>,
               @Inject(MAT_DIALOG_DATA) public data: any) { }
 
   ngOnInit() {

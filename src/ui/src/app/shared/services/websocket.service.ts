@@ -7,6 +7,7 @@ import { GlobalsService } from './globals.service';
 @Injectable()
 export class WebsocketService {
 
+  private websocketUrl: string;
   private ws: WebSocket;
 
   public results_subject: ReplaySubject<string>;
@@ -15,7 +16,9 @@ export class WebsocketService {
   private timed_out: boolean = false;
   private connecting: boolean = false;
 
-  constructor(private globals_service: GlobalsService) { }
+  constructor(private globals_service: GlobalsService) {
+    this.websocketUrl = this.globals_service.site.websocketUrl;
+  }
 
   newResultsSubject() {
     // Create a new one
@@ -32,7 +35,7 @@ export class WebsocketService {
     this.connecting = true;
 
     // Connect the websocket
-    this.ws = new WebSocket(this.globals_service.site.websocketUrl);
+    this.ws = new WebSocket(this.websocketUrl);
 
     var connection_timeout = setTimeout(function () {
       self.timed_out = true;
