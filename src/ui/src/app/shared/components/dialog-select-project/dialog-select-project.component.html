@@ -1,11 +1,11 @@
 <div *ngIf="! submit_error">
-  <div md-dialog-title>
-    <button md-icon-button md-dialog-close class="button-dialog-top-right">
-      <md-icon>close</md-icon>
+  <div MatDialogTitle>
+    <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
+      <mat-icon>close</mat-icon>
     </button>
     <h2>Add To Project</h2>
   </div>
-  <md-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
+  <mat-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
     <form [formGroup]="project_form">
       <div class="form-group">
         <table class="rapd-form-table">
@@ -13,66 +13,66 @@
             <tr>
               <td class="rapd-form-table-rj">Project</td>
               <td class="rapd-form-table-select">
-                <md-select [(ngModel)]="model._id"
+                <mat-select [(ngModel)]="model._id"
                            formControlName="_id">
-                   <md-option *ngFor="let project of projects" [value]="project._id">
+                   <mat-option *ngFor="let project of projects" [value]="project._id">
                     {{project.title}}
-                   </md-option>
-                </md-select>
+                   </mat-option>
+                </mat-select>
               </td>
             </tr>
             <!-- <tr>
               <td class="rapd-form-table-rji">Name</td>
               <td class="rapd-form-table-select">
-                <md-input-container style="width:7.5em;">
-                  <input mdInput
+                <mat-form-field style="width:7.5em;">
+                  <input matInput
                          style="text-align:center;"
                          placeholder=""
                          formControlName="title"
                          [(ngModel)]="model.title">
-                </md-input-container>
+                </mat-form-field>
               </td>
             </tr>
             <tr>
               <td class="rapd-form-table-rji">Description</td>
               <td class="rapd-form-table-select">
-                <md-input-container style="width:7.5em;">
-                  <input mdInput
+                <mat-form-field style="width:7.5em;">
+                  <input matInput
                          style="text-align:center;"
                          placeholder=""
                          formControlName="description"
                          [(ngModel)]="model.description">
-                </md-input-container>
+                </mat-form-field>
               </td>
             </tr>
             <tr *ngIf="profile.groups.length > 1">
               <td class="rapd-form-table-rj">Group</td>
               <td class="rapd-form-table-select">
-                <md-select [(ngModel)]="model.group"
+                <mat-select [(ngModel)]="model.group"
                            formControlName="group">
-                  <md-option *ngFor="let group of profile.groups" [value]="group._id">
+                  <mat-option *ngFor="let group of profile.groups" [value]="group._id">
                    {{group.groupname}}
-                  </md-option>
-                </md-select>
+                  </mat-option>
+                </mat-select>
               </td>
             </tr> -->
           </tbody>
         </table>
       </div>
     </form>
-  </md-dialog-content>
+  </mat-dialog-content>
 
-  <md-dialog-actions align="end">
-    <md-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></md-progress-spinner>
-    <button md-raised-button color="primary" (click)="submitProjectSelection()">Select</button>
-  </md-dialog-actions>
+  <mat-dialog-actions align="end">
+    <mat-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></mat-progress-spinner>
+    <button mat-raised-button color="primary" (click)="submitProjectSelection()">Select</button>
+  </mat-dialog-actions>
 </div>
 <div *ngIf="submit_error">
-  <md-dialog-content>
+  <mat-dialog-content>
     <h2>Error</h2>
     {{submit_error}}
-  </md-dialog-content>
-  <md-dialog-actions align="end">
-    <button md-raised-button color="primary" md-dialog-close>Ok</button>
-  </md-dialog-actions>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-raised-button color="primary" mat-dialog-close>Ok</button>
+  </mat-dialog-actions>
 </div>

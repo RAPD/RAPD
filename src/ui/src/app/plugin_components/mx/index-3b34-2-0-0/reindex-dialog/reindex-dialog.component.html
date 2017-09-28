@@ -1,13 +1,13 @@
 <div *ngIf="! submit_error">
-  <div md-dialog-title>
-    <button md-icon-button md-dialog-close class="button-dialog-top-right">
-      <md-icon>close</md-icon>
+  <div MatDialogTitle>
+    <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
+      <mat-icon>close</mat-icon>
     </button>
     <h2>Reindex</h2>
     <h3>{{data.header1.basename}}</h3>
   </div>
 
-  <md-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
+  <mat-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
     <form [formGroup]="reindex_form">
       <div class="form-group">
         <table class="rapd-form-table">
@@ -15,121 +15,121 @@
             <tr>
               <td class="rapd-form-table-rj">Spacegroup Override</td>
               <td class="rapd-form-table-select">
-                <md-select [(ngModel)]="model.spacegroup"
+                <mat-select [(ngModel)]="model.spacegroup"
                            formControlName="spacegroup">
-                  <md-option [value]="0">None</md-option>
-                  <md-option *ngFor="let sg of globals_service.sgs_in_order" [value]="sg">
+                  <mat-option [value]="0">None</mat-option>
+                  <mat-option *ngFor="let sg of globals_service.sgs_in_order" [value]="sg">
                     {{globals_service.intl2std[sg]}}
-                  </md-option>
-                </md-select>
+                  </mat-option>
+                </mat-select>
               </td>
             </tr>
             <tr>
               <td class="rapd-form-table-rj">Sample Type</td>
               <td class="rapd-form-table-select">
-                <md-select [(ngModel)]="model.sample_type"
+                <mat-select [(ngModel)]="model.sample_type"
                            formControlName="sample_type">
-                  <md-option *ngFor="let sample_type of sample_types" [value]="sample_type.val">
+                  <mat-option *ngFor="let sample_type of sample_types" [value]="sample_type.val">
                     {{sample_type.label}}
-                  </md-option>
-                </md-select>
+                  </mat-option>
+                </mat-select>
               </td>
             </tr>
             <tr>
               <td class="rapd-form-table-rji">Solvent Content</td>
               <td>
-                <md-input-container class="example-full-width">
-                  <input mdInput
+                <mat-form-field class="example-full-width">
+                  <input matInput
                          placeholder=""
                          formControlName="solvent_content"
                          [(ngModel)]="model.solvent_content">
-                </md-input-container>
+                </mat-form-field>
               </td>
             </tr>
             <tr>
               <td class="rapd-form-table-rj">Strategy Type</td>
               <td class="rapd-form-table-select">
-                <md-select [(ngModel)]="model.strategy_type"
+                <mat-select [(ngModel)]="model.strategy_type"
                            formControlName="strategy_type">
-                  <md-option *ngFor="let strategy_type of strategy_types" [value]="strategy_type.val">
+                  <mat-option *ngFor="let strategy_type of strategy_types" [value]="strategy_type.val">
                     {{strategy_type.label}}
-                  </md-option>
-                </md-select>
+                  </mat-option>
+                </mat-select>
               </td>
             </tr>
             <tr [ngClass]="model.strategy_type == 'mosflm' ? 'hidden': ''">
               <td class="rapd-form-table-rj">Best Complexity</td>
               <td class="rapd-form-table-select">
-                <md-select [(ngModel)]="model.best_complexity"
+                <mat-select [(ngModel)]="model.best_complexity"
                            formControlName="best_complexity">
-                  <md-option *ngFor="let best_complex of best_complexity" [value]="best_complex">
+                  <mat-option *ngFor="let best_complex of best_complexity" [value]="best_complex">
                     {{best_complex}}
-                  </md-option>
-                </md-select>
+                  </mat-option>
+                </mat-select>
               </td>
             </tr>
             <tr [ngClass]="model.strategy_type == 'best' ? 'hidden': ''">
               <td class="rapd-form-table-rj"># Segments</td>
               <td class="rapd-form-table-select">
-                <md-select [(ngModel)]="model.mosflm_seg"
+                <mat-select [(ngModel)]="model.mosflm_seg"
                            formControlName="mosflm_seg"
                            width="4em">
-                  <md-option *ngFor="let mosflm_seg of mosflm_segs" [value]="mosflm_seg">
+                  <mat-option *ngFor="let mosflm_seg of mosflm_segs" [value]="mosflm_seg">
                     {{mosflm_seg}}
-                  </md-option>
-                </md-select>
+                  </mat-option>
+                </mat-select>
               </td>
             </tr>
             <tr [ngClass]="model.strategy_type == 'best' ? 'hidden': ''">
               <td class="rapd-form-table-rj">Range of Segment</td>
               <td>
-                <md-input-container class="example-full-width">
-                  <input mdInput
+                <mat-form-field class="example-full-width">
+                  <input matInput
                          placeholder=""
                          formControlName="mosflm_rot"
                          [(ngModel)]="model.mosflm_rot">
-                </md-input-container>
+                </mat-form-field>
               </td>
             </tr>
             <tr [ngClass]="model.strategy_type == 'best' ? 'hidden': ''">
               <td class="rapd-form-table-rji">Start Angle</td>
               <td>
-                <md-input-container class="example-full-width">
-                  <input mdInput
+                <mat-form-field class="example-full-width">
+                  <input matInput
                          placeholder=""
                          formControlName="mosflm_start"
                          [(ngModel)]="model.mosflm_start">
-                </md-input-container>
+                </mat-form-field>
               </td>
             </tr>
             <tr [ngClass]="model.strategy_type == 'best' ? 'hidden': ''">
               <td class="rapd-form-table-rji">End Angle</td>
               <td>
-                <md-input-container class="example-full-width">
-                  <input mdInput
+                <mat-form-field class="example-full-width">
+                  <input matInput
                          placeholder=""
                          formControlName="mosflm_end"
                          [(ngModel)]="model.mosflm_end">
-                </md-input-container>
+                </mat-form-field>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
     </form>
-  </md-dialog-content>
-  <md-dialog-actions align="end">
-    <md-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></md-progress-spinner>
-    <button md-raised-button *ngIf="submit_error" color="primary" (click)="submitReindex()">Ok</button>
-    <button md-raised-button *ngIf="! submit_error" color="primary" (click)="submitReindex()">Execute</button>
-  </md-dialog-actions>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <mat-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></mat-progress-spinner>
+    <button mat-raised-button *ngIf="submit_error" color="primary" (click)="submitReindex()">Ok</button>
+    <button mat-raised-button *ngIf="! submit_error" color="primary" (click)="submitReindex()">Execute</button>
+  </mat-dialog-actions>
 </div>
 <div *ngIf="submit_error">
-  <md-dialog-content>
+  <mat-dialog-content>
     <h2>Error</h2>
     {{submit_error}}
-  </md-dialog-content>
-  <md-dialog-actions align="end">
-    <button md-raised-button color="primary" md-dialog-close>Ok</button>
-  </md-dialog-actions>
+  </mat-dialog-content>
+  <mat-dialog-actions align="end">
+    <button mat-raised-button color="primary" mat-dialog-close>Ok</button>
+  </mat-dialog-actions>
 </div>

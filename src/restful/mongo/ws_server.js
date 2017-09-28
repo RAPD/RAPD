@@ -1,5 +1,5 @@
 // Configuration
-var config = require('./config');
+const config = require('./config');
 
 // Core modules
 var http = require('http');

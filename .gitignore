@@ -42,6 +42,9 @@ src/ui/dist
 src/ui/tmp
 src/ui/node_modules
 
+# UI configuration
+src/ui/src/app/site.ts
+
 # IDEs and editors
 /.idea
 .project

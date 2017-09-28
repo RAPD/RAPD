@@ -1,6 +1,7 @@
 import { Component,
          OnInit } from '@angular/core';
-import { MdDialog } from '@angular/material';
+import { MatDialog,
+         MatToolbarModule } from '@angular/material';
 
 import { RestService } from '../shared/services/rest.service';
 import { Project } from '../shared/classes/project';
@@ -16,7 +17,7 @@ export class ProjectspanelComponent implements OnInit {
   projects: Project[];
 
   constructor(private rest_service: RestService,
-              public dialog: MdDialog) { }
+              public dialog: MatDialog) { }
 
   ngOnInit() {
     this.getProjects();

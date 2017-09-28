@@ -15,14 +15,14 @@ export class RequestsService {
   public submitRequest(request: any): Observable<any> {
 
     console.log('submitRequest');
-    console.log(this.globals_service.apiUrl);
+    console.log(this.globals_service.site.restApiUrl);
     console.log(request);
 
     let header = new Headers();
     header.append('Content-Type', 'application/json');
 
     return this.authHttp.put(
-      this.globals_service.apiUrl + '/requests',
+      this.globals_service.site.restApiUrl + '/requests',
       JSON.stringify({request:request}),
       {headers:header}
     )

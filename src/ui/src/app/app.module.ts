@@ -13,8 +13,8 @@ import { AppRoutingModule,
 
 import 'hammerjs';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MaterialModule,
-         MdDialogModule } from '@angular/material';
+import { NoConflictStyleCompatibilityMode } from '@angular/material';
+import { RapdMaterialModule } from './rapd.module';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ChartsModule } from 'ng2-charts/ng2-charts';
 
@@ -25,6 +25,7 @@ import { WebsocketService } from './shared/services/websocket.service';
 import { SessionService } from './shared/services/session.service';
 import { RequestsService } from './shared/services/requests.service';
 import { GlobalsService } from './shared/services/globals.service';
+import { Site } from './site';
 import { provideAuth, AuthHttp, AuthConfig } from 'angular2-jwt';
 
 import { MaintoolbarComponent } from './maintoolbar/maintoolbar.component';
@@ -111,9 +112,9 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     AppRoutingModule,
     HttpModule,
     BrowserAnimationsModule,
+    NoConflictStyleCompatibilityMode,
+    RapdMaterialModule,
     FlexLayoutModule,
-    MaterialModule,
-    MdDialogModule,
     NgxDatatableModule,
     ChartsModule
   ],
@@ -125,6 +126,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
                SessionService,
                RequestsService,
                GlobalsService,
+               Site,
                // Replacement for AUTH_PROVIDERS
                {
                  provide: AuthHttp,

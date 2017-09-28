@@ -38,6 +38,7 @@ VERSION = "2.0.0"
 
 # Standard imports
 from distutils.spawn import find_executable
+import glob
 import json
 import logging
 import logging.handlers
@@ -373,7 +374,10 @@ class RapdPlugin(Process):
         """Create the self.results dict"""
 
         # Container for actual results
-        self.results["results"] = {"analysis":False}
+        self.results["results"] = {
+            "analysis":False,
+            "data_produced": []
+            }
 
         # Copy over details of this run
         self.results["command"] = self.command.get("command")
@@ -1809,29 +1813,29 @@ class RapdPlugin(Process):
 
         # Create the free-R-flagged data
         # The source file
-        in_file = os.path.join(results['dir'], results['mtzfile'])
+        in_file = os.path.join(results['dir'], results["mtzfile"])
         self.logger.debug('FastIntegration::finish_data - in_file = %s', in_file)
         # Truncate the data.
-        comfile = ['#!/bin/csh\n',
-                   'truncate hklin %s hklout truncated.mtz << eof > truncate.log\n'
+        comfile = ["#!/bin/csh\n",
+                   "truncate hklin %s hklout truncated.mtz << eof > truncate.log\n"
                    % in_file,
-                   'ranges 60\n',
-                   'eof\n']
-        self.write_file('truncate.sh', comfile)
-        os.chmod('truncate.sh', stat.S_IRWXU)
-        p = subprocess.Popen('./truncate.sh',
+                   "ranges 60\n",
+                   "eof\n"]
+        self.write_file("truncate.sh", comfile)
+        os.chmod("truncate.sh", stat.S_IRWXU)
+        p = subprocess.Popen("./truncate.sh",
                              shell=True,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
         p.wait()
         # Set the free R flag.
-        comfile = ['#!/bin/csh\n',
-                   'freerflag hklin truncated.mtz hklout freer.mtz <<eof > freer.log\n',
-                   'END\n',
-                   'eof']
-        self.write_file('freer.sh', comfile)
-        os.chmod('freer.sh', stat.S_IRWXU)
-        p = subprocess.Popen('./freer.sh',
+        comfile = ["#!/bin/csh\n",
+                   "freerflag hklin truncated.mtz hklout freer.mtz <<eof > freer.log\n",
+                   "END\n",
+                   "eof"]
+        self.write_file("freer.sh", comfile)
+        os.chmod("freer.sh", stat.S_IRWXU)
+        p = subprocess.Popen("./freer.sh",
                              shell=True,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
@@ -1840,39 +1844,44 @@ class RapdPlugin(Process):
         shutil.copyfile("freer.mtz", "%s_free.mtz" % archive_files_prefix)
         files_to_archive.append("%s_free.mtz" % archive_files_prefix)
 
+        # Rename the so-called mergable file
+        mergable_file = results["mtzfile"].replace("_aimless", "_mergable")
+        shutil.copyfile(results["mtzfile"], os.path.join(archive_dirname,
+                                                         mergable_file))
+
         if scalepack:
             # Create the merged scalepack format file.
-            comfile = ['#!/bin/csh\n',
-                       'mtz2various hklin truncated.mtz hklout NATIVE.sca ',
-                       '<< eof > mtz2scaNAT.log\n',
-                       'OUTPUT SCALEPACK\n',
-                       'labin I=IMEAN SIGI=SIGIMEAN\n',
-                       'END\n',
-                       'eof']
-            self.write_file('mtz2scaNAT.sh', comfile)
-            os.chmod('mtz2scaNAT.sh', stat.S_IRWXU)
-            p = subprocess.Popen('./mtz2scaNAT.sh',
+            comfile = ["#!/bin/csh\n",
+                       "mtz2various hklin truncated.mtz hklout NATIVE.sca ",
+                       "<< eof > mtz2scaNAT.log\n",
+                       "OUTPUT SCALEPACK\n",
+                       "labin I=IMEAN SIGI=SIGIMEAN\n",
+                       "END\n",
+                       "eof"]
+            self.write_file("mtz2scaNAT.sh", comfile)
+            os.chmod("mtz2scaNAT.sh", stat.S_IRWXU)
+            p = subprocess.Popen("./mtz2scaNAT.sh",
                                  shell=True,
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE)
             p.wait()
-            self.fixMtz2Sca('NATIVE.sca')
-            Utils.fixSCA(self, 'NATIVE.sca')
+            self.fixMtz2Sca("NATIVE.sca")
+            Utils.fixSCA(self, "NATIVE.sca")
             # Move to archive
             shutil.copyfile("NATIVE.sca", "%s_NATIVE.sca" % archive_files_prefix)
             files_to_archive.append("%s_NATIVE.sca" % archive_files_prefix)
 
             # Create the unmerged scalepack format file.
-            comfile = ['#!/bin/csh\n',
-                       'mtz2various hklin truncated.mtz hklout ANOM.sca ',
-                       '<< eof > mtz2scaANOM.log\n',
-                       'OUTPUT SCALEPACK\n',
-                       'labin I(+)=I(+) SIGI(+)=SIGI(+) I(-)=I(-) SIGI(-)=SIGI(-)\n',
-                       'END\n',
-                       'eof']
-            self.write_file('mtz2scaANOM.sh', comfile)
-            os.chmod('mtz2scaANOM.sh', stat.S_IRWXU)
-            p = subprocess.Popen('./mtz2scaANOM.sh',
+            comfile = ["#!/bin/csh\n",
+                       "mtz2various hklin truncated.mtz hklout ANOM.sca ",
+                       "<< eof > mtz2scaANOM.log\n",
+                       "OUTPUT SCALEPACK\n",
+                       "labin I(+)=I(+) SIGI(+)=SIGI(+) I(-)=I(-) SIGI(-)=SIGI(-)\n",
+                       "END\n",
+                       "eof"]
+            self.write_file("mtz2scaANOM.sh", comfile)
+            os.chmod("mtz2scaANOM.sh", stat.S_IRWXU)
+            p = subprocess.Popen("./mtz2scaANOM.sh",
                                  shell=True,
                                  stdout=subprocess.PIPE,
                                  stderr=subprocess.PIPE)
@@ -1885,31 +1894,28 @@ class RapdPlugin(Process):
 
         if mosflm:
             # Create a mosflm matrix file
-            correct_file = os.path.join(results['dir'], 'CORRECT.LP')
+            correct_file = os.path.join(results["dir"], "CORRECT.LP")
             Xds2Mosflm(xds_file=correct_file, mat_file="reference.mat")
 
+        # Move critical files into archive directory for packaging
+        critical_file_patterns = ("*aimless.com",
+                                  "*aimless.log",
+                                  "*pointless.log")
+        for critical_file_pattern in critical_file_patterns:
+            src_file = glob.glob(critical_file_pattern)[0]
+            target_file = os.path.join(archive_dir, src_file)
+            shutil.copyfile(src_file, target_file)
+            files_to_archive.append(target_file)
 
+        sys.exit()
 
         # Clean up the filesystem.
         # Move some files around
-        if os.path.isdir('%s/xds_lp_files' % self.dirs['work']) == False:
-            os.mkdir('%s/xds_lp_files' % self.dirs['work'])
-        os.system('cp %s/*.LP %s/xds_lp_files/' % (results['dir'], self.dirs['work']))
+        # if os.path.isdir('%s/xds_lp_files' % self.dirs['work']) == False:
+        #     os.mkdir('%s/xds_lp_files' % self.dirs['work'])
+        # os.system('cp %s/*.LP %s/xds_lp_files/' % (results['dir'], self.dirs['work']))
 
-        # tar_name = '_'.join([self.image_data['image_prefix'], str(self.image_data['run_number'])])
-        # results_dir = os.path.join(self.dirs['work'], tar_name)
-        # if os.path.isdir(results_dir) == False:
-        #     os.mkdir(results_dir)
-        # prefix = '%s/%s_%s' %(results_dir, self.image_data['image_prefix'],
-        #                       self.image_data['run_number'])
-
-        # os.system('cp freer.mtz %s_free.mtz' % prefix)
-        # os.system('cp NATIVE.sca %s_NATIVE.sca' % prefix)
-        # os.system('cp ANOM.sca %s_ANOM.sca' % prefix)
-        # os.system('cp %s/*aimless.log %s_aimless.log' %(results['dir'], prefix))
-        # os.system('cp %s/*aimless.com %s_aimless.com' %(results['dir'], prefix))
         # os.system('cp %s/*pointless.mtz %s_mergable.mtz' %(results['dir'], prefix))
-        # os.system('cp %s/*pointless.log %s_pointless.log' %(results['dir'], prefix))
         # os.system('cp %s/XDS.LOG %s_XDS.LOG' %(results['dir'], prefix))
         # os.system('cp %s/XDS.INP %s_XDS.INP' %(results['dir'], prefix))
         # os.system('cp %s/CORRECT.LP %s_CORRECT.LP' %(results['dir'], prefix))
@@ -1925,7 +1931,7 @@ class RapdPlugin(Process):
         os.system('rm -f *.mtz *.sca *.sh *.log junk_*')
 
         # Create an archive
-        
+        # archive.create_archive()
 
         # Create a downloadable tar file.
         tar_dir = tar_name

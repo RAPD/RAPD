@@ -1,61 +1,61 @@
-<h1 md-dialog-title>User</h1>
-
-<button md-icon-button class="button-dialog-top-right" (click)="exitUser()">
-  <md-icon>close</md-icon>
-</button>
-
+<div MatDialogTitle>
+  <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
+    <mat-icon>close</mat-icon>
+  </button>
+  <h2>User</h2>
+</div>
 <form [formGroup]="user_form">
   <div class="form-group">
     <p>
-      <md-input-container>
-        <input mdInput
+      <mat-form-field>
+        <input matInput
           formControlName="email"
           required
           placeholder='email'
           pattern='^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'
           [(ngModel)]="model.email"
           autofocus>
-      </md-input-container>
+      </mat-form-field>
     </p>
     <p>
-      <md-input-container>
-        <input mdInput
+      <mat-form-field>
+        <input matInput
           placeholder="name"
           formControlName="username"
           required
           [(ngModel)]="model.username">
-      </md-input-container>
+      </mat-form-field>
     </p>
     <p>
-      <md-select formControlName="role"
+      <mat-select formControlName="role"
               [(ngModel)]="model.role"
               placeholder="Role">
-        <md-option value="user">user</md-option>
-        <md-option value="group_admin">group admin</md-option>
-        <md-option value="site_admin">site admin</md-option>
-      </md-select>
+        <mat-option value="user">user</mat-option>
+        <mat-option value="group_admin">group admin</mat-option>
+        <mat-option value="site_admin">site admin</mat-option>
+      </mat-select>
     </p>
     <p *ngIf="model.groups.length === 0">
-      <md-select formControlName="group0" placeholder="Group">
-        <md-option value="">None</md-option>
-        <md-option *ngFor="let g of groups" [value]="g._id">{{g.groupname}}</md-option>
-      </md-select>
+      <mat-select formControlName="group0" placeholder="Group">
+        <mat-option value="">None</mat-option>
+        <mat-option *ngFor="let g of groups" [value]="g._id">{{g.groupname}}</mat-option>
+      </mat-select>
     </p>
     <p *ngIf="model.groups.length > 0">
-      <md-select formControlName="group0"
+      <mat-select formControlName="group0"
               [(ngModel)]="model.groups[0]._id"
               placeholder="Group #1">
-        <md-option value="">None</md-option>
-        <md-option *ngFor="let g of groups" [value]="g._id">{{g.groupname}}</md-option>
-      </md-select>
+        <mat-option value="">None</mat-option>
+        <mat-option *ngFor="let g of groups" [value]="g._id">{{g.groupname}}</mat-option>
+      </mat-select>
     </p>
     <p *ngIf="model.groups.length > 0">
-      <md-select *ngIf="model.groups.length == 1"
+      <mat-select *ngIf="model.groups.length == 1"
               formControlName="group1"
               placeholder="Group #2">
-        <md-option value="">None</md-option>
-        <md-option *ngFor="let g of groups" [value]="g._id">{{g.groupname}}</md-option>
-      </md-select>
+        <mat-option value="">None</mat-option>
+        <mat-option *ngFor="let g of groups" [value]="g._id">{{g.groupname}}</mat-option>
+      </mat-select>
       <select *ngIf="model.groups.length > 1"
               formControlName="group1"
               [(ngModel)]="model.groups[1]._id">
@@ -64,27 +64,27 @@
       </select>
     </p>
     <p *ngIf="model.groups.length > 1">
-      <md-select *ngIf="model.groups.length == 2" formControlName="group2" placeholder="Group #3">
-        <md-option value="">Unknown</md-option>
-        <md-option *ngFor="let g of groups" [value]="g._id">{{g.groupname}}</md-option>
-      </md-select>
-      <md-select *ngIf="model.groups.length > 2"
+      <mat-select *ngIf="model.groups.length == 2" formControlName="group2" placeholder="Group #3">
+        <mat-option value="">Unknown</mat-option>
+        <mat-option *ngFor="let g of groups" [value]="g._id">{{g.groupname}}</mat-option>
+      </mat-select>
+      <mat-select *ngIf="model.groups.length > 2"
               formControlName="group2"
               [(ngModel)]="model.groups[2]._id"
               placeholder="Group #3">
-        <md-option value="">None</md-option>
-        <md-option *ngFor="let g of groups" [value]="g._id">{{g.groupname}}</md-option>
-      </md-select>
+        <mat-option value="">None</mat-option>
+        <mat-option *ngFor="let g of groups" [value]="g._id">{{g.groupname}}</mat-option>
+      </mat-select>
     </p>
   </div>
   <p>
-    <md-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></md-progress-spinner>
+    <mat-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></mat-progress-spinner>
   </p>
   <p>
     {{error_message}}
   </p>
   <p>
-    <button *ngIf="model._id" type="button" md-button color="warn" (click)="deleteUser()">Delete</button>
-    <button style="float:right;" type="button" [disabled]="!user_form.valid" md-button (click)="submitUser()">Save</button>
+    <button *ngIf="model._id" type="button" mat-button color="warn" (click)="deleteUser()">Delete</button>
+    <button style="float:right;" type="button" [disabled]="!user_form.valid" mat-button (click)="submitUser()">Save</button>
   </p>
 </form>

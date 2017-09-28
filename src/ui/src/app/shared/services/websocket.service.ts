@@ -2,9 +2,12 @@ import { Injectable } from '@angular/core';
 
 import { ReplaySubject } from 'rxjs/Rx';
 
+import { GlobalsService } from './globals.service';
+
 @Injectable()
 export class WebsocketService {
 
+  private websocketUrl: string;
   private ws: WebSocket;
 
   public results_subject: ReplaySubject<string>;
@@ -13,8 +16,8 @@ export class WebsocketService {
   private timed_out: boolean = false;
   private connecting: boolean = false;
 
-  constructor() {
-    // this.newResultsSubject();
+  constructor(private globals_service: GlobalsService) {
+    this.websocketUrl = this.globals_service.site.websocketUrl;
   }
 
   newResultsSubject() {
@@ -32,7 +35,7 @@ export class WebsocketService {
     this.connecting = true;
 
     // Connect the websocket
-    this.ws = new WebSocket('ws://' + window.location.hostname + ':3000');
+    this.ws = new WebSocket(this.websocketUrl);
 
     var connection_timeout = setTimeout(function () {
       self.timed_out = true;

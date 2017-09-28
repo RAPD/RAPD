@@ -1,8 +1,9 @@
 import { Component,
          Input,
          OnInit } from '@angular/core';
-import { MdDialog,
-         MD_DIALOG_DATA } from '@angular/material';
+import { MatDialog,
+         MAT_DIALOG_DATA,
+         MatToolbarModule } from '@angular/material';
 
 import { ReplaySubject }   from 'rxjs/Rx';
 
@@ -85,7 +86,7 @@ export class Index3b34200Component implements OnInit {
 
   constructor(private websocket_service: WebsocketService,
               private globals_service: GlobalsService,
-              public dialog: MdDialog) { }
+              public dialog: MatDialog) { }
 
   ngOnInit() {
     this.incomingData$ = this.websocket_service.subscribeResultDetails(this.current_result.result_type, this.current_result.result_id);

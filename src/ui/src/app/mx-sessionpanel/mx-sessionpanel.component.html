@@ -1,20 +1,20 @@
-<md-tab-group class="session-tab-group" (focusChange)="tabSelected($event);">
-  <md-tab label="Snaps">
+<mat-tab-group class="session-tab-group" (focusChange)="tabSelected($event);">
+  <mat-tab label="Snaps">
     <app-mx-result-container result_type="snap" [session_id]="session_id"></app-mx-result-container>
-  </md-tab>
-  <md-tab label="Runs">
+  </mat-tab>
+  <mat-tab label="Runs">
     <app-mx-result-container result_type="sweep" [session_id]="session_id"></app-mx-result-container>
-  </md-tab>
-  <md-tab label="Merge">
+  </mat-tab>
+  <mat-tab label="Merge">
     <app-mx-result-container result_type="merge" [session_id]="session_id"></app-mx-result-container>
-  </md-tab>
-  <md-tab label="MR">
+  </mat-tab>
+  <mat-tab label="MR">
     <app-mx-result-container result_type="mr" [session_id]="session_id"></app-mx-result-container>
-  </md-tab>
-  <md-tab label="SAD">
+  </mat-tab>
+  <mat-tab label="SAD">
     <app-mx-result-container result_type="sad" [session_id]="session_id"></app-mx-result-container>
-  </md-tab>
-  <md-tab label="MAD">
+  </mat-tab>
+  <mat-tab label="MAD">
     <app-mx-result-container result_type="mad" [session_id]="session_id"></app-mx-result-container>
-  </md-tab>
-</md-tab-group>
+  </mat-tab>
+</mat-tab-group>

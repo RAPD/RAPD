@@ -3,40 +3,36 @@ var Schema = mongoose.Schema;
 var bcrypt = require('bcryptjs');
 
 var UserSchema = new Schema({
-  username: {
+  creator: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  created: {
+    type: Date,
+    required: true,
+    default: Date.now
+  },
+  email: {
     type: String,
     required: true
-  },
-  password: {
-    type: String,
-    required: false
-  },
-  role: {
-    type: String,
-    required: true,
-    default: 'user'
   },
   groups: [{
     type: Schema.Types.ObjectId,
     ref: 'Group',
     default: []
   }],
-  email: {
-    type: String,
-    required: true
-  },
-  status: {
-    type: String,
-    required: true,
-    default: 'active'
+  lockUntil: {
+    type: Date,
   },
   loginAttempts: {
     type: Number,
     required: true,
     default: 0
   },
-  lockUntil: {
-    type: Date,
+  password: {
+    type: String,
+    required: false
   },
   pass_expire: {
     type: Date,
@@ -46,10 +42,24 @@ var UserSchema = new Schema({
     type: Boolean,
     default: false
   },
+  role: {
+    type: String,
+    required: true,
+    default: 'user'
+  },
+  status: {
+    type: String,
+    required: true,
+    default: 'active'
+  },
   timestamp: {
     type: Date,
     default: Date.now
   },
+  username: {
+    type: String,
+    required: true
+  }
 }, {strict:false});
 
 // How much work for hashing
@@ -129,60 +139,69 @@ var reasons = UserSchema.statics.failedLogin = {
 
 UserSchema.statics.getAuthenticated = function(email, password, cb) {
 
-    this.findOne({ email: email }).
-         populate('groups', 'groupname').
-         exec(function(err, user) {
+  console.log('getAuthenticated', email, password);
 
-        if (err) {
-          console.log(err);
-          return cb(err);
-        }
+  this.findOne({email:email}).
+       populate('groups', 'groupname').
+       exec(function(err, user) {
 
-        // make sure the user exists
-        if (!user) {
-          console.log('Nonuser');
-          return cb(null, null, reasons.NOT_FOUND);
-        }
+         console.log(err, user);
 
-        console.log(user);
+         if (err) {
+           console.log(err);
+           return cb(err);
+         }
 
-        // check if the account is currently locked
-        if (user.isLocked) {
-            // just increment login attempts if account is already locked
-            return user.incLoginAttempts(function(err) {
-                if (err) return cb(err);
-                return cb(null, null, reasons.MAX_ATTEMPTS);
-            });
-        }
+         // make sure the user exists
+         if (!user) {
+           console.log('Nonuser');
+           return cb(null, null, reasons.NOT_FOUND);
+         }
 
-        // Test for a matching password
-        user.comparePassword(password, function(err, isMatch) {
-            if (err) return cb(err);
+         // check if the account is currently locked
+         if (user.isLocked) {
+           // just increment login attempts if account is already locked
+           return user.incLoginAttempts(function(err) {
+             if (err) return cb(err);
+             return cb(null, null, reasons.MAX_ATTEMPTS);
+           });
+         }
 
-            // check if the password was a match
-            if (isMatch) {
-                // Remove the password from the returned
-                user.password = undefined;
-                // if there's no lock or failed attempts, just return the user
-                if (!user.loginAttempts && !user.lockUntil) return cb(null, user);
-                // reset attempts and lock info
-                var updates = {
-                    $set: { loginAttempts: 0 },
-                    $unset: { lockUntil: 1 }
-                };
-                return user.update(updates, function(err) {
-                    if (err) return cb(err);
-                    return cb(null, user);
-                });
-            }
+         // Test for a matching password
+         user.comparePassword(password, function(err, isMatch) {
+           if (err) return cb(err);
 
-            // password is incorrect, so increment login attempts before responding
-            user.incLoginAttempts(function(err) {
-                if (err) return cb(err);
-                return cb(null, null, reasons.PASSWORD_INCORRECT);
-            });
-        });
-    });
+           // check if the password was a match
+           if (isMatch) {
+             console.log('match');
+             // Remove the password from the returned
+             user.password = undefined;
+             // if there's no lock or failed attempts, just return the user
+             if (!user.loginAttempts && !user.lockUntil) {
+               return cb(null, user);
+             }
+             // reset attempts and lock info
+             var updates = {
+               $set: { loginAttempts: 0 },
+               $unset: { lockUntil: 1 }
+             };
+             return user.update(updates, function(err) {
+               if (err) return cb(err);
+               return cb(null, user);
+             });
+           }
+
+           console.log('Not a match');
+
+           // password is incorrect, so increment login attempts before responding
+           user.incLoginAttempts(function(err) {
+             if (err) {
+               return cb(err);
+             }
+             return cb(null, null, reasons.PASSWORD_INCORRECT);
+           });
+         });
+       });
 };
 
 module.exports = mongoose.model('User', UserSchema);

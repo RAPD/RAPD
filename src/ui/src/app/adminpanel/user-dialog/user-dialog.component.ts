@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { FormGroup, FormControl } from '@angular/forms';
 
-import { MdDialogRef } from '@angular/material';
+import { MatDialogRef } from '@angular/material';
 
 import { RestService } from '../../shared/services/rest.service';
 import { User } from '../../shared/classes/user';
@@ -22,7 +22,7 @@ export class UserDialogComponent implements OnInit {
   user_form: FormGroup;
 
   constructor(private admin_service: RestService,
-              public dialogRef: MdDialogRef<UserDialogComponent>) { }
+              public dialogRef: MatDialogRef<UserDialogComponent>) { }
 
   ngOnInit() {
 

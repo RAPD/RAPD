@@ -1,4 +1,5 @@
 module.exports = {
+  'port': 3000,  // can be overidden by process.ENV
   'site': 'NE-CAT',
   'secret': 'ilovescotchyscotch',
   'database': 'mongodb://127.0.0.1:27017/rapd',

@@ -1,11 +1,11 @@
-<div md-dialog-title>
-  <button md-icon-button md-dialog-close class="button-dialog-top-right">
-    <md-icon>close</md-icon>
+<div MatDialogTitle>
+  <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
+    <mat-icon>close</mat-icon>
   </button>
   <h3>{{this.data.dialog_title}}</h3>
 </div>
 
-<md-dialog-content style="margin:0">
+<mat-dialog-content style="margin:0">
   <canvas baseChart
     [datasets]="data.ys"
     [labels]="data.xs"
@@ -14,4 +14,4 @@
     [colors]="lineChartColors"
     (chartHover)="chartHovered($event)"
     (chartClick)="chartClicked($event)"></canvas>
-</md-dialog-content>
+</mat-dialog-content>

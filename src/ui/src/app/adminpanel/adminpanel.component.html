@@ -1,9 +1,9 @@
 <div class="panel" *ngIf="user.role === 'site_admin'">
-  <md-tab-group class="session-tab-group">
-    <md-tab label="Users">
+  <mat-tab-group class="session-tab-group">
+    <mat-tab label="Users">
         <article class="c-content">
-          <button md-raised-button (click)="newUser()">New User</button>
-          <button type="button" md-raised-button color="primary" (click)="changePass()">Change My Password</button>
+          <button mat-raised-button (click)="newUser()">New User</button>
+          <button type="button" mat-raised-button color="primary" (click)="changePass()">Change My Password</button>
         </article>
         <article class="c-content">
           <ngx-datatable
@@ -34,11 +34,11 @@
             </ngx-datatable-column>
           </ngx-datatable>
         </article>
-    </md-tab>
+    </mat-tab>
 
-    <md-tab label="Groups">
+    <mat-tab label="Groups">
         <article class="c-content">
-          <button md-raised-button class="r-button" (click)="createGroup()">New Group</button>
+          <button mat-raised-button class="r-button" (click)="createGroup()">New Group</button>
         </article>
         <article class="c-content">
           <ngx-datatable
@@ -69,11 +69,11 @@
             </ngx-datatable-column>
           </ngx-datatable>
         </article>
-    </md-tab>
+    </mat-tab>
 
-    <md-tab label="Sessions">
+    <mat-tab label="Sessions">
       <article class="c-content">
-        <button md-raised-button (click)="createSession()">New Session</button>
+        <button mat-raised-button (click)="createSession()">New Session</button>
       </article>
       <article class="c-content">
         <ngx-datatable
@@ -114,8 +114,8 @@
           </ngx-datatable-column>
         </ngx-datatable>
       </article>
-    </md-tab>
-  </md-tab-group>
+    </mat-tab>
+  </mat-tab-group>
 </div>
 <div class="panel" *ngIf="user.role !== 'site_admin'">
   <article class="l-content">

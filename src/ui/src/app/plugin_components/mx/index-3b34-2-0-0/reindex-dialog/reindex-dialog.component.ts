@@ -3,9 +3,10 @@ import { Component,
          OnInit } from '@angular/core';
 import { FormGroup,
          FormControl } from '@angular/forms';
-import { MdDialog,
-         MdDialogRef,
-         MD_DIALOG_DATA } from '@angular/material';
+import { MatDialog,
+         MatDialogRef,
+         MAT_DIALOG_DATA,
+         MatSnackBar } from '@angular/material';
 
 import { RestService } from '../../../../shared/services/rest.service';
 import { GlobalsService } from '../../../../shared/services/globals.service';
@@ -38,8 +39,9 @@ export class ReindexDialogComponent implements OnInit {
 
     constructor(private globals_service: GlobalsService,
                 private rest_service: RestService,
-                public dialogRef: MdDialogRef<ReindexDialogComponent>,
-                @Inject(MD_DIALOG_DATA) public data: any) { }
+                public dialogRef: MatDialogRef<ReindexDialogComponent>,
+                @Inject(MAT_DIALOG_DATA) public data: any,
+                public snackBar: MatSnackBar) { }
 
   ngOnInit() {
 
@@ -100,6 +102,9 @@ export class ReindexDialogComponent implements OnInit {
                          this.submitted = false;
                          this.submit_error = parameters.error;
                          if (parameters.success) {
+                           let snackBarRef = this.snackBar.open('Reindex request submitted', 'Ok', {
+                             duration: 2000,
+                           });
                            this.dialogRef.close();
                          }
                        });
