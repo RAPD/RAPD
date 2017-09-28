@@ -37,7 +37,7 @@ import subprocess
 import sys
 import time
 import uuid
-
+import signal
 import redis
 
 # RAPD imports
@@ -302,7 +302,7 @@ class Overwatcher(Registrar):
         """
 
         #self.managed_process.kill()
-        os.kill(self.managed_process.pid)
+        os.kill(self.managed_process.pid, signal.SIGKILL)
 
     def start_managed_process(self):
         """

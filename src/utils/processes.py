@@ -26,7 +26,9 @@ __status__ = "Development"
 
 # Standard imports
 from pprint import pprint
-#import subprocess
+import sys, os, signal
+import shlex
+#import time
 from subprocess import Popen, PIPE
 from multiprocessing import Pool
 
@@ -49,17 +51,22 @@ def local_subprocess(command,
     #pid_queue.put('gh')
     #pprint(command)
     # Run the process
-    proc = Popen(command,
-                 shell=True,
+    #proc = Popen(command,
+    proc = Popen(shlex.split(command),
+                 #shell=True,
                  stdout=PIPE,
                  stderr=PIPE)
 
     # Send back PID if have pid_queue
     if pid_queue:
         pid_queue.put(proc.pid)
-
-    # Get the stdout and stderr from process
-    stdout, stderr = proc.communicate()
+    
+    try:
+        # Get the stdout and stderr from process
+        stdout, stderr = proc.communicate()
+    except KeyboardInterrupt:
+        #sys.exit()
+        os._exit()
 
     # Put results on a Queue, if given
     if result_queue:

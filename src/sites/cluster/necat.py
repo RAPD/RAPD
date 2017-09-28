@@ -33,6 +33,7 @@ import redis
 import subprocess
 import time
 import tempfile
+from multiprocessing import Process
 
 def checkCluster():
     """
@@ -111,7 +112,15 @@ def connectCluster(inp, job=True):
       return(line.strip())
   client.close()
 
-def processCluster(command,
+def processCluster(**kwargs):
+    """
+    Helper to run processCluster in a multiprocessing.Process to avoid
+    threading problems in DRMAA with multiple jobs sent to same session.
+    """
+    job = Process(target=processCluster2, kwargs=kwargs)
+    job.start()
+
+def processCluster2(command,
                    work_dir=False,
                    logfile=False,
                    batch_queue='all.q',
@@ -192,7 +201,6 @@ def processCluster(command,
     s.deleteJobTemplate(jt)
 
     #If multiprocessing.event is set, then run loop to watch until job or script has finished.
-    #if mp_event:
     #Returns True if job is still running or False if it is dead. Uses CPU to run loop!!!
     decodestatus = {drmaa.JobState.UNDETERMINED: True,
                     drmaa.JobState.QUEUED_ACTIVE: True,

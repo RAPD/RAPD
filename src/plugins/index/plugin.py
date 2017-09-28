@@ -44,8 +44,10 @@ import functools
 # import glob
 import json
 import logging
-from multiprocessing import Process, Queue, Event
-import multiprocessing
+from multiprocessing import Process, Event
+from multiprocessing import Queue as mp_Queue
+from Queue import Queue
+from threading import Thread
 import numpy
 import os
 from pprint import pprint
@@ -150,6 +152,7 @@ class RapdPlugin(Process):
     #auto_summary = False
     labelit_log = {}
     labelit_results = {}
+    labelit_proc = False
     #labelit_summary = False
     labelit_failed = False
     distl_log = []
@@ -345,6 +348,7 @@ class RapdPlugin(Process):
         self.solvent_content = self.preferences.get("solvent_content", 0.55)
 
         Process.__init__(self, name="AutoindexingStrategy")
+        # self.start() is called by the initiator of this script
 
     def construct_results(self):
         """Create the self.results dict"""
@@ -414,7 +418,7 @@ class RapdPlugin(Process):
             
       	    # Sorts labelit results by highest symmetry.
             self.labelitSort()
-            """
+            
             # If there is a solution, then calculate a strategy.
             if self.labelit_failed == False:
 
@@ -433,7 +437,7 @@ class RapdPlugin(Process):
 
             # Pass back results, and cleanup.
             self.postprocess()
-            """
+            
     def connect_to_redis(self):
         """Connect to the redis instance"""
         # Create a pool connection
@@ -635,6 +639,7 @@ class RapdPlugin(Process):
         # try:
         # Setup queue for getting labelit log and results in labelitSort.
         self.labelitQueue = Queue()
+
         params = {}
         params["test"] = self.test
         params["launcher"] = self.launcher
@@ -650,15 +655,13 @@ class RapdPlugin(Process):
         command['preferences'] = self.preferences
 
         # Launch labelit
-        Process(target=RunLabelit,
-                args=(command,
-                      self.labelitQueue,
-                      params,
-                      self.tprint,
-                      self.logger)).start()
-
-        # except:
-        #     self.logger.exception("**Error in process_labelit**")
+        Thread(target=RunLabelit,
+              args=(command,
+                    self.labelitQueue,
+                    params,
+                    self.tprint,
+                    self.logger)).start()
+        #self.labelit_proc.start()
 
     def processXDSbg(self):
         """
@@ -968,7 +971,8 @@ class RapdPlugin(Process):
                 inp_kwargs.update(self.batch_queue)
                 
                 #Launch the job
-                jobs[str(i)] = Process(target=self.launcher,
+                #jobs[str(i)] = Process(target=self.launcher,
+                jobs[str(i)] = Thread(target=self.launcher,
                                        kwargs=inp_kwargs)
                 jobs[str(i)].start()
 
@@ -1075,8 +1079,9 @@ class RapdPlugin(Process):
                     inp_kwargs.update(self.batch_queue)
                     
                     #Launch the job
-                    Process(target=self.launcher,
-                            kwargs=inp_kwargs).start()
+                    #Process(target=self.launcher,
+                    Thread(target=self.launcher,
+                                    kwargs=inp_kwargs).start()
 
         except:
             self.logger.exception("**Error in processMosflm**")
@@ -1472,66 +1477,70 @@ Distance | % Transmission", level=98, color="white")
                     self.best_anom_results = {"best_results_anom":"FAILED"}
                     self.best_anom_failed = True
 
-        st = 0
-        if self.strategy == "mosflm":
-            st = 4
-        # dict = {}
-        # Run twice for regular(0) and anomalous(1) strategies
-        l = ["", "_anom"]
-        first_print = False
-        for x in range(0, 2):
-            for i in range(st, 5):
-                timed_out = False
-                timer = 0
-                job = self.jobs[str(i)]
-                while 1:
-                    # print "<<< x=%d, i=%d" % (x, i)
-                    if job.is_alive() == False:
-                        if i == 4:
-                            log = os.path.join(self.labelit_dir, "mosflm_strat%s.out" % l[x])
-                        else:
-                            log = os.path.join(self.labelit_dir, str(i))+"/best%s.log" % l[x]
-                        break
-                    time.sleep(1)
-                    timer += 1
-                    if self.verbose:
-                        number = round(timer % 1, 1)
-                        if number in (0.0, 1.0):
-                            if first_print:
-                                self.tprint(arg=".",
-                                            level=10,
-                                            color="white",
-                                            newline=False)
+
+        try:
+            st = 0
+            if self.strategy == "mosflm":
+                st = 4
+            # dict = {}
+            # Run twice for regular(0) and anomalous(1) strategies
+            l = ["", "_anom"]
+            first_print = False
+            for x in range(0, 2):
+                for i in range(st, 5):
+                    timed_out = False
+                    timer = 0
+                    job = self.jobs[str(i)]
+                    while 1:
+                        # print "<<< x=%d, i=%d" % (x, i)
+                        if job.is_alive() == False:
+                            if i == 4:
+                                log = os.path.join(self.labelit_dir, "mosflm_strat%s.out" % l[x])
                             else:
-                                first_print = True
-                                self.tprint(arg="    Waiting for strategy to finish",
-                                            level=10,
-                                            color="white",
-                                            newline=False)
-                    if self.strategy_timer:
-                        if timer >= self.strategy_timer:
-                            timed_out = True
-                            # print "Timed out"
-                            job.terminate()
+                                log = os.path.join(self.labelit_dir, str(i))+"/best%s.log" % l[x]
                             break
-                if timed_out:
-                    self.tprint(arg="  Strategy calculation timed out", level=30, color="red")
-                    set_best_results(i, x)
-                    if i < 4:
-                        if self.multiproc == False:
-                            self.processStrategy(i+1)
-                else:
-                    if i == 4:
-                        self.postprocessMosflm(log)
-                    else:
-                        job1 = self.postprocessBest(log)
-                        if job1 == "OK":
-                            break
-                        # If Best failed...
-                        else:
+                        time.sleep(1)
+                        timer += 1
+                        if self.verbose:
+                            number = round(timer % 1, 1)
+                            if number in (0.0, 1.0):
+                                if first_print:
+                                    self.tprint(arg=".",
+                                                level=10,
+                                                color="white",
+                                                newline=False)
+                                else:
+                                    first_print = True
+                                    self.tprint(arg="    Waiting for strategy to finish",
+                                                level=10,
+                                                color="white",
+                                                newline=False)
+                        if self.strategy_timer:
+                            if timer >= self.strategy_timer:
+                                timed_out = True
+                                # print "Timed out"
+                                job.terminate()
+                                break
+                    if timed_out:
+                        self.tprint(arg="  Strategy calculation timed out", level=30, color="red")
+                        set_best_results(i, x)
+                        if i < 4:
                             if self.multiproc == False:
                                 self.processStrategy(i+1)
-                            set_best_results(i, x)
+                    else:
+                        if i == 4:
+                            self.postprocessMosflm(log)
+                        else:
+                            job1 = self.postprocessBest(log)
+                            if job1 == "OK":
+                                break
+                            # If Best failed...
+                            else:
+                                if self.multiproc == False:
+                                    self.processStrategy(i+1)
+                                set_best_results(i, x)
+        except KeyboardInterrupt:
+            pass
 
         if self.test == False:
             if self.multiproc:
@@ -1545,7 +1554,7 @@ Distance | % Transmission", level=98, color="white")
                         if self.jobs[str(i)].is_alive():
                             if self.verbose:
                                 self.logger.debug("terminating job: %s" % self.jobs[str(i)])
-                            xutils.killChildren(self, self.jobs[str(i)].pid)
+                            xutils.kill_children(self.jobs[str(i)].pid, self.logger)
 
     def labelitSort(self):
         """
@@ -1564,10 +1573,13 @@ Distance | % Transmission", level=98, color="white")
         sol_dict = {}
         sym = "0"
 
-        # Get the results and logs
-        self.labelit_results = self.labelitQueue.get()
-        self.labelit_log = self.labelitQueue.get()
-
+        try:
+            # Get the results and logs
+            self.labelit_results = self.labelitQueue.get()
+            self.labelit_log = self.labelitQueue.get()
+        except KeyboardInterrupt:
+            sys.exit()
+        
         # print "labelit_results"
         # pprint(self.labelit_results)
         # print "labelit_log"
@@ -2087,7 +2099,8 @@ Distance | % Transmission", level=98, color="white")
         #     self.logger.exception("**ERROR in htmlBestPlots**")
 
 
-class RunLabelit(Process):
+#class RunLabelit(Process):
+class RunLabelit(Thread):
 
     labelit_pids = []
     jobids = {}
@@ -2097,9 +2110,6 @@ class RunLabelit(Process):
 
     # Holder for results
     labelit_log = {}
-
-    # For results passing
-    indexing_results_queue = Queue()
 
     # For handling print_warning
     errors_printed = False
@@ -2127,7 +2137,7 @@ class RunLabelit(Process):
       		     'sample_type': 'protein'},
             'return_address': ('127.0.0.1', 50000)}
     	"""
-
+        Thread.__init__(self)
         self.start_time= time.time()
 
         # Passed-in vars
@@ -2165,6 +2175,13 @@ class RunLabelit(Process):
         
         # If self.cluster_use == True, you can specify a batch queue on your cluster. 
         self.batch_queue = params.get("batch_queue", {})
+        # I don't like this so I may move this later!!
+        if not len(self.batch_queue.keys()):
+            # Setup a Queue.Queue for local_subprocess
+            self.queue_type = ''
+        else:
+            # Setup a multiprocessing.Queue for cluster submission. This solves threading issue in DRMAA.
+            self.queue_type = 'mp_'
 
         # Get detector vendortype for settings. Defaults to ADSC.
         self.vendortype = params.get("vendortype", "ADSC")
@@ -2181,12 +2198,7 @@ class RunLabelit(Process):
             # Get the total number of Labelit runs
             self.tot_runs = xutils.get_labelit_settings(self, 'total')
 
-        # If limiting number of LABELIT run on cluster.
-        #self.short = False
-
-    	# Make decisions based on input params
-        #if self.nrun != 'all':
-        #    self.short = True
+        # Make decisions based on input params
         # Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does
         # not send results to database.
         #******BEAMLINE SPECIFIC*****
@@ -2212,6 +2224,8 @@ class RunLabelit(Process):
         if self.spacegroup != False:
             self.tprint(arg="Spacegroup is set to %s" % self.spacegroup, level=10, color="white")
 
+        # For results passing
+        self.indexing_results_queue = eval('%sQueue()'%self.queue_type)
 
         # This is where I place my overall folder settings.
         self.working_dir = self.setup.get("work")
@@ -2231,15 +2245,13 @@ class RunLabelit(Process):
         self.labelit_jobs = {}
         self.pids = {}
 
-        Process.__init__(self, name="RunLabelit")
+        #Process.__init__(self, name="RunLabelit")
         self.start()
 
     def run(self):
         """
         Convoluted path of modules to run.
         """
-        # print "run"
-
         self.logger.debug("RunLabelit::run")
 
         self.preprocess()
@@ -2258,41 +2270,6 @@ class RunLabelit(Process):
             for i in range(self.tot_runs):
                 xutils.get_labelit_settings(self, i)
                 #self.labelit_jobs[xutils.get_labelit_settings(self, i)] = i
-        
-        """
-        if self.nrun != 'all':
-            # This is used for beam center plugin
-            self.labelit_timer = 300
-            self.labelit_jobs[xutils.get_labelit_settings(self, self.nrun)] = self.nrun
-
-            # if a specific iteration is sent in then it only runs that one
-            #if self.nrun == 0:
-            #    self.labelit_jobs[self.process_labelit().keys()[0]] = 0
-            #else:
-            #    self.labelit_jobs[xutils.get_labelit_settings(self, self.nrun).keys()[0]] = \
-            #        self.nrun
-
-        # Normal mode
-        else:
-            for i in range():
-                self.labelit_jobs[xutils.get_labelit_settings(self, i)] = i
-
-            # Create the separate folders for the labelit runs, modify the dataset_preferences.py
-            # file, and launch for each iteration.
-            # THIS IS DONE IN get_labelit_settings already
-            #for iteration in range(self.nrun, -1, -1):
-            #    xutils.create_folders_labelit(self.working_dir, iteration)
-
-            # Launch first job
-            #self.process_labelit(iteration=0)
-            # self.labelit_jobs[self.process_labelit().keys()[0]] = 0
-
-            # If self.multiproc == True runs all labelits at the same time.
-            # NEED TO SET TOTAL NUMBER OF ITERATIONS
-            #if self.multiproc:
-            #    for index in range(1, self.nrun):
-            #        self.labelit_jobs[xutils.get_labelit_settings(self, index).keys()[0]] = index
-        """
 
         # Watch for returns
         self.labelit_run_queue()
@@ -2326,7 +2303,6 @@ class RunLabelit(Process):
         if self.verbose:
             self.logger.debug('RunLabelit::preprocess_labelit')
 
-        # try:
         twotheta = self.header.get("twotheta", 0.0)
         x_beam = self.header.get("x_beam")
         y_beam = self.header.get("y_beam")
@@ -2428,9 +2404,6 @@ rerunning.\n" % spot_count)
         self.logger.debug("RunLabelit::process_labelit")
         # print "process_labelit %d %s" % (iteration, inp)
 
-        # Get in the right directory
-        os.chdir(os.path.join(self.working_dir, str(iteration)))
-
         # try:
         labelit_input = []
         self.labelit_log[iteration] = []
@@ -2492,7 +2465,6 @@ rerunning.\n" % spot_count)
             self.labelit_log[iteration] = labelit_input
         else:
             self.labelit_log[iteration].extend(labelit_input)
-        #labelit_jobs = {}
 
         # Don't launch job if self.test = True
         if self.test:
@@ -2503,8 +2475,8 @@ rerunning.\n" % spot_count)
             log = os.path.join(os.getcwd(), "labelit.log")
 
             # queue to retrieve the PID or JobIB once submitted.
-            pid_queue = Queue()
-            
+            pid_queue = eval('%sQueue()'%self.queue_type)
+
             # setup input kwargs
             inp_kwargs = {"command": command,
                           "logfile": log,
@@ -2515,21 +2487,16 @@ rerunning.\n" % spot_count)
             inp_kwargs.update(self.batch_queue)
             
             # Launch the job
-            run = Process(target=self.launcher,
-                          name=iteration,
-                          kwargs=inp_kwargs)
+            run = Thread(target=self.launcher,
+                         name=iteration,
+                         kwargs=inp_kwargs)
             run.start()
 
-            #print iteration, run.pid
-            
             # Save the jobs for monitoring status
             self.jobs[iteration] = run
-            
+
             # Save the PID for killing the job later if needed.
-            pid = pid_queue.get()
-            print iteration, run.pid, pid
-            #self.labelit_pids.append(pid)
-            self.jobids[iteration] = pid
+            self.jobids[iteration] = pid_queue.get()
 
             # Save the number of times a job was run to stop a loop
             if self.labelit_tracker.has_key(iteration):
@@ -2537,7 +2504,7 @@ rerunning.\n" % spot_count)
             else:
                 self.labelit_tracker[iteration]=1
 
-        # return a dict with the job and iteration
+        # return the job
         return run
 
     def postprocess_labelit(self, raw_result): # iteration=0, run_before=False, blank=False):
@@ -2858,7 +2825,7 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
         """
         Run Queue for Labelit.
         """
-        self.logger.debug('RunLabelit::run_queue')
+        self.logger.debug('RunLabelit::labelit_run_queue')
 
         kill_jobs = True
         timer = 0
@@ -2866,174 +2833,41 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
 
         ellapsed_time = time.time() - start_time
         current_progress = 0
-        try:
-            while ellapsed_time < global_vars.LABELIT_TIMEOUT:
-                prog = int(7*ellapsed_time / 50)
-                if prog > current_progress:
-                    self.tprint(prog*10, "progress")
-                    current_progress = prog
-                if not self.indexing_results_queue.empty():
-                    result = self.indexing_results_queue.get(False)
-                    # pprint(result)
-                    # join the Process
-                    self.jobs[result["tag"]].join(None)
-                    # Remove jobid from running jobs
-                    del self.jobids[result["tag"]]
-                    # Postprocess the labelit job
-                    self.postprocess_labelit(raw_result=result)
-                    # All jobs have finished
-                    #if not len(self.labelit_pids):
-                    if not len(self.jobids.keys()):
-                        # print "All jobs done"
-                        kill_jobs = False
-                        break
-                # sys.stdout.write(".")
-                # sys.stdout.flush()
-                if self.tot_runs == 1:
-                    # For beam center plugin, slow it down
-                    time.sleep(1)
-                else:
-                    time.sleep(0.1)
-                ellapsed_time = time.time() - start_time
-        except KeyboardInterrupt:
-            # Kill jobs smoothly
-            pass
-  
-        if kill_jobs:
-            # Make sure all jobs are killed
-            for i, pid in self.jobids.iteritems():
-                self.labelit_results[i] = {"labelit_results": "FAILED"}
-                self.kill_job(pid, self.logger)
 
-    def labelit_run_queue_OLD(self):
-        """
-        Run Queue for Labelit.
-        """
-        self.logger.debug('RunLabelit::run_queue')
-
-        timed_out = False
-        timer = 0
-        start_time = time.time()
-        
-        #print self.labelit_jobs
-        #print multiprocessing.active_children()
-        #for x in multiprocessing.active_children():
-        #    print x, x.pid, x.name
-
-        ellapsed_time = time.time() - start_time
-        current_progress = 0
         while ellapsed_time < global_vars.LABELIT_TIMEOUT:
             prog = int(7*ellapsed_time / 50)
             if prog > current_progress:
                 self.tprint(prog*10, "progress")
                 current_progress = prog
-            # THE JOBS ARE NEVER JOINED THIS WAY!!! 
             if not self.indexing_results_queue.empty():
                 result = self.indexing_results_queue.get(False)
-                # pprint(result)
-                # Remove job from dict
-                self.labelit_pids.remove(result["pid"])
-                # Add result to labelit_results
-                # self.labelit_results[result["tag"]] = result
+                # join the Process
+                self.jobs[result["tag"]].join()
+                # Remove jobid from running jobs
+                del self.jobids[result["tag"]]
                 # Postprocess the labelit job
                 self.postprocess_labelit(raw_result=result)
                 # All jobs have finished
-                if not len(self.labelit_pids):
+                #if not len(self.labelit_pids):
+                if not len(self.jobids.keys()):
                     # print "All jobs done"
+                    kill_jobs = False
                     break
             # sys.stdout.write(".")
             # sys.stdout.flush()
-            time.sleep(1)
+            if self.tot_runs == 1:
+                # For beam center plugin, slow it down
+                time.sleep(1)
+            else:
+                time.sleep(0.1)
             ellapsed_time = time.time() - start_time
-        else:
-            # Make sure all jobs are done or kill them
-            for pid in self.labelit_pids:
-                iteration = self.labelit_jobs[pid]
-                #TODO
-                # print "Killing iteration:%d pid:%d" % (iteration, pid)
-                # COULD BE JOBID ON CLUSTER!!! THIS WONT WORK
-                os.kill(pid, signal.SIGKILL)
-                self.labelit_pids.remove(pid)
-                self.labelit_results[iteration] = {"labelit_results": "FAILED"}
 
-        # pprint(self.labelit_results)
-
-
-        """
-        # Set wait time longer to lower the load on the node running the job.
-        if self.short:
-            wait = 1
-        else:
-            wait = 0.1
-
-        jobs = self.labelit_jobs.keys()
-        print "JOBS %s" % jobs
-
-        if jobs != ["None"]:
-            counter = len(jobs)
-            while counter != 0:
-                for job in jobs:
-                    if self.test:
-                        running = False
-                    else:
-                        running = job.is_alive()
-                    print "Job %d running:%s" % (self.labelit_jobs[job], running)
-                    if running == False:
-                        jobs.remove(job)
-                        iteration = self.labelit_jobs[job]
-                        # if self.verbose:
-                            # self.logger.debug('Finished Labelit%s'%iteration)
-                            # self.tprint(arg="Finished Labelit%s" % iteration, level=30)
-                        # Check if job had been rerun, fix the iteration.
-                        if iteration >= 10:
-                            iteration -= 10
-                            job = self.postprocess_labelit(iteration, True)
-                        else:
-                            job = self.postprocess_labelit(iteration, False)
-                        # If job is rerun, then save the iteration and pid.
-                        if job != None:
-                            if self.multiproc:
-                                iteration += 10
-                            else:
-                                iteration += 1
-                            self.labelit_jobs[job.keys()[0]] = iteration
-                            jobs.extend(job.keys())
-                        else:
-                            counter -= 1
-                time.sleep(wait)
-                timer += wait
-
-                if self.labelit_timer:
-                    if timer >= self.labelit_timer:
-                        if self.multiproc:
-                            timed_out = True
-                            break
-                        else:
-                            iteration += 1
-                            if iteration <= self.nrun:
-                                xutils.get_labelit_settings(self, iteration)
-                            else:
-                                timed_out = True
-                                break
-            if timed_out:
-                self.logger.debug('Labelit timed out.')
-                for job in jobs:
-                    i = self.labelit_jobs[job]
-                    if i >= 10:
-                        i -=10
-                    self.labelit_results[str(i)] = {"labelit_results": 'FAILED'}
-                    if self.cluster_use:
-                        # xutils.killChildrenCluster(self,self.pids[str(i)])
-                        self.cluster_adapter.killChildrenCluster(self, self.pids[str(i)])
-                    else:
-                        xutils.killChildren(self, self.pids[str(i)])
-
-        if self.short == False:
-            self.logger.debug('Labelit finished.')
-
-        # except:
-        #     self.logger.exception('**Error in RunLabelit.run_queue**')
-        """
+        if kill_jobs:
+            # Make sure all jobs are killed
+            for i, pid in self.jobids.iteritems():
+                self.labelit_results[i] = {"labelit_results": "FAILED"}
+                self.kill_job(pid, self.logger)
+        
 
     def condense_logs(self):
         """Put the Labelit logs together"""
