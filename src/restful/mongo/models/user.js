@@ -3,40 +3,36 @@ var Schema = mongoose.Schema;
 var bcrypt = require('bcryptjs');
 
 var UserSchema = new Schema({
-  username: {
+  creator: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+  created: {
+    type: Date,
+    required: true,
+    default: Date.now
+  },
+  email: {
     type: String,
     required: true
-  },
-  password: {
-    type: String,
-    required: false
-  },
-  role: {
-    type: String,
-    required: true,
-    default: 'user'
   },
   groups: [{
     type: Schema.Types.ObjectId,
     ref: 'Group',
     default: []
   }],
-  email: {
-    type: String,
-    required: true
-  },
-  status: {
-    type: String,
-    required: true,
-    default: 'active'
+  lockUntil: {
+    type: Date,
   },
   loginAttempts: {
     type: Number,
     required: true,
     default: 0
   },
-  lockUntil: {
-    type: Date,
+  password: {
+    type: String,
+    required: false
   },
   pass_expire: {
     type: Date,
@@ -46,10 +42,24 @@ var UserSchema = new Schema({
     type: Boolean,
     default: false
   },
+  role: {
+    type: String,
+    required: true,
+    default: 'user'
+  },
+  status: {
+    type: String,
+    required: true,
+    default: 'active'
+  },
   timestamp: {
     type: Date,
     default: Date.now
   },
+  username: {
+    type: String,
+    required: true
+  }
 }, {strict:false});
 
 // How much work for hashing

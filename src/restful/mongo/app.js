@@ -19,23 +19,22 @@ const config = require('./config'); // get our config file
 
 // Routing
 const routes =          require('./routes/index');
+const groups_routes =   require('./routes/groups');
 const projects_routes = require('./routes/projects');
 const sessions_routes = require('./routes/sessions');
 const users_routes =    require('./routes/users');
-
 
 // Redis
 const redis =      require('redis');
 var redis_client = redis.createClient(config.redis_host);
 
 // MongoDB Models
-const Session = require('./models/session');
+// const Session = require('./models/session');
 const User =    require('./models/user');
 const Group =   require('./models/group');
 const Image =   require('./models/image');
 const Run =     require('./models/run');
 // MongoDB connection
-const q =      require('q');
 var mongoose = require('mongoose');
 // Fix the promise issue in Mongoose
 mongoose.Promise = require('q').Promise;
@@ -328,286 +327,107 @@ apiRoutes.post('/changepass', function(req, res) {
   });
 });
 
-// routes that end with users
-// ----------------------------------------------------
-// route to return all users (GET http://localhost:8080/api/users)
-apiRoutes.route('/users')
-  .get(function(req, res) {
-    User.
-      find({}).
-      populate('groups', 'groupname').
-      exec(function(err, users) {
-        console.log(users);
-        for (let user of users) {
-          user.password = undefined;
-        }
-        res.json(users);
-      });
-  });
-
-apiRoutes.route('/users/:user_id')
-
-  // edit the user with _id (accessed ad PUT http://localhost:8080/api/users/:user_id)
-  .put(function(req,res) {
-
-    console.log('PUT users');
-    // console.log(req.body.user);
-
-    let user = req.body.user;
-
-    // Make sure groups are only _ids
-    for (let g of user.groups) {
-      // console.log(g);
-      delete g.groupname
-    }
-
-    console.log(user);
-
-    // Updating
-    if (user._id) {
-
-      User.findById(user._id, function(err, saved_user) {
-        if (err) {
-          console.log(err);
-          res.send(err);
-        }
-
-        console.log('saved_user', saved_user);
-
-        //
-        // Update the entry
-        saved_user.username = user.username;
-        saved_user.email = user.email;
-        saved_user.status = user.status;
-        saved_user.groups = user.groups;
-        saved_user.role = user.role;
-        //
-        saved_user.save(function(err) {
-          if (err) {
-            res.send(err);
-          }
-          User.
-            findById({_id: user._id}).
-            populate('groups', 'groupname').
-            exec(function(err, return_user) {
-              console.log(return_user);
-              return_user.password = undefined;
-              let params = {
-                success: true,
-                operation: 'edit',
-                user: return_user
-              }
-              res.json(params);
-            });
-        });
-      });
-    } else {
-
-      console.log('New user');
-      // create a sample user
-      var new_user = new User({
-        username: user.username,
-        // password: 'groovylovebugbed',
-        role: 'site_admin',
-        groups: user.groups,
-        email: user.email,
-        status: user.status
-      });
-
-      // save the sample user
-      new_user.save(function(err, return_user, numAffected) {
-        if (err) throw err;
-
-        console.log('User saved successfully');
-        res.json({
-          success: true,
-          operation: 'add',
-          user: return_user
-        });
-      });
-    }
-  })
-
-
-  // delete the user with _id (accessed at DELETE http://localhost:8080/api/users/:user_id)
-  .delete(function(req, res) {
-
-      console.log(req.params.user_id);
-
-      User.remove({
-          _id: req.params.user_id
-      }, function(err, user) {
-          if (err) {
-            res.send(err);
-          }
-
-          res.json({
-            operation: 'delete',
-            success: true,
-            _id: req.params.user_id,
-            message: 'Successfully deleted'});
-      });
-  });
-
-  apiRoutes.route('/user')
-
-    .post(function(req, res) {
-      console.log('POST user');
-      console.log(req.body);
-      let user = req.body;
-
-      // Make sure groups are only _ids
-      for (let g of user.groups) {
-        console.log(g);
-        delete g.groupname
-      }
-
-      console.log(user);
-
-      // Updating
-      if (user._id) {
-        User.findById(user._id, function(err, saved_user) {
-          if (err) {
-            console.log(err);
-            res.send(err);
-          }
-
-          console.log(saved_user);
-
-          //
-          // Update the entry
-          saved_user.username = user.username;
-          saved_user.email = user.email;
-          saved_user.status = user.status;
-          saved_user.groups = user.groups;
-          saved_user.role = user.role;
-          //
-          saved_user.save(function(err) {
-            if (err) {
-              res.send(err);
-            }
-            User.
-              findById({_id: user._id}).
-              populate('groups', 'groupname').
-              exec(function(err, return_user) {
-                console.log(return_user);
-                return_user.password = undefined;
-                let params = {
-                  success: true,
-                  user: return_user
-                }
-                res.json(params);
-              });
-          });
-        });
-      } else {
-
-        console.log('New user');
-
-      }
-    });
-
-// routes that end with groups
-// ----------------------------------------------------
-// route to return all groups (GET http://localhost:8080/api/groups)
-apiRoutes.route('/groups')
-
-  .get(function(req, res) {
-    Group.find({}, function(err, groups) {
-      console.log(groups);
-      res.json(groups);
-    });
-  });
-
-apiRoutes.route('/groups/:group_id')
-
-  // edit or add the group with _id (accessed ad PUT http://localhost:8080/api/groups/:group_id)
-  .put(function(req,res) {
-
-    console.log('PUT groups');
-
-    let group = req.body.group;
-
-    console.log(group);
-
-    // Updating
-    if (group._id) {
-
-      Group.findById(group._id, function(err, saved_group) {
-        if (err) {
-          console.log(err);
-          res.send(err);
-        }
-
-        console.log('saved_group', saved_group);
-
-        //
-        // Update the entry
-        saved_group.groupname = group.groupname;
-        saved_group.institution = group.institution;
-        saved_group.status = group.status;
-
-        //
-        saved_group.save(function(err, return_group, numAffected) {
-          if (err) {
-            res.send(err);
-          }
-
-          console.log('return_group', return_group);
-
-          let params = {
-                success: true,
-                operation: 'edit',
-                group: return_group
-              }
-          res.json(params);
-        });
-      });
-    } else {
-
-      console.log('New group');
-      // create a sample user
-      var new_group = new Group({
-        groupname: group.groupname,
-        institution: group.institution,
-        uid: group.uid,
-        gid: group.gid,
-        status: group.status
-      });
-
-      // save the sample user
-      new_group.save(function(err, return_group, numAffected) {
-        if (err) throw err;
-
-        console.log('Group saved successfully');
-        res.json({
-          success: true,
-          operation: 'add',
-          group: return_group
-        });
-      });
-    }
-  })
-
-  // delete the group with _id (accessed at DELETE http://localhost:8080/api/groups/:group_id)
-  .delete(function(req, res) {
-
-      console.log('DELETE group:',req.params.group_id);
-
-      Group.remove({
-          _id: req.params.group_id
-      }, function(err, group) {
-          if (err) {
-            res.send(err);
-          }
-
-          res.json({
-            operation: 'delete',
-            success: true,
-            _id: req.params.group_id,
-            message: 'Successfully deleted'});
-      });
-  });
+// // routes that end with groups
+// // ----------------------------------------------------
+// // route to return all groups (GET http://localhost:8080/api/groups)
+// apiRoutes.route('/groups')
+//
+//   .get(function(req, res) {
+//     Group.find({}, function(err, groups) {
+//       console.log(groups);
+//       res.json(groups);
+//     });
+//   });
+//
+// apiRoutes.route('/groups/:group_id')
+//
+//   // edit or add the group with _id (accessed ad PUT http://localhost:8080/api/groups/:group_id)
+//   .put(function(req,res) {
+//
+//     console.log('PUT groups');
+//
+//     let group = req.body.group;
+//
+//     console.log(group);
+//
+//     // Updating
+//     if (group._id) {
+//
+//       Group.findById(group._id, function(err, saved_group) {
+//         if (err) {
+//           console.log(err);
+//           res.send(err);
+//         }
+//
+//         console.log('saved_group', saved_group);
+//
+//         //
+//         // Update the entry
+//         saved_group.groupname = group.groupname;
+//         saved_group.institution = group.institution;
+//         saved_group.status = group.status;
+//
+//         //
+//         saved_group.save(function(err, return_group, numAffected) {
+//           if (err) {
+//             res.send(err);
+//           }
+//
+//           console.log('return_group', return_group);
+//
+//           let params = {
+//                 success: true,
+//                 operation: 'edit',
+//                 group: return_group
+//               }
+//           res.json(params);
+//         });
+//       });
+//     } else {
+//
+//       console.log('New group');
+//       // create a sample user
+//       var new_group = new Group({
+//         groupname: group.groupname,
+//         institution: group.institution,
+//         uid: group.uid,
+//         gid: group.gid,
+//         status: group.status
+//       });
+//
+//       // save the sample user
+//       new_group.save(function(err, return_group, numAffected) {
+//         if (err) throw err;
+//
+//         console.log('Group saved successfully');
+//         res.json({
+//           success: true,
+//           operation: 'add',
+//           group: return_group
+//         });
+//       });
+//     }
+//   })
+//
+//   // delete the group with _id (accessed at DELETE http://localhost:8080/api/groups/:group_id)
+//   .delete(function(req, res) {
+//
+//       console.log('DELETE group:',req.params.group_id);
+//
+//       Group.remove({
+//           _id: req.params.group_id
+//       }, function(err, group) {
+//           if (err) {
+//             res.send(err);
+//           }
+//
+//           res.json({
+//             operation: 'delete',
+//             success: true,
+//             _id: req.params.group_id,
+//             message: 'Successfully deleted'});
+//       });
+//   });
 
 // Routes that end with images
 // -----------------------------------------------------------------------------
@@ -645,24 +465,6 @@ apiRoutes.route('/images/:image_id')
     });
 
 
-// // Routes that end with projects
-// // ----------------------------------------------------
-// // route to return all users (GET http://localhost:8080/api/users)
-// apiRoutes.route('/projects')
-//   .get(function(req, res) {
-//     Project.
-//       find({}).
-//       populate('groups', 'groupname').
-//       exec(function(err, users) {
-//         console.log(users);
-//         for (let user of users) {
-//           user.password = undefined;
-//         }
-//         res.json(users);
-//       });
-//   });
-
-
 // routes that end with jobs
 // ----------------------------------------------------
 // These are redis-based queries
@@ -696,67 +498,6 @@ apiRoutes.route('/requests')
   }); // End .put(function(req,res) {
 
 
-
-    // // Updating
-    // if (group._id) {
-    //
-    //   Group.findById(group._id, function(err, saved_group) {
-    //     if (err) {
-    //       console.log(err);
-    //       res.send(err);
-    //     }
-    //
-    //     console.log('saved_group', saved_group);
-    //
-    //     //
-    //     // Update the entry
-    //     saved_group.groupname = group.groupname;
-    //     saved_group.institution = group.institution;
-    //     saved_group.status = group.status;
-    //
-    //     //
-    //     saved_group.save(function(err, return_group, numAffected) {
-    //       if (err) {
-    //         res.send(err);
-    //       }
-    //
-    //       console.log('return_group', return_group);
-    //
-    //       let params = {
-    //             success: true,
-    //             operation: 'edit',
-    //             group: return_group
-    //           }
-    //       res.json(params);
-    //     });
-    //   });
-    // } else {
-    //
-    //   console.log('New group');
-    //   // create a sample user
-    //   var new_group = new Group({
-    //     groupname: group.groupname,
-    //     institution: group.institution,
-    //     uid: group.uid,
-    //     gid: group.gid,
-    //     status: group.status
-    //   });
-    //
-    //   // save the sample user
-    //   new_group.save(function(err, return_group, numAffected) {
-    //     if (err) throw err;
-    //
-    //     console.log('Group saved successfully');
-    //     res.json({
-    //       success: true,
-    //       operation: 'add',
-    //       group: return_group
-    //     });
-    //   });
-    // }
-  // });
-
-
 // REGISTER OUR ROUTES -------------------------------
 
 // basic route
@@ -770,8 +511,10 @@ app.get('/', function(req, res) {
 app.use('/api', apiRoutes);
 
 // Imported routes
+app.use('/api', groups_routes);
 app.use('/api', projects_routes);
 app.use('/api', sessions_routes);
+app.use('/api', users_routes);
 
 module.exports = app;
 
