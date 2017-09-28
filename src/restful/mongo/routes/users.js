@@ -112,4 +112,50 @@ router.route('/users/:user_id')
     });
   });
 
+// Route to handle changing password (POST api/changepass)
+router.post('/changepass', function(req, res) {
+
+  // console.log('changepass');
+  // console.log(req.body);
+
+  User.
+  findOne({email: req.body.email}).
+  exec(function(err, user) {
+    if (err) {
+      console.error(err);
+      res.send(err);
+    } else {
+      if (user) {
+        let new_pass_raw = req.body.password;
+        user.password =  new_pass_raw;
+        // Expire in 1 year
+        user.pass_expire = Date.now() + 31622240;
+        user.pass_force_change = false;
+        user.save(function(err, saved_user) {
+          if (err) {
+            console.error(err);
+            res.send(err);
+          } else {
+            console.log('Changed password for', req.body.email);
+            // Set up the email options
+            let mailOptions = {
+              from: 'fmurphy@anl.gov',
+              to: user.email,
+              cc: 'fmurphy@anl.gov',
+              subject: 'RAPD password change',
+              text: 'Your RAPD password has been updated.\nIf this is an unauthorized change, please contactthe RAPD administrator at XXX'};
+            // Send the email
+            smtp_transport.sendMail(mailOptions);
+            // Reply to client
+            res.json({success: true});
+          }
+        });
+      } else {
+        console.error('No user found for email', req.body.email);
+        res.send('No user found for email', req.body.email);
+      }
+    }
+  });
+});
+
 module.exports = router;

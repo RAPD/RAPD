@@ -20,6 +20,7 @@ const config = require('./config'); // get our config file
 // Routing
 const routes =          require('./routes/index');
 const groups_routes =   require('./routes/groups');
+const images_routes =   require('./routes/images');
 const projects_routes = require('./routes/projects');
 const sessions_routes = require('./routes/sessions');
 const users_routes =    require('./routes/users');
@@ -327,124 +328,6 @@ apiRoutes.post('/changepass', function(req, res) {
   });
 });
 
-// // routes that end with groups
-// // ----------------------------------------------------
-// // route to return all groups (GET http://localhost:8080/api/groups)
-// apiRoutes.route('/groups')
-//
-//   .get(function(req, res) {
-//     Group.find({}, function(err, groups) {
-//       console.log(groups);
-//       res.json(groups);
-//     });
-//   });
-//
-// apiRoutes.route('/groups/:group_id')
-//
-//   // edit or add the group with _id (accessed ad PUT http://localhost:8080/api/groups/:group_id)
-//   .put(function(req,res) {
-//
-//     console.log('PUT groups');
-//
-//     let group = req.body.group;
-//
-//     console.log(group);
-//
-//     // Updating
-//     if (group._id) {
-//
-//       Group.findById(group._id, function(err, saved_group) {
-//         if (err) {
-//           console.log(err);
-//           res.send(err);
-//         }
-//
-//         console.log('saved_group', saved_group);
-//
-//         //
-//         // Update the entry
-//         saved_group.groupname = group.groupname;
-//         saved_group.institution = group.institution;
-//         saved_group.status = group.status;
-//
-//         //
-//         saved_group.save(function(err, return_group, numAffected) {
-//           if (err) {
-//             res.send(err);
-//           }
-//
-//           console.log('return_group', return_group);
-//
-//           let params = {
-//                 success: true,
-//                 operation: 'edit',
-//                 group: return_group
-//               }
-//           res.json(params);
-//         });
-//       });
-//     } else {
-//
-//       console.log('New group');
-//       // create a sample user
-//       var new_group = new Group({
-//         groupname: group.groupname,
-//         institution: group.institution,
-//         uid: group.uid,
-//         gid: group.gid,
-//         status: group.status
-//       });
-//
-//       // save the sample user
-//       new_group.save(function(err, return_group, numAffected) {
-//         if (err) throw err;
-//
-//         console.log('Group saved successfully');
-//         res.json({
-//           success: true,
-//           operation: 'add',
-//           group: return_group
-//         });
-//       });
-//     }
-//   })
-//
-//   // delete the group with _id (accessed at DELETE http://localhost:8080/api/groups/:group_id)
-//   .delete(function(req, res) {
-//
-//       console.log('DELETE group:',req.params.group_id);
-//
-//       Group.remove({
-//           _id: req.params.group_id
-//       }, function(err, group) {
-//           if (err) {
-//             res.send(err);
-//           }
-//
-//           res.json({
-//             operation: 'delete',
-//             success: true,
-//             _id: req.params.group_id,
-//             message: 'Successfully deleted'});
-//       });
-//   });
-
-// Routes that end with images
-// -----------------------------------------------------------------------------
-// route to return image data given an id (GET http://localhost:8080/api/images/:image_id)
-apiRoutes.route('/images/:image_id')
-  .get(function(req, res) {
-
-    console.log('GET image:', req.params.image_id);
-
-    Image.
-      findOne({_id:req.params.image_id}).
-      exec(function(err, image) {
-        console.log(image);
-        res.json(image);
-      })
-
-  });
 
 
   // Routes that end with runs
@@ -512,6 +395,7 @@ app.use('/api', apiRoutes);
 
 // Imported routes
 app.use('/api', groups_routes);
+app.use('/api', images_routes);
 app.use('/api', projects_routes);
 app.use('/api', sessions_routes);
 app.use('/api', users_routes);
@@ -519,7 +403,8 @@ app.use('/api', users_routes);
 module.exports = app;
 
 
-var port = normalizePort(process.env.PORT || '3000');
+
+var port = normalizePort(process.env.PORT || config.port);
 app.set('port', port);
 
 server.listen(port);
