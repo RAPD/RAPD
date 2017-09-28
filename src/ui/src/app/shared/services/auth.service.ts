@@ -1,20 +1,21 @@
 import { Injectable } from '@angular/core';
-import { Headers, Http } from '@angular/http';
+import { Headers,
+         Http } from '@angular/http';
 import { CanActivate } from '@angular/router';
 
 import { Observable } from 'rxjs/Observable';
-import { AuthHttp, JwtHelper } from 'angular2-jwt';
+import { AuthHttp,
+         JwtHelper } from 'angular2-jwt';
 
+import { GlobalsService } from './globals.service';
 
 @Injectable()
 export class AuthService implements CanActivate {
 
-  // private apiUrl: string = 'http://localhost:3000/api/';
-  private apiUrl: string = 'http://kona.nec.aps.anl.gov:3000/api/';
-  // private profile: any;
   jwtHelper: JwtHelper = new JwtHelper();
 
-  constructor(public http: Http,
+  constructor(private globals_service: GlobalsService,
+              public http: Http,
               private auth_http: AuthHttp) { }
 
   canActivate() {
@@ -22,6 +23,8 @@ export class AuthService implements CanActivate {
   }
 
   public login(credentials): Observable<any> {
+
+    console.log('this.globals_service.site.restApiUrl', this.globals_service.site.restApiUrl);
 
     console.log('login', credentials);
 
@@ -33,7 +36,7 @@ export class AuthService implements CanActivate {
     console.log(header);
 
     return this.http.post(
-      this.apiUrl + 'authenticate',
+      this.globals_service.site.restApiUrl + 'authenticate',
       creds,
       {headers: header}
     )
@@ -54,7 +57,7 @@ export class AuthService implements CanActivate {
     console.log(header);
 
     return this.http.post(
-      this.apiUrl + 'requestpass',
+      this.globals_service.site.restApiUrl + 'requestpass',
       creds,
       {headers: header}
     )
@@ -73,7 +76,7 @@ export class AuthService implements CanActivate {
     header.append('Content-Type', 'application/x-www-form-urlencoded'); // 'application/json');
 
     return this.auth_http.post(
-      this.apiUrl + 'changepass',
+      this.globals_service.site.restApiUrl + 'changepass',
       creds,
       {headers: header}
     )
@@ -201,11 +204,11 @@ getAuth(): Observable<any> {
   var header = new Headers();
   header.append('Content-Type', 'application/x-www-form-urlencoded'); //'application/json');
   //
-  // console.log(this.apiUrl+'/authenticate');
+  // console.log(this.globals_service.site.restApiUrl+'/authenticate');
   // console.log(creds);
   //
   return this.http.post(
-    this.apiUrl+'/authenticate',
+    this.globals_service.site.restApiUrl+'/authenticate',
     creds,
     {headers:header}
   )

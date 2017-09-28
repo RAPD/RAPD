@@ -1,10 +1,13 @@
 import { Injectable } from '@angular/core';
-import { Headers, Response } from '@angular/http';
+import { Headers,
+         Response } from '@angular/http';
 
 import { Observable } from 'rxjs/Observable';
 import { Subscriber } from 'rxjs/Subscriber';
 import { AuthHttp } from 'angular2-jwt';
 import * as moment from 'moment';
+
+import { GlobalsService } from './globals.service';
 
 import { User } from '../classes/user';
 import { Group } from '../classes/group';
@@ -16,16 +19,14 @@ import { Run } from '../classes/run';
 @Injectable()
 export class RestService {
 
-  // private apiUrl = 'http://localhost:3000/api';
-  private apiUrl = 'http://kona.nec.aps.anl.gov:3000/api';
-
-  constructor(private authHttp: AuthHttp) { }
+  constructor(private globals_service: GlobalsService,
+              private authHttp: AuthHttp) { }
 
   public getUsers(): Observable<User[]> {
 
     console.log('getUsers');
 
-    return this.authHttp.get(this.apiUrl + '/users')
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/users')
       .map(this.extractUsers)
       .catch(this.handleError);
   }
@@ -46,7 +47,7 @@ export class RestService {
     header.append('Content-Type', 'application/json'); // 'application/x-www-form-urlencoded'
 
     return this.authHttp.put(
-      this.apiUrl + '/users/' + user._id,
+      this.globals_service.site.restApiUrl + '/users/' + user._id,
       JSON.stringify({user: user}),
       {headers: header}
     )
@@ -63,14 +64,14 @@ export class RestService {
 
     console.log('deleteUser', _id);
 
-    return this.authHttp.delete(this.apiUrl + '/users/' + _id).map(res => res.json());
+    return this.authHttp.delete(this.globals_service.site.restApiUrl + '/users/' + _id).map(res => res.json());
   }
 
   public getGroups(): Observable<Group[]> {
 
     console.log('getGroups');
 
-    return this.authHttp.get(this.apiUrl + '/groups')
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/groups')
       .map(this.extractGroups);
       // .catch(this.handleError);
   }
@@ -97,7 +98,7 @@ export class RestService {
     header.append('Content-Type', 'application/json'); // 'application/x-www-form-urlencoded'
 
     return this.authHttp.put(
-      this.apiUrl + '/groups/' + group._id,
+      this.globals_service.site.restApiUrl + '/groups/' + group._id,
       JSON.stringify({group: group}),
       {headers: header}
     )
@@ -109,14 +110,14 @@ export class RestService {
 
     console.log('deleteGroup', _id);
 
-    return this.authHttp.delete(this.apiUrl + '/groups/' + _id).map(res => res.json());
+    return this.authHttp.delete(this.globals_service.site.restApiUrl + '/groups/' + _id).map(res => res.json());
   }
 
   public getSessions(): Observable<Session[]> {
 
     // console.log('getSessions');
 
-    return this.authHttp.get(this.apiUrl + '/sessions')
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/sessions')
       .map(this.extractSessions);
       // .catch(this.handleError);
   }
@@ -143,7 +144,7 @@ export class RestService {
     header.append('Content-Type', 'application/json'); // 'application/x-www-form-urlencoded'
 
     return this.authHttp.put(
-      this.apiUrl + '/sessions/' + session._id,
+      this.globals_service.site.restApiUrl + '/sessions/' + session._id,
       JSON.stringify({session: session}),
       {headers: header}
     )
@@ -155,7 +156,7 @@ export class RestService {
 
     console.log('getImageData _id:', _id);
 
-    return this.authHttp.get(this.apiUrl + '/images/' + _id)
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/images/' + _id)
                         .map(res => res.json());
   }
 
@@ -164,7 +165,7 @@ export class RestService {
 
     console.log('getRunData _id:', _id);
 
-    return this.authHttp.get(this.apiUrl + '/runs/' + _id)
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/runs/' + _id)
                         .map(res => res.json());
   }
 
@@ -176,7 +177,7 @@ export class RestService {
 
     console.log('getProjects');
 
-    return this.authHttp.get(this.apiUrl + '/projects')
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/projects')
       .map(res => res.json())
       .catch(error => this.handleError(error));
   }
@@ -189,7 +190,7 @@ export class RestService {
     header.append('Content-Type', 'application/json');
 
     return this.authHttp.put(
-      this.apiUrl + '/projects',
+      this.globals_service.site.restApiUrl + '/projects',
       JSON.stringify({project:project}),
       {headers:header}
     )
@@ -205,7 +206,7 @@ export class RestService {
     header.append('Content-Type', 'application/json');
 
     return this.authHttp.put(
-      this.apiUrl + '/projects/add_result',
+      this.globals_service.site.restApiUrl + '/projects/add_result',
       JSON.stringify({
         project_id:data._id,
         result:data.result
@@ -227,7 +228,7 @@ export class RestService {
     header.append('Content-Type', 'application/json'); // 'application/x-www-form-urlencoded'
 
     return this.authHttp.put(
-      this.apiUrl + '/requests',
+      this.globals_service.site.restApiUrl + '/requests',
       JSON.stringify({request:request}),
       {headers:header}
     )

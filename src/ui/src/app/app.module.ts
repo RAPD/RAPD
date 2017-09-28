@@ -25,6 +25,7 @@ import { WebsocketService } from './shared/services/websocket.service';
 import { SessionService } from './shared/services/session.service';
 import { RequestsService } from './shared/services/requests.service';
 import { GlobalsService } from './shared/services/globals.service';
+import { Site } from './site';
 import { provideAuth, AuthHttp, AuthConfig } from 'angular2-jwt';
 
 import { MaintoolbarComponent } from './maintoolbar/maintoolbar.component';
@@ -125,6 +126,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
                SessionService,
                RequestsService,
                GlobalsService,
+               Site,
                // Replacement for AUTH_PROVIDERS
                {
                  provide: AuthHttp,

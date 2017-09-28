@@ -1,12 +1,18 @@
-import { Injectable, OnInit } from '@angular/core';
+import { Inject,
+         Injectable,
+         OnInit } from '@angular/core';
+
+import { Site } from '../../site';
 
 @Injectable()
 export class GlobalsService implements OnInit {
 
-  // public apiUrl = 'http://localhost:3000/api';
-  public apiUrl = 'http://kona.nec.aps.anl.gov:3000/api';
+  constructor(@Inject(Site) public site:Site) {}
 
-  public site = "SERCAT";
+  // public apiUrl = 'http://localhost:3000/api';
+  // public apiUrl = 'http://kona.nec.aps.anl.gov:3000/api';
+
+  // public site = "SERCAT";
   public site_color = '#EE0000';
 
   public LineChartColors:Array<Object> = [

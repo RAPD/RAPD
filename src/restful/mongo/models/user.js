@@ -129,60 +129,69 @@ var reasons = UserSchema.statics.failedLogin = {
 
 UserSchema.statics.getAuthenticated = function(email, password, cb) {
 
-    this.findOne({ email: email }).
-         populate('groups', 'groupname').
-         exec(function(err, user) {
+  console.log('getAuthenticated', email, password);
 
-        if (err) {
-          console.log(err);
-          return cb(err);
-        }
+  this.findOne({email:email}).
+       populate('groups', 'groupname').
+       exec(function(err, user) {
 
-        // make sure the user exists
-        if (!user) {
-          console.log('Nonuser');
-          return cb(null, null, reasons.NOT_FOUND);
-        }
+         console.log(err, user);
 
-        console.log(user);
+         if (err) {
+           console.log(err);
+           return cb(err);
+         }
 
-        // check if the account is currently locked
-        if (user.isLocked) {
-            // just increment login attempts if account is already locked
-            return user.incLoginAttempts(function(err) {
-                if (err) return cb(err);
-                return cb(null, null, reasons.MAX_ATTEMPTS);
-            });
-        }
+         // make sure the user exists
+         if (!user) {
+           console.log('Nonuser');
+           return cb(null, null, reasons.NOT_FOUND);
+         }
 
-        // Test for a matching password
-        user.comparePassword(password, function(err, isMatch) {
-            if (err) return cb(err);
+         // check if the account is currently locked
+         if (user.isLocked) {
+           // just increment login attempts if account is already locked
+           return user.incLoginAttempts(function(err) {
+             if (err) return cb(err);
+             return cb(null, null, reasons.MAX_ATTEMPTS);
+           });
+         }
 
-            // check if the password was a match
-            if (isMatch) {
-                // Remove the password from the returned
-                user.password = undefined;
-                // if there's no lock or failed attempts, just return the user
-                if (!user.loginAttempts && !user.lockUntil) return cb(null, user);
-                // reset attempts and lock info
-                var updates = {
-                    $set: { loginAttempts: 0 },
-                    $unset: { lockUntil: 1 }
-                };
-                return user.update(updates, function(err) {
-                    if (err) return cb(err);
-                    return cb(null, user);
-                });
-            }
+         // Test for a matching password
+         user.comparePassword(password, function(err, isMatch) {
+           if (err) return cb(err);
 
-            // password is incorrect, so increment login attempts before responding
-            user.incLoginAttempts(function(err) {
-                if (err) return cb(err);
-                return cb(null, null, reasons.PASSWORD_INCORRECT);
-            });
-        });
-    });
+           // check if the password was a match
+           if (isMatch) {
+             console.log('match');
+             // Remove the password from the returned
+             user.password = undefined;
+             // if there's no lock or failed attempts, just return the user
+             if (!user.loginAttempts && !user.lockUntil) {
+               return cb(null, user);
+             }
+             // reset attempts and lock info
+             var updates = {
+               $set: { loginAttempts: 0 },
+               $unset: { lockUntil: 1 }
+             };
+             return user.update(updates, function(err) {
+               if (err) return cb(err);
+               return cb(null, user);
+             });
+           }
+
+           console.log('Not a match');
+
+           // password is incorrect, so increment login attempts before responding
+           user.incLoginAttempts(function(err) {
+             if (err) {
+               return cb(err);
+             }
+             return cb(null, null, reasons.PASSWORD_INCORRECT);
+           });
+         });
+       });
 };
 
 module.exports = mongoose.model('User', UserSchema);

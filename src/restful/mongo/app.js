@@ -1,24 +1,18 @@
-var debug = require('debug')('backend:server');
-var http = require('http');
-var express = require('express');
-var session = require('express-session');
-var RedisStore = require('connect-redis')(session);
-var path = require('path');
-var favicon = require('serve-favicon');
-var morgan = require('morgan');
-var cookieParser = require('cookie-parser');
-
-var randomstring = require("randomstring");
-var nodemailer = require('nodemailer');
-var smtpTransport = require('nodemailer-smtp-transport');
-// var parseCookie = express.cookieParser();
-var bodyParser = require('body-parser');
-var Wss = require('./ws_server');
-var jwt = require('jsonwebtoken');
-
-// // Redis
-// var redis = require('redis'),
-//     redis_client = redis.createClient();
+const debug =         require('debug')('backend:server');
+const http =          require('http');
+const express =       require('express');
+const session =       require('express-session');
+const RedisStore =    require('connect-redis')(session);
+const path =          require('path');
+const favicon =       require('serve-favicon');
+const morgan =        require('morgan');
+const cookieParser =  require('cookie-parser');
+const randomstring =  require("randomstring");
+const nodemailer =    require('nodemailer');
+const smtpTransport = require('nodemailer-smtp-transport');
+const bodyParser =    require('body-parser');
+const Wss =           require('./ws_server');
+const jwt =           require('jsonwebtoken');
 
 // Configuration
 var config = require('./config'); // get our config file
@@ -28,17 +22,26 @@ var routes = require('./routes/index');
 var users = require('./routes/users');
 
 // Redis
-var redis = require('redis');
+const redis = require('redis');
 var redis_client = redis.createClient(config.redis_host);
 
 // MongoDB connection
+const q =      require('q');
 var mongoose = require('mongoose');
+// Fix the promise issue in Mongoose
+mongoose.Promise = require('q').Promise;
 // MongoDB Models
 var Session = require('./models/session');
 var User = require('./models/user');
 var Group = require('./models/group');
 var Image = require('./models/image');
 var Run = require('./models/run');
+// Connect to MongoDB
+mongoose.connect(config.database, {
+  useMongoClient: true,
+}, function(error) {
+  console.error(error);
+});
 
 // Email Configuration
 var smtp_transport = nodemailer.createTransport(smtpTransport({
@@ -62,10 +65,7 @@ app.use(app_session);
 var wss = new Wss({morgan:morgan,
                    server:server});
 
-// Connect to MongoDB
-mongoose.connect(config.database, {
-  useMongoClient: true,
-});
+
 app.set('superSecret', config.secret);
 
 // configure app to use bodyParser()
@@ -113,7 +113,7 @@ apiRoutes.use(function(req, res, next) {
 apiRoutes.post('/authenticate', function(req, res) {
 
   console.log('authenticate');
-  // console.log(req.body);
+  console.log(req.body);
 
   User.getAuthenticated(req.body.email, req.body.password, function(err, user, reason) {
 
