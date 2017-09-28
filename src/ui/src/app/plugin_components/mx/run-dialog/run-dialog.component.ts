@@ -1,7 +1,7 @@
 import { Component,
          Inject,
          OnInit } from '@angular/core';
-import { MdDialogRef,
+import { MatDialogRef,
          MAT_DIALOG_DATA } from '@angular/material';
 
 import { RestService } from '../../../shared/services/rest.service';
@@ -17,7 +17,7 @@ export class RunDialogComponent implements OnInit {
   private image_data:any;
   private run_data:any;
 
-  constructor(public dialogRef: MdDialogRef<RunDialogComponent>,
+  constructor(public dialogRef: MatDialogRef<RunDialogComponent>,
               private rest_service: RestService,
               @Inject(MAT_DIALOG_DATA) public data: any) { }
 

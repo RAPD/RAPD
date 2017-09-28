@@ -11,7 +11,7 @@ import { User } from '../shared/classes/user';
 })
 export class DashboardComponent implements OnInit {
 
-  // changepassDialogRef: MdDialogRef<ChangepassDialogComponent>
+  // changepassDialogRef: MatDialogRef<ChangepassDialogComponent>
   user: User;
   master_on: boolean = false;
 

@@ -2,7 +2,7 @@ import { Component,
          OnInit } from '@angular/core';
 import { FormGroup,
          FormControl } from '@angular/forms';
-import { MdDialogRef,
+import { MatDialogRef,
          MAT_DIALOG_DATA } from '@angular/material';
 
 import { RestService } from '../../services/rest.service';
@@ -26,7 +26,7 @@ export class DialogNewProjectComponent implements OnInit {
   private project_form: FormGroup;
 
   constructor(private rest_service: RestService,
-              public dialogRef: MdDialogRef<DialogNewProjectComponent>) { }
+              public dialogRef: MatDialogRef<DialogNewProjectComponent>) { }
 
   ngOnInit() {
 

@@ -2,7 +2,7 @@ import { Component,
          Inject,
          OnInit,
          ViewChild } from '@angular/core';
-import { MdDialogRef,
+import { MatDialogRef,
          MatDialog,
          MAT_DIALOG_DATA } from '@angular/material';
 import { BaseChartDirective } from 'ng2-charts';
@@ -16,7 +16,7 @@ export class PlotOmegaStartComponent implements OnInit {
 
   // @ViewChild(BaseChartDirective) private Chart: BaseChartDirective;
 
-  constructor(public dialogRef: MdDialogRef<PlotOmegaStartComponent>,
+  constructor(public dialogRef: MatDialogRef<PlotOmegaStartComponent>,
               @Inject(MAT_DIALOG_DATA) public data: any) { }
 
   ngOnInit() {

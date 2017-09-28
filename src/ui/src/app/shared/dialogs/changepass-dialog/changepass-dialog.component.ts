@@ -2,7 +2,7 @@ import { Component,
          OnInit } from '@angular/core';
 import { FormGroup,
          FormControl } from '@angular/forms';
-import { MdDialogRef } from '@angular/material';
+import { MatDialogRef } from '@angular/material';
 
 import { AuthService } from '../../services/auth.service';
 
@@ -18,7 +18,7 @@ export class ChangepassDialogComponent implements OnInit {
   changepass_form: FormGroup;
 
   constructor(private auth_service: AuthService,
-              public dialogRef: MdDialogRef<ChangepassDialogComponent>) { }
+              public dialogRef: MatDialogRef<ChangepassDialogComponent>) { }
 
   ngOnInit() {
 

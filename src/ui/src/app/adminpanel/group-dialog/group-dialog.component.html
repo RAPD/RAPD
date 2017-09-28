@@ -1,7 +1,9 @@
-<h1 MdDialogTitle>Group</h1>
-<button mat-icon-button class="button-dialog-top-right" (click)="exitGroup()">
-  <mat-icon>close</mat-icon>
-</button>
+<div MatDialogTitle>
+  <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
+    <mat-icon>close</mat-icon>
+  </button>
+  <h2>Group</h2>
+</div>
 <form [formGroup]="group_form">
   <div class="form-group">
     <p>
