@@ -44,6 +44,7 @@ src/ui/node_modules
 
 # UI configuration
 src/ui/src/app/site.ts
+src/restful/mongo/config.js
 
 # IDEs and editors
 /.idea
