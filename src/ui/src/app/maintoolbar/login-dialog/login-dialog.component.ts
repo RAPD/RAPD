@@ -24,7 +24,7 @@ export class LoginDialogComponent implements OnInit {
   lostpass_form: FormGroup;
   submitted: boolean;
   show_request_success: boolean;
-  public error_message = '';
+  public submit_error = '';
 
   constructor(private auth_service: AuthService,
               private websocket_service: WebsocketService,
@@ -64,7 +64,7 @@ export class LoginDialogComponent implements OnInit {
           self.dialogRef.close(params)
         }, 5000);
       } else {
-        this.error_message = params.message;
+        this.submit_error = params.message;
       }
       this.submitted = false;
     });
@@ -84,7 +84,7 @@ export class LoginDialogComponent implements OnInit {
         this.mode = 'show_request_success';
         setTimeout(function() {self.dialogRef.close(undefined)}, 5000);
       } else {
-        this.error_message = params.message;
+        this.submit_error = params.message;
       }
     });
   }

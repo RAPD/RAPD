@@ -1,18 +1,21 @@
+const bodyParser =    require('body-parser');
+const cookieParser =  require('cookie-parser');
 const debug =         require('debug')('backend:server');
-const http =          require('http');
 const express =       require('express');
 const session =       require('express-session');
 const RedisStore =    require('connect-redis')(session);
-const path =          require('path');
+const http =          require('http');
 const favicon =       require('serve-favicon');
+const jwt =           require('jsonwebtoken');
+const ldap =          require('ldapjs');
 const morgan =        require('morgan');
-const cookieParser =  require('cookie-parser');
-const randomstring =  require("randomstring");
 const nodemailer =    require('nodemailer');
 const smtpTransport = require('nodemailer-smtp-transport');
-const bodyParser =    require('body-parser');
+const path =          require('path');
+const randomstring =  require('randomstring');
+
+// RAPD websocket server
 const Wss =           require('./ws_server');
-const jwt =           require('jsonwebtoken');
 
 // Configuration
 const config = require('./config'); // get our config file
@@ -88,13 +91,13 @@ apiRoutes.use(function(req, res, next) {
     res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT,DELETE");
     res.setHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Authorization, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers");
     // intercepts OPTIONS method from http://johnzhang.io/options-request-in-express
-    // if ('OPTIONS' === req.method) {
-    //   //respond with 200
-    //   res.sendStatus(200);
-    // }
-    // else {
-    next();
-    // }
+    if ('OPTIONS' === req.method) {
+      //respond with 200
+      res.sendStatus(200);
+    }
+    else {
+      next();
+    }
 });
 
 // route to authenticate a user (POST http://localhost:8080/api/authenticate)
@@ -103,45 +106,106 @@ apiRoutes.post('/authenticate', function(req, res) {
   // console.log('authenticate');
   // console.log(req.body);
 
-  User.getAuthenticated(req.body.email, req.body.password, function(err, user, reason) {
-    if (err) {
-      console.error(err);
-      res.json({ success: false, message: err });
-    // login was successful if we have a user
-    } else if (user) {
-      // create a token
-      var token = jwt.sign(user, app.get('superSecret'), {
-        expiresIn: 86400 // expires in 24 hours
-      });
-
-      // return the information including token as JSON
-      // console.log('returning token');
-      res.json({
-        success: true,
-        message: 'Enjoy your token!',
-        token: token,
-        pass_force_change: user.pass_force_change
-      });
-    // otherwise we can determine why we failed
-    } else {
-      var reasons = User.failedLogin;
-      switch (reason) {
+  if (config.authenticate_mode === 'mongo') {
+    User.getAuthenticated(req.body.email, req.body.password, function(err, user, reason) {
+      if (err) {
+        console.error(err);
+        res.json({ success: false, message: err });
+      // login was successful if we have a user
+      } else if (user) {
+        // create a token
+        var token = jwt.sign(user, app.get('superSecret'), {
+          expiresIn: 86400 // expires in 24 hours
+        });
+        // Return the information including token as JSON
+        res.json({
+          success: true,
+          message: 'Enjoy your token!',
+          token: token,
+          pass_force_change: user.pass_force_change
+        });
+      // otherwise we can determine why we failed
+      } else {
+        var reasons = User.failedLogin;
+        switch (reason) {
           case reasons.NOT_FOUND:
-              res.json({ success: false, message: 'Authentication failed. No such user.' });
-              break;
+            res.json({ success: false, message: 'Authentication failed. No such user.' });
+            break;
           case reasons.PASSWORD_INCORRECT:
-              res.json({ success: false, message: 'Authentication failed. Wrong password.' });
-              // note: these cases are usually treated the same - don't tell
-              // the user *why* the login failed, only that it did
-              break;
+            res.json({ success: false, message: 'Authentication failed. Wrong password.' });
+            // note: these cases are usually treated the same - don't tell
+            // the user *why* the login failed, only that it did
+            break;
           case reasons.MAX_ATTEMPTS:
-              res.json({ success: false, message: 'Authentication failed. Too many failed attempts' });
-              // send email or otherwise notify user that account is
-              // temporarily locked
-              break;
+            res.json({ success: false, message: 'Authentication failed. Too many failed attempts' });
+            // send email or otherwise notify user that account is
+            // temporarily locked
+            break;
+        }
       }
-    }
-  });
+    });
+  } else if (config.authenticate_mode === 'ldap') {
+    // Authenticate
+    ldap_client.bind('uid='+req.body.uid+','+config.ldap_dn, req.body.password, function(err) {
+
+      // REJECTION
+      if (err) {
+        console.error(err);
+        var reason = err.name.toString();
+        res.json({success:false,
+                  message:'Authentication failed. ' + reason});
+
+      // AUTHENTICATED
+      } else {
+        // Fetch user
+        ldap_client.search('uid='+req.body.uid+',ou=People,dc=ser,dc=aps,dc=anl,dc=gov', {
+          scope:'sub',
+          filter:'objectclass=*',
+          sizeLimit:1
+          }, function(err, result) {
+
+            // LDAP error
+            if (err) {
+              console.error(err);
+              res.json({success:false,
+                        message:err});
+            }
+
+            var user = undefined;
+
+            result.on('searchEntry', function(entry) {
+
+              // The user information
+              user = entry.object;
+
+              // create a token
+              var token = jwt.sign(user, app.get('superSecret'), {
+                expiresIn: 86400 // expires in 24 hours
+              });
+
+              // return the information including token as JSON
+              res.json({success:true,
+                        message:'Enjoy your token!',
+                        token:token,
+                        pass_force_change:false});
+            });
+            result.on('searchReference', function(referral) {
+              console.log('referral: ' + referral.uris.join());
+            });
+            result.on('error', function(err) {
+              console.error('error: ' + err.message);
+              res.json({success:false,
+                        message:err});
+            });
+            result.on('end', function(end) {
+              console.log(user);
+              console.log('status: ' + end.status);
+
+            });
+          });
+      }
+    });
+  }
 });
 
 // route to authenticate a user (POST api/requestpass)
@@ -155,7 +219,9 @@ apiRoutes.post('/requestpass', function(req, res) {
   exec(function(err, user) {
     if (err) {
       console.error(err);
-        res.send(err);
+        console.error(err)
+        res.send({success: false,
+                  message: err});
     } else if (user) {
       let new_pass_raw = randomstring.generate(12);
       // console.log('new_pass_raw', new_pass_raw);
@@ -166,7 +232,8 @@ apiRoutes.post('/requestpass', function(req, res) {
       user.save(function(err, saved_user) {
         if (err) {
           console.error(err);
-          res.send(err);
+          res.send({success: false,
+                    message: err});
         } else {
           // Set up the email options
           let mailOptions = {
@@ -183,7 +250,8 @@ apiRoutes.post('/requestpass', function(req, res) {
       });
     } else {
       console.error('No user found in password request');
-      res.send('No user found in password request');
+      res.send({success: false,
+                message: 'No user found for email '+req.body.email});
     }
   });
 });
