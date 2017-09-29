@@ -117,7 +117,8 @@ function Wss (opt, callback) {
           jwt.verify(data.token, 'ilovescotchyscotch', function(err, decoded) {
             if (err) {
               // console.log(err);
-              return res.json({ success: false, message: 'Failed to authenticate token.' });
+              // return res.json({ success: false, message: 'Failed to authenticate token.' });
+              ws.send(JSON.stringify({success:false, message:'Failed to authenticate token.'}));
             } else {
               // console.log(decoded);
 
