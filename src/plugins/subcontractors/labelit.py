@@ -95,6 +95,11 @@ def parse_output(labelit_output, iteration=0):
     mosflm_mos = []
     mosflm_rms = []
 
+    # TESTING
+    #return ('min_spots', 20)
+    #return "failed"
+    return "junk"
+
     # If results empty, then fail
     if len(labelit_output) == 0:
         return "failed"
@@ -141,8 +146,7 @@ def parse_output(labelit_output, iteration=0):
             if line.startswith("InputFileError: Input error:"):
                 return "no_pair"
             if line.startswith("Have "):
-                # self.min_good_spots = line.split()[1].rstrip(";")
-                few_spots = True
+                few_spots = int(line.split()[1].rstrip(";"))
             if line.startswith("UnboundLocalError"):
                 return "bad_input"
             if line.startswith("divide by zero"):
@@ -176,7 +180,7 @@ def parse_output(labelit_output, iteration=0):
             if min_spots:
                 # print "min spots", labelit_output
                 spots_count = int(labelit_output[-2].split("=")[1])
-                return ("min spots", spots_count)
+                return ("min_spots", spots_count)
             else:
                 return "failed"
         else:
@@ -233,9 +237,10 @@ def parse_output(labelit_output, iteration=0):
             mosflm_rms.append(line.split()[7+result_line])
 
     # Sometimes Labelit works with few spots, sometimes it doesn"t...
+    # When it doesn't, then rerun
     if few_spots:
         if os.path.exists(mosflm_index) == False:
-            return "min_good_spots"
+            return ("min_good_spots", few_spots)
 
     data = {"labelit_face": labelit_face,
             "labelit_solution": labelit_solution,
@@ -398,7 +403,7 @@ def decrease_spot_requirements(spot_count):
 
         return spot_count
 
-def decrease_good_spot_requirements(iteration, min_spots=20):
+def decrease_good_spot_requirements(min_spots):
     """
     Sometimes Labelit gives an eror saying that there aren't enough 'good spots' for Mosflm. Not a
     Labelit failure error. Forces Labelit/Mosflm to give result regardless. Sometimes causes failed
@@ -406,9 +411,12 @@ def decrease_good_spot_requirements(iteration, min_spots=20):
     """
 
     with open("dataset_preferences.py", "a") as preferences:
-        preferences.write("\n#iteration %s\n" % iteration)
         preferences.write("model_refinement_minimum_N=%d" % min_spots)
-
+    """
+    with open("dataset_preferences.py", "r") as preferences:
+        for line in preferences:
+            print line
+    """
     return min_spots
 
 def no_bumpiness():
@@ -443,7 +451,8 @@ def fix_multiple_cells(lattice_group, labelit_solution):
                 if index == 0:
                     rmsd.append(float(line[4]))
                 else:
-                    if line[4] == str(min_rmsd):
+                    #if line[4] == str(min_rmsd):
+                    if float(line[4]) == min_rmsd:
                         cell_cmd = "known_cell=%s,%s,%s,%s,%s,%s " % (line[8],
                                                                       line[9],
                                                                       line[10],

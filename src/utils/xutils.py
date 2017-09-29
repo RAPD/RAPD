@@ -1237,7 +1237,7 @@ def get_labelit_settings(self, iteration=0):
         
     if iteration == 0:
         preferences.close()
-        self.labelit_log[str(iteration)] = ['\nUsing default parameters.\n']
+        self.labelit_log[iteration] = ['\nUsing default parameters.\n']
         self.tprint("\n  Using default parameters", level=30, color="white", newline=False)
         self.logger.debug('Using default parameters.')
 
@@ -1253,7 +1253,7 @@ def get_labelit_settings(self, iteration=0):
             preferences.write('distl.minimum_spot_area=6\n')
             preferences.write('distl.minimum_signal_height=4.3\n')
         preferences.close()
-        self.labelit_log[str(iteration)] = ['\nLooking for long unit cell.\n']
+        self.labelit_log[iteration] = ['\nLooking for long unit cell.\n']
         self.tprint("\n  Looking for long unit cell", level=30, color="white", newline=False)
         self.logger.debug('Looking for long unit cell.')
 
@@ -1261,7 +1261,7 @@ def get_labelit_settings(self, iteration=0):
         # Change it up and go for larger peaks like small molecule.
         preferences.write('distl.minimum_spot_height=6\n')
         preferences.close()
-        self.labelit_log[str(iteration)] = ['\nChanging settings to look for stronger peaks (ie. small molecule).\n']
+        self.labelit_log[iteration] = ['\nChanging settings to look for stronger peaks (ie. small molecule).\n']
         self.tprint("\n  Looking for stronger peaks (ie. small molecule)", level=30, color="white", newline=False)
         self.logger.debug("Changing settings to look for stronger peaks (ie. small molecule).")
 
@@ -1276,22 +1276,22 @@ def get_labelit_settings(self, iteration=0):
             preferences.write('distl.minimum_spot_area=7\n')
             preferences.write('distl.minimum_signal_height=1.2\n')
         preferences.close()
-        self.labelit_log[str(iteration)] = ['\nLooking for weak diffraction.\n']
+        self.labelit_log[iteration] = ['\nLooking for weak diffraction.\n']
         self.tprint("\n  Looking for weak diffraction", level=30, color="white", newline=False)
         self.logger.debug('Looking for weak diffraction.')
 
     elif iteration == 4:
         if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
             preferences.write('distl.minimum_spot_area=3\n')
-            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 3.\n']
+            self.labelit_log[iteration] = ['\nSetting spot picking level to 3.\n']
             area = 3
         elif "Eiger" in self.vendortype:
             preferences.write('distl.minimum_spot_area=3\n')
-            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 3.\n']
+            self.labelit_log[iteration] = ['\nSetting spot picking level to 3.\n']
             area = 3
         else:
             preferences.write('distl.minimum_spot_area=8\n')
-            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 8.\n']
+            self.labelit_log[iteration] = ['\nSetting spot picking level to 8.\n']
             area = 8
         preferences.close()
         self.tprint("\n  Setting spot picking level to %d" % area, level=30, color="white", newline=False)
@@ -1301,17 +1301,17 @@ def get_labelit_settings(self, iteration=0):
         if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
             preferences.write('distl.minimum_spot_area=2\n')
             preferences.write('distl_highres_limit=5\n')
-            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 2 and resolution to 5.\n']
+            self.labelit_log[iteration] = ['\nSetting spot picking level to 2 and resolution to 5.\n']
             setting = (2, 5)
         elif "Eiger" in self.vendortype:
             preferences.write('distl.minimum_spot_area=2\n')
             preferences.write('distl_highres_limit=4\n')
-            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 2 and resolution to 4.\n']
+            self.labelit_log[iteration] = ['\nSetting spot picking level to 2 and resolution to 4.\n']
             setting = (2, 4)
         else:
             preferences.write('distl.minimum_spot_area=6\n')
             preferences.write('distl_highres_limit=5\n')
-            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 6 and resolution to 5.\n']
+            self.labelit_log[iteration] = ['\nSetting spot picking level to 6 and resolution to 5.\n']
             setting = (6, 5)
         preferences.close()
         self.tprint("\n  Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white", newline=False)
