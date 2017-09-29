@@ -88,13 +88,13 @@ apiRoutes.use(function(req, res, next) {
     res.setHeader("Access-Control-Allow-Methods", "GET,HEAD,OPTIONS,POST,PUT,DELETE");
     res.setHeader("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Authorization, Origin,Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers");
     // intercepts OPTIONS method from http://johnzhang.io/options-request-in-express
-    // if ('OPTIONS' === req.method) {
-    //   //respond with 200
-    //   res.sendStatus(200);
-    // }
-    // else {
-    next();
-    // }
+    if ('OPTIONS' === req.method) {
+      //respond with 200
+      res.sendStatus(200);
+    }
+    else {
+      next();
+    }
 });
 
 // route to authenticate a user (POST http://localhost:8080/api/authenticate)
@@ -155,7 +155,9 @@ apiRoutes.post('/requestpass', function(req, res) {
   exec(function(err, user) {
     if (err) {
       console.error(err);
-        res.send(err);
+        console.error(err)
+        res.send({success: false,
+                  message: err});
     } else if (user) {
       let new_pass_raw = randomstring.generate(12);
       // console.log('new_pass_raw', new_pass_raw);
@@ -166,7 +168,8 @@ apiRoutes.post('/requestpass', function(req, res) {
       user.save(function(err, saved_user) {
         if (err) {
           console.error(err);
-          res.send(err);
+          res.send({success: false,
+                    message: err});
         } else {
           // Set up the email options
           let mailOptions = {
@@ -183,7 +186,8 @@ apiRoutes.post('/requestpass', function(req, res) {
       });
     } else {
       console.error('No user found in password request');
-      res.send('No user found in password request');
+      res.send({success: false,
+                message: 'No user found for email '+req.body.email});
     }
   });
 });

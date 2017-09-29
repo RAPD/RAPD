@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Headers,
          Http } from '@angular/http';
-import { CanActivate } from '@angular/router';
+import { CanActivate,
+         Router } from '@angular/router';
 
 import { Observable } from 'rxjs/Observable';
 import { AuthHttp,
@@ -16,7 +17,8 @@ export class AuthService implements CanActivate {
 
   constructor(private globals_service: GlobalsService,
               public http: Http,
-              private auth_http: AuthHttp) { }
+              private auth_http: AuthHttp,
+              private router: Router) { }
 
   canActivate() {
     return this.authenticated();
@@ -249,6 +251,8 @@ getAuth(): Observable<any> {
     // this.userProfile = undefined;
     // Redirect to home
     // window.location.href = 'http://localhost:4200';
-    window.location.href = 'http://kona.nec.aps.anl.gov:4200';
+    //window.location.href = 'http://'+window.location.host;
+    this.router.navigate(['/']);
+
   }
 }

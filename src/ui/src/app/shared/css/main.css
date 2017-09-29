@@ -56,34 +56,37 @@ body {
 
 }
 
-.main-title {
-  position: absolute;
-  margin-top:1em;
-}
-
-.main-title h1 {
-    /*padding: 0;*/
-    float: left;
-    color: #b31b1b;
-    font-family: 'ChunkFive', 'Georgia', serif;
-    font-size: 3em;
-}
-
-.main-toolbar .main-buttons {
-  position: absolute;
-  right: 1em;
-  margin-top: 12px;
-}
-
 /*
- * Items in the top-level UI
+ * The top of the UI
  */
-.main-toolbar {
+.main-title {
+  position: relative;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+h2.main-title {
+  float: left;
+  font-family: 'ChunkFive', 'Georgia', serif;
+  font-size: 2em;
+}
+
+mat-toolbar.main-toolbar {
   background: rgba(229, 229, 229, 1.0);
   border-radius: 5px;
   box-shadow: none;
   width: 100%;
 }
+
+.main-toolbar .main-buttons {
+  width: 100%;
+}
+
+
+/*
+ * Items in the top-level UI
+ */
+
 
 div.rapd-main-panel {
   background-color: rgba(229, 229, 229, 1.0);
