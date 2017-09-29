@@ -1,4 +1,5 @@
 module.exports = {
+  authenticate_mode: 'mongo',  // mongo or ldap
   'port': 3000,  // can be overidden by process.ENV
   'site': 'NE-CAT',
   'secret': 'ilovescotchyscotch',

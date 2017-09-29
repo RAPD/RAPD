@@ -59,14 +59,13 @@ body {
 /*
  * The top of the UI
  */
-.main-title {
+/*.main-title {
   position: relative;
   top: 50%;
   transform: translateY(-50%);
-}
+}*/
 
-h2.main-title {
-  float: left;
+.main-title {
   font-family: 'ChunkFive', 'Georgia', serif;
   font-size: 2em;
 }

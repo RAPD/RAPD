@@ -25,7 +25,7 @@ var Wss = require('./ws_server');
 
 // MongoDB Models
 var Session = require('./models/session');
-var User = require('./models/user');
+// var User = require('./models/user');
 var Group = require('./models/group');
 
 // LDAP client

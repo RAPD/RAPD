@@ -1,13 +1,9 @@
 <mat-toolbar class="main-toolbar">
-  <!-- <div class="main-title"> -->
-    <!--  -->
-  <!-- </div> -->
-  <!-- <div> -->
-  <div class="main-buttons">
-    <!-- <div style="float:left;"> -->
-      <h2 class="main-title" [style.color]= "globals_service.site_color ? globals_service.site_color : '#445A64'">RAPD @ {{globals_service.site.name}}</h2>
-    <!-- </div> -->
-    <div style="float:right;">
+  <div fxLayout="row" class="main-buttons">
+    <div fxFlex fxFlexAlign="start" style="padding-top:0.5em;">
+      <span class="main-title" [style.color]= "globals_service.site_color ? globals_service.site_color : '#445A64'">RAPD @ {{globals_service.site.name}}</span>
+    </div>
+    <div fxFlex fxFlexAlign="end" style="text-align:right;">
       <button mat-raised-button (click)="changeMode('admin')">Admin</button>
       <button mat-raised-button (click)="changeMode('projects')">Projects</button>
       <button mat-raised-button (click)="changeMode('sessions')">Sessions</button>
