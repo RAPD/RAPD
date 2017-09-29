@@ -801,12 +801,12 @@ def ParseOutputRaddose(self, inp):
             if "Command not found" in line:
                 raise Exception("No raddose command available")
             if line.startswith('Total absorbed dose'):
-                dose_per_image = float(line.split()[4])
+                dose = float(line.split()[4])
             if line.startswith('** Time in sec'):
                 exp_dose_lim = line.split()[11]
             if line.startswith('   Time in sec'):
                 hen_lim = line.split()[13]
-        raddose = {"dose per image": dose_per_image,
+        raddose = {"dose": dose,
                    "exp dose limit": exp_dose_lim,
                    "henderson limit": hen_lim  }
         return(raddose)

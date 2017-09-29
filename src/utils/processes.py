@@ -26,7 +26,11 @@ __status__ = "Development"
 
 # Standard imports
 from pprint import pprint
-import subprocess
+import sys, os, signal
+import shlex
+#import time
+from subprocess import Popen, PIPE
+from multiprocessing import Pool
 
 def local_subprocess(command,
                      logfile=False,
@@ -44,19 +48,25 @@ def local_subprocess(command,
         pid_queue - a multiprocessing.Queue for placing PID of subprocess in
         tag - an identifying tag to be useful to the caller
     """
-    # pprint(commands)
+    #pid_queue.put('gh')
+    #pprint(command)
     # Run the process
-    proc = subprocess.Popen(command,
-                            shell=True,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
+    #proc = Popen(command,
+    proc = Popen(shlex.split(command),
+                 #shell=True,
+                 stdout=PIPE,
+                 stderr=PIPE)
 
     # Send back PID if have pid_queue
     if pid_queue:
         pid_queue.put(proc.pid)
-
-    # Get the stdout and stderr from process
-    stdout, stderr = proc.communicate()
+    
+    try:
+        # Get the stdout and stderr from process
+        stdout, stderr = proc.communicate()
+    except KeyboardInterrupt:
+        #sys.exit()
+        os._exit()
 
     # Put results on a Queue, if given
     if result_queue:
@@ -75,55 +85,9 @@ def local_subprocess(command,
             out_file.write(stdout)
             out_file.write(stderr)
 
+def mp_pool(nproc=8):
+    """Setup and return a multiprocessing.Pool to launch jobs"""
+    pool = Pool(processes=nproc)
+    return pool
 
 
-def local_subprocess_OLD(commands):
-    """
-    Run job as subprocess on local machine. based on xutils.processLocal
-
-    Arguments
-    ---------
-    commands - a dict with various data for running. Recognized fields are:
-        command - the command to be run in the subprocess
-        logfile - name of a logfile to be generated. The logfile will be STDOUT+STDERR
-        pid_queue - a multiprocessing.Queue for placing PID of subprocess in
-        tag - an identifying tag to be useful to the caller
-    """
-    # pprint(commands)
-    command = commands.get("command", False)
-    logfile = commands.get("logfile", False)
-    pid_queue = commands.get("pid_queue", False)
-    result_queue = commands.get("result_queue", False)
-    tag = commands.get("tag", False)
-
-    # Run the process
-    proc = subprocess.Popen(command,
-                            shell=True,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
-
-    # Send back PID if have pid_queue
-    if pid_queue:
-        pid_queue.put(proc.pid)
-
-    # Get the stdout and stderr from process
-    stdout, stderr = proc.communicate()
-    # print stdout
-    # print stderr
-
-    # Put results on a Queue, if given
-    if result_queue:
-        result = {
-            "pid": proc.pid,
-            "returncode": proc.returncode,
-            "stdout": stdout,
-            "stderr": stderr,
-            "tag": tag
-        }
-        result_queue.put(result)
-
-    # Write out a log file, if name passed in
-    if logfile:
-        with open(logfile, "w") as out_file:
-            out_file.write(stdout)
-            out_file.write(stderr)

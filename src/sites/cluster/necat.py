@@ -33,6 +33,7 @@ import redis
 import subprocess
 import time
 import tempfile
+from multiprocessing import Process
 
 def checkCluster():
     """
@@ -70,7 +71,7 @@ def check_queue(inp):
     d = {#"INDEX+STRATEGY" : 'phase3.q',
          "INDEX"          : 'phase3.q',
          "BEAMCENTER"     : 'all.q',
-         "XDS"      : 'all.q',
+         "XDS"            : 'all.q',
          }
     return(d[inp])
   
@@ -111,7 +112,15 @@ def connectCluster(inp, job=True):
       return(line.strip())
   client.close()
 
-def processCluster(command,
+def processCluster(**kwargs):
+    """
+    Helper to run processCluster in a multiprocessing.Process to avoid
+    threading problems in DRMAA with multiple jobs sent to same session.
+    """
+    job = Process(target=processCluster2, kwargs=kwargs)
+    job.start()
+
+def processCluster2(command,
                    work_dir=False,
                    logfile=False,
                    batch_queue='all.q',
@@ -192,7 +201,6 @@ def processCluster(command,
     s.deleteJobTemplate(jt)
 
     #If multiprocessing.event is set, then run loop to watch until job or script has finished.
-    #if mp_event:
     #Returns True if job is still running or False if it is dead. Uses CPU to run loop!!!
     decodestatus = {drmaa.JobState.UNDETERMINED: True,
                     drmaa.JobState.QUEUED_ACTIVE: True,
@@ -352,25 +360,28 @@ def processCluster_OLD(self, inp, output=False):
         if name!= False:
             self.red.lpush(name,1)
 
-def killChildrenCluster(self,inp):
+def kill_job(inp, logger=False):
   """
   Kill jobs on cluster. The JobID is sent in and job is killed. Must be launched from
   a compute node on the cluster. Used in pipelines to kill jobs when timed out or if
   a solution in Phaser is found in the first round and the second round jobs are not needed.
   """
-  if self.verbose:
-    self.logger.debug('Utilities::killChildrenCluster')
+  if logger:
+      logger.debug('Utilities::killChildrenCluster')
   try:
-    command = 'qdel %s'%inp
-    self.logger.debug(command)
-    os.system(command)
+      command = 'qdel %s'%inp
+      if logger:
+          logger.debug(command)
+      os.system(command)
   except:
-    self.logger.exception('**Could not kill the jobs on the cluster**')
+      if logger:
+          logger.exception('**Could not kill the jobs on the cluster**')
 
 def stillRunningCluster(self,jobid):
   """
   Check to see if process and/or its children and/or children's children are still running. Must
-  be launched from compute node.
+  be launched from compute node. 
+  OBSOLETE if using DRMAA for job submission
   """
   try:
     running = False

@@ -1209,17 +1209,23 @@ def errorLabelitPost(self, iteration, error, run_before=False):
   except:
     self.logger.exception('**ERROR in Utils.errorLabelitPost**')
 
-def errorLabelit(self, iteration):
+#def errorLabelit(self, iteration=0):
+def get_labelit_settings(self, iteration=0):
     """
     Labelit error correction. Set/reset setting in dataset_preferences.py according to error iteration.
     Commented out things were tried before.
     """
 
     self.logger.debug('Utilities::errorLabelit')
+    
+    # If iteration is string, return the total number of iterations in the funnction.
+    if isinstance(iteration, str):
+        return 6
 
     # Create separate folders for Labelit runs.
     if self.multiproc == False:
         iteration += 1
+    # Change to the correct folder (create it if necessary).
     foldersLabelit(self, iteration)
 
     preferences = open('dataset_preferences.py','a')
@@ -1228,6 +1234,12 @@ def errorLabelit(self, iteration):
 
     if self.twotheta == False:
         preferences.write('beam_search_scope=0.3\n')
+        
+    if iteration == 0:
+        preferences.close()
+        self.labelit_log[str(iteration)] = ['\nUsing default parameters.\n']
+        self.tprint("\n  Using default parameters", level=30, color="white", newline=False)
+        self.logger.debug('Using default parameters.')
 
     if iteration == 1:
         # Seemed to pick stronger spots on Pilatis
@@ -2614,25 +2626,24 @@ def getVendortype(self,inp):
   return (vendortype)
 
 def load_cluster_adapter(self):
-  """Load the appropriate cluster adapter.
-     Need self.site set so it knows which cluster to import.
-  """
-  #try:
-  if self.site.CLUSTER_ADAPTER:
-    return (load_module(self.site.CLUSTER_ADAPTER))
-  else:
-    return (False)
-  """
-  except:
-    # If self.site is not set.
-    return (False)
-  """
-def killChildren(self,pid):
+    """Load the appropriate cluster adapter.
+       Need self.site set so it knows which cluster to import.
+    """
+    try:
+        if self.site.CLUSTER_ADAPTER:
+            return (load_module(self.site.CLUSTER_ADAPTER))
+        else:
+            return (False)
+    except:
+        # If self.site is not set.
+        return (False)
+
+def kill_children(pid, logger=False):
   """
   Kills the parent process, the children, and the children's children.
   """
-  if self.verbose:
-    self.logger.debug('Utilities::killChildren')
+  if logger:
+    logger.debug('Utilities::killChildren')
   pids = []
   try:
     output = subprocess.Popen('ps -F -A | grep %s'%pid,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
@@ -2648,27 +2659,31 @@ def killChildren(self,pid):
           if line.split()[2] == str(pid1):
             pids.append(line.split()[:][1])
     for p in pids:
-      self.logger.debug('kill -9 %s'%p)
+      if logger:
+          logger.debug('kill -9 %s'%p)
       os.system('kill -9 %s'%p)
 
   except:
-    self.logger.exception('**Could not kill the children?!?**')
+    if logger:
+        logger.exception('**Could not kill the children?!?**')
 
-def killJobs(self,inp):
+def kill_job(inp, logger=False):
   """
   Kills all the input jobs.
   """
-  if self.verbose:
-    self.logger.debug('Utilities::killJobs')
+  if logger:
+    logger.debug('Utilities::killJobs')
   try:
     output = subprocess.Popen('ps -F -A | grep %s'%inp,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
     for line in output.stdout:
       kill = 'kill -9 %s'%line
-      self.logger.debug(kill)
+      if logger:
+          logger.debug(kill)
       os.system(kill)
 
   except:
-    self.logger.exception('**Could not kill the children?!?**')
+    if logger:
+        logger.exception('**Could not kill the children?!?**')
 
 def makeHAfiles(self):
   """
