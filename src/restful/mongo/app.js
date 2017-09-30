@@ -152,6 +152,9 @@ apiRoutes.post('/authenticate', function(req, res) {
       }
     });
   } else if (config.authenticate_mode === 'ldap') {
+
+    console.log('req.body:', req.body);
+
     // Authenticate
     ldap_client.bind('uid='+req.body.uid+','+config.ldap_dn, req.body.password, function(err) {
 
