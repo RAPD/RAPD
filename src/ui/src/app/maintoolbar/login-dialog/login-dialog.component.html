@@ -10,10 +10,10 @@
   </h2>
   <form [formGroup]="login_form" (ngSubmit)="onSubmitLogin()">
     <table>
-      <tr><td>
+      <tr><td *ngIf="globals_service.site.authUserType === 'email'">
         <mat-form-field>
           <input matInput
-            formControlName="email"
+            formControlName='email'
             required
             placeholder='email'
             pattern='^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'>
@@ -25,6 +25,18 @@
           <div class="mat-char-counter" *ngIf="login_form.controls.email.errors && login_form.controls.email.errors.pattern">
             Email is invalid
           </div>
+        </div>
+      </td><td *ngIf="globals_service.site.authUserType === 'uid'">
+        <mat-form-field>
+          <input matInput
+            formControlName='uid'
+            required
+            placeholder='username'>
+        </mat-form-field>
+        <div class="mat-errors-spacer" [hidden]="login_form.controls.uid.untouched">
+          <!-- <div class="mat-char-counter" *ngIf="login_form.controls.uid.errors.required">
+            Username is required
+          </div> -->
         </div>
       </td></tr>
       <tr><td>

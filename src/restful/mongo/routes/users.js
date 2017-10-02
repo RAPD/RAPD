@@ -1,5 +1,5 @@
 var express = require('express');
-const ldap =          require('ldapjs');
+const ldap =  require('ldapjs');
 var router = express.Router();
 
 const config = require('../config');
@@ -32,30 +32,33 @@ router.route('/users')
     // LDAP
     } else if (config.authenticate_mode === 'ldap') {
       // SERCAT uses LDAP per group
-      var users = [];
-      ldap_client.search(config.ldap_dn, {  //}"dc=ser,dc=aps,dc=anl,dc=gov", {
-        scope:'sub',
-        filter:'objectclass=*'
-      }, function(err, ldap_result) {
-        if (err) {
-          console.error(err);
-          res.json({success:false,
-                    message:err});
-        } else {
-          ldap_result.on('searchEntry', function(entry) {
-            console.log('entry: ' + JSON.stringify(entry.object));
-            users.push(entry.object);
-          });
-          ldap_result.on('searchReference', function(referral) {
-            console.log('referral: ' + referral.uris.join());
-          });
-          ldap_result.on('error', function(err) {
-            console.error('error: ' + err.message);
-          });
-          ldap_result.on('end', function(result) {
-            console.log('status: ' + result.status);
-            res.json(users);
-          });
+      res.json({success:false,
+                message:'This site manages by group, not user.'});
+
+      // var users = [];
+      // ldap_client.search(config.ldap_dn, {  //}"dc=ser,dc=aps,dc=anl,dc=gov", {
+      //   scope:'sub',
+      //   filter:'objectclass=*'
+      // }, function(err, ldap_result) {
+      //   if (err) {
+      //     console.error(err);
+      //     res.json({success:false,
+      //               message:err});
+      //   } else {
+      //     ldap_result.on('searchEntry', function(entry) {
+      //       console.log('entry: ' + JSON.stringify(entry.object));
+      //       users.push(entry.object);
+      //     });
+      //     ldap_result.on('searchReference', function(referral) {
+      //       console.log('referral: ' + referral.uris.join());
+      //     });
+      //     ldap_result.on('error', function(err) {
+      //       console.error('error: ' + err.message);
+      //     });
+      //     ldap_result.on('end', function(result) {
+      //       console.log('status: ' + result.status);
+      //       res.json(users);
+      //     });
         }
       });
     }

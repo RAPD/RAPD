@@ -8,9 +8,10 @@ import { MatDialogRef } from '@angular/material';
 //          MdDialogConfig
 import { Router } from '@angular/router';
 
-import { CommunicateDialogComponent } from '../../shared/dialogs/communicate-dialog/communicate-dialog.component';
+// import { CommunicateDialogComponent } from '../../shared/dialogs/communicate-dialog/communicate-dialog.component';
 import { AuthService } from '../../shared/services/auth.service';
 import { WebsocketService } from '../../shared/services/websocket.service';
+import { GlobalsService } from '../../shared/services/globals.service';
 
 @Component({
   selector: 'app-login-dialog',
@@ -26,7 +27,8 @@ export class LoginDialogComponent implements OnInit {
   show_request_success: boolean;
   public submit_error = '';
 
-  constructor(private auth_service: AuthService,
+  constructor(private globals_service: GlobalsService,
+              private auth_service: AuthService,
               private websocket_service: WebsocketService,
               private router: Router,
               public dialogRef: MatDialogRef<LoginDialogComponent>) { }
@@ -37,6 +39,7 @@ export class LoginDialogComponent implements OnInit {
 
     this.login_form = new FormGroup({
        email: new FormControl(),
+       uid: new FormControl(),
        password: new FormControl()
     });
 
