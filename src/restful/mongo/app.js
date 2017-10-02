@@ -67,7 +67,7 @@ let server = http.createServer(app);
 // Add session handling
 let app_session = session({
   store: new RedisStore({}),
-  secret: 'keyboard cat',
+  secret: 'jsdjkdasfjkhldfs',
   resave: false,
   saveUninitialized: true
 });
@@ -224,46 +224,53 @@ apiRoutes.post('/requestpass', function(req, res) {
   // console.log('requestpass');
   // console.log(req.body);
 
-  User.
-  findOne({email: req.body.email}).
-  exec(function(err, user) {
-    if (err) {
-      console.error(err);
-        console.error(err)
-        res.send({success: false,
-                  message: err});
-    } else if (user) {
-      let new_pass_raw = randomstring.generate(12);
-      // console.log('new_pass_raw', new_pass_raw);
-      user.password =  new_pass_raw;
-      // Expire in 60 minutes
-      user.pass_expire = Date.now() + 3600;
-      user.pass_force_change = true;
-      user.save(function(err, saved_user) {
-        if (err) {
-          console.error(err);
+  if (config.authenticate_mode === 'mongo') {
+    User.
+    findOne({email: req.body.email}).
+    exec(function(err, user) {
+      if (err) {
+        console.error(err);
+          console.error(err)
           res.send({success: false,
                     message: err});
-        } else {
-          // Set up the email options
-          let mailOptions = {
-            from: 'fmurphy@anl.gov',
-            to: user.email,
-            cc: 'fmurphy@anl.gov',
-            subject: 'RAPD password recovery',
-            text: 'Your new temporary password is '+new_pass_raw+'\nIt is authorized for 60 minutes.'};
-          // Send the email
-          smtp_transport.sendMail(mailOptions);
-          // Reply to client
-          res.json({success: true});
-        }
-      });
-    } else {
-      console.error('No user found in password request');
-      res.send({success: false,
-                message: 'No user found for email '+req.body.email});
-    }
-  });
+      } else if (user) {
+        let new_pass_raw = randomstring.generate(12);
+        // console.log('new_pass_raw', new_pass_raw);
+        user.password =  new_pass_raw;
+        // Expire in 60 minutes
+        user.pass_expire = Date.now() + 3600;
+        user.pass_force_change = true;
+        user.save(function(err, saved_user) {
+          if (err) {
+            console.error(err);
+            res.send({success: false,
+                      message: err});
+          } else {
+            // Set up the email options
+            let mailOptions = {
+              from:config.admin_email,
+              to:user.email,
+              cc:'fmurphy@anl.gov',
+              subject:'RAPD password recovery',
+              text:'Your new temporary password is '+new_pass_raw+'\nIt is authorized for 60 minutes.'};
+            // Send the email
+            smtp_transport.sendMail(mailOptions);
+            // Reply to client
+            res.json({success: true});
+          }
+        });
+      } else {
+        console.error('No user found in password request');
+        res.send({success: false,
+                  message: 'No user found for email '+req.body.email});
+      }
+    });
+
+  // Cannot change password
+  } else {
+    res.send({success:false,
+              message:'Sorry, this server is not capable of giving temporary passwords.'});
+  }
 });
 
 // test route to make sure everything is working (accessed at GET http://localhost:8080/api)
@@ -325,8 +332,6 @@ app.use('/api', sessions_routes);
 app.use('/api', users_routes);
 
 module.exports = app;
-
-
 
 var port = normalizePort(process.env.PORT || config.port);
 app.set('port', port);

@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 
+const config = require('../config');
 const User =    require('../models/user');
 
 // routes that end with users
@@ -8,16 +9,48 @@ const User =    require('../models/user');
 // route to return all users (GET api/users)
 router.route('/users')
   .get(function(req, res) {
-    User.
-      find({}).
-      populate('groups', 'groupname').
-      exec(function(err, users) {
-        // Do not return the password
-        for (let user of users) {
-          user.password = undefined;
+    // MONGO
+    if (config.authenticate_mode === 'mongo') {
+      User.
+        find({}).
+        populate('groups', 'groupname').
+        exec(function(err, users) {
+          // Do not return the password
+          for (let user of users) {
+            user.password = undefined;
+          }
+          res.json(users);
+        });
+    // LDAP
+    } else if (config.authenticate_mode === 'ldap') {
+      // SERCAT uses LDAP per group
+      var users = [];
+      ldap_client.search(config.ldap_dn, {  //}"dc=ser,dc=aps,dc=anl,dc=gov", {
+        scope:'sub',
+        filter:'objectclass=*'
+      }, function(err, ldap_result) {
+        if (err) {
+          console.error(err);
+          res.json({success:false,
+                    message:err});
+        } else {
+          ldap_result.on('searchEntry', function(entry) {
+            console.log('entry: ' + JSON.stringify(entry.object));
+            users.push(entry.object);
+          });
+          ldap_result.on('searchReference', function(referral) {
+            console.log('referral: ' + referral.uris.join());
+          });
+          ldap_result.on('error', function(err) {
+            console.error('error: ' + err.message);
+          });
+          ldap_result.on('end', function(result) {
+            console.log('status: ' + result.status);
+            res.json(users);
+          });
         }
-        res.json(users);
       });
+    }
   });
 
 router.route('/users/:user_id')
