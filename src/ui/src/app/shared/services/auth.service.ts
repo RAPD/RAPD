@@ -30,7 +30,7 @@ export class AuthService implements CanActivate {
 
     console.log('login', credentials);
 
-    let creds = 'email=' + credentials.email + '&password=' + credentials.password;
+    let creds = 'email=' + credentials.email + '&uid=' + credentials.uid + '&password=' + credentials.password;
     // console.log(creds);
 
     let header = new Headers();
