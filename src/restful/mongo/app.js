@@ -191,26 +191,61 @@ apiRoutes.post('/authenticate', function(req, res) {
                 console.log('looking for group....');
                 console.log(err);
                 console.log(groups);
+
+                // Mark user as being from LDAP
+                user.ldap = true;
+
+                // A group has been returned
+                if (groups) {
+                  user.group = groups[0];
+
+                  // create a token
+                  var token = jwt.sign(user, app.get('superSecret'), {
+                    expiresIn: 86400 // expires in 24 hours
+                  });
+
+                  // return the information including token as JSON
+                  res.json({success:true,
+                            message:'Enjoy your token!',
+                            token:token,
+                            pass_force_change:false});
+                            
+                // No groups returned
+                } else {
+                  // Create a new group with the info from LDAP
+                  let new_group = new Group({
+                    groupname:user.cn,
+                    institution:'',
+                    uid:user.uid,
+                    uidNumber:user.uidNumber,
+                    gid:user.gidNumber,
+                    status:'active',
+                    creator:req.decoded._doc._id
+                  });
+                  new_group.save(function(err, return_group) {
+                    if (err) {
+                      console.error(err);
+                      res.send(err);
+                    } else {
+                      console.log('Group saved successfully', return_group);
+
+                      user.group = return_group;
+
+                      // create a token
+                      var token = jwt.sign(user, app.get('superSecret'), {
+                        expiresIn: 86400 // expires in 24 hours
+                      });
+
+                      // return the information including token as JSON
+                      res.json({success:true,
+                                message:'Enjoy your token!',
+                                token:token,
+                                pass_force_change:false});
+
+                    }
+                  });
+                }
               });
-
-              // Turn LDAP user info to something more Mongo-like
-              let m_user = {
-                email:user.mail,
-                role:'user',
-                status:'active',
-                username:user.uid
-              };
-
-              // create a token
-              var token = jwt.sign(user, app.get('superSecret'), {
-                expiresIn: 86400 // expires in 24 hours
-              });
-
-              // return the information including token as JSON
-              res.json({success:true,
-                        message:'Enjoy your token!',
-                        token:token,
-                        pass_force_change:false});
             });
             result.on('searchReference', function(referral) {
               console.log('referral: ' + referral.uris.join());
