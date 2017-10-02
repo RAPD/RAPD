@@ -1,23 +1,74 @@
 var express = require('express');
+const nodemailer =    require('nodemailer');
+const smtpTransport = require('nodemailer-smtp-transport');
 var router = express.Router();
 
+const config = require('../config');
 const User =    require('../models/user');
+
+// Email Configuration
+var smtp_transport = nodemailer.createTransport(smtpTransport({
+  host: 'mailhost.anl.gov'
+}));
+
+// Create connection to LDAP
+if (config.authenticate_mode === 'ldap') {
+  const ldap =  require('ldapjs');
+  var ldap_client = ldap.createClient({
+    url: 'ldap://'+config.ldap_server
+  });
+}
 
 // routes that end with users
 // ----------------------------------------------------
 // route to return all users (GET api/users)
 router.route('/users')
   .get(function(req, res) {
-    User.
-      find({}).
-      populate('groups', 'groupname').
-      exec(function(err, users) {
-        // Do not return the password
-        for (let user of users) {
-          user.password = undefined;
-        }
-        res.json(users);
-      });
+    // MONGO
+    if (config.authenticate_mode === 'mongo') {
+      User.
+        find({}).
+        populate('groups', 'groupname').
+        exec(function(err, users) {
+          // Do not return the password
+          for (let user of users) {
+            user.password = undefined;
+          }
+          res.json(users);
+        });
+    // LDAP
+    } else if (config.authenticate_mode === 'ldap') {
+      // SERCAT uses LDAP per group
+      res.json({success:false,
+                message:'This site manages by group, not user.'});
+
+      // var users = [];
+      // ldap_client.search(config.ldap_dn, {  //}"dc=ser,dc=aps,dc=anl,dc=gov", {
+      //   scope:'sub',
+      //   filter:'objectclass=*'
+      // }, function(err, ldap_result) {
+      //   if (err) {
+      //     console.error(err);
+      //     res.json({success:false,
+      //               message:err});
+      //   } else {
+      //     ldap_result.on('searchEntry', function(entry) {
+      //       console.log('entry: ' + JSON.stringify(entry.object));
+      //       users.push(entry.object);
+      //     });
+      //     ldap_result.on('searchReference', function(referral) {
+      //       console.log('referral: ' + referral.uris.join());
+      //     });
+      //     ldap_result.on('error', function(err) {
+      //       console.error('error: ' + err.message);
+      //     });
+      //     ldap_result.on('end', function(result) {
+      //       console.log('status: ' + result.status);
+      //       res.json(users);
+      //     });
+      // }
+      // });
+    }
   });
 
 router.route('/users/:user_id')

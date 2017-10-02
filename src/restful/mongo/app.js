@@ -7,7 +7,6 @@ const RedisStore =    require('connect-redis')(session);
 const http =          require('http');
 const favicon =       require('serve-favicon');
 const jwt =           require('jsonwebtoken');
-const ldap =          require('ldapjs');
 const morgan =        require('morgan');
 const nodemailer =    require('nodemailer');
 const smtpTransport = require('nodemailer-smtp-transport');
@@ -31,11 +30,12 @@ const users_routes =    require('./routes/users');
 
 // Redis
 const redis =      require('redis');
-var redis_client = redis.createClient(config.redis_host);
+var redis_client = redis.createClient(config.redis_port, config.redis_host);
 
 // MongoDB Models
 // const Session = require('./models/session');
 const User =    require('./models/user');
+const Group =   require('./models/group');
 const Run =     require('./models/run');
 // MongoDB connection
 var mongoose = require('mongoose');
@@ -47,6 +47,14 @@ mongoose.connect(config.database, {
 }, function(error) {
   console.error(error);
 });
+
+// LDAP
+if (config.authenticate_mode === 'ldap') {
+  const ldap =          require('ldapjs');
+  var ldap_client = ldap.createClient({
+    url: 'ldap://'+config.ldap_server
+  });
+}
 
 // Email Configuration
 var smtp_transport = nodemailer.createTransport(smtpTransport({
@@ -103,16 +111,36 @@ apiRoutes.use(function(req, res, next) {
 // route to authenticate a user (POST http://localhost:8080/api/authenticate)
 apiRoutes.post('/authenticate', function(req, res) {
 
-  // console.log('authenticate');
-  // console.log(req.body);
+  console.log('authenticate');
+  console.log(req.body);
 
   if (config.authenticate_mode === 'mongo') {
-    User.getAuthenticated(req.body.email, req.body.password, function(err, user, reason) {
+    User.getAuthenticated(req.body.uid, req.body.password, function(err, user, reason) {
       if (err) {
         console.error(err);
         res.json({ success: false, message: err });
       // login was successful if we have a user
       } else if (user) {
+        console.log('user:', user);
+        // { _id: 59921becef080369c2f07cb2,
+        //   username: 'Frank Murphy',
+        //   group: null,
+        //   email: 'fmurphy@anl.gov',
+        //   __v: 3,
+        //   creator: 59921becef080369c2f07cb2,
+        //   timestamp: 2017-08-14T21:53:48.763Z,
+        //   status: 'active',
+        //   role: 'site_admin',
+        //   pass_force_change: false,
+        //   pass_expire: 2017-10-03T06:14:35.594Z,
+        //   loginAttempts: 0,
+        //   groups:
+        //     [ { _id: 59921becef080369c2f07cb3, groupname: 'NECAT' },
+        //       { _id: 59921becef080369c2f07cb3, groupname: 'NECAT' },
+        //       { _id: 59921becef080369c2f07cb3, groupname: 'NECAT' },
+        //       { _id: 59921becef080369c2f07cb3, groupname: 'NECAT' } ],
+        //   created: 2017-09-28T18:37:05.470Z }
+
         // create a token
         var token = jwt.sign(user, app.get('superSecret'), {
           expiresIn: 86400 // expires in 24 hours
@@ -155,8 +183,9 @@ apiRoutes.post('/authenticate', function(req, res) {
         res.json({success:false,
                   message:'Authentication failed. ' + reason});
 
-      // AUTHENTICATED
+      // AUTHENTICATED - now get Mongo info on user/group
       } else {
+
         // Fetch user
         ldap_client.search('uid='+req.body.uid+',ou=People,dc=ser,dc=aps,dc=anl,dc=gov', {
           scope:'sub',
@@ -169,40 +198,87 @@ apiRoutes.post('/authenticate', function(req, res) {
               console.error(err);
               res.json({success:false,
                         message:err});
-            }
+            } else {
 
-            var user = undefined;
+              result.on('searchEntry', function(entry) {
 
-            result.on('searchEntry', function(entry) {
+                // The user information
+                let user = entry.object;
 
-              // The user information
-              user = entry.object;
+                // Look for a group that corresponds to this user
+                Group.find({uid:user.uid}, function(err, groups) {
 
-              // create a token
-              var token = jwt.sign(user, app.get('superSecret'), {
-                expiresIn: 86400 // expires in 24 hours
+                  console.log('looking for group....');
+                  console.log(err);
+                  console.log(groups);
+
+                  // A group has been returned
+                  if (groups[0]) {
+
+                    let return_group = groups[0];
+                    console.log('Have group for user', return_group);
+
+                    // // create a token
+                    // var token = jwt.sign(user, app.get('superSecret'), {
+                    //   expiresIn: 86400 // expires in 24 hours
+                    // });
+                    //
+                    // // return the information including token as JSON
+                    // res.json({success:true,
+                    //           message:'Enjoy your token!',
+                    //           token:token,
+                    //           pass_force_change:false});
+
+                  // No groups returned
+                  } else {
+
+                    // Create a new group with the info from LDAP
+                    let new_group = new Group({
+                      groupname:user.cn,
+                      institution:'',
+                      uid:user.uid,
+                      uidNumber:user.uidNumber,
+                      gidNumber:user.gidNumber,
+                      status:'active'
+                    });
+                    new_group.save(function(err, return_group) {
+                      if (err) {
+                        console.error(err);
+                        res.send({success:false,
+                                  message:err});
+                      } else {
+                        console.log('Group saved successfully', return_group);
+
+                        // // create a token
+                        // var token = jwt.sign(user, app.get('superSecret'), {
+                        //   expiresIn: 86400 // expires in 24 hours
+                        // });
+                        //
+                        // // return the information including token as JSON
+                        // res.json({success:true,
+                        //           message:'Enjoy your token!',
+                        //           token:token,
+                        //           pass_force_change:false});
+
+                      }
+                    });
+                  }
+                });
               });
-
-              // return the information including token as JSON
-              res.json({success:true,
-                        message:'Enjoy your token!',
-                        token:token,
-                        pass_force_change:false});
-            });
-            result.on('searchReference', function(referral) {
-              console.log('referral: ' + referral.uris.join());
-            });
-            result.on('error', function(err) {
-              console.error('error: ' + err.message);
-              res.json({success:false,
-                        message:err});
-            });
-            result.on('end', function(end) {
-              console.log(user);
-              console.log('status: ' + end.status);
-
-            });
-          });
+              result.on('searchReference', function(referral) {
+                console.log('referral: ' + referral.uris.join());
+              });
+              result.on('error', function(err) {
+                console.error('error: ' + err.message);
+                res.json({success:false,
+                          message:err});
+              });
+              result.on('end', function(end) {
+                console.log(user);
+                console.log('status: ' + end.status);
+              });
+            }
+        });
       }
     });
   }

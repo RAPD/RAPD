@@ -11,6 +11,13 @@ export class Site implements OnInit {
   public websocketUrl: string = 'ws://localhost:3000';
 
   //
+  // Authentication info
+  //
+  // The type of user id expected - email or username
+  public authUserType: string = 'email';
+
+
+  //
   // UI
   //
 

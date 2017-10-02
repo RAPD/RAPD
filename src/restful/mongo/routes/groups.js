@@ -1,17 +1,26 @@
 var express = require('express');
 var router = express.Router();
 
+const config = require('../config');
+
 // MongoDB model
 var Group = require('../models/group');
+
+// Create connection to LDAP
+if (config.authenticate_mode === 'ldap') {
+  const ldap =  require('ldapjs');
+  var ldap_client = ldap.createClient({
+    url: 'ldap://'+config.ldap_server
+  });
+}
 
 // Routes
 router.route('/groups')
   // route to return all groups (GET api/groups)
   .get(function(req, res) {
-    'use strict';
-    Group.find({}, function(err, groups) {
-      res.json(groups);
-    });
+      Group.find({}, function(err, groups) {
+        res.json(groups);
+      });
   });
 
 router.route('/groups/:group_id')

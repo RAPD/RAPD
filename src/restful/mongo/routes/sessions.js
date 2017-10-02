@@ -8,7 +8,7 @@ const Session = require('../models/session');
 // ----------------------------------------------------
 router.route('/sessions')
 
-    // create a session (accessed at POST http://localhost:3000/api/sessions)
+    // create a session (accessed at POST api/sessions)
     .post(function(req, res) {
 
         var session = new Session(JSON.parse(req.body.session));     // create a new instance of the Session model
@@ -23,11 +23,11 @@ router.route('/sessions')
 
     })
 
-    // get all the sessions (accessed at GET http://localhost:3000/api/sessions)
+    // get all the sessions (accessed at GET api/sessions)
     .get(function(req, res) {
 
       var find_search = { group: { $in: req.decoded._doc.groups}};
-      if (req.decoded._doc.role == 'site_admin') {
+      if (req.decoded._doc.role === 'site_admin') {
         find_search = {}
       }
 

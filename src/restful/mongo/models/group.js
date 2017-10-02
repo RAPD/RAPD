@@ -5,7 +5,7 @@ var GroupSchema = new Schema({
   creator: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
+    required: false,
   },
   created: {
     type: Date,
