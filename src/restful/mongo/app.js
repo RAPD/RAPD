@@ -209,7 +209,7 @@ apiRoutes.post('/authenticate', function(req, res) {
                             message:'Enjoy your token!',
                             token:token,
                             pass_force_change:false});
-                            
+
                 // No groups returned
                 } else {
                   // Create a new group with the info from LDAP
@@ -218,9 +218,8 @@ apiRoutes.post('/authenticate', function(req, res) {
                     institution:'',
                     uid:user.uid,
                     uidNumber:user.uidNumber,
-                    gid:user.gidNumber,
-                    status:'active',
-                    creator:req.decoded._doc._id
+                    gidNumber:user.gidNumber,
+                    status:'active'
                   });
                   new_group.save(function(err, return_group) {
                     if (err) {
