@@ -26,11 +26,11 @@ export class AuthService implements CanActivate {
 
   public login(credentials): Observable<any> {
 
-    console.log('this.globals_service.site.restApiUrl', this.globals_service.site.restApiUrl);
+    // console.log('this.globals_service.site.restApiUrl', this.globals_service.site.restApiUrl);
 
-    console.log('login', credentials);
+    // console.log('login', credentials);
 
-    let creds = 'email=' + credentials.email + '&uid=' + credentials.uid + '&password=' + credentials.password;
+    let creds = 'uid=' + credentials.uid + '&password=' + credentials.password;
     // console.log(creds);
 
     let header = new Headers();

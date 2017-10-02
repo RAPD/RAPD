@@ -7,7 +7,6 @@ const RedisStore =    require('connect-redis')(session);
 const http =          require('http');
 const favicon =       require('serve-favicon');
 const jwt =           require('jsonwebtoken');
-const ldap =          require('ldapjs');
 const morgan =        require('morgan');
 const nodemailer =    require('nodemailer');
 const smtpTransport = require('nodemailer-smtp-transport');
@@ -51,6 +50,7 @@ mongoose.connect(config.database, {
 
 // LDAP
 if (config.authenticate_mode === 'ldap') {
+  const ldap =          require('ldapjs');
   var ldap_client = ldap.createClient({
     url: 'ldap://'+config.ldap_server
   });
@@ -115,12 +115,13 @@ apiRoutes.post('/authenticate', function(req, res) {
   console.log(req.body);
 
   if (config.authenticate_mode === 'mongo') {
-    User.getAuthenticated(req.body.email, req.body.password, function(err, user, reason) {
+    User.getAuthenticated(req.body.uid, req.body.password, function(err, user, reason) {
       if (err) {
         console.error(err);
         res.json({ success: false, message: err });
       // login was successful if we have a user
       } else if (user) {
+        console.log('user:', user);
         // create a token
         var token = jwt.sign(user, app.get('superSecret'), {
           expiresIn: 86400 // expires in 24 hours

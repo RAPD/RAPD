@@ -1,12 +1,19 @@
 var express = require('express');
-const ldap =  require('ldapjs');
+const nodemailer =    require('nodemailer');
+const smtpTransport = require('nodemailer-smtp-transport');
 var router = express.Router();
 
 const config = require('../config');
 const User =    require('../models/user');
 
+// Email Configuration
+var smtp_transport = nodemailer.createTransport(smtpTransport({
+  host: 'mailhost.anl.gov'
+}));
+
 // Create connection to LDAP
 if (config.authenticate_mode === 'ldap') {
+  const ldap =  require('ldapjs');
   var ldap_client = ldap.createClient({
     url: 'ldap://'+config.ldap_server
   });

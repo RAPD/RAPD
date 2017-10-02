@@ -1,5 +1,4 @@
 var express = require('express');
-const ldap =  require('ldapjs');
 var router = express.Router();
 
 const config = require('../config');
@@ -9,6 +8,7 @@ var Group = require('../models/group');
 
 // Create connection to LDAP
 if (config.authenticate_mode === 'ldap') {
+  const ldap =  require('ldapjs');
   var ldap_client = ldap.createClient({
     url: 'ldap://'+config.ldap_server
   });
