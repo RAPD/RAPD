@@ -206,31 +206,32 @@ apiRoutes.post('/authenticate', function(req, res) {
                 let user = entry.object;
 
                 // Look for a group that corresponds to this user
-                Group.find({uid:user.uid, uidNumber:user.uidNumber}, function(err, groups) {
+                Group.find({uid:user.uid}, function(err, groups) {
+
                   console.log('looking for group....');
                   console.log(err);
                   console.log(groups);
 
-                  // Mark user as being from LDAP
-                  user.ldap = true;
-
                   // A group has been returned
                   if (groups[0]) {
-                    user.group = groups[0];
 
-                    // create a token
-                    var token = jwt.sign(user, app.get('superSecret'), {
-                      expiresIn: 86400 // expires in 24 hours
-                    });
+                    let return_group = groups[0];
+                    console.log('Have group for user', return_group);
 
-                    // return the information including token as JSON
-                    res.json({success:true,
-                              message:'Enjoy your token!',
-                              token:token,
-                              pass_force_change:false});
+                    // // create a token
+                    // var token = jwt.sign(user, app.get('superSecret'), {
+                    //   expiresIn: 86400 // expires in 24 hours
+                    // });
+                    //
+                    // // return the information including token as JSON
+                    // res.json({success:true,
+                    //           message:'Enjoy your token!',
+                    //           token:token,
+                    //           pass_force_change:false});
 
                   // No groups returned
                   } else {
+
                     // Create a new group with the info from LDAP
                     let new_group = new Group({
                       groupname:user.cn,
@@ -243,22 +244,21 @@ apiRoutes.post('/authenticate', function(req, res) {
                     new_group.save(function(err, return_group) {
                       if (err) {
                         console.error(err);
-                        res.send(err);
+                        res.send({success:false,
+                                  message:err});
                       } else {
                         console.log('Group saved successfully', return_group);
 
-                        user.group = return_group;
-
-                        // create a token
-                        var token = jwt.sign(user, app.get('superSecret'), {
-                          expiresIn: 86400 // expires in 24 hours
-                        });
-
-                        // return the information including token as JSON
-                        res.json({success:true,
-                                  message:'Enjoy your token!',
-                                  token:token,
-                                  pass_force_change:false});
+                        // // create a token
+                        // var token = jwt.sign(user, app.get('superSecret'), {
+                        //   expiresIn: 86400 // expires in 24 hours
+                        // });
+                        //
+                        // // return the information including token as JSON
+                        // res.json({success:true,
+                        //           message:'Enjoy your token!',
+                        //           token:token,
+                        //           pass_force_change:false});
 
                       }
                     });
