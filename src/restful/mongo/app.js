@@ -274,7 +274,7 @@ apiRoutes.post('/authenticate', function(req, res) {
                           message:err});
               });
               result.on('end', function(end) {
-                console.log(user);
+                // console.log(user);
                 console.log('status: ' + end.status);
               });
             }
