@@ -1210,7 +1210,7 @@ def errorLabelitPost(self, iteration, error, run_before=False):
     self.logger.exception('**ERROR in Utils.errorLabelitPost**')
 
 #def errorLabelit(self, iteration=0):
-def get_labelit_settings(self, iteration=0):
+def get_labelit_settings_OLD(self, iteration=0):
     """
     Labelit error correction. Set/reset setting in dataset_preferences.py according to error iteration.
     Commented out things were tried before.
