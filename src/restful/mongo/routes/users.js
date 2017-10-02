@@ -1,8 +1,16 @@
 var express = require('express');
+const ldap =          require('ldapjs');
 var router = express.Router();
 
 const config = require('../config');
 const User =    require('../models/user');
+
+// Create connection to LDAP
+if (config.authenticate_mode === 'ldap') {
+  var ldap_client = ldap.createClient({
+    url: 'ldap://'+config.ldap_server
+  });
+}
 
 // routes that end with users
 // ----------------------------------------------------
