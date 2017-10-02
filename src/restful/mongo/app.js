@@ -48,6 +48,13 @@ mongoose.connect(config.database, {
   console.error(error);
 });
 
+// LDAP
+if (config.authenticate_mode === 'ldap') {
+  var ldap_client = ldap.createClient({
+    url: 'ldap://'+config.ldap_server
+  });
+}
+
 // Email Configuration
 var smtp_transport = nodemailer.createTransport(smtpTransport({
   host: 'mailhost.anl.gov'
