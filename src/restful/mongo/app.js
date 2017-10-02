@@ -36,6 +36,7 @@ var redis_client = redis.createClient(config.redis_port, config.redis_host);
 // MongoDB Models
 // const Session = require('./models/session');
 const User =    require('./models/user');
+const Group =   require('./models/group');
 const Run =     require('./models/run');
 // MongoDB connection
 var mongoose = require('mongoose');
@@ -183,7 +184,22 @@ apiRoutes.post('/authenticate', function(req, res) {
             result.on('searchEntry', function(entry) {
 
               // The user information
-              user = entry.object;
+              let user = entry.object;
+
+              // Look for a group that corresponds to this user
+              Group.find({uid:user.uid, uidNumber:user.uidNumber}, function(err, groups) {
+                console.log('looking for group....');
+                console.log(err);
+                console.log(groups);
+              });
+
+              // Turn LDAP user info to something more Mongo-like
+              let m_user = {
+                email:user.mail,
+                role:'user',
+                status:'active',
+                username:user.uid
+              };
 
               // create a token
               var token = jwt.sign(user, app.get('superSecret'), {
