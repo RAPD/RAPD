@@ -122,6 +122,25 @@ apiRoutes.post('/authenticate', function(req, res) {
       // login was successful if we have a user
       } else if (user) {
         console.log('user:', user);
+        // { _id: 59921becef080369c2f07cb2,
+        //   username: 'Frank Murphy',
+        //   group: null,
+        //   email: 'fmurphy@anl.gov',
+        //   __v: 3,
+        //   creator: 59921becef080369c2f07cb2,
+        //   timestamp: 2017-08-14T21:53:48.763Z,
+        //   status: 'active',
+        //   role: 'site_admin',
+        //   pass_force_change: false,
+        //   pass_expire: 2017-10-03T06:14:35.594Z,
+        //   loginAttempts: 0,
+        //   groups:
+        //     [ { _id: 59921becef080369c2f07cb3, groupname: 'NECAT' },
+        //       { _id: 59921becef080369c2f07cb3, groupname: 'NECAT' },
+        //       { _id: 59921becef080369c2f07cb3, groupname: 'NECAT' },
+        //       { _id: 59921becef080369c2f07cb3, groupname: 'NECAT' } ],
+        //   created: 2017-09-28T18:37:05.470Z }
+
         // create a token
         var token = jwt.sign(user, app.get('superSecret'), {
           expiresIn: 86400 // expires in 24 hours
@@ -164,8 +183,9 @@ apiRoutes.post('/authenticate', function(req, res) {
         res.json({success:false,
                   message:'Authentication failed. ' + reason});
 
-      // AUTHENTICATED
+      // AUTHENTICATED - now get Mongo info on user/group
       } else {
+
         // Fetch user
         ldap_client.search('uid='+req.body.uid+',ou=People,dc=ser,dc=aps,dc=anl,dc=gov', {
           scope:'sub',
@@ -178,89 +198,87 @@ apiRoutes.post('/authenticate', function(req, res) {
               console.error(err);
               res.json({success:false,
                         message:err});
-            }
+            } else {
 
-            var user = undefined;
+              result.on('searchEntry', function(entry) {
 
-            result.on('searchEntry', function(entry) {
+                // The user information
+                let user = entry.object;
 
-              // The user information
-              let user = entry.object;
+                // Look for a group that corresponds to this user
+                Group.find({uid:user.uid, uidNumber:user.uidNumber}, function(err, groups) {
+                  console.log('looking for group....');
+                  console.log(err);
+                  console.log(groups);
 
-              // Look for a group that corresponds to this user
-              Group.find({uid:user.uid, uidNumber:user.uidNumber}, function(err, groups) {
-                console.log('looking for group....');
-                console.log(err);
-                console.log(groups);
+                  // Mark user as being from LDAP
+                  user.ldap = true;
 
-                // Mark user as being from LDAP
-                user.ldap = true;
+                  // A group has been returned
+                  if (groups[0]) {
+                    user.group = groups[0];
 
-                // A group has been returned
-                if (groups) {
-                  user.group = groups[0];
+                    // create a token
+                    var token = jwt.sign(user, app.get('superSecret'), {
+                      expiresIn: 86400 // expires in 24 hours
+                    });
 
-                  // create a token
-                  var token = jwt.sign(user, app.get('superSecret'), {
-                    expiresIn: 86400 // expires in 24 hours
-                  });
+                    // return the information including token as JSON
+                    res.json({success:true,
+                              message:'Enjoy your token!',
+                              token:token,
+                              pass_force_change:false});
 
-                  // return the information including token as JSON
-                  res.json({success:true,
-                            message:'Enjoy your token!',
-                            token:token,
-                            pass_force_change:false});
+                  // No groups returned
+                  } else {
+                    // Create a new group with the info from LDAP
+                    let new_group = new Group({
+                      groupname:user.cn,
+                      institution:'',
+                      uid:user.uid,
+                      uidNumber:user.uidNumber,
+                      gidNumber:user.gidNumber,
+                      status:'active'
+                    });
+                    new_group.save(function(err, return_group) {
+                      if (err) {
+                        console.error(err);
+                        res.send(err);
+                      } else {
+                        console.log('Group saved successfully', return_group);
 
-                // No groups returned
-                } else {
-                  // Create a new group with the info from LDAP
-                  let new_group = new Group({
-                    groupname:user.cn,
-                    institution:'',
-                    uid:user.uid,
-                    uidNumber:user.uidNumber,
-                    gidNumber:user.gidNumber,
-                    status:'active'
-                  });
-                  new_group.save(function(err, return_group) {
-                    if (err) {
-                      console.error(err);
-                      res.send(err);
-                    } else {
-                      console.log('Group saved successfully', return_group);
+                        user.group = return_group;
 
-                      user.group = return_group;
+                        // create a token
+                        var token = jwt.sign(user, app.get('superSecret'), {
+                          expiresIn: 86400 // expires in 24 hours
+                        });
 
-                      // create a token
-                      var token = jwt.sign(user, app.get('superSecret'), {
-                        expiresIn: 86400 // expires in 24 hours
-                      });
+                        // return the information including token as JSON
+                        res.json({success:true,
+                                  message:'Enjoy your token!',
+                                  token:token,
+                                  pass_force_change:false});
 
-                      // return the information including token as JSON
-                      res.json({success:true,
-                                message:'Enjoy your token!',
-                                token:token,
-                                pass_force_change:false});
-
-                    }
-                  });
-                }
+                      }
+                    });
+                  }
+                });
               });
-            });
-            result.on('searchReference', function(referral) {
-              console.log('referral: ' + referral.uris.join());
-            });
-            result.on('error', function(err) {
-              console.error('error: ' + err.message);
-              res.json({success:false,
-                        message:err});
-            });
-            result.on('end', function(end) {
-              console.log(user);
-              console.log('status: ' + end.status);
-
-            });
-          });
+              result.on('searchReference', function(referral) {
+                console.log('referral: ' + referral.uris.join());
+              });
+              result.on('error', function(err) {
+                console.error('error: ' + err.message);
+                res.json({success:false,
+                          message:err});
+              });
+              result.on('end', function(end) {
+                console.log(user);
+                console.log('status: ' + end.status);
+              });
+            }
+        });
       }
     });
   }
