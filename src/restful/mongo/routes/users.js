@@ -59,8 +59,8 @@ router.route('/users')
       //       console.log('status: ' + result.status);
       //       res.json(users);
       //     });
-        }
-      });
+      // }
+      // });
     }
   });
 

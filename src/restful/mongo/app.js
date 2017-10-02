@@ -31,7 +31,7 @@ const users_routes =    require('./routes/users');
 
 // Redis
 const redis =      require('redis');
-var redis_client = redis.createClient(config.redis_host);
+var redis_client = redis.createClient(config.redis_port, config.redis_host);
 
 // MongoDB Models
 // const Session = require('./models/session');
@@ -48,13 +48,6 @@ mongoose.connect(config.database, {
   console.error(error);
 });
 
-// Create connection to LDAP
-if (config.authenticate_mode === 'ldap') {
-  var ldap_client = ldap.createClient({
-    url: 'ldap://'+config.ldap_server
-  });
-}
-
 // Email Configuration
 var smtp_transport = nodemailer.createTransport(smtpTransport({
   host: 'mailhost.anl.gov'
@@ -67,7 +60,7 @@ let server = http.createServer(app);
 // Add session handling
 let app_session = session({
   store: new RedisStore({}),
-  secret: 'jsdjkdasfjkhldfs',
+  secret: 'keyboard cat',
   resave: false,
   saveUninitialized: true
 });
@@ -152,9 +145,6 @@ apiRoutes.post('/authenticate', function(req, res) {
       }
     });
   } else if (config.authenticate_mode === 'ldap') {
-
-    console.log('req.body:', req.body);
-
     // Authenticate
     ldap_client.bind('uid='+req.body.uid+','+config.ldap_dn, req.body.password, function(err) {
 
@@ -224,53 +214,46 @@ apiRoutes.post('/requestpass', function(req, res) {
   // console.log('requestpass');
   // console.log(req.body);
 
-  if (config.authenticate_mode === 'mongo') {
-    User.
-    findOne({email: req.body.email}).
-    exec(function(err, user) {
-      if (err) {
-        console.error(err);
-          console.error(err)
+  User.
+  findOne({email: req.body.email}).
+  exec(function(err, user) {
+    if (err) {
+      console.error(err);
+        console.error(err)
+        res.send({success: false,
+                  message: err});
+    } else if (user) {
+      let new_pass_raw = randomstring.generate(12);
+      // console.log('new_pass_raw', new_pass_raw);
+      user.password =  new_pass_raw;
+      // Expire in 60 minutes
+      user.pass_expire = Date.now() + 3600;
+      user.pass_force_change = true;
+      user.save(function(err, saved_user) {
+        if (err) {
+          console.error(err);
           res.send({success: false,
                     message: err});
-      } else if (user) {
-        let new_pass_raw = randomstring.generate(12);
-        // console.log('new_pass_raw', new_pass_raw);
-        user.password =  new_pass_raw;
-        // Expire in 60 minutes
-        user.pass_expire = Date.now() + 3600;
-        user.pass_force_change = true;
-        user.save(function(err, saved_user) {
-          if (err) {
-            console.error(err);
-            res.send({success: false,
-                      message: err});
-          } else {
-            // Set up the email options
-            let mailOptions = {
-              from:config.admin_email,
-              to:user.email,
-              cc:'fmurphy@anl.gov',
-              subject:'RAPD password recovery',
-              text:'Your new temporary password is '+new_pass_raw+'\nIt is authorized for 60 minutes.'};
-            // Send the email
-            smtp_transport.sendMail(mailOptions);
-            // Reply to client
-            res.json({success: true});
-          }
-        });
-      } else {
-        console.error('No user found in password request');
-        res.send({success: false,
-                  message: 'No user found for email '+req.body.email});
-      }
-    });
-
-  // Cannot change password
-  } else {
-    res.send({success:false,
-              message:'Sorry, this server is not capable of giving temporary passwords.'});
-  }
+        } else {
+          // Set up the email options
+          let mailOptions = {
+            from: 'fmurphy@anl.gov',
+            to: user.email,
+            cc: 'fmurphy@anl.gov',
+            subject: 'RAPD password recovery',
+            text: 'Your new temporary password is '+new_pass_raw+'\nIt is authorized for 60 minutes.'};
+          // Send the email
+          smtp_transport.sendMail(mailOptions);
+          // Reply to client
+          res.json({success: true});
+        }
+      });
+    } else {
+      console.error('No user found in password request');
+      res.send({success: false,
+                message: 'No user found for email '+req.body.email});
+    }
+  });
 });
 
 // test route to make sure everything is working (accessed at GET http://localhost:8080/api)
@@ -283,9 +266,9 @@ apiRoutes.get('/', function(req, res) {
 // route middleware to verify a token
 apiRoutes.use(function(req, res, next) {
 
-  console.log(req.body);
-  console.log(req.query);
-  console.log(req.headers);
+  // console.log(req.body);
+  // console.log(req.query);
+  // console.log(req.headers);
 
   // check header or url parameters or post parameters for token
   var token = req.headers.authorization.replace('Bearer ', '');
@@ -332,6 +315,8 @@ app.use('/api', sessions_routes);
 app.use('/api', users_routes);
 
 module.exports = app;
+
+
 
 var port = normalizePort(process.env.PORT || config.port);
 app.set('port', port);

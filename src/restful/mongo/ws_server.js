@@ -32,7 +32,13 @@ var result_type_trans = {
 var ws_connections = {};
 
 // Subscribe to redis updates
-var sub = redis.createClient(config.redis_port, config.redis_host);
+try {
+  var sub = redis.createClient(config.redis_port, config.redis_host);
+} catch (e) {
+  console.error("Cannot connect to redis", config.redis_port, config.redis_host);
+  throw e;
+}
+
 
 sub.on("message", function (channel, message) {
 
