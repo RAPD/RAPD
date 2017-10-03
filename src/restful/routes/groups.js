@@ -101,4 +101,17 @@ router.route('/groups/:group_id')
     });
   });
 
+  router.route('/groups/populate')
+    // populate all groups from LDAP server (PUT api/groups/populate)
+    .get(function(req, res) {
+      //ldapsearch -h c191 -b "dc=ser,dc=aps,dc=anl,dc=gov" -s sub "objectclass=*" -x
+      ldap_client.search('uid=*,ou=People,dc=ser,dc=aps,dc=anl,dc=gov', {
+        scope:'sub',
+        filter:'objectclass=*',
+        sizeLimit:1
+      }, function(err, results) {
+        console.log(results);
+      });
+    });
+
 module.exports = router;
