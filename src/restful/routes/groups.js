@@ -102,35 +102,52 @@ router.route('/groups/:group_id')
   });
 
   router.route('/groups/populate')
-    // populate all groups from LDAP server (PUT api/groups/populate)
-    .get(function(req, res) {
-      ldap_client.search(config.ldap_dn,{
-          scope:'sub',
-          filter:'objectclass=*',
-          // sizeLimit:10
-          },  function(err, res) {
-        res.on('searchEntry', function(entry) {
-          console.log('entry: ' + JSON.stringify(entry.object));
-          Groups.find({uid:entry.uid}, function(err, groups) {
-            if (! groups[0]) {
-              console.log('  No entry for', entry.uid);
-            } else {
-              console.log('  Have entry for', entry.uid, groups[0]._id)
-            }
-          });
-        });
-        res.on('searchReference', function(referral) {
-          console.log('referral: ' + referral.uris.join());
-        });
-        res.on('error', function(err) {
-          console.error('error: ' + err.message);
-        });
-        res.on('end', function(result) {
-          console.log('status: ' + result.status);
-        });
-      });
-      res.json({success:'true'});
-    });
+   // populate all groups from LDAP server (PUT api/groups/populate)
+   .get(function(req, res) {
+     ldap_client.search(config.ldap_dn,{
+         scope:'sub',
+         filter:'objectclass=*',
+         // sizeLimit:10
+       },  function(err, res) {
+         res.on('searchEntry', function(entry) {
+           console.log('entry: ' + JSON.stringify(entry.object));
+           Group.find({uid:entry.object.uid}, function(err, groups) {
+             if (! groups[0]) {
+               console.log('  No entry for', entry.object.uid);
+               let new_group = Group({
+                 email:entry.object.mail,
+                 gidNumber:entry.object.gidNumber,
+                 groupname:entry.object.cn,
+                 role:'user',
+                 status:'active',
+                 uid:entry.object.uid,
+                 uidNumber:entry.object.uidNumber
+               });
+               new_group.save(function(err, return_group) {
+                 if (err) {
+                   console.error(err);
+                 } else {
+                   console.log('  Made group:', return_group);
+                 });
+             } else {
+               console.log('  Have entry for', groups[0].uid, groups[0]._id)
+             }
+           });
+         });
+         res.on('searchReference', function(referral) {
+           console.log('referral: ' + referral.uris.join());
+         });
+         res.on('error', function(err) {
+           console.error('error: ' + err.message);
+         });
+         res.on('end', function(result) {
+           console.log('status: ' + result.status);
+         });
+       });
+       res.json({success:'true'});
+   });
+
+
 
 
 module.exports = router;
