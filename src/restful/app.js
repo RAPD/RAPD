@@ -169,7 +169,7 @@ apiRoutes.post('/authenticate', function(req, res) {
       } else {
 
         // Fetch user
-        ldap_client.search('uid='+req.body.uid+',ou=People,dc=ser,dc=aps,dc=anl,dc=gov', {
+        ldap_client.search('uid='+req.body.uid+','+config.ldap_dn, {
           scope:'sub',
           filter:'objectclass=*',
           sizeLimit:1

@@ -104,14 +104,33 @@ router.route('/groups/:group_id')
   router.route('/groups/populate')
     // populate all groups from LDAP server (PUT api/groups/populate)
     .get(function(req, res) {
-      //ldapsearch -h c191 -b "dc=ser,dc=aps,dc=anl,dc=gov" -s sub "objectclass=*" -x
-      ldap_client.search('uid=*,ou=People,dc=ser,dc=aps,dc=anl,dc=gov', {
-        scope:'sub',
-        filter:'objectclass=*',
-        sizeLimit:1
-      }, function(err, results) {
-        console.log(results);
+      ldap_client.search(config.ldap_dn,{
+          scope:'sub',
+          filter:'objectclass=*',
+          // sizeLimit:10
+          },  function(err, res) {
+        res.on('searchEntry', function(entry) {
+          console.log('entry: ' + JSON.stringify(entry.object));
+          Groups.find({uid:entry.uid}, function(err, groups) {
+            if (! groups[0]) {
+              console.log('  No entry for', entry.uid);
+            } else {
+              console.log('  Have entry for', entry.uid, groups[0]._id)
+            }
+          });
+        });
+        res.on('searchReference', function(referral) {
+          console.log('referral: ' + referral.uris.join());
+        });
+        res.on('error', function(err) {
+          console.error('error: ' + err.message);
+        });
+        res.on('end', function(result) {
+          console.log('status: ' + result.status);
+        });
       });
+      res.json({success:'true'});
     });
+
 
 module.exports = router;
