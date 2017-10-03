@@ -223,7 +223,7 @@ apiRoutes.post('/authenticate', function(req, res) {
                       };
 
                       // create a token
-                      let token = jwt.sign(user, app.get('superSecret'), {
+                      let token = jwt.sign(m_user, app.get('superSecret'), {
                         expiresIn: 86400 // expires in 24 hours
                       });
 
