@@ -206,7 +206,7 @@ apiRoutes.post('/authenticate', function(req, res) {
                       console.log('Have group for user', return_group);
 
                       // Transform group info to user-like object
-                      let m_user = {
+                      let m_user = {_doc:{
                         _id:return_group._id,
                         username:return_group.groupname,
                         email:return_group.email,
@@ -220,7 +220,7 @@ apiRoutes.post('/authenticate', function(req, res) {
                         groups:[{_id:return_group._id,
                                  groupname:return_group.groupname}],
                         created:return_group.created
-                      };
+                      }};
 
                       // create a token
                       let token = jwt.sign(m_user, app.get('superSecret'), {
@@ -255,7 +255,7 @@ apiRoutes.post('/authenticate', function(req, res) {
 
                           console.log('Group saved successfully', return_group);
 
-                          let m_user = {
+                          let m_user = {_doc:{
                             _id:return_group._id,
                             username:return_group.groupname,
                             email:return_group.email,
@@ -269,7 +269,7 @@ apiRoutes.post('/authenticate', function(req, res) {
                             groups:[{_id:return_group._id,
                                      groupname:return_group.groupname}],
                             created:return_group.created
-                          };
+                          }};
 
                           // create a token
                           let token = jwt.sign(m_user, app.get('superSecret'), {
