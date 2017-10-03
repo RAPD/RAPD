@@ -122,24 +122,6 @@ apiRoutes.post('/authenticate', function(req, res) {
       // login was successful if we have a user
       } else if (user) {
         console.log('user:', user);
-        // { _id: 59921becef080369c2f07cb2,
-        //   username: 'Frank Murphy',
-        //   group: null,
-        //   email: 'fmurphy@anl.gov',
-        //   __v: 3,
-        //   creator: 59921becef080369c2f07cb2,
-        //   timestamp: 2017-08-14T21:53:48.763Z,
-        //   status: 'active',
-        //   role: 'site_admin',
-        //   pass_force_change: false,
-        //   pass_expire: 2017-10-03T06:14:35.594Z,
-        //   loginAttempts: 0,
-        //   groups:
-        //     [ { _id: 59921becef080369c2f07cb3, groupname: 'NECAT' },
-        //       { _id: 59921becef080369c2f07cb3, groupname: 'NECAT' },
-        //       { _id: 59921becef080369c2f07cb3, groupname: 'NECAT' },
-        //       { _id: 59921becef080369c2f07cb3, groupname: 'NECAT' } ],
-        //   created: 2017-09-28T18:37:05.470Z }
 
         // create a token
         var token = jwt.sign(user, app.get('superSecret'), {
@@ -212,89 +194,96 @@ apiRoutes.post('/authenticate', function(req, res) {
                   console.log(err);
                   console.log(groups);
 
-                  // A group has been returned
-                  if (groups[0]) {
-
-                    let return_group = groups[0];
-                    console.log('Have group for user', return_group);
-
-                    // // create a token
-                    // var token = jwt.sign(user, app.get('superSecret'), {
-                    //   expiresIn: 86400 // expires in 24 hours
-                    // });
-                    //
-                    // // return the information including token as JSON
-                    // res.json({success:true,
-                    //           message:'Enjoy your token!',
-                    //           token:token,
-                    //           pass_force_change:false});
-
-                  // No groups returned
+                  if (err) {
+                    console.error(err);
+                    res.json({success:false,
+                              message:err});
                   } else {
+                    // A group has been returned
+                    if (groups[0]) {
 
-                    // Create a new group with the info from LDAP
-                    let new_group = new Group({
-                      groupname:user.cn,
-                      institution:'',
-                      uid:user.uid,
-                      uidNumber:user.uidNumber,
-                      gidNumber:user.gidNumber,
-                      status:'active'
-                    });
-                    new_group.save(function(err, return_group) {
-                      if (err) {
-                        console.error(err);
-                        res.send({success:false,
-                                  message:err});
-                      } else {
-                        console.log('Group saved successfully', return_group);
+                      let return_group = groups[0];
+                      console.log('Have group for user', return_group);
 
-                        let m_user = {
-                          username:return_group.groupname,
-                          email:'',
-                          creator:'',
-                          timestamp:return_group.timestamp,
-                          status:return_group.status,
-                          role:'user',
-                          pass_force_change:false,
-                          pass_expire:false,
-                          loginAttempts:0,
-                          
+                      // Transform group info to user-like object
+                      let m_user = {
+                        _id:return_group._id,
+                        username:return_group.groupname,
+                        email:return_group.email,
+                        creator:return_group.creator,
+                        timestamp:return_group.timestamp,
+                        status:return_group.status,
+                        role:return_group.role,
+                        pass_force_change:false,
+                        pass_expire:false,
+                        loginAttempts:return_group.loginAttempts,
+                        groups:[{_id:return_group._id,
+                                 groupname:return_group.groupname}],
+                        created:return_group.created
+                      };
 
-                        };
+                      // create a token
+                      let token = jwt.sign(user, app.get('superSecret'), {
+                        expiresIn: 86400 // expires in 24 hours
+                      });
 
-                        // { _id: 59921becef080369c2f07cb2,
-                        //   username: 'Frank Murphy',
-                        //   group: null,
-                        //   email: 'fmurphy@anl.gov',
-                        //   __v: 3,
-                        //   creator: 59921becef080369c2f07cb2,
-                        //   timestamp: 2017-08-14T21:53:48.763Z,
-                        //   status: 'active',
-                        //   role: 'site_admin',
-                        //   pass_force_change: false,
-                        //   pass_expire: 2017-10-03T06:14:35.594Z,
-                        //   loginAttempts: 0,
-                        //   groups:
-                        //     [ { _id: 59921becef080369c2f07cb3, groupname: 'NECAT' },
-                        //       { _id: 59921becef080369c2f07cb3, groupname: 'NECAT' },
-                        //       { _id: 59921becef080369c2f07cb3, groupname: 'NECAT' },
-                        //       { _id: 59921becef080369c2f07cb3, groupname: 'NECAT' } ],
-                        //   created: 2017-09-28T18:37:05.470Z }
+                      // Return the information including token as JSON
+                      res.json({success:true,
+                                message:'Enjoy your token!',
+                                token:token,
+                                pass_force_change:false});
 
-                        // // create a token
-                        // var token = jwt.sign(user, app.get('superSecret'), {
-                        //   expiresIn: 86400 // expires in 24 hours
-                        // });
-                        //
-                        // // return the information including token as JSON
-                        // res.json({success:true,
-                        //           message:'Enjoy your token!',
-                        //           token:token,
-                        //           pass_force_change:false});
+                    // No groups returned
+                    } else {
 
-                      }
-                    });
+                      // Create a new group with the info from LDAP
+                      let new_group = new Group({
+                        email:user.mail,
+                        gidNumber:user.gidNumber,
+                        groupname:user.cn,
+                        role:'user',
+                        status:'active',
+                        uid:user.uid,
+                        uidNumber:user.uidNumber,
+                      });
+                      new_group.save(function(err, return_group) {
+                        if (err) {
+                          console.error(err);
+                          res.send({success:false,
+                                    message:err});
+                        } else {
+
+                          console.log('Group saved successfully', return_group);
+
+                          let m_user = {
+                            _id:return_group._id,
+                            username:return_group.groupname,
+                            email:return_group.email,
+                            creator:return_group.creator,
+                            timestamp:return_group.timestamp,
+                            status:return_group.status,
+                            role:return_group.role,
+                            pass_force_change:false,
+                            pass_expire:false,
+                            loginAttempts:return_group.loginAttempts,
+                            groups:[{_id:return_group._id,
+                                     groupname:return_group.groupname}],
+                            created:return_group.created
+                          };
+
+                          // create a token
+                          let token = jwt.sign(m_user, app.get('superSecret'), {
+                            expiresIn: 86400 // expires in 24 hours
+                          });
+
+                          // Return the information including token as JSON
+                          res.json({success:true,
+                                    message:'Enjoy your token!',
+                                    token:token,
+                                    pass_force_change:false});
+                        }
+                      });
+                    }
                   }
                 });
               });
