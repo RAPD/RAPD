@@ -19,6 +19,7 @@ router.route('/groups')
   // route to return all groups (GET api/groups)
   .get(function(req, res) {
       Group.find({}, function(err, groups) {
+        console.log('Return', groups.length, 'groups');
         res.json(groups);
       });
   });
@@ -128,7 +129,8 @@ router.route('/groups/:group_id')
                    console.error(err);
                  } else {
                    console.log('  Made group:', return_group);
-                 });
+                 }
+               });
              } else {
                console.log('  Have entry for', groups[0].uid, groups[0]._id)
              }
