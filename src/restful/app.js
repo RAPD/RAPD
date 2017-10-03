@@ -311,47 +311,51 @@ apiRoutes.post('/requestpass', function(req, res) {
 
   // console.log('requestpass');
   // console.log(req.body);
-
-  User.
-  findOne({email: req.body.email}).
-  exec(function(err, user) {
-    if (err) {
-      console.error(err);
-        console.error(err)
-        res.send({success: false,
-                  message: err});
-    } else if (user) {
-      let new_pass_raw = randomstring.generate(12);
-      // console.log('new_pass_raw', new_pass_raw);
-      user.password =  new_pass_raw;
-      // Expire in 60 minutes
-      user.pass_expire = Date.now() + 3600;
-      user.pass_force_change = true;
-      user.save(function(err, saved_user) {
-        if (err) {
-          console.error(err);
+  if (config.authenticate_mode === 'mongo') {
+    User.
+    findOne({email: req.body.email}).
+    exec(function(err, user) {
+      if (err) {
+        console.error(err);
+          console.error(err)
           res.send({success: false,
                     message: err});
-        } else {
-          // Set up the email options
-          let mailOptions = {
-            from: 'fmurphy@anl.gov',
-            to: user.email,
-            cc: 'fmurphy@anl.gov',
-            subject: 'RAPD password recovery',
-            text: 'Your new temporary password is '+new_pass_raw+'\nIt is authorized for 60 minutes.'};
-          // Send the email
-          smtp_transport.sendMail(mailOptions);
-          // Reply to client
-          res.json({success: true});
-        }
-      });
-    } else {
-      console.error('No user found in password request');
-      res.send({success: false,
-                message: 'No user found for email '+req.body.email});
-    }
-  });
+      } else if (user) {
+        let new_pass_raw = randomstring.generate(12);
+        // console.log('new_pass_raw', new_pass_raw);
+        user.password =  new_pass_raw;
+        // Expire in 60 minutes
+        user.pass_expire = Date.now() + 3600;
+        user.pass_force_change = true;
+        user.save(function(err, saved_user) {
+          if (err) {
+            console.error(err);
+            res.send({success: false,
+                      message: err});
+          } else {
+            // Set up the email options
+            let mailOptions = {
+              from: 'fmurphy@anl.gov',
+              to: user.email,
+              cc: 'fmurphy@anl.gov',
+              subject: 'RAPD password recovery',
+              text: 'Your new temporary password is '+new_pass_raw+'\nIt is authorized for 60 minutes.'};
+            // Send the email
+            smtp_transport.sendMail(mailOptions);
+            // Reply to client
+            res.json({success: true});
+          }
+        });
+      } else {
+        console.error('No user found in password request');
+        res.send({success: false,
+                  message: 'No user found for email '+req.body.email});
+      }
+    });
+  } else if (config.authenticate_mode === 'ldap') {
+    res.send({success: false,
+              message: 'Sorry, cannot fetch passwords for this site'});
+  }
 });
 
 // test route to make sure everything is working (accessed at GET http://localhost:8080/api)
@@ -483,45 +487,3 @@ function onListening() {
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
 }
-
-
-// // Setup route
-// app.get('/setup', function(req, res) {
-//
-//   // create a sample user
-//   var fm = new User({
-//     username: 'Frank Murphy',
-//     password: 'groovylovebugbed',
-//     role: 'site_admin',
-//     group: null,
-//     email: 'fmurphy@anl.gov',
-//     status: 'active'
-//   });
-//
-//   // save the sample user
-//   fm.save(function(err) {
-//     if (err) throw err;
-//
-//     console.log('User saved successfully');
-//   });
-//
-//   // // create a sample group
-//   var necat = new Group({
-//     groupname: 'NECAT',
-//     institution: 'Cornell University',
-//     status: 'active',
-//     uid: 'necat',
-//     gidNumber: 1,
-//     uidNumber: 1
-//   });
-//
-//   // save the sample user
-//   necat.save(function(err) {
-//     if (err) throw err;
-//
-//     console.log('Group saved successfully');
-//   });
-//
-//   res.json({ success: true });
-//
-// });

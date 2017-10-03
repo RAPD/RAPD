@@ -35,7 +35,6 @@ router.route('/groups/:group_id')
         if (err) {
           console.error(err);
           res.send(err);
-
         }
         // Update the entry
         saved_group.groupname = group.groupname;
