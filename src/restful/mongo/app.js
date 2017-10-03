@@ -115,7 +115,7 @@ apiRoutes.post('/authenticate', function(req, res) {
   console.log(req.body);
 
   if (config.authenticate_mode === 'mongo') {
-    User.getAuthenticated(req.body.uid, req.body.password, function(err, user, reason) {
+    User.getAuthenticated(req.body.email, req.body.password, function(err, user, reason) {
       if (err) {
         console.error(err);
         res.json({ success: false, message: err });
