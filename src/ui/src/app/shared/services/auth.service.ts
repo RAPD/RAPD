@@ -107,8 +107,8 @@ export class AuthService implements CanActivate {
       );
 
       // Save user information
-      // this.profile = this.jwtHelper.decodeToken(token)._doc;
-      // console.log(this.profile);
+      let profile = this.jwtHelper.decodeToken(token)._doc;
+      console.log(profile);
       localStorage.setItem('profile', JSON.stringify(this.jwtHelper.decodeToken(token)._doc));
 
       // Return for consumer
