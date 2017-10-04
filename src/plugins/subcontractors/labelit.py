@@ -105,6 +105,7 @@ def parse_output(labelit_output, iteration=0):
     #return "bad_input"
     #return "bumpiness"
     #return "mosflm_error"
+    #return "eiger_cbf_error"
     
 
     # If results empty, then fail
@@ -166,6 +167,9 @@ def parse_output(labelit_output, iteration=0):
                 return "bad_input"
             if line.startswith("MOSFLM_Warning: MOSFLM does not give expected results on r_"):
                 return "mosflm_error"
+            if line.count("TypeError: unsupported operand type(s) for %: 'NoneType' and 'int'"):
+                return "eiger_cbf_error"
+            
             # Save the beam center
             if line.startswith("Beam center"):
                 labelit_bc["labelit_x_beam"] = line.split()[3][:-3]

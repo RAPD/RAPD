@@ -139,7 +139,7 @@ class RapdPlugin(Process):
 
     # Will not use RAM if self.cluster_use=True since runs would be on separate nodes. Slower
     # (>10%).
-    cluster_use = False
+    cluster_use = True
 
     # Switch for verbose
     verbose = True
@@ -283,7 +283,7 @@ class RapdPlugin(Process):
         # Setup the appropriate launcher
         if self.cluster_use:
             cluster_launcher = xutils.load_cluster_adapter(self)
-            self.launcher = cluster_launcher.processCluster
+            self.launcher = cluster_launcher.process_cluster
             # Based on the command, pick a batch queue on the cluster. Added to input kwargs
             self.batch_queue = {'batch_queue': cluster_launcher.check_queue(self.command["command"])}
             self.kill_job = cluster_launcher.kill_job
@@ -416,14 +416,15 @@ class RapdPlugin(Process):
             # Run Labelit
             self.start_labelit()
             
+            # Run Distl while Labelit is running
+            self.processDistl()
+            
       	    # Sorts labelit results by highest symmetry.
             self.labelitSort()
             
             # If there is a solution, then calculate a strategy.
             if self.labelit_failed == False:
 
-                # Start distl.signal_strength for the correct labelit iteration
-                self.processDistl()
                 if self.multiproc == False:
                     self.postprocessDistl()
                 self.preprocess_raddose()
@@ -731,21 +732,25 @@ class RapdPlugin(Process):
         self.distl_output = []
         l = ["", "2"]
         f = 1
+        
+        # change to the working dir
+        os.chdir(self.working_dir)
+        
         if self.header2:
             f = 2
         for i in range(0, f):
             if self.test:
                 inp = "ls"
-                job = Process(target=xutils.processLocal, args=(inp, self.logger))
+                job = Thread(target=xutils.processLocal, args=(inp, self.logger))
             else:
                 command = "distl.signal_strength %s" % eval("self.header%s" % l[i]).get("fullname")
-                job = Process(target=local_subprocess,
-                                              kwargs={"command": command,
-                                                     "logfile": os.path.join(os.getcwd(), "distl%s.log" % i),
-                                                     "pid_queue": False,
-                                                     "result_queue": False,
-                                                     "tag": i
-                                                    },)
+                job = Thread(target=local_subprocess,
+                             kwargs={"command": command,
+                                    "logfile": os.path.join(os.getcwd(), "distl%s.log" % i),
+                                    "pid_queue": False,
+                                    "result_queue": False,
+                                    "tag": i
+                                   },)
                 # job = Process(target=xutils.processLocal,
                 #               args=((inp, "distl%s.log" % i), self.logger))
             job.start()
@@ -1002,90 +1007,92 @@ class RapdPlugin(Process):
         if self.verbose and self.logger:
             self.logger.debug("AutoindexingStrategy::processMosflm")
 
-        try:
-            l = [("mosflm_strat", "", ""), ("mosflm_strat_anom", "_anom", "ANOMALOUS")]
-            # Opens file from Labelit/Mosflm autoindexing and edit it to run a strategy.
-            mosflm_rot = self.preferences.get("mosflm_rot", 0.0)
-            mosflm_seg = self.preferences.get("mosflm_seg", 1)
-            mosflm_st = self.preferences.get("mosflm_start", 0.0)
-            mosflm_end = self.preferences.get("mosflm_end", 360.0)
+        #try:
+        l = [("mosflm_strat", "", ""), ("mosflm_strat_anom", "_anom", "ANOMALOUS")]
+        # Opens file from Labelit/Mosflm autoindexing and edit it to run a strategy.
+        mosflm_rot = self.preferences.get("mosflm_rot", 0.0)
+        mosflm_seg = self.preferences.get("mosflm_seg", 1)
+        mosflm_st = self.preferences.get("mosflm_start", 0.0)
+        mosflm_end = self.preferences.get("mosflm_end", 360.0)
 
-            # Does the user request a start or end range?
-            range1 = False
-            if mosflm_st != 0.0:
-                range1 = True
-            if mosflm_end != 360.0:
-                range1 = True
+        # Does the user request a start or end range?
+        range1 = False
+        if mosflm_st != 0.0:
+            range1 = True
+        if mosflm_end != 360.0:
+            range1 = True
+        if range1:
+            if mosflm_rot == 0.0:
+                # mosflm_rot = str(360/float(xutils.symopsSG(self,xutils.getMosflmSG(self))))
+                mosflm_rot = str(360/float(xutils.symopsSG(self, xutils.getLabelitCell(self, "sym"))))
+        # Save info from previous data collections.
+        if self.multicrystalstrat:
+            ref_data = self.preferences.get("reference_data")
+            if self.spacegroup == False:
+                self.spacegroup = ref_data[0][-1]
+                xutils.fixMosflmSG(self)
+                # For posting in summary
+                self.prev_sg = True
+        else:
+            ref_data = False
+
+        # Run twice for regular and anomalous strategies.
+        for i in range(0, 2):
+            shutil.copy(self.index_number, l[i][0])
+            temp = []
+            # Read the Mosflm input file from Labelit and use only the top part.
+            for x, line in enumerate(open(l[i][0], "r").readlines()):
+                temp.append(line)
+                if line.count("ipmosflm"):
+                    newline = line.replace(self.index_number, l[i][0])
+                    temp.remove(line)
+                    temp.insert(x, newline)
+                if line.count("FINDSPOTS"):
+                    im = line.split()[-1]
+                if line.startswith("MATRIX"):
+                    fi = x
+
+            # Load the image as per Andrew Leslie for Mosflm bug.
+            new_line = "IMAGE %s\nLOAD\nGO\n" % im
+
+            # New lines for strategy calculation
+            if ref_data:
+                for x in range(len(ref_data)):
+                    new_line += "MATRIX %s\nSTRATEGY start %s end %s PARTS %s\nGO\n" %  d(ref_data[x][0], ref_data[x][1], ref_data[x][2], len(ref_data)+1)
+                new_line += "MATRIX %s.mat\n"%self.index_number
             if range1:
-                if mosflm_rot == 0.0:
-                    # mosflm_rot = str(360/float(xutils.symopsSG(self,xutils.getMosflmSG(self))))
-                    mosflm_rot = str(360/float(xutils.symopsSG(self, xutils.getLabelitCell(self, "sym"))))
-            # Save info from previous data collections.
-            if self.multicrystalstrat:
-                ref_data = self.preferences.get("reference_data")
-                if self.spacegroup == False:
-                    self.spacegroup = ref_data[0][-1]
-                    xutils.fixMosflmSG(self)
-                    # For posting in summary
-                    self.prev_sg = True
+                new_line += "STRATEGY START %.2f END %.2f\nGO\n" % (mosflm_st, mosflm_end)
+                new_line += "ROTATE %.2f SEGMENTS %d %s\n" % (mosflm_rot, mosflm_seg, l[i][2])
             else:
-                ref_data = False
-
-            # Run twice for regular and anomalous strategies.
-            for i in range(0, 2):
-                shutil.copy(self.index_number, l[i][0])
-                temp = []
-                # Read the Mosflm input file from Labelit and use only the top part.
-                for x, line in enumerate(open(l[i][0], "r").readlines()):
-                    temp.append(line)
-                    if line.count("ipmosflm"):
-                        newline = line.replace(self.index_number, l[i][0])
-                        temp.remove(line)
-                        temp.insert(x, newline)
-                    if line.count("FINDSPOTS"):
-                        im = line.split()[-1]
-                    if line.startswith("MATRIX"):
-                        fi = x
-
-                # Load the image as per Andrew Leslie for Mosflm bug.
-                new_line = "IMAGE %s\nLOAD\nGO\n" % im
-
-                # New lines for strategy calculation
-                if ref_data:
-                    for x in range(len(ref_data)):
-                        new_line += "MATRIX %s\nSTRATEGY start %s end %s PARTS %s\nGO\n" %  d(ref_data[x][0], ref_data[x][1], ref_data[x][2], len(ref_data)+1)
-                    new_line += "MATRIX %s.mat\n"%self.index_number
-                if range1:
-                    new_line += "STRATEGY START %.2f END %.2f\nGO\n" % (mosflm_st, mosflm_end)
-                    new_line += "ROTATE %.2f SEGMENTS %d %s\n" % (mosflm_rot, mosflm_seg, l[i][2])
+                if mosflm_rot == "0.0":
+                    new_line += "STRATEGY AUTO %s\n"%l[i][2]
+                elif mosflm_seg != "1":
+                    new_line += "STRATEGY AUTO ROTATE %.2f SEGMENTS %d %s\n" % (mosflm_rot, mosflm_seg, l[i][2])
                 else:
-                    if mosflm_rot == "0.0":
-                        new_line += "STRATEGY AUTO %s\n"%l[i][2]
-                    elif mosflm_seg != "1":
-                        new_line += "STRATEGY AUTO ROTATE %.2f SEGMENTS %d %s\n" % (mosflm_rot, mosflm_seg, l[i][2])
-                    else:
-                        new_line += "STRATEGY AUTO ROTATE %.2f %s\n" % (mosflm_rot, l[i][2])
-                new_line += "GO\nSTATS\nEXIT\neof\n"
-                if self.test == False:
-                    new = open(l[i][0], "w")
-                    new.writelines(temp[:fi+1])
-                    new.writelines(new_line)
-                    new.close()
-                    log = os.path.join(os.getcwd(), l[i][0]+".out")
-                    inp = "tcsh %s" % l[i][0]
-                    inp_kwargs = {'command': inp,
-                                  'logfile': log}
-                    # Update batch queue info if using a compute cluster
-                    inp_kwargs.update(self.batch_queue)
+                    new_line += "STRATEGY AUTO ROTATE %.2f %s\n" % (mosflm_rot, l[i][2])
+            new_line += "GO\nSTATS\nEXIT\neof\n"
+            if self.test == False:
+                new = open(l[i][0], "w")
+                new.writelines(temp[:fi+1])
+                new.writelines(new_line)
+                new.close()
+                log = os.path.join(os.getcwd(), l[i][0]+".out")
+                inp = "tcsh %s" % l[i][0]
+                inp_kwargs = {'command': inp,
+                              'logfile': log}
+                # Update batch queue info if using a compute cluster
+                inp_kwargs.update(self.batch_queue)
+                
+                #Launch the job
+                job = Thread(target=self.launcher,
+                                kwargs=inp_kwargs)
+                job.start()
                     
-                    #Launch the job
-                    #Process(target=self.launcher,
-                    Thread(target=self.launcher,
-                                    kwargs=inp_kwargs).start()
-
+        
+        """
         except:
             self.logger.exception("**Error in processMosflm**")
-
+        """
     def check_best_detector(self, detector):
         """Check that the detector we need is in the BEST configuration file"""
 
@@ -1154,6 +1161,7 @@ class RapdPlugin(Process):
                 self.tprint(arg="  Starting Mosflm runs", level=98, color="white")
                 xutils.folders2(self, self.labelit_dir)
                 job = Process(target=self.processMosflm, name="mosflm%s" % i)
+                #job = Thread(target=self.processMosflm, name="mosflm%s" % i)
             # Run BEST
             else:
                 # print "Starting %d" % i
@@ -1161,6 +1169,7 @@ class RapdPlugin(Process):
                 # Reduces resolution and reruns Mosflm to calc new files, then runs Best.
                 #job = multiprocessing.Process(target=self.errorBest, name="best%s" % i, args=(i, best_version))
                 job = Process(target=self.errorBest, name="best%s" % i, args=(i, best_version))
+                #job = Thread(target=self.errorBest, name="best%s" % i, args=(i, best_version))
             job.start()
             self.jobs[str(i)] = job
 
@@ -1216,8 +1225,8 @@ class RapdPlugin(Process):
                         self.tprint(arg="Distl timed out", level=30, color="red")
                         self.logger.error("Distl timed out.")
 
-        # Get into the labelit directory
-        os.chdir(self.labelit_dir)
+        # Get into the working directory
+        os.chdir(self.working_dir)
 
         # Count frames
         if self.header2:
@@ -2099,26 +2108,26 @@ Distance | % Transmission", level=98, color="white")
         #     self.logger.exception("**ERROR in htmlBestPlots**")
 
 
-#class RunLabelit(Process):
 class RunLabelit(Thread):
-
-    labelit_pids = []
+    
+    # Holder of PID's or JobID's
     jobids = {}
-    #labelit_jobs = {}
+    # Holder for the job threads
     jobs = {}
-    labelit_tracker = {}
-
+    # Holder for errors
+    tracker = {}
     # Holder for results
-    labelit_log = {}
-
-    # For handling print_warning
+    results = {}
+    # Holder for the logs
+    log = {}
+    # For handling print_warning (future?)
     errors_printed = False
 
     def __init__(self, command, output, params, tprint=False, logger=None):
         """
         input >> command
-    	#New minimum input
-    	{   'command': 'INDEX+STRATEGY',
+        #New minimum input
+        {   'command': 'INDEX+STRATEGY',
             'directories': {   'work': '/home/schuerjp/temp/beamcenter/800.0'},
             'header1': {   'beam_center_x': 149.871,
       		'beam_center_y': 145.16,
@@ -2136,7 +2145,7 @@ class RunLabelit(Thread):
       		     'multiprocessing': 'True',
       		     'sample_type': 'protein'},
             'return_address': ('127.0.0.1', 50000)}
-    	"""
+        """
         Thread.__init__(self)
         self.start_time= time.time()
 
@@ -2162,7 +2171,8 @@ class RunLabelit(Thread):
         self.preferences = command["preferences"]
         self.site_parameters = command.get("site_parameters", {})
 
-        # params
+        # Set input params
+        # Run in debug mode
         self.test = params.get("test", False)
 
         # Pass int the multiprocessing.Pool for job submission
@@ -2198,16 +2208,9 @@ class RunLabelit(Thread):
             # Get the total number of Labelit runs
             self.tot_runs = self.get_labelit_settings('total')
 
-        # Make decisions based on input params
-        # Sets settings so I can view the HTML output on my machine (not in the RAPD GUI), and does
-        # not send results to database.
-        #******BEAMLINE SPECIFIC*****
-        # if self.header.has_key("acc_time"):
+        # Display results in UI
         self.gui = True
-        #     self.test = False
-        # else:
-        #     self.gui = True
-        #******BEAMLINE SPECIFIC*****
+
         # Set times for processes. "False" to disable.
         if self.header2:
             self.labelit_timer = 180
@@ -2229,21 +2232,6 @@ class RunLabelit(Thread):
 
         # This is where I place my overall folder settings.
         self.working_dir = self.setup.get("work")
-        # This is where I have chosen to place my results
-        self.auto_summary = False
-        self.labelit_input = False
-        self.labelit_results = {}
-        self.labelit_summary = False
-        self.labelit_failed = False
-        # Labelit settings
-        self.index_number = False
-        self.ignore_user_cell = False
-        self.ignore_user_SG = False
-        # self.min_good_spots = False
-        self.twotheta = False
-        # dicts for running the Queues
-        self.labelit_jobs = {}
-        self.pids = {}
 
         #Process.__init__(self, name="RunLabelit")
         self.start()
@@ -2262,7 +2250,6 @@ class RunLabelit(Thread):
         if self.tot_runs == 1:
             # This is used for beam center plugin
             self.labelit_timer = 300
-            #self.labelit_jobs[xutils.get_labelit_settings(self, self.nrun)] = self.nrun
             # Sets the dataset_preferences.py and launches Labelit
             self.get_labelit_settings(self.nrun)
         else:
@@ -2277,6 +2264,7 @@ class RunLabelit(Thread):
             # Put the logs together
             self.condense_logs()
 
+        # send results and logs back to main process
         self.postprocess()
 
     def preprocess(self):
@@ -2285,9 +2273,7 @@ class RunLabelit(Thread):
         """
         if self.verbose and self.logger:
             self.logger.debug("RunLabelit::preprocess")
-        if os.path.exists(self.working_dir) == False:
-            os.makedirs(self.working_dir)
-        os.chdir(self.working_dir)
+        xutils.create_folder(self.working_dir)
         if self.test:
             if self.nrun == 'all':
                 self.logger.debug("TEST IS ON")
@@ -2351,7 +2337,6 @@ class RunLabelit(Thread):
                                   self.preferences.get("beam_search", 0.2))
             else:
                 # Have to increase the beam_search_scope when 2theta is in use.
-                self.twotheta = True
                 preferences.write('beam_search_scope=0.5\n')
                 preferences.write('autoindex_override_twotheta=%.2f\n'%twotheta)
                 # preferences.write('autoindex_override_distance='+distance+'\n')
@@ -2371,28 +2356,28 @@ class RunLabelit(Thread):
         # Correct error by decreasing the good spots requirement
         if overrides.get("min_good_spots"):
             good_spots = labelit.decrease_good_spot_requirements(overrides.get("min_good_spots"))
-            self.labelit_log[iteration].append("\nSetting min number of good bragg spots to %d and \
+            self.log[iteration].append("\nSetting min number of good bragg spots to %d and \
 rerunning.\n" % good_spots)
 
         # Correct error by increasing Mosflm resolution
         if overrides.get("decrease_mosflm_resolution"):
             new_res = labelit.decrease_mosflm_resolution(iteration)
-            self.labelit_log[iteration].append("\nDecreasing integration resolution to %.1f and \
+            self.log[iteration].append("\nDecreasing integration resolution to %.1f and \
 rerunning.\n" % new_res)
 
         # Decrease the number of spots required
         if overrides.get("min_spots"):
             spot_count = labelit.decrease_spot_requirements(overrides.get("min_spots"))
-            #self.labelit_log[iteration].extend("\nDecreasing spot requirments to %d and \
-            self.labelit_log[iteration].append("\nDecreasing spot requirments to %d and \
+            #self.log[iteration].extend("\nDecreasing spot requirments to %d and \
+            self.log[iteration].append("\nDecreasing spot requirments to %d and \
 rerunning.\n" % spot_count)
 
         # Get rid of bumpiness
         if overrides.get("bumpiness"):
             removed = labelit.no_bumpiness()
             if removed:
-                #self.labelit_log[iteration].extend("\nProfile bumpiness removed and rerunning.\n")
-                self.labelit_log[iteration].append("\nProfile bumpiness removed and rerunning.\n")
+                #self.log[iteration].extend("\nProfile bumpiness removed and rerunning.\n")
+                self.log[iteration].append("\nProfile bumpiness removed and rerunning.\n")
             else:
                 pass
 
@@ -2421,12 +2406,9 @@ rerunning.\n" % spot_count)
     
         preferences.write('\n#iteration %s\n' % iteration)
     
-        if self.twotheta == False:
-            preferences.write('beam_search_scope=0.3\n')
-            
         if iteration == 0:
             preferences.close()
-            self.labelit_log[iteration] = ['\nUsing default parameters.\n']
+            self.log[iteration] = ['\nUsing default parameters.\n']
             self.tprint("\n  Using default parameters", level=30, color="white", newline=False)
             self.logger.debug('Using default parameters.')
     
@@ -2442,7 +2424,7 @@ rerunning.\n" % spot_count)
                 preferences.write('distl.minimum_spot_area=6\n')
                 preferences.write('distl.minimum_signal_height=4.3\n')
             preferences.close()
-            self.labelit_log[iteration] = ['\nLooking for long unit cell.\n']
+            self.log[iteration] = ['\nLooking for long unit cell.\n']
             self.tprint("\n  Looking for long unit cell", level=30, color="white", newline=False)
             self.logger.debug('Looking for long unit cell.')
     
@@ -2450,7 +2432,7 @@ rerunning.\n" % spot_count)
             # Change it up and go for larger peaks like small molecule.
             preferences.write('distl.minimum_spot_height=6\n')
             preferences.close()
-            self.labelit_log[iteration] = ['\nChanging settings to look for stronger peaks (ie. small molecule).\n']
+            self.log[iteration] = ['\nChanging settings to look for stronger peaks (ie. small molecule).\n']
             self.tprint("\n  Looking for stronger peaks (ie. small molecule)", level=30, color="white", newline=False)
             self.logger.debug("Changing settings to look for stronger peaks (ie. small molecule).")
     
@@ -2465,22 +2447,22 @@ rerunning.\n" % spot_count)
                 preferences.write('distl.minimum_spot_area=7\n')
                 preferences.write('distl.minimum_signal_height=1.2\n')
             preferences.close()
-            self.labelit_log[iteration] = ['\nLooking for weak diffraction.\n']
+            self.log[iteration] = ['\nLooking for weak diffraction.\n']
             self.tprint("\n  Looking for weak diffraction", level=30, color="white", newline=False)
             self.logger.debug('Looking for weak diffraction.')
     
         elif iteration == 4:
             if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
                 preferences.write('distl.minimum_spot_area=3\n')
-                self.labelit_log[iteration] = ['\nSetting spot picking level to 3.\n']
+                self.log[iteration] = ['\nSetting spot picking level to 3.\n']
                 area = 3
             elif "Eiger" in self.vendortype:
                 preferences.write('distl.minimum_spot_area=3\n')
-                self.labelit_log[iteration] = ['\nSetting spot picking level to 3.\n']
+                self.log[iteration] = ['\nSetting spot picking level to 3.\n']
                 area = 3
             else:
                 preferences.write('distl.minimum_spot_area=8\n')
-                self.labelit_log[iteration] = ['\nSetting spot picking level to 8.\n']
+                self.log[iteration] = ['\nSetting spot picking level to 8.\n']
                 area = 8
             preferences.close()
             self.tprint("\n  Setting spot picking level to %d" % area, level=30, color="white", newline=False)
@@ -2490,17 +2472,17 @@ rerunning.\n" % spot_count)
             if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
                 preferences.write('distl.minimum_spot_area=2\n')
                 preferences.write('distl_highres_limit=5\n')
-                self.labelit_log[iteration] = ['\nSetting spot picking level to 2 and resolution to 5.\n']
+                self.log[iteration] = ['\nSetting spot picking level to 2 and resolution to 5.\n']
                 setting = (2, 5)
             elif "Eiger" in self.vendortype:
                 preferences.write('distl.minimum_spot_area=2\n')
                 preferences.write('distl_highres_limit=4\n')
-                self.labelit_log[iteration] = ['\nSetting spot picking level to 2 and resolution to 4.\n']
+                self.log[iteration] = ['\nSetting spot picking level to 2 and resolution to 4.\n']
                 setting = (2, 4)
             else:
                 preferences.write('distl.minimum_spot_area=6\n')
                 preferences.write('distl_highres_limit=5\n')
-                self.labelit_log[iteration] = ['\nSetting spot picking level to 6 and resolution to 5.\n']
+                self.log[iteration] = ['\nSetting spot picking level to 6 and resolution to 5.\n']
                 setting = (6, 5)
             preferences.close()
             self.tprint("\n  Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white", newline=False)
@@ -2573,13 +2555,12 @@ rerunning.\n" % spot_count)
             command += "%s " % self.header2.get("fullname")
 
         # Save the command to the top of log file, before running job.
-        self.labelit_log[iteration].extend([command])
+        self.log[iteration].extend([command])
         print '\n%s'%command
 
         # Don't launch job if self.test = True
         if self.test:
             run = "junk%s" % iteration
-            #labelit_jobs["junk%s" % iteration] = iteration
         # Not testing
         else:
             log = os.path.join(os.getcwd(), "labelit.log")
@@ -2609,22 +2590,8 @@ rerunning.\n" % spot_count)
             self.jobids[iteration] = pid_queue.get()
 
             # Save the number of times a job was run to stop a loop
-            #if self.labelit_tracker.get(iteration, False):
-                #self.labelit_tracker[iteration]+=1
-            #    self.labelit_tracker[iteration]['nruns'] += self.labelit_tracker[iteration].get('nruns', 1)
-            #else:
-            #    self.labelit_tracker[iteration]['nruns'] = 1
-            self.labelit_tracker.setdefault(iteration, {'nruns':0})
-            self.labelit_tracker[iteration]['nruns'] += 1
-            print self.labelit_tracker[iteration]
-            #if error:
-                #self.labelit_tracker[iteration].setdefault(error, {error:0})
-                #self.labelit_tracker[iteration][error] += 1
-                #print error, self.labelit_tracker[iteration][error]
-                
-            #self.labelit_tracker.setdefault(iteration, 1)
-            #self.labelit_tracker[iteration] += self.labelit_tracker.get(iteration, 1)
-            #print iteration, self.labelit_tracker[iteration]
+            self.tracker.setdefault(iteration, {'nruns':0})
+            self.tracker[iteration]['nruns'] += 1
 
         # return the job
         return run
@@ -2641,146 +2608,144 @@ rerunning.\n" % spot_count)
         iteration = raw_result["tag"]
         stdout = raw_result["stdout"]
 
-        # There is an error
-        # if raw_result["returncode"] != 0:
-        error = False
-
         # Add to log
-        self.labelit_log[iteration].append("\n\n")
-        self.labelit_log[iteration].extend(stdout.split("\n"))
+        self.log[iteration].append("\n\n")
+        self.log[iteration].extend(stdout.split("\n"))
 
         # Look for labelit problem with Eiger CBFs
-        if "TypeError: unsupported operand type(s) for %: 'NoneType' and 'int'" in stdout:
-            error = "IOTBX needs patched for Eiger CBF files\n"
-            if not self.errors_printed:
-                self.print_warning("Eiger CBF")
-                self.errors_printed = True
+        #if "TypeError: unsupported operand type(s) for %: 'NoneType' and 'int'" in stdout:
+        #    error = "IOTBX needs patched for Eiger CBF files\n"
+        #    if not self.errors_printed:
+        #        self.print_warning("Eiger CBF")
+        #        self.errors_printed = True
 
         # Couldn't index
         # elif "No_Indexing_Solution: (couldn't find 3 good basis vectors)" in stdout:
         #     error = "No_Indexing_Solution: (couldn't find 3 good basis vectors)"
 
         # Return if there is an error not caught by parsing
-        if error:
-            self.labelit_log[iteration].append(error)
-            self.labelit_results[iteration] = {"labelit_results": "ERROR"}
+        #if error:
+        #    self.log[iteration].append(error)
+        #    self.labelit_results[iteration] = {"labelit_results": "ERROR"}
             #return False
 
         # No error or error caught by parsing
+        #else:
+
+        parsed_result = labelit.parse_output(stdout, iteration)
+        # Save the return into the shared var
+        self.results[iteration] = {"labelit_results": parsed_result}
+
+        # Do error checking and send to correct place according to iteration.
+        potential_problems = {
+            # Base command to rerun job
+            "run_command": functools.partial(self.process_labelit, iteration=iteration),
+
+            "bad_input": {
+                "error": "Labelit did not like your input unit cell dimensions or SG.",
+                "execute1": {"ignore_sublattice": True},
+                "execute2": {"ignore_user_cell": True},
+                "execute3": {"ignore_user_cell": True, 
+                             "ignore_user_SG": True}},
+            "bumpiness": {
+                "error": "Labelit settings need to be adjusted.",
+                "execute1": {"bumpiness": True}
+                },
+            "mosflm_error": {
+                "error": "Mosflm could not integrate your image.",
+                "execute1": {"decrease_mosflm_resolution": True}
+                },
+            "min_good_spots": {
+                "error": "Labelit did not have enough spots to find a solution",
+                "execute1": True
+                },
+            "min_spots": {
+              "error": "Labelit did not have enough spots to find a solution",
+              "execute1": True
+                },
+            "fix_cell": {
+                "error": "Labelit had multiple choices for user SG and failed.",
+                "execute1": True,
+                },
+
+            # No fix for these errors
+            "fix_labelit": {
+                "error": "Distance is not getting read correctly from the image header."},
+            "no_pair": {
+                "error": "Images are not a pair."},
+            "failed": {
+                "error": "Autoindexing failed to find a solution"},
+            "eiger_cbf_error": {
+                "error": "IOTBX needs patched for Eiger CBF files"},
+        }
+
+        # If Labelit results are OK, then...
+        if isinstance(parsed_result, dict):
+            problem_flag = False
+
+        # Otherwise deal with fixing and rerunning Labelit
+        elif isinstance(parsed_result, tuple):
+            problem_flag = parsed_result[0]
         else:
+            problem_flag = parsed_result
 
-            parsed_result = labelit.parse_output(stdout, iteration)
-            # Save the return into the shared var
-            self.labelit_results[iteration] = {"labelit_results": parsed_result}
+        if problem_flag:
+            # Change to the correct folder for rerunning.
+            xutils.create_folders_labelit(self.working_dir, iteration)
+            
+            # Check if there is a fix... 
+            problem_actions = potential_problems.get(problem_flag, False)
+            if problem_actions:
+                # Keep track of how many times the specific errors have come up.
+                self.tracker[iteration].setdefault(problem_flag,  0)
+                self.tracker[iteration][problem_flag] += 1
+                # Shortcuts
+                ex = problem_actions.get("execute%s"%self.tracker[iteration][problem_flag], False)
+                er = problem_actions.get('error')
 
-            # Do error checking and send to correct place according to iteration.
-            potential_problems = {
-                # Base command to rerun job
-                "run_command": functools.partial(self.process_labelit, iteration=iteration),
+            # Failure to index due to too few spots
+            if problem_flag == "min_spots":
+                spot_count = parsed_result[1]
+                # If only run once and more than 25 spots
+                if spot_count > 25 and ex:
+                    potential_problems['run_command'](overrides={"min_spots": spot_count})
+                else:
+                    # Failed since not enough spots 
+                    failed = True
 
-                "bad_input": {
-                    "error": "Labelit did not like your input unit cell dimensions or SG.",
-                    "execute1": {"ignore_sublattice": True},
-                    "execute2": {"ignore_user_cell": True},
-                    "execute3": {"ignore_user_cell": True, 
-                                 "ignore_user_SG": True}},
-                "bumpiness": {
-                    "error": "Labelit settings need to be adjusted.",
-                    "execute1": {"bumpiness": True}
-                    },
-                "mosflm_error": {
-                    "error": "Mosflm could not integrate your image.",
-                    "execute1": {"decrease_mosflm_resolution": True}
-                    },
-                "min_good_spots": {
-                    "error": "Labelit did not have enough spots to find a solution",
-                    "execute1": True
-                    },
-                "min_spots": {
-                  "error": "Labelit did not have enough spots to find a solution",
-                  "execute1": True
-                    },
-                "fix_cell": {
-                    "error": "Labelit had multiple choices for user SG and failed.",
-                    "execute1": True,
-                    },
-
-                # No fix for these errors
-                "fix_labelit": {
-                    "error": "Distance is not getting read correctly from the image header."},
-                "no_pair": {
-                    "error": "Images are not a pair."},
-                "failed": {
-                    "error": "Autoindexing Failed to find a solution"},
-            }
-
-            # If Labelit results are OK, then...
-            if isinstance(parsed_result, dict):
-                problem_flag = False
-
-            # Otherwise deal with fixing and rerunning Labelit
-            elif isinstance(parsed_result, tuple):
-                problem_flag = parsed_result[0]
-            else:
-                problem_flag = parsed_result
-
-            if problem_flag:
-                # Change to the correct folder for rerunning.
-                xutils.create_folders_labelit(self.working_dir, iteration)
-                
-                # Check if there is a fix... 
-                problem_actions = potential_problems.get(problem_flag, False)
-                if problem_actions:
-                    # Keep track of how many times the error has come up
-                    self.labelit_tracker[iteration].setdefault(problem_flag,  0)
-                    self.labelit_tracker[iteration][problem_flag] += 1
-                    print self.labelit_tracker[iteration]
-                    ex = problem_actions.get("execute%s"%self.labelit_tracker[iteration][problem_flag], False)
-                    er = problem_actions.get('error')
-
-                # Failure to index due to too few spots
-                if problem_flag == "min_spots":
-                    spot_count = parsed_result[1]
-                    # If only run once and more than 25 spots
-                    if spot_count > 25 and ex:
-                        potential_problems['run_command'](overrides={"min_spots": spot_count})
-                    else:
-                        # Failed since not enough spots 
-                        failed = True
-
-                # When Labelit works, but Mosflm step fails. Rerun forcing Mosflm to work.
-                elif problem_flag == "min_good_spots":
-                    if ex:
-                        potential_problems['run_command'](overrides={"min_good_spots": parsed_result[1]})
-                    else:
-                        failed = True
-
-                # Multiple solutions possible with similar cell dimensions
-                elif problem_flag == "fix_cell":
-                    if ex:
-                        potential_problems['run_command'](overrides={"fix_cell": True,
-                                                                     "ignore_user_cell": True,
-                                                                     "ignore_user_SG": True,
-                                                                     "lattice_group": parsed_result[1],
-                                                                     "labelit_solution": parsed_result[2]})
-                    else:
-                        failed = True
-
-                # Rest of the problems
-                elif problem_flag in potential_problems:
-                    if ex:
-                        potential_problems['run_command'](overrides=ex)
-                    else:
-                        failed = True
-
-                # No solution
+            # When Labelit works, but Mosflm step fails. Rerun forcing Mosflm to work.
+            elif problem_flag == "min_good_spots":
+                if ex:
+                    potential_problems['run_command'](overrides={"min_good_spots": parsed_result[1]})
                 else:
                     failed = True
 
-                # IF is failed, save the log and results
-                if failed:
-                    self.labelit_log[iteration].append("\n%s\n" % er)
-                    self.labelit_results[iteration] = {"labelit_results": "FAILED"}
+            # Multiple solutions possible with similar cell dimensions
+            elif problem_flag == "fix_cell":
+                if ex:
+                    potential_problems['run_command'](overrides={"fix_cell": True,
+                                                                 "ignore_user_cell": True,
+                                                                 "ignore_user_SG": True,
+                                                                 "lattice_group": parsed_result[1],
+                                                                 "labelit_solution": parsed_result[2]})
+                else:
+                    failed = True
+
+            # Rest of the problems
+            elif problem_flag in potential_problems:
+                if ex:
+                    potential_problems['run_command'](overrides=ex)
+                else:
+                    failed = True
+
+            # No solution
+            else:
+                failed = True
+
+            # If failed, save the log and results
+            if failed:
+                self.log[iteration].append("\n%s\n" % er)
+                self.results[iteration] = {"labelit_results": "FAILED"}
 
     def print_warning(self, warn_type):
         """ """
@@ -2800,10 +2765,10 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
             self.logger.debug("RunLabelit::postprocess")
 
         # Pass back output
-        self.output.put(self.labelit_results)
-        
+        self.output.put(self.results)
+        # Pass back the logs
         if self.nrun == 'all':
-            self.output.put(self.labelit_log)
+            self.output.put(self.log)
 
     def labelit_run_queue(self):
         """
@@ -2832,13 +2797,10 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
                 # Postprocess the labelit job
                 self.postprocess_labelit(raw_result=result)
                 # All jobs have finished
-                #if not len(self.labelit_pids):
                 if not len(self.jobids.keys()):
                     # print "All jobs done"
                     kill_jobs = False
                     break
-            # sys.stdout.write(".")
-            # sys.stdout.flush()
             if self.tot_runs == 1:
                 # For beam center plugin, slow it down
                 time.sleep(1)
@@ -2849,7 +2811,7 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
         if kill_jobs:
             # Make sure all jobs are killed
             for i, pid in self.jobids.iteritems():
-                self.labelit_results[i] = {"labelit_results": "FAILED"}
+                self.results[i] = {"labelit_results": "FAILED"}
                 self.kill_job(pid, self.logger)
         
 
@@ -2858,17 +2820,15 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
 
         self.logger.debug("RunLabelit::condense_logs")
 
-        #for iteration in range(0, self.nrun):
         for iteration in range(self.tot_runs):
-            # pprint(self.labelit_log[iteration])
-            if iteration in self.labelit_log:
+            # pprint(self.log[iteration])
+            if iteration in self.log:
                 header_line = "-------------------------\nLABELIT ITERATION %s\n-------------------\
 ------\n" % iteration
                 if iteration == 0:
-                    self.labelit_log["run1"] = ["\nRun 1\n"]
-                self.labelit_log["run1"].append(header_line)
-                self.labelit_log["run1"].extend(self.labelit_log[iteration])
-                self.labelit_log["run1"].append("\n")
+                    self.log["run1"] = ["\nRun 1\n"]
+                self.log["run1"].append(header_line)
+                self.log["run1"].extend(self.log[iteration])
+                self.log["run1"].append("\n")
             else:
-                self.labelit_log["run1"].append("\nLabelit iteration %s FAILED\n" % iteration)
-        #pprint(self.labelit_log)
+                self.log["run1"].append("\nLabelit iteration %s FAILED\n" % iteration)

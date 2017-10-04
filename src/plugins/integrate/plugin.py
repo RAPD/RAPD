@@ -245,7 +245,7 @@ class RapdPlugin(Process):
         if self.cluster_use:
             # Load the cluster adapter
             cluster_launcher = xutils.load_cluster_adapter(self)
-            self.launcher = cluster_launcher.processCluster
+            self.launcher = cluster_launcher.process_cluster
             # Based on the command, pick a batch queue on the cluster. Added to input kwargs
             self.batch_queue = {'batch_queue': cluster_launcher.check_queue(self.command["command"])}
             if self.ram_use == True:
@@ -1286,7 +1286,7 @@ class RapdPlugin(Process):
 
         """
         if self.cluster_use == True:
-            xds_proc = Process(target=BLspec.processCluster,
+            xds_proc = Process(target=BLspec.process_cluster,
                                args=(self, (xds_command, 'XDS.LOG', '8', 'phase2.q')))
         else:
             xds_proc = multiprocessing.Process(target=local_subprocess,

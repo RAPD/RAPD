@@ -34,6 +34,7 @@ import subprocess
 import time
 import tempfile
 from multiprocessing import Process
+from functools import wraps
 
 def checkCluster():
     """
@@ -68,11 +69,13 @@ def check_queue(inp):
     """
     Returns which cluster batch queue should be used with the plugin.
     """
-    d = {#"INDEX+STRATEGY" : 'phase3.q',
+    d = {"ECHO"           : 'general.q',
          "INDEX"          : 'phase3.q',
          "BEAMCENTER"     : 'all.q',
          "XDS"            : 'all.q',
+         "INTEGRATE"      : 'phase2.q'
          }
+    
     return(d[inp])
   
 def get_nproc_njobs():
@@ -112,15 +115,23 @@ def connectCluster(inp, job=True):
       return(line.strip())
   client.close()
 
-def processCluster(**kwargs):
+def process_cluster_fix(func):
     """
-    Helper to run processCluster in a multiprocessing.Process to avoid
+    wrapper to run processCluster in a multiprocessing.Process to avoid
     threading problems in DRMAA with multiple jobs sent to same session.
     """
-    job = Process(target=processCluster2, kwargs=kwargs)
-    job.start()
+    # If command starts with any in list, then mp.Process it.
+    l = ['labelit', 'best -f', 'tcsh mo']
+    @wraps(func)
+    def wrapper(**kwargs):
+        if kwargs['command'][:7] in l:
+            Process(target=func, kwargs=kwargs).start()
+        else:
+            return func(**kwargs)
+    return wrapper
 
-def processCluster2(command,
+@process_cluster_fix
+def process_cluster(command,
                    work_dir=False,
                    logfile=False,
                    batch_queue='all.q',

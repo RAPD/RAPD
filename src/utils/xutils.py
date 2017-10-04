@@ -1319,7 +1319,7 @@ def get_labelit_settings_OLD(self, iteration=0):
 
     return self.process_labelit(iteration)
 
-def errorLabelitMin(self, iteration, line):
+def errorLabelitMin_OLD(self, iteration, line):
   """
   Labelit error correction. Reset min spots allowed. Set/reset setting in dataset_preferences.py according
   to error iteration. Only run in multiproc mode.
@@ -1347,7 +1347,7 @@ def errorLabelitMin(self, iteration, line):
     self.labelit_log[str(iteration)].extend('\nCould not change spot finding settings in dataset_preferences.py file.\n')
     return(None)
 
-def errorLabelitFixCell(self,iteration,lg,labelit_sol):
+def errorLabelitFixCell_OLD(self,iteration,lg,labelit_sol):
   """
   Pick correct cell (lowest rmsd) if multiple cell choices are possible in user selected SG and rerun Labelit.
   """
@@ -1372,7 +1372,7 @@ def errorLabelitFixCell(self,iteration,lg,labelit_sol):
     self.logger.exception('**Error in Utils.errorLabelitFixCell**')
     return(None)
 
-def errorLabelitCellSG(self,iteration):
+def errorLabelitCellSG_OLD(self,iteration):
   """
   #Retrying Labelit without using user specified unit cell params.
   """
@@ -1388,7 +1388,7 @@ def errorLabelitCellSG(self,iteration):
     self.logger.exception('**ERROR in Utils.errorLabelitCellSG**')
     return(None)
 
-def errorLabelitBump(self,iteration):
+def errorLabelitBump_OLD(self,iteration):
   """
   Get rid of distl_profile_bumpiness line in dataset_preferences.py. Don't think I use much anyway.
   """
@@ -1410,7 +1410,7 @@ def errorLabelitBump(self,iteration):
     self.labelit_log[str(iteration)].extend('\nCould not remove distl_profile_bumpiness line in dataset_preferences.py file.\n')
     return(None)
 
-def errorLabelitGoodSpots(self,iteration):
+def errorLabelitGoodSpots_OLD(self,iteration):
   """
   Sometimes Labelit gives an eror saying that there aren't enough 'good spots' for Mosflm. Not a Labelit
   failure error. Forces Labelit/Mosflm to give result regardless. Sometimes causes failed index.
@@ -1438,7 +1438,7 @@ def errorLabelitGoodSpots(self,iteration):
     self.labelit_log[str(iteration)].extend('\nCould not change min number of good bragg spots settings in dataset_preferences.py file.\n')
     return(None)
 
-def errorLabelitMosflm(self,iteration):
+def errorLabelitMosflm_OLD(self,iteration):
     """
     Set Mosflm integration resolution lower. Seems to fix this error.
     """
