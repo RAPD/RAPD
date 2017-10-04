@@ -30,7 +30,7 @@ export class AuthService implements CanActivate {
 
     // console.log('login', credentials);
 
-    let creds = 'uid=' + credentials.uid + '&password=' + credentials.password;
+    let creds = 'uid=' + credentials.uid + '&email=' + credentials.email+ '&password=' + credentials.password;
     // console.log(creds);
 
     let header = new Headers();
@@ -107,9 +107,14 @@ export class AuthService implements CanActivate {
       );
 
       // Save user information
-      // this.profile = this.jwtHelper.decodeToken(token)._doc;
-      // console.log(this.profile);
-      localStorage.setItem('profile', JSON.stringify(this.jwtHelper.decodeToken(token)._doc));
+      let decoded_token = this.jwtHelper.decodeToken(token);
+      if (decoded_token._doc) {
+        var profile = decoded_token._doc;
+      } else {
+        var profile = decoded_token;
+      }
+      console.log(profile);
+      localStorage.setItem('profile', JSON.stringify(profile));
 
       // Return for consumer
       return res_json;

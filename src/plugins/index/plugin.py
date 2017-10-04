@@ -279,7 +279,7 @@ class RapdPlugin(Process):
         #else:
         #    self.cluster_adapter = False
         #    self.batch_queue = False
-        
+
         # Setup the appropriate launcher
         if self.cluster_use:
             cluster_launcher = xutils.load_cluster_adapter(self)
@@ -291,7 +291,7 @@ class RapdPlugin(Process):
             self.launcher = local_subprocess
             self.batch_queue = {}
             self.kill_job = xutils.kill_children
-        
+
         # Setup a multiprocessing.Pool for running jobs (8 will be full speed)
         # If set to 1, then everything is run sequentially
         #self.pool = mp_pool(self.preferences.get('nproc', 8))
@@ -415,16 +415,15 @@ class RapdPlugin(Process):
 
             # Run Labelit
             self.start_labelit()
-            
+
             # Run Distl while Labelit is running
             self.processDistl()
-            
-      	    # Sorts labelit results by highest symmetry.
+
+          # Sorts labelit results by highest symmetry.
             self.labelitSort()
-            
+
             # If there is a solution, then calculate a strategy.
             if self.labelit_failed == False:
-
                 if self.multiproc == False:
                     self.postprocessDistl()
                 self.preprocess_raddose()
@@ -438,7 +437,7 @@ class RapdPlugin(Process):
 
             # Pass back results, and cleanup.
             self.postprocess()
-            
+
     def connect_to_redis(self):
         """Connect to the redis instance"""
         # Create a pool connection
@@ -483,9 +482,9 @@ class RapdPlugin(Process):
         if os.path.exists(self.working_dir) == False:
             os.makedirs(self.working_dir)
         os.chdir(self.working_dir)
-        
+
         # Add flux info to header
-        #self.header = 
+        #self.header =
 
         # Setup event for job control on cluster (Only works at NE-CAT using DRMAA for
         # job submission)
@@ -974,7 +973,7 @@ class RapdPlugin(Process):
                               'logfile': log}
                 # Update batch queue info if using a compute cluster
                 inp_kwargs.update(self.batch_queue)
-                
+
                 #Launch the job
                 #jobs[str(i)] = Process(target=self.launcher,
                 jobs[str(i)] = Thread(target=self.launcher,
@@ -1087,12 +1086,7 @@ class RapdPlugin(Process):
                 job = Thread(target=self.launcher,
                                 kwargs=inp_kwargs)
                 job.start()
-                    
-        
-        """
-        except:
-            self.logger.exception("**Error in processMosflm**")
-        """
+
     def check_best_detector(self, detector):
         """Check that the detector we need is in the BEST configuration file"""
 
@@ -1146,11 +1140,13 @@ class RapdPlugin(Process):
             if self.multiproc == False:
                 end = st+1
 
-        # Get the Best version for this machine
-        best_version = xutils.getBestVersion()
+        # Only check best info if we are going to use best
+        if st < 4:
+            # Get the Best version for this machine
+            best_version = xutils.getBestVersion()
 
-        # Make sure that the BEST install has the detector
-        self.check_best_detector(DETECTOR_TO_BEST.get(self.header.get("detector"), None))
+            # Make sure that the BEST install has the detector
+            self.check_best_detector(DETECTOR_TO_BEST.get(self.header.get("detector"), None))
 
         for i in range(st, end):
             # Print for 1st BEST run
@@ -1588,7 +1584,7 @@ Distance | % Transmission", level=98, color="white")
             self.labelit_log = self.labelitQueue.get()
         except KeyboardInterrupt:
             sys.exit()
-        
+
         # print "labelit_results"
         # pprint(self.labelit_results)
         # print "labelit_log"
@@ -2182,8 +2178,8 @@ class RunLabelit(Thread):
         # Will not use RAM if cluster_use=True since runs would be on separate nodes. Adds
         # overhead of 1-3s to total run time if all nodes same speed.
         self.launcher = params.get("launcher", local_subprocess)
-        
-        # If self.cluster_use == True, you can specify a batch queue on your cluster. 
+
+        # If self.cluster_use == True, you can specify a batch queue on your cluster.
         self.batch_queue = params.get("batch_queue", {})
         # I don't like this so I may move this later!!
         if not len(self.batch_queue.keys()):
@@ -2246,7 +2242,7 @@ class RunLabelit(Thread):
 
         # Make the initial dataset_prefernces.py file
         self.preprocess_labelit()
-        
+
         if self.tot_runs == 1:
             # This is used for beam center plugin
             self.labelit_timer = 300
@@ -2576,7 +2572,7 @@ rerunning.\n" % spot_count)
                           "tag": iteration}
             # Add batch queue info if launching on cluster
             inp_kwargs.update(self.batch_queue)
-            
+
             # Launch the job
             run = Thread(target=self.launcher,
                          name=iteration,
@@ -2813,7 +2809,7 @@ $RAPD_HOME/install/sources/cctbx/README.md\n",
             for i, pid in self.jobids.iteritems():
                 self.results[i] = {"labelit_results": "FAILED"}
                 self.kill_job(pid, self.logger)
-        
+
 
     def condense_logs(self):
         """Put the Labelit logs together"""

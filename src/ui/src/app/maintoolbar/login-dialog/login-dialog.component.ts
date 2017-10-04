@@ -54,6 +54,8 @@ export class LoginDialogComponent implements OnInit {
 
     this.submitted = true;
 
+    console.log('this.login_form.value:', this.login_form.value);
+
     this.auth_service.login(this.login_form.value).subscribe(params => {
       // console.log('onSubmit >>', params);
       if (params.success === true) {

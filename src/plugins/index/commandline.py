@@ -156,7 +156,7 @@ def construct_command(image_headers, commandline_args, detector_module):
     # Unknown
     command["preferences"]["beam_flip"] = False
     #command["preferences"]["multiprocessing"] = False
-    
+
     # Launches jobs at same time using more cores. Much Faster!!
     #command["preferences"]["multiprocessing"] = True
     command["preferences"]["nproc"] = commandline_args.nproc
@@ -480,7 +480,7 @@ def main():
     if site and not site_module:
         site_file = utils.site.determine_site(site_arg=site)
         site_module = importlib.import_module(site_file)
-    
+
     # Have a detector - read in file data
     if detector_module:
         image_headers = {}
@@ -488,7 +488,7 @@ def main():
             if site_module:
                 image_headers[data_file] = detector_module.read_header(data_file,
                                                                        #site_module.BEAM_SETTINGS)
-                                                                       site_module.BEAM_INFO.get(site.upper()))
+                                                                       site_module.BEAM_INFO.get(site.upper(), {}))
             else:
                 image_headers[data_file] = detector_module.read_header(data_file)
             # If this image is derived from an hdf5 master file, tag it

@@ -12,6 +12,10 @@ var GroupSchema = new Schema({
     required: true,
     default: Date.now
   },
+  email: {
+    type: String,
+    required: false
+  },
   gidNumber: {
     type: Number,
     required: true
@@ -23,6 +27,16 @@ var GroupSchema = new Schema({
   institution: {
     type: String,
     default: 'unknown'
+  },
+  loginAttempts: {
+    type: Number,
+    required: false,
+    default: 0
+  },
+  role: {
+    type: String,
+    required: false,
+    default: 'user'
   },
   status: {
     type: String,
