@@ -1081,7 +1081,7 @@ class RapdPlugin(Process):
                     #Launch the job
                     #Process(target=self.launcher,
                     Thread(target=self.launcher,
-                                    kwargs=inp_kwargs).start()
+                           kwargs=inp_kwargs).start()
 
         except:
             self.logger.exception("**Error in processMosflm**")
