@@ -1139,14 +1139,13 @@ class RapdPlugin(Process):
             if self.multiproc == False:
                 end = st+1
 
-        print "I:", i
-        sys.exit()
+        # Only check best info if we are going to use best
+        if st < 4:
+            # Get the Best version for this machine
+            best_version = xutils.getBestVersion()
 
-        # Get the Best version for this machine
-        best_version = xutils.getBestVersion()
-
-        # Make sure that the BEST install has the detector
-        self.check_best_detector(DETECTOR_TO_BEST.get(self.header.get("detector"), None))
+            # Make sure that the BEST install has the detector
+            self.check_best_detector(DETECTOR_TO_BEST.get(self.header.get("detector"), None))
 
         for i in range(st, end):
             # Print for 1st BEST run
