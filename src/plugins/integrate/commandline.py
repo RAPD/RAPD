@@ -109,7 +109,7 @@ def get_image_data(data_file, detector_module, site_module, site):
     # print "get_image_data", data_file
 
     if site_module:
-        header = detector_module.read_header(data_file, site_module.BEAM_INFO.get(site))
+        header = detector_module.read_header(data_file, site_module.BEAM_INFO.get(site, {}))
     else:
         header = detector_module.read_header(data_file)
 

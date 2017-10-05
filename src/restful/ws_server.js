@@ -108,6 +108,7 @@ parse_message = function(channel, message) {
       return_array.push(['results', [result]]);
 
       // Create a detailed result
+      return_array.push(['result_details', message]);
 
       // Return
       return return_array;
