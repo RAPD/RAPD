@@ -1797,7 +1797,7 @@ class RapdPlugin(Process):
             archive_dirname = '_'.join([self.image_data['image_prefix'],
                                        str(self.image_data['run_number'])])
         else:
-            archive_dirname = [self.image_data['image_prefix']
+            archive_dirname = self.image_data['image_prefix']
 
 
         # Full path location of the archive
@@ -1856,6 +1856,8 @@ class RapdPlugin(Process):
 
         # Rename the so-called mergable file
         mergable_file = results["mtzfile"].replace("_aimless", "_mergable")
+        print mergable_file, os.path.exists(mergable_file)
+        print os.path.join(archive_dirname, mergable_file), os.path.exists(os.path.join(archive_dirname, mergable_file))
         shutil.copyfile(results["mtzfile"], os.path.join(archive_dirname,
                                                          mergable_file))
 
