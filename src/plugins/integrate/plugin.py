@@ -1810,7 +1810,7 @@ class RapdPlugin(Process):
         if self.image_data.get("run_number"):
             archive_files_prefix = "%s/%s_%d" % (archive_dir,
                                                  self.image_data.get("image_prefix"),
-                                                 self.image_data.get("run_number")
+                                                 self.image_data.get("run_number"))
         else:
             archive_files_prefix = "%s/%s" % (archive_dir,
                                               self.image_data.get("image_prefix"))
