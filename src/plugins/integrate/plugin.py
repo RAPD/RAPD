@@ -1793,16 +1793,27 @@ class RapdPlugin(Process):
 
         # Set up the method
         # Archive directory name
-        archive_dirname = '_'.join([self.image_data['image_prefix'],
-                                   str(self.image_data['run_number'])])
+        if self.image_data.get("run_number"):
+            archive_dirname = '_'.join([self.image_data['image_prefix'],
+                                       str(self.image_data['run_number'])])
+        else:
+            archive_dirname = '_'.join([self.image_data['image_prefix'],
+                                       str(self.image_data['run_number'])])
+
+
         # Full path location of the archive
         archive_dir = os.path.join(self.dirs['work'], archive_dirname)
         if not os.path.isdir(archive_dir):
             os.mkdir(archive_dir)
+
         # Full path prefix for archive files
-        archive_files_prefix = "%s/%s_%d" %(archive_dir,
-                                            self.image_data["image_prefix"],
-                                            self.image_data["run_number"])
+        if self.image_data.get("run_number"):
+            archive_files_prefix = "%s/%s_%d" % (archive_dir,
+                                                 self.image_data.get("image_prefix"),
+                                                 self.image_data.get("run_number")
+        else:
+            archive_files_prefix = "%s/%s" % (archive_dir,
+                                              self.image_data.get("image_prefix"))
 
         # Flags for file creation
         scalepack = False
