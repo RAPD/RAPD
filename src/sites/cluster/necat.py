@@ -121,12 +121,18 @@ def process_cluster_fix(func):
     threading problems in DRMAA with multiple jobs sent to same session.
     """
     # If command starts with any in list, then mp.Process it.
-    l = ['labelit', 'best -f', 'tcsh mo']
+    l = ['labelit.index', 'best -f', 'mosflm_strat']
     @wraps(func)
     def wrapper(**kwargs):
-        if kwargs['command'][:7] in l:
-            Process(target=func, kwargs=kwargs).start()
-        else:
+        #if kwargs['command'][:7] in l:
+        print kwargs['command']
+        launched = False
+        for s in l:
+            if kwargs['command'].count(s):
+                Process(target=func, kwargs=kwargs).start()
+                launched = True
+                break
+        if launched == False:
             return func(**kwargs)
     return wrapper
 

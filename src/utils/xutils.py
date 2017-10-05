@@ -1481,7 +1481,7 @@ def getBestVersion():
 
     return version
 
-def errorBest(self, iteration=0, best_version="3.2.0"):
+def errorBest_OLD(self, iteration=0, best_version="3.2.0"):
     """
     Run all the Best runs at the same time.
     Reduce resolution limit and rerun Mosflm to calculate new files.
@@ -1505,7 +1505,7 @@ def errorBest(self, iteration=0, best_version="3.2.0"):
                 new.writelines(temp)
                 new.close()
                 subprocess.Popen("sh %s" % f, shell=True).wait()
-        self.processBest(iteration, best_version)
+        self.process_best(iteration, best_version)
 
     except:
         self.logger.exception("**ERROR in Utils.errorBest**")
@@ -1646,16 +1646,16 @@ def fixMosflmSG(self):
     self.logger.debug('Utilities::fixMosflmSG')
   try:
     temp = []
-    shutil.copy('%s'%self.index_number,'%s_orig'%self.index_number)
+    shutil.copy(os.path.join(self.labelit._dir,self.index_number),'%s_orig'%os.path.join(self.labelit._dir,self.index_number))
     if self.verbose:
       self.logger.debug('Since user selected the space group, Mosflm files will be edited to match.')
-    for x,line in enumerate(open('%s'%self.index_number,'r').readlines()):
+    for x,line in enumerate(open('%s'%os.path.join(self.labelit._dir, self.index_number),'r').readlines()):
       temp.append(line)
       if line.startswith('SYMMETRY'):
         if line.split()[1] != self.spacegroup:
           temp.remove(line)
           temp.insert(x,'SYMMETRY %s\n'%self.spacegroup)
-    new = open('%s'%self.index_number,'w')
+    new = open('%s'%os.path.join(self.labelit._dir, self.index_number),'w')
     new.writelines(temp)
     new.close()
 
@@ -1865,6 +1865,7 @@ def foldersStrategy(self, iteration=0):
     folders(self,iteration)
     if copy:
       if iteration[-1] == '0':
+        # Does this even work? there is bestfile.dat and .par? 
         os.system('cp %s/bestfile* %s/%s*.hkl .'%(self.labelit_dir,self.labelit_dir,self.index_number))
       shutil.copy(os.path.join(self.labelit_dir,self.index_number),os.getcwd())
       shutil.copy(os.path.join(self.labelit_dir,'%s.mat'%self.index_number),os.getcwd())
@@ -1878,6 +1879,37 @@ def foldersStrategy(self, iteration=0):
   except:
     self.logger.exception('**Error in Utils.foldersStrategy**')
 
+def foldersStrategy_NEW(self, iteration=0):
+  """
+  Sets up new directory for programs.
+  """
+  if self.verbose:
+    self.logger.debug('Utilities::foldersStrategy')
+  #try:
+  #if os.path.exists(os.path.join(self.working_dir,str(iteration))):
+  new_folder = os.path.join(self.labelit_dir,str(iteration))
+  if os.path.exists(new_folder):
+    copy = False
+  else:
+    copy = True
+  #folders(self,iteration)
+  folders2(self, new_folder)
+  if copy:
+    if iteration == 0:
+      os.system('cp %s/bestfile* %s/%s*.hkl .'%(self.labelit_dir,self.labelit_dir,self.index_number))
+    #shutil.copy(os.path.join(self.labelit_dir,self.index_number),new_folder)
+    shutil.copy(os.path.join(self.labelit_dir,'%s.mat'%self.index_number),new_folder)
+    if self.header2:
+      shutil.copy(os.path.join(self.labelit_dir,'%s_S.mat'%self.index_number),new_folder)
+    #For Pilatis background calc.
+    if self.vendortype in ('Pilatus-6M','ADSC-HF4M'):
+    #if self.pilatus:
+      if os.path.exists(os.path.join(self.working_dir,'BKGINIT.cbf')):
+        shutil.copy(os.path.join(self.working_dir,'BKGINIT.cbf'),new_folder)
+  """
+  except:
+    self.logger.exception('**Error in Utils.foldersStrategy**')
+  """
 def folders(self,inp=None):
   """
   Sets up new directory for programs.
@@ -2398,7 +2430,7 @@ def getLabelitCell(self,inp=False):
     run3 = False
     cell = False
     sym = False
-    for line in open('bestfile.par','r').readlines():
+    for line in open(os.path.join(self.labelit_dir,'bestfile.par'),'r').readlines():
       if line.startswith('CELL'):
         if len(line.split()) == 7:
           cell = line.split()[1:]
@@ -2411,11 +2443,11 @@ def getLabelitCell(self,inp=False):
           run3 = True
     #Sometimes bestfile.par is corrupt so I have backups to get cell and sym.
     if run2:
-      for line in open('%s.mat'%self.index_number,'r').readlines():
+      for line in open('%s.mat'%os.path.join(self.labelit_dir,self.index_number),'r').readlines():
         if len(line.split()) == 6:
           cell = line.split()
     if run3:
-      for line in open(self.index_number,'r').readlines():
+      for line in open(os.path.join(self.labelit_dir, self.index_number),'r').readlines():
         if line.startswith('SYMMETRY'):
           sym = line.split()[1]
     if inp == 'all':
