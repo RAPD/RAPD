@@ -1797,8 +1797,7 @@ class RapdPlugin(Process):
             archive_dirname = '_'.join([self.image_data['image_prefix'],
                                        str(self.image_data['run_number'])])
         else:
-            archive_dirname = '_'.join([self.image_data['image_prefix'],
-                                       str(self.image_data['run_number'])])
+            archive_dirname = [self.image_data['image_prefix']
 
 
         # Full path location of the archive
