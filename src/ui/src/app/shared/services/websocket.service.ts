@@ -107,6 +107,11 @@ export class WebsocketService {
         self.result_details_subject.next(data.results);
         break;
 
+      case 'RAPD_RESULTS':
+        // Send the data to the subscribers
+        self.results_subject.next(data);
+        break;
+
       default:
         break;
     }
