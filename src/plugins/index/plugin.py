@@ -156,6 +156,8 @@ class RapdPlugin(Process):
     labelit_proc = False
     #labelit_summary = False
     labelit_failed = False
+    labelit_cell = False
+    labelit_sym = False
     distl_log = []
     distl_results = []
     distl_summary = False
@@ -472,7 +474,7 @@ class RapdPlugin(Process):
             self.redis.publish("RAPD_RESULTS", json_results)
 
         # Determine detector vendortype
-        self.vendortype = xutils.getVendortype(self, self.header)
+        self.vendortype = xutils.get_vendortype(self.header)
         self.dest_dir = self.setup.get("work")
         if self.test or self.cluster_use:
             self.working_dir = self.dest_dir
@@ -560,8 +562,9 @@ class RapdPlugin(Process):
         flux = self.header.get('flux', self.site_parameters.get('BEAM_FLUX', 1E10 ))
 
         # Get unit cell
-        cell = xutils.getLabelitCell(self)
-        nres = xutils.calcTotResNumber(self, self.volume)
+        #cell = self.get_labelit_cell_sym()
+        #nres = xutils.calcTotResNumber(self, self.volume)
+        nres = xutils.calc_tot_res_number(self.volume, self.sample_type, self.solvent_content)
 
         # Adding these typically does not change the Best strategy much, if it at all.
         patm = False
@@ -585,13 +588,13 @@ class RapdPlugin(Process):
             setup += "GAUSS %.2f %.2f\nIMAGES 1\n" % (gauss_x, gauss_y)
         setup += "PHOSEC %d\n" % flux
         setup += "EXPOSURE %.2f\n" % self.time
-        if cell:
-            setup += "CELL %s %s %s %s %s %s\n" % (cell[0],
-                                                   cell[1],
-                                                   cell[2],
-                                                   cell[3],
-                                                   cell[4],
-                                                   cell[5])
+        if self.labelit_cell:
+            setup += "CELL %s %s %s %s %s %s\n" % (self.labelit_cell[0],
+                                                   self.labelit_cell[1],
+                                                   self.labelit_cell[2],
+                                                   self.labelit_cell[3],
+                                                   self.labelit_cell[4],
+                                                   self.labelit_cell[5])
         else:
             self.logger.debug("Could not get unit cell from bestfile.par")
 
@@ -679,6 +682,7 @@ class RapdPlugin(Process):
             new_name = name.replace(name[name.rfind("_")+1:name.rfind(".")], len(temp)*"?")
             #range = str(int(temp))+" "+str(int(temp))
             command = "JOB=XYCORR INIT\n"
+            #xutils.calcXDSbc Does not exist anymore
             command += xutils.calcXDSbc(self)
             command += "DETECTOR_DISTANCE=%s\n" % self.header.get("distance")
             command += "OSCILLATION_RANGE=%s\n" % self.header.get("osc_range")
@@ -740,16 +744,14 @@ class RapdPlugin(Process):
             f = 2
         for i in range(0, f):
             if self.test:
-                inp = "ls"
-                job = Thread(target=xutils.processLocal, args=(inp, self.logger))
+                #job = Thread(target=xutils.processLocal, args=(inp, self.logger))
+                job = Thread(target=local_subprocess,
+                             kwargs={"command": 'ls'})
             else:
                 command = "distl.signal_strength %s" % eval("self.header%s" % l[i]).get("fullname")
                 job = Thread(target=local_subprocess,
                              kwargs={"command": command,
                                     "logfile": os.path.join(os.getcwd(), "distl%s.log" % i),
-                                    "pid_queue": False,
-                                    "result_queue": False,
-                                    "tag": i
                                    },)
                 # job = Process(target=xutils.processLocal,
                 #               args=((inp, "distl%s.log" % i), self.logger))
@@ -797,7 +799,7 @@ class RapdPlugin(Process):
         self.logger.debug("check_best")
 
         # try:
-        xutils.foldersStrategy_NEW(self, iteration)
+        self.folders_strategy(iteration)
         #print os.getcwd()
         if iteration != 0:
             #orig = os.path.join(self.labelit_dir, self.index_number)
@@ -844,13 +846,7 @@ class RapdPlugin(Process):
         min_dis = self.site_parameters.get("DETECTOR_DISTANCE_MIN")
         min_d_o = self.site_parameters.get("DIFFRACTOMETER_OSC_MIN")
         min_e_t = self.site_parameters.get("DETECTOR_TIME_MIN")
-
-        # print max_dis, min_dis, min_d_o, min_e_t
         
-        # Go to the correct directory
-        #work_dir = os.path.join(os.path.basename(self.labelit_dir), str(iteration))
-        #xutils.foldersStrategy(self, work_dir)
-
         # Get image numbers
         try:
             counter_depth = self.header["image_template"].count("?")
@@ -871,7 +867,7 @@ class RapdPlugin(Process):
 
         # Tell Best if two-theta is being used.
         if int(self.header.get("twotheta", 0)) != 0:
-            xutils.fixBestfile(self)
+            xutils.fix_bestfile(self)
 
         # If Raddose failed, here are the defaults.
         dose = 100000
@@ -1043,12 +1039,15 @@ class RapdPlugin(Process):
         if range1:
             if mosflm_rot == 0.0:
                 # mosflm_rot = str(360/float(xutils.symopsSG(self,xutils.getMosflmSG(self))))
-                mosflm_rot = str(360/float(xutils.symopsSG(self, xutils.getLabelitCell(self, "sym"))))
+                #mosflm_rot = str(360/float(xutils.symopsSG(self, xutils.getLabelitCell(self, "sym"))))
+                #mosflm_rot = str(360/float(xutils.symopsSG(self, self.get_labelit_cell("sym"))))
+                mosflm_rot = 360.0/(xutils.sg_to_nsymops(self.labelit_sym))
         # Save info from previous data collections.
         if self.multicrystalstrat:
             ref_data = self.preferences.get("reference_data")
             if self.spacegroup == False:
                 self.spacegroup = ref_data[0][-1]
+                # LG should have been checked in labelit_sort
                 xutils.fixMosflmSG(self)
                 # For posting in summary
                 self.prev_sg = True
@@ -1086,7 +1085,7 @@ class RapdPlugin(Process):
                 new_line += "STRATEGY START %.2f END %.2f\nGO\n" % (mosflm_st, mosflm_end)
                 new_line += "ROTATE %.2f SEGMENTS %d %s\n" % (mosflm_rot, mosflm_seg, l[i][2])
             else:
-                if mosflm_rot == "0.0":
+                if mosflm_rot == 0.0:
                     new_line += "STRATEGY AUTO %s\n"%l[i][2]
                 elif mosflm_seg != "1":
                     new_line += "STRATEGY AUTO ROTATE %.2f SEGMENTS %d %s\n" % (mosflm_rot, mosflm_seg, l[i][2])
@@ -1163,7 +1162,7 @@ class RapdPlugin(Process):
             else:
                 # Only check best info if we are going to use best
                 # Get the Best version for this machine
-                best_version = xutils.getBestVersion()
+                best_version = xutils.get_best_version()
                 # Make sure that the BEST install has the detector
                 self.check_best_detector(DETECTOR_TO_BEST.get(self.header.get("detector"), None))
             
@@ -1576,6 +1575,32 @@ Distance | % Transmission", level=98, color="white")
                                 self.logger.debug("terminating job: %s" % self.jobs[str(i)])
                             xutils.kill_children(self.jobs[str(i)].pid, self.logger)
 
+    def labelit_cell_sym(self):
+      """
+      Get unit cell from Labelit results.
+      """
+      if self.verbose:
+        self.logger.debug('AutoindexingStrategy::labelit_cell_sym')
+
+      for line in open(os.path.join(self.labelit_dir,'bestfile.par'),'r').readlines():
+            if line.startswith('CELL'):
+                if len(line.split()) == 7:
+                    self.labelit_cell = line.split()[1:]
+            if line.startswith('SYMMETRY'):
+                if len(line.split()) == 2:
+                    self.labelit_sym = line.split()[1]
+
+      #Sometimes bestfile.par is corrupt so I have backups to get cell and sym.
+      # Only gets here if bestfile.par is corrupt
+      if self.labelit_cell == False:
+          for line in open('%s.mat'%os.path.join(self.labelit_dir,self.index_number),'r').readlines():
+              if len(line.split()) == 6:
+                  self.labelit_cell = line.split()
+      if self.labelit_sym == False:
+        for line in open(os.path.join(self.labelit_dir, self.index_number),'r').readlines():
+          if line.startswith('SYMMETRY'):
+            self.labelit_sym = line.split()[1]
+
     def labelit_sort(self):
         """
         Sort out which iteration of Labelit has the highest symmetry and choose that solution. If
@@ -1591,7 +1616,7 @@ Distance | % Transmission", level=98, color="white")
         volumes = []
         sg_dict = {}
         sol_dict = {}
-        sym = "0"
+        sym = 0
 
         try:
             # Get the results and logs
@@ -1635,7 +1660,7 @@ Distance | % Transmission", level=98, color="white")
                 volumes.append(volume)
             else:
                 # If Labelit failed, set dummy params
-                sg_dict[iteration] = "0"
+                sg_dict[iteration] = 0
                 sg_list1.append(0)
                 rms_list1.append(100)
                 metric_list1.append(100)
@@ -1672,12 +1697,11 @@ Distance | % Transmission", level=98, color="white")
         sym = sg_dict[highest]
 
         # If there is a solution...
-        if sym != '0':
+        if sym != 0:
             self.logger.debug("The sorted labelit solution was #%s", highest)
 
             # Save best results in corect place.
             self.labelit_results = self.labelit_results[highest]
-            # pprint(self.labelit_results)
 
             # Set self.volume for best solution
             self.volume = volumes[highest]
@@ -1688,6 +1712,7 @@ Distance | % Transmission", level=98, color="white")
             os.chdir(self.labelit_dir)
 
             # Parse out additional information from labelit-created files
+            """
             bestfile_lines = open("bestfile.par", "r").readlines()
             mat_lines = open("%s.mat" % self.index_number, "r").readlines()
             sub_lines = open("%s" % self.index_number, "r").readlines()
@@ -1695,23 +1720,21 @@ Distance | % Transmission", level=98, color="white")
             labelit_cell, labelit_sym = labelit.parse_labelit_files(bestfile_lines,
                                                                     mat_lines,
                                                                     sub_lines)
-            self.labelit_results["labelit_results"]["best_cell"] = labelit_cell
-            self.labelit_results["labelit_results"]["best_sym"] = labelit_sym
+            """
+            # Save the self.Labelit_cell and self.Labelit_sym
+            self.labelit_cell_sym()
+            
+            self.labelit_results["labelit_results"]["best_cell"] = self.labelit_cell
+            self.labelit_results["labelit_results"]["best_sym"] = self.labelit_sym
             # pprint(self.labelit_results)
 
             # Handle the user-set spacegroup
             if self.spacegroup != False:
                 check_lg = xutils.checkSG(self, sym)
-                # print check_lg
-                # Input as number now.
-                # user_sg  = xutils.convertSG(self, self.spacegroup, reverse=True)
-                user_sg = self.spacegroup
-                # print user_sg
-                # sys.exit()
-                if user_sg != sym:
+                if self.spacegroup != sym:
                     fix_spacegroup = False
                     for line in check_lg:
-                        if line == user_sg:
+                        if line == self.spacegroup:
                             fix_spacegroup = True
                     if fix_spacegroup:
                         xutils.fixMosflmSG(self)
@@ -1746,6 +1769,32 @@ Distance | % Transmission", level=98, color="white")
 
         # except:
         #     self.logger.exception("**ERROR in labelit_sort**")
+
+    def folders_strategy(self, iteration=0):
+        """
+        Sets up new directory for programs.
+        """
+        if self.verbose:
+            self.logger.debug('Utilities::foldersStrategy')
+
+        copy = False
+        new_folder = os.path.join(self.labelit_dir,str(iteration))
+        if os.path.exists(new_folder) == False:
+            copy = True
+        # Go to new_folder
+        xutils.folders2(self, new_folder)
+        if copy:
+            if iteration == 0:
+                # Copy files Mosflm generates for BEST
+                os.system('cp %s/bestfile* %s/%s*.hkl .'%(self.labelit_dir,self.labelit_dir,self.index_number))
+            # Copy other files required by BEST
+            shutil.copy(os.path.join(self.labelit_dir,'%s.mat'%self.index_number),new_folder)
+            if self.header2:
+                shutil.copy(os.path.join(self.labelit_dir,'%s_S.mat'%self.index_number),new_folder)
+            #For Pilatis background calc. (NOT USED because it takes too long and doent make much difference)
+            if self.vendortype in ('Pilatus-6M','ADSC-HF4M'):
+                if os.path.exists(os.path.join(self.working_dir,'BKGINIT.cbf')):
+                    shutil.copy(os.path.join(self.working_dir,'BKGINIT.cbf'),new_folder)
 
     def find_best_strat(self, inp):
         """
@@ -2547,8 +2596,7 @@ rerunning.\n" % spot_count)
             user_cell = self.preferences.get("unitcell", False)
             if user_cell:
                 command += 'known_cell=%s,%s,%s,%s,%s,%s ' % tuple(user_cell)
-        #if not self.ignore_user_SG and not overrides.get("ignore_user_SG"):
-        if not overrides.get("ignore_user_SG"):
+        if not self.ignore_user_SG and not overrides.get("ignore_user_SG"):
             if self.spacegroup != False:
                 command += 'known_symmetry=%s ' % self.spacegroup
         if overrides.get("ignore_sublattice"):

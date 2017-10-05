@@ -281,7 +281,7 @@ def parse_output(labelit_output, iteration=0):
 
     return data
 
-def parse_labelit_files(bestfile_lines, mat_lines, sub_lines, mode="all"):
+def parse_labelit_files_OLD(bestfile_lines, mat_lines, sub_lines, mode="all"):
     """
     Parse the lines from bestfile.par
     Transplant from xutils.getLabelitCell
