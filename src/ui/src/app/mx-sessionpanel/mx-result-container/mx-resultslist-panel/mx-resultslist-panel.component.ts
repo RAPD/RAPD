@@ -57,8 +57,8 @@ export class MxResultslistPanelComponent implements OnInit {
 
     console.log(data);
 
-    if (data.msg_type === 'results') {
-      for (let result of data.results) {
+    // if (data.msg_type === 'results') {
+      for (let result of data) {
         if (result.result_type === this.result_types[this.result_type]) {
           console.log(result);
           // New result
@@ -75,7 +75,7 @@ export class MxResultslistPanelComponent implements OnInit {
         //   self.integrate_results.push(result);
         // }
       }
-    }
+    // }
   }
 
   private onClick(id: string) {

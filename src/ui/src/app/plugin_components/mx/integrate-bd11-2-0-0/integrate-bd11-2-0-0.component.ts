@@ -2,6 +2,7 @@ import { Component,
          ComponentFactory,
          ComponentFactoryResolver,
          Input,
+         OnDestroy,
          OnInit,
          ViewChild,
          ViewContainerRef } from '@angular/core';
@@ -39,7 +40,7 @@ for (let key in mx) {
   templateUrl: './integrate-bd11-2-0-0.component.html',
   styleUrls: ['./integrate-bd11-2-0-0.component.css']
 })
-export class IntegrateBd11200Component implements OnInit {
+export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
   @Input()
   current_result: any;
@@ -123,6 +124,10 @@ export class IntegrateBd11200Component implements OnInit {
       this.current_result.result_type,
       this.current_result.result_id);
     this.incomingData$.subscribe(x => this.handleIncomingData(x));
+  }
+
+  ngOnDestroy() {
+    this.websocket_service.unsubscribeResultDetails(this.incomingData$);
   }
 
   public handleIncomingData(data: any) {
