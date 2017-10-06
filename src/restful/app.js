@@ -74,7 +74,7 @@ let app_session = session({
 });
 app.use(app_session);
 
-// Create the socket.io server
+// Create the websocket server
 var wss = new Wss({morgan:morgan,
                    server:server});
 
