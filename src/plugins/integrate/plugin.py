@@ -1856,9 +1856,12 @@ class RapdPlugin(Process):
 
         # Rename the so-called mergable file
         mergable_file = results["mtzfile"].replace("_aimless", "_mergable")
+        print results["mtzfile"], os.path.exists(results["mtzfile"])
         print mergable_file, os.path.exists(mergable_file)
         print os.path.join(archive_dirname, mergable_file), os.path.exists(os.path.join(archive_dirname, mergable_file))
-        shutil.copyfile(results["mtzfile"], os.path.join(archive_dirname,
+        print archive_dirname, os.path.exists(archive_dirname)
+        shutil.copyfile(results["mtzfile"], os.path.join(self.dirs['work'],
+                                                         archive_dirname,
                                                          mergable_file))
 
         if scalepack:

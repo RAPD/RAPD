@@ -10,6 +10,7 @@ export class WebsocketService {
   private websocketUrl: string;
   private ws: WebSocket;
 
+  public results_subscribers = [];
   public details_subscribers = [];
 
   public results_subject: ReplaySubject<string>;
@@ -101,8 +102,16 @@ export class WebsocketService {
     switch (data.msg_type) {
 
       case 'results':
-        // Send the data to the subscribers
-        self.results_subject.next(data);
+        data.results.forEach(function(result) {
+          console.log(result);
+          // Send the data to the subscribers
+          self.results_subscribers.forEach(function(subscriber) {
+            if (subscriber.session_id === result.session_id) {
+              subscriber.subject.next([result]);
+            }
+          });
+        });
+        // self.results_subject.next(data);
         break;
 
       case 'result_details':
@@ -193,9 +202,28 @@ export class WebsocketService {
 
     console.log('subscribeResults session_id:', session_id);
 
-    // Return the observable
-    return this.results_subject;
+    let results_subject = new ReplaySubject<string>(1);
 
+    this.results_subscribers.push({
+      subject:results_subject,
+      session_id:session_id
+    });
+
+    // Return the observable
+    return results_subject;
+
+  }
+
+  // Unsubscribe from result details
+  unsubscribeResults(subject: ReplaySubject<string>) {
+    console.log('unsubscribeResultDetails');
+
+    let index = this.results_subscribers.findIndex(function(element){
+      return element.subject === subject;
+    });
+    let subscriber = this.details_subscribers.splice(index, 1)[0];
+    subscriber['subject'].complete();
+    subscriber = null;
   }
 
   // Get details for a result
@@ -233,11 +261,10 @@ export class WebsocketService {
   // Unsubscribe from result details
   unsubscribeResultDetails(subject: ReplaySubject<string>) {
     console.log('unsubscribeResultDetails');
-    console.log(subject);
+
     let index = this.details_subscribers.findIndex(function(element){
       return element.subject === subject;
     });
-    console.log(index);
     let subscriber = this.details_subscribers.splice(index, 1)[0];
     subscriber['subject'].complete();
     subscriber = null;
