@@ -1912,14 +1912,16 @@ class RapdPlugin(Process):
         # Move critical files into archive directory for packaging
         critical_file_patterns = ("*aimless.com",
                                   "*aimless.log",
-                                  "*pointless.log")
+                                  "*pointless.com"
+                                  "*pointless.log",
+                                  "*XDS.INP",
+                                  "*XDS.LOG",
+                                  "*.LP")
         for critical_file_pattern in critical_file_patterns:
             src_file = glob.glob(critical_file_pattern)[0]
             target_file = os.path.join(archive_dir, src_file)
             shutil.copyfile(src_file, target_file)
             files_to_archive.append(target_file)
-
-        sys.exit()
 
         # Clean up the filesystem.
         # Move some files around
@@ -1936,14 +1938,15 @@ class RapdPlugin(Process):
         # os.system('cp %s/XDS_ASCII.HKL %s_XDS.HKL' %(results['dir'], prefix))
 
         # Remove any integration directories.
-        for wedge_dir in glob.glob("wedge_*"):
-            os.remove(wedge_dir)
+        # for wedge_dir in glob.glob("wedge_*"):
+            # os.remove(wedge_dir)
 
         # Remove extra files in working directory.
-        os.system('rm -f *.mtz *.sca *.sh *.log junk_*')
+        # os.system('rm -f *.mtz *.sca *.sh *.log junk_*')
 
         # Create an archive
-        # archive.create_archive()
+        archive.create_archive()
+        sys.exit()
 
         # Create a downloadable tar file.
         tar_dir = tar_name

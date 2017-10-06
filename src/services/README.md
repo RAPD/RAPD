@@ -7,6 +7,8 @@ Make a directory to store data in (I have used `/Users/frankmurphy/workspace/dat
 ```shell
 run -d -p 27017:27017 --name mongo -v /Users/frankmurphy/workspace/data/mongo:/data/db mongo --storageEngine wiredTiger
 ```
+To then connect to MongoDB in a shell, `docker run -it --link mongo:mongo --rm mongo sh -c 'exec mongo "$MONGO_PORT_27017_TCP_ADDR:$MONGO_PORT_27017_TCP_PORT/test"'`
+
 
 #### Redis with persistence
 ```shell
@@ -38,11 +40,13 @@ module.exports = {
   ldap_dn: 'ou=People,dc=ser,dc=aps,dc=anl,dc=gov',
 };
 ```
-
+Build and run the application.
 ```shell
 
 docker build -t rapd_rest .
 docker run --name rapd_rest --link redis:redis --link mongo:mongo -p 3000:3000 rapd_rest
 ```
+To test if the server is up, try curling `curl http://127.0.0.1:3000/api`. You should recieve `{"message":"Welcome to the RAPD api!"}`
 
-N
+#### Proxy server
+Depending how you want to configure your client interface, a proxy server is handy to minimize ports you have to open, etc.
