@@ -1210,7 +1210,7 @@ def errorLabelitPost(self, iteration, error, run_before=False):
     self.logger.exception('**ERROR in Utils.errorLabelitPost**')
 
 #def errorLabelit(self, iteration=0):
-def get_labelit_settings(self, iteration=0):
+def get_labelit_settings_OLD(self, iteration=0):
     """
     Labelit error correction. Set/reset setting in dataset_preferences.py according to error iteration.
     Commented out things were tried before.
@@ -1237,7 +1237,7 @@ def get_labelit_settings(self, iteration=0):
         
     if iteration == 0:
         preferences.close()
-        self.labelit_log[str(iteration)] = ['\nUsing default parameters.\n']
+        self.labelit_log[iteration] = ['\nUsing default parameters.\n']
         self.tprint("\n  Using default parameters", level=30, color="white", newline=False)
         self.logger.debug('Using default parameters.')
 
@@ -1253,7 +1253,7 @@ def get_labelit_settings(self, iteration=0):
             preferences.write('distl.minimum_spot_area=6\n')
             preferences.write('distl.minimum_signal_height=4.3\n')
         preferences.close()
-        self.labelit_log[str(iteration)] = ['\nLooking for long unit cell.\n']
+        self.labelit_log[iteration] = ['\nLooking for long unit cell.\n']
         self.tprint("\n  Looking for long unit cell", level=30, color="white", newline=False)
         self.logger.debug('Looking for long unit cell.')
 
@@ -1261,7 +1261,7 @@ def get_labelit_settings(self, iteration=0):
         # Change it up and go for larger peaks like small molecule.
         preferences.write('distl.minimum_spot_height=6\n')
         preferences.close()
-        self.labelit_log[str(iteration)] = ['\nChanging settings to look for stronger peaks (ie. small molecule).\n']
+        self.labelit_log[iteration] = ['\nChanging settings to look for stronger peaks (ie. small molecule).\n']
         self.tprint("\n  Looking for stronger peaks (ie. small molecule)", level=30, color="white", newline=False)
         self.logger.debug("Changing settings to look for stronger peaks (ie. small molecule).")
 
@@ -1276,22 +1276,22 @@ def get_labelit_settings(self, iteration=0):
             preferences.write('distl.minimum_spot_area=7\n')
             preferences.write('distl.minimum_signal_height=1.2\n')
         preferences.close()
-        self.labelit_log[str(iteration)] = ['\nLooking for weak diffraction.\n']
+        self.labelit_log[iteration] = ['\nLooking for weak diffraction.\n']
         self.tprint("\n  Looking for weak diffraction", level=30, color="white", newline=False)
         self.logger.debug('Looking for weak diffraction.')
 
     elif iteration == 4:
         if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
             preferences.write('distl.minimum_spot_area=3\n')
-            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 3.\n']
+            self.labelit_log[iteration] = ['\nSetting spot picking level to 3.\n']
             area = 3
         elif "Eiger" in self.vendortype:
             preferences.write('distl.minimum_spot_area=3\n')
-            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 3.\n']
+            self.labelit_log[iteration] = ['\nSetting spot picking level to 3.\n']
             area = 3
         else:
             preferences.write('distl.minimum_spot_area=8\n')
-            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 8.\n']
+            self.labelit_log[iteration] = ['\nSetting spot picking level to 8.\n']
             area = 8
         preferences.close()
         self.tprint("\n  Setting spot picking level to %d" % area, level=30, color="white", newline=False)
@@ -1301,17 +1301,17 @@ def get_labelit_settings(self, iteration=0):
         if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
             preferences.write('distl.minimum_spot_area=2\n')
             preferences.write('distl_highres_limit=5\n')
-            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 2 and resolution to 5.\n']
+            self.labelit_log[iteration] = ['\nSetting spot picking level to 2 and resolution to 5.\n']
             setting = (2, 5)
         elif "Eiger" in self.vendortype:
             preferences.write('distl.minimum_spot_area=2\n')
             preferences.write('distl_highres_limit=4\n')
-            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 2 and resolution to 4.\n']
+            self.labelit_log[iteration] = ['\nSetting spot picking level to 2 and resolution to 4.\n']
             setting = (2, 4)
         else:
             preferences.write('distl.minimum_spot_area=6\n')
             preferences.write('distl_highres_limit=5\n')
-            self.labelit_log[str(iteration)] = ['\nSetting spot picking level to 6 and resolution to 5.\n']
+            self.labelit_log[iteration] = ['\nSetting spot picking level to 6 and resolution to 5.\n']
             setting = (6, 5)
         preferences.close()
         self.tprint("\n  Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white", newline=False)
@@ -1319,7 +1319,7 @@ def get_labelit_settings(self, iteration=0):
 
     return self.process_labelit(iteration)
 
-def errorLabelitMin(self, iteration, line):
+def errorLabelitMin_OLD(self, iteration, line):
   """
   Labelit error correction. Reset min spots allowed. Set/reset setting in dataset_preferences.py according
   to error iteration. Only run in multiproc mode.
@@ -1347,7 +1347,7 @@ def errorLabelitMin(self, iteration, line):
     self.labelit_log[str(iteration)].extend('\nCould not change spot finding settings in dataset_preferences.py file.\n')
     return(None)
 
-def errorLabelitFixCell(self,iteration,lg,labelit_sol):
+def errorLabelitFixCell_OLD(self,iteration,lg,labelit_sol):
   """
   Pick correct cell (lowest rmsd) if multiple cell choices are possible in user selected SG and rerun Labelit.
   """
@@ -1372,7 +1372,7 @@ def errorLabelitFixCell(self,iteration,lg,labelit_sol):
     self.logger.exception('**Error in Utils.errorLabelitFixCell**')
     return(None)
 
-def errorLabelitCellSG(self,iteration):
+def errorLabelitCellSG_OLD(self,iteration):
   """
   #Retrying Labelit without using user specified unit cell params.
   """
@@ -1388,7 +1388,7 @@ def errorLabelitCellSG(self,iteration):
     self.logger.exception('**ERROR in Utils.errorLabelitCellSG**')
     return(None)
 
-def errorLabelitBump(self,iteration):
+def errorLabelitBump_OLD(self,iteration):
   """
   Get rid of distl_profile_bumpiness line in dataset_preferences.py. Don't think I use much anyway.
   """
@@ -1410,7 +1410,7 @@ def errorLabelitBump(self,iteration):
     self.labelit_log[str(iteration)].extend('\nCould not remove distl_profile_bumpiness line in dataset_preferences.py file.\n')
     return(None)
 
-def errorLabelitGoodSpots(self,iteration):
+def errorLabelitGoodSpots_OLD(self,iteration):
   """
   Sometimes Labelit gives an eror saying that there aren't enough 'good spots' for Mosflm. Not a Labelit
   failure error. Forces Labelit/Mosflm to give result regardless. Sometimes causes failed index.
@@ -1438,7 +1438,7 @@ def errorLabelitGoodSpots(self,iteration):
     self.labelit_log[str(iteration)].extend('\nCould not change min number of good bragg spots settings in dataset_preferences.py file.\n')
     return(None)
 
-def errorLabelitMosflm(self,iteration):
+def errorLabelitMosflm_OLD(self,iteration):
     """
     Set Mosflm integration resolution lower. Seems to fix this error.
     """
@@ -1481,7 +1481,7 @@ def getBestVersion():
 
     return version
 
-def errorBest(self, iteration=0, best_version="3.2.0"):
+def errorBest_OLD(self, iteration=0, best_version="3.2.0"):
     """
     Run all the Best runs at the same time.
     Reduce resolution limit and rerun Mosflm to calculate new files.
@@ -1505,7 +1505,7 @@ def errorBest(self, iteration=0, best_version="3.2.0"):
                 new.writelines(temp)
                 new.close()
                 subprocess.Popen("sh %s" % f, shell=True).wait()
-        self.processBest(iteration, best_version)
+        self.process_best(iteration, best_version)
 
     except:
         self.logger.exception("**ERROR in Utils.errorBest**")
@@ -1646,16 +1646,16 @@ def fixMosflmSG(self):
     self.logger.debug('Utilities::fixMosflmSG')
   try:
     temp = []
-    shutil.copy('%s'%self.index_number,'%s_orig'%self.index_number)
+    shutil.copy(os.path.join(self.labelit._dir,self.index_number),'%s_orig'%os.path.join(self.labelit._dir,self.index_number))
     if self.verbose:
       self.logger.debug('Since user selected the space group, Mosflm files will be edited to match.')
-    for x,line in enumerate(open('%s'%self.index_number,'r').readlines()):
+    for x,line in enumerate(open('%s'%os.path.join(self.labelit._dir, self.index_number),'r').readlines()):
       temp.append(line)
       if line.startswith('SYMMETRY'):
         if line.split()[1] != self.spacegroup:
           temp.remove(line)
           temp.insert(x,'SYMMETRY %s\n'%self.spacegroup)
-    new = open('%s'%self.index_number,'w')
+    new = open('%s'%os.path.join(self.labelit._dir, self.index_number),'w')
     new.writelines(temp)
     new.close()
 
@@ -1865,6 +1865,7 @@ def foldersStrategy(self, iteration=0):
     folders(self,iteration)
     if copy:
       if iteration[-1] == '0':
+        # Does this even work? there is bestfile.dat and .par? 
         os.system('cp %s/bestfile* %s/%s*.hkl .'%(self.labelit_dir,self.labelit_dir,self.index_number))
       shutil.copy(os.path.join(self.labelit_dir,self.index_number),os.getcwd())
       shutil.copy(os.path.join(self.labelit_dir,'%s.mat'%self.index_number),os.getcwd())
@@ -1878,6 +1879,37 @@ def foldersStrategy(self, iteration=0):
   except:
     self.logger.exception('**Error in Utils.foldersStrategy**')
 
+def foldersStrategy_NEW(self, iteration=0):
+  """
+  Sets up new directory for programs.
+  """
+  if self.verbose:
+    self.logger.debug('Utilities::foldersStrategy')
+  #try:
+  #if os.path.exists(os.path.join(self.working_dir,str(iteration))):
+  new_folder = os.path.join(self.labelit_dir,str(iteration))
+  if os.path.exists(new_folder):
+    copy = False
+  else:
+    copy = True
+  #folders(self,iteration)
+  folders2(self, new_folder)
+  if copy:
+    if iteration == 0:
+      os.system('cp %s/bestfile* %s/%s*.hkl .'%(self.labelit_dir,self.labelit_dir,self.index_number))
+    #shutil.copy(os.path.join(self.labelit_dir,self.index_number),new_folder)
+    shutil.copy(os.path.join(self.labelit_dir,'%s.mat'%self.index_number),new_folder)
+    if self.header2:
+      shutil.copy(os.path.join(self.labelit_dir,'%s_S.mat'%self.index_number),new_folder)
+    #For Pilatis background calc.
+    if self.vendortype in ('Pilatus-6M','ADSC-HF4M'):
+    #if self.pilatus:
+      if os.path.exists(os.path.join(self.working_dir,'BKGINIT.cbf')):
+        shutil.copy(os.path.join(self.working_dir,'BKGINIT.cbf'),new_folder)
+  """
+  except:
+    self.logger.exception('**Error in Utils.foldersStrategy**')
+  """
 def folders(self,inp=None):
   """
   Sets up new directory for programs.
@@ -2398,7 +2430,7 @@ def getLabelitCell(self,inp=False):
     run3 = False
     cell = False
     sym = False
-    for line in open('bestfile.par','r').readlines():
+    for line in open(os.path.join(self.labelit_dir,'bestfile.par'),'r').readlines():
       if line.startswith('CELL'):
         if len(line.split()) == 7:
           cell = line.split()[1:]
@@ -2411,11 +2443,11 @@ def getLabelitCell(self,inp=False):
           run3 = True
     #Sometimes bestfile.par is corrupt so I have backups to get cell and sym.
     if run2:
-      for line in open('%s.mat'%self.index_number,'r').readlines():
+      for line in open('%s.mat'%os.path.join(self.labelit_dir,self.index_number),'r').readlines():
         if len(line.split()) == 6:
           cell = line.split()
     if run3:
-      for line in open(self.index_number,'r').readlines():
+      for line in open(os.path.join(self.labelit_dir, self.index_number),'r').readlines():
         if line.startswith('SYMMETRY'):
           sym = line.split()[1]
     if inp == 'all':

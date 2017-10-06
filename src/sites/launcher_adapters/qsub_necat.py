@@ -100,23 +100,24 @@ class LauncherAdapter(object):
         nproc = self.determine_nproc()
 
         # Determine which cluster queue to run
-        queue = self.determine_queue()
+        #queue = self.determine_queue()
+        queue = cluster.check_queue(self.message['command'])
 
         # Setup a Queue to retreive the jobID.
         q = Queue()
 
         # Setup the job and launch it.
-        job = Process(target=cluster.processCluster,
+        job = Process(target=cluster.process_cluster,
                       kwargs={'command':command_line,
                               'work_dir':work_dir,
                               'logfile':False,
-                              'queue':queue,
+                              'batch_queue':queue,
                               'nproc':nproc,
                               'logger':self.logger,
                               'name':qsub_label,
                               'mp_event':False,
                               'timeout':False,
-                              'jobID':q})
+                              'pid_queue':q})
         job.start()
         # This will be passed back to a monitor that will watch the jobs and kill ones that run too long.
         jobID = q.get()
@@ -156,7 +157,7 @@ class LauncherAdapter(object):
             nproc = 4
         return nproc
     
-    def determine_queue(self):
+    def determine_queue_OLD(self):
         """Determine the cluster queue for the main job."""
         """
         if self.message['command'] == 'INDEX':

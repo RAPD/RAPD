@@ -42,16 +42,16 @@ try {
 
 sub.on("message", function (channel, message) {
 
-  console.log("sub channel " + channel + ": " + message);
+  // console.log("sub channel " + channel + ": " + message);
 
   // Decode into oject
   let parsed_message = JSON.parse(message);
-  console.log(parsed_message);
 
   // Grab out the session_id
   let session_id = false;
   try {
-    let session_id = parsed_message.process.session_id;
+    session_id = parsed_message.process.session_id;
+    console.log('Message session:', session_id);
   }
   catch (e) {
     if (e instanceof TypeError) {
@@ -59,16 +59,22 @@ sub.on("message", function (channel, message) {
     } else {
       console.error(e);
     }
-}
+  }
+
+  // Turn message into messages to send to clients
+  let messages_to_send = parse_message(channel, parsed_message);
 
   // Look for websockets that are watching the same session
   if (session_id) {
     Object.keys(ws_connections).forEach(function(socket_id) {
-      console.log(ws_connections[socket_id].session.session_id);
+      // console.log(ws_connections[socket_id].session);
       if (ws_connections[socket_id].session.session_id === session_id) {
         console.log('Have a live one!');
-        ws_connections[socket_id].send(JSON.stringify({msg_type:'result',
-                                                       result:parsed_message}));
+        messages_to_send.forEach(function(message) {
+          console.log(message)
+          ws_connections[socket_id].send(JSON.stringify({msg_type:message[0],
+                                                         results:message[1]}));
+        });
       }
     });
   }
@@ -76,6 +82,45 @@ sub.on("message", function (channel, message) {
 
 // Subscribe to updates
 sub.subscribe("RAPD_RESULTS");
+
+parse_message = function(channel, message) {
+  console.log('parse_message', channel, message);
+
+  switch (channel) {
+
+    case 'RAPD_RESULTS':
+      console.log('RAPD_RESULTS');
+
+      // Array to return
+      let return_array = [];
+
+      // Create a result
+      let result = { _id: message.process.process_id,
+        plugin_version: message.plugin.version,
+        repr: message.process.repr,
+        session_id: message.process.session_id,
+        plugin_id: message.plugin.id,
+        result_id: message._id,
+        result_type: (message.plugin.data_type + ':' + message.plugin.type).toLowerCase(),
+        plugin_type: message.plugin.type.toLowerCase(),
+        timestamp: new Date().toISOString(),
+        projects: [] };
+      return_array.push(['results', [result]]);
+
+      // Create a detailed result
+      return_array.push(['result_details', message]);
+
+      // Return
+      return return_array;
+      break;
+
+    default:
+      console.log('Don\'t know about this channel.');
+      return false;
+      break;
+
+  }
+};
 
 // The websocket code
 function Wss (opt, callback) {
@@ -120,13 +165,12 @@ function Wss (opt, callback) {
 
         // Initializing the websocket
         if (data.request_type === 'initialize' ) {
-          jwt.verify(data.token, 'ilovescotchyscotch', function(err, decoded) {
+          jwt.verify(data.token, config.secret, function(err, decoded) {
             if (err) {
-              // console.log(err);
-              // return res.json({ success: false, message: 'Failed to authenticate token.' });
-              ws.send(JSON.stringify({success:false, message:'Failed to authenticate token.'}));
+              console.error(err);
+              ws.send(JSON.stringify({success:false,
+                                      message:'Failed to authenticate token.'}));
             } else {
-              // console.log(decoded);
 
               let now = Date.now()/1000;
               // console.log(now, decoded.iat, decoded.exp, (decoded.exp-now)/(60));
@@ -175,13 +219,13 @@ function Wss (opt, callback) {
                     find({'session_id':mongoose.Types.ObjectId(data.session_id)}).
                     where('result_type').in(['mx:index', 'mx:integrate']).
                     sort('-timestamp').
-                    exec(function(err, sessions) {
+                    exec(function(err, results) {
                         if (err)
                             return false;
-                        console.log(sessions);
+                        console.log(results);
                         // Send back over the websocket
                         ws.send(JSON.stringify({msg_type:'results',
-                                                results:sessions}));
+                                                results:results}));
                     });
                 } else if (data_class === 'snap') {
 

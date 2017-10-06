@@ -95,6 +95,19 @@ def parse_output(labelit_output, iteration=0):
     mosflm_mos = []
     mosflm_rms = []
 
+    # TESTING
+    #return ('min_spots', 28)
+    #return "failed"
+    #return "junk"
+    #return ("min_good_spots", 28)
+    #return "fix_labelit"
+    #return "no_pair"
+    #return "bad_input"
+    #return "bumpiness"
+    #return "mosflm_error"
+    #return "eiger_cbf_error"
+    
+
     # If results empty, then fail
     if len(labelit_output) == 0:
         return "failed"
@@ -141,8 +154,7 @@ def parse_output(labelit_output, iteration=0):
             if line.startswith("InputFileError: Input error:"):
                 return "no_pair"
             if line.startswith("Have "):
-                # self.min_good_spots = line.split()[1].rstrip(";")
-                few_spots = True
+                few_spots = int(line.split()[1].rstrip(";"))
             if line.startswith("UnboundLocalError"):
                 return "bad_input"
             if line.startswith("divide by zero"):
@@ -155,6 +167,9 @@ def parse_output(labelit_output, iteration=0):
                 return "bad_input"
             if line.startswith("MOSFLM_Warning: MOSFLM does not give expected results on r_"):
                 return "mosflm_error"
+            if line.count("TypeError: unsupported operand type(s) for %: 'NoneType' and 'int'"):
+                return "eiger_cbf_error"
+            
             # Save the beam center
             if line.startswith("Beam center"):
                 labelit_bc["labelit_x_beam"] = line.split()[3][:-3]
@@ -176,9 +191,11 @@ def parse_output(labelit_output, iteration=0):
             if min_spots:
                 # print "min spots", labelit_output
                 spots_count = int(labelit_output[-2].split("=")[1])
-                return ("min spots", spots_count)
+                return ("min_spots", spots_count)
             else:
                 return "failed"
+        elif multi_sg:
+            return "bad_input"
         else:
             return "failed"
 
@@ -233,9 +250,10 @@ def parse_output(labelit_output, iteration=0):
             mosflm_rms.append(line.split()[7+result_line])
 
     # Sometimes Labelit works with few spots, sometimes it doesn"t...
+    # When it doesn't, then rerun
     if few_spots:
         if os.path.exists(mosflm_index) == False:
-            return "min_good_spots"
+            return ("min_good_spots", few_spots)
 
     data = {"labelit_face": labelit_face,
             "labelit_solution": labelit_solution,
@@ -370,21 +388,22 @@ def get_labelit_stats(labelit_results, simple=False):
 #
 # Functions for modifying labelit runs
 
-def increase_mosflm_resolution(iteration):
+def decrease_mosflm_resolution(iteration):
     """Increases resolution of mosflm run"""
 
-    # Open and modify preferences
-    preferences = open("dataset_preferences.py", "a")
-
-    # Open index01 and grab out resolution
-    for line in open("index01", "r").readlines():
-        if line.startswith("RESOLUTION"):
-            new_res = float(line.split()[1])+1.00
-            preferences.write("\n#iteration %d\nmosflm_integration_reslimit_override = %.1f\n" % \
-                              (iteration, new_res))
-    preferences.close()
-
-    return new_res
+    if os.path.isfile("index01"):
+        # Open and modify preferences
+        preferences = open("dataset_preferences.py", "a")
+    
+        # Open index01 and grab out resolution
+        for line in open("index01", "r").readlines():
+            if line.startswith("RESOLUTION"):
+                new_res = float(line.split()[1])+1.00
+                preferences.write("\n#iteration %d\nmosflm_integration_reslimit_override = %.1f\n" % \
+                                  (iteration, new_res))
+        preferences.close()
+    
+        return new_res
 
 def decrease_spot_requirements(spot_count):
     """Decrease the required spot count in an attempt to get indexing to work"""
@@ -398,7 +417,7 @@ def decrease_spot_requirements(spot_count):
 
         return spot_count
 
-def decrease_good_spot_requirements(iteration, min_spots=20):
+def decrease_good_spot_requirements(min_spots):
     """
     Sometimes Labelit gives an eror saying that there aren't enough 'good spots' for Mosflm. Not a
     Labelit failure error. Forces Labelit/Mosflm to give result regardless. Sometimes causes failed
@@ -406,9 +425,12 @@ def decrease_good_spot_requirements(iteration, min_spots=20):
     """
 
     with open("dataset_preferences.py", "a") as preferences:
-        preferences.write("\n#iteration %s\n" % iteration)
         preferences.write("model_refinement_minimum_N=%d" % min_spots)
-
+    """
+    with open("dataset_preferences.py", "r") as preferences:
+        for line in preferences:
+            print line
+    """
     return min_spots
 
 def no_bumpiness():
@@ -443,14 +465,16 @@ def fix_multiple_cells(lattice_group, labelit_solution):
                 if index == 0:
                     rmsd.append(float(line[4]))
                 else:
-                    if line[4] == str(min_rmsd):
-                        cell_cmd = "known_cell=%s,%s,%s,%s,%s,%s " % (line[8],
-                                                                      line[9],
-                                                                      line[10],
-                                                                      line[11],
-                                                                      line[12],
-                                                                      line[13])
-                        return cell_cmd
+                    #if line[4] == str(min_rmsd):
+                    if float(line[4]) == min_rmsd:
+                        #cell_cmd = "known_cell=%s,%s,%s,%s,%s,%s " % (line[8],
+                        #                                              line[9],
+                        #                                              line[10],
+                        #                                              line[11],
+                        #                                              line[12],
+                        #                                              line[13])
+                        #return cell_cmd
+                        return "known_setting=%s "%line[1]
 
 def main():
     """

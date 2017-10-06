@@ -106,22 +106,13 @@ class RedisRunMonitor_OLD():
 
         # Create redis connections
         # Where beamline information is coming from
-        # Create a pool connection
         redis_database = importlib.import_module('database.rapd_redis_adapter')
         
         bl_database = redis_database.Database(settings=self.site.SITE_ADAPTER_SETTINGS)
         self.bl_redis = bl_database.connect_redis_pool()
         pipe = self.bl_redis.pipeline()
-        
-        #self.red = redis.Redis(beamline_settings[self.beamline]['redis_ip'])
-        #pipe = self.red.pipeline()
-        
+
         # Where information will be published to
-        """
-        self.pub = pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
-                                       sentinel_port=26379,
-                                       master_name="remote_master")
-        """
         #self.pub = BLspec.connect_redis_manager_HA()
         self.pub_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
         self.pub = self.pub_database.connect_redis_manager_HA()
@@ -443,7 +434,6 @@ class Gatherer(object):
         self.ow_registrar.register({"site_id":self.site.ID})
 
         # Get redis connection
-        #red = redis.Redis(connection_pool=self.redis_pool)
 
         #self.logger.debug("  Will publish new images on filecreate:%s" % self.tag)
         #self.logger.debug("  Will push new images onto images_collected:%s" % self.tag)

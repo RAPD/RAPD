@@ -245,7 +245,7 @@ class RapdPlugin(Process):
         if self.cluster_use:
             # Load the cluster adapter
             cluster_launcher = xutils.load_cluster_adapter(self)
-            self.launcher = cluster_launcher.processCluster
+            self.launcher = cluster_launcher.process_cluster
             # Based on the command, pick a batch queue on the cluster. Added to input kwargs
             self.batch_queue = {'batch_queue': cluster_launcher.check_queue(self.command["command"])}
             if self.ram_use == True:
@@ -1286,7 +1286,7 @@ class RapdPlugin(Process):
 
         """
         if self.cluster_use == True:
-            xds_proc = Process(target=BLspec.processCluster,
+            xds_proc = Process(target=BLspec.process_cluster,
                                args=(self, (xds_command, 'XDS.LOG', '8', 'phase2.q')))
         else:
             xds_proc = multiprocessing.Process(target=local_subprocess,
@@ -1793,16 +1793,26 @@ class RapdPlugin(Process):
 
         # Set up the method
         # Archive directory name
-        archive_dirname = '_'.join([self.image_data['image_prefix'],
-                                   str(self.image_data['run_number'])])
+        if self.image_data.get("run_number"):
+            archive_dirname = '_'.join([self.image_data['image_prefix'],
+                                       str(self.image_data['run_number'])])
+        else:
+            archive_dirname = self.image_data['image_prefix']
+
+
         # Full path location of the archive
         archive_dir = os.path.join(self.dirs['work'], archive_dirname)
         if not os.path.isdir(archive_dir):
             os.mkdir(archive_dir)
+
         # Full path prefix for archive files
-        archive_files_prefix = "%s/%s_%d" %(archive_dir,
-                                            self.image_data["image_prefix"],
-                                            self.image_data["run_number"])
+        if self.image_data.get("run_number"):
+            archive_files_prefix = "%s/%s_%d" % (archive_dir,
+                                                 self.image_data.get("image_prefix"),
+                                                 self.image_data.get("run_number"))
+        else:
+            archive_files_prefix = "%s/%s" % (archive_dir,
+                                              self.image_data.get("image_prefix"))
 
         # Flags for file creation
         scalepack = False
@@ -1846,6 +1856,8 @@ class RapdPlugin(Process):
 
         # Rename the so-called mergable file
         mergable_file = results["mtzfile"].replace("_aimless", "_mergable")
+        print mergable_file, os.path.exists(mergable_file)
+        print os.path.join(archive_dirname, mergable_file), os.path.exists(os.path.join(archive_dirname, mergable_file))
         shutil.copyfile(results["mtzfile"], os.path.join(archive_dirname,
                                                          mergable_file))
 
