@@ -1923,8 +1923,12 @@ class RapdPlugin(Process):
         for critical_file_pattern in critical_file_patterns:
             g_return = glob.glob(critical_file_pattern)[0]
             if g_return:
-                print g_return
-                # src_file = g_return[0]
+                if isinstance(g_return, str):
+                    src_file = g_return
+                elif isinstance(g_return, list):
+                    src_file = g_return[0]
+                print ">>>", src_file
+
                 # target_file = os.path.join(archive_dir, src_file)
                 # shutil.copyfile(src_file, target_file)
                 # files_to_archive.append(target_file)
