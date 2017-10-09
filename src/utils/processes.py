@@ -48,12 +48,8 @@ def local_subprocess(command,
         pid_queue - a multiprocessing.Queue for placing PID of subprocess in
         tag - an identifying tag to be useful to the caller
     """
-    #pid_queue.put('gh')
-    #pprint(command)
-    # Run the process
-    #proc = Popen(command,
+
     proc = Popen(shlex.split(command),
-                 #shell=True,
                  stdout=PIPE,
                  stderr=PIPE)
 

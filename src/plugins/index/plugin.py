@@ -274,15 +274,6 @@ class RapdPlugin(Process):
                 # and does not send results to database.
                 self.gui = False
 
-        # Load the appropriate cluster adapter or set to False
-        #if self.cluster_use:
-        #    self.cluster_adapter = xutils.load_cluster_adapter(self)
-        #    # Based on the command, pick a batch queue on the cluster.
-        #    self.batch_queue = self.cluster_adapter.check_queue(self.command["command"])
-        #else:
-        #    self.cluster_adapter = False
-        #    self.batch_queue = False
-
         # Setup the appropriate launcher
         if self.cluster_use:
             cluster_launcher = xutils.load_cluster_adapter(self)
@@ -579,7 +570,8 @@ class RapdPlugin(Process):
             crystal_size_y = self.preferences.get("crystal_size_y", 100.0)/1000.0
             crystal_size_z = self.preferences.get("crystal_size_z", 100.0)/1000.0
 
-        raddose = open("raddose.com", "w+")
+        f = os.path.join(self.labelit_dir, "raddose.com")
+        raddose = open(f, "w+")
         setup = "raddose << EOF\n"
         if beam_size_x and beam_size_y:
             setup += "BEAM %s %s\n" % (beam_size_x, beam_size_y)
@@ -625,6 +617,7 @@ class RapdPlugin(Process):
         setup += "END\nEOF\n"
         raddose.writelines(setup)
         raddose.close()
+        os.chmod(f, stat.S_IRWXU)
 
         # except:
             # self.logger.exception("**ERROR in preprocess_raddose**")
@@ -749,6 +742,7 @@ class RapdPlugin(Process):
                              kwargs={"command": 'ls'})
             else:
                 command = "distl.signal_strength %s" % eval("self.header%s" % l[i]).get("fullname")
+                
                 job = Thread(target=local_subprocess,
                              kwargs={"command": command,
                                     "logfile": os.path.join(os.getcwd(), "distl%s.log" % i),
@@ -770,9 +764,11 @@ class RapdPlugin(Process):
 
         self.raddose_log = []
         try:
+            f = os.path.join(self.labelit_dir, 'raddose.com')
             # Need to fix for other environments!!
             self.raddose_log.append("tcsh raddose.com\n")
-            output = subprocess.Popen("tcsh raddose.com",
+            #output = subprocess.Popen("tcsh raddose.com",
+            output = subprocess.Popen(f,
                                       shell=True,
                                       stdout=subprocess.PIPE,
                                       stderr=subprocess.STDOUT)
@@ -1065,7 +1061,7 @@ class RapdPlugin(Process):
                 for x, line in enumerate(raw):
                     temp.append(line)
                     if line.count("ipmosflm"):
-                        newline = line.replace(self.index_number, l[i][0])
+                        newline = line.replace('> %s.out'%self.index_number,'')
                         temp.remove(line)
                         temp.insert(x, newline)
                     if line.count("FINDSPOTS"):
@@ -1107,7 +1103,7 @@ class RapdPlugin(Process):
                 inp_kwargs.update(self.batch_queue)
                 
                 #Launch the job
-                Thread(target=self.launcher,
+                Process(target=self.launcher,
                         kwargs=inp_kwargs).start()
 
     def check_best_detector(self, detector):
@@ -1739,8 +1735,9 @@ Distance | % Transmission", level=98, color="white")
                     if fix_spacegroup:
                         xutils.fixMosflmSG(self)
                         xutils.fixBestSG(self)
-                    else:
-                        self.ignore_user_SG = True
+                    #else:
+                         # Used for telling user that SG is not compatible with cell
+                    #    self.ignore_user_SG = True
 
             # Print Labelit results to commandline
             self.tprint(arg="\nHighest symmetry Labelit result",
@@ -2596,7 +2593,8 @@ rerunning.\n" % spot_count)
             user_cell = self.preferences.get("unitcell", False)
             if user_cell:
                 command += 'known_cell=%s,%s,%s,%s,%s,%s ' % tuple(user_cell)
-        if not self.ignore_user_SG and not overrides.get("ignore_user_SG"):
+        #if not self.ignore_user_SG and not overrides.get("ignore_user_SG"):
+        if not overrides.get("ignore_user_SG"):
             if self.spacegroup != False:
                 command += 'known_symmetry=%s ' % self.spacegroup
         if overrides.get("ignore_sublattice"):
