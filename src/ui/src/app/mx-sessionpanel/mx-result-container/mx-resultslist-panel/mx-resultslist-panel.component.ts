@@ -54,14 +54,17 @@ export class MxResultslistPanelComponent implements OnInit {
 
   private handleIncomingData(data: any) {
     let self = this;
-    if (data.msg_type === 'results') {
-      for (let result of data.results) {
+
+    console.log(data);
+
+    // if (data.msg_type === 'results') {
+      for (let result of data) {
         if (result.result_type === this.result_types[this.result_type]) {
           console.log(result);
           // New result
           let id = result._id; // result.process.process_id;
           if (self.data_results.indexOf(id) === -1) {
-            self.data_results.push(id);
+            self.data_results.unshift(id);
           }
           self.data_results_object[id] = result;
         }
@@ -72,7 +75,7 @@ export class MxResultslistPanelComponent implements OnInit {
         //   self.integrate_results.push(result);
         // }
       }
-    }
+    // }
   }
 
   private onClick(id: string) {

@@ -10,6 +10,9 @@ export class WebsocketService {
   private websocketUrl: string;
   private ws: WebSocket;
 
+  public results_subscribers = [];
+  public details_subscribers = [];
+
   public results_subject: ReplaySubject<string>;
   public result_details_subject: ReplaySubject<string>;
 
@@ -99,12 +102,31 @@ export class WebsocketService {
     switch (data.msg_type) {
 
       case 'results':
-        // Send the data to the subscribers
-        self.results_subject.next(data);
+        data.results.forEach(function(result) {
+          console.log(result);
+          // Send the data to the subscribers
+          self.results_subscribers.forEach(function(subscriber) {
+            if (subscriber.session_id === result.session_id) {
+              subscriber.subject.next([result]);
+            }
+          });
+        });
+        // self.results_subject.next(data);
         break;
 
       case 'result_details':
-        self.result_details_subject.next(data.results);
+        //self.result_details_subject.next(data.results);
+        console.log(data.results);
+        self.details_subscribers.forEach(function(subscriber) {
+          if (subscriber.result_id == data.results._id) {
+            subscriber.subject.next(data.results);
+          }
+        });
+        break;
+
+      case 'RAPD_RESULTS':
+        // Send the data to the subscribers
+        self.results_subject.next(data);
         break;
 
       default:
@@ -180,19 +202,47 @@ export class WebsocketService {
 
     console.log('subscribeResults session_id:', session_id);
 
-    // Return the observable
-    return this.results_subject;
+    let results_subject = new ReplaySubject<string>(1);
 
+    this.results_subscribers.push({
+      subject:results_subject,
+      session_id:session_id
+    });
+
+    // Return the observable
+    return results_subject;
+
+  }
+
+  // Unsubscribe from result details
+  unsubscribeResults(subject: ReplaySubject<string>) {
+    console.log('unsubscribeResultDetails');
+
+    let index = this.results_subscribers.findIndex(function(element){
+      return element.subject === subject;
+    });
+    let subscriber = this.details_subscribers.splice(index, 1)[0];
+    subscriber['subject'].complete();
+    subscriber = null;
   }
 
   // Get details for a result
   subscribeResultDetails(result_type: string,
                          result_id: string): ReplaySubject<string> {
+
     console.log('subscribeResultDetails  result_type =', result_type, 'result_id =', result_id);
 
     let self = this;
 
     this.result_details_subject = new ReplaySubject<string>(1);
+
+    let result_details_subject = new ReplaySubject<string>(1);
+
+    this.details_subscribers.push({
+      subject:result_details_subject,
+      result_type:result_type,
+      result_id:result_id
+    });
 
     // Ask for result details, but protected for connection
     this.waitForSocketConnection(function() {
@@ -205,7 +255,19 @@ export class WebsocketService {
     });
 
     // Return the ReplaySubject
-    return this.result_details_subject;
+    return result_details_subject;
+  }
+
+  // Unsubscribe from result details
+  unsubscribeResultDetails(subject: ReplaySubject<string>) {
+    console.log('unsubscribeResultDetails');
+
+    let index = this.details_subscribers.findIndex(function(element){
+      return element.subject === subject;
+    });
+    let subscriber = this.details_subscribers.splice(index, 1)[0];
+    subscriber['subject'].complete();
+    subscriber = null;
   }
 
 }

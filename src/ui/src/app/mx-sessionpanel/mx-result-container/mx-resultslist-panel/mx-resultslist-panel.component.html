@@ -9,23 +9,27 @@
       [ngClass]="id == active_result ? 'active-result': ''">
       {{data_results_object[id].repr}}
     </mat-list-item>
-  <mat-divider class="rapd-side-list-divider"></mat-divider>
-  <mat-list-item
-    *ngIf="! data_results_object[id].display"
-    [attr.id]=id
-    [myHighlight]="highlight_color"
-    (click)="onClick(id)"
-    [ngClass]="id == active_result ? 'active-result': ''">
-    {{data_results_object[id].repr}}
-  </mat-list-item>
-  <mat-divider class="rapd-side-list-divider" style="border-top-color:rgba(255,125,125,0.5);"></mat-divider>
-  <mat-list-item
-    *ngIf="data_results_object[id].display == 'junked'"
-    [attr.id]=id
-    [myHighlight]="highlight_color"
-    (click)="onClick(id)"
-    [ngClass]="id == active_result ? 'active-result': ''">
-    {{data_results_object[id].repr}}
-  </mat-list-item>
-</ng-container>
+  </ng-container>
+    <mat-divider class="rapd-side-list-divider"></mat-divider>
+  <ng-container *ngFor="let id of data_results">
+    <mat-list-item
+      *ngIf="! data_results_object[id].display"
+      [attr.id]=id
+      [myHighlight]="highlight_color"
+      (click)="onClick(id)"
+      [ngClass]="id == active_result ? 'active-result': ''">
+      {{data_results_object[id].repr}}
+    </mat-list-item>
+  </ng-container>
+    <mat-divider class="rapd-side-list-divider" style="border-top-color:rgba(255,125,125,0.5);"></mat-divider>
+    <ng-container *ngFor="let id of data_results">
+      <mat-list-item
+      *ngIf="data_results_object[id].display == 'junked'"
+      [attr.id]=id
+      [myHighlight]="highlight_color"
+      (click)="onClick(id)"
+      [ngClass]="id == active_result ? 'active-result': ''">
+      {{data_results_object[id].repr}}
+    </mat-list-item>
+  </ng-container>
 </mat-list>

@@ -35,8 +35,7 @@ export class MxResultContainerComponent implements OnInit {
 
   @ViewChild('target', { read: ViewContainerRef }) target;
 
-  constructor(/* private compiler: ComponentResolver, */
-              private componentfactoryResolver: ComponentFactoryResolver) { }
+  constructor(private componentfactoryResolver: ComponentFactoryResolver) { }
 
   ngOnInit() {}
 
@@ -44,6 +43,9 @@ export class MxResultContainerComponent implements OnInit {
   selectResult(event) {
 
     console.log('selectResult', event);
+
+    // Destroy the current component in the target view
+    this.target.clear();
 
     // Save the current displayed result
     this.current_result = event.value;
@@ -56,7 +58,6 @@ export class MxResultContainerComponent implements OnInit {
 
     // Create a componentfactoryResolver instance
     const factory = this.componentfactoryResolver.resolveComponentFactory(mx_components[component_name]);
-    // const factory = this.componentfactoryResolver.resolveComponentFactory(mx_components['indexstrategyaaaa1component']);
 
     // Create the component
     let component = this.target.createComponent(factory);

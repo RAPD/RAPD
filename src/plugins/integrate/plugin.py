@@ -333,7 +333,7 @@ class RapdPlugin(Process):
         # self.start()
 
     def run(self):
-        self.logger.debug('Fastintegration::run')
+        self.logger.debug("run")
         self.preprocess()
         self.process()
         self.postprocess()
@@ -416,7 +416,7 @@ class RapdPlugin(Process):
                             color="red")
                 self.results["process"]["status"] = -1
                 self.results["error"] = "Executable for %s is not present" % executable
-                self.write_json(self.results)
+                self.write_json()
                 raise exceptions.MissingExecutableException(executable)
 
         # If no gnuplot turn off printing
@@ -472,11 +472,6 @@ class RapdPlugin(Process):
         self.results["results"] = final_results
 
         # self.logger.debug(self.results)
-
-        self.write_json(self.results)
-
-        self.print_credits()
-
         self.run_analysis_plugin()
 
     def run_analysis_plugin(self):
@@ -533,7 +528,16 @@ class RapdPlugin(Process):
         """After it's all done"""
 
         # Write the output JSON again
-        self.write_json(self.results)
+        self.write_json()
+
+        # Create archive
+        self.create_archive()
+
+        # Clean up
+        self.clean_up()
+
+        # Print the credits
+        self.print_credits()
 
         self.tprint(100, "progress")
 
@@ -1780,29 +1784,39 @@ class RapdPlugin(Process):
 
         """
          'files': {'ANOM_sca': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_ANOM.sca',
-                       'NATIVE_sca': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_NATIVE.sca',
-                       'downloadable': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1.tar.bz2',
-                       'mergable': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_mergable.mtz',
-                       'mtzfile': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_free.mtz',
-                       'scala_com': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_scala.com',
-                       'scala_log': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_scala.log',
-                       'xds_com': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_XDS.INP',
-                       'xds_data': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_XDS.HKL',
-                       'xds_log': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_XDS.LOG'},
+                   'NATIVE_sca': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_NATIVE.sca',
+                   'downloadable': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1.tar.bz2',
+                   'mergable': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_mergable.mtz',
+                   'mtzfile': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_free.mtz',
+                   'scala_com': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_scala.com',
+                   'scala_log': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_scala.log',
+                   'xds_com': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_XDS.INP',
+                   'xds_data': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_XDS.HKL',
+                   'xds_log': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_XDS.LOG'},
         """
 
         # Set up the method
         # Archive directory name
-        archive_dirname = '_'.join([self.image_data['image_prefix'],
-                                   str(self.image_data['run_number'])])
+        if self.image_data.get("run_number"):
+            archive_dirname = '_'.join([self.image_data['image_prefix'],
+                                       str(self.image_data['run_number'])])
+        else:
+            archive_dirname = self.image_data['image_prefix']
+
+
         # Full path location of the archive
         archive_dir = os.path.join(self.dirs['work'], archive_dirname)
         if not os.path.isdir(archive_dir):
             os.mkdir(archive_dir)
+
         # Full path prefix for archive files
-        archive_files_prefix = "%s/%s_%d" %(archive_dir,
-                                            self.image_data["image_prefix"],
-                                            self.image_data["run_number"])
+        if self.image_data.get("run_number"):
+            archive_files_prefix = "%s/%s_%d" % (archive_dir,
+                                                 self.image_data.get("image_prefix"),
+                                                 self.image_data.get("run_number"))
+        else:
+            archive_files_prefix = "%s/%s" % (archive_dir,
+                                              self.image_data.get("image_prefix"))
 
         # Flags for file creation
         scalepack = False
@@ -1846,7 +1860,12 @@ class RapdPlugin(Process):
 
         # Rename the so-called mergable file
         mergable_file = results["mtzfile"].replace("_aimless", "_mergable")
-        shutil.copyfile(results["mtzfile"], os.path.join(archive_dirname,
+        print results["mtzfile"], os.path.exists(results["mtzfile"])
+        print mergable_file, os.path.exists(mergable_file)
+        print os.path.join(archive_dirname, mergable_file), os.path.exists(os.path.join(archive_dirname, mergable_file))
+        print archive_dirname, os.path.exists(archive_dirname)
+        shutil.copyfile(results["mtzfile"], os.path.join(self.dirs['work'],
+                                                         archive_dirname,
                                                          mergable_file))
 
         if scalepack:
@@ -1900,38 +1919,29 @@ class RapdPlugin(Process):
         # Move critical files into archive directory for packaging
         critical_file_patterns = ("*aimless.com",
                                   "*aimless.log",
-                                  "*pointless.log")
+                                  "*pointless.com"
+                                  "*pointless.log",
+                                  "*XDS.INP",
+                                  "*XDS.LOG",
+                                  "*.LP")
         for critical_file_pattern in critical_file_patterns:
-            src_file = glob.glob(critical_file_pattern)[0]
-            target_file = os.path.join(archive_dir, src_file)
-            shutil.copyfile(src_file, target_file)
-            files_to_archive.append(target_file)
+            g_return = glob.glob(critical_file_pattern)[0]
+            if g_return:
+                if isinstance(g_return, str):
+                    src_file = g_return
+                elif isinstance(g_return, list):
+                    src_file = g_return[0]
+                print ">>>", src_file
 
+                # target_file = os.path.join(archive_dir, src_file)
+                # shutil.copyfile(src_file, target_file)
+                # files_to_archive.append(target_file)
         sys.exit()
 
-        # Clean up the filesystem.
-        # Move some files around
-        # if os.path.isdir('%s/xds_lp_files' % self.dirs['work']) == False:
-        #     os.mkdir('%s/xds_lp_files' % self.dirs['work'])
-        # os.system('cp %s/*.LP %s/xds_lp_files/' % (results['dir'], self.dirs['work']))
-
-        # os.system('cp %s/*pointless.mtz %s_mergable.mtz' %(results['dir'], prefix))
-        # os.system('cp %s/XDS.LOG %s_XDS.LOG' %(results['dir'], prefix))
-        # os.system('cp %s/XDS.INP %s_XDS.INP' %(results['dir'], prefix))
-        # os.system('cp %s/CORRECT.LP %s_CORRECT.LP' %(results['dir'], prefix))
-        # os.system('cp %s/INTEGRATE.LP %s_INTEGRATE.LP' %(results['dir'], prefix))
-        # os.system('cp %s/XDSSTAT.LP %s_XDSSTAT.LP' %(results['dir'], prefix))
-        # os.system('cp %s/XDS_ASCII.HKL %s_XDS.HKL' %(results['dir'], prefix))
-
-        # Remove any integration directories.
-        for wedge_dir in glob.glob("wedge_*"):
-            os.remove(wedge_dir)
-
-        # Remove extra files in working directory.
-        os.system('rm -f *.mtz *.sca *.sh *.log junk_*')
 
         # Create an archive
-        # archive.create_archive()
+        archive.create_archive()
+        sys.exit()
 
         # Create a downloadable tar file.
         tar_dir = tar_name
@@ -2225,7 +2235,6 @@ class RapdPlugin(Process):
                 time.sleep(2)
                 gnuplot.terminate()
 
-
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
 
@@ -2238,12 +2247,12 @@ class RapdPlugin(Process):
 
         self.tprint(info_string, level=99, color="white")
 
-    def write_json(self, results):
+    def write_json(self):
         """Write a file with the JSON version of the results"""
 
-        pprint(results);
+        pprint(self.results);
 
-        json_string = json.dumps(results)
+        json_string = json.dumps(self.results)
 
         # Output to terminal?
         if self.preferences["json"]:
@@ -2252,6 +2261,38 @@ class RapdPlugin(Process):
         # Write a file
         with open("result.json", "w") as outfile:
             outfile.writelines(json_string)
+
+    def create_archive(self):
+        """Create archive of results"""
+
+        pass
+
+    def clean_up(self):
+        """Clean up filesystem"""
+
+        return True
+
+        # Clean up the filesystem.
+        # Move some files around
+        # if os.path.isdir('%s/xds_lp_files' % self.dirs['work']) == False:
+        #     os.mkdir('%s/xds_lp_files' % self.dirs['work'])
+        # os.system('cp %s/*.LP %s/xds_lp_files/' % (results['dir'], self.dirs['work']))
+
+        # os.system('cp %s/*pointless.mtz %s_mergable.mtz' %(results['dir'], prefix))
+        # os.system('cp %s/XDS.LOG %s_XDS.LOG' %(results['dir'], prefix))
+        # os.system('cp %s/XDS.INP %s_XDS.INP' %(results['dir'], prefix))
+        # os.system('cp %s/CORRECT.LP %s_CORRECT.LP' %(results['dir'], prefix))
+        # os.system('cp %s/INTEGRATE.LP %s_INTEGRATE.LP' %(results['dir'], prefix))
+        # os.system('cp %s/XDSSTAT.LP %s_XDSSTAT.LP' %(results['dir'], prefix))
+        # os.system('cp %s/XDS_ASCII.HKL %s_XDS.HKL' %(results['dir'], prefix))
+
+        # Remove any integration directories.
+        # for wedge_dir in glob.glob("wedge_*"):
+            # os.remove(wedge_dir)
+
+        # Remove extra files in working directory.
+        # os.system('rm -f *.mtz *.sca *.sh *.log junk_*')
+
 
 
 class DataHandler(threading.Thread):

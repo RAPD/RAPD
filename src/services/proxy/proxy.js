@@ -14,12 +14,19 @@ var server = http.createServer(function(req, res) {
   // You can define here your custom logic to handle the request
   // and then proxy the request.
   // The REST API
-  if (req.url.match(/\/api\//)) {
+  console.log(req.url);
+  console.log(req.url.match(/\/api\//));
+  if (req.url.match(/\/api/)) {
+    console.log('Call to REST');
     proxy.web(req, res, { target: 'http://127.0.0.1:3000' });
   // Everything else
   } else {
-    proxy.web(req, res, { target: 'http://127.0.0.1:4200' });
-    //proxy.ws(req, res,  { target: 'http://127.0.0.1:3000' });
+    console.log('Everything else');
+    try {
+      proxy.web(req, res, { target: 'http://127.0.0.1:4200' });
+    } catch (e) {
+      console.error(e);
+    }
   }
 });
 

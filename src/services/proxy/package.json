@@ -5,7 +5,7 @@
   "main": "proxy.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node proxy.js"
+    "start": "forever run proxy.js"
   },
   "author": "",
   "license": "ISC",
