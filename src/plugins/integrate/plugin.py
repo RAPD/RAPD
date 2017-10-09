@@ -333,7 +333,7 @@ class RapdPlugin(Process):
         # self.start()
 
     def run(self):
-        self.logger.debug('Fastintegration::run')
+        self.logger.debug("run")
         self.preprocess()
         self.process()
         self.postprocess()
@@ -416,7 +416,7 @@ class RapdPlugin(Process):
                             color="red")
                 self.results["process"]["status"] = -1
                 self.results["error"] = "Executable for %s is not present" % executable
-                self.write_json(self.results)
+                self.write_json()
                 raise exceptions.MissingExecutableException(executable)
 
         # If no gnuplot turn off printing
@@ -472,11 +472,6 @@ class RapdPlugin(Process):
         self.results["results"] = final_results
 
         # self.logger.debug(self.results)
-
-        self.write_json(self.results)
-
-        self.print_credits()
-
         self.run_analysis_plugin()
 
     def run_analysis_plugin(self):
@@ -533,7 +528,16 @@ class RapdPlugin(Process):
         """After it's all done"""
 
         # Write the output JSON again
-        self.write_json(self.results)
+        self.write_json()
+
+        # Create archive
+        self.create_archive()
+
+        # Clean up
+        self.clean_up()
+
+        # Print the credits
+        self.print_credits()
 
         self.tprint(100, "progress")
 
@@ -1934,26 +1938,6 @@ class RapdPlugin(Process):
                 # files_to_archive.append(target_file)
         sys.exit()
 
-        # Clean up the filesystem.
-        # Move some files around
-        # if os.path.isdir('%s/xds_lp_files' % self.dirs['work']) == False:
-        #     os.mkdir('%s/xds_lp_files' % self.dirs['work'])
-        # os.system('cp %s/*.LP %s/xds_lp_files/' % (results['dir'], self.dirs['work']))
-
-        # os.system('cp %s/*pointless.mtz %s_mergable.mtz' %(results['dir'], prefix))
-        # os.system('cp %s/XDS.LOG %s_XDS.LOG' %(results['dir'], prefix))
-        # os.system('cp %s/XDS.INP %s_XDS.INP' %(results['dir'], prefix))
-        # os.system('cp %s/CORRECT.LP %s_CORRECT.LP' %(results['dir'], prefix))
-        # os.system('cp %s/INTEGRATE.LP %s_INTEGRATE.LP' %(results['dir'], prefix))
-        # os.system('cp %s/XDSSTAT.LP %s_XDSSTAT.LP' %(results['dir'], prefix))
-        # os.system('cp %s/XDS_ASCII.HKL %s_XDS.HKL' %(results['dir'], prefix))
-
-        # Remove any integration directories.
-        # for wedge_dir in glob.glob("wedge_*"):
-            # os.remove(wedge_dir)
-
-        # Remove extra files in working directory.
-        # os.system('rm -f *.mtz *.sca *.sh *.log junk_*')
 
         # Create an archive
         archive.create_archive()
@@ -2251,7 +2235,6 @@ class RapdPlugin(Process):
                 time.sleep(2)
                 gnuplot.terminate()
 
-
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
 
@@ -2264,12 +2247,12 @@ class RapdPlugin(Process):
 
         self.tprint(info_string, level=99, color="white")
 
-    def write_json(self, results):
+    def write_json(self):
         """Write a file with the JSON version of the results"""
 
-        pprint(results);
+        pprint(self.results);
 
-        json_string = json.dumps(results)
+        json_string = json.dumps(self.results)
 
         # Output to terminal?
         if self.preferences["json"]:
@@ -2278,6 +2261,38 @@ class RapdPlugin(Process):
         # Write a file
         with open("result.json", "w") as outfile:
             outfile.writelines(json_string)
+
+    def create_archive(self):
+        """Create archive of results"""
+
+        pass
+
+    def clean_up(self):
+        """Clean up filesystem"""
+
+        return True
+
+        # Clean up the filesystem.
+        # Move some files around
+        # if os.path.isdir('%s/xds_lp_files' % self.dirs['work']) == False:
+        #     os.mkdir('%s/xds_lp_files' % self.dirs['work'])
+        # os.system('cp %s/*.LP %s/xds_lp_files/' % (results['dir'], self.dirs['work']))
+
+        # os.system('cp %s/*pointless.mtz %s_mergable.mtz' %(results['dir'], prefix))
+        # os.system('cp %s/XDS.LOG %s_XDS.LOG' %(results['dir'], prefix))
+        # os.system('cp %s/XDS.INP %s_XDS.INP' %(results['dir'], prefix))
+        # os.system('cp %s/CORRECT.LP %s_CORRECT.LP' %(results['dir'], prefix))
+        # os.system('cp %s/INTEGRATE.LP %s_INTEGRATE.LP' %(results['dir'], prefix))
+        # os.system('cp %s/XDSSTAT.LP %s_XDSSTAT.LP' %(results['dir'], prefix))
+        # os.system('cp %s/XDS_ASCII.HKL %s_XDS.HKL' %(results['dir'], prefix))
+
+        # Remove any integration directories.
+        # for wedge_dir in glob.glob("wedge_*"):
+            # os.remove(wedge_dir)
+
+        # Remove extra files in working directory.
+        # os.system('rm -f *.mtz *.sca *.sh *.log junk_*')
+
 
 
 class DataHandler(threading.Thread):
