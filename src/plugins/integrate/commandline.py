@@ -81,6 +81,13 @@ def get_commandline():
                         choices=["auto", "pointless", "xds"],
                         help="Rounds of polishing to perform")
 
+    # Don't run analysis
+    parser.add_argument("--noanalysis",
+                        action="store_false",
+                        dest="analysis",
+                        default=True,
+                        help="Do not run analysis")
+
     # Directory or files
     parser.add_argument(action="store",
                         dest="template",
