@@ -199,6 +199,7 @@ class Launcher(object):
         # Look for the launcher matching this ip_address and the input tag
         possible_tags = []
         for launcher in launchers:
+            #print launcher
             if launcher.get('ip_address') == self.ip_address and launcher.get('tag') == self.tag:
                 self.launcher = launcher
                 break
@@ -224,7 +225,8 @@ s IP address (%s), but not for the input tag (%s)" % (self.ip_address, self.tag)
             sys.exit(9)
         else:
             # Get the job_list to watch for this launcher
-            self.job_list = self.launcher.get('job_list')
+	    self.job_list = self.launcher.get('job_list')
+	    print self.job_list
             
 
     def load_adapter(self):
