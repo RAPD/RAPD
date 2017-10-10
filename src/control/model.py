@@ -129,7 +129,7 @@ class Model(object):
 
         # Import the detector
         self.init_detectors()
-        
+
         # start launcher manager
         self.start_launcher_manager()
 
@@ -216,7 +216,7 @@ class Model(object):
 
         # Shorten variable names
         site = self.site
-        
+
         import sites.detectors.necat_dectris_eiger16m
 
         # A single detector
@@ -497,6 +497,7 @@ class Model(object):
                 return False
 
             # Add some data to the header - no run_id for snaps
+            pprint(header)
             header["collect_mode"] = "SNAP"
             header["run_id"] = None
             header["site_tag"] = site_tag
