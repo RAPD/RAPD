@@ -357,7 +357,7 @@ class Database(object):
 
         self.logger.debug("%s _id %s", collection_name, result1_id)
 
-        result2 = db.plugin_results.update_one(
+        result2 = db.results.update_one(
             {"result_id":result1_id},
             {"$set":{
                 "data_type":plugin_result["plugin"]["data_type"],
@@ -375,7 +375,7 @@ class Database(object):
         if result2.raw_result.get("updatedExisting", False):
             result2_id = db.plugin_results.find_one(
                 {"result_id":result1_id},
-                {"_id":1})["_id"]
+                {"_id":1})
         # upsert
         else:
             result2_id = result2.upserted_id
