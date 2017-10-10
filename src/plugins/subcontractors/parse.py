@@ -792,9 +792,6 @@ def ParseOutputRaddose(inp):
     # print "ParseOutputRaddose"
     # print inp
 
-    if self.verbose:
-        self.logger.debug("Parse.ParseOutputRaddose")
-        self.logger.debug(inp)
 
     try:
         for line in inp:
@@ -812,7 +809,7 @@ def ParseOutputRaddose(inp):
         return(raddose)
 
     except:
-        self.logger.exception('**Error in Parse.ParseOutputRaddose**')
+        #self.logger.exception('**Error in Parse.ParseOutputRaddose**')
         return(False)
 
 
