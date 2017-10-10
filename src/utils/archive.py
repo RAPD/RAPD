@@ -41,6 +41,7 @@ from pprint import pprint
 # import shutil
 # import subprocess
 # import sys
+import tarfile
 # import time
 # import unittest
 
@@ -49,11 +50,53 @@ from pprint import pprint
 # import detectors.detector_utils as detector_utils
 # import utils
 
+def compress_target(target):
+    """Compress a target and return the result file name"""
+
+    archive_name = "%s.tar.bz2" % target
+
+    with tarfile.open(archive_name, "w:bz2") as tar:
+        tar.add(target)
+
+    return os.path.abspath(archive_name)
+
+
 def create_archive(directory, archive_name=False):
     """
     Creates an archive file for the input directory
     """
-    pass
+    # print "create_archive"
+    # print "  directory: %s" % directory
+    # print "  archive_name: %s" % archive_name
+    cwd = os.getcwd()
+
+    if not os.path.isdir(directory):
+        return False
+
+    # Move to directory that contains directory to be archived
+    parent_dir = os.path.dirname(directory)
+    # print "  parent_dir:", parent_dir
+    os.chdir(parent_dir)
+
+    # Create a manifest and put it in the archive directory
+    records = create_manifest(directory, True)
+
+    # Compress the archive
+    archive_name = compress_target(directory)
+
+    # Get a hash value for the archive
+    archive_hash = get_hash(archive_name)
+
+    return_dict = {
+        "file": archive_name,
+        "hash": archive_hash
+    }
+
+    # Return to the original directory
+    if not cwd == directory:
+        os.chdir(cwd)
+
+    return return_dict
 
 def create_manifest(directory, write=True):
     """
@@ -69,21 +112,25 @@ def create_manifest(directory, write=True):
 
     # Run through files
     for globfile in globfiles:
+        trunc_file = globfile.replace(directory+"/", "")
         # It's a file
         if os.path.isfile(globfile):
             # Compute hash
             file_hash = hashlib.sha1(open(globfile, "r").read()).hexdigest()
             # Store hash
-            records[globfile] = file_hash
+            records[trunc_file] = file_hash
 
     if write:
-        with open("files.sha", "w") as output_file:
+        with open(directory + "/files.sha", "w") as output_file:
             for key, val in records.iteritems():
                 output_file.write("%s  %s\n" % (val, key))
 
     # Return the dict
     return records
 
+def get_hash(filename):
+    """Returns a hash for a file"""
+    return hashlib.sha1(open(filename, "r").read()).hexdigest()
 
 
 if __name__ == "__main__":

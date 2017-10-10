@@ -3,6 +3,7 @@
 .svn
 
 # Build
+src/restful
 .project
 .pydevproject
 *.pyc

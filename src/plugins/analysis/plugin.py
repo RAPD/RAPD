@@ -139,7 +139,7 @@ class RapdPlugin(Process):
 
         # Some logging
         self.logger.info(command)
-        pprint(command)
+        # pprint(command)
 
         # Store passed-in variables
         self.command = command
@@ -323,6 +323,8 @@ calculation",
         command = "phenix.xtriage %s scaling.input.xray_data.obs_labels=\"I(+),\
 SIGI(+),I(-),SIGI(-)\"  scaling.input.parameters.reporting.loggraphs=True" % \
 self.command["input_data"]["datafile"]
+
+        print command
 
         xtriage_proc = subprocess.Popen([command,],
                                         stdout=subprocess.PIPE,

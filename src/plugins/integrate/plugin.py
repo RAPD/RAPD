@@ -139,6 +139,9 @@ class RapdPlugin(Process):
     # Dict for holding results
     results = {"_id": str(ObjectId())}
 
+    # Store archive directory for internal use
+    archive_dir = False
+
     def __init__(self, site, command, tprint=False, logger=False):
         """
         Initialize the plugin
@@ -170,7 +173,7 @@ class RapdPlugin(Process):
         # Some logging
         self.logger.info(site)
         self.logger.info(command)
-        pprint(command)
+        # pprint(command)
 
         # Store passed-in variables
         self.site = site
@@ -333,7 +336,7 @@ class RapdPlugin(Process):
         # self.start()
 
     def run(self):
-        self.logger.debug("run")
+        self.logger.debug('Fastintegration::run')
         self.preprocess()
         self.process()
         self.postprocess()
@@ -376,7 +379,10 @@ class RapdPlugin(Process):
         # Container for actual results
         self.results["results"] = {
             "analysis":False,
-            "data_produced": []
+            # Archives that will live in filesystem
+            "archive_files":[],
+            # Data produced by plugin that will be stored in database
+            "data_produced":[]
             }
 
         # Copy over details of this run
@@ -416,7 +422,7 @@ class RapdPlugin(Process):
                             color="red")
                 self.results["process"]["status"] = -1
                 self.results["error"] = "Executable for %s is not present" % executable
-                self.write_json()
+                self.write_json(self.results)
                 raise exceptions.MissingExecutableException(executable)
 
         # If no gnuplot turn off printing
@@ -442,8 +448,7 @@ class RapdPlugin(Process):
             return
 
         xds_input = self.xds_default
-
-        if self.command["command"] == 'XDS':
+        if self.command["command"] == "XDS":
             integration_results = self.xds_total(xds_input)
         else:
             if os.path.isfile(self.last_image) == True:
@@ -469,74 +474,83 @@ class RapdPlugin(Process):
 
         # Set up the results for return
         self.results["process"]["status"] = 100
-        self.results["results"] = final_results
+        self.results["results"].update(final_results)
 
-        # self.logger.debug(self.results)
+        self.write_json(self.results)
+
         self.run_analysis_plugin()
 
     def run_analysis_plugin(self):
         """Set up and run the analysis plugin"""
 
-        self.logger.debug("Setting up analysis plugin")
-        self.tprint("\nLaunching ANALYSIS plugin", level=30, color="blue")
+        # Run analysis
+        if self.preferences.get("analysis", False):
 
-        # Queue to exchange information
-        plugin_queue = Queue()
+            self.logger.debug("Setting up analysis plugin")
+            self.tprint("\nLaunching ANALYSIS plugin", level=30, color="blue")
 
-        # Construct the pdbquery plugin command
-        class AnalysisArgs(object):
-            """Object containing settings for plugin command construction"""
-            clean = True
-            datafile = self.results["results"]["files"]["mtzfile"]
-            dir_up = self.preferences["dir_up"]
-            json = self.preferences["json"]
-            nproc = self.preferences["nproc"]
-            pdbquery = False  #TODO
-            progress = self.preferences["progress"]
-            queue = plugin_queue
-            run_mode = "subprocess-interactive"
-            sample_type = "default"
-            show_plots = self.preferences["show_plots"]
-            test = False
+            # Queue to exchange information
+            plugin_queue = Queue()
 
-        analysis_command = plugins.analysis.commandline.construct_command(AnalysisArgs)
+            # Construct the pdbquery plugin command
+            # pprint(self.results["results"].keys())
+            class AnalysisArgs(object):
+                """Object containing settings for plugin command construction"""
+                clean = True
+                datafile = self.results["results"]["mtzfile"]
+                dir_up = self.preferences["dir_up"]
+                json = self.preferences["json"]
+                nproc = self.preferences["nproc"]
+                pdbquery = False  #TODO
+                progress = self.preferences.get("progress", False)
+                queue = plugin_queue
+                run_mode = "subprocess-interactive"
+                sample_type = "default"
+                show_plots = self.preferences.get("show_plots", False)
+                test = False
 
-        # The pdbquery plugin
-        plugin = plugins.analysis.plugin
+            analysis_command = plugins.analysis.commandline.construct_command(AnalysisArgs)
 
-        # Print out plugin info
-        self.tprint(arg="\nPlugin information", level=10, color="blue")
-        self.tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10, color="white")
-        self.tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10, color="white")
-        self.tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
-        self.tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
+            # The pdbquery plugin
+            plugin = plugins.analysis.plugin
 
-        # Run the plugin
-        plugin_instance = plugin.RapdPlugin(analysis_command,
-                                            self.tprint,
-                                            self.logger)
+            # Print out plugin info
+            self.tprint(arg="\nPlugin information", level=10, color="blue")
+            self.tprint(arg="  Plugin type:    %s" % plugin.PLUGIN_TYPE, level=10, color="white")
+            self.tprint(arg="  Plugin subtype: %s" % plugin.PLUGIN_SUBTYPE, level=10, color="white")
+            self.tprint(arg="  Plugin version: %s" % plugin.VERSION, level=10, color="white")
+            self.tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
-        plugin_instance.start()
+            # Run the plugin
+            plugin_instance = plugin.RapdPlugin(analysis_command,
+                                                self.tprint,
+                                                self.logger)
 
-        analysis_result = plugin_queue.get()
+            plugin_instance.start()
 
-        pprint(analysis_result);
+            analysis_result = plugin_queue.get()
 
-        self.results["results"]["analysis"] = analysis_result
+            # pprint(analysis_result);
+
+            self.results["results"]["analysis"] = analysis_result
+
+        # Do not run analysis
+        else:
+            self.results["results"]["analysis"] = False
 
     def postprocess(self):
         """After it's all done"""
 
         # Write the output JSON again
-        self.write_json()
+        self.write_json(self.results)
 
-        # Create archive
+        # Create an archive
         self.create_archive()
 
-        # Clean up
+        # Housekeeping
         self.clean_up()
 
-        # Print the credits
+        # Print out the credits
         self.print_credits()
 
         self.tprint(100, "progress")
@@ -838,7 +852,7 @@ class RapdPlugin(Process):
         self.print_plots(final_results)
         self.tprint(90, "progress")
 
-        final_results['status'] = 'ANALYSIS'
+        # final_results['status'] = 'ANALYSIS'
         return final_results
 
     def xds_split(self, xdsinput):
@@ -1711,7 +1725,7 @@ class RapdPlugin(Process):
 
          # Set up the results for return
         self.results["process"]["status"] = 50
-        self.results['results'] = results
+        self.results["results"].update(results)
         self.logger.debug(self.results)
 
         return results
@@ -1780,6 +1794,8 @@ class RapdPlugin(Process):
         """
         Final creation of various files (e.g. an mtz file with R-flag added,
         .sca files with native or anomalous data treatment)
+
+        Also sets up the archive directory...
         """
 
         """
@@ -1795,6 +1811,10 @@ class RapdPlugin(Process):
                    'xds_log': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_XDS.LOG'},
         """
 
+        # Flags for file creation
+        scalepack = True
+        mosflm = True
+
         # Set up the method
         # Archive directory name
         if self.image_data.get("run_number"):
@@ -1808,6 +1828,7 @@ class RapdPlugin(Process):
         archive_dir = os.path.join(self.dirs['work'], archive_dirname)
         if not os.path.isdir(archive_dir):
             os.mkdir(archive_dir)
+        self.archive_dir = archive_dir
 
         # Full path prefix for archive files
         if self.image_data.get("run_number"):
@@ -1818,12 +1839,8 @@ class RapdPlugin(Process):
             archive_files_prefix = "%s/%s" % (archive_dir,
                                               self.image_data.get("image_prefix"))
 
-        # Flags for file creation
-        scalepack = False
-        mosflm = False
-
-        # Holder for afiles to be archived
-        files_to_archive = []
+        # Holder for files to be archived
+        # files_to_archive = []
 
         # Create the free-R-flagged data
         # The source file
@@ -1855,18 +1872,33 @@ class RapdPlugin(Process):
                              stderr=subprocess.PIPE)
         p.wait()
         # Move to archive
-        shutil.copyfile("freer.mtz", "%s_free.mtz" % archive_files_prefix)
-        files_to_archive.append("%s_free.mtz" % archive_files_prefix)
+        src_file = os.path.abspath("freer.mtz")
+        tgt_file = "%s_free.mtz" % archive_files_prefix
+        # print "Copy %s to %s" % (src_file, tgt_file)
+        shutil.copyfile(src_file, tgt_file)
+        # files_to_archive.append(tgt_file)
+        # Include in produced_data
+        self.results["results"]["data_produced"].append({
+            "filepath":src_file,
+            "hash":archive.get_hash(src_file),
+            #TODO
+            "description":"rfree"
+        })
+        # pprint(self.results["results"]["data_produced"])
 
         # Rename the so-called mergable file
-        mergable_file = results["mtzfile"].replace("_aimless", "_mergable")
-        print results["mtzfile"], os.path.exists(results["mtzfile"])
-        print mergable_file, os.path.exists(mergable_file)
-        print os.path.join(archive_dirname, mergable_file), os.path.exists(os.path.join(archive_dirname, mergable_file))
-        print archive_dirname, os.path.exists(archive_dirname)
-        shutil.copyfile(results["mtzfile"], os.path.join(self.dirs['work'],
-                                                         archive_dirname,
-                                                         mergable_file))
+        src_file = os.path.abspath(results["mtzfile"].replace("_aimless", "_pointless"))
+        tgt_file = "%s_mergable.mtz" % archive_files_prefix
+        # print "Copy %s to %s" % (src_file, tgt_file)
+        shutil.copyfile(src_file, tgt_file)
+        # Include in produced_data
+        self.results["results"]["data_produced"].append({
+            "filepath":src_file,
+            "hash":archive.get_hash(src_file),
+            #TODO
+            "description":"mergable"
+        })
+        # pprint(self.results["results"]["data_produced"])
 
         if scalepack:
             # Create the merged scalepack format file.
@@ -1887,8 +1919,10 @@ class RapdPlugin(Process):
             self.fixMtz2Sca("NATIVE.sca")
             Utils.fixSCA(self, "NATIVE.sca")
             # Move to archive
-            shutil.copyfile("NATIVE.sca", "%s_NATIVE.sca" % archive_files_prefix)
-            files_to_archive.append("%s_NATIVE.sca" % archive_files_prefix)
+            src_file = os.path.abspath("NATIVE.sca")
+            tgt_file = "%s_NATIVE.sca" % archive_files_prefix
+            shutil.copyfile(src_file, tgt_file)
+            # files_to_archive.append("%s_NATIVE.sca" % archive_files_prefix)
 
             # Create the unmerged scalepack format file.
             comfile = ["#!/bin/csh\n",
@@ -1908,8 +1942,10 @@ class RapdPlugin(Process):
             self.fixMtz2Sca("ANOM.sca")
             Utils.fixSCA(self, "ANOM.sca")
             # Move to archive
-            shutil.copyfile("ANOM.sca", "%s_ANOM.sca" % archive_files_prefix)
-            files_to_archive.append("%s_ANOM.sca" % archive_files_prefix)
+            src_file = os.path.abspath("NATIVE.sca")
+            tgt_file = "%s_NATIVE.sca" % archive_files_prefix
+            shutil.copyfile(src_file, tgt_file)
+            # files_to_archive.append("%s_ANOM.sca" % archive_files_prefix)
 
         if mosflm:
             # Create a mosflm matrix file
@@ -1917,75 +1953,28 @@ class RapdPlugin(Process):
             Xds2Mosflm(xds_file=correct_file, mat_file="reference.mat")
 
         # Move critical files into archive directory for packaging
-        critical_file_patterns = ("*aimless.com",
+        archival_file_patterns = ("*aimless.com",
                                   "*aimless.log",
-                                  "*pointless.com"
+                                  "*pointless.com",
                                   "*pointless.log",
                                   "*XDS.INP",
                                   "*XDS.LOG",
                                   "*.LP")
-        for critical_file_pattern in critical_file_patterns:
-            g_return = glob.glob(critical_file_pattern)[0]
-            if g_return:
-                if isinstance(g_return, str):
-                    src_file = g_return
-                elif isinstance(g_return, list):
-                    src_file = g_return[0]
-                print ">>>", src_file
-
-                # target_file = os.path.join(archive_dir, src_file)
-                # shutil.copyfile(src_file, target_file)
-                # files_to_archive.append(target_file)
-        sys.exit()
-
-
-        # Create an archive
-        archive.create_archive()
-        sys.exit()
-
-        # Create a downloadable tar file.
-        tar_dir = tar_name
-        tar_name += '.tar.bz2'
-        tarname = os.path.join(self.dirs['work'], tar_name)
-        # print 'tar -cjf %s %s' %(tar_name, tar_dir)
-        # print os.getcwd()
-        os.chdir(self.dirs['work'])
-        # print os.getcwd()
-        os.system('tar -cjf %s %s' %(tar_name, tar_dir))
-
-        # Tarball the XDS log files
-        lp_name = 'xds_lp_files.tar.bz2'
-        # print "tar -cjf %s xds_lp_files/" % lp_name
-        os.system("tar -cjf %s xds_lp_files/" % lp_name)
-        # Remove xds_lp_files directory
-        os.system('rm -rf xds_lp_files')
-        # If ramdisks were used, erase files from ram_disks.
-        if self.ram_use == True and self.preferences['ram_cleanup'] == True:
-            remove_command = 'rm -rf /dev/shm/%s' % self.image_data['image_prefix']
-            for node in self.ram_nodes[0]:
-                command2 = 'ssh -x %s "%s"' % (node, remove_command)
-                p = subprocess.Popen(command2,
-                                     shell=True,
-                                     stdout=subprocess.PIPE,
-                                     stderr=subprocess.PIPE)
-                p.wait()
-
-        tmp = results
-
-        files = {'mergable' : '%s_mergable.mtz' % prefix,
-                 'mtzfile' : '%s_free.mtz' % prefix,
-                 'ANOM_sca' : '%s_ANOM.sca' % prefix,
-                 'NATIVE_sca' : '%s_NATIVE.sca' % prefix,
-                 'scala_log' : '%s_scala.log' % prefix,
-                 'scala_com' : '%s_scala.com' % prefix,
-                 'xds_data' : '%s_XDS.HKL' % prefix,
-                 'xds_log' : '%s_XDS.LOG' % prefix,
-                 'xds_com' : '%s_XDS.INP' % prefix,
-                 'downloadable' : tarname
-                }
-        tmp['files'] = files
-
-        return tmp
+        for archival_file_pattern in archival_file_patterns:
+            # print archival_file_pattern, glob.glob(archival_file_pattern)
+            g_return = glob.glob(archival_file_pattern)
+            if len(g_return) > 0:
+                # g_return = g_return[0]
+                if g_return:
+                    if isinstance(g_return, str):
+                        src_files = [g_return]
+                    elif isinstance(g_return, list):
+                        src_files = g_return
+                    # print ">>>", src_files
+                    for src_file in src_files:
+                        tgt_file = os.path.join(archive_dir, src_file)
+                        shutil.copyfile(src_file, tgt_file)
+        return results
 
     def fixMtz2Sca(self, scafile):
         """
@@ -2001,43 +1990,46 @@ class RapdPlugin(Process):
         self.write_file(scafile, inlines)
         return
 
-    def run_analysis(self, data_to_analyze, dir):
-        """
-        Runs "pdbquery" and xtriage on the integrated data.
-        data_to_analyze = the integrated mtzfile
-        dir = the working integration directory
-        """
-        self.logger.debug('FastIntegration::run_analysis')
-        self.logger.debug('                 data = %s', data_to_analyze)
-        self.logger.debug('                 dir = %s', dir)
-        analysis_dir = os.path.join(dir, 'analysis')
-        if os.path.isdir(analysis_dir) == False:
-            os.mkdir(analysis_dir)
-        run_dict = {'fullname'  : self.image_data['fullname'],
-                    'total'     : self.image_data['total'],
-                    'osc_range' : self.image_data['osc_range'],
-                    'x_beam'    : self.image_data['x_beam'],
-                    'y_beam'    : self.image_data['y_beam'],
-                    'two_theta' : self.image_data.get("twotheta", 0),
-                    'distance'  : self.image_data['distance']
-                   }
-        pdb_input = []
-        pdb_dict = {}
-        pdb_dict['run'] = run_dict
-        pdb_dict['dir'] = analysis_dir
-        pdb_dict['data'] = data_to_analyze
-        pdb_dict["plugin_directories"] = self.dirs.get("plugin_directories", False)
-        pdb_dict['control'] = self.controller_address
-        pdb_dict['process_id'] = self.process_id
-        pdb_input.append(pdb_dict)
-        self.logger.debug('    Sending pdb_input to Autostats')
-        # try:
-        T = AutoStats(pdb_input, self.logger)
-        self.logger.debug('I KNOW WHO YOU ARE')
-        # except:
-        #     self.logger.debug('    Execution of AutoStats failed')
-        #     return('Failed')
-        return "Success"
+    # def run_analysis(self, data_to_analyze, dir):
+    #     """
+    #     Runs "pdbquery" and xtriage on the integrated data.
+    #     data_to_analyze = the integrated mtzfile
+    #     dir = the working integration directory
+    #     """
+    #
+    #     if self.preferences.get("analysis", False):
+    #         self.logger.debug('FastIntegration::run_analysis')
+    #         self.logger.debug('                 data = %s', data_to_analyze)
+    #         self.logger.debug('                 dir = %s', dir)
+    #
+    #         analysis_dir = os.path.join(dir, 'analysis')
+    #         if os.path.isdir(analysis_dir) == False:
+    #             os.mkdir(analysis_dir)
+    #         run_dict = {'fullname'  : self.image_data['fullname'],
+    #                     'total'     : self.image_data['total'],
+    #                     'osc_range' : self.image_data['osc_range'],
+    #                     'x_beam'    : self.image_data['x_beam'],
+    #                     'y_beam'    : self.image_data['y_beam'],
+    #                     'two_theta' : self.image_data.get("twotheta", 0),
+    #                     'distance'  : self.image_data['distance']
+    #                    }
+    #         pdb_input = []
+    #         pdb_dict = {}
+    #         pdb_dict['run'] = run_dict
+    #         pdb_dict['dir'] = analysis_dir
+    #         pdb_dict['data'] = data_to_analyze
+    #         pdb_dict["plugin_directories"] = self.dirs.get("plugin_directories", False)
+    #         pdb_dict['control'] = self.controller_address
+    #         pdb_dict['process_id'] = self.process_id
+    #         pdb_input.append(pdb_dict)
+    #         self.logger.debug('    Sending pdb_input to Autostats')
+    #         # try:
+    #         T = AutoStats(pdb_input, self.logger)
+    #         self.logger.debug('I KNOW WHO YOU ARE')
+    #         # except:
+    #         #     self.logger.debug('    Execution of AutoStats failed')
+    #         #     return('Failed')
+    #         return "Success"
 
     def find_xds_symm(self, xdsdir, xdsinp):
         """
@@ -2235,6 +2227,39 @@ class RapdPlugin(Process):
                 time.sleep(2)
                 gnuplot.terminate()
 
+    def create_archive(self):
+        """Create an archive file of results"""
+        self.logger.debug("create_archive")
+
+        # Do we have a directory to archive?
+        if self.archive_dir:
+
+            # Compress the directory
+            archive_result = archive.create_archive(self.archive_dir)
+
+            if archive_result:
+                self.results["results"]["archive_files"].append(archive_result)
+
+    def clean_up(self):
+        """Clean up after self"""
+
+        self.logger.debug("clean_up")
+
+        if self.preferences.get("clean_up", False):
+            # Make sure we are in the work directory
+            os.chdir(self.dirs["work"])
+
+            # Erase the archive directory
+            if self.archive_dir:
+                shutil.rmtree(self.archive_dir)
+
+            # Erase all wedge directories
+            for wedge_dir in glob.glob("wedge_*"):
+                shutil.rmtree(wedge_dir)
+
+            # Remove extra files in working directory.
+            # os.system('rm -f *.mtz *.sca *.sh *.log junk_*')
+
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
 
@@ -2247,12 +2272,12 @@ class RapdPlugin(Process):
 
         self.tprint(info_string, level=99, color="white")
 
-    def write_json(self):
+    def write_json(self, results):
         """Write a file with the JSON version of the results"""
 
-        pprint(self.results);
+        # pprint(results);
 
-        json_string = json.dumps(self.results)
+        json_string = json.dumps(results)
 
         # Output to terminal?
         if self.preferences["json"]:
@@ -2261,38 +2286,6 @@ class RapdPlugin(Process):
         # Write a file
         with open("result.json", "w") as outfile:
             outfile.writelines(json_string)
-
-    def create_archive(self):
-        """Create archive of results"""
-
-        pass
-
-    def clean_up(self):
-        """Clean up filesystem"""
-
-        return True
-
-        # Clean up the filesystem.
-        # Move some files around
-        # if os.path.isdir('%s/xds_lp_files' % self.dirs['work']) == False:
-        #     os.mkdir('%s/xds_lp_files' % self.dirs['work'])
-        # os.system('cp %s/*.LP %s/xds_lp_files/' % (results['dir'], self.dirs['work']))
-
-        # os.system('cp %s/*pointless.mtz %s_mergable.mtz' %(results['dir'], prefix))
-        # os.system('cp %s/XDS.LOG %s_XDS.LOG' %(results['dir'], prefix))
-        # os.system('cp %s/XDS.INP %s_XDS.INP' %(results['dir'], prefix))
-        # os.system('cp %s/CORRECT.LP %s_CORRECT.LP' %(results['dir'], prefix))
-        # os.system('cp %s/INTEGRATE.LP %s_INTEGRATE.LP' %(results['dir'], prefix))
-        # os.system('cp %s/XDSSTAT.LP %s_XDSSTAT.LP' %(results['dir'], prefix))
-        # os.system('cp %s/XDS_ASCII.HKL %s_XDS.HKL' %(results['dir'], prefix))
-
-        # Remove any integration directories.
-        # for wedge_dir in glob.glob("wedge_*"):
-            # os.remove(wedge_dir)
-
-        # Remove extra files in working directory.
-        # os.system('rm -f *.mtz *.sca *.sh *.log junk_*')
-
 
 
 class DataHandler(threading.Thread):
