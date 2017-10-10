@@ -334,8 +334,11 @@ def parse_raw_output(raw_output):
         # print "Grabbing tables"
         # print "table_label", table_label
 
-        table_start = tables[table_label]
-        # print "table_start", table_start
+        try:
+            table_start = tables[table_label]
+            # print "table_start", table_start
+        except KeyError:
+            continue
 
         column_labels = []
         column_data = {}
