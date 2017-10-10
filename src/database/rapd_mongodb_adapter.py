@@ -384,19 +384,19 @@ class Database(object):
         return {"plugin_results_id":result2_id,
                 "result_id":result1_id}
 
-    def getArrayStats(self,in_array,mode='float'):
-        """
-        return the max,min,mean and std_dev of an input array
-        """
-        self.logger.debug('Database::getArrayStats')
-
-        if (mode == 'float'):
-            narray = numpy.array(in_array, dtype=float)
-
-        try:
-            return(narray.max(), narray.min(), narray.mean(), narray.std())
-        except:
-            return(0, 0, 0, 0)
+    # def getArrayStats(self, in_array, mode="float"):
+    #     """
+    #     return the max,min,mean and std_dev of an input array
+    #     """
+    #     self.logger.debug('Database::getArrayStats')
+    #
+    #     if (mode == 'float'):
+    #         narray = numpy.array(in_array, dtype=float)
+    #
+    #     try:
+    #         return(narray.max(), narray.min(), narray.mean(), narray.std())
+    #     except:
+    #         return(0, 0, 0, 0)
 
     ############################################################################
     # Functions for runs                                                       #
