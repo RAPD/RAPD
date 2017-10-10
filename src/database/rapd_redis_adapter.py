@@ -38,7 +38,7 @@ import logging
 import os
 import threading
 
-from bson.objectid import ObjectId
+#from bson.objectid import ObjectId
 import redis
 from redis.sentinel import Sentinel
 
