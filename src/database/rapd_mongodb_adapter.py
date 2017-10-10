@@ -344,11 +344,13 @@ class Database(object):
             {"$set":plugin_result},
             upsert=True)
 
+        self.logger.debug(result1)
+
         # Get the _id from updated entry
         if result1.raw_result.get("updatedExisting", False):
             result1_id = db[collection_name].find_one(
                 {"process.process_id":ObjectId(plugin_result["process"]["process_id"])},
-                {"_id":1})["_id"]
+                {"_id":1})
         # upsert
         else:
             result1_id = result1.upserted_id
