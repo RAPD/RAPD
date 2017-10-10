@@ -353,6 +353,8 @@ class Database(object):
         else:
             result1_id = result1.upserted_id
 
+        self.logger.debug("%s _id %s", (collection_name, result1_id))
+
         result2 = db.plugin_results.update_one(
             {"result_id":result1_id},
             {"$set":{
