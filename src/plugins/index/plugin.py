@@ -159,9 +159,11 @@ class RapdPlugin(Process):
     labelit_cell = False
     labelit_sym = False
     distl_log = []
+    distl_queue = Queue()
     distl_results = []
     distl_summary = False
-    raddose_results = False
+    raddose_file = False
+    raddose_results = {}
     raddose_summary = False
     best_log = []
     best_results = False
@@ -336,6 +338,7 @@ class RapdPlugin(Process):
         self.time = self.header.get("time", 0.2)
         self.wavelength = self.header.get("wavelength")
         self.transmission = self.header.get("transmission", 10.0)
+        #self.transmission = self.header.get("transmission", 0.1)
         # self.aperture = str(self.header.get("md2_aperture"))
         self.spacegroup = self.preferences.get("spacegroup", False)
         #self.flux = str(self.header.get("flux", '3E10'))
@@ -410,11 +413,11 @@ class RapdPlugin(Process):
             # Run Labelit
             self.start_labelit()
 
-            # Run Distl while Labelit is running
-            self.process_distl()
-
-          # Sorts labelit results by highest symmetry.
+            # Sorts labelit results by highest symmetry.
             self.labelit_sort()
+          
+            # Run Distl
+            self.process_distl()
 
             # If there is a solution, then calculate a strategy.
             if self.labelit_failed == False:
@@ -570,16 +573,19 @@ class RapdPlugin(Process):
             crystal_size_y = self.preferences.get("crystal_size_y", 100.0)/1000.0
             crystal_size_z = self.preferences.get("crystal_size_z", 100.0)/1000.0
 
-        f = os.path.join(self.labelit_dir, "raddose.com")
-        raddose = open(f, "w+")
-        setup = "raddose << EOF\n"
+        self.raddose_file = os.path.join(self.labelit_dir, "raddose.com")
+        raddose = open(self.raddose_file, "w+")
+        setup = '#!/bin/sh\n'
+        setup += "raddose << EOF\n"
         if beam_size_x and beam_size_y:
             setup += "BEAM %s %s\n" % (beam_size_x, beam_size_y)
         # Full-width-half-max of the beam (for non-uniform beams)
         if gauss_x and gauss_y:
-            setup += "GAUSS %.2f %.2f\nIMAGES 1\n" % (gauss_x, gauss_y)
+            setup += "GAUSS %.2f %.2f\n" % (gauss_x, gauss_y)
+        setup += "IMAGES 1\n"
         setup += "PHOSEC %d\n" % flux
-        setup += "EXPOSURE %.2f\n" % self.time
+        #setup += "EXPOSURE %.2f\n" % self.time
+        setup += "EXPOSURE 1.0\n" # set to 1s so dose result is Gy per S.
         if self.labelit_cell:
             setup += "CELL %s %s %s %s %s %s\n" % (self.labelit_cell[0],
                                                    self.labelit_cell[1],
@@ -617,7 +623,7 @@ class RapdPlugin(Process):
         setup += "END\nEOF\n"
         raddose.writelines(setup)
         raddose.close()
-        os.chmod(f, stat.S_IRWXU)
+        os.chmod(self.raddose_file, stat.S_IRWXU)
 
         # except:
             # self.logger.exception("**ERROR in preprocess_raddose**")
@@ -724,36 +730,25 @@ class RapdPlugin(Process):
         """
         if self.verbose and self.logger:
             self.logger.debug('AutoindexingStrategy::process_distl')
-        # try:
 
         self.distl_output = []
         l = ["", "2"]
         f = 1
-        
-        # change to the working dir
-        os.chdir(self.working_dir)
-        
         if self.header2:
             f = 2
         for i in range(0, f):
             if self.test:
-                #job = Thread(target=xutils.processLocal, args=(inp, self.logger))
                 job = Thread(target=local_subprocess,
                              kwargs={"command": 'ls'})
             else:
                 command = "distl.signal_strength %s" % eval("self.header%s" % l[i]).get("fullname")
-                
                 job = Thread(target=local_subprocess,
                              kwargs={"command": command,
-                                    "logfile": os.path.join(os.getcwd(), "distl%s.log" % i),
+                                     "result_queue": self.distl_queue,
+                                     "logfile": os.path.join(os.getcwd(), "distl%s.log" % i),
                                    },)
-                # job = Process(target=xutils.processLocal,
-                #               args=((inp, "distl%s.log" % i), self.logger))
             job.start()
             self.distl_output.append(job)
-
-        # except:
-        #     self.logger.exception("**Error in process_distl**")
 
     def process_raddose(self):
         """
@@ -762,29 +757,15 @@ class RapdPlugin(Process):
         if self.verbose and self.logger:
             self.logger.debug("AutoindexingStrategy::process_raddose")
 
-        self.raddose_log = []
-        try:
-            f = os.path.join(self.labelit_dir, 'raddose.com')
-            # Need to fix for other environments!!
-            self.raddose_log.append("tcsh raddose.com\n")
-            #output = subprocess.Popen("tcsh raddose.com",
-            output = subprocess.Popen(f,
-                                      shell=True,
-                                      stdout=subprocess.PIPE,
-                                      stderr=subprocess.STDOUT)
-            output.wait()
-            for line in output.stdout:
-                self.raddose_log.append(line)
-
-        except:
-            self.logger.exception("**ERROR in process_raddose**")
-
-        raddose = Parse.ParseOutputRaddose(self, self.raddose_log)
-        self.raddose_results = {"raddose_results":raddose}
-        if self.raddose_results["raddose_results"] == None:
-            self.raddose_results = {"raddose_results":False}
-            if self.verbose and self.logger:
-                self.logger.debug("Raddose failed")
+        # Setup queue for results
+        queue = Queue()
+        # Run the command
+        inp_kwargs = {'command': self.raddose_file,
+                      'result_queue': queue}
+        Thread(target=local_subprocess, kwargs=inp_kwargs).start()
+        # Save the results
+        raddose = Parse.ParseOutputRaddose(queue.get()["stdout"].splitlines())
+        self.raddose_results = {"raddose_results" : raddose}
 
     def check_best(self, iteration=0, best_version="3.2.0"):
         """
@@ -798,35 +779,27 @@ class RapdPlugin(Process):
         self.folders_strategy(iteration)
         #print os.getcwd()
         if iteration != 0:
-            #orig = os.path.join(self.labelit_dir, self.index_number)
-            #print self.labelit_dir
-            #print os.path.join(self.labelit_dir, iteration)
             f = '%s/%s/%s_res%s'%(self.labelit_dir, iteration, self.index_number, iteration)
-            #f = "%s_res%s"%(self.index_number, iteration)
-            #print f
-            #f = "%s_res%s"%(orig, iteration)
             if self.test == False:
                 temp = []
                 orig = os.path.join(self.labelit_dir, self.index_number)
-                #f = "%s_res%s"%(orig, iteration)
-                #shutil.copy(orig, f)
-                for line in open(orig, "r").readlines():
-                #for line in open(f, "r").readlines():
-                    temp.append(line)
-                    if line.startswith("RESOLUTION"):
-                        temp.remove(line)
-                        temp.append("RESOLUTION %s\n" % str(float(line.split()[1]) + iteration))
+                with open(orig, "r") as raw:
+                    for x, line in enumerate(raw):
+                        temp.append(line)
+                        #if line.count("ipmosflm"):
+                        #    newline = line.replace(self.index_number, '%s/%s/%s'%(self.labelit_dir, iteration, self.index_number))
+                        #    temp.remove(line)
+                        #    temp.insert(x, newline)
+                        if line.startswith("RESOLUTION"):
+                            temp.remove(line)
+                            temp.append("RESOLUTION %s\n" % str(float(line.split()[1]) + iteration))
                 new = open(f, "w")
                 new.writelines(temp)
                 new.close()
                 os.chmod(f, stat.S_IRWXU)
-                #subprocess.Popen("sh %s" % f, shell=True).wait()
-                subprocess.Popen(f, shell=True).wait()
+                #subprocess.Popen(f).wait()
+                local_subprocess(command=f)
         self.process_best(iteration, best_version)
-
-        # except:
-        #     self.logger.exception("**ERROR in errorBest**")
-        #     self.best_log.append("\nCould not reset Mosflm resolution for Best.\n")
 
     def process_best(self, iteration=0, best_version="3.2.0", runbefore=False):
         """
@@ -837,12 +810,6 @@ class RapdPlugin(Process):
 
         self.logger.debug("AutoindexingStrategy::process_best %s", best_version)
 
-        # try:
-        max_dis = self.site_parameters.get("DETECTOR_DISTANCE_MAX")
-        min_dis = self.site_parameters.get("DETECTOR_DISTANCE_MIN")
-        min_d_o = self.site_parameters.get("DIFFRACTOMETER_OSC_MIN")
-        min_e_t = self.site_parameters.get("DETECTOR_TIME_MIN")
-        
         # Get image numbers
         try:
             counter_depth = self.header["image_template"].count("?")
@@ -862,41 +829,22 @@ class RapdPlugin(Process):
             image_number.append(image_number_format % self.header2["image_number"])
 
         # Tell Best if two-theta is being used.
-        if int(self.header.get("twotheta", 0)) != 0:
-            xutils.fix_bestfile(self)
+        if self.header.get("twotheta", 0.0) != 0.0:
+            xutils.fix_bestfile()
 
         # If Raddose failed, here are the defaults.
-        dose = 100000
-        exp_dose_lim = 300
-        if self.raddose_results:
-            if self.raddose_results.get("raddose_results"):
-                dose = self.raddose_results.get("raddose_results").get('dose')
-                exp_dose_lim = self.raddose_results.get("raddose_results").get('exp dose limit')
+        dose = self.raddose_results["raddose_results"].get('dose', 100000)
+        #exp_dose_lim = self.raddose_results.get("raddose_results", 300).get('exp dose limit', 300)
 
         # Set how many frames a crystal will last at current exposure time.
-        self.crystal_life = str(int(float(exp_dose_lim) / self.time))
-        if self.crystal_life == '0':
-            self.crystal_life = '1'
+        # Warning in the GUI if flux is too high
+        #self.crystal_life = str(int(float(exp_dose_lim) / self.time))
+        #if self.crystal_life == '0':
+        #    self.crystal_life = '1'
+        
         # Adjust dose for ribosome crystals.
         if self.sample_type == 'ribosome':
             dose = 500001
-        # If dose is too high, warns user and sets to reasonable amount and reruns Best but give
-        # warning.
-        if dose > 500000:
-            dose = 500000
-            exp_dose_lim = 100
-            self.high_dose = True
-            """
-            if iteration == 1:
-                dose = 100000.0
-                exp_dose_lim = 300
-            if iteration == 2:
-                dose = 100000.0
-                exp_dose_lim = False
-            if iteration == 3:
-                dose = False
-                exp_dose_lim = False
-            """
 
         # Put together the command for labelit.index
         best_detector = DETECTOR_TO_BEST.get(self.header.get("detector"), False)
@@ -911,10 +859,11 @@ class RapdPlugin(Process):
         # Binning
         if str(self.header.get('binning')) == '2x2':
             command += '-2x'
-        if self.high_dose:
-            command += ' -t 1.0'
-        else:
-            command += " -t %.2f" % self.time
+        command += " -t %.2f" % self.time
+        #if self.high_dose:
+        #    command += ' -t 1.0'
+        #else:
+        #    command += " -t %.2f" % self.time
         command += ' -e %s -sh %.1f' % (self.preferences.get('best_complexity', 'none'),\
                                         self.preferences.get('shape', 2.0))
         if self.preferences.get('aimed_res') != 0.0:
@@ -922,12 +871,16 @@ class RapdPlugin(Process):
         if best_version >= "3.4":
             command += ' -Trans %.1f' % self.transmission
         # Set minimum rotation width per frame. Different for PAR and CCD detectors.
-        command += ' -w %s' % min_d_o
+        if self.site_parameters.get("DIFFRACTOMETER_OSC_MIN", False):
+            command += ' -w %s' % self.site_parameters.get("DIFFRACTOMETER_OSC_MIN")
         # Set minimum exposure time per frame.
-        command += ' -M %s' % min_e_t
+        if self.site_parameters.get("DETECTOR_TIME_MIN", False):
+            command += ' -M %s' % self.site_parameters.get("DETECTOR_TIME_MIN")
         # Set min and max detector distance
-        if best_version >= "3.4":
-            command += ' -DIS_MAX %s -DIS_MIN %s' % (max_dis, min_dis)
+        if best_version >= "3.4" and self.site_parameters.get("DETECTOR_DISTANCE_MAX", False):
+            command += ' -DIS_MAX %s' % self.site_parameters.get("DETECTOR_DISTANCE_MAX") 
+        if best_version >= "3.4" and self.site_parameters.get("DETECTOR_DISTANCE_MIN", False):
+            command += ' -DIS_MIN %s'% self.site_parameters.get("DETECTOR_DISTANCE_MIN")
         # Fix bug in BEST for PAR detectors. Use the cumulative completeness of 99% instead of all
         # bin.
         #if self.vendortype in ('Pilatus-6M', 'ADSC-HF4M'):
@@ -939,7 +892,7 @@ class RapdPlugin(Process):
             # Set the I/sigI to 0.75 like Mosflm res in Labelit.
             command += ' -i2s 0.75 -su 1.5'
         # set dose  and limit, else set time
-        if best_version >= "3.4" and dose:
+        if best_version >= "3.4":
             #command += ' -GpS %s -DMAX 30000000'%dose
             command += ' -GpS %s'%dose
         else:
@@ -985,7 +938,6 @@ class RapdPlugin(Process):
                 inp_kwargs.update(self.batch_queue)
 
                 #Launch the job
-                #jobs[str(i)] = Process(target=self.launcher,
                 jobs[str(i)] = Thread(target=self.launcher,
                                        kwargs=inp_kwargs)
                 jobs[str(i)].start()
@@ -1005,9 +957,6 @@ class RapdPlugin(Process):
                                 # self.process_best(iteration, (start, ran, int(job), int(job)+1))
                             counter -= 1
                     time.sleep(0.1)
-
-        # except:
-        #     self.logger.exception('**Error in process_best**')
 
     def process_mosflm(self):
         """
@@ -1173,12 +1122,10 @@ class RapdPlugin(Process):
             if i == 4:
                 self.tprint(arg="  Starting Mosflm runs", level=98, color="white")
                 job = Process(target=self.process_mosflm, name="mosflm%s" % i)
-                #job = Thread(target=self.process_mosflm, name="mosflm%s" % i)
             # Run BEST
             else:
                 # Reduces resolution and reruns Mosflm to calc new files, then runs Best.
                 job = Process(target=self.check_best, name="best%s" % i, args=(i, best_version))
-                #job = Thread(target=self.check_best, name="best%s" % i, args=(i, best_version))
             job.start()
             self.jobs[str(i)] = job
 
@@ -1224,15 +1171,12 @@ class RapdPlugin(Process):
                     # print "Waiting for Distl to finish %s seconds" % timer
             if self.distl_timer:
                 if timer >= self.distl_timer:
-                    job.terminate()
+                    #job.terminate()
                     self.distl_output.remove(job)
                     self.distl_log.append("Distl timed out\n")
                     if self.verbose and self.logger:
                         self.tprint(arg="Distl timed out", level=30, color="red")
                         self.logger.error("Distl timed out.")
-
-        # Get into the working directory
-        os.chdir(self.working_dir)
 
         # Count frames
         if self.header2:
@@ -1241,9 +1185,10 @@ class RapdPlugin(Process):
             frame_count = 1
 
         # Parse out distl results for the frame(s)
-        for frame_number in range(0, frame_count):
+        for frame_number in range(frame_count):
+            log = self.distl_queue.get()['stdout'].splitlines()
             # Read in the log
-            log = open("distl%s.log" % frame_number, "r").readlines()
+            #log = open("distl%s.log" % frame_number, "r").readlines()
             # Store the logs in one
             self.distl_log.extend(log)
             # Parse and put the distl results into storage
@@ -1285,9 +1230,6 @@ class RapdPlugin(Process):
             vals = tuple([val] + result)
             self.tprint(arg=format_string % vals, level=30, color="white")
 
-        # except:
-        #     self.logger.exception("**Error in postprocess_distl**")
-
     def error_best_post(self, iteration, error, anom=False):
         """
         Post error to proper log in postprocess_best.
@@ -1312,9 +1254,6 @@ class RapdPlugin(Process):
             if self.verbose and self.logger:
                 self.logger.debug(line)
         eval('self.best%s_log'%j[1]).append('\n%s' % line)
-
-        # except:
-        #     self.logger.exception('**Error in error_best_post**')
 
     def postprocess_best(self, inp, runbefore=False):
         """

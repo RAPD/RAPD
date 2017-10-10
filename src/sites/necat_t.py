@@ -57,7 +57,8 @@ BEAM_INFO = {
                 #"EXPOSURE_TIME_MIN": 0.05,
                 "DETECTOR_TIME_MIN": 0.05,
                 # Flux of the beam
-                "BEAM_FLUX":1.5E12,
+                #"BEAM_FLUX":1.5E12,
+                "BEAM_FLUX":5E12,
                 # Max size of the beam in mm
                 "BEAM_SIZE_X":0.05,
                 "BEAM_SIZE_Y":0.02,

@@ -202,8 +202,8 @@ def calculate_flux(header, site_params):
         ratio = (numpy.pi*(aperture/2)**2) / full_beam_area
 
     # Calculate the new_beam_area ratio to full_beam_area
-    flux = int(round(site_params.get('BEAM_FLUX') * header.get('transmission') * ratio))
-    
+    flux = int(round(site_params.get('BEAM_FLUX') * (header.get('transmission')/100) * ratio))
+
     # Return the flux and beam size
     return (flux, new_x, new_y)
 
@@ -296,7 +296,7 @@ def base_read_header(image,
         "tau": ("^#\sTau\s\=\s*([\d\.]+e\-09) s", lambda x: float(x)),
         "threshold": ("^#\sThreshold_setting\:\s*([\d\.]+)\seV", lambda x: float(x)),
         "time": ("^# Exposure_time\s*([\d\.]+) s", lambda x: float(x)),
-        "transmission": ("^# Filter_transmission\s*([\d\.]+)", lambda x: float(x)/100),
+        "transmission": ("^# Filter_transmission\s*([\d\.]+)", lambda x: float(x)),
         "trim_file": ("^#\sTrim_file\:\s*([\w\.]+)", lambda x:str(x).rstrip()),
         "twotheta": ("^# Detector_2theta\s*([\d\.]*)\s*deg", lambda x: float(x)),
         "wavelength": ("^# Wavelength\s*([\d\.]+) A", lambda x: float(x)),

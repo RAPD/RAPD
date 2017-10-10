@@ -1601,11 +1601,11 @@ def fixBestSGBack_OLD(self):
   except:
     self.logger.exception('**ERROR in Utils.fixBestSGBack**')
 
-def fix_bestfile(self):
+def fix_bestfile():
     """
     Fix the 'BEAM SWUNG_OUT' line in case of 2 theta usage.
     """
-    self.logger.debug('Utilities::fixBestfile')
+    #self.logger.debug('Utilities::fixBestfile')
 
     temp = []
     tt = False

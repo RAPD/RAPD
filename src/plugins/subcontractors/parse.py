@@ -784,37 +784,26 @@ def ParseOutputDistl(self, inp):
     # pprint(result_dict)
     return result_dict
 
-def ParseOutputRaddose(self, inp):
+def ParseOutputRaddose(inp):
     """
     Looks for dose and cell volume. Passes info back to caller
     """
 
-    # print "ParseOutputRaddose"
-    # print inp
+    for line in inp:
+        #print line
+        if "Command not found" in line:
+            raise Exception("No raddose command available")
+        if line.startswith('Total absorbed dose'):
+            dose = int(float(line.split()[4]))
+        if line.startswith('** Time in sec'):
+            exp_dose_lim = int(line.split()[11])
+        if line.startswith('   Time in sec'):
+            hen_lim = int(line.split()[13])
+    raddose = {"dose": dose,
+               "exp dose limit": exp_dose_lim,
+               "henderson limit": hen_lim  }
 
-    if self.verbose:
-        self.logger.debug("Parse.ParseOutputRaddose")
-        self.logger.debug(inp)
-
-    try:
-        for line in inp:
-            if "Command not found" in line:
-                raise Exception("No raddose command available")
-            if line.startswith('Total absorbed dose'):
-                dose = float(line.split()[4])
-            if line.startswith('** Time in sec'):
-                exp_dose_lim = line.split()[11]
-            if line.startswith('   Time in sec'):
-                hen_lim = line.split()[13]
-        raddose = {"dose": dose,
-                   "exp dose limit": exp_dose_lim,
-                   "henderson limit": hen_lim  }
-        return(raddose)
-
-    except:
-        self.logger.exception('**Error in Parse.ParseOutputRaddose**')
-        return(None)
-
+    return(raddose)
 
 def ParseOutputBestNone(self, inp):
     """
