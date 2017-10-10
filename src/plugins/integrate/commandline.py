@@ -82,6 +82,13 @@ def get_commandline():
                         help="Rounds of polishing to perform")
 
     # Don't run analysis
+    parser.add_argument("--dirty",
+                        action="store_false",
+                        dest="clean_up",
+                        default=True,
+                        help="Do not clean up")
+
+    # Don't run analysis
     parser.add_argument("--noanalysis",
                         action="store_false",
                         dest="analysis",
@@ -204,6 +211,8 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
         }
 
     command["preferences"] = {
+        "analysis": commandline_args.analysis,
+        "clean_up": commandline_args.clean_up,
         "dir_up": commandline_args.dir_up,
         "start_frame": commandline_args.start_image,
         "end_frame": commandline_args.end_image,
