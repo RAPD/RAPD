@@ -497,7 +497,6 @@ class Model(object):
                 return False
 
             # Add some data to the header - no run_id for snaps
-            pprint(header)
             header["collect_mode"] = "SNAP"
             header["run_id"] = None
             header["site_tag"] = site_tag
@@ -506,8 +505,8 @@ class Model(object):
             if self.site_adapter:
                 site_data = self.site_adapter.get_image_data()
                 header.update(site_data)
-                #print "2"
-                #pprint(header)
+                print "2"
+                pprint(header)
 
             # Add to database
             image_id = self.database.add_image(data=header, return_type="id")
@@ -517,8 +516,8 @@ class Model(object):
             else:
                 return False
 
-            # print "1"
-            # pprint(header)
+            print "1"
+            pprint(header)
 
             # Update remote client
             if self.remote_adapter:
