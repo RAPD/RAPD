@@ -335,6 +335,8 @@ class Database(object):
 
         # Add the current timestamp to the plugin_result
         plugin_result["timestamp"] = datetime.datetime.utcnow()
+        if plugin_result.get("_id", False):
+            plugin_result["_id"] = ObjectId(plugin_result["_id"])
 
         # Add to results
         collection_name = ("%s_%s_results" % (plugin_result["plugin"]["data_type"],
@@ -343,8 +345,6 @@ class Database(object):
             {"process.process_id":plugin_result["process"]["process_id"]},
             {"$set":plugin_result},
             upsert=True)
-
-        self.logger.debug(result1)
 
         # Get the _id from updated entry
         if result1.raw_result.get("updatedExisting", False):
