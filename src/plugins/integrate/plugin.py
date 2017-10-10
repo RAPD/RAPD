@@ -173,7 +173,7 @@ class RapdPlugin(Process):
         # Some logging
         self.logger.info(site)
         self.logger.info(command)
-        pprint(command)
+        # pprint(command)
 
         # Store passed-in variables
         self.site = site
@@ -493,7 +493,7 @@ class RapdPlugin(Process):
             plugin_queue = Queue()
 
             # Construct the pdbquery plugin command
-            pprint(self.results["results"].keys())
+            # pprint(self.results["results"].keys())
             class AnalysisArgs(object):
                 """Object containing settings for plugin command construction"""
                 clean = True

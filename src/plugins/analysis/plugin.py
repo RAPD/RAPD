@@ -139,7 +139,7 @@ class RapdPlugin(Process):
 
         # Some logging
         self.logger.info(command)
-        pprint(command)
+        # pprint(command)
 
         # Store passed-in variables
         self.command = command
