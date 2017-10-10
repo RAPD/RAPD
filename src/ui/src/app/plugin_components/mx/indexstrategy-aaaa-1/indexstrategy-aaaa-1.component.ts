@@ -100,7 +100,8 @@ export class IndexstrategyAaaa1Component implements OnInit, OnDestroy {
   ngOnInit() {
     console.log(this.current_result);
     this.incomingData$ = this.websocket_service.subscribeResultDetails(
-      this.current_result.result_type,
+      this.current_result.data_type,
+      this.current_result.plugin_type,
       this.current_result.result_id);
     this.incomingData$.subscribe(x => this.handleIncomingData(x));
   }

@@ -301,12 +301,12 @@ function Wss (opt, callback) {
                 // data.result_type = data.result_type.slice(data.result_type.indexOf(':')+1);
               }
 
-              console.log('Looking in:', data.result_type+'_results');
+              console.log('Looking in:', data.data_type+'_'+ data.plugin_type +'_results');
 
-              let name = data.result_type+'_result';
+              // Create a mongoose model for the result
+              let name = data.data_type+'_'+ data.plugin_type +'_result';
               let collection_name = name.charAt(0).toUpperCase() + name.slice(1);
               var ResultModel;
-
               try {
                 if (mongoose.model(collection_name)) {
                   ResultModel = mongoose.model(collection_name);
@@ -318,8 +318,7 @@ function Wss (opt, callback) {
                 }
               }
 
-              // let ResultSchema = new mongoose.Schema({}, {strict:false});
-              // let ResultModel = mongoose.model(data.result_type+'_result', ResultSchema);
+              // Searhc for a result
               ResultModel.
                 findOne({'_id':mongoose.Types.ObjectId(data.result_id)}).
                 // where('result_type').in(result_type_trans[data_type][data_class]).
