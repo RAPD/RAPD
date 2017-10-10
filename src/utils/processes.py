@@ -29,7 +29,7 @@ from pprint import pprint
 import sys, os, signal
 import shlex
 #import time
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, STDOUT
 from multiprocessing import Pool
 
 def local_subprocess(command,
@@ -51,7 +51,9 @@ def local_subprocess(command,
 
     proc = Popen(shlex.split(command),
                  stdout=PIPE,
-                 stderr=PIPE)
+                 stderr=PIPE,
+                 #stderr=STDOUT,
+                 )
 
     # Send back PID if have pid_queue
     if pid_queue:

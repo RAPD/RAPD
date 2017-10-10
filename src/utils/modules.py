@@ -62,9 +62,9 @@ def load_module(seek_module, directories=False, logger=False):
                 module = importlib.import_module(directory+"."+seek_module)
                 break
             except ImportError as e:
-                #print e
+                print e
                 #logger.debug("FAILED to load module %s", directory+"."+seek_module)
-                pass
+                #pass
             #     if logger:
             #         logger.error("Error loading %s", directory+"."+seek_module)
             
