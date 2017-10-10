@@ -129,7 +129,7 @@ class Model(object):
 
         # Import the detector
         self.init_detectors()
-        
+
         # start launcher manager
         self.start_launcher_manager()
 
@@ -216,7 +216,7 @@ class Model(object):
 
         # Shorten variable names
         site = self.site
-        
+
         import sites.detectors.necat_dectris_eiger16m
 
         # A single detector
@@ -505,8 +505,8 @@ class Model(object):
             if self.site_adapter:
                 site_data = self.site_adapter.get_image_data()
                 header.update(site_data)
-                #print "2"
-                #pprint(header)
+                print "2"
+                pprint(header)
 
             # Add to database
             image_id = self.database.add_image(data=header, return_type="id")
@@ -516,8 +516,8 @@ class Model(object):
             else:
                 return False
 
-            # print "1"
-            # pprint(header)
+            print "1"
+            pprint(header)
 
             # Update remote client
             if self.remote_adapter:

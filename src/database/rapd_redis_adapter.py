@@ -83,7 +83,7 @@ class Database(object):
             self.pool = True
         else:
             self.pool = False
-        
+
         # A lock for troublesome fast-acting data entry
         #self.LOCK = threading.Lock()
     def connect_to_redis(self):
@@ -101,10 +101,10 @@ class Database(object):
         self.pool = redis.Redis(connection_pool=pool)
         # The return the connection
         return self.pool
-    
+
     def connect_redis_manager_HA(self):
         return (Sentinel(self.sentinal_hosts).master_for(self.sentinal_name))
-    
+
     def stop(self):
         if self.pool:
             self.pool.close()
