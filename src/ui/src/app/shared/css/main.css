@@ -190,6 +190,10 @@ mat-divider.rapd-side-list-divider {
   font-size: 0.9em;
 }
 
+.rapd-list-item .mat-list-item-content {
+  height: 1.5em;
+}
+
 .mat-overlay-pane {
   background: rgba(255,255,255,0.95);
 }
