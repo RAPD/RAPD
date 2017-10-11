@@ -139,7 +139,7 @@ SESSION_METHOD = "image_file"
 #     stat -- uses os.stat to determine attribute used
 #   attribute
 #     uid -- st_uid
-GROUP_ID = {"stat", "uid", uidNumber")
+GROUP_ID = ("stat", "uid", "uidNumber")
 # GROUP_ID = {
 #     "type":"stat",
 #     "attribute":"uid",
