@@ -25,10 +25,10 @@ export class SessionService {
   }
 
   private extractData(res: Response, error) {
-    // console.log('error', error);
+    console.log('error', error);
     let body = res.json();
     for (let session of body) {
-      // console.log(session);
+      console.log(session);
       session.start_display = moment(session.start).format('YYYY-MM-DD hh:mm:ss');
       session.end_display = moment(session.end).format('YYYY-MM-DD hh:mm:ss');
     }

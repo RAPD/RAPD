@@ -945,7 +945,7 @@ class Model(object):
 
             session_id = self.database.create_session(
                 data_root_dir=header.get("data_root_dir", None),
-                group_id=group_id
+                group=group_id
             )
 
         return session_id

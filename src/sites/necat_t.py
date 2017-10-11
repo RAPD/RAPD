@@ -179,7 +179,6 @@ IMAGE_IGNORE_DIRECTORIES = (
     "/gpfs5/users/necat/phii_dfa_scan_data",
     "/gpfs5/users/necat/phii_ova_scan_data",
     "/gpfs5/users/necat/rapd/uranium/trunk/test_data",
-    "/epu/rdma/gpfs5/users/necat/rapd/uranium/trunk/test_data",
     "/epu/rdma/gpfs5/users/necat/phii_dfa_1/in",
     "/epu/rdma/gpfs5/users/necat/phii_dfa_2/in",
     "/epu/rdma/gpfs5/users/necat/phii_raster_snap/in",
@@ -187,6 +186,13 @@ IMAGE_IGNORE_DIRECTORIES = (
     "/epu/rdma/gpfs5/users/necat/phii_dfa_scan_data",
     "/epu/rdma/gpfs5/users/necat/phii_ova_scan_data",
     "/epu/rdma/gpfs5/users/necat/rapd/uranium/trunk/test_data",
+    "/epu2/rdma/gpfs5/users/necat/phii_dfa_1/in",
+    "/epu2/rdma/gpfs5/users/necat/phii_dfa_2/in",
+    "/epu2/rdma/gpfs5/users/necat/phii_raster_snap/in",
+    "/epu2/rdma/gpfs5/users/necat/phii_rastersnap_scan_data",
+    "/epu2/rdma/gpfs5/users/necat/phii_dfa_scan_data",
+    "/epu2/rdma/gpfs5/users/necat/phii_ova_scan_data",
+    "/epu2/rdma/gpfs5/users/necat/rapd/uranium/trunk/test_data",
     )
 # Images collected containing the following string will be ignored
 IMAGE_IGNORE_STRINGS = ("ignore", )
