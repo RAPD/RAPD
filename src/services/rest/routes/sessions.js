@@ -36,10 +36,12 @@ router.route('/sessions')
         populate('group', 'groupname').
         sort({end: -1}).
         exec(function(err, sessions) {
-          if (err)
-              res.send(err);
-          console.log(sessions);
-          res.json(sessions);
+          if (err) {
+            res.send(err);
+          } else {
+            console.log(sessions);
+            res.json(sessions);
+          }
         });
     });
 
