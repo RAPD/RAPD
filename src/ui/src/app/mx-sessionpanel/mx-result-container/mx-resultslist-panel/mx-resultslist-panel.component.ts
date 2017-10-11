@@ -1,4 +1,5 @@
 import { Component,
+        //  OnDestroy,
          OnInit,
          Input,
          Output,
@@ -12,7 +13,7 @@ import { WebsocketService } from '../../../shared/services/websocket.service';
   templateUrl: './mx-resultslist-panel.component.html',
   styleUrls: ['./mx-resultslist-panel.component.css'],
 })
-export class MxResultslistPanelComponent implements OnInit {
+export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
 
   highlight_color = 'white';
   message: string;
@@ -51,6 +52,10 @@ export class MxResultslistPanelComponent implements OnInit {
     this.incomingData$ = this.websocket_service.subscribeResults(this.session_id);
     this.incomingData$.subscribe(x => this.handleIncomingData(x));
   }
+
+  // ngOnDestroy() {
+  //   this.sub.unsubscribe();
+  // }
 
   private handleIncomingData(data: any) {
     let self = this;
