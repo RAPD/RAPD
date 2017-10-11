@@ -177,7 +177,7 @@ class Database(object):
 
         return str(session_id)
 
-    def create_session(self, data_root_dir, group_id=None):
+    def create_session(self, data_root_dir, group=None, session_type="mx"):
         """
         Get the session _id for the input information. The entry will be made it does not yet exist.
         The data_root_dir must be input for this to work.
@@ -194,13 +194,14 @@ class Database(object):
         # Make sure the group_id is an ObjectId
         # If it should be an ObjectId, cast it to one
         try:
-            group_id = ObjectId(group_id)
+            group = ObjectId(group)
         except bson.errors.InvalidId:
             pass
 
         # Insert into the database
         result = db.sessions.insert_one({"data_root_dir": data_root_dir,
-                                         "group_id": group_id,
+                                         "group": group,
+                                         "type":session_type,
                                          "timestamp": datetime.datetime.utcnow()})
 
         return str(result.inserted_id)
