@@ -139,11 +139,12 @@ SESSION_METHOD = "image_file"
 #     stat -- uses os.stat to determine attribute used
 #   attribute
 #     uid -- st_uid
-GROUP_ID = {
-    "type":"stat",
-    "attribute":"uid",
-    "field":"uidNumber"
-}
+GROUP_ID = {"stat", "uid", uidNumber")
+# GROUP_ID = {
+#     "type":"stat",
+#     "attribute":"uid",
+#     "field":"uidNumber"
+# }
 # The field name in groups collection that matches the property described in GROUP_ID
 #   uidNumber
 GROUP_ID_FIELD = "uidNumber"

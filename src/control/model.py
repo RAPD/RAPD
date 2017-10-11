@@ -933,6 +933,7 @@ class Model(object):
 
             # Determine group_id
             if self.site.GROUP_ID:
+                print "Have self.site.GROUP_ID"
                 det_type, det_attribute, det_field = self.site.GROUP_ID
                 if det_type == "stat":
                     attribute_value = os.stat(header.get("data_root_dir")).__getattribute__("st_%s" % det_attribute)
