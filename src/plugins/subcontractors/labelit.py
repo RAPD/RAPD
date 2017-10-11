@@ -285,6 +285,7 @@ def parse_labelit_files_OLD(bestfile_lines, mat_lines, sub_lines, mode="all"):
     """
     Parse the lines from bestfile.par
     Transplant from xutils.getLabelitCell
+    NOW IN PLUGIN
     """
 
     run2 = False
