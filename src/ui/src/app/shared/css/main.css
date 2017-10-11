@@ -187,6 +187,7 @@ mat-divider.rapd-side-list-divider {
 
 .mat-list-item {
   background-color: inherit;
+  font-size: 0.9em;
 }
 
 .mat-overlay-pane {
