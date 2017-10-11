@@ -764,7 +764,7 @@ class Model(object):
                            "plugin_directories":self.site.RAPD_PLUGIN_DIRECTORIES}
 
             # Get the session id
-            session_id = self.get_session(header)
+            session_id = self.get_session_id(header)
 
             # Add the process to the database to display as in-process
             process_id = self.database.add_plugin_process(plugin_type="index",
@@ -835,7 +835,7 @@ class Model(object):
                                    "plugin_directories":self.site.RAPD_PLUGIN_DIRECTORIES}
 
                     # Get the session id
-                    session_id = self.get_session(header)
+                    session_id = self.get_session_id(header)
 
                     # Add the process to the database to display as in-process
                     process_id = self.database.add_plugin_process(
@@ -878,7 +878,7 @@ class Model(object):
                            "plugin_directories":self.site.RAPD_PLUGIN_DIRECTORIES}
 
             # Get the session id
-            session_id = self.get_session(header)
+            session_id = self.get_session_id(header)
 
             # Add the process to the database to display as in-process
             process_id = self.database.add_plugin_process(plugin_type="integrate",
@@ -923,7 +923,7 @@ class Model(object):
             self.recent_runs[header["run_id"]]["rapd_status"] = "INTEGRATING"
             # TODO - update database version of run as well
 
-    def get_session(self, header):
+    def get_session_id(self, header):
         """Get a session_id"""
 
         # Is the session information figured out by the image file name
@@ -932,8 +932,13 @@ class Model(object):
         if not session_id:
 
             # Determine group_id
-            if self.site.GROUP_ID == "uid":
-                group_id = os.stat(header.get("data_root_dir")).st_uid
+            if self.site.GROUP_ID:
+                det_type, det_attribute, det_field = self.site.GROUP_ID
+                if det_type == "stat":
+                    attribute_value = os.stat(header.get("data_root_dir")).__getattribute__("st_%s" % det_attribute)
+                    group_id = self.database.get_group(value=attribute_value,
+                                                       field=det_field,
+                                                       just_id=True)
             else:
                 group_id = None
 

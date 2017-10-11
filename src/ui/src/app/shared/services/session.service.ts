@@ -3,7 +3,7 @@ import { Response } from '@angular/http';
 
 import { Observable } from 'rxjs/Observable';
 import { AuthHttp } from 'angular2-jwt';
-import * as moment from 'moment';
+import * as moment from 'moment-mini';
 
 import { GlobalsService } from './globals.service';
 

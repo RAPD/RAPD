@@ -227,10 +227,11 @@ export class WebsocketService {
   }
 
   // Get details for a result
-  subscribeResultDetails(result_type: string,
+  subscribeResultDetails(data_type: string,
+                         plugin_type: string,
                          result_id: string): ReplaySubject<string> {
 
-    console.log('subscribeResultDetails  result_type =', result_type, 'result_id =', result_id);
+    console.log('subscribeResultDetails  data_type =', data_type, 'plugin_type = ', plugin_type, 'result_id =', result_id);
 
     let self = this;
 
@@ -240,7 +241,9 @@ export class WebsocketService {
 
     this.details_subscribers.push({
       subject:result_details_subject,
-      result_type:result_type,
+      result_type:data_type+':'+plugin_type,
+      data_type:data_type,
+      plugin_type:plugin_type,
       result_id:result_id
     });
 
@@ -249,7 +252,9 @@ export class WebsocketService {
       // Request all results
       self.ws.send(JSON.stringify({
         request_type: 'get_result_details',
-        result_type: result_type,
+        result_type: data_type+':'+plugin_type,
+        data_type:data_type,
+        plugin_type:plugin_type,
         result_id: result_id
       }));
     });
