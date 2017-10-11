@@ -102,9 +102,11 @@ export class Index3b34200Component implements OnInit, OnDestroy {
     // console.log('handleIncomingData', data);
     this.full_result = data;
 
-    if (this.full_result.results.plots.osc_range) {
-      this.selected_plot = 'osc_range';
-      this.setPlot('osc_range');
+    if ('plots' in this.full_result.results) {
+      if ('osc_range' in this.full_result.results.plots) {
+        this.selected_plot = 'osc_range';
+        this.setPlot('osc_range');
+      }
     }
   }
 
