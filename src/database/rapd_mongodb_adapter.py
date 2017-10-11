@@ -40,7 +40,8 @@ import os
 import threading
 
 from bson.objectid import ObjectId
-import numpy
+import bson.errors
+# import numpy
 import pymongo
 
 
@@ -120,6 +121,38 @@ class Database(object):
         return db
 
     ############################################################################
+    # Functions for groups                                                     #
+    ############################################################################
+    def get_group(self, value, field="_id", just_id=False):
+        """
+        Returns a dict from the database when queried with value and field.
+
+        value - the value for the search
+        field - the field to be queried
+        """
+
+        self.logger.debug(value, field)
+
+        # No value, no query
+        if not value:
+            return False
+
+        # If it should be an ObjectId, cast it to one
+        try:
+            _value = ObjectId(value)
+        except bson.errors.InvalidId:
+            _value = value
+
+        # Get connection to database
+        db = self.get_db_connection()
+
+        # Query and return, transform _id to string
+        if just_id:
+            return str(db.groups.find_one({field:_value}, {"_id":1}))
+        else:
+            return db.groups.find_one({field:_value})
+
+    ############################################################################
     # Functions for sessions & users                                           #
     ############################################################################
     def get_session_id(self, data_root_dir):
@@ -142,9 +175,9 @@ class Database(object):
         if session_id:
             session_id = str(session_id.get("_id", False))
 
-        return session_id
+        return str(session_id)
 
-    def create_session(self, data_root_dir, group_id=None):
+    def create_session(self, data_root_dir, group=None, session_type="mx"):
         """
         Get the session _id for the input information. The entry will be made it does not yet exist.
         The data_root_dir must be input for this to work.
@@ -158,9 +191,17 @@ class Database(object):
         # Connect
         db = self.get_db_connection()
 
+        # Make sure the group_id is an ObjectId
+        # If it should be an ObjectId, cast it to one
+        try:
+            group = ObjectId(group)
+        except bson.errors.InvalidId:
+            pass
+
         # Insert into the database
         result = db.sessions.insert_one({"data_root_dir": data_root_dir,
-                                         "group_id": group_id,
+                                         "group": group,
+                                         "type":session_type,
                                          "timestamp": datetime.datetime.utcnow()})
 
         return str(result.inserted_id)
@@ -335,6 +376,8 @@ class Database(object):
 
         # Add the current timestamp to the plugin_result
         plugin_result["timestamp"] = datetime.datetime.utcnow()
+        if plugin_result.get("_id", False):
+            plugin_result["_id"] = ObjectId(plugin_result["_id"])
 
         # Add to results
         collection_name = ("%s_%s_results" % (plugin_result["plugin"]["data_type"],
@@ -348,14 +391,14 @@ class Database(object):
         if result1.raw_result.get("updatedExisting", False):
             result1_id = db[collection_name].find_one(
                 {"process.process_id":ObjectId(plugin_result["process"]["process_id"])},
-                {"_id":1})["_id"]
+                {"_id":1})
         # upsert
         else:
             result1_id = result1.upserted_id
 
-        self.logger.debug("%s _id %s", (collection_name, result1_id))
+        self.logger.debug("%s _id %s", collection_name, result1_id)
 
-        result2 = db.plugin_results.update_one(
+        result2 = db.results.update_one(
             {"result_id":result1_id},
             {"$set":{
                 "data_type":plugin_result["plugin"]["data_type"],
@@ -373,7 +416,7 @@ class Database(object):
         if result2.raw_result.get("updatedExisting", False):
             result2_id = db.plugin_results.find_one(
                 {"result_id":result1_id},
-                {"_id":1})["_id"]
+                {"_id":1})
         # upsert
         else:
             result2_id = result2.upserted_id
@@ -382,19 +425,19 @@ class Database(object):
         return {"plugin_results_id":result2_id,
                 "result_id":result1_id}
 
-    def getArrayStats(self,in_array,mode='float'):
-        """
-        return the max,min,mean and std_dev of an input array
-        """
-        self.logger.debug('Database::getArrayStats')
-
-        if (mode == 'float'):
-            narray = numpy.array(in_array, dtype=float)
-
-        try:
-            return(narray.max(), narray.min(), narray.mean(), narray.std())
-        except:
-            return(0, 0, 0, 0)
+    # def getArrayStats(self, in_array, mode="float"):
+    #     """
+    #     return the max,min,mean and std_dev of an input array
+    #     """
+    #     self.logger.debug('Database::getArrayStats')
+    #
+    #     if (mode == 'float'):
+    #         narray = numpy.array(in_array, dtype=float)
+    #
+    #     try:
+    #         return(narray.max(), narray.min(), narray.mean(), narray.std())
+    #     except:
+    #         return(0, 0, 0, 0)
 
     ############################################################################
     # Functions for runs                                                       #

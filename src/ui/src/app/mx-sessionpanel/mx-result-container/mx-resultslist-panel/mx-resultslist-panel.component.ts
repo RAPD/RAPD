@@ -1,4 +1,5 @@
 import { Component,
+        //  OnDestroy,
          OnInit,
          Input,
          Output,
@@ -12,7 +13,7 @@ import { WebsocketService } from '../../../shared/services/websocket.service';
   templateUrl: './mx-resultslist-panel.component.html',
   styleUrls: ['./mx-resultslist-panel.component.css'],
 })
-export class MxResultslistPanelComponent implements OnInit {
+export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
 
   highlight_color = 'white';
   message: string;
@@ -52,6 +53,10 @@ export class MxResultslistPanelComponent implements OnInit {
     this.incomingData$.subscribe(x => this.handleIncomingData(x));
   }
 
+  // ngOnDestroy() {
+  //   this.sub.unsubscribe();
+  // }
+
   private handleIncomingData(data: any) {
     let self = this;
 
@@ -59,7 +64,7 @@ export class MxResultslistPanelComponent implements OnInit {
 
     // if (data.msg_type === 'results') {
       for (let result of data) {
-        if (result.result_type === this.result_types[this.result_type]) {
+        if (result.result_type.toLowerCase() === this.result_types[this.result_type]) {
           console.log(result);
           // New result
           let id = result._id; // result.process.process_id;

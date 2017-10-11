@@ -5,7 +5,7 @@ import { Headers,
 import { Observable } from 'rxjs/Observable';
 import { Subscriber } from 'rxjs/Subscriber';
 import { AuthHttp } from 'angular2-jwt';
-import * as moment from 'moment';
+import * as moment from 'moment-mini';
 
 import { GlobalsService } from './globals.service';
 
@@ -115,7 +115,7 @@ export class RestService {
 
   public getSessions(): Observable<Session[]> {
 
-    // console.log('getSessions');
+    console.log('getSessions');
 
     return this.authHttp.get(this.globals_service.site.restApiUrl + '/sessions')
       .map(this.extractSessions);

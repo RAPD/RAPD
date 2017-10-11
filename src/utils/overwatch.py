@@ -151,7 +151,6 @@ class Registrar(object):
         """
 
         # Get connection
-        #red = redis.Redis(connection_pool=self.redis_pool)
         red = self.redis
 
         # Create entry
@@ -249,9 +248,9 @@ class Overwatcher(Registrar):
         self.managed_file_flags.remove('--python')
         self.python_command = self.managed_file_flags.pop(i)
 
-        print site
-        print managed_file
-        print managed_file_flags
+        #print site
+        #print managed_file
+        #print managed_file_flags
 
         # Create a unique id
         self.uuid = uuid.uuid4().hex
