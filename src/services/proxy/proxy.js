@@ -18,7 +18,11 @@ var server = http.createServer(function(req, res) {
   console.log(req.url.match(/\/api\//));
   if (req.url.match(/\/api/)) {
     console.log('Call to REST');
-    proxy.web(req, res, { target: 'http://127.0.0.1:3000' });
+    try {
+      proxy.web(req, res, { target: 'http://127.0.0.1:3000' });
+    } catch (e) {
+      console.error(e);
+    }
   // Everything else
   } else {
     console.log('Everything else');
