@@ -439,14 +439,15 @@ class RapdPlugin(Process):
         """Connect to the redis instance"""
         # Create a pool connection
         redis_database = importlib.import_module('database.rapd_redis_adapter')
-
         self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        if self.site.CONTROL_DATABASE_SETTINGS['REDIS_CONNECTION'] == 'pool':
-            # For a Redis pool connection
-            self.redis = self.redis_database.connect_redis_pool()
-        else:
-            # For a Redis sentinal connection
-            self.redis = self.redis_database.connect_redis_manager_HA()
+        self.redis = self.redis_database.connect_to_redis()
+
+    def send_results(self):
+        """Let everyone know we are working on this"""
+        self.logger.debug("Sending back on redis")
+        json_results = json.dumps(self.results)
+        self.redis.lpush("RAPD_RESULTS", json_results)
+        self.redis.publish("RAPD_RESULTS", json_results)
 
     def preprocess(self):
         """
@@ -456,16 +457,12 @@ class RapdPlugin(Process):
 
         # Construct the results
         self.construct_results()
-        # pprint(self.results)
 
         # Let everyone know we are working on this
         if self.preferences.get("run_mode") == "server":
             if not self.redis:
                 self.connect_to_redis()
-            self.logger.debug("Sending back on redis")
-            json_results = json.dumps(self.results)
-            self.redis.lpush("RAPD_RESULTS", json_results)
-            self.redis.publish("RAPD_RESULTS", json_results)
+            self.send_results()
 
         # Determine detector vendortype
         self.vendortype = xutils.get_vendortype(self.header)
@@ -479,9 +476,6 @@ class RapdPlugin(Process):
         if os.path.exists(self.working_dir) == False:
             os.makedirs(self.working_dir)
         os.chdir(self.working_dir)
-
-        # Add flux info to header
-        #self.header =
 
         # Setup event for job control on cluster (Only works at NE-CAT using DRMAA for
         # job submission)
@@ -545,19 +539,13 @@ class RapdPlugin(Process):
         if self.verbose and self.logger:
             self.logger.debug("AutoindexingStrategy::preprocess_raddose")
 
-        # try:
-        #print self.site_parameters
         beam_size_x = self.header.get('x_beam_size', self.site_parameters.get('BEAM_SIZE_X', False))
         beam_size_y = self.header.get('y_beam_size', self.site_parameters.get('BEAM_SIZE_Y', False))
-        #beam_size_x = self.site_parameters.get('BEAM_SIZE_X', False)
-        #beam_size_y = self.site_parameters.get('BEAM_SIZE_Y', False)
         gauss_x = self.site_parameters.get('BEAM_GAUSS_X', False)
         gauss_y = self.site_parameters.get('BEAM_GAUSS_Y', False)
         flux = self.header.get('flux', self.site_parameters.get('BEAM_FLUX', 1E10 ))
 
-        # Get unit cell
-        #cell = self.get_labelit_cell_sym()
-        #nres = xutils.calcTotResNumber(self, self.volume)
+        # Get number of residues in the unit cell
         nres = xutils.calc_tot_res_number(self.volume, self.sample_type, self.solvent_content)
 
         # Adding these typically does not change the Best strategy much, if it at all.
@@ -573,8 +561,6 @@ class RapdPlugin(Process):
             crystal_size_y = self.preferences.get("crystal_size_y", 100.0)/1000.0
             crystal_size_z = self.preferences.get("crystal_size_z", 100.0)/1000.0
 
-        self.raddose_file = os.path.join(self.labelit_dir, "raddose.com")
-        raddose = open(self.raddose_file, "w+")
         setup = '#!/bin/sh\n'
         setup += "raddose << EOF\n"
         if beam_size_x and beam_size_y:
@@ -621,12 +607,12 @@ class RapdPlugin(Process):
         if satm:
             setup += "SATM %d\n" % satm
         setup += "END\nEOF\n"
-        raddose.writelines(setup)
-        raddose.close()
-        os.chmod(self.raddose_file, stat.S_IRWXU)
 
-        # except:
-            # self.logger.exception("**ERROR in preprocess_raddose**")
+        # write the file
+        self.raddose_file = os.path.join(self.labelit_dir, "raddose.com")
+        with open(self.raddose_file, "w+") as raddose:
+            raddose.writelines(setup)
+        os.chmod(self.raddose_file, stat.S_IRWXU)
 
     def start_labelit(self):
         """
@@ -716,9 +702,8 @@ class RapdPlugin(Process):
             command += "INCIDENT_BEAM_DIRECTION=0.0 0.0 1.0\n"
             command += "FRACTION_OF_POLARIZATION=0.99 !default=0.5 for unpolarized beam\n"
             command += "POLARIZATION_PLANE_NORMAL= 0.0 1.0 0.0\n"
-            f = open("XDS.INP", "w")
-            f.writelines(command)
-            f.close()
+            with open("XDS.INP", "w") as f:
+                f.writelines(command)
             Process(target=xutils.processLocal, args=("xds_par", self.logger)).start()
 
         except:
@@ -777,7 +762,6 @@ class RapdPlugin(Process):
 
         # try:
         self.folders_strategy(iteration)
-        #print os.getcwd()
         if iteration != 0:
             f = '%s/%s/%s_res%s'%(self.labelit_dir, iteration, self.index_number, iteration)
             if self.test == False:
@@ -793,11 +777,9 @@ class RapdPlugin(Process):
                         if line.startswith("RESOLUTION"):
                             temp.remove(line)
                             temp.append("RESOLUTION %s\n" % str(float(line.split()[1]) + iteration))
-                new = open(f, "w")
-                new.writelines(temp)
-                new.close()
+                with open(f, "w") as new:
+                    new.writelines(temp)
                 os.chmod(f, stat.S_IRWXU)
-                #subprocess.Popen(f).wait()
                 local_subprocess(command=f)
         self.process_best(iteration, best_version)
 
@@ -1040,11 +1022,9 @@ class RapdPlugin(Process):
             inp = os.path.join(self.labelit_dir, l[i][0])
             log = inp+".out"
             if self.test == False:
-                new = open(inp, "w")
-                new.writelines(temp[:fi+1])
-                new.writelines(new_line)
-                new.close()
-                
+                with open(inp, "w") as new:
+                    new.writelines(temp[:fi+1])
+                    new.writelines(new_line)
                 os.chmod(inp, stat.S_IRWXU)
                 inp_kwargs = {'command': inp,
                               'logfile': log}
@@ -1186,9 +1166,8 @@ class RapdPlugin(Process):
 
         # Parse out distl results for the frame(s)
         for frame_number in range(frame_count):
-            log = self.distl_queue.get()['stdout'].splitlines()
             # Read in the log
-            #log = open("distl%s.log" % frame_number, "r").readlines()
+            log = self.distl_queue.get()['stdout'].splitlines()
             # Store the logs in one
             self.distl_log.extend(log)
             # Parse and put the distl results into storage
@@ -1354,24 +1333,17 @@ Distance | % Transmission", level=98, color="white")
         if self.verbose and self.logger:
             self.logger.debug("AutoindexingStrategy::postprocess_mosflm %s" % inp)
 
-        # print "postprocess_mosflm"
-
-        try:
-            if os.path.basename(inp).count("anom"):
-                anom = True
-                l = ["ANOM", "self.mosflm_strat_anom", "Mosflm ANOM strategy results"]
-            else:
-                anom = False
-                l = ["", "self.mosflm_strat", "Mosflm strategy results"]
-            out = open(inp, "r").readlines()
-            eval("%s_log" % l[1]).extend(out)
-        except:
-            self.logger.exception("**ERROR in postprocess_mosflm**")
-
+        if os.path.basename(inp).count("anom"):
+            anom = True
+            l = ["ANOM", "self.mosflm_strat_anom", "Mosflm ANOM strategy results"]
+        else:
+            anom = False
+            l = ["", "self.mosflm_strat", "Mosflm strategy results"]
+        out = open(inp, "r").readlines()
+        eval("%s_log" % l[1]).extend(out)
         data = Parse.ParseOutputMosflm_strat(self, out, anom)
 
         # Print to terminal
-        #pprint(data)
         #if "run_number" in data:
         if anom == False:
             flag = "strategy "
@@ -1646,16 +1618,6 @@ Distance | % Transmission", level=98, color="white")
             self.index_number = self.labelit_results.get("labelit_results").get("mosflm_index")
             os.chdir(self.labelit_dir)
 
-            # Parse out additional information from labelit-created files
-            """
-            bestfile_lines = open("bestfile.par", "r").readlines()
-            mat_lines = open("%s.mat" % self.index_number, "r").readlines()
-            sub_lines = open("%s" % self.index_number, "r").readlines()
-            # Parse the file for unit cell information
-            labelit_cell, labelit_sym = labelit.parse_labelit_files(bestfile_lines,
-                                                                    mat_lines,
-                                                                    sub_lines)
-            """
             # Save the self.Labelit_cell and self.Labelit_sym
             self.labelit_cell_sym()
             
@@ -2000,10 +1962,11 @@ Distance | % Transmission", level=98, color="white")
         if self.preferences.get("run_mode") == "server":
             if not self.redis:
                 self.connect_to_redis()
-            self.logger.debug("Sending back on redis")
-            json_results = json.dumps(self.results)
-            self.redis.lpush("RAPD_RESULTS", json_results)
-            self.redis.publish("RAPD_RESULTS", json_results)
+            self.send_results()
+            #self.logger.debug("Sending back on redis")
+            #json_results = json.dumps(self.results)
+            #self.redis.lpush("RAPD_RESULTS", json_results)
+            #self.redis.publish("RAPD_RESULTS", json_results)
 
         self.tprint(arg=100, level="progress")
 
@@ -2046,6 +2009,9 @@ Distance | % Transmission", level=98, color="white")
         self.logger.debug("-------------------------------------")
         self.tprint(arg="\nRAPD autoindexing & strategy complete", level=98, color="green")
         self.tprint(arg="Total elapsed time: %s seconds" % t, level=10, color="white")
+
+        # Kill the redis connection
+        self.redis_database.stop()
 
     def html_best_plots(self):
         """
@@ -2303,40 +2269,39 @@ class RunLabelit(Thread):
 
         if self.test == False:
             # Setup the dataset_preferences.py file for Labelit.
-            preferences = open('dataset_preferences.py', 'w')
-            preferences.write('#####Base Labelit settings#####\n')
-            preferences.write('best_support=True\n')
-            # Set Mosflm RMSD tolerance larger
-            preferences.write('mosflm_rmsd_tolerance=4.0\n')
-
-            # If binning is off. Force Labelit to use all pixels(MAKES THINGS WORSE).
-            # Increase number of spots to use for indexing.
-            if binning == False:
-                preferences.write('distl_permit_binning=False\n')
-                preferences.write('distl_maximum_number_spots_for_indexing=600\n')
-
-            # If user wants to change the res limit for autoindexing.
-            if self.preferences.get('index_hi_res', 0.0) != 0.0:
-                #preferences.write('distl.res.outer='+index_hi_res+'\n')
-                preferences.write('distl_highres_limit=%.2f\n' % self.preferences.get('index_hi_res'))
-
-            # Always specify the beam center.
-            # If Malcolm flips the beam center in the image header...
-            if self.preferences.get("beam_flip", False):
-                preferences.write("autoindex_override_beam=(%.2f, %.2f)\n" % (y_beam, x_beam))
-            else:
-                preferences.write("autoindex_override_beam=(%.2f, %.2f)\n" % (x_beam, y_beam))
-
-            # If two-theta is being used, specify the angle and distance correctly.
-            if twotheta == 0.0:
-                preferences.write('beam_search_scope=%.2f\n' %
-                                  self.preferences.get("beam_search", 0.2))
-            else:
-                # Have to increase the beam_search_scope when 2theta is in use.
-                preferences.write('beam_search_scope=0.5\n')
-                preferences.write('autoindex_override_twotheta=%.2f\n'%twotheta)
-                # preferences.write('autoindex_override_distance='+distance+'\n')
-            preferences.close()
+            with open('dataset_preferences.py', 'w') as preferences:
+                preferences.write('#####Base Labelit settings#####\n')
+                preferences.write('best_support=True\n')
+                # Set Mosflm RMSD tolerance larger
+                preferences.write('mosflm_rmsd_tolerance=4.0\n')
+    
+                # If binning is off. Force Labelit to use all pixels(MAKES THINGS WORSE).
+                # Increase number of spots to use for indexing.
+                if binning == False:
+                    preferences.write('distl_permit_binning=False\n')
+                    preferences.write('distl_maximum_number_spots_for_indexing=600\n')
+    
+                # If user wants to change the res limit for autoindexing.
+                if self.preferences.get('index_hi_res', 0.0) != 0.0:
+                    #preferences.write('distl.res.outer='+index_hi_res+'\n')
+                    preferences.write('distl_highres_limit=%.2f\n' % self.preferences.get('index_hi_res'))
+    
+                # Always specify the beam center.
+                # If Malcolm flips the beam center in the image header...
+                if self.preferences.get("beam_flip", False):
+                    preferences.write("autoindex_override_beam=(%.2f, %.2f)\n" % (y_beam, x_beam))
+                else:
+                    preferences.write("autoindex_override_beam=(%.2f, %.2f)\n" % (x_beam, y_beam))
+    
+                # If two-theta is being used, specify the angle and distance correctly.
+                if twotheta == 0.0:
+                    preferences.write('beam_search_scope=%.2f\n' %
+                                      self.preferences.get("beam_search", 0.2))
+                else:
+                    # Have to increase the beam_search_scope when 2theta is in use.
+                    preferences.write('beam_search_scope=0.5\n')
+                    preferences.write('autoindex_override_twotheta=%.2f\n'%twotheta)
+                    # preferences.write('autoindex_override_distance='+distance+'\n')
 
     def correct_labelit(self, iteration, overrides):
         """
@@ -2398,92 +2363,85 @@ rerunning.\n" % spot_count)
         #foldersLabelit(self, iteration)
         xutils.create_folders_labelit(self.working_dir, iteration)
     
-        preferences = open('dataset_preferences.py','a')
-    
-        preferences.write('\n#iteration %s\n' % iteration)
-    
-        if iteration == 0:
+        with open('dataset_preferences.py','a') as preferences:
+            preferences.write('\n#iteration %s\n' % iteration)
+            if iteration == 0:
+                self.log[iteration] = ['\nUsing default parameters.\n']
+                self.tprint("\n  Using default parameters", level=30, color="white", newline=False)
+                self.logger.debug('Using default parameters.')
+        
+            if iteration == 1:
+                # Seemed to pick stronger spots on Pilatis
+                if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
+                    preferences.write('distl.minimum_spot_area=3\n')
+                    preferences.write('distl.minimum_signal_height=4\n')
+                elif "Eiger" in self.vendortype:
+                    preferences.write('distl.minimum_spot_area=3\n')
+                    preferences.write('distl.minimum_signal_height=5.5\n')
+                else:
+                    preferences.write('distl.minimum_spot_area=6\n')
+                    preferences.write('distl.minimum_signal_height=4.3\n')
+                self.log[iteration] = ['\nLooking for long unit cell.\n']
+                self.tprint("\n  Looking for long unit cell", level=30, color="white", newline=False)
+                self.logger.debug('Looking for long unit cell.')
+        
+            elif iteration == 2:
+                # Change it up and go for larger peaks like small molecule.
+                preferences.write('distl.minimum_spot_height=6\n')
+                self.log[iteration] = ['\nChanging settings to look for stronger peaks (ie. small molecule).\n']
+                self.tprint("\n  Looking for stronger peaks (ie. small molecule)", level=30, color="white", newline=False)
+                self.logger.debug("Changing settings to look for stronger peaks (ie. small molecule).")
+        
+            elif iteration == 3:
+                if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
+                    preferences.write('distl.minimum_spot_area=2\n')
+                    preferences.write('distl.minimum_signal_height=2.3\n')
+                elif "Eiger" in self.vendortype:
+                    preferences.write('distl.minimum_spot_area=3\n')
+                    preferences.write('distl.minimum_signal_height=2.6\n')
+                else:
+                    preferences.write('distl.minimum_spot_area=7\n')
+                    preferences.write('distl.minimum_signal_height=1.2\n')
+                self.log[iteration] = ['\nLooking for weak diffraction.\n']
+                self.tprint("\n  Looking for weak diffraction", level=30, color="white", newline=False)
+                self.logger.debug('Looking for weak diffraction.')
+        
+            elif iteration == 4:
+                if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
+                    preferences.write('distl.minimum_spot_area=3\n')
+                    self.log[iteration] = ['\nSetting spot picking level to 3.\n']
+                    area = 3
+                elif "Eiger" in self.vendortype:
+                    preferences.write('distl.minimum_spot_area=3\n')
+                    self.log[iteration] = ['\nSetting spot picking level to 3.\n']
+                    area = 3
+                else:
+                    preferences.write('distl.minimum_spot_area=8\n')
+                    self.log[iteration] = ['\nSetting spot picking level to 8.\n']
+                    area = 8
+                self.tprint("\n  Setting spot picking level to %d" % area, level=30, color="white", newline=False)
+                self.logger.debug('Setting spot picking level to 3 or 8.')
+        
+            elif iteration == 5:
+                if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
+                    preferences.write('distl.minimum_spot_area=2\n')
+                    preferences.write('distl_highres_limit=5\n')
+                    self.log[iteration] = ['\nSetting spot picking level to 2 and resolution to 5.\n']
+                    setting = (2, 5)
+                elif "Eiger" in self.vendortype:
+                    preferences.write('distl.minimum_spot_area=2\n')
+                    preferences.write('distl_highres_limit=4\n')
+                    self.log[iteration] = ['\nSetting spot picking level to 2 and resolution to 4.\n']
+                    setting = (2, 4)
+                else:
+                    preferences.write('distl.minimum_spot_area=6\n')
+                    preferences.write('distl_highres_limit=5\n')
+                    self.log[iteration] = ['\nSetting spot picking level to 6 and resolution to 5.\n']
+                    setting = (6, 5)
+                self.tprint("\n  Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white", newline=False)
+                self.logger.debug('Setting spot picking level to 2 or 6.')
             preferences.close()
-            self.log[iteration] = ['\nUsing default parameters.\n']
-            self.tprint("\n  Using default parameters", level=30, color="white", newline=False)
-            self.logger.debug('Using default parameters.')
-    
-        if iteration == 1:
-            # Seemed to pick stronger spots on Pilatis
-            if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
-                preferences.write('distl.minimum_spot_area=3\n')
-                preferences.write('distl.minimum_signal_height=4\n')
-            elif "Eiger" in self.vendortype:
-                preferences.write('distl.minimum_spot_area=3\n')
-                preferences.write('distl.minimum_signal_height=5.5\n')
-            else:
-                preferences.write('distl.minimum_spot_area=6\n')
-                preferences.write('distl.minimum_signal_height=4.3\n')
-            preferences.close()
-            self.log[iteration] = ['\nLooking for long unit cell.\n']
-            self.tprint("\n  Looking for long unit cell", level=30, color="white", newline=False)
-            self.logger.debug('Looking for long unit cell.')
-    
-        elif iteration == 2:
-            # Change it up and go for larger peaks like small molecule.
-            preferences.write('distl.minimum_spot_height=6\n')
-            preferences.close()
-            self.log[iteration] = ['\nChanging settings to look for stronger peaks (ie. small molecule).\n']
-            self.tprint("\n  Looking for stronger peaks (ie. small molecule)", level=30, color="white", newline=False)
-            self.logger.debug("Changing settings to look for stronger peaks (ie. small molecule).")
-    
-        elif iteration == 3:
-            if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
-                preferences.write('distl.minimum_spot_area=2\n')
-                preferences.write('distl.minimum_signal_height=2.3\n')
-            elif "Eiger" in self.vendortype:
-                preferences.write('distl.minimum_spot_area=3\n')
-                preferences.write('distl.minimum_signal_height=2.6\n')
-            else:
-                preferences.write('distl.minimum_spot_area=7\n')
-                preferences.write('distl.minimum_signal_height=1.2\n')
-            preferences.close()
-            self.log[iteration] = ['\nLooking for weak diffraction.\n']
-            self.tprint("\n  Looking for weak diffraction", level=30, color="white", newline=False)
-            self.logger.debug('Looking for weak diffraction.')
-    
-        elif iteration == 4:
-            if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
-                preferences.write('distl.minimum_spot_area=3\n')
-                self.log[iteration] = ['\nSetting spot picking level to 3.\n']
-                area = 3
-            elif "Eiger" in self.vendortype:
-                preferences.write('distl.minimum_spot_area=3\n')
-                self.log[iteration] = ['\nSetting spot picking level to 3.\n']
-                area = 3
-            else:
-                preferences.write('distl.minimum_spot_area=8\n')
-                self.log[iteration] = ['\nSetting spot picking level to 8.\n']
-                area = 8
-            preferences.close()
-            self.tprint("\n  Setting spot picking level to %d" % area, level=30, color="white", newline=False)
-            self.logger.debug('Setting spot picking level to 3 or 8.')
-    
-        elif iteration == 5:
-            if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
-                preferences.write('distl.minimum_spot_area=2\n')
-                preferences.write('distl_highres_limit=5\n')
-                self.log[iteration] = ['\nSetting spot picking level to 2 and resolution to 5.\n']
-                setting = (2, 5)
-            elif "Eiger" in self.vendortype:
-                preferences.write('distl.minimum_spot_area=2\n')
-                preferences.write('distl_highres_limit=4\n')
-                self.log[iteration] = ['\nSetting spot picking level to 2 and resolution to 4.\n']
-                setting = (2, 4)
-            else:
-                preferences.write('distl.minimum_spot_area=6\n')
-                preferences.write('distl_highres_limit=5\n')
-                self.log[iteration] = ['\nSetting spot picking level to 6 and resolution to 5.\n']
-                setting = (6, 5)
-            preferences.close()
-            self.tprint("\n  Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white", newline=False)
-            self.logger.debug('Setting spot picking level to 2 or 6.')
-    
+
         return self.process_labelit(iteration)
 
     def process_labelit(self, iteration=0, inp=False, overrides={}, error=False):
@@ -2552,14 +2510,15 @@ rerunning.\n" % spot_count)
 
         # Save the command to the top of log file, before running job.
         self.log[iteration].extend([command])
-        print '\n%s'%command
+        #print '\n%s'%command
 
         # Don't launch job if self.test = True
         if self.test:
             run = "junk%s" % iteration
         # Not testing
         else:
-            log = os.path.join(os.getcwd(), "labelit.log")
+            #log = os.path.join(os.getcwd(), "labelit.log")
+            log = '%s/%s/%s'%(self.working_dir, iteration, "labelit.log")
 
             # queue to retrieve the PID or JobIB once submitted.
             pid_queue = eval('%sQueue()'%self.queue_type)
@@ -2574,6 +2533,7 @@ rerunning.\n" % spot_count)
             inp_kwargs.update(self.batch_queue)
 
             # Launch the job
+            #run = Process(target=self.launcher,
             run = Thread(target=self.launcher,
                          name=iteration,
                          kwargs=inp_kwargs)
@@ -2590,7 +2550,7 @@ rerunning.\n" % spot_count)
             self.tracker[iteration]['nruns'] += 1
 
         # return the job
-        return run
+        #return run
 
     def postprocess_labelit(self, raw_result):
         """

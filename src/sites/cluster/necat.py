@@ -70,7 +70,8 @@ def check_queue(inp):
     Returns which cluster batch queue should be used with the plugin.
     """
     d = {"ECHO"           : 'general.q',
-         "INDEX"          : 'phase3.q',
+         #"INDEX"          : 'phase3.q',
+         "INDEX"          : 'phase1.q',
          "BEAMCENTER"     : 'all.q',
          "XDS"            : 'all.q',
          "INTEGRATE"      : 'phase2.q'
@@ -115,6 +116,10 @@ def connectCluster(inp, job=True):
       return(line.strip())
   client.close()
 
+class Cluster_Event():
+    def __init__(self):
+        pass
+
 def process_cluster_fix(func):
     """
     wrapper to run processCluster in a multiprocessing.Process to avoid
@@ -124,8 +129,7 @@ def process_cluster_fix(func):
     l = ['labelit.index', 'best -f', 'mosflm_strat']
     @wraps(func)
     def wrapper(**kwargs):
-        #if kwargs['command'][:7] in l:
-        print kwargs['command']
+        
         launched = False
         for s in l:
             if kwargs['command'].count(s):
