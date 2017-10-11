@@ -51,16 +51,16 @@ BEAM_INFO = {
     "SERCAT_BM" : {
         # Flux of the beam
         "BEAM_FLUX":8E11,
-        # Size of the beam in microns
-        "BEAM_SIZE_X":50,
-        "BEAM_SIZE_Y":20,
+        # Size of the beam in mm
+        "BEAM_SIZE_X":0.05,
+        "BEAM_SIZE_Y":0.02,
         # Shape of the beam - ellipse, rectangle
         "BEAM_SHAPE":"ellipse",
         # Shape of the attenuated beam - circle or rectangle
         "BEAM_APERTURE_SHAPE":"circle",
         # Gaussian description of the beam for raddose
-        "BEAM_GAUSS_X":0.03,
-        "BEAM_GAUSS_Y":0.01,
+        #"BEAM_GAUSS_X":0.03,
+        #"BEAM_GAUSS_Y":0.01,
         # Beam center calibration
         "BEAM_CENTER_DATE":"2015-12-07",
         # Beamcenter equation coefficients (b, m1, m2, m3, m4, m5, m6)
@@ -90,16 +90,16 @@ BEAM_INFO = {
     "SERCAT_ID" : {
         # Flux of the beam
         "BEAM_FLUX":8E11,
-        # Size of the beam in microns
-        "BEAM_SIZE_X":50,
-        "BEAM_SIZE_Y":20,
+        # Size of the beam in mm
+        "BEAM_SIZE_X":0.05,
+        "BEAM_SIZE_Y":0.02,
         # Shape of the beam - ellipse, rectangle
         "BEAM_SHAPE":"ellipse",
         # Shape of the attenuated beam - circle or rectangle
         "BEAM_APERTURE_SHAPE":"circle",
         # Gaussian description of the beam for raddose
-        "BEAM_GAUSS_X":0.03,
-        "BEAM_GAUSS_Y":0.01,
+        #"BEAM_GAUSS_X":0.03,
+        #"BEAM_GAUSS_Y":0.01,
         # Beam center calibration
         "BEAM_CENTER_DATE":"2015-12-07",
         # Beamcenter equation coefficients (b, m1, m2, m3, m4, m5, m6)

@@ -573,9 +573,7 @@ class RapdPlugin(Process):
             crystal_size_y = self.preferences.get("crystal_size_y", 100.0)/1000.0
             crystal_size_z = self.preferences.get("crystal_size_z", 100.0)/1000.0
 
-        self.raddose_file = os.path.join(self.labelit_dir, "raddose.com")
-        raddose = open(self.raddose_file, "w+")
-        setup = '#!/bin/sh\n'
+        setup = '#!/bin/bash\n'
         setup += "raddose << EOF\n"
         if beam_size_x and beam_size_y:
             setup += "BEAM %s %s\n" % (beam_size_x, beam_size_y)
@@ -621,8 +619,10 @@ class RapdPlugin(Process):
         if satm:
             setup += "SATM %d\n" % satm
         setup += "END\nEOF\n"
-        raddose.writelines(setup)
-        raddose.close()
+        self.raddose_file = os.path.join(self.labelit_dir, "raddose.com")
+        with open(self.raddose_file, "w+") as raddose:
+	    raddose.writelines(setup)
+            #raddose.close()
         os.chmod(self.raddose_file, stat.S_IRWXU)
 
         # except:
@@ -1575,7 +1575,8 @@ Distance | % Transmission", level=98, color="white")
         if error_count == len(self.labelit_results):
             # print "Unsuccessful indexing run. Exiting."
             # TODO
-            sys.exit(9)
+            #sys.exit(9)
+	    self.postprocess()
 
         # Run through all the results - compile them
         for iteration, result in self.labelit_results.iteritems():

@@ -810,7 +810,7 @@ def ParseOutputRaddose(inp):
 
     except:
         #self.logger.exception('**Error in Parse.ParseOutputRaddose**')
-        return(False)
+        return False
 
 
 def ParseOutputBestNone(self, inp):
