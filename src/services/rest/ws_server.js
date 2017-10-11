@@ -91,6 +91,12 @@ parse_message = function(channel, message) {
     case 'RAPD_RESULTS':
       console.log('RAPD_RESULTS');
 
+      // Do nothing for ECHO
+      if (message.command === 'ECHO') {
+        console.log('Echo...');
+        return true;
+      }
+
       // Array to return
       let return_array = [];
 
