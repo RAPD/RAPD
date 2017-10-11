@@ -123,7 +123,7 @@ class Database(object):
     ############################################################################
     # Functions for groups                                                     #
     ############################################################################
-    def get_group(self, value, field="_id"):
+    def get_group(self, value, field="_id", just_id=False):
         """
         Returns a dict from the database when queried with value and field.
 
@@ -147,7 +147,10 @@ class Database(object):
         db = self.get_db_connection()
 
         # Query and return, transform _id to string
-        return db.groups.find_one({field:_value})
+        if just_id:
+            return str(db.groups.find_one({field:_value}, {"_id":1}))
+        else:
+            return db.groups.find_one({field:_value})
 
     ############################################################################
     # Functions for sessions & users                                           #
@@ -172,7 +175,7 @@ class Database(object):
         if session_id:
             session_id = str(session_id.get("_id", False))
 
-        return session_id
+        return str(session_id)
 
     def create_session(self, data_root_dir, group_id=None):
         """
@@ -187,6 +190,13 @@ class Database(object):
 
         # Connect
         db = self.get_db_connection()
+
+        # Make sure the group_id is an ObjectId
+        # If it should be an ObjectId, cast it to one
+        try:
+            group_id = ObjectId(group_id)
+        except bson.errors.InvalidId:
+            pass
 
         # Insert into the database
         result = db.sessions.insert_one({"data_root_dir": data_root_dir,

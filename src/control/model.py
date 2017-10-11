@@ -937,7 +937,8 @@ class Model(object):
                 if det_type == "stat":
                     attribute_value = os.stat(header.get("data_root_dir")).__getattribute__("st_%s" % det_attribute)
                     group_id = self.database.get_group(value=attribute_value,
-                                                       field=det_field)
+                                                       field=det_field,
+                                                       just_id=True)
             else:
                 group_id = None
 
