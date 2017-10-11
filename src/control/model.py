@@ -932,8 +932,12 @@ class Model(object):
         if not session_id:
 
             # Determine group_id
-            if self.site.GROUP_ID == "uid":
-                group_id = os.stat(header.get("data_root_dir")).st_uid
+            if self.site.GROUP_ID:
+                det_type, det_attribute, det_field = self.site.GROUP_ID
+                if det_type == "stat":
+                    attribute_value = os.stat(header.get("data_root_dir")).__getattribute__("st_%s" % det_attribute)
+                    group_id = self.database.get_group(value=attribute_value,
+                                                       field=det_field)
             else:
                 group_id = None
 

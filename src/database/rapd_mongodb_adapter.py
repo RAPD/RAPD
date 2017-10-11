@@ -40,7 +40,8 @@ import os
 import threading
 
 from bson.objectid import ObjectId
-import numpy
+import bson.errors
+# import numpy
 import pymongo
 
 
@@ -118,6 +119,35 @@ class Database(object):
         db = self.client.rapd
 
         return db
+
+    ############################################################################
+    # Functions for groups                                                     #
+    ############################################################################
+    def get_group(self, value, field="_id"):
+        """
+        Returns a dict from the database when queried with value and field.
+
+        value - the value for the search
+        field - the field to be queried
+        """
+
+        self.logger.debug(value, field)
+
+        # No value, no query
+        if not value:
+            return False
+
+        # If it should be an ObjectId, cast it to one
+        try:
+            _value = ObjectId(value)
+        except bson.errors.InvalidId:
+            _value = value
+
+        # Get connection to database
+        db = self.get_db_connection()
+
+        # Query and return, transform _id to string
+        return db.groups.find_one({field:_value})
 
     ############################################################################
     # Functions for sessions & users                                           #
