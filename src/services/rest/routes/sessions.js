@@ -37,6 +37,7 @@ router.route('/sessions')
         sort({end: -1}).
         exec(function(err, sessions) {
           if (err) {
+            console.error(err);
             res.send(err);
           } else {
             console.log(sessions);
