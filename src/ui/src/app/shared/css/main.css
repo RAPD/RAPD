@@ -185,8 +185,9 @@ mat-divider.rapd-side-list-divider {
   min-width: calc(100vw - 17em);
 }
 
-.mat-list-item {
+.mat-list-item.rapd-list-item {
   background-color: inherit;
+  font-size: 0.9em;
 }
 
 .mat-overlay-pane {

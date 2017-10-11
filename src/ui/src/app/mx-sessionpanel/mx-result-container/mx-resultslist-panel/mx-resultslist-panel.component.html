@@ -2,6 +2,7 @@
   <mat-list-item *ngIf="data_results.length == 0">No results</mat-list-item>
   <ng-container *ngFor="let id of data_results">
     <mat-list-item
+      class="rapd-list-item"
       *ngIf="data_results_object[id].display == 'pinned'"
       [attr.id]=id
       [myHighlight]="highlight_color"
@@ -13,6 +14,7 @@
     <mat-divider class="rapd-side-list-divider"></mat-divider>
   <ng-container *ngFor="let id of data_results">
     <mat-list-item
+      class="rapd-list-item"
       *ngIf="! data_results_object[id].display"
       [attr.id]=id
       [myHighlight]="highlight_color"
@@ -24,6 +26,7 @@
     <mat-divider class="rapd-side-list-divider" style="border-top-color:rgba(255,125,125,0.5);"></mat-divider>
     <ng-container *ngFor="let id of data_results">
       <mat-list-item
+      class="rapd-list-item"
       *ngIf="data_results_object[id].display == 'junked'"
       [attr.id]=id
       [myHighlight]="highlight_color"
