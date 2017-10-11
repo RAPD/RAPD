@@ -107,6 +107,8 @@ parse_message = function(channel, message) {
         session_id: message.process.session_id,
         plugin_id: message.plugin.id,
         result_id: message._id,
+        data_type: message.plugin.data_type.toLowerCase(),
+        // result_type is deprecated
         result_type: (message.plugin.data_type + ':' + message.plugin.type).toLowerCase(),
         plugin_type: message.plugin.type.toLowerCase(),
         timestamp: new Date().toISOString(),
