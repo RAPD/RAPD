@@ -146,11 +146,15 @@ class Database(object):
         # Get connection to database
         db = self.get_db_connection()
 
+        # Query
+        db_return = db.groups.find_one({field:_value})
+
         # Query and return, transform _id to string
         if just_id:
-            return str(db.groups.find_one({field:_value}, {"_id":1}))
-        else:
-            return db.groups.find_one({field:_value})
+            if db_return:
+                db_return = str(db_return["_id"])
+
+        return db_return
 
     ############################################################################
     # Functions for sessions & users                                           #
