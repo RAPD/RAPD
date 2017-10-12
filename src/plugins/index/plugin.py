@@ -476,6 +476,14 @@ class RapdPlugin(Process):
         if os.path.exists(self.working_dir) == False:
             os.makedirs(self.working_dir)
         os.chdir(self.working_dir)
+        
+        # Check if pair are in different folders, then make symlink for Labelit.
+        if self.header2:
+          if os.path.dirname(self.header['fullname']) != os.path.dirname(self.header2['fullname']):
+            os.symlink(self.header['fullname'], os.path.basename(self.header['fullname']))
+            self.header['fullname'] = os.path.join(os.getcwd(), os.path.basename(self.header['fullname']))
+            os.symlink(self.header2['fullname'], os.path.basename(self.header2['fullname']))
+            self.header2['fullname'] = os.path.join(os.getcwd(), os.path.basename(self.header2['fullname']))
 
         # Setup event for job control on cluster (Only works at NE-CAT using DRMAA for
         # job submission)

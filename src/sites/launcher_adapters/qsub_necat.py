@@ -156,22 +156,10 @@ class LauncherAdapter(object):
         if self.message['command'] in ('INDEX', 'INTEGRATE'):
             nproc = 4
         return nproc
-    
-    def determine_queue_OLD(self):
-        """Determine the cluster queue for the main job."""
-        """
-        if self.message['command'] == 'INDEX':
-            return('index.q')
-        if self.message['command'] == 'INTEGRATE':
-            return('phase2.q')
-        else:
-            return('phase1.q')
-        """
-        return 'phase3.q'
 
 if __name__ == "__main__":
-    import multiprocessing
-    import threading
+    #import multiprocessing
+    #import threading
     event = multiprocessing.Event()
     event.set()
     #threading.Thread(target=run_job).start()

@@ -793,7 +793,6 @@ class Model(object):
 
             # If the last two images have "pair" in their name - look more closely
             if ("pair" in self.pairs[site_tag][0][0]) and ("pair" in self.pairs[site_tag][1][0]):
-
                 self.logger.debug("Potentially a pair of images")
 
                 # Break down the image name
@@ -813,6 +812,7 @@ class Model(object):
                 #if (directory1, basename1, prefix1) == (directory2, basename2, prefix2) and (image_number1 == image_number2-1):
                 ### Have to modify for /epu/rdma since each image are in their own directory.
                 #if (basename1, prefix1) == (basename2, prefix2) and (image_number1 == image_number2-1):
+                print image_number1, image_number2
                 if basename1[0:basename1.rfind('_')] == basename2[0:basename2.rfind('_')] and (image_number1 == image_number2-1):
                     self.logger.info("This looks like a pair to me: %s, %s",
                                      self.pairs[site_tag][0][0],
@@ -854,7 +854,7 @@ class Model(object):
                                    "session_id":session_id
                                },
                                "directories":directories,
-                               "header1":header,
+                               "header1":header1,
                                "header2":header2,
                                "site_parameters":self.site.BEAM_INFO[header1["site_tag"]],
                                "preferences":{}
