@@ -1010,6 +1010,10 @@ def ParseOutputBest(self, inp, anom=False):
                 else:
                     sp_list.append(line)
 
+    # If it failed and wasn't caught
+    if len(omega_starts) == 0:
+        return 'neg B'
+
     # Now accumulate the sweep data into overall
     overall["number_images"] = sum(number_images)
     overall["omega_start"] = omega_starts[0]

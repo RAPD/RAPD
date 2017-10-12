@@ -737,7 +737,7 @@ class RapdPlugin(Process):
             else:
                 command = "distl.signal_strength %s" % eval("self.header%s" % l[i]).get("fullname")
                 #job = Thread(target=local_subprocess,
-		job = Process(target=local_subprocess,
+                job = Process(target=local_subprocess,
                              kwargs={"command": command,
                                      "result_queue": self.distl_queue,
                                      "logfile": os.path.join(os.getcwd(), "distl%s.log" % i),
@@ -759,22 +759,16 @@ class RapdPlugin(Process):
         #              'result_queue': queue}
         #Thread(target=local_subprocess, kwargs=inp_kwargs).start()
         try:
-	    output = subprocess.Popen([self.raddose_file], close_fds=True, stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+            output = subprocess.Popen([self.raddose_file], stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
             output.wait()
             for line in output.stdout:
                 self.raddose_log.append(line)
             # Save the results
             raddose = Parse.ParseOutputRaddose(self.raddose_log)
             self.raddose_results = {"raddose_results" : raddose}
-	except OSError as E:
-	    print 'GH'
-	    print E
-	    print dir(E)
-	    print E.filename
-	    print E.strerror
-	    self.raddose_results = {"raddose_results" : {'dose':100000}}
-	    
-	    
+        except OSError as E:
+              print E
+              self.raddose_results = {"raddose_results" : {'dose':100000}}
 
     def check_best(self, iteration=0, best_version="3.2.0"):
         """
