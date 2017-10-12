@@ -68,7 +68,10 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
           console.log(result);
           // New result
           let id = result._id; // result.process.process_id;
+          console.log(id);
+          console.log(self.data_results);
           if (self.data_results.indexOf(id) === -1) {
+            console.log('new');
             self.data_results.unshift(id);
           }
           self.data_results_object[id] = result;
