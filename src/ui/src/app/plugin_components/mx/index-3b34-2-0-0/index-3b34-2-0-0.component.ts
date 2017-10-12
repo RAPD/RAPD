@@ -26,7 +26,7 @@ export class Index3b34200Component implements OnInit, OnDestroy {
   @Input() current_result: any;
   incomingData$: ReplaySubject<string>;
 
-  full_result: any;
+  full_result: any = {process:{status:0}, results:{}};
 
   view_mode: string = 'summary';
 
@@ -99,13 +99,14 @@ export class Index3b34200Component implements OnInit, OnDestroy {
   }
 
   public handleIncomingData(data:any) {
-    // console.log('handleIncomingData', data);
+    console.log('handleIncomingData', data);
     this.full_result = data;
-
-    if ('plots' in this.full_result.results) {
-      if ('osc_range' in this.full_result.results.plots) {
-        this.selected_plot = 'osc_range';
-        this.setPlot('osc_range');
+    if ('results' in this.full_result) {
+      if ('plots' in this.full_result.results) {
+        if ('osc_range' in this.full_result.results.plots) {
+          this.selected_plot = 'osc_range';
+          this.setPlot('osc_range');
+        }
       }
     }
   }

@@ -288,6 +288,7 @@ function Wss (opt, callback) {
             case 'update_result':
 
               console.log('update_result');
+              console.log(data.result);
 
               Result.
                 update(data.result).
