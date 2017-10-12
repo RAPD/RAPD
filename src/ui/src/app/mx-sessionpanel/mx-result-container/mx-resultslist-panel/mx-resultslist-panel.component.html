@@ -20,12 +20,26 @@
       [myHighlight]="highlight_color"
       (click)="onClick(id)"
       [ngClass]="id == active_result ? 'active-result': ''">
-      {{data_results_object[id].repr}}
+      <table style="width:100%;">
+        <tr>
+          <td style="padding:0 0 0 0;">
+            {{data_results_object[id].repr}}
+          </td>
+        </tr>
+        <tr *ngIf="(data_results_object[id])?.status < 100">
+          <td style="padding:0 0 0 0;">
+            <mat-progress-bar
+              mode="indeterminate"
+              color="primary">
+            </mat-progress-bar>
+          </td>
+        </tr>
+      </table>
     </mat-list-item>
   </ng-container>
-    <mat-divider class="rapd-side-list-divider" style="border-top-color:rgba(255,125,125,0.5);"></mat-divider>
-    <ng-container *ngFor="let id of data_results">
-      <mat-list-item
+  <mat-divider class="rapd-side-list-divider" style="border-top-color:rgba(255,125,125,0.5);"></mat-divider>
+  <ng-container *ngFor="let id of data_results">
+    <mat-list-item
       class="rapd-list-item"
       *ngIf="(data_results_object[id])?.display == 'junked'"
       [attr.id]=id

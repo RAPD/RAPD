@@ -24,12 +24,16 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
   // Arrays for holding result thumbnail data structures
   data_results: Array<any> = [];
   data_results_object: any = {};
-  index_results: Array<any> = [];
-  integrate_results: Array<any> = [];
-  merge_results: Array<any> = [];
-  mr_results: Array<any> = [];
-  sad_results: Array<any> = [];
-  mad_results: Array<any> = [];
+
+  // Object for holding progressbar counters
+  progressbar_counters:any = {};
+
+  // index_results: Array<any> = [];
+  // integrate_results: Array<any> = [];
+  // merge_results: Array<any> = [];
+  // mr_results: Array<any> = [];
+  // sad_results: Array<any> = [];
+  // mad_results: Array<any> = [];
 
   incomingData$: ReplaySubject<string>;
 
