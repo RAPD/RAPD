@@ -63,7 +63,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
     console.log(data);
 
     // if (data.msg_type === 'results') {
-      for (let result of data) {
+    for (let result of data) {
         if ((result.data_type+':'+result.plugin_type).toLowerCase() === this.result_types[this.result_type]) {
           console.log(result);
           // New result
@@ -95,5 +95,27 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
     this.resultSelect.emit({
       value: this.data_results_object[id]
     });
+  }
+
+  // Should the result be in the list?
+  private display(id:string): boolean {
+
+    let result = this.data_results_object[id];
+
+    if (result.status === 100) {
+      return true;
+    } else {
+      if ((Date.now() - result.timestamp) > 3600 ) {
+        return false;
+      } else {
+        return true;
+      }
+    }
+
+    // if ((Date.now() - timestamp) > 3600 ) {
+    //   return true;
+    // } else {
+    //   return false;
+    // }
   }
 }
