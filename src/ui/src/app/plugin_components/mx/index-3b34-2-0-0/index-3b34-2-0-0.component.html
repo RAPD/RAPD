@@ -1,5 +1,24 @@
 <div class="result-panel child">
-  <mat-card *ngIf="full_result" class="rapd-result">
+  <mat-card *ngIf="full_result.process.status === 1" class="rapd-result">
+    <mat-card-header class="rapd-result">
+      <div style="width:100%">
+        <div style="float:left;">
+          <h3>
+            Indexing Initiated for
+            <span>{{full_result.header1.basename}}</span>
+            <span style="color:blue;"><mat-icon (click)="displayHeader(full_result.header1)">info_outline</mat-icon></span>
+            <span *ngIf="full_result.header2"> & {{full_result.command.header2.basename}}</span>
+            <span *ngIf="full_result.header2" style="color:blue;"><mat-icon (click)="displayHeader(full_result.header2)">info_outline</mat-icon></span>
+          </h3>
+        </div>
+      </div>
+    </mat-card-header>
+    <div>
+      <mat-card-content class="rapd-result">
+      </mat-card-content>
+    </div>
+  </mat-card>
+  <mat-card *ngIf="full_result.process.status > 1" class="rapd-result">
     <mat-card-header class="rapd-result">
       <div style="width:100%">
         <div style="float:left;">

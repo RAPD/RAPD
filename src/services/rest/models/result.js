@@ -4,6 +4,10 @@ var Schema = mongoose.Schema;
 var ResultSchema   = new Schema({}, {strict:false});
 
 var ResultSchema = new Schema({
+   _id: {
+     type: Schema.ObjectId,
+     auto: true
+  },
   display: {
     type: String,
     required: false
