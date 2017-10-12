@@ -103,7 +103,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
     console.log('display', id);
 
     let result = this.data_results_object[id];
-
+    console.log(result);
     console.log(result.status, result.timestamp);
 
     if (result.status === 100 || (Date.now() - result.timestamp) < 3600) {
