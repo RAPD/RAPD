@@ -1559,7 +1559,11 @@ Distance | % Transmission", level=98, color="white")
             self.logger.debug("No solution was found when sorting Labelit results.")
             self.tprint(arg="\n  Labelit failed to index", level=30, color="red")
             self.labelit_failed = True
-            self.labelit_results = {"labelit_results":"FAILED"}
+            #self.labelit_results = {"labelit_results":"FAILED"}
+            self.labelit_results = {"labelit_results": {'status': 'FAILED',
+                                                        'error' : 'See logs',
+                                                        'logs'  : self.labelit_log,
+                                                       }}
             self.labelit_dir = os.path.join(self.working_dir, "0")
             os.chdir(self.labelit_dir)
             self.process_distl()
