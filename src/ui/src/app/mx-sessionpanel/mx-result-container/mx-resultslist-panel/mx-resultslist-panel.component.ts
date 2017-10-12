@@ -24,12 +24,16 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
   // Arrays for holding result thumbnail data structures
   data_results: Array<any> = [];
   data_results_object: any = {};
-  index_results: Array<any> = [];
-  integrate_results: Array<any> = [];
-  merge_results: Array<any> = [];
-  mr_results: Array<any> = [];
-  sad_results: Array<any> = [];
-  mad_results: Array<any> = [];
+
+  // Object for holding progressbar counters
+  progressbar_counters:any = {};
+
+  // index_results: Array<any> = [];
+  // integrate_results: Array<any> = [];
+  // merge_results: Array<any> = [];
+  // mr_results: Array<any> = [];
+  // sad_results: Array<any> = [];
+  // mad_results: Array<any> = [];
 
   incomingData$: ReplaySubject<string>;
 
@@ -86,7 +90,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
     // }
   }
 
-  private onClick(id: string) {
+  private onClick(id: string):void {
     console.log(id);
     // console.log(event);
     // event.target
@@ -101,30 +105,30 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
   }
 
   // Should the result be in the list?
-  public display(id:string): string {
-
-    // console.log('display', id);
-
-    let result = this.data_results_object[id];
-    // console.log(result);
-    // console.log(result.status, result.timestamp);
-
-    let d:any = new Date(result.timestamp);
-
-    if (result.status === 100 || (Date.now() - d) < 36000) {
-      if (result.display) {
-        return result.display;
-      } else {
-        return 'normal';
-      }
-    } else {
-      return '';
-    }
-
-    // if ((Date.now() - timestamp) > 3600 ) {
-    //   return true;
-    // } else {
-    //   return false;
-    // }
-  }
+  // public display(id:string): string {
+  //
+  //   // console.log('display', id);
+  //
+  //   let result = this.data_results_object[id];
+  //   // console.log(result);
+  //   // console.log(result.status, result.timestamp);
+  //
+  //   let d:any = new Date(result.timestamp);
+  //
+  //   if (result.status === 100 || (Date.now() - d) < 36000) {
+  //     if (result.display) {
+  //       return result.display;
+  //     } else {
+  //       return 'normal';
+  //     }
+  //   } else {
+  //     return '';
+  //   }
+  //
+  //   // if ((Date.now() - timestamp) > 3600 ) {
+  //   //   return true;
+  //   // } else {
+  //   //   return false;
+  //   // }
+  // }
 }
