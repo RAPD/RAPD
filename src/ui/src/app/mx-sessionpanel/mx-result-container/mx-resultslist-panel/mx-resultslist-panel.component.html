@@ -3,7 +3,7 @@
   <ng-container *ngFor="let id of data_results">
     <mat-list-item
       class="rapd-list-item"
-      *ngIf="display(id) && data_results_object[id].display === 'pinned')"
+      *ngIf="display(id) === 'pinned'"
       [attr.id]=id
       [myHighlight]="highlight_color"
       (click)="onClick(id)"
@@ -15,7 +15,7 @@
   <ng-container *ngFor="let id of data_results">
     <mat-list-item
       class="rapd-list-item"
-      *ngIf="display(id) && ! data_results_object[id].display"
+      *ngIf="display(id) === 'normal'"
       [attr.id]=id
       [myHighlight]="highlight_color"
       (click)="onClick(id)"
@@ -27,7 +27,7 @@
     <ng-container *ngFor="let id of data_results">
       <mat-list-item
       class="rapd-list-item"
-      *ngIf="display(id) && data_results_object[id].display === 'junked'"
+      *ngIf="display(id) === 'junked'"
       [attr.id]=id
       [myHighlight]="highlight_color"
       (click)="onClick(id)"

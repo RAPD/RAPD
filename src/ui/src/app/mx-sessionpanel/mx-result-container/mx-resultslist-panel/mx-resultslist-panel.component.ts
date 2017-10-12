@@ -98,18 +98,18 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
   }
 
   // Should the result be in the list?
-  private display(id:string): boolean {
+  private display(id:string): string {
 
     let result = this.data_results_object[id];
 
-    if (result.status === 100) {
-      return true;
-    } else {
-      if ((Date.now() - result.timestamp) > 3600 ) {
-        return false;
+    if (result.status === 100 || (Date.now() - result.timestamp) < 3600) {
+      if (result.display) {
+        return result.display;
       } else {
-        return true;
+        return 'normal';
       }
+    } else {
+      return '';
     }
 
     // if ((Date.now() - timestamp) > 3600 ) {
