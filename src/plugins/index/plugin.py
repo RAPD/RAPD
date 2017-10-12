@@ -159,11 +159,13 @@ class RapdPlugin(Process):
     labelit_cell = False
     labelit_sym = False
     distl_log = []
-    distl_queue = Queue()
+    #distl_queue = Queue()
+    distl_queue = mp_Queue()
     distl_results = []
     distl_summary = False
     raddose_file = False
-    raddose_results = {}
+    raddose_log = []
+    raddose_results = {"raddose_results": False}
     raddose_summary = False
     best_log = []
     best_results = False
@@ -618,7 +620,7 @@ class RapdPlugin(Process):
         self.raddose_file = os.path.join(self.labelit_dir, "raddose.com")
         with open(self.raddose_file, "w+") as raddose:
 	    raddose.writelines(setup)
-            #raddose.close()
+            raddose.close()
         os.chmod(self.raddose_file, stat.S_IRWXU)
 
     def start_labelit(self):
@@ -734,7 +736,8 @@ class RapdPlugin(Process):
                              kwargs={"command": 'ls'})
             else:
                 command = "distl.signal_strength %s" % eval("self.header%s" % l[i]).get("fullname")
-                job = Thread(target=local_subprocess,
+                #job = Thread(target=local_subprocess,
+		job = Process(target=local_subprocess,
                              kwargs={"command": command,
                                      "result_queue": self.distl_queue,
                                      "logfile": os.path.join(os.getcwd(), "distl%s.log" % i),
@@ -755,14 +758,23 @@ class RapdPlugin(Process):
         #inp_kwargs = {'command': self.raddose_file,
         #              'result_queue': queue}
         #Thread(target=local_subprocess, kwargs=inp_kwargs).start()
-        output = subprocess.Popen([self.raddose_file], stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-        output.wait()
-        for line in output.stdout:
-            self.raddose_log.append(line)
-        
-        # Save the results
-        raddose = Parse.ParseOutputRaddose(self.raddose_log)
-        self.raddose_results = {"raddose_results" : raddose}
+        try:
+	    output = subprocess.Popen([self.raddose_file], close_fds=True, stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+            output.wait()
+            for line in output.stdout:
+                self.raddose_log.append(line)
+            # Save the results
+            raddose = Parse.ParseOutputRaddose(self.raddose_log)
+            self.raddose_results = {"raddose_results" : raddose}
+	except OSError as E:
+	    print 'GH'
+	    print E
+	    print dir(E)
+	    print E.filename
+	    print E.strerror
+	    self.raddose_results = {"raddose_results" : {'dose':100000}}
+	    
+	    
 
     def check_best(self, iteration=0, best_version="3.2.0"):
         """
