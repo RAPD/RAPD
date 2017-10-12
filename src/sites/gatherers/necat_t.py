@@ -439,68 +439,71 @@ class Gatherer(object):
         #self.logger.debug("  Will push new images onto images_collected:%s" % self.tag)
         self.logger.debug("  Will publish new datasets on run_data:%s" % self.tag)
         self.logger.debug("  Will push new datasets onto run_data:%s" % self.tag)
-
-        while self.go:
-
-            # 5 rounds of checking
-            #for ___ in range(5):
-
-            # Check if the run info changed in beamline Redis DB.
-            #current_run = self.bl_redis.get("RUN_INFO_SV")
-            current_run = self.redis.rpop('run_info_T')
-            if current_run not in (None, ""):
-                # Split it
-                #cur_run = current_run.split("_") #runid,first#,total#,dist,energy,transmission,omega_start,deltaomega,time,timestamp
-                #1_1_23_400.00_12661.90_30.00_45.12_0.20_0.50_
-                # Reset it back to an empty string if beamline is E.
-                #self.bl_redis.set("RUN_INFO_SV", "")
-                # get the additional beamline params and put into nice dict.
-                run_data = self.get_run_data(current_run)
-                # Get rid of trailing slash from beamline Redis.
-                dir = run_data['directory']
-                if dir[-1] == '/':
-                    run_data['directory'] = dir[:-1]
-                
-                self.logger.debug("run_data:%s %s", self.tag, run_data)
-                # Put into exchangable format
-                run_data_json = json.dumps(run_data)
-                # Publish to Redis
-                self.redis.publish("run_data:%s" % self.tag, run_data_json)
-                # Push onto redis list in case no one is currently listening
-                self.redis.lpush("run_data:%s" % self.tag, run_data_json)
+        
+        try:
+            while self.go:
+    
+                # 5 rounds of checking
+                #for ___ in range(5):
+    
+                # Check if the run info changed in beamline Redis DB.
+                #current_run = self.bl_redis.get("RUN_INFO_SV")
+                current_run = self.redis.rpop('run_info_T')
+                if current_run not in (None, ""):
+                    # Split it
+                    #cur_run = current_run.split("_") #runid,first#,total#,dist,energy,transmission,omega_start,deltaomega,time,timestamp
+                    #1_1_23_400.00_12661.90_30.00_45.12_0.20_0.50_
+                    # Reset it back to an empty string if beamline is E.
+                    #self.bl_redis.set("RUN_INFO_SV", "")
+                    # get the additional beamline params and put into nice dict.
+                    run_data = self.get_run_data(current_run)
+                    # Get rid of trailing slash from beamline Redis.
+                    dir = run_data['directory']
+                    if dir[-1] == '/':
+                        run_data['directory'] = dir[:-1]
                     
-                """
-                if self.check_for_run_info():
-                    run_data = self.get_run_data()
-                    if run_data:
-                        self.logger.debug("run_data:%s %s", self.tag, run_data)
-                        # Put into exchangable format
-                        run_data_json = json.dumps(run_data)
-                        # Publish to Redis
-                        red.publish("run_data:%s" % self.tag, run_data_json)
-                        # Push onto redis list in case no one is currently listening
-                        red.lpush("run_data:%s" % self.tag, run_data_json)
-                
-                # 20 image checks
-                for __ in range(20):
-                    # Check if the image file has changed
-                    if self.check_for_image_collected():
-                        image_name = self.get_image_data()
-                        if image_name:
-                            self.logger.debug("image_collected:%s %s",
-                                              self.tag,
-                                              image_name)
+                    self.logger.debug("run_data:%s %s", self.tag, run_data)
+                    # Put into exchangable format
+                    run_data_json = json.dumps(run_data)
+                    # Publish to Redis
+                    self.redis.publish("run_data:%s" % self.tag, run_data_json)
+                    # Push onto redis list in case no one is currently listening
+                    self.redis.lpush("run_data:%s" % self.tag, run_data_json)
+                        
+                    """
+                    if self.check_for_run_info():
+                        run_data = self.get_run_data()
+                        if run_data:
+                            self.logger.debug("run_data:%s %s", self.tag, run_data)
+                            # Put into exchangable format
+                            run_data_json = json.dumps(run_data)
                             # Publish to Redis
-                            red.publish("image_collected:%s" % self.tag, image_name)
+                            red.publish("run_data:%s" % self.tag, run_data_json)
                             # Push onto redis list in case no one is currently listening
-                            red.lpush("images_collected:%s" % self.tag, image_name)
-                        break
-                    else:
-                        time.sleep(0.05)
-                """
-            time.sleep(0.1)
-            # Have Registrar update status
-            self.ow_registrar.update({"site_id":self.site.ID})
+                            red.lpush("run_data:%s" % self.tag, run_data_json)
+                    
+                    # 20 image checks
+                    for __ in range(20):
+                        # Check if the image file has changed
+                        if self.check_for_image_collected():
+                            image_name = self.get_image_data()
+                            if image_name:
+                                self.logger.debug("image_collected:%s %s",
+                                                  self.tag,
+                                                  image_name)
+                                # Publish to Redis
+                                red.publish("image_collected:%s" % self.tag, image_name)
+                                # Push onto redis list in case no one is currently listening
+                                red.lpush("images_collected:%s" % self.tag, image_name)
+                            break
+                        else:
+                            time.sleep(0.05)
+                    """
+                time.sleep(0.1)
+                # Have Registrar update status
+                self.ow_registrar.update({"site_id":self.site.ID})
+        except KeyboardInterrupt:
+            self.stop()
 
     def stop(self):
         """
@@ -508,7 +511,7 @@ class Gatherer(object):
         """
         self.logger.debug("NecatGatherer.stop")
 
-        self.go = False
+        #self.go = False
         self.redis_database.stop()
         self.bl_database.stop()
 

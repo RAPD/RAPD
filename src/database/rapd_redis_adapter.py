@@ -106,5 +106,6 @@ class Database(object):
         return (Sentinel(self.sentinal_hosts).master_for(self.sentinal_name))
 
     def stop(self):
-        if self.pool:
-            self.pool.close()
+        pass
+        #if self.pool:
+        #    self.pool.close()

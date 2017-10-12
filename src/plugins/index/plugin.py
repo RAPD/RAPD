@@ -743,13 +743,18 @@ class RapdPlugin(Process):
             self.logger.debug("AutoindexingStrategy::process_raddose")
 
         # Setup queue for results
-        queue = Queue()
+        #queue = Queue()
         # Run the command
-        inp_kwargs = {'command': self.raddose_file,
-                      'result_queue': queue}
-        Thread(target=local_subprocess, kwargs=inp_kwargs).start()
+        #inp_kwargs = {'command': self.raddose_file,
+        #              'result_queue': queue}
+        #Thread(target=local_subprocess, kwargs=inp_kwargs).start()
+        output = subprocess.Popen([self.raddose_file], stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+        output.wait()
+        for line in output.stdout:
+            self.raddose_log.append(line)
+        
         # Save the results
-        raddose = Parse.ParseOutputRaddose(queue.get()["stdout"].splitlines())
+        raddose = Parse.ParseOutputRaddose(self.raddose_log)
         self.raddose_results = {"raddose_results" : raddose}
 
     def check_best(self, iteration=0, best_version="3.2.0"):
