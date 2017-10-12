@@ -76,7 +76,7 @@
                 </tbody>
               </table>
             </div>
-            <div>
+            <div *ngIf="(full_result.results)?.best_results_norm">
               <h2>Data Collection Strategies</h2>
               <div>
                 <h3>Normal</h3>
@@ -105,7 +105,7 @@
                   </tbody>
                 </table>
               </div>
-              <div>
+              <div *ngIf="(full_result.results)?.best_results_anom">
                 <h3>Anomalous</h3>
                 <table class="rapd-table">
                   <thead>
