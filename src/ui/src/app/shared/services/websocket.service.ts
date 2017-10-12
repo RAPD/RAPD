@@ -117,11 +117,13 @@ export class WebsocketService {
       case 'result_details':
         //self.result_details_subject.next(data.results);
         console.log(data.results);
-        self.details_subscribers.forEach(function(subscriber) {
-          if (subscriber.result_id == data.results._id) {
-            subscriber.subject.next(data.results);
-          }
-        });
+        if (data.results) {
+          self.details_subscribers.forEach(function(subscriber) {
+            if (subscriber.result_id == data.results._id) {
+              subscriber.subject.next(data.results);
+            }
+          });
+        }
         break;
 
       case 'RAPD_RESULTS':
