@@ -310,4 +310,8 @@ export class Index3b34200Component implements OnInit, OnDestroy {
     // doc.save('Test.pdf');
   }
 
+  round_ten(value:number):number {
+    return Math.round(value/10)*10;
+  }
+
 }

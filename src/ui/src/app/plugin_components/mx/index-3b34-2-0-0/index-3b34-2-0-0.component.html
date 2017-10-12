@@ -55,23 +55,23 @@
                   <tr>
                     <th>Spacegroup</th>
                     <th>Unit Cell</th>
-                    <th>Mosaicity</th>
-                    <th>Resolution</th>
+                    <th>Mosaicity (&deg;)</th>
+                    <th>Resolution (&Aring;)</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
                     <td>{{this.full_result.results.labelit_results.best_sym}}</td>
                     <td>
-                      {{this.full_result.results.labelit_results.best_cell[0]}} &Aring;,
-                      {{this.full_result.results.labelit_results.best_cell[1]}} &Aring;,
-                      {{this.full_result.results.labelit_results.best_cell[2]}} &Aring;,
-                      {{this.full_result.results.labelit_results.best_cell[3]}}&deg;,
-                      {{this.full_result.results.labelit_results.best_cell[4]}}&deg;,
-                      {{this.full_result.results.labelit_results.best_cell[5]}}&deg;
+                      {{this.full_result.results.labelit_results.best_cell[0]}}
+                      {{this.full_result.results.labelit_results.best_cell[1]}}
+                      {{this.full_result.results.labelit_results.best_cell[2]}}
+                      {{this.full_result.results.labelit_results.best_cell[3]}}
+                      {{this.full_result.results.labelit_results.best_cell[4]}}
+                      {{this.full_result.results.labelit_results.best_cell[5]}}
                     </td>
-                    <td>{{this.full_result.results.labelit_results.mosflm_mos[0]}}&deg;</td>
-                    <td>{{this.full_result.results.labelit_results.mosflm_res[0]}} &Aring;</td>
+                    <td>{{this.full_result.results.labelit_results.mosflm_mos[0]}}</td>
+                    <td>{{this.full_result.results.labelit_results.mosflm_res[0]}}</td>
                   </tr>
                 </tbody>
               </table>
@@ -95,12 +95,12 @@
                   <tbody>
                     <tr *ngFor="let key of objectKeys(full_result.results.best_results_norm.sweeps)">
                       <td>{{full_result.results.best_results_norm.sweeps[key].run_number}}</td>
-                      <td>{{full_result.results.best_results_norm.sweeps[key].phi_start}}&deg;</td>
-                      <td>{{full_result.results.best_results_norm.sweeps[key].phi_width}}&deg;</td>
+                      <td>{{full_result.results.best_results_norm.sweeps[key].phi_start}}</td>
+                      <td>{{full_result.results.best_results_norm.sweeps[key].phi_width.toFixed(2)}}</td>
                       <td>{{full_result.results.best_results_norm.sweeps[key].number_of_images}}</td>
-                      <td>{{full_result.results.best_results_norm.sweeps[key].exposure_time}}s</td>
-                      <td>{{full_result.results.best_results_norm.sweeps[key].distance.toFixed(0)}}mm</td>
-                      <td>{{full_result.results.best_results_norm.sweeps[key].transmission.toFixed(1)}}%</td>
+                      <td>{{full_result.results.best_results_norm.sweeps[key].exposure_time.toFixed(2)}}</td>
+                      <td>{{round_ten(full_result.results.best_results_norm.sweeps[key].distance)}}</td>
+                      <td>{{full_result.results.best_results_norm.sweeps[key].transmission.toFixed(0)}}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -122,12 +122,12 @@
                   <tbody>
                     <tr *ngFor="let key of objectKeys(full_result.results.best_results_anom.sweeps)">
                       <td>{{full_result.results.best_results_anom.sweeps[key].run_number}}</td>
-                      <td>{{full_result.results.best_results_anom.sweeps[key].phi_start}}&deg;</td>
-                      <td>{{full_result.results.best_results_anom.sweeps[key].phi_width}}&deg;</td>
+                      <td>{{full_result.results.best_results_anom.sweeps[key].phi_start}}</td>
+                      <td>{{full_result.results.best_results_anom.sweeps[key].phi_width.toFixed(2)}}</td>
                       <td>{{full_result.results.best_results_anom.sweeps[key].number_of_images}}</td>
-                      <td>{{full_result.results.best_results_anom.sweeps[key].exposure_time}}s</td>
-                      <td>{{full_result.results.best_results_anom.sweeps[key].distance.toFixed(0)}}mm</td>
-                      <td>{{full_result.results.best_results_anom.sweeps[key].transmission.toFixed(1)}}%</td>
+                      <td>{{full_result.results.best_results_anom.sweeps[key].exposure_time.toFixed(2)}}</td>
+                      <td>{{round_ten(full_result.results.best_results_anom.sweeps[key].distance)}}</td>
+                      <td>{{full_result.results.best_results_anom.sweeps[key].transmission.toFixed(0)}}</td>
                     </tr>
                   </tbody>
                 </table>
