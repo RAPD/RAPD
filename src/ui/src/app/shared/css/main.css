@@ -186,7 +186,7 @@ mat-divider.rapd-side-list-divider {
 }
 
 .mat-list-item.rapd-list-item {
-  background-color: inherit;
+  /*background-color: inherit;*/
   font-size: 0.9em;
 }
 

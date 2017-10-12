@@ -86,7 +86,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
     // }
   }
 
-  private onClick(id: string) {
+  private onClick(id: string):void {
     console.log(id);
     // console.log(event);
     // event.target
