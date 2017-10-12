@@ -98,7 +98,9 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
   }
 
   // Should the result be in the list?
-  private display(id:string): string {
+  public display(id:string): string {
+
+    console.log('display', id);
 
     let result = this.data_results_object[id];
 
