@@ -63,12 +63,15 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
     console.log(data);
 
     // if (data.msg_type === 'results') {
-      for (let result of data) {
+    for (let result of data) {
         if ((result.data_type+':'+result.plugin_type).toLowerCase() === this.result_types[this.result_type]) {
           console.log(result);
           // New result
           let id = result._id; // result.process.process_id;
+          console.log(id);
+          console.log(self.data_results);
           if (self.data_results.indexOf(id) === -1) {
+            console.log('new');
             self.data_results.unshift(id);
           }
           self.data_results_object[id] = result;
@@ -95,5 +98,33 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
     this.resultSelect.emit({
       value: this.data_results_object[id]
     });
+  }
+
+  // Should the result be in the list?
+  public display(id:string): string {
+
+    // console.log('display', id);
+
+    let result = this.data_results_object[id];
+    // console.log(result);
+    // console.log(result.status, result.timestamp);
+
+    let d:any = new Date(result.timestamp);
+
+    if (result.status === 100 || (Date.now() - d) < 36000) {
+      if (result.display) {
+        return result.display;
+      } else {
+        return 'normal';
+      }
+    } else {
+      return '';
+    }
+
+    // if ((Date.now() - timestamp) > 3600 ) {
+    //   return true;
+    // } else {
+    //   return false;
+    // }
   }
 }

@@ -409,9 +409,10 @@ class Database(object):
                 "plugin_id":plugin_result["plugin"]["id"],
                 "plugin_type":plugin_result["plugin"]["type"],
                 "plugin_version":plugin_result["plugin"]["version"],
-                "session_id":ObjectId(plugin_result["process"]["session_id"]),
                 "repr":plugin_result["process"]["repr"],
-                "result_id":result1_id
+                "result_id":result1_id,
+                "session_id":ObjectId(plugin_result["process"]["session_id"]),
+                "status":plugin_result["process"]["status"]
                 }
             },
             upsert=True)

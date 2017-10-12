@@ -47,6 +47,11 @@ var ResultSchema = new Schema({
     ref: 'Session',
     required: true,
   },
+  status: {
+    type: Number,
+    required: true,
+    default: 1
+  },
   timestamp: {
     type: Date,
     default: Date.now

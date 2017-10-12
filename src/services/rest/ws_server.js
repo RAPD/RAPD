@@ -102,17 +102,19 @@ parse_message = function(channel, message) {
 
       // Create a result
       let result = { _id: message.process.process_id,
-        plugin_version: message.plugin.version,
-        repr: message.process.repr,
-        session_id: message.process.session_id,
-        plugin_id: message.plugin.id,
-        result_id: message._id,
         data_type: message.plugin.data_type.toLowerCase(),
-        // result_type is deprecated
-        result_type: (message.plugin.data_type + ':' + message.plugin.type).toLowerCase(),
+        plugin_id: message.plugin.id,
         plugin_type: message.plugin.type.toLowerCase(),
-        timestamp: new Date().toISOString(),
-        projects: [] };
+        plugin_version: message.plugin.version,
+        projects: [],
+        repr: message.process.repr,
+        result_id: message._id,
+        session_id: message.process.session_id,
+        status: message.process.status,
+        timestamp: new Date().toISOString()
+        // result_type is deprecated
+        // result_type: (message.plugin.data_type + ':' + message.plugin.type).toLowerCase(),
+        };
       return_array.push(['results', [result]]);
 
       // Create a detailed result
