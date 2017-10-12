@@ -291,7 +291,7 @@ function Wss (opt, callback) {
               console.log(data.result);
 
               Result.
-                update(data.result).
+                update({_id:data.result._id}, data.result).
                 exec(function(err, res) {
                   console.log(err);
                   console.log(res);
