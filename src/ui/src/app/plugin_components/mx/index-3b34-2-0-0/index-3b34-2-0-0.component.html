@@ -96,11 +96,11 @@
                     <tr *ngFor="let key of objectKeys(full_result.results.best_results_norm.sweeps)">
                       <td>{{full_result.results.best_results_norm.sweeps[key].run_number}}</td>
                       <td>{{full_result.results.best_results_norm.sweeps[key].phi_start}}</td>
-                      <td>{{full_result.results.best_results_norm.sweeps[key].phi_width.toFixed(2)}}</td>
+                      <td>{{full_result.results.best_results_norm.sweeps[key].phi_width | number:'1.1-2'}}</td>
                       <td>{{full_result.results.best_results_norm.sweeps[key].number_of_images}}</td>
-                      <td>{{full_result.results.best_results_norm.sweeps[key].exposure_time.toFixed(2)}}</td>
+                      <td>{{full_result.results.best_results_norm.sweeps[key].exposure_time | number:'1.1-2'}}</td>
                       <td>{{round_ten(full_result.results.best_results_norm.sweeps[key].distance)}}</td>
-                      <td>{{full_result.results.best_results_norm.sweeps[key].transmission.toFixed(0)}}</td>
+                      <td>{{full_result.results.best_results_norm.sweeps[key].transmission | number:'1.0-0'}}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -123,11 +123,11 @@
                     <tr *ngFor="let key of objectKeys(full_result.results.best_results_anom.sweeps)">
                       <td>{{full_result.results.best_results_anom.sweeps[key].run_number}}</td>
                       <td>{{full_result.results.best_results_anom.sweeps[key].phi_start}}</td>
-                      <td>{{full_result.results.best_results_anom.sweeps[key].phi_width.toFixed(2)}}</td>
+                      <td>{{full_result.results.best_results_anom.sweeps[key].phi_width | number:'1.1-2'}}</td>
                       <td>{{full_result.results.best_results_anom.sweeps[key].number_of_images}}</td>
-                      <td>{{full_result.results.best_results_anom.sweeps[key].exposure_time.toFixed(2)}}</td>
+                      <td>{{full_result.results.best_results_anom.sweeps[key].exposure_time | number:'1.1-2'}}</td>
                       <td>{{round_ten(full_result.results.best_results_anom.sweeps[key].distance)}}</td>
-                      <td>{{full_result.results.best_results_anom.sweeps[key].transmission.toFixed(0)}}</td>
+                      <td>{{full_result.results.best_results_anom.sweeps[key].transmission | number:'1.0-0'}}</td>
                     </tr>
                   </tbody>
                 </table>
