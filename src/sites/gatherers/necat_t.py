@@ -169,7 +169,7 @@ class RedisRunMonitor_OLD():
                     extra_data = self.getRunData()
                     
                     if self.beamline == "T":
-                        current_dir = "/epu/rdma%s%s_%d_%06d" % (
+                        current_dir = "/epu2/rdma%s%s_%d_%06d" % (
                                       current_dir,
                                       extra_data['prefix'],
                                       int(cur_run[0]),
