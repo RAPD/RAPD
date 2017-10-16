@@ -122,6 +122,7 @@ class LauncherAdapter(object):
         # This will be passed back to a monitor that will watch the jobs and kill ones that run too long.
         jobID = q.get()
         print jobID
+        #job.join(None)
 
     def fix_command(self):
         """

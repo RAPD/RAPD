@@ -458,7 +458,8 @@ class Gatherer(object):
                     # get the additional beamline params and put into nice dict.
                     run_data = self.get_run_data(current_run)
                     # Get rid of trailing slash from beamline Redis.
-                    dir = run_data['directory']
+                    #dir = run_data['directory']
+                    dir = '/epu2/rdma%s'%run_data['directory']
                     if dir[-1] == '/':
                         run_data['directory'] = dir[:-1]
                     

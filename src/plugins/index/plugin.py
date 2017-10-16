@@ -421,8 +421,11 @@ class RapdPlugin(Process):
             # Run Distl
             self.process_distl()
 
+            # If no solution
+            if self.labelit_failed:
+                self.postprocess_distl()
             # If there is a solution, then calculate a strategy.
-            if self.labelit_failed == False:
+            else:
                 if self.multiproc == False:
                     self.postprocess_distl()
                 self.preprocess_raddose()
@@ -1169,7 +1172,7 @@ class RapdPlugin(Process):
                     # print "Waiting for Distl to finish %s seconds" % timer
             if self.distl_timer:
                 if timer >= self.distl_timer:
-                    #job.terminate()
+                    job.terminate()
                     self.distl_output.remove(job)
                     self.distl_log.append("Distl timed out\n")
                     if self.verbose and self.logger:
@@ -1562,11 +1565,11 @@ Distance | % Transmission", level=98, color="white")
             #self.labelit_results = {"labelit_results":"FAILED"}
             self.labelit_results = {"labelit_results": {'status': 'FAILED',
                                                         'error' : 'See logs',
-                                                        'logs'  : self.labelit_log,
+                                                        'log'  : self.labelit_log,
                                                        }}
             self.labelit_dir = os.path.join(self.working_dir, "0")
             os.chdir(self.labelit_dir)
-            self.process_distl()
+            #self.process_distl()
             self.postprocess_distl()
             #   if os.path.exists("DISTL_pickle"):
               #   self.makeImages(2)

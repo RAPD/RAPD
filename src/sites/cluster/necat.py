@@ -116,9 +116,9 @@ def connectCluster(inp, job=True):
       return(line.strip())
   client.close()
 
-class Cluster_Event():
-    def __init__(self):
-        pass
+#class Cluster_Event():
+#    def __init__(self):
+#        pass
 
 def process_cluster_fix(func):
     """
