@@ -105,30 +105,40 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
   }
 
   // Should the result be in the list?
-  // public display(id:string): string {
-  //
-  //   // console.log('display', id);
-  //
-  //   let result = this.data_results_object[id];
-  //   // console.log(result);
-  //   // console.log(result.status, result.timestamp);
-  //
-  //   let d:any = new Date(result.timestamp);
-  //
-  //   if (result.status === 100 || (Date.now() - d) < 36000) {
-  //     if (result.display) {
-  //       return result.display;
-  //     } else {
-  //       return 'normal';
-  //     }
-  //   } else {
-  //     return '';
-  //   }
-  //
-  //   // if ((Date.now() - timestamp) > 3600 ) {
-  //   //   return true;
-  //   // } else {
-  //   //   return false;
-  //   // }
-  // }
+  public shouldDisplay(id:string): boolean {
+
+    // console.log('display', id);
+
+    let result = this.data_results_object[id];
+    // console.log(result);
+    // console.log(result.status, result.timestamp);
+    if (result.display in {pinned:1, trashed:1}) {
+      return true;
+    } else if (result.status == 100) { 
+      return false;
+    }  else {
+      let d:any = new Date(result.timestamp);
+      if (Date.now() - d < 3600) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    // if (result.status === 100 || (Date.now() - d) < 36000) {
+    //   if (result.display) {
+    //     return result.display;
+    //   } else {
+    //     return 'normal';
+    //   }
+    // } else {
+    //   return '';
+    // }
+    //
+    // if ((Date.now() - timestamp) > 3600 ) {
+    //   return true;
+    // } else {
+    //   return false;
+    // }
+  }
 }
