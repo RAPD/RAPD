@@ -113,8 +113,8 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
     // console.log(result);
     // console.log(result.status, result.timestamp);
     if (result.display in {pinned:1, trashed:1}) {
-      return true;
-    } else if (result.status == 100) { 
+      return false;
+    } else if (result.status == 100) {
       return false;
     }  else {
       let d:any = new Date(result.timestamp);
