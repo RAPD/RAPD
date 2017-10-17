@@ -74,8 +74,8 @@ def get_object_id(value):
 def traverse_and_objectidify(input_object):
     """Traverses an object and looks for object_ids to turn into ObjectIds"""
 
-    # print "traverse_and_objectidify"
-    # pprint(input_object)
+    print "traverse_and_objectidify"
+    pprint(input_object)
 
     if isinstance(input_object, dict):
         for key, val in input_object.iteritems():
@@ -431,25 +431,29 @@ class Database(object):
         now = datetime.datetime.utcnow()
         plugin_result["timestamp"] = now
 
-        # Make sure we are all ObjectIds
-        _plugin_result = traverse_and_objectidify(plugin_result)
+        # Make sure we are all ObjectIds - this is until I can get the
+        # object traversal working
         self.logger.debug(plugin_result["process"])
-        self.logger.debug(_plugin_result["process"])
-        if _plugin_result.get("_id", False):
-            _plugin_result["_id"] = get_object_id(_plugin_result["_id"])
+        if plugin_result.get("_id", False):
+            plugin_result["_id"] = get_object_id(plugin_result["_id"])
+        # _ids in process dict
+        for key, val in plugin_result["process"]:
+            if "_id" in key:
+                plugin_result["process"][key] = get_object_id(val)
+        self.logger.debug(plugin_result["process"])
 
         # Add to results
-        collection_name = ("%s_%s_results" % (_plugin_result["plugin"]["data_type"],
-                                              _plugin_result["plugin"]["type"])).lower()
+        collection_name = ("%s_%s_results" % (plugin_result["plugin"]["data_type"],
+                                              plugin_result["plugin"]["type"])).lower()
         result1 = db[collection_name].update_one(
-            {"process.process_id":_plugin_result["process"]["process_id"]},
-            {"$set":_plugin_result},
+            {"process.process_id":plugin_result["process"]["process_id"]},
+            {"$set":plugin_result},
             upsert=True)
 
         # Get the _id from updated entry
         if result1.raw_result.get("updatedExisting", False):
             result1_id = db[collection_name].find_one(
-                {"process.process_id":_plugin_result["process"]["process_id"]},
+                {"process.process_id":plugin_result["process"]["process_id"]},
                 {"_id":1})
             self.logger.debug("%s _id  from updatedExisting %s", collection_name, result1_id)
         # upsert
@@ -460,14 +464,14 @@ class Database(object):
         result2 = db.results.update_one(
             {"result_id":get_object_id(result1_id)},
             {"$set":{
-                "data_type":_plugin_result["plugin"]["data_type"],
-                "plugin_id":_plugin_result["plugin"]["id"],
-                "plugin_type":_plugin_result["plugin"]["type"],
-                "plugin_version":_plugin_result["plugin"]["version"],
-                "repr":_plugin_result["process"]["repr"],
+                "data_type":plugin_result["plugin"]["data_type"],
+                "plugin_id":plugin_result["plugin"]["id"],
+                "plugin_type":plugin_result["plugin"]["type"],
+                "plugin_version":plugin_result["plugin"]["version"],
+                "repr":plugin_result["process"]["repr"],
                 "result_id":get_object_id(result1_id),
-                "session_id":get_object_id(_plugin_result["process"]["session_id"]),
-                "status":_plugin_result["process"]["status"],
+                "session_id":get_object_id(plugin_result["process"]["session_id"]),
+                "status":plugin_result["process"]["status"],
                 "timestamp":now,
                 }
             },
