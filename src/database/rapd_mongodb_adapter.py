@@ -431,8 +431,9 @@ class Database(object):
 
         # Make sure we are all ObjectIds
         _plugin_result = traverse_and_objectidify(plugin_result)
-        # if plugin_result.get("_id", False):
-        #     plugin_result["_id"] = get_object_id(plugin_result["_id"])
+        self.logger.debug(_plugin_result["process"])
+        if plugin_result.get("_id", False):
+            plugin_result["_id"] = get_object_id(plugin_result["_id"])
 
         # Add to results
         collection_name = ("%s_%s_results" % (_plugin_result["plugin"]["data_type"],
