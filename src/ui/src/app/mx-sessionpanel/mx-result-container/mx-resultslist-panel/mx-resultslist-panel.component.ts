@@ -64,15 +64,16 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
   private handleIncomingData(data: any) {
     let self = this;
 
-    console.log(data);
+    // console.log(data);
 
     // if (data.msg_type === 'results') {
     for (let result of data) {
         if ((result.data_type+':'+result.plugin_type).toLowerCase() === this.result_types[this.result_type]) {
+
           console.log(result);
 
           // Filter for age/display
-          if (result.display) {
+          if (! result.display) {
             if (result.status < 100) {
               let result_time:any = new Date(result.timestamp);
               if (Date.now() - result_time > 3600) {
