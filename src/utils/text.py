@@ -2,6 +2,7 @@ from bson import json_util
 from bson.objectid import ObjectId
 import json as system_json
 import sys
+from collections import OrderedDict
 
 black = "\033[30m"
 red = "\033[31m"
@@ -45,4 +46,5 @@ class json(object):
     @staticmethod
     def loads(input):
         """Just like json.loads"""
+        #return system_json.loads(input, object_hook=json_util.object_hook, object_pairs_hook=OrderedDict)
         return system_json.loads(input, object_hook=json_util.object_hook)

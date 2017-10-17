@@ -504,8 +504,8 @@ class Model(object):
             if self.site_adapter:
                 site_data = self.site_adapter.get_image_data()
                 header.update(site_data)
-                print "2"
-                pprint(header)
+                #print "2"
+                #pprint(header)
 
             # Add to database
             image_id = self.database.add_image(data=header, return_type="id")
@@ -515,8 +515,8 @@ class Model(object):
             else:
                 return False
 
-            print "1"
-            pprint(header)
+            #print "1"
+            #pprint(header)
 
             # Update remote client
             if self.remote_adapter:
@@ -607,7 +607,7 @@ class Model(object):
                                                      image_number=image_number,
                                                      minutes=minutes,
                                                      return_type=return_type)
-        print 'id_runs: %s'%identified_runs
+
         # If boolean, just return
         if return_type == "boolean":
             return identified_runs
@@ -915,7 +915,6 @@ class Model(object):
                     "xdsinp":header.pop("xdsinp")
                 },
             }
-            print type(command['preferences']['xdsinp'])
             self.send_command(command, "RAPD_JOBS")
 
             # Set the run status

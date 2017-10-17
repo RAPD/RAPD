@@ -35,6 +35,8 @@ from pprint import pprint
 import redis.exceptions
 import time
 import threading
+from collections import OrderedDict
+
 
 # RAPD imports
 import utils.launch_tools as launch_tools
@@ -44,6 +46,7 @@ import utils.site
 import utils.log
 from utils.overwatch import Registrar
 from utils.text import json
+#import json
 from bson.objectid import ObjectId
 
 # Timer (s) for checking which launchers are alive.
@@ -144,7 +147,8 @@ class Launcher_Manager(threading.Thread):
                         command = self.redis.rpop("RAPD_JOBS")
                         # Handle the message
                         if command:
-                            self.push_command(json.loads(command))
+                            #self.push_command(json.loads(command))
+                            self.push_command(json.loads(command, object_pairs_hook=OrderedDict))
                             # Only run 1 command
                             # self.running = False
                             # break
@@ -212,6 +216,9 @@ class Launcher_Manager(threading.Thread):
 
         # get the correct running launcher and launch_dir
         launcher, launch_dir = self.set_launcher(message['command'], site_tag)
+        
+        if message['command'].startswith('INTEGRATE'):
+            print 'type: %s'%message['preferences']['xdsinp']
 
         if launcher:
             # Update preferences to be in server run mode
