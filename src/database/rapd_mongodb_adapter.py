@@ -451,11 +451,11 @@ class Database(object):
             result1_id = db[collection_name].find_one(
                 {"process.process_id":_plugin_result["process"]["process_id"]},
                 {"_id":1})
+            self.logger.debug("%s _id  from updatedExisting %s", collection_name, result1_id)
         # upsert
         else:
             result1_id = result1.upserted_id
-
-        self.logger.debug("%s _id %s", collection_name, result1_id)
+            self.logger.debug("%s _id  from upserting %s", collection_name, result1_id)
 
         result2 = db.results.update_one(
             {"result_id":get_object_id(result1_id)},
