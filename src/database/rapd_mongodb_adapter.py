@@ -454,15 +454,15 @@ class Database(object):
         self.logger.debug("%s _id %s", collection_name, result1_id)
 
         result2 = db.results.update_one(
-            {"result_id":result1_id},
+            {"result_id":get_object_id(result1_id)},
             {"$set":{
                 "data_type":_plugin_result["plugin"]["data_type"],
                 "plugin_id":_plugin_result["plugin"]["id"],
                 "plugin_type":_plugin_result["plugin"]["type"],
                 "plugin_version":_plugin_result["plugin"]["version"],
                 "repr":_plugin_result["process"]["repr"],
-                "result_id":result1_id,
-                "session_id":_plugin_result["process"]["session_id"],
+                "result_id":get_object_id(result1_id),
+                "session_id":get_object_id(_plugin_result["process"]["session_id"]),
                 "status":_plugin_result["process"]["status"],
                 "timestamp":now,
                 }
