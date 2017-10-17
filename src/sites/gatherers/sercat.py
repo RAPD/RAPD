@@ -38,7 +38,6 @@ __status__ = "Production"
 import argparse
 import datetime
 import importlib
-import json
 import logging
 import logging.handlers
 import os
@@ -58,6 +57,8 @@ import utils.log
 from utils.overwatch import Registrar
 import utils.site
 import utils.text as text
+from utils.text import json
+from bson.objectid import ObjectId
 
 class Gatherer(object):
     """

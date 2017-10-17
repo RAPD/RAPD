@@ -33,7 +33,6 @@ import argparse
 # import from collections import OrderedDict
 # import datetime
 # import glob
-import json
 # import logging
 # import multiprocessing
 # import os
@@ -47,6 +46,9 @@ import sys
 # import time
 # import unittest
 # import uuid
+
+from utils.text import json
+from bson.objectid import ObjectId
 
 # Phenix imports
 import phaser

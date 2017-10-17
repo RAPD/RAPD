@@ -37,7 +37,6 @@ VERSION = "1.0.0"
 
 # Standard imports
 import argparse
-import json
 import logging
 import multiprocessing
 import os
@@ -52,6 +51,8 @@ import urllib2
 # import utils
 import utils.credits as rcredits
 import utils.global_vars as rglobals
+from utils.text import json
+from bson.objectid import ObjectId
 # import info
 
 # Cache of CIF files

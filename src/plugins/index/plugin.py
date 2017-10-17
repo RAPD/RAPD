@@ -42,7 +42,6 @@ from collections import OrderedDict
 from distutils.spawn import find_executable
 import functools
 # import glob
-import json
 import logging
 from multiprocessing import Process, Event
 from multiprocessing import Queue as mp_Queue
@@ -72,6 +71,8 @@ from utils.r_numbers import try_int, try_float
 import utils.exceptions as exceptions
 import utils.global_vars as global_vars
 from utils.processes import local_subprocess, mp_pool
+from utils.text import json
+from bson.objectid import ObjectId
 import utils.xutils as xutils
 
 DETECTOR_TO_BEST = {
@@ -422,7 +423,7 @@ class RapdPlugin(Process):
 
             # Sorts labelit results by highest symmetry.
             self.labelit_sort()
-          
+
             # Run Distl
             self.process_distl()
 
@@ -486,7 +487,7 @@ class RapdPlugin(Process):
         if os.path.exists(self.working_dir) == False:
             os.makedirs(self.working_dir)
         os.chdir(self.working_dir)
-        
+
         # Check if pair are in different folders, then make symlink for Labelit.
         if self.header2:
           if os.path.dirname(self.header['fullname']) != os.path.dirname(self.header2['fullname']):
@@ -849,7 +850,7 @@ class RapdPlugin(Process):
         #self.crystal_life = str(int(float(exp_dose_lim) / self.time))
         #if self.crystal_life == '0':
         #    self.crystal_life = '1'
-        
+
         # Adjust dose for ribosome crystals.
         if self.sample_type == 'ribosome':
             dose = 500001
@@ -886,7 +887,7 @@ class RapdPlugin(Process):
             command += ' -M %s' % self.site_parameters.get("DETECTOR_TIME_MIN")
         # Set min and max detector distance
         if best_version >= "3.4" and self.site_parameters.get("DETECTOR_DISTANCE_MAX", False):
-            command += ' -DIS_MAX %s' % self.site_parameters.get("DETECTOR_DISTANCE_MAX") 
+            command += ' -DIS_MAX %s' % self.site_parameters.get("DETECTOR_DISTANCE_MAX")
         if best_version >= "3.4" and self.site_parameters.get("DETECTOR_DISTANCE_MIN", False):
             command += ' -DIS_MIN %s'% self.site_parameters.get("DETECTOR_DISTANCE_MIN")
         # Fix bug in BEST for PAR detectors. Use the cumulative completeness of 99% instead of all
@@ -1056,7 +1057,7 @@ class RapdPlugin(Process):
                               'logfile': log}
                 # Update batch queue info if using a compute cluster
                 inp_kwargs.update(self.batch_queue)
-                
+
                 #Launch the job
                 Process(target=self.launcher,
                         kwargs=inp_kwargs).start()
@@ -1116,7 +1117,7 @@ class RapdPlugin(Process):
                 best_version = xutils.get_best_version()
                 # Make sure that the BEST install has the detector
                 self.check_best_detector(DETECTOR_TO_BEST.get(self.header.get("detector"), None))
-            
+
             if self.multiproc == False:
                 end = st+1
 
@@ -1609,7 +1610,7 @@ Distance | % Transmission", level=98, color="white")
             # pprint(rms_list1)
             # pprint(metric_list1)
             # pprint(volumes)
-    
+
             for index in range(len(sg_list1)):
                 if sg_list1[index] == numpy.amax(sg_list1):
                     # If its P1 look at the Mosflm RMS, else look at the Labelit metric.
@@ -1617,13 +1618,13 @@ Distance | % Transmission", level=98, color="white")
                         sol_dict[rms_list1[index]] = self.labelit_results.keys()[index]
                     else:
                         sol_dict[metric_list1[index]] = self.labelit_results.keys()[index]
-    
+
             # print "sol_dict"
             # pprint(sol_dict)
-    
+
             sol_dict_keys = sol_dict.keys()
             sol_dict_keys.sort()
-    
+
             # Best Labelit_results key
             highest = sol_dict[sol_dict_keys[0]]
             # Since iter 5 cuts res, it is often the best. Only choose if its the
@@ -1631,32 +1632,32 @@ Distance | % Transmission", level=98, color="white")
             if len(sol_dict_keys) > 1:
                 if highest == 5:
                     highest = sol_dict[sol_dict_keys[1]]
-    
+
             # symmetry of best solution
             sym = sg_dict[highest]
-    
+
             # If there is a solution...
             if sym != 0:
                 self.logger.debug("The sorted labelit solution was #%s", highest)
-    
+
                 # Save best results in corect place.
                 self.labelit_results = self.labelit_results[highest]
-    
+
                 # Set self.volume for best solution
                 self.volume = volumes[highest]
-    
+
                 # Set self.labelit_dir and go to it.
                 self.labelit_dir = os.path.join(self.working_dir, str(highest))
                 self.index_number = self.labelit_results.get("labelit_results").get("mosflm_index")
                 os.chdir(self.labelit_dir)
-    
+
                 # Save the self.Labelit_cell and self.Labelit_sym
                 self.labelit_cell_sym()
-                
+
                 self.labelit_results["labelit_results"]["best_cell"] = self.labelit_cell
                 self.labelit_results["labelit_results"]["best_sym"] = self.labelit_sym
                 # pprint(self.labelit_results)
-    
+
                 # Handle the user-set spacegroup
                 if self.spacegroup != False:
                     check_lg = xutils.checkSG(self, sym)
@@ -1671,13 +1672,13 @@ Distance | % Transmission", level=98, color="white")
                         #else:
                              # Used for telling user that SG is not compatible with cell
                         #    self.ignore_user_SG = True
-    
+
                 # Print Labelit results to commandline
                 self.tprint(arg="\nHighest symmetry Labelit result",
                             level=98,
                             color="blue",
                             newline=False)
-    
+
                 for line in self.labelit_results["labelit_results"]["output"][5:]:
                     self.tprint(arg="  %s" % line.rstrip(), level=98, color="white")
                 # pprint(self.labelit_results["labelit_results"]["output"])
@@ -2082,7 +2083,7 @@ Distance | % Transmission", level=98, color="white")
 
 
 class RunLabelit(Thread):
-    
+
     # Holder of PID's or JobID's
     jobids = {}
     # Holder for the job threads
@@ -2285,25 +2286,25 @@ class RunLabelit(Thread):
                 preferences.write('best_support=True\n')
                 # Set Mosflm RMSD tolerance larger
                 preferences.write('mosflm_rmsd_tolerance=4.0\n')
-    
+
                 # If binning is off. Force Labelit to use all pixels(MAKES THINGS WORSE).
                 # Increase number of spots to use for indexing.
                 if binning == False:
                     preferences.write('distl_permit_binning=False\n')
                     preferences.write('distl_maximum_number_spots_for_indexing=600\n')
-    
+
                 # If user wants to change the res limit for autoindexing.
                 if self.preferences.get('index_hi_res', 0.0) != 0.0:
                     #preferences.write('distl.res.outer='+index_hi_res+'\n')
                     preferences.write('distl_highres_limit=%.2f\n' % self.preferences.get('index_hi_res'))
-    
+
                 # Always specify the beam center.
                 # If Malcolm flips the beam center in the image header...
                 if self.preferences.get("beam_flip", False):
                     preferences.write("autoindex_override_beam=(%.2f, %.2f)\n" % (y_beam, x_beam))
                 else:
                     preferences.write("autoindex_override_beam=(%.2f, %.2f)\n" % (x_beam, y_beam))
-    
+
                 # If two-theta is being used, specify the angle and distance correctly.
                 if twotheta == 0.0:
                     preferences.write('beam_search_scope=%.2f\n' %
@@ -2360,27 +2361,27 @@ rerunning.\n" % spot_count)
         Set/reset setting in dataset_preferences.py according to run iteration.
         Commented out things were tried before.
         """
-    
+
         self.logger.debug('Utilities::errorLabelit')
-        
+
         # If iteration is string, return the total number of iterations in the funnction.
         if isinstance(iteration, str):
             return 6
-    
+
         # Create separate folders for Labelit runs.
         if self.multiproc == False:
             iteration += 1
         # Change to the correct folder (create it if necessary).
         #foldersLabelit(self, iteration)
         xutils.create_folders_labelit(self.working_dir, iteration)
-    
+
         with open('dataset_preferences.py','a') as preferences:
             preferences.write('\n#iteration %s\n' % iteration)
             if iteration == 0:
                 self.log[iteration] = ['\nUsing default parameters.\n']
                 self.tprint("\n  Using default parameters", level=30, color="white", newline=False)
                 self.logger.debug('Using default parameters.')
-        
+
             if iteration == 1:
                 # Seemed to pick stronger spots on Pilatis
                 if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
@@ -2395,14 +2396,14 @@ rerunning.\n" % spot_count)
                 self.log[iteration] = ['\nLooking for long unit cell.\n']
                 self.tprint("\n  Looking for long unit cell", level=30, color="white", newline=False)
                 self.logger.debug('Looking for long unit cell.')
-        
+
             elif iteration == 2:
                 # Change it up and go for larger peaks like small molecule.
                 preferences.write('distl.minimum_spot_height=6\n')
                 self.log[iteration] = ['\nChanging settings to look for stronger peaks (ie. small molecule).\n']
                 self.tprint("\n  Looking for stronger peaks (ie. small molecule)", level=30, color="white", newline=False)
                 self.logger.debug("Changing settings to look for stronger peaks (ie. small molecule).")
-        
+
             elif iteration == 3:
                 if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
                     preferences.write('distl.minimum_spot_area=2\n')
@@ -2416,7 +2417,7 @@ rerunning.\n" % spot_count)
                 self.log[iteration] = ['\nLooking for weak diffraction.\n']
                 self.tprint("\n  Looking for weak diffraction", level=30, color="white", newline=False)
                 self.logger.debug('Looking for weak diffraction.')
-        
+
             elif iteration == 4:
                 if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
                     preferences.write('distl.minimum_spot_area=3\n')
@@ -2432,7 +2433,7 @@ rerunning.\n" % spot_count)
                     area = 8
                 self.tprint("\n  Setting spot picking level to %d" % area, level=30, color="white", newline=False)
                 self.logger.debug('Setting spot picking level to 3 or 8.')
-        
+
             elif iteration == 5:
                 if "Pilatus" in self.vendortype or "HF4M" in self.vendortype:
                     preferences.write('distl.minimum_spot_area=2\n')
@@ -2571,7 +2572,7 @@ rerunning.\n" % spot_count)
         ex = False
         er = "Labelit failed to find solution."
         failed = False
-        
+
         iteration = raw_result["tag"]
         stdout = raw_result["stdout"]
 
@@ -2596,7 +2597,7 @@ rerunning.\n" % spot_count)
                 "error": "Labelit did not like your input unit cell dimensions or SG.",
                 "execute1": {"ignore_sublattice": True},
                 "execute2": {"ignore_user_cell": True},
-                "execute3": {"ignore_user_cell": True, 
+                "execute3": {"ignore_user_cell": True,
                              "ignore_user_SG": True}},
             "bumpiness": {
                 "error": "Labelit settings need to be adjusted.",
@@ -2643,8 +2644,8 @@ rerunning.\n" % spot_count)
         if problem_flag:
             # Change to the correct folder for rerunning.
             xutils.create_folders_labelit(self.working_dir, iteration)
-            
-            # Check if there is a fix... 
+
+            # Check if there is a fix...
             problem_actions = potential_problems.get(problem_flag, False)
             if problem_actions:
                 # Keep track of how many times the specific errors have come up.
@@ -2661,7 +2662,7 @@ rerunning.\n" % spot_count)
                 if spot_count > 25 and ex:
                     potential_problems['run_command'](overrides={"min_spots": spot_count})
                 else:
-                    # Failed since not enough spots 
+                    # Failed since not enough spots
                     failed = True
 
             # When Labelit works, but Mosflm step fails. Rerun forcing Mosflm to work.

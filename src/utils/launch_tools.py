@@ -27,10 +27,12 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 # Standard imports
-import json
 import os
 import stat
 import tempfile
+
+from utils.text import json
+from bson.objectid import ObjectId
 
 def write_command_file(target_directory, command, message):
     """

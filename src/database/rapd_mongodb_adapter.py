@@ -34,13 +34,13 @@ sudo docker run --name mongodb -p 27017:27017 -d mongo:3.4
 # Standard imports
 import copy
 import datetime
-import json
 import logging
 import os
 import threading
 
 from bson.objectid import ObjectId
 import bson.errors
+from utils.text import json
 # import numpy
 from pprint import pprint
 import pymongo
@@ -305,6 +305,8 @@ class Database(object):
         db = self.get_db_connection()
 
         # Query and return, transform _id to string
+        return_dict = db.images.find_one({"_id":_image_id})
+        return_dict["_id"] = str(return_dict["_id"])
         return db.images.find_one({"_id":_image_id})
 
     #

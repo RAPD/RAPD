@@ -31,7 +31,6 @@ __status__ = "Production"
 import collections
 import datetime
 import importlib
-import json
 import logging
 import os
 from pprint import pprint
@@ -39,13 +38,13 @@ from pprint import pprint
 # import socket
 import sys
 
-from bson import json_util
 
 # RAPD imports
 from control.control_server import LaunchAction, ControllerServer
 from utils.modules import load_module
 from utils.site import get_ip_address
-
+from utils.text import json
+from bson.objectid import ObjectId
 # from rapd_console import ConsoleFeeder
 # from rapd_site import TransferToUI, TransferToBeamline, CopyToUser
 
@@ -372,7 +371,7 @@ class Model(object):
         print "send_command"
         pprint(command)
 
-        self.redis.lpush(channel, json.dumps(command, default=json_util.default))
+        self.redis.lpush(channel, json.dumps(command))
         print "Command sent"
 
     def stop(self):

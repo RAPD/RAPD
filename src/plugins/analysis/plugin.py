@@ -38,7 +38,6 @@ VERSION = "2.0.0"
 # Standard imports
 import base64
 from distutils.spawn import find_executable
-import json
 import logging
 from multiprocessing import Process, Queue
 import os
@@ -57,6 +56,8 @@ import plugins.subcontractors.xtriage as xtriage
 
 import utils.credits as rcredits
 import utils.exceptions as exceptions
+from utils.text import json
+from bson.objectid import ObjectId
 import utils.xutils as xutils
 # import info
 import plugins.pdbquery.commandline

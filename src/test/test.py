@@ -32,7 +32,6 @@ from argparse import RawTextHelpFormatter
 import glob
 import hashlib
 import importlib
-import json
 # import logging
 # import multiprocessing
 import os
@@ -53,6 +52,8 @@ import test_sets
 import utils.global_vars as rglobals
 import utils.log
 import utils.site as site
+from utils.text import json
+from bson.objectid import ObjectId
 
 # Cache for test data
 TEST_CACHE = rglobals.TEST_CACHE

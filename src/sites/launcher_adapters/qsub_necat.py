@@ -28,7 +28,6 @@ __status__ = "Development"
 
 # Standard imports
 import logging
-import json
 import os
 from subprocess import Popen
 import drmaa
@@ -38,10 +37,11 @@ from multiprocessing import Process
 from multiprocessing import Queue as mp_Queue
 from threading import Thread
 
-
 # RAPD imports
 import utils.launch_tools as launch_tools
 import sites.cluster.necat as cluster
+from utils.text import json
+from bson.objectid import ObjectId
 
 class LauncherAdapter(Thread):
     """
@@ -128,10 +128,10 @@ class LauncherAdapter(Thread):
         # This will be passed back to a monitor that will watch the jobs and kill ones that run too long.
         jobID = q.get()
         print jobID
-        
+
         # This joins the jobs so no defunct pythons left.
         job.join()
-        
+
         #while job.is_alive():
         #    time.sleep(1)
 

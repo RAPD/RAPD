@@ -53,7 +53,6 @@ Redis database using the key DISTL_EPOCHTIME_SV""",
 from rapd_site import beamline_settings, secret_settings
 
 import fcntl
-import json
 import logging, logging.handlers
 import math
 import multiprocessing
@@ -73,6 +72,8 @@ import time
 import urllib2
 import uuid
 
+from utils.text import json
+from bson.objectid import ObjectId
 
 # Number of images concurrently processed
 _POOLSIZE = 8

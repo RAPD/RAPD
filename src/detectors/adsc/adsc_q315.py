@@ -33,7 +33,6 @@ carefully
 
 # Standard imports
 from collections import OrderedDict
-import json
 import os
 import re
 import sys
@@ -42,6 +41,8 @@ import time
 # RAPD imports
 # from rapd_utils import date_adsc_to_sql
 # import monitors.redis_monitor
+from utils.text import json
+from bson.objectid import ObjectId
 
 """
 A relatively recent header from APS 24ID-E

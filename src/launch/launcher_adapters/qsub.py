@@ -29,12 +29,13 @@ This is the stock version used at NE-CAT
 """
 
 import logging
-import json
 import os
 from subprocess import Popen
 
 # RAPD imports
 import utils.launch_tools as launch_tools
+from utils.text import json
+from bson.objectid import ObjectId
 
 class LauncherAdapter(object):
     """

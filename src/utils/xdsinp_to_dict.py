@@ -26,8 +26,10 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
-import json
 import sys
+
+from utils.text import json
+from bson.objectid import ObjectId
 
 class INP2DICT(object):
     def __init__(self, xdsinp, xdsdict):

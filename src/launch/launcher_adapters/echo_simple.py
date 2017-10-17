@@ -33,7 +33,6 @@ __status__ = "Development"
 # import from collections import OrderedDict
 # import datetime
 # import glob
-import json
 import logging
 # import multiprocessing
 # import os
@@ -57,6 +56,8 @@ import redis
 # import utils.credits as credits
 from utils import exceptions
 import utils.launch_tools as launch_tools
+from utils.text import json
+from bson.objectid import ObjectId
 
 class LauncherAdapter(object):
     """

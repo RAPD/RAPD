@@ -31,13 +31,13 @@ to rapd_server via to rapd_adsc
 
 This server is used at 24ID-E with an ADSC Q315 detector
 
-If you are adapting rapd to your locality, you will need to check this 
+If you are adapting rapd to your locality, you will need to check this
 carefully.
 """
 """
 import socket
 import os
-import threading 
+import threading
 import time
 import atexit
 import re
@@ -53,7 +53,6 @@ import logging, logging.handlers
 import argparse
 import datetime
 import importlib
-import json
 import logging
 import logging.handlers
 import os
@@ -72,6 +71,8 @@ import utils.log
 from utils.overwatch import Registrar
 import utils.site
 import utils.text as text
+from utils.text import json
+from bson.objectid import ObjectId
 
 # Monitor Beamlines
 #
@@ -107,7 +108,7 @@ class RedisRunMonitor_OLD():
         # Create redis connections
         # Where beamline information is coming from
         redis_database = importlib.import_module('database.rapd_redis_adapter')
-        
+
         bl_database = redis_database.Database(settings=self.site.SITE_ADAPTER_SETTINGS)
         self.bl_redis = bl_database.connect_redis_pool()
         pipe = self.bl_redis.pipeline()
@@ -116,7 +117,7 @@ class RedisRunMonitor_OLD():
         #self.pub = BLspec.connect_redis_manager_HA()
         self.pub_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
         self.pub = self.pub_database.connect_redis_manager_HA()
-        
+
         # For beamline T
         #self.pubsub = self.pub.pubsub()
         #self.pubsub.subscribe('run_info_T')
@@ -150,7 +151,7 @@ class RedisRunMonitor_OLD():
                     #print current_run
                     if current_run == None:
                         current_run = ''
-                    
+
                 if (len(current_run) > 0):
                     if self.beamline == "E":
                         self.pub.lpush('run_info_T', current_run)
@@ -167,7 +168,7 @@ class RedisRunMonitor_OLD():
 
                     # Get extra run data
                     extra_data = self.getRunData()
-                    
+
                     if self.beamline == "T":
                         current_dir = "/epu2/rdma%s%s_%d_%06d" % (
                                       current_dir,
@@ -439,13 +440,13 @@ class Gatherer(object):
         #self.logger.debug("  Will push new images onto images_collected:%s" % self.tag)
         self.logger.debug("  Will publish new datasets on run_data:%s" % self.tag)
         self.logger.debug("  Will push new datasets onto run_data:%s" % self.tag)
-        
+
         try:
             while self.go:
-    
+
                 # 5 rounds of checking
                 #for ___ in range(5):
-    
+
                 # Check if the run info changed in beamline Redis DB.
                 #current_run = self.bl_redis.get("RUN_INFO_SV")
                 current_run = self.redis.rpop('run_info_T')
@@ -459,7 +460,7 @@ class Gatherer(object):
                     run_data = self.get_run_data(current_run)
                     # Get rid of trailing slash from beamline Redis.
                     #dir = run_data['directory']
-                    # Have to remove trailing slash 
+                    # Have to remove trailing slash
                     #if dir[-1] == '/':
                     #    run_data['directory'] = dir[:-1]
                     dir = "/epu2/rdma%s%s_%d_%06d" % (
@@ -475,7 +476,7 @@ class Gatherer(object):
                     self.redis.publish("run_data:%s" % self.tag, run_data_json)
                     # Push onto redis list in case no one is currently listening
                     self.redis.lpush("run_data:%s" % self.tag, run_data_json)
-                        
+
                     """
                     if self.check_for_run_info():
                         run_data = self.get_run_data()
@@ -487,7 +488,7 @@ class Gatherer(object):
                             red.publish("run_data:%s" % self.tag, run_data_json)
                             # Push onto redis list in case no one is currently listening
                             red.lpush("run_data:%s" % self.tag, run_data_json)
-                    
+
                     # 20 image checks
                     for __ in range(20):
                         # Check if the image file has changed
@@ -525,7 +526,7 @@ class Gatherer(object):
         """Connect to redis host"""
         # Connect to control redis for publishing run data info
         redis_database = importlib.import_module('database.rapd_redis_adapter')
-        
+
         self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
         self.redis = self.redis_database.connect_to_redis()
 
@@ -559,7 +560,7 @@ class Gatherer(object):
         """Put together info from run and pass it back."""
         # Split it
         cur_run = run_info.split("_") #runnumber,first#,total#,dist,energy,transmission,omega_start,deltaomega,time,timestamp
-        
+
         pipe = self.bl_redis.pipeline()
         #pipe.get("DETECTOR_SV")
         pipe.get("EIGER_DIRECTORY_SV")
@@ -567,7 +568,7 @@ class Gatherer(object):
         #pipe.get("DET_THETA_SV")        #two theta
         #pipe.get("MD2_ALL_AXES_SV")     #for kappa and phi
         return_array = pipe.execute()
-        
+
         """
         run_data = {'directory'   : current_dir,
                                 'prefix'      : extra_data['prefix'],

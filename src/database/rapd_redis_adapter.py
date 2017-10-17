@@ -33,7 +33,6 @@ __status__ = "Production"
 
 # Standard imports
 import datetime
-import json
 import logging
 import os
 import threading
@@ -41,6 +40,9 @@ import threading
 #from bson.objectid import ObjectId
 import redis
 from redis.sentinel import Sentinel
+
+from utils.text import json
+from bson.objectid import ObjectId
 
 CONNECTION_ATTEMPTS = 30
 

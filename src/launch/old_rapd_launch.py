@@ -26,7 +26,6 @@ import socket
 import threading
 import multiprocessing
 import subprocess
-import json
 import os
 import time
 import sys
@@ -37,6 +36,8 @@ import tempfile
 from rapd_site import secret_settings_general as secrets
 from rapd_database import Database
 from rapd_communicate import Communicate
+from utils.text import json
+from bson.objectid import ObjectId
 
 BUFFER_SIZE = 8192
 
