@@ -399,9 +399,6 @@ function Wss (opt, callback) {
                                                 results:result}));
                       }
                     }
-
-
-
                 });
 
               // ws.send(JSON.stringify({msg_type:'result_details',
