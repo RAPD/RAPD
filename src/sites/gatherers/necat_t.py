@@ -442,10 +442,6 @@ class Gatherer(object):
         
         try:
             while self.go:
-    
-                # 5 rounds of checking
-                #for ___ in range(5):
-    
                 # Check if the run info changed in beamline Redis DB.
                 #current_run = self.bl_redis.get("RUN_INFO_SV")
                 current_run = self.redis.rpop('run_info_T')
@@ -467,45 +463,18 @@ class Gatherer(object):
                                       run_data['image_prefix'],
                                       int(run_data['run_number']),
                                       int(run_data['start_image_number']))
-                    run_data['directory'] = dir
-                    self.logger.debug("run_data:%s %s", self.tag, run_data)
-                    # Put into exchangable format
-                    run_data_json = json.dumps(run_data)
-                    # Publish to Redis
-                    self.redis.publish("run_data:%s" % self.tag, run_data_json)
-                    # Push onto redis list in case no one is currently listening
-                    self.redis.lpush("run_data:%s" % self.tag, run_data_json)
-                        
-                    """
-                    if self.check_for_run_info():
-                        run_data = self.get_run_data()
-                        if run_data:
-                            self.logger.debug("run_data:%s %s", self.tag, run_data)
-                            # Put into exchangable format
-                            run_data_json = json.dumps(run_data)
-                            # Publish to Redis
-                            red.publish("run_data:%s" % self.tag, run_data_json)
-                            # Push onto redis list in case no one is currently listening
-                            red.lpush("run_data:%s" % self.tag, run_data_json)
-                    
-                    # 20 image checks
-                    for __ in range(20):
-                        # Check if the image file has changed
-                        if self.check_for_image_collected():
-                            image_name = self.get_image_data()
-                            if image_name:
-                                self.logger.debug("image_collected:%s %s",
-                                                  self.tag,
-                                                  image_name)
-                                # Publish to Redis
-                                red.publish("image_collected:%s" % self.tag, image_name)
-                                # Push onto redis list in case no one is currently listening
-                                red.lpush("images_collected:%s" % self.tag, image_name)
-                            break
-                        else:
-                            time.sleep(0.05)
-                    """
-                time.sleep(0.1)
+                    if self.ignored(dir):
+                        self.logger.debug("Directory %s is marked to be ignored - skipping", dir)
+                    else:
+                        run_data['directory'] = dir
+                        self.logger.debug("run_data:%s %s", self.tag, run_data)
+                        # Put into exchangable format
+                        run_data_json = json.dumps(run_data)
+                        # Publish to Redis
+                        self.redis.publish("run_data:%s" % self.tag, run_data_json)
+                        # Push onto redis list in case no one is currently listening
+                        self.redis.lpush("run_data:%s" % self.tag, run_data_json)
+                time.sleep(0.2)
                 # Have Registrar update status
                 self.ow_registrar.update({"site_id":self.site.ID})
         except KeyboardInterrupt:
@@ -554,6 +523,13 @@ class Gatherer(object):
             print "ERROR - no settings for this host"
             self.tag = "test"
             # sys.exit(9)
+
+    def ignored(self, dir):
+        """Check if folder is supposed to be ignored."""
+        for d in self.site.IMAGE_IGNORE_DIRECTORIES:
+            if dir.startswith(d):
+                return True
+        return False
 
     def get_run_data(self, run_info):
         """Put together info from run and pass it back."""

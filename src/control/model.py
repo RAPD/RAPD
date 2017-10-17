@@ -916,6 +916,7 @@ class Model(object):
                     "xdsinp":header.pop("xdsinp")
                 },
             }
+            print type(command['preferences']['xdsinp'])
             self.send_command(command, "RAPD_JOBS")
 
             # Set the run status

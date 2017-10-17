@@ -54,6 +54,8 @@ import subprocess
 import sys
 import threading
 import time
+import importlib
+from collections import OrderedDict
 
 # Nonstandard imports
 from bson.objectid import ObjectId
@@ -341,6 +343,20 @@ class RapdPlugin(Process):
         self.process()
         self.postprocess()
 
+    def connect_to_redis(self):
+        """Connect to the redis instance"""
+        # Create a pool connection
+        redis_database = importlib.import_module('database.rapd_redis_adapter')
+        redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        self.redis = redis_database.connect_to_redis()
+
+    def send_results(self):
+        """Let everyone know we are working on this"""
+        self.logger.debug("Sending back on redis")
+        json_results = json.dumps(self.results)
+        self.redis.lpush("RAPD_RESULTS", json_results)
+        self.redis.publish("RAPD_RESULTS", json_results)
+
     def preprocess(self):
         """
         Things to do before main proces runs.
@@ -397,8 +413,8 @@ class RapdPlugin(Process):
         self.results["process"]["type"] = "plugin"
         # The repr
         self.results["process"]["repr"] = self.run_data["image_template"].replace(\
-            "?"*self.run_data["image_template"].count("?"), "[%d-%d]" % (self.run_data["start"], \
-            self.run_data["end"]))
+            "?"*self.run_data["image_template"].count("?"), "[%d-%d]" % (self.image_data["start"], \
+            self.image_data["start"] + self.image_data["total"] - 1))
         # The run _id
 
 
@@ -1196,6 +1212,9 @@ class RapdPlugin(Process):
                      'NAME_TEMPLATE_OF_DATA_FRAMES=%s\n\n' % file_template,
                      'BACKGROUND_RANGE=%s\n\n' % background_range,
                      '!===== DETECTOR_PARAMETERS =====\n']
+        
+        self.logger.debug('dict_type: %s'%type(xds_dict))
+        
         for key, value in xds_dict.iteritems():
             # Regions that are excluded are defined with
             # various keyword containing the word UNTRUSTED.

@@ -357,20 +357,28 @@ class RapdPlugin(Process):
 
         # Copy over details of this run
         self.results["command"] = self.command #.get("command")
+        for version in (1, 2):
+            if self.results["header%d" % version]:
+                #self.results["header%d" % version] = {"_id": eval('self.header%d'%version).get("_id")}
+                if isinstance(eval('self.header%d'%version).get("_id"), dict):
+                    self.results["header%d" % version] = {"_id": eval('self.header%d'%version).get("_id").get("$oid")}
+                else:
+                    self.results["header%d" % version] = {"_id": eval('self.header%d'%version).get("_id")}
+        
         # Just save the _id
-        self.results["header1"] = {"_id": self.header.get("_id")}
-        if self.header2:
-            self.results["header2"] = {"_id": self.header2.get("_id")}
-        else:
-            self.results["header2"] = self.header2
+        #self.results["header1"] = {"_id": self.header.get("_id")}
+        #if self.header2:
+        #    self.results["header2"] = {"_id": self.header2.get("_id")}
+        #else:
+        #    self.results["header2"] = self.header2
         """
         # Temporary cover for missing basename
         for version in (1, 2):
             if self.results["header%d" % version]:
                 self.results["header%d" % version]["basename"] = \
                     os.path.basename(self.results["header%d" % version]["fullname"])
-        self.results["preferences"] = self.preferences
         """
+        self.results["preferences"] = self.preferences
         # Describe the process
         self.results["process"] = self.command.get("process", {})
         # Status is now 1 (starting)
@@ -392,7 +400,6 @@ class RapdPlugin(Process):
             "id":ID,
             "version":VERSION
         }
-        pprint(self.results)
 
     def run(self):
         """
