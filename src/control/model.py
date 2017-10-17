@@ -608,7 +608,7 @@ class Model(object):
                                                      image_number=image_number,
                                                      minutes=minutes,
                                                      return_type=return_type)
-
+        print 'id_runs: %s'%identified_runs
         # If boolean, just return
         if return_type == "boolean":
             return identified_runs
@@ -812,7 +812,6 @@ class Model(object):
                 #if (directory1, basename1, prefix1) == (directory2, basename2, prefix2) and (image_number1 == image_number2-1):
                 ### Have to modify for /epu/rdma since each image are in their own directory.
                 #if (basename1, prefix1) == (basename2, prefix2) and (image_number1 == image_number2-1):
-                print image_number1, image_number2
                 if basename1[0:basename1.rfind('_')] == basename2[0:basename2.rfind('_')] and (image_number1 == image_number2-1):
                     self.logger.info("This looks like a pair to me: %s, %s",
                                      self.pairs[site_tag][0][0],

@@ -33,13 +33,17 @@ import os
 from subprocess import Popen
 import drmaa
 import time
-from multiprocessing import Queue, Process
+#from multiprocessing import Queue, Process
+from multiprocessing import Process
+from multiprocessing import Queue as mp_Queue
+from threading import Thread
+
 
 # RAPD imports
 import utils.launch_tools as launch_tools
 import sites.cluster.necat as cluster
 
-class LauncherAdapter(object):
+class LauncherAdapter(Thread):
     """
     An adapter for launcher process.
 
@@ -57,6 +61,7 @@ class LauncherAdapter(object):
         message -- command from the control process
         settings --
         """
+        Thread.__init__(self)
 
         # Get the logger Instance
         self.logger = logging.getLogger("RAPDLogger")
@@ -104,7 +109,7 @@ class LauncherAdapter(object):
         queue = cluster.check_queue(self.message['command'])
 
         # Setup a Queue to retreive the jobID.
-        q = Queue()
+        q = mp_Queue()
 
         # Setup the job and launch it.
         job = Process(target=cluster.process_cluster,
@@ -117,11 +122,18 @@ class LauncherAdapter(object):
                               'name':qsub_label,
                               'mp_event':False,
                               'timeout':False,
-                              'pid_queue':q})
+                              'pid_queue':q,
+                              })
         job.start()
         # This will be passed back to a monitor that will watch the jobs and kill ones that run too long.
         jobID = q.get()
         print jobID
+        
+        # This joins the jobs so no defunct pythons left.
+        job.join()
+        
+        #while job.is_alive():
+        #    time.sleep(1)
 
     def fix_command(self):
         """

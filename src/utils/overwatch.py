@@ -33,7 +33,7 @@ import atexit
 import importlib
 import json
 import os
-import subprocess
+from subprocess import Popen
 import sys
 import time
 import uuid
@@ -227,6 +227,7 @@ class Overwatcher(Registrar):
     ow_type = "overwatcher"
     ow_id = None
     ow_managed_id = None
+    
 
     def __init__(self, site, managed_file, managed_file_flags):
         """
@@ -247,6 +248,7 @@ class Overwatcher(Registrar):
         i = self.managed_file_flags.index('--python')
         self.managed_file_flags.remove('--python')
         self.python_command = self.managed_file_flags.pop(i)
+        print self.python_command
 
         #print site
         #print managed_file
@@ -309,7 +311,7 @@ class Overwatcher(Registrar):
         environment. If the process exits immediately, the overwatcher will exit
         """
         # The environmental_vars
-        path = os.environ.copy()
+        #path = os.environ.copy()
 
         # Put together the command
         command = self.managed_file_flags[:]
@@ -320,7 +322,8 @@ class Overwatcher(Registrar):
         print 'command: %s'%command
 
         # Run the input command
-        self.managed_process = subprocess.Popen(command, env=path)
+        #self.managed_process = Popen(command, env=path)
+        self.managed_process = Popen(command)
 
         # Make sure the managed process actually ran
         time.sleep(0.5)

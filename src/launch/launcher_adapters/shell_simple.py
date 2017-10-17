@@ -75,9 +75,9 @@ class LauncherAdapter(object):
 
         # Call the launch process on the command file
         self.logger.debug("rapd.launch -s %s %s", site_tag, command_file)
-	print site_tag
-	Popen(["rapd.launch", "-s",site_tag, command_file])
-	#Popen(["rapd.launch", "-s",self.site, command_file])
+        print site_tag
+        Popen(["rapd.launch", "-s",site_tag, command_file])
+        #Popen(["rapd.launch", "-s",self.site, command_file])
 
     def fix_command(self):
         """

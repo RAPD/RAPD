@@ -116,9 +116,9 @@ def connectCluster(inp, job=True):
       return(line.strip())
   client.close()
 
-class Cluster_Event():
-    def __init__(self):
-        pass
+#class Cluster_Event():
+#    def __init__(self):
+#        pass
 
 def process_cluster_fix(func):
     """
@@ -133,6 +133,7 @@ def process_cluster_fix(func):
         launched = False
         for s in l:
             if kwargs['command'].count(s):
+                print 'GH'
                 Process(target=func, kwargs=kwargs).start()
                 launched = True
                 break

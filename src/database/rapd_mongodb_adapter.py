@@ -671,6 +671,24 @@ class Database(object):
                 for result in filtered_results:
                     result_ids.append(str(result["_id"]))
                 return result_ids
+#
+# Utility functions
+#
+def get_object_id(value):
+    """Attempts to wrap ObjectIds to something reasonable"""
+    return_val = None
+    try:
+        return_val = ObjectId(value)
+    except bson.errors.InvalidId:
+        if value == "None":
+            return_val = None
+        elif value == "False":
+            return_val = False
+        elif value == "True":
+            return_val = True
+        else:
+            pass
+    return return_val
 
 if __name__ == "__main__":
 

@@ -44,6 +44,7 @@ from utils.modules import load_module
 from utils.overwatch import Registrar
 import utils.site
 import utils.text as text
+from threading import Thread
 
 BUFFER_SIZE = 8192
 
@@ -115,7 +116,7 @@ class Launcher(object):
                                               "job_list":self.job_list})
     
                 # Look for a new command
-                # This will trow a redis.exceptions.ConnectionError if redis is unreachable
+                # This will throw a redis.exceptions.ConnectionError if redis is unreachable
                 #command = self.redis.brpop(["RAPD_JOBS",], 5)
                 try:
                     while self.redis.llen(self.job_list) != 0:
@@ -167,7 +168,8 @@ class Launcher(object):
             self.logger.debug("Command received channel:%s  message: %s", self.job_list, message)
 
         # Use the adapter to launch
-        self.adapter(self.site, message, self.launcher)
+        #self.adapter(self.site, message, self.launcher)
+        Thread(target=self.adapter, args=(self.site, message, self.launcher)).start()
 
     def get_settings(self):
         """
@@ -225,9 +227,8 @@ s IP address (%s), but not for the input tag (%s)" % (self.ip_address, self.tag)
             sys.exit(9)
         else:
             # Get the job_list to watch for this launcher
-	    self.job_list = self.launcher.get('job_list')
-	    print self.job_list
-            
+            self.job_list = self.launcher.get('job_list')
+            #print self.job_list
 
     def load_adapter(self):
         """Find and load the adapter"""
