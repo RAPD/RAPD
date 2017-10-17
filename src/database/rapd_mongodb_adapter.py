@@ -431,13 +431,19 @@ class Database(object):
         now = datetime.datetime.utcnow()
         plugin_result["timestamp"] = now
 
+        # Try to make the plugin_result by object traversal
+        _plugin_result = traverse_and_objectidify(plugin_result)
+        self.logger.debug("traverse_and_objectidify")
+        self.logger.debug(_plugin_result["process"])
+
+
         # Make sure we are all ObjectIds - this is until I can get the
         # object traversal working
         self.logger.debug(plugin_result["process"])
         if plugin_result.get("_id", False):
             plugin_result["_id"] = get_object_id(plugin_result["_id"])
         # _ids in process dict
-        for key, val in plugin_result["process"]:
+        for key, val in plugin_result["process"].iteritems():
             if "_id" in key:
                 plugin_result["process"][key] = get_object_id(val)
         self.logger.debug(plugin_result["process"])
@@ -738,5 +744,7 @@ if __name__ == "__main__":
     }
 
     pprint(test_dict)
+    print "\n"
     res_dict = traverse_and_objectidify(test_dict)
+    print("\n")
     pprint(res_dict)
