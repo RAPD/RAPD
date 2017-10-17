@@ -35,7 +35,7 @@ ID = "SERCAT_ID"
 DESCRIPTION = ""
 
 # The secrets file - do not put in github repo!
-SECRETS_FILE = "sites.secrets_sercat_id"
+SECRETS_FILE = "sites.secrets_sercat"
 
 # Copy the secrets attribute to the local scope
 # Do not remove unless you know what you are doing!
