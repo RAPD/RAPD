@@ -113,6 +113,10 @@ class Gatherer(object):
         # Get redis connection
         red = redis.Redis(connection_pool=self.redis_pool)
 
+        print "  Will publish new images on filecreate:%s" % self.tag
+        print "  Will push new images onto images_collected:%s" % self.tag
+
+
         self.logger.debug("  Will publish new images on filecreate:%s" % self.tag)
         self.logger.debug("  Will push new images onto images_collected:%s" % self.tag)
 
