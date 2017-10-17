@@ -351,7 +351,7 @@ class Database(object):
                                                  "status":status,
                                                  "representation":representation,
                                                  "request_type":request_type,
-                                                 "session_id":session_id,
+                                                 "session_id":get_object_id(session_id),
                                                  "data_root_dir":data_root_dir,
                                                  "timestamp":datetime.datetime.utcnow()})
 
@@ -433,9 +433,10 @@ class Database(object):
 
         # Make sure we are all ObjectIds
         _plugin_result = traverse_and_objectidify(plugin_result)
+        self.logger.debug(plugin_result["process"])
         self.logger.debug(_plugin_result["process"])
-        if plugin_result.get("_id", False):
-            plugin_result["_id"] = get_object_id(plugin_result["_id"])
+        if _plugin_result.get("_id", False):
+            _plugin_result["_id"] = get_object_id(_plugin_result["_id"])
 
         # Add to results
         collection_name = ("%s_%s_results" % (_plugin_result["plugin"]["data_type"],
