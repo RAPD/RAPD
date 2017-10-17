@@ -79,7 +79,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
               console.log('  status < 100');
               let result_time:any = Date.parse(result.timestamp);
               console.log('  time diff =', Date.now() - result_time);
-              if (Date.now() - result_time > 3600) {
+              if (Date.now() - result_time > 3600000) {
                 return false;
               }
             }
