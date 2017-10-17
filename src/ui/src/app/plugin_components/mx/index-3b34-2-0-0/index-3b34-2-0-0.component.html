@@ -48,7 +48,7 @@
       <mat-card-content *ngIf="view_mode === 'summary'" class="rapd-result">
         <div fxLayout="row" fxLayoutGap="10px">
           <div fxFlex="none">
-            <div *ngIf="full_result.results.labelit_results">
+            <div *ngIf="full_result.results.labelit_results.status !== 'FAILED'">
               <h3>Indexing Solution</h3>
               <table class="rapd-table">
                 <thead>
@@ -365,7 +365,7 @@
           <div *ngIf="full_result.results.raddose_results" class="rapd-result">
             <h3>Raddose Analysis</h3>
           </div>
-          <div *ngIf="full_result.results.labelit_results" class="rapd-result">
+          <div *ngIf="full_result.results.labelit_results.status !== 'FAILED'" class="rapd-result">
             <h3>Mosflm Integration</h3>
             <table class="rapd-table">
               <thead>
@@ -396,7 +396,7 @@
               </tbody>
             </table>
           </div>
-          <div *ngIf="full_result.results.labelit_results" class="rapd-result">
+          <div *ngIf="full_result.results.labelit_results.status !== 'FAILED'" class="rapd-result">
             <h3>Labelit Indexing</h3>
             <table class="rapd-table">
               <thead>
