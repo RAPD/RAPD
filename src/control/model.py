@@ -1024,9 +1024,10 @@ class Model(object):
         Types currently handled: NEWIMAGE, NEWRUN
         """
 
-        self.logger.debug("Received: %s", message)
+        # self.logger.debug("Received: %s", message)
 
         command = message.get("command")
+        self.logger.debug("Received message of command type: %s", command)
 
         # From a plugin
         if message.get("process", {}).get("type") == "plugin":
