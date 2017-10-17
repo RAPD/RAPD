@@ -110,17 +110,21 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
     // console.log('display', id);
 
     let result = this.data_results_object[id];
-    // console.log(result);
-    // console.log(result.status, result.timestamp);
+    console.log(result);
+    // console.log(result.display, result.status, result.timestamp);
     if (result.display !== '') {
+      console.log('  not ""');
       return false;
     } else if (result.status === 100) {
+      console.log('  == 100');
       return true;
     } else {
       let d:any = new Date(result.timestamp);
       if (Date.now() - d < 3600) {
+        console.log('  new enough');
         return true;
       } else {
+        console.log('  too old');
         return false;
       }
     }
