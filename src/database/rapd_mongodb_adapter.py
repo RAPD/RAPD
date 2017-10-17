@@ -42,6 +42,7 @@ import threading
 from bson.objectid import ObjectId
 import bson.errors
 # import numpy
+from pprint import pprint
 import pymongo
 
 
@@ -53,6 +54,9 @@ CONNECTION_ATTEMPTS = 30
 def get_object_id(value):
     """Attempts to wrap ObjectIds to something reasonable"""
     return_val = None
+
+    # print "get_object_id", value
+
     try:
         return_val = ObjectId(value)
     except (bson.errors.InvalidId, TypeError) as error:
@@ -63,8 +67,24 @@ def get_object_id(value):
         elif value == "True":
             return_val = True
         else:
-            pass
+            return_val = value
+
     return return_val
+
+def traverse_and_objectidify(input_object):
+    """Traverses an object and looks for object_ids to turn into ObjectIds"""
+
+    # print "traverse_and_objectidify"
+
+    if isinstance(input_object, dict):
+        for key, val in input_object.iteritems():
+            if isinstance(key, str):
+                if "_id" in key:
+                    input_object[key] = get_object_id(val)
+            elif isinstance(val, dict):
+                input_object[key] = traverse_and_objectidify(val)
+
+    return input_object
 
 class Database(object):
     """
@@ -408,21 +428,24 @@ class Database(object):
         # Add the current timestamp to the plugin_result
         now = datetime.datetime.utcnow()
         plugin_result["timestamp"] = now
-        if plugin_result.get("_id", False):
-            plugin_result["_id"] = get_object_id(plugin_result["_id"])
+
+        # Make sure we are all ObjectIds
+        _plugin_result = traverse_and_objectidify(plugin_result)
+        # if plugin_result.get("_id", False):
+        #     plugin_result["_id"] = get_object_id(plugin_result["_id"])
 
         # Add to results
-        collection_name = ("%s_%s_results" % (plugin_result["plugin"]["data_type"],
-                                              plugin_result["plugin"]["type"])).lower()
+        collection_name = ("%s_%s_results" % (_plugin_result["plugin"]["data_type"],
+                                              _plugin_result["plugin"]["type"])).lower()
         result1 = db[collection_name].update_one(
-            {"process.process_id":plugin_result["process"]["process_id"]},
-            {"$set":plugin_result},
+            {"process.process_id":_plugin_result["process"]["process_id"]},
+            {"$set":_plugin_result},
             upsert=True)
 
         # Get the _id from updated entry
         if result1.raw_result.get("updatedExisting", False):
             result1_id = db[collection_name].find_one(
-                {"process.process_id":get_object_id(plugin_result["process"]["process_id"])},
+                {"process.process_id":_plugin_result["process"]["process_id"]},
                 {"_id":1})
         # upsert
         else:
@@ -433,14 +456,14 @@ class Database(object):
         result2 = db.results.update_one(
             {"result_id":result1_id},
             {"$set":{
-                "data_type":plugin_result["plugin"]["data_type"],
-                "plugin_id":plugin_result["plugin"]["id"],
-                "plugin_type":plugin_result["plugin"]["type"],
-                "plugin_version":plugin_result["plugin"]["version"],
-                "repr":plugin_result["process"]["repr"],
+                "data_type":_plugin_result["plugin"]["data_type"],
+                "plugin_id":_plugin_result["plugin"]["id"],
+                "plugin_type":_plugin_result["plugin"]["type"],
+                "plugin_version":_plugin_result["plugin"]["version"],
+                "repr":_plugin_result["process"]["repr"],
                 "result_id":result1_id,
-                "session_id":get_object_id(plugin_result["process"]["session_id"]),
-                "status":plugin_result["process"]["status"],
+                "session_id":_plugin_result["process"]["session_id"],
+                "status":_plugin_result["process"]["status"],
                 "timestamp":now,
                 }
             },
@@ -674,22 +697,34 @@ class Database(object):
 #
 # Utility functions
 #
-def get_object_id(value):
-    """Attempts to wrap ObjectIds to something reasonable"""
-    return_val = None
-    try:
-        return_val = ObjectId(value)
-    except bson.errors.InvalidId:
-        if value == "None":
-            return_val = None
-        elif value == "False":
-            return_val = False
-        elif value == "True":
-            return_val = True
-        else:
-            pass
-    return return_val
+# def get_object_id(value):
+#     """Attempts to wrap ObjectIds to something reasonable"""
+#     return_val = None
+#     try:
+#         return_val = ObjectId(value)
+#     except bson.errors.InvalidId:
+#         if value == "None":
+#             return_val = None
+#         elif value == "False":
+#             return_val = False
+#         elif value == "True":
+#             return_val = True
+#         else:
+#             pass
+#     return return_val
 
 if __name__ == "__main__":
 
     print "rapd_mongodb_adapter.py.__main__"
+
+    test_dict = {
+        "_id":"59e627aa799305396a42f1fc",
+        "fake_id":"frank",
+        2:{
+            "my_id":"59e627aa799305396a42f1fc",
+            "not":"not an id",
+        }
+    }
+
+    pprint(test_dict)
+    pprint(traverse_and_objectidify(test_dict))
