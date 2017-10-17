@@ -454,7 +454,7 @@ class Database(object):
         if result1.raw_result.get("updatedExisting", False):
             result1_id = db[collection_name].find_one(
                 {"process.process_id":plugin_result["process"]["process_id"]},
-                {"_id":1})
+                {"_id":1})["_id"]
             self.logger.debug("%s _id  from updatedExisting %s", collection_name, result1_id)
         # upsert
         else:
@@ -481,7 +481,7 @@ class Database(object):
         if result2.raw_result.get("updatedExisting", False):
             result2_id = db.plugin_results.find_one(
                 {"result_id":result1_id},
-                {"_id":1})
+                {"_id":1})["_id"]
         # upsert
         else:
             result2_id = result2.upserted_id
