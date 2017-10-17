@@ -15,6 +15,7 @@ var redis = require('redis');
 
 // Import models
 var Result = require('./models/result');
+var Image =  require('./models/image');
 
 // Definitions of result types
 var result_type_trans = {
@@ -118,7 +119,30 @@ parse_message = function(channel, message) {
       return_array.push(['results', [result]]);
 
       // Create a detailed result
-      return_array.push(['result_details', message]);
+      // Get image header information
+      if ('image1_id' in message.process) {
+        Image.
+          findOne({_id:message.process.image1_id})
+          .exec(function(im1_error, im1_result){
+            if (im1_result) {
+              message.image1 = im1_result;
+              if ('image2_id' in message.process) {
+                Image.
+                  findOne({_id:message.process.image2_id})
+                  .exec(function(im2_error, im2_result){
+                    if (im2_result) {
+                      message.image2 = im1_result;
+                      return_array.push(['result_details', message]);
+                    }
+                  });
+              } else {
+                return_array.push(['result_details', message]);
+              }
+            }
+          });
+      } else {
+        return_array.push(['result_details', message]);
+      }
 
       // Return
       return return_array;
@@ -335,12 +359,46 @@ function Wss (opt, callback) {
                 // where('result_type').in(result_type_trans[data_type][data_class]).
                 // sort('-timestamp').
                 exec(function(err, result) {
-                    if (err)
-                        return false;
-                    console.log(result);
-                    // Send back over the websocket
-                    ws.send(JSON.stringify({msg_type:'result_details',
-                                            results:result}));
+                    if (err) {
+                      return false;
+                    } else {
+                      console.log(result);
+                      if ('process' in result) {
+                        if ('image1_id' in result.process) {
+                          Image.
+                            findOne({_id:result.process.image1_id})
+                            .exec(function(im1_error, im1_result){
+                              if (im1_result) {
+                                result.image1 = im1_result;
+                                if ('image2_id' in result.process) {
+                                  Image.
+                                    findOne({_id:result.process.image2_id})
+                                    .exec(function(im2_error, im2_result){
+                                      if (im2_result) {
+                                        result.image2 = im1_result;
+                                        // Send back over the websocket
+                                        ws.send(JSON.stringify({msg_type:'result_details',
+                                                                results:result}));
+                                      }
+                                    });
+                                } else {
+                                  // Send back over the websocket
+                                  ws.send(JSON.stringify({msg_type:'result_details',
+                                                          results:result}));
+                                }
+                              }
+                            });
+                        } else {
+                          // Send back over the websocket
+                          ws.send(JSON.stringify({msg_type:'result_details',
+                                                  results:result}));
+                        }
+                      } else {
+                        // Send back over the websocket
+                        ws.send(JSON.stringify({msg_type:'result_details',
+                                                results:result}));
+                      }
+                    }
                 });
 
               // ws.send(JSON.stringify({msg_type:'result_details',
