@@ -75,12 +75,14 @@ def traverse_and_objectidify(input_object):
     """Traverses an object and looks for object_ids to turn into ObjectIds"""
 
     # print "traverse_and_objectidify"
+    # pprint(input_object)
 
     if isinstance(input_object, dict):
         for key, val in input_object.iteritems():
-            if isinstance(key, str):
-                if "_id" in key:
-                    input_object[key] = get_object_id(val)
+            if isinstance(val, str):
+                if isinstance(key, str):
+                    if "_id" in key:
+                        input_object[key] = get_object_id(val)
             elif isinstance(val, dict):
                 input_object[key] = traverse_and_objectidify(val)
 
@@ -721,11 +723,15 @@ if __name__ == "__main__":
     test_dict = {
         "_id":"59e627aa799305396a42f1fc",
         "fake_id":"frank",
-        2:{
+        "process":{
             "my_id":"59e627aa799305396a42f1fc",
             "not":"not an id",
+            "third_shell": {
+                "hidden_id":"59e627aa799305396a42f1fc",
+            }
         }
     }
 
     pprint(test_dict)
-    pprint(traverse_and_objectidify(test_dict))
+    res_dict = traverse_and_objectidify(test_dict)
+    pprint(res_dict)
