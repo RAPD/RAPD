@@ -47,6 +47,25 @@ import pymongo
 
 CONNECTION_ATTEMPTS = 30
 
+#
+# Utility functions
+#
+def get_object_id(value):
+    """Attempts to wrap ObjectIds to something reasonable"""
+    return_val = None
+    try:
+        return_val = ObjectId(value)
+    except (bson.errors.InvalidId, TypeError) as error:
+        if value == "None":
+            return_val = None
+        elif value == "False":
+            return_val = False
+        elif value == "True":
+            return_val = True
+        else:
+            pass
+    return return_val
+
 class Database(object):
     """
     Provides connection to MongoDB for Model.
@@ -387,7 +406,8 @@ class Database(object):
         db = self.get_db_connection()
 
         # Add the current timestamp to the plugin_result
-        plugin_result["timestamp"] = datetime.datetime.utcnow()
+        now = datetime.datetime.utcnow()
+        plugin_result["timestamp"] = now
         if plugin_result.get("_id", False):
             plugin_result["_id"] = get_object_id(plugin_result["_id"])
 
@@ -420,7 +440,8 @@ class Database(object):
                 "repr":plugin_result["process"]["repr"],
                 "result_id":result1_id,
                 "session_id":get_object_id(plugin_result["process"]["session_id"]),
-                "status":plugin_result["process"]["status"]
+                "status":plugin_result["process"]["status"],
+                "timestamp":now,
                 }
             },
             upsert=True)

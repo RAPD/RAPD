@@ -64,12 +64,27 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
   private handleIncomingData(data: any) {
     let self = this;
 
-    console.log(data);
+    // console.log(data);
 
     // if (data.msg_type === 'results') {
     for (let result of data) {
         if ((result.data_type+':'+result.plugin_type).toLowerCase() === this.result_types[this.result_type]) {
+
           console.log(result);
+
+          // Filter for age/display
+          if (! result.display) {
+            console.log('  no display');
+            if (result.status < 100) {
+              console.log('  status < 100');
+              let result_time:any = Date.parse(result.timestamp);
+              console.log('  time diff =', Date.now() - result_time);
+              if (Date.now() - result_time > 3600000) {
+                return false;
+              }
+            }
+          }
+
           // New result
           let id = result._id; // result.process.process_id;
           console.log(id);
@@ -105,25 +120,26 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
   }
 
   // Should the result be in the list?
-  public shouldDisplay(id:string): boolean {
-
-    // console.log('display', id);
-
-    let result = this.data_results_object[id];
-    // console.log(result);
-    // console.log(result.status, result.timestamp);
-    if (result.display in {pinned:1, trashed:1}) {
-      return true;
-    } else if (result.status == 100) { 
-      return false;
-    }  else {
-      let d:any = new Date(result.timestamp);
-      if (Date.now() - d < 3600) {
-        return true;
-      } else {
-        return false;
-      }
-    }
+  // public shouldDisplay(id:string): boolean {
+  //
+  //   // console.log('display', id);
+  //
+  //   let result = this.data_results_object[id];
+  //   // console.log(result.status, result.timestamp);
+  //   if (result.display in {pinned:1, trashed:1}) {
+  //     return false;
+  //   } else if (result.status == 100) {
+  //     return true;
+  //   }  else {
+  //     let d:any = new Date(result.timestamp);
+  //     if (Date.now() - d < 3600) {
+  //       // console.log('  new enough');
+  //       return true;
+  //     } else {
+  //       // console.log('  too old');
+  //       return false;
+  //     }
+  //   }
 
     // if (result.status === 100 || (Date.now() - d) < 36000) {
     //   if (result.display) {
@@ -140,5 +156,5 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
     // } else {
     //   return false;
     // }
-  }
+  // }
 }

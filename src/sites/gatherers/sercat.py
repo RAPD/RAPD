@@ -75,9 +75,13 @@ class Gatherer(object):
         """
         Setup and start the SercatGatherer
         """
-
+        print "__init__"
         # Get the logger Instance
-        self.logger = logging.getLogger("RAPDLogger")
+        # self.logger = logging.getLogger("RAPDLogger")
+        self.logger = utils.log.get_logger(logfile_dir=site.LOGFILE_DIR,
+                                           logfile_id="rapd_gather",
+                                           #level=log_level
+                                           )
 
         # Passed-in variables
         self.site = site
@@ -101,6 +105,7 @@ class Gatherer(object):
         """
         The while loop for watching the files
         """
+        print "run"
         self.logger.info("SercatGatherer.run")
 
         # Set up overwatcher
@@ -112,10 +117,16 @@ class Gatherer(object):
         # Get redis connection
         red = redis.Redis(connection_pool=self.redis_pool)
 
+        print "  Will publish new images on filecreate:%s" % self.tag
+        print "  Will push new images onto images_collected:%s" % self.tag
+
+
         self.logger.debug("  Will publish new images on filecreate:%s" % self.tag)
         self.logger.debug("  Will push new images onto images_collected:%s" % self.tag)
 
         while self.go:
+
+            print "go"
 
             # 5 rounds of checking
             for ___ in range(5):
