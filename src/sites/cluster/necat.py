@@ -133,6 +133,7 @@ def process_cluster_fix(func):
         launched = False
         for s in l:
             if kwargs['command'].count(s):
+                print 'GH'
                 Process(target=func, kwargs=kwargs).start()
                 launched = True
                 break

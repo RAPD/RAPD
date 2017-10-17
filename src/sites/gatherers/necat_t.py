@@ -459,10 +459,15 @@ class Gatherer(object):
                     run_data = self.get_run_data(current_run)
                     # Get rid of trailing slash from beamline Redis.
                     #dir = run_data['directory']
-                    dir = '/epu2/rdma%s'%run_data['directory']
-                    if dir[-1] == '/':
-                        run_data['directory'] = dir[:-1]
-                    
+                    # Have to remove trailing slash 
+                    #if dir[-1] == '/':
+                    #    run_data['directory'] = dir[:-1]
+                    dir = "/epu2/rdma%s%s_%d_%06d" % (
+                                      run_data['directory'],
+                                      run_data['image_prefix'],
+                                      int(run_data['run_number']),
+                                      int(run_data['start_image_number']))
+                    run_data['directory'] = dir
                     self.logger.debug("run_data:%s %s", self.tag, run_data)
                     # Put into exchangable format
                     run_data_json = json.dumps(run_data)

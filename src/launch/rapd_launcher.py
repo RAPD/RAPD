@@ -44,6 +44,7 @@ from utils.modules import load_module
 from utils.overwatch import Registrar
 import utils.site
 import utils.text as text
+from threading import Thread
 
 BUFFER_SIZE = 8192
 
@@ -167,7 +168,8 @@ class Launcher(object):
             self.logger.debug("Command received channel:%s  message: %s", self.job_list, message)
 
         # Use the adapter to launch
-        self.adapter(self.site, message, self.launcher)
+        #self.adapter(self.site, message, self.launcher)
+        Thread(target=self.adapter, args=(self.site, message, self.launcher)).start()
 
     def get_settings(self):
         """

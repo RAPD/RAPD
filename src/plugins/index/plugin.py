@@ -357,16 +357,20 @@ class RapdPlugin(Process):
 
         # Copy over details of this run
         self.results["command"] = self.command #.get("command")
-        self.results["header1"] = self.header
-        self.results["header2"] = self.header2
-
+        # Just save the _id
+        self.results["header1"] = {"_id": self.header.get("_id")}
+        if self.header2:
+            self.results["header2"] = {"_id": self.header2.get("_id")}
+        else:
+            self.results["header2"] = self.header2
+        """
         # Temporary cover for missing basename
         for version in (1, 2):
             if self.results["header%d" % version]:
                 self.results["header%d" % version]["basename"] = \
                     os.path.basename(self.results["header%d" % version]["fullname"])
         self.results["preferences"] = self.preferences
-
+        """
         # Describe the process
         self.results["process"] = self.command.get("process", {})
         # Status is now 1 (starting)
@@ -388,6 +392,7 @@ class RapdPlugin(Process):
             "id":ID,
             "version":VERSION
         }
+        pprint(self.results)
 
     def run(self):
         """
@@ -444,8 +449,8 @@ class RapdPlugin(Process):
         """Connect to the redis instance"""
         # Create a pool connection
         redis_database = importlib.import_module('database.rapd_redis_adapter')
-        self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        self.redis = self.redis_database.connect_to_redis()
+        redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        self.redis = redis_database.connect_to_redis()
 
     def send_results(self):
         """Let everyone know we are working on this"""
@@ -2018,9 +2023,6 @@ Distance | % Transmission", level=98, color="white")
         self.logger.debug("-------------------------------------")
         self.tprint(arg="\nRAPD autoindexing & strategy complete", level=98, color="green")
         self.tprint(arg="Total elapsed time: %s seconds" % t, level=10, color="white")
-
-        # Kill the redis connection
-        self.redis_database.stop()
 
     def html_best_plots(self):
         """
