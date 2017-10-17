@@ -75,7 +75,7 @@ class Gatherer(object):
         """
         Setup and start the SercatGatherer
         """
-
+        print "__init__"
         # Get the logger Instance
         self.logger = logging.getLogger("RAPDLogger")
 
@@ -101,6 +101,7 @@ class Gatherer(object):
         """
         The while loop for watching the files
         """
+        print "run"
         self.logger.info("SercatGatherer.run")
 
         # Set up overwatcher
@@ -116,6 +117,8 @@ class Gatherer(object):
         self.logger.debug("  Will push new images onto images_collected:%s" % self.tag)
 
         while self.go:
+
+            print "go"
 
             # 5 rounds of checking
             for ___ in range(5):
