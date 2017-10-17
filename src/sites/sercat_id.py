@@ -86,12 +86,10 @@ UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"
 # Control settings
 # Database to use for control operations. Options: "mysql"
 CONTROL_DATABASE = "mongodb"
-CONTROL_DATABASE_DATA = "rapd_data"
-CONTROL_DATABASE_USERS = "rapd_users"
-CONTROL_DATABASE_CLOUD = "rapd_cloud"
+
 # Redis databse
 # Running in a cluster configuration - True || False
-CONTROL_REDIS_CLUSTER = False
+# CONTROL_REDIS_CLUSTER = False
 
 # Detector settings
 # Must have a file in detectors that is all lowercase of this string
@@ -162,13 +160,18 @@ REMOTE_ADAPTER_REDIS_CLUSTER = CONTROL_REDIS_CLUSTER
 ## Be extra careful when modifying
 CONTROL_DATABASE_SETTINGS = {
     "CONTROL_DATABASE":CONTROL_DATABASE,
-    "DATABASE_NAME_DATA":CONTROL_DATABASE_DATA,
-    "DATABASE_NAME_USERS":CONTROL_DATABASE_USERS,
-    "DATABASE_NAME_CLOUD":CONTROL_DATABASE_CLOUD,
     "DATABASE_HOST":CONTROL_DATABASE_HOST,
     "DATABASE_PORT":CONTROL_DATABASE_PORT,
     "DATABASE_USER":CONTROL_DATABASE_USER,
-    "DATABASE_PASSWORD":CONTROL_DATABASE_PASSWORD
+    "DATABASE_PASSWORD":CONTROL_DATABASE_PASSWORD,
+    # Connection can be 'pool' for database on single computer, or
+    # 'sentinal' for high availability on redundant computers.
+    "REDIS_CONNECTION":"pool",
+    "REDIS_HOST":CONTROL_REDIS_HOST,
+    "REDIS_PORT":CONTROL_REDIS_PORT,
+    "REDIS_DB":CONTROL_REDIS_DB,
+    "REDIS_SENTINEL_HOSTS":CONTROL_SENTINEL_HOSTS,
+    "REDIS_MASTER_NAME":CONTROL_REDIS_MASTER_NAME,
 }
 
 LAUNCHER_SETTINGS = {
