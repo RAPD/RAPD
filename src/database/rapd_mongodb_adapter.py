@@ -120,6 +120,27 @@ class Database(object):
 
         return db
 
+    #
+    # Utility functions
+    #
+    def get_object_id(value):
+        """Attempts to wrap ObjectIds to something reasonable"""
+        return_val = None
+        try:
+            return_val = ObjectId(value)
+        except bson.errors.InvalidId:
+            if value == "None":
+                return_val = None
+            elif value == "False":
+                return_val = False
+            elif value == "True":
+                return_val = True
+            else:
+                pass
+        return return_val
+
+
+
     ############################################################################
     # Functions for groups                                                     #
     ############################################################################
@@ -138,10 +159,11 @@ class Database(object):
             return False
 
         # If it should be an ObjectId, cast it to one
-        try:
-            _value = ObjectId(value)
-        except bson.errors.InvalidId:
-            _value = value
+        _value = get_object_id(value)
+        # try:
+        #     _value = ObjectId(value)
+        # except bson.errors.InvalidId:
+        #     _value = value
 
         # Get connection to database
         db = self.get_db_connection()
@@ -197,14 +219,15 @@ class Database(object):
 
         # Make sure the group_id is an ObjectId
         # If it should be an ObjectId, cast it to one
-        try:
-            group = ObjectId(group)
-        except bson.errors.InvalidId:
-            pass
+        _group = get_object_id(group)
+        # try:
+        #     group = ObjectId(group)
+        # except bson.errors.InvalidId:
+        #     pass
 
         # Insert into the database
         result = db.sessions.insert_one({"data_root_dir": data_root_dir,
-                                         "group": group,
+                                         "group": _group,
                                          "type":session_type,
                                          "timestamp": datetime.datetime.utcnow()})
 
@@ -255,11 +278,14 @@ class Database(object):
 
         self.logger.debug(image_id)
 
+        # Make sure we are querying by ObjectId
+        _image_id = get_object_id(image_id)
+
         # Get connection to database
         db = self.get_db_connection()
 
         # Query and return, transform _id to string
-        return db.images.find_one({"_id":ObjectId(str(image_id))})
+        return db.images.find_one({"_id":_image_id})
 
     #
     # Functions for processes                                                                      #
@@ -339,7 +365,10 @@ class Database(object):
         if display:
             set_dict["display"] = display
 
-        db.plugin_processes.update({"_id":ObjectId(str(process_id))},
+        # Make sure we are using an ObjectId
+        _process_id = get_object_id(process_id)
+
+        db.plugin_processes.update({"_id":_process_id},
                                    {"$set":set_dict})
 
         return True
@@ -381,7 +410,7 @@ class Database(object):
         # Add the current timestamp to the plugin_result
         plugin_result["timestamp"] = datetime.datetime.utcnow()
         if plugin_result.get("_id", False):
-            plugin_result["_id"] = ObjectId(plugin_result["_id"])
+            plugin_result["_id"] = get_object_id(plugin_result["_id"])
 
         # Add to results
         collection_name = ("%s_%s_results" % (plugin_result["plugin"]["data_type"],
@@ -394,7 +423,7 @@ class Database(object):
         # Get the _id from updated entry
         if result1.raw_result.get("updatedExisting", False):
             result1_id = db[collection_name].find_one(
-                {"process.process_id":ObjectId(plugin_result["process"]["process_id"])},
+                {"process.process_id":get_object_id(plugin_result["process"]["process_id"])},
                 {"_id":1})
         # upsert
         else:
@@ -411,7 +440,7 @@ class Database(object):
                 "plugin_version":plugin_result["plugin"]["version"],
                 "repr":plugin_result["process"]["repr"],
                 "result_id":result1_id,
-                "session_id":ObjectId(plugin_result["process"]["session_id"]),
+                "session_id":get_object_id(plugin_result["process"]["session_id"]),
                 "status":plugin_result["process"]["status"]
                 }
             },
