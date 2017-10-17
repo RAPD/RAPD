@@ -55,7 +55,7 @@ def get_object_id(value):
     return_val = None
     try:
         return_val = ObjectId(value)
-    except bson.errors.InvalidId:
+    except (bson.errors.InvalidId, TypeError as error):
         if value == "None":
             return_val = None
         elif value == "False":
