@@ -359,38 +359,48 @@ function Wss (opt, callback) {
                 // where('result_type').in(result_type_trans[data_type][data_class]).
                 // sort('-timestamp').
                 exec(function(err, result) {
-                    if (err)
-                        return false;
-                    console.log(result);
-                    if ('image1_id' in result.process) {
-                      Image.
-                        findOne({_id:result.process.image1_id})
-                        .exec(function(im1_error, im1_result){
-                          if (im1_result) {
-                            result.image1 = im1_result;
-                            if ('image2_id' in result.process) {
-                              Image.
-                                findOne({_id:result.process.image2_id})
-                                .exec(function(im2_error, im2_result){
-                                  if (im2_result) {
-                                    result.image2 = im1_result;
-                                    // Send back over the websocket
-                                    ws.send(JSON.stringify({msg_type:'result_details',
-                                                            results:result}));
-                                  }
-                                });
-                            } else {
-                              // Send back over the websocket
-                              ws.send(JSON.stringify({msg_type:'result_details',
-                                                      results:result}));
-                            }
-                          }
-                        });
+                    if (err) {
+                      return false;
                     } else {
-                      // Send back over the websocket
-                      ws.send(JSON.stringify({msg_type:'result_details',
-                                              results:result}));
+                      console.log(result);
+                      if ('process' in result) {
+                        if ('image1_id' in result.process) {
+                          Image.
+                            findOne({_id:result.process.image1_id})
+                            .exec(function(im1_error, im1_result){
+                              if (im1_result) {
+                                result.image1 = im1_result;
+                                if ('image2_id' in result.process) {
+                                  Image.
+                                    findOne({_id:result.process.image2_id})
+                                    .exec(function(im2_error, im2_result){
+                                      if (im2_result) {
+                                        result.image2 = im1_result;
+                                        // Send back over the websocket
+                                        ws.send(JSON.stringify({msg_type:'result_details',
+                                                                results:result}));
+                                      }
+                                    });
+                                } else {
+                                  // Send back over the websocket
+                                  ws.send(JSON.stringify({msg_type:'result_details',
+                                                          results:result}));
+                                }
+                              }
+                            });
+                        } else {
+                          // Send back over the websocket
+                          ws.send(JSON.stringify({msg_type:'result_details',
+                                                  results:result}));
+                        }
+                      } else {
+                        // Send back over the websocket
+                        ws.send(JSON.stringify({msg_type:'result_details',
+                                                results:result}));
+                      }
                     }
+
+
 
                 });
 
