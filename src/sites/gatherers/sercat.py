@@ -77,7 +77,11 @@ class Gatherer(object):
         """
         print "__init__"
         # Get the logger Instance
-        self.logger = logging.getLogger("RAPDLogger")
+        # self.logger = logging.getLogger("RAPDLogger")
+        self.logger = utils.log.get_logger(logfile_dir=site.LOGFILE_DIR,
+                                           logfile_id="rapd_gather",
+                                           #level=log_level
+                                           )
 
         # Passed-in variables
         self.site = site
