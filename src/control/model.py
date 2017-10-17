@@ -1012,7 +1012,7 @@ class Model(object):
         # Save the results for the plugin
         if "results" in message:
             __ = self.database.save_plugin_result(message)
-            self.logger.debug(__)
+            # self.logger.debug(__)
 
     def receive(self, message):
         """
