@@ -72,8 +72,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
           console.log(result);
 
           // Filter for age/display
-          let disp:string = result.display;
-          if (! disp in {pinned:1, trashed:1}) {
+          if (result.display) {
             if (result.status < 100) {
               let result_time:any = new Date(result.timestamp);
               if (Date.now() - result_time > 3600) {
