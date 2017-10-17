@@ -26,7 +26,6 @@ __status__ = "Development"
 
 # Standard imports
 import gzip
-import json
 from multiprocessing import Pool, Process, Queue
 import os
 from pprint import pprint
@@ -44,6 +43,8 @@ from plugins.subcontractors.parse import ParseOutputPhaser, setPhaserFailed
 # from utils.communicate import rapd_send
 # import utils.site as site_utils
 import utils.global_vars as rglobals
+from utils.text import json
+from bson.objectid import ObjectId
 import utils.xutils as xutils
 
 PDBQ_SERVER = rglobals.PDBQ_SERVER

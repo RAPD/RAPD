@@ -35,7 +35,6 @@ sudo docker run --name mariadb -v /home/schuerjp/data:/var/lib/mysql -p 3306:330
 
 # Standard imports
 import datetime
-import json
 import logging
 import operator
 import os
@@ -44,6 +43,9 @@ import time
 
 import numpy
 import pymysql
+
+from utils.text import json
+from bson.objectid import ObjectId
 
 MYSQL_ATTEMPTS = 30
 
@@ -1349,7 +1351,7 @@ class Database(object):
         settings = information.get("preferences", {})
         results = information.get("results", {})
 
-        
+
 
 
     def addSingleResult(self,dirs,info,settings,results):

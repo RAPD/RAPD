@@ -26,12 +26,14 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
 # Standard imports
-import json
 import os
 from pprint import pprint
 import shutil
 import subprocess
 import sys
+
+from utils.text import json
+from bson.objectid import ObjectId
 
 from iotbx import mtz as iotbx_mtz
 from iotbx import pdb as iotbx_pdb
@@ -561,7 +563,7 @@ def checkAnom(self):
   else:
     Parse.setShelxResults(self)
     return (False)
-  
+
   except:
     self.logger.exception('**ERROR in Utils.checkAnom**')
     Parse.setShelxResults(self)
@@ -636,7 +638,7 @@ def checkVolume(self,volume):
   """
 def check_volume_OLD(volume):
     """Check to see if unit cell is really big"""
-    
+
 
     if float(volume) > 25000000.0: #For 30S
         sample_type = "ribosome"
@@ -1205,7 +1207,7 @@ def get_labelit_settings_OLD(self, iteration=0):
     """
 
     self.logger.debug('Utilities::errorLabelit')
-    
+
     # If iteration is string, return the total number of iterations in the funnction.
     if isinstance(iteration, str):
         return 6
@@ -1222,7 +1224,7 @@ def get_labelit_settings_OLD(self, iteration=0):
 
     if self.twotheta == False:
         preferences.write('beam_search_scope=0.3\n')
-        
+
     if iteration == 0:
         preferences.close()
         self.labelit_log[iteration] = ['\nUsing default parameters.\n']
@@ -1838,7 +1840,7 @@ def foldersStrategy_OLD2(self, iteration=0):
   folders(self,iteration)
   if copy:
     if iteration[-1] == '0':
-      # Does this even work? there is bestfile.dat and .par? 
+      # Does this even work? there is bestfile.dat and .par?
       os.system('cp %s/bestfile* %s/%s*.hkl .'%(self.labelit_dir,self.labelit_dir,self.index_number))
     shutil.copy(os.path.join(self.labelit_dir,self.index_number),os.getcwd())
     shutil.copy(os.path.join(self.labelit_dir,'%s.mat'%self.index_number),os.getcwd())
@@ -3658,7 +3660,7 @@ def get_sub_groups(input_sg, mode="simple"):
 
     if isinstance(input_sg, int):
         input_sg = str(input_sg)
-    
+
     # Look for subgroups
     if subgroups1.has_key(input_sg):
         simple_sg = input_sg
@@ -3889,6 +3891,6 @@ def XDS2Shelx(self,inp,output=False):
     output.put(os.path.join(os.getcwd(),os.path.basename(inp).replace('.HKL','.sca')))
   else:
     self.datafile = os.path.join(os.getcwd(),os.path.basename(inp).replace('.HKL','.sca'))
-  
+
   #except:
   #  self.logger.exception('**ERROR in Utils.XDS2Shelx**')

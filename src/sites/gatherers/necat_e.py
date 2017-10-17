@@ -31,13 +31,13 @@ to rapd_server via to rapd_adsc
 
 This server is used at 24ID-E with an ADSC Q315 detector
 
-If you are adapting rapd to your locality, you will need to check this 
+If you are adapting rapd to your locality, you will need to check this
 carefully.
 """
 """
 import socket
 import os
-import threading 
+import threading
 import time
 import atexit
 import re
@@ -53,7 +53,6 @@ import logging, logging.handlers
 import argparse
 import datetime
 import importlib
-import json
 import logging
 import logging.handlers
 import os
@@ -72,6 +71,8 @@ import utils.log
 from utils.overwatch import Registrar
 import utils.site
 import utils.text as text
+from utils.text import json
+from bson.objectid import ObjectId
 
 # Monitor Beamlines
 #
@@ -112,7 +113,7 @@ class Gatherer(object):
 
         # Now run
         self.run()
-    
+
     """Used by both beamlines"""
     def __init__(self,beamline="C",notify=None,logger=None):
         if logger:
@@ -145,14 +146,14 @@ class Gatherer(object):
         # Where beamline information is coming from
         # Create a pool connection
         redis_database = importlib.import_module('database.rapd_redis_adapter')
-        
+
         bl_database = redis_database.Database(settings=self.site.SITE_ADAPTER_SETTINGS)
         self.bl_redis = bl_database.connect_redis_pool()
         pipe = self.bl_redis.pipeline()
-        
+
         #self.red = redis.Redis(beamline_settings[self.beamline]['redis_ip'])
         #pipe = self.red.pipeline()
-        
+
         # Where information will be published to
         """
         self.pub = pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
@@ -162,7 +163,7 @@ class Gatherer(object):
         #self.pub = BLspec.connect_redis_manager_HA()
         self.pub_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
         self.pub = self.pub_database.connect_redis_manager_HA()
-        
+
         # For beamline T
         #self.pubsub = self.pub.pubsub()
         #self.pubsub.subscribe('run_info_T')
@@ -196,7 +197,7 @@ class Gatherer(object):
                     #print current_run
                     if current_run == None:
                         current_run = ''
-                    
+
                 if (len(current_run) > 0):
                     if self.beamline == "E":
                         self.pub.lpush('run_info_T', current_run)
@@ -213,7 +214,7 @@ class Gatherer(object):
 
                     # Get extra run data
                     extra_data = self.getRunData()
-                    
+
                     if self.beamline == "T":
                         current_dir = "/epu/rdma%s%s_%d_%06d" % (
                                       current_dir,
@@ -419,13 +420,13 @@ class Gatherer(object):
 #             'db_cloud_name'   : 'rapd_cloud'}
 """
 settings = {
-               #ID24-C 
+               #ID24-C
                'nec-pid.nec.aps.anl.gov'  : ('/usr/local/ccd_dist_md2b_rpc/tmp/marcollect','/usr/local/ccd_dist_md2b_rpc/tmp/xf_status','C'),
                #ID24-E
                'selenium.nec.aps.anl.gov' : ('/usr/local/ccd_dist_md2_rpc_nm/tmp/marcollect','/usr/local/ccd_dist_md2_rpc_nm/tmp/xf_status','C'),  #'/home/ccd/samba/phii_adsc_log/adsc.log','E'),
                #DEFAULT
                'default'                  : ('/tmp/marcollect','/tmp/xf_status','T')
-           } 
+           }
 """
 class RAPD_ADSC_Server_OLD(threading.Thread):
     """
@@ -433,7 +434,7 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
     by the SimpleXMLRPCServer
     """
     def __init__(self,one_run=False):
-        
+
         #set up logging
         LOG_FILENAME = '/tmp/rapd_adscserver.log'
         # Set up a specific logger with our desired output level
@@ -445,18 +446,18 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
         formatter = logging.Formatter("%(asctime)s - %(message)s")
         handler.setFormatter(formatter)
         logger.addHandler(handler)
-        
+
         logger.info('RAPD_ADSCSERVER.__init__')
 
         #init the thread
         threading.Thread.__init__(self)
-        
-        self.logger     = logger 
+
+        self.logger     = logger
         self.ip_address = socket.gethostbyaddr(socket.gethostname())[-1][0]
-        
+
         #passed in
         self.one_run = one_run
-        
+
         #for keeping track of file change times
         self.mar_time = 0
         self.xf_time  = 0
@@ -465,7 +466,7 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
         self.last_image = False
         self.xf_status_queue = deque()
         self.marcollect_queue = deque()
-        
+
         #initiate connection to MySQL for heartbeat function
         self.Connect2SQL()
 
@@ -474,25 +475,25 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
 
         #get our bearings
         self.SetHost()
-        
+
         #running conditions
         self.Go = True
         atexit.register(self.Stop)
-                
+
         #now run
         self.start()
-        
+
     def run(self):
         """
         The while loop for watching the files
         """
         self.logger.info('RAPD_ADSC_Server::run')
-            
+
         #red = redis.Redis('164.54.212.169')
         red = pysent.RedisManager(sentinel_host="remote.nec.aps.anl.gov",
                                   sentinel_port=26379,
                                   master_name="remote_master")
-    
+
         self.UpdateStatusDataserver()
         counter = 0
         while(self.Go):
@@ -510,7 +511,7 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
                         #Publish to Redis
                         #print "Publish to redis",xparsed.get('image_name','')
                         red.publish('filecreate:E',xparsed.get('image_name',''))
-                    break 
+                    break
                 else:
                     time.sleep(0.1)
             if counter == 15:
@@ -523,15 +524,15 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
         Used to stop the loop
         """
         self.logger.debug('RAPD_ADSC_Server::Stop')
-            
+
         self.Go = False
-        
+
     def SetHost(self):
         """
         Use os.uname to set files to watch
         """
         self.logger.debug('RAPD_ADSC_Server::SetHost')
-        
+
         #figure out which host we are on
         host = os.uname()[1]
         #now grab the file locations, beamline from settings
@@ -539,8 +540,8 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
             self.marcollect,self.xf_status,self.beamline = settings[host]
         else:
             self.marcollect,self.xf_status,self.beamline = settings['default']
-        
-            
+
+
     # """
     # MySQL Methods
     # """
@@ -555,10 +556,10 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
     #         self.cursor      = self.connection.cursor()
     #     except:
     #         pass
-        
+
     # def UpdateStatusDataserver(self):
     #     """
-    #     Update rapd_data.status_dataserver so everyone knows we are alive 
+    #     Update rapd_data.status_dataserver so everyone knows we are alive
     #     """
     #     self.logger.debug('UpdateStatusDataserver')
     #     try:
@@ -573,14 +574,14 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
 
     """
     MARCOLLECT METHODS
-    """ 
+    """
     def GetMarcollectTime(self):
         """
-        Returns modification time of marcollect 
+        Returns modification time of marcollect
         Used by XMLRPC server
         """
         return(self.mar_time)
-    
+
     def GetMarcollectData(self):
         """
         Returns dict of marcollect
@@ -590,7 +591,7 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
             return(self.marcollect_queue.pop())
         else:
             return(False)
-    
+
     def CheckMarcollect(self):
         """
         return True if marcollect has been changed, False if not
@@ -604,7 +605,7 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
                 if tries == 4:
                     return(False)
                 tries += 1
-                
+
         #the modification time has not changed
         if (self.mar_time == statinfo.st_mtime):
             return(False)
@@ -634,7 +635,7 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
         """
         self.logger.debug('RAPD_ADSC_Server::ParseMarcollect')
         #self.logger.debug(lines)
-        
+
         try:
             out_dict = { 'Runs' : {} }
             for i in range(len(lines)):
@@ -669,8 +670,8 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
                     out_dict['MAD'] = sline[1].strip()
                 elif sline[0] == 'Energy to Use':
                     pass
-    
-                #handle the run lines 
+
+                #handle the run lines
                 elif sline[0] == 'Run(s)':
                     run_num = 0
                     for j in range(i+1,len(lines)):
@@ -714,26 +715,26 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
                                 run_num += 1
             if not out_dict['MAD']:
                 out_dict['MAD'] = 'No'
-                
+
             self.logger.debug("Resulting dict")
-            self.logger.debug(out_dict)            
-            
+            self.logger.debug(out_dict)
+
             return(out_dict)
-        
+
         except:
             self.logger.exception('Failure to parse marcollect - error in format?')
             return(False)
-    
+
     def AddMarcollect(self,data,attempt=0):
         """
         Add a new marcollect to the MySQL database
         """
         self.logger.debug('RAPD_ADSC_Server::AddMarcollect %d' % attempt)
-            
+
         if attempt > 2:
             self.logger.debug('FAILED TO ADD MARCOLLECT AFTER 3 TRIES - Giving Up!')
             return(False)
-            
+
         #connect to the database
         try:
             self.mar_dict = data.copy()
@@ -749,20 +750,20 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
                                                            mad,
                                                            mode,
                                                            beamline) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                                                           (data['ADC'], 
-                                                            data['Anom_Wedge'], 
-                                                            data['Anomalous'], 
+                                                           (data['ADC'],
+                                                            data['Anom_Wedge'],
+                                                            data['Anomalous'],
                                                             data['Beam_Center'],
-                                                            data['Binning'], 
-                                                            data['Comment'], 
-                                                            data['Compression'], 
+                                                            data['Binning'],
+                                                            data['Comment'],
+                                                            data['Compression'],
                                                             data['Directory'],
-                                                            data['Image_Prefix'], 
-                                                            data['MAD'], 
+                                                            data['Image_Prefix'],
+                                                            data['MAD'],
                                                             data['Mode'],
                                                             self.beamline))
-            self.connection.commit()            
-        
+            self.connection.commit()
+
         except _mysql_exceptions.IntegrityError , (errno, strerror):
             if errno == 1062:
                 self.logger.exception('This run_status is already in the database')
@@ -781,57 +782,57 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
                                                                  mad          = %s,
                                                                  mode         = %s,
                                                                  beamline     = %s WHERE directory = %s AND image_prefix = %s""",
-                                                           (data['ADC'], 
-                                                            data['Anom_Wedge'], 
-                                                            data['Anomalous'], 
+                                                           (data['ADC'],
+                                                            data['Anom_Wedge'],
+                                                            data['Anomalous'],
                                                             data['Beam_Center'],
                                                             data['Binning'],
-                                                            data['Comment'], 
-                                                            data['Compression'], 
+                                                            data['Comment'],
+                                                            data['Compression'],
                                                             data['Directory'],
-                                                            data['Image_Prefix'], 
-                                                            data['MAD'], 
+                                                            data['Image_Prefix'],
+                                                            data['MAD'],
                                                             data['Mode'],
                                                             self.beamline,
                                                             data['Directory'],
                                                             data['Image_Prefix']))
-                        self.connection.commit()  
+                        self.connection.commit()
                         self.logger.debug('Run Status entered')
                     except:
                         self.logger.exception("Exception in updating run_status")
             else:
                 self.logger.exception('ERROR : unknown IntegrityError exception in Database::AddMarcollect')
-        
+
         except _mysql_exceptions.OperationalError , (errno, strerror):
             if errno == 2006:
                 self.logger.exception('Connection to MySQL database lost. Will attempt to reconnect.')
                 self.Connect2SQL()
                 self.AddMarcollect(data,attempt=attempt+1)
             else:
-                self.logger.exception('ERROR : unknown OperationalError in Database::AddMarcollect')   
+                self.logger.exception('ERROR : unknown OperationalError in Database::AddMarcollect')
         except:
             self.logger.exception('ERROR : unknown exception in Database::AddMarCollect')
-          
+
         #add the runs even if we have an error with adding the marcollect
         results = []
         for run in data['Runs'].keys():
             results.append(self.AddRun(data['Runs'][run]))
-            
+
         if True in results:
             return(True)
         else:
-            return(False)    
-            
+            return(False)
+
     def AddRun(self,run,attempt=0):
         """
         Add a new run to the MySQL database
         """
         self.logger.debug('RAPD_ADSC_Server::AddRun')
-        
+
         if attempt > 2:
             self.logger.warning('FAILED TO ADD RUN AFTER 3 TRIES - Giving Up!')
             return(False)
-        
+
         try:
             self.logger.debug("Adding run into database directory:%s image_prefix:%s run_number:%s" %(run['Directory'],run['Image_Prefix'],run['Run']))
             self.cursor.execute("""INSERT INTO runs (directory,
@@ -850,25 +851,25 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
                                                      de_zngr,
                                                      anomalous,
                                                      beamline) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-                                                     (run['Directory'], 
-                                                      run['Image_Prefix'], 
-                                                      run['Run'], 
-                                                      run['Start'], 
-                                                      run['Total'], 
+                                                     (run['Directory'],
+                                                      run['Image_Prefix'],
+                                                      run['Run'],
+                                                      run['Start'],
+                                                      run['Total'],
                                                       run['Distance'],
-                                                      run['2-Theta'], 
-                                                      run['Phi'], 
-                                                      run['Kappa'], 
-                                                      run['Omega'], 
+                                                      run['2-Theta'],
+                                                      run['Phi'],
+                                                      run['Kappa'],
+                                                      run['Omega'],
                                                       run['Axis'],
-                                                      run['Width'], 
-                                                      run['Time'], 
+                                                      run['Width'],
+                                                      run['Time'],
                                                       run['De-Zngr'],
                                                       run['Anomalous'],
                                                       self.beamline))
             self.connection.commit()
             return(True)
-       
+
         except _mysql_exceptions.IntegrityError , (errno, strerror):
             if errno == 1062:
                 self.logger.exception('Run is already in the database')
@@ -890,41 +891,41 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
                                                            de_zngr      = %s,
                                                            anomalous    = %s,
                                                            beamline     = %s WHERE directory = %s AND image_prefix = %s AND run_number = %s AND start = %s""",
-                                                           (run['Directory'], 
-                                                            run['Image_Prefix'], 
-                                                            run['Run'], 
-                                                            run['Start'], 
-                                                            run['Total'], 
+                                                           (run['Directory'],
+                                                            run['Image_Prefix'],
+                                                            run['Run'],
+                                                            run['Start'],
+                                                            run['Total'],
                                                             run['Distance'],
-                                                            run['2-Theta'], 
-                                                            run['Phi'], 
-                                                            run['Kappa'], 
-                                                            run['Omega'], 
+                                                            run['2-Theta'],
+                                                            run['Phi'],
+                                                            run['Kappa'],
+                                                            run['Omega'],
                                                             run['Axis'],
-                                                            run['Width'], 
-                                                            run['Time'], 
+                                                            run['Width'],
+                                                            run['Time'],
                                                             run['De-Zngr'],
                                                             run['Anomalous'],
                                                             self.beamline,
-                                                            run['Directory'], 
-                                                            run['Image_Prefix'], 
-                                                            run['Run'], 
+                                                            run['Directory'],
+                                                            run['Image_Prefix'],
+                                                            run['Run'],
                                                             run['Start']))
                     self.connection.commit()
                     self.logger.debug("Run entered")
             else:
                 self.logger.exception('ERROR : unknown IntegrityError exception in RAPD_ADSC_Server::AddRun')
             return(False)
-        
+
         except _mysql_exceptions.OperationalError , (errno, strerror):
             if errno == 2006:
                 self.logger.exception('Connection to MySQL database lost. Will attempt to reconnect.')
                 self.Connect2SQL()
                 self.AddRun(run,attempt=attempt+1)
             else:
-                self.logger.exception('ERROR : unknown OperationalError in RAPD_ADSC_Server::AddRun')   
+                self.logger.exception('ERROR : unknown OperationalError in RAPD_ADSC_Server::AddRun')
             return(False)
-        
+
         except:
             self.logger.exception('ERROR : unknown exception in RAPD_ADSC_Server::AddRun')
             return(False)
@@ -934,11 +935,11 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
     """
     def GetXFStatusTime(self):
         """
-        Returns modification time of xf_status 
+        Returns modification time of xf_status
         Used by XMLRPC server
         """
         return(self.xf_time)
-    
+
     def GetXFStatusData(self):
         """
         Returns dict of xf_status
@@ -947,7 +948,7 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
             return(self.xf_status_queue.pop())
         else:
             return(False)
-    
+
     def NewXFStatus(self):
         """
         Called if xf_status modification time is newer than the time in memory
@@ -956,16 +957,16 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
         xlines  = self.GetXFStatus()
         #parse the lines
         xparsed = self.ParseXFStatus(xlines)
-        #if there are lines after parsing i.e. this is a real file, add the info to the 
+        #if there are lines after parsing i.e. this is a real file, add the info to the
         #database and then look at the image
-        return(xparsed)            
-    
+        return(xparsed)
+
     def GetLastImage(self):
         """
         Returns the last image as taken from xf_status
         """
         return(self.last_image)
-    
+
     def CheckXFStatus(self):
         """
         return True if xf_status has been changed, False if not
@@ -979,15 +980,15 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
                 if tries == 4:
                     return(False)
                 tries += 1
-                
+
         #the modification time has not changed
         if (self.xf_time == statinfo.st_mtime):
             return(False)
         #the file has changed
         else:
             self.xf_time = statinfo.st_mtime
-            return(True)     
-         
+            return(True)
+
     def GetXFStatus(self):
         """
         return contents of xf_status
@@ -999,14 +1000,14 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
         #remove the temporary file
         os.system('rm -f ./tmp_xf_status')
         return(in_lines)
-    
+
     def ParseXFStatus(self,lines):
         """
         Parse the lines from the file xf_status and return a dict that
         is somewhat intelligible
         """
         #self.logger.debug('RAPD_ADSC_Server::ParseXFStatus')
-        
+
         out_dict = { 'adsc_number'  : '',
                      'image_name'   : '',
                      'directory'    : '',
@@ -1020,14 +1021,14 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
                 if len(sline) == 2:
                     if sline[1].strip() == '<none>':
                         self.logger.debug('xf_status empty')
-                        out_dict = False  
+                        out_dict = False
                         break
                     else:
                         try:
                             out_dict['adsc_number'] = sline[0]
                             out_dict['image_name']   = sline[1]
                             #set this for retrieval
-                            self.last_image = sline[1] 
+                            self.last_image = sline[1]
                             out_dict['directory']    = os.path.dirname(sline[1])
                             out_dict['image_prefix'] = '_'.join(os.path.basename(sline[1]).split('_')[:-2])
                             out_dict['run_number']   = os.path.basename(sline[1]).split('_')[-2]
@@ -1043,18 +1044,18 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
         except:
             self.logger.exception('Failure to parse xf_status - error in format?')
             return(False)
-    
+
     def AddXFStatus(self,data,attempt=0):
         """
         Add a new xf_status to the MySQL database
         Return True if the image is successfully added to the database
         """
         self.logger.debug('RAPD_ADSC_Server::AddXFStatus')
-            
+
         if attempt > 2:
             self.logger.warning('FAILED TO ADD XF_STATUS AFTER 3 TRIES - Giving Up!')
             return(False)
-                
+
         try:
             self.xf_dict = data.copy()
             self.cursor.execute("""INSERT INTO image_status (fullname,
@@ -1064,21 +1065,21 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
                                                              adsc_number,
                                                              image_number,
                                                              beamline) VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-                                                             (data['image_name'], 
-                                                              data['directory'], 
+                                                             (data['image_name'],
+                                                              data['directory'],
                                                               data['image_prefix'],
-                                                              data['run_number'], 
-                                                              data['adsc_number'], 
+                                                              data['run_number'],
+                                                              data['adsc_number'],
                                                               data['image_number'],
                                                               self.beamline))
             self.connection.commit()
-        
+
         except _mysql_exceptions.IntegrityError , (errno, strerror):
             if errno == 1062:
                 self.logger.exception('xf_status is already in the database')
             else:
                 self.logger.exception('ERROR : unknown IntegrityError exception in RAPD_ADSC_Server::AddXFStatus')
-        
+
         except _mysql_exceptions.OperationalError , (errno, strerror):
             if errno == 2006:
                 self.logger.exception('Connection to MySQL database lost. Will attempt to reconnect.')
@@ -1086,7 +1087,7 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
                 self.AddXFStatus(data,attempt=attempt+1)
             else:
                 self.logger.exception('ERROR : unknown OperationalError in RAPD_ADSC_Server::AddXFStatus')
-        
+
         except:
             self.logger.exception('ERROR : unknown exception in RAPD_ADSC_Server::AddXFStatus')
 
@@ -1094,10 +1095,10 @@ class RAPD_ADSC_Server_OLD(threading.Thread):
         return(base64.b64decode(item))
 
 if __name__ == '__main__':
-    
+
     #create the watcher instance
-    watcher = RAPD_ADSC_Server()  
-      
+    watcher = RAPD_ADSC_Server()
+
     #create the server
     server = SimpleXMLRPCServer(("", 8001),logRequests=False)
     server.register_function(watcher.GetMarcollectTime)
@@ -1106,4 +1107,3 @@ if __name__ == '__main__':
     server.register_function(watcher.GetXFStatusData)
     server.register_function(watcher.GetLastImage)
     server.serve_forever()
-    

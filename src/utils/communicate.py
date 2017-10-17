@@ -27,8 +27,10 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
 # Standard imports
-import json
 import socket
+
+from utils.text import json
+from bson.objectid import ObjectId
 
 def rapd_send(controller_address, message, logger=False):
     """

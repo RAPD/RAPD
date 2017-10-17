@@ -28,7 +28,6 @@ __status__ = "Development"
 import argparse
 # import datetime
 # import glob
-import json
 # import logging
 # import multiprocessing
 import os

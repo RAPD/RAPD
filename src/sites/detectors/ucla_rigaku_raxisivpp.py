@@ -29,7 +29,6 @@ import argparse
 from collections import OrderedDict
 # import datetime
 # import glob
-import json
 # import logging
 # import multiprocessing
 import os
@@ -47,6 +46,8 @@ import time
 # import commandline_utils
 # import detectors.detector_utils as detector_utils
 # import utils
+from utils.text import json
+from bson.objectid import ObjectId
 
 # R-AXIS
 import detectors.rigaku.raxis as detector

@@ -1,3 +1,6 @@
+from bson import json_util
+from bson.objectid import ObjectId
+import json as system_json
 import sys
 
 black = "\033[30m"
@@ -30,3 +33,16 @@ def color(requested_color="default"):
 
 aring = unichr(197).encode('utf-8')
 deg = unichr(176).encode('utf-8')
+
+class json(object):
+    """Provide methods like the systme json, but wrapped for rapd"""
+
+    @staticmethod
+    def dumps(input):
+        """Just like json.dumps"""
+        return system_json.dumps(input, default=json_util.default)
+
+    @staticmethod
+    def loads(input):
+        """Just like json.loads"""
+        return system_json.loads(input, object_hook=json_util.object_hook)

@@ -38,7 +38,6 @@ VERSION = "2.0.0"
 
 # Standard imports
 from distutils.spawn import find_executable
-import json
 import logging
 import logging.handlers
 import math
@@ -60,6 +59,8 @@ from subcontractors.xdsme.xds2mos import Xds2Mosflm
 from utils.communicate import rapd_send
 from subcontractors.stats import AutoStats
 import utils.text as text
+from utils.text import json
+from bson.objectid import ObjectId
 import utils.xutils as Utils
 
 # Import smartie.py from the installed CCP4 package

@@ -28,10 +28,12 @@ Method for connecting and sending command to Launcher instance
 
 import socket
 import threading
-import json
 import time
 import logging
 import logging.handlers
+
+from utils.text import json
+from bson.objectid import ObjectId
 
 BUFFER_SIZE = 8192
 

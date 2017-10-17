@@ -38,7 +38,6 @@ VERSION = "2.0.0"
 
 # Standard imports
 from collections import OrderedDict
-import json
 import logging
 from multiprocessing import Process, Queue, Event
 import numpy
@@ -56,6 +55,8 @@ from subcontractors.xoalign import RunXOalign
 from utils.communicate import rapd_send
 from utils.modules import load_module
 import utils.xutils as Utils
+from utils.text import json
+from bson.objectid import ObjectId
 
 DETECTOR_TO_BEST = {
     "ADSC": "q315",

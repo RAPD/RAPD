@@ -27,7 +27,6 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
 # Standard imports
-import json
 import logging
 import threading
 import time
@@ -37,7 +36,8 @@ import importlib
 
 # RAPD imports
 from utils.overwatch import Registrar
-# import pysent
+from utils.text import json
+from bson.objectid import ObjectId
 
 # Constants
 POLLING_REST = 1      # Time to rest between checks for new run data
@@ -117,7 +117,7 @@ class Monitor(threading.Thread):
     def connect_to_redis(self):
         """Connect to the redis instance"""
         redis_database = importlib.import_module('database.rapd_redis_adapter')
-        
+
         self.redis_database = redis_database.Database(settings=self.site.RUN_MONITOR_SETTINGS)
         self.redis = self.redis_database.connect_to_redis()
 

@@ -38,7 +38,6 @@ VERSION = "1.0.0"
 # Standard imports
 from distutils.spawn import find_executable
 import glob
-import json
 import logging
 import multiprocessing
 import os
@@ -55,6 +54,8 @@ from plugins.subcontractors.phaser import parse_phaser_output, run_phaser_pdbque
 import utils.credits as rcredits
 import utils.exceptions as exceptions
 import utils.global_vars as rglobals
+from utils.text import json
+from bson.objectid import ObjectId
 # import utils.pdb as rpdb
 import utils.xutils as xutils
 import info

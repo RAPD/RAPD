@@ -31,7 +31,6 @@ __status__ = "Development"
 import argparse
 import logging
 import importlib
-import json
 from pprint import pprint
 import redis.exceptions
 import time
@@ -44,6 +43,8 @@ from utils.lock import file_lock
 import utils.site
 import utils.log
 from utils.overwatch import Registrar
+from utils.text import json
+from bson.objectid import ObjectId
 
 # Timer (s) for checking which launchers are alive.
 TIMER = 5
@@ -51,7 +52,7 @@ TIMER = 5
 class Launcher_Manager(threading.Thread):
     """
     Listens to the 'RAPD_JOBS'list and sends jobs to proper
-    launcher. 
+    launcher.
     """
     def __init__(self, site, logger=False, overwatch_id=False):
         """
@@ -104,7 +105,7 @@ class Launcher_Manager(threading.Thread):
                 # Have Registrar update status
                 if self.overwatch_id:
                     self.ow_registrar.update()
-                
+
                 # Get updated job list by checking which launchers are running
                 # Reassign jobs if launcher(s) status changes
                 if round(self.timer%TIMER,1) == 1.0:
@@ -288,7 +289,7 @@ def main():
     logger.debug("Commandline arguments:")
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s" % pair)
-    
+
     LAUNCHER_MANAGER = Launcher_Manager(site=SITE,
                                         logger=logger,
                                         overwatch_id=commandline_args.overwatch_id)

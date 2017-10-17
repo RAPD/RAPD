@@ -22,12 +22,14 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
-import json
 import logging
 import os
 import pymongo
 import redis
 import uuid
+
+from utils.text import json
+from bson.objectid import ObjectId
 
 from utils import pysent
 

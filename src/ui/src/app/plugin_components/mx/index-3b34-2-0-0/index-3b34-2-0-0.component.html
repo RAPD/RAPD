@@ -77,7 +77,8 @@
               </table>
             </div>
             <div *ngIf="full_result.results.labelit_results.status === 'FAILED'">
-              <h2>{{full_result.results.labelit_results.error}}</h2>
+              <h2>Labelit Failure</h2>
+              <h3>{{full_result.results.labelit_results.error}}</h3>
             </div>
             <div *ngIf="(full_result.results)?.best_results_norm">
               <h2>Data Collection Strategies</h2>

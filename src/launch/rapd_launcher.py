@@ -30,7 +30,6 @@ __status__ = "Production"
 # Standard imports
 import argparse
 import importlib
-import json
 from pprint import pprint
 import redis.exceptions
 import sys
@@ -44,6 +43,8 @@ from utils.modules import load_module
 from utils.overwatch import Registrar
 import utils.site
 import utils.text as text
+from utils.text import json
+from bson.objectid import ObjectId
 from threading import Thread
 
 BUFFER_SIZE = 8192
@@ -114,7 +115,7 @@ class Launcher(object):
                 if self.overwatch_id:
                     self.ow_registrar.update({"site_id":self.site.ID,
                                               "job_list":self.job_list})
-    
+
                 # Look for a new command
                 # This will throw a redis.exceptions.ConnectionError if redis is unreachable
                 #command = self.redis.brpop(["RAPD_JOBS",], 5)
@@ -124,7 +125,7 @@ class Launcher(object):
                         # Handle the message
                         if command:
                             self.handle_command(json.loads(command))
-    
+
                             # Only run 1 command
                             # self.running = False
                             # break
@@ -194,10 +195,10 @@ class Launcher(object):
             elif launcher[0] == self.ip_address:
                 possible_tags.append(launcher[1])
         """
-        
+
         # Save typing
         launchers = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"]
-        
+
         # Look for the launcher matching this ip_address and the input tag
         possible_tags = []
         for launcher in launchers:
@@ -207,7 +208,7 @@ class Launcher(object):
                 break
             elif launcher.get('ip_address') == self.ip_address:
                 possible_tags.append(launcher.get('tag'))
-        
+
         # No launcher adapter
         if self.launcher is None:
 

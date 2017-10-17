@@ -26,7 +26,6 @@ __email__ = "fmurphy@anl.gov"
 __status__ = "Production"
 
 # Standard imports
-import json
 import logging
 #import redis
 import importlib
@@ -34,6 +33,8 @@ import socket
 import threading
 import time
 
+from utils.text import json
+from bson.objectid import ObjectId
 
 class ControllerServer(threading.Thread):
     """
@@ -85,7 +86,7 @@ class ControllerServer(threading.Thread):
 
         self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
         self.redis = self.redis_database.connect_to_redis()
-        
+
 class LaunchAction(threading.Thread):
     """
     Manages the dispatch of jobs to the cluster process

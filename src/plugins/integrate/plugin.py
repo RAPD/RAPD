@@ -39,7 +39,6 @@ VERSION = "2.0.0"
 # Standard imports
 from distutils.spawn import find_executable
 import glob
-import json
 import logging
 import logging.handlers
 import math
@@ -72,6 +71,7 @@ import utils.exceptions as exceptions
 # from utils.r_numbers import try_int, try_float
 from utils.processes import local_subprocess
 import utils.text as text
+from utils.text import json
 import utils.xutils as Utils
 import utils.spacegroup as spacegroup
 

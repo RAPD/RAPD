@@ -31,7 +31,6 @@ __status__ = "Development"
 import argparse
 import atexit
 import importlib
-import json
 import os
 from subprocess import Popen
 import sys
@@ -44,6 +43,8 @@ import redis
 import utils.commandline
 import utils.site
 import utils.text as text
+from utils.text import json
+from bson.objectid import ObjectId
 
 # Time in seconds for a process to be considered dead
 OVERWATCH_TIMEOUT = 30
@@ -128,12 +129,12 @@ class Registrar(object):
 
                 # Expire the current entry in N seconds
                 red.expire("OW:"+self.uuid+":"+self.ow_id, OVERWATCH_TIMEOUT)
-            
+
             # Used to monitor which launchers are running.
             if launcher:
                 # Put entry in the redis db
                 red.set("OW:"+launcher, 1)
-                
+
                 # Expire the current entry in N seconds
                 red.expire("OW:"+launcher, OVERWATCH_TIMEOUT)
 
@@ -191,12 +192,12 @@ class Registrar(object):
 
                 # Expire the current entry in N seconds
                 red.expire("OW:"+self.uuid+":"+self.ow_id, OVERWATCH_TIMEOUT)
-            
+
             # Used to monitor which launchers are running.
             if launcher:
                 # Put entry in the redis db
                 red.set("OW:"+launcher, 1)
-                
+
                 # Expire the current entry in N seconds
                 red.expire("OW:"+launcher, OVERWATCH_TIMEOUT)
 
@@ -227,7 +228,7 @@ class Overwatcher(Registrar):
     ow_type = "overwatcher"
     ow_id = None
     ow_managed_id = None
-    
+
 
     def __init__(self, site, managed_file, managed_file_flags):
         """
@@ -346,11 +347,11 @@ class Overwatcher(Registrar):
                 # Get the managed process ow_id if unknown
                 if self.ow_managed_id == None:
                     self.ow_managed_id = self.get_managed_id()
-    
+
                 # Check the managed process status if a managed process is found
                 if not self.ow_managed_id == None:
                     status = self.check_managed_process()
-    
+
                     # Watched process has failed
                     if status == False:
                         self.restart_managed_process()

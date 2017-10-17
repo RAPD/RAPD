@@ -40,7 +40,6 @@ VERSION = "1.0.0"
 # import from collections import OrderedDict
 # import datetime
 # import glob
-import json
 import logging
 import multiprocessing
 import os
@@ -64,6 +63,8 @@ import time
 import utils.credits as rcredits
 # import info
 # from utils import exceptions
+from utils.text import json
+from bson.objectid import ObjectId
 
 # Software dependencies
 VERSIONS = {}
