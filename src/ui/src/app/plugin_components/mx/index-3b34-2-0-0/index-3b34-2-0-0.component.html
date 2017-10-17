@@ -48,7 +48,7 @@
       <mat-card-content *ngIf="view_mode === 'summary'" class="rapd-result">
         <div fxLayout="row" fxLayoutGap="10px">
           <div fxFlex="none">
-            <div>
+            <div *ngIf="full_result.results.labelit_results">
               <h3>Indexing Solution</h3>
               <table class="rapd-table">
                 <thead>
