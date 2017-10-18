@@ -484,23 +484,22 @@ class Database(object):
                 }
             },
             upsert=True)
-        pprint(result2)
 
         # Get the _id from updated entry in plugin_results
         if result2.raw_result.get("updatedExisting", False):
-            pprint(db.plugin_results.find_one(
-                {"result_id":result1_id},
-                {"_id":1}))
+            # pprint(db.plugin_results.find_one(
+            #     {"result_id":get_object_id(result1_id)},
+            #     {"_id":1}))
             result2_id = db.plugin_results.find_one(
-                {"result_id":result1_id},
+                {"result_id":get_object_id(result1_id)},
                 {"_id":1})["_id"]
         # upsert
         else:
             result2_id = result2.upserted_id
 
         # Return the _ids for the two collections
-        return {"plugin_results_id":result2_id,
-                "result_id":result1_id}
+        return {"plugin_results_id":str(result2_id),
+                "result_id":str(result1_id)}
 
     # def getArrayStats(self, in_array, mode="float"):
     #     """
