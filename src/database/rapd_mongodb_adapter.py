@@ -484,6 +484,7 @@ class Database(object):
                 }
             },
             upsert=True)
+        pprint(result2)
 
         # Get the _id from updated entry in plugin_results
         if result2.raw_result.get("updatedExisting", False):
