@@ -37,7 +37,7 @@ from pprint import pprint
 # import redis
 # import socket
 import sys
-
+import time
 
 # RAPD imports
 from control.control_server import LaunchAction, ControllerServer
@@ -488,11 +488,19 @@ class Model(object):
             self.logger.debug("%s is a snap", fullname)
 
             # Get all the image information
-            try:
-                header = detector.read_header(fullname,
-                                              beam_settings=self.site.BEAM_INFO[site_tag.upper()])
-            except IOError:
-                self.logger.exception("Unable to access image")
+            attempt_counter = 0
+            while attempt_counter < 5:
+                try:
+                    attempt_counter += 1
+                    header = detector.read_header(
+                        fullname,
+                        beam_settings=self.site.BEAM_INFO[site_tag.upper()])
+                    break
+                except IOError:
+                    self.logger.exception("Unable to access image")
+                    time.sleep(0.1)
+            else:
+                self.logger.error("Unable to access image after %d tries", attempt_counter)
                 return False
 
             # Add some data to the header - no run_id for snaps
