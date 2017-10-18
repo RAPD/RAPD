@@ -487,6 +487,9 @@ class Database(object):
 
         # Get the _id from updated entry in plugin_results
         if result2.raw_result.get("updatedExisting", False):
+            pprint(db.plugin_results.find_one(
+                {"result_id":result1_id},
+                {"_id":1}))
             result2_id = db.plugin_results.find_one(
                 {"result_id":result1_id},
                 {"_id":1})["_id"]
