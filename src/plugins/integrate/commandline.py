@@ -81,7 +81,7 @@ def get_commandline():
                         choices=["auto", "pointless", "xds"],
                         help="Rounds of polishing to perform")
 
-    # Don't run analysis
+    # Don't clean up
     parser.add_argument("--dirty",
                         action="store_false",
                         dest="clean_up",

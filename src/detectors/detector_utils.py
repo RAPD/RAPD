@@ -286,6 +286,12 @@ def load_detector(detector):
         module = importlib.import_module(detector_file)
         return module
 
+def merge_xds_input(inp0, inp1):
+    """Merge base xds_inp(inp0) with changes (inp1)"""
+    new_inp = []
+    for line in inp1:
+        pass
+
 def print_hdf5_file_structure(file_name) :
     """
     Prints the HDF5 file structure

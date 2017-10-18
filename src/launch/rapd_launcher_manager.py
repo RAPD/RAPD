@@ -148,7 +148,7 @@ class Launcher_Manager(threading.Thread):
                         # Handle the message
                         if command:
                             #self.push_command(json.loads(command))
-                            self.push_command(json.loads(command, object_pairs_hook=OrderedDict))
+                            self.push_command(json.loads(command))
                             # Only run 1 command
                             # self.running = False
                             # break
@@ -216,9 +216,6 @@ class Launcher_Manager(threading.Thread):
 
         # get the correct running launcher and launch_dir
         launcher, launch_dir = self.set_launcher(message['command'], site_tag)
-        
-        if message['command'].startswith('INTEGRATE'):
-            print 'type: %s'%message['preferences']['xdsinp']
 
         if launcher:
             # Update preferences to be in server run mode

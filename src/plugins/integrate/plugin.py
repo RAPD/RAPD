@@ -197,10 +197,13 @@ class RapdPlugin(Process):
             self.image_data["start"] = self.run_data.get("start_image_number")
 
         if self.preferences.get("end_frame", False):
+            self.image_data["end"] = self.preferences.get("end_frame")
             self.image_data["total"] = self.preferences.get("end_frame") - \
                                        self.image_data["start"] + 1
         else:
             self.image_data["total"] = self.run_data.get("number_images")
+            self.image_data["end"] = self.image_data["start"] + \
+                                     self.image_data["total"] - 1
 
         self.image_data['image_template'] = self.run_data["image_template"]
 
@@ -301,7 +304,7 @@ class RapdPlugin(Process):
         #        self.image_data['x_beam'] = self.preferences['x_beam']
         #        self.image_data['y_beam'] = self.preferences['y_beam']
 
-        # Some detectord need flipped for XDS
+        # Some detectors need flipped for XDS
         if self.preferences.get('flip_beam', False):
             x = self.image_data['y_beam']
             self.image_data['y_beam'] = self.image_data['x_beam']
@@ -679,15 +682,15 @@ class RapdPlugin(Process):
         self.logger.debug('Fastintegration::xds_total')
         self.tprint(arg="\nXDS processing", level=99, color="blue")
 
-        first = int(self.image_data['start'])
-        last = int(self.image_data['start']) + int(self.image_data['total']) -1
-        data_range = '%s %s' %(first, last)
-        self.logger.debug('start = %s, total = %s',
-                          self.image_data['start'],
-                          self.image_data['total'])
-        self.logger.debug('first - %s, last = %s', first, last)
-        self.logger.debug('data_range = %s', data_range)
-        directory = 'wedge_%s_%s' % (first, last)
+        #first = int(self.image_data['start'])
+        #last = int(self.image_data['start']) + int(self.image_data['total']) -1
+        #data_range = '%s %s' %(self.image_data['start'], self.image_data['end'])
+        #self.logger.debug('start = %s, total = %s',
+        #                  self.image_data['start'],
+        #                  self.image_data['total'])
+        #self.logger.debug('first - %s, last = %s', first, last)
+        #self.logger.debug('data_range = %s', data_range)
+        directory = 'wedge_%s_%s' % (self.image_data['start'], self.image_data['end'])
         xdsdir = os.path.join(self.dirs['work'], directory)
         if os.path.isdir(xdsdir) == False:
             os.mkdir(xdsdir)
@@ -712,7 +715,9 @@ class RapdPlugin(Process):
             xdsinp,
             "MAXIMUM_NUMBER_OF_JOBS=%s\n" % self.jobs)
         xdsinp = self.change_xds_inp(xdsinp, "JOB=XYCORR INIT COLSPOT \n\n")
-        xdsinp = self.change_xds_inp(xdsinp, "DATA_RANGE=%s\n" % data_range)
+        #xdsinp = self.change_xds_inp(xdsinp, "DATA_RANGE=%s\n" % data_range)
+        xdsinp = self.change_xds_inp(xdsinp, "DATA_RANGE=%s %s\n" %(self.image_data['start'],
+                                                                    self.image_data['end']) )
         xdsfile = os.path.join(xdsdir, 'XDS.INP')
         self.write_file(xdsfile, xdsinp)
         self.tprint(arg="  Searching for peaks",
@@ -1156,7 +1161,7 @@ class RapdPlugin(Process):
             results = self.run_results(xdsdir)
         return results
 
-    def create_xds_input(self, xds_dict):
+    def create_xds_input(self, inp):
         """
     	This function takes the dict holding XDS keywords and values
     	and converts them into a list of strings that serves as the
@@ -1168,8 +1173,8 @@ class RapdPlugin(Process):
         # print self.image_data["start"]
         # print self.image_data["total"]
 
-        last_frame = self.image_data["start"] + self.image_data["total"] - 1
-        self.logger.debug('last_frame = %s', last_frame)
+        #last_frame = self.image_data["start"] + self.image_data["total"] - 1
+        #self.logger.debug('last_frame = %s', last_frame)
         # print last_frame
         # self.logger.debug('detector_type = %s' % detector_type)
 
@@ -1193,12 +1198,13 @@ class RapdPlugin(Process):
         pad = file_template.count('?')
     	# Replace the first instance of '?' with the padded out image number
     	# of the last frame
-        self.last_image = file_template.replace('?', '%d'.zfill(pad) % last_frame, 1)
+        #self.last_image = file_template.replace('?', '%d'.zfill(pad) % last_frame, 1)
+        self.last_image = file_template.replace('?', '%d'.zfill(pad) % self.image_data['end'], 1)
     	# Remove the remaining '?'
         self.last_image = self.last_image.replace('?', '')
     	# Repeat the last two steps for the first image's filename.
-        self.first_image = file_template.replace('?', str(self.image_data["start"]).zfill(pad), 1)
-        self.first_image = self.first_image.replace('?', '')
+        #self.first_image = file_template.replace('?', str(self.image_data["start"]).zfill(pad), 1)
+        #self.first_image = self.first_image.replace('?', '')
 
     	# Begin constructing the list that will represent the XDS.INP file.
         xds_input = ['!===== DATA SET DEPENDENT PARAMETERS =====\n',
@@ -1213,26 +1219,8 @@ class RapdPlugin(Process):
                      'BACKGROUND_RANGE=%s\n\n' % background_range,
                      '!===== DETECTOR_PARAMETERS =====\n']
         
-        self.logger.debug('dict_type: %s'%type(xds_dict))
-        
-        for key, value in xds_dict.iteritems():
-            # Regions that are excluded are defined with
-            # various keyword containing the word UNTRUSTED.
-            # Since multiple regions may be specified using
-            # the same keyword on XDS but a dict cannot
-            # have multiple values assigned to a key,
-            # the following if statements work though any
-            # of these regions and add them to xdsinput.
-            if 'UNTRUSTED' in key:
-                if 'RECTANGLE' in key:
-                    line = 'UNTRUSTED_RECTANGLE=%s\n' %value
-                elif 'ELLIPSE' in key:
-                    line = 'UNTRUSTED_ELLIPSE=%s\n' %value
-                elif 'QUADRILATERL' in key:
-                    line = 'UNTRUSTED_QUADRILATERAL=%s\n' %value
-            else:
-                line = "%s=%s\n" % (key, value)
-            xds_input.append(line)
+        for line in inp:
+            xds_input.append("%s%s"%('='.join(line), '\n'))
 
     	# If the detector is tilted in 2theta, adjust the value of
     	# DIRECTION_OF_DETECTOR_Y-AXIS.

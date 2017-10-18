@@ -65,7 +65,7 @@ HEADER_VERSION = 1
 XDS_FLIP_BEAM = detector.XDS_FLIP_BEAM
 # XDSINP = detector.XDSINP
 # Update the XDS information from the imported detector
-XDSINP = OrderedDict([
+XDSINP = [
     ("REFINE(CORRECT)", "POSITION DISTANCE BEAM ORIENTATION CELL AXIS"),
     ("REFINE(IDXREF)", "BEAM AXIS ORIENTATION CELL"),
     ("REFINE(INTEGRATE)", "POSITION DISTANCE BEAM ORIENTATION CELL"),
@@ -113,7 +113,7 @@ XDSINP = OrderedDict([
     ("UNTRUSTED_RECTANGLE16", " 1030 1041      0 4372"),
     ("UNTRUSTED_RECTANGLE17", " 2070 2081      0 4372"),
     ("UNTRUSTED_RECTANGLE18", " 3110 3121      0 4372"),
-    ])
+    ]
 
 def parse_file_name(fullname):
     """
