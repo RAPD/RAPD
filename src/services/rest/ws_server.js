@@ -151,11 +151,15 @@ parse_message = function(channel, message) {
                     if (im2_result) {
                       message.image2 = im1_result;
                       return_array.push(['result_details', message]);
+                    } else {
+                      return_array.push(['result_details', message]);
                     }
                   });
               } else {
                 return_array.push(['result_details', message]);
               }
+            } else {
+              return_array.push(['result_details', message]);
             }
           });
       } else {
