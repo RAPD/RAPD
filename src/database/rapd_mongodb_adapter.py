@@ -434,9 +434,9 @@ class Database(object):
         plugin_result["timestamp"] = now
 
         # Try to make the plugin_result by object traversal
-        _plugin_result = traverse_and_objectidify(plugin_result)
-        self.logger.debug("traverse_and_objectidify")
-        self.logger.debug(_plugin_result["process"])
+        # _plugin_result = traverse_and_objectidify(plugin_result)
+        # self.logger.debug("traverse_and_objectidify")
+        # self.logger.debug(_plugin_result["process"])
 
 
         # Make sure we are all ObjectIds - this is until I can get the
