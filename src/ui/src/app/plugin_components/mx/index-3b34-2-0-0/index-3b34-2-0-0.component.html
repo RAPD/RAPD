@@ -21,6 +21,7 @@
   <mat-card *ngIf="full_result.process.status > 1" class="rapd-result">
     <mat-card-header class="rapd-result">
       <div style="width:100%">
+
         <div style="float:left;">
           <h3>
             Indexing Results for
@@ -42,6 +43,7 @@
             <mat-option value="logs">Logs</mat-option>
           </mat-select>
         </div>
+
       </div>
     </mat-card-header>
     <div>
@@ -140,16 +142,15 @@
           </div>
           <div fxFlex fxLayout="column" fxLayoutGap="10px" class="rapd-result">
             <div fxFlex="none" class="rapd-plot-header">
-              <div style="float:left;">
+              <div class="rapd-chart-title-panel">
                 <h3>{{selected_plot_label}}</h3>
               </div>
-              <div style="float:right;">
+              <div class="rapd-chart-select-panel">
                 <mat-select
                   placeholder="Select plot"
                   (change)="setPlot(selected_plot)"
                   [(ngModel)]="selected_plot"
-                  name="plot"
-                  style="width:12em;">
+                  name="plot">
                   <mat-option *ngFor="let key of objectKeys(plot_select_labels)" [value]="key">{{plot_select_labels[key]}}</mat-option>
                 </mat-select>
               </div>

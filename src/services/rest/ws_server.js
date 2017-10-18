@@ -370,8 +370,13 @@ function Wss (opt, callback) {
                 }
               } catch(e) {
                 if (e.name === 'MissingSchemaError') {
-                  let schema = schemas[collection_name];
-                  //  let schema = new mongoose.Schema({}, {strict:false});
+                  // let schema = schemas[collection_name];
+                  let schema = new mongoose.Schema({
+                    _id: {
+                      type: Schema.ObjectId,
+                      auto: true
+                      },
+                    }, {strict:false});
                   ResultModel = mongoose.model(collection_name, schema);
                 }
               }

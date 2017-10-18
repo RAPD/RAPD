@@ -351,6 +351,10 @@ div.rapd-result {
 div.rapd-result-paragraph {
   margin-left: 10px;
 }
+/* dive that holds title for chart */
+.rapd-chart-title-panel {
+  float: left;
+}
 
 /* div that holds a select that looks separate */
 .rapd-select-panel {
@@ -362,10 +366,16 @@ div.rapd-result-paragraph {
               0 2px 2px 0 rgba(0,0,0,.14),
               0 1px 5px 0 rgba(0,0,0,.12);*/
   float: right;
-  margin: 1em 0 1em 0;
+  margin: 1.1em 0 1em 0;
   padding: 5px;
   width: 7em;
 }
+
+.rapd-select-panel .mat-select-value {
+  text-align:right;
+}
+
+
 
 /* Entries for showing raw output from programs */
 .rapd-raw-output-card {
@@ -374,10 +384,21 @@ div.rapd-result-paragraph {
   overflow-x:visible;
 }
 
-/* CSS for plots and their containers */
+/*
+ * CSS for plots and their containers
+ */
+
+/* div that holds select for chart type */
+.rapd-chart-select-panel {
+  float: right;
+  margin: 1.2em 0.2em 0 0;
+  width: 10em;
+}
+
 div.rapd-plot-header {
-  margin-left: 30px;
-  width: 90%;
+  /*margint: 30px;*/
+  padding: 1em 1em 1em 1em;
+  width: 100%;
 }
 
 div.chart-container {
@@ -385,6 +406,9 @@ div.chart-container {
   width:90%;
 }
 
+.rapd-chart-select-panel .mat-select-value {
+  text-align:right;
+}
 
 /* CSS for log file displays */
 .rapd-raw-output {
