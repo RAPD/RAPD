@@ -112,12 +112,15 @@ export class Index3b34200Component implements OnInit, OnDestroy {
   }
 
   // Display the header information
-  displayHeader(header) {
+  displayHeader(image_id) {
+
+    console.log('displayHeader', image_id);
 
     let config = {
-      // width: '450px',
-      // height: '600px',
-      data: header };
+      data: {
+        image_id:image_id
+      }
+    };
 
     let dialogRef = this.dialog.open(HeaderDialogComponent, config);
   }
