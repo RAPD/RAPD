@@ -1218,9 +1218,38 @@ class RapdPlugin(Process):
                      'NAME_TEMPLATE_OF_DATA_FRAMES=%s\n\n' % file_template,
                      'BACKGROUND_RANGE=%s\n\n' % background_range,
                      '!===== DETECTOR_PARAMETERS =====\n']
-        
+
+        # Regions that are excluded are defined with
+        # various keyword containing the word UNTRUSTED.
+        # Since different detectors may have different
+        # regions excluded, this allows for replacement
+        # of default regions with user specified regions.
+        l = ['UNTRUSTED_RECTANGLE', 'UNTRUSTED_ELLIPSE', 'UNTRUSTED_QUADRILATERAL']
         for line in inp:
+            for x in range(len(l)):
+                if line[0].count(l[x]):
+                    line = (l[x], line[1])
             xds_input.append("%s%s"%('='.join(line), '\n'))
+        """
+        for key, value in xds_dict.iteritems():
+            # Regions that are excluded are defined with
+            # various keyword containing the word UNTRUSTED.
+            # Since multiple regions may be specified using
+            # the same keyword on XDS but a dict cannot
+            # have multiple values assigned to a key,
+            # the following if statements work though any
+            # of these regions and add them to xdsinput.
+            if 'UNTRUSTED' in key:
+                if 'RECTANGLE' in key:
+                    line = 'UNTRUSTED_RECTANGLE=%s\n' %value
+                elif 'ELLIPSE' in key:
+                    line = 'UNTRUSTED_ELLIPSE=%s\n' %value
+                elif 'QUADRILATERAL' in key:
+                    line = 'UNTRUSTED_QUADRILATERAL=%s\n' %value
+            else:
+                line = "%s=%s\n" % (key, value)
+            xds_input.append(line)
+        """
 
     	# If the detector is tilted in 2theta, adjust the value of
     	# DIRECTION_OF_DETECTOR_Y-AXIS.

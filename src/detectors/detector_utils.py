@@ -286,11 +286,22 @@ def load_detector(detector):
         module = importlib.import_module(detector_file)
         return module
 
-def merge_xds_input(inp0, inp1):
-    """Merge base xds_inp(inp0) with changes (inp1)"""
+def merge_xds_input(base, new):
+    """Merge base xds_inp with changes/additions from new"""
     new_inp = []
-    for line in inp1:
-        pass
+    # replace existing keywords in base xds
+    for line in base:
+        if len(new) > 0:
+            for x in range(len(new)):
+                if line[0] == new[x][0]:
+                    line = new.pop(x)
+        new_inp.append("%s%s"%('='.join(line), '\n'))
+    # Add new keywords
+    if len(new) > 0:
+        for line in new:
+            new_inp.append("%s%s"%('='.join(line), '\n'))
+
+    return new_inp
 
 def print_hdf5_file_structure(file_name) :
     """
