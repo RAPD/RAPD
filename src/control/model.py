@@ -443,9 +443,25 @@ class Model(object):
                 # Right on time
                 if place_in_run == 1:
                     # Get all the image information
-                    header = detector.read_header(
-                        fullname,
-                        beam_settings=self.site.BEAM_INFO[site_tag.upper()])
+                    attempt_counter = 0
+                    while attempt_counter < 5:
+                        try:
+                            attempt_counter += 1
+                            header = detector.read_header(
+                                fullname,
+                                beam_settings=self.site.BEAM_INFO[site_tag.upper()])
+                            break
+                        except IOError:
+                            self.logger.exception("Unable to access image")
+                            time.sleep(0.1)
+                    else:
+                        self.logger.error("Unable to access image after %d tries", attempt_counter)
+                        return False
+
+                    # # Get all the image information
+                    # header = detector.read_header(
+                    #     fullname,
+                    #     beam_settings=self.site.BEAM_INFO[site_tag.upper()])
 
                     # Put data about run in the header object
                     header["collect_mode"] = "run"
