@@ -162,6 +162,7 @@ class RapdPlugin(Process):
     distl_log = []
     #distl_queue = Queue()
     distl_queue = mp_Queue()
+    distl_output = []
     distl_results = []
     distl_summary = False
     raddose_file = False
@@ -357,14 +358,14 @@ class RapdPlugin(Process):
         self.results["results"] = {}
 
         # Copy over details of this run
-        self.results["command"] = self.command #.get("command")
-        for version in (1, 2):
-            if self.results["header%d" % version]:
-                #self.results["header%d" % version] = {"_id": eval('self.header%d'%version).get("_id")}
-                if isinstance(eval('self.header%d'%version).get("_id"), dict):
-                    self.results["header%d" % version] = {"_id": eval('self.header%d'%version).get("_id").get("$oid")}
-                else:
-                    self.results["header%d" % version] = {"_id": eval('self.header%d'%version).get("_id")}
+        #self.results["command"] = self.command #.get("command")
+        #for version in (1, 2):
+        #    if self.results["header%d" % version]:
+        #        #self.results["header%d" % version] = {"_id": eval('self.header%d'%version).get("_id")}
+        #        if isinstance(eval('self.header%d'%version).get("_id"), dict):
+        #            self.results["header%d" % version] = {"_id": eval('self.header%d'%version).get("_id").get("$oid")}
+        #        else:
+        #            self.results["header%d" % version] = {"_id": eval('self.header%d'%version).get("_id")}
 
         # Just save the _id
         #self.results["header1"] = {"_id": self.header.get("_id")}
@@ -424,6 +425,8 @@ class RapdPlugin(Process):
         if self.minikappa:
             self.process_xoalign()
         else:
+            # Run Distl
+            self.process_distl()
 
             # Run Labelit
             self.start_labelit()
@@ -431,28 +434,20 @@ class RapdPlugin(Process):
             # Sorts labelit results by highest symmetry.
             self.labelit_sort()
 
-            # Run Distl
-            self.process_distl()
-
             # If no solution
             if self.labelit_failed:
                 self.postprocess_distl()
             # If there is a solution, then calculate a strategy.
             else:
-                if self.multiproc == False:
-                    self.postprocess_distl()
                 self.preprocess_raddose()
                 self.process_raddose()
                 self.process_strategy()
+                self.postprocess_distl()
                 self.run_queue()
-
-                # Get the distl_results
-                if self.multiproc:
-                    self.postprocess_distl()
 
             # Pass back results, and cleanup.
             self.postprocess()
-
+            
     def connect_to_redis(self):
         """Connect to the redis instance"""
         # Create a pool connection
@@ -741,7 +736,6 @@ class RapdPlugin(Process):
         if self.verbose and self.logger:
             self.logger.debug('AutoindexingStrategy::process_distl')
 
-        self.distl_output = []
         l = ["", "2"]
         f = 1
         if self.header2:
@@ -1583,7 +1577,7 @@ Distance | % Transmission", level=98, color="white")
             self.labelit_dir = os.path.join(self.working_dir, "0")
             os.chdir(self.labelit_dir)
             #self.process_distl()
-            self.postprocess_distl()
+            #self.postprocess_distl()
             #   if os.path.exists("DISTL_pickle"):
               #   self.makeImages(2)
             self.best_failed = True
