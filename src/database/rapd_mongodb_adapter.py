@@ -501,6 +501,14 @@ class Database(object):
                 {"result_id":get_object_id(result1_id)},
                 {"_id":1})["_id"]
 
+        # Update the session last_process field
+        db.sessions.update_one(
+            {"_id":get_object_id(plugin_result["process"]["session_id"])},
+            {"$set": {
+                "last_process": now
+            }}
+        )
+
         # Return the _ids for the two collections
         return {"plugin_results_id":str(result1_id),
                 "result_id":str(result2_id)}
