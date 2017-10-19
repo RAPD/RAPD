@@ -21,7 +21,6 @@
   <mat-card *ngIf="full_result.process.status > 1" class="rapd-result">
     <mat-card-header class="rapd-result">
       <div style="width:100%">
-
         <div style="float:left;">
           <h3>
             Indexing Results for
@@ -43,7 +42,6 @@
             <mat-option value="logs">Logs</mat-option>
           </mat-select>
         </div>
-
       </div>
     </mat-card-header>
     <div>
@@ -141,58 +139,11 @@
               <!-- TODO Change to mosflm_results_norm -->
               <div *ngIf="(full_result.results)?['MOSFLM strategy results']">
                 <h3>Normal from Mosflm</h3>
-                <!-- <table class="rapd-table">
-                  <thead>
-                    <tr>
-                      <th>N</th>
-                      <th>&Omega; Start</th>
-                      <th>&Delta;&Omega;</th>
-                      <th># Images</th>
-                      <th>Exposure time</th>
-                      <th>Distance</th>
-                      <th>Transmission</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let key of objectKeys(full_result.results.best_results_norm.sweeps)">
-                      <td>{{full_result.results.best_results_norm.sweeps[key].run_number}}</td>
-                      <td>{{full_result.results.best_results_norm.sweeps[key].phi_start}}</td>
-                      <td>{{full_result.results.best_results_norm.sweeps[key].phi_width | number:'1.1-2'}}</td>
-                      <td>{{full_result.results.best_results_norm.sweeps[key].number_of_images}}</td>
-                      <td>{{full_result.results.best_results_norm.sweeps[key].exposure_time | number:'1.1-2'}}</td>
-                      <td>{{round_ten(full_result.results.best_results_norm.sweeps[key].distance)}}</td>
-                      <td>{{full_result.results.best_results_norm.sweeps[key].transmission | number:'1.0-0'}}</td>
-                    </tr>
-                  </tbody>
-                </table> -->
               </div>
-            <!-- TODO Change to mosflm_results_norm -->
-            <div *ngIf="(full_result.results)?['MOSFLM strategy results']">
-              <h3>Anomalous from Mosflm</h3>
-              <!-- <table class="rapd-table">
-                <thead>
-                  <tr>
-                    <th>N</th>
-                    <th>&Omega; Start</th>
-                    <th>&Delta;&Omega;</th>
-                    <th># Images</th>
-                    <th>Exposure time</th>
-                    <th>Distance</th>
-                    <th>Transmission</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let key of objectKeys(full_result.results.best_results_norm.sweeps)">
-                    <td>{{full_result.results.best_results_norm.sweeps[key].run_number}}</td>
-                    <td>{{full_result.results.best_results_norm.sweeps[key].phi_start}}</td>
-                    <td>{{full_result.results.best_results_norm.sweeps[key].phi_width | number:'1.1-2'}}</td>
-                    <td>{{full_result.results.best_results_norm.sweeps[key].number_of_images}}</td>
-                    <td>{{full_result.results.best_results_norm.sweeps[key].exposure_time | number:'1.1-2'}}</td>
-                    <td>{{round_ten(full_result.results.best_results_norm.sweeps[key].distance)}}</td>
-                    <td>{{full_result.results.best_results_norm.sweeps[key].transmission | number:'1.0-0'}}</td>
-                  </tr>
-                </tbody>
-              </table> -->
+              <!-- TODO Change to mosflm_results_anom -->
+              <div *ngIf="(full_result.results)?['MOSFLM strategy results']">
+                <h3>Anomalous from Mosflm</h3>
+              </div>
             </div>
           </div>
           <div fxFlex fxLayout="column" fxLayoutGap="10px" class="rapd-result">
