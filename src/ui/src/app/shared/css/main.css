@@ -159,7 +159,7 @@ mat-toolbar.rapd-main-panel-action-bar {
   width: 16em;
   overflow: auto;
   margin: 0.25em 0 0.5em 0.25em;
-  min-height: calc(100vh - 8em);
+  max-height: calc(100vh - 8em);
 }
 
 /* Divider between pinned/normal/trashed results */
