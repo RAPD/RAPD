@@ -21,13 +21,14 @@
   <mat-card *ngIf="full_result.process.status > 1" class="rapd-result">
     <mat-card-header class="rapd-result">
       <div style="width:100%">
+
         <div style="float:left;">
           <h3>
             Indexing Results for
             <span>{{full_result.image1.basename}}</span>
-            <span style="color:blue;"><mat-icon (click)="displayHeader(full_result.image1._id)">info_outline</mat-icon></span>
+            <span style="color:blue;"><mat-icon (click)="displayHeader(full_result.image1)">info_outline</mat-icon></span>
             <span *ngIf="full_result.image2"> & {{full_result.command.image2.basename}}</span>
-            <span *ngIf="full_result.image2" style="color:blue;"><mat-icon (click)="displayHeader(full_result.image2._id)">info_outline</mat-icon></span>
+            <span *ngIf="full_result.image2" style="color:blue;"><mat-icon (click)="displayHeader(full_result.image2)">info_outline</mat-icon></span>
           </h3>
         </div>
         <div class="rapd-select-panel">
@@ -42,6 +43,7 @@
             <mat-option value="logs">Logs</mat-option>
           </mat-select>
         </div>
+
       </div>
     </mat-card-header>
     <div>
@@ -80,10 +82,10 @@
               <h2>Labelit Failure</h2>
               <h3>{{full_result.results.labelit_results.error}}</h3>
             </div>
-            <div>
+            <div *ngIf="(full_result.results)?.best_results_norm">
               <h2>Data Collection Strategies</h2>
-              <div *ngIf="(full_result.results)?.best_results_norm !== 'FAILED'">
-                <h3>Normal from Best</h3>
+              <div>
+                <h3>Normal</h3>
                 <table class="rapd-table">
                   <thead>
                     <tr>
@@ -109,8 +111,8 @@
                   </tbody>
                 </table>
               </div>
-              <div *ngIf="(full_result.results)?.best_results_anom !== 'FAILED'">
-                <h3>Anomalous from Best</h3>
+              <div *ngIf="(full_result.results)?.best_results_anom">
+                <h3>Anomalous</h3>
                 <table class="rapd-table">
                   <thead>
                     <tr>
@@ -135,14 +137,6 @@
                     </tr>
                   </tbody>
                 </table>
-              </div>
-              <!-- TODO Change to mosflm_results_norm -->
-              <div *ngIf="(full_result.results)?['MOSFLM strategy results']">
-                <h3>Normal from Mosflm</h3>
-              </div>
-              <!-- TODO Change to mosflm_results_anom -->
-              <div *ngIf="(full_result.results)?['MOSFLM strategy results']">
-                <h3>Anomalous from Mosflm</h3>
               </div>
             </div>
           </div>
