@@ -127,11 +127,11 @@ export class RestService {
     // console.log('error', error);
     let body = res.json();
 
-    for (let session of body) {
-      // console.log(session);
-      session.start_display = moment(session.start).format('YYYY-MM-DD hh:mm:ss');
-      session.end_display = moment(session.end).format('YYYY-MM-DD hh:mm:ss');
-    }
+    // for (let session of body) {
+    //   // console.log(session);
+    //   session.start_display = moment(session.start).format('YYYY-MM-DD hh:mm:ss');
+    //   session.end_display = moment(session.end).format('YYYY-MM-DD hh:mm:ss');
+    // }
     return body || {};
   }
 
