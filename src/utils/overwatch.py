@@ -266,9 +266,11 @@ class Overwatcher(Registrar):
         Orchestrate core functioning of the Overwatcher instance
         """
 
+        # Just printing help info
         if "--help" in self.managed_file_flags:
             self.start_managed_process()
 
+        # An actual run
         else:
             # Connect to redis
             self.connect()
@@ -472,6 +474,7 @@ def main():
     # print environmental_vars
 
     if parsed_args.help:
+        print "----------------------------------------"
         SITE = None
     else:
         # Environmental var for site if no commandline
@@ -493,7 +496,7 @@ def main():
     # Create a list from the parsed_args
     parsed_args_list = []
     for arg, val in parsed_args._get_kwargs():
-        print "  arg:%s  val:%s" % (arg, val)
+        # print "  arg:%s  val:%s" % (arg, val)
         if arg != "managed_file":
             if val == True:
                 parsed_args_list.append("--%s" % arg)
