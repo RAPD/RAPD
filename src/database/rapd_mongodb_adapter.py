@@ -450,7 +450,9 @@ class Database(object):
                 plugin_result["process"][key] = get_object_id(val)
         self.logger.debug(plugin_result["process"])
 
-        # Add to results
+        #
+        # Add to plugin results
+        #
         collection_name = ("%s_%s_results" % (plugin_result["plugin"]["data_type"],
                                               plugin_result["plugin"]["type"])).lower()
         result1 = db[collection_name].update_one(
@@ -469,6 +471,9 @@ class Database(object):
             result1_id = result1.upserted_id
             self.logger.debug("%s _id  from upserting %s", collection_name, result1_id)
 
+        #
+        # Update results
+        #
         result2 = db.results.update_one(
             {"result_id":get_object_id(result1_id)},
             {"$set":{
@@ -486,20 +491,19 @@ class Database(object):
             upsert=True)
 
         # Get the _id from updated entry in plugin_results
-        if result2.raw_result.get("updatedExisting", False):
-            # pprint(db.plugin_results.find_one(
-            #     {"result_id":get_object_id(result1_id)},
-            #     {"_id":1}))
-            result2_id = db.plugin_results.find_one(
-                {"result_id":get_object_id(result1_id)},
-                {"_id":1})["_id"]
-        # upsert
-        else:
+        # Upserted
+        if result2.upserted_id:
             result2_id = result2.upserted_id
 
+        # Modified
+        else:
+            result2_id = db.results.find_one(
+                {"result_id":get_object_id(result1_id)},
+                {"_id":1})["_id"]
+
         # Return the _ids for the two collections
-        return {"plugin_results_id":str(result2_id),
-                "result_id":str(result1_id)}
+        return {"plugin_results_id":str(result1_id),
+                "result_id":str(result2_id)}
 
     # def getArrayStats(self, in_array, mode="float"):
     #     """
