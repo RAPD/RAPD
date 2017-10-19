@@ -48,6 +48,11 @@ def get_commandline():
     parser = argparse.ArgumentParser(parents=[utils.commandline.base_parser],
                                      description=commandline_description)
 
+    parser.add_argument("--clean_start",
+                        action="store_true",
+                        dest="clean_start",
+                        help="Wipe input queues clean before starting")
+
     return parser.parse_args()
 
 def main():

@@ -440,7 +440,9 @@ def get_commandline():
                                      description=commandline_description,
                                      add_help=False)
     # Help
-    parser.add_argument("--help", "-h", action="store_true", dest="help")
+    parser.add_argument("--help", "-h",
+                        action="store_true",
+                        dest="help")
 
     parser.add_argument("--managed_file", "-f",
                         action="store",
