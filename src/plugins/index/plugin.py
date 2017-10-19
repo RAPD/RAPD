@@ -64,6 +64,7 @@ import info
 import plugins.subcontractors.parse as Parse
 import plugins.subcontractors.best as best
 import plugins.subcontractors.labelit as labelit
+import plugins.subcontractors.mosflm as mosflm
 from plugins.subcontractors.xoalign import RunXOalign
 import utils.credits as rcredits
 from utils.r_numbers import try_int, try_float
