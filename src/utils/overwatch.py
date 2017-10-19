@@ -465,23 +465,26 @@ def main():
 
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
-    print environmental_vars
+    # print environmental_vars
 
-    # Environmental var for site if no commandline
-    site = parsed_args.site
-    if site == None:
-        if environmental_vars.has_key("RAPD_SITE"):
-            site = environmental_vars["RAPD_SITE"]
+    if parsed_args.help:
+        SITE = None
+    else:
+        # Environmental var for site if no commandline
+        site = parsed_args.site
+        if site == None:
+            if environmental_vars.has_key("RAPD_SITE"):
+                site = environmental_vars["RAPD_SITE"]
 
-    # Determine the site
-    site_file = utils.site.determine_site(site_arg=site)
-    if site_file == False:
-        print text.error+"Could not determine a site file. Exiting."+text.stop
-        sys.exit(9)
+        # Determine the site
+        site_file = utils.site.determine_site(site_arg=site)
+        if site_file == False:
+            print text.error+"Could not determine a site file. Exiting."+text.stop
+            sys.exit(9)
 
-    # Import the site settings
-    print "Importing %s" % site_file
-    SITE = importlib.import_module(site_file)
+        # Import the site settings
+        print "Importing %s" % site_file
+        SITE = importlib.import_module(site_file)
 
     # Create a list from the parsed_args
     parsed_args_list = []
