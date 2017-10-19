@@ -249,7 +249,7 @@ class Overwatcher(Registrar):
         i = self.managed_file_flags.index('--python')
         self.managed_file_flags.remove('--python')
         self.python_command = self.managed_file_flags.pop(i)
-        print self.python_command
+        # print self.python_command
 
         #print site
         #print managed_file
@@ -320,7 +320,7 @@ class Overwatcher(Registrar):
         command.insert(0, self.python_command)
         command.append("--overwatch_id")
         command.append(self.uuid)
-        print 'command: %s'%command
+        # print 'command: %s'%command
 
         # Run the input command
         #self.managed_process = Popen(command, env=path)
@@ -433,7 +433,7 @@ def get_commandline():
     parser = argparse.ArgumentParser(description=commandline_description,
                                      add_help=False)
     # Help
-    parser.add_argument("--help", "-h",action="store_true",dest="help")
+    parser.add_argument("--help", "-h", action="store_true", dest="help")
 
     parser.add_argument("--managed_file", "-f",
                         action="store",
