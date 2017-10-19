@@ -82,7 +82,7 @@ class Model(object):
     site_adapter = None
     remote_adapter = None
 
-    def __init__(self, SITE, overwatch_id=None):
+    def __init__(self, SITE, settings={}, overwatch_id=None):
         """
         Save variables and start the process activity
 
@@ -96,13 +96,8 @@ class Model(object):
 
         # Passed-in variables
         self.site = SITE
+        self.settings = settings
         self.overwatch_id = overwatch_id
-
-        # Instance variables
-        # try:
-        #     self.return_address = (get_ip_address(), SITE.CONTROL_PORT)
-        # except socket.gaierror:
-        #     self.return_address = ("127.0.0.1", SITE.CONTROL_PORT)
 
         # Start the process
         self.run()
@@ -262,9 +257,10 @@ class Model(object):
             image_monitor = importlib.import_module("%s" % site.IMAGE_MONITOR.lower())
 
             # Instantiate the monitor
-            self.image_monitor = image_monitor.Monitor( site=site,
-                                                        notify=self.receive,
-                                                        overwatch_id=self.overwatch_id)
+            self.image_monitor = image_monitor.Monitor(site=site,
+                                                       notify=self.receive,
+                                                       clean_start=self.settings.get("clean_start", False),
+                                                       overwatch_id=self.overwatch_id)
     def stop_image_monitor(self):
         """Stop the image listening process for core"""
 

@@ -103,11 +103,14 @@ def main():
                                   )
 
     logger.debug("Commandline arguments:")
+    settings = {}
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s" % pair)
-
+        settings[arg] = val
+        
     # Instantiate the model
     MODEL = Model(SITE=SITE,
+                  settings=settings,
                   overwatch_id=commandline_args.overwatch_id)
 
     try:
