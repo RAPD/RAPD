@@ -240,8 +240,6 @@ class Overwatcher(Registrar):
         managed_file_flags -- flags to be passed to the managed file
         """
 
-        print managed_file_flags
-
         # Passed-in variables
         self.site = site
         self.managed_file = managed_file
@@ -268,20 +266,24 @@ class Overwatcher(Registrar):
         Orchestrate core functioning of the Overwatcher instance
         """
 
-        # Connect to redis
-        self.connect()
+        if "--help" in self.managed_file_flags:
+            self.start_managed_process()
 
-        # Register self
-        self.register()
+        else:
+            # Connect to redis
+            self.connect()
 
-        # Start microservice with self.uuid as overwatch id
-        self.start_managed_process()
+            # Register self
+            self.register()
 
-        # Register to kill the managed process on overwatch exit
-        atexit.register(self.kill_managed_process)
+            # Start microservice with self.uuid as overwatch id
+            self.start_managed_process()
 
-        # Start listening for information on managed service and updating
-        self.listen_and_update()
+            # Register to kill the managed process on overwatch exit
+            atexit.register(self.kill_managed_process)
+
+            # Start listening for information on managed service and updating
+            self.listen_and_update()
 
     def restart_managed_process(self):
         """
