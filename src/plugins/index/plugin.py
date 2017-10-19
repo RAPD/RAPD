@@ -447,7 +447,7 @@ class RapdPlugin(Process):
 
             # Pass back results, and cleanup.
             self.postprocess()
-            
+
     def connect_to_redis(self):
         """Connect to the redis instance"""
         # Create a pool connection
@@ -1369,7 +1369,8 @@ Distance | % Transmission", level=98, color="white")
             l = ["", "self.mosflm_strat", "mosflm_results_norm"]
         out = open(inp, "r").readlines()
         eval("%s_log" % l[1]).extend(out)
-        data = Parse.ParseOutputMosflm_strat(self, out, anom)
+        data = mosflm.parse_strategy(out, anom)
+        # data = Parse.ParseOutputMosflm_strat(self, out, anom)
 
         # Print to terminal
         #if "run_number" in data:

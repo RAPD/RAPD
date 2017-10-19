@@ -100,14 +100,14 @@ def main():
     logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
                                   logfile_id="rapd_control",
                                   #level=log_level
-                                  )
+                                 )
 
     logger.debug("Commandline arguments:")
     settings = {}
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s" % pair)
         settings[arg] = val
-        
+
     # Instantiate the model
     MODEL = Model(SITE=SITE,
                   settings=settings,
