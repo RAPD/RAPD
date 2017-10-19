@@ -168,7 +168,7 @@ class Model(object):
 
     def connect_to_redis(self):
         """Connect to the redis instance"""
-        redis_database = importlib.import_module('database.rapd_redis_adapter')
+        redis_database = importlib.import_module('database.redis_adapter')
 
         self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
         self.redis = self.redis_database.connect_to_redis()
@@ -184,7 +184,7 @@ class Model(object):
 
         # Import the database adapter as database module
         # global database
-        database = importlib.import_module('database.rapd_%s_adapter' % self.site.CONTROL_DATABASE)
+        database = importlib.import_module('database.%s_adapter' % self.site.CONTROL_DATABASE)
 
         # Shorten it a little
         site = self.site
