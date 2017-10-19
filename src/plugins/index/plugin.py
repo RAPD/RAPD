@@ -365,7 +365,7 @@ class RapdPlugin(Process):
                     self.results["header%d" % version] = {"_id": eval('self.header%d'%version).get("_id").get("$oid")}
                 else:
                     self.results["header%d" % version] = {"_id": eval('self.header%d'%version).get("_id")}
-        
+
         # Just save the _id
         #self.results["header1"] = {"_id": self.header.get("_id")}
         #if self.header2:
@@ -1369,10 +1369,10 @@ Distance | % Transmission", level=98, color="white")
 
         if os.path.basename(inp).count("anom"):
             anom = True
-            l = ["ANOM", "self.mosflm_strat_anom", "Mosflm ANOM strategy results"]
+            l = ["ANOM", "self.mosflm_strat_anom", "mosflm_results_anom"]
         else:
             anom = False
-            l = ["", "self.mosflm_strat", "Mosflm strategy results"]
+            l = ["", "self.mosflm_strat", "mosflm_results_norm"]
         out = open(inp, "r").readlines()
         eval("%s_log" % l[1]).extend(out)
         data = Parse.ParseOutputMosflm_strat(self, out, anom)
