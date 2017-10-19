@@ -474,7 +474,7 @@ def main():
     # print environmental_vars
 
     if parsed_args.help:
-        print "----------------------------------------"
+        print "\n"
         SITE = None
     else:
         # Environmental var for site if no commandline
