@@ -430,8 +430,10 @@ def get_commandline():
 
     commandline_description = "Overwatch wrapper"
 
-    parser = argparse.ArgumentParser(parents=[utils.commandline.base_parser],
-                                     description=commandline_description)
+    parser = argparse.ArgumentParser(description=commandline_description,
+                                     add_help=False)
+    # Help
+    parser.add_argument("--help", "-h",action="store_true",dest="help")
 
     parser.add_argument("--managed_file", "-f",
                         action="store",
@@ -443,6 +445,9 @@ def get_commandline():
                         dest="python",
                         help="Which python to launch managed file")
     parsed_args = parser.parse_args()
+
+    if parsed_args.help:
+        parser.print_help()
 
     return parsed_args
 
