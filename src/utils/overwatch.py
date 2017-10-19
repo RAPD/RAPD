@@ -240,6 +240,8 @@ class Overwatcher(Registrar):
         managed_file_flags -- flags to be passed to the managed file
         """
 
+        print managed_file_flags
+
         # Passed-in variables
         self.site = site
         self.managed_file = managed_file
