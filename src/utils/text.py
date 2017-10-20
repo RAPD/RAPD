@@ -46,5 +46,17 @@ class json(object):
     @staticmethod
     def loads(input):
         """Just like json.loads"""
-        #return system_json.loads(input, object_hook=json_util.object_hook, object_pairs_hook=OrderedDict)
+        # return system_json.loads(input, object_hook=json_util.object_hook, object_pairs_hook=OrderedDict)
         return system_json.loads(input, object_hook=json_util.object_hook)
+
+if __name__ == "__main__":
+
+    input_obj = {1:ObjectId('111111111111111111111111'),2:OrderedDict({1:'one'})}
+
+    print "input object:", input_obj
+
+    d_res = json.dumps(input_obj)
+    print "\ndumped string:", d_res
+
+    l_res = json.loads(d_res)
+    print "\nloaded object:", l_res

@@ -57,6 +57,7 @@ class Monitor(threading.Thread):
 
     def __init__(self,
                  site,
+                 clean_start=False,
                  notify=None,
                  overwatch_id=None):
         """
@@ -76,6 +77,7 @@ class Monitor(threading.Thread):
 
         # Passed-in variables
         self.site = site
+        self.clean_start = clean_start
         self.notify = notify
         self.overwatch_id = overwatch_id
 
@@ -129,6 +131,11 @@ class Monitor(threading.Thread):
 
         # Determine interval for overwatch update
         ow_round_interval = 50 # int((5 * len(self.image_lists)) / POLLING_REST)
+
+        # If we are starting clean
+        if self.clean_start:
+            for tag in self.tags:
+                self.redis.delete("images_collected:%s" % tag)
 
         while self.running:
 

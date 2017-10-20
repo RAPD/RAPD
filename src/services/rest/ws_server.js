@@ -7,6 +7,10 @@ var url = require('url');
 var WebSocketServer = require('ws').Server;
 // var SocketIo = require('socket.io');
 var mongoose = require('mongoose');
+// Fix the promise issue in Mongoose
+mongoose.Promise = require('q').Promise;
+var Schema = mongoose.Schema;
+
 var jwt = require('jsonwebtoken');
 var uuid = require('node-uuid');
 
@@ -28,6 +32,20 @@ var result_type_trans = {
       mad: []
     }
   };
+
+var schemas = {
+  'Mx_index_result':new Schema({
+    _id: {
+      type: Schema.ObjectId,
+      auto: true
+    },
+    // image1: {
+    //   type: Schema.Types.ObjectId,
+    //   ref: 'Image',
+    //   required: false,
+    // },
+  }),
+}
 
 // All the ws_connections
 var ws_connections = {};
@@ -133,11 +151,15 @@ parse_message = function(channel, message) {
                     if (im2_result) {
                       message.image2 = im1_result;
                       return_array.push(['result_details', message]);
+                    } else {
+                      return_array.push(['result_details', message]);
                     }
                   });
               } else {
                 return_array.push(['result_details', message]);
               }
+            } else {
+              return_array.push(['result_details', message]);
             }
           });
       } else {
@@ -327,18 +349,18 @@ function Wss (opt, callback) {
 
             // Get result details
             case 'get_result_details':
+
               console.log('get_result_details');
               console.log(data);
 
               // Create a model
-              if (data.result_type.indexOf(':') !== -1) {
-                data.result_type = data.result_type.replace(/:/, '_');
-                // data.result_type = data.result_type.slice(data.result_type.indexOf(':')+1);
-              }
-
-              console.log('Looking in:', data.data_type+'_'+ data.plugin_type +'_results');
+              // if (data.result_type.indexOf(':') !== -1) {
+              //   data.result_type = data.result_type.replace(/:/, '_');
+              //   // data.result_type = data.result_type.slice(data.result_type.indexOf(':')+1);
+              // }
 
               // Create a mongoose model for the result
+              console.log('Looking in:', data.data_type+'_'+ data.plugin_type +'_results');
               let name = data.data_type+'_'+ data.plugin_type +'_result';
               let collection_name = name.charAt(0).toUpperCase() + name.slice(1);
               var ResultModel;
@@ -348,61 +370,100 @@ function Wss (opt, callback) {
                 }
               } catch(e) {
                 if (e.name === 'MissingSchemaError') {
-                   let schema = new mongoose.Schema({}, {strict:false});
-                   ResultModel = mongoose.model(collection_name, schema);
+                  // let schema = schemas[collection_name];
+                  let schema = new mongoose.Schema({
+                    _id: {
+                      type: Schema.ObjectId,
+                      auto: true
+                      },
+                    }, {strict:false});
+                  ResultModel = mongoose.model(collection_name, schema);
                 }
               }
 
-              // Searhc for a result
+              // Search for a result
+              // let query1 = ResultModel.findOne({'_id':mongoose.Types.ObjectId(data.result_id)});
+              // query1.then(function(doc) {
+              //   console.log(doc);
+              // });
+
               ResultModel.
                 findOne({'_id':mongoose.Types.ObjectId(data.result_id)}).
                 // where('result_type').in(result_type_trans[data_type][data_class]).
                 // sort('-timestamp').
-                exec(function(err, result) {
-                    if (err) {
-                      return false;
-                    } else {
-                      console.log(result);
-                      if ('process' in result) {
-                        if ('image1_id' in result.process) {
+                exec(function(err, detailed_result) {
+                  // Error
+                  if (err) {
+                    console.error(err);
+                    ws.send(JSON.stringify({msg_type:'result_details',
+                                            success:false,
+                                            results:err}));
+                    return false;
+                  // No error
+                  } else {
+                    console.log(detailed_result);
+                    console.log(Object.keys(detailed_result));
+                    console.log(detailed_result._doc);
+                    console.log(detailed_result._doc.process);
+
+                      // Make sure there is a process
+                      if ('process' in detailed_result._doc) {
+                        // If there is an image1_id
+                        if ('image1_id' in detailed_result._doc.process) {
+
+                          // Manually populate
                           Image.
-                            findOne({_id:result.process.image1_id})
-                            .exec(function(im1_error, im1_result){
-                              if (im1_result) {
-                                result.image1 = im1_result;
-                                if ('image2_id' in result.process) {
+                            findOne({_id:detailed_result._doc.process.image1_id}).
+                            exec(function(err, image1) {
+                              if (err) {
+                                console.error(err);
+                                return false;
+                              } else {
+                                detailed_result._doc.image1 = image1;
+                                console.log('POPULATED image1');
+                                console.log(detailed_result);
+                                // Now look for image2
+                                if ('image2_id' in detailed_result._doc.process) {
+
+                                  // Manually populate
                                   Image.
-                                    findOne({_id:result.process.image2_id})
-                                    .exec(function(im2_error, im2_result){
-                                      if (im2_result) {
-                                        result.image2 = im1_result;
+                                    findOne({_id:detailed_result._doc.process.image1_id}).
+                                    exec(function(err, image2) {
+                                      if (err) {
+                                        console.error(err);
+                                        return false;
+                                      } else {
+                                        detailed_result._doc.image1 = image2;
+                                        console.log('POPULATED image2');
+                                        console.log(detailed_result);
                                         // Send back over the websocket
                                         ws.send(JSON.stringify({msg_type:'result_details',
-                                                                results:result}));
+                                                                success:true,
+                                                                results:detailed_result}));
                                       }
                                     });
                                 } else {
                                   // Send back over the websocket
                                   ws.send(JSON.stringify({msg_type:'result_details',
-                                                          results:result}));
+                                                          success:true,
+                                                          results:detailed_result}));
                                 }
                               }
                             });
                         } else {
                           // Send back over the websocket
                           ws.send(JSON.stringify({msg_type:'result_details',
-                                                  results:result}));
+                                                  success:true,
+                                                  results:detailed_result}));
                         }
                       } else {
                         // Send back over the websocket
                         ws.send(JSON.stringify({msg_type:'result_details',
-                                                results:result}));
+                                                success:true,
+                                                results:detailed_result}));
                       }
                     }
-                });
-
-              // ws.send(JSON.stringify({msg_type:'result_details',
-              //                         results:'bar'}));
+                  });
 
               break;
           }

@@ -2,18 +2,18 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var SessionSchema = new Schema({
-  start: {
-    type: Date
-  },
-  end: {
-    type: Date
-  },
   data_root_directory: {
     type: String,
     default: ''
   },
-  site: {
-    type: String,
+  last_process: {
+    type: Date,
+    required: true,
+    default: Date.now
+  },
+  group: {
+    type: Schema.Types.ObjectId,
+    ref: 'Group',
     required: true
   },
   session_type: {
@@ -21,10 +21,9 @@ var SessionSchema = new Schema({
     required: true,
     default: 'mx'
   },
-  group: {
-    type: Schema.Types.ObjectId,
-    ref: 'Group',
-    required: true,
+  site: {
+    type: String,
+    required: true
   },
   timestamp: {
     type: Date,

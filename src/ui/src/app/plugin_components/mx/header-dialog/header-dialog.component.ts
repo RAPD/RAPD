@@ -3,6 +3,7 @@ import { Component,
          OnInit } from '@angular/core';
 import { MatDialogRef,
          MAT_DIALOG_DATA } from '@angular/material';
+import { RestService } from '../../../shared/services/rest.service';
 
 @Component({
   selector: 'app-header-dialog',
@@ -11,10 +12,19 @@ import { MatDialogRef,
 })
 export class HeaderDialogComponent implements OnInit {
 
+  private image_data:any;
+  private error:any;
+
   constructor(public dialogRef: MatDialogRef<HeaderDialogComponent>,
+              private rest_service: RestService,
               @Inject(MAT_DIALOG_DATA) public data: any) { }
 
   ngOnInit() {
     console.log(this.data);
+
+    this.rest_service.getImageData(this.data.image_id)
+                     .subscribe(
+                       image_data => this.image_data=image_data,
+                       error => this.error=error);
   }
 }

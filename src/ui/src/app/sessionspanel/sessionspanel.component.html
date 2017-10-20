@@ -21,14 +21,14 @@
           {{value}}
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Start" prop="start_display">
+      <ngx-datatable-column name="Created" prop="timestamp">
         <ng-template let-value="value" ngx-datatable-cell-template>
-          {{value}}
+          {{ value | date:'y-MM-dd HH:mm' }}
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="End" prop="end_display">
+      <ngx-datatable-column name="Last Process" prop="last_process">
         <ng-template let-value="value" ngx-datatable-cell-template>
-          {{value}}
+          {{ value | date:'y-MM-dd HH:mm' }}
         </ng-template>
       </ngx-datatable-column>
       <ngx-datatable-column name="Directory" prop="data_root_directory">

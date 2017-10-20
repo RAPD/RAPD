@@ -33,10 +33,12 @@ const redis =      require('redis');
 var redis_client = redis.createClient(config.redis_port, config.redis_host);
 
 // MongoDB Models
-// const Session = require('./models/session');
 const User =    require('./models/user');
 const Group =   require('./models/group');
+const Result =  require('./models/result');
 const Run =     require('./models/run');
+const Session = require('./models/session');
+
 // MongoDB connection
 var mongoose = require('mongoose');
 // Fix the promise issue in Mongoose

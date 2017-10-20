@@ -48,6 +48,11 @@ def get_commandline():
     parser = argparse.ArgumentParser(parents=[utils.commandline.base_parser],
                                      description=commandline_description)
 
+    parser.add_argument("--clean_start",
+                        action="store_true",
+                        dest="clean_start",
+                        help="Wipe input queues clean before starting")
+
     return parser.parse_args()
 
 def main():
@@ -95,14 +100,17 @@ def main():
     logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
                                   logfile_id="rapd_control",
                                   #level=log_level
-                                  )
+                                 )
 
     logger.debug("Commandline arguments:")
+    settings = {}
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s" % pair)
+        settings[arg] = val
 
     # Instantiate the model
     MODEL = Model(SITE=SITE,
+                  settings=settings,
                   overwatch_id=commandline_args.overwatch_id)
 
     try:

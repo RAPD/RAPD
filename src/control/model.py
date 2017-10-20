@@ -37,7 +37,7 @@ from pprint import pprint
 # import redis
 # import socket
 import sys
-
+import time
 
 # RAPD imports
 from control.control_server import LaunchAction, ControllerServer
@@ -82,7 +82,7 @@ class Model(object):
     site_adapter = None
     remote_adapter = None
 
-    def __init__(self, SITE, overwatch_id=None):
+    def __init__(self, SITE, settings={}, overwatch_id=None):
         """
         Save variables and start the process activity
 
@@ -96,13 +96,8 @@ class Model(object):
 
         # Passed-in variables
         self.site = SITE
+        self.settings = settings
         self.overwatch_id = overwatch_id
-
-        # Instance variables
-        # try:
-        #     self.return_address = (get_ip_address(), SITE.CONTROL_PORT)
-        # except socket.gaierror:
-        #     self.return_address = ("127.0.0.1", SITE.CONTROL_PORT)
 
         # Start the process
         self.run()
@@ -168,7 +163,7 @@ class Model(object):
 
     def connect_to_redis(self):
         """Connect to the redis instance"""
-        redis_database = importlib.import_module('database.rapd_redis_adapter')
+        redis_database = importlib.import_module('database.redis_adapter')
 
         self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
         self.redis = self.redis_database.connect_to_redis()
@@ -184,7 +179,7 @@ class Model(object):
 
         # Import the database adapter as database module
         # global database
-        database = importlib.import_module('database.rapd_%s_adapter' % self.site.CONTROL_DATABASE)
+        database = importlib.import_module('database.%s_adapter' % self.site.CONTROL_DATABASE)
 
         # Shorten it a little
         site = self.site
@@ -262,9 +257,10 @@ class Model(object):
             image_monitor = importlib.import_module("%s" % site.IMAGE_MONITOR.lower())
 
             # Instantiate the monitor
-            self.image_monitor = image_monitor.Monitor( site=site,
-                                                        notify=self.receive,
-                                                        overwatch_id=self.overwatch_id)
+            self.image_monitor = image_monitor.Monitor(site=site,
+                                                       notify=self.receive,
+                                                       clean_start=self.settings.get("clean_start", False),
+                                                       overwatch_id=self.overwatch_id)
     def stop_image_monitor(self):
         """Stop the image listening process for core"""
 
@@ -443,9 +439,25 @@ class Model(object):
                 # Right on time
                 if place_in_run == 1:
                     # Get all the image information
-                    header = detector.read_header(
-                        fullname,
-                        beam_settings=self.site.BEAM_INFO[site_tag.upper()])
+                    attempt_counter = 0
+                    while attempt_counter < 5:
+                        try:
+                            attempt_counter += 1
+                            header = detector.read_header(
+                                fullname,
+                                beam_settings=self.site.BEAM_INFO[site_tag.upper()])
+                            break
+                        except IOError:
+                            self.logger.exception("Unable to access image")
+                            time.sleep(0.1)
+                    else:
+                        self.logger.error("Unable to access image after %d tries", attempt_counter)
+                        return False
+
+                    # # Get all the image information
+                    # header = detector.read_header(
+                    #     fullname,
+                    #     beam_settings=self.site.BEAM_INFO[site_tag.upper()])
 
                     # Put data about run in the header object
                     header["collect_mode"] = "run"
@@ -488,11 +500,19 @@ class Model(object):
             self.logger.debug("%s is a snap", fullname)
 
             # Get all the image information
-            try:
-                header = detector.read_header(fullname,
-                                              beam_settings=self.site.BEAM_INFO[site_tag.upper()])
-            except IOError:
-                self.logger.exception("Unable to access image")
+            attempt_counter = 0
+            while attempt_counter < 5:
+                try:
+                    attempt_counter += 1
+                    header = detector.read_header(
+                        fullname,
+                        beam_settings=self.site.BEAM_INFO[site_tag.upper()])
+                    break
+                except IOError:
+                    self.logger.exception("Unable to access image")
+                    time.sleep(0.1)
+            else:
+                self.logger.error("Unable to access image after %d tries", attempt_counter)
                 return False
 
             # Add some data to the header - no run_id for snaps

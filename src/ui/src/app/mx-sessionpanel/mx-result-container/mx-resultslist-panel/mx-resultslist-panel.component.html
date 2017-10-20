@@ -15,6 +15,7 @@
   <ng-container *ngFor="let id of data_results">
     <mat-list-item
       class="rapd-list-item"
+      *ngIf="! (data_results_object[id])?.display"
       [attr.id]=id
       [myHighlight]="highlight_color"
       (click)="onClick(id)"

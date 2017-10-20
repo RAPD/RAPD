@@ -249,7 +249,7 @@ class Overwatcher(Registrar):
         i = self.managed_file_flags.index('--python')
         self.managed_file_flags.remove('--python')
         self.python_command = self.managed_file_flags.pop(i)
-        print self.python_command
+        # print self.python_command
 
         #print site
         #print managed_file
@@ -266,20 +266,26 @@ class Overwatcher(Registrar):
         Orchestrate core functioning of the Overwatcher instance
         """
 
-        # Connect to redis
-        self.connect()
+        # Just printing help info
+        if "--help" in self.managed_file_flags:
+            self.start_managed_process()
 
-        # Register self
-        self.register()
+        # An actual run
+        else:
+            # Connect to redis
+            self.connect()
 
-        # Start microservice with self.uuid as overwatch id
-        self.start_managed_process()
+            # Register self
+            self.register()
 
-        # Register to kill the managed process on overwatch exit
-        atexit.register(self.kill_managed_process)
+            # Start microservice with self.uuid as overwatch id
+            self.start_managed_process()
 
-        # Start listening for information on managed service and updating
-        self.listen_and_update()
+            # Register to kill the managed process on overwatch exit
+            atexit.register(self.kill_managed_process)
+
+            # Start listening for information on managed service and updating
+            self.listen_and_update()
 
     def restart_managed_process(self):
         """
@@ -320,7 +326,7 @@ class Overwatcher(Registrar):
         command.insert(0, self.python_command)
         command.append("--overwatch_id")
         command.append(self.uuid)
-        print 'command: %s'%command
+        # print 'command: %s'%command
 
         # Run the input command
         #self.managed_process = Popen(command, env=path)
@@ -431,7 +437,12 @@ def get_commandline():
     commandline_description = "Overwatch wrapper"
 
     parser = argparse.ArgumentParser(parents=[utils.commandline.base_parser],
-                                     description=commandline_description)
+                                     description=commandline_description,
+                                     add_help=False)
+    # Help
+    parser.add_argument("--help", "-h",
+                        action="store_true",
+                        dest="help")
 
     parser.add_argument("--managed_file", "-f",
                         action="store",
@@ -443,6 +454,9 @@ def get_commandline():
                         dest="python",
                         help="Which python to launch managed file")
     parsed_args = parser.parse_args()
+
+    if parsed_args.help:
+        parser.print_help()
 
     return parsed_args
 
@@ -459,28 +473,32 @@ def main():
 
     # Get the environmental variables
     environmental_vars = utils.site.get_environmental_variables()
-    print environmental_vars
+    # print environmental_vars
 
-    # Environmental var for site if no commandline
-    site = parsed_args.site
-    if site == None:
-        if environmental_vars.has_key("RAPD_SITE"):
-            site = environmental_vars["RAPD_SITE"]
+    if parsed_args.help:
+        print "\n"
+        SITE = None
+    else:
+        # Environmental var for site if no commandline
+        site = parsed_args.site
+        if site == None:
+            if environmental_vars.has_key("RAPD_SITE"):
+                site = environmental_vars["RAPD_SITE"]
 
-    # Determine the site
-    site_file = utils.site.determine_site(site_arg=site)
-    if site_file == False:
-        print text.error+"Could not determine a site file. Exiting."+text.stop
-        sys.exit(9)
+        # Determine the site
+        site_file = utils.site.determine_site(site_arg=site)
+        if site_file == False:
+            print text.error+"Could not determine a site file. Exiting."+text.stop
+            sys.exit(9)
 
-    # Import the site settings
-    print "Importing %s" % site_file
-    SITE = importlib.import_module(site_file)
+        # Import the site settings
+        print "Importing %s" % site_file
+        SITE = importlib.import_module(site_file)
 
     # Create a list from the parsed_args
     parsed_args_list = []
     for arg, val in parsed_args._get_kwargs():
-        print "  arg:%s  val:%s" % (arg, val)
+        # print "  arg:%s  val:%s" % (arg, val)
         if arg != "managed_file":
             if val == True:
                 parsed_args_list.append("--%s" % arg)
