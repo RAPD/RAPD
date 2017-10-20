@@ -30,6 +30,7 @@ Provides generic interface for cluster interactions
 import os
 import time
 import tempfile
+import shlex
 
 # Non-standard imports
 import drmaa
