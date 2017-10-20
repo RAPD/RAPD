@@ -22,9 +22,11 @@ def connect_redis_manager_HA(name="remote_master"):
     # Get the master redis instance
     return(sentinel.master_for(name))
 
-import utils.xutils as xutils
-cluster_launcher = xutils.load_cluster_adapter(self)
-launcher = cluster_launcher.process_cluster
+#import utils.xutils as xutils
+#cluster_launcher = xutils.load_cluster_adapter(self)
+#launcher = cluster_launcher.process_cluster
+import sites.cluster.sercat as cluster
+launcher = cluster.process_cluster
 inp_kwargs = {'command': 'sleep 5',
               'logfile': '/home/schuerjp/temp/junk.log'}
 # Update batch queue info if using a compute cluster
