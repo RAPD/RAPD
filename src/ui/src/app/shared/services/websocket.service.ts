@@ -111,7 +111,6 @@ export class WebsocketService {
             }
           });
         });
-        // self.results_subject.next(data);
         break;
 
       case 'result_details':
