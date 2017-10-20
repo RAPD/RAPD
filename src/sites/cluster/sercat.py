@@ -355,7 +355,7 @@ def process_cluster(command,
     #name = inp.get('name', False)
     # Sends job/process ID back
     #pid = inp.get('pid', False)
-    l = []
+    #l = []
     
     if work_dir == False:
         work_dir = os.getcwd()
@@ -390,7 +390,7 @@ def process_cluster(command,
       else:
         qs += '-o %s '%os.path.join(work_dir,logfile)
     qs += "%s -l nodes=1:ppn=%s %s" % (v, nproc, fname)
-    
+    print qs
     #Launch the job on the cluster
     #job = subprocess.Popen(qs,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
     proc = subprocess.Popen(shlex.split(qs),
