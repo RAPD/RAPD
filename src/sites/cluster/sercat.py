@@ -29,6 +29,7 @@ Provides generic interface for cluster interactions
 # Standard imports
 import os
 import time
+import tempfile
 
 # Non-standard imports
 import drmaa
@@ -234,7 +235,7 @@ def process_cluster_old(self, inp, output=False):
    
     print "Job finished"
 
-def process_cluster(inp):
+def process_cluster_OLD(inp):
     """
     Launch job on SERCAT's scyld cluster. Does not wait for jobs to end!
     """
@@ -305,6 +306,154 @@ def process_cluster(inp):
     while check_qsub_job(l[0]):
       time.sleep(0.2)
     print "Job finished"
+
+def process_cluster(command,
+                   work_dir=False,
+                   logfile=False,
+                   batch_queue='all.q',
+                   nproc=1,
+                   logger=False,
+                   name=False,
+                   mp_event=False,
+                   timeout=False,
+                   pid_queue=False,
+                   tag=False,
+                   result_queue=False):
+    """
+    Submit job to cluster using DRMAA (when you are already on the cluster).
+    Main script should not end with os._exit() otherwise running jobs could be orphanned.
+    To eliminate this issue, setup self.running = multiprocessing.Event(), self.running.set() in main script,
+    then set it to False (self.running.clear()) during postprocess to kill running jobs smoothly.
+    
+    command - command to run
+    work_dir - working directory
+    logfile - print results of command to this file
+    batch_queue - specify a batch queue on the cluster (options are all.q, phase1.q, phase2.q, phase3.q, 
+            index.q, general.q, high_mem.q, rosetta.q). If no queue is specified, it will run on any node.
+    nproc - number of processor to reserve for the job on a single node. If # of slots 
+            are not available, it will wait to launch until resources are free. 
+    logger - logger event to pass status reports.
+    name - Name of job as seen when running 'qstat' command.
+    mp_event - Pass in the Multiprocessing.Event() that the plugin in uses to signal termination. 
+               This way the job will be killed if the event() is cleared within the plugin.
+    timeout - max time (in seconds) to wait for job to complete before it is killed. (default=False waits forever)
+    pid_queue - pass back the jobIB through a multiprocessing.Queue()
+    tag - used by RAPD to keep track of iterations of jobs. (required for result_queue, if used)
+    result_queue - pass back the results in a multiprocessing.Queue() (requires tag)
+    """
+
+    """
+    Launch job on SERCAT's scyld cluster. Does not wait for jobs to end!
+    """
+    
+    #command = inp.get('command')
+    #log = inp.get('log', False)
+    #queue = inp.get('queue', False)
+    #smp = inp.get('smp',1)
+    #d = inp.get('dir', os.getcwd())
+    #name = inp.get('name', False)
+    # Sends job/process ID back
+    #pid = inp.get('pid', False)
+    l = []
+    
+    if work_dir == False:
+        work_dir = os.getcwd()
+    if result_queue:
+        if logfile == False:
+            fd = tempfile.NamedTemporaryFile(dir=work_dir, delete=False)
+            logfile = fd.name
+
+    # Make an input script if not input
+    if command[-3] == '.sh':
+      fname = command
+    else:  
+      fname = 'qsub%s.sh'%random.randint(0,5000)
+      with open(fname,'w') as f:
+          print >>f, command
+          f.close()
+    
+    # Setup path
+    v = "-v PATH=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
+/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/bin:\
+/home/schuerjp/Programs/best:\
+/home/schuerjp/Programs/RAPD/bin:\
+/home/schuerjp/Programs/RAPD/share/phenix-1.10.1-2155/build/bin:\
+/home/schuerjp/Programs/raddose-20-05-09-distribute-noexec/bin:\
+/usr/local/bin:/bin:/usr/bin"
+    
+    # Setup the qsub command
+    qs = 'qsub -d %s -j oe '%work_dir
+    if logfile:
+      if logfile.count('/'):
+        qs += '-o %s '%logfile
+      else:
+        qs += '-o %s '%os.path.join(work_dir,logfile)
+    qs += "%s -l nodes=1:ppn=%s %s" % (v, nproc, fname)
+    
+    #Launch the job on the cluster
+    #job = subprocess.Popen(qs,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+    proc = subprocess.Popen(shlex.split(qs),
+                           stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE)
+    
+    stdout, stderr = proc.communicate()
+    print stdout
+    # Send back PID if have pid_queue
+    #if pid_queue:
+    #    pid_queue.put(proc.pid)
+
+    #try:
+        # Get the stdout and stderr from process
+    #    stdout, stderr = proc.communicate()
+    #except KeyboardInterrupt:
+    #    os._exit()
+        # SHOULD THIS KILL THE JOBS?
+    """
+    # Wait for job to complete
+    time.sleep(1)
+    while check_qsub_job(l[0]):
+      time.sleep(0.2)
+    print "Job finished"
+    
+    # Delete logile if it was not asked to be saved
+    if fd:
+        os.unlink(logfile)
+    # Put results on a Queue, if given
+    if result_queue:
+        result = {
+            "pid": proc.pid,
+            "returncode": proc.returncode,
+            "stdout": stdout,
+            "stderr": stderr,
+            "tag": tag
+        }
+        result_queue.put(result)
+
+    # Write out a log file, if name passed in
+    if logfile:
+        with open(logfile, "w") as out_file:
+            out_file.write(stdout)
+            out_file.write(stderr)
+    """
+    """
+    # Return job_id.
+    #if isinstance(output, dict):
+    for line in job.stdout:
+      if len(line)!= 0:
+        l.append(line)
+    if pid != False:
+      # For my pipelines
+      if name == False:
+        pid.put(l[0])
+      else:
+        # For Frank's main launcher
+        pid.put(job.pid)
+    # Wait for job to complete
+    time.sleep(1)
+    while check_qsub_job(l[0]):
+      time.sleep(0.2)
+    print "Job finished"
+    """
 
 def process_cluster_beorun(inp):
     """
