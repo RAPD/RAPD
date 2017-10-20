@@ -80,11 +80,11 @@
             </div>
             <div *ngIf="(full_result.results)?.labelit_results.status === 'FAILED'">
               <h2>Labelit Failure</h2>
-              <h3>{{full_result.results.labelit_results.error}}</h3>
+              <h3 class="rapd-failure">{{full_result.results.labelit_results.error}}</h3>
             </div>
             <div>
-              <h2>Data Collection Strategies</h2>
               <div *ngIf="full_result.results.best_results_norm !== undefined">
+                <h2>Data Collection Strategies</h2>
                 <div *ngIf="(full_result.results.best_results_norm)?.status !== 'FAILED'">
                   <h3>Normal by Best</h3>
                   <table class="rapd-table">
@@ -140,15 +140,18 @@
                   </table>
                 </div>
               </div>
-              <!-- <div "(full_result.results.mosflm_results_norm)?.status !== 'FAILED'">
-                <h3>Normal by Mosflm</h3>
-              </div> -->
-              <!-- <div "(full_result.results.mosflm_results_anom)?.status !== 'FAILED'">
-                <h3>Anomalous by Best</h3>
-              </div> -->
+              <div *ngIf="full_result.results.mosflm_results_norm !== undefined">
+                <h2>Data Collection Strategies</h2>
+                <div "(full_result.results.mosflm_results_norm)?.status !== 'FAILED'">
+                  <h3>Normal by Mosflm</h3>
+                </div>
+                <div "(full_result.results.mosflm_results_anom)?.status !== 'FAILED'">
+                  <h3>Anomalous by Best</h3>
+                </div>
+              </div>
             </div>
           </div>
-          <div fxFlex fxLayout="column" fxLayoutGap="10px" class="rapd-result">
+          <div *ngIf="full_result.results.plots" fxFlex fxLayout="column" fxLayoutGap="10px" class="rapd-result">
             <div fxFlex="none" class="rapd-plot-header">
               <div class="rapd-chart-title-panel">
                 <h3>{{selected_plot_label}}</h3>
