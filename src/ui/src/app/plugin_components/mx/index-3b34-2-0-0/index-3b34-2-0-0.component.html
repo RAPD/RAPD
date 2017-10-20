@@ -494,12 +494,24 @@
       </mat-card-content>
       <mat-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
         <app-log-card
+          *ngIf="full_result.results.best_results_norm"
           [log]="full_result.results.best_results_norm.log"
           header="Best Strategy Normal">
         </app-log-card>
         <app-log-card
+          *ngIf="full_result.results.best_results_anom"
           [log]="full_result.results.best_results_anom.log"
           header="Best Strategy ANOMALOUS">
+        </app-log-card>
+        <app-log-card
+          *ngIf="full_result.results.mosflm_results_norm"
+          [log]="full_result.results.mosflm_results_norm.log"
+          header="Mosflm Strategy Normal">
+        </app-log-card>
+        <app-log-card
+          *ngIf="full_result.results.mosflm_results_anom"
+          [log]="full_result.results.mosflm_results_anom.log"
+          header="Mosflm Strategy ANOMALOUS">
         </app-log-card>
         <app-log-card
           [log]="objectKeys(full_result.results.labelit_results.log)"
