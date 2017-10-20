@@ -30,6 +30,10 @@ body {
 }
 
 
+h3.rapd-failure {
+  color: red;
+}
+
 
 .container {
   display: flex;
