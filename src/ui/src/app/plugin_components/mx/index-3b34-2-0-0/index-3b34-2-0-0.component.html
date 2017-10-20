@@ -82,10 +82,10 @@
               <h2>Labelit Failure</h2>
               <h3>{{full_result.results.labelit_results.error}}</h3>
             </div>
-            <div *ngIf="(full_result.results)?.best_results_norm">
+            <div *ngIf="(full_result.results)?.best_results_norm || (full_result.results)?.mosflm_results_norm">
               <h2>Data Collection Strategies</h2>
-              <div>
-                <h3>Normal</h3>
+              <div *ngIf="(full_result.results)?.best_results_norm">
+                <h3>Normal by Best</h3>
                 <table class="rapd-table">
                   <thead>
                     <tr>
@@ -112,7 +112,7 @@
                 </table>
               </div>
               <div *ngIf="(full_result.results)?.best_results_anom">
-                <h3>Anomalous</h3>
+                <h3>Anomalous by Best</h3>
                 <table class="rapd-table">
                   <thead>
                     <tr>
