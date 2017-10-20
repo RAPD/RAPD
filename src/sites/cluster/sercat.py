@@ -398,7 +398,8 @@ def process_cluster(command,
                            stderr=subprocess.PIPE)
     
     stdout, stderr = proc.communicate()
-    print stdout
+    print 'stdout: %s'%stdout
+    print 'stderr: %s'%stderr
     # Send back PID if have pid_queue
     #if pid_queue:
     #    pid_queue.put(proc.pid)
