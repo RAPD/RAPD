@@ -240,6 +240,8 @@ class Overwatcher(Registrar):
         managed_file_flags -- flags to be passed to the managed file
         """
 
+        # print "__init__"
+
         # Passed-in variables
         self.site = site
         self.managed_file = managed_file
@@ -251,9 +253,9 @@ class Overwatcher(Registrar):
         self.python_command = self.managed_file_flags.pop(i)
         # print self.python_command
 
-        #print site
-        #print managed_file
-        #print managed_file_flags
+        # print site
+        # print managed_file
+        # print managed_file_flags
 
         # Create a unique id
         self.uuid = uuid.uuid4().hex
@@ -448,23 +450,28 @@ def get_commandline():
                         action="store",
                         dest="managed_file",
                         help="File to be overwatched")
+
     parser.add_argument("--python", "-p",
                         action="store",
                         default="rapd.python",
                         dest="python",
                         help="Which python to launch managed file")
-    parsed_args = parser.parse_args()
+
+    # parser.add_argument('rest', nargs=argparse.REMAINDER)
+
+    # parsed_args = parser.parse_args()
+    parsed_args, unknownargs = parser.parse_known_args()
 
     if parsed_args.help:
         parser.print_help()
 
-    return parsed_args
+    return parsed_args, unknownargs
 
 def main():
     """Called when overwatch is run from the commandline"""
 
     # Get the commandline args
-    parsed_args = get_commandline()
+    parsed_args, unknownargs = get_commandline()
 
     # Make sure there is a managed_process in parsed_args
     if parsed_args.managed_file == None:
@@ -509,11 +516,13 @@ def main():
                 parsed_args_list.append("--%s" % arg)
                 parsed_args_list.append(str(val))
 
+    # Add the args not understood by overwatch argparser
+    parsed_args_list.extend(unknownargs)
+
     # Instantiate the Overwatcher
     OW = Overwatcher(site=SITE,
                      managed_file=parsed_args.managed_file,
                      managed_file_flags=parsed_args_list)
-
 
 if __name__ == "__main__":
 
