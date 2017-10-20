@@ -142,10 +142,10 @@
               </div>
               <div *ngIf="full_result.results.mosflm_results_norm !== undefined">
                 <h2>Data Collection Strategies</h2>
-                <div "(full_result.results.mosflm_results_norm)?.status !== 'FAILED'">
+                <div *ngIf="(full_result.results.mosflm_results_norm)?.status !== 'FAILED'">
                   <h3>Normal by Mosflm</h3>
                 </div>
-                <div "(full_result.results.mosflm_results_anom)?.status !== 'FAILED'">
+                <div *ngIf="(full_result.results.mosflm_results_anom)?.status !== 'FAILED'">
                   <h3>Anomalous by Best</h3>
                 </div>
               </div>
