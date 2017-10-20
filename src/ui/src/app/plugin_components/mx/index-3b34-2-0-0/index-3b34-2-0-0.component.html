@@ -502,7 +502,7 @@
           header="Best Strategy ANOMALOUS">
         </app-log-card>
         <app-log-card
-          [log]="full_result.results.labelit_results.output"
+          [log]="objectKeys(full_result.results.labelit_results.log)"
           header="Labelit Indexing">
         </app-log-card>
       </mat-card-content>
