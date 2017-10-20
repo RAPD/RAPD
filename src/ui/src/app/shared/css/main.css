@@ -225,6 +225,9 @@ button.button-dialog-top-right.mat-icon-button {
 .active-result {
   background-color: yellow;
 }
+.active-result:hover {
+  background-color: yellow;
+}
 
 .hidden {
   display: none;
