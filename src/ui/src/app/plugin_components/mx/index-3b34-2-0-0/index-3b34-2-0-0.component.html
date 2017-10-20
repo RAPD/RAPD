@@ -50,7 +50,7 @@
       <mat-card-content *ngIf="view_mode === 'summary'" class="rapd-result">
         <div fxLayout="row" fxLayoutGap="10px">
           <div fxFlex="none">
-            <div *ngIf="full_result.results.labelit_results.status !== 'FAILED'">
+            <div *ngIf="(full_result.results)?.labelit_results.status !== 'FAILED'">
               <h3>Indexing Solution</h3>
               <table class="rapd-table">
                 <thead>
@@ -78,13 +78,13 @@
                 </tbody>
               </table>
             </div>
-            <div *ngIf="full_result.results.labelit_results.status === 'FAILED'">
+            <div *ngIf="(full_result.results)?.labelit_results.status === 'FAILED'">
               <h2>Labelit Failure</h2>
               <h3>{{full_result.results.labelit_results.error}}</h3>
             </div>
             <div>
               <h2>Data Collection Strategies</h2>
-              <!-- <div *ngIf="(full_result.results)?.best_results_norm.status !== 'FAILED'">
+              <div *ngIf="(full_result.results.best_results_norm)?.status !== 'FAILED'">
                 <h3>Normal by Best</h3>
                 <table class="rapd-table">
                   <thead>
@@ -110,8 +110,8 @@
                     </tr>
                   </tbody>
                 </table>
-              </div> -->
-              <!-- <div *ngIf="(full_result.results)?.best_results_anom.status !== 'FAILED'">
+              </div>
+              <div *ngIf="(full_result.results.best_results_anom)?.status !== 'FAILED'">
                 <h3>Anomalous by Best</h3>
                 <table class="rapd-table">
                   <thead>
@@ -137,7 +137,7 @@
                     </tr>
                   </tbody>
                 </table>
-              </div> -->
+              </div>
               <!-- <div "(full_result.results)?.mosflm_results_norm.status !== 'FAILED'">
                 <h3>Normal by Mosflm</h3>
               </div> -->
