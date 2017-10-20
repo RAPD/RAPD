@@ -34,7 +34,7 @@ import importlib
 
 # RAPD imports
 from utils.overwatch import Registrar
-import database.rapd_redis_adapter as redis_database
+import database.redis_adapter as redis_database
 # from utils import pysent
 
 # Constants
