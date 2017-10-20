@@ -6,6 +6,7 @@ import redis
 from redis.sentinel import Sentinel
 import time
 from threading import Thread
+import shlex
 #import streamUtils as Utils
 #from cctbx.regression.tst_adp_aniso_restraints import fd
 
@@ -27,6 +28,7 @@ def connect_redis_manager_HA(name="remote_master"):
 #cluster_launcher = xutils.load_cluster_adapter(self)
 #launcher = cluster_launcher.process_cluster
 import sites.cluster.sercat as cluster
+
 launcher = cluster.process_cluster
 inp_kwargs = {'command': 'sleep 5',
               'logfile': '/home/schuerjp/temp/junk.log'}
