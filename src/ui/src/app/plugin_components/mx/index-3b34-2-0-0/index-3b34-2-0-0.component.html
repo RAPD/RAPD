@@ -514,7 +514,7 @@
           header="Mosflm Strategy ANOMALOUS">
         </app-log-card>
         <app-log-card
-          [log]="[].concat.apply([], Object.keys(this.full_result.results.labelit_results.log).map(function(k,i){return this.full_result.results.labelit_results.log[k]}))"
+          [log]="objectToArray(full_result.results.labelit_results.log)"
           header="Labelit Indexing">
         </app-log-card>
       </mat-card-content>

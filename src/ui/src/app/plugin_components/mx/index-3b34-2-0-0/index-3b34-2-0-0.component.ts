@@ -84,6 +84,11 @@ export class Index3b34200Component implements OnInit, OnDestroy {
   };
 
   objectKeys = Object.keys;
+  objectToArray(input:any):[any] {
+    return [].concat.apply([], Object.keys(input).map(function(key, index) {
+      return input[key];
+    }));
+  }
 
   constructor(private websocket_service: WebsocketService,
               private globals_service: GlobalsService,
