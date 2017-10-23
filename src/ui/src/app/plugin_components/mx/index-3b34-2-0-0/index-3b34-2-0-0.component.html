@@ -157,7 +157,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr *ngFor="let sweep or full_result.results.mosflm_results_norm.strategy.sweeps">
+                      <tr *ngFor="let sweep of full_result.results.mosflm_results_norm.strategy.sweeps">
                         <td>{{sweep.run_number}}</td>
                         <td>{{sweep.phi_start  | number:'1.1-2'}}</td>
                         <td>{{sweep.phi_range | number:'1.1-2'}}</td>
