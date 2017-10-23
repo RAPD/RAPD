@@ -189,7 +189,7 @@ export class WebsocketService {
   // Change the display mode for a result
   updateResult(result:any) {
 
-    console.log('setDisplayMode', result);
+    // console.log('setDisplayMode', result);
 
     // Request to update result
     this.ws.send(JSON.stringify({
