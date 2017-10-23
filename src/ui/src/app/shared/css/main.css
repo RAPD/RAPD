@@ -34,6 +34,9 @@ h3.rapd-failure {
   color: red;
 }
 
+.rapd-error-result {
+  color: rgba(100, 100, 100, 1.0);
+}
 
 .container {
   display: flex;
@@ -41,9 +44,9 @@ h3.rapd-failure {
   flex-wrap: nowrap;
 }
 
-.child {
+/*.child {
 
-}
+}*/
 
 
 
