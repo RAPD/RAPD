@@ -82,8 +82,8 @@
               <h2>Labelit Failure</h2>
               <h3 class="rapd-failure">{{full_result.results.labelit_results.error}}</h3>
             </div>
-            <div>
-              <div *ngIf="full_result.results.best_results_norm !== 'FAILED'">
+            <div *ngIf="(full_result.results)?.labelit_results.status !== 'FAILED'">
+              <div *ngIf="(full_result.results.best_results_norm)?.status !== 'FAILED'">
                 <h2>Data Collection Strategies</h2>
                 <div *ngIf="(full_result.results.best_results_norm)?.status !== 'FAILED'">
                   <h3>Normal by Best</h3>
@@ -112,7 +112,7 @@
                     </tbody>
                   </table>
                 </div>
-                <div *ngIf="full_result.results.best_results_anom !== 'FAILED'">
+                <div *ngIf="(full_result.results.best_results_anom)? !== 'FAILED'">
                   <h3>Anomalous by Best</h3>
                   <table class="rapd-table">
                     <thead>
@@ -458,10 +458,10 @@
                   <td>Completeness Normal</td>
                   <td>{{full_result.results.mosflm_results_norm.strategy.stats.completeness_norm}}</td>
                 </tr>
-                <tr>
+                <!-- <tr>
                   <td>Completeness Anomalous</td>
                   <td>{{full_result.results.mosflm_results_norm.strategy.stats.completeness_anom}}</td>
-                </tr>
+                </tr> -->
                 <tr>
                   <td>Multiplicity</td>
                   <td>{{full_result.results.mosflm_results_norm.strategy.stats.multiplicity}}</td>
