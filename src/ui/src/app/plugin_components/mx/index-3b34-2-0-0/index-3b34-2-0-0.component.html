@@ -157,7 +157,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr *ngFor="let key of objectKeys(full_result.results.mosflm_results_norm.sweeps)">
+                      <tr *ngFor="let key of objectKeys(full_result.results.mosflm_results_norm.strategy.sweeps)">
                         <td>{{full_result.results.best_results_anom.sweeps[key].run_number}}</td>
                         <td>{{full_result.results.best_results_anom.sweeps[key].phi_start  | number:'1.1-2'}}</td>
                         <td>{{full_result.results.best_results_anom.sweeps[key].phi_range | number:'1.1-2'}}</td>
@@ -184,7 +184,7 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr *ngFor="let key of objectKeys(full_result.results.mosflm_results_anom.sweeps)">
+                      <tr *ngFor="let key of objectKeys(full_result.results.mosflm_results_anom.strategy.sweeps)">
                         <td>{{full_result.results.best_results_anom.sweeps[key].run_number}}</td>
                         <td>{{full_result.results.best_results_anom.sweeps[key].phi_start  | number:'1.1-2'}}</td>
                         <td>{{full_result.results.best_results_anom.sweeps[key].phi_range | number:'1.1-2'}}</td>
