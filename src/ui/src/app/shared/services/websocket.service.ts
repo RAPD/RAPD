@@ -103,7 +103,7 @@ export class WebsocketService {
 
       case 'results':
         data.results.forEach(function(result) {
-          console.log(result);
+          // console.log(result);
           // Send the data to the subscribers
           self.results_subscribers.forEach(function(subscriber) {
             if (subscriber.session_id === result.session_id) {
