@@ -9,9 +9,9 @@
 @import '~roboto-fontface/css/roboto/roboto-fontface.css';
 
 /* For the tables */
-@import '~@swimlane/ngx-datatable/release/index.css';
+/*@import '~@swimlane/ngx-datatable/release/index.css';*/
 @import '~@swimlane/ngx-datatable/release/themes/material.css';
-@import '~@swimlane/ngx-datatable/release/assets/icons.css';
+/*@import '~@swimlane/ngx-datatable/release/assets/icons.css';*/
 
 /* My custom */
 /*@import 'app/shared/css/normalize.css';*/
