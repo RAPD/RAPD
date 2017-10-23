@@ -157,10 +157,10 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr *ngFor="let key of objectKeys(full_result.results.mosflm_results_norm.strategy.sweeps)">
-                        <td>{{full_result.results.best_results_anom.sweeps[key].run_number}}</td>
-                        <td>{{full_result.results.best_results_anom.sweeps[key].phi_start  | number:'1.1-2'}}</td>
-                        <td>{{full_result.results.best_results_anom.sweeps[key].phi_range | number:'1.1-2'}}</td>
+                      <tr *ngFor="let sweep or full_result.results.mosflm_results_norm.strategy.sweeps">
+                        <td>{{sweep.run_number}}</td>
+                        <td>{{sweep.phi_start  | number:'1.1-2'}}</td>
+                        <td>{{sweep.phi_range | number:'1.1-2'}}</td>
                         <!-- <td>{{full_result.results.best_results_anom.sweeps[key].number_of_images}}</td> -->
                         <!-- <td>{{full_result.results.best_results_anom.sweeps[key].exposure_time | number:'1.1-2'}}</td> -->
                         <!-- <td>{{round_ten(full_result.results.best_results_anom.sweeps[key].distance)}}</td> -->
@@ -184,10 +184,10 @@
                       </tr>
                     </thead>
                     <tbody>
-                      <tr *ngFor="let key of objectKeys(full_result.results.mosflm_results_anom.strategy.sweeps)">
-                        <td>{{full_result.results.best_results_anom.sweeps[key].run_number}}</td>
-                        <td>{{full_result.results.best_results_anom.sweeps[key].phi_start  | number:'1.1-2'}}</td>
-                        <td>{{full_result.results.best_results_anom.sweeps[key].phi_range | number:'1.1-2'}}</td>
+                      <tr *ngFor="let sweep of full_result.results.mosflm_results_anom.strategy.sweeps">
+                        <td>{{sweep.run_number}}</td>
+                        <td>{{sweep.phi_start  | number:'1.1-2'}}</td>
+                        <td>{{sweep.phi_range | number:'1.1-2'}}</td>
                         <!-- <td>{{full_result.results.best_results_anom.sweeps[key].number_of_images}}</td> -->
                         <!-- <td>{{full_result.results.best_results_anom.sweeps[key].exposure_time | number:'1.1-2'}}</td> -->
                         <!-- <td>{{round_ten(full_result.results.best_results_anom.sweeps[key].distance)}}</td> -->
