@@ -10,6 +10,7 @@
       [rowHeight]="'auto'"
       [reorderable]="reorderable"
       [selectionType]="'single'"
+      [sorts]="[{prop: 'last_process', dir: 'desc'}]"
       (select)='selectSession($event)'>
       <ngx-datatable-column name="Site" prop="site">
         <ng-template let-value="value" ngx-datatable-cell-template>
