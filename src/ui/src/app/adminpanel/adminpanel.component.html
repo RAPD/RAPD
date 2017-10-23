@@ -1,11 +1,7 @@
 <div class="panel" *ngIf="user.role === 'site_admin'">
   <mat-tab-group class="session-tab-group">
     <mat-tab label="Users">
-        <article class="c-content">
-          <button mat-raised-button (click)="newUser()">New User</button>
-          <button type="button" mat-raised-button color="primary" (click)="changePass()">Change My Password</button>
-        </article>
-        <article class="c-content">
+        <article class="c-content" style="margin-top:2em;">
           <ngx-datatable
             class="material"
             [rows]="users"
@@ -36,14 +32,22 @@
             </ngx-datatable-column>
           </ngx-datatable>
         </article>
+        <mat-toolbar class="rapd-main-panel-action-bar">
+          <form class="user-filter-form">
+            <md-form-field
+              (keyup)='updateUserFilter($event)'>
+              <input mdInput placeholder="Filter Table">
+            </md-form-field>
+          </form>
+          <button mat-button color="primary" (click)="newUser()">New User</button>
+          <button mat-button color="primary" (click)="changePass()">Change My Password</button>
+        </mat-toolbar>
     </mat-tab>
 
     <mat-tab label="Groups">
-        <article class="c-content">
-          <button mat-raised-button class="r-button" (click)="createGroup()">New Group</button>
-        </article>
-        <article class="c-content">
+        <article class="c-content" style="margin-top:2em;">
           <ngx-datatable
+            #groups_table
             class="material"
             [rows]="groups"
             [loadingIndicator]="loadingIndicator"
@@ -73,13 +77,21 @@
             </ngx-datatable-column>
           </ngx-datatable>
         </article>
+        <article class="c-content">
+        </article>
+        <mat-toolbar class="rapd-main-panel-action-bar">
+          <form class="group-filter-form">
+            <md-form-field
+              (keyup)='updateGroupFilter($event)'>
+              <input mdInput placeholder="Filter Table">
+            </md-form-field>
+          </form>
+          <button mat-button color="primary" (click)="createGroup()">New Group</button>
+        </mat-toolbar>
     </mat-tab>
 
     <mat-tab label="Sessions">
-      <article class="c-content">
-        <button mat-raised-button (click)="createSession()">New Session</button>
-      </article>
-      <article class="c-content">
+      <article class="c-content" style="margin-top:2em;">
         <ngx-datatable
           class="material"
           [rows]="sessions"
@@ -120,6 +132,15 @@
           </ngx-datatable-column>
         </ngx-datatable>
       </article>
+      <mat-toolbar class="rapd-main-panel-action-bar">
+        <form class="session-filter-form">
+          <md-form-field
+            (keyup)='updateSessionFilter($event)'>
+            <input mdInput placeholder="Filter Table">
+          </md-form-field>
+        </form>
+        <button mat-button color="primary" (click)="createSession()">New Session</button>
+      </mat-toolbar>
     </mat-tab>
   </mat-tab-group>
 </div>
