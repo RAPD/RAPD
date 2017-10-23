@@ -514,7 +514,13 @@
           header="Mosflm Strategy ANOMALOUS">
         </app-log-card>
         <app-log-card
+          *ngIf="full_result.results.labelit_results.log"
           [log]="full_result.results.labelit_results.log.run1"
+          header="Labelit Indexing">
+        </app-log-card>
+        <app-log-card
+          *ngIf="full_result.results.labelit_results.output"
+          [log]="full_result.results.labelit_results.output"
           header="Labelit Indexing">
         </app-log-card>
       </mat-card-content>

@@ -273,7 +273,7 @@ export class Index3b34200Component implements OnInit, OnDestroy {
         break;
     }
 
-    console.log(this.data);
+    // console.log(this.data);
   }
 
   openReindexDialog() {
