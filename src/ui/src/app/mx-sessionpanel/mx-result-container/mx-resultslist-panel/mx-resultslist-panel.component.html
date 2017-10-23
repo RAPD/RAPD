@@ -1,4 +1,4 @@
-<mat-list dense class="rapd-side-list">
+<mat-list class="rapd-side-list">
   <mat-list-item *ngIf="data_results.length == 0">No results</mat-list-item>
   <ng-container *ngFor="let id of data_results">
     <mat-list-item
@@ -19,11 +19,12 @@
       [attr.id]=id
       [myHighlight]="highlight_color"
       (click)="onClick(id)"
-      [ngClass]="id == active_result ? 'active-result': ''"
-      [ngClass]="(data_results[id])?.status < 0 ? 'rapd-error-result' : ''">
+      [ngClass]="id == active_result ? 'active-result': ''">
       <table style="width:100%;">
         <tr>
-          <td style="padding:0 0 0 0;">
+          <td
+            [ngClass]="(data_results_object[id])?.status < 0 ? 'rapd-error-result' : ''"
+            style="padding:0 0 0 0;">
             {{data_results_object[id].repr}}
           </td>
         </tr>
