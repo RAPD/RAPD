@@ -20,14 +20,14 @@
       [myHighlight]="highlight_color"
       (click)="onClick(id)"
       [ngClass]="id == active_result ? 'active-result': ''"
-      [ngClass]="(data_results[id])?.status === -1 ? 'rapd-error-result' : ''">
+      [ngClass]="(data_results[id])?.status < 0 ? 'rapd-error-result' : ''">
       <table style="width:100%;">
         <tr>
           <td style="padding:0 0 0 0;">
             {{data_results_object[id].repr}}
           </td>
         </tr>
-        <tr *ngIf="(data_results_object[id])?.status < 100">
+        <tr *ngIf="(data_results_object[id])?.status > 0 && (data_results_object[id])?.status < 100">
           <td style="padding:0 0 0 0;">
             <mat-progress-bar
               mode="indeterminate"
