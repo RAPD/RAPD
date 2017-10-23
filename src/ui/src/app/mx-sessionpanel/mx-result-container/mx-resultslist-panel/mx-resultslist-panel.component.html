@@ -20,7 +20,7 @@
       [myHighlight]="highlight_color"
       (click)="onClick(id)"
       [ngClass]="id == active_result ? 'active-result': ''"
-      [ngClass]="status == -1 ? 'rapd-error-result' : ''">
+      [ngClass]="(data_results[id])?.status === -1 ? 'rapd-error-result' : ''">
       <table style="width:100%;">
         <tr>
           <td style="padding:0 0 0 0;">
