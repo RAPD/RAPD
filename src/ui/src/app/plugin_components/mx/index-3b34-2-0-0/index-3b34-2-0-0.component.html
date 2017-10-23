@@ -300,7 +300,7 @@
       </mat-card-content>
       <mat-card-content *ngIf="view_mode === 'details'" class="rapd-result">
         <div>
-          <div *ngIf="full_result.results.best_results_norm" class="rapd-result">
+          <div *ngIf="full_result.results.best_results_norm !== 'FAILED'" class="rapd-result">
             <h3>Data Collection Strategy from Best Normal</h3>
             <table class="rapd-table">
               <thead>
@@ -363,7 +363,7 @@
               </tbody>
             </table>
           </div>
-          <div *ngIf="full_result.results.best_results_anom" class="rapd-result">
+          <div *ngIf="full_result.results.best_results_anom !== 'FAILED'" class="rapd-result">
             <h3>Data Collection Strategy from Best ANOMALOUS</h3>
             <table class="rapd-table">
               <thead>
