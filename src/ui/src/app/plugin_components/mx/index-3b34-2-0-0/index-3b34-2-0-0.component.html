@@ -426,6 +426,108 @@
               </tbody>
             </table>
           </div>
+          <div *ngIf="(full_result.results.mosflm_results_norm)?.status !== 'FAILED'" class="rapd-result">
+            <h3>Data Collection Strategy from Mosflm Normal</h3>
+            <table class="rapd-table">
+              <thead>
+                <tr>
+                  <th>N</th>
+                  <th>&Omega; Start</th>
+                  <th>&Omega; Range</th>
+                  <!-- <th># Images</th> -->
+                  <!-- <th>Exposure time</th> -->
+                  <!-- <th>Distance</th> -->
+                  <!-- <th>Transmission</th> -->
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let sweep of full_result.results.mosflm_results_norm.strategy.sweeps">
+                  <td>{{sweep.run_number}}</td>
+                  <td>{{sweep.phi_start  | number:'1.1-2'}}</td>
+                  <td>{{sweep.phi_range | number:'1.1-2'}}</td>
+                  <!-- <td>{{full_result.results.best_results_anom.sweeps[key].number_of_images}}</td> -->
+                  <!-- <td>{{full_result.results.best_results_anom.sweeps[key].exposure_time | number:'1.1-2'}}</td> -->
+                  <!-- <td>{{round_ten(full_result.results.best_results_anom.sweeps[key].distance)}}</td> -->
+                  <!-- <td>{{full_result.results.best_results_anom.sweeps[key].transmission | number:'1.0-0'}}</td> -->
+                </tr>
+              </tbody>
+            </table>
+            <table class="rapd-table">
+              <tbody>
+                <tr>
+                  <td>Completeness Normal</td>
+                  <td>{{full_result.results.mosflm_results_norm.strategy.stats.completeness_norm}}</td>
+                </tr>
+                <tr>
+                  <td>Completeness Anomalous</td>
+                  <td>{{full_result.results.mosflm_results_norm.strategy.stats.completeness_anom}}</td>
+                </tr>
+                <tr>
+                  <td>Multiplicity</td>
+                  <td>{{full_result.results.mosflm_results_norm.strategy.stats.multiplicity}}</td>
+                </tr>
+                <tr>
+                  <td>Reflections Total</td>
+                  <td>{{full_result.results.mosflm_results_norm.strategy.stats.reflections_total}}</td>
+                </tr>
+                <tr>
+                  <td>Reflections Unique</td>
+                  <td>{{full_result.results.mosflm_results_norm.strategy.stats.reflections_unique}}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div *ngIf="(full_result.results.mosflm_results_anom)?.status !== 'FAILED'" class="rapd-result">
+            <h3>Data Collection Strategy from Mosflm ANOMALOUS</h3>
+            <table class="rapd-table">
+              <thead>
+                <tr>
+                  <th>N</th>
+                  <th>&Omega; Start</th>
+                  <th>&Omega; Range</th>
+                  <!-- <th># Images</th> -->
+                  <!-- <th>Exposure time</th> -->
+                  <!-- <th>Distance</th> -->
+                  <!-- <th>Transmission</th> -->
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let sweep of full_result.results.mosflm_results_anom.strategy.sweeps">
+                  <td>{{sweep.run_number}}</td>
+                  <td>{{sweep.phi_start  | number:'1.1-2'}}</td>
+                  <td>{{sweep.phi_range | number:'1.1-2'}}</td>
+                  <!-- <td>{{full_result.results.best_results_anom.sweeps[key].number_of_images}}</td> -->
+                  <!-- <td>{{full_result.results.best_results_anom.sweeps[key].exposure_time | number:'1.1-2'}}</td> -->
+                  <!-- <td>{{round_ten(full_result.results.best_results_anom.sweeps[key].distance)}}</td> -->
+                  <!-- <td>{{full_result.results.best_results_anom.sweeps[key].transmission | number:'1.0-0'}}</td> -->
+                </tr>
+              </tbody>
+            </table>
+            <table class="rapd-table">
+              <tbody>
+                <tr>
+                  <td>Completeness Normal</td>
+                  <td>{{full_result.results.mosflm_results_anom.strategy.stats.completeness_norm}}</td>
+                </tr>
+                <tr>
+                  <td>Completeness Anomalous</td>
+                  <td>{{full_result.results.mosflm_results_anom.strategy.stats.completeness_anom}}</td>
+                </tr>
+                <tr>
+                  <td>Multiplicity</td>
+                  <td>{{full_result.results.mosflm_results_anom.strategy.stats.multiplicity}}</td>
+                </tr>
+                <tr>
+                  <td>Reflections Total</td>
+                  <td>{{full_result.results.mosflm_results_anom.strategy.stats.reflections_total}}</td>
+                </tr>
+                <tr>
+                  <td>Reflections Unique</td>
+                  <td>{{full_result.results.mosflm_results_anom.strategy.stats.reflections_unique}}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
           <div *ngIf="full_result.results.raddose_results" class="rapd-result">
             <h3>Raddose Analysis</h3>
           </div>
