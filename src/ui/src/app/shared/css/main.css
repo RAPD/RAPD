@@ -34,10 +34,6 @@ h3.rapd-failure {
   color: red;
 }
 
-.rapd-error-result {
-  color: rgba(100, 100, 100, 1.0);
-}
-
 .container {
   display: flex;
   flex-direction: row;
@@ -195,6 +191,10 @@ mat-divider.rapd-side-list-divider {
 .mat-list-item.rapd-list-item {
   /*background-color: inherit;*/
   font-size: 0.9em;
+}
+
+.rapd-error-result {
+  color: rgba(0, 0, 0, 0.2);
 }
 
 .rapd-list-item .mat-list-item-content {
