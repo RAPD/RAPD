@@ -82,7 +82,7 @@
               <h2>Labelit Failure</h2>
               <h3 class="rapd-failure">{{full_result.results.labelit_results.error}}</h3>
             </div>
-            <div>
+            <div *ngIf="(full_result.results)?.labelit_results.status !== 'FAILED'">
               <div *ngIf="full_result.results.best_results_norm !== 'FAILED'">
                 <h2>Data Collection Strategies</h2>
                 <div *ngIf="(full_result.results.best_results_norm)?.status !== 'FAILED'">
