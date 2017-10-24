@@ -390,51 +390,40 @@ def process_cluster(command,
     proc = subprocess.Popen(qs,
                            stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE)
-    
+
     stdout, stderr = proc.communicate()
-    
+
     # Get the JobID
     job = stdout[:stdout.rfind('.')]
-    print job
-    #print 'stdout: %s'%stdout
-    #print 'stderr: %s'%stderr
+    
     # Send back PID if have pid_queue
-    #if pid_queue:
-    #    pid_queue.put(proc.pid)
+    if pid_queue:
+        pid_queue.put(job)
 
-    #try:
-        # Get the stdout and stderr from process
-    #    stdout, stderr = proc.communicate()
-    #except KeyboardInterrupt:
-    #    os._exit()
-        # SHOULD THIS KILL THE JOBS?
-    """
-    # Wait for job to complete
-    time.sleep(1)
-    while check_qsub_job(l[0]):
+    while check_qsub_job(job):
       time.sleep(0.2)
     print "Job finished"
+
+    # Put results on a Queue, if given
+    if result_queue:
+        stdout = ""
+        if os.path.isfile(logfile):
+            with open(logfile, 'rb') as raw:
+                for line in raw:
+                    stdout += line
+        
+        result = {
+            "pid": job,
+            "returncode": False,
+            "stdout": stdout,
+            "stderr": '',
+            "tag": tag
+        }
+        result_queue.put(result)
     
     # Delete logile if it was not asked to be saved
     if fd:
         os.unlink(logfile)
-    # Put results on a Queue, if given
-    if result_queue:
-        result = {
-            "pid": proc.pid,
-            "returncode": proc.returncode,
-            "stdout": stdout,
-            "stderr": stderr,
-            "tag": tag
-        }
-        result_queue.put(result)
-
-    # Write out a log file, if name passed in
-    if logfile:
-        with open(logfile, "w") as out_file:
-            out_file.write(stdout)
-            out_file.write(stderr)
-    """
     """
     # Return job_id.
     #if isinstance(output, dict):
@@ -498,11 +487,8 @@ def check_qsub_job(job):
   """
   Check to see if process and/or its children and/or children's children are still running.
   """
-  #try:
   running = False
-  if job.count('localdomain'):
-    job = job[:job.rfind('.')]
-  output = subprocess.Popen('/usr/bin/qstat',shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+  output = subprocess.Popen(['/usr/bin/qstat'],stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
   for line in output.stdout:
     if line.split()[0] == job:
       if line.split()[4] == 'R':
