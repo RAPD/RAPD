@@ -486,5 +486,5 @@ def check_qsub_job(job):
 
 def kill_job(job):
     output = subprocess.check_output(['/usr/bin/qdel', job])
-    print output
+    #print output
     print 'killed %s'%job
