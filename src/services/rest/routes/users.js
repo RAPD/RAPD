@@ -2,6 +2,7 @@ var express = require('express');
 const nodemailer =    require('nodemailer');
 const smtpTransport = require('nodemailer-smtp-transport');
 var router = express.Router();
+var mongoose = require('mongoose');
 
 const config = require('../config');
 const User =    require('../models/user');
@@ -78,18 +79,27 @@ router.route('/users/:user_id')
 
     // Creating
     } else {
-      // Create the user
-      let new_user = new User({
-        creator:req.decoded._doc._id,
-        email: user.email,
-        groups: user.groups,
-        role: user.role,
-        status: user.status,
-        username: user.username
-      });
+
+      // Set the creator
+      user.creator = req.decoded._doc._id;
+      // // Create the user
+      // let new_user = new User({
+      //   creator:req.decoded._doc._id,
+      //   email: user.email,
+      //   groups: user.groups,
+      //   role: user.role,
+      //   status: user.status,
+      //   username: user.username
+      // });
 
       // Save and return the user
-      new_user.save(function(err, return_user) {
+      User.findOneAndUpdate(
+        {_id:mongoose.Types.ObjectId()},
+        user,
+        {new: true, upsert: true}
+      )
+      .populate('groups', 'groupname')
+      .exec(function(err, return_user) {
         if (err) {
           console.error(err);
           res.status(500).json({
@@ -98,7 +108,7 @@ router.route('/users/:user_id')
             message: err
           });
         } else {
-          console.log('User saved successfully', return_user);
+          console.log('User created successfully', return_user);
           res.status(200).json({
             success: true,
             operation: 'add',

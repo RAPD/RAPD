@@ -87,6 +87,7 @@ export class AdminpanelComponent implements OnInit {
 
   // New user button is clicked
   newUser() {
+
     let user = new User();
 
     user._id = undefined;
@@ -98,7 +99,8 @@ export class AdminpanelComponent implements OnInit {
     user.status = 'active';
 
     let pseudo_event = {
-      selected: [user]
+      type: 'click',
+      row: user
     };
 
     this.editUser(pseudo_event);
@@ -115,7 +117,6 @@ export class AdminpanelComponent implements OnInit {
       this.userDialogRef.componentInstance.groups = this.groups;
 
       this.userDialogRef.afterClosed().subscribe(result => {
-        console.log('closed', result);
         this.userDialogRef = null;
         if (result !== undefined) {
           if (result.operation === 'delete') {

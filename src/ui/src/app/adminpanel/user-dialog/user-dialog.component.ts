@@ -42,7 +42,7 @@ export class UserDialogComponent implements OnInit {
     this.submitted = true;
 
     const form_values = this.user_form.value;
-    // console.log('form_values', form_values);
+    console.log('form_values', form_values);
 
     this.model.groups = [];
 
@@ -59,6 +59,8 @@ export class UserDialogComponent implements OnInit {
       if (form_values.group2.length > 0) {
         this.model.groups.push({_id: form_values.group2});
     }}
+
+    console.log(this.model);
 
     this.rest_service.submitUser(this.model).subscribe(params => {
       this.submitted = false;
