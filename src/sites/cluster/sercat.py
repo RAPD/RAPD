@@ -472,6 +472,19 @@ def check_qsub_job(job):
   Check to see if process and/or its children and/or children's children are still running.
   """
   running = False
+  output = subprocess.check_output(['/usr/bin/qstat'])
+  for line in output:
+    print line
+    if line.split()[0] == job:
+      if line.split()[4] in ['Q', 'R']:
+        running = True
+  return(running)
+
+def check_qsub_job_OLD(job):
+  """
+  Check to see if process and/or its children and/or children's children are still running.
+  """
+  running = False
   output = subprocess.Popen(['/usr/bin/qstat'],stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
   for line in output.stdout:
     if line.split()[0] == job:
