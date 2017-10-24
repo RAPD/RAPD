@@ -401,9 +401,9 @@ def process_cluster(command,
         pid_queue.put(job)
     try:
         while check_qsub_job(job):
-          #time.sleep(0.2)
-          time.sleep(2)
-          kill_job(job)
+          time.sleep(0.2)
+          #time.sleep(2)
+          #kill_job(job)
           if mp_event:
               if mp_event.is_set() == False:
                   kill_job(job)
@@ -486,5 +486,4 @@ def check_qsub_job(job):
 
 def kill_job(job):
     output = subprocess.check_output(['/usr/bin/qdel', job])
-    #print output
-    print 'killed %s'%job
+    print 'killed job: %s'%job
