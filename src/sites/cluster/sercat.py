@@ -476,18 +476,15 @@ def check_qsub_job(job):
   """
   Check to see if process and/or its children and/or children's children are still running.
   """
-  print 'gh1'
   running = False
   output = subprocess.check_output(['/usr/bin/qstat'])
   for line in output.splitlines():
     if line.split()[0] == job:
-      print line.split()[4]
       if line.split()[4] in ['Q', 'R']:
         running = True
   return(running)
 
 def kill_job(job):
-    print 'gh'
     output = subprocess.check_output(['/usr/bin/qdel', job])
     print 'killed job: %s'%job
     time.sleep(1)
