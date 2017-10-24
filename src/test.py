@@ -6,6 +6,7 @@ import redis
 from redis.sentinel import Sentinel
 import time
 from threading import Thread
+from multiprocessing import Process
 import shlex
 #import streamUtils as Utils
 #from cctbx.regression.tst_adp_aniso_restraints import fd
