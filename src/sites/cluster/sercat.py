@@ -346,17 +346,6 @@ def process_cluster(command,
     """
     Launch job on SERCAT's scyld cluster. Does not wait for jobs to end!
     """
-    
-    #command = inp.get('command')
-    #log = inp.get('log', False)
-    #queue = inp.get('queue', False)
-    #smp = inp.get('smp',1)
-    #d = inp.get('dir', os.getcwd())
-    #name = inp.get('name', False)
-    # Sends job/process ID back
-    #pid = inp.get('pid', False)
-    #l = []
-    
     # Setup path
     v = "PATH=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
 /home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/bin:\
@@ -394,22 +383,9 @@ def process_cluster(command,
           print >>f, '#PBS -l nodes=1:ppn=%s'%nproc
           print >>f, command+'\n'
           f.close()
-    
 
-    """
-    # Setup the qsub command
-    qs = 'qsub -d %s -j oe '%work_dir
-    if logfile:
-      if logfile.count('/'):
-        qs += '-o %s '%logfile
-      else:
-        qs += '-o %s '%os.path.join(work_dir,logfile)
-    """
-    #qs += "%s -l nodes=1:ppn=%s %s" % (v, nproc, fname)
     qs = ['qsub', fname]
     #Launch the job on the cluster
-    #job = subprocess.Popen(qs,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-    #proc = subprocess.Popen(shlex.split(qs),
     proc = subprocess.Popen(qs,
                            stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE)
