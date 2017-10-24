@@ -60,6 +60,7 @@ inp_kwargs = {'command': 'sleep 20',
               'name':'TEST',
               'pid_queue': q,
               'result_queue': q0,
+              'timeout': 5,
               #'mp_event': event,
               }
 # Update batch queue info if using a compute cluster
