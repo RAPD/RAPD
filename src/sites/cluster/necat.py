@@ -256,7 +256,6 @@ def process_cluster(command,
     # Used for passing back results to queue
     if result_queue:
         # stdout and stderr are joined
-        stderr = ""
         stdout = ""
         if os.path.isfile(logfile):
             with open(logfile, 'rb') as raw:
@@ -269,7 +268,7 @@ def process_cluster(command,
         result = {'pid': job,
                   #"returncode": proc.returncode,
                   "stdout": stdout,
-                  "stderr": stderr,
+                  "stderr": '',
                   "tag": tag}
         result_queue.put(result)
 

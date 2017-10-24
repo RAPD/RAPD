@@ -6,6 +6,7 @@ import redis
 from redis.sentinel import Sentinel
 import time
 from threading import Thread
+from multiprocessing import Process, Queue
 import shlex
 #import streamUtils as Utils
 #from cctbx.regression.tst_adp_aniso_restraints import fd
@@ -49,15 +50,21 @@ time.sleep(2)
 print 'event cleared'
 event.clear()
 """
-inp_kwargs = {'command': 'sleep 5',
-              'logfile': '/home/schuerjp/temp/junk.log'}
+q = Queue()
+inp_kwargs = {'command': 'sleep 10',
+              'logfile': '/home/schuerjp/temp/junk.log',
+              'nproc':2,
+              'name':'TEST',
+              'pid_queue': q,
+              }
 # Update batch queue info if using a compute cluster
 #inp_kwargs.update(self.batch_queue)
 
 #Launch the job
-jobs = Thread(target=launcher,
+jobs = Process(target=launcher,
               kwargs=inp_kwargs)
 jobs.start()
+print q.get()
 
 """
 import sites.detectors.necat_dectris_eiger16m as eiger
