@@ -379,16 +379,19 @@ def process_cluster(command,
     else:  
       fname = 'qsub%s.sh'%random.randint(0,5000)
       with open(fname,'w') as f:
-          print >>f, '#!/bin/bash\n'
-          print >>f, '#PBS -j oe\n'
-          print >>f, '#PBS -d %s\n'%work_dir
-          print >>f, '#PBS -v %s\n'%v
+          print >>f, '#!/bin/bash'
+          print >>f, '#PBS -j oe'
+          print >>f, '#PBS -d %s'%work_dir
+          print >>f, '#PBS -v %s'%v
+          print >>f, '#PBS -q %s'%batch_queue
+          if name:
+              print >>f, '#PBS -N %s'%name
           if logfile:
               if logfile.count('/'):
-                  print >>f, '#PBS -o %s\n'%logfile
+                  print >>f, '#PBS -o %s'%logfile
               else:
-                  print >>f, '#PBS -o %s\n'%os.path.join(work_dir,logfile)
-          print >>f, '#PBS -l nodes=1:ppn=%s\n'%nproc
+                  print >>f, '#PBS -o %s'%os.path.join(work_dir,logfile)
+          print >>f, '#PBS -l nodes=1:ppn=%s'%nproc
           print >>f, command+'\n'
           f.close()
     
@@ -403,9 +406,7 @@ def process_cluster(command,
         qs += '-o %s '%os.path.join(work_dir,logfile)
     """
     #qs += "%s -l nodes=1:ppn=%s %s" % (v, nproc, fname)
-    #qs = 'qsub %s'%fname
     qs = ['qsub', fname]
-    print qs
     #Launch the job on the cluster
     #job = subprocess.Popen(qs,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
     #proc = subprocess.Popen(shlex.split(qs),
