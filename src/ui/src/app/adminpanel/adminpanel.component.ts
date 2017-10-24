@@ -11,7 +11,6 @@ import { GroupDialogComponent } from './group-dialog/group-dialog.component';
 import { SessionDialogComponent } from './session-dialog/session-dialog.component';
 import { ChangepassDialogComponent } from '../shared/dialogs/changepass-dialog/changepass-dialog.component';
 
-
 import { RestService } from '../shared/services/rest.service';
 import { User } from '../shared/classes/user';
 import { Group } from '../shared/classes/group';
@@ -313,7 +312,7 @@ export class AdminpanelComponent implements OnInit {
 
     let session = event.selected[0];
 
-    // console.log(session);
+    console.log(session);
 
     if (session === undefined) {
       session = new Session();
@@ -349,7 +348,7 @@ export class AdminpanelComponent implements OnInit {
   }
 
   addSession(new_session: Session) {
-    // console.log('addSession:', new_session);
+    console.log('addSession:', new_session);
     // If the session already exists, replace it
     let index = this.sessions.findIndex(session => session._id === new_session._id);
     if (index !== -1) {
@@ -360,7 +359,7 @@ export class AdminpanelComponent implements OnInit {
   }
 
   deleteSession(_id: string) {
-    // console.log('deleteSession', _id);
+    console.log('deleteSession', _id);
     // If the session already exists, replace it
     let index = this.sessions.findIndex(session => session._id === _id);
     if (index !== -1) {

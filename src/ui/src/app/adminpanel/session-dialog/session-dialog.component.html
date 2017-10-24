@@ -7,23 +7,25 @@
 <form [formGroup]="session_form">
   <div class="form-group">
     <p>
-      <mat-select formControlName="site" [(ngModel)]="model.site" placeholder="Site">
-        <!-- <option value="">Unknown</option> -->
-        <mat-option *ngFor="let s of sites" [value]="s">{{s}}</mat-option>
-      </mat-select>
+      <mat-form-field>
+        <mat-select
+          formControlName="site"
+          [(ngModel)]="model.site"
+          placeholder="Site">
+          <mat-option *ngFor="let s of globals_service.site.site_tags" [value]="s">{{s}}</mat-option>
+        </mat-select>
+      </mat-form-field>
     </p>
-    <!-- <p>
-      Type:
-      <select formControlName="session_type"
-              [(ngModel)]="model.session_type">
-        <option *ngFor="let t of session_types" [value]="t">{{t}}</option>
-      </select>
-    </p> -->
     <p>
-      <mat-select formControlName="group" [(ngModel)]="model.group._id" placeholder="Group">
-        <mat-option value="">Unknown</mat-option>
-        <mat-option *ngFor="let g of groups" [value]="g._id">{{g.groupname}}</mat-option>
-      </mat-select>
+      <mat-form-field>
+        <mat-select
+          formControlName="group"
+          [(ngModel)]="model.group._id"
+          placeholder="Group">
+          <mat-option value="">Unknown</mat-option>
+          <mat-option *ngFor="let g of groups" [value]="g._id">{{g.groupname}}</mat-option>
+        </mat-select>
+      </mat-form-field>
     </p>
     <p>
       <mat-form-field>
@@ -37,7 +39,11 @@
     </p>
   </div>
   <p>
-    <mat-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></mat-progress-spinner>
+    <mat-progress-bar
+      *ngIf="submitted"
+      mode="indeterminate"
+      color="primary">
+    </mat-progress-bar>
   </p>
   <p>
     {{error_message}}

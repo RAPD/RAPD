@@ -35,8 +35,13 @@
         <mat-toolbar class="rapd-main-panel-action-bar">
           <form class="user-filter-form">
             <mat-form-field
+              floatPlaceholder="never"
               (keyup)='updateUserFilter($event)'>
-              <input matInput placeholder="Filter Table">
+              <input
+                matInput
+                type="text"
+                placeholder="Filter"
+                style="font-size:1em;">
             </mat-form-field>
           </form>
           <button mat-button color="primary" (click)="newUser()">New User</button>
@@ -82,8 +87,11 @@
         <mat-toolbar class="rapd-main-panel-action-bar">
           <form class="group-filter-form">
             <mat-form-field
+              floatPlaceholder="never"
               (keyup)='updateGroupFilter($event)'>
-              <input matInput placeholder="Filter Table">
+              <input
+                matInput
+                placeholder="Filter">
             </mat-form-field>
           </form>
           <button mat-button color="primary" (click)="createGroup()">New Group</button>
@@ -136,7 +144,9 @@
         <form class="session-filter-form">
           <mat-form-field
             (keyup)='updateSessionFilter($event)'>
-            <input matInput placeholder="Filter Table">
+            <input
+              matInput
+              placeholder="Filter">
           </mat-form-field>
         </form>
         <button mat-button color="primary" (click)="createSession()">New Session</button>

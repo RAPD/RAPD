@@ -22,6 +22,9 @@ export class RestService {
   constructor(private globals_service: GlobalsService,
               private authHttp: AuthHttp) { }
 
+  //
+  // USERS
+  //
   public getUsers(): Observable<User[]> {
 
     console.log('getUsers');
@@ -76,6 +79,9 @@ export class RestService {
       // .catch(this.handleError);
   }
 
+  //
+  // GROUPS
+  //
   private extractGroups(res: Response, error) {
 
     // console.log('error', error);
@@ -105,7 +111,7 @@ export class RestService {
     .map(res => res.json());
   }
 
-  // Delete a user from the database
+  // Delete a group from the database
   public deleteGroup(_id: string): Observable<any> {
 
     console.log('deleteGroup', _id);
@@ -113,6 +119,9 @@ export class RestService {
     return this.authHttp.delete(this.globals_service.site.restApiUrl + '/groups/' + _id).map(res => res.json());
   }
 
+  //
+  // SESSIONS
+  //
   public getSessions(): Observable<Session[]> {
 
     console.log('getSessions');
@@ -151,7 +160,17 @@ export class RestService {
     .map(res => res.json());
   }
 
-  // IMAGE methods
+  // Delete a user from the database
+  public deleteSession(_id: string): Observable<any> {
+
+    console.log('deleteSession', _id);
+
+    return this.authHttp.delete(this.globals_service.site.restApiUrl + '/sessions/' + _id).map(res => res.json());
+  }
+
+  //
+  // IMAGES
+  //
   public getImageData(_id:string): Observable<Image> {
 
     console.log('getImageData _id:', _id);

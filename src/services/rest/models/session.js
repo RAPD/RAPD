@@ -9,7 +9,7 @@ var SessionSchema = new Schema({
   last_process: {
     type: Date,
     required: true,
-    default: new Date(2017, 0, 1)
+    default: undefined //new Date(2017, 0, 1)
   },
   group: {
     type: Schema.Types.ObjectId,

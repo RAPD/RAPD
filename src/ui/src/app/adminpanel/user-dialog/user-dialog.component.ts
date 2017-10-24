@@ -60,13 +60,12 @@ export class UserDialogComponent implements OnInit {
 
     this.submitted = true;
 
-    let form_values = this.user_form.value;
-
+    const form_values = this.user_form.value;
     console.log('form_values', form_values);
-    console.log('this.model', this.model);
 
-    // this.model.groups = [];
+    this.model.groups = [];
 
+    // Putting groups into the model as [{_id:...}]
     if (form_values.group0) {
       if (form_values.group0.length > 0) {
         this.model.groups.push({_id: form_values.group0});
@@ -80,15 +79,8 @@ export class UserDialogComponent implements OnInit {
         this.model.groups.push({_id: form_values.group2});
     }}
 
-    // Make sure the group names match the group _id
-    for (let g of this.model.groups) {
-      console.log(g);
-      let filtered = this.groups.filter(group => group._id === g._id);
-      g.groupname = filtered[0].groupname;
-    }
-
     this.admin_service.submitUser(this.model).subscribe(params => {
-      console.log(params);
+      // console.log(params);
       this.submitted = false;
       if (params.success === true) {
         this.dialogRef.close(params);
@@ -103,7 +95,7 @@ export class UserDialogComponent implements OnInit {
     this.submitted = true;
 
     this.admin_service.deleteUser(this.user._id).subscribe(params => {
-      console.log(params);
+      // console.log(params);
       this.submitted = false;
       if (params.success === true) {
         this.dialogRef.close(params);

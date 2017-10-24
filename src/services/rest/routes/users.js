@@ -46,50 +46,32 @@ router.route('/users')
 router.route('/users/:user_id')
   // edit or create the user with _id (PUT api/users/:user_id)
   .put(function(req,res) {
+
     // Passed as JSON
     let user = req.body.user;
-    // Make sure groups are only _ids
-    for (let g of user.groups) {
-      delete g.groupname
-    }
+
     // Updating
     if (user._id) {
-      User.findById(user._id, function(err, saved_user) {
+      User.findByIdAndUpdate(user._id, user, {new:true})
+          .populate('groups', 'groupname')
+          .exec(function(err, return_user) {
 
-        if (err) {
-          console.log(err);
-          res.send(err);
-
-        } else {
-          // Update the entry
-          saved_user.username = user.username;
-          saved_user.email = user.email;
-          saved_user.status = user.status;
-          saved_user.groups = user.groups;
-          saved_user.role = user.role;
-
-          // Save the user with changes
-          saved_user.save(function(err, return_user) {
+            // Error!
             if (err) {
-              console.error(err);
+
+              console.log(err);
               res.send(err);
+
             } else {
-              // User.
-              //   findById({_id: user._id}).
-              //   populate('groups', 'groupname').
-              //   exec(function(err, return_user) {
-              //     console.log(return_user);
-              // Blank out the password
+              //     // Blank out the password
               return_user.password = undefined;
-              res.json({
+              res.status(200).json({
                 success: true,
                 operation: 'edit',
                 user: return_user
               });
             }
           });
-        }
-      });
 
     // Creating
     } else {

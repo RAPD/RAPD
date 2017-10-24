@@ -92,7 +92,11 @@
     </p>
   </div>
   <p>
-    <mat-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></mat-progress-spinner>
+    <mat-progress-bar
+      *ngIf="submitted"
+      mode="indeterminate"
+      color="primary">
+    </mat-progress-bar>
   </p>
   <p>
     {{error_message}}

@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+var mongoose = require('mongoose');
 
 // const Group = require('../models/group');
 const Session = require('../models/session');
@@ -65,83 +66,66 @@ router.route('/sessions/:session_id')
 
       let session = req.body.session;
 
-      // console.log(session);
+      if (session._id) {
+        // use our bear model to find the session we want
+        Session.findByIdAndUpdate(session._id, session, {new:true})
+               .populate('group', 'groupname')
+               .exec(function(err, return_session) {
+                 // Error
+                 if (err) {
+                   console.error(err);
+                   res.status(500).send(err);
 
-      // Make sure group is only an _id
-      session.group = session.group._id;
+                 // No error
+                 } else {
+                   let params = {
+                     success: true,
+                     operation: 'edit',
+                     session: return_session
+                   };
+                   res.status(200).json(params);
+                 }
+               });
+      } else {
 
-      // use our bear model to find the session we want
-      Session.findById(session._id, function(err, saved_session) {
+        Session.findOneAndUpdate({_id:mongoose.Types.ObjectId()}, session, {new: true, upsert: true})
+               .populate('group', 'groupname')
+               .exec(function(err, new_session) {
+                 if (err) {
+                   console.error(err);
+                   res.status(500).send(err);
+                 } else {
+                   console.log(new_session);
+                   let params = {
+                     success: true,
+                     operation: 'add',
+                     session: new_session
+                   };
+                   res.status(200).json(params);
+                 }
+               });
 
-        // Error
-        if (err) {
-          res.send(err);
-        }
-
-        if (saved_session) {
-          // Update the document
-          saved_session.set(session);
-
-          // save the bear
-          saved_session.save(function(err) {
-            if (err) {
-              res.send(err);
-            }
-
-          Session.
-            findById(session._id).
-            populate('group', 'groupname').
-            exec(function(err, return_session) {
-              // console.log(return_session);
-              let params = {
-                success: true,
-                operation: 'edit',
-                session: return_session
-              };
-              res.json(params);
-            });
-          });
-        } else {
-          // create a new session
-          var new_session = new Session(session);
-
-          // save the sample user
-          new_session.save(function(err, return_session, numAffected) {
-            if (err) {
-              throw err;
-            }
-
-            console.log('Session saved successfully');
-
-            Session.
-              findById({_id: return_session._id}).
-              populate('group', 'groupname').
-              exec(function(err, new_session) {
-                // console.log(new_session);
-                let params = {
-                  success: true,
-                  operation: 'add',
-                  user: new_session
-                }
-                res.json(params);
-              });
-          });
-        }
-      });
+      }
     })
 
     // delete the session with this id (accessed at DELETE http://localhost:8080/api/sessions/:session_id)
     .delete(function(req, res) {
 
-        // console.log(req.params.session_id);
+        console.log('delete', req.params.session_id);
 
         Session.remove({
             _id: req.params.session_id
         }, function(err, session) {
-            if (err)
-                res.send(err);
-
-            res.json({ message: 'Successfully deleted' });
+            if (err) {
+              console.error(err)
+              res.status(500).send(err);
+            } else {
+                res.json({
+                  success: true,
+                  operation: 'delete',
+                  _id: req.params.session_id
+                });
+            }
         });
     });
 
