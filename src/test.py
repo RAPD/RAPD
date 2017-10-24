@@ -51,7 +51,7 @@ print 'event cleared'
 event.clear()
 """
 q = Queue()
-#q0 = Queue()
+q0 = Queue()
 event = Event()
 event.set()
 inp_kwargs = {'command': 'sleep 20',
@@ -60,6 +60,7 @@ inp_kwargs = {'command': 'sleep 20',
               'name':'TEST',
               'pid_queue': q,
               #'result_queue': q0,
+              'mp_event': event,
               }
 # Update batch queue info if using a compute cluster
 #inp_kwargs.update(self.batch_queue)
