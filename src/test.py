@@ -62,6 +62,7 @@ inp_kwargs = {'command': 'sleep 10',
 jobs = Process(target=launcher,
               kwargs=inp_kwargs)
 jobs.start()
+print 'gh'
 
 """
 import sites.detectors.necat_dectris_eiger16m as eiger
