@@ -490,3 +490,4 @@ def kill_job(job):
     print 'gh'
     output = subprocess.check_output(['/usr/bin/qdel', job])
     print 'killed job: %s'%job
+    time.sleep(1)
