@@ -49,7 +49,7 @@ time.sleep(2)
 print 'event cleared'
 event.clear()
 """
-inp_kwargs = {'command': 'sleep 5',
+inp_kwargs = {'command': 'sleep 10',
               'logfile': '/home/schuerjp/temp/junk.log',
               'nproc':2,
               'name':'TEST',
