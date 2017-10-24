@@ -52,7 +52,7 @@ event.clear()
 """
 q = Queue()
 q0 = Queue()
-inp_kwargs = {'command': 'sleep 10',
+inp_kwargs = {'command': 'sleep 20',
               'logfile': '/home/schuerjp/temp/junk.log',
               'nproc':2,
               'name':'TEST',
