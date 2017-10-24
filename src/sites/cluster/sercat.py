@@ -311,7 +311,7 @@ def process_cluster_OLD(inp):
 def process_cluster(command,
                    work_dir=False,
                    logfile=False,
-                   batch_queue='all.q',
+                   batch_queue='rapd',
                    nproc=1,
                    logger=False,
                    name=False,
@@ -357,6 +357,15 @@ def process_cluster(command,
     #pid = inp.get('pid', False)
     #l = []
     
+    # Setup path
+    v = "PATH=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
+/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/bin:\
+/home/schuerjp/Programs/best:\
+/home/schuerjp/Programs/RAPD/bin:\
+/home/schuerjp/Programs/RAPD/share/phenix-1.10.1-2155/build/bin:\
+/home/schuerjp/Programs/raddose-20-05-09-distribute-noexec/bin:\
+/usr/local/bin:/bin:/usr/bin"
+
     if work_dir == False:
         work_dir = os.getcwd()
     if result_queue:
@@ -370,18 +379,24 @@ def process_cluster(command,
     else:  
       fname = 'qsub%s.sh'%random.randint(0,5000)
       with open(fname,'w') as f:
-          print >>f, command
+          print >>f, '#!/bin/bash'
+          print >>f, '#PBS -j oe'
+          print >>f, '#PBS -d %s'%work_dir
+          print >>f, '#PBS -v %s'%v
+          print >>f, '#PBS -q %s'%batch_queue
+          if name:
+              print >>f, '#PBS -N %s'%name
+          if logfile:
+              if logfile.count('/'):
+                  print >>f, '#PBS -o %s'%logfile
+              else:
+                  print >>f, '#PBS -o %s'%os.path.join(work_dir,logfile)
+          print >>f, '#PBS -l nodes=1:ppn=%s'%nproc
+          print >>f, command+'\n'
           f.close()
     
-    # Setup path
-    v = "-v PATH=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
-/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/bin:\
-/home/schuerjp/Programs/best:\
-/home/schuerjp/Programs/RAPD/bin:\
-/home/schuerjp/Programs/RAPD/share/phenix-1.10.1-2155/build/bin:\
-/home/schuerjp/Programs/raddose-20-05-09-distribute-noexec/bin:\
-/usr/local/bin:/bin:/usr/bin"
-    
+
+    """
     # Setup the qsub command
     qs = 'qsub -d %s -j oe '%work_dir
     if logfile:
@@ -389,11 +404,13 @@ def process_cluster(command,
         qs += '-o %s '%logfile
       else:
         qs += '-o %s '%os.path.join(work_dir,logfile)
-    qs += "%s -l nodes=1:ppn=%s %s" % (v, nproc, fname)
-    print qs
+    """
+    #qs += "%s -l nodes=1:ppn=%s %s" % (v, nproc, fname)
+    qs = ['qsub', fname]
     #Launch the job on the cluster
     #job = subprocess.Popen(qs,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-    proc = subprocess.Popen(shlex.split(qs),
+    #proc = subprocess.Popen(shlex.split(qs),
+    proc = subprocess.Popen(qs,
                            stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE)
     

@@ -30,6 +30,25 @@ def connect_redis_manager_HA(name="remote_master"):
 import sites.cluster.sercat as cluster
 
 launcher = cluster.process_cluster
+"""
+import multiprocessing
+#import threading
+event = multiprocessing.Event()
+event.set()
+#threading.Thread(target=run_job).start()
+processCluster(command='touch junk',
+               #work_dir='/gpfs6/users/necat/Jon/RAPD_test/Output',
+               work_dir='/gpfs5/users/necat/rapd/rapd2_t/single/2017-08-09/B_14:612',
+               logfile='/gpfs6/users/necat/Jon/RAPD_test/Output/temp.log',
+               queue='index.q',
+               nproc=2,
+               name='TEST',
+               mp_event=event,
+               timeout=False,)
+time.sleep(2)
+print 'event cleared'
+event.clear()
+"""
 inp_kwargs = {'command': 'sleep 5',
               'logfile': '/home/schuerjp/temp/junk.log'}
 # Update batch queue info if using a compute cluster
