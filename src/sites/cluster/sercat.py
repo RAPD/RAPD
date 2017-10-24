@@ -492,6 +492,6 @@ def check_qsub_job(job):
   for line in output.stdout:
     if line.split()[0] == job:
       print line.split()[4]
-      if line.split()[4] == 'R':
+      if line.split()[4] in ['Q', 'R']:
         running = True
   return(running)
