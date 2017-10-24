@@ -433,6 +433,8 @@ def process_cluster(command,
             "tag": tag
         }
         result_queue.put(result)
+    # Delete the .sh file
+    os.unlink(fname)
     
     # Delete logile if it was not asked to be saved
     if fd:
