@@ -401,9 +401,9 @@ def process_cluster(command,
         pid_queue.put(job)
     try:
         while check_qsub_job(job):
-          time.sleep(0.2)
-          #time.sleep(2)
-          #kill_job(job)
+          #time.sleep(0.2)
+          time.sleep(2)
+          kill_job(job)
           if mp_event:
               if mp_event.is_set() == False:
                   kill_job(job)
@@ -476,6 +476,7 @@ def check_qsub_job(job):
   """
   Check to see if process and/or its children and/or children's children are still running.
   """
+  print 'gh1'
   running = False
   output = subprocess.check_output(['/usr/bin/qstat'])
   for line in output.splitlines():
@@ -485,5 +486,6 @@ def check_qsub_job(job):
   return(running)
 
 def kill_job(job):
+    print 'gh'
     output = subprocess.check_output(['/usr/bin/qdel', job])
     print 'killed job: %s'%job
