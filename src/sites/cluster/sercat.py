@@ -474,6 +474,7 @@ def check_qsub_job(job):
   running = False
   output = subprocess.check_output(['/usr/bin/qstat'])
   print output.split()
+  print output.splitlines()
   for line in output:
     print line
     if line.split()[0] == job:
