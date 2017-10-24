@@ -1,120 +1,123 @@
 <div *ngIf="! submit_error">
-<div MatDialogTitle>
-  <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
-    <mat-icon>close</mat-icon>
-  </button>
-</div>
-<div *ngIf="mode === 'login'">
-  <h2>
-    Login
-  </h2>
-  <form [formGroup]="login_form" (ngSubmit)="onSubmitLogin()">
-    <table>
-      <tr><td *ngIf="globals_service.site.authUserType === 'email'">
+  <div MatDialogTitle>
+    <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  <div *ngIf="mode === 'login'">
+    <h2>
+      Login
+    </h2>
+    <form [formGroup]="login_form" (ngSubmit)="onSubmitLogin()">
+      <table>
+        <tr><td *ngIf="globals_service.site.authUserType === 'email'">
+          <mat-form-field>
+            <input matInput
+              formControlName='email'
+              required
+              placeholder='email'
+              pattern='^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'>
+          </mat-form-field>
+          <div class="mat-errors-spacer" [hidden]="login_form.controls.email.valid || login_form.controls.email.untouched">
+            <div class="mat-char-counter" *ngIf="login_form.controls.email.errors && login_form.controls.email.errors.required">
+              Email is required
+            </div>
+            <div class="mat-char-counter" *ngIf="login_form.controls.email.errors && login_form.controls.email.errors.pattern">
+              Email is invalid
+            </div>
+          </div>
+        </td><td *ngIf="globals_service.site.authUserType === 'uid'">
+          <mat-form-field>
+            <input matInput
+              formControlName='uid'
+              required
+              placeholder='username'>
+          </mat-form-field>
+          <div class="mat-errors-spacer" [hidden]="login_form.controls.uid.untouched">
+            <!-- <div class="mat-char-counter" *ngIf="login_form.controls.uid.errors.required">
+              Username is required
+            </div> -->
+          </div>
+        </td></tr>
+        <tr><td>
+          <mat-form-field>
+            <input matInput
+              formControlName="password"
+              required placeholder='password'
+              type='password'>
+          </mat-form-field>
+          <div class="mat-errors-spacer" [hidden]="login_form.controls.password.valid || login_form.controls.password.untouched">
+            <div class="mat-char-counter" *ngIf="login_form.controls.password.errors && login_form.controls.password.errors.required">
+              Password is required
+            </div>
+            <div class="mat-char-counter" *ngIf="login_form.controls.password.errors && login_form.controls.password.errors.pattern">
+              Password is invalid
+            </div>
+          </div>
+        </td></tr>
+      </table>
+      <div style="text-align:center;">
+        <button type="submit" [disabled]="!login_form.valid" mat-button color="primary">Login</button>
+        <mat-progress-bar
+          *ngIf='submitted'
+          mode='indeterminate'>
+        </mat-progress-bar>
+      </div>
+    </form>
+    <!-- <p>{{error_message}}</p> -->
+    <button mat-button (click)="mode='lostpass'">Forgot your password?</button>
+  </div>
+  <div *ngIf="mode === 'lostpass'">
+    <h2>
+      Password Recovery
+    </h2>
+    <div>
+      <form [formGroup]="lostpass_form" (ngSubmit)="onSubmitLostpass()">
         <mat-form-field>
           <input matInput
-            formControlName='email'
+            formControlName="email"
             required
             placeholder='email'
             pattern='^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'>
         </mat-form-field>
         <div class="mat-errors-spacer" [hidden]="login_form.controls.email.valid || login_form.controls.email.untouched">
-          <div class="mat-char-counter" *ngIf="login_form.controls.email.errors && login_form.controls.email.errors.required">
+          <div class="mat-char-counter" *ngIf="lostpass_form.controls.email.errors && lostpass_form.controls.email.errors.required">
             Email is required
           </div>
-          <div class="mat-char-counter" *ngIf="login_form.controls.email.errors && login_form.controls.email.errors.pattern">
+          <div class="mat-char-counter" *ngIf="lostpass_form.controls.email.errors && lostpass_form.controls.email.errors.pattern">
             Email is invalid
           </div>
         </div>
-      </td><td *ngIf="globals_service.site.authUserType === 'uid'">
-        <mat-form-field>
-          <input matInput
-            formControlName='uid'
-            required
-            placeholder='username'>
-        </mat-form-field>
-        <div class="mat-errors-spacer" [hidden]="login_form.controls.uid.untouched">
-          <!-- <div class="mat-char-counter" *ngIf="login_form.controls.uid.errors.required">
-            Username is required
-          </div> -->
+        <div style="text-align:center;">
+          <button type="submit" [disabled]="!lostpass_form.valid" mat-button color="primary">Submit</button>
+          <mat-progress-spinner *ngIf='submitted' mode='indeterminate' style="height:30px;width:30px;"></mat-progress-spinner>
         </div>
-      </td></tr>
-      <tr><td>
-        <mat-form-field>
-          <input matInput
-            formControlName="password"
-            required placeholder='password'
-            type='password'>
-        </mat-form-field>
-        <div class="mat-errors-spacer" [hidden]="login_form.controls.password.valid || login_form.controls.password.untouched">
-          <div class="mat-char-counter" *ngIf="login_form.controls.password.errors && login_form.controls.password.errors.required">
-            Password is required
-          </div>
-          <div class="mat-char-counter" *ngIf="login_form.controls.password.errors && login_form.controls.password.errors.pattern">
-            Password is invalid
-          </div>
-        </div>
-      </td></tr>
-    </table>
-    <div style="text-align:center;">
-      <button type="submit" [disabled]="!login_form.valid" mat-button color="primary">Login</button>
-      <mat-progress-spinner *ngIf='submitted' mode='indeterminate' style="height:30px;width:30px;"></mat-progress-spinner>
+      </form>
     </div>
-  </form>
-  <!-- <p>{{error_message}}</p> -->
-  <button mat-button (click)="mode='lostpass'">Forgot your password?</button>
-</div>
-<div *ngIf="mode === 'lostpass'">
-  <h2>
-    Password Recovery
-  </h2>
-  <div>
-    <form [formGroup]="lostpass_form" (ngSubmit)="onSubmitLostpass()">
-      <mat-form-field>
-        <input matInput
-          formControlName="email"
-          required
-          placeholder='email'
-          pattern='^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'>
-      </mat-form-field>
-      <div class="mat-errors-spacer" [hidden]="login_form.controls.email.valid || login_form.controls.email.untouched">
-        <div class="mat-char-counter" *ngIf="lostpass_form.controls.email.errors && lostpass_form.controls.email.errors.required">
-          Email is required
-        </div>
-        <div class="mat-char-counter" *ngIf="lostpass_form.controls.email.errors && lostpass_form.controls.email.errors.pattern">
-          Email is invalid
-        </div>
-      </div>
-      <div style="text-align:center;">
-        <button type="submit" [disabled]="!lostpass_form.valid" mat-button color="primary">Submit</button>
-        <mat-progress-spinner *ngIf='submitted' mode='indeterminate' style="height:30px;width:30px;"></mat-progress-spinner>
-      </div>
-    </form>
+    <div style="text-align:center;">
+      <button mat-button (click)="mode='login'">Already have a password?</button>
+    </div>
   </div>
-  <div style="text-align:center;">
-    <button mat-button (click)="mode='login'">Already have a password?</button>
-  </div>
-</div>
 
-<div *ngIf="mode === 'signup'">
-  <h1>
-    Sign Up
-  </h1>
-</div>
-<div *ngIf="mode === 'show_login_success'">
-  <h1>
-    Success
-  </h1>
-  Your login has been successful.
-</div>
-<div *ngIf="mode === 'show_request_success'">
-  <h1>
-    Success
-  </h1>
-  Your request for a recovery password has been successful.
-  <br>
-  You should eceive an email shortly.
-</div>
+  <div *ngIf="mode === 'signup'">
+    <h1>
+      Sign Up
+    </h1>
+  </div>
+  <div *ngIf="mode === 'show_login_success'">
+    <h1>
+      Success
+    </h1>
+    Your login has been successful.
+  </div>
+  <div *ngIf="mode === 'show_request_success'">
+    <h1>
+      Success
+    </h1>
+    Your request for a recovery password has been successful.
+    <br>
+    You should eceive an email shortly.
+  </div>
 </div>
 <div *ngIf="submit_error">
   <mat-dialog-content>

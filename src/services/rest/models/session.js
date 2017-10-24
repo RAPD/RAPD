@@ -9,7 +9,7 @@ var SessionSchema = new Schema({
   last_process: {
     type: Date,
     required: true,
-    default: Date.now
+    default: undefined //new Date(2017, 0, 1)
   },
   group: {
     type: Schema.Types.ObjectId,
@@ -27,7 +27,7 @@ var SessionSchema = new Schema({
   },
   timestamp: {
     type: Date,
-    default: Date.now
+    default: new Date(2017, 0, 1)
   }
 }, {strict:false});
 

@@ -22,13 +22,16 @@ export class RestService {
   constructor(private globals_service: GlobalsService,
               private authHttp: AuthHttp) { }
 
+  //
+  // USERS
+  //
   public getUsers(): Observable<User[]> {
 
     console.log('getUsers');
 
     return this.authHttp.get(this.globals_service.site.restApiUrl + '/users')
       .map(this.extractUsers)
-      .catch(this.handleError);
+      .catch(error => this.handleError(error));
   }
 
   private extractUsers(res: Response, error) {
@@ -41,22 +44,16 @@ export class RestService {
   // Submit a user to be saved in the database
   public submitUser(user: User): Observable<any> {
 
-    console.log('submitUser');
-
     let header = new Headers();
-    header.append('Content-Type', 'application/json'); // 'application/x-www-form-urlencoded'
+    header.append('Content-Type', 'application/json');
 
     return this.authHttp.put(
       this.globals_service.site.restApiUrl + '/users/' + user._id,
       JSON.stringify({user: user}),
       {headers: header}
     )
-    .map(res => res.json());
-    // .subscribe(
-    //   data => console.log(data),
-    //   err => console.log(err),
-    //   () => console.log('Request Complete')
-    // );
+    .map(res => res.json())
+    .catch(error => this.handleError(error));
   }
 
   // Delete a user from the database
@@ -72,10 +69,13 @@ export class RestService {
     console.log('getGroups');
 
     return this.authHttp.get(this.globals_service.site.restApiUrl + '/groups')
-      .map(this.extractGroups);
-      // .catch(this.handleError);
+      .map(this.extractGroups)
+      .catch(error => this.handleError(error));
   }
 
+  //
+  // GROUPS
+  //
   private extractGroups(res: Response, error) {
 
     // console.log('error', error);
@@ -105,7 +105,7 @@ export class RestService {
     .map(res => res.json());
   }
 
-  // Delete a user from the database
+  // Delete a group from the database
   public deleteGroup(_id: string): Observable<any> {
 
     console.log('deleteGroup', _id);
@@ -113,13 +113,16 @@ export class RestService {
     return this.authHttp.delete(this.globals_service.site.restApiUrl + '/groups/' + _id).map(res => res.json());
   }
 
+  //
+  // SESSIONS
+  //
   public getSessions(): Observable<Session[]> {
 
     console.log('getSessions');
 
     return this.authHttp.get(this.globals_service.site.restApiUrl + '/sessions')
-      .map(this.extractSessions);
-      // .catch(this.handleError);
+      .map(this.extractSessions)
+      .catch(error => this.handleError(error));
   }
 
   private extractSessions(res: Response, error) {
@@ -151,7 +154,17 @@ export class RestService {
     .map(res => res.json());
   }
 
-  // IMAGE methods
+  // Delete a user from the database
+  public deleteSession(_id: string): Observable<any> {
+
+    console.log('deleteSession', _id);
+
+    return this.authHttp.delete(this.globals_service.site.restApiUrl + '/sessions/' + _id).map(res => res.json());
+  }
+
+  //
+  // IMAGES
+  //
   public getImageData(_id:string): Observable<Image> {
 
     console.log('getImageData _id:', _id);
@@ -238,10 +251,9 @@ export class RestService {
 
   // Generic error handler for connection problems
   private handleError(error) {
-    console.error(error);
     return Observable.of({
       success:false,
-      error:error
+      message:error.toString()
     });
   }
 

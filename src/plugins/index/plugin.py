@@ -71,7 +71,7 @@ from utils.r_numbers import try_int, try_float
 #from utils.communicate import rapd_send
 import utils.exceptions as exceptions
 import utils.global_vars as global_vars
-from utils.processes import local_subprocess, mp_pool
+from utils.processes import local_subprocess # , mp_pool
 from utils.text import json
 from bson.objectid import ObjectId
 import utils.xutils as xutils
@@ -452,7 +452,7 @@ class RapdPlugin(Process):
     def connect_to_redis(self):
         """Connect to the redis instance"""
         # Create a pool connection
-        redis_database = importlib.import_module('database.rapd_redis_adapter')
+        redis_database = importlib.import_module('database.redis_adapter')
         redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
         self.redis = redis_database.connect_to_redis()
 
@@ -1372,6 +1372,7 @@ Distance | % Transmission", level=98, color="white")
         eval("%s_log" % l[1]).extend(out)
         data = mosflm.parse_strategy(out, anom)
         # data = Parse.ParseOutputMosflm_strat(self, out, anom)
+        # pprint(data)
 
         # Print to terminal
         #if "run_number" in data:
@@ -1382,24 +1383,28 @@ Distance | % Transmission", level=98, color="white")
             flag = "strategy anom "
             self.tprint(arg="\nMosflm strategy ANOMALOUS", level=98, color="blue")
         # Header lines
-        self.tprint(arg="  " + "-" * 69, level=98, color="white")
-        self.tprint(arg="  " + " N |  Omega_start |  N.of.images | Rot.width |  Exposure | Distance ", level=98, color="white")
-        self.tprint(arg="  " + "-" * 69, level=98, color="white")
+        self.tprint(arg="  " + "-" * 34, level=98, color="white")
+        #  self.tprint(arg="  " + " N |  Omega_start |  N.of.images | Rot.width |  Exposure | Distance ", level=98, color="white")
+        self.tprint(arg = "  " + " N |   phi start  |   phi range  ", level=98, color="white")
+        self.tprint(arg="  " + "-" * 34, level=98, color="white")
 
-        for i in range(len(data[flag+"run number"])):
+        for sweep in data["strategy"]["sweeps"]: # range(len(data[flag+"run number"])):
             self.tprint(
-                arg="  %2d |    %6.2f    |   %6d     |   %5s   |   %5.2f   | %7s  " %
+                arg = "  %2d |    %6.2f    |   %6.2f   " %
+                    # arg="  %2d |    %6.2f    |   %6d     |   %5s   |   %5.2f   | %7s  " %
                     (
-                        int(data[flag+"run number"][i]),
-                        float(data[flag+"phi start"][i]),
-                        int(data[flag+"num of images"][i]),
-                        data[flag+"delta phi"],
-                        float(data[flag+"image exp time"]),
-                        str(data[flag+"distance"])
+                        sweep["run_number"],
+                        sweep["phi_start"],
+                        sweep["phi_range"],
+                        # int(data[flag+"num of images"][i]),
+                        # data[flag+"delta phi"],
+                        #float(data[flag+"image exp time"]),
+                        #str(data[flag+"distance"])
+
                     ),
                 level=98,
                 color="white")
-        self.tprint(arg="  " + "-" * 69, level=98, color="white")
+        self.tprint(arg="  " + "-" * 34, level=98, color="white")
 
         if data == None:
             if self.verbose and self.logger:

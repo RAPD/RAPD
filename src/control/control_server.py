@@ -82,7 +82,7 @@ class ControllerServer(threading.Thread):
 
     def connect_to_redis(self):
         """Connect to the redis instance"""
-        redis_database = importlib.import_module('database.rapd_redis_adapter')
+        redis_database = importlib.import_module('database.redis_adapter')
 
         self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
         self.redis = self.redis_database.connect_to_redis()

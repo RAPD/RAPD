@@ -30,6 +30,9 @@ body {
 }
 
 
+h3.rapd-failure {
+  color: red;
+}
 
 .container {
   display: flex;
@@ -37,9 +40,9 @@ body {
   flex-wrap: nowrap;
 }
 
-.child {
+/*.child {
 
-}
+}*/
 
 
 
@@ -190,6 +193,10 @@ mat-divider.rapd-side-list-divider {
   font-size: 0.9em;
 }
 
+.rapd-error-result {
+  color: rgba(0, 0, 0, 0.2);
+}
+
 .rapd-list-item .mat-list-item-content {
   height: 1.5em;
 }
@@ -221,6 +228,9 @@ button.button-dialog-top-right.mat-icon-button {
 .active-result {
   background-color: yellow;
 }
+.active-result:hover {
+  background-color: yellow;
+}
 
 .hidden {
   display: none;
@@ -235,6 +245,11 @@ button.button-dialog-top-right.mat-icon-button {
 /*
  * Table for settings input
  */
+
+ :host /deep/ .datatable-body-row.active .datatable-row-group {
+ background-color: white !important;
+ }
+
 table.rapd-form-table {
   table-layout: fixed;
   /*width: 100%;*/

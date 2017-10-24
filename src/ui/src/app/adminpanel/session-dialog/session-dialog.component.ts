@@ -3,6 +3,7 @@ import { FormGroup, FormControl } from '@angular/forms';
 
 import { MatDialogRef } from '@angular/material';
 
+import { GlobalsService } from '../../shared/services/globals.service';
 import { RestService } from '../../shared/services/rest.service';
 import { Group } from '../../shared/classes/group';
 import { Session } from '../../shared/classes/session';
@@ -21,16 +22,8 @@ export class SessionDialogComponent implements OnInit {
   @Input() groups: Group[];
   session_form: FormGroup;
 
-  sites = [
-    '24-ID-E',
-    '24-ID-C'
-  ]
-
-  // session_types = [
-  //   'mx'
-  // ]
-
-  constructor(private admin_service: RestService,
+  constructor(private globals_service: GlobalsService,
+              private admin_service: RestService,
               public dialogRef: MatDialogRef<SessionDialogComponent>) { }
 
   ngOnInit() {
@@ -70,14 +63,14 @@ export class SessionDialogComponent implements OnInit {
 
     this.submitted = true;
 
-    // this.admin_service.deleteGroup(this.group._id).subscribe(params => {
-    //   console.log(params);
-    //   this.submitted = false;
-    //   if (params.success === true) {
-    //     this.dialogRef.close(params);
-    //   } else {
-    //     this.error_message = params;
-    //   }
-    // });
+    this.admin_service.deleteSession(this.session._id).subscribe(params => {
+      console.log(params);
+      this.submitted = false;
+      if (params.success === true) {
+        this.dialogRef.close(params);
+      } else {
+        this.error_message = params;
+      }
+    });
   }
 }
