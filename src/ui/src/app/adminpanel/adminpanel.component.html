@@ -12,9 +12,8 @@
             [limit]="10"
             [rowHeight]="'auto'"
             [reorderable]="reorderable"
-            [selectionType]="'single'"
             [sorts]="[{prop: 'username', dir: 'asc'}]"
-            (select)='editUser($event)'>
+            (activate)='editUser($event)'>
             <ngx-datatable-column name="Username" prop="username">
               <ng-template let-value="value" ngx-datatable-cell-template>
                 {{value}}
@@ -62,9 +61,8 @@
             [limit]="10"
             [rowHeight]="'auto'"
             [reorderable]="reorderable"
-            [selectionType]="'single'"
             [sorts]="[{prop: 'groupname', dir: 'asc'}]"
-            (select)='editGroup($event)'>
+            (activate)='editGroup($event)'>
             <ngx-datatable-column name="Group Name" prop="groupname">
               <ng-template let-value="value" ngx-datatable-cell-template>
                 {{value}}
@@ -110,9 +108,8 @@
           [limit]="10"
           [rowHeight]="'auto'"
           [reorderable]="reorderable"
-          [selectionType]="'single'"
           [sorts]="[{prop: 'last_process', dir: 'desc'}]"
-          (select)='editSession($event)'>
+          (activate)='editSession($event)'>
           <ngx-datatable-column name="Site" prop="site">
             <ng-template let-value="value" ngx-datatable-cell-template>
               {{value}}

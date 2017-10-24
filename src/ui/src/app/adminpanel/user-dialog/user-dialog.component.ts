@@ -15,21 +15,18 @@ import { Group } from '../../shared/classes/group';
 export class UserDialogComponent implements OnInit {
 
   submitted: boolean = false;
-  error_message: string;
+  submit_error: string;
   @Input() user: User;
   model: User;
   @Input() groups: Group[];
   user_form: FormGroup;
 
-  constructor(private admin_service: RestService,
+  constructor(private rest_service: RestService,
               public dialogRef: MatDialogRef<UserDialogComponent>) { }
 
   ngOnInit() {
-
-    console.log(this.user);
-
+    // console.log(this.user);
     this.model = Object.assign({}, this.user);
-
     this.user_form = new FormGroup({
       email: new FormControl(),
       username: new FormControl(),
@@ -38,22 +35,6 @@ export class UserDialogComponent implements OnInit {
       group1: new FormControl(),
       group2: new FormControl()
     });
-
-  }
-
-  exitUser() {
-
-    // Make sure the group names match the group _id
-    for (let g of this.user.groups) {
-      if (g._id === '') {
-        let index = this.user.groups.indexOf(g);
-        this.user.groups.slice(index, 1);
-      }
-    }
-
-    this.dialogRef.close(undefined);
-
-    // console.log(this.user.groups);
   }
 
   submitUser() {
@@ -61,7 +42,7 @@ export class UserDialogComponent implements OnInit {
     this.submitted = true;
 
     const form_values = this.user_form.value;
-    console.log('form_values', form_values);
+    // console.log('form_values', form_values);
 
     this.model.groups = [];
 
@@ -79,28 +60,28 @@ export class UserDialogComponent implements OnInit {
         this.model.groups.push({_id: form_values.group2});
     }}
 
-    this.admin_service.submitUser(this.model).subscribe(params => {
-      // console.log(params);
+    this.rest_service.submitUser(this.model).subscribe(params => {
       this.submitted = false;
       if (params.success === true) {
         this.dialogRef.close(params);
       } else {
-        this.error_message = params;
+        this.submit_error = params.message;
       }
     });
   }
 
   deleteUser() {
-
+    // Mark as submitted
     this.submitted = true;
 
-    this.admin_service.deleteUser(this.user._id).subscribe(params => {
+    // Use REST service
+    this.rest_service.deleteUser(this.user._id).subscribe(params => {
       // console.log(params);
       this.submitted = false;
       if (params.success === true) {
         this.dialogRef.close(params);
       } else {
-        this.error_message = params;
+        this.submit_error = params.message;
       }
     });
   }

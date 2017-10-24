@@ -12,18 +12,19 @@ var smtp_transport = nodemailer.createTransport(smtpTransport({
 }));
 
 // Create connection to LDAP
-if (config.authenticate_mode === 'ldap') {
-  const ldap =  require('ldapjs');
-  var ldap_client = ldap.createClient({
-    url: 'ldap://'+config.ldap_server
-  });
-}
+// if (config.authenticate_mode === 'ldap') {
+//   const ldap =  require('ldapjs');
+//   var ldap_client = ldap.createClient({
+//     url: 'ldap://'+config.ldap_server
+//   });
+// }
 
 // routes that end with users
 // ----------------------------------------------------
 // route to return all users (GET api/users)
 router.route('/users')
   .get(function(req, res) {
+
     // MONGO
     if (config.authenticate_mode === 'mongo') {
       User.
@@ -36,7 +37,8 @@ router.route('/users')
           }
           res.json(users);
         });
-    // LDAP
+
+    // LDAP - no users
     } else if (config.authenticate_mode === 'ldap') {
       // SERCAT uses LDAP per group
       res.json([]);
@@ -55,16 +57,17 @@ router.route('/users/:user_id')
       User.findByIdAndUpdate(user._id, user, {new:true})
           .populate('groups', 'groupname')
           .exec(function(err, return_user) {
-
-            // Error!
             if (err) {
-
-              console.log(err);
-              res.send(err);
-
+              console.error(err);
+              res.status(500).json({
+                success: false,
+                operation: 'edit',
+                message: err
+              });
             } else {
-              //     // Blank out the password
+              // Blank out the password
               return_user.password = undefined;
+              console.log('User edited successfully', return_user);
               res.status(200).json({
                 success: true,
                 operation: 'edit',
@@ -75,6 +78,7 @@ router.route('/users/:user_id')
 
     // Creating
     } else {
+      // Create the user
       let new_user = new User({
         creator:req.decoded._doc._id,
         email: user.email,
@@ -84,13 +88,18 @@ router.route('/users/:user_id')
         username: user.username
       });
 
+      // Save and return the user
       new_user.save(function(err, return_user) {
         if (err) {
           console.error(err);
-          res.send(err);
+          res.status(500).json({
+            success: false,
+            operation: 'add',
+            message: err
+          });
         } else {
           console.log('User saved successfully', return_user);
-          res.json({
+          res.status(200).json({
             success: true,
             operation: 'add',
             user: return_user
@@ -120,15 +129,15 @@ router.route('/users/:user_id')
 // Route to handle changing password (POST api/changepass)
 router.post('/changepass', function(req, res) {
 
-  // console.log('changepass');
-  // console.log(req.body);
-
   User.
-  findOne({email: req.body.email}).
-  exec(function(err, user) {
+  findOne({email: req.body.email})
+  .exec(function(err, user) {
     if (err) {
       console.error(err);
-      res.send(err);
+      res.status(500).json({
+        success: false,
+        message: err
+      });
     } else {
       if (user) {
         let new_pass_raw = req.body.password;
@@ -139,25 +148,31 @@ router.post('/changepass', function(req, res) {
         user.save(function(err, saved_user) {
           if (err) {
             console.error(err);
-            res.send(err);
+            res.status(500).json({
+              success: false,
+              message: err
+            });
           } else {
-            console.log('Changed password for', req.body.email);
             // Set up the email options
             let mailOptions = {
-              from: 'fmurphy@anl.gov',
+              from: config.admin_email,
               to: user.email,
-              cc: 'fmurphy@anl.gov',
+              cc: config.admin_email,
               subject: 'RAPD password change',
-              text: 'Your RAPD password has been updated.\nIf this is an unauthorized change, please contactthe RAPD administrator at XXX'};
+              text: 'Your RAPD password has been updated.\nIf this is an unauthorized change, please contactthe RAPD administrator at '+config.admin_email};
             // Send the email
             smtp_transport.sendMail(mailOptions);
+            console.log('Changed password for', req.body.email);
             // Reply to client
             res.json({success: true});
           }
         });
       } else {
         console.error('No user found for email', req.body.email);
-        res.send('No user found for email', req.body.email);
+        res.status(404).json({
+          success: false,
+          message: 'No user found for email '+req.body.email
+        });
       }
     }
   });

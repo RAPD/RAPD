@@ -120,11 +120,12 @@ router.route('/sessions/:session_id')
               console.error(err)
               res.status(500).send(err);
             } else {
-                res.json({
-                  success: true,
-                  operation: 'delete',
-                  _id: req.params.session_id
-                });
+              console.log('Session deleted successfully');
+              res.status(200).json({
+                success: true,
+                operation: 'delete',
+                _id: req.params.session_id
+              });
             }
         });
     });
