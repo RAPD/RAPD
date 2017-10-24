@@ -491,6 +491,7 @@ def check_qsub_job(job):
   output = subprocess.Popen(['/usr/bin/qstat'],stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
   for line in output.stdout:
     if line.split()[0] == job:
+      print line.split()[4]
       if line.split()[4] == 'R':
         running = True
   return(running)
