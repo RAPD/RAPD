@@ -346,6 +346,7 @@ def process_cluster(command,
     """
     Launch job on SERCAT's scyld cluster. Does not wait for jobs to end!
     """
+    fd = False
     # Setup path
     v = "PATH=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
 /home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/bin:\
@@ -391,8 +392,12 @@ def process_cluster(command,
                            stderr=subprocess.PIPE)
     
     stdout, stderr = proc.communicate()
-    print 'stdout: %s'%stdout
-    print 'stderr: %s'%stderr
+    
+    # Get the JobID
+    job = stdout[:stdout.rfind('.')]
+    print job
+    #print 'stdout: %s'%stdout
+    #print 'stderr: %s'%stderr
     # Send back PID if have pid_queue
     #if pid_queue:
     #    pid_queue.put(proc.pid)
