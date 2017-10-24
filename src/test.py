@@ -51,11 +51,13 @@ print 'event cleared'
 event.clear()
 """
 q = Queue()
-inp_kwargs = {'command': 'sleep 10',
+q0 = Queue()
+inp_kwargs = {'command': 'sleep 5',
               'logfile': '/home/schuerjp/temp/junk.log',
               'nproc':2,
               'name':'TEST',
               'pid_queue': q,
+              'result_queue': q0,
               }
 # Update batch queue info if using a compute cluster
 #inp_kwargs.update(self.batch_queue)

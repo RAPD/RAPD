@@ -399,13 +399,16 @@ def process_cluster(command,
     # Send back PID if have pid_queue
     if pid_queue:
         pid_queue.put(job)
-
-    while check_qsub_job(job):
-      time.sleep(0.2)
-      if mp_event:
-          if mp_event.is_set() == False:
-              kill_job(job)
-    print "Job finished"
+    try:
+        while check_qsub_job(job):
+          time.sleep(0.2)
+          if mp_event:
+              if mp_event.is_set() == False:
+                  kill_job(job)
+        print "Job finished"
+    except:
+        if logger:
+            logger.debug('qsub_sercat.py was killed, but the launched job will continue to run')
 
     # Put results on a Queue, if given
     if result_queue:
@@ -473,22 +476,7 @@ def check_qsub_job(job):
   """
   running = False
   output = subprocess.check_output(['/usr/bin/qstat'])
-  #print output.split()
-  #print output.splitlines()
   for line in output.splitlines():
-    print line
-    if line.split()[0] == job:
-      if line.split()[4] in ['Q', 'R']:
-        running = True
-  return(running)
-
-def check_qsub_job_OLD(job):
-  """
-  Check to see if process and/or its children and/or children's children are still running.
-  """
-  running = False
-  output = subprocess.Popen(['/usr/bin/qstat'],stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-  for line in output.stdout:
     if line.split()[0] == job:
       if line.split()[4] in ['Q', 'R']:
         running = True
