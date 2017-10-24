@@ -58,7 +58,7 @@ inp_kwargs = {'command': 'sleep 10',
 #inp_kwargs.update(self.batch_queue)
 
 #Launch the job
-jobs = Thread(target=launcher,
+jobs = Process(target=launcher,
               kwargs=inp_kwargs)
 jobs.start()
 
