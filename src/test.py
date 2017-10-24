@@ -52,15 +52,15 @@ event.clear()
 """
 q = Queue()
 q0 = Queue()
-event = Event()
-event.set()
+#event = Event()
+#event.set()
 inp_kwargs = {'command': 'sleep 20',
               'logfile': '/home/schuerjp/temp/junk.log',
               'nproc':2,
               'name':'TEST',
               'pid_queue': q,
-              #'result_queue': q0,
-              'mp_event': event,
+              'result_queue': q0,
+              #'mp_event': event,
               }
 # Update batch queue info if using a compute cluster
 #inp_kwargs.update(self.batch_queue)
@@ -70,9 +70,10 @@ jobs = Process(target=launcher,
               kwargs=inp_kwargs)
 jobs.start()
 print q.get()
-time.sleep(2)
-print 'event cleared'
-event.clear()
+print q0.get()
+#time.sleep(2)
+#print 'event cleared'
+#event.clear()
 
 """
 import sites.detectors.necat_dectris_eiger16m as eiger
