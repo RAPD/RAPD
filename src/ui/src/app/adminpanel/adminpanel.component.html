@@ -34,10 +34,10 @@
         </article>
         <mat-toolbar class="rapd-main-panel-action-bar">
           <form class="user-filter-form">
-            <md-form-field
+            <mat-form-field
               (keyup)='updateUserFilter($event)'>
-              <input mdInput placeholder="Filter Table">
-            </md-form-field>
+              <input matInput placeholder="Filter Table">
+            </mat-form-field>
           </form>
           <button mat-button color="primary" (click)="newUser()">New User</button>
           <button mat-button color="primary" (click)="changePass()">Change My Password</button>
@@ -81,10 +81,10 @@
         </article>
         <mat-toolbar class="rapd-main-panel-action-bar">
           <form class="group-filter-form">
-            <md-form-field
+            <mat-form-field
               (keyup)='updateGroupFilter($event)'>
-              <input mdInput placeholder="Filter Table">
-            </md-form-field>
+              <input matInput placeholder="Filter Table">
+            </mat-form-field>
           </form>
           <button mat-button color="primary" (click)="createGroup()">New Group</button>
         </mat-toolbar>
@@ -134,10 +134,10 @@
       </article>
       <mat-toolbar class="rapd-main-panel-action-bar">
         <form class="session-filter-form">
-          <md-form-field
+          <mat-form-field
             (keyup)='updateSessionFilter($event)'>
-            <input mdInput placeholder="Filter Table">
-          </md-form-field>
+            <input matInput placeholder="Filter Table">
+          </mat-form-field>
         </form>
         <button mat-button color="primary" (click)="createSession()">New Session</button>
       </mat-toolbar>

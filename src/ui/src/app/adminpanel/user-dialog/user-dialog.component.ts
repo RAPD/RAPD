@@ -63,23 +63,27 @@ export class UserDialogComponent implements OnInit {
     let form_values = this.user_form.value;
 
     console.log('form_values', form_values);
+    console.log('this.model', this.model);
 
     // this.model.groups = [];
 
     if (form_values.group0) {
-      this.model.groups.push({_id: form_values.group0});
-    }
+      if (form_values.group0.length > 0) {
+        this.model.groups.push({_id: form_values.group0});
+    }}
     if (form_values.group1) {
-      this.model.groups.push({_id: form_values.group1});
-    }
+      if (form_values.group1.length > 0) {
+        this.model.groups.push({_id: form_values.group1});
+    }}
     if (form_values.group2) {
-      this.model.groups.push({_id: form_values.group2});
-    }
+      if (form_values.group2.length > 0) {
+        this.model.groups.push({_id: form_values.group2});
+    }}
 
     // Make sure the group names match the group _id
     for (let g of this.model.groups) {
+      console.log(g);
       let filtered = this.groups.filter(group => group._id === g._id);
-      console.log('Filtered:', filtered);
       g.groupname = filtered[0].groupname;
     }
 

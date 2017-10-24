@@ -42,11 +42,15 @@
       </mat-form-field>
     </p>
     <p>
-      <mat-select formControlName="status" placeholder="Role"
-              [(ngModel)]="model.status">
-        <mat-option value="active">active</mat-option>
-        <mat-option value="inactive">inactive</mat-option>
-      </mat-select>
+      <mat-form-field>
+        <mat-select formControlName="status"
+          width="5em"
+          placeholder="Status"
+          [(ngModel)]="model.status">
+          <mat-option value="active">active</mat-option>
+          <mat-option value="inactive">inactive</mat-option>
+        </mat-select>
+      </mat-form-field>
     </p>
   </div>
   <p>

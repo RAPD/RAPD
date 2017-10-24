@@ -245,6 +245,11 @@ button.button-dialog-top-right.mat-icon-button {
 /*
  * Table for settings input
  */
+
+ :host /deep/ .datatable-body-row.active .datatable-row-group {
+ background-color: white !important;
+ }
+
 table.rapd-form-table {
   table-layout: fixed;
   /*width: 100%;*/
