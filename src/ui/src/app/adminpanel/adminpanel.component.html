@@ -1,6 +1,6 @@
 <div class="panel" *ngIf="user.role === 'site_admin' || user.role === 'group_admin'">
   <mat-tab-group class="session-tab-group">
-    <mat-tab label="Users">
+    <mat-tab *ngIf="globals_service.have_users === true" label="Users">
         <article class="c-content" style="margin-top:2em;">
           <ngx-datatable
             class="material"
