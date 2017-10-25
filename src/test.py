@@ -71,6 +71,7 @@ jobs = Process(target=launcher,
               kwargs=inp_kwargs)
 jobs.start()
 print q.get()
+jobs.join(1)
 #print q0.get()
 
 #time.sleep(2)
