@@ -89,6 +89,34 @@ def determine_nproc(command):
     if command in ('INDEX', 'INTEGRATE'):
         nproc = 4
     return nproc
+  
+def fix_command(message):
+    """
+    Adjust the command passed in in install-specific ways
+    """
+    # Adjust the working directory for the launch computer
+    work_dir_candidate = os.path.join(
+        message["directories"]["launch_dir"],
+        message["directories"]["work"])
+
+    # Make sure this is an original directory
+    if os.path.exists(work_dir_candidate):
+        # Already exists
+        for i in range(1, 1000):
+            if not os.path.exists("_".join((work_dir_candidate, str(i)))):
+                work_dir_candidate = "_".join((work_dir_candidate, str(i)))
+                break
+            else:
+                i += 1
+    # Now make the directory
+    if os.path.isdir(work_dir_candidate) == False:
+        os.makedirs(work_dir_candidate)
+
+    # Modify command
+    message["directories"]["work"] = work_dir_candidate
+
+    return message
+
 
 def connectCluster(inp, job=True):
   """
@@ -162,11 +190,6 @@ def process_cluster(command,
                    tag=False,
                    result_queue=False):
     """
-    Submit job to cluster using DRMAA (when you are already on the cluster).
-    Main script should not end with os._exit() otherwise running jobs could be orphanned.
-    To eliminate this issue, setup self.running = multiprocessing.Event(), self.running.set() in main script,
-    then set it to False (self.running.clear()) during postprocess to kill running jobs smoothly.
-    
     command - command to run
     work_dir - working directory
     logfile - print results of command to this file

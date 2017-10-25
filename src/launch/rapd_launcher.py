@@ -229,7 +229,6 @@ s IP address (%s), but not for the input tag (%s)" % (self.ip_address, self.tag)
         else:
             # Get the job_list to watch for this launcher
             self.job_list = self.launcher.get('job_list')
-            #print self.job_list
 
     def load_adapter(self):
         """Find and load the adapter"""

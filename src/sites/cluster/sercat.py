@@ -52,13 +52,107 @@ def check_cluster():
 
 def check_queue(inp):
     """
-    Returns which cluster queue should be used with the pipeline.
-    """
-    d = {"INDEX+STRATEGY" : False,
-         "BEAMCENTER"     : False,
+    Returns which cluster batch queue should be used with the plugin.
+
+    d = {"ECHO"           : 'general.q',
+         #"INDEX"          : 'phase3.q',
+         "INDEX"          : 'phase1.q',
+         "BEAMCENTER"     : 'all.q',
+         "XDS"            : 'all.q',
+         "INTEGRATE"      : 'phase2.q'
          }
     return(d[inp])
-    
+    """
+    return 'rapd'
+  
+def get_nproc_njobs():
+    """Return the nproc and njobs for an XDS integrate job"""
+    return (4, 5)
+  
+def determine_nproc(command):
+    """Determine how many processors to reserve on the cluster for a specific job type."""
+    nproc = 1
+    if command in ('INDEX', 'INTEGRATE'):
+        nproc = 4
+    return nproc
+
+def fix_command(message):
+    """
+    Adjust the command passed in in install-specific ways
+    """
+
+    # Adjust the working directory for the launch computer
+    work_dir_candidate = os.path.join(
+        message["launch_dir"],
+        message["directories"]["work"])
+
+    # Make sure this is an original directory
+    if os.path.exists(work_dir_candidate):
+        # Already exists
+        for i in range(1, 1000):
+            if not os.path.exists("_".join((work_dir_candidate, str(i)))):
+                work_dir_candidate = "_".join((work_dir_candidate, str(i)))
+                break
+            else:
+                i += 1
+
+    # Modify command
+    message["directories"]["work"] = work_dir_candidate
+
+    # Filesystem is NOT shared
+    # For header_1 & header_2
+    for header_iter in ("1", "2"):
+        header_key = "header%s" % header_iter
+        if header_key in message:
+            # Values that need changed
+            for value_key in ("fullname", "directory"):
+                # Store originals
+                message[header_key][value_key+"_orig"] = message[header_key][value_key]
+
+                # Change
+                for prepended_string in ("/raw", "/archive"):
+                    if message[header_key][value_key].startswith(prepended_string):
+                        message[header_key][value_key] = message[header_key][value_key].replace(prepended_string, "/panfs/panfs0.localdomain"+prepended_string)
+
+    return message
+
+def fix_command_OLD(message):
+    """
+    Adjust the command passed in in install-specific ways
+    """
+
+    # Adjust the working directory for the launch computer
+    work_dir_candidate = os.path.join(
+        self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"],
+        self.decoded_message["directories"]["work"])
+
+    # Make sure this is an original directory
+    if os.path.exists(work_dir_candidate):
+        # Already exists
+        for i in range(1, 1000):
+            if not os.path.exists("_".join((work_dir_candidate, str(i)))):
+                work_dir_candidate = "_".join((work_dir_candidate, str(i)))
+                break
+            else:
+                i += 1
+
+    # Modify command
+    self.decoded_message["directories"]["work"] = work_dir_candidate
+
+    # Filesystem is NOT shared
+    # For header_1 & header_2
+    for header_iter in ("1", "2"):
+        header_key = "header%s" % header_iter
+        if header_key in self.decoded_message:
+            # Values that need changed
+            for value_key in ("fullname", "directory"):
+                # Store originals
+                self.decoded_message[header_key][value_key+"_orig"] = self.decoded_message[header_key][value_key]
+
+                # Change
+                for prepended_string in ("/raw", "/archive"):
+                    if self.decoded_message[header_key][value_key].startswith(prepended_string):
+                        self.decoded_message[header_key][value_key] = self.decoded_message[header_key][value_key].replace(prepended_string, "/panfs/panfs0.localdomain"+prepended_string)
 
 def process_cluster_drmaa(self, inp, output=False):
     """
