@@ -844,6 +844,7 @@ class RapdPlugin(Process):
             xutils.fix_bestfile()
 
         # If Raddose failed, here are the defaults.
+        pprint(self.raddose_results)
         dose = self.raddose_results["raddose_results"].get('dose', 100000)
         #exp_dose_lim = self.raddose_results.get("raddose_results", 300).get('exp dose limit', 300)
 
