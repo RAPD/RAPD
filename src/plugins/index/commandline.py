@@ -90,7 +90,7 @@ def construct_command(image_headers, commandline_args, detector_module):
         counter += 1
         command["header%d" % counter] = image_headers[image]
     if counter == 1:
-        command["header2"] = None
+        command["image2"] = None
 
     # Plugin settings
     command["preferences"] = {}

@@ -118,8 +118,8 @@ class RapdPlugin(Process):
             {
                 "work":""                           # Where to perform the work
             },
-        "header1":{},                               # Image information
-        ["header2":{},]                             # 2nd image information
+        "image1":{},                               # Image information
+        ["image2":{},]                             # 2nd image information
         "site_parameters":{}                        # Site data
         "preferences":{}                            # Settings for calculations
         "return_address":("127.0.0.1", 50000)       # Location of control process
@@ -258,8 +258,8 @@ class RapdPlugin(Process):
 
         # Setting up data input
         self.setup = self.command["directories"]
-        self.header = self.command["header1"]
-        self.header2 = self.command.get("header2", False)
+        self.image1 = self.command["image1"]
+        self.image2 = self.command.get("image2", False)
         # get the default preferences and update what was sent in...
         self.preferences = info.DEFAULT_PREFERENCES#.update(self.command.get("preferences", {}))
         self.preferences.update(self.command.pop("preferences", {}))
@@ -274,7 +274,7 @@ class RapdPlugin(Process):
             # If running from command line, site_parameters is not in there. Needed for BEST.
             if self.site:
                 self.site_parameters = self.site.BEAM_INFO.get(
-                    xutils.get_site(self.header['fullname'], False)[1])
+                    xutils.get_site(self.image1['fullname'], False)[1])
             else:
                 self.site_parameters = self.preferences.get("site_parameters", False)
                 # Sets settings so I can view the HTML output on my machine (not in the RAPD GUI),
@@ -298,7 +298,7 @@ class RapdPlugin(Process):
         #self.pool = mp_pool(self.preferences.get('nproc', 8))
 
         # Set timer for distl. "False" will disable.
-        if self.header2:
+        if self.image2:
             self.distl_timer = 60
         else:
             self.distl_timer = 30
@@ -326,7 +326,7 @@ class RapdPlugin(Process):
         self.strategy = self.preferences.get("strategy_type", "best")
 
         # Check to see if XOALign should run.
-        if self.header.has_key("mk3_phi") and self.header.has_key("mk3_kappa"):
+        if self.image1.has_key("mk3_phi") and self.image1.has_key("mk3_kappa"):
             self.minikappa = True
         else:
             self.minikappa = False
@@ -339,14 +339,14 @@ class RapdPlugin(Process):
             self.strategy = "mosflm"
 
         # Settings for all programs
-        #self.beamline = self.header.get("beamline")
-        self.time = self.header.get("time", 0.2)
-        self.wavelength = self.header.get("wavelength")
-        self.transmission = self.header.get("transmission", 10.0)
-        #self.transmission = self.header.get("transmission", 0.1)
-        # self.aperture = str(self.header.get("md2_aperture"))
+        #self.beamline = self.image1.get("beamline")
+        self.time = self.image1.get("time", 0.2)
+        self.wavelength = self.image1.get("wavelength")
+        self.transmission = self.image1.get("transmission", 10.0)
+        #self.transmission = self.image1.get("transmission", 0.1)
+        # self.aperture = str(self.image1.get("md2_aperture"))
         self.spacegroup = self.preferences.get("spacegroup", False)
-        #self.flux = str(self.header.get("flux", '3E10'))
+        #self.flux = str(self.image1.get("flux", '3E10'))
         self.solvent_content = self.preferences.get("solvent_content", 0.55)
 
         Process.__init__(self, name="AutoindexingStrategy")
@@ -362,18 +362,18 @@ class RapdPlugin(Process):
         #self.results["command"] = self.command #.get("command")
         #for version in (1, 2):
         #    if self.results["header%d" % version]:
-        #        #self.results["header%d" % version] = {"_id": eval('self.header%d'%version).get("_id")}
-        #        if isinstance(eval('self.header%d'%version).get("_id"), dict):
-        #            self.results["header%d" % version] = {"_id": eval('self.header%d'%version).get("_id").get("$oid")}
+        #        #self.results["header%d" % version] = {"_id": eval('self.image1%d'%version).get("_id")}
+        #        if isinstance(eval('self.image1%d'%version).get("_id"), dict):
+        #            self.results["header%d" % version] = {"_id": eval('self.image1%d'%version).get("_id").get("$oid")}
         #        else:
-        #            self.results["header%d" % version] = {"_id": eval('self.header%d'%version).get("_id")}
+        #            self.results["header%d" % version] = {"_id": eval('self.image1%d'%version).get("_id")}
 
         # Just save the _id
-        #self.results["header1"] = {"_id": self.header.get("_id")}
-        #if self.header2:
-        #    self.results["header2"] = {"_id": self.header2.get("_id")}
+        #self.results["image1"] = {"_id": self.image1.get("_id")}
+        #if self.image2:
+        #    self.results["image2"] = {"_id": self.image2.get("_id")}
         #else:
-        #    self.results["header2"] = self.header2
+        #    self.results["image2"] = self.image2
         """
         # Temporary cover for missing basename
         for version in (1, 2):
@@ -389,11 +389,11 @@ class RapdPlugin(Process):
         # Process type is plugin
         self.results["process"]["type"] = "plugin"
         # Assign the text representation for this result
-        if not self.header2:
-            self.results["process"]["repr"] = os.path.basename(self.header["fullname"])
+        if not self.image2:
+            self.results["process"]["repr"] = os.path.basename(self.image1["fullname"])
         else:
-            self.results["process"]["repr"] = re.sub(r"\?\?*", "?", self.header["image_template"])\
-                .replace("?", "%d+%d" % (self.header["image_number"], self.header2["image_number"]))
+            self.results["process"]["repr"] = re.sub(r"\?\?*", "?", self.image1["image_template"])\
+                .replace("?", "%d+%d" % (self.image1["image_number"], self.image2["image_number"]))
 
         # Describe plugin
         self.results["plugin"] = {
@@ -414,7 +414,7 @@ class RapdPlugin(Process):
 
         self.tprint(arg=0, level="progress")
         # Check if h5 file is input and convert to cbf's.
-        if self.header["fullname"][-3:] == ".h5":
+        if self.image1["fullname"][-3:] == ".h5":
             if self.convert_images() == False:
                 # If conversion fails, kill the job.
                 self.postprocess()
@@ -479,7 +479,7 @@ class RapdPlugin(Process):
             self.send_results()
 
         # Determine detector vendortype
-        self.vendortype = xutils.get_vendortype(self.header)
+        self.vendortype = xutils.get_vendortype(self.image1)
         self.dest_dir = self.setup.get("work")
         if self.test or self.cluster_use:
             self.working_dir = self.dest_dir
@@ -492,12 +492,12 @@ class RapdPlugin(Process):
         os.chdir(self.working_dir)
 
         # Check if pair are in different folders, then make symlink for Labelit.
-        if self.header2:
-          if os.path.dirname(self.header['fullname']) != os.path.dirname(self.header2['fullname']):
-            os.symlink(self.header['fullname'], os.path.basename(self.header['fullname']))
-            self.header['fullname'] = os.path.join(os.getcwd(), os.path.basename(self.header['fullname']))
-            os.symlink(self.header2['fullname'], os.path.basename(self.header2['fullname']))
-            self.header2['fullname'] = os.path.join(os.getcwd(), os.path.basename(self.header2['fullname']))
+        if self.image2:
+          if os.path.dirname(self.image1['fullname']) != os.path.dirname(self.image2['fullname']):
+            os.symlink(self.image1['fullname'], os.path.basename(self.image1['fullname']))
+            self.image1['fullname'] = os.path.join(os.getcwd(), os.path.basename(self.image1['fullname']))
+            os.symlink(self.image2['fullname'], os.path.basename(self.image2['fullname']))
+            self.image2['fullname'] = os.path.join(os.getcwd(), os.path.basename(self.image2['fullname']))
 
         # Setup event for job control on cluster (Only works at NE-CAT using DRMAA for
         # job submission)
@@ -561,11 +561,11 @@ class RapdPlugin(Process):
         if self.verbose and self.logger:
             self.logger.debug("AutoindexingStrategy::preprocess_raddose")
 
-        beam_size_x = self.header.get('x_beam_size', self.site_parameters.get('BEAM_SIZE_X', False))
-        beam_size_y = self.header.get('y_beam_size', self.site_parameters.get('BEAM_SIZE_Y', False))
+        beam_size_x = self.image1.get('x_beam_size', self.site_parameters.get('BEAM_SIZE_X', False))
+        beam_size_y = self.image1.get('y_beam_size', self.site_parameters.get('BEAM_SIZE_Y', False))
         gauss_x = self.site_parameters.get('BEAM_GAUSS_X', False)
         gauss_y = self.site_parameters.get('BEAM_GAUSS_Y', False)
-        flux = self.header.get('flux', self.site_parameters.get('BEAM_FLUX', 1E10 ))
+        flux = self.image1.get('flux', self.site_parameters.get('BEAM_FLUX', 1E10 ))
 
         # Get number of residues in the unit cell
         nres = xutils.calc_tot_res_number(self.volume, self.sample_type, self.solvent_content)
@@ -683,15 +683,15 @@ class RapdPlugin(Process):
             self.logger.debug("AutoindexingStrategy::process_xds_bg")
 
         try:
-            name = str(self.header.get("fullname"))
+            name = str(self.image1.get("fullname"))
             temp = name[name.rfind("_")+1:name.rfind(".")]
             new_name = name.replace(name[name.rfind("_")+1:name.rfind(".")], len(temp)*"?")
             #range = str(int(temp))+" "+str(int(temp))
             command = "JOB=XYCORR INIT\n"
             #xutils.calcXDSbc Does not exist anymore
             command += xutils.calcXDSbc(self)
-            command += "DETECTOR_DISTANCE=%s\n" % self.header.get("distance")
-            command += "OSCILLATION_RANGE=%s\n" % self.header.get("osc_range")
+            command += "DETECTOR_DISTANCE=%s\n" % self.image1.get("distance")
+            command += "OSCILLATION_RANGE=%s\n" % self.image1.get("osc_range")
             command += "X-RAY_WAVELENGTH=%.4f\n" % self.wavelength
             command += "NAME_TEMPLATE_OF_DATA_FRAMES=%s\n" % new_name
             #command += "BACKGROUND_RANGE="+range+"\n"
@@ -739,14 +739,14 @@ class RapdPlugin(Process):
 
         l = ["", "2"]
         f = 1
-        if self.header2:
+        if self.image2:
             f = 2
         for i in range(0, f):
             if self.test:
                 job = Thread(target=local_subprocess,
                              kwargs={"command": 'ls'})
             else:
-                command = "distl.signal_strength %s" % eval("self.header%s" % l[i]).get("fullname")
+                command = "distl.signal_strength %s" % eval("self.image1%s" % l[i]).get("fullname")
                 #job = Thread(target=local_subprocess,
                 job = Process(target=local_subprocess,
                              kwargs={"command": command,
@@ -823,24 +823,24 @@ class RapdPlugin(Process):
 
         # Get image numbers
         try:
-            counter_depth = self.header["image_template"].count("?")
+            counter_depth = self.image1["image_template"].count("?")
         except KeyError:
             raise Exception("Header information missing image_template")
 
         # Look for the correct hkl file
         for test_depth in (3, 4, 5, 6):
-            test_file = "%s_%s.hkl" % (self.index_number, ("%0"+str(test_depth)+"d") % self.header["image_number"])
+            test_file = "%s_%s.hkl" % (self.index_number, ("%0"+str(test_depth)+"d") % self.image1["image_number"])
             if os.path.exists(test_file):
                 counter_depth = test_depth
                 break
 
         image_number_format = "%0"+str(counter_depth)+"d"
-        image_number = [image_number_format % self.header["image_number"],]
-        if self.header2:
-            image_number.append(image_number_format % self.header2["image_number"])
+        image_number = [image_number_format % self.image1["image_number"],]
+        if self.image2:
+            image_number.append(image_number_format % self.image2["image_number"])
 
         # Tell Best if two-theta is being used.
-        if self.header.get("twotheta", 0.0) != 0.0:
+        if self.image1.get("twotheta", 0.0) != 0.0:
             xutils.fix_bestfile()
 
         # If Raddose failed, here are the defaults.
@@ -858,17 +858,17 @@ class RapdPlugin(Process):
             dose = 500001
 
         # Put together the command for labelit.index
-        best_detector = DETECTOR_TO_BEST.get(self.header.get("detector"), False)
+        best_detector = DETECTOR_TO_BEST.get(self.image1.get("detector"), False)
         if not best_detector:
             self.tprint(arg="RAPD does not have a BEST definition for your detector type %s"
-                        % self.header.get("detector"),
+                        % self.image1.get("detector"),
                         level=30,
                         color="red")
             return
         command = "best -f %s" % best_detector
 
         # Binning
-        if str(self.header.get('binning')) == '2x2':
+        if str(self.image1.get('binning')) == '2x2':
             command += '-2x'
         command += " -t %.2f" % self.time
         #if self.high_dose:
@@ -921,7 +921,7 @@ class RapdPlugin(Process):
           if os.path.exists(os.path.join(self.working_dir,'BKGINIT.cbf')):
             end = ' -MXDS bestfile.par BKGINIT.cbf %s_%s.hkl ' % (self.index_number,image_number[0])
         """
-        if self.header2:
+        if self.image2:
             end += '%s_%s.hkl' % (self.index_number, image_number[1])
         command += end
         command1 += end
@@ -1118,7 +1118,7 @@ class RapdPlugin(Process):
                 # Get the Best version for this machine
                 best_version = xutils.get_best_version()
                 # Make sure that the BEST install has the detector
-                self.check_best_detector(DETECTOR_TO_BEST.get(self.header.get("detector"), None))
+                self.check_best_detector(DETECTOR_TO_BEST.get(self.image1.get("detector"), None))
 
             if self.multiproc == False:
                 end = st+1
@@ -1188,7 +1188,7 @@ class RapdPlugin(Process):
                         self.logger.error("Distl timed out.")
 
         # Count frames
-        if self.header2:
+        if self.image2:
             frame_count = 2
         else:
             frame_count = 1
@@ -1710,7 +1710,7 @@ Distance | % Transmission", level=98, color="white")
                 os.system('cp %s/bestfile* %s/%s*.hkl .'%(self.labelit_dir,self.labelit_dir,self.index_number))
             # Copy other files required by BEST
             shutil.copy(os.path.join(self.labelit_dir,'%s.mat'%self.index_number),new_folder)
-            if self.header2:
+            if self.image2:
                 shutil.copy(os.path.join(self.labelit_dir,'%s_S.mat'%self.index_number),new_folder)
             #For Pilatis background calc. (NOT USED because it takes too long and doent make much difference)
             if self.vendortype in ('Pilatus-6M','ADSC-HF4M'):
@@ -1887,7 +1887,7 @@ Distance | % Transmission", level=98, color="white")
         # Set up the results for return
         self.results["process"]["status"] = 100
         # self.results["directories"] = self.setup
-        # self.results["information"] = self.header
+        # self.results["information"] = self.image1
         # self.results["preferences"] = self.preferences
 
         if self.labelit_failed == False:
@@ -2111,7 +2111,7 @@ class RunLabelit(Thread):
         #New minimum input
         {   'command': 'INDEX+STRATEGY',
             'directories': {   'work': '/home/schuerjp/temp/beamcenter/800.0'},
-            'header1': {   'beam_center_x': 149.871,
+            'image1': {   'beam_center_x': 149.871,
       		'beam_center_y': 145.16,
       		'distance': 800.0,
       		'fullname': '/home/schuerjp/temp/beamcenter/SER-9_Pn0.0020',
@@ -2148,8 +2148,8 @@ class RunLabelit(Thread):
 
         # Setting up data input
         self.setup = command["directories"]
-        self.header = command["header1"]
-        self.header2 = command.get("header2", False)
+        self.image1 = command["image1"]
+        self.image2 = command.get("image2", False)
         self.preferences = command["preferences"]
         self.site_parameters = command.get("site_parameters", {})
 
@@ -2194,7 +2194,7 @@ class RunLabelit(Thread):
         self.gui = True
 
         # Set times for processes. "False" to disable.
-        if self.header2:
+        if self.image2:
             self.labelit_timer = 180
         else:
             self.labelit_timer = 120
@@ -2270,9 +2270,9 @@ class RunLabelit(Thread):
         if self.verbose and self.logger:
             self.logger.debug('RunLabelit::preprocess_labelit')
 
-        twotheta = self.header.get("twotheta", 0.0)
-        x_beam = self.header.get("x_beam")
-        y_beam = self.header.get("y_beam")
+        twotheta = self.image1.get("twotheta", 0.0)
+        x_beam = self.image1.get("x_beam")
+        y_beam = self.image1.get("y_beam")
 
         # If an override beam center is provided, use it
         if self.preferences.get("x_beam", False):
@@ -2284,8 +2284,8 @@ class RunLabelit(Thread):
                         newline=False)
 
         binning = True
-        if self.header.has_key('binning'):
-            binning = self.header.get('binning')
+        if self.image1.has_key('binning'):
+            binning = self.image1.get('binning')
 
         if self.test == False:
             # Setup the dataset_preferences.py file for Labelit.
@@ -2522,11 +2522,11 @@ rerunning.\n" % spot_count)
             command += 'codecamp.maxcell=80 codecamp.minimum_spot_count=10 '
         if inp:
             command += '%s ' % inp
-        command += '%s ' % self.header.get('fullname')
+        command += '%s ' % self.image1.get('fullname')
 
         # If pair of images
-        if self.header2:
-            command += "%s " % self.header2.get("fullname")
+        if self.image2:
+            command += "%s " % self.image2.get("fullname")
 
         # Save the command to the top of log file, before running job.
         self.log[iteration].extend([command])
