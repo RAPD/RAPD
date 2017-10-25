@@ -59,10 +59,9 @@
       </div>
     </form>
   </mat-dialog-content>
-
   <mat-dialog-actions align="end">
     <mat-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></mat-progress-spinner>
-    <button mat-raised-button color="primary" (click)="submitNewProject()">Submit</button>
+    <button mat-raised-button color="primary" (click)="submitProject()">Submit</button>
   </mat-dialog-actions>
 </div>
 <div *ngIf="submit_error">

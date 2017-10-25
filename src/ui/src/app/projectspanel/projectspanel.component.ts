@@ -1,6 +1,9 @@
 import { Component,
-         OnInit } from '@angular/core';
+         OnInit,
+         ViewContainerRef } from '@angular/core';
 import { MatDialog,
+         MatDialogConfig,
+         MatDialogRef,
          MatToolbarModule } from '@angular/material';
 
 import { RestService } from '../shared/services/rest.service';
@@ -15,8 +18,10 @@ import { DialogNewProjectComponent } from '../shared/components/dialog-new-proje
 export class ProjectspanelComponent implements OnInit {
 
   projects: Project[];
+  dialogRef: MatDialogRef<DialogNewProjectComponent>;
 
   constructor(private rest_service: RestService,
+              public viewContainerRef: ViewContainerRef,
               public dialog: MatDialog) { }
 
   ngOnInit() {
@@ -33,14 +38,46 @@ export class ProjectspanelComponent implements OnInit {
       )
   }
 
-  openNewProjectDialog() {
-    let dialogRef = this.dialog.open(DialogNewProjectComponent);
+  newProject() {
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.projects.push(result);
-      }
-    });
+    let project = new Project();
+
+    project._id = undefined;
+    project.creator = undefined;
+    project.created = undefined;
+    project.description = undefined;
+    project.group = undefined;
+    project.last_action = undefined;
+    project.last_timestamp = undefined;
+    project.project_type = 'mx';
+    project.results = [];
+    project.title = undefined;
+
+    let pseudo_event = {
+      type: 'click',
+      row: project
+    };
+
+    this.editProject(pseudo_event);
+  }
+
+  editProject(event) {
+
+    if (event.type === 'click') {
+      let project = event.row;
+
+      let config = new MatDialogConfig();
+      config.viewContainerRef = this.viewContainerRef;
+
+      this.dialogRef = this.dialog.open(DialogNewProjectComponent, config);
+      this.dialogRef.componentInstance.project = project;
+
+      this.dialogRef.afterClosed().subscribe(result => {
+        if (result) {
+          this.projects.push(result);
+        }
+      });
+    }
   }
 
 }

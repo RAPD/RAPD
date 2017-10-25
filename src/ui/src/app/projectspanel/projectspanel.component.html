@@ -9,8 +9,7 @@
       [footerHeight]="50"
       [rowHeight]="'auto'"
       [reorderable]="reorderable"
-      [selectionType]="'single'"
-      (select)='selectSession($event)'>
+      (activate)='editSession($event)'>
       <ngx-datatable-column name="Type" prop="project_type">
         <ng-template let-value="value" ngx-datatable-cell-template>
           {{value}}

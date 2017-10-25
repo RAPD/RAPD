@@ -28,20 +28,19 @@
           </div>
         </td><td *ngIf="globals_service.site.authUserType === 'uid'">
           <mat-form-field>
-            <input matInput
+            <input
+              matInput
               formControlName='uid'
               required
               placeholder='username'>
           </mat-form-field>
           <div class="mat-errors-spacer" [hidden]="login_form.controls.uid.untouched">
-            <!-- <div class="mat-char-counter" *ngIf="login_form.controls.uid.errors.required">
-              Username is required
-            </div> -->
           </div>
         </td></tr>
         <tr><td>
           <mat-form-field>
-            <input matInput
+            <input
+              matInput
               formControlName="password"
               required placeholder='password'
               type='password'>
@@ -60,12 +59,14 @@
         <button type="submit" [disabled]="!login_form.valid" mat-button color="primary">Login</button>
         <mat-progress-bar
           *ngIf='submitted'
-          mode='indeterminate'>
+          mode='indeterminate'
+          style='margin-top:5px;'>
         </mat-progress-bar>
       </div>
     </form>
-    <!-- <p>{{error_message}}</p> -->
-    <button mat-button (click)="mode='lostpass'">Forgot your password?</button>
+    <div style="text-align:center;">
+      <button mat-button color="accent" (click)="mode='lostpass'">Forgot your password?</button>
+    </div>
   </div>
   <div *ngIf="mode === 'lostpass'">
     <h2>
@@ -90,12 +91,16 @@
         </div>
         <div style="text-align:center;">
           <button type="submit" [disabled]="!lostpass_form.valid" mat-button color="primary">Submit</button>
-          <mat-progress-spinner *ngIf='submitted' mode='indeterminate' style="height:30px;width:30px;"></mat-progress-spinner>
+          <mat-progress-bar
+            *ngIf='submitted'
+            mode='indeterminate'
+            style='margin-top:5px;'>
+          </mat-progress-bar>
         </div>
       </form>
     </div>
     <div style="text-align:center;">
-      <button mat-button (click)="mode='login'">Already have a password?</button>
+      <button mat-button color="accent" (click)="mode='login'">Already have a password?</button>
     </div>
   </div>
 

@@ -1,10 +1,14 @@
 import { Component,
+         Input,
          OnInit } from '@angular/core';
+
 import { FormGroup,
          FormControl } from '@angular/forms';
+
 import { MatDialogRef,
          MAT_DIALOG_DATA } from '@angular/material';
 
+import { Project } from '../../classes/project';
 import { RestService } from '../../services/rest.service';
 
 @Component({
@@ -17,12 +21,14 @@ export class DialogNewProjectComponent implements OnInit {
   private profile: any;
   private submit_error:string;
   private submitted:boolean = false;
-  private model:any = {
-    project_type:'mx',
-    title:'',
-    description:'',
-    group:''
-  };
+  @Input() project: Project;
+  model: Project;
+  // private model:any = {
+  //   project_type:'mx',
+  //   title:'',
+  //   description:'',
+  //   group:''
+  // };
   private project_form: FormGroup;
 
   constructor(private rest_service: RestService,
@@ -43,7 +49,7 @@ export class DialogNewProjectComponent implements OnInit {
     });
   }
 
-  submitNewProject() {
+  submitProject() {
 
     let form_value = this.project_form.value;
 
@@ -51,22 +57,24 @@ export class DialogNewProjectComponent implements OnInit {
     if (! form_value.group) {
       form_value.group = this.profile.groups[0]._id;
     }
+    // form_value._id = undefined;
+    console.log(form_value);
+    console.log(this.model);
+    return false;
 
-    // console.log(form_value);
-
-    this.submitted = true;
-    this.rest_service.newProject(form_value)
-                     .subscribe(
-                       parameters => {
-                         console.log(parameters);
-                         // A problem connecting to REST server
-                         // Submitted is over
-                         this.submitted = false;
-                         this.submit_error = parameters.error;
-                         if (parameters.success) {
-                           this.dialogRef.close(parameters.project);
-                         }
-                       });
+    // this.submitted = true;
+    // this.rest_service.submitProject(form_value)
+    //                  .subscribe(
+    //                    parameters => {
+    //                      console.log(parameters);
+    //                      // A problem connecting to REST server
+    //                      // Submitted is over
+    //                      this.submitted = false;
+    //                      this.submit_error = parameters.error;
+    //                      if (parameters.success) {
+    //                        this.dialogRef.close(parameters.project);
+    //                      }
+    //                    });
   }
 
 }
