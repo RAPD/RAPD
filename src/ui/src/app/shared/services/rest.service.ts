@@ -194,7 +194,7 @@ export class RestService {
 
     console.log('submitProject', project);
     console.log(this.globals_service.site.restApiUrl + '/projects/' + project._id);
-    
+
     let header: Headers = new Headers();
     header.append('Content-Type', 'application/json');
 
@@ -251,7 +251,7 @@ export class RestService {
     header.append('Content-Type', 'application/json'); // 'application/x-www-form-urlencoded'
 
     return this.authHttp.put(
-      this.globals_service.site.restApiUrl + '/requests',
+      this.globals_service.site.restApiUrl + '/jobs/submit',
       JSON.stringify({request:request}),
       {headers:header}
     )
