@@ -51,7 +51,7 @@ print 'event cleared'
 event.clear()
 """
 q = Queue()
-q0 = Queue()
+#q0 = Queue()
 #event = Event()
 #event.set()
 inp_kwargs = {'command': 'sleep 5',
@@ -59,7 +59,7 @@ inp_kwargs = {'command': 'sleep 5',
               'nproc':2,
               'name':'TEST',
               'pid_queue': q,
-              'result_queue': q0,
+              #'result_queue': q0,
               #'timeout': 5,
               #'mp_event': event,
               }
@@ -71,7 +71,8 @@ jobs = Process(target=launcher,
               kwargs=inp_kwargs)
 jobs.start()
 print q.get()
-print q0.get()
+#print q0.get()
+
 #time.sleep(2)
 #print 'event cleared'
 #event.clear()

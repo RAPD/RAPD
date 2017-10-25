@@ -246,7 +246,6 @@ def process_cluster(command,
                 if counter > timeout:
                     kill_job(s, job, logger)
                     break
-            #time.sleep(0.2)
             time.sleep(1)
             counter += 1
     except:
