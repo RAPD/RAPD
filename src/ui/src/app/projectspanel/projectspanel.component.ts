@@ -74,9 +74,21 @@ export class ProjectspanelComponent implements OnInit {
 
       this.dialogRef.afterClosed().subscribe(result => {
         if (result) {
-          this.projects.push(result);
+          if (result.success === true) {
+            this.addProject(result.project);
+          }
         }
       });
+    }
+  }
+
+  addProject(new_project:Project) {
+    // If the user already exists, replace it
+    let index = this.projects.findIndex(project => project._id === new_project._id);
+    if (index !== -1) {
+      this.projects.splice(index, 1, new_project);
+    } else {
+      this.projects.unshift(new_project);
     }
   }
 

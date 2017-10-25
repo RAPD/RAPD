@@ -74,7 +74,7 @@ router.route('/projects/:project_id')
         project,
         {new:true, upsert:true}
       )
-      exec(function(err, return_project) {
+      .exec(function(err, return_project) {
         if (err) {
           console.error(err);
           res.status(500).json({

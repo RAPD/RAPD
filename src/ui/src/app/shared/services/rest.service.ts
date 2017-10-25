@@ -46,6 +46,7 @@ export class RestService {
   public submitUser(user: User): Observable<any> {
 
     console.log('submitUser', user);
+    console.log(this.globals_service.site.restApiUrl + '/users/' + user._id);
 
     let header = new Headers();
     header.append('Content-Type', 'application/json');
@@ -192,7 +193,8 @@ export class RestService {
   public submitProject(project: Project): Observable<any> {
 
     console.log('submitProject', project);
-
+    console.log(this.globals_service.site.restApiUrl + '/projects/' + project._id);
+    
     let header: Headers = new Headers();
     header.append('Content-Type', 'application/json');
 
