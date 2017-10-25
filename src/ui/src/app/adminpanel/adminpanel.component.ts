@@ -39,7 +39,7 @@ export class AdminpanelComponent implements OnInit {
   filtered_sessions: Session[];
   errorMessage: string;
 
-  constructor(private admin_service: RestService,
+  constructor(private rest_service: RestService,
               public dialog: MatDialog,
               public viewContainerRef: ViewContainerRef,
               private changeDetectorRef: ChangeDetectorRef) { }
@@ -60,7 +60,7 @@ export class AdminpanelComponent implements OnInit {
   // USERS
   //
   getUsers() {
-    this.admin_service.getUsers()
+    this.rest_service.getUsers()
       .subscribe(
        users => {
          this.filtered_users = [...users];
@@ -114,7 +114,12 @@ export class AdminpanelComponent implements OnInit {
       config.viewContainerRef = this.viewContainerRef;
       this.userDialogRef = this.dialog.open(UserDialogComponent, config);
       this.userDialogRef.componentInstance.user = user;
-      this.userDialogRef.componentInstance.groups = this.groups;
+      if (this.user.role === 'site_admin') {
+        this.userDialogRef.componentInstance.groups = this.groups;
+      } else if (this.user.role === 'group_admin') {
+        this.userDialogRef.componentInstance.groups = this.user.groups;
+      }
+
 
       this.userDialogRef.afterClosed().subscribe(result => {
         this.userDialogRef = null;
@@ -164,7 +169,7 @@ export class AdminpanelComponent implements OnInit {
 
     var self = this;
 
-    this.admin_service.getGroups()
+    this.rest_service.getGroups()
       .subscribe(
        groups => {
          this.filtered_groups = [...groups];
@@ -270,7 +275,7 @@ export class AdminpanelComponent implements OnInit {
   //
 
   getSessions() {
-    this.admin_service.getSessions()
+    this.rest_service.getSessions()
       .subscribe(
        sessions => {
          this.filtered_sessions = [...sessions];

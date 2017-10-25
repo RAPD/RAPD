@@ -20,7 +20,10 @@ router.route('/groups')
   .get(function(req, res) {
       Group.find({}, function(err, groups) {
         console.log('Return', groups.length, 'groups');
-        res.json(groups);
+        res.json({
+          success: true,
+          groups: groups
+        });
       });
   });
 
