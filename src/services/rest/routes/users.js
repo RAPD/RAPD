@@ -31,10 +31,8 @@ router.route('/users')
 
     // MONGO
     if (config.authenticate_mode === 'mongo') {
-      let query_params = {}
-      if (req.decoded._doc.role === 'user') {
-        query_params = {_id:mongoose.Types.ObjectId(req.decoded._doc._id)};
-      } else if (req.decoded._doc.role === 'site_admin') {
+      let query_params = {_id:mongoose.Types.ObjectId(req.decoded._doc._id)};
+      if (req.decoded._doc.role === 'site_admin') {
         query_params = {};
       } else if (req.decoded._doc.role === 'group_admin') {
         query_params = {groups:{'$elemMatch':{'$in':req.decoded._doc.groups.map(function(e){return e._id;})}}};
@@ -50,16 +48,17 @@ router.route('/users')
                 success: false,
                 message: err
               });
+            } else {
+              // Do not return the password
+              for (let user of users) {
+                user.password = undefined;
+              }
+              console.log('Returning', users.length, 'users');
+              res.status(200).json({
+                success: true,
+                users: users
+              });
             }
-            // Do not return the password
-            for (let user of users) {
-              user.password = undefined;
-            }
-            console.log('Returning', users.length, 'users');
-            res.status(200).json({
-              success: true,
-              users: users
-            });
           });
 
     // LDAP - no users
@@ -70,6 +69,27 @@ router.route('/users')
   });
 
 router.route('/users/:user_id')
+
+  // get the user with that id (accessed at GET api/users/:user_id)
+  .get(function(req, res) {
+    User.findById(req.params.user_id, function(err, user) {
+      if (err) {
+        console.error(err);
+        res.status(500).json({
+          success: false,
+          message: err
+        });
+      } else {
+        user.password = undefined;
+        console.log('Returning user', user);
+        res.status(200).json({
+          success: true,
+          user: user
+        });
+      }
+    });
+  })
+
   // edit or create the user with _id (PUT api/users/:user_id)
   .put(function(req,res) {
 
@@ -119,7 +139,7 @@ router.route('/users/:user_id')
           res.status(500).json({
             success: false,
             operation: 'add',
-            message: err
+            message: err.message
           });
         } else {
           // Set up the email options
@@ -160,8 +180,8 @@ If this in error, please contact ${ config.admin_email }.`
         res.status(200).json({
           operation: 'delete',
           success: true,
-          _id: req.params.user_id,
-          message: 'Successfully deleted'});
+          _id: req.params.user_id
+        });
       }
     });
   });

@@ -122,7 +122,6 @@ export class AdminpanelComponent implements OnInit {
         this.userDialogRef.componentInstance.groups = this.user.groups;
       }
 
-
       this.userDialogRef.afterClosed().subscribe(result => {
         this.userDialogRef = null;
         if (result !== undefined) {
@@ -145,7 +144,6 @@ export class AdminpanelComponent implements OnInit {
   }
 
   addUser(new_user: User) {
-    console.log('addUser:', new_user);
     // If the user already exists, replace it
     let index = this.users.findIndex(user => user._id === new_user._id);
     if (index !== -1) {
@@ -208,7 +206,8 @@ export class AdminpanelComponent implements OnInit {
   // Create a new group
   createGroup() {
     let pseudo_event = {
-      selected: [undefined]
+      selected: [undefined],
+      type: 'click'
     };
 
     this.editGroup(pseudo_event);
@@ -309,7 +308,8 @@ export class AdminpanelComponent implements OnInit {
 
     // Create a pseudo-event for the editSession method
     let pseudo_event = {
-      selected: [undefined]
+      selected: [undefined],
+      type: 'click'
     };
 
     // Call the editSession method

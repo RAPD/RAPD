@@ -1,35 +1,47 @@
-<h1 MatDialogTitle>Change Password</h1>
-
-<button mat-icon-button class="button-dialog-top-right" (click)="exitChangepass()">
-  <mat-icon>close</mat-icon>
-</button>
-
+<div MatDialogTitle>
+  <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
+    <mat-icon>close</mat-icon>
+  </button>
+  <h2>Change Password</h2>
+</div>
 <form [formGroup]="changepass_form" (ngSubmit)="onSubmit()">
-  <table>
-    <tr><td>
-      <mat-form-field>
-        <input matInput
-          formControlName="password1"
-          required
-          minlength="8"
-          placeholder='password'
-          type='password'>
-      </mat-form-field>
-    </td></tr>
-    <tr><td>
-      <mat-form-field>
-        <input matInput
-          formControlName="password2"
-          required
-          minlength="8"
-          placeholder='password'
-          type='password'>
-      </mat-form-field>
-    </td></tr>
-  </table>
-  <button type="submit" [disabled]="!changepass_form.valid || !passMatch()" mat-raised-button color="primary">Change</button>
-
-  <mat-progress-spinner *ngIf='submitted' mode='indeterminate' style="height:30px;width:30px;"></mat-progress-spinner>
-
+  <p>
+    <mat-form-field>
+      <input matInput
+        formControlName="password1"
+        required
+        minlength="8"
+        placeholder='password'
+        type='password'>
+    </mat-form-field>
+  </p>
+  <p>
+    <mat-form-field>
+      <input matInput
+        formControlName="password2"
+        required
+        minlength="8"
+        placeholder='password'
+        type='password'>
+    </mat-form-field>
+  </p>
+  <p>
+    <mat-progress-bar
+      *ngIf='submitted'
+      mode='indeterminate'
+      style="margin-top:5px;">
+    </mat-progress-bar>
+  </p>
+  <p>
+    {{error_message}}
+  </p>
+  <p style="text-align:center;">
+    <button
+      type="submit"
+      [disabled]="!changepass_form.valid || !passMatch()"
+      mat-raised-button
+      color="primary">
+      Change
+    </button>
+  </p>
 </form>
-<p>{{error_message}}</p>

@@ -80,11 +80,11 @@ export class ReindexDialogComponent implements OnInit {
     // Start to make the request object
     let request: any = {command:'INDEX'};
     request.parent_result_id = this.data._id;
-    request.image1_id = this.data.header1._id;
+    request.image1_id = this.data.image1._id;
 
     // 2nd image?
-    if (this.data.header2) {
-      request.image2_id = this.data.header2._id;
+    if (this.data.image2) {
+      request.image2_id = this.data.image2._id;
     } else {
       request.image2_id = false;
     }

@@ -45,6 +45,9 @@ export class RestService {
   // Submit a user to be saved in the database
   public submitUser(user: User): Observable<any> {
 
+    console.log('submitUser', user);
+    console.log(this.globals_service.site.restApiUrl + '/users/' + user._id);
+
     let header = new Headers();
     header.append('Content-Type', 'application/json');
 
@@ -118,25 +121,16 @@ export class RestService {
   // SESSIONS
   //
   public getSessions(): Observable<Session[]> {
-
-    console.log('getSessions');
-
+    // console.log('getSessions');
     return this.authHttp.get(this.globals_service.site.restApiUrl + '/sessions')
       .map(this.extractSessions)
       .catch(error => this.handleError(error));
   }
 
   private extractSessions(res: Response, error) {
-
-    // console.log('error', error);
+    // console.error(error);
     let body = res.json();
-
-    // for (let session of body) {
-    //   // console.log(session);
-    //   session.start_display = moment(session.start).format('YYYY-MM-DD hh:mm:ss');
-    //   session.end_display = moment(session.end).format('YYYY-MM-DD hh:mm:ss');
-    // }
-    return body || {};
+    return body.sessions || [];
   }
 
   // Submit a session to be saved in the database
@@ -180,9 +174,9 @@ export class RestService {
     console.log('getRunData _id:', _id);
 
     return this.authHttp.get(this.globals_service.site.restApiUrl + '/runs/' + _id)
-                        .map(res => res.json());
+                        .map(res => res.json().run)
+                        .catch(error => this.handleError(error));
   }
-
 
   //
   // PROJECT methods
@@ -192,25 +186,40 @@ export class RestService {
     console.log('getProjects');
 
     return this.authHttp.get(this.globals_service.site.restApiUrl + '/projects')
-      .map(res => res.json())
+      .map(res => res.json().projects)
       .catch(error => this.handleError(error));
   }
 
-  public newProject(project): Observable<any> {
+  public submitProject(project: Project): Observable<any> {
 
-    console.log('newProject');
+    console.log('submitProject', project);
+    console.log(this.globals_service.site.restApiUrl + '/projects/' + project._id);
 
     let header: Headers = new Headers();
     header.append('Content-Type', 'application/json');
 
     return this.authHttp.put(
-      this.globals_service.site.restApiUrl + '/projects',
+      this.globals_service.site.restApiUrl + '/projects/' + project._id,
       JSON.stringify({project:project}),
       {headers:header}
     )
     .map(res => res.json())
     .catch(error => this.handleError(error));
   }
+
+  // public submitUser(user: User): Observable<any> {
+  //
+  //   let header = new Headers();
+  //   header.append('Content-Type', 'application/json');
+  //
+  //   return this.authHttp.put(
+  //     this.globals_service.site.restApiUrl + '/users/' + user._id,
+  //     JSON.stringify({user: user}),
+  //     {headers: header}
+  //   )
+  //   .map(res => res.json())
+  //   .catch(error => this.handleError(error));
+  // }
 
   public addResultToProject(data:any): Observable<any> {
 
@@ -242,7 +251,7 @@ export class RestService {
     header.append('Content-Type', 'application/json'); // 'application/x-www-form-urlencoded'
 
     return this.authHttp.put(
-      this.globals_service.site.restApiUrl + '/requests',
+      this.globals_service.site.restApiUrl + '/jobs/submit',
       JSON.stringify({request:request}),
       {headers:header}
     )

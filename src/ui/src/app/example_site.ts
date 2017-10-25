@@ -23,6 +23,7 @@ export class Site implements OnInit {
 
   // The name of the site - used in the UI
   public name:string = 'SERCAT';
+  public site_tags:string[] = ['NECAT-C', 'NECAT-E']
 
   ngOnInit() {
   }

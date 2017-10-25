@@ -16,7 +16,7 @@ import { Session } from '../../shared/classes/session';
 export class SessionDialogComponent implements OnInit {
 
   submitted: boolean = false;
-  error_message: string;
+  submit_error: string;
   @Input() session: Session;
   model: Session;
   @Input() groups: Group[];
@@ -27,11 +27,7 @@ export class SessionDialogComponent implements OnInit {
               public dialogRef: MatDialogRef<SessionDialogComponent>) { }
 
   ngOnInit() {
-
-    console.log(this.session);
-
     this.model = Object.assign({}, this.session);
-
     this.session_form = new FormGroup({
       group: new FormControl(),
       site: new FormControl(),
@@ -49,12 +45,11 @@ export class SessionDialogComponent implements OnInit {
     this.submitted = true;
 
     this.admin_service.submitSession(this.model).subscribe(params => {
-      console.log(params);
       this.submitted = false;
       if (params.success === true) {
         this.dialogRef.close(params);
       } else {
-        this.error_message = params;
+        this.submit_error = params.message;
       }
     });
   }
@@ -69,7 +64,7 @@ export class SessionDialogComponent implements OnInit {
       if (params.success === true) {
         this.dialogRef.close(params);
       } else {
-        this.error_message = params;
+        this.submit_error = params.message;
       }
     });
   }

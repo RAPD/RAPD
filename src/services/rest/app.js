@@ -24,6 +24,7 @@ const groups_routes =   require('./routes/groups');
 const images_routes =   require('./routes/images');
 const jobs_routes =     require('./routes/jobs');
 const projects_routes = require('./routes/projects');
+const results_routes =  require('./routes/results');
 const runs_routes =     require('./routes/runs');
 const sessions_routes = require('./routes/sessions');
 const users_routes =    require('./routes/users');
@@ -415,20 +416,20 @@ app.use('/api', groups_routes);
 app.use('/api', images_routes);
 app.use('/api', jobs_routes);
 app.use('/api', projects_routes);
+app.use('/api', results_routes);
 app.use('/api', runs_routes);
 app.use('/api', sessions_routes);
 app.use('/api', users_routes);
 
 module.exports = app;
 
-
-
-var port = normalizePort(process.env.PORT || config.port);
+let port = normalizePort(process.env.PORT || config.port);
 app.set('port', port);
 
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
+
 
 
 /**

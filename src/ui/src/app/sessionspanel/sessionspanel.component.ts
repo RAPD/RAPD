@@ -2,7 +2,7 @@ import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { Highlight } from '../shared/directives/highlight.directive';
-import { SessionService } from '../shared/services/session.service';
+import { RestService } from '../shared/services/rest.service';
 import { Session } from '../shared/classes/session';
 
 @Component({
@@ -17,7 +17,7 @@ export class SessionspanelComponent implements OnInit {
   sessions: Session[];
   errorMessage: string;
 
-  constructor(private session_service: SessionService,
+  constructor(private rest_service: RestService,
               private router: Router) { }
 
   ngOnInit() {
@@ -25,7 +25,7 @@ export class SessionspanelComponent implements OnInit {
   }
 
   getSessions() {
-    this.session_service.getSessions()
+    this.rest_service.getSessions()
       .subscribe(
        sessions => this.sessions = sessions,
        error => this.errorMessage = <any>error);

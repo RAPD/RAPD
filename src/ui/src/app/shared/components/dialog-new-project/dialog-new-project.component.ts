@@ -1,10 +1,15 @@
 import { Component,
+         Input,
          OnInit } from '@angular/core';
+
 import { FormGroup,
          FormControl } from '@angular/forms';
+
 import { MatDialogRef,
          MAT_DIALOG_DATA } from '@angular/material';
 
+import { Project } from '../../classes/project';
+import { User } from '../../classes/user';
 import { RestService } from '../../services/rest.service';
 
 @Component({
@@ -14,25 +19,23 @@ import { RestService } from '../../services/rest.service';
 })
 export class DialogNewProjectComponent implements OnInit {
 
+  private user: User;
   private profile: any;
   private submit_error:string;
   private submitted:boolean = false;
-  private model:any = {
-    project_type:'mx',
-    title:'',
-    description:'',
-    group:''
-  };
+  @Input() project: Project;
+  model: Project;
   private project_form: FormGroup;
 
   constructor(private rest_service: RestService,
               public dialogRef: MatDialogRef<DialogNewProjectComponent>) { }
 
   ngOnInit() {
-
     // Get the user profile
-    this.profile = JSON.parse(localStorage.getItem('profile'));
-    // this.model.group = this.profile.groups[0]._id;
+    this.user = JSON.parse(localStorage.getItem('profile'));
+
+    // Load the model with project
+    this.model = Object.assign({}, this.project);
 
     // Create the form group
     this.project_form = new FormGroup({
@@ -41,30 +44,34 @@ export class DialogNewProjectComponent implements OnInit {
       description: new FormControl(),
       group: new FormControl(),
     });
+    console.log(this.model);
   }
 
-  submitNewProject() {
+  submitProject() {
 
     let form_value = this.project_form.value;
 
     // Control for groups
     if (! form_value.group) {
-      form_value.group = this.profile.groups[0]._id;
+      form_value.group = this.user.groups[0]._id;
     }
-
-    // console.log(form_value);
+    // form_value._id = undefined;
+    console.log(form_value);
+    console.log(this.model);
 
     this.submitted = true;
-    this.rest_service.newProject(form_value)
+    this.rest_service.submitProject(this.model)
                      .subscribe(
-                       parameters => {
-                         console.log(parameters);
+                       params => {
+                         console.log(params);
                          // A problem connecting to REST server
                          // Submitted is over
                          this.submitted = false;
-                         this.submit_error = parameters.error;
-                         if (parameters.success) {
-                           this.dialogRef.close(parameters.project);
+                         this.submit_error = params.error;
+                         if (params.success) {
+                           this.dialogRef.close(params);
+                         } else {
+                           this.submit_error = params.message;
                          }
                        });
   }

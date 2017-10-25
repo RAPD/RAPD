@@ -9,8 +9,7 @@
       [footerHeight]="50"
       [rowHeight]="'auto'"
       [reorderable]="reorderable"
-      [selectionType]="'single'"
-      (select)='selectSession($event)'>
+      (activate)='editProject($event)'>
       <ngx-datatable-column name="Type" prop="project_type">
         <ng-template let-value="value" ngx-datatable-cell-template>
           {{value}}
@@ -34,6 +33,6 @@
     </ngx-datatable>
   </article>
   <mat-toolbar class="rapd-main-panel-action-bar">
-    <button mat-button color="primary" (click)="openNewProjectDialog()"><mat-icon>add</mat-icon>New Project</button>
+    <button mat-button color="primary" (click)="newProject()"><mat-icon>add</mat-icon>New Project</button>
   </mat-toolbar>
 </div>

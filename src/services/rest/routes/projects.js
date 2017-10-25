@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+var mongoose = require('mongoose');
 
 // MongoDB Models
 var Project = require('../models/project');
@@ -10,61 +11,80 @@ var Result = require('../models/result');
 router.route('/projects')
   // route to return all projects
   .get(function(req, res) {
-    console.log('GET /projects');
-    console.log(req.decoded._doc);
 
-    let find_search = { group: { $in: req.decoded._doc.groups}};
+    let query_params = {group:{$in:req.decoded._doc.groups}};
     if (req.decoded._doc.role == 'site_admin') {
-      find_search = {};
+      query_params = {};
     }
 
     Project.
-      find(find_search).
+      find(query_params).
       populate('group', 'groupname').
       exec(function(err, projects) {
-        console.log(projects);
-        res.json(projects);
+        if (err) {
+          console.error(err);
+          res.status(500).json({
+            success: false,
+            message: err
+          });
+        } else {
+          console.log('Returning', projects.length, 'projects');
+          res.status(200).json({
+            success: true,
+            projects: projects
+          });
+        }
       });
-  })
+  });
 
+router.route('/projects/:project_id')
   // route to add or modify project
   .put(function(req, res) {
-    console.log('PUT /projects');
 
     let project = req.body.project;
 
-    console.log(project);
-
     // Updating
     if (project._id) {
-      res.json({
-        success:false,
-        error:'Project updating not currently supported'
+      Project.findByIdAndUpdate(user._id, user, {new:true})
+      .populate('results')
+      .exec(function(err, return_project) {
+        if (err) {
+          console.error(err);
+          res.status(500).json({
+            success: false,
+            message: err
+          });
+        } else {
+          console.log('Project edited successfully', return_project);
+          res.status(200).json({
+            success: true,
+            user: return_project
+          });
+        }
       });
-    // New
+
+    // Creating
     } else {
 
-      // Create a new project
-      let new_project = new Project({
-        project_type:project.project_type,
-        title:project.title,
-        description:project.description,
-        group:project.group,
-        creator:req.decoded._doc._id,
-      });
+      project.creator = req.decoded._doc._id;
 
       // Save the project
-      new_project.save(function(err, return_project, numAffected) {
+      Project.findOneAndUpdate(
+        {_id:mongoose.Types.ObjectId()},
+        project,
+        {new:true, upsert:true}
+      )
+      .exec(function(err, return_project) {
         if (err) {
-          res.json({
+          console.error(err);
+          res.status(500).json({
             success:false,
             error:err
           });
         } else {
-          console.log('Project saved successfully');
-          res.json({
+          console.log('Project created successfully', return_project);
+          res.status(200).json({
             success: true,
-            operation: 'add',
             project: return_project
           });
         }
@@ -76,19 +96,15 @@ router.route('/projects')
 router.route('/projects/add_result')
   // route to add or modify project
   .put(function(req, res) {
-    console.log('PUT /projects/add_result');
 
     let project_id = req.body.project_id,
         result = req.body.result;
 
-    // console.log(project_id);
-    console.log(result);
-
     // Make sure project._id is in results.projects for result._id
-    Result.update({_id:result._id}, {$addToSet:{projects:project_id}}, function(err1, res1) {
-      // console.log(err);
-      // console.log(result);
+    Result.findOneAndUpdate({_id:result._id}, {$addToSet:{projects:project_id}})
+    .exec(function(err1, return_result) {
       if (err1) {
+        console.error(err1);
         res.json({
           success:false,
           error:err1
@@ -96,16 +112,23 @@ router.route('/projects/add_result')
       // 1st update was successful
       } else {
         // Now make sure the result is in the project.results
-        Project.update({_id:project_id}, {$addToSet:{results:result._id}}, function(err2, res2) {
-          // console.log(err2);
-          // console.log(res2);
+        Project.findOneAndUpdate({_id:project_id}, {$addToSet:{results:result._id}})
+        .populate('results')
+        .exec(function(err2, return_project) {
           if (err2) {
-            res.json({
+            console.error(err2);
+            res.status(500).json({
               success:false,
               error:err2
             });
           } else {
-            res.json({success:true});
+            console.log('Result marked with project', return_result);
+            console.log('Results added to project', return_project);
+            res.status(200).json({
+              success:true,
+              result:return_result,
+              project:return_project,
+            });
           }
         });
       }

@@ -3,7 +3,12 @@
     <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
       <mat-icon>close</mat-icon>
     </button>
-    <h2>User</h2>
+    <h2>
+      <div *ngIf="model._id;then edit_content else create_content"></div>
+      <ng-template #edit_content>Edit </ng-template>
+      <ng-template #create_content>Create </ng-template>
+      User
+    </h2>
   </div>
   <form [formGroup]="user_form">
     <div class="form-group">
