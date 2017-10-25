@@ -25,13 +25,10 @@ def connect_redis_manager_HA(name="remote_master"):
     # Get the master redis instance
     return(sentinel.master_for(name))
 
-#import utils.xutils as xutils
-#cluster_launcher = xutils.load_cluster_adapter(self)
-#launcher = cluster_launcher.process_cluster
-import sites.cluster.sercat as cluster
-
-launcher = cluster.process_cluster
 """
+import sites.cluster.sercat as cluster
+launcher = cluster.process_cluster
+
 import multiprocessing
 #import threading
 event = multiprocessing.Event()
@@ -49,7 +46,7 @@ processCluster(command='touch junk',
 time.sleep(2)
 print 'event cleared'
 event.clear()
-"""
+
 q = Queue()
 #q0 = Queue()
 #event = Event()
@@ -73,7 +70,7 @@ jobs.start()
 print q.get()
 jobs.join(1)
 #print q0.get()
-
+"""
 #time.sleep(2)
 #print 'event cleared'
 #event.clear()
@@ -247,7 +244,7 @@ pool.close()
 pool.join()
 """
 
-#red = connect_redis_manager_HA()
+red = connect_redis_manager_HA()
 
 #red.delete('images_collected:NECAT_T')
 #red.lpush('images_collected:NECAT_T', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000001.cbf')
@@ -262,15 +259,14 @@ pool.join()
 #red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/slri/sicheri_E_3136/images/Igor/runs/VP03_MKTYc/VP03_MKTYc_1_000001/VP03_MKTYc_1_000002.cbf'),
 #red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/harvard/haowu_E_3143/images/liwang/runs/hw1_7/hw1_7_1_000001/hw1_7_1_000001.cbf'),
 
-#print red.llen('RAPD_QSUB_JOBS_0')
+print red.llen('RAPD_QSUB_JOBS_0')
 #red.delete('RAPD_QSUB_JOBS_0')
-#print red.llen('RAPD_JOBS')
+print red.llen('RAPD_JOBS')
+print red.llen("images_collected:NECAT_T")
+red.delete("images_collected:NECAT_T")
 #print red.llen("images_collected:NECAT_T")
-#red.delete("images_collected:NECAT_T")
-#print red.llen("images_collected:NECAT_T")
-#print red.llen('run_info_T')
-
-#print red.llen('run_data:NECAT_T')
+print red.llen('run_data:NECAT_T')
+red.delete("run_data:NECAT_T")
 #print red.llen('RAPD_RESULTS')
 #red.delete('RAPD_RESULTS')
 #print red.llen('run_info_T')

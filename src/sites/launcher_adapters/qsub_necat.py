@@ -102,7 +102,7 @@ class LauncherAdapter(Thread):
         qsub_label = os.path.basename(command_file).replace(".rapd", "")
 
         # Determine the number of precessors to request for job
-        nproc = self.determine_nproc()
+        nproc = cluster.determine_nproc(self.message['command'])
 
         # Determine which cluster queue to run
         #queue = self.determine_queue()
@@ -160,14 +160,6 @@ class LauncherAdapter(Thread):
         # Modify command
         #self.decoded_message["directories"]["work"] = work_dir_candidate
         self.message["directories"]["work"] = work_dir_candidate
-
-    def determine_nproc(self):
-        """Determine how many processors to reserve on the cluster for a specific job type."""
-        nproc = 1
-        #if self.message['command'] in ('INDEX'):
-        if self.message['command'] in ('INDEX', 'INTEGRATE'):
-            nproc = 4
-        return nproc
 
 if __name__ == "__main__":
     #import multiprocessing

@@ -82,6 +82,13 @@ def check_queue(inp):
 def get_nproc_njobs():
     """Return the nproc and njobs for an XDS integrate job"""
     return (4, 20)
+  
+def determine_nproc(command):
+    """Determine how many processors to reserve on the cluster for a specific job type."""
+    nproc = 1
+    if command in ('INDEX', 'INTEGRATE'):
+        nproc = 4
+    return nproc
 
 def connectCluster(inp, job=True):
   """

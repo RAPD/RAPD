@@ -106,7 +106,8 @@ def main():
     settings = {}
     for pair in commandline_args._get_kwargs():
         logger.debug("  arg:%s  val:%s" % pair)
-        settings[arg] = val
+        #settings[arg] = val
+        settings[pair[0]] = pair[1]
 
     # Instantiate the model
     MODEL = Model(SITE=SITE,
