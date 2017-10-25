@@ -76,4 +76,19 @@ export class DialogNewProjectComponent implements OnInit {
                        });
   }
 
+  deleteProject() {
+    this.submitted = true;
+
+    // Use REST service
+    this.rest_service.deleteProject(this.project._id).subscribe(params => {
+      // console.log(params);
+      this.submitted = false;
+      if (params.success === true) {
+        this.dialogRef.close(params);
+      } else {
+        this.submit_error = params.message;
+      }
+    });
+  }
+
 }

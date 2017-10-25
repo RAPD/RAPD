@@ -47,17 +47,27 @@
           </mat-form-field>
         </p>
       </div>
+      <p>
+        <mat-progress-bar
+          *ngIf="submitted"
+          mode="indeterminate"
+          style="margin-top:5px;"
+          color="primary">
+        </mat-progress-bar>
+      </p>
+      <p>
+        <button
+          *ngIf="model._id"
+          type="button"
+          mat-button
+          color="warn"
+          (click)="deleteProject()">
+          Delete
+        </button>
+        <button mat-raised-button color="primary" (click)="submitProject()">Submit</button>
+      </p>
     </form>
   </mat-dialog-content>
-  <mat-dialog-actions align="end">
-    <mat-progress-bar
-      *ngIf="submitted"
-      mode="indeterminate"
-      style="margin-top:5px;"
-      color="primary">
-    </mat-progress-bar>
-    <button mat-raised-button color="primary" (click)="submitProject()">Submit</button>
-  </mat-dialog-actions>
 </div>
 <div *ngIf="submit_error">
   <mat-dialog-content>
