@@ -58,6 +58,7 @@ router.route('/projects/:project_id')
           console.log('Project edited successfully', return_project);
           res.status(200).json({
             success: true,
+            operation: 'edit',
             user: return_project
           });
         }
@@ -85,11 +86,32 @@ router.route('/projects/:project_id')
           console.log('Project created successfully', return_project);
           res.status(200).json({
             success: true,
+            operation: 'create',
             project: return_project
           });
         }
       });
     }
+  })
+
+  // Delete the user with _id (DELETE api/projects/:project_id)
+  .delete(function(req, res) {
+    Project.remove({_id:req.params.project_id}, function(err) {
+      if (err) {
+        console.error(err);
+        res.status(500).json({
+          success: false,
+          message: err
+        });
+      } else {
+        console.log('Project deleted successfully', req.params.project_id);
+        res.status(200).json({
+          operation: 'delete',
+          success: true,
+          _id: req.params.project_id
+        });
+      }
+    });
   });
 
 // /projects/add_result
