@@ -35,6 +35,7 @@ export class UserDialogComponent implements OnInit {
       group1: new FormControl(),
       group2: new FormControl()
     });
+    console.log(this.groups);
   }
 
   submitUser() {
@@ -59,6 +60,8 @@ export class UserDialogComponent implements OnInit {
       if (form_values.group2.length > 0) {
         this.model.groups.push({_id: form_values.group2});
     }}
+
+    // console.log(this.model);
 
     this.rest_service.submitUser(this.model).subscribe(params => {
       this.submitted = false;

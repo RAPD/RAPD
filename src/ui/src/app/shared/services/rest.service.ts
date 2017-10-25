@@ -29,16 +29,17 @@ export class RestService {
 
     console.log('getUsers');
 
+    let header = new Headers();
+    header.append('Content-Type', 'application/json');
+
     return this.authHttp.get(this.globals_service.site.restApiUrl + '/users')
       .map(this.extractUsers)
       .catch(error => this.handleError(error));
   }
 
   private extractUsers(res: Response, error) {
-    console.log('error', error);
     let body = res.json();
-    console.log(body);
-    return body || {};
+    return body.users || [];
   }
 
   // Submit a user to be saved in the database
@@ -86,7 +87,7 @@ export class RestService {
     //   session.start_display = moment(session.start).format('YYYY-MM-DD hh:mm:ss');
     //   session.end_display = moment(session.end).format('YYYY-MM-DD hh:mm:ss');
     // }
-    return body || {};
+    return body.groups || [];
   }
 
   // Submit a group to be saved in the database

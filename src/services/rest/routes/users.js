@@ -2,13 +2,14 @@ var express = require('express');
 const nodemailer =    require('nodemailer');
 const smtpTransport = require('nodemailer-smtp-transport');
 var router = express.Router();
+var mongoose = require('mongoose');
 
 const config = require('../config');
 const User =    require('../models/user');
 
 // Email Configuration
 var smtp_transport = nodemailer.createTransport(smtpTransport({
-  host: 'mailhost.anl.gov'
+  host: config.mailhost
 }));
 
 // Create connection to LDAP
@@ -25,18 +26,41 @@ var smtp_transport = nodemailer.createTransport(smtpTransport({
 router.route('/users')
   .get(function(req, res) {
 
+    //req.decoded._doc._id is the requesting user's _id
+    console.log(req.decoded._doc);
+
     // MONGO
     if (config.authenticate_mode === 'mongo') {
-      User.
-        find({}).
-        populate('groups', 'groupname').
-        exec(function(err, users) {
-          // Do not return the password
-          for (let user of users) {
-            user.password = undefined;
-          }
-          res.json(users);
-        });
+      let query_params = {}
+      if (req.decoded._doc.role === 'user') {
+        query_params = {_id:mongoose.Types.ObjectId(req.decoded._doc._id)};
+      } else if (req.decoded._doc.role === 'site_admin') {
+        query_params = {};
+      } else if (req.decoded._doc.role === 'group_admin') {
+        query_params = {groups:{'$elemMatch':{'$in':req.decoded._doc.groups.map(function(e){return e._id;})}}};
+      }
+
+        User.
+          find(query_params).
+          populate('groups', 'groupname').
+          exec(function(err, users) {
+            if (err) {
+              console.error(err);
+              res.status(500).json({
+                success: false,
+                message: err
+              });
+            }
+            // Do not return the password
+            for (let user of users) {
+              user.password = undefined;
+            }
+            console.log('Returning', users.length, 'users');
+            res.status(200).json({
+              success: true,
+              users: users
+            });
+          });
 
     // LDAP - no users
     } else if (config.authenticate_mode === 'ldap') {
@@ -78,18 +102,18 @@ router.route('/users/:user_id')
 
     // Creating
     } else {
-      // Create the user
-      let new_user = new User({
-        creator:req.decoded._doc._id,
-        email: user.email,
-        groups: user.groups,
-        role: user.role,
-        status: user.status,
-        username: user.username
-      });
+
+      // Set the creator
+      user.creator = req.decoded._doc._id;
 
       // Save and return the user
-      new_user.save(function(err, return_user) {
+      User.findOneAndUpdate(
+        {_id:mongoose.Types.ObjectId()},
+        user,
+        {new: true, upsert: true}
+      )
+      .populate('groups', 'groupname')
+      .exec(function(err, return_user) {
         if (err) {
           console.error(err);
           res.status(500).json({
@@ -98,7 +122,20 @@ router.route('/users/:user_id')
             message: err
           });
         } else {
-          console.log('User saved successfully', return_user);
+          // Set up the email options
+          let mailOptions = {
+            from: config.admin_email,
+            to: user.email,
+            cc: config.admin_email,
+            subject: 'RAPD user account created',
+            text: `A RAPD user account has been created for you using the email
+address ${ user.email }. Please navigate to ${ config.rapd_url } to
+start using RAPD. \n
+If this in error, please contact ${ config.admin_email }.`
+          };
+          // Send the email
+          smtp_transport.sendMail(mailOptions);
+          console.log('User created successfully', return_user);
           res.status(200).json({
             success: true,
             operation: 'add',
@@ -114,10 +151,13 @@ router.route('/users/:user_id')
     User.remove({_id:req.params.user_id}, function(err) {
       if (err) {
         console.error(err);
-        res.send(err);
+        res.status(500).json({
+          success: false,
+          message: err
+        });
       } else {
-        console.log('User deleted successfully', req.params.user_id)
-        res.json({
+        console.log('User deleted successfully', req.params.user_id);
+        res.status(200).json({
           operation: 'delete',
           success: true,
           _id: req.params.user_id,
@@ -162,7 +202,7 @@ router.post('/changepass', function(req, res) {
               text: 'Your RAPD password has been updated.\nIf this is an unauthorized change, please contactthe RAPD administrator at '+config.admin_email};
             // Send the email
             smtp_transport.sendMail(mailOptions);
-            console.log('Changed password for', req.body.email);
+            console.log(`Changed password for ${req.body.email}`);
             // Reply to client
             res.json({success: true});
           }

@@ -1,6 +1,6 @@
-<div class="panel" *ngIf="user.role === 'site_admin'">
+<div class="panel" *ngIf="user.role === 'site_admin' || user.role === 'group_admin'">
   <mat-tab-group class="session-tab-group">
-    <mat-tab label="Users">
+    <mat-tab *ngIf="globals_service.have_users === true" label="Users">
         <article class="c-content" style="margin-top:2em;">
           <ngx-datatable
             class="material"
@@ -48,7 +48,7 @@
         </mat-toolbar>
     </mat-tab>
 
-    <mat-tab label="Groups">
+    <mat-tab *ngIf="user.role === 'site_admin'" label="Groups">
         <article class="c-content" style="margin-top:2em;">
           <ngx-datatable
             #groups_table
@@ -96,7 +96,7 @@
         </mat-toolbar>
     </mat-tab>
 
-    <mat-tab label="Sessions">
+    <mat-tab *ngIf="user.role === 'site_admin'" label="Sessions">
       <article class="c-content" style="margin-top:2em;">
         <ngx-datatable
           class="material"
@@ -151,7 +151,7 @@
     </mat-tab>
   </mat-tab-group>
 </div>
-<div class="panel" *ngIf="user.role !== 'site_admin'">
+<div class="rapd-main-panel" *ngIf="user.role === 'user'">
   <article class="l-content">
     <h2>My Info</h2>
     <table class="is-full-width sessions-table">
@@ -167,7 +167,7 @@
         <td>{{user.username}}</td>
         <td>{{user.email}}</td>
         <td>{{user.role}}</td>
-        <td> <span *ngFor="let group of user_groups; let last = last">{{group.groupname}}{{last ? '' : ', ' }}</span></td>
+        <td> <span *ngFor="let group of user.groups">{{group.groupname}}</span> </td>
       </tr>
     </table>
   </article>
@@ -181,11 +181,14 @@
           <th>Status</th>
         </tr>
       </thead>
-      <tr *ngFor="let group of user_groups">
+      <!-- <tr *ngFor="let group of user_groups">
         <td>{{group.groupname}}</td>
         <td>{{group.institution}}</td>
         <td>{{group.status}}</td>
-      </tr>
+      </tr> -->
     </table>
   </article>
+  <mat-toolbar class="rapd-main-panel-action-bar">
+    <button mat-button color="primary" (click)="changePass()">Change My Password</button>
+  </mat-toolbar>
 </div>

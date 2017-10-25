@@ -60,7 +60,7 @@ if (config.authenticate_mode === 'ldap') {
 
 // Email Configuration
 var smtp_transport = nodemailer.createTransport(smtpTransport({
-  host: 'mailhost.anl.gov'
+  host: config.mailhost
 }));
 
 // Create the express app instance
@@ -337,14 +337,15 @@ apiRoutes.post('/requestpass', function(req, res) {
           } else {
             // Set up the email options
             let mailOptions = {
-              from: 'fmurphy@anl.gov',
+              from: config.admin_email,
               to: user.email,
-              cc: 'fmurphy@anl.gov',
+              cc: config.admin_email,
               subject: 'RAPD password recovery',
               text: 'Your new temporary password is '+new_pass_raw+'\nIt is authorized for 60 minutes.'};
             // Send the email
             smtp_transport.sendMail(mailOptions);
             // Reply to client
+            console.log(`Reset password for ${user.email} to ${new_pass_raw}`);
             res.json({success: true});
           }
         });
