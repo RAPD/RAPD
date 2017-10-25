@@ -845,7 +845,10 @@ class RapdPlugin(Process):
 
         # If Raddose failed, here are the defaults.
         pprint(self.raddose_results)
-        dose = self.raddose_results["raddose_results"].get('dose', 100000)
+        if self.raddose_results["raddose_results"]:
+            dose = self.raddose_results["raddose_results"].get('dose', 100000)
+        else:
+            dose = 100000
         #exp_dose_lim = self.raddose_results.get("raddose_results", 300).get('exp dose limit', 300)
 
         # Set how many frames a crystal will last at current exposure time.
