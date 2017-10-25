@@ -12,6 +12,7 @@ import { GroupDialogComponent } from './group-dialog/group-dialog.component';
 import { SessionDialogComponent } from './session-dialog/session-dialog.component';
 import { ChangepassDialogComponent } from '../shared/dialogs/changepass-dialog/changepass-dialog.component';
 
+import { GlobalsService } from '../shared/services/globals.service';
 import { RestService } from '../shared/services/rest.service';
 import { User } from '../shared/classes/user';
 import { Group } from '../shared/classes/group';
@@ -39,7 +40,8 @@ export class AdminpanelComponent implements OnInit {
   filtered_sessions: Session[];
   errorMessage: string;
 
-  constructor(private rest_service: RestService,
+  constructor(private globals_service: GlobalsService,
+              private rest_service: RestService,
               public dialog: MatDialog,
               public viewContainerRef: ViewContainerRef,
               private changeDetectorRef: ChangeDetectorRef) { }
