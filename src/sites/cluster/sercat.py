@@ -347,6 +347,7 @@ def process_cluster(command,
     Launch job on SERCAT's scyld cluster. Does not wait for jobs to end!
     """
     fd = False
+    counter = 0
     # Setup path
     v = "PATH=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
 /home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/bin:\
@@ -401,10 +402,16 @@ def process_cluster(command,
         pid_queue.put(job)
     try:
         while check_qsub_job(job):
-          time.sleep(0.2)
           if mp_event:
               if mp_event.is_set() == False:
                   kill_job(job)
+                  break
+          if timeout:
+              if counter > timeout:
+                  kill_job(job)
+                  break
+          time.sleep(1)
+          counter += 1
         print "Job finished"
     except:
         if logger:
@@ -426,6 +433,8 @@ def process_cluster(command,
             "tag": tag
         }
         result_queue.put(result)
+    # Delete the .sh file
+    os.unlink(fname)
     
     # Delete logile if it was not asked to be saved
     if fd:
