@@ -88,7 +88,7 @@ def construct_command(image_headers, commandline_args, detector_module):
     counter = 0
     for image in images:
         counter += 1
-        command["header%d" % counter] = image_headers[image]
+        command["image%d" % counter] = image_headers[image]
     if counter == 1:
         command["image2"] = None
 
