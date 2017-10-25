@@ -737,7 +737,7 @@ class RapdPlugin(Process):
         if self.verbose and self.logger:
             self.logger.debug('AutoindexingStrategy::process_distl')
 
-        l = ["", "2"]
+        l = ["1", "2"]
         f = 1
         if self.image2:
             f = 2
@@ -746,7 +746,7 @@ class RapdPlugin(Process):
                 job = Thread(target=local_subprocess,
                              kwargs={"command": 'ls'})
             else:
-                command = "distl.signal_strength %s" % eval("self.image1%s" % l[i]).get("fullname")
+                command = "distl.signal_strength %s" % eval("self.image%s" % l[i]).get("fullname")
                 #job = Thread(target=local_subprocess,
                 job = Process(target=local_subprocess,
                              kwargs={"command": command,
