@@ -1,5 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { FormGroup, FormControl } from '@angular/forms';
+import { FormGroup,
+         FormControl,
+         Validators } from '@angular/forms';
 
 import { MatDialogRef } from '@angular/material';
 
@@ -35,7 +37,6 @@ export class UserDialogComponent implements OnInit {
       group1: new FormControl(),
       group2: new FormControl()
     });
-    console.log(this.groups);
   }
 
   submitUser() {

@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { FormGroup, FormControl } from '@angular/forms';
+import { FormGroup,
+         FormControl } from '@angular/forms';
 
 import { MatDialogRef } from '@angular/material';
 
@@ -32,7 +33,8 @@ export class GroupDialogComponent implements OnInit {
       groupname: new FormControl(),
       institution: new FormControl(),
       uid: new FormControl(),
-      gid: new FormControl(),
+      uidNumber: new FormControl(),
+      gidNumber: new FormControl(),
       status: new FormControl()
     });
   }
