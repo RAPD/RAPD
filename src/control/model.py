@@ -338,22 +338,12 @@ class Model(object):
         # Construct a working directory and repr
         work_dir, new_repr = self.get_work_dir(type_level="echo")
 
-        # Add the process to the database to display as in-process
-        process_id = self.database.add_plugin_process(plugin_type="echo",
-                                                      request_type="original",
-                                                      representation=new_repr,
-                                                      status=1,
-                                                      display="hide",
-                                                      session_id=None,
-                                                      data_root_dir=None)
-
         # Run an echo to make sure everything is up
         command = {
             "command":"ECHO",
             "process":{
-                "process_id":process_id,
                 "status":0,
-                "type":"plugin"
+                "source":"server"
                 },
             "directories":{
                 "work":work_dir
@@ -479,7 +469,7 @@ class Model(object):
                     header["_id"] = image_id
 
                     # Send to be processed
-                    self.new_data_image(header=header)
+                    self.new_data_image(image1=header)
 
                 # Handle getting to the party late
                 else:
@@ -538,7 +528,7 @@ class Model(object):
                 self.remote_adapter.add_image(header)
 
             # KBO
-            self.new_data_image(header=header)
+            self.new_data_image(image1=header)
 
         # No information is findable
         else:
@@ -742,7 +732,7 @@ class Model(object):
             # Return the run position for this image
             return run_info["_id"], run_position
 
-    def new_data_image(self, header):
+    def new_data_image(self, image1):
         """
         Handle the information that there is a new image in the database.
 
@@ -754,23 +744,23 @@ class Model(object):
             5. The image is last in a wedge of data collection
 
         Keyword argument
-        header -- dict containing lots of image information
+        image1 -- dict containing lots of image information
         """
 
-        self.logger.debug(header["fullname"])
+        self.logger.debug(image1["fullname"])
 
         # Save some typing
         site = self.site
-        data_root_dir = header["data_root_dir"]
-        site_tag = header["site_tag"].upper()
+        data_root_dir = image1["data_root_dir"]
+        site_tag = image1["site_tag"].upper()
 
-        if header.get("collect_mode", None) == "SNAP":
+        if image1.get("collect_mode", None) == "SNAP":
 
             # Add the image to self.pair
-            self.pairs[site_tag].append((header["fullname"].lower(), header["_id"]))
+            self.pairs[site_tag].append((image1["fullname"].lower(), image1["_id"]))
 
             work_dir, new_repr = self.get_work_dir(type_level="single",
-                                                   image_data1=header)
+                                                   image_data1=image1)
 
             # Now package directories into a dict for easy access by worker class
             directories = {"work":work_dir,
@@ -778,28 +768,23 @@ class Model(object):
                            "plugin_directories":self.site.RAPD_PLUGIN_DIRECTORIES}
 
             # Get the session id
-            session_id = self.get_session_id(header)
+            session_id = self.get_session_id(image1)
 
-            # Add the process to the database to display as in-process
-            process_id = self.database.add_plugin_process(plugin_type="index",
-                                                          request_type="original",
-                                                          representation=new_repr,
-                                                          session_id=session_id,
-                                                          data_root_dir=data_root_dir)
-
-            # Add the ID entry to the header dict
-            header.update({"repr":new_repr})
+            # Add the ID entry to the image1 dict
+            image1.update({"repr":new_repr})
 
             # Run autoindex and strategy plugin
             command = {"command":"INDEX",
                        "process":{
-                           "image1_id":header.get("_id"),
-                           "process_id":process_id,
-                           "session_id":session_id
+                           "image1_id":image1.get("_id"),
+                           "image2_id":None,
+                           "session_id":session_id,
+                           "source":"server",
+                           "status":0,
                        },
                        "directories":directories,
-                       "image1":header,
-                       "site_parameters":self.site.BEAM_INFO[header["site_tag"]],
+                       "image1":image1,
+                       "site_parameters":self.site.BEAM_INFO[image1["site_tag"]],
                        "preferences":{}
                       }
 
@@ -835,7 +820,7 @@ class Model(object):
                     image1 = self.database.get_image_by_image_id(image_id=self.pairs[site_tag][0][1])
 
                     # Make a copy of the second pair to be LESS confusing
-                    image2 = header.copy()
+                    image2 = image1.copy()
 
                     # Derive  directory and repr
                     work_dir, new_repr = self.get_work_dir(type_level="pair",
@@ -848,23 +833,16 @@ class Model(object):
                                    "plugin_directories":self.site.RAPD_PLUGIN_DIRECTORIES}
 
                     # Get the session id
-                    session_id = self.get_session_id(header)
-
-                    # Add the process to the database to display as in-process
-                    process_id = self.database.add_plugin_process(
-                        plugin_type="index+strategy:pair",
-                        request_type="original",
-                        representation=new_repr,
-                        status=1,
-                        display="show",
-                        session_id=session_id,
-                        data_root_dir=data_root_dir)
+                    session_id = self.get_session_id(image1)
 
                     # Run autoindex and strategy plugin
                     command = {"command":"INDEX",
                                "process":{
-                                   "process_id":process_id,
-                                   "session_id":session_id
+                                   "image1_id":image1.get("_id"),
+                                   "image2_id":image2.get("_id"),
+                                   "session_id":session_id,
+                                   "source":"server",
+                                   "status":0,
                                },
                                "directories":directories,
                                "image1":image1,
@@ -879,11 +857,11 @@ class Model(object):
         else:
 
             # Make it easier to use run info
-            run_position = header["place_in_run"]
+            run_position = image1["place_in_run"]
 
             # Derive  directory and repr
             work_dir, new_repr = self.get_work_dir(type_level="integrate",
-                                                   image_data1=header)
+                                                   image_data1=image1)
 
             # Now package directories into a dict for easy access by worker class
             directories = {"work":work_dir,
@@ -891,49 +869,36 @@ class Model(object):
                            "plugin_directories":self.site.RAPD_PLUGIN_DIRECTORIES}
 
             # Get the session id
-            session_id = self.get_session_id(header)
-
-            # Add the process to the database to display as in-process
-            process_id = self.database.add_plugin_process(plugin_type="integrate",
-                                                          request_type="original",
-                                                          representation=new_repr,
-                                                          status=1,
-                                                          display="show",
-                                                          session_id=session_id,
-                                                          data_root_dir=data_root_dir)
-
-            # Add the ID entry to the header dict
-            # header.update({"repr":new_repr})
+            session_id = self.get_session_id(image1)
 
             # Pop out the run data
-            run_data = header.pop("run")
+            run_data = image1.pop("run")
 
             # Construct and send command
             command = {
                 "command":"INTEGRATE",
                 "process":{
-                    "process_id":process_id,
                     "session_id":session_id,
                     "status":0,
                     "type":"plugin",
-                    "image_id":header.get("_id"),
+                    "image_id":image1.get("_id"),
                     "run_id":run_data.get("_id"),
                     "session_id":session_id
                     },
                 "directories":directories,
                 "data": {
-                    "image_data":header,
+                    "image_data":image1,
                     "run_data":run_data
                 },
-                "site_parameters":self.site.BEAM_INFO[header["site_tag"]],
+                "site_parameters":self.site.BEAM_INFO[image1["site_tag"]],
                 "preferences":{
-                    "xdsinp":header.pop("xdsinp")
+                    "xdsinp":image1.pop("xdsinp")
                 },
             }
             self.send_command(command, "RAPD_JOBS")
 
             # Set the run status
-            self.recent_runs[header["run_id"]]["rapd_status"] = "INTEGRATING"
+            self.recent_runs[image1["run_id"]]["rapd_status"] = "INTEGRATING"
             # TODO - update database version of run as well
 
     def get_session_id(self, header):
@@ -1009,19 +974,8 @@ class Model(object):
         Handle incoming communications from plugins
 
         Keyword arguments
-        message -- dict of pertinent information. Needs to at least contain
-                       a dict under the key process with entries for process_id
-                       and status
-
-        This form of handling returns from plugins is soon to be discontinued. To
-        make RAPD more flexible to new plugins changes will be coming.
+        message -- dict of pertinent information.
         """
-
-        # Update the plugin_process in the DB
-        # if message["process"].get("process_id", False):
-        #     self.database.update_plugin_process(
-        #         process_id=message["process"].get("process_id", None),
-        #         status=message["process"].get("status", 1))
 
         # Save the results for the plugin
         if "results" in message:
