@@ -164,15 +164,17 @@ def process_cluster_fix(func):
     l = ['labelit.index', 'best -f', 'mosflm_strat']
     @wraps(func)
     def wrapper(**kwargs):
-        
-        launched = False
+        job = False
         for s in l:
             if kwargs['command'].count(s):
                 print 'GH'
-                Process(target=func, kwargs=kwargs).start()
-                launched = True
+                job = Process(target=func, kwargs=kwargs)
+                job.start()
                 break
-        if launched == False:
+        # wait for the job to finish and join
+        if job:
+            job.join()
+        else:
             return func(**kwargs)
     return wrapper
 
@@ -280,7 +282,7 @@ def process_cluster(command,
             counter += 1
     except:
         if logger:
-            logger.debug('qsub_necat.py was killed, but the launched job will continue to run')
+            logger.debug('qsub.py was killed, but the launched job will continue to run')
     
     # Used for passing back results to queue
     if result_queue:
