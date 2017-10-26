@@ -78,7 +78,7 @@ export class ReindexDialogComponent implements OnInit {
   submitReindex() {
 
     // Start to make the request object
-    let request: any = {command:'INDEX'};
+    let request:any = {command:'INDEX'};
     request.parent_result_id = this.data._id;
     request.image1_id = this.data.image1._id;
 
@@ -91,6 +91,8 @@ export class ReindexDialogComponent implements OnInit {
 
     // Update the preferences with the form values
     request.preferences = Object.assign(this.data.preferences, this.reindex_form.value);
+
+    console.log(request);
 
     this.submitted = true;
     this.rest_service.submitJob(request)

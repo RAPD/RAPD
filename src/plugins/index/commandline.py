@@ -50,7 +50,12 @@ def construct_command(image_headers, commandline_args, detector_module):
     # The task to be carried out
     command = {
         "command": "INDEX",
-        "process": {"process_id": uuid.uuid1().get_hex()}
+        "process": {
+            "process_id": uuid.uuid1().get_hex(),
+            "parent_id": None,
+            "source": "commandline",
+            "status": 0
+            }
         }
 
     # Working directory
@@ -160,6 +165,9 @@ def construct_command(image_headers, commandline_args, detector_module):
     # Launches jobs at same time using more cores. Much Faster!!
     #command["preferences"]["multiprocessing"] = True
     command["preferences"]["nproc"] = commandline_args.nproc
+
+    # The run mode for rapd
+    command["preferences"]["run_mode"] = commandline_args.run_mode
 
     # Site parameters
     command["preferences"]["site_parameters"] = {}
@@ -288,7 +296,13 @@ def get_commandline():
 
     args = parser.parse_args()
 
-    # Checking input
+    # Insert logic to check or modify args here
+
+    # Running in interactive mode if this code is being called
+    if args.json:
+        args.run_mode = "json"
+    else:
+        args.run_mode = "interactive"
 
     # Regularize spacegroup
     if args.spacegroup:
