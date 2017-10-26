@@ -463,6 +463,7 @@ def process_cluster(command,
       fname = command
     else:  
       fname = 'qsub%s.sh'%random.randint(0,5000)
+      print fname
       with open(fname,'w') as f:
           print >>f, '#!/bin/bash'
           print >>f, '#PBS -j oe'
@@ -509,7 +510,7 @@ def process_cluster(command,
         print "Job finished"
     except:
         if logger:
-            logger.debug('qsub_sercat.py was killed, but the launched job will continue to run')
+            logger.debug('qsub.py was killed, but the launched job will continue to run')
 
     # Put results on a Queue, if given
     if result_queue:

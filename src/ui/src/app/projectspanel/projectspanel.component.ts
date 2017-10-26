@@ -75,7 +75,11 @@ export class ProjectspanelComponent implements OnInit {
       this.dialogRef.afterClosed().subscribe(result => {
         if (result) {
           if (result.success === true) {
-            this.addProject(result.project);
+            if (result.operation === 'delete') {
+              this.removeProject(result._id);
+            } else {
+              this.addProject(result.project);
+            }
           }
         }
       });
@@ -89,6 +93,14 @@ export class ProjectspanelComponent implements OnInit {
       this.projects.splice(index, 1, new_project);
     } else {
       this.projects.unshift(new_project);
+    }
+  }
+
+  removeProject(_id:string) {
+    // If the user already exists, replace it
+    let index = this.projects.findIndex(project => project._id === _id);
+    if (index !== -1) {
+      this.projects.splice(index, 1);
     }
   }
 

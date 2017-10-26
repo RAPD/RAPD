@@ -134,7 +134,7 @@ class RapdAgent(Process):
                 "work":""                           # Where to perform the work
             },
         "image_data":{},                            # Image information
-        ["header2":{},]                             # 2nd image information
+        ["image2":{},]                             # 2nd image information
         "preferences":{}                            # Settings for calculations
         "return_address":("127.0.0.1", 50000)       # Location of control process
     }

@@ -207,19 +207,17 @@ export class RestService {
     .catch(error => this.handleError(error));
   }
 
-  // public submitUser(user: User): Observable<any> {
-  //
-  //   let header = new Headers();
-  //   header.append('Content-Type', 'application/json');
-  //
-  //   return this.authHttp.put(
-  //     this.globals_service.site.restApiUrl + '/users/' + user._id,
-  //     JSON.stringify({user: user}),
-  //     {headers: header}
-  //   )
-  //   .map(res => res.json())
-  //   .catch(error => this.handleError(error));
-  // }
+  // Delete a project from the database
+  public deleteProject(_id: string): Observable<any> {
+
+    console.log('deleteProject', _id);
+
+    return this.authHttp.delete(
+      this.globals_service.site.restApiUrl + '/projects/' + _id
+    )
+    .map(res => res.json())
+    .catch(error => this.handleError(error));
+  }
 
   public addResultToProject(data:any): Observable<any> {
 
