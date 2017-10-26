@@ -156,7 +156,6 @@ def main():
     """
     Run the main process
     """
-    print 'gh'
     # Get the commandline args
     commandline_args = get_commandline()
 
@@ -210,5 +209,5 @@ def main():
         raise Exception("Not sure what to do!")
 
 if __name__ == "__main__":
-
+    print 'gh'
     main()
