@@ -2,7 +2,8 @@ import { Component,
          Inject,
          OnInit } from '@angular/core';
 import { FormGroup,
-         FormControl } from '@angular/forms';
+         FormControl,
+         Validators } from '@angular/forms';
 import { MatDialog,
          MatDialogRef,
          MAT_DIALOG_DATA,
@@ -63,16 +64,21 @@ export class ReindexDialogComponent implements OnInit {
     }
 
     this.reindex_form = new FormGroup({
-      beam_search: new FormControl(),
-      spacegroup: new FormControl(),
-      sample_type: new FormControl(),
-      solvent_content: new FormControl(),
-      strategy_type: new FormControl(),
+      beam_search: new FormControl(this.model.beam_search,
+                                   [Validators.min(0), Validators.max(10)]),
       best_complexity: new FormControl(),
+      mosflm_end: new FormControl(this.model.mosflm_end,
+                                  [Validators.min(0), Validators.max(360)]),
+      mosflm_rot: new FormControl(this.model.mosflm_rot,
+                                  [Validators.min(0), Validators.max(360)]),
       mosflm_seg: new FormControl(),
-      mosflm_rot: new FormControl(),
-      mosflm_start: new FormControl(),
-      mosflm_end: new FormControl(),
+      mosflm_start: new FormControl(this.model.mosflm_start,
+                                    [Validators.min(0), Validators.max(360)]),
+      sample_type: new FormControl(),
+      solvent_content: new FormControl(this.model.solvent_content,
+                                       [Validators.min(0), Validators.max(1)]),
+      spacegroup: new FormControl(),
+      strategy_type: new FormControl(),
     });
   }
 
