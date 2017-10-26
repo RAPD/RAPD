@@ -524,8 +524,6 @@ class Model(object):
             if self.site_adapter:
                 site_data = self.site_adapter.get_image_data()
                 header.update(site_data)
-                #print "2"
-                #pprint(header)
 
             # Add to database
             image_id = self.database.add_image(data=header, return_type="id")
@@ -534,9 +532,6 @@ class Model(object):
             # Duplicate entry
             else:
                 return False
-
-            #print "1"
-            #pprint(header)
 
             # Update remote client
             if self.remote_adapter:
@@ -803,7 +798,7 @@ class Model(object):
                            "session_id":session_id
                        },
                        "directories":directories,
-                       "header1":header,
+                       "image1":header,
                        "site_parameters":self.site.BEAM_INFO[header["site_tag"]],
                        "preferences":{}
                       }
@@ -837,15 +832,15 @@ class Model(object):
                                      self.pairs[site_tag][1][0])
 
                     # Get the data for the first image
-                    header1 = self.database.get_image_by_image_id(image_id=self.pairs[site_tag][0][1])
+                    image1 = self.database.get_image_by_image_id(image_id=self.pairs[site_tag][0][1])
 
                     # Make a copy of the second pair to be LESS confusing
-                    header2 = header.copy()
+                    image2 = header.copy()
 
                     # Derive  directory and repr
                     work_dir, new_repr = self.get_work_dir(type_level="pair",
-                                                           image_data1=header1,
-                                                           image_data2=header2)
+                                                           image_data1=image1,
+                                                           image_data2=image2)
 
                     # Now package directories into a dict for easy access by worker class
                     directories = {"work" : work_dir,
@@ -872,9 +867,9 @@ class Model(object):
                                    "session_id":session_id
                                },
                                "directories":directories,
-                               "header1":header1,
-                               "header2":header2,
-                               "site_parameters":self.site.BEAM_INFO[header1["site_tag"]],
+                               "image1":image1,
+                               "image2":image2,
+                               "site_parameters":self.site.BEAM_INFO[image1["site_tag"]],
                                "preferences":{}
                               }
 
