@@ -88,6 +88,7 @@ class LauncherAdapter(Thread):
 
         # Get the new working directory
         work_dir = self.message["directories"]["work"]
+	print work_dir
 
         # Get the launcher directory - Add command_files to keep files isolated
         qsub_dir = self.message["directories"]["launch_dir"]+"/command_files"

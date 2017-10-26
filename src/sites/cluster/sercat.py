@@ -83,7 +83,7 @@ def fix_command(message):
 
     # Adjust the working directory for the launch computer
     work_dir_candidate = os.path.join(
-        message["launch_dir"],
+        message["directories"]["launch_dir"],
         message["directories"]["work"])
 
     # Make sure this is an original directory
