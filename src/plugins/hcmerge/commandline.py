@@ -279,6 +279,7 @@ def get_commandline():
     # Check to see if the user has set a spacegroup.  If so, then change from symbol to IUCR number.
     if args.spacegroup:
         args.spacegroup = space_group_symbols(args.spacegroup).number()
+        print 'Spacegroup number is' + str(args.spacegroup)
     # Turn cell into a tuple
     # if args.cell:
     #     args.cell=tuple(args.cell)

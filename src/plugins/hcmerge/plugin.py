@@ -188,8 +188,8 @@ class RapdPlugin(multiprocessing.Process):
             self.prefix = 'merged'
 
         # Check for user-defined spacegroup
-        if self.settings.has_key('user_spacegroup'):
-            self.user_spacegroup = self.settings['user_spacegroup']
+        if self.settings.has_key('spacegroup'):
+            self.user_spacegroup = self.settings['spacegroup']
         else:
             self.user_spacegroup = 0 # Default to None
 
