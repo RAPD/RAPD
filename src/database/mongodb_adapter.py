@@ -312,88 +312,88 @@ class Database(object):
     #
     # Functions for processes                                                                      #
     #
-    def add_plugin_process(self,
-                           plugin_type=None,
-                           request_type=None,
-                           representation=None,
-                           status=0,
-                           display="show",
-                           session_id=None,
-                           data_root_dir=None):
-        """
-        Add an entry to the plugin_processes table - for keeping track of
-        launched processes and their state
-
-        Keyword arguments
-        plugin_type -- type of plugin
-        request_type -- request type, such as original
-        representation -- how the request is represented to users
-        status -- progress from 0 to 100 (default = 0) 1 = started,
-                  100 = finished, -1 = error
-        display -- display state of this process (default = show)
-        session_id -- unique _id for session in sessions create_data_collections (default = None)
-        data_root_dir -- unique root of the data for data collected at a site (default = None)
-        """
-
-        self.logger.debug("%s %s %s %s %s %s %s",
-                          plugin_type,
-                          request_type,
-                          representation,
-                          status,
-                          display,
-                          session_id,
-                          data_root_dir)
-
-        # Connect to the database
-        db = self.get_db_connection()
-
-        # Insert into db
-        result = db.plugin_processes.insert_one({"plugin_type":plugin_type,
-                                                 "display":display,
-                                                 "status":status,
-                                                 "representation":representation,
-                                                 "request_type":request_type,
-                                                 "session_id":get_object_id(session_id),
-                                                 "data_root_dir":data_root_dir,
-                                                 "timestamp":datetime.datetime.utcnow()})
-
-        return str(result.inserted_id)
-
-    def update_plugin_process(self,
-                              process_id,
-                              status=False,
-                              display=False):
-        """
-        Add an entry to the plugin_processes table - for keeping track of
-        launched processes and their state
-
-        Keyword arguments
-        process_id -- unique identifier for process
-        status -- progress from 0 to 100 (default = 0) 1 = started,
-                  100 = finished, -1 = error
-        display -- display state of this process (default = show)
-        """
-
-        self.logger.debug("update_plugin_process %s %s %s", process_id, status, display)
-
-        # Connect to the database
-        db = self.get_db_connection()
-
-        # Construct the values to be updated
-        set_dict = {"timestamp":datetime.datetime.utcnow()}
-        if status:
-            set_dict["status"] = status
-
-        if display:
-            set_dict["display"] = display
-
-        # Make sure we are using an ObjectId
-        _process_id = get_object_id(process_id)
-
-        db.plugin_processes.update({"_id":_process_id},
-                                   {"$set":set_dict})
-
-        return True
+    # def add_plugin_process(self,
+    #                        plugin_type=None,
+    #                        request_type=None,
+    #                        representation=None,
+    #                        status=0,
+    #                        display="show",
+    #                        session_id=None,
+    #                        data_root_dir=None):
+    #     """
+    #     Add an entry to the plugin_processes table - for keeping track of
+    #     launched processes and their state
+    #
+    #     Keyword arguments
+    #     plugin_type -- type of plugin
+    #     request_type -- request type, such as original
+    #     representation -- how the request is represented to users
+    #     status -- progress from 0 to 100 (default = 0) 1 = started,
+    #               100 = finished, -1 = error
+    #     display -- display state of this process (default = show)
+    #     session_id -- unique _id for session in sessions create_data_collections (default = None)
+    #     data_root_dir -- unique root of the data for data collected at a site (default = None)
+    #     """
+    #
+    #     self.logger.debug("%s %s %s %s %s %s %s",
+    #                       plugin_type,
+    #                       request_type,
+    #                       representation,
+    #                       status,
+    #                       display,
+    #                       session_id,
+    #                       data_root_dir)
+    #
+    #     # Connect to the database
+    #     db = self.get_db_connection()
+    #
+    #     # Insert into db
+    #     result = db.plugin_processes.insert_one({"plugin_type":plugin_type,
+    #                                              "display":display,
+    #                                              "status":status,
+    #                                              "representation":representation,
+    #                                              "request_type":request_type,
+    #                                              "session_id":get_object_id(session_id),
+    #                                              "data_root_dir":data_root_dir,
+    #                                              "timestamp":datetime.datetime.utcnow()})
+    #
+    #     return str(result.inserted_id)
+    #
+    # def update_plugin_process(self,
+    #                           process_id,
+    #                           status=False,
+    #                           display=False):
+    #     """
+    #     Add an entry to the plugin_processes table - for keeping track of
+    #     launched processes and their state
+    #
+    #     Keyword arguments
+    #     process_id -- unique identifier for process
+    #     status -- progress from 0 to 100 (default = 0) 1 = started,
+    #               100 = finished, -1 = error
+    #     display -- display state of this process (default = show)
+    #     """
+    #
+    #     self.logger.debug("update_plugin_process %s %s %s", process_id, status, display)
+    #
+    #     # Connect to the database
+    #     db = self.get_db_connection()
+    #
+    #     # Construct the values to be updated
+    #     set_dict = {"timestamp":datetime.datetime.utcnow()}
+    #     if status:
+    #         set_dict["status"] = status
+    #
+    #     if display:
+    #         set_dict["display"] = display
+    #
+    #     # Make sure we are using an ObjectId
+    #     _process_id = get_object_id(process_id)
+    #
+    #     db.plugin_processes.update({"_id":_process_id},
+    #                                {"$set":set_dict})
+    #
+    #     return True
 
 
     ############################################################################
@@ -433,17 +433,12 @@ class Database(object):
         now = datetime.datetime.utcnow()
         plugin_result["timestamp"] = now
 
-        # Try to make the plugin_result by object traversal
-        # _plugin_result = traverse_and_objectidify(plugin_result)
-        # self.logger.debug("traverse_and_objectidify")
-        # self.logger.debug(_plugin_result["process"])
-
-
         # Make sure we are all ObjectIds - this is until I can get the
         # object traversal working
         self.logger.debug(plugin_result["process"])
         if plugin_result.get("_id", False):
             plugin_result["_id"] = get_object_id(plugin_result["_id"])
+
         # _ids in process dict
         for key, val in plugin_result["process"].iteritems():
             if "_id" in key:
@@ -456,14 +451,14 @@ class Database(object):
         collection_name = ("%s_%s_results" % (plugin_result["plugin"]["data_type"],
                                               plugin_result["plugin"]["type"])).lower()
         result1 = db[collection_name].update_one(
-            {"process.process_id":plugin_result["process"]["process_id"]},
+            {"process.result_id":plugin_result["process"]["result_id"]},
             {"$set":plugin_result},
             upsert=True)
 
         # Get the _id from updated entry
         if result1.raw_result.get("updatedExisting", False):
             result1_id = db[collection_name].find_one(
-                {"process.process_id":plugin_result["process"]["process_id"]},
+                {"process.result_id":plugin_result["process"]["result_id"]},
                 {"_id":1})["_id"]
             self.logger.debug("%s _id  from updatedExisting %s", collection_name, result1_id)
         # upsert
@@ -478,6 +473,7 @@ class Database(object):
             {"result_id":get_object_id(result1_id)},
             {"$set":{
                 "data_type":plugin_result["plugin"]["data_type"],
+                "parent_id":plugin_result["process"]["parent_id"],
                 "plugin_id":plugin_result["plugin"]["id"],
                 "plugin_type":plugin_result["plugin"]["type"],
                 "plugin_version":plugin_result["plugin"]["version"],

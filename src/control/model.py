@@ -336,7 +336,7 @@ class Model(object):
         """Send a test echo request to Launch"""
 
         # Construct a working directory and repr
-        work_dir, new_repr = self.get_work_dir(type_level="echo")
+        work_dir = self.get_work_dir(type_level="echo")
 
         # Run an echo to make sure everything is up
         command = {
@@ -759,8 +759,8 @@ class Model(object):
             # Add the image to self.pair
             self.pairs[site_tag].append((image1["fullname"].lower(), image1["_id"]))
 
-            work_dir, new_repr = self.get_work_dir(type_level="single",
-                                                   image_data1=image1)
+            work_dir = self.get_work_dir(type_level="single",
+                                         image_data1=image1)
 
             # Now package directories into a dict for easy access by worker class
             directories = {"work":work_dir,
@@ -770,14 +770,12 @@ class Model(object):
             # Get the session id
             session_id = self.get_session_id(image1)
 
-            # Add the ID entry to the image1 dict
-            image1.update({"repr":new_repr})
-
             # Run autoindex and strategy plugin
             command = {"command":"INDEX",
                        "process":{
                            "image1_id":image1.get("_id"),
                            "image2_id":None,
+                           "result_id":ObjectId(),
                            "session_id":session_id,
                            "source":"server",
                            "status":0,
@@ -823,9 +821,9 @@ class Model(object):
                     image2 = image1.copy()
 
                     # Derive  directory and repr
-                    work_dir, new_repr = self.get_work_dir(type_level="pair",
-                                                           image_data1=image1,
-                                                           image_data2=image2)
+                    work_dir = self.get_work_dir(type_level="pair",
+                                                 image_data1=image1,
+                                                 image_data2=image2)
 
                     # Now package directories into a dict for easy access by worker class
                     directories = {"work" : work_dir,
@@ -840,6 +838,7 @@ class Model(object):
                                "process":{
                                    "image1_id":image1.get("_id"),
                                    "image2_id":image2.get("_id"),
+                                   "result_id":ObjectId(),
                                    "session_id":session_id,
                                    "source":"server",
                                    "status":0,
@@ -860,8 +859,8 @@ class Model(object):
             run_position = image1["place_in_run"]
 
             # Derive  directory and repr
-            work_dir, new_repr = self.get_work_dir(type_level="integrate",
-                                                   image_data1=image1)
+            work_dir = self.get_work_dir(type_level="integrate",
+                                         image_data1=image1)
 
             # Now package directories into a dict for easy access by worker class
             directories = {"work":work_dir,
@@ -878,12 +877,12 @@ class Model(object):
             command = {
                 "command":"INTEGRATE",
                 "process":{
+                    "image_id":image1.get("_id"),
+                    "result_id":ObjectId(),
+                    "run_id":run_data.get("_id"),
                     "session_id":session_id,
                     "status":0,
                     "type":"plugin",
-                    "image_id":image1.get("_id"),
-                    "run_id":run_data.get("_id"),
-                    "session_id":session_id
                     },
                 "directories":directories,
                 "data": {
@@ -959,15 +958,12 @@ class Model(object):
         else:
             sub_dir = type_level
 
-        # Use the last leg of the directory as the repr
-        new_repr = sub_dir
-
         # Join the  levels
         work_dir_candidate = os.path.join(typelevel_dir,
                                           datelevel_dir,
                                           sub_dir)
 
-        return work_dir_candidate, new_repr
+        return work_dir_candidate
 
     def handle_plugin_communication(self, message):
         """

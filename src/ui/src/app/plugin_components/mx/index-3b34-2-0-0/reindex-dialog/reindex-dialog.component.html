@@ -119,7 +119,12 @@
     </form>
   </mat-dialog-content>
   <mat-dialog-actions align="end">
-    <mat-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></mat-progress-spinner>
+    <mat-progress-bar
+      *ngIf="submitted"
+      mode="indeterminate"
+      style="margin-top:5px;"
+      color="primary">
+    </mat-progress-bar>
     <button mat-raised-button *ngIf="submit_error" color="primary" (click)="submitReindex()">Ok</button>
     <button mat-raised-button *ngIf="! submit_error" color="primary" (click)="submitReindex()">Execute</button>
   </mat-dialog-actions>
