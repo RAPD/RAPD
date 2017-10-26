@@ -122,12 +122,13 @@ BEAM_INFO = {
 
 # Logging
 # Linux should be /var/log/
-LOGFILE_DIR = "/tmp/log"
+#LOGFILE_DIR = "/tmp/log"
+LOGFILE_DIR = "/home/schuerjp/temp/log"
 LOG_LEVEL = 50
 
 # Control process settings
 # Process is a singleton? The file to lock to. False if no locking.
-CONTROL_LOCK_FILE = "/tmp/lock/rapd_control.lock"
+CONTROL_LOCK_FILE = "/home/schuerjp/temp/lock/rapd_control.lock"
 
 # Method RAPD uses to match data root dir to a user & session
 #   manual -- the data_root_dir will be connected manually with a group/session
@@ -169,10 +170,10 @@ DETECTORS = {"SERCAT_ID":("SERCAT_RAYONIX_MX300HS", ""),
              "SERCAT_BM":("SERCAT_RAYONIX_MX225", "")}
 
 # Launcher Manager to sort out where to send jobs
-LAUNCHER_MANAGER_LOCK_FILE = "/tmp/lock/launcher_manager.lock"
+LAUNCHER_MANAGER_LOCK_FILE = "/home/schuerjp/temp/lock/launcher_manager.lock"
 
 # Launcher settings
-LAUNCHER_LOCK_FILE = "/tmp/lock/launcher.lock"
+LAUNCHER_LOCK_FILE = "/home/schuerjp/temp/lock/launcher.lock"
 
 # Launcher to send jobs to
 # The value should be the key of the launcher to select in LAUNCHER_SPECIFICATIONS
@@ -197,7 +198,7 @@ CLUSTER_ADAPTER = "sites.cluster.sercat"
 # Data gatherer settings
 # The data gatherer for this site, in the src/sites/gatherers directory
 GATHERER = "sercat_id.py"
-GATHERER_LOCK_FILE = "/tmp/lock/gatherer.lock"
+GATHERER_LOCK_FILE = "/home/schuerjp/temp/lock/gatherer.lock"
 
 # Monitor for collected images
 IMAGE_MONITOR = "monitors.image_monitors.redis_image_monitor"
