@@ -35,6 +35,7 @@ import time
 #from multiprocessing import Queue, Process
 from multiprocessing import Process
 from multiprocessing import Queue as mp_Queue
+from Queue import Queue as t_Queue
 from threading import Thread
 
 # RAPD imports
@@ -113,10 +114,11 @@ class LauncherAdapter(Thread):
         queue = cluster.check_queue(self.message['command'])
 
         # Setup a Queue to retreive the jobID.
-        q = mp_Queue()
+        #q = mp_Queue()
+        q = t_Queue()
 
         # Setup the job and launch it.
-        job = Process(target=cluster.process_cluster,
+        job = Thread(target=cluster.process_cluster,
                       kwargs={'command':command_line,
                               'work_dir':work_dir,
                               'logfile':False,
