@@ -77,20 +77,27 @@ export class ReindexDialogComponent implements OnInit {
 
   submitReindex() {
 
-    // Start to make the request object
-    let request:any = {command:'INDEX'};
-    request.parent_result_id = this.data._id;
-    request.image1_id = this.data.image1._id;
+    console.log(this.data);
 
-    // 2nd image?
-    if (this.data.image2) {
-      request.image2_id = this.data.image2._id;
-    } else {
-      request.image2_id = false;
-    }
+    // Start to make the request object
+    let request:any = {
+      command:'INDEX',
+      process:{
+        parent_id: this.data.process.result_id,
+        source: 'client',
+        status: 0
+      },
+    };
+
+    // Images
+    request.image1 = this.data.image1;
+    request.image2 = this.data.image2;
 
     // Update the preferences with the form values
     request.preferences = Object.assign(this.data.preferences, this.reindex_form.value);
+
+    // Set run mode
+    request.preferences.run_mode = 'server';
 
     console.log(request);
 
