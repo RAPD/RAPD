@@ -89,7 +89,6 @@ class LauncherAdapter(Thread):
 
         # Get the new working directory
         work_dir = self.message["directories"]["work"]
-	print work_dir
 
         # Get the launcher directory - Add command_files to keep files isolated
         qsub_dir = self.message["directories"]["launch_dir"]+"/command_files"
@@ -98,11 +97,13 @@ class LauncherAdapter(Thread):
         command_file = launch_tools.write_command_file(qsub_dir, self.message["command"], self.message)
 
         # Set the site tag from input
-        site_tag = launch_tools.get_site_tag(self.message)
+        site_tag = launch_tools.get_site_tag(self.message).split('_')[0]
 
         # The command to launch the job
-        command_line = "rapd.launch -vs %s %s" % (site_tag, command_file)
-        #self.logger.debug("command: %s"%command_line)
+        #command_line = "rapd.launch -vs %s %s" % (site_tag, command_file)
+	command_line = "rapd.launch -s %s %s" % (site_tag, command_file)
+        
+	#self.logger.debug("command: %s"%command_line)
 
         # Parse a label for qsub job from the command_file name
         qsub_label = os.path.basename(command_file).replace(".rapd", "")

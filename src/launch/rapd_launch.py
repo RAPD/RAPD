@@ -156,7 +156,7 @@ def main():
     """
     Run the main process
     """
-
+    print 'gh'
     # Get the commandline args
     commandline_args = get_commandline()
 

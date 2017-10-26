@@ -28,6 +28,7 @@ Provides generic interface for cluster interactions
 
 # Standard imports
 import os
+import stat
 import time
 import tempfile
 import shlex
@@ -470,7 +471,7 @@ def process_cluster(command,
       fname = os.path.join(os.getcwd(),'qsub%s.sh'%random.randint(0,5000))
       print fname
       with open(fname,'w') as f:
-          print >>f, '#!/bin/bash'
+          #print >>f, '#!/bin/tcsh'
           print >>f, '#PBS -j oe'
           print >>f, '#PBS -d %s'%work_dir
           print >>f, '#PBS -v %s'%v
@@ -486,6 +487,7 @@ def process_cluster(command,
           print >>f, command+'\n'
           f.close()
 
+    #os.chmod(fname, stat.S_IRWXU)
     qs = ['qsub', fname]
     #Launch the job on the cluster
     proc = subprocess.Popen(qs,
