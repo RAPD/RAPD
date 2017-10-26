@@ -83,7 +83,7 @@ def fix_command(message):
 
     # Adjust the working directory for the launch computer
     work_dir_candidate = os.path.join(
-        message["launch_dir"],
+        message["directories"]["launch_dir"],
         message["directories"]["work"])
 
     # Make sure this is an original directory
@@ -95,7 +95,10 @@ def fix_command(message):
                 break
             else:
                 i += 1
-
+    # Now make the directory
+    if os.path.isdir(work_dir_candidate) == False:
+        os.makedirs(work_dir_candidate)
+     
     # Modify command
     message["directories"]["work"] = work_dir_candidate
 
@@ -453,6 +456,7 @@ def process_cluster(command,
 
     if work_dir == False:
         work_dir = os.getcwd()
+    os.chdir(work_dir)
     if result_queue:
         if logfile == False:
             fd = tempfile.NamedTemporaryFile(dir=work_dir, delete=False)
@@ -462,7 +466,8 @@ def process_cluster(command,
     if command[-3] == '.sh':
       fname = command
     else:  
-      fname = 'qsub%s.sh'%random.randint(0,5000)
+      #fname = 'qsub%s.sh'%random.randint(0,5000)
+      fname = os.path.join(os.getcwd(),'qsub%s.sh'%random.randint(0,5000))
       print fname
       with open(fname,'w') as f:
           print >>f, '#!/bin/bash'
@@ -530,7 +535,7 @@ def process_cluster(command,
         result_queue.put(result)
 
     # Delete the .sh file if generated
-    os.unlink(fname)
+    #os.unlink(fname)
     
     # Delete logile if it was not asked to be saved
     if fd:

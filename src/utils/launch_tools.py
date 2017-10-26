@@ -92,8 +92,8 @@ def get_site_tag(message):
     """Find and return the site_tag from the image header"""
     # Find site_tag from SNAP
     site_tag = False
-    if message.get('image1', False):
-        site_tag = message['image1'].get('site_tag')
+    if message.get('header1', False):
+        site_tag = message['header1'].get('site_tag')
     # Find site_tag from INTEGRATE
     elif message.get('data', False):
         site_tag = message['data']['image_data'].get('site_tag')
