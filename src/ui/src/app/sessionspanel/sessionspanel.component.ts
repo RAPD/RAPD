@@ -15,6 +15,7 @@ import { Session } from '../shared/classes/session';
 export class SessionspanelComponent implements OnInit {
 
   sessions: Session[];
+  filtered_sessions: Session[];
   errorMessage: string;
 
   constructor(private rest_service: RestService,
@@ -37,6 +38,24 @@ export class SessionspanelComponent implements OnInit {
     let id = event.selected[0]._id
 
     this.router.navigate(['/mx', id]);
+  }
+
+  // The filter is changed
+  updateSessionFilter(event) {
+    const val = event.target.value.toLowerCase();
+
+    // filter our data
+    const temp = this.filtered_sessions.filter(function(d) {
+      // console.log(d);
+      return d.group.groupname.toLowerCase().indexOf(val) !== -1 ||
+             d.site.toLowerCase().indexOf(val) !== -1 ||
+             d.data_root_dir.toLowerCase().indexOf(val) !== -1 ||
+             d.last_process.indexOf(val) !== -1 ||
+             !val;
+    });
+
+    // update the rows
+    this.sessions = temp;
   }
 
 }
