@@ -49,7 +49,7 @@ export class SessionspanelComponent implements OnInit {
       // console.log(d);
       return d.group.groupname.toLowerCase().indexOf(val) !== -1 ||
              d.site.toLowerCase().indexOf(val) !== -1 ||
-             d.data_root_dir.toLowerCase().indexOf(val) !== -1 ||
+             d.data_root_directory.toLowerCase().indexOf(val) !== -1 ||
              d.last_process.indexOf(val) !== -1 ||
              !val;
     });
