@@ -319,17 +319,16 @@ function Wss (opt, callback) {
                     find({'session_id':mongoose.Types.ObjectId(data.session_id)}).
                     // where('result_type').in(['mx:index+strategy']).
                     sort('-timestamp').
-                    exec(function(err, results) {
-                        if (err) {
-                          console.error(err);
-                        } else {
-                          console.log(results);
-                          // Send back over the websocket
-                          ws.send(JSON.stringify({msg_type:'results',
-                                                  results:results}));
-                        }
+                    exec(function(err, sessions) {
+                        if (err)
+                            return false;
+                        console.log(sessions);
+                        // Send back over the websocket
+                        ws.send(JSON.stringify({msg_type:'results',
+                                                results:sessions}));
                     });
                 }
+
               }
 
               break;
@@ -339,19 +338,11 @@ function Wss (opt, callback) {
               console.log('update_result');
               console.log(data.result);
 
-              Result
-                .findOneAndUpdate(
-                  {_id:data.result._id},
-                  data.result,
-                  {new: true}
-                )
-                .exec(function(err, updated_result) {
-                  if (err) {
-                    console.log(err);
-                  } else {
-                    console.log(updated_result);
-                    send_to_session(updated_result.session_id, 'results', [updated_result]);
-                  }
+              Result.
+                update({_id:data.result._id}, data.result).
+                exec(function(err, res) {
+                  console.log(err);
+                  console.log(res);
                 });
 
               break;
@@ -410,10 +401,10 @@ function Wss (opt, callback) {
                     return false;
                   // No error
                   } else {
-                    console.log(detailed_result);
-                    console.log(Object.keys(detailed_result));
-                    console.log(detailed_result._doc);
-                    console.log(detailed_result._doc.process);
+                    // console.log(detailed_result);
+                    // console.log(Object.keys(detailed_result));
+                    // console.log(detailed_result._doc);
+                    // console.log(detailed_result._doc.process);
 
                       // Make sure there is a process
                       if ('process' in detailed_result._doc) {
@@ -430,7 +421,7 @@ function Wss (opt, callback) {
                               } else {
                                 detailed_result._doc.image1 = image1;
                                 console.log('POPULATED image1');
-                                console.log(detailed_result);
+                                // console.log(detailed_result);
                                 // Now look for image2
                                 if ('image2_id' in detailed_result._doc.process) {
 
@@ -557,19 +548,5 @@ function Wss (opt, callback) {
       });
     });
 }
-
-var send_to_session = function(session_id, msg_type, msg) {
-  console.log('send_to_session', session_id, msg_type, msg)
-  // Go through collected sockets
-  Object.keys(ws_connections).forEach(function(socket_id) {
-    console.log(ws_connections[socket_id].session.session_id);
-    // If the session_ids match, send message
-    if (ws_connections[socket_id].session.session_id == session_id) {
-        console.log('Sending', msg_type, msg);
-        ws_connections[socket_id].send(JSON.stringify({msg_type:msg_type,
-                                                       results:msg}));
-    }
-  });
-};
 
 module.exports = Wss;
