@@ -844,7 +844,6 @@ class RapdPlugin(Process):
             xutils.fix_bestfile()
 
         # If Raddose failed, here are the defaults.
-        pprint(self.raddose_results)
         if self.raddose_results["raddose_results"]:
             dose = self.raddose_results["raddose_results"].get('dose', 100000)
         else:
@@ -1071,8 +1070,6 @@ class RapdPlugin(Process):
     def check_best_detector(self, detector):
         """Check that the detector we need is in the BEST configuration file"""
 
-        # print "check_best_detector", detector
-
         best_executable = subprocess.check_output(["which", "best"])
         detector_info = os.path.join(os.path.dirname(best_executable),
                                      "detector-inf.dat")
@@ -1081,7 +1078,6 @@ class RapdPlugin(Process):
         lines = open(detector_info, "r").readlines()
         found = False
         for line in lines:
-            # print line.rstrip()
             if line.startswith(detector+" "):
                 found = True
                 break
@@ -1089,8 +1085,7 @@ class RapdPlugin(Process):
                 break
 
         if not found:
-            self.tprint(arg="!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" %
-                        detector,
+            self.tprint(arg="!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
                         level=30,
                         color="red")
             self.tprint(arg="!!! Detector %s missing from the BEST detector information file !!!" %
@@ -1101,8 +1096,7 @@ class RapdPlugin(Process):
                         (info.BEST_INFO[detector], detector_info),
                         level=30,
                         color="red")
-            self.tprint(arg="!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" %
-                        detector,
+            self.tprint(arg="!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
                         level=30,
                         color="red")
 
@@ -1115,7 +1109,6 @@ class RapdPlugin(Process):
         """
 
         self.logger.debug("process_strategy")
-        # print "process_strategy", iteration
 
         if iteration:
             st = iteration
