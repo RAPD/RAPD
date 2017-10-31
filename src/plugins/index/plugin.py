@@ -1092,7 +1092,7 @@ class RapdPlugin(Process):
                         detector,
                         level=30,
                         color="red")
-            self.tprint(arg="Add \"%s\" \n to file %s \n to get BEST running" %
+            self.tprint(arg="Add \"%s\" \n to file %s to get BEST running" %
                         (info.BEST_INFO[detector], detector_info),
                         level=30,
                         color="red")
@@ -1109,7 +1109,7 @@ class RapdPlugin(Process):
         iteration -- (default False)
         """
 
-        self.logger.debug("process_strategy")
+        self.logger.debug("process_strategy", iteration)
 
         if iteration:
             st = iteration
@@ -1127,7 +1127,8 @@ class RapdPlugin(Process):
                 detector_found = self.check_best_detector(DETECTOR_TO_BEST.get(self.image1.get("detector"), None))
                 # No detector in best param file - bail on best
                 if not detector_found:
-                    self.strategy == "mosflm"
+                    self.logger.debug("Detector not support by best. Failing over to mosflm strategy")
+                    self.strategy = "mosflm"
                     st = 4
 
             if self.multiproc == False:
