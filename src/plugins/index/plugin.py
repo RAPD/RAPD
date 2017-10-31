@@ -1085,7 +1085,7 @@ class RapdPlugin(Process):
                 break
 
         if not found:
-            self.tprint(arg="!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+            self.tprint(arg="!!!",
                         level=30,
                         color="red")
             self.tprint(arg="!!! Detector %s missing from the BEST detector information file !!!" %
@@ -1096,9 +1096,10 @@ class RapdPlugin(Process):
                         (info.BEST_INFO[detector], detector_info),
                         level=30,
                         color="red")
-            self.tprint(arg="!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!",
+            self.tprint(arg="!!!",
                         level=30,
                         color="red")
+        return found
 
     def process_strategy(self, iteration=False):
         """
@@ -1123,7 +1124,11 @@ class RapdPlugin(Process):
                 # Get the Best version for this machine
                 best_version = xutils.get_best_version()
                 # Make sure that the BEST install has the detector
-                self.check_best_detector(DETECTOR_TO_BEST.get(self.image1.get("detector"), None))
+                detector_found = self.check_best_detector(DETECTOR_TO_BEST.get(self.image1.get("detector"), None))
+                # No detector in best param file - bail on best
+                if not detector_found:
+                    self.strategy == "mosflm"
+                    st = 4
 
             if self.multiproc == False:
                 end = st+1
