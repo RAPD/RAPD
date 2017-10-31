@@ -56,8 +56,8 @@ export class DialogNewProjectComponent implements OnInit {
       form_value.group = this.user.groups[0]._id;
     }
     // form_value._id = undefined;
-    console.log(form_value);
-    console.log(this.model);
+    // console.log(form_value);
+    // console.log(this.model);
 
     this.submitted = true;
     this.rest_service.submitProject(this.model)

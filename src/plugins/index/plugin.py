@@ -952,9 +952,10 @@ class RapdPlugin(Process):
                 # Update batch queue info if using a compute cluster
                 inp_kwargs.update(self.batch_queue)
 
-                #Launch the job
+                # Launch the job
+                print "launching job"
                 jobs[str(i)] = Thread(target=self.launcher,
-                                       kwargs=inp_kwargs)
+                                      kwargs=inp_kwargs)
                 jobs[str(i)].start()
 
         # Check if Best should rerun since original Best strategy is too long for Pilatus using
