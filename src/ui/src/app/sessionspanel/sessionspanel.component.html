@@ -33,11 +33,24 @@
           {{ value | date:'y-MM-dd HH:mm' }}
         </ng-template>
       </ngx-datatable-column>
-      <ngx-datatable-column name="Directory" prop="data_root_directory">
+      <ngx-datatable-column name="Directory" prop="data_root_dir">
         <ng-template let-value="value" ngx-datatable-cell-template>
           {{value}}
         </ng-template>
       </ngx-datatable-column>
     </ngx-datatable>
   </article>
+  <mat-toolbar class="rapd-main-panel-action-bar">
+    <form class="user-filter-form">
+      <mat-form-field
+        floatPlaceholder="never"
+        (keyup)='updateSessionFilter($event)'>
+        <input
+          matInput
+          type="text"
+          placeholder="Filter"
+          style="font-size:1em;">
+      </mat-form-field>
+    </form>
+  </mat-toolbar>
 </div>
