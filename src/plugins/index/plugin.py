@@ -1089,12 +1089,20 @@ class RapdPlugin(Process):
                 break
 
         if not found:
-            self.tprint(arg="Detector %s missing from the BEST detector information file" %
+            self.tprint(arg="!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" %
+                        detector,
+                        level=30,
+                        color="red")
+            self.tprint(arg="!!! Detector %s missing from the BEST detector information file !!!" %
                         detector,
                         level=30,
                         color="red")
             self.tprint(arg="Add \"%s\" \n to file %s \n to get BEST running" %
                         (info.BEST_INFO[detector], detector_info),
+                        level=30,
+                        color="red")
+            self.tprint(arg="!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" %
+                        detector,
                         level=30,
                         color="red")
 
@@ -1458,7 +1466,6 @@ Distance | % Transmission", level=98, color="white")
                     while 1:
                         # print "<<< x=%d, i=%d" % (x, i)
                         if job.is_alive() == False:
-                            print(dir(job))
                             if i == 4:
                                 log = os.path.join(self.labelit_dir, "mosflm_strat%s.out" % l[x])
                             else:
