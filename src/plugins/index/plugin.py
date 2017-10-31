@@ -953,7 +953,6 @@ class RapdPlugin(Process):
                 inp_kwargs.update(self.batch_queue)
 
                 # Launch the job
-                print "launching job"
                 jobs[str(i)] = Thread(target=self.launcher,
                                       kwargs=inp_kwargs)
                 jobs[str(i)].start()
@@ -1443,7 +1442,6 @@ Distance | % Transmission", level=98, color="white")
                     self.best_anom_results = {"best_results_anom":"FAILED"}
                     self.best_anom_failed = True
 
-
         try:
             st = 0
             if self.strategy == "mosflm":
@@ -1460,6 +1458,7 @@ Distance | % Transmission", level=98, color="white")
                     while 1:
                         # print "<<< x=%d, i=%d" % (x, i)
                         if job.is_alive() == False:
+                            print(dir(job))
                             if i == 4:
                                 log = os.path.join(self.labelit_dir, "mosflm_strat%s.out" % l[x])
                             else:
