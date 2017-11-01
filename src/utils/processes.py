@@ -61,7 +61,7 @@ def local_subprocess(command,
     print "  shell", shell
     print "  cwd", os.getcwd()
 
-    if logfile:
+    if logfile and (not result_queue):
         file_handle = open(logfile, "w")
         proc = Popen(shlex.split(command),
                      stdout=file_handle,
@@ -74,6 +74,7 @@ def local_subprocess(command,
 
         proc.wait()
         file_handle.close()
+
     else:
         proc = Popen(shlex.split(command),
                      stdout=PIPE,
@@ -102,6 +103,12 @@ def local_subprocess(command,
                 "tag": tag
             }
             result_queue.put(result)
+        #
+        if logfile:
+            file_handle = open(logfile, "w")
+            file_handle.write(stdout)
+            file_handle.write(stderr)
+            file_handle.close()
 
 def mp_pool_FUTURE(nproc=8):
     """Setup and return a multiprocessing.Pool to launch jobs"""
