@@ -209,5 +209,5 @@ def main():
         raise Exception("Not sure what to do!")
 
 if __name__ == "__main__":
-    print 'gh'
+    print 'ghh'
     main()
