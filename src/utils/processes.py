@@ -26,20 +26,17 @@ __status__ = "Development"
 
 # Standard imports
 from pprint import pprint
-import os
+import sys, os, signal
 import shlex
-import signal
-import sys
 #import time
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE, STDOUT
 from multiprocessing import Pool
 
 def local_subprocess(command,
                      logfile=False,
                      pid_queue=False,
                      result_queue=False,
-                     tag=False,
-                     shell=False):
+                     tag=False):
     """
     Run job as subprocess on local machine. based on xutils.processLocal
 
@@ -52,63 +49,39 @@ def local_subprocess(command,
         tag - an identifying tag to be useful to the caller
     """
 
-    print "local_subprocess"
-    print "  command", command
-    print "  logfile", logfile
-    print "  pid_queue", pid_queue
-    print "  result_queue", result_queue
-    print "  tag", tag
-    print "  shell", shell
-    print "  cwd", os.getcwd()
+    proc = Popen(shlex.split(command),
+                 stdout=PIPE,
+                 stderr=PIPE,
+                 #stderr=STDOUT,
+                 )
 
-    if logfile and (not result_queue):
-        file_handle = open(logfile, "w")
-        proc = Popen(shlex.split(command),
-                     stdout=file_handle,
-                     stderr=file_handle,
-                     shell=shell
-                    )
-        # Send back PID if have pid_queue
-        if pid_queue:
-            pid_queue.put(proc.pid)
+    # Send back PID if have pid_queue
+    if pid_queue:
+        pid_queue.put(proc.pid)
 
-        proc.wait()
-        file_handle.close()
-
-    else:
-        proc = Popen(shlex.split(command),
-                     stdout=PIPE,
-                     stderr=PIPE,
-                     shell=shell
-                    )
-
-        # Send back PID if have pid_queue
-        if pid_queue:
-            pid_queue.put(proc.pid)
-
-        try:
+    try:
         # Get the stdout and stderr from process
-            stdout, stderr = proc.communicate()
-        except KeyboardInterrupt:
-            # sys.exit()
-            os._exit()
+        stdout, stderr = proc.communicate()
+    except KeyboardInterrupt:
+        #sys.exit()
+        os._exit()
 
-        # Put results on a Queue, if given
-        if result_queue:
-            result = {
-                "pid": proc.pid,
-                "returncode": proc.returncode,
-                "stdout": stdout,
-                "stderr": stderr,
-                "tag": tag
-            }
-            result_queue.put(result)
-        #
-        if logfile:
-            file_handle = open(logfile, "w")
-            file_handle.write(stdout)
-            file_handle.write(stderr)
-            file_handle.close()
+    # Put results on a Queue, if given
+    if result_queue:
+        result = {
+            "pid": proc.pid,
+            "returncode": proc.returncode,
+            "stdout": stdout,
+            "stderr": stderr,
+            "tag": tag
+        }
+        result_queue.put(result)
+
+    # Write out a log file, if name passed in
+    if logfile:
+        with open(logfile, "w") as out_file:
+            out_file.write(stdout)
+            out_file.write(stderr)
 
 def mp_pool_FUTURE(nproc=8):
     """Setup and return a multiprocessing.Pool to launch jobs"""
