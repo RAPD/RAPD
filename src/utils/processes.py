@@ -92,16 +92,16 @@ def local_subprocess(command,
             # sys.exit()
             os._exit()
 
-    # Put results on a Queue, if given
-    if result_queue:
-        result = {
-            "pid": proc.pid,
-            "returncode": proc.returncode,
-            "stdout": stdout,
-            "stderr": stderr,
-            "tag": tag
-        }
-        result_queue.put(result)
+        # Put results on a Queue, if given
+        if result_queue:
+            result = {
+                "pid": proc.pid,
+                "returncode": proc.returncode,
+                "stdout": stdout,
+                "stderr": stderr,
+                "tag": tag
+            }
+            result_queue.put(result)
 
 def mp_pool_FUTURE(nproc=8):
     """Setup and return a multiprocessing.Pool to launch jobs"""
