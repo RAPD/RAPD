@@ -33,6 +33,7 @@ from subprocess import Popen
 
 # RAPD imports
 import utils.launch_tools as launch_tools
+from utils.modules import load_module
 
 class LauncherAdapter(object):
     """
@@ -60,23 +61,28 @@ class LauncherAdapter(object):
         """
         Orchestrate the adapter's actions
         """
-
-        # Adjust the message to this site
-        self.fix_command()
-
-        # Put the command into a file
-        command_file = launch_tools.write_command_file(self.settings["launch_dir"],
-                                                       self.message["command"],
-                                                       self.message)
-
-        # Set the site tag from input
-        site_tag = launch_tools.get_site_tag(self.message).split('_')[0]
-	
-
-        # Call the launch process on the command file
-        self.logger.debug("rapd.launch -s %s %s", site_tag, command_file)
-        print site_tag
-        Popen(["rapd.launch", "-s",site_tag, command_file])
+        # Check if command is ECHO
+        if self.message['command'] == 'ECHO':
+            # Load the simple_echo module
+            echo = load_module(seek_module='launch.launcher_adapters.echo_simple')
+            # send message to simple_echo
+            echo.LauncherAdapter(self.site, self.message, self.settings)
+        else:
+            # Adjust the message to this site
+            self.fix_command()
+    
+            # Put the command into a file
+            command_file = launch_tools.write_command_file(self.settings["launch_dir"],
+                                                           self.message["command"],
+                                                           self.message)
+    
+            # Set the site tag from input
+            site_tag = launch_tools.get_site_tag(self.message).split('_')[0]
+    
+            # Call the launch process on the command file
+            self.logger.debug("rapd.launch -s %s %s", site_tag, command_file)
+            print site_tag
+            Popen(["rapd.launch", "-s",site_tag, command_file])
 
     def fix_command(self):
         """

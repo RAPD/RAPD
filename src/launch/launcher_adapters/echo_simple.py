@@ -39,7 +39,7 @@ import logging
 from pprint import pprint
 # import pymongo
 # import re
-import redis
+#import redis
 # import shutil
 # import subprocess
 # import sys
@@ -48,6 +48,7 @@ import redis
 # import urllib2
 # import uuid
 # from distutils.spawn import find_executable
+import importlib
 
 # RAPD imports
 # import commandline_utils
@@ -87,12 +88,12 @@ class LauncherAdapter(object):
         self.message = message
         self.settings = settings
 
-        print "site"
-        pprint(site)
-        print "message"
-        pprint(message)
-        print "settings"
-        pprint(settings)
+        #print "site"
+        #pprint(site)
+        #print "message"
+        #pprint(message)
+        #print "settings"
+        #pprint(settings)
 
         self.run()
 
@@ -105,13 +106,12 @@ class LauncherAdapter(object):
 
     def preprocess(self):
         """Adjust the command passed in in install-specific ways"""
-
+        
         # Connect to redis
-        pool = redis.ConnectionPool(host=self.site.CONTROL_REDIS_HOST,
-                                    port=self.site.CONTROL_REDIS_PORT,
-                                    db=self.site.CONTROL_REDIS_DB)
+        redis_database = importlib.import_module('database.redis_adapter')
 
-        self.redis = redis.Redis(connection_pool=pool)
+        redis_db = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        self.redis = redis_db.connect_to_redis()
 
     def process(self):
         """The main action of the adapter"""

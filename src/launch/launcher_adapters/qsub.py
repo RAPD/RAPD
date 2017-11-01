@@ -76,70 +76,76 @@ class LauncherAdapter(Thread):
         """
         Orchestrate the adapter's actions
         """
-        # Load the cluster adapter for the site.
-        # This will need site specific functions for 'fix_command', 
-        # 'determine_nproc', 'check_queue', and 'process_cluster'
-        cluster = load_module(seek_module=self.site.CLUSTER_ADAPTER)
-
-        # Adjust the message to this site
-        # Get the new working directory. Message only has second part of the path.
-        #self.fix_command()
-        self.message = cluster.fix_command(self.message)
-        #self.message["directories"]["work"] = cluster.fix_command(self.message)
-
-        # Get the new working directory
-        work_dir = self.message["directories"]["work"]
-
-        # Get the launcher directory - Add command_files to keep files isolated
-        qsub_dir = self.message["directories"]["launch_dir"]+"/command_files"
-
-        # Put the message into a rapd-readable file
-        command_file = launch_tools.write_command_file(qsub_dir, self.message["command"], self.message)
-
-        # Set the site tag from input
-        site_tag = launch_tools.get_site_tag(self.message).split('_')[0]
-
-        # The command to launch the job
-        #command_line = "rapd.launch -vs %s %s" % (site_tag, command_file)
-        command_line = "rapd.launch -s %s %s" % (site_tag, command_file)
-
-        # Parse a label for qsub job from the command_file name
-        qsub_label = os.path.basename(command_file).replace(".rapd", "")
-
-        # Determine the number of precessors to request for job
-        nproc = cluster.determine_nproc(self.message['command'])
-
-        # Determine which cluster queue to run
-        #queue = self.determine_queue()
-        queue = cluster.check_queue(self.message['command'])
-
-        # Setup a Queue to retreive the jobID.
-        #q = mp_Queue()
-        q = t_Queue()
-
-        # Setup the job and launch it.
-        job = Thread(target=cluster.process_cluster,
-                      kwargs={'command':command_line,
-                              'work_dir':work_dir,
-                              'logfile':False,
-                              'batch_queue':queue,
-                              'nproc':nproc,
-                              'logger':self.logger,
-                              'name':qsub_label,
-                              'mp_event':False,
-                              'timeout':False,
-                              'pid_queue':q,
-                              })
-        job.start()
-        # This will be passed back to a monitor that will watch the jobs and kill ones that run too long.
-        jobID = q.get()
-        print jobID
-
-        # This joins the jobs so no defunct pythons left.
-        job.join()
-
-        #while job.is_alive():
-        #    time.sleep(1)
+        if self.message['command'] == 'ECHO':
+            echo = load_module(seek_module='launch.launcher_adapters.echo_simple')
+            # send message to simple_echo
+            echo.LauncherAdapter(self.site, self.message, self.settings)
+        else:
+            # Load the cluster adapter for the site.
+            # This will need site specific functions for 'fix_command', 
+            # 'determine_nproc', 'check_queue', and 'process_cluster'
+            cluster = load_module(seek_module=self.site.CLUSTER_ADAPTER)
+    
+            # Adjust the message to this site
+            # Get the new working directory. Message only has second part of the path.
+            #self.fix_command()
+            self.message = cluster.fix_command(self.message)
+            #self.message["directories"]["work"] = cluster.fix_command(self.message)
+    
+            # Get the new working directory
+            work_dir = self.message["directories"]["work"]
+    
+            # Get the launcher directory - Add command_files to keep files isolated
+            qsub_dir = self.message["directories"]["launch_dir"]+"/command_files"
+    
+            # Put the message into a rapd-readable file
+            command_file = launch_tools.write_command_file(qsub_dir, self.message["command"], self.message)
+    
+            # Set the site tag from input
+            print launch_tools.get_site_tag(self.message)
+            site_tag = launch_tools.get_site_tag(self.message).split('_')[0]
+    
+            # The command to launch the job
+            #command_line = "rapd.launch -vs %s %s" % (site_tag, command_file)
+            command_line = "rapd.launch -s %s %s" % (site_tag, command_file)
+    
+            # Parse a label for qsub job from the command_file name
+            qsub_label = os.path.basename(command_file).replace(".rapd", "")
+    
+            # Determine the number of precessors to request for job
+            nproc = cluster.determine_nproc(self.message['command'])
+    
+            # Determine which cluster queue to run
+            #queue = self.determine_queue()
+            queue = cluster.check_queue(self.message['command'])
+    
+            # Setup a Queue to retreive the jobID.
+            #q = mp_Queue()
+            q = t_Queue()
+    
+            # Setup the job and launch it.
+            job = Thread(target=cluster.process_cluster,
+                          kwargs={'command':command_line,
+                                  'work_dir':work_dir,
+                                  'logfile':False,
+                                  'batch_queue':queue,
+                                  'nproc':nproc,
+                                  'logger':self.logger,
+                                  'name':qsub_label,
+                                  'mp_event':False,
+                                  'timeout':False,
+                                  'pid_queue':q,
+                                  })
+            job.start()
+            # This will be passed back to a monitor that will watch the jobs and kill ones that run too long.
+            jobID = q.get()
+            print jobID
+    
+            # This joins the jobs so no defunct pythons left.
+            job.join()
+    
+            #while job.is_alive():
+            #    time.sleep(1)
 
 if __name__ == "__main__":
     #import multiprocessing
