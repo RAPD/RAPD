@@ -58,7 +58,7 @@ def local_subprocess(command,
     # Send back PID if have pid_queue
     if pid_queue:
         pid_queue.put(proc.pid)
-    
+
     try:
         # Get the stdout and stderr from process
         stdout, stderr = proc.communicate()
@@ -87,5 +87,3 @@ def mp_pool_FUTURE(nproc=8):
     """Setup and return a multiprocessing.Pool to launch jobs"""
     pool = Pool(processes=nproc)
     return pool
-
-
