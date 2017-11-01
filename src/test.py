@@ -252,7 +252,7 @@ red = connect_redis_manager_HA()
 #red.lpush('images_collected:NECAT_T', '/gpfs2/users/columbia/hendrickson_E_3093/images/wwang/runs/Hend03_04/Hend03_04_1_001075.cbf')
 #red.lpush('images_collected:NECAT_T', '/gpfs2/users/columbia/hendrickson_E_3093/images/wwang/runs/CPS3509_03/CPS3509_03_1_000001.cbf')
 #red.lpush('images_collected:NECAT_T', '/gpfs2/users/mskcc/patel_E_3080/images/hui/runs/hy_640_9/hy_640_9_1_000002.cbf')
-#red.lpush('images_collected:NECAT_T', '/gpfs2/users/mskcc/patel_E_2891/images/juncheng/snaps/chengwI5_PAIR_0_000005.cbf'),
+red.lpush('images_collected:NECAT_T', '/gpfs2/users/mskcc/patel_E_2891/images/juncheng/snaps/chengwI5_PAIR_0_000005.cbf'),
 #red.lpush('images_collected:NECAT_T', '/gpfs2/users/mskcc/patel_E_2891/images/juncheng/snaps/chengwI5_PAIR_0_000006.cbf'),
 #red.lpush('images_collected:NECAT_T', '/gpfs2/users/columbia/Mancia_E_3109/images/meagan/snaps/man2_3_0_000001.cbf'), # no index
 #red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/slri/sicheri_E_3136/images/Igor/runs/VP03_MKTYc/VP03_MKTYc_1_000001/VP03_MKTYc_1_000001.cbf'),
@@ -270,7 +270,7 @@ print red.llen('run_data:NECAT_T')
 #print red.llen('RAPD_RESULTS')
 #red.delete('RAPD_RESULTS')
 #print red.llen('run_info_T')
-#print red.llen('RAPD_JOBS_WAITING')
+print red.llen('RAPD_JOBS_WAITING')
 #red.delete('RAPD_JOBS_WAITING')
 #print red.llen('RAPD_JOBS_WAITING')
 #print red.lrange('run_info_T', 0, 5)
