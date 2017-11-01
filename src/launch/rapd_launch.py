@@ -184,7 +184,6 @@ def main():
 
     # Import the site settings
     SITE = importlib.import_module(site_file)
-    print 'GGHH'
 
     """
     # Set up logging
