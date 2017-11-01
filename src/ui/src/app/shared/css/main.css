@@ -189,8 +189,11 @@ mat-divider.rapd-side-list-divider {
 }
 
 .mat-list-item.rapd-list-item {
-  /*background-color: inherit;*/
-  font-size: 0.9em;
+
+}
+
+.mat-list-item.rapd-list-child-item {
+    margin-left: 3em;
 }
 
 .rapd-error-result {

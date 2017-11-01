@@ -10,111 +10,105 @@
   <mat-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
     <form [formGroup]="reindex_form">
       <div class="form-group">
-        <table class="rapd-form-table">
-          <tbody>
-            <tr>
-              <td class="rapd-form-table-rj">Spacegroup Override</td>
-              <td class="rapd-form-table-select">
-                <mat-select [(ngModel)]="model.spacegroup"
-                           formControlName="spacegroup">
-                  <mat-option [value]="0">None</mat-option>
-                  <mat-option *ngFor="let sg of globals_service.sgs_in_order" [value]="sg">
-                    {{globals_service.intl2std[sg]}}
-                  </mat-option>
-                </mat-select>
-              </td>
-            </tr>
-            <tr>
-              <td class="rapd-form-table-rj">Sample Type</td>
-              <td class="rapd-form-table-select">
-                <mat-select [(ngModel)]="model.sample_type"
-                           formControlName="sample_type">
-                  <mat-option *ngFor="let sample_type of sample_types" [value]="sample_type.val">
-                    {{sample_type.label}}
-                  </mat-option>
-                </mat-select>
-              </td>
-            </tr>
-            <tr>
-              <td class="rapd-form-table-rji">Solvent Content</td>
-              <td>
-                <mat-form-field class="example-full-width">
-                  <input matInput
-                         placeholder=""
-                         formControlName="solvent_content"
-                         [(ngModel)]="model.solvent_content">
-                </mat-form-field>
-              </td>
-            </tr>
-            <tr>
-              <td class="rapd-form-table-rj">Strategy Type</td>
-              <td class="rapd-form-table-select">
-                <mat-select [(ngModel)]="model.strategy_type"
-                           formControlName="strategy_type">
-                  <mat-option *ngFor="let strategy_type of strategy_types" [value]="strategy_type.val">
-                    {{strategy_type.label}}
-                  </mat-option>
-                </mat-select>
-              </td>
-            </tr>
-            <tr [ngClass]="model.strategy_type == 'mosflm' ? 'hidden': ''">
-              <td class="rapd-form-table-rj">Best Complexity</td>
-              <td class="rapd-form-table-select">
-                <mat-select [(ngModel)]="model.best_complexity"
-                           formControlName="best_complexity">
-                  <mat-option *ngFor="let best_complex of best_complexity" [value]="best_complex">
-                    {{best_complex}}
-                  </mat-option>
-                </mat-select>
-              </td>
-            </tr>
-            <tr [ngClass]="model.strategy_type == 'best' ? 'hidden': ''">
-              <td class="rapd-form-table-rj"># Segments</td>
-              <td class="rapd-form-table-select">
-                <mat-select [(ngModel)]="model.mosflm_seg"
-                           formControlName="mosflm_seg"
-                           width="4em">
-                  <mat-option *ngFor="let mosflm_seg of mosflm_segs" [value]="mosflm_seg">
-                    {{mosflm_seg}}
-                  </mat-option>
-                </mat-select>
-              </td>
-            </tr>
-            <tr [ngClass]="model.strategy_type == 'best' ? 'hidden': ''">
-              <td class="rapd-form-table-rj">Range of Segment</td>
-              <td>
-                <mat-form-field class="example-full-width">
-                  <input matInput
-                         placeholder=""
-                         formControlName="mosflm_rot"
-                         [(ngModel)]="model.mosflm_rot">
-                </mat-form-field>
-              </td>
-            </tr>
-            <tr [ngClass]="model.strategy_type == 'best' ? 'hidden': ''">
-              <td class="rapd-form-table-rji">Start Angle</td>
-              <td>
-                <mat-form-field class="example-full-width">
-                  <input matInput
-                         placeholder=""
-                         formControlName="mosflm_start"
-                         [(ngModel)]="model.mosflm_start">
-                </mat-form-field>
-              </td>
-            </tr>
-            <tr [ngClass]="model.strategy_type == 'best' ? 'hidden': ''">
-              <td class="rapd-form-table-rji">End Angle</td>
-              <td>
-                <mat-form-field class="example-full-width">
-                  <input matInput
-                         placeholder=""
-                         formControlName="mosflm_end"
-                         [(ngModel)]="model.mosflm_end">
-                </mat-form-field>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <p>
+          <mat-form-field>
+            <mat-select
+              [(ngModel)]="model.spacegroup"
+              formControlName="spacegroup"
+              placeholder="Spacegroup override">
+              <mat-option [value]="0">None</mat-option>
+              <mat-option *ngFor="let sg of globals_service.sgs_in_order" [value]="sg">
+                {{globals_service.intl2std[sg]}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </p>
+        <p>
+          <mat-form-field>
+            <mat-select [(ngModel)]="model.sample_type"
+                       formControlName="sample_type"
+                       placeholder="Sample type">
+              <mat-option *ngFor="let sample_type of sample_types" [value]="sample_type.val">
+                {{sample_type.label}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </p>
+        <p>
+          <mat-form-field>
+            <input matInput
+                   placeholder="Solvent content (0-1)"
+                   formControlName="solvent_content"
+                   [(ngModel)]="model.solvent_content">
+          </mat-form-field>
+        </p>
+        <p>
+          <mat-form-field>
+            <mat-select [(ngModel)]="model.strategy_type"
+                       formControlName="strategy_type"
+                       placeholder="Strategy program">
+              <mat-option *ngFor="let strategy_type of strategy_types" [value]="strategy_type.val">
+                {{strategy_type.label}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </p>
+        <p [ngClass]="model.strategy_type != 'best' ? 'hidden': ''">
+          <mat-form-field>
+            <mat-select [(ngModel)]="model.best_complexity"
+                       formControlName="best_complexity"
+                       placeholder="Strategy complexity">
+              <mat-option *ngFor="let best_complex of best_complexity" [value]="best_complex">
+                {{best_complex}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </p>
+        <p [ngClass]="model.strategy_type == 'best' ? 'hidden': ''">
+          <mat-form-field>
+            <mat-select
+              [(ngModel)]="model.mosflm_seg"
+              formControlName="mosflm_seg"
+              placeholder="Number of segments">
+              <mat-option *ngFor="let mosflm_seg of mosflm_segs" [value]="mosflm_seg">
+                {{mosflm_seg}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        <!-- </p>
+        <p [ngClass]="model.strategy_type == 'best' ? 'hidden': ''"> -->
+          <mat-form-field class="example-full-width">
+            <input matInput
+                   placeholder="Segment rotation range"
+                   formControlName="mosflm_rot"
+                   [(ngModel)]="model.mosflm_rot">
+          </mat-form-field>
+        </p>
+        <p [ngClass]="model.strategy_type == 'best' ? 'hidden': ''">
+          <mat-form-field class="example-full-width">
+            <input matInput
+                   placeholder="Strategy range start"
+                   formControlName="mosflm_start"
+                   [(ngModel)]="model.mosflm_start">
+          </mat-form-field>
+        <!-- </p>
+        <p [ngClass]="model.strategy_type == 'best' ? 'hidden': ''"> -->
+          <mat-form-field class="example-full-width">
+            <input matInput
+                   placeholder="Strategy range end"
+                   formControlName="mosflm_end"
+                   [(ngModel)]="model.mosflm_end">
+          </mat-form-field>
+        </p>
+        <p>
+          <mat-form-field class="example-full-width">
+            <input matInput
+                   placeholder="Beam search scope (mm)"
+                   number
+                   formControlName="beam_search"
+                   [(ngModel)]="model.beam_search">
+          </mat-form-field>
+        </p>
       </div>
     </form>
   </mat-dialog-content>

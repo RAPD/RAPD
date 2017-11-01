@@ -1,5 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { FormGroup, FormControl } from '@angular/forms';
+import { FormGroup,
+         FormControl,
+         Validators } from '@angular/forms';
 
 import { MatDialogRef } from '@angular/material';
 
@@ -35,7 +37,6 @@ export class UserDialogComponent implements OnInit {
       group1: new FormControl(),
       group2: new FormControl()
     });
-    console.log(this.groups);
   }
 
   submitUser() {
@@ -50,18 +51,22 @@ export class UserDialogComponent implements OnInit {
     // Putting groups into the model as [{_id:...}]
     if (form_values.group0) {
       if (form_values.group0.length > 0) {
-        this.model.groups.push({_id: form_values.group0});
+        if (this.model.groups.some(function(group){return group._id == form_values.group0})) {
+          this.model.groups.push({_id: form_values.group0});
+        }
     }}
     if (form_values.group1) {
       if (form_values.group1.length > 0) {
-        this.model.groups.push({_id: form_values.group1});
+        if (this.model.groups.some(function(group){return group._id == form_values.group1})) {
+          this.model.groups.push({_id: form_values.group1});
+        }
     }}
     if (form_values.group2) {
       if (form_values.group2.length > 0) {
-        this.model.groups.push({_id: form_values.group2});
+        if (this.model.groups.some(function(group){return group._id == form_values.group2})) {
+          this.model.groups.push({_id: form_values.group2});
+        }
     }}
-
-    // console.log(this.model);
 
     this.rest_service.submitUser(this.model).subscribe(params => {
       this.submitted = false;

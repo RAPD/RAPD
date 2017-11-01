@@ -34,7 +34,7 @@
       <mat-form-field>
       <input matInput
         placeholder="UID"
-        formControlName="uid"
+        formControlName="uidNumber"
         [(ngModel)]="model.uidNumber">
       </mat-form-field>
     </p>
@@ -42,14 +42,13 @@
       <mat-form-field>
         <input matInput
           placeholder="GID"
-          formControlName="gid"
+          formControlName="gidNumber"
           [(ngModel)]="model.gidNumber  ">
       </mat-form-field>
     </p>
     <p>
       <mat-form-field>
         <mat-select formControlName="status"
-          width="5em"
           placeholder="Status"
           [(ngModel)]="model.status">
           <mat-option value="active">active</mat-option>

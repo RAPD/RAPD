@@ -844,7 +844,6 @@ class RapdPlugin(Process):
             xutils.fix_bestfile()
 
         # If Raddose failed, here are the defaults.
-        pprint(self.raddose_results)
         if self.raddose_results["raddose_results"]:
             dose = self.raddose_results["raddose_results"].get('dose', 100000)
         else:
@@ -952,9 +951,9 @@ class RapdPlugin(Process):
                 # Update batch queue info if using a compute cluster
                 inp_kwargs.update(self.batch_queue)
 
-                #Launch the job
+                # Launch the job
                 jobs[str(i)] = Thread(target=self.launcher,
-                                       kwargs=inp_kwargs)
+                                      kwargs=inp_kwargs)
                 jobs[str(i)].start()
 
         # Check if Best should rerun since original Best strategy is too long for Pilatus using
@@ -1071,8 +1070,6 @@ class RapdPlugin(Process):
     def check_best_detector(self, detector):
         """Check that the detector we need is in the BEST configuration file"""
 
-        # print "check_best_detector", detector
-
         best_executable = subprocess.check_output(["which", "best"])
         detector_info = os.path.join(os.path.dirname(best_executable),
                                      "detector-inf.dat")
@@ -1081,7 +1078,6 @@ class RapdPlugin(Process):
         lines = open(detector_info, "r").readlines()
         found = False
         for line in lines:
-            # print line.rstrip()
             if line.startswith(detector+" "):
                 found = True
                 break
@@ -1089,14 +1085,21 @@ class RapdPlugin(Process):
                 break
 
         if not found:
-            self.tprint(arg="Detector %s missing from the BEST detector information file" %
+            self.tprint(arg="!!!",
+                        level=30,
+                        color="red")
+            self.tprint(arg="!!! Detector %s missing from the BEST detector information file !!!" %
                         detector,
                         level=30,
                         color="red")
-            self.tprint(arg="Add \"%s\" \n to file %s \n to get BEST running" %
+            self.tprint(arg="Add \"%s\" \n to file %s to get BEST running" %
                         (info.BEST_INFO[detector], detector_info),
                         level=30,
                         color="red")
+            self.tprint(arg="!!!",
+                        level=30,
+                        color="red")
+        return found
 
     def process_strategy(self, iteration=False):
         """
@@ -1106,8 +1109,7 @@ class RapdPlugin(Process):
         iteration -- (default False)
         """
 
-        self.logger.debug("process_strategy")
-        # print "process_strategy", iteration
+        self.logger.debug("process_strategy", iteration)
 
         if iteration:
             st = iteration
@@ -1122,7 +1124,12 @@ class RapdPlugin(Process):
                 # Get the Best version for this machine
                 best_version = xutils.get_best_version()
                 # Make sure that the BEST install has the detector
-                self.check_best_detector(DETECTOR_TO_BEST.get(self.image1.get("detector"), None))
+                detector_found = self.check_best_detector(DETECTOR_TO_BEST.get(self.image1.get("detector"), None))
+                # No detector in best param file - bail on best
+                if not detector_found:
+                    self.logger.debug("Detector not support by best. Failing over to mosflm strategy")
+                    self.strategy = "mosflm"
+                    st = 4
 
             if self.multiproc == False:
                 end = st+1
@@ -1441,7 +1448,6 @@ Distance | % Transmission", level=98, color="white")
                 else:
                     self.best_anom_results = {"best_results_anom":"FAILED"}
                     self.best_anom_failed = True
-
 
         try:
             st = 0

@@ -1,6 +1,10 @@
-var express = require('express');
-var router = express.Router();
+var express  = require('express');
+var router   = express.Router();
 const config = require('../config');
+
+// Redis
+const redis  = require('redis');
+var redis_client = redis.createClient(config.redis_port, config.redis_host);
 
 // routes that end with jobs
 // ----------------------------------------------------
@@ -15,28 +19,21 @@ router.route('/jobs/submit')
 
     console.log(request);
 
-    res.status(200).json({
-            success: true,
-            queue_length: 1
+    redis_client.lpush('RAPD_JOBS', JSON.stringify(request), function(err, queue_length) {
+      if (err) {
+        console.error(err);
+        res.status(500).json({
+          success: false,
+          error: err
+        });
+      } else {
+        console.log('Job added to RAPD_JOBS queue length:', queue_length);
+        res.status(200).json({
+          success: true,
+          queue_length: queue_length
+        });
+      }
     });
-
-    // redis_client.lpush('RAPD_CLIENT_REQUESTS', JSON.stringify(request), function(err, queue_length) {
-    //   if (err) {
-    //     console.error(err);
-    //     let params = {
-    //       success: false,
-    //       error: err
-    //     };
-    //     res.json(params);
-    //   } else {
-    //     console.log('queue length:', queue_length);
-    //     let params = {
-    //       success: true,
-    //       queue_length: queue_length
-    //     };
-    //     res.json(params);
-    //   }
-    // });
   }); // End .put(function(req,res) {
 
 module.exports = router;
