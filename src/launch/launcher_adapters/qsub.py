@@ -102,7 +102,6 @@ class LauncherAdapter(Thread):
     
             # The command to launch the job
             command_line = "rapd.launch -vs %s %s" % (site_tag, command_file)
-            print command_line
     
             # Parse a label for qsub job from the command_file name
             qsub_label = os.path.basename(command_file).replace(".rapd", "")

@@ -39,7 +39,7 @@ ID = ("NECAT_T", 'NECAT_E')
 #BEAMLINE="T"
 
 # The secrets file - do not put in github repo!
-SECRETS = "sites.secrets_necat_t"
+SECRETS = "sites.secrets_necat"
 # Copy the secrets attribute to the local scope
 # Do not remove unless you know what you are doing!
 read_secrets(SECRETS, sys.modules[__name__])
