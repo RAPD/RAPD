@@ -3,12 +3,12 @@
     <ngx-datatable
       class="material"
       [rows]="projects"
-      [loadingIndicator]="loadingIndicator"
+      [loadingIndicator]="true"
       [columnMode]="'force'"
       [headerHeight]="50"
       [footerHeight]="50"
       [rowHeight]="'auto'"
-      [reorderable]="reorderable"
+      [reorderable]="true"
       (activate)='editProject($event)'>
       <ngx-datatable-column name="Type" prop="project_type">
         <ng-template let-value="value" ngx-datatable-cell-template>
