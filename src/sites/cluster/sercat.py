@@ -452,8 +452,7 @@ def process_cluster(command,
 /home/schuerjp/Programs/best:\
 /home/schuerjp/Programs/RAPD/bin:\
 /home/schuerjp/Programs/RAPD/share/phenix-1.10.1-2155/build/bin:\
-/home/schuerjp/Programs/raddose-20-05-09-distribute-noexec/bin:\
-/usr/local/bin:/bin:/usr/bin"
+/home/schuerjp/Programs/raddose-20-05-09-distribute-noexec/bin"
 
     if work_dir == False:
         work_dir = os.getcwd()
@@ -471,11 +470,12 @@ def process_cluster(command,
       fname = os.path.join(os.getcwd(),'qsub%s.sh'%random.randint(0,5000))
       print fname
       with open(fname,'w') as f:
-          #print >>f, '#!/bin/bash'
+          print >>f, '#!/bin/bash'
           print >>f, '#PBS -S /bin/bash'
           print >>f, '#PBS -j oe'
           print >>f, '#PBS -d %s'%work_dir
-          print >>f, '#PBS -v %s'%v
+          #print >>f, '#PBS -v %s'%v
+	  print >>f, '#PBS -V'
           print >>f, '#PBS -q %s'%batch_queue
           if name:
               print >>f, '#PBS -N %s'%name
@@ -488,7 +488,7 @@ def process_cluster(command,
           print >>f, command+'\n'
           f.close()
 
-    #os.chmod(fname, stat.S_IRWXU)
+    os.chmod(fname, stat.S_IRWXU)
     qs = ['qsub', fname]
     #Launch the job on the cluster
     proc = subprocess.Popen(qs,
