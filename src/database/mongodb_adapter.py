@@ -473,7 +473,7 @@ class Database(object):
             {"result_id":get_object_id(result1_id)},
             {"$set":{
                 "data_type":plugin_result["plugin"]["data_type"],
-                "parent_id":plugin_result["process"]["parent_id"],
+                "parent_id":plugin_result["process"].get(["parent_id"], False),
                 "plugin_id":plugin_result["plugin"]["id"],
                 "plugin_type":plugin_result["plugin"]["type"],
                 "plugin_version":plugin_result["plugin"]["version"],
