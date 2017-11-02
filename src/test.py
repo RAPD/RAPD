@@ -258,19 +258,20 @@ red = connect_redis_manager_HA()
 #red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/slri/sicheri_E_3136/images/Igor/runs/VP03_MKTYc/VP03_MKTYc_1_000001/VP03_MKTYc_1_000001.cbf'),
 #red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/slri/sicheri_E_3136/images/Igor/runs/VP03_MKTYc/VP03_MKTYc_1_000001/VP03_MKTYc_1_000002.cbf'),
 #red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/harvard/haowu_E_3143/images/liwang/runs/hw1_7/hw1_7_1_000001/hw1_7_1_000001.cbf'),
+red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/columbia/hendrickson_E_3193/images/wwang/runs/Hend02_08/Hend02_08_1_000001/Hend02_08_1_001400.cbf')
 
 print red.llen('RAPD_QSUB_JOBS_0')
 #red.delete('RAPD_QSUB_JOBS_0')
 print red.llen('RAPD_JOBS')
 print red.llen("images_collected:NECAT_T")
-red.delete("images_collected:NECAT_T")
+#red.delete("images_collected:NECAT_T")
 #print red.llen("images_collected:NECAT_T")
 print red.llen('run_data:NECAT_T')
 #red.delete("run_data:NECAT_T")
 #print red.llen('RAPD_RESULTS')
 #red.delete('RAPD_RESULTS')
 #print red.llen('run_info_T')
-#print red.llen('RAPD_JOBS_WAITING')
+print red.llen('RAPD_JOBS_WAITING')
 #red.delete('RAPD_JOBS_WAITING')
 #print red.llen('RAPD_JOBS_WAITING')
 #print red.lrange('run_info_T', 0, 5)

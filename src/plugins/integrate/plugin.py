@@ -185,7 +185,7 @@ class RapdPlugin(Process):
         self.dirs = self.command["directories"]
         self.image_data = self.command.get("data", {}).get("image_data")
         self.run_data = self.command.get("data", {}).get("run_data")
-        self.process_id = self.command["process"]["process_id"]
+        #self.process_id = self.command["process"]["process_id"]
         self.preferences = info.DEFAULT_PREFERENCES
         self.preferences.update(self.command.get("preferences", {}))
 

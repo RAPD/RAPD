@@ -171,7 +171,8 @@ def main():
 
     # If no site, error
     if site == False:
-        print text.error+"Could not determine a site. Exiting."+text.stop
+        #print text.error+"Could not determine a site. Exiting."+text.stop
+        print "Could not determine a site. Exiting."
         sys.exit(9)
 
     # Determine the site_file
@@ -179,7 +180,8 @@ def main():
 
     # Error out if no site_file to import
     if site_file == False:
-        print text.error+"Could not find a site file. Exiting."+text.stop
+        #print text.error+"Could not find a site file. Exiting."+text.stop
+        print "Could not find a site file. Exiting."
         sys.exit(9)
 
     # Import the site settings
@@ -209,5 +211,5 @@ def main():
         raise Exception("Not sure what to do!")
 
 if __name__ == "__main__":
-    print 'ghh'
+
     main()
