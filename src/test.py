@@ -1,4 +1,4 @@
-import cbf
+#import cbf
 import json
 import shutil
 import os
@@ -24,6 +24,15 @@ def connect_redis_manager_HA(name="remote_master"):
     sentinel = Sentinel(hosts)
     # Get the master redis instance
     return(sentinel.master_for(name))
+    
+def connect_redis():
+
+    pool = redis.ConnectionPool(host="164.54.208.142",
+    				port=6379,
+    				db=0)
+    # Save the pool for a clean exit.
+    return redis.Redis(connection_pool=pool)
+
 
 """
 import sites.cluster.sercat as cluster
@@ -244,7 +253,8 @@ pool.close()
 pool.join()
 """
 
-red = connect_redis_manager_HA()
+#red = connect_redis_manager_HA()
+red = connect_redis()
 
 #red.delete('images_collected:NECAT_T')
 #red.lpush('images_collected:NECAT_T', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000001.cbf')
@@ -258,11 +268,12 @@ red.lpush('images_collected:NECAT_T', '/gpfs2/users/mskcc/patel_E_2891/images/ju
 #red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/slri/sicheri_E_3136/images/Igor/runs/VP03_MKTYc/VP03_MKTYc_1_000001/VP03_MKTYc_1_000001.cbf'),
 #red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/slri/sicheri_E_3136/images/Igor/runs/VP03_MKTYc/VP03_MKTYc_1_000001/VP03_MKTYc_1_000002.cbf'),
 #red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/harvard/haowu_E_3143/images/liwang/runs/hw1_7/hw1_7_1_000001/hw1_7_1_000001.cbf'),
+red.lpush('images_collected:SERCAT_ID', '/data/ID_GSK_20171101.raw/11_01_2017_APS22id/screen/GSK8P9_AR.0002')
 
 print red.llen('RAPD_QSUB_JOBS_0')
 #red.delete('RAPD_QSUB_JOBS_0')
 print red.llen('RAPD_JOBS')
-print red.llen("images_collected:NECAT_T")
+print red.llen("images_collected:SERCAT_ID")
 #red.delete("images_collected:NECAT_T")
 #print red.llen("images_collected:NECAT_T")
 print red.llen('run_data:NECAT_T')
