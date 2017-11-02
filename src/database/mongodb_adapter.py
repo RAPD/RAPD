@@ -429,7 +429,7 @@ class Database(object):
         plugin_result -- dict of information from plugin - must have a process key pointing to entry
         """
 
-        self.logger.debug("save_plugin_result %s", plugin_result.get("process"))
+        self.logger.debug("save_plugin_result %s", plugin_result)
 
         # Connect to the database
         db = self.get_db_connection()
