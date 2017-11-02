@@ -19,13 +19,13 @@ import { RestService } from '../../services/rest.service';
 })
 export class DialogNewProjectComponent implements OnInit {
 
-  private user: User;
-  private profile: any;
-  private submit_error:string;
-  private submitted:boolean = false;
+  public user: User;
+  public profile: any;
+  public submit_error:string;
+  public submitted:boolean = false;
   @Input() project: Project;
-  model: Project;
-  private project_form: FormGroup;
+  public model: Project;
+  public project_form: FormGroup;
 
   constructor(private rest_service: RestService,
               public dialogRef: MatDialogRef<DialogNewProjectComponent>) { }

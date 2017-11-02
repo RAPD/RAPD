@@ -244,9 +244,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors"
-                    (chartHover)="chartHovered($event)"
-                    (chartClick)="chartClicked($event)">
+                    [colors]="globals_service.LineChartColors">
                   </canvas>
                 </div>
                 <div *ngIf="selected_plot=='osc_range'">
@@ -255,9 +253,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors"
-                    (chartHover)="chartHovered($event)"
-                    (chartClick)="chartClicked($event)">
+                    [colors]="globals_service.LineChartColors">
                   </canvas>
                 </div>
                 <div *ngIf="selected_plot=='osc_range_anom'">
@@ -266,9 +262,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors"
-                    (chartHover)="chartHovered($event)"
-                    (chartClick)="chartClicked($event)">
+                    [colors]="globals_service.LineChartColors">
                   </canvas>
                 </div>
                 <div *ngIf="selected_plot=='rad_damage'">
@@ -277,9 +271,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors"
-                    (chartHover)="chartHovered($event)"
-                    (chartClick)="chartClicked($event)">
+                    [colors]="globals_service.LineChartColors">
                   </canvas>
                 </div>
                 <div *ngIf="selected_plot=='wilson'">
@@ -288,9 +280,7 @@
                     [labels]="data.xs"
                     [options]="data.lineChartOptions"
                     [chartType]="data.lineChartType"
-                    [colors]="globals_service.LineChartColors"
-                    (chartHover)="chartHovered($event)"
-                    (chartClick)="chartClicked($event)">
+                    [colors]="globals_service.LineChartColors">
                   </canvas>
                 </div>
               </div>

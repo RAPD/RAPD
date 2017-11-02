@@ -223,7 +223,11 @@ class Database(object):
 
         return str(session_id)
 
-    def create_session(self, data_root_dir, group=None, session_type="mx"):
+    def create_session(self,
+                       data_root_dir,
+                       group=None,
+                       session_type="mx",
+                       site=None):
         """
         Get the session _id for the input information. The entry will be made it does not yet exist.
         The data_root_dir must be input for this to work.
@@ -247,7 +251,8 @@ class Database(object):
 
         # Insert into the database
         result = db.sessions.insert_one({"data_root_dir": data_root_dir,
-                                         "group": _group,
+                                         "group":_group,
+                                         "site":site,
                                          "type":session_type,
                                          "timestamp": datetime.datetime.utcnow()})
 
@@ -424,7 +429,7 @@ class Database(object):
         plugin_result -- dict of information from plugin - must have a process key pointing to entry
         """
 
-        self.logger.debug("save_plugin_result %s", plugin_result.get("process"))
+        self.logger.debug("save_plugin_result %s", plugin_result)
 
         # Connect to the database
         db = self.get_db_connection()
@@ -435,23 +440,21 @@ class Database(object):
 
         # Make sure we are all ObjectIds - this is until I can get the
         # object traversal working
-        self.logger.debug(plugin_result["process"])
         if plugin_result.get("_id", False):
             plugin_result["_id"] = get_object_id(plugin_result["_id"])
-
         # _ids in process dict
         for key, val in plugin_result["process"].iteritems():
             if "_id" in key:
                 plugin_result["process"][key] = get_object_id(val)
-        self.logger.debug(plugin_result["process"])
 
         #
-        # Add to plugin results
+        # Add to plugin-specific results
         #
+        self.logger.debug("Updating the plugin result table _id:%s", plugin_result.get("_id", "NONE"))
         collection_name = ("%s_%s_results" % (plugin_result["plugin"]["data_type"],
                                               plugin_result["plugin"]["type"])).lower()
         result1 = db[collection_name].update_one(
-            {"process.result_id":plugin_result["process"]["result_id"]},
+            {"process.result_id":plugin_result["process"].get("result_id", None)},
             {"$set":plugin_result},
             upsert=True)
 

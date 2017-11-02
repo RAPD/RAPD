@@ -16,11 +16,11 @@ import { RestService } from '../../../shared/services/rest.service';
 })
 export class DialogSelectProjectComponent implements OnInit {
 
-  private projects: any;
-  private submit_error: string;
-  private submitted: boolean = false;
-  private model: any = {_id:''};
-  private project_form: FormGroup;
+  public projects: any;
+  public submit_error: string;
+  public submitted: boolean = false;
+  public model: any = {_id:''};
+  public project_form: FormGroup;
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: any,
               public dialogRef: MatDialogRef<DialogSelectProjectComponent>,

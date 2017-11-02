@@ -433,21 +433,18 @@ class Model(object):
                     while attempt_counter < 5:
                         try:
                             attempt_counter += 1
-                            header = detector.read_header(
-                                fullname,
-                                beam_settings=self.site.BEAM_INFO[site_tag.upper()])
-                            break
+                            if os.path.exists(fullname):
+                                header = detector.read_header(
+                                    fullname,
+                                    beam_settings=self.site.BEAM_INFO[site_tag.upper()])
+                                break
+                            else:
+                                time.sleep(0.2)
                         except IOError:
                             self.logger.exception("Unable to access image")
-                            time.sleep(0.1)
                     else:
                         self.logger.error("Unable to access image after %d tries", attempt_counter)
                         return False
-
-                    # # Get all the image information
-                    # header = detector.read_header(
-                    #     fullname,
-                    #     beam_settings=self.site.BEAM_INFO[site_tag.upper()])
 
                     # Put data about run in the header object
                     header["collect_mode"] = "run"
@@ -494,13 +491,16 @@ class Model(object):
             while attempt_counter < 5:
                 try:
                     attempt_counter += 1
-                    header = detector.read_header(
-                        fullname,
-                        beam_settings=self.site.BEAM_INFO[site_tag.upper()])
-                    break
+                    if os.path.exists(fullname):
+                        header = detector.read_header(
+                            fullname,
+                            beam_settings=self.site.BEAM_INFO[site_tag.upper()])
+                        # Break out of loop
+                        break
+                    else:
+                        time.sleep(0.2)
                 except IOError:
                     self.logger.exception("Unable to access image")
-                    time.sleep(0.1)
             else:
                 self.logger.error("Unable to access image after %d tries", attempt_counter)
                 return False
@@ -774,8 +774,9 @@ class Model(object):
             command = {"command":"INDEX",
                        "process":{
                            "image1_id":image1.get("_id"),
-                           "image2_id":None,
-                           "result_id":ObjectId(),
+                           "image2_id":False,
+                           "parent_id":False,
+                           "result_id":str(ObjectId()),
                            "session_id":session_id,
                            "source":"server",
                            "status":0,
@@ -838,7 +839,8 @@ class Model(object):
                                "process":{
                                    "image1_id":image1.get("_id"),
                                    "image2_id":image2.get("_id"),
-                                   "result_id":ObjectId(),
+                                   "parent_id":False,
+                                   "result_id":str(ObjectId()),
                                    "session_id":session_id,
                                    "source":"server",
                                    "status":0,
@@ -878,7 +880,8 @@ class Model(object):
                 "command":"INTEGRATE",
                 "process":{
                     "image_id":image1.get("_id"),
-                    "result_id":ObjectId(),
+                    "parent_id":False,
+                    "result_id":str(ObjectId()),
                     "run_id":run_data.get("_id"),
                     "session_id":session_id,
                     "status":0,
@@ -922,7 +925,8 @@ class Model(object):
 
             session_id = self.database.create_session(
                 data_root_dir=header.get("data_root_dir", None),
-                group=group_id
+                group=group_id,
+                site=header.get("site_tag", None)
             )
 
         return session_id

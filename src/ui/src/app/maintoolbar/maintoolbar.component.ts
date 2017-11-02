@@ -24,8 +24,8 @@ export class MaintoolbarComponent implements OnInit {
   loginDialogRef: MatDialogRef<LoginDialogComponent>;
   changepassDialogRef: MatDialogRef<ChangepassDialogComponent>;
 
-  constructor(private auth_service: AuthService,
-              private globals_service: GlobalsService,
+  constructor(public auth_service: AuthService,
+              public globals_service: GlobalsService,
               public dialog: MatDialog,
               public viewContainerRef: ViewContainerRef) {}
 
