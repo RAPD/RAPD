@@ -24,6 +24,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
   // Arrays for holding result thumbnail data structures
   data_results: Array<any> = [];
   data_results_object: any = {};
+  public data_results_array: Array<any> = [];
 
   // Object for holding progressbar counters
   progressbar_counters:any = {};
@@ -72,58 +73,6 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
           }
         }
 
-        // Is this a child?
-        // if (result.parent_id) {
-        //   console.log('Have parent');
-
-        //   // If the result is pinned or junked, it is de-parented
-        //   if (! (result.display === 'junked' || result.display === 'pinned')) {
-        //
-        //     console.log('Not junked or pinned');
-        //
-        //     // Parent is here
-        //     let parent_index = self.data_results.indexOf(result.parent_id);
-        //     if (parent_index !== -1) {
-        //       console.log('parent is here');
-        //       // Make sure it's on the children list
-        //       if (self.data_results_object[result.parent_id].children.indexOf(result._id) === -1) {
-        //         console.log('Adding self to list');
-        //         self.data_results_object[result.parent_id].children.unshift(result._id);
-        //       }
-        //     }
-        //     // Make sure it's not already on the normal list
-        //     let present = self.data_results.indexOf(result._id);
-        //     if (present !== -1) {
-        //       self.data_results.splice(present, 1);
-        //     }
-        //   // Child, but junked or pinned
-        //   } else {
-        //     // Make sure it's on the main list
-        //     if (self.data_results.indexOf(result._id) === -1) {
-        //       self.data_results.unshift(result._id);
-        //     }
-        //     // Make sure it's not on the parent
-        //     // Parent is here
-        //     let index = self.data_results.indexOf(result.parent_id);
-        //     if (index !== -1) {
-        //       // Make sure it's on the children list
-        //       let present = self.data_results_object[result.parent_id].children.indexOf(result._id);
-        //       if (present !== -1) {
-        //         self.data_results_object[result.parent_id].children.splice(present, 1);
-        //       }
-        //     }
-        //   }
-        // // Not a child, so make sure there is a children array
-        // } else {
-        //   if (result.children === undefined) {
-        //     result.children = [];
-        //   }
-        //   // Not a child at all
-        //   if (self.data_results.indexOf(result._id) === -1) {
-        //     self.data_results.unshift(result._id);
-        //   }
-        // }
-
         // Add to result list
         if (self.data_results.indexOf(result._id) === -1) {
           self.data_results.unshift(result._id);
@@ -132,7 +81,22 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
         // Update results
         self.data_results_object[result._id] = result;
       }
+
+      // New one array method
+      let index_of_result = this.data_results_array.findIndex(x => x._id === result._id);
+      if (index_of_result === -1) {
+        console.log('NEW');
+        this.data_results_array.push(result);
+      } else {
+        console.log('OLD');
+      }
     }
+
+    // Sort the data array
+    this.data_results_array.sort(function(a, b) {
+      return a.timestamp - b.timestamp;
+    });
+
   }
 
   private onClick(id:string):void {
