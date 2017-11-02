@@ -446,11 +446,6 @@ class Model(object):
                         self.logger.error("Unable to access image after %d tries", attempt_counter)
                         return False
 
-                    # # Get all the image information
-                    # header = detector.read_header(
-                    #     fullname,
-                    #     beam_settings=self.site.BEAM_INFO[site_tag.upper()])
-
                     # Put data about run in the header object
                     header["collect_mode"] = "run"
                     header["run_id"] = str(run_id)
