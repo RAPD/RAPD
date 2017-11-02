@@ -433,13 +433,15 @@ class Model(object):
                     while attempt_counter < 5:
                         try:
                             attempt_counter += 1
-                            header = detector.read_header(
-                                fullname,
-                                beam_settings=self.site.BEAM_INFO[site_tag.upper()])
-                            break
+                            if os.path.exists(fullname):
+                                header = detector.read_header(
+                                    fullname,
+                                    beam_settings=self.site.BEAM_INFO[site_tag.upper()])
+                                break
+                            else:
+                                time.sleep(0.2)
                         except IOError:
                             self.logger.exception("Unable to access image")
-                            time.sleep(0.1)
                     else:
                         self.logger.error("Unable to access image after %d tries", attempt_counter)
                         return False
@@ -494,13 +496,16 @@ class Model(object):
             while attempt_counter < 5:
                 try:
                     attempt_counter += 1
-                    header = detector.read_header(
-                        fullname,
-                        beam_settings=self.site.BEAM_INFO[site_tag.upper()])
-                    break
+                    if os.path.exists(fullname):
+                        header = detector.read_header(
+                            fullname,
+                            beam_settings=self.site.BEAM_INFO[site_tag.upper()])
+                        # Break out of loop
+                        break
+                    else:
+                        time.sleep(0.2)
                 except IOError:
                     self.logger.exception("Unable to access image")
-                    time.sleep(0.1)
             else:
                 self.logger.error("Unable to access image after %d tries", attempt_counter)
                 return False
