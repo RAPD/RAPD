@@ -40,7 +40,6 @@ import { MxResultContainerComponent } from './mx-sessionpanel/mx-result-containe
 import { MxResultslistPanelComponent } from './mx-sessionpanel/mx-result-container/mx-resultslist-panel/mx-resultslist-panel.component';
 import { MxResultPanelComponent } from './mx-sessionpanel/mx-result-container/mx-result-panel/mx-result-panel.component';
 import { Highlight } from './shared/directives/highlight.directive';
-// import { LoginPanelComponent } from './login-panel/login-panel.component';
 import { UnauthorizedpanelComponent } from './unauthorizedpanel/unauthorizedpanel.component';
 import { UserDialogComponent } from './adminpanel/user-dialog/user-dialog.component';
 import { GroupDialogComponent } from './adminpanel/group-dialog/group-dialog.component';
@@ -82,7 +81,6 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     MxResultslistPanelComponent,
     MxResultPanelComponent,
     Highlight,
-    // LoginPanelComponent,
     UnauthorizedpanelComponent,
     UserDialogComponent,
     GroupDialogComponent,
