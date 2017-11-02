@@ -143,7 +143,9 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     ReindexDialogComponent,
     ReintegrateDialogComponent,
     DialogNewProjectComponent,
-    DialogSelectProjectComponent
+    DialogSelectProjectComponent,
+    Index3b34200Component,
+    IntegrateBd11200Component
   ],
   bootstrap: [AppComponent]
 })
