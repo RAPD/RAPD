@@ -774,8 +774,8 @@ class Model(object):
             command = {"command":"INDEX",
                        "process":{
                            "image1_id":image1.get("_id"),
-                           "image2_id":None,
-                           "parent_id":None,
+                           "image2_id":False,
+                           "parent_id":False,
                            "result_id":str(ObjectId()),
                            "session_id":session_id,
                            "source":"server",
@@ -839,7 +839,7 @@ class Model(object):
                                "process":{
                                    "image1_id":image1.get("_id"),
                                    "image2_id":image2.get("_id"),
-                                   "parent_id":None,
+                                   "parent_id":False,
                                    "result_id":str(ObjectId()),
                                    "session_id":session_id,
                                    "source":"server",
@@ -880,7 +880,7 @@ class Model(object):
                 "command":"INTEGRATE",
                 "process":{
                     "image_id":image1.get("_id"),
-                    "parent_id":None,
+                    "parent_id":False,
                     "result_id":str(ObjectId()),
                     "run_id":run_data.get("_id"),
                     "session_id":session_id,
