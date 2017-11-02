@@ -440,19 +440,17 @@ class Database(object):
 
         # Make sure we are all ObjectIds - this is until I can get the
         # object traversal working
-        self.logger.debug(plugin_result["process"])
         if plugin_result.get("_id", False):
             plugin_result["_id"] = get_object_id(plugin_result["_id"])
-
         # _ids in process dict
         for key, val in plugin_result["process"].iteritems():
             if "_id" in key:
                 plugin_result["process"][key] = get_object_id(val)
-        self.logger.debug(plugin_result["process"])
 
         #
         # Add to plugin-specific results
         #
+        self.logger.debug("Updating the plugin result table _id:%s", plugin_result.get("_id", "NONE"))
         collection_name = ("%s_%s_results" % (plugin_result["plugin"]["data_type"],
                                               plugin_result["plugin"]["type"])).lower()
         result1 = db[collection_name].update_one(
