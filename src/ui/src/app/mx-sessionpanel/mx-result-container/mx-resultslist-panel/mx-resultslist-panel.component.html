@@ -26,6 +26,33 @@
 
   <mat-divider class="rapd-side-list-divider"></mat-divider>
 
+  <ng-container *ngFor="let data_result of data_results_array">
+    <mat-list-item
+      class="rapd-list-item"
+      [attr.id]=data_result._id
+      [myHighlight]="highlight_color"
+      (click)="onClick(data_result._id)"
+      [ngClass]="data_result._id == active_result ? 'active-result': ''">
+      <table style="width:100%;">
+        <tr>
+          <td
+            [ngClass]="data_result.status < 0 ? 'rapd-error-result' : ''"
+            style="padding:0 0 0 0;">
+            {{data_result.repr}}
+          </td>
+        </tr>
+        <tr *ngIf="data_result.status > 0 && data_result.status < 100">
+          <td style="padding:0 0 0 0;">
+            <mat-progress-bar
+              mode="indeterminate"
+              color="primary">
+            </mat-progress-bar>
+          </td>
+        </tr>
+      </table>
+    </mat-list-item>
+  </ng-container>
+
   <ng-container *ngFor="let id of data_results">
     <div *ngIf="! ((data_results_object[id])?.display || (data_results_object[id])?.parent_id)">
       <mat-list-item

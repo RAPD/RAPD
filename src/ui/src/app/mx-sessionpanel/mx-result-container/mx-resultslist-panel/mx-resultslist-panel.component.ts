@@ -86,9 +86,10 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
       let index_of_result = this.data_results_array.findIndex(x => x._id === result._id);
       if (index_of_result === -1) {
         console.log('NEW');
-        this.data_results_array.push(result);
+        this.data_results_array.unshift(result);
       } else {
         console.log('OLD');
+        this.data_results_array[index_of_result] = result;
       }
     }
 
