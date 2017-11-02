@@ -775,7 +775,8 @@ class Model(object):
                        "process":{
                            "image1_id":image1.get("_id"),
                            "image2_id":None,
-                           "result_id":ObjectId(),
+                           "parent_id":None,
+                           "result_id":str(ObjectId()),
                            "session_id":session_id,
                            "source":"server",
                            "status":0,
@@ -838,7 +839,8 @@ class Model(object):
                                "process":{
                                    "image1_id":image1.get("_id"),
                                    "image2_id":image2.get("_id"),
-                                   "result_id":ObjectId(),
+                                   "parent_id":None,
+                                   "result_id":str(ObjectId()),
                                    "session_id":session_id,
                                    "source":"server",
                                    "status":0,
@@ -878,7 +880,8 @@ class Model(object):
                 "command":"INTEGRATE",
                 "process":{
                     "image_id":image1.get("_id"),
-                    "result_id":ObjectId(),
+                    "parent_id":None,
+                    "result_id":str(ObjectId()),
                     "run_id":run_data.get("_id"),
                     "session_id":session_id,
                     "status":0,

@@ -451,7 +451,7 @@ class Database(object):
         collection_name = ("%s_%s_results" % (plugin_result["plugin"]["data_type"],
                                               plugin_result["plugin"]["type"])).lower()
         result1 = db[collection_name].update_one(
-            {"process.result_id":plugin_result["process"]["result_id"]},
+            {"process.result_id":plugin_result["process"].get("result_id", None)},
             {"$set":plugin_result},
             upsert=True)
 
