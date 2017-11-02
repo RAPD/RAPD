@@ -223,7 +223,11 @@ class Database(object):
 
         return str(session_id)
 
-    def create_session(self, data_root_dir, group=None, session_type="mx"):
+    def create_session(self,
+                       data_root_dir,
+                       group=None,
+                       session_type="mx",
+                       site=None):
         """
         Get the session _id for the input information. The entry will be made it does not yet exist.
         The data_root_dir must be input for this to work.
@@ -247,7 +251,8 @@ class Database(object):
 
         # Insert into the database
         result = db.sessions.insert_one({"data_root_dir": data_root_dir,
-                                         "group": _group,
+                                         "group":_group,
+                                         "site":site,
                                          "type":session_type,
                                          "timestamp": datetime.datetime.utcnow()})
 
@@ -446,7 +451,7 @@ class Database(object):
         self.logger.debug(plugin_result["process"])
 
         #
-        # Add to plugin results
+        # Add to plugin-specific results
         #
         collection_name = ("%s_%s_results" % (plugin_result["plugin"]["data_type"],
                                               plugin_result["plugin"]["type"])).lower()
