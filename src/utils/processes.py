@@ -67,15 +67,22 @@ def local_subprocess(command,
     if pid_queue:
         pid_queue.put(proc.pid)
 
-    try:
-        # Get the stdout and stderr from process
-        stdout, stderr = proc.communicate()
-    except KeyboardInterrupt:
-        #sys.exit()
-        os._exit()
+    if logfile:
+        proc.wait()
+        out.close()
+    else:
+        try:
+            # Get the stdout and stderr from process
+            stdout, stderr = proc.communicate()
+        except KeyboardInterrupt:
+            #sys.exit()
+            os._exit()
 
     # Put results on a Queue, if given
     if result_queue:
+        if logfile:
+            stdout = open(logfile, "r").read()
+            stderr = None
         result = {
             "pid": proc.pid,
             "returncode": proc.returncode,
@@ -86,11 +93,11 @@ def local_subprocess(command,
         result_queue.put(result)
 
     # Write out a log file, if name passed in
-    # if logfile:
-    #     print "In logfile %s" % logfile
-    #     with open(logfile, "w") as out_file:
-    #         out_file.write(stdout)
-    #         out_file.write(stderr)
+    if logfile:
+        print "In logfile %s" % logfile
+        with open(logfile, "w") as out_file:
+            out_file.write(stdout)
+            out_file.write(stderr)
 
 def mp_pool_FUTURE(nproc=8):
     """Setup and return a multiprocessing.Pool to launch jobs"""
