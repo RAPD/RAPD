@@ -103,6 +103,7 @@ class Registrar(object):
         entry = {"ow_type":self.ow_type,
                  "id":self.uuid,
                  "ow_id":self.ow_id,
+                 "start_time":time.time(),
                  "timestamp":time.time()}
 
         # If custom_vars have been passed, add them
