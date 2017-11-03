@@ -431,6 +431,9 @@ class Database(object):
 
         self.logger.debug("save_plugin_result %s", plugin_result)
 
+        # Clear _id from plugin_result
+        del plugin_result["_id"]
+
         # Connect to the database
         db = self.get_db_connection()
 
