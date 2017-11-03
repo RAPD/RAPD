@@ -62,6 +62,7 @@ def local_subprocess(command,
     try:
         # Get the stdout and stderr from process
         stdout, stderr = proc.communicate()
+        print stdout
     except KeyboardInterrupt:
         #sys.exit()
         os._exit()
@@ -79,7 +80,7 @@ def local_subprocess(command,
 
     # Write out a log file, if name passed in
     if logfile:
-        print "In logfile"
+        print "In logfile %s" % logfile
         with open(logfile, "w") as out_file:
             out_file.write(stdout)
             out_file.write(stderr)
