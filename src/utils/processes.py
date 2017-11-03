@@ -79,6 +79,7 @@ def local_subprocess(command,
 
     # Write out a log file, if name passed in
     if logfile:
+        print "In logfile"
         with open(logfile, "w") as out_file:
             out_file.write(stdout)
             out_file.write(stderr)
