@@ -128,7 +128,7 @@ class Registrar(object):
             red.publish("OW:registering", json.dumps(entry))
 
             # If this process has an overwatcher
-            if not self.ow_id == None:
+            if not self.ow_id == False:
                 # Put entry in the redis db
                 red.hmset("OW:"+self.uuid+":"+self.ow_id, entry)
 
