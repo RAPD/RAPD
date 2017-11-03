@@ -32,7 +32,6 @@ import argparse
 import atexit
 import importlib
 import os
-from pprint import pprint
 from subprocess import Popen
 import sys
 import time
@@ -53,7 +52,7 @@ OVERWATCH_TIMEOUT = 30
 class Registrar(object):
     """Provides microservice monitoring tools"""
 
-    def __init__(self, site=None, ow_type="unknown", ow_id=False):
+    def __init__(self, site=None, ow_type="unknown", ow_id=None):
         """
         Initialize the Registrar
 
@@ -104,11 +103,7 @@ class Registrar(object):
         entry = {"ow_type":self.ow_type,
                  "id":self.uuid,
                  "ow_id":self.ow_id,
-                 "start_time":time.time(),
                  "timestamp":time.time()}
-
-        print "registering overwatcher"
-        pprint(entry)
 
         # If custom_vars have been passed, add them
         entry.update(custom_vars)
@@ -128,7 +123,7 @@ class Registrar(object):
             red.publish("OW:registering", json.dumps(entry))
 
             # If this process has an overwatcher
-            if self.ow_id:
+            if not self.ow_id == None:
                 # Put entry in the redis db
                 red.hmset("OW:"+self.uuid+":"+self.ow_id, entry)
 
@@ -187,7 +182,7 @@ class Registrar(object):
             red.publish("OW:updating", json.dumps(entry))
 
             # If this process has an overwatcher
-            if self.ow_id:
+            if not self.ow_id == None:
                 # Put entry in the redis db
                 red.hset("OW:"+self.uuid+":"+self.ow_id, "timestamp", time.time())
 
@@ -205,10 +200,6 @@ class Registrar(object):
 
                 # Expire the current entry in N seconds
                 red.expire("OW:"+launcher, OVERWATCH_TIMEOUT)
-
-            # Server health data
-            if self.ow_type == "overwatcher":
-                pass
 
         # Redis is down
         except redis.exceptions.ConnectionError:
@@ -235,8 +226,9 @@ class Overwatcher(Registrar):
     """
 
     ow_type = "overwatcher"
-    ow_id = False
+    ow_id = None
     ow_managed_id = None
+
 
     def __init__(self, site, managed_file, managed_file_flags):
         """
@@ -259,6 +251,11 @@ class Overwatcher(Registrar):
         i = self.managed_file_flags.index('--python')
         self.managed_file_flags.remove('--python')
         self.python_command = self.managed_file_flags.pop(i)
+        # print self.python_command
+
+        # print site
+        # print managed_file
+        # print managed_file_flags
 
         # Create a unique id
         self.uuid = uuid.uuid4().hex
@@ -352,17 +349,15 @@ class Overwatcher(Registrar):
 
         connection_errors = 0
         try:
-            counter = 0
             while True:
-                counter += 1
                 time.sleep(5)
 
                 # Get the managed process ow_id if unknown
-                if self.ow_managed_id:
+                if self.ow_managed_id == None:
                     self.ow_managed_id = self.get_managed_id()
 
                 # Check the managed process status if a managed process is found
-                if not self.ow_managed_id:
+                if not self.ow_managed_id == None:
                     status = self.check_managed_process()
 
                     # Watched process has failed
@@ -388,6 +383,7 @@ class Overwatcher(Registrar):
         """
 
         # Get connection
+        #red = redis.Redis(connection_pool=self.redis_pool)
         red = self.redis
 
         # What's the time?
@@ -478,7 +474,7 @@ def main():
     parsed_args, unknownargs = get_commandline()
 
     # Make sure there is a managed_process in parsed_args
-    if not parsed_args.managed_file:
+    if parsed_args.managed_file == None:
         print text.error+"Need a file to manage. Exiting.\n"+text.stop
         sys.exit(9)
 
@@ -492,7 +488,7 @@ def main():
     else:
         # Environmental var for site if no commandline
         site = parsed_args.site
-        if not site:
+        if site == None:
             if environmental_vars.has_key("RAPD_SITE"):
                 site = environmental_vars["RAPD_SITE"]
 
@@ -514,7 +510,7 @@ def main():
             if val == True:
                 parsed_args_list.append("--%s" % arg)
                 continue
-            if not val:
+            if val == False:
                 continue
             if val != None:
                 parsed_args_list.append("--%s" % arg)
