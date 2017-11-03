@@ -128,7 +128,7 @@ class Registrar(object):
             red.publish("OW:registering", json.dumps(entry))
 
             # If this process has an overwatcher
-            if not self.ow_id == False:
+            if self.ow_id:
                 # Put entry in the redis db
                 red.hmset("OW:"+self.uuid+":"+self.ow_id, entry)
 
@@ -187,7 +187,7 @@ class Registrar(object):
             red.publish("OW:updating", json.dumps(entry))
 
             # If this process has an overwatcher
-            if not self.ow_id == None:
+            if self.ow_id:
                 # Put entry in the redis db
                 red.hset("OW:"+self.uuid+":"+self.ow_id, "timestamp", time.time())
 
@@ -358,11 +358,11 @@ class Overwatcher(Registrar):
                 time.sleep(5)
 
                 # Get the managed process ow_id if unknown
-                if self.ow_managed_id == None:
+                if self.ow_managed_id:
                     self.ow_managed_id = self.get_managed_id()
 
                 # Check the managed process status if a managed process is found
-                if not self.ow_managed_id == None:
+                if not self.ow_managed_id:
                     status = self.check_managed_process()
 
                     # Watched process has failed
@@ -478,7 +478,7 @@ def main():
     parsed_args, unknownargs = get_commandline()
 
     # Make sure there is a managed_process in parsed_args
-    if parsed_args.managed_file == None:
+    if not parsed_args.managed_file:
         print text.error+"Need a file to manage. Exiting.\n"+text.stop
         sys.exit(9)
 
@@ -492,7 +492,7 @@ def main():
     else:
         # Environmental var for site if no commandline
         site = parsed_args.site
-        if site == None:
+        if not site:
             if environmental_vars.has_key("RAPD_SITE"):
                 site = environmental_vars["RAPD_SITE"]
 
@@ -514,7 +514,7 @@ def main():
             if val == True:
                 parsed_args_list.append("--%s" % arg)
                 continue
-            if val == False:
+            if not val:
                 continue
             if val != None:
                 parsed_args_list.append("--%s" % arg)
