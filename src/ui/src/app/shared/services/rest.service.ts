@@ -56,7 +56,7 @@ export class RestService {
       JSON.stringify({user: user}),
       {headers: header}
     )
-    .map(res => res.json())
+    // .map(res => res.json())
     .catch(error => this.handleError(error));
   }
 
@@ -105,8 +105,8 @@ export class RestService {
       this.globals_service.site.restApiUrl + '/groups/' + group._id,
       JSON.stringify({group: group}),
       {headers: header}
-    )
-    .map(res => res.json());
+    );
+    // .map(res => res.json());
   }
 
   // Delete a group from the database
@@ -114,7 +114,7 @@ export class RestService {
 
     console.log('deleteGroup', _id);
 
-    return this.authHttp.delete(this.globals_service.site.restApiUrl + '/groups/' + _id).map(res => res.json());
+    return this.authHttp.delete(this.globals_service.site.restApiUrl + '/groups/' + _id); //.map(res => res.json());
   }
 
   //
@@ -145,8 +145,8 @@ export class RestService {
       this.globals_service.site.restApiUrl + '/sessions/' + session._id,
       JSON.stringify({session: session}),
       {headers: header}
-    )
-    .map(res => res.json());
+    );
+    // .map(res => res.json());
   }
 
   // Delete a user from the database
@@ -154,7 +154,7 @@ export class RestService {
 
     console.log('deleteSession', _id);
 
-    return this.authHttp.delete(this.globals_service.site.restApiUrl + '/sessions/' + _id).map(res => res.json());
+    return this.authHttp.delete(this.globals_service.site.restApiUrl + '/sessions/' + _id); //.map(res => res.json());
   }
 
   //
@@ -164,8 +164,8 @@ export class RestService {
 
     console.log('getImageData _id:', _id);
 
-    return this.authHttp.get(this.globals_service.site.restApiUrl + '/images/' + _id)
-                        .map(res => res.json());
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/images/' + _id);
+                        // .map(res => res.json());
   }
 
   // RUN methods
@@ -203,7 +203,7 @@ export class RestService {
       JSON.stringify({project:project}),
       {headers:header}
     )
-    .map(res => res.json())
+    // .map(res => res.json())
     .catch(error => this.handleError(error));
   }
 
@@ -215,7 +215,7 @@ export class RestService {
     return this.authHttp.delete(
       this.globals_service.site.restApiUrl + '/projects/' + _id
     )
-    .map(res => res.json())
+    // .map(res => res.json())
     .catch(error => this.handleError(error));
   }
 
@@ -234,7 +234,7 @@ export class RestService {
       }),
       {headers:header}
     )
-    .map(res => res.json())
+    // .map(res => res.json())
     .catch(error => this.handleError(error));
   }
 
@@ -253,7 +253,7 @@ export class RestService {
       JSON.stringify({request:request}),
       {headers:header}
     )
-    .map(res => res.json())
+    // .map(res => res.json())
     .catch(error => this.handleError(error));
   }
 

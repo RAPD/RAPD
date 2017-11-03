@@ -52,7 +52,7 @@ OVERWATCH_TIMEOUT = 30
 class Registrar(object):
     """Provides microservice monitoring tools"""
 
-    def __init__(self, site=None, ow_type="unknown", ow_id=None):
+    def __init__(self, site=None, ow_type="unknown", ow_id=False):
         """
         Initialize the Registrar
 
@@ -103,7 +103,11 @@ class Registrar(object):
         entry = {"ow_type":self.ow_type,
                  "id":self.uuid,
                  "ow_id":self.ow_id,
+                 "start_time":time.time(),
                  "timestamp":time.time()}
+
+        print "registering overwatcher"
+        pprint(entry)
 
         # If custom_vars have been passed, add them
         entry.update(custom_vars)
@@ -201,6 +205,10 @@ class Registrar(object):
                 # Expire the current entry in N seconds
                 red.expire("OW:"+launcher, OVERWATCH_TIMEOUT)
 
+            # Server health data
+            if self.ow_type == "overwatcher":
+                pass
+
         # Redis is down
         except redis.exceptions.ConnectionError:
 
@@ -226,9 +234,8 @@ class Overwatcher(Registrar):
     """
 
     ow_type = "overwatcher"
-    ow_id = None
+    ow_id = False
     ow_managed_id = None
-
 
     def __init__(self, site, managed_file, managed_file_flags):
         """
@@ -251,11 +258,6 @@ class Overwatcher(Registrar):
         i = self.managed_file_flags.index('--python')
         self.managed_file_flags.remove('--python')
         self.python_command = self.managed_file_flags.pop(i)
-        # print self.python_command
-
-        # print site
-        # print managed_file
-        # print managed_file_flags
 
         # Create a unique id
         self.uuid = uuid.uuid4().hex
@@ -349,7 +351,9 @@ class Overwatcher(Registrar):
 
         connection_errors = 0
         try:
+            counter = 0
             while True:
+                counter += 1
                 time.sleep(5)
 
                 # Get the managed process ow_id if unknown
@@ -383,7 +387,6 @@ class Overwatcher(Registrar):
         """
 
         # Get connection
-        #red = redis.Redis(connection_pool=self.redis_pool)
         red = self.redis
 
         # What's the time?
