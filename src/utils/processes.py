@@ -29,6 +29,7 @@ from pprint import pprint
 import sys, os, signal
 import shlex
 #import time
+import subprocess
 from subprocess import Popen, PIPE, STDOUT
 from multiprocessing import Pool
 
@@ -49,11 +50,12 @@ def local_subprocess(command,
         tag - an identifying tag to be useful to the caller
     """
 
-    proc = Popen(shlex.split(command),
-                 stdout=PIPE,
-                 stderr=PIPE,
-                 #stderr=STDOUT,
-                 )
+    print command
+    proc = subprocess.Popen(shlex.split(command),
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            #stderr=STDOUT,
+                            )
 
     # Send back PID if have pid_queue
     if pid_queue:
@@ -62,7 +64,6 @@ def local_subprocess(command,
     try:
         # Get the stdout and stderr from process
         stdout, stderr = proc.communicate()
-        print stdout
     except KeyboardInterrupt:
         #sys.exit()
         os._exit()
