@@ -93,11 +93,11 @@ def local_subprocess(command,
         result_queue.put(result)
 
     # Write out a log file, if name passed in
-    if logfile:
-        print "In logfile %s" % logfile
-        with open(logfile, "w") as out_file:
-            out_file.write(stdout)
-            out_file.write(stderr)
+    # if logfile:
+    #     print "In logfile %s" % logfile
+    #     with open(logfile, "w") as out_file:
+    #         out_file.write(stdout)
+    #         out_file.write(stderr)
 
 def mp_pool_FUTURE(nproc=8):
     """Setup and return a multiprocessing.Pool to launch jobs"""
