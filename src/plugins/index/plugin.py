@@ -1503,6 +1503,7 @@ Distance | % Transmission", level=98, color="white")
                         else:
                             print "Looking at %s" % log
                             job1 = self.postprocess_best(log)
+                            print "  job=%s" % job1
                             if job1 == "OK":
                                 print "  OK"
                                 break
