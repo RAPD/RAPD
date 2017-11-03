@@ -32,6 +32,7 @@ import argparse
 import atexit
 import importlib
 import os
+from pprint import pprint
 from subprocess import Popen
 import sys
 import time
