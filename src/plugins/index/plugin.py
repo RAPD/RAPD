@@ -1501,11 +1501,14 @@ Distance | % Transmission", level=98, color="white")
                         if i == 4:
                             self.postprocess_mosflm(log)
                         else:
+                            print "Looking at %s" % log
                             job1 = self.postprocess_best(log)
                             if job1 == "OK":
+                                print "  OK"
                                 break
                             # If Best failed...
                             else:
+                                print "  failed"
                                 if self.multiproc == False:
                                     self.process_strategy(i+1)
                                 set_best_results(i, x)
