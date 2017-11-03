@@ -1284,8 +1284,7 @@ class RapdPlugin(Process):
         runbefore -- (default False)
         """
 
-        if self.verbose and self.logger:
-            self.logger.debug("AutoindexingStrategy::postprocess_best")
+        self.logger.debug("AutoindexingStrategy::postprocess_best %s" % inp)
 
         # print inp
 
