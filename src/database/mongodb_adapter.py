@@ -440,6 +440,7 @@ class Database(object):
 
         # Make sure we are all ObjectIds - this is until I can get the
         # object traversal working
+        print "Incoming plugin_result._id: %s" % plugin_result.get("_id", False)
         if plugin_result.get("_id", False):
             plugin_result["_id"] = get_object_id(plugin_result["_id"])
         # _ids in process dict
@@ -450,11 +451,15 @@ class Database(object):
         #
         # Add to plugin-specific results
         #
-        self.logger.debug("Updating the plugin result table _id:%s", plugin_result.get("_id", "NONE"))
+        self.logger.debug("Updating the plugin result table _id: %s", plugin_result.get("_id", "NONE"))
         collection_name = ("%s_%s_results" % (plugin_result["plugin"]["data_type"],
                                               plugin_result["plugin"]["type"])).lower()
+        # Debugging call to query db
+        debug_result = db[collection_name].find_one({"process.result_id":plugin_result["process"].get("result_id")})
+        self.logger.debug("Debugging query for previous plugin result %s" % debug_result)
+
         result1 = db[collection_name].update_one(
-            {"process.result_id":plugin_result["process"].get("result_id", None)},
+            {"process.result_id":plugin_result["process"].get("result_id")},
             {"$set":plugin_result},
             upsert=True)
 
