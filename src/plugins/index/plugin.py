@@ -71,7 +71,7 @@ from utils.r_numbers import try_int, try_float
 #from utils.communicate import rapd_send
 import utils.exceptions as exceptions
 import utils.global_vars as global_vars
-from utils.processes import local_subprocess # , mp_pool
+from utils.processes import local_subprocess, LocalSubprocess
 from utils.text import json
 from bson.objectid import ObjectId
 import utils.xutils as xutils
@@ -952,9 +952,15 @@ class RapdPlugin(Process):
                 inp_kwargs.update(self.batch_queue)
 
                 # Launch the job
-                jobs[str(i)] = Thread(target=self.launcher,
-                                      kwargs=inp_kwargs)
+                jobs[str(i)] = LocalSubprocess(command=inp_kwargs["command"],
+                                               logfile=inp_kwargs["logfile"])
+                # jobs[str(i)] = Thread(target=self.launcher,
+                #                       kwargs=inp_kwargs)
                 jobs[str(i)].start()
+
+        # print "Sleeping..."
+        # time.sleep(5)
+
 
         # Check if Best should rerun since original Best strategy is too long for Pilatus using
         # correct start and end from plots. (Way around bug in BEST.)
@@ -1285,8 +1291,7 @@ class RapdPlugin(Process):
         """
 
         self.logger.debug("AutoindexingStrategy::postprocess_best %s" % inp)
-
-        # print inp
+        print "postprocess_best inp: %s" % inp
 
         # Read in log files
         xml = "None"
@@ -1294,6 +1299,9 @@ class RapdPlugin(Process):
         if inp.count("anom"):
             anom = True
         log = open(inp, "r").readlines()
+        print ">>>>>>"
+        pprint(log)
+        print "<<<<<<"
 
         if os.path.exists(inp.replace("log", "xml")):
             xml = open(inp.replace("log", "xml"), "r").readlines()
@@ -1305,7 +1313,7 @@ class RapdPlugin(Process):
 
         # Parse the best results
         data = Parse.ParseOutputBest(self, (log, xml), anom)
-        #pprint(data)
+        pprint(data)
 
         # Set directory for future use
         #data["directory"] = os.path.dirname(inp)
@@ -1462,7 +1470,7 @@ Distance | % Transmission", level=98, color="white")
                     timer = 0
                     job = self.jobs[str(i)]
                     while 1:
-                        # print "<<< x=%d, i=%d" % (x, i)
+                        print i, ">>>", job.is_alive()
                         if job.is_alive() == False:
                             if i == 4:
                                 log = os.path.join(self.labelit_dir, "mosflm_strat%s.out" % l[x])
@@ -1501,6 +1509,7 @@ Distance | % Transmission", level=98, color="white")
                         if i == 4:
                             self.postprocess_mosflm(log)
                         else:
+                            self.jobs[str(i)].join()
                             print "Looking at %s" % log
                             job1 = self.postprocess_best(log)
                             print "  job=%s" % job1
@@ -1513,6 +1522,7 @@ Distance | % Transmission", level=98, color="white")
                                 if self.multiproc == False:
                                     self.process_strategy(i+1)
                                 set_best_results(i, x)
+
         except KeyboardInterrupt:
             pass
 

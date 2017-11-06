@@ -26,12 +26,74 @@ __status__ = "Development"
 
 # Standard imports
 from pprint import pprint
-import sys, os, signal
+import sys
+import os
+import signal
 import shlex
 #import time
 import subprocess
 from subprocess import Popen, PIPE, STDOUT
 from multiprocessing import Pool
+
+import threading
+import subprocess
+
+class LocalSubprocess(threading.Thread):
+
+    def __init__(self,
+                 command=False,
+                 logfile=False,
+                 pid_queue=False,
+                 result_queue=False,
+                 tag=False):
+
+        print "LocalSubprocess command: %s" % command
+        print "                logfile: %s" % logfile
+
+        self.stdout = None
+        self.stderr = None
+
+        self.command=command
+        self.logfile=logfile
+        self.pid_queue=pid_queue
+        self.result_queue=result_queue
+        self.tag=tag
+
+        threading.Thread.__init__(self)
+
+    def run(self):
+
+        print "LocalSubprocess.run"
+
+        if not self.command:
+            self.command = 'ls'
+        command = self.command.split(" ")
+        print os.getcwd()
+
+        p = subprocess.Popen(command,
+                             shell=True,
+                             stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+
+        self.stdout, self.stderr = p.communicate()
+
+        print "STDOUT"
+        print self.stdout
+        print "STDERR"
+        print self.stderr
+
+        if self.logfile:
+            print "LocalSubprocess.logfile"
+            with open(self.logfile, "w") as out_file:
+                out_file.write(self.stdout)
+                out_file.write(self.stderr)
+
+        print "LocalSubprocess.done"
+
+# myclass = MyClass()
+# myclass.start()
+# myclass.join()
+# print myclass.stdout
 
 def local_subprocess(command,
                      logfile=False,
@@ -50,16 +112,9 @@ def local_subprocess(command,
         tag - an identifying tag to be useful to the caller
     """
 
-    if logfile:
-        out = open(logfile, "w")
-        err = out
-    else:
-        out = subprocess.PIPE
-        err = subprocess.PIPE
-
     proc = subprocess.Popen(shlex.split(command),
-                            stdout=out,
-                            stderr=err,
+                            stdout=PIPE,
+                            stderr=PIPE,
                             #stderr=STDOUT,
                             )
 
@@ -67,22 +122,15 @@ def local_subprocess(command,
     if pid_queue:
         pid_queue.put(proc.pid)
 
-    if logfile:
-        proc.wait()
-        out.close()
-    else:
-        try:
-            # Get the stdout and stderr from process
-            stdout, stderr = proc.communicate()
-        except KeyboardInterrupt:
-            #sys.exit()
-            os._exit()
+    try:
+        # Get the stdout and stderr from process
+        stdout, stderr = proc.communicate()
+    except KeyboardInterrupt:
+        #sys.exit()
+        os._exit()
 
     # Put results on a Queue, if given
     if result_queue:
-        if logfile:
-            stdout = open(logfile, "r").read()
-            stderr = None
         result = {
             "pid": proc.pid,
             "returncode": proc.returncode,
@@ -93,11 +141,10 @@ def local_subprocess(command,
         result_queue.put(result)
 
     # Write out a log file, if name passed in
-    # if logfile:
-    #     print "In logfile %s" % logfile
-    #     with open(logfile, "w") as out_file:
-    #         out_file.write(stdout)
-    #         out_file.write(stderr)
+    if logfile:
+        with open(logfile, "w") as out_file:
+            out_file.write(stdout)
+            out_file.write(stderr)
 
 def mp_pool_FUTURE(nproc=8):
     """Setup and return a multiprocessing.Pool to launch jobs"""
