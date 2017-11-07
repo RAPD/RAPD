@@ -1995,6 +1995,10 @@ Distance | % Transmission", level=98, color="white")
         # if self.gui:
         self.results["results"] = results
 
+        # Set process.status to error (-1)
+        if self.labelit_results["status"] == "FAILED":
+            self.results["process"]["status"] = -1
+
         self.logger.debug(self.results)
 
         # Print results to screen in JSON format
