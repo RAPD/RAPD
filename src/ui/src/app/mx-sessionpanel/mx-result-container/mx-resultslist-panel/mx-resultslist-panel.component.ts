@@ -24,16 +24,10 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
   // Arrays for holding result thumbnail data structures
   data_results: Array<any> = [];
   data_results_object: any = {};
+  public data_results_array: Array<any> = [];
 
   // Object for holding progressbar counters
   progressbar_counters:any = {};
-
-  // index_results: Array<any> = [];
-  // integrate_results: Array<any> = [];
-  // merge_results: Array<any> = [];
-  // mr_results: Array<any> = [];
-  // sad_results: Array<any> = [];
-  // mad_results: Array<any> = [];
 
   incomingData$: ReplaySubject<string>;
 
@@ -62,53 +56,51 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
   // }
 
   private handleIncomingData(data: any) {
+
     let self = this;
 
-    // console.log(data);
-
-    // if (data.msg_type === 'results') {
     for (let result of data) {
-        if ((result.data_type+':'+result.plugin_type).toLowerCase() === this.result_types[this.result_type]) {
+      // My kind of data
+      if ((result.data_type+':'+result.plugin_type).toLowerCase() === this.result_types[this.result_type]) {
 
-          console.log(result);
-
-          // Filter for age/display
-          if (! result.display) {
-            console.log('  no display');
-            if (result.status < 100) {
-              console.log('  status < 100');
-              let result_time:any = Date.parse(result.timestamp);
-              console.log('  time diff =', Date.now() - result_time);
-              if (Date.now() - result_time > 3600000) {
-                return false;
-              }
+        // Filter for age & status
+        if (! result.display) {
+          if (result.status > 0 && result.status < 100) {
+            let result_time:any = Date.parse(result.timestamp);
+            if (Date.now() - result_time > 3600000) {
+              return false;
             }
           }
-
-          // New result
-          let id = result._id; // result.process.process_id;
-          console.log(id);
-          console.log(self.data_results);
-          if (self.data_results.indexOf(id) === -1) {
-            console.log('new');
-            self.data_results.unshift(id);
-          }
-          self.data_results_object[id] = result;
         }
 
-        // if (result.result_type === 'mx:index+strategy') {
-        //   self.index_results.push(result);
-        // } else if (result.result_type === 'mx:integrate') {
-        //   self.integrate_results.push(result);
-        // }
+        // Add to result list
+        if (self.data_results.indexOf(result._id) === -1) {
+          self.data_results.unshift(result._id);
+        }
+
+        // Update results
+        self.data_results_object[result._id] = result;
       }
-    // }
+
+      // New one array method
+      let index_of_result = this.data_results_array.findIndex(x => x._id === result._id);
+      if (index_of_result === -1) {
+        console.log('NEW');
+        this.data_results_array.unshift(result);
+      } else {
+        console.log('OLD');
+        this.data_results_array[index_of_result] = result;
+      }
+    }
+
+    // Sort the data array
+    this.data_results_array.sort(function(a, b) {
+      return a.timestamp - b.timestamp;
+    });
+
   }
 
-  private onClick(id: string):void {
-    console.log(id);
-    // console.log(event);
-    // event.target
+  private onClick(id:string):void {
 
     // Save the current result as the active result
     this.active_result = id;
@@ -118,43 +110,4 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
       value: this.data_results_object[id]
     });
   }
-
-  // Should the result be in the list?
-  // public shouldDisplay(id:string): boolean {
-  //
-  //   // console.log('display', id);
-  //
-  //   let result = this.data_results_object[id];
-  //   // console.log(result.status, result.timestamp);
-  //   if (result.display in {pinned:1, trashed:1}) {
-  //     return false;
-  //   } else if (result.status == 100) {
-  //     return true;
-  //   }  else {
-  //     let d:any = new Date(result.timestamp);
-  //     if (Date.now() - d < 3600) {
-  //       // console.log('  new enough');
-  //       return true;
-  //     } else {
-  //       // console.log('  too old');
-  //       return false;
-  //     }
-  //   }
-
-    // if (result.status === 100 || (Date.now() - d) < 36000) {
-    //   if (result.display) {
-    //     return result.display;
-    //   } else {
-    //     return 'normal';
-    //   }
-    // } else {
-    //   return '';
-    // }
-    //
-    // if ((Date.now() - timestamp) > 3600 ) {
-    //   return true;
-    // } else {
-    //   return false;
-    // }
-  // }
 }

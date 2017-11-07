@@ -35,7 +35,6 @@ export class AuthService implements CanActivate {
 
     let header = new Headers();
     header.append('Content-Type', 'application/x-www-form-urlencoded'); // 'application/json');
-    console.log(header);
 
     return this.http.post(
       this.globals_service.site.restApiUrl + 'authenticate',
@@ -44,7 +43,7 @@ export class AuthService implements CanActivate {
     )
     // .map(res => res.json())
     .map(res => this.handleAuth(res))
-    .catch(this.handleError);
+    .catch(error => this.handleError(error));
   }
 
   public requestPass(credentials): Observable<any> {
@@ -65,7 +64,7 @@ export class AuthService implements CanActivate {
     )
     // .map(res => res.json())
     .map(res => this.handlePassReq(res))
-    .catch(this.handleError);
+    .catch(error => this.handleError(error));
   }
 
   public changePass(credentials): Observable<any> {
@@ -84,7 +83,7 @@ export class AuthService implements CanActivate {
     )
     // .map(res => res.json())
     .map(res => this.handleChangePassReq(res))
-    .catch(this.handleError);
+    .catch(error => this.handleError(error));
   }
 
   handleAuth(res) {
@@ -186,43 +185,13 @@ export class AuthService implements CanActivate {
     }
   }
 
-
-  private handleError(error: any) {
+  private handleError(error) {
     console.error('An error occurred', error);
-    error.success = false;
-    // return error;
-    // return Observable.throw(error);
-    return Observable.create({
+    return Observable.of({
       success: false,
-      message: error.message
+      message: error.toString()
     });
   }
-
-/*
-getAuth(): Observable<any> {
-  console.log('getAuth');
-
-
-  // this.global_service = global_service;
-
-  // Automatic authentication for now
-  var creds ='email=fmurphy@anl.gov&password=shallowkillerbeg';
-
-  var header = new Headers();
-  header.append('Content-Type', 'application/x-www-form-urlencoded'); //'application/json');
-  //
-  // console.log(this.globals_service.site.restApiUrl+'/authenticate');
-  // console.log(creds);
-  //
-  return this.http.post(
-    this.globals_service.site.restApiUrl+'/authenticate',
-    creds,
-    {headers:header}
-  )
-  .map(res => res.json())
-  .catch(this.handleError);
-}
-*/
 
   public authenticated() {
 

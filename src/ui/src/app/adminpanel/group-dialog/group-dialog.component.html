@@ -2,7 +2,12 @@
   <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
     <mat-icon>close</mat-icon>
   </button>
-  <h2>Group</h2>
+  <h2>
+    <div *ngIf="model._id;then edit_content else create_content"></div>
+    <ng-template #edit_content>Edit </ng-template>
+    <ng-template #create_content>Create </ng-template>
+    Group
+  </h2>
 </div>
 <form [formGroup]="group_form">
   <div class="form-group">
@@ -29,24 +34,27 @@
       <mat-form-field>
       <input matInput
         placeholder="UID"
-        formControlName="uid"
-        [(ngModel)]="model.uid">
+        formControlName="uidNumber"
+        [(ngModel)]="model.uidNumber">
       </mat-form-field>
     </p>
     <p>
       <mat-form-field>
         <input matInput
           placeholder="GID"
-          formControlName="gid"
-          [(ngModel)]="model.gid">
+          formControlName="gidNumber"
+          [(ngModel)]="model.gidNumber  ">
       </mat-form-field>
     </p>
     <p>
-      <mat-select formControlName="status" placeholder="Role"
-              [(ngModel)]="model.status">
-        <mat-option value="active">active</mat-option>
-        <mat-option value="inactive">inactive</mat-option>
-      </mat-select>
+      <mat-form-field>
+        <mat-select formControlName="status"
+          placeholder="Status"
+          [(ngModel)]="model.status">
+          <mat-option value="active">active</mat-option>
+          <mat-option value="inactive">inactive</mat-option>
+        </mat-select>
+      </mat-form-field>
     </p>
   </div>
   <p>

@@ -1,32 +1,47 @@
-<mat-list class="rapd-side-list">
+<mat-list dense class="rapd-side-list">
   <mat-list-item *ngIf="data_results.length == 0">No results</mat-list-item>
   <ng-container *ngFor="let id of data_results">
-    <mat-list-item
-      class="rapd-list-item"
-      *ngIf="(data_results_object[id])?.display == 'pinned'"
-      [attr.id]=id
-      [myHighlight]="highlight_color"
-      (click)="onClick(id)"
-      [ngClass]="id == active_result ? 'active-result': ''">
-      {{data_results_object[id].repr}}
-    </mat-list-item>
+    <div *ngIf="(data_results_object[id])?.display == 'pinned'">
+      <mat-list-item
+        class="rapd-list-item"
+        [attr.id]=id
+        [myHighlight]="highlight_color"
+        (click)="onClick(id)"
+        [ngClass]="id == active_result ? 'active-result': ''">
+        {{data_results_object[id].repr}}
+      </mat-list-item>
+      <div *ngFor="let child_id of (data_results_object[id])?.children; let i = index;">
+        <mat-list-item
+          *ngIf="! (data_results_object[child_id])?.display"
+          class="rapd-list-child-item"
+          [attr.id]="child_id"
+          [myHighlight]="highlight_color"
+          (click)="onClick(child_id)"
+          [ngClass]="child_id == active_result ? 'active-result': ''">
+          Reprocess {{i+1}}
+        </mat-list-item>
+      </div>
+    </div>
   </ng-container>
-    <mat-divider class="rapd-side-list-divider"></mat-divider>
-  <ng-container *ngFor="let id of data_results">
+
+  <mat-divider class="rapd-side-list-divider"></mat-divider>
+
+  <ng-container *ngFor="let data_result of data_results_array">
     <mat-list-item
       class="rapd-list-item"
-      *ngIf="! (data_results_object[id])?.display"
-      [attr.id]=id
+      [attr.id]=data_result._id
       [myHighlight]="highlight_color"
-      (click)="onClick(id)"
-      [ngClass]="id == active_result ? 'active-result': ''">
+      (click)="onClick(data_result._id)"
+      [ngClass]="data_result._id == active_result ? 'active-result': ''">
       <table style="width:100%;">
         <tr>
-          <td style="padding:0 0 0 0;">
-            {{data_results_object[id].repr}}
+          <td
+            [ngClass]="data_result.status < 0 ? 'rapd-error-result' : ''"
+            style="padding:0 0 0 0;">
+            {{data_result.repr}}
           </td>
         </tr>
-        <tr *ngIf="(data_results_object[id])?.status < 100">
+        <tr *ngIf="data_result.status > 0 && data_result.status < 100">
           <td style="padding:0 0 0 0;">
             <mat-progress-bar
               mode="indeterminate"
@@ -37,16 +52,86 @@
       </table>
     </mat-list-item>
   </ng-container>
-  <mat-divider class="rapd-side-list-divider" style="border-top-color:rgba(255,125,125,0.5);"></mat-divider>
+
   <ng-container *ngFor="let id of data_results">
-    <mat-list-item
-      class="rapd-list-item"
-      *ngIf="(data_results_object[id])?.display == 'junked'"
-      [attr.id]=id
-      [myHighlight]="highlight_color"
-      (click)="onClick(id)"
-      [ngClass]="id == active_result ? 'active-result': ''">
-      {{data_results_object[id].repr}}
-    </mat-list-item>
+    <div *ngIf="! ((data_results_object[id])?.display || (data_results_object[id])?.parent_id)">
+      <mat-list-item
+        class="rapd-list-item"
+        [attr.id]=id
+        [myHighlight]="highlight_color"
+        (click)="onClick(id)"
+        [ngClass]="id == active_result ? 'active-result': ''">
+        <table style="width:100%;">
+          <tr>
+            <td
+              [ngClass]="(data_results_object[id])?.status < 0 ? 'rapd-error-result' : ''"
+              style="padding:0 0 0 0;">
+              {{data_results_object[id].repr}}
+            </td>
+          </tr>
+          <tr *ngIf="(data_results_object[id])?.status > 0 && (data_results_object[id])?.status < 100">
+            <td style="padding:0 0 0 0;">
+              <mat-progress-bar
+                mode="indeterminate"
+                color="primary">
+              </mat-progress-bar>
+            </td>
+          </tr>
+        </table>
+      </mat-list-item>
+      <div *ngFor="let child_id of (data_results_object[id])?.children; let i = index;">
+        <mat-list-item
+          *ngIf="! (data_results_object[child_id])?.display"
+          class="rapd-list-child-item"
+          [attr.id]="child_id"
+          [myHighlight]="highlight_color"
+          (click)="onClick(child_id)"
+          [ngClass]="child_id == active_result ? 'active-result': ''">
+          <table style="width:100%;">
+            <tr>
+              <td
+                [ngClass]="(data_results_object[child_id])?.status < 0 ? 'rapd-error-result' : ''"
+                style="padding:0 0 0 0;">
+                Reprocess {{i+1}}
+              </td>
+            </tr>
+            <tr *ngIf="(data_results_object[child_id])?.status > 0 && (data_results_object[id])?.status < 100">
+              <td style="padding:0 0 0 0;">
+                <mat-progress-bar
+                  mode="indeterminate"
+                  color="primary">
+                </mat-progress-bar>
+              </td>
+            </tr>
+          </table>
+        </mat-list-item>
+      </div>
+    </div>
+  </ng-container>
+
+  <mat-divider class="rapd-side-list-divider" style="border-top-color:rgba(255,125,125,0.5);"></mat-divider>
+
+  <ng-container *ngFor="let id of data_results">
+    <div *ngIf="(data_results_object[id])?.display === 'junked'">
+      <mat-list-item
+        class="rapd-list-item"
+        [attr.id]=id
+        [myHighlight]="highlight_color"
+        (click)="onClick(id)"
+        [ngClass]="id == active_result ? 'active-result': ''">
+        {{data_results_object[id].repr}}
+      </mat-list-item>
+      <div *ngFor="let child_id of (data_results_object[id])?.children; let i = index;">
+        <mat-list-item
+          *ngIf="! (data_results_object[child_id])?.display"
+          class="rapd-list-child-item"
+          [attr.id]="child_id"
+          [myHighlight]="highlight_color"
+          (click)="onClick(child_id)"
+          [ngClass]="child_id == active_result ? 'active-result': ''">
+          Reprocess {{i+1}}
+        </mat-list-item>
+      </div>
+    </div>
   </ng-container>
 </mat-list>

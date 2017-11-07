@@ -2,7 +2,7 @@ import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { Highlight } from '../shared/directives/highlight.directive';
-import { SessionService } from '../shared/services/session.service';
+import { RestService } from '../shared/services/rest.service';
 import { Session } from '../shared/classes/session';
 
 @Component({
@@ -15,9 +15,10 @@ import { Session } from '../shared/classes/session';
 export class SessionspanelComponent implements OnInit {
 
   sessions: Session[];
+  filtered_sessions: Session[];
   errorMessage: string;
 
-  constructor(private session_service: SessionService,
+  constructor(private rest_service: RestService,
               private router: Router) { }
 
   ngOnInit() {
@@ -25,7 +26,7 @@ export class SessionspanelComponent implements OnInit {
   }
 
   getSessions() {
-    this.session_service.getSessions()
+    this.rest_service.getSessions()
       .subscribe(
        sessions => this.sessions = sessions,
        error => this.errorMessage = <any>error);
@@ -37,6 +38,24 @@ export class SessionspanelComponent implements OnInit {
     let id = event.selected[0]._id
 
     this.router.navigate(['/mx', id]);
+  }
+
+  // The filter is changed
+  updateSessionFilter(event) {
+    const val = event.target.value.toLowerCase();
+
+    // filter our data
+    const temp = this.filtered_sessions.filter(function(d) {
+      // console.log(d);
+      return d.group.groupname.toLowerCase().indexOf(val) !== -1 ||
+             d.site.toLowerCase().indexOf(val) !== -1 ||
+             d.data_root_directory.toLowerCase().indexOf(val) !== -1 ||
+             d.last_process.indexOf(val) !== -1 ||
+             !val;
+    });
+
+    // update the rows
+    this.sessions = temp;
   }
 
 }

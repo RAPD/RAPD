@@ -82,6 +82,41 @@ def check_queue(inp):
 def get_nproc_njobs():
     """Return the nproc and njobs for an XDS integrate job"""
     return (4, 20)
+  
+def determine_nproc(command):
+    """Determine how many processors to reserve on the cluster for a specific job type."""
+    nproc = 1
+    if command in ('INDEX', 'INTEGRATE'):
+        nproc = 4
+    return nproc
+  
+def fix_command(message):
+    """
+    Adjust the command passed in in install-specific ways
+    """
+    # Adjust the working directory for the launch computer
+    work_dir_candidate = os.path.join(
+        message["directories"]["launch_dir"],
+        message["directories"]["work"])
+
+    # Make sure this is an original directory
+    if os.path.exists(work_dir_candidate):
+        # Already exists
+        for i in range(1, 1000):
+            if not os.path.exists("_".join((work_dir_candidate, str(i)))):
+                work_dir_candidate = "_".join((work_dir_candidate, str(i)))
+                break
+            else:
+                i += 1
+    # Now make the directory
+    if os.path.isdir(work_dir_candidate) == False:
+        os.makedirs(work_dir_candidate)
+
+    # Modify command
+    message["directories"]["work"] = work_dir_candidate
+
+    return message
+
 
 def connectCluster(inp, job=True):
   """
@@ -129,15 +164,17 @@ def process_cluster_fix(func):
     l = ['labelit.index', 'best -f', 'mosflm_strat']
     @wraps(func)
     def wrapper(**kwargs):
-        
-        launched = False
+        job = False
         for s in l:
             if kwargs['command'].count(s):
                 print 'GH'
-                Process(target=func, kwargs=kwargs).start()
-                launched = True
+                job = Process(target=func, kwargs=kwargs)
+                job.start()
                 break
-        if launched == False:
+        # wait for the job to finish and join
+        if job:
+            job.join()
+        else:
             return func(**kwargs)
     return wrapper
 
@@ -155,11 +192,6 @@ def process_cluster(command,
                    tag=False,
                    result_queue=False):
     """
-    Submit job to cluster using DRMAA (when you are already on the cluster).
-    Main script should not end with os._exit() otherwise running jobs could be orphanned.
-    To eliminate this issue, setup self.running = multiprocessing.Event(), self.running.set() in main script,
-    then set it to False (self.running.clear()) during postprocess to kill running jobs smoothly.
-    
     command - command to run
     work_dir - working directory
     logfile - print results of command to this file
@@ -246,17 +278,15 @@ def process_cluster(command,
                 if counter > timeout:
                     kill_job(s, job, logger)
                     break
-            #time.sleep(0.2)
             time.sleep(1)
             counter += 1
     except:
         if logger:
-            logger.debug('qsub_necat.py was killed, but the launched job will continue to run')
+            logger.debug('qsub.py was killed, but the launched job will continue to run')
     
     # Used for passing back results to queue
     if result_queue:
         # stdout and stderr are joined
-        stderr = ""
         stdout = ""
         if os.path.isfile(logfile):
             with open(logfile, 'rb') as raw:
@@ -269,7 +299,7 @@ def process_cluster(command,
         result = {'pid': job,
                   #"returncode": proc.returncode,
                   "stdout": stdout,
-                  "stderr": stderr,
+                  "stderr": '',
                   "tag": tag}
         result_queue.put(result)
 

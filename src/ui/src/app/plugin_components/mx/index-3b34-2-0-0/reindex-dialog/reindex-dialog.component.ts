@@ -2,7 +2,8 @@ import { Component,
          Inject,
          OnInit } from '@angular/core';
 import { FormGroup,
-         FormControl } from '@angular/forms';
+         FormControl,
+         Validators } from '@angular/forms';
 import { MatDialog,
          MatDialogRef,
          MAT_DIALOG_DATA,
@@ -46,15 +47,16 @@ export class ReindexDialogComponent implements OnInit {
   ngOnInit() {
 
     this.model = {
-      spacegroup: this.data.preferences.spacegroup,
+      beam_search: this.data.preferences.beam_search,
+      best_complexity: this.data.preferences.best_complexity,
       sample_type: this.data.preferences.sample_type,
       solvent_content: this.data.preferences.solvent_content,
+      spacegroup: this.data.preferences.spacegroup,
       strategy_type: this.data.preferences.strategy_type,
-      best_complexity: this.data.preferences.best_complexity,
-      mosflm_seg: this.data.preferences.mosflm_seg,
-      mosflm_rot: this.data.preferences.mosflm_rot,
-      mosflm_start: this.data.preferences.mosflm_start,
       mosflm_end: this.data.preferences.mosflm_end,
+      mosflm_rot: this.data.preferences.mosflm_rot,
+      mosflm_seg: this.data.preferences.mosflm_seg,
+      mosflm_start: this.data.preferences.mosflm_start,
     };
 
     if (this.model.spacegroup === false) {
@@ -62,35 +64,57 @@ export class ReindexDialogComponent implements OnInit {
     }
 
     this.reindex_form = new FormGroup({
-      spacegroup: new FormControl(),
-      sample_type: new FormControl(),
-      solvent_content: new FormControl(),
-      strategy_type: new FormControl(),
+      beam_search: new FormControl(this.model.beam_search,
+                                   [Validators.min(0), Validators.max(10)]),
       best_complexity: new FormControl(),
+      mosflm_end: new FormControl(this.model.mosflm_end,
+                                  [Validators.min(0), Validators.max(360)]),
+      mosflm_rot: new FormControl(this.model.mosflm_rot,
+                                  [Validators.min(0), Validators.max(360)]),
       mosflm_seg: new FormControl(),
-      mosflm_rot: new FormControl(),
-      mosflm_start: new FormControl(),
-      mosflm_end: new FormControl(),
+      mosflm_start: new FormControl(this.model.mosflm_start,
+                                    [Validators.min(0), Validators.max(360)]),
+      sample_type: new FormControl(),
+      solvent_content: new FormControl(this.model.solvent_content,
+                                       [Validators.min(0), Validators.max(1)]),
+      spacegroup: new FormControl(),
+      strategy_type: new FormControl(),
     });
-
   }
 
   submitReindex() {
 
-    // Start to make the request object
-    let request: any = {command:'INDEX'};
-    request.parent_result_id = this.data._id;
-    request.image1_id = this.data.header1._id;
+    console.log(this.data);
 
-    // 2nd image?
-    if (this.data.header2) {
-      request.image2_id = this.data.header2._id;
-    } else {
-      request.image2_id = false;
+    // Start to make the request object
+    let request:any = {
+      command:'INDEX',
+      process:{
+        parent_id: this.data.process.result_id,
+        source: 'client',
+        status: 0
+      },
+    };
+
+    // If this is a child, then its parent is our parent
+    if (this.data.process.parent_id) {
+      request.process.parent_id = this.data.process.parent_id;
     }
+
+    // Images
+    request.image1 = this.data.image1;
+    request.image2 = this.data.image2;
+
+    // Directories is a copy from parent. Plugin will handle
+    request.directories = this.data.command.directories;
 
     // Update the preferences with the form values
     request.preferences = Object.assign(this.data.preferences, this.reindex_form.value);
+
+    // Set run mode
+    request.preferences.run_mode = 'server';
+
+    console.log(request);
 
     this.submitted = true;
     this.rest_service.submitJob(request)

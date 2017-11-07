@@ -156,7 +156,6 @@ def main():
     """
     Run the main process
     """
-
     # Get the commandline args
     commandline_args = get_commandline()
 
@@ -172,7 +171,8 @@ def main():
 
     # If no site, error
     if site == False:
-        print text.error+"Could not determine a site. Exiting."+text.stop
+        #print text.error+"Could not determine a site. Exiting."+text.stop
+        print "Could not determine a site. Exiting."
         sys.exit(9)
 
     # Determine the site_file
@@ -180,7 +180,8 @@ def main():
 
     # Error out if no site_file to import
     if site_file == False:
-        print text.error+"Could not find a site file. Exiting."+text.stop
+        #print text.error+"Could not find a site file. Exiting."+text.stop
+        print "Could not find a site file. Exiting."
         sys.exit(9)
 
     # Import the site settings

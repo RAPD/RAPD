@@ -3,7 +3,6 @@ import { Routes, RouterModule }   from '@angular/router';
 
 import { LoginGuard } from './shared/guards/login-guard';
 
-import { LoginPanelComponent } from './login-panel/login-panel.component';
 import { WelcomepanelComponent } from './welcomepanel';
 import { DashboardComponent } from './dashboard';
 import { SessionspanelComponent } from './sessionspanel';
@@ -34,8 +33,6 @@ const appRoutes: Routes = [
       component: MxSessionpanelComponent,
       canActivate: [ LoginGuard ],
       children: []},
-  { path: 'login',
-      component: LoginPanelComponent },
   { path: 'unauthorized',
       component: UnauthorizedpanelComponent}
   // { path: '**', component: PageNotFoundComponent }

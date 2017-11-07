@@ -1,3 +1,18 @@
+<div MatDialogTitle>
+  <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
+    <mat-icon>close</mat-icon>
+  </button>
+  <h2>
+    <div *ngIf="model._id;then edit_content else create_content"></div>
+    <ng-template #edit_content>Edit </ng-template>
+    <ng-template #create_content>Create </ng-template>
+    Add To Project
+  </h2>
+</div>
+<form [formGroup]="project_form">
+  <div class="form-group">
+    <p>
+
 <div *ngIf="! submit_error">
   <div MatDialogTitle>
     <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
@@ -7,58 +22,14 @@
   </div>
   <mat-dialog-content [ngClass]="submitted ? 'overlay-grey': ''">
     <form [formGroup]="project_form">
-      <div class="form-group">
-        <table class="rapd-form-table">
-          <tbody>
-            <tr>
-              <td class="rapd-form-table-rj">Project</td>
-              <td class="rapd-form-table-select">
-                <mat-select [(ngModel)]="model._id"
-                           formControlName="_id">
-                   <mat-option *ngFor="let project of projects" [value]="project._id">
-                    {{project.title}}
-                   </mat-option>
-                </mat-select>
-              </td>
-            </tr>
-            <!-- <tr>
-              <td class="rapd-form-table-rji">Name</td>
-              <td class="rapd-form-table-select">
-                <mat-form-field style="width:7.5em;">
-                  <input matInput
-                         style="text-align:center;"
-                         placeholder=""
-                         formControlName="title"
-                         [(ngModel)]="model.title">
-                </mat-form-field>
-              </td>
-            </tr>
-            <tr>
-              <td class="rapd-form-table-rji">Description</td>
-              <td class="rapd-form-table-select">
-                <mat-form-field style="width:7.5em;">
-                  <input matInput
-                         style="text-align:center;"
-                         placeholder=""
-                         formControlName="description"
-                         [(ngModel)]="model.description">
-                </mat-form-field>
-              </td>
-            </tr>
-            <tr *ngIf="profile.groups.length > 1">
-              <td class="rapd-form-table-rj">Group</td>
-              <td class="rapd-form-table-select">
-                <mat-select [(ngModel)]="model.group"
-                           formControlName="group">
-                  <mat-option *ngFor="let group of profile.groups" [value]="group._id">
-                   {{group.groupname}}
-                  </mat-option>
-                </mat-select>
-              </td>
-            </tr> -->
-          </tbody>
-        </table>
-      </div>
+      <mat-form-field>
+        <mat-select [(ngModel)]="model._id"
+                   formControlName="_id">
+           <mat-option *ngFor="let project of projects" [value]="project._id">
+            {{project.title}}
+           </mat-option>
+        </mat-select>
+      </mat-form-field>
     </form>
   </mat-dialog-content>
 

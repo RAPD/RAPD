@@ -103,7 +103,7 @@ export class WebsocketService {
 
       case 'results':
         data.results.forEach(function(result) {
-          console.log(result);
+          // console.log(result);
           // Send the data to the subscribers
           self.results_subscribers.forEach(function(subscriber) {
             if (subscriber.session_id === result.session_id) {
@@ -111,7 +111,6 @@ export class WebsocketService {
             }
           });
         });
-        // self.results_subject.next(data);
         break;
 
       case 'result_details':
@@ -190,7 +189,7 @@ export class WebsocketService {
   // Change the display mode for a result
   updateResult(result:any) {
 
-    console.log('setDisplayMode', result);
+    // console.log('setDisplayMode', result);
 
     // Request to update result
     this.ws.send(JSON.stringify({

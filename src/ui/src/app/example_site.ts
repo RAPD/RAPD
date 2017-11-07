@@ -15,7 +15,7 @@ export class Site implements OnInit {
   //
   // The type of user id expected - email or username
   public authUserType: string = 'email';
-
+  public have_users:boolean = false;
 
   //
   // UI
@@ -23,6 +23,7 @@ export class Site implements OnInit {
 
   // The name of the site - used in the UI
   public name:string = 'SERCAT';
+  public site_tags:string[] = ['NECAT-C', 'NECAT-E']
 
   ngOnInit() {
   }

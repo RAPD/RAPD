@@ -15,7 +15,8 @@ var UserSchema = new Schema({
   },
   email: {
     type: String,
-    required: true
+    required: true,
+    unique: true
   },
   groups: [{
     type: Schema.Types.ObjectId,

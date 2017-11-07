@@ -6,17 +6,30 @@ var Run = require('../models/run');
 
 // Routes that end with runs
 // -----------------------------------------------------------------------------
-// route to return image data given an id (GET http://localhost:8080/api/runs/:run_id)
+// route to return image data given an id (GET api/runs/:run_id)
 router.route('/runs/:run_id')
   .get(function(req, res) {
-
-    console.log('GET run:', req.params.run_id);
 
     Run.
       findOne({_id:req.params.run_id}).
       exec(function(err, run) {
-        console.log(run);
-        res.json(run);
+        if (err) {
+          console.error(err);
+          res.status(500).json({
+            success: false,
+            message: err
+          });
+        } else {
+          // Do not return the password
+          for (let user of users) {
+            user.password = undefined;
+          }
+          console.log('Returning run', run);
+          res.status(200).json({
+            success: true,
+            run: run
+          });
+        }
       });
   });
 

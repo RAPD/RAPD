@@ -1,9 +1,9 @@
 export class Group {
   _id: string;
+  gidNumber: number;
   groupname: string;
   institution: string;
-  uid: number;
-  gid: number;
   status: string;
   timestamp: any;
+  uidNumber: number;
 }

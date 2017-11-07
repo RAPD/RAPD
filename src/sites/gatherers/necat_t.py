@@ -107,7 +107,7 @@ class RedisRunMonitor_OLD():
 
         # Create redis connections
         # Where beamline information is coming from
-        redis_database = importlib.import_module('database.rapd_redis_adapter')
+        redis_database = importlib.import_module('database.redis_adapter')
 
         bl_database = redis_database.Database(settings=self.site.SITE_ADAPTER_SETTINGS)
         self.bl_redis = bl_database.connect_redis_pool()
@@ -494,7 +494,7 @@ class Gatherer(object):
     def connect(self):
         """Connect to redis host"""
         # Connect to control redis for publishing run data info
-        redis_database = importlib.import_module('database.rapd_redis_adapter')
+        redis_database = importlib.import_module('database.redis_adapter')
 
         self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
         self.redis = self.redis_database.connect_to_redis()

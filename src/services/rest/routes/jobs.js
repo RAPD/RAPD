@@ -1,34 +1,37 @@
-var express = require('express');
-var router = express.Router();
+var express  = require('express');
+var router   = express.Router();
+const config = require('../config');
+
+// Redis
+const redis  = require('redis');
+var redis_client = redis.createClient(config.redis_port, config.redis_host);
 
 // routes that end with jobs
 // ----------------------------------------------------
 // These are redis-based queries
 // route to return all current requests (GET http://localhost:3000/api/requests)
-router.route('/requests')
+router.route('/jobs/submit')
 
-  // add a request for a process to launch (accessed at PUT http://localhost:3000/api/requests)
-  .put(function(req,res) {
-
-    console.log('PUT request');
+  // add a request for a process to launch (accessed at PUT api/requests)
+  .put(function(req, res) {
 
     let request = req.body.request;
 
-    redis_client.lpush('RAPD_CLIENT_REQUESTS', JSON.stringify(request), function(err, queue_length) {
+    console.log(request);
+
+    redis_client.lpush('RAPD_JOBS', JSON.stringify(request), function(err, queue_length) {
       if (err) {
         console.error(err);
-        let params = {
+        res.status(500).json({
           success: false,
           error: err
-        };
-        res.json(params);
+        });
       } else {
-        console.log('queue length:', queue_length);
-        let params = {
+        console.log('Job added to RAPD_JOBS queue length:', queue_length);
+        res.status(200).json({
           success: true,
           queue_length: queue_length
-        };
-        res.json(params);
+        });
       }
     });
   }); // End .put(function(req,res) {

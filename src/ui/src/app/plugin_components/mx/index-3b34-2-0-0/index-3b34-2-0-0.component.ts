@@ -2,6 +2,7 @@ import { Component,
          Input,
          OnDestroy,
          OnInit } from '@angular/core';
+
 import { MatDialog,
          MAT_DIALOG_DATA,
          MatToolbarModule } from '@angular/material';
@@ -24,6 +25,7 @@ import { DialogSelectProjectComponent } from '../../../shared/components/dialog-
 export class Index3b34200Component implements OnInit, OnDestroy {
 
   @Input() current_result: any;
+
   incomingData$: ReplaySubject<string>;
 
   full_result: any = {process:{status:0}, results:{}};
@@ -84,6 +86,11 @@ export class Index3b34200Component implements OnInit, OnDestroy {
   };
 
   objectKeys = Object.keys;
+  objectToArray(input:any):[any] {
+    return [].concat.apply([], Object.keys(input).map(function(key, index) {
+      return input[key];
+    }));
+  }
 
   constructor(private websocket_service: WebsocketService,
               private globals_service: GlobalsService,
@@ -114,7 +121,7 @@ export class Index3b34200Component implements OnInit, OnDestroy {
   // Display the header information
   displayHeader(image_id) {
 
-    console.log('displayHeader', image_id);
+    // console.log('displayHeader', image_id);
 
     let config = {
       data: {
@@ -128,7 +135,7 @@ export class Index3b34200Component implements OnInit, OnDestroy {
   // Set up the plot
   setPlot(plot_key:string) {
 
-    console.log('setPlot', plot_key, this.selected_plot);
+    // console.log('setPlot', plot_key, this.selected_plot);
 
     // Load the result for convenience
     let plot_result = this.full_result.results.plots[plot_key];
@@ -268,7 +275,7 @@ export class Index3b34200Component implements OnInit, OnDestroy {
         break;
     }
 
-    console.log(this.data);
+    // console.log(this.data);
   }
 
   openReindexDialog() {
@@ -304,6 +311,9 @@ export class Index3b34200Component implements OnInit, OnDestroy {
     result.display = 'junked';
     this.websocket_service.updateResult(result);
   }
+
+  // signal upstream that a result's display status has changed
+
 
   printPage() {
     // var doc = jsPDF();

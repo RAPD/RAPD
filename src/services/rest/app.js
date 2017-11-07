@@ -24,6 +24,7 @@ const groups_routes =   require('./routes/groups');
 const images_routes =   require('./routes/images');
 const jobs_routes =     require('./routes/jobs');
 const projects_routes = require('./routes/projects');
+const results_routes =  require('./routes/results');
 const runs_routes =     require('./routes/runs');
 const sessions_routes = require('./routes/sessions');
 const users_routes =    require('./routes/users');
@@ -60,7 +61,7 @@ if (config.authenticate_mode === 'ldap') {
 
 // Email Configuration
 var smtp_transport = nodemailer.createTransport(smtpTransport({
-  host: 'mailhost.anl.gov'
+  host: config.mailhost
 }));
 
 // Create the express app instance
@@ -337,14 +338,15 @@ apiRoutes.post('/requestpass', function(req, res) {
           } else {
             // Set up the email options
             let mailOptions = {
-              from: 'fmurphy@anl.gov',
+              from: config.admin_email,
               to: user.email,
-              cc: 'fmurphy@anl.gov',
+              cc: config.admin_email,
               subject: 'RAPD password recovery',
               text: 'Your new temporary password is '+new_pass_raw+'\nIt is authorized for 60 minutes.'};
             // Send the email
             smtp_transport.sendMail(mailOptions);
             // Reply to client
+            console.log(`Reset password for ${user.email} to ${new_pass_raw}`);
             res.json({success: true});
           }
         });
@@ -414,20 +416,20 @@ app.use('/api', groups_routes);
 app.use('/api', images_routes);
 app.use('/api', jobs_routes);
 app.use('/api', projects_routes);
+app.use('/api', results_routes);
 app.use('/api', runs_routes);
 app.use('/api', sessions_routes);
 app.use('/api', users_routes);
 
 module.exports = app;
 
-
-
-var port = normalizePort(process.env.PORT || config.port);
+let port = normalizePort(process.env.PORT || config.port);
 app.set('port', port);
 
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
+
 
 
 /**

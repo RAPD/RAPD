@@ -120,8 +120,9 @@ parse_message = function(channel, message) {
       let return_array = [];
 
       // Create a result
-      let result = { _id: message.process.process_id,
+      let result = { _id: message.process.result_id,
         data_type: message.plugin.data_type.toLowerCase(),
+        parent_id: message.process.parent_id,
         plugin_id: message.plugin.id,
         plugin_type: message.plugin.type.toLowerCase(),
         plugin_version: message.plugin.version,
@@ -131,8 +132,6 @@ parse_message = function(channel, message) {
         session_id: message.process.session_id,
         status: message.process.status,
         timestamp: new Date().toISOString()
-        // result_type is deprecated
-        // result_type: (message.plugin.data_type + ':' + message.plugin.type).toLowerCase(),
         };
       return_array.push(['results', [result]]);
 
@@ -401,10 +400,10 @@ function Wss (opt, callback) {
                     return false;
                   // No error
                   } else {
-                    console.log(detailed_result);
-                    console.log(Object.keys(detailed_result));
-                    console.log(detailed_result._doc);
-                    console.log(detailed_result._doc.process);
+                    // console.log(detailed_result);
+                    // console.log(Object.keys(detailed_result));
+                    // console.log(detailed_result._doc);
+                    // console.log(detailed_result._doc.process);
 
                       // Make sure there is a process
                       if ('process' in detailed_result._doc) {
@@ -421,7 +420,7 @@ function Wss (opt, callback) {
                               } else {
                                 detailed_result._doc.image1 = image1;
                                 console.log('POPULATED image1');
-                                console.log(detailed_result);
+                                // console.log(detailed_result);
                                 // Now look for image2
                                 if ('image2_id' in detailed_result._doc.process) {
 

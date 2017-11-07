@@ -185,7 +185,7 @@ class RapdPlugin(Process):
         self.dirs = self.command["directories"]
         self.image_data = self.command.get("data", {}).get("image_data")
         self.run_data = self.command.get("data", {}).get("run_data")
-        self.process_id = self.command["process"]["process_id"]
+        #self.process_id = self.command["process"]["process_id"]
         self.preferences = info.DEFAULT_PREFERENCES
         self.preferences.update(self.command.get("preferences", {}))
 
@@ -349,7 +349,7 @@ class RapdPlugin(Process):
     def connect_to_redis(self):
         """Connect to the redis instance"""
         # Create a pool connection
-        redis_database = importlib.import_module('database.rapd_redis_adapter')
+        redis_database = importlib.import_module('database.redis_adapter')
         redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
         self.redis = redis_database.connect_to_redis()
 

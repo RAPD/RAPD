@@ -75,14 +75,17 @@ function Wss (opt, callback) {
       ws.on('message', function(message) {
 
         var data = JSON.parse(message);
-        console.log(data);
+        // console.log(data);
 
         // Initializing the websocket
         if (data.request_type === 'initialize' ) {
           jwt.verify(data.token, 'ilovescotchyscotch', function(err, decoded) {
             if (err) {
-              console.log(err);
-              // return res.json({ success: false, message: 'Failed to authenticate token.' });
+              console.error(err);
+              return res.json({
+                success: false,
+                message: 'Failed to authenticate token.'
+              });
             } else {
               // console.log(decoded);
 

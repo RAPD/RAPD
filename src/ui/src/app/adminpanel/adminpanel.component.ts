@@ -1,4 +1,5 @@
-import { Component,
+import { ChangeDetectorRef,
+         Component,
          OnInit,
          ViewContainerRef } from '@angular/core';
 
@@ -11,7 +12,7 @@ import { GroupDialogComponent } from './group-dialog/group-dialog.component';
 import { SessionDialogComponent } from './session-dialog/session-dialog.component';
 import { ChangepassDialogComponent } from '../shared/dialogs/changepass-dialog/changepass-dialog.component';
 
-
+import { GlobalsService } from '../shared/services/globals.service';
 import { RestService } from '../shared/services/rest.service';
 import { User } from '../shared/classes/user';
 import { Group } from '../shared/classes/group';
@@ -31,14 +32,19 @@ export class AdminpanelComponent implements OnInit {
 
   user: User;
   users: User[];
+  filtered_users: User[];
   groups: Group[];
+  filtered_groups: Group[];
   user_groups: Group[] = [];
   sessions: Session[];
+  filtered_sessions: Session[];
   errorMessage: string;
 
-  constructor(private admin_service: RestService,
+  constructor(private globals_service: GlobalsService,
+              private rest_service: RestService,
               public dialog: MatDialog,
-              public viewContainerRef: ViewContainerRef) { }
+              public viewContainerRef: ViewContainerRef,
+              private changeDetectorRef: ChangeDetectorRef) { }
 
   ngOnInit() {
 
@@ -50,44 +56,40 @@ export class AdminpanelComponent implements OnInit {
 
     // Get the user profile
     this.user = JSON.parse(localStorage.getItem('profile'));
-    console.log(this.user);
   }
 
+  //
+  // USERS
+  //
   getUsers() {
-    this.admin_service.getUsers()
+    this.rest_service.getUsers()
       .subscribe(
-       users => this.users = users,
+       users => {
+         this.filtered_users = [...users];
+         this.users = users;
+       },
        error => this.errorMessage = <any>error);
   }
 
-  getGroups() {
+  // The filter is changed
+  updateUserFilter(event) {
+    const val = event.target.value.toLowerCase();
 
-    var self = this;
+    // filter our data
+    const temp = this.filtered_users.filter(function(d) {
+      return d.username.toLowerCase().indexOf(val) !== -1 ||
+             d.email.toLowerCase().indexOf(val) !== -1 ||
+             d.role.toLowerCase().indexOf(val) !== -1 ||
+             !val;
+    });
 
-    this.admin_service.getGroups()
-      .subscribe(
-       groups => this.groups = groups,
-       error => this.errorMessage = <any>error,
-       function() {
-         // Assemble the user's groups into a list
-         for (let group_id of self.user.groups) {
-           console.log('group_id', group_id);
-           let index = self.groups.findIndex(group => group._id === group_id);
-           self.user_groups.push(self.groups[index]);
-         }
-       }
-     );
-  }
-
-  getSessions() {
-    this.admin_service.getSessions()
-      .subscribe(
-       sessions => this.sessions = sessions,
-       error => this.errorMessage = <any>error);
+    // update the rows
+    this.users = temp;
   }
 
   // New user button is clicked
   newUser() {
+
     let user = new User();
 
     user._id = undefined;
@@ -99,7 +101,8 @@ export class AdminpanelComponent implements OnInit {
     user.status = 'active';
 
     let pseudo_event = {
-      selected: [user]
+      type: 'click',
+      row: user
     };
 
     this.editUser(pseudo_event);
@@ -107,29 +110,31 @@ export class AdminpanelComponent implements OnInit {
 
   // A user entry is clicked on
   editUser(event) {
-
-    let user = event.selected[0];
-
-    let config = new MatDialogConfig();
-    config.viewContainerRef = this.viewContainerRef;
-
-    this.userDialogRef = this.dialog.open(UserDialogComponent, config);
-    this.userDialogRef.componentInstance.user = user;
-    this.userDialogRef.componentInstance.groups = this.groups;
-
-    this.userDialogRef.afterClosed().subscribe(result => {
-      // console.log('closed', result);
-      this.userDialogRef = null;
-      if (result !== undefined) {
-        if (result.operation === 'delete') {
-          this.deleteUser(result._id);
-        } if (result.operation === 'add') {
-          this.addUser(result.user);
-        } if (result.operation === 'edit') {
-          this.addUser(result.user);
-        }
+    if (event.type === 'click') {
+      let user = event.row;
+      let config = new MatDialogConfig();
+      config.viewContainerRef = this.viewContainerRef;
+      this.userDialogRef = this.dialog.open(UserDialogComponent, config);
+      this.userDialogRef.componentInstance.user = user;
+      if (this.user.role === 'site_admin') {
+        this.userDialogRef.componentInstance.groups = this.groups;
+      } else if (this.user.role === 'group_admin') {
+        this.userDialogRef.componentInstance.groups = this.user.groups;
       }
-    });
+
+      this.userDialogRef.afterClosed().subscribe(result => {
+        this.userDialogRef = null;
+        if (result !== undefined) {
+          if (result.operation === 'delete') {
+            this.deleteUser(result._id);
+          } else if (result.operation === 'add') {
+            this.addUser(result.user);
+          } else if (result.operation === 'edit') {
+            this.addUser(result.user);
+          }
+        }
+      });
+    }
   }
 
   changePass() {
@@ -139,7 +144,6 @@ export class AdminpanelComponent implements OnInit {
   }
 
   addUser(new_user: User) {
-    console.log('addUser:', new_user);
     // If the user already exists, replace it
     let index = this.users.findIndex(user => user._id === new_user._id);
     if (index !== -1) {
@@ -150,7 +154,7 @@ export class AdminpanelComponent implements OnInit {
   }
 
   deleteUser(_id: string) {
-    console.log('deleteUser', _id);
+    // console.log('deleteUser', _id);
     // If the user already exists, replace it
     let index = this.users.findIndex(user => user._id === _id);
     if (index !== -1) {
@@ -158,10 +162,52 @@ export class AdminpanelComponent implements OnInit {
     }
   }
 
+  //
+  // GROUPS
+  //
+  getGroups() {
+
+    var self = this;
+
+    this.rest_service.getGroups()
+      .subscribe(
+       groups => {
+         this.filtered_groups = [...groups];
+         this.groups = groups;
+       },
+       error => this.errorMessage = <any>error,
+       function() {
+         // Assemble the user's groups into a list
+         for (let group_id of self.user.groups) {
+          //  console.log('group_id', group_id);
+           let index = self.groups.findIndex(group => group._id === group_id);
+           self.user_groups.push(self.groups[index]);
+         }
+       }
+     );
+  }
+
+  // The filter is changed
+  updateGroupFilter(event) {
+    const val = event.target.value.toLowerCase();
+
+    // filter our data
+    const temp = this.filtered_groups.filter(function(d) {
+      return d.groupname.toLowerCase().indexOf(val) !== -1 ||
+             d.institution.toLowerCase().indexOf(val) !== -1 ||
+             d.status.toLowerCase().indexOf(val) !== -1 ||
+             !val;
+    });
+
+    // update the rows
+    this.groups = temp;
+  }
+
   // Create a new group
   createGroup() {
     let pseudo_event = {
-      selected: [undefined]
+      selected: [undefined],
+      type: 'click'
     };
 
     this.editGroup(pseudo_event);
@@ -169,44 +215,44 @@ export class AdminpanelComponent implements OnInit {
 
   // A group entry is clicked on
   editGroup(event) {
+    if (event.type === 'click') {
 
-    let group = event.selected[0];
+      let group = event.row;
 
-    console.log(group);
-
-    if (group === undefined) {
-      group = new Group();
-      group._id = undefined;
-      group.groupname = undefined;
-      group.institution = undefined;
-      group.uid = undefined;
-      group.gid = undefined;
-      group.status = 'active';
-    }
-
-    let config = new MatDialogConfig();
-    config.viewContainerRef = this.viewContainerRef;
-
-    this.groupDialogRef = this.dialog.open(GroupDialogComponent, config);
-    this.groupDialogRef.componentInstance.group = group;
-
-    this.groupDialogRef.afterClosed().subscribe(result => {
-      console.log('closed', result);
-      this.groupDialogRef = null;
-      if (result !== undefined) {
-        if (result.operation === 'delete') {
-          this.deleteGroup(result._id);
-        } if (result.operation === 'add') {
-          this.addGroup(result.group);
-        } if (result.operation === 'edit') {
-          this.addGroup(result.group);
-        }
+      if (group === undefined) {
+        group = new Group();
+        group._id = undefined;
+        group.groupname = undefined;
+        group.institution = undefined;
+        group.uid = undefined;
+        group.gid = undefined;
+        group.status = 'active';
       }
-    });
+
+      let config = new MatDialogConfig();
+      config.viewContainerRef = this.viewContainerRef;
+
+      this.groupDialogRef = this.dialog.open(GroupDialogComponent, config);
+      this.groupDialogRef.componentInstance.group = group;
+
+      this.groupDialogRef.afterClosed().subscribe(result => {
+        // console.log('closed', result);
+        this.groupDialogRef = null;
+        if (result !== undefined) {
+          if (result.operation === 'delete') {
+            this.deleteGroup(result._id);
+          } if (result.operation === 'add') {
+            this.addGroup(result.group);
+          } if (result.operation === 'edit') {
+            this.addGroup(result.group);
+          }
+        }
+      });
+    }
   }
 
   addGroup(new_group: Group) {
-    console.log('addGroup:', new_group);
+    // console.log('addGroup:', new_group);
     // If the user already exists, replace it
     let index = this.groups.findIndex(group => group._id === new_group._id);
     if (index !== -1) {
@@ -217,7 +263,7 @@ export class AdminpanelComponent implements OnInit {
   }
 
   deleteGroup(_id: string) {
-    console.log('deleteGroup', _id);
+    // console.log('deleteGroup', _id);
     // If the user already exists, replace it
     let index = this.groups.findIndex(group => group._id === _id);
     if (index !== -1) {
@@ -225,12 +271,45 @@ export class AdminpanelComponent implements OnInit {
     }
   }
 
+  //
+  // SESSIONS
+  //
+
+  getSessions() {
+    this.rest_service.getSessions()
+      .subscribe(
+       sessions => {
+         this.filtered_sessions = [...sessions];
+         this.sessions = sessions;
+       },
+       error => this.errorMessage = <any>error);
+  }
+
+  // The filter is changed
+  updateSessionFilter(event) {
+    const val = event.target.value.toLowerCase();
+
+    // filter our data
+    const temp = this.filtered_sessions.filter(function(d) {
+      // console.log(d);
+      return d.group.groupname.toLowerCase().indexOf(val) !== -1 ||
+             d.site.toLowerCase().indexOf(val) !== -1 ||
+             d.data_root_directory.toLowerCase().indexOf(val) !== -1 ||
+             d.last_process.indexOf(val) !== -1 ||
+             !val;
+    });
+
+    // update the rows
+    this.sessions = temp;
+  }
+
   // Ctreate a new session
   createSession() {
 
     // Create a pseudo-event for the editSession method
     let pseudo_event = {
-      selected: [undefined]
+      selected: [undefined],
+      type: 'click'
     };
 
     // Call the editSession method
@@ -240,41 +319,41 @@ export class AdminpanelComponent implements OnInit {
   // A session entry is clicked on
   editSession(event) {
 
-    let session = event.selected[0];
+    if (event.type === 'click') {
+      let session = event.row;
 
-    // console.log(session);
-
-    if (session === undefined) {
-      session = new Session();
-      session._id = undefined;
-      session.group = {
-        _id: undefined,
-        groupname: undefined
-      };
-      session.site = undefined;
-      session.session_type = 'mx';
-    }
-
-    let config = new MatDialogConfig();
-    config.viewContainerRef = this.viewContainerRef;
-
-    this.sessionDialogRef = this.dialog.open(SessionDialogComponent, config);
-    this.sessionDialogRef.componentInstance.session = session;
-    this.sessionDialogRef.componentInstance.groups = this.groups;
-
-    this.sessionDialogRef.afterClosed().subscribe(result => {
-      // console.log('closed', result);
-      this.sessionDialogRef = null;
-      if (result !== undefined) {
-        if (result.operation === 'delete') {
-          this.deleteSession(result._id);
-        } if (result.operation === 'add') {
-          this.addSession(result.session);
-        } if (result.operation === 'edit') {
-          this.addSession(result.session);
-        }
+      if (session === undefined) {
+        session = new Session();
+        session._id = undefined;
+        session.group = {
+          _id: undefined,
+          groupname: undefined
+        };
+        session.site = undefined;
+        session.session_type = 'mx';
       }
-    });
+
+      let config = new MatDialogConfig();
+      config.viewContainerRef = this.viewContainerRef;
+
+      this.sessionDialogRef = this.dialog.open(SessionDialogComponent, config);
+      this.sessionDialogRef.componentInstance.session = session;
+      this.sessionDialogRef.componentInstance.groups = this.groups;
+
+      this.sessionDialogRef.afterClosed().subscribe(result => {
+        console.log('closed', result);
+        this.sessionDialogRef = null;
+        if (result !== undefined) {
+          if (result.operation === 'delete') {
+            this.deleteSession(result._id);
+          } if (result.operation === 'add') {
+            this.addSession(result.session);
+          } if (result.operation === 'edit') {
+            this.addSession(result.session);
+          }
+        }
+      });
+    }
   }
 
   addSession(new_session: Session) {

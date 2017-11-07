@@ -12,8 +12,8 @@ import { RestService } from '../../../shared/services/rest.service';
 })
 export class HeaderDialogComponent implements OnInit {
 
-  private image_data:any;
-  private error:any;
+  public image_data:any;
+  public error:any;
 
   constructor(public dialogRef: MatDialogRef<HeaderDialogComponent>,
               private rest_service: RestService,

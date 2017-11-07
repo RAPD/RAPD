@@ -14,15 +14,15 @@ import { RestService } from '../../../shared/services/rest.service';
 export class RunDialogComponent implements OnInit {
 
   public objectKeys = Object.keys;
-  private image_data:any;
-  private run_data:any;
+  public image_data:any;
+  public run_data:any;
 
   constructor(public dialogRef: MatDialogRef<RunDialogComponent>,
               private rest_service: RestService,
               @Inject(MAT_DIALOG_DATA) public data: any) { }
 
   ngOnInit() {
-    console.log(this.data);
+    // console.log(this.data);
 
     this.rest_service.getImageData(this.data.image_id)
                      .subscribe(

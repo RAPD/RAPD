@@ -20,42 +20,36 @@ router.route('/groups')
   .get(function(req, res) {
       Group.find({}, function(err, groups) {
         console.log('Return', groups.length, 'groups');
-        res.json(groups);
+        res.json({
+          success: true,
+          groups: groups
+        });
       });
   });
 
 router.route('/groups/:group_id')
   // edit or add the group with _id (PUT api/groups/:group_id)
   .put(function(req, res) {
+
     // Passed as JSON
     let group = req.body.group;
+
     // Updating
     if (group._id) {
-      Group.findById(group._id, function(err, saved_group) {
+
+      Group.findByIdAndUpdate(group._id, group, {new:true}, function(err, return_group) {
 
         if (err) {
           console.error(err);
-          res.send(err);
+          res.status(500).send(err);
+        } else {
+          console.log('Group updated successfully', return_group);
+          res.status(200).json({
+            success:true,
+            operation:'edit',
+            group:return_group
+          });
         }
-        // Update the entry
-        saved_group.groupname = group.groupname;
-        saved_group.institution = group.institution;
-        saved_group.status = group.status;
-
-        // Save the group with changes
-        saved_group.save(function(err, return_group) {
-          if (err) {
-            console.error(err);
-            res.send(err);
-          } else {
-            console.log('Group updated successfully', return_group);
-            res.json({
-              success:true,
-              operation:'edit',
-              group:return_group
-            });
-          }
-        });
       });
 
     // Creating
