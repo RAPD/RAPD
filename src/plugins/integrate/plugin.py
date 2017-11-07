@@ -1274,7 +1274,7 @@ class RapdPlugin(Process):
             xds_input.append('DIRECTION_OF_DETECTOR_Y-AXIS= 0.0 %.4f %.4f\n' %(tilty, tiltz))
             xds_input.append('! 0.0 cos(2theta) sin(2theta)\n\n')
 
-        # pprint(xds_input)
+        #pprint(xds_input)
 
         return xds_input
 
