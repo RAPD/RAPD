@@ -40,6 +40,8 @@ import subprocess
 
 class LocalSubprocess(threading.Thread):
 
+    done = False
+
     def __init__(self,
                  command=False,
                  logfile=False,
@@ -88,6 +90,7 @@ class LocalSubprocess(threading.Thread):
                 out_file.write(self.stdout)
                 out_file.write(self.stderr)
 
+        done = True
         print "LocalSubprocess.done"
 
 # myclass = MyClass()
@@ -117,7 +120,7 @@ def local_subprocess(command,
                             stderr=PIPE,
                             #stderr=STDOUT,
                             )
-
+    print "  running...", command
     # Send back PID if have pid_queue
     if pid_queue:
         pid_queue.put(proc.pid)
@@ -125,6 +128,7 @@ def local_subprocess(command,
     try:
         # Get the stdout and stderr from process
         stdout, stderr = proc.communicate()
+        print "  done..."
     except KeyboardInterrupt:
         #sys.exit()
         os._exit()
@@ -145,6 +149,8 @@ def local_subprocess(command,
         with open(logfile, "w") as out_file:
             out_file.write(stdout)
             out_file.write(stderr)
+
+    print "  finished...", command
 
 def mp_pool_FUTURE(nproc=8):
     """Setup and return a multiprocessing.Pool to launch jobs"""

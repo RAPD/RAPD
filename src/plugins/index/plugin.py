@@ -954,9 +954,10 @@ class RapdPlugin(Process):
                 # Launch the job
                 # jobs[str(i)] = LocalSubprocess(command=inp_kwargs["command"],
                 #                                logfile=inp_kwargs["logfile"])
-                self.jobs[str(i)] = Thread(target=self.launcher,
+                # TODO Should this be self.jobs?
+                jobs[str(i)] = Thread(target=self.launcher,
                                       kwargs=inp_kwargs)
-                self.jobs[str(i)].start()
+                jobs[str(i)].start()
 
 
         # Check if Best should rerun since original Best strategy is too long for Pilatus using
