@@ -257,10 +257,12 @@ class Model(object):
             image_monitor = importlib.import_module("%s" % site.IMAGE_MONITOR.lower())
 
             # Instantiate the monitor
-            self.image_monitor = image_monitor.Monitor(site=site,
-                                                       notify=self.receive,
-                                                       clean_start=self.settings.get("clean_start", False),
-                                                       overwatch_id=self.overwatch_id)
+            self.image_monitor = image_monitor.Monitor(
+                site=site,
+                notify=self.receive,
+                clean_start=self.settings.get("clean_start", False),
+                overwatch_id=self.overwatch_id)
+
     def stop_image_monitor(self):
         """Stop the image listening process for core"""
 
@@ -994,7 +996,7 @@ class Model(object):
         # self.logger.debug("Received: %s", message)
 
         command = message.get("command")
-        self.logger.debug("Received message of command type: %s", command)
+        self.logger.debug("Received message")
 
         # From a plugin
         if message.get("process", {}).get("type") == "plugin":

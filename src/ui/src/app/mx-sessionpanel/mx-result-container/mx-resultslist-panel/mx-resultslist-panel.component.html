@@ -1,6 +1,6 @@
 <mat-list dense class="rapd-side-list">
-  <mat-list-item *ngIf="data_results.length == 0">No results</mat-list-item>
-  <ng-container *ngFor="let id of data_results">
+  <mat-list-item *ngIf="data_results_ids.length == 0">No results</mat-list-item>
+  <ng-container *ngFor="let id of data_results_ids">
     <div *ngIf="(data_results_object[id])?.display == 'pinned'">
       <mat-list-item
         class="rapd-list-item"
@@ -26,7 +26,7 @@
 
   <mat-divider class="rapd-side-list-divider"></mat-divider>
 
-  <ng-container *ngFor="let data_result of data_results_array">
+  <!-- <ng-container *ngFor="let data_result of data_results_array">
     <mat-list-item
       class="rapd-list-item"
       [attr.id]=data_result._id
@@ -51,9 +51,36 @@
         </tr>
       </table>
     </mat-list-item>
-  </ng-container>
+    <div *ngFor="let child of data_result.children; let i = index; trackBy: trackChild">
+      <mat-list-item
+        *ngIf="! child.display"
+        class="rapd-list-child-item"
+        [attr.id]="child._id"
+        [myHighlight]="highlight_color"
+        (click)="onClick(child._id)"
+        [ngClass]="child_id == active_result ? 'active-result': ''">
+        <table style="width:100%;">
+          <tr>
+            <td
+              [ngClass]="child.status < 0 ? 'rapd-error-result' : ''"
+              style="padding:0 0 0 0;">
+              Reprocess {{i+1}}
+            </td>
+          </tr>
+          <tr *ngIf="child.status > 0 && data_result.status < 100">
+            <td style="padding:0 0 0 0;">
+              <mat-progress-bar
+                mode="indeterminate"
+                color="primary">
+              </mat-progress-bar>
+            </td>
+          </tr>
+        </table>
+      </mat-list-item>
+    </div>
+  </ng-container> -->
 
-  <ng-container *ngFor="let id of data_results">
+  <ng-container *ngFor="let id of data_results_ids">
     <div *ngIf="! ((data_results_object[id])?.display || (data_results_object[id])?.parent_id)">
       <mat-list-item
         class="rapd-list-item"
@@ -111,7 +138,7 @@
 
   <mat-divider class="rapd-side-list-divider" style="border-top-color:rgba(255,125,125,0.5);"></mat-divider>
 
-  <ng-container *ngFor="let id of data_results">
+  <ng-container *ngFor="let id of data_results_ids">
     <div *ngIf="(data_results_object[id])?.display === 'junked'">
       <mat-list-item
         class="rapd-list-item"
