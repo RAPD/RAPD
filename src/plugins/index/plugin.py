@@ -952,14 +952,11 @@ class RapdPlugin(Process):
                 inp_kwargs.update(self.batch_queue)
 
                 # Launch the job
-                jobs[str(i)] = LocalSubprocess(command=inp_kwargs["command"],
-                                               logfile=inp_kwargs["logfile"])
-                # jobs[str(i)] = Thread(target=self.launcher,
-                #                       kwargs=inp_kwargs)
-                jobs[str(i)].start()
-
-        # print "Sleeping..."
-        # time.sleep(5)
+                # jobs[str(i)] = LocalSubprocess(command=inp_kwargs["command"],
+                #                                logfile=inp_kwargs["logfile"])
+                self.jobs[str(i)] = Thread(target=self.launcher,
+                                      kwargs=inp_kwargs)
+                self.jobs[str(i)].start()
 
 
         # Check if Best should rerun since original Best strategy is too long for Pilatus using
@@ -977,6 +974,8 @@ class RapdPlugin(Process):
                                 # self.process_best(iteration, (start, ran, int(job), int(job)+1))
                             counter -= 1
                     time.sleep(0.1)
+
+        # self.jobs = jobs
 
     def process_mosflm(self):
         """
