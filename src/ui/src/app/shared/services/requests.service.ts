@@ -25,8 +25,8 @@ export class RequestsService {
       this.globals_service.site.restApiUrl + '/requests',
       JSON.stringify({request:request}),
       {headers:header}
-    )
-    .map(res => res.json());
+    );
+    // .map(res => res.json());
   }
 
 }

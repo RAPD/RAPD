@@ -22,9 +22,8 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
   active_result: string;
 
   // Arrays for holding result thumbnail data structures
-  data_results: Array<any> = [];
+  data_results_ids: Array<any> = [];
   data_results_object: any = {};
-  public data_results_array: Array<any> = [];
 
   // Object for holding progressbar counters
   progressbar_counters:any = {};
@@ -74,28 +73,18 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
         }
 
         // Add to result list
-        if (self.data_results.indexOf(result._id) === -1) {
-          self.data_results.unshift(result._id);
+        if (self.data_results_ids.indexOf(result._id) === -1) {
+          self.data_results_ids.unshift(result._id);
         }
 
         // Update results
         self.data_results_object[result._id] = result;
       }
-
-      // New one array method
-      let index_of_result = this.data_results_array.findIndex(x => x._id === result._id);
-      if (index_of_result === -1) {
-        console.log('NEW');
-        this.data_results_array.unshift(result);
-      } else {
-        console.log('OLD');
-        this.data_results_array[index_of_result] = result;
-      }
     }
 
     // Sort the data array
-    this.data_results_array.sort(function(a, b) {
-      return a.timestamp - b.timestamp;
+    this.data_results_ids.sort(function(a, b) {
+      return self.data_results_object[a].timestamp - self.data_results_object[b].timestamp;
     });
 
   }

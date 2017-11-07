@@ -1,8 +1,12 @@
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { HttpModule, Http, RequestOptions } from '@angular/http';
+import { FormsModule,
+         ReactiveFormsModule } from '@angular/forms';
+// import { HttpClientModule } from '@angular/common/http';
+import { Http,
+         HttpModule,
+         RequestOptions } from '@angular/http';
 import { AppComponent } from './app.component';
 import { Router } from '@angular/router';
 
@@ -13,7 +17,6 @@ import { AppRoutingModule,
 
 import 'hammerjs';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { NoConflictStyleCompatibilityMode } from '@angular/material';
 import { RapdMaterialModule } from './rapd.module';
 import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { ChartsModule } from 'ng2-charts/ng2-charts';
@@ -106,7 +109,6 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     AppRoutingModule,
     HttpModule,
     BrowserAnimationsModule,
-    NoConflictStyleCompatibilityMode,
     RapdMaterialModule,
     FlexLayoutModule,
     NgxDatatableModule,
