@@ -253,8 +253,8 @@ pool.close()
 pool.join()
 """
 
-#red = connect_redis_manager_HA()
-red = connect_redis()
+red = connect_redis_manager_HA()
+#red = connect_redis()
 
 #red.delete('images_collected:NECAT_T')
 #red.lpush('images_collected:NECAT_T', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000001.cbf')
@@ -268,9 +268,10 @@ red = connect_redis()
 #red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/slri/sicheri_E_3136/images/Igor/runs/VP03_MKTYc/VP03_MKTYc_1_000001/VP03_MKTYc_1_000001.cbf'),
 #red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/slri/sicheri_E_3136/images/Igor/runs/VP03_MKTYc/VP03_MKTYc_1_000001/VP03_MKTYc_1_000002.cbf'),
 #red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/harvard/haowu_E_3143/images/liwang/runs/hw1_7/hw1_7_1_000001/hw1_7_1_000001.cbf'),
-red.lpush('images_collected:SERCAT_ID', '/data/ID_GSK_20171101.raw/11_01_2017_APS22id/screen/GSK8P9_AR.0002'),
+#red.lpush('images_collected:SERCAT_ID', '/data/ID_GSK_20171101.raw/11_01_2017_APS22id/screen/GSK8P9_AR.0002'),
 #red.lpush('images_collected:SERCAT_ID', '/data/ID_MDAnderson_mdanderson.raw/TJ/ATG_70164_07_13/IACS-07_Pn13.0001'),
-#red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/columbia/hendrickson_E_3193/images/wwang/runs/Hend02_08/Hend02_08_1_000001/Hend02_08_1_001400.cbf')
+red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/sinai/jin_E_3213/images/babault/snaps/JJ1_A3_PAIR_0_000003/JJ1_A3_PAIR_0_000003.cbf')
+red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/sinai/jin_E_3213/images/babault/snaps/JJ1_A3_PAIR_0_000004/JJ1_A3_PAIR_0_000004.cbf')
 
 print red.llen('RAPD_QSUB_JOBS_0')
 #red.delete('RAPD_QSUB_JOBS_0')
