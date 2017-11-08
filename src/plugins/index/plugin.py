@@ -1996,7 +1996,7 @@ Distance | % Transmission", level=98, color="white")
         self.results["results"] = results
 
         # Set process.status to error (-1)
-        if self.labelit_results["status"] == "FAILED":
+        if self.labelit_results.get("status") == "FAILED":
             self.results["process"]["status"] = -1
 
         self.logger.debug(self.results)
