@@ -84,7 +84,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
 
     // Sort the data array
     this.data_results_ids.sort(function(a, b) {
-      return self.data_results_object[a].timestamp - self.data_results_object[b].timestamp;
+      return self.data_results_object[b].timestamp - self.data_results_object[a].timestamp;
     });
 
   }
