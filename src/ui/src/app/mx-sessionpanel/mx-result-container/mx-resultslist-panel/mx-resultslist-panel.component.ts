@@ -4,6 +4,7 @@ import { Component,
          Input,
          Output,
          Pipe,
+         PipeTransform,
          EventEmitter } from '@angular/core';
 import { ReplaySubject } from 'rxjs/Rx';
 import { Highlight } from '../../../shared/directives/highlight.directive';
@@ -12,7 +13,7 @@ import { WebsocketService } from '../../../shared/services/websocket.service';
 @Pipe({
   name: "sort"
 })
-export class ArraySortPipe {
+export class ArraySortPipe implements PipeTransform {
   transform(array: any[], field: string): any[] {
     array.sort((a: any, b: any) => {
       if (a[field] < b[field]) {
