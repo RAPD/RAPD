@@ -59,6 +59,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
     let self = this;
 
     for (let result of data) {
+
       // My kind of data
       if ((result.data_type+':'+result.plugin_type).toLowerCase() === this.result_types[this.result_type]) {
 
@@ -79,15 +80,15 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
 
         // Update results
         self.data_results_object[result._id] = result;
-      }
+        }
     }
 
-    // Sort the data array
-    this.data_results_ids.sort(function(a, b) {
-      return self.data_results_object[a].timestamp - self.data_results_object[b].timestamp;
-    });
+    // // Sort the data array
+    // this.data_results_ids.sort(function(a, b) {
+    //   return self.data_results_object[a].timestamp - self.data_results_object[b].timestamp;
+    // });
 
-    console.log(this.data_results_ids);
+    // console.log(this.data_results_ids);
 
   }
 
