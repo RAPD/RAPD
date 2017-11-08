@@ -786,7 +786,9 @@ class Model(object):
                        "directories":directories,
                        "image1":image1,
                        "site_parameters":self.site.BEAM_INFO[image1["site_tag"]],
-                       "preferences":{}
+                       "preferences":{
+                           "cleanup":False
+                       }
                       }
 
             self.send_command(command, "RAPD_JOBS")
@@ -817,11 +819,11 @@ class Model(object):
                                      self.pairs[site_tag][0][0],
                                      self.pairs[site_tag][1][0])
 
-                    # Get the data for the first image
-                    image1 = self.database.get_image_by_image_id(image_id=self.pairs[site_tag][0][1])
-
                     # Make a copy of the second pair to be LESS confusing
                     image2 = image1.copy()
+                    
+                    # Get the data for the first image
+                    image1 = self.database.get_image_by_image_id(image_id=self.pairs[site_tag][0][1])
 
                     # Derive  directory and repr
                     work_dir = self.get_work_dir(type_level="pair",
