@@ -31,6 +31,7 @@ export class ArraySortPipe {
   selector: 'app-mx-resultslist-panel',
   templateUrl: './mx-resultslist-panel.component.html',
   styleUrls: ['./mx-resultslist-panel.component.css'],
+  pipes: [ ArraySortPipe ],
 })
 export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
 
