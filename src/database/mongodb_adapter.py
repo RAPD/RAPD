@@ -431,11 +431,11 @@ class Database(object):
 
         self.logger.debug("save_plugin_result %s", plugin_result)
 
-        # Clear _id from plugin_result
-        del plugin_result["_id"]
-
         # Connect to the database
         db = self.get_db_connection()
+
+        # Clear _id from plugin_result
+        del plugin_result["_id"]
 
         # Add the current timestamp to the plugin_result
         now = datetime.datetime.utcnow()
@@ -443,45 +443,53 @@ class Database(object):
 
         # Make sure we are all ObjectIds - this is until I can get the
         # object traversal working
-        print "Incoming plugin_result._id: %s" % plugin_result.get("_id", False)
-        if plugin_result.get("_id", False):
-            plugin_result["_id"] = get_object_id(plugin_result["_id"])
+        # print "Incoming plugin_result._id: %s" % plugin_result.get("_id", False)
+        # if plugin_result.get("_id", False):
+        #     plugin_result["_id"] = get_object_id(plugin_result["_id"])
+
         # _ids in process dict
         for key, val in plugin_result["process"].iteritems():
             if "_id" in key:
                 plugin_result["process"][key] = get_object_id(val)
 
+        # The coordinating result_id (_id of results collection & process.result_id)
+        _result_id = plugin_result["process"].get("result_id")
+
         #
         # Add to plugin-specific results
         #
-        self.logger.debug("Updating the plugin result table _id: %s", plugin_result.get("_id", "NONE"))
         collection_name = ("%s_%s_results" % (plugin_result["plugin"]["data_type"],
                                               plugin_result["plugin"]["type"])).lower()
+        self.logger.debug("Updating the %s collection process.result_id: %s",
+                          collection_name,
+                          _result_id)
+
         # Debugging call to query db
-        debug_result = db[collection_name].find_one({"process.result_id":plugin_result["process"].get("result_id")})
+        debug_result = db[collection_name].find_one({"process.result_id":_result_id})
         self.logger.debug("Debugging query for previous plugin result %s" % debug_result)
 
+        # Update the plugin-specific table
         result1 = db[collection_name].update_one(
-            {"process.result_id":plugin_result["process"].get("result_id")},
+            {"process.result_id":_result_id},
             {"$set":plugin_result},
             upsert=True)
 
         # Get the _id from updated entry
         if result1.raw_result.get("updatedExisting", False):
-            result1_id = db[collection_name].find_one(
-                {"process.result_id":plugin_result["process"]["result_id"]},
+            plugin_result_id = db[collection_name].find_one(
+                {"process.result_id":_result_id},
                 {"_id":1})["_id"]
-            self.logger.debug("%s _id  from updatedExisting %s", collection_name, result1_id)
+            self.logger.debug("%s _id from updatedExisting %s", collection_name, plugin_result_id)
         # upsert
         else:
-            result1_id = result1.upserted_id
-            self.logger.debug("%s _id  from upserting %s", collection_name, result1_id)
+            plugin_result_id = result1.upserted_id
+            self.logger.debug("%s _id  from upserting %s", collection_name, plugin_result_id)
 
         #
         # Update results
         #
         result2 = db.results.update_one(
-            {"result_id":get_object_id(result1_id)},
+            {"_id":_result_id},
             {"$set":{
                 "data_type":plugin_result["plugin"]["data_type"],
                 "parent_id":plugin_result["process"].get("parent_id", False),
@@ -489,7 +497,7 @@ class Database(object):
                 "plugin_type":plugin_result["plugin"]["type"],
                 "plugin_version":plugin_result["plugin"]["version"],
                 "repr":plugin_result["process"]["repr"],
-                "result_id":get_object_id(result1_id),
+                "result_id":get_object_id(plugin_result_id),
                 "session_id":get_object_id(plugin_result["process"]["session_id"]),
                 "status":plugin_result["process"]["status"],
                 "timestamp":now,
@@ -500,12 +508,12 @@ class Database(object):
         # Get the _id from updated entry in plugin_results
         # Upserted
         if result2.upserted_id:
-            result2_id = result2.upserted_id
+            result_id = result2.upserted_id
 
         # Modified
         else:
-            result2_id = db.results.find_one(
-                {"result_id":get_object_id(result1_id)},
+            result_id = db.results.find_one(
+                {"result_id":get_object_id(plugin_result_id)},
                 {"_id":1})["_id"]
 
         # Update the session last_process field
@@ -517,8 +525,8 @@ class Database(object):
         )
 
         # Return the _ids for the two collections
-        return {"plugin_results_id":str(result1_id),
-                "result_id":str(result2_id)}
+        return {"plugin_results_id":str(plugin_result_id),
+                "result_id":str(result_id)}
 
     # def getArrayStats(self, in_array, mode="float"):
     #     """
