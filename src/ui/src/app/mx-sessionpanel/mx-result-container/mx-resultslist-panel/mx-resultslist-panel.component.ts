@@ -3,10 +3,29 @@ import { Component,
          OnInit,
          Input,
          Output,
+         Pipe,
          EventEmitter } from '@angular/core';
 import { ReplaySubject } from 'rxjs/Rx';
 import { Highlight } from '../../../shared/directives/highlight.directive';
 import { WebsocketService } from '../../../shared/services/websocket.service';
+
+@Pipe({
+  name: "sort"
+})
+export class ArraySortPipe {
+  transform(array: any[], field: string): any[] {
+    array.sort((a: any, b: any) => {
+      if (a[field] < b[field]) {
+        return -1;
+      } else if (a[field] > b[field]) {
+        return 1;
+      } else {
+        return 0;
+      }
+    });
+    return array;
+  }
+}
 
 @Component({
   selector: 'app-mx-resultslist-panel',
@@ -22,6 +41,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
   active_result: string;
 
   // Arrays for holding result thumbnail data structures
+  data_results: Array<any> = [];
   data_results_ids: Array<any> = [];
   data_results_object: any = {};
 
@@ -74,19 +94,42 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
         }
 
         // Add to result list
-        if (self.data_results_ids.indexOf(result._id) === -1) {
-          self.data_results_ids.unshift(result._id);
+        // if (self.data_results_ids.indexOf(result._id) === -1) {
+        //   self.data_results_ids.unshift(result._id);
+        // }
+
+        // Look for index of result
+        var index = this.data_results.findIndex(function(elem) {
+          if (elem._id === result._id) {
+            return true;
+          } else {
+            return false;
+          }
+        })
+        // Update
+        if (index) {
+          this.data_results[index] = result;
+        // Insert
+        } else {
+          this.data_results.unshift(result);
         }
 
         // Update results
-        self.data_results_object[result._id] = result;
-        }
+        // self.data_results_object[result._id] = result;
+        // }
     }
 
-    // // Sort the data array
-    // this.data_results_ids.sort(function(a, b) {
-    //   return self.data_results_object[a].timestamp - self.data_results_object[b].timestamp;
-    // });
+    // Sort the data array
+    this.data_results_ids.sort(function(a, b) {
+      var i = self.data_results_object[a].timestamp,
+          j = self.data_results_object[b].timestamp;
+
+        if (i < j) {
+          return -1;
+        }
+
+      return self.data_results_object[a].timestamp - self.data_results_object[b].timestamp;
+    });
 
     // console.log(this.data_results_ids);
 
