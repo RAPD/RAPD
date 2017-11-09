@@ -62,7 +62,6 @@ import { ReintegrateDialogComponent } from './plugin_components/mx/reintegrate-d
 import { DialogSelectProjectComponent } from './shared/components/dialog-select-project/dialog-select-project.component';
 import { DialogNewProjectComponent } from './shared/components/dialog-new-project/dialog-new-project.component';
 import { DialogErrorComponent } from './shared/components/dialog-error/dialog-error.component';
-import { ArraySortPipe } from './shared/pipes/array-sort.pipe';
 
 export function authHttpServiceFactory(http: Http, options: RequestOptions) {
   return new AuthHttp( new AuthConfig({}), http, options);
@@ -100,8 +99,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     ReintegrateDialogComponent,
     DialogSelectProjectComponent,
     DialogNewProjectComponent,
-    DialogErrorComponent,
-    ArraySortPipe
+    DialogErrorComponent
   ],
   imports: [
     BrowserModule,

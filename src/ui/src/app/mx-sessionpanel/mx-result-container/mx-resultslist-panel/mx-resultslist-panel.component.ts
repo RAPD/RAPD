@@ -9,13 +9,11 @@ import { Component,
 import { ReplaySubject } from 'rxjs/Rx';
 import { Highlight } from '../../../shared/directives/highlight.directive';
 import { WebsocketService } from '../../../shared/services/websocket.service';
-import { ArraySortPipe } from '../../../shared/pipes/array-sort.pipe';
 
 @Component({
   selector: 'app-mx-resultslist-panel',
   templateUrl: './mx-resultslist-panel.component.html',
   styleUrls: ['./mx-resultslist-panel.component.css'],
-  pipes: [ ArraySortPipe ],
 })
 export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
 
@@ -80,11 +78,6 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
           }
         }
 
-        // Add to result list
-        // if (self.data_results_ids.indexOf(result._id) === -1) {
-        //   self.data_results_ids.unshift(result._id);
-        // }
-
         // Look for index of result
         var index = this.data_results.findIndex(function(elem) {
           if (elem._id === result._id) {
@@ -111,7 +104,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
           if (parent_result) {
             console.log('parent_result:', parent_result);
             // Look for index of result
-            var index = parent_result.children.findIndex(function(elem) {
+            var my_index = parent_result.children.findIndex(function(elem) {
               if (elem._id === result._id) {
                 return true;
               } else {
@@ -119,10 +112,10 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
               }
             });
             // Update
-            console.log('  index:', index);
-            if (index !== -1) {
+            console.log('  my_index:', my_index);
+            if (my_index !== -1) {
               console.log('  Updated data');
-              parent_result[index] = result;
+              parent_result[my_index] = result;
             // Insert
             } else {
               console.log('  New data');
@@ -133,7 +126,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
 
         // Update children
         console.log('result.children');
-        if (result.children != false); {
+        if (result.children != false) {
           console.log('Have children', result.children);
           result.children.forEach(function(elem, index) {
             console.log('  child:', elem);
@@ -142,10 +135,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
             result.children[index] = child_result;
           });
         }
-
-        // Update results
-        // self.data_results_object[result._id] = result;
-        // }
+      }
     }
 
     // Sort the data array
