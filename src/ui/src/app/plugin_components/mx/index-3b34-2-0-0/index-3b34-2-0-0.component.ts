@@ -119,13 +119,14 @@ export class Index3b34200Component implements OnInit, OnDestroy {
   }
 
   // Display the header information
-  displayHeader(image_id) {
+  displayHeader(image_data) {
 
-    // console.log('displayHeader', image_id);
+    console.log('displayHeader', image_data);
 
     let config = {
       data: {
-        image_id:image_id
+        image_data:image_data,
+        image_id: false
       }
     };
 
