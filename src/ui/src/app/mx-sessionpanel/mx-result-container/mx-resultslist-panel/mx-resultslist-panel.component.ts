@@ -25,8 +25,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
 
   // Arrays for holding result thumbnail data structures
   data_results: Array<any> = [];
-  data_results_ids: Array<any> = [];
-  data_results_object: any = {};
+  new_result_timeout: number;
 
   // Object for holding progressbar counters
   progressbar_counters:any = {};
@@ -132,23 +131,29 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
             console.log('  child:', elem);
             var child_result = self.getResult(elem);
             console.log('  child_result:', child_result);
-            result.children[index] = child_result;
+            if (child_result) {
+                result.children[index] = child_result;
+            }
           });
         }
       }
     }
 
-    // Sort the data array
-    this.data_results.sort(function(a, b) {
-        if (a.timestamp > b.timestamp) {
-          return -1;
-        } else if (a.timestamp < b.timestamp) {
-          return 1;
-        } else {
-          return 0;
-        }
-
-    });
+    if (this.new_result_timeout) {
+      clearTimeout(this.new_result_timeout);
+    }
+    this.new_result_timeout = setTimeout(function() {
+      // Sort the data array
+      self.data_results.sort(function(a, b) {
+          if (a.timestamp > b.timestamp) {
+            return -1;
+          } else if (a.timestamp < b.timestamp) {
+            return 1;
+          } else {
+            return 0;
+          }
+      });
+    }, 200);
   }
 
   private getResult(id:string) {
