@@ -6,9 +6,9 @@
           <h3>
             Indexing Initiated for
             <span>{{full_result.image1.fullname.split('/').reverse()[0]}}</span>
-            <span style="color:blue;"><mat-icon (click)="displayHeader(full_result.image1._id)">info_outline</mat-icon></span>
+            <span style="color:blue;"><mat-icon (click)="displayHeader(full_result.command.image1._id)">info_outline</mat-icon></span>
             <span *ngIf="full_result.image2"> & {{full_result.command.image2.fullname.split('/').reverse()[0]}}</span>
-            <span *ngIf="full_result.image2" style="color:blue;"><mat-icon (click)="displayHeader(full_result.image2._id)">info_outline</mat-icon></span>
+            <span *ngIf="full_result.image2" style="color:blue;"><mat-icon (click)="displayHeader(full_result.command.image2._id)">info_outline</mat-icon></span>
           </h3>
         </div>
       </div>
@@ -26,9 +26,9 @@
           <h3>
             Indexing Results for
             <span>{{full_result.image1.fullname.split('/').reverse()[0]}}</span>
-            <span style="color:blue;"><mat-icon (click)="displayHeader(full_result.image1._id)">info_outline</mat-icon></span>
+            <span style="color:blue;"><mat-icon (click)="displayHeader(full_result.command.image1._id)">info_outline</mat-icon></span>
             <span *ngIf="full_result.image2"> & {{full_result.command.image2.fullname.split('/').reverse()[0]}}</span>
-            <span *ngIf="full_result.image2" style="color:blue;"><mat-icon (click)="displayHeader(full_result.image2._id)">info_outline</mat-icon></span>
+            <span *ngIf="full_result.image2" style="color:blue;"><mat-icon (click)="displayHeader(full_result.command.image2._id)">info_outline</mat-icon></span>
           </h3>
         </div>
         <div class="rapd-select-panel">
