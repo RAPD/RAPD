@@ -240,7 +240,6 @@ def process_cluster(command,
                    logfile=False,
                    batch_queue='rapd',
                    nproc=1,
-                   nnodes=1,
                    logger=False,
                    name=False,
                    mp_event=False,
@@ -314,7 +313,7 @@ def process_cluster(command,
                   print >>f, '#PBS -o %s'%logfile
               else:
                   print >>f, '#PBS -o %s'%os.path.join(work_dir,logfile)
-          print >>f, '#PBS -l nodes=%s:ppn=%s'%(nnodes, nproc)
+          print >>f, '#PBS -l nodes=1:ppn=%s'%nproc
           print >>f, command+'\n'
           f.close()
 
