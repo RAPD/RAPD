@@ -141,6 +141,10 @@ def parse_output(labelit_output, iteration=0):
                 return "failed"
                 # else:
                 #     return "no index"
+            if line.startswith("MOSFLM_Warning: MOSFLM logfile overflow"):
+                # if self.multiproc:
+                return "failed"
+            
             if line.startswith("ValueError: min()"):
                 # if self.multiproc:
                 return "failed"

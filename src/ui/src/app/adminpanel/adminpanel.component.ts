@@ -291,7 +291,7 @@ export class AdminpanelComponent implements OnInit {
 
     // filter our data
     const temp = this.filtered_sessions.filter(function(d) {
-      // console.log(d);
+      console.log(d);
       return d.group.groupname.toLowerCase().indexOf(val) !== -1 ||
              d.site.toLowerCase().indexOf(val) !== -1 ||
              d.data_root_directory.toLowerCase().indexOf(val) !== -1 ||

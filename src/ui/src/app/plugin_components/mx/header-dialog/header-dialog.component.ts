@@ -22,9 +22,13 @@ export class HeaderDialogComponent implements OnInit {
   ngOnInit() {
     console.log(this.data);
 
-    this.rest_service.getImageData(this.data.image_id)
-                     .subscribe(
-                       image_data => this.image_data=image_data,
-                       error => this.error=error);
+    if (this.data.image_data) {
+      this.image_data = this.data.image_data;
+    } else {
+      this.rest_service.getImageData(this.data.image_id)
+                       .subscribe(
+                         image_data => this.image_data=image_data,
+                         error => this.error=error);
+    }
   }
 }
