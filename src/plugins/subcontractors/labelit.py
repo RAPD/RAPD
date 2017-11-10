@@ -285,50 +285,6 @@ def parse_output(labelit_output, iteration=0):
 
     return data
 
-def parse_labelit_files_OLD(bestfile_lines, mat_lines, sub_lines, mode="all"):
-    """
-    Parse the lines from bestfile.par
-    Transplant from xutils.getLabelitCell
-    NOW IN PLUGIN
-    """
-
-    run2 = False
-    run3 = False
-    cell = False
-    sym = False
-    for line in bestfile_lines:
-        # print line
-        if line.startswith('CELL'):
-            if len(line.split()) == 7:
-                cell = [try_float(item) for item in line.split()[1:]]
-            else:
-                run2 = True
-        if line.startswith('SYMMETRY'):
-            if len(line.split()) == 2:
-                sym = line.split()[1]
-            else:
-                run3 = True
-    # Sometimes bestfile.par is corrupt so I have backups to get cell and sym.
-    if run2:
-        for line in mat_lines:
-            if len(line.split()) == 6:
-                cell = [try_float(item) for item in line.split()]
-
-    if run3:
-        for line in sub_lines:
-            if line.startswith('SYMMETRY'):
-                sym = line.split()[1]
-
-    # pprint(cell)
-    # pprint(sym)
-
-    if mode == 'all':
-        return (cell, sym)
-    elif mode == 'sym':
-        return sym
-    else:
-        return cell
-
 def get_labelit_stats(labelit_results, simple=False):
     """
     Returns stats from Labelit for determining beam center

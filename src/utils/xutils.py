@@ -2882,59 +2882,6 @@ def processLocal(inp, logger=False, output=False):
             out_file.write(stdout)
             out_file.write(stderr)
 
-def rocksCommand(inp, logger=False):
-  """
-  Run Rocks command on all cluster nodes. Mainly used by rapd_agent_beamcenter.py to copy
-  specific images to /dev/shm on each node for processing in RAM.
-  """
-  if logger:
-    logger.debug('Utilities::rocksCommand')
-  #try:
-  command = '/opt/rocks/bin/rocks run host compute "%s"'%inp
-  if logger:
-    processLocal("ssh necat@gadolinium '%s'"%command,logger)
-  else:
-    processLocal("ssh necat@gadolinium '%s'"%command)
-  #except:
-  #    self.logger.exception('**ERROR in Utils.rocksCommand**')
-
-def readHeader_TESTING(self,image):
-  """
-  Read image header as RAPD.
-  """
-  if self.verbose:
-      self.logger.debug('MultiRuns::readHeader')
-
-  tail = image[-3:]
-  d = {}
-  if tail== 'cbf':
-    from rapd_pilatus import PilatusReadHeader
-    from rapd_site import settings_C as C
-    d['header'] = PilatusReadHeader(os.path.join(os.getcwd(),image),logger=self.logger)
-    distance = float(d['header'].get('distance'))
-    x_beam = C['beam_center_x_m6'] * distance**6 + \
-             C['beam_center_x_m5'] * distance**5 + \
-             C['beam_center_x_m4'] * distance**4 + \
-             C['beam_center_x_m3'] * distance**3 + \
-             C['beam_center_x_m2'] * distance**2 + \
-             C['beam_center_x_m1'] * distance + C['beam_center_x_b']
-             #header['vertical_offset']
-    y_beam = C['beam_center_y_m6'] * distance**6 + \
-             C['beam_center_y_m5'] * distance**5 + \
-             C['beam_center_y_m4'] * distance**4 + \
-             C['beam_center_y_m3'] * distance**3 + \
-             C['beam_center_y_m2'] * distance**2 + \
-             C['beam_center_y_m1'] * distance + C['beam_center_y_b']
-    d['header'].update({'x_beam':x_beam})
-    d['header'].update({'y_beam':y_beam})
-  else:
-    from rapd_adsc import AdscReadHeader
-    d['header'] = AdscReadHeader(os.path.join(os.getcwd(),image),logger=self.logger)
-  return(d)
-
-def junk():
-  return('got here')
-
 def readMarHeader(inp):
   import re,struct
   print 'got here'
