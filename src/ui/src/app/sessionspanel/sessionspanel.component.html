@@ -40,15 +40,12 @@
     </ngx-datatable>
   </article>
   <mat-toolbar class="rapd-main-panel-action-bar">
-    <form class="user-filter-form">
+    <form class="session-filter-form">
       <mat-form-field
-        floatPlaceholder="never"
         (keyup)='updateSessionFilter($event)'>
         <input
           matInput
-          type="text"
-          placeholder="Filter"
-          style="font-size:1em;">
+          placeholder="Filter">
       </mat-form-field>
     </form>
   </mat-toolbar>
