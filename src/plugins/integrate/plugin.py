@@ -387,7 +387,7 @@ class RapdPlugin(Process):
 
         self.xds_default = self.create_xds_input(self.preferences['xdsinp'])
 
-        self.check_dependencies()
+        #self.check_dependencies()
 
     def construct_results(self):
         """Create the self.results dict"""
@@ -2299,7 +2299,7 @@ class RapdPlugin(Process):
         json_string = json.dumps(results)
 
         # Output to terminal?
-        if self.preferences["json"]:
+        if self.preferences.get("json", False):
             print json_string
 
         # Write a file

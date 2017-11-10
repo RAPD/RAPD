@@ -468,7 +468,7 @@ def process_cluster(command,
     else:  
       #fname = 'qsub%s.sh'%random.randint(0,5000)
       fname = os.path.join(os.getcwd(),'qsub%s.sh'%random.randint(0,5000))
-      print fname
+      #print fname
       with open(fname,'w') as f:
           print >>f, '#!/bin/bash'
           print >>f, '#PBS -S /bin/bash'
