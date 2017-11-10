@@ -120,44 +120,6 @@ def fix_command(message):
 
     return message
 
-def fix_command_OLD(message):
-    """
-    Adjust the command passed in in install-specific ways
-    """
-
-    # Adjust the working directory for the launch computer
-    work_dir_candidate = os.path.join(
-        self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"],
-        self.decoded_message["directories"]["work"])
-
-    # Make sure this is an original directory
-    if os.path.exists(work_dir_candidate):
-        # Already exists
-        for i in range(1, 1000):
-            if not os.path.exists("_".join((work_dir_candidate, str(i)))):
-                work_dir_candidate = "_".join((work_dir_candidate, str(i)))
-                break
-            else:
-                i += 1
-
-    # Modify command
-    self.decoded_message["directories"]["work"] = work_dir_candidate
-
-    # Filesystem is NOT shared
-    # For header_1 & header_2
-    for header_iter in ("1", "2"):
-        header_key = "header%s" % header_iter
-        if header_key in self.decoded_message:
-            # Values that need changed
-            for value_key in ("fullname", "directory"):
-                # Store originals
-                self.decoded_message[header_key][value_key+"_orig"] = self.decoded_message[header_key][value_key]
-
-                # Change
-                for prepended_string in ("/raw", "/archive"):
-                    if self.decoded_message[header_key][value_key].startswith(prepended_string):
-                        self.decoded_message[header_key][value_key] = self.decoded_message[header_key][value_key].replace(prepended_string, "/panfs/panfs0.localdomain"+prepended_string)
-
 def process_cluster_drmaa(self, inp, output=False):
     """
     Submit job to cluster using DRMAA (when you are already on the cluster).
@@ -272,145 +234,13 @@ def process_cluster_drmaa(self, inp, output=False):
     s.exit()
 
     print "Job finished"
-    
-def process_cluster_old(self, inp, output=False):
-    s = False
-    jt = False
-    running = True
-    log = False
-    queue = False
-    smp = 1
-    name = False
-    l = []
-
-    # Check if self.running is setup... used for Best and Mosflm strategies
-    # because you can't kill child processes launched on cluster easily.
-    try:
-        __ = self.running
-    except AttributeError:
-        running = False
-
-    # print inp
-    if type(inp) != tuple:
-        command = inp
-    else:
-      if len(inp) == 2:
-        command, log = inp
-      elif len(inp) == 3:
-        command, log, queue = inp
-      elif len(inp) == 4:
-        command, log, smp, queue = inp
-      else:
-        command, log, smp, queue, name = inp
-    if queue == False:
-        queue = "all.q"
-    # Queues aren't used right now.
-    # Make an input script
-    fname = 'qsub%s.sh'%random.randint(0,5000)
-    f = open(fname,'w')
-    print >>f, command
-    f.close()
-
-    # Setup path
-    v = "-v PATH=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
-/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/bin:\
-/home/schuerjp/Programs/best:\
-/home/schuerjp/Programs/RAPD/bin:\
-/home/schuerjp/Programs/RAPD/share/phenix-1.10.1-2155/build/bin:\
-/home/schuerjp/Programs/raddose-20-05-09-distribute-noexec/bin:\
-/usr/local/bin:/bin:/usr/bin"
-    
-    qs = 'qsub -d %s -j oe '%os.getcwd()
-    if log:
-      qs += '-o %s '%os.path.join(os.getcwd(),log)
-    qs += "%s -l nodes=1:ppn=%s %s" % (v, smp, fname)
-    job = subprocess.Popen(qs,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-    # Return job_id.
-    #if isinstance(output, dict):
-    if output != False:
-      for line in job.stdout:
-        l.append(line)
-      output.put(l[0])
-   
-    print "Job finished"
-
-def process_cluster_OLD(inp):
-    """
-    Launch job on SERCAT's scyld cluster. Does not wait for jobs to end!
-    """
-    import utils.xutils as Utils
-    import time
-    running = True
-    command = inp.get('command')
-    log = inp.get('log', False)
-    queue = inp.get('queue', False)
-    smp = inp.get('smp',1)
-    d = inp.get('dir', os.getcwd())
-    name = inp.get('name', False)
-    # Sends job/process ID back
-    pid = inp.get('pid', False)
-    l = []
-
-    # Check if self.running is setup... used for Best and Mosflm strategies
-    # because you can't kill child processes launched on cluster easily.
-    """
-    try:
-        __ = self.running
-    except AttributeError:
-        running = False
-    """
-    # Make an input script if not input
-    if command[-3] == '.sh':
-      fname = command
-    else:  
-      fname = 'qsub%s.sh'%random.randint(0,5000)
-      f = open(fname,'w')
-      print >>f, command
-      f.close()
-    
-    # Setup path
-    v = "-v PATH=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
-/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/bin:\
-/home/schuerjp/Programs/best:\
-/home/schuerjp/Programs/RAPD/bin:\
-/home/schuerjp/Programs/RAPD/share/phenix-1.10.1-2155/build/bin:\
-/home/schuerjp/Programs/raddose-20-05-09-distribute-noexec/bin:\
-/usr/local/bin:/bin:/usr/bin"
-    
-    # Setup the qsub command
-    qs = 'qsub -d %s -j oe '%d
-    if log:
-      if log.count('/'):
-        qs += '-o %s '%log
-      else:
-        qs += '-o %s '%os.path.join(d,log)
-    qs += "%s -l nodes=1:ppn=%s %s" % (v, smp, fname)
-    
-    #Launch the job on the cluster
-    job = subprocess.Popen(qs,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
-    # Return job_id.
-    #if isinstance(output, dict):
-    for line in job.stdout:
-      if len(line)!= 0:
-        l.append(line)
-    if pid != False:
-      # For my pipelines
-      if name == False:
-        pid.put(l[0])
-      else:
-        # For Frank's main launcher
-        pid.put(job.pid)
-    # Wait for job to complete
-    time.sleep(1)
-    while check_qsub_job(l[0]):
-      time.sleep(0.2)
-    print "Job finished"
 
 def process_cluster(command,
                    work_dir=False,
                    logfile=False,
                    batch_queue='rapd',
                    nproc=1,
+                   nnodes=1,
                    logger=False,
                    name=False,
                    mp_event=False,
@@ -484,7 +314,7 @@ def process_cluster(command,
                   print >>f, '#PBS -o %s'%logfile
               else:
                   print >>f, '#PBS -o %s'%os.path.join(work_dir,logfile)
-          print >>f, '#PBS -l nodes=1:ppn=%s'%nproc
+          print >>f, '#PBS -l nodes=%s:ppn=%s'%(nnodes, nproc)
           print >>f, command+'\n'
           f.close()
 

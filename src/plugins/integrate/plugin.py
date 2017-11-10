@@ -387,7 +387,7 @@ class RapdPlugin(Process):
 
         self.xds_default = self.create_xds_input(self.preferences['xdsinp'])
 
-        #self.check_dependencies()
+        self.check_dependencies()
 
     def construct_results(self):
         """Create the self.results dict"""
