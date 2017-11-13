@@ -1226,10 +1226,12 @@ class RapdPlugin(Process):
         # of default regions with user specified regions.
         l = ['UNTRUSTED_RECTANGLE', 'UNTRUSTED_ELLIPSE', 'UNTRUSTED_QUADRILATERAL']
         for line in inp:
-            for x in range(len(l)):
-                if line[0].count(l[x]):
-                    line = (l[x], line[1])
+            for l0 in l:
+                if line[0].count(l0):
+                    line = (l0, line[1])
+                    break
             xds_input.append("%s%s"%('='.join(line), '\n'))
+            
         """
         for key, value in xds_dict.iteritems():
             # Regions that are excluded are defined with

@@ -26,7 +26,6 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
-from collections import OrderedDict
 import os
 import pprint
 
@@ -62,7 +61,9 @@ XDS_FLIP_BEAM = detector.XDS_FLIP_BEAM
 # Import from more generic detector
 XDSINP0 = detector.XDSINP
 # Update the XDS information from the imported detector
-XDSINP1 = [()
+# The tuple should contain two items (key and value)
+# ie. XDSINP1 = [("SEPMIN", "4"),]
+XDSINP1 = [(),
           ]
 XDSINP = merge_xds_input(XDSINP0, XDSINP1)
 

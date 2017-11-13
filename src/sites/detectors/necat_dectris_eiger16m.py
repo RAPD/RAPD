@@ -29,7 +29,6 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
-from collections import OrderedDict
 import os
 from pprint import pprint
 import re
@@ -68,9 +67,7 @@ HEADER_VERSION = 1
 XDS_FLIP_BEAM = detector.XDS_FLIP_BEAM
 # XDSINP = detector.XDSINP
 # Update the XDS information from the imported detector
-
-#XDSINP = OrderedDict(
-XDSINP =   [
+XDSINP_OLD =   [
     ("REFINE(CORRECT)", "POSITION DISTANCE BEAM ORIENTATION CELL AXIS"),
     ("REFINE(IDXREF)", "BEAM AXIS ORIENTATION CELL"),
     ("REFINE(INTEGRATE)", "POSITION DISTANCE BEAM ORIENTATION CELL"),
@@ -119,6 +116,35 @@ XDSINP =   [
     ("UNTRUSTED_RECTANGLE17", " 2070 2081      0 4372"),
     ("UNTRUSTED_RECTANGLE18", " 3110 3121      0 4372"),
     ]
+XDSINP0 = detector.XDSINP
+
+XDSINP1 = [
+    ('DIRECTION_OF_DETECTOR_X-AXIS', '1 0 0') ,
+    ('DIRECTION_OF_DETECTOR_Y-AXIS', '0 1 0') ,
+    ('INCIDENT_BEAM_DIRECTION', '0 0 1') ,
+    ('MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT', '4') ,
+    ('NUMBER_OF_PROFILE_GRID_POINTS_ALONG_ALPHA/BETA', '13') ,
+    ('NUMBER_OF_PROFILE_GRID_POINTS_ALONG_GAMMA', '9') ,
+    ('OVERLOAD', '3000000') ,
+    ('POLARIZATION_PLANE_NORMAL', '0 1 0') ,
+    ('REFINE(CORRECT)', 'POSITION DISTANCE BEAM ORIENTATION CELL AXIS') ,
+    ('REFINE(IDXREF)', 'BEAM AXIS ORIENTATION CELL') ,
+    ('REFINE(INTEGRATE)', 'POSITION DISTANCE BEAM ORIENTATION CELL') ,
+    ('ROTATION_AXIS', '1 0 0') ,
+    ('SEPMIN', '4') ,
+    ('TRUSTED_REGION', '0.00 1.2') ,
+    ('VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS', '8000. 30000.') ,
+    ('UNTRUSTED_RECTANGLE11', '    0 4151    225  260'),
+    ('UNTRUSTED_RECTANGLE12', '    0 4151    806  811'),
+    ('UNTRUSTED_RECTANGLE13', '    0 4151   1357 1362'),
+    ('UNTRUSTED_RECTANGLE14', '    0 4151   1908 1913'),
+    ('UNTRUSTED_RECTANGLE15', '    0 4151   2459 2464'),
+    ('UNTRUSTED_RECTANGLE16', '    0 4151   3010 3015'),
+    ('UNTRUSTED_RECTANGLE17', '    0 4151   3561 3566'),
+    ('UNTRUSTED_RECTANGLE18', '    0 4151   4112 4117'),
+    ]
+XDSINP = utils.merge_xds_input(XDSINP0, XDSINP1)
+
 
 def parse_file_name(fullname):
     """
