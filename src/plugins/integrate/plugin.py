@@ -2318,7 +2318,7 @@ class RapdPlugin(Process):
         json_string = json.dumps(results)
 
         # Output to terminal?
-        if self.preferences["json"]:
+        if self.preferences.get("json", False):
             print json_string
 
         # Write a file

@@ -15,37 +15,37 @@
       </tr>
     </thead> -->
     <tbody>
-      <tr>
+      <tr *ngIf="image_data.osc_start">
         <td class="manual-table-rj">Oscillation Start</td><td>{{image_data.osc_start}}&deg;</td>
       </tr>
-      <tr>
+      <tr *ngIf="image_data.osc_range">
         <td class="manual-table-rj">Oscillation Range</td><td>{{image_data.osc_range}}&deg;</td>
       </tr>
-      <tr>
+      <tr *ngIf="image_data.time">
         <td class="manual-table-rj">Exposure Time</td><td>{{image_data.time}} s</td>
       </tr>
-      <tr>
+      <tr *ngIf="image_data.transmission">
         <td class="manual-table-rj">Transmission</td><td>{{image_data.transmission.toFixed(2)}}%</td>
       </tr>
-      <tr>
+      <tr *ngIf="image_data.wavelength">
         <td class="manual-table-rj">Wavelength</td><td>{{image_data.wavelength}} &Aring;</td>
       </tr>
-      <tr>
+      <tr *ngIf="image_data.distance">
         <td class="manual-table-rj">Distance</td><td>{{image_data.distance}} mm</td>
       </tr>
       <tr *ngIf="image_data.twotheta">
         <td class="manual-table-rj">Two Theta</td><td>{{image_data.twotheta}}&deg;</td>
       </tr>
-      <tr>
+      <tr *ngIf="image_data.x_beam">
         <td class="manual-table-rj">Beam Center X</td><td>{{image_data.x_beam.toFixed(2)}} mm</td>
       </tr>
-      <tr>
+      <tr *ngIf="image_data.y_beam">
         <td class="manual-table-rj">Y</td><td>{{image_data.y_beam.toFixed(2)}} mm</td>
       </tr>
-      <tr>
+      <tr *ngIf="image_data.date">
         <td class="manual-table-rj">Date</td><td>{{image_data.date.slice(0,10)}}</td>
       </tr>
-      <tr>
+      <tr *ngIf="image_data.date">
         <td class="manual-table-rj">Time</td><td>{{image_data.date.slice(11,19)}}</td>
       </tr>
     </tbody>

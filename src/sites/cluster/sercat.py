@@ -68,7 +68,7 @@ def check_queue(inp):
   
 def get_nproc_njobs():
     """Return the nproc and njobs for an XDS integrate job"""
-    return (4, 5)
+    return (2, 5)
   
 def determine_nproc(command):
     """Determine how many processors to reserve on the cluster for a specific job type."""
@@ -119,44 +119,6 @@ def fix_command(message):
                         message[header_key][value_key] = message[header_key][value_key].replace(prepended_string, "/panfs/panfs0.localdomain"+prepended_string)
 
     return message
-
-def fix_command_OLD(message):
-    """
-    Adjust the command passed in in install-specific ways
-    """
-
-    # Adjust the working directory for the launch computer
-    work_dir_candidate = os.path.join(
-        self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.site.LAUNCHER_ID]["launch_dir"],
-        self.decoded_message["directories"]["work"])
-
-    # Make sure this is an original directory
-    if os.path.exists(work_dir_candidate):
-        # Already exists
-        for i in range(1, 1000):
-            if not os.path.exists("_".join((work_dir_candidate, str(i)))):
-                work_dir_candidate = "_".join((work_dir_candidate, str(i)))
-                break
-            else:
-                i += 1
-
-    # Modify command
-    self.decoded_message["directories"]["work"] = work_dir_candidate
-
-    # Filesystem is NOT shared
-    # For header_1 & header_2
-    for header_iter in ("1", "2"):
-        header_key = "header%s" % header_iter
-        if header_key in self.decoded_message:
-            # Values that need changed
-            for value_key in ("fullname", "directory"):
-                # Store originals
-                self.decoded_message[header_key][value_key+"_orig"] = self.decoded_message[header_key][value_key]
-
-                # Change
-                for prepended_string in ("/raw", "/archive"):
-                    if self.decoded_message[header_key][value_key].startswith(prepended_string):
-                        self.decoded_message[header_key][value_key] = self.decoded_message[header_key][value_key].replace(prepended_string, "/panfs/panfs0.localdomain"+prepended_string)
 
 def process_cluster_drmaa(self, inp, output=False):
     """
@@ -272,6 +234,7 @@ def process_cluster_drmaa(self, inp, output=False):
     s.exit()
 
     print "Job finished"
+<<<<<<< HEAD
     
 def process_cluster_old(self, inp, output=False):
     s = False
@@ -406,6 +369,8 @@ def process_cluster_OLD(inp):
     while check_qsub_job(l[0]):
       time.sleep(0.2)
     print "Job finished"
+=======
+>>>>>>> b0d66e8dbbf30ef80e7886f02f6c793a2c845131
 
 def process_cluster(command,
                    work_dir=False,
@@ -469,7 +434,7 @@ def process_cluster(command,
     else:  
       #fname = 'qsub%s.sh'%random.randint(0,5000)
       fname = os.path.join(os.getcwd(),'qsub%s.sh'%random.randint(0,5000))
-      print fname
+      #print fname
       with open(fname,'w') as f:
           print >>f, '#!/bin/bash'
           print >>f, '#PBS -S /bin/bash'

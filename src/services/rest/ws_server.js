@@ -273,6 +273,7 @@ function Wss (opt, callback) {
                   Result.
                     find({'session_id':mongoose.Types.ObjectId(data.session_id)}).
                     where('result_type').in(['mx:index', 'mx:integrate']).
+                    // populate('children').
                     sort('-timestamp').
                     exec(function(err, results) {
                         if (err)
@@ -287,6 +288,7 @@ function Wss (opt, callback) {
                   Result.
                     find({'session_id':mongoose.Types.ObjectId(data.session_id)}).
                     where('result_type').in(result_type_trans[data_type][data_class]).
+                    // populate('children').
                     sort('-timestamp').
                     exec(function(err, sessions) {
                         if (err)
@@ -301,6 +303,7 @@ function Wss (opt, callback) {
                   Result.
                     find({'session_id':mongoose.Types.ObjectId(data.session_id)}).
                     where('result_type').in(result_type_trans[data_type][data_class]).
+                    // populate('children').
                     sort('-timestamp').
                     exec(function(err, sessions) {
                         if (err)
@@ -316,7 +319,7 @@ function Wss (opt, callback) {
 
                   Result.
                     find({'session_id':mongoose.Types.ObjectId(data.session_id)}).
-                    // where('result_type').in(['mx:index+strategy']).
+                    // populate('children').
                     sort('-timestamp').
                     exec(function(err, sessions) {
                         if (err)

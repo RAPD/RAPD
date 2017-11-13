@@ -786,7 +786,9 @@ class Model(object):
                        "directories":directories,
                        "image1":image1,
                        "site_parameters":self.site.BEAM_INFO[image1["site_tag"]],
-                       "preferences":{}
+                       "preferences":{
+                           "cleanup":False
+                       }
                       }
 
             self.send_command(command, "RAPD_JOBS")

@@ -6,9 +6,18 @@ var ResultSchema = new Schema({
      type: Schema.ObjectId,
      auto: true
   },
+  children: {
+    type: [Schema.Types.ObjectId],
+    required: false,
+    default: [],
+    ref: 'Result'
+  },
   display: {
     type: String,
     required: false
+  },
+  parent_id: {
+    type: Schema.ObjectId
   },
   plugin_id: {
     type: String,

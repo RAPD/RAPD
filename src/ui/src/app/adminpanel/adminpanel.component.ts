@@ -274,7 +274,6 @@ export class AdminpanelComponent implements OnInit {
   //
   // SESSIONS
   //
-
   getSessions() {
     this.rest_service.getSessions()
       .subscribe(
@@ -288,14 +287,15 @@ export class AdminpanelComponent implements OnInit {
   // The filter is changed
   updateSessionFilter(event) {
     const val = event.target.value.toLowerCase();
-
+    console.log(val);
+    console.log(this.filtered_sessions);
     // filter our data
     const temp = this.filtered_sessions.filter(function(d) {
-      // console.log(d);
+      console.log(d);
       return d.group.groupname.toLowerCase().indexOf(val) !== -1 ||
              d.site.toLowerCase().indexOf(val) !== -1 ||
              d.data_root_directory.toLowerCase().indexOf(val) !== -1 ||
-             d.last_process.indexOf(val) !== -1 ||
+             //d.last_process.indexOf(val) !== -1 ||
              !val;
     });
 
