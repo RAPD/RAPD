@@ -25,6 +25,7 @@ router.route('/overwatches')
           message: err
         });
       } else {
+        let num_keys = ow_keys.length;
         ow_keys.forEach(function(ow_key) {
           redis_client.hgetall(ow_key, function(err, ow_hash) {
             if (err) {
