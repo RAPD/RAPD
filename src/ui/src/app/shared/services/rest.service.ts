@@ -260,12 +260,12 @@ export class RestService {
   //
   // OVERWATCH methods
   //
-  public getOverwatches(_id:string): Observable<any> {
+  public getOverwatches(): Observable<any> {
 
     console.log('getOverwatches');
 
     return this.authHttp.get(this.globals_service.site.restApiUrl + '/overwatches')
-                        .map(res => res.json())
+                        .map(res => res.json().overwatches)
                         .catch(error => this.handleError(error));
   }
 

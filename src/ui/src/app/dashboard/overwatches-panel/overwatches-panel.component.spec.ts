@@ -1,20 +1,20 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ComponentsPanelComponent } from './components-panel.component';
+import { OverwatchesPanelComponent } from './overwatches-panel.component';
 
-describe('ComponentsPanelComponent', () => {
-  let component: ComponentsPanelComponent;
-  let fixture: ComponentFixture<ComponentsPanelComponent>;
+describe('OverwatchesPanelComponent', () => {
+  let component: OverwatchesPanelComponent;
+  let fixture: ComponentFixture<OverwatchesPanelComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ComponentsPanelComponent ]
+      declarations: [ OverwatchesPanelComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(ComponentsPanelComponent);
+    fixture = TestBed.createComponent(OverwatchesPanelComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

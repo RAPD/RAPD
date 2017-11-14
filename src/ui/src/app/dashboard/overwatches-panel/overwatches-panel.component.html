@@ -1,0 +1,69 @@
+<div class="panel" *ngIf="user.role === 'site_admin'">
+  <article class="c-content" style="margin-top:2em;">
+
+    <table class="rapd-table">
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Type</th>
+          <th>Start</th>
+          <th>Last</th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngFor="let parent of overwatches">
+          <tr>
+            <td>{{parent.id}}</td>
+            <td>{{parent.ow_type}}</td>
+            <td>{{parent.start_time | date:'short'}}</td>
+            <td>{{parent.timestamp | date:'short'}}</td>
+          </tr>
+          <tr *ngFor="let child of parent.children">
+            <td>{{child.id}}</td>
+            <td>{{child.ow_type}}</td>
+            <td>{{child.start_time | date:'short'}}</td>
+            <td>{{child.timestamp | date:'short'}}</td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+
+
+    <!-- <ngx-datatable
+      class="material"
+      [rows]="overwatches"
+      [loadingIndicator]="loadingIndicator"
+      [columnMode]="'force'"
+      [headerHeight]="50"
+      [footerHeight]="50"
+      [limit]="10"
+      [rowHeight]="'auto'"
+      [reorderable]="reorderable"
+      [sorts]="[{prop: 'username', dir: 'asc'}]">
+      <ngx-datatable-column name="Id" prop="id">
+        <ng-template let-value="value" ngx-datatable-cell-template>
+          {{value}}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Type" prop="ow_type">
+        <ng-template let-value="value" ngx-datatable-cell-template>
+          {{value}}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Start" prop="start_time">
+        <ng-template let-value="value" ngx-datatable-cell-template>
+          {{value}}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Last" prop="timestamp">
+        <ng-template let-value="value" ngx-datatable-cell-template>
+          {{value}}
+        </ng-template>
+      </ngx-datatable-column>
+    </ngx-datatable> -->
+  </article>
+</div>
+
+<div class="panel" *ngIf="user.role !== 'site_admin'">
+
+</div>

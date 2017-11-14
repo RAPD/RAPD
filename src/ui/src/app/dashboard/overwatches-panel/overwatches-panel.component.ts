@@ -2,25 +2,30 @@ import { Component,
          OnInit } from '@angular/core';
 
 import { RestService } from '../../shared/services/rest.service';
-// import { Overwatcher } from '../../shared/classes/overwatcher';
+import { User } from '../../shared/classes/user';
 
 @Component({
-  selector: 'app-components-panel',
-  templateUrl: './components-panel.component.html',
-  styleUrls: ['./components-panel.component.css']
+  selector: 'app-overwatches-panel',
+  templateUrl: './overwatches-panel.component.html',
+  styleUrls: ['./overwatches-panel.component.css']
 })
-export class ComponentsPanelComponent implements OnInit {
+export class OverwatchesPanelComponent implements OnInit {
 
   private error_message:string;
-  components: any[];
+  private overwatches: any[];
+  public user: User;
 
   constructor(private rest_service: RestService) { }
 
   ngOnInit() {
-    this.getComponents();
+
+    // Get the user profile
+    this.user = JSON.parse(localStorage.getItem('profile'));
+
+    this.getOverwatches();
   }
 
-  getComponents() {
+  getOverwatches() {
     this.rest_service.getOverwatches()
       .subscribe(
        overwatches => {
