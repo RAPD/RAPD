@@ -32,6 +32,7 @@ import argparse
 import atexit
 import importlib
 import os
+import socket
 from subprocess import Popen
 import sys
 import time
@@ -101,9 +102,12 @@ class Registrar(object):
 
         # Create an entry
         entry = {"ow_type":self.ow_type,
+                 "host_ip":socket.gethostbyname(socket.gethostname()),
+                 "hostname":socket.gethostname(),
                  "id":self.uuid,
                  "ow_id":self.ow_id,
                  "start_time":time.time(),
+                 "status":"initializing",
                  "timestamp":time.time()}
 
         # If custom_vars have been passed, add them
@@ -312,8 +316,14 @@ class Overwatcher(Registrar):
         Kill the managed process
         """
 
+        # Update the entry in redis
+        self.update(custom_vars={"status":"killing"})
+
         #self.managed_process.kill()
         os.kill(self.managed_process.pid, signal.SIGKILL)
+
+        # Update the entry in redis
+        self.update(custom_vars={"status":"stopped"})
 
     def start_managed_process(self):
         """
@@ -331,6 +341,10 @@ class Overwatcher(Registrar):
         command.append(self.uuid)
         # print 'command: %s'%command
 
+        # Update the entry in redis with the command being run
+        self.update(custom_vars={"command":" ".join(command),
+                                 "status":"starting"})
+
         # Run the input command
         #self.managed_process = Popen(command, env=path)
         self.managed_process = Popen(command)
@@ -340,7 +354,11 @@ class Overwatcher(Registrar):
         exit_code = self.managed_process.poll()
         if exit_code != None:
             print text.error+"Managed process exited on start. Exiting."+text.stop
+            self.update(custom_vars={"status":"error"})
             sys.exit(9)
+
+        # Update the entry in redis
+        self.update(custom_vars={"status":"running"})
 
     def listen_and_update(self):
         """
@@ -417,7 +435,7 @@ class Overwatcher(Registrar):
         red = self.redis
 
         # Look for keys
-        print "Looking for OW:*:%s" % self.uuid
+        # print "Looking for OW:*:%s" % self.uuid
         try:
             keys = red.keys("OW:*:%s" % self.uuid)
         # Redis is down - no keys to be found
@@ -429,8 +447,11 @@ class Overwatcher(Registrar):
         elif len(keys) > 1:
             return None
         else:
-            print "Found it!"
-            return keys[0].split(":")[1]
+            # print "Found it!"
+            managed_id = keys[0].split(":")[1]
+            # Update the entry in redis with the command being run
+            self.update(custom_vars={"managed_id":managed_id})
+            return managed_id
 
 def get_commandline():
     """
