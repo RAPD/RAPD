@@ -257,6 +257,19 @@ export class RestService {
     .catch(error => this.handleError(error));
   }
 
+  //
+  // OVERWATCH methods
+  //
+  public getOverwatches(_id:string): Observable<any> {
+
+    console.log('getOverwatches');
+
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/overwatches')
+                        .map(res => res.json())
+                        .catch(error => this.handleError(error));
+  }
+
+
   // Generic error handler for connection problems
   private handleError(error) {
     return Observable.of({

@@ -3,6 +3,7 @@ import { Component,
          ViewContainerRef } from '@angular/core';
 
 import { User } from '../shared/classes/user';
+import { ComponentsPanelComponent } from './components-panel/components-panel.component';
 
 @Component({
   selector: 'app-dashboard',

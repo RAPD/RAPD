@@ -33,7 +33,10 @@ import { provideAuth, AuthHttp, AuthConfig } from 'angular2-jwt';
 
 import { MaintoolbarComponent } from './maintoolbar/maintoolbar.component';
 import { WelcomepanelComponent } from './welcomepanel/welcomepanel.component';
+
 import { DashboardComponent } from './dashboard/dashboard.component';
+import { ComponentsPanelComponent } from './dashboard/components-panel/components-panel.component';
+
 import { SessionspanelComponent } from './sessionspanel/sessionspanel.component';
 import { ProjectspanelComponent } from './projectspanel/projectspanel.component';
 import { AdminpanelComponent } from './adminpanel/adminpanel.component';
@@ -73,6 +76,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     MaintoolbarComponent,
     WelcomepanelComponent,
     DashboardComponent,
+    ComponentsPanelComponent,
     SessionspanelComponent,
     ProjectspanelComponent,
     AdminpanelComponent,
