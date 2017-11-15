@@ -276,7 +276,7 @@ export class RestService {
 
     return this.authHttp.put(
       this.globals_service.site.restApiUrl + '/overwatches/stop/' + id)
-      JSON.stringify({}),
+      JSON.stringify({id:id}),
       {headers:header}
     )
     .map(res => res.json())
@@ -290,7 +290,7 @@ export class RestService {
 
     return this.authHttp.put(
       this.globals_service.site.restApiUrl + '/overwatches/start/' + id,
-      JSON.stringify({}),
+      JSON.stringify({id:id}),
       {headers:header}
     )
     .map(res => res.json())
