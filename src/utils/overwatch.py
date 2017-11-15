@@ -156,7 +156,7 @@ class Registrar(object):
         """
 
         # Get connection
-        red = self.get_redis
+        red = self.redis
 
         # Create entry
         entry = {"ow_type":self.ow_type,
@@ -216,9 +216,6 @@ class Registrar(object):
 
         self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
         self.redis = self.redis_database.connect_to_redis()
-
-    def get_redis(self):
-        return self.redis
 
     def stop(self):
         """Stop the running process cleanly"""
@@ -289,7 +286,7 @@ class Overwatcher(Registrar):
             self.register()
 
             # Start microservice with self.uuid as overwatch id
-            self.start_managed_process()
+            self.start_managed_process(help=True)
 
             # Register to kill the managed process on overwatch exit
             atexit.register(self.kill_managed_process)
@@ -331,7 +328,7 @@ class Overwatcher(Registrar):
         # Forget the managed id
         self.ow_managed_id = None
 
-    def start_managed_process(self):
+    def start_managed_process(self, help=False):
         """
         Start the managed process with the passed in flags and the current
         environment. If the process exits immediately, the overwatcher will exit
@@ -348,8 +345,9 @@ class Overwatcher(Registrar):
         # print 'command: %s'%command
 
         # Update the entry in redis with the command being run
-        self.update(custom_vars={"command":" ".join(command),
-                                 "status":"starting"})
+        if not help:
+            self.update(custom_vars={"command":" ".join(command),
+                                     "status":"starting"})
 
         # Run the input command
         #self.managed_process = Popen(command, env=path)
