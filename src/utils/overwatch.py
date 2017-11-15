@@ -53,8 +53,6 @@ OVERWATCH_TIMEOUT = 30
 class Registrar(object):
     """Provides microservice monitoring tools"""
 
-    redis = None
-
     def __init__(self, site=None, ow_type="unknown", ow_id=None):
         """
         Initialize the Registrar
@@ -99,7 +97,6 @@ class Registrar(object):
         """
 
         # Get connection
-        #red = redis.Redis(connection_pool=self.redis_pool)
         red = self.redis
 
         # Create an entry
@@ -159,7 +156,7 @@ class Registrar(object):
         """
 
         # Get connection
-        red = self.redis
+        red = self.get_redis
 
         # Create entry
         entry = {"ow_type":self.ow_type,
@@ -219,6 +216,9 @@ class Registrar(object):
 
         self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
         self.redis = self.redis_database.connect_to_redis()
+
+    def get_redis(self):
+        return self.redis
 
     def stop(self):
         """Stop the running process cleanly"""
