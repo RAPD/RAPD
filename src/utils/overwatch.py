@@ -275,7 +275,7 @@ class Overwatcher(Registrar):
 
         # Just printing help info
         if "--help" in self.managed_file_flags:
-            self.start_managed_process()
+            self.start_managed_process(help=True)
 
         # An actual run
         else:
@@ -357,8 +357,9 @@ class Overwatcher(Registrar):
         time.sleep(0.5)
         exit_code = self.managed_process.poll()
         if exit_code != None:
-            print text.error+"Managed process exited on start. Exiting."+text.stop
-            self.update(custom_vars={"status":"error"})
+            if not help:
+                print text.error+"Managed process exited on start. Exiting."+text.stop
+                self.update(custom_vars={"status":"error"})
             sys.exit(9)
 
         # Set flag that we do want to restart the process
