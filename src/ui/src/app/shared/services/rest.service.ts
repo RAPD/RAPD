@@ -269,6 +269,33 @@ export class RestService {
                         .catch(error => this.handleError(error));
   }
 
+  public stopOverwatch(id:string) {
+
+    let header: Headers = new Headers();
+    header.append('Content-Type', 'application/json');
+
+    return this.authHttp.put(
+      this.globals_service.site.restApiUrl + '/overwatches/stop/' + id)
+      JSON.stringify({}),
+      {headers:header}
+    )
+    .map(res => res.json())
+    .catch(error => this.handleError(error));
+  }
+
+  public startOverwatch(id:string) {
+
+    let header: Headers = new Headers();
+    header.append('Content-Type', 'application/json');
+
+    return this.authHttp.put(
+      this.globals_service.site.restApiUrl + '/overwatches/start/' + id,
+      JSON.stringify({}),
+      {headers:header}
+    )
+    .map(res => res.json())
+    .catch(error => this.handleError(error));
+  }
 
   // Generic error handler for connection problems
   private handleError(error) {

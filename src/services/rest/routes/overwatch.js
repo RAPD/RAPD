@@ -103,5 +103,42 @@ router.route('/overwatches')
     }); // END redis_client.keys('OW:*', function(err, ow_keys) {
   }); // end of .get
 
+  router.route('/overwatches/start/:ow_id')
+    // route to add or modify project
+    .put(function(req, res) {
+
+      let ow_id = req.params.ow_id;
+
+      redis_client.hset('OW:'+ow_id+':instruction', 'command', 'start', function(err, ow_hash) {
+        if (err) {
+          console.error(err);
+          res.status(500).json({
+            success: false,
+            message: err
+          });
+        } else {
+          res.status(200).json({success:true});
+        }
+      });
+    }); // End of .put(function(req, res) {
+
+    router.route('/overwatches/stop/:ow_id')
+      // route to add or modify project
+      .put(function(req, res) {
+
+        let ow_id = req.params.ow_id;
+
+        redis_client.hset('OW:'+ow_id+':instruction', 'command', 'stop', function(err, ow_hash) {
+          if (err) {
+            console.error(err);
+            res.status(500).json({
+              success: false,
+              message: err
+            });
+          } else {
+            res.status(200).json({success:true});
+          }
+        });
+      }); // End of .put(function(req, res) {
 
 module.exports = router;

@@ -45,6 +45,24 @@ export class OverwatchesPanelComponent implements OnInit, OnDestroy {
        error => this.error_message = <any>error);
   }
 
+  // Stop the overwatch's child process
+  stopOverwatch(id:string) {
+    this.rest_service.stopOverwatch(id).subscribe(
+     response => {
+       console.log(response);
+     },
+     error => this.error_message = <any>error);
+  }
+
+  // Start the overwatch's child process
+  startOverwatch(id:string) {
+    this.rest_service.startOverwatch(id).subscribe(
+     response => {
+       console.log(response);
+     },
+     error => this.error_message = <any>error);
+  }
+
   ngOnDestroy() {
     console.log("DESTROYED");
     clearTimeout(this.update_timeout);
