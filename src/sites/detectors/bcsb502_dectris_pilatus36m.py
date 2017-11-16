@@ -61,6 +61,7 @@ XDS_FLIP_BEAM = detector.XDS_FLIP_BEAM
 # Import from more generic detector
 XDSINP0 = detector.XDSINP
 # Update the XDS information from the imported detector
+# only if there are differnces or new keywords.
 # The tuple should contain two items (key and value)
 # ie. XDSINP1 = [("SEPMIN", "4"),]
 XDSINP1 = [(),

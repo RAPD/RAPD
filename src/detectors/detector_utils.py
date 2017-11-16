@@ -322,6 +322,7 @@ def reorder_input(inp0, inp1):
     if isinstance(inp0, dict):
         temp0 = [(key, value) for key, value in inp0.iteritems()]
         temp0.sort()
+        # print converted
         print '-------inp0-------'
         for line in temp0:
             print line, ','
@@ -333,6 +334,7 @@ def reorder_input(inp0, inp1):
     if isinstance(inp1, dict):
         temp1 = [(key, value) for key, value in inp1.iteritems()]
         temp1.sort()
+        # print converted
         print '-------inp1-------'
         for line in temp1:
             print line, ','
@@ -350,7 +352,6 @@ def reorder_input(inp0, inp1):
     # Assuming we are adding new untrusted regions
     unt1 = [ line for line in unt1 if unt0.count(line) == False]
     #unt0.extend(unt1)
-    
 
     print '\n-------new params-------'
     # If the same keywords are used, then inp1 takes priority
