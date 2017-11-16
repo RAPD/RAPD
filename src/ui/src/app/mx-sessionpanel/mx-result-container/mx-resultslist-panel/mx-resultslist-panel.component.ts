@@ -114,11 +114,11 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
             console.log('  my_index:', my_index);
             if (my_index !== -1) {
               console.log('  Updated data');
-              parent_result[my_index] = result;
+              parent_result.children[my_index] = result;
             // Insert
             } else {
               console.log('  New data');
-              parent_result.unshift(result);
+              parent_result.children.unshift(result);
             }
           }
         }

@@ -1,20 +1,19 @@
-<div *ngIf="user">
-  <div class="panel" *ngIf="user.role === 'site_admin'">
-  <mat-tab-group class="session-tab-group">
-    <mat-tab label="Overview">
-      <!-- <mat-slide-toggle
-        [checked]="master_on ? 'checked' : ''">
-        Master On/Off
-      </mat-slide-toggle> -->
-    </mat-tab>
-    <mat-tab label="Components">
-    </mat-tab>
-    <mat-tab label="Stats">
-    </mat-tab>
-    <mat-tab label="Settings">
-    </mat-tab>
-  </mat-tab-group>
-</div>
-<div class="panel" *ngIf="user.role !== 'site_admin'">
-</div>
+<div class="panel">
+  <div *ngIf="user">
+    <div class="panel" *ngIf="user.role === 'site_admin'">
+      <mat-tab-group class="session-tab-group">
+        <mat-tab label="Overview">
+        </mat-tab>
+        <mat-tab label="Components">
+          <app-overwatches-panel></app-overwatches-panel>
+        </mat-tab>
+        <mat-tab label="Stats">
+        </mat-tab>
+        <mat-tab label="Settings">
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+    <div class="panel" *ngIf="user.role !== 'site_admin'">
+    </div>
+  </div>
 </div>

@@ -20,14 +20,15 @@ const Wss =           require('./ws_server');
 const config = require('./config'); // get our config file
 
 // Routing
-const groups_routes =   require('./routes/groups');
-const images_routes =   require('./routes/images');
-const jobs_routes =     require('./routes/jobs');
-const projects_routes = require('./routes/projects');
-const results_routes =  require('./routes/results');
-const runs_routes =     require('./routes/runs');
-const sessions_routes = require('./routes/sessions');
-const users_routes =    require('./routes/users');
+const groups_routes =    require('./routes/groups');
+const images_routes =    require('./routes/images');
+const jobs_routes =      require('./routes/jobs');
+const overwatch_routes = require('./routes/overwatch');
+const projects_routes =  require('./routes/projects');
+const results_routes =   require('./routes/results');
+const runs_routes =      require('./routes/runs');
+const sessions_routes =  require('./routes/sessions');
+const users_routes =     require('./routes/users');
 
 // Redis
 const redis =      require('redis');
@@ -415,6 +416,7 @@ app.use('/api', apiRoutes);
 app.use('/api', groups_routes);
 app.use('/api', images_routes);
 app.use('/api', jobs_routes);
+app.use('/api', overwatch_routes);
 app.use('/api', projects_routes);
 app.use('/api', results_routes);
 app.use('/api', runs_routes);

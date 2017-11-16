@@ -1,0 +1,62 @@
+<div class="rapd-main-panel" *ngIf="user.role === 'site_admin'">
+  <div *ngIf="(overwatches)?.length > 0">
+    <article class="c-content" style="margin-top:2em;text-align:left;">
+      <h3>RAPD Subsystems</h3>
+      <table class="rapd-table">
+        <thead>
+          <tr>
+            <th>Host</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Start</th>
+            <th>Last</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let parent of overwatches">
+            <tr>
+              <td>{{parent.hostname}}</td>
+              <td>{{parent.managed_type}}</td>
+              <td>{{parent.status}}</td>
+              <td>{{parent.start_time | date:'short'}}</td>
+              <td *ngIf="parent.children[0]">{{parent.children[0].timestamp | date:'medium'}}</td>
+              <td *ngIf="! parent.children[0]">-</td>
+              <td>
+                <button
+                  mat-icon-button
+                  color="warn"
+                  [disabled]="parent.status == 'stopped'"
+                  (click)="stopOverwatch(parent)">
+                  <mat-icon>clear</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  [ngClass]="{'grey-text': parent.status == 'running', 'green-text': parent.status != 'running'}"
+                  [disabled]="parent.status == 'running'"
+                  (click)="startOverwatch(parent)">
+                  <mat-icon>play_arrow</mat-icon>
+                </button>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </article>
+    <mat-toolbar class="rapd-main-panel-action-bar">
+      <button
+        mat-button
+        color="warn"
+        (click)="stopAll()">
+        <mat-icon>warning</mat-icon>Stop All
+      </button>
+    </mat-toolbar>
+  </div>
+  <div *ngIf="(overwatches)?.length == 0">
+    <h3>No RAPD subsystems running</h3>
+  </div>
+</div>
+
+<div class="rapd-main-panel" *ngIf="user.role !== 'site_admin'">
+
+</div>

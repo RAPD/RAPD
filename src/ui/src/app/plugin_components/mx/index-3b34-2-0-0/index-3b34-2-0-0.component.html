@@ -328,7 +328,7 @@
                 </tr>
                 <tr>
                   <td>Rotation Range</td>
-                  <td>{{(full_result.results.best_results_norm.overall.omega_end - full_result.results.best_results_norm.overall.omega_start).toFixed(1)}}&deg;</td>
+                  <td>{{(full_result.results.best_results_norm.overall.omega_end - full_result.results.best_results_norm.overall.omega_start) | number:'1.1-1'}}&deg;</td>
                 </tr>
                 <tr>
                   <td>Number of Images</td>
@@ -370,12 +370,12 @@
               <tbody>
                 <tr *ngFor="let key of objectKeys(full_result.results.best_results_anom.sweeps)">
                   <td>{{full_result.results.best_results_anom.sweeps[key].run_number}}</td>
-                  <td>{{full_result.results.best_results_anom.sweeps[key].phi_start}}&deg;</td>
-                  <td>{{full_result.results.best_results_anom.sweeps[key].phi_width}}&deg;</td>
+                  <td>{{full_result.results.best_results_anom.sweeps[key].phi_start | number:'1.1-2'}}&deg;</td>
+                  <td>{{full_result.results.best_results_anom.sweeps[key].phi_width | number:'1.1-2'}}&deg;</td>
                   <td>{{full_result.results.best_results_anom.sweeps[key].number_of_images}}</td>
                   <td>{{full_result.results.best_results_anom.sweeps[key].exposure_time}}s</td>
                   <td>{{full_result.results.best_results_anom.sweeps[key].distance.toFixed(0)}}mm</td>
-                  <td>{{full_result.results.best_results_anom.sweeps[key].transmission.toFixed(1)}}%</td>
+                  <td>{{full_result.results.best_results_anom.sweeps[key].transmission | number:'1.0-0'}}%</td>
                 </tr>
               </tbody>
             </table>
@@ -391,7 +391,7 @@
                 </tr>
                 <tr>
                   <td>Rotation Range</td>
-                  <td>{{full_result.results.best_results_anom.overall.omega_end - full_result.results.best_results_anom.overall.omega_start}}&deg;</td>
+                  <td>{{(full_result.results.best_results_anom.overall.omega_end - full_result.results.best_results_anom.overall.omega_start) | number:'1.1-1'}}&deg;</td>
                 </tr>
                 <tr>
                   <td>Number of Images</td>
@@ -416,7 +416,7 @@
               </tbody>
             </table>
           </div>
-          <div *ngIf="(full_result.results.mosflm_results_norm)?.status !== 'FAILED'" class="rapd-result">
+          <div *ngIf="full_result.results.mosflm_results_norm !== undefined" class="rapd-result">
             <h3>Data Collection Strategy from Mosflm Normal</h3>
             <table class="rapd-table">
               <thead>
@@ -467,7 +467,7 @@
               </tbody>
             </table>
           </div>
-          <div *ngIf="(full_result.results.mosflm_results_anom)?.status !== 'FAILED'" class="rapd-result">
+          <div *ngIf="full_result.results.mosflm_results_anom !== undefined" class="rapd-result">
             <h3>Data Collection Strategy from Mosflm ANOMALOUS</h3>
             <table class="rapd-table">
               <thead>

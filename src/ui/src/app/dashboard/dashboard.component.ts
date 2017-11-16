@@ -3,6 +3,7 @@ import { Component,
          ViewContainerRef } from '@angular/core';
 
 import { User } from '../shared/classes/user';
+import { OverwatchesPanelComponent } from './overwatches-panel/overwatches-panel.component';
 
 @Component({
   selector: 'app-dashboard',

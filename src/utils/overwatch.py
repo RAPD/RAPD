@@ -32,6 +32,7 @@ import argparse
 import atexit
 import importlib
 import os
+import socket
 from subprocess import Popen
 import sys
 import time
@@ -96,14 +97,22 @@ class Registrar(object):
         """
 
         # Get connection
-        #red = redis.Redis(connection_pool=self.redis_pool)
         red = self.redis
+
+        hostname = socket.gethostname()
+        try:
+            host_ip = socket.gethostbyname(socket.gethostname())
+        except socket.gaierror:
+            host_ip = "unknown"
 
         # Create an entry
         entry = {"ow_type":self.ow_type,
+                 "host_ip":host_ip,
+                 "hostname":hostname,
                  "id":self.uuid,
                  "ow_id":self.ow_id,
                  "start_time":time.time(),
+                 "status":"initializing",
                  "timestamp":time.time()}
 
         # If custom_vars have been passed, add them
@@ -229,7 +238,8 @@ class Overwatcher(Registrar):
     ow_type = "overwatcher"
     ow_id = None
     ow_managed_id = None
-
+    ow_managed_type = None
+    run_process = True
 
     def __init__(self, site, managed_file, managed_file_flags):
         """
@@ -271,7 +281,7 @@ class Overwatcher(Registrar):
 
         # Just printing help info
         if "--help" in self.managed_file_flags:
-            self.start_managed_process()
+            self.start_managed_process(help=True)
 
         # An actual run
         else:
@@ -282,7 +292,7 @@ class Overwatcher(Registrar):
             self.register()
 
             # Start microservice with self.uuid as overwatch id
-            self.start_managed_process()
+            self.start_managed_process(help=True)
 
             # Register to kill the managed process on overwatch exit
             atexit.register(self.kill_managed_process)
@@ -294,9 +304,6 @@ class Overwatcher(Registrar):
         """
         Kill and then start the managed process
         """
-
-        # Forget the previous id
-        self.ow_managed_id = None
 
         # Kill
         self.kill_managed_process()
@@ -312,10 +319,24 @@ class Overwatcher(Registrar):
         Kill the managed process
         """
 
-        #self.managed_process.kill()
-        os.kill(self.managed_process.pid, signal.SIGKILL)
+        print "kill_managed_process"
 
-    def start_managed_process(self):
+        # Set flag that we do not want to restart the process
+        self.run_process = False
+
+        # Update the entry in redis
+        self.update(custom_vars={"status":"killing"})
+
+        self.managed_process.kill()
+        # os.kill(self.managed_process.pid, signal.SIGKILL)
+
+        # Forget the managed id
+        self.ow_managed_id = None
+
+        # Update the entry in redis
+        self.update(custom_vars={"status":"stopped"})
+
+    def start_managed_process(self, help=False):
         """
         Start the managed process with the passed in flags and the current
         environment. If the process exits immediately, the overwatcher will exit
@@ -331,6 +352,11 @@ class Overwatcher(Registrar):
         command.append(self.uuid)
         # print 'command: %s'%command
 
+        # Update the entry in redis with the command being run
+        if not help:
+            self.update(custom_vars={"command":" ".join(command),
+                                     "status":"starting"})
+
         # Run the input command
         #self.managed_process = Popen(command, env=path)
         self.managed_process = Popen(command)
@@ -339,8 +365,16 @@ class Overwatcher(Registrar):
         time.sleep(0.5)
         exit_code = self.managed_process.poll()
         if exit_code != None:
-            print text.error+"Managed process exited on start. Exiting."+text.stop
+            if not help:
+                print text.error+"Managed process exited on start. Exiting."+text.stop
+                self.update(custom_vars={"status":"error"})
             sys.exit(9)
+
+        # Set flag that we do want to restart the process
+        self.run_process = True
+
+        # Update the entry in redis
+        self.update(custom_vars={"status":"running"})
 
     def listen_and_update(self):
         """
@@ -357,13 +391,22 @@ class Overwatcher(Registrar):
                 if self.ow_managed_id == None:
                     self.ow_managed_id = self.get_managed_id()
 
+                # Get the managed process type
+                if self.ow_managed_type == None:
+                    self.ow_managed_type = self.get_managed_type()
+
                 # Check the managed process status if a managed process is found
                 if not self.ow_managed_id == None:
                     status = self.check_managed_process()
 
                     # Watched process has failed
                     if status == False:
-                        self.restart_managed_process()
+                        # If we are supposed to run the process, run
+                        if self.run_process == True:
+                            self.restart_managed_process()
+
+                # Check for an instruction
+                self.check_for_instruction()
 
                 # Update the overwatcher status
                 try:
@@ -408,6 +451,38 @@ class Overwatcher(Registrar):
         else:
             return True
 
+    def check_for_instruction(self):
+        """
+        Check for an instruction in the redis instance
+        """
+
+        # print "check_for_instruction"
+
+        # Get connection
+        red = self.redis
+
+        # What's the time?
+        now = time.time()
+
+        try:
+            # Get the instruction
+            instruction = red.hgetall("OW:%s:instruction" % self.uuid)
+        # There is no entry - do nothing
+        except TypeError:
+            return False
+        # Redis is down - do nothing
+        except redis.exceptions.ConnectionError:
+            return False
+
+        # If there is an instruction, delete it as we have retrieved it
+        if instruction:
+            red.delete("OW:%s:instruction" % self.uuid)
+            print "Have instruction:", instruction
+            if instruction["command"] == "stop":
+                self.kill_managed_process()
+            elif instruction["command"] == "start":
+                self.start_managed_process()
+
     def get_managed_id(self):
         """
         Retrieve the managed process's ow_id
@@ -417,7 +492,7 @@ class Overwatcher(Registrar):
         red = self.redis
 
         # Look for keys
-        print "Looking for OW:*:%s" % self.uuid
+        # print "Looking for OW:*:%s" % self.uuid
         try:
             keys = red.keys("OW:*:%s" % self.uuid)
         # Redis is down - no keys to be found
@@ -429,8 +504,36 @@ class Overwatcher(Registrar):
         elif len(keys) > 1:
             return None
         else:
-            print "Found it!"
-            return keys[0].split(":")[1]
+            # print "Found it!"
+            managed_id = keys[0].split(":")[1]
+            # Update the entry in redis with the command being run
+            self.update(custom_vars={"managed_id":managed_id})
+            return managed_id
+
+    def get_managed_type(self):
+        """
+        Retrieve the managed process's ow_type
+        """
+
+        # Get connection
+        red = self.redis
+
+        # Make sure we have a managed_id
+        if not self.ow_managed_id:
+            return False
+
+        # Look for keys
+        try:
+            ow_type = red.hget("OW:%s" % self.ow_managed_id, "ow_type")
+        # Redis is down - no keys to be found
+        except redis.exceptions.ConnectionError:
+            return None
+
+        if ow_type:
+            # Update the entry in redis with the command being run
+            self.update(custom_vars={"managed_type":ow_type})
+
+        return ow_type
 
 def get_commandline():
     """

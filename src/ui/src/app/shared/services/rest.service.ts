@@ -257,6 +257,62 @@ export class RestService {
     .catch(error => this.handleError(error));
   }
 
+  //
+  // OVERWATCH methods
+  //
+  public getOverwatches(): Observable<any> {
+
+    console.log('getOverwatches');
+
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/overwatches')
+                        .map(res => res.json().overwatches)
+                        .catch(error => this.handleError(error));
+  }
+
+  public stopOverwatch(id:string) {
+
+    let header: Headers = new Headers();
+    header.append('Content-Type', 'application/json');
+
+    return this.authHttp.put(
+      this.globals_service.site.restApiUrl + '/overwatches/stop/' + id,
+      JSON.stringify({id:id}),
+      {headers:header}
+    )
+    .map(res => res.json())
+    .catch(error => this.handleError(error));
+  }
+
+  public stopAllOverwatches() {
+
+    console.log('stopAllOverwatches');
+
+    let header: Headers = new Headers();
+    header.append('Content-Type', 'application/json');
+
+    return this.authHttp.put(
+      this.globals_service.site.restApiUrl + '/overwatches/stopall',
+      JSON.stringify({id:'foo'}),
+      {headers:header}
+    )
+    .map(res => res.json())
+    .catch(error => this.handleError(error));
+  }
+
+  public startOverwatch(id:string) {
+
+    let header: Headers = new Headers();
+    header.append('Content-Type', 'application/json');
+
+    return this.authHttp.put(
+      this.globals_service.site.restApiUrl + '/overwatches/start/' + id,
+      JSON.stringify({id:id}),
+      {headers:header}
+    )
+    .map(res => res.json())
+    .catch(error => this.handleError(error));
+  }
+
   // Generic error handler for connection problems
   private handleError(error) {
     return Observable.of({
