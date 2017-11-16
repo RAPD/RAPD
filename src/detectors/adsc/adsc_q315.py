@@ -32,7 +32,6 @@ carefully
 """
 
 # Standard imports
-from collections import OrderedDict
 import os
 import re
 import sys
@@ -95,34 +94,32 @@ CCD_IMAGE_SATURATION=65535;
 """
 
 XDS_FLIP_BEAM = True
-XDSINP = OrderedDict([
-    ("DETECTOR", "ADSC "),
-    ("MINIMUM_VALID_PIXEL_VALUE", "1 "),
-    ("OVERLOAD", " 65000"),
-    ("VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS", " 6000 30000"),
-    ("DIRECTION_OF_DETECTOR_X-AXIS", " 1.0 0.0 0.0"),
-    ("DIRECTION_OF_DETECTOR_Y-AXIS", "0.0 1.0 0.0"),
-    ("TRUSTED_REGION", "0.0 1.05"),
-    # If Adding untrusted regions, simply append an index numb)r
-    # so the end of the keywo)d
-    ("UNTRUSTED_RECTANGLE1", " 510 1022 2570 3070"),
-    ("NX", "2048"),
-    ("NY", "2048"),
-    ("QX", "0.05130"),
-    ("QY", "0.05130"),
-    ("MAX_FAC_Rmeas", "2.0"),
-    ("FRACTION_OF_POLARIZATION", "0.90"),
-    ("POLARIZATION_PLANE_NORMAL", " 0.0 1.0 0.0"),
-    ("MAX_CELL_ANGLE_ERROR", "2.0"),
-    ("MAX_CELL_AXIS_ERROR", "0.03"),
-    ("MIN_RFL_Rmeas", " 50"),
-    ("ROTATION_AXIS", " 1.0  0.0 0.0"),
-    ("INCIDENT_BEAM_DIRECTION", "0.0 0.0 1.0"),
-    ("STRICT_ABSORPTION_CORRECTION", "TRUE"),
-    ("REFINE(IDXREF)", "BEAM AXIS ORIENTATION CELL POSITION"),
-    ("REFINE(INTEGRATE)", "BEAM ORIENTATION CELL POSITION"),
-    ("REFINE(CORRECT)", "POSITION BEAM ORIENTATION CELL AXIS"),
-    ])
+XDSINP = [
+    ('DETECTOR', 'ADSC '),
+    ('DIRECTION_OF_DETECTOR_X-AXIS', '1 0 0'),
+    ('DIRECTION_OF_DETECTOR_Y-AXIS', '0 1 0'),
+    ('FRACTION_OF_POLARIZATION', '0.90'),
+    ('INCIDENT_BEAM_DIRECTION', '0 0 1'),
+    ('MAX_CELL_ANGLE_ERROR', '2.0'),
+    ('MAX_CELL_AXIS_ERROR', '0.03'),
+    ('MAX_FAC_Rmeas', '2.0'),
+    ('MINIMUM_VALID_PIXEL_VALUE', '1'),
+    ('MIN_RFL_Rmeas', '50'),
+    ('NX', '2048'),
+    ('NY', '2048'),
+    ('OVERLOAD', '65000'),
+    ('POLARIZATION_PLANE_NORMAL', '0 1 0'),
+    ('QX', '0.05130'),
+    ('QY', '0.05130'),
+    ('REFINE(CORRECT)', 'POSITION BEAM ORIENTATION CELL AXIS'),
+    ('REFINE(IDXREF)', 'BEAM AXIS ORIENTATION CELL POSITION'),
+    ('REFINE(INTEGRATE)', 'BEAM ORIENTATION CELL POSITION'),
+    ('ROTATION_AXIS', '1 0 0'),
+    ('STRICT_ABSORPTION_CORRECTION', 'TRUE'),
+    ('TRUSTED_REGION', '0.0 1.05'),
+    ('UNTRUSTED_RECTANGLE1', ' 510 1022 2570 3070'),
+    ('VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS', '6000 30000'),
+    ]
 
 MONTHS = {'Jan' : '01',
           'Feb' : '02',

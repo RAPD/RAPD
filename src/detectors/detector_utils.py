@@ -289,20 +289,27 @@ def load_detector(detector):
 def merge_xds_input(base, new):
     """Merge base xds_inp with changes/additions from new"""
     new_inp = []
+    skip = False
     # replace existing keywords in base xds
     for line in base:
-        if len(new) > 0:
-            for x in range(len(new)):
-                if line[0] == new[x][0]:
-                    line = new.pop(x)
-                    break
+        try:
+            if len(new[0]) > 0:
+                for x in range(len(new)):
+                    if line[0] == new[x][0]:
+                        line = new.pop(x)
+                        break
+        except IndexError:
+            print 'nothing left in inp1'
+            skip = True
         #new_inp.append("%s%s"%('='.join(line), '\n'))
         new_inp.append(line)
-    # Add new keywords
-    if len(new) > 0:
-        for line in new:
-            #new_inp.append("%s%s"%('='.join(line), '\n'))
-            new_inp.append(line)
+    # Skip if nothing left to add
+    if skip == False:
+        # Add new keywords
+        if len(new[0]) > 0:
+            for line in new:
+                #new_inp.append("%s%s"%('='.join(line), '\n'))
+                new_inp.append(line)
 
     return new_inp
 
@@ -341,28 +348,34 @@ def reorder_input(inp0, inp1):
     else:
         temp1 = inp1
         temp1.sort()
-
     # Separate the UNTRUSTED_ lines for separate sorting
-    unt0 = [ l0[1] for l0 in temp0 if l0[0].count('UNTRUSTED_')]
-    unt0.sort()
-    temp0 = [ l0 for l0 in temp0 if l0[0].count('UNTRUSTED_') == False]
-    unt1 = [ l1[1] for l1 in temp1 if l1[0].count('UNTRUSTED_')]
-    unt1.sort()
-    temp1 = [ l1 for l1 in temp1 if l1[0].count('UNTRUSTED_') == False]
-    # Assuming we are adding new untrusted regions
-    unt1 = [ line for line in unt1 if unt0.count(line) == False]
-    #unt0.extend(unt1)
-
-    print '\n-------new params-------'
-    # If the same keywords are used, then inp1 takes priority
-    for x, l0 in enumerate(temp0):
-        for y, l1 in enumerate(temp1):
-            # if keyword is the same
-            if l0[0] == l1[0]:
-                if l0[1] != l1[1]:
-                    print l1, ','
-    for x in range(len(unt1)):
-        print "('UNTRUSTED_RECTANGLE%s', '%s'),"%((len(unt0)+1+x), unt1[x])
+    if len(temp0[0]) > 0:
+        unt0 = [ l0[1] for l0 in temp0 if l0[0].count('UNTRUSTED_')]
+        unt0.sort()
+        temp0 = [ l0 for l0 in temp0 if l0[0].count('UNTRUSTED_') == False]
+    if len(temp1[0]) > 0:
+        unt1 = [ l1[1] for l1 in temp1 if l1[0].count('UNTRUSTED_')]
+        unt1.sort()
+        temp1 = [ l1 for l1 in temp1 if l1[0].count('UNTRUSTED_') == False]
+        # Assuming we are adding new untrusted regions
+        unt1 = [ line for line in unt1 if unt0.count(line) == False]
+    if temp0 == []:
+        temp0 = [()]
+    if temp1 == []:
+        temp1 = [()]
+    
+    
+    if len(temp0[0]) > 0 and len(temp1[0]) > 0:
+        print '\n-------new params-------'
+        # If the same keywords are used, then inp1 takes priority
+        for x, l0 in enumerate(temp0):
+            for y, l1 in enumerate(temp1):
+                # if keyword is the same
+                if l0[0] == l1[0]:
+                    if l0[1].strip() != l1[1].strip():
+                        print l1, ','
+        for x in range(len(unt1)):
+            print "('UNTRUSTED_RECTANGLE%s', '%s'),"%((len(unt0)+1+x), unt1[x])
 
 def print_hdf5_file_structure(file_name) :
     """
@@ -512,9 +525,10 @@ if __name__ == "__main__":
         print text.red + "No input image" + text.stop
         sys.exit(9)
     """
-    import detectors.dectris.dectris_eiger16m as inp0
-    import sites.detectors.necat_dectris_eiger16m as inp1
-    #reorder_input(inp0.XDSINP, inp1.XDSINP)
+    import detectors.rigaku.raxis as inp0
+    import sites.detectors.ucla_rigaku_raxisivpp as inp1
+    reorder_input(inp0.XDSINP, inp1.XDSINP)
+    print '----TEST-----'
     for line in inp1.XDSINP:
         print line
     

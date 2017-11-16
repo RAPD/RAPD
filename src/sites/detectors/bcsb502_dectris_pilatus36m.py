@@ -36,8 +36,7 @@ import pprint
 
 # Dectris Pilatus 6M
 import detectors.dectris.dectris_pilatus6m as detector
-
-from detectors.detector_utils import merge_xds_input
+import detectors.detector_utils as utils
 
 # Detector information
 # The RAPD detector type
@@ -59,6 +58,7 @@ HEADER_VERSION = 1
 # XDS information for constructing the XDS.INP file
 XDS_FLIP_BEAM = detector.XDS_FLIP_BEAM
 # Import from more generic detector
+
 XDSINP0 = detector.XDSINP
 # Update the XDS information from the imported detector
 # only if there are differnces or new keywords.
@@ -66,7 +66,7 @@ XDSINP0 = detector.XDSINP
 # ie. XDSINP1 = [("SEPMIN", "4"),]
 XDSINP1 = [(),
           ]
-XDSINP = merge_xds_input(XDSINP0, XDSINP1)
+XDSINP = utils.merge_xds_input(XDSINP0, XDSINP1)
 
 def parse_file_name(fullname):
     """

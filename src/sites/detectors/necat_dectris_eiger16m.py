@@ -65,27 +65,19 @@ HEADER_VERSION = 1
 # XDS information for constructing the XDS.INP file
 # Import from more generic detector
 XDS_FLIP_BEAM = detector.XDS_FLIP_BEAM
+
 # Get the reference input
 XDSINP0 = detector.XDSINP
-
 # Update the XDS information from the imported detector
 # only if there are differnces or new keywords.
 # The tuple should contain two items (key and value)
 # ie. XDSINP1 = [("SEPMIN", "4"),]
-XDSINP1 = [
-    ('DIRECTION_OF_DETECTOR_X-AXIS', '1 0 0') ,
-    ('DIRECTION_OF_DETECTOR_Y-AXIS', '0 1 0') ,
-    ('INCIDENT_BEAM_DIRECTION', '0 0 1') ,
-    ('MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT', '4') ,
+XDSINP1 = [('MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT', '4') ,
     ('NUMBER_OF_PROFILE_GRID_POINTS_ALONG_ALPHA/BETA', '13') ,
     ('NUMBER_OF_PROFILE_GRID_POINTS_ALONG_GAMMA', '9') ,
     ('OVERLOAD', '3000000') ,
-    ('POLARIZATION_PLANE_NORMAL', '0 1 0') ,
     ('REFINE(CORRECT)', 'POSITION DISTANCE BEAM ORIENTATION CELL AXIS') ,
-    ('REFINE(IDXREF)', 'BEAM AXIS ORIENTATION CELL') ,
     ('REFINE(INTEGRATE)', 'POSITION DISTANCE BEAM ORIENTATION CELL') ,
-    ('ROTATION_AXIS', '1 0 0') ,
-    ('SEPMIN', '4') ,
     ('TRUSTED_REGION', '0.00 1.2') ,
     ('VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS', '8000. 30000.') ,
     ('UNTRUSTED_RECTANGLE11', '    0 4151    225  260'),
@@ -97,6 +89,7 @@ XDSINP1 = [
     ('UNTRUSTED_RECTANGLE17', '    0 4151   3561 3566'),
     ('UNTRUSTED_RECTANGLE18', '    0 4151   4112 4117'),
     ]
+
 XDSINP = utils.merge_xds_input(XDSINP0, XDSINP1)
 
 

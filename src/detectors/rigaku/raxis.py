@@ -75,7 +75,27 @@ HEADER_VERSION = 1
 
 # XDS information for constructing the XDS.INP file
 XDS_FLIP_BEAM = True
+
+XDSINP = [
+    ("NX", "3000"),
+    ("MINIMUM_VALID_PIXEL_VALUE", "0 "),
+    ("VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS", " 6000 30000"),
+    ("QY", "0.100"),
+    ("QX", "0.1000"),
+    ("DELPHI", " 5.0"),
+    ("INCIDENT_BEAM_DIRECTION", "0 0 1"),
+    ("BEAM_DIVERGENCE_E.S.D.", "0.136"),
+    ("OVERLOAD", "1000000"),
+    ("DIRECTION_OF_DETECTOR_Y-AXIS", "0 -1 0"),
+    ("NY", "3000"),
+    ("DIRECTION_OF_DETECTOR_X-AXIS", "1 0 0"),
+    ("DETECTOR", "RAXIS  "),
+    ("POLARIZATION_PLANE_NORMAL", "1 0 0"),
+    ("TRUSTED_REGION", "0.0 1.35"),
+    ("ROTATION_AXIS", "0 1 0"),
+  ]
 # Import from more generic detector
+
 # XDSINP = detector.XDSINP
 # Update the XDS information from the imported detector
 # XDSINP.update({})
