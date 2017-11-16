@@ -121,18 +121,18 @@ parse_message = function(channel, message) {
 
       // Create a result
       let result = { _id: message.process.result_id,
-        data_type: message.plugin.data_type.toLowerCase(),
-        parent_id: message.process.parent_id,
-        plugin_id: message.plugin.id,
-        plugin_type: message.plugin.type.toLowerCase(),
-        plugin_version: message.plugin.version,
-        projects: [],
-        repr: message.process.repr,
-        result_id: message._id,
-        session_id: message.process.session_id,
-        status: message.process.status,
-        timestamp: new Date().toISOString()
-        };
+          data_type: message.plugin.data_type.toLowerCase(),
+          parent_id: message.process.parent_id,
+          plugin_id: message.plugin.id,
+          plugin_type: message.plugin.type.toLowerCase(),
+          plugin_version: message.plugin.version,
+          projects: [],
+          repr: message.process.repr,
+          result_id: message._id,
+          session_id: message.process.session_id,
+          status: message.process.status,
+          timestamp: new Date().toISOString()
+          };
       return_array.push(['results', [result]]);
 
       // Create a detailed result
@@ -233,7 +233,8 @@ function Wss (opt, callback) {
               if (decoded.iat <= now && decoded.exp >= now) {
                 // Add token to websocket session
                 ws.session.token = decoded;
-                // console.log(ws.session);
+                console.log(ws.session);
+
               }
             }
           });

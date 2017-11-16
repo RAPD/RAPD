@@ -12,6 +12,7 @@ const nodemailer =    require('nodemailer');
 const smtpTransport = require('nodemailer-smtp-transport');
 const path =          require('path');
 const randomstring =  require('randomstring');
+const useragent =     require('express-useragent');
 
 // RAPD websocket server
 const Wss =           require('./ws_server');
@@ -37,6 +38,7 @@ var redis_client = redis.createClient(config.redis_port, config.redis_host);
 // MongoDB Models
 const User =    require('./models/user');
 const Group =   require('./models/group');
+const Login =   require('./models/login');
 const Result =  require('./models/result');
 const Run =     require('./models/run');
 const Session = require('./models/session');
@@ -77,6 +79,9 @@ let app_session = session({
   saveUninitialized: true
 });
 app.use(app_session);
+
+// Add useragent to make some stuff simpler
+app.use(useragent.express());
 
 // Create the websocket server
 var wss = new Wss({morgan:morgan,
@@ -131,6 +136,7 @@ apiRoutes.post('/authenticate', function(req, res) {
         var token = jwt.sign(user, app.get('superSecret'), {
           expiresIn: 86400 // expires in 24 hours
         });
+
         // Return the information including token as JSON
         res.json({
           success: true,
@@ -138,6 +144,21 @@ apiRoutes.post('/authenticate', function(req, res) {
           token: token,
           pass_force_change: user.pass_force_change
         });
+
+        // Get useragent data
+        let ua = req.useragent;
+
+        // Record the login
+        let new_login = new Login({
+          browser:ua.browser,
+          browser_version:ua.version,
+          email:req.body.email,
+          ip_address:req.connection.remoteAddress,
+          os:ua.os,
+          platform:ua.platform,
+          success:true
+        }).save();
+
       // otherwise we can determine why we failed
       } else {
         var reasons = User.failedLogin;
