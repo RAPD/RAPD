@@ -104,7 +104,6 @@ router.route('/overwatches')
   }); // end of .get
 
   router.route('/overwatches/start/:ow_id')
-    // route to add or modify project
     .put(function(req, res) {
 
       let ow_id = req.params.ow_id;
@@ -123,7 +122,6 @@ router.route('/overwatches')
     }); // End of .put(function(req, res) {
 
     router.route('/overwatches/stop/:ow_id')
-      // route to add or modify project
       .put(function(req, res) {
 
         let ow_id = req.params.ow_id;
@@ -141,4 +139,59 @@ router.route('/overwatches')
         });
       }); // End of .put(function(req, res) {
 
+      router.route('/overwatches/stopall')
+        .put(function(req, res) {
+          console.log('STOP ALL');
+          redis_client.keys('OW:*', function(err, ow_keys) {
+            if (err) {
+              console.error(err);
+              res.status(500).json({
+                success: false,
+                message: err
+              });
+            } else {
+              let num_keys = ow_keys.length;
+              console.log('num_keys =', num_keys);
+              let key_counter = 0;
+              ow_keys.forEach(function(ow_key) {
+
+                // Filter for entries like OW:id:id
+                if (ow_key.length > 40) {
+                  console.log('Ignoring', ow_key)
+                  key_counter += 1;
+
+                // The form we want OW:id
+                } else {
+
+                  // Get the full entry
+                  redis_client.hgetall(ow_key, function(err, ow_hash) {
+                    key_counter += 1;
+                    if (err) {
+                      console.error(err);
+                      res.status(500).json({
+                        success: false,
+                        message: err
+                      });
+                    } else {
+
+                      // An overwatcher - ask it to close managed process
+                      if (ow_hash.ow_type === 'overwatcher') {
+                        redis_client.hset(ow_key+':instruction', 'command', 'stop', function(result, err) {
+                          console.error(err);
+                          console.log(result);
+                        })
+                      }
+                    }
+                    // If we are done, send back the data
+                    if (key_counter === num_keys) {
+                      // Return the components
+                      console.log('Done stopping all');
+                      res.status(200).json({success:true});
+                    }
+                  }); // END redis_client.hgetall(ow_key, function(err, ow_hash) {
+                }
+              }); // END ow_keys.forEach(function(ow_key) {
+            }
+          }); // END redis_client.keys('OW:*', function(err, ow_keys) {
+        }); // End of .put(function(req, res) {
 module.exports = router;

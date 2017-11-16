@@ -319,6 +319,8 @@ class Overwatcher(Registrar):
         Kill the managed process
         """
 
+        print "kill_managed_process"
+
         # Set flag that we do not want to restart the process
         self.run_process = False
 
@@ -328,11 +330,11 @@ class Overwatcher(Registrar):
         self.managed_process.kill()
         # os.kill(self.managed_process.pid, signal.SIGKILL)
 
-        # Update the entry in redis
-        self.update(custom_vars={"status":"stopped"})
-
         # Forget the managed id
         self.ow_managed_id = None
+
+        # Update the entry in redis
+        self.update(custom_vars={"status":"stopped"})
 
     def start_managed_process(self, help=False):
         """

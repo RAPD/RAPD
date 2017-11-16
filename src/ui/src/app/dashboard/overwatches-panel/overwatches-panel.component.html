@@ -1,88 +1,62 @@
-<div class="panel" *ngIf="user.role === 'site_admin'">
-  <article class="c-content" style="margin-top:2em;">
-
-    <table class="rapd-table">
-      <thead>
-        <tr>
-          <th>Host</th>
-          <th>Type</th>
-          <th>Status</th>
-          <th>Start</th>
-          <th>Last</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <ng-container *ngFor="let parent of overwatches">
+<div class="rapd-main-panel" *ngIf="user.role === 'site_admin'">
+  <div *ngIf="(overwatches)?.length > 0">
+    <article class="c-content" style="margin-top:2em;text-align:left;">
+      <h3>RAPD Subsystems</h3>
+      <table class="rapd-table">
+        <thead>
           <tr>
-            <td>{{parent.hostname}}</td>
-            <td>{{parent.managed_type}}</td>
-            <td>{{parent.status}}</td>
-            <td>{{parent.start_time | date:'short'}}</td>
-            <td *ngIf="parent.children[0]">{{parent.children[0].timestamp | date:'medium'}}</td>
-            <td *ngIf="! parent.children[0]">-</td>
-            <td>
-              <button
-                mat-icon-button
-                color="warn"
-                (click)="stopOverwatch(parent.id)">
-                <mat-icon>clear</mat-icon>
-              </button>
-              <button
-                mat-icon-button
-                style="color:green;"
-                (click)="startOverwatch(parent.id)">
-                <mat-icon>play_arrow</mat-icon>
-              </button>
-            </td>
+            <th>Host</th>
+            <th>Type</th>
+            <th>Status</th>
+            <th>Start</th>
+            <th>Last</th>
+            <th>Actions</th>
           </tr>
-          <!-- <tr *ngFor="let child of parent.children">
-            <td></td>
-            <td>{{child.ow_type}}</td>
-            <td>{{child.start_time | date:'short'}}</td>
-            <td>{{child.timestamp | date:'medium'}}</td>
-            <td></td>
-          </tr> -->
-        </ng-container>
-      </tbody>
-    </table>
-
-
-    <!-- <ngx-datatable
-      class="material"
-      [rows]="overwatches"
-      [loadingIndicator]="loadingIndicator"
-      [columnMode]="'force'"
-      [headerHeight]="50"
-      [footerHeight]="50"
-      [limit]="10"
-      [rowHeight]="'auto'"
-      [reorderable]="reorderable"
-      [sorts]="[{prop: 'username', dir: 'asc'}]">
-      <ngx-datatable-column name="Id" prop="id">
-        <ng-template let-value="value" ngx-datatable-cell-template>
-          {{value}}
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="Type" prop="ow_type">
-        <ng-template let-value="value" ngx-datatable-cell-template>
-          {{value}}
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="Start" prop="start_time">
-        <ng-template let-value="value" ngx-datatable-cell-template>
-          {{value}}
-        </ng-template>
-      </ngx-datatable-column>
-      <ngx-datatable-column name="Last" prop="timestamp">
-        <ng-template let-value="value" ngx-datatable-cell-template>
-          {{value}}
-        </ng-template>
-      </ngx-datatable-column>
-    </ngx-datatable> -->
-  </article>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let parent of overwatches">
+            <tr>
+              <td>{{parent.hostname}}</td>
+              <td>{{parent.managed_type}}</td>
+              <td>{{parent.status}}</td>
+              <td>{{parent.start_time | date:'short'}}</td>
+              <td *ngIf="parent.children[0]">{{parent.children[0].timestamp | date:'medium'}}</td>
+              <td *ngIf="! parent.children[0]">-</td>
+              <td>
+                <button
+                  mat-icon-button
+                  color="warn"
+                  [disabled]="parent.status == 'stopped'"
+                  (click)="stopOverwatch(parent)">
+                  <mat-icon>clear</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  [ngClass]="{'grey-text': parent.status == 'running', 'green-text': parent.status != 'running'}"
+                  [disabled]="parent.status == 'running'"
+                  (click)="startOverwatch(parent)">
+                  <mat-icon>play_arrow</mat-icon>
+                </button>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </article>
+    <mat-toolbar class="rapd-main-panel-action-bar">
+      <button
+        mat-button
+        color="warn"
+        (click)="stopAll()">
+        <mat-icon>warning</mat-icon>Stop All
+      </button>
+    </mat-toolbar>
+  </div>
+  <div *ngIf="(overwatches)?.length == 0">
+    <h3>No RAPD subsystems running</h3>
+  </div>
 </div>
 
-<div class="panel" *ngIf="user.role !== 'site_admin'">
+<div class="rapd-main-panel" *ngIf="user.role !== 'site_admin'">
 
 </div>

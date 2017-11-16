@@ -1,7 +1,7 @@
 import { Component,
          OnDestroy,
          OnInit } from '@angular/core';
-
+import { MatSnackBar } from '@angular/material';
 import { RestService } from '../../shared/services/rest.service';
 import { User } from '../../shared/classes/user';
 
@@ -18,7 +18,8 @@ export class OverwatchesPanelComponent implements OnInit, OnDestroy {
 
   private update_timeout:number;
 
-  constructor(private rest_service: RestService) { }
+  constructor(private rest_service: RestService,
+              public snackBar: MatSnackBar) { }
 
   ngOnInit() {
 
@@ -46,22 +47,66 @@ export class OverwatchesPanelComponent implements OnInit, OnDestroy {
   }
 
   // Stop the overwatch's child process
-  stopOverwatch(id:string) {
-    this.rest_service.stopOverwatch(id).subscribe(
-     response => {
-       console.log(response);
-     },
-     error => this.error_message = <any>error);
+  stopOverwatch(parent:any) {
+    if (parent.status !== 'stopped') {
+      this.rest_service.stopOverwatch(parent.id).subscribe(
+       parameters => {
+         console.log(parameters);
+         if (parameters.success) {
+           let snackBarRef = this.snackBar.open('Stop requested', 'Ok', {
+             duration: 5000,
+           });
+           parent.status = 'stop requested';
+         }
+       },
+       error => this.error_message = <any>error);
+    } else {
+      let snackBarRef = this.snackBar.open('Can\'t stop a stopped process', 'Ok', {
+        duration: 5000,
+      });
+    }
   }
 
   // Start the overwatch's child process
-  startOverwatch(id:string) {
-    this.rest_service.startOverwatch(id).subscribe(
-     response => {
-       console.log(response);
+  startOverwatch(parent:any) {
+    if (parent.status !== 'running') {
+      this.rest_service.startOverwatch(parent.id).subscribe(
+       parameters => {
+         console.log(parameters);
+         if (parameters.success) {
+           let snackBarRef = this.snackBar.open('Start requested', 'Ok', {
+             duration: 5000,
+           });
+           parent.status = 'start requested';
+         }
+       },
+       error => this.error_message = <any>error);
+    } else {
+      let snackBarRef = this.snackBar.open('Cannot start a running process', 'Ok', {
+        duration: 5000,
+      });
+    }
+
+
+  }
+
+  // stop all the overwatches
+  stopAll() {
+
+    console.log('stopAll');
+
+    this.rest_service.stopAllOverwatches().subscribe(
+     parameters => {
+       console.log(parameters);
+       if (parameters.success) {
+         let snackBarRef = this.snackBar.open('Stop all requested', 'Ok', {
+           duration: 5000,
+         });
+         parent.status = 'start requested';
+       }
      },
      error => this.error_message = <any>error);
-  }
+}
 
   ngOnDestroy() {
     console.log("DESTROYED");

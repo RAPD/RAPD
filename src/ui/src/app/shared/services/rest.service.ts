@@ -275,8 +275,24 @@ export class RestService {
     header.append('Content-Type', 'application/json');
 
     return this.authHttp.put(
-      this.globals_service.site.restApiUrl + '/overwatches/stop/' + id)
+      this.globals_service.site.restApiUrl + '/overwatches/stop/' + id,
       JSON.stringify({id:id}),
+      {headers:header}
+    )
+    .map(res => res.json())
+    .catch(error => this.handleError(error));
+  }
+
+  public stopAllOverwatches() {
+
+    console.log('stopAllOverwatches');
+
+    let header: Headers = new Headers();
+    header.append('Content-Type', 'application/json');
+
+    return this.authHttp.put(
+      this.globals_service.site.restApiUrl + '/overwatches/stopall',
+      JSON.stringify({id:'foo'}),
       {headers:header}
     )
     .map(res => res.json())
