@@ -99,10 +99,16 @@ class Registrar(object):
         # Get connection
         red = self.redis
 
+        hostname = socket.gethostname()
+        try:
+            host_ip = socket.gethostbyname(socket.gethostname())
+        except socket.gaierror:
+            host_ip = "unknown"
+
         # Create an entry
         entry = {"ow_type":self.ow_type,
-                 "host_ip":socket.gethostbyname(socket.gethostname()),
-                 "hostname":socket.gethostname(),
+                 "host_ip":host_ip,
+                 "hostname":hostname,
                  "id":self.uuid,
                  "ow_id":self.ow_id,
                  "start_time":time.time(),
