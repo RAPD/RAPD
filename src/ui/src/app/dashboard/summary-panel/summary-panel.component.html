@@ -1,25 +1,36 @@
 <div class="rapd-main-panel">
-  <mat-card>
+  <mat-card style="width:49%;height:49%">
     <mat-card-header>
       Results
     </mat-card-header>
     <mat-card-content>
       <div *ngIf="(results)?.datasets">
         <canvas baseChart
+          style="height:100px;"
           [datasets]="results.datasets"
           [labels]="results.labels"
           [options]="stacked_bar_options"
+          [colors]="globals_service.BarChartColors"
           [chartType]="'bar'">
         </canvas>
       </div>
     </mat-card-content>
   </mat-card>
-  <mat-card>
+  <mat-card style="width:49%;height:49%">
     <mat-card-header>
-      Logins
+      Login Attempts
     </mat-card-header>
     <mat-card-content>
-
+      <div *ngIf="(logins)?.datasets">
+        <canvas baseChart
+          style="height:100px;"
+          [datasets]="logins.datasets"
+          [labels]="logins.labels"
+          [options]="stacked_bar_options"
+          [colors]="globals_service.BarChartColors"
+          [chartType]="'bar'">
+        </canvas>
+      </div>
     </mat-card-content>
   </mat-card>
 </div>

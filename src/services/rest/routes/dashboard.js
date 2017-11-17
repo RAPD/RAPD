@@ -4,6 +4,7 @@ const config   = require('../config');
 const mongoose = require('mongoose');
 
 const Result = require('../models/result');
+const Login = require('../models/login');
 
 // Redis
 // const redis = require('redis');
@@ -123,4 +124,90 @@ router.route('/dashboard/results')
       }
     });
   }); // End of .get(function(req, res) {
+
+router.route('/dashboard/logins')
+
+// get all the current available overwatch data
+.get(function(req, res) {
+
+  // Set date to start
+  let today = new Date();
+  let twoWeekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 14);
+
+  // Aggregate results
+  Login.aggregate([
+    {$match:{
+      timestamp:{$gte:twoWeekStart}
+    }},
+    {$group:{
+      _id:{
+        day:{$dayOfMonth:'$timestamp'},
+        month:{$month:'$timestamp'},
+        year:{$year:'$timestamp'},
+        success:'$success'
+      },
+      count:{$sum:1}
+    }}
+  ], function(err, results) {
+    if (err) {
+      console.error(err);
+      res.status(500).json({
+        success:false,
+        message:err
+      });
+    } else {
+
+      // Organize to a more plotable form
+      let return_obj = {datasets:[], labels:[]}
+          staging_obj = {'success':{},'fail':{}},
+          states = ['success', 'fail'],
+          colors = {success:'rgba(0, 256, 0, 1)',fail:'rgba(256, 0, 0, 1)'};
+
+      // console.log(staging_obj);
+      // console.log(return_obj);
+
+      while (twoWeekStart < today) {
+        let month = twoWeekStart.getMonth()+1,
+            date = twoWeekStart.getDate();
+        return_obj.labels.push(`${month}-${date}`)
+        states.forEach(function(state) {
+          staging_obj[state][`${month}-${date}`] = 0;
+        });
+        twoWeekStart.setDate(date+1);
+      }
+      // console.log(staging_obj);
+      // console.log(return_obj);
+
+      // Put the results into the staging object
+      results.forEach(function(result) {
+        // console.log('result', result);
+        if (result._id.success == true) {
+          staging_obj.success[`${result._id.month}-${result._id.day}`] = result.count;
+        } else {
+          staging_obj.fail[`${result._id.month}-${result._id.day}`] = result.count;
+        }
+      });
+
+      // Now put it all together
+      states.forEach(function(state) {
+        twoWeekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 14);
+        let my_dataset = {label:state, data:[], backgroundColor:colors[state]};
+        while (twoWeekStart < today) {
+          let month = twoWeekStart.getMonth()+1,
+              date = twoWeekStart.getDate();
+              my_dataset.data.push(staging_obj[state][`${month}-${date}`]);
+          twoWeekStart.setDate(date+1);
+        }
+        return_obj.datasets.push(my_dataset);
+      });
+
+      console.log('return_obj', return_obj);
+      res.status(200).json({
+        success:true,
+        logins:return_obj
+      });
+    }
+  });
+}); // End of .get(function(req, res) {
+
 module.exports = router;
