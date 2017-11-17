@@ -30,7 +30,7 @@ export class OverwatchesPanelComponent implements OnInit, OnDestroy {
   }
 
   getOverwatches() {
-    console.log('getOverwatches');
+    // console.log('getOverwatches');
 
     let self = this;
 
@@ -38,7 +38,7 @@ export class OverwatchesPanelComponent implements OnInit, OnDestroy {
       .subscribe(
        overwatches => {
          this.overwatches = overwatches;
-         console.log(overwatches);
+         // console.log(overwatches);
          this.update_timeout = setTimeout(function() {
            self.getOverwatches();
          }, 10000);
@@ -51,7 +51,7 @@ export class OverwatchesPanelComponent implements OnInit, OnDestroy {
     if (parent.status !== 'stopped') {
       this.rest_service.stopOverwatch(parent.id).subscribe(
        parameters => {
-         console.log(parameters);
+         // console.log(parameters);
          if (parameters.success) {
            let snackBarRef = this.snackBar.open('Stop requested', 'Ok', {
              duration: 5000,
@@ -72,7 +72,7 @@ export class OverwatchesPanelComponent implements OnInit, OnDestroy {
     if (parent.status !== 'running') {
       this.rest_service.startOverwatch(parent.id).subscribe(
        parameters => {
-         console.log(parameters);
+         // console.log(parameters);
          if (parameters.success) {
            let snackBarRef = this.snackBar.open('Start requested', 'Ok', {
              duration: 5000,
@@ -97,7 +97,7 @@ export class OverwatchesPanelComponent implements OnInit, OnDestroy {
 
     this.rest_service.stopAllOverwatches().subscribe(
      parameters => {
-       console.log(parameters);
+       // console.log(parameters);
        if (parameters.success) {
          let snackBarRef = this.snackBar.open('Stop all requested', 'Ok', {
            duration: 5000,
@@ -109,7 +109,7 @@ export class OverwatchesPanelComponent implements OnInit, OnDestroy {
 }
 
   ngOnDestroy() {
-    console.log("DESTROYED");
+    // console.log("DESTROYED");
     clearTimeout(this.update_timeout);
   }
 

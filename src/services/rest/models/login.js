@@ -6,9 +6,13 @@ var LoginSchema = new Schema({
     type: String,
     required: true
   },
-  email: {
+  browser_version: {
     type: String,
     required: true
+  },
+  email: {
+    type: String,
+    required: false
   },
   ip_address: {
     type: String,
@@ -26,10 +30,10 @@ var LoginSchema = new Schema({
     type: Date,
     default: Date.now
   },
-  browser_version: {
-    type: String,
-    required: true
-  },
+  uid: {
+    type: Number,
+    required: false
+  }
 }, {strict:false})
 
 module.exports = mongoose.model('Login', LoginSchema);

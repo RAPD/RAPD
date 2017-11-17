@@ -1,0 +1,25 @@
+<div class="rapd-main-panel">
+  <mat-card>
+    <mat-card-header>
+      Results
+    </mat-card-header>
+    <mat-card-content>
+      <div *ngIf="(results)?.datasets">
+        <canvas baseChart
+          [datasets]="results.datasets"
+          [labels]="results.labels"
+          [options]="stacked_bar_options"
+          [chartType]="'bar'">
+        </canvas>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  <mat-card>
+    <mat-card-header>
+      Logins
+    </mat-card-header>
+    <mat-card-content>
+
+    </mat-card-content>
+  </mat-card>
+</div>

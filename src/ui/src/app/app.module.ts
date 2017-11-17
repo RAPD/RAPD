@@ -35,6 +35,7 @@ import { MaintoolbarComponent } from './maintoolbar/maintoolbar.component';
 import { WelcomepanelComponent } from './welcomepanel/welcomepanel.component';
 
 import { DashboardComponent } from './dashboard/dashboard.component';
+import { SummaryPanelComponent } from './dashboard/summary-panel/summary-panel.component';
 import { OverwatchesPanelComponent } from './dashboard/overwatches-panel/overwatches-panel.component';
 
 import { SessionspanelComponent } from './sessionspanel/sessionspanel.component';
@@ -76,6 +77,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     MaintoolbarComponent,
     WelcomepanelComponent,
     DashboardComponent,
+    SummaryPanelComponent,
     OverwatchesPanelComponent,
     SessionspanelComponent,
     ProjectspanelComponent,

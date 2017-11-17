@@ -21,6 +21,7 @@ const Wss =           require('./ws_server');
 const config = require('./config'); // get our config file
 
 // Routing
+const dashboard_routes = require('./routes/dashboard');
 const groups_routes =    require('./routes/groups');
 const images_routes =    require('./routes/images');
 const jobs_routes =      require('./routes/jobs');
@@ -121,7 +122,9 @@ apiRoutes.use(function(req, res, next) {
 apiRoutes.post('/authenticate', function(req, res) {
 
   console.log('authenticate');
-  console.log(req.body);
+
+  // Get useragent data
+  let ua = req.useragent;
 
   if (config.authenticate_mode === 'mongo') {
     User.getAuthenticated(req.body.email, req.body.password, function(err, user, reason) {
@@ -177,9 +180,6 @@ apiRoutes.post('/authenticate', function(req, res) {
             break;
         }
 
-        // Get useragent data
-        let ua = req.useragent;
-
         // Return to client
         console.error(message);
         res.json({
@@ -199,6 +199,7 @@ apiRoutes.post('/authenticate', function(req, res) {
           success:false,
         }).save();
 
+        return false;
       }
     });
   } else if (config.authenticate_mode === 'ldap') {
@@ -207,10 +208,28 @@ apiRoutes.post('/authenticate', function(req, res) {
 
       // REJECTION
       if (err) {
+
         console.error(err);
-        var reason = err.name.toString();
+
+        let reason = err.name.toString();
+
+        // Return to client
         res.json({success:false,
                   message:'Authentication failed. ' + reason});
+
+        // Log the failure
+        let new_login = new Login({
+          browser:ua.browser,
+          browser_version:ua.version,
+          email:req.body.email,
+          ip_address:req.connection.remoteAddress,
+          os:ua.os,
+          platform:ua.platform,
+          reason:reason,
+          success:false,
+        }).save();
+
+        return false;
 
       // AUTHENTICATED - now get Mongo info on user/group
       } else {
@@ -224,9 +243,29 @@ apiRoutes.post('/authenticate', function(req, res) {
 
             // LDAP error
             if (err) {
+
               console.error(err);
+
+              let reason = err.name.toString();
+
+              // Notify client
               res.json({success:false,
-                        message:err});
+                        message:reason});
+
+              // Log the failure
+              let new_login = new Login({
+                browser:ua.browser,
+                browser_version:ua.version,
+                uid:req.body.uid,
+                ip_address:req.connection.remoteAddress,
+                os:ua.os,
+                platform:ua.platform,
+                reason:reason,
+                success:false,
+              }).save();
+
+              return false;
+
             } else {
 
               result.on('searchEntry', function(entry) {
@@ -237,14 +276,30 @@ apiRoutes.post('/authenticate', function(req, res) {
                 // Look for a group that corresponds to this user
                 Group.find({uid:user.uid}, function(err, groups) {
 
-                  console.log('looking for group....');
-                  console.log(err);
-                  console.log(groups);
-
                   if (err) {
+
                     console.error(err);
+
+                    let reason = err.name.toString();
+
+                    // Notify client
                     res.json({success:false,
-                              message:err});
+                              message:reason});
+
+                    // Log the failure
+                    let new_login = new Login({
+                      browser:ua.browser,
+                      browser_version:ua.version,
+                      uid:req.body.uid,
+                      ip_address:req.connection.remoteAddress,
+                      os:ua.os,
+                      platform:ua.platform,
+                      reason:reason,
+                      success:false,
+                    }).save();
+
+                    return false;
+
                   } else {
                     // A group has been returned
                     if (groups[0]) {
@@ -280,6 +335,19 @@ apiRoutes.post('/authenticate', function(req, res) {
                                 token:token,
                                 pass_force_change:false});
 
+                      // Record the login
+                      let new_login = new Login({
+                        browser:ua.browser,
+                        browser_version:ua.version,
+                        uid:req.body.uid,
+                        ip_address:req.connection.remoteAddress,
+                        os:ua.os,
+                        platform:ua.platform,
+                        success:true
+                      }).save();
+
+                      return true;
+
                     // No groups returned
                     } else {
 
@@ -295,9 +363,29 @@ apiRoutes.post('/authenticate', function(req, res) {
                       });
                       new_group.save(function(err, return_group) {
                         if (err) {
+
                           console.error(err);
-                          res.send({success:false,
-                                    message:err});
+
+                          let reason = err.name.toString();
+
+                          // Notify client
+                          res.json({success:false,
+                                    message:reason});
+
+                          // Log the failure
+                          let new_login = new Login({
+                            browser:ua.browser,
+                            browser_version:ua.version,
+                            uid:req.body.uid,
+                            ip_address:req.connection.remoteAddress,
+                            os:ua.os,
+                            platform:ua.platform,
+                            reason:reason,
+                            success:false,
+                          }).save();
+
+                          return false;
+
                         } else {
 
                           console.log('Group saved successfully', return_group);
@@ -328,6 +416,19 @@ apiRoutes.post('/authenticate', function(req, res) {
                                     message:'Enjoy your token!',
                                     token:token,
                                     pass_force_change:false});
+
+                          // Record the login
+                          let new_login = new Login({
+                            browser:ua.browser,
+                            browser_version:ua.version,
+                            email:req.body.email,
+                            ip_address:req.connection.remoteAddress,
+                            os:ua.os,
+                            platform:ua.platform,
+                            success:true
+                          }).save();
+
+                          return true;
                         }
                       });
                     }
@@ -456,6 +557,7 @@ apiRoutes.use(function(req, res, next) {
 app.use('/api', apiRoutes);
 
 // Imported routes
+app.use('/api', dashboard_routes);
 app.use('/api', groups_routes);
 app.use('/api', images_routes);
 app.use('/api', jobs_routes);

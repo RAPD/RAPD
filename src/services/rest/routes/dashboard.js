@@ -3,9 +3,11 @@ var router     = express.Router();
 const config   = require('../config');
 const mongoose = require('mongoose');
 
+const Result = require('../models/result');
+
 // Redis
-const redis = require('redis');
-var redis_client = redis.createClient(config.redis_port, config.redis_host);
+// const redis = require('redis');
+// var redis_client = redis.createClient(config.redis_port, config.redis_host);
 
 
 /*
@@ -46,6 +48,79 @@ router.route('/dashboard/results')
   // get all the current available overwatch data
   .get(function(req, res) {
 
+    // Set date to start
+    let today = new Date();
+    let twoWeekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 14);
 
+    // Aggregate results
+    Result.aggregate([
+      {$match:{
+        timestamp:{$gte:twoWeekStart}
+      }},
+      {$group:{
+        _id:{
+          day:{$dayOfMonth:'$timestamp'},
+          month:{$month:'$timestamp'},
+          year:{$year:'$timestamp'},
+          plugin_type:'$plugin_type'
+        },
+        count:{$sum:1}
+      }}
+    ], function(err, results) {
+      if (err) {
+        console.error(err);
+        res.status(500).json({
+          success:false,
+          message:err
+        });
+      } else {
+
+        // Organize to a more plotable form
+        let return_obj = {datasets:[], labels:[]}
+            staging_obj = {};
+
+        config.plugin_types.forEach(function(plugin_type) {
+          staging_obj[plugin_type] = {};
+        });
+
+        while (twoWeekStart < today) {
+          let month = twoWeekStart.getMonth()+1,
+              date = twoWeekStart.getDate();
+          return_obj.labels.push(`${month}-${date}`)
+          config.plugin_types.forEach(function(plugin_type) {
+            staging_obj[plugin_type][`${month}-${date}`] = 0;
+          });
+          twoWeekStart.setDate(date+1);
+        }
+        // console.log(staging_obj);
+        // console.log(return_obj);
+
+        // Put the results into an object
+        results.forEach(function(result) {
+          // console.log('>>>', result);
+          staging_obj[result._id.plugin_type][`${result._id.month}-${result._id.day}`] = result.count;
+        });
+
+        // Now put it all together
+        config.plugin_types.forEach(function(plugin_type) {
+          twoWeekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 14);
+          let my_dataset = {label:plugin_type, data:[]};
+          while (twoWeekStart < today) {
+            let month = twoWeekStart.getMonth()+1,
+                date = twoWeekStart.getDate();
+                my_dataset.data.push(staging_obj[plugin_type][`${month}-${date}`]);
+            twoWeekStart.setDate(date+1);
+          }
+          return_obj.datasets.push(my_dataset);
+        });
+
+        console.log('return_obj', return_obj);
+        console.log(return_obj);
+        res.status(200).json({
+          success:true,
+          results:return_obj
+        });
+      }
+    });
   }); // End of .get(function(req, res) {
 module.exports = router;
