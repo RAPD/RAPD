@@ -161,22 +161,44 @@ apiRoutes.post('/authenticate', function(req, res) {
 
       // otherwise we can determine why we failed
       } else {
-        var reasons = User.failedLogin;
+        var reasons = User.failedLogin,
+            message;
+
+        // Turn reason into something understandable
         switch (reason) {
           case reasons.NOT_FOUND:
-            res.json({ success: false, message: 'Authentication failed. No such user.' });
+            message = 'Authentication failed. No such user.';
             break;
           case reasons.PASSWORD_INCORRECT:
-            res.json({ success: false, message: 'Authentication failed. Wrong password.' });
-            // note: these cases are usually treated the same - don't tell
-            // the user *why* the login failed, only that it did
+            message = 'Authentication failed. Wrong password.';
             break;
           case reasons.MAX_ATTEMPTS:
-            res.json({ success: false, message: 'Authentication failed. Too many failed attempts' });
-            // send email or otherwise notify user that account is
-            // temporarily locked
+            message = 'Authentication failed. Too many failed attempts';
             break;
         }
+
+        // Get useragent data
+        let ua = req.useragent;
+
+        // Return to client
+        console.error(message);
+        res.json({
+          success:false,
+          message:message
+        });
+
+        // Log the failure
+        let new_login = new Login({
+          browser:ua.browser,
+          browser_version:ua.version,
+          email:req.body.email,
+          ip_address:req.connection.remoteAddress,
+          os:ua.os,
+          platform:ua.platform,
+          reason:reason,
+          success:false,
+        }).save();
+
       }
     });
   } else if (config.authenticate_mode === 'ldap') {
