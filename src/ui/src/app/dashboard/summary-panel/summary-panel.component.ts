@@ -17,13 +17,13 @@ export class SummaryPanelComponent implements OnInit, OnDestroy {
   public logins: any[];
   private logins_timeout:number;
   public stacked_bar_options:any = {
-    title:{
-      display:false,
-      text:"Chart.js Bar Chart - Stacked"
-    },
-    tooltips: {
-      mode: 'index',
-      intersect: false
+    layout: {
+      padding: {
+        left: 10,
+        right: 10,
+        top: 10,
+        bottom: 10
+      }
     },
     legend: {
       display: true,
@@ -36,11 +36,25 @@ export class SummaryPanelComponent implements OnInit, OnDestroy {
     scales: {
       xAxes: [{
         stacked: true,
+        gridLines: {
+          display: false
+        },
       }],
       yAxes: [{
-        stacked: true
+        stacked: true,
+        gridLines: {
+          display: false
+        },
       }]
-    }
+    },
+    title:{
+      display:false,
+      text:"Chart.js Bar Chart - Stacked"
+    },
+    tooltips: {
+      mode: 'index',
+      intersect: false
+    },
   };
   public colors: any[] = [{backgroundColor:'rgba(256, 0, 0, 1)'},{backgroundColor:'rgba(0, 256, 0, 1)'}];
 
@@ -53,6 +67,7 @@ export class SummaryPanelComponent implements OnInit, OnDestroy {
   }
 
   getResults() {
+    let self = this;
     this.rest_service.getDashboardResults()
       .subscribe(
        results => {
@@ -69,6 +84,7 @@ export class SummaryPanelComponent implements OnInit, OnDestroy {
   }
 
   getLogins() {
+    let self = this;
     this.rest_service.getDashboardLogins()
       .subscribe(
        results => {
@@ -77,7 +93,7 @@ export class SummaryPanelComponent implements OnInit, OnDestroy {
          }
          console.log(results.logins);
          this.logins_timeout = setTimeout(function() {
-           self.getDashboardLogins();
+           self.getLogins();
          }, 31000);
        },
        error => this.error_message = <any>error);
