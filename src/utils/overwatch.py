@@ -520,7 +520,7 @@ class Overwatcher(Registrar):
 
         # Make sure we have a managed_id
         if not self.ow_managed_id:
-            return False
+            return None
 
         # Look for keys
         try:

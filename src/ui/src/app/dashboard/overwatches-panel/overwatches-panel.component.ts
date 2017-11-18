@@ -36,9 +36,11 @@ export class OverwatchesPanelComponent implements OnInit, OnDestroy {
 
     this.rest_service.getOverwatches()
       .subscribe(
-       overwatches => {
-         this.overwatches = overwatches;
-         // console.log(overwatches);
+       results => {
+         if (results.success === true) {
+           this.overwatches = results.overwatches;
+           console.log(results.overwatches);
+         }
          this.update_timeout = setTimeout(function() {
            self.getOverwatches();
          }, 10000);

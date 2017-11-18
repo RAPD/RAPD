@@ -1,36 +1,40 @@
 <div class="rapd-main-panel">
-  <div fxLayout="row" style="padding:10px;" fxLayoutGap="10px">
-    <mat-card fxFlex style="width:40%;height:40%;">
-      <mat-card-header>
-        Results
-      </mat-card-header>
-      <mat-card-content>
-        <div *ngIf="(results)?.datasets">
-          <canvas baseChart
-            [datasets]="results.datasets"
-            [labels]="results.labels"
-            [options]="stacked_bar_options"
-            [colors]="globals_service.BarChartColors"
-            [chartType]="'bar'">
-          </canvas>
+  <div fxLayout="row" style="padding:10px;" fxLayoutGap="20px">
+    <div fxFlex>
+      <div class="rapd-panel">
+        <div class="rapd-panel-heading">
+          Results
         </div>
-      </mat-card-content>
-    </mat-card>
-    <mat-card fxFlex style="width:40%;height:40%">
-      <mat-card-header>
-        Login Attempts
-      </mat-card-header>
-      <mat-card-content>
-        <div *ngIf="(logins)?.datasets">
-          <canvas baseChart
-            [datasets]="logins.datasets"
-            [labels]="logins.labels"
-            [options]="stacked_bar_options"
-            [colors]="globals_service.BarChartColors"
-            [chartType]="'bar'">
-          </canvas>
+        <div class="rapd-panel-content">
+          <div *ngIf="(results)?.datasets">
+            <canvas baseChart
+              [datasets]="results.datasets"
+              [labels]="results.labels"
+              [options]="stacked_bar_options"
+              [colors]="globals_service.BarChartColors"
+              [chartType]="'bar'">
+            </canvas>
+          </div>
         </div>
-      </mat-card-content>
-    </mat-card>
+      </div>
+    </div>
+    <div fxFlex>
+      <div class="rapd-panel">
+        <div class="rapd-panel-heading">
+          Login Attempts
+        </div>
+        <div class="rapd-panel-content">
+          <div *ngIf="(logins)?.datasets">
+            <canvas baseChart
+              [datasets]="logins.datasets"
+              [labels]="logins.labels"
+              [options]="stacked_bar_options"
+              [colors]="globals_service.BarChartColors"
+              [chartType]="'bar'">
+            </canvas>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>

@@ -329,6 +329,45 @@ table.rapd-table {
   text-align: center;
 }
 
+table.rapd-table-wide {
+  table-layout: fixed;
+  border: 1px solid rgba(0,0,0,0.2);
+  border-collapse: collapse;
+  border-radius: 2px;
+  text-align: center;
+  width: 100%;
+}
+
+.rapd-table-wide th, td {
+  padding: 0 10px 0px 10px;
+}
+
+.rapd-table-wide tr {
+  padding: 10px 10px 10px 10px;
+  height: 30px;
+}
+
+.rapd-table-wide thead th {
+  color: rgba(0,0,0,0.54);
+  font-weight: 500;
+  font-size: 1;
+}
+
+.rapd-table-wide thead tr {
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.rapd-table-wide tbody {
+  color: rgba(0,0,0,1);
+  font-weight: 400;
+  font-size: 1em;
+}
+
+.rapd-table-wide tbody tr {
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  border-top: 1px solid rgba(0,0,0,0.1);
+  text-align: center;
+}
 
 
 mat-card.rapd-result {

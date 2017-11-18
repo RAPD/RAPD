@@ -265,7 +265,7 @@ export class RestService {
     console.log('getOverwatches');
 
     return this.authHttp.get(this.globals_service.site.restApiUrl + '/overwatches')
-                        .map(res => res.json().overwatches)
+                        .map(res => res.json())
                         .catch(error => this.handleError(error));
   }
 

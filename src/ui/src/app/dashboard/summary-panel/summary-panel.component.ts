@@ -12,9 +12,9 @@ import { GlobalsService } from '../../shared/services/globals.service';
 export class SummaryPanelComponent implements OnInit, OnDestroy {
 
   private error_message:string;
-  public results: any[];
+  public results: any;
   private results_timeout:number;
-  public logins: any[];
+  public logins: any;
   private logins_timeout:number;
   public stacked_bar_options:any = {
     layout: {
@@ -27,10 +27,7 @@ export class SummaryPanelComponent implements OnInit, OnDestroy {
     },
     legend: {
       display: true,
-      position: 'right',
-      // labels: {
-      //   boxWidth: 3,
-      // },
+      position: 'right'
     },
     responsive: true,
     scales: {
@@ -91,7 +88,7 @@ export class SummaryPanelComponent implements OnInit, OnDestroy {
          if (results.success === true) {
            this.logins = results.logins;
          }
-         console.log(results.logins);
+         // console.log(results.logins);
          this.logins_timeout = setTimeout(function() {
            self.getLogins();
          }, 31000);
