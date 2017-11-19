@@ -2,8 +2,9 @@ var express = require('express');
 var router = express.Router();
 
 // const Group = require('../models/group');
-const Session = require('../models/session');
-const Result = require('../models/result');
+const Activity = require('../models/activity');
+const Session  = require('../models/session');
+const Result   = require('../models/result');
 
 // on routes that end in /results
 // ----------------------------------------------------
@@ -24,6 +25,10 @@ router.route('/resultsbysession/:session_id')
               success: true,
               results: results
             });
+            // console.log(req.decoded._doc);
+            // let new_activity = new Activity({
+            //   activity_type:'get_resultsbysession'
+            // }).save();
           }
         });
     });

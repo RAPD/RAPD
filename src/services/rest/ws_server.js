@@ -18,8 +18,9 @@ var uuid = require('node-uuid');
 var redis = require('redis');
 
 // Import models
-var Result = require('./models/result');
-var Image =  require('./models/image');
+var Activity = require('./models/activity');
+var Image    = require('./models/image');
+var Result   = require('./models/result');
 
 // Definitions of result types
 var result_type_trans = {
@@ -465,9 +466,21 @@ function Wss (opt, callback) {
                                                 success:true,
                                                 results:detailed_result}));
                       }
-                    }
-                  });
 
+                    // Register activity
+                    console.log('Register activity');
+                    // console.log({
+                    //   activity_type:'get_result_details',
+                    //   activity_subtype:data.data_type+'_'+ data.plugin_type,
+                    //   user:ws.session.token._doc._id
+                    // });
+                    let new_activity = new Activity({
+                      activity_type:'get_result_details',
+                      activity_subtype:data.data_type+'_'+ data.plugin_type,
+                      user:ws.session.token._doc._id
+                    }).save();
+                  }
+                });
               break;
           }
         }
