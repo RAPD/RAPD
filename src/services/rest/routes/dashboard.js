@@ -192,7 +192,7 @@ router.route('/dashboard/logins')
       // Now put it all together
       states.forEach(function(state) {
         twoWeekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 14);
-        let my_dataset = {label:state, data:[], backgroundColor:colors[state]};
+        let my_dataset = {label:state, data:[]};
         while (twoWeekStart < today) {
           let month = twoWeekStart.getMonth()+1,
               date = twoWeekStart.getDate();
@@ -273,7 +273,7 @@ router.route('/dashboard/logins')
         // Now put it all together
         sources.forEach(function(source) {
           twoWeekStart = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 14);
-          let my_dataset = {label:source, backgroundColor:colors[source], borderColor:colors[source], fill:false, data:[]};
+          let my_dataset = {label:source, fill:false, data:[]};
           while (twoWeekStart < today) {
             let month = twoWeekStart.getMonth()+1,
                 date = twoWeekStart.getDate();
