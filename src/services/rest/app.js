@@ -98,6 +98,14 @@ app.use(bodyParser.json());
 // use morgan to log requests to the console
 app.use(morgan('dev'));
 
+// Logging of REST requests
+var myLogger = function (req, res, next) {
+  console.log('req.originalUrl', req.originalUrl);
+  next()
+}
+app.use(myLogger);
+
+
 // ROUTES FOR OUR API
 // =============================================================================
 var apiRoutes = express.Router();              // get an instance of the express Router
