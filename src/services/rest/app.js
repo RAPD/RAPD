@@ -100,7 +100,7 @@ app.use(morgan('dev'));
 
 // Logging of REST requests
 var myLogger = function (req, res, next) {
-  console.log('req.originalUrl', req.originalUrl);
+  console.log('req.url', req.url);
   next()
 }
 app.use(myLogger);

@@ -34,16 +34,24 @@ var server = http.createServer(function(req, res) {
   }
 });
 
-// The websocket
-var ws_proxy = new httpProxy.createProxyServer({
-  target: {
-    host: 'localhost',
-    port: 3000
-  }
-});
-server.on('upgrade', function (req, socket, head) {
-  ws_proxy.ws(req, socket, head);
-});
+try {// The websocket
+  var ws_proxy = new httpProxy.createProxyServer({
+    target: {
+      host: 'localhost',
+      port: 3000
+    }
+  });
+} catch (e) {
+  console.error(e);
+}
+
+try {
+  server.on('upgrade', function (req, socket, head) {
+    ws_proxy.ws(req, socket, head);
+  });
+} catch (e) {
+  console.error(e);
+}
 
 // Listen on 80
 server.listen(80);
