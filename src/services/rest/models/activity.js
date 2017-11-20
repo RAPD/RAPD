@@ -2,11 +2,15 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 // var bcrypt = require('bcryptjs');
 var ActivitySchema = new Schema({
-  activity_type: {
+  source: {
     type: String,
     required: true
   },
-  activity_subtype: {
+  type: {
+    type: String,
+    required: true
+  },
+  subtype: {
     type: String,
     required: false
   },

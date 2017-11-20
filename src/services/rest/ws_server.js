@@ -475,8 +475,9 @@ function Wss (opt, callback) {
                     //   user:ws.session.token._doc._id
                     // });
                     let new_activity = new Activity({
-                      activity_type:'get_result_details',
-                      activity_subtype:data.data_type+'_'+ data.plugin_type,
+                      source:'websocket',
+                      type:'get_result_details',
+                      subtype:data.data_type+'_'+ data.plugin_type,
                       user:ws.session.token._doc._id
                     }).save();
                   }

@@ -109,8 +109,8 @@ var myLogger = function (req, res, next) {
   // console.log('req.url', req.url);
   if (! (req.url in screened_urls)) {
     let activity = new Activity({
-      activity_type:'rest',
-      activity_subtype:req.url
+      source:'rest',
+      type:req.url
     }).save();
   }
   next()
