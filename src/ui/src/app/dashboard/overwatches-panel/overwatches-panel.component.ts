@@ -39,7 +39,7 @@ export class OverwatchesPanelComponent implements OnInit, OnDestroy {
        results => {
          if (results.success === true) {
            this.overwatches = results.overwatches;
-           console.log(results.overwatches);
+           // console.log(results.overwatches);
          }
          this.update_timeout = setTimeout(function() {
            self.getOverwatches();
@@ -95,7 +95,7 @@ export class OverwatchesPanelComponent implements OnInit, OnDestroy {
   // stop all the overwatches
   stopAll() {
 
-    console.log('stopAll');
+    // console.log('stopAll');
 
     this.rest_service.stopAllOverwatches().subscribe(
      parameters => {

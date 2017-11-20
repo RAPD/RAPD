@@ -335,6 +335,14 @@ function Wss (opt, callback) {
 
               }
 
+              // Register activity
+              let new_activity = new Activity({
+                source:'websocket',
+                type:'get_results',
+                subtype:data.data_type+'_'+ data.plugin_type,
+                user:ws.session.token._doc._id
+              }).save();
+
               break;
 
             case 'update_result':
@@ -468,12 +476,6 @@ function Wss (opt, callback) {
                       }
 
                     // Register activity
-                    console.log('Register activity');
-                    // console.log({
-                    //   activity_type:'get_result_details',
-                    //   activity_subtype:data.data_type+'_'+ data.plugin_type,
-                    //   user:ws.session.token._doc._id
-                    // });
                     let new_activity = new Activity({
                       source:'websocket',
                       type:'get_result_details',

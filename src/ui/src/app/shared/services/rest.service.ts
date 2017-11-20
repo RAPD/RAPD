@@ -262,7 +262,7 @@ export class RestService {
   //
   public getOverwatches(): Observable<any> {
 
-    console.log('getOverwatches');
+    // console.log('getOverwatches');
 
     return this.authHttp.get(this.globals_service.site.restApiUrl + '/overwatches')
                         .map(res => res.json())
@@ -285,7 +285,7 @@ export class RestService {
 
   public stopAllOverwatches() {
 
-    console.log('stopAllOverwatches');
+    // console.log('stopAllOverwatches');
 
     let header: Headers = new Headers();
     header.append('Content-Type', 'application/json');
@@ -327,9 +327,18 @@ export class RestService {
 
   public getDashboardLogins(): Observable<any> {
 
-    console.log('getDashboardLogins');
+    // console.log('getDashboardLogins');
 
     return this.authHttp.get(this.globals_service.site.restApiUrl + 'dashboard/logins')
+                        .map(res => res.json())
+                        .catch(error => this.handleError(error));
+  }
+
+  public getServerActivities(): Observable<any> {
+
+    // console.log('getServerActivities');
+
+    return this.authHttp.get(this.globals_service.site.restApiUrl + 'dashboard/server_activities')
                         .map(res => res.json())
                         .catch(error => this.handleError(error));
   }

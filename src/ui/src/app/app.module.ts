@@ -37,6 +37,7 @@ import { WelcomepanelComponent } from './welcomepanel/welcomepanel.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { SummaryPanelComponent } from './dashboard/summary-panel/summary-panel.component';
 import { OverwatchesPanelComponent } from './dashboard/overwatches-panel/overwatches-panel.component';
+import { ActivitiesPanelComponent } from './dashboard/activities-panel/activities-panel.component';
 
 import { SessionspanelComponent } from './sessionspanel/sessionspanel.component';
 import { ProjectspanelComponent } from './projectspanel/projectspanel.component';
@@ -79,6 +80,7 @@ export function authHttpServiceFactory(http: Http, options: RequestOptions) {
     DashboardComponent,
     SummaryPanelComponent,
     OverwatchesPanelComponent,
+    ActivitiesPanelComponent,
     SessionspanelComponent,
     ProjectspanelComponent,
     AdminpanelComponent,
