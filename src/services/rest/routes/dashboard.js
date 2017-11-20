@@ -115,8 +115,8 @@ router.route('/dashboard/results')
           return_obj.datasets.push(my_dataset);
         });
 
-        console.log('return_obj', return_obj);
-        console.log(return_obj);
+        // console.log('return_obj', return_obj);
+        // console.log(return_obj);
         res.status(200).json({
           success:true,
           results:return_obj
@@ -201,7 +201,7 @@ router.route('/dashboard/logins')
         return_obj.datasets.push(my_dataset);
       });
 
-      console.log('return_obj', return_obj);
+      // console.log('return_obj', return_obj);
       res.status(200).json({
         success:true,
         logins:return_obj

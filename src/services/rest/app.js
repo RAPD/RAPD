@@ -37,12 +37,13 @@ const redis =      require('redis');
 var redis_client = redis.createClient(config.redis_port, config.redis_host);
 
 // MongoDB Models
-const User =    require('./models/user');
-const Group =   require('./models/group');
-const Login =   require('./models/login');
-const Result =  require('./models/result');
-const Run =     require('./models/run');
-const Session = require('./models/session');
+const Activity = require('./models/activity');
+const User =     require('./models/user');
+const Group =    require('./models/group');
+const Login =    require('./models/login');
+const Result =   require('./models/result');
+const Run =      require('./models/run');
+const Session =  require('./models/session');
 
 // MongoDB connection
 var mongoose = require('mongoose');
@@ -99,8 +100,19 @@ app.use(bodyParser.json());
 app.use(morgan('dev'));
 
 // Logging of REST requests
+let screened_urls = {
+  '/api/dashboard/logins':1,
+  '/api/dashboard/results':1,
+  '/api/overwatches':1,
+}
 var myLogger = function (req, res, next) {
-  console.log('req.url', req.url);
+  // console.log('req.url', req.url);
+  if (! (req.url in screened_urls)) {
+    let activity = new Activity({
+      activity_type:'rest',
+      activity_subtype:req.url
+    }).save();
+  }
   next()
 }
 app.use(myLogger);
