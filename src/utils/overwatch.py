@@ -342,7 +342,7 @@ class Overwatcher(Registrar):
         environment. If the process exits immediately, the overwatcher will exit
         """
         # The environmental_vars
-        #path = os.environ.copy()
+        path = os.environ.copy()
 
         # Put together the command
         command = self.managed_file_flags[:]
@@ -358,8 +358,8 @@ class Overwatcher(Registrar):
                                      "status":"starting"})
 
         # Run the input command
-        #self.managed_process = Popen(command, env=path)
-        self.managed_process = Popen(command)
+        self.managed_process = Popen(command, env=path)
+        #self.managed_process = Popen(command)
 
         # Make sure the managed process actually ran
         time.sleep(0.5)
