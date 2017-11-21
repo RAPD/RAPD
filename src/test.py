@@ -252,6 +252,13 @@ print indexing_results_queue.get()
 pool.close()
 pool.join()
 """
+TIMER = 5
+timer = 0
+while True:
+    if round(timer%TIMER,1) == 1.0:
+        print timer
+    time.sleep(0.2)
+    timer += 0.2
 
 red = connect_redis_manager_HA()
 #red = connect_redis()
@@ -276,7 +283,7 @@ red = connect_redis_manager_HA()
 #red.lpush('images_collected:SERCAT_ID', '/data/raw/ID_17_11_08_UNC_KE/Puck41_pn7_IDbeam_2/UNC-41_Pn7.0312'),
 #red.lpush('images_collected:SERCAT_ID', '/data/ID_GSK_20171101.raw/11_01_2017_APS22id/screen/GSK8P9_AR.0002'),
 #red.lpush('images_collected:SERCAT_ID', '/data/ID_MDAnderson_mdanderson.raw/TJ/ATG_70164_07_13/IACS-07_Pn13.0001'),
-red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/fandm/piro_E_3242/images/christine/runs/149pN3F_x04/149pN3F_x04_1_000001/149pN3F_x04_1_000001.cbf')
+#red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/fandm/piro_E_3242/images/christine/runs/149pN3F_x04/149pN3F_x04_1_000001/149pN3F_x04_1_000001.cbf')
 
 print red.llen('RAPD_QSUB_JOBS_0')
 #red.delete('RAPD_QSUB_JOBS_0')

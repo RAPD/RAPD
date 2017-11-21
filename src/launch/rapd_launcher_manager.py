@@ -106,13 +106,17 @@ class Launcher_Manager(threading.Thread):
             # This is the server portion of the code
             while self.running:
                 # Have Registrar update status
-                if self.overwatch_id:
-                    self.ow_registrar.update()
+                #if self.overwatch_id:
+                #    self.ow_registrar.update()
 
                 # Get updated job list by checking which launchers are running
                 # Reassign jobs if launcher(s) status changes
                 if round(self.timer%TIMER,1) == 1.0:
                     try:
+                        # Have Registrar update status
+                        if self.overwatch_id:
+                            self.ow_registrar.update()
+
                         # Check which launchers are running
                         temp = [l for l in full_job_list if self.redis.get("OW:"+l)]
 

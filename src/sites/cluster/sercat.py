@@ -275,7 +275,7 @@ def process_cluster(command,
     """
     fd = False
     counter = 0
-    # Setup path
+    # Setup path NOT USED
     v = "PATH=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
 /home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/bin:\
 /home/schuerjp/Programs/best:\
@@ -321,9 +321,8 @@ def process_cluster(command,
     #qs = ['qsub', fname]
     qs = 'qsub %s'%fname
     #Launch the job on the cluster
-    proc = subprocess.Popen(qs,
-                           shell=True,
-                           #executable='/bin/bash',
+    path = os.environ.copy()
+    proc = subprocess.Popen(qs, env=path,
                            stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE)
 			   
