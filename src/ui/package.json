@@ -21,7 +21,7 @@
     "@angular/flex-layout": "git+https://github.com/angular/flex-layout-builds.git",
     "@angular/forms": "^5.0.0",
     "@angular/http": "^5.0.0",
-    "@angular/material": "^5.0.0-rc0",
+    "@angular/material": "^5.0.0-rc.1",
     "@angular/platform-browser": "^5.0.0",
     "@angular/platform-browser-dynamic": "^5.0.0",
     "@angular/router": "^5.0.0",
@@ -42,7 +42,7 @@
     "zone.js": "^0.8.17"
   },
   "devDependencies": {
-    "@angular/cli": "^1.5.0",
+    "@angular/cli": "^1.5.3",
     "@angular/compiler-cli": "^5.0.0",
     "@types/hammerjs": "^2.0.35",
     "@types/jasmine": "2.5.54",

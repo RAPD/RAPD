@@ -8,6 +8,6 @@ DEFAULT_PREFERENCES = {'multiprocessing': False, # Should be False for non-qsub
                        "show_plots": False, # plots for command line
                        "progress": False, # progress bar for command line
                        "spacegroup_decider": 'auto', # choices=["auto", "pointless", "xds"],
-                       #"rounds_polishing": 1, # not used yet...
                        "cluster_use": True,
+                       #"rounds_polishing": 1, # not used yet...
                        }

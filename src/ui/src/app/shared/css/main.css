@@ -243,6 +243,30 @@ button.button-dialog-top-right.mat-icon-button {
   opacity: 0.5;
 }
 
+/*
+ * Small content panels with black tops
+ */
+ .rapd-panel {
+   background-color: rgba(255,255,255,1);
+   border-radius: 3px;
+ }
+
+ .rapd-panel-heading {
+   background: rgba(0,0,0,1);
+   border-radius: 3px 3px 0 0;
+   color: rgba(255,255,255,1);
+   display: block;
+   height: 20px;
+   margin: 0 0 0 0;
+   padding: 10px 15px;
+   text-align: left;
+ }
+
+ .rapd-panel-content {
+   padding: 10px;
+ }
+
+
 
 
 /*
@@ -329,6 +353,45 @@ table.rapd-table {
   text-align: center;
 }
 
+table.rapd-table-wide {
+  table-layout: fixed;
+  border: 1px solid rgba(0,0,0,0.2);
+  border-collapse: collapse;
+  border-radius: 2px;
+  text-align: center;
+  width: 100%;
+}
+
+.rapd-table-wide th, td {
+  padding: 0 10px 0px 10px;
+}
+
+.rapd-table-wide tr {
+  padding: 10px 10px 10px 10px;
+  height: 30px;
+}
+
+.rapd-table-wide thead th {
+  color: rgba(0,0,0,0.54);
+  font-weight: 500;
+  font-size: 1;
+}
+
+.rapd-table-wide thead tr {
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.rapd-table-wide tbody {
+  color: rgba(0,0,0,1);
+  font-weight: 400;
+  font-size: 1em;
+}
+
+.rapd-table-wide tbody tr {
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  border-top: 1px solid rgba(0,0,0,0.1);
+  text-align: center;
+}
 
 
 mat-card.rapd-result {

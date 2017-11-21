@@ -314,7 +314,7 @@ def process_cluster(command,
               else:
                   print >>f, '#PBS -o %s'%os.path.join(work_dir,logfile)
           print >>f, '#PBS -l nodes=1:ppn=%s'%nproc
-          print >>f, command+'\n'
+          print >>f, command+'\n\n'
           f.close()
 
     os.chmod(fname, stat.S_IRWXU)

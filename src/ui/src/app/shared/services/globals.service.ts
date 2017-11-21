@@ -58,6 +58,49 @@ export class GlobalsService implements OnInit {
     }
   ];
 
+  public BarChartColors:Array<Object> = [
+    { // green
+      backgroundColor: 'rgba(0, 128, 128, 1)',
+      borderColor: 'rgba(0, 128, 128, 1)',
+      pointBackgroundColor: 'rgba(0, 128, 128, 1)',
+      pointBorderColor: 'rgba(0, 128, 128, 1)',
+      pointHoverBackgroundColor: 'rgba(0, 128, 128, 1)',
+      pointHoverBorderColor: 'rgba(0, 128, 128, 1)'
+    },
+    { // dark grey
+      backgroundColor: 'rgba(122, 198, 150, 1)',
+      borderColor: 'rgba(122, 198, 150, 1)',
+      pointBackgroundColor: 'rgba(122, 198, 150, 1)',
+      pointBorderColor: 'rgba(122, 198, 150, 1)',
+      pointHoverBackgroundColor: 'rgba(122, 198, 150, 1)',
+      pointHoverBorderColor: 'rgba(122, 198, 150, 1)'
+    },
+    { // grey
+      backgroundColor: 'rgba(125, 125, 114, 1)',
+      borderColor: 'rgba(125, 125, 114, 1)',
+      pointBackgroundColor: 'rgba(125, 125, 114, 1)',
+      pointBorderColor: 'rgba(125, 125, 114, 1)',
+      pointHoverBackgroundColor: 'rgba(125, 125, 114, 1)',
+      pointHoverBorderColor: 'rgba(125, 125, 114, 1)'
+    },
+    { // grey
+      backgroundColor: 'rgba(239, 115, 139, 1)',
+      borderColor: 'rgba(239, 115, 139, 1)',
+      pointBackgroundColor: 'rgba(239, 115, 139, 1)',
+      pointBorderColor: 'rgba(239, 115, 139, 1)',
+      pointHoverBackgroundColor: 'rgba(239, 115, 139, 1)',
+      pointHoverBorderColor: 'rgba(239, 115, 139, 1)'
+    },
+    { // grey
+      backgroundColor: 'rgba(139, 0, 0, 1)',
+      borderColor: 'rgba(139, 0, 0, 1)',
+      pointBackgroundColor: 'rgba(139, 0, 0, 1)',
+      pointBorderColor: 'rgba(139, 0, 0, 1)',
+      pointHoverBackgroundColor: 'rgba(139, 0, 0, 1)',
+      pointHoverBorderColor: 'rgba(139, 0, 0, 1)'
+    }
+  ];
+
   // Spacegroup data
   public sgs_in_order:Array<string>  = [
     '1',

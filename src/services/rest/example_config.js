@@ -18,4 +18,6 @@ module.exports = {
   ldap_server: '127.0.0.1',
   // String for LDAP to find your users
   ldap_dn: 'ou=People,dc=ser,dc=aps,dc=anl,dc=gov',
+  // Plugin types that show up in the MongoDB
+  plugin_types: ['index', 'integrate']
 };

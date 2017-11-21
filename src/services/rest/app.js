@@ -21,6 +21,7 @@ const Wss =           require('./ws_server');
 const config = require('./config'); // get our config file
 
 // Routing
+const dashboard_routes = require('./routes/dashboard');
 const groups_routes =    require('./routes/groups');
 const images_routes =    require('./routes/images');
 const jobs_routes =      require('./routes/jobs');
@@ -36,12 +37,13 @@ const redis =      require('redis');
 var redis_client = redis.createClient(config.redis_port, config.redis_host);
 
 // MongoDB Models
-const User =    require('./models/user');
-const Group =   require('./models/group');
-const Login =   require('./models/login');
-const Result =  require('./models/result');
-const Run =     require('./models/run');
-const Session = require('./models/session');
+const Activity = require('./models/activity');
+const User =     require('./models/user');
+const Group =    require('./models/group');
+const Login =    require('./models/login');
+const Result =   require('./models/result');
+const Run =      require('./models/run');
+const Session =  require('./models/session');
 
 // MongoDB connection
 var mongoose = require('mongoose');
@@ -97,6 +99,25 @@ app.use(bodyParser.json());
 // use morgan to log requests to the console
 app.use(morgan('dev'));
 
+// Logging of REST requests
+let screened_urls = {
+  '/api/dashboard/logins':1,
+  '/api/dashboard/results':1,
+  '/api/overwatches':1,
+}
+var myLogger = function (req, res, next) {
+  // console.log('req.url', req.url);
+  if (! (req.url in screened_urls)) {
+    let activity = new Activity({
+      source:'rest',
+      type:req.url
+    }).save();
+  }
+  next()
+}
+app.use(myLogger);
+
+
 // ROUTES FOR OUR API
 // =============================================================================
 var apiRoutes = express.Router();              // get an instance of the express Router
@@ -121,7 +142,9 @@ apiRoutes.use(function(req, res, next) {
 apiRoutes.post('/authenticate', function(req, res) {
 
   console.log('authenticate');
-  console.log(req.body);
+
+  // Get useragent data
+  let ua = req.useragent;
 
   if (config.authenticate_mode === 'mongo') {
     User.getAuthenticated(req.body.email, req.body.password, function(err, user, reason) {
@@ -161,22 +184,42 @@ apiRoutes.post('/authenticate', function(req, res) {
 
       // otherwise we can determine why we failed
       } else {
-        var reasons = User.failedLogin;
+        var reasons = User.failedLogin,
+            message;
+
+        // Turn reason into something understandable
         switch (reason) {
           case reasons.NOT_FOUND:
-            res.json({ success: false, message: 'Authentication failed. No such user.' });
+            message = 'Authentication failed. No such user.';
             break;
           case reasons.PASSWORD_INCORRECT:
-            res.json({ success: false, message: 'Authentication failed. Wrong password.' });
-            // note: these cases are usually treated the same - don't tell
-            // the user *why* the login failed, only that it did
+            message = 'Authentication failed. Wrong password.';
             break;
           case reasons.MAX_ATTEMPTS:
-            res.json({ success: false, message: 'Authentication failed. Too many failed attempts' });
-            // send email or otherwise notify user that account is
-            // temporarily locked
+            message = 'Authentication failed. Too many failed attempts';
             break;
         }
+
+        // Return to client
+        console.error(message);
+        res.json({
+          success:false,
+          message:message
+        });
+
+        // Log the failure
+        let new_login = new Login({
+          browser:ua.browser,
+          browser_version:ua.version,
+          email:req.body.email,
+          ip_address:req.connection.remoteAddress,
+          os:ua.os,
+          platform:ua.platform,
+          reason:reason,
+          success:false,
+        }).save();
+
+        return false;
       }
     });
   } else if (config.authenticate_mode === 'ldap') {
@@ -185,10 +228,28 @@ apiRoutes.post('/authenticate', function(req, res) {
 
       // REJECTION
       if (err) {
+
         console.error(err);
-        var reason = err.name.toString();
+
+        let reason = err.name.toString();
+
+        // Return to client
         res.json({success:false,
                   message:'Authentication failed. ' + reason});
+
+        // Log the failure
+        let new_login = new Login({
+          browser:ua.browser,
+          browser_version:ua.version,
+          email:req.body.email,
+          ip_address:req.connection.remoteAddress,
+          os:ua.os,
+          platform:ua.platform,
+          reason:reason,
+          success:false,
+        }).save();
+
+        return false;
 
       // AUTHENTICATED - now get Mongo info on user/group
       } else {
@@ -202,9 +263,29 @@ apiRoutes.post('/authenticate', function(req, res) {
 
             // LDAP error
             if (err) {
+
               console.error(err);
+
+              let reason = err.name.toString();
+
+              // Notify client
               res.json({success:false,
-                        message:err});
+                        message:reason});
+
+              // Log the failure
+              let new_login = new Login({
+                browser:ua.browser,
+                browser_version:ua.version,
+                uid:req.body.uid,
+                ip_address:req.connection.remoteAddress,
+                os:ua.os,
+                platform:ua.platform,
+                reason:reason,
+                success:false,
+              }).save();
+
+              return false;
+
             } else {
 
               result.on('searchEntry', function(entry) {
@@ -215,14 +296,30 @@ apiRoutes.post('/authenticate', function(req, res) {
                 // Look for a group that corresponds to this user
                 Group.find({uid:user.uid}, function(err, groups) {
 
-                  console.log('looking for group....');
-                  console.log(err);
-                  console.log(groups);
-
                   if (err) {
+
                     console.error(err);
+
+                    let reason = err.name.toString();
+
+                    // Notify client
                     res.json({success:false,
-                              message:err});
+                              message:reason});
+
+                    // Log the failure
+                    let new_login = new Login({
+                      browser:ua.browser,
+                      browser_version:ua.version,
+                      uid:req.body.uid,
+                      ip_address:req.connection.remoteAddress,
+                      os:ua.os,
+                      platform:ua.platform,
+                      reason:reason,
+                      success:false,
+                    }).save();
+
+                    return false;
+
                   } else {
                     // A group has been returned
                     if (groups[0]) {
@@ -258,6 +355,19 @@ apiRoutes.post('/authenticate', function(req, res) {
                                 token:token,
                                 pass_force_change:false});
 
+                      // Record the login
+                      let new_login = new Login({
+                        browser:ua.browser,
+                        browser_version:ua.version,
+                        uid:req.body.uid,
+                        ip_address:req.connection.remoteAddress,
+                        os:ua.os,
+                        platform:ua.platform,
+                        success:true
+                      }).save();
+
+                      return true;
+
                     // No groups returned
                     } else {
 
@@ -273,9 +383,29 @@ apiRoutes.post('/authenticate', function(req, res) {
                       });
                       new_group.save(function(err, return_group) {
                         if (err) {
+
                           console.error(err);
-                          res.send({success:false,
-                                    message:err});
+
+                          let reason = err.name.toString();
+
+                          // Notify client
+                          res.json({success:false,
+                                    message:reason});
+
+                          // Log the failure
+                          let new_login = new Login({
+                            browser:ua.browser,
+                            browser_version:ua.version,
+                            uid:req.body.uid,
+                            ip_address:req.connection.remoteAddress,
+                            os:ua.os,
+                            platform:ua.platform,
+                            reason:reason,
+                            success:false,
+                          }).save();
+
+                          return false;
+
                         } else {
 
                           console.log('Group saved successfully', return_group);
@@ -306,6 +436,19 @@ apiRoutes.post('/authenticate', function(req, res) {
                                     message:'Enjoy your token!',
                                     token:token,
                                     pass_force_change:false});
+
+                          // Record the login
+                          let new_login = new Login({
+                            browser:ua.browser,
+                            browser_version:ua.version,
+                            email:req.body.email,
+                            ip_address:req.connection.remoteAddress,
+                            os:ua.os,
+                            platform:ua.platform,
+                            success:true
+                          }).save();
+
+                          return true;
                         }
                       });
                     }
@@ -434,6 +577,7 @@ apiRoutes.use(function(req, res, next) {
 app.use('/api', apiRoutes);
 
 // Imported routes
+app.use('/api', dashboard_routes);
 app.use('/api', groups_routes);
 app.use('/api', images_routes);
 app.use('/api', jobs_routes);

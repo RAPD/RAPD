@@ -3,11 +3,13 @@
     <div class="panel" *ngIf="user.role === 'site_admin'">
       <mat-tab-group class="session-tab-group">
         <mat-tab label="Overview">
+          <app-summary-panel></app-summary-panel>
         </mat-tab>
         <mat-tab label="Components">
           <app-overwatches-panel></app-overwatches-panel>
         </mat-tab>
         <mat-tab label="Stats">
+          <app-activities-panel></app-activities-panel>
         </mat-tab>
         <mat-tab label="Settings">
         </mat-tab>

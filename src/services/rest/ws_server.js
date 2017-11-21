@@ -18,8 +18,9 @@ var uuid = require('node-uuid');
 var redis = require('redis');
 
 // Import models
-var Result = require('./models/result');
-var Image =  require('./models/image');
+var Activity = require('./models/activity');
+var Image    = require('./models/image');
+var Result   = require('./models/result');
 
 // Definitions of result types
 var result_type_trans = {
@@ -334,6 +335,14 @@ function Wss (opt, callback) {
 
               }
 
+              // Register activity
+              let new_activity = new Activity({
+                source:'websocket',
+                type:'get_results',
+                subtype:data.data_type+'_'+ data.plugin_type,
+                user:ws.session.token._doc._id
+              }).save();
+
               break;
 
             case 'update_result':
@@ -465,9 +474,16 @@ function Wss (opt, callback) {
                                                 success:true,
                                                 results:detailed_result}));
                       }
-                    }
-                  });
 
+                    // Register activity
+                    let new_activity = new Activity({
+                      source:'websocket',
+                      type:'get_result_details',
+                      subtype:data.data_type+'_'+ data.plugin_type,
+                      user:ws.session.token._doc._id
+                    }).save();
+                  }
+                });
               break;
           }
         }

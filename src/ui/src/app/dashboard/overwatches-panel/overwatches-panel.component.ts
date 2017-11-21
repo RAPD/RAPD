@@ -30,15 +30,17 @@ export class OverwatchesPanelComponent implements OnInit, OnDestroy {
   }
 
   getOverwatches() {
-    console.log('getOverwatches');
+    // console.log('getOverwatches');
 
     let self = this;
 
     this.rest_service.getOverwatches()
       .subscribe(
-       overwatches => {
-         this.overwatches = overwatches;
-         console.log(overwatches);
+       results => {
+         if (results.success === true) {
+           this.overwatches = results.overwatches;
+           // console.log(results.overwatches);
+         }
          this.update_timeout = setTimeout(function() {
            self.getOverwatches();
          }, 10000);
@@ -51,7 +53,7 @@ export class OverwatchesPanelComponent implements OnInit, OnDestroy {
     if (parent.status !== 'stopped') {
       this.rest_service.stopOverwatch(parent.id).subscribe(
        parameters => {
-         console.log(parameters);
+         // console.log(parameters);
          if (parameters.success) {
            let snackBarRef = this.snackBar.open('Stop requested', 'Ok', {
              duration: 5000,
@@ -72,7 +74,7 @@ export class OverwatchesPanelComponent implements OnInit, OnDestroy {
     if (parent.status !== 'running') {
       this.rest_service.startOverwatch(parent.id).subscribe(
        parameters => {
-         console.log(parameters);
+         // console.log(parameters);
          if (parameters.success) {
            let snackBarRef = this.snackBar.open('Start requested', 'Ok', {
              duration: 5000,
@@ -93,11 +95,11 @@ export class OverwatchesPanelComponent implements OnInit, OnDestroy {
   // stop all the overwatches
   stopAll() {
 
-    console.log('stopAll');
+    // console.log('stopAll');
 
     this.rest_service.stopAllOverwatches().subscribe(
      parameters => {
-       console.log(parameters);
+       // console.log(parameters);
        if (parameters.success) {
          let snackBarRef = this.snackBar.open('Stop all requested', 'Ok', {
            duration: 5000,
@@ -109,7 +111,7 @@ export class OverwatchesPanelComponent implements OnInit, OnDestroy {
 }
 
   ngOnDestroy() {
-    console.log("DESTROYED");
+    // console.log("DESTROYED");
     clearTimeout(this.update_timeout);
   }
 

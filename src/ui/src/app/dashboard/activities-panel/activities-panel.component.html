@@ -1,0 +1,24 @@
+<div class="rapd-main-panel">
+  <div fxLayout="row" style="padding:10px;" fxLayoutGap="20px">
+    <div fxFlex>
+      <div class="rapd-panel">
+        <div class="rapd-panel-heading">
+          Server Activity
+        </div>
+        <div class="rapd-panel-content">
+          <div *ngIf="(server_activities)?.datasets">
+            <canvas baseChart
+              [datasets]="server_activities.datasets"
+              [labels]="server_activities.labels"
+              [options]="line_options"
+              [colors]="colors"
+              [chartType]="'line'">
+            </canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div fxFlex>
+    </div>
+  </div>
+</div>
