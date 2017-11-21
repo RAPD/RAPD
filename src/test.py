@@ -251,7 +251,7 @@ print pid_queue.get()
 print indexing_results_queue.get()
 pool.close()
 pool.join()
-"""
+
 TIMER = 5
 timer = 0
 while True:
@@ -259,6 +259,10 @@ while True:
         print timer
     time.sleep(0.2)
     timer += 0.2
+"""
+d = {'fullname': '/gpfs1/users/duke/pei_C_3263/images/pei/runs/A6/0_0/A6_1_0001.cbf !Change to accurate path to data frames'}
+#d = {'fullname': '/gpfs1/users/duke/pei_C_3263/images/pei/runs/A6/0_0/A6_1_0001.cbf'}
+print d['fullname'].replace(' !Change to accurate path to data frames', '')
 
 red = connect_redis_manager_HA()
 #red = connect_redis()
