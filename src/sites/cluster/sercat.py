@@ -318,8 +318,8 @@ def process_cluster(command,
           f.close()
 
     os.chmod(fname, stat.S_IRWXU)
-    #qs = ['qsub', fname]
-    qs = 'qsub %s'%fname
+    qs = ['qsub', fname]
+    #qs = 'qsub %s'%fname
     #Launch the job on the cluster
     path = os.environ.copy()
     proc = subprocess.Popen(qs, env=path,
