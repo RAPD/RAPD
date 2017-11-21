@@ -247,29 +247,41 @@ class RapdPlugin(Process):
         #else:
         #    self.ram_use = False
         #    self.ram_nodes = None
-
+        
+        # Setup initial shell_launcher
+        # Load the subprocess adapter
+        self.launcher = local_subprocess
+        self.batch_queue = {}
+        self.jobs = 1
+        self.procs = 4
+        
+        # If using a computer cluster, overwrite the self.launcher
         self.cluster_use = self.preferences.get('cluster_use', False)
-        #self.cluster_use = True
         if self.cluster_use:
             # Load the cluster adapter
             cluster_launcher = xutils.load_cluster_adapter(self)
-            self.launcher = cluster_launcher.process_cluster
-            # Based on the command, pick a batch queue on the cluster. Added to input kwargs
-            self.batch_queue = {'batch_queue': cluster_launcher.check_queue(self.command["command"])}
-            if self.ram_use == True:
-                self.jobs = len(self.ram_nodes[0])
-                self.procs = 8
+            # If it cannot load, then the shell launcher is kept
+            if cluster_launcher:
+                self.launcher = cluster_launcher.process_cluster
+                # Based on the command, pick a batch queue on the cluster. Added to input kwargs
+                self.batch_queue = {'batch_queue': cluster_launcher.check_queue(self.command["command"])}
+                if self.ram_use == True:
+                    self.jobs = len(self.ram_nodes[0])
+                    self.procs = 8
+                else:
+                    # Set self.jobs and self.procs based on available cluster resources
+                    self.procs, self.jobs = cluster_launcher.get_nproc_njobs()
+                    #self.jobs = 20
+                    #self.procs = 8
             else:
-                # Set self.jobs and self.procs based on available cluster resources
-                self.procs, self.jobs = cluster_launcher.get_nproc_njobs()
-                #self.jobs = 20
-                #self.procs = 8
-        else:
-            # Load the subprocess adapter
-            self.launcher = local_subprocess
-            self.batch_queue = {}
-            self.jobs = 1
-            self.procs = 4
+                if self.logger:
+                    self.logger.debug('The cluster_adapter could not be loaded, defaulting to shell launching!!!')
+        #else:
+        #    # Load the subprocess adapter
+        #    self.launcher = local_subprocess
+        #    self.batch_queue = {}
+        #    self.jobs = 1
+        #    self.procs = 4
         #if 'multiprocessing' in self.preferences:
         #    self.cluster_use = self.preferences['multiprocessing']
         #    if self.cluster_use == 'True':
