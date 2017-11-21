@@ -175,7 +175,7 @@ class RapdPlugin(Process):
         # Some logging
         self.logger.info(site)
         self.logger.info(command)
-        # pprint(command)
+        pprint(command)
 
         # Store passed-in variables
         self.site = site
@@ -247,14 +247,14 @@ class RapdPlugin(Process):
         #else:
         #    self.ram_use = False
         #    self.ram_nodes = None
-        
+
         # Setup initial shell_launcher
         # Load the subprocess adapter
         self.launcher = local_subprocess
         self.batch_queue = {}
         self.jobs = 1
         self.procs = 4
-        
+
         # If using a computer cluster, overwrite the self.launcher
         self.cluster_use = self.preferences.get('cluster_use', False)
         if self.cluster_use:
@@ -509,7 +509,40 @@ class RapdPlugin(Process):
 
         self.write_json(self.results)
 
+    def postprocess(self):
+        """After it's all done"""
+
+        # Write the output JSON again
+        self.write_json(self.results)
+
+        # Create an archive
+        self.create_archive()
+
+        # Transfer files to Control
+        self.transfer_files()
+
+        # Print out the credits
+        self.print_credits()
+
+        # Run analysis
         self.run_analysis_plugin()
+
+        # Housekeeping
+        self.clean_up()
+
+        self.tprint(100, "progress")
+
+    def print_credits(self):
+        """Print credits for programs utilized by this plugin"""
+
+        self.tprint(rcredits.HEADER,
+                    level=99,
+                    color="blue")
+
+        programs = ["AIMLESS", "CCP4", "CCTBX", "POINTLESS", "XDS"]
+        info_string = rcredits.get_credits_text(programs, "    ")
+
+        self.tprint(info_string, level=99, color="white")
 
     def run_analysis_plugin(self):
         """Set up and run the analysis plugin"""
@@ -568,23 +601,6 @@ class RapdPlugin(Process):
         # Do not run analysis
         else:
             self.results["results"]["analysis"] = False
-
-    def postprocess(self):
-        """After it's all done"""
-
-        # Write the output JSON again
-        self.write_json(self.results)
-
-        # Create an archive
-        self.create_archive()
-
-        # Housekeeping
-        self.clean_up()
-
-        # Print out the credits
-        self.print_credits()
-
-        self.tprint(100, "progress")
 
     def ram_total(self, xdsinput):
         """
@@ -1243,7 +1259,7 @@ class RapdPlugin(Process):
                     line = (l0, line[1])
                     break
             xds_input.append("%s%s"%('='.join(line), '\n'))
-            
+
         """
         for key, value in xds_dict.iteritems():
             # Regions that are excluded are defined with
@@ -1852,7 +1868,7 @@ class RapdPlugin(Process):
          'files': {'ANOM_sca': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_ANOM.sca',
                    'NATIVE_sca': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_NATIVE.sca',
                    'downloadable': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1.tar.bz2',
-                   'mergable': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_mergable.mtz',
+                   'unmerged': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_unmerged.mtz',
                    'mtzfile': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_free.mtz',
                    'scala_com': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_scala.com',
                    'scala_log': '/Users/frankmurphy/workspace/rapd_github/test_data/aps/necat/APS_NECAT_24-ID-C/rapd_integrate_thaum1_01s-01d_1_1-20/thaum1_01s-01d_1/thaum1_01s-01d_1_scala.log',
@@ -1926,29 +1942,30 @@ class RapdPlugin(Process):
         tgt_file = "%s_free.mtz" % archive_files_prefix
         # print "Copy %s to %s" % (src_file, tgt_file)
         shutil.copyfile(src_file, tgt_file)
-        # files_to_archive.append(tgt_file)
         # Include in produced_data
+        prod_file = os.path.join(self.dirs["work"], os.path.basename(tgt_file))
+        shutil.copyfile(src_file, prod_file)
         self.results["results"]["data_produced"].append({
-            "filepath":src_file,
-            "hash":archive.get_hash(src_file),
-            #TODO
+            "filepath":prod_file,
+            "hash":archive.get_hash(prod_file),
             "description":"rfree"
         })
-        # pprint(self.results["results"]["data_produced"])
+        pprint(self.results["results"]["data_produced"])
 
-        # Rename the so-called mergable file
+        # Rename the so-called unmerged file
         src_file = os.path.abspath(results["mtzfile"].replace("_aimless", "_pointless"))
-        tgt_file = "%s_mergable.mtz" % archive_files_prefix
+        tgt_file = "%s_unmerged.mtz" % archive_files_prefix
         # print "Copy %s to %s" % (src_file, tgt_file)
         shutil.copyfile(src_file, tgt_file)
         # Include in produced_data
+        prod_file = os.path.join(self.dirs["work"], os.path.basename(tgt_file))
+        shutil.copyfile(src_file, prod_file)
         self.results["results"]["data_produced"].append({
-            "filepath":src_file,
-            "hash":archive.get_hash(src_file),
-            #TODO
-            "description":"mergable"
+            "filepath":prod_file,
+            "hash":archive.get_hash(prod_file),
+            "description":"unmerged"
         })
-        # pprint(self.results["results"]["data_produced"])
+        pprint(self.results["results"]["data_produced"])
 
         if scalepack:
             # Create the merged scalepack format file.
@@ -2290,6 +2307,13 @@ class RapdPlugin(Process):
             if archive_result:
                 self.results["results"]["archive_files"].append(archive_result)
 
+    def transfer_files(self):
+        """
+        Transfer files to a directory that the control can access
+        """
+
+        pass
+
     def clean_up(self):
         """Clean up after self"""
 
@@ -2309,18 +2333,6 @@ class RapdPlugin(Process):
 
             # Remove extra files in working directory.
             # os.system('rm -f *.mtz *.sca *.sh *.log junk_*')
-
-    def print_credits(self):
-        """Print credits for programs utilized by this plugin"""
-
-        self.tprint(rcredits.HEADER,
-                    level=99,
-                    color="blue")
-
-        programs = ["AIMLESS", "CCP4", "CCTBX", "POINTLESS", "XDS"]
-        info_string = rcredits.get_credits_text(programs, "    ")
-
-        self.tprint(info_string, level=99, color="white")
 
     def write_json(self, results):
         """Write a file with the JSON version of the results"""

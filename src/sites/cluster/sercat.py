@@ -305,6 +305,7 @@ def process_cluster(command,
           print >>f, '#PBS -d %s'%work_dir
           #print >>f, '#PBS -v %s'%v
           print >>f, '#PBS -V'
+          print >>f, '#PBS -v PBS_O_SHELL=/bin/bash'
           print >>f, '#PBS -q %s'%batch_queue
           if name:
               print >>f, '#PBS -N %s'%name

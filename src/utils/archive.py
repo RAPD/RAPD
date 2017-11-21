@@ -53,10 +53,24 @@ import tarfile
 def compress_target(target):
     """Compress a target and return the result file name"""
 
-    archive_name = "%s.tar.bz2" % target
+    print "compress_target target:", target
+
+    # Save where we were
+    start_dir = os.getcwd()
+
+    # Move to target directory
+    os.chdir(os.path.dirname(target))
+
+    # Shorten the target from abspath
+    my_target = os.path.basename(target)
+
+    archive_name = "%s.tar.bz2" % my_target
 
     with tarfile.open(archive_name, "w:bz2") as tar:
-        tar.add(target)
+        tar.add(my_target)
+
+    # Move bach to starting work directory
+    os.chdir(start_dir)
 
     return os.path.abspath(archive_name)
 
@@ -65,9 +79,9 @@ def create_archive(directory, archive_name=False):
     """
     Creates an archive file for the input directory
     """
-    # print "create_archive"
-    # print "  directory: %s" % directory
-    # print "  archive_name: %s" % archive_name
+    print "create_archive"
+    print "  directory: %s" % directory
+    print "  archive_name: %s" % archive_name
     cwd = os.getcwd()
 
     if not os.path.isdir(directory):

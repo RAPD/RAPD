@@ -79,7 +79,7 @@ def get_commandline():
                         dest="spacegroup_decider",
                         default="auto",
                         choices=["auto", "pointless", "xds"],
-                        help="Rounds of polishing to perform")
+                        help="Set the spacegroup decider")
 
     # Don't clean up
     parser.add_argument("--dirty",
@@ -213,6 +213,7 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
     command["preferences"] = {
         "analysis": commandline_args.analysis,
         "clean_up": commandline_args.clean_up,
+        "cluster_use": commandline_args.cluster_use,
         "dir_up": commandline_args.dir_up,
         "start_frame": commandline_args.start_image,
         "end_frame": commandline_args.end_image,

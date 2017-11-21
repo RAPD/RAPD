@@ -260,6 +260,7 @@ while True:
     time.sleep(0.2)
     timer += 0.2
 """
+
 #red = connect_redis_manager_HA()
 red = connect_redis()
 
