@@ -175,7 +175,7 @@ class RapdPlugin(Process):
         # Some logging
         self.logger.info(site)
         self.logger.info(command)
-        # pprint(command)
+        pprint(command)
 
         # Store passed-in variables
         self.site = site
@@ -1243,7 +1243,7 @@ class RapdPlugin(Process):
                     line = (l0, line[1])
                     break
             xds_input.append("%s%s"%('='.join(line), '\n'))
-            
+
         """
         for key, value in xds_dict.iteritems():
             # Regions that are excluded are defined with

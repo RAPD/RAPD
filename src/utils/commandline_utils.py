@@ -190,6 +190,14 @@ dp_parser.add_argument("--nproc",
                        help="Number of processors to use. Defaults to the number of \
                              processors available")
 
+# Use the cluster
+dp_parser.add_argument("--cluster",
+                       action="store_true",
+                       dest="cluster_use",
+                       help="Use cluster")
+
+
+
 # The rapd file generating parser - to be used by commandline RAPD processes
 gf_parser = argparse.ArgumentParser(add_help=False)
 
@@ -389,7 +397,7 @@ def analyze_data_sources(sources,
                     #counter += 1
             else:
                 raise Exception("%s does not exist" % source_abspath)
-        
+
         return return_data
 
     elif mode == "integrate":
@@ -483,7 +491,7 @@ if __name__ == "__main__":
     print "commandline_utils.py"
     s = ['/gpfs6/users/necat/Jon/RAPD_test/Output/IDP07311-5.002_master.h5']
     analyze_data_sources(s, 'integrate', )
-    
+
     """
     parser = argparse.ArgumentParser(parents=[dp_parser],
                                      description="Testing")
