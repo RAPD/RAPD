@@ -251,7 +251,7 @@ print pid_queue.get()
 print indexing_results_queue.get()
 pool.close()
 pool.join()
-"""
+
 TIMER = 5
 timer = 0
 while True:
@@ -259,9 +259,9 @@ while True:
         print timer
     time.sleep(0.2)
     timer += 0.2
-
-red = connect_redis_manager_HA()
-#red = connect_redis()
+"""
+#red = connect_redis_manager_HA()
+red = connect_redis()
 
 #red.delete('images_collected:NECAT_T')
 #red.lpush('images_collected:NECAT_T', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000001.cbf')
@@ -282,19 +282,19 @@ red = connect_redis_manager_HA()
 #red.lpush('images_collected:SERCAT_ID', '/data/raw/ID_17_11_08_20171108_AMA/CRC-5p2/CRC-5_Pn2.0001'),
 #red.lpush('images_collected:SERCAT_ID', '/data/raw/ID_17_11_08_UNC_KE/Puck41_pn7_IDbeam_2/UNC-41_Pn7.0312'),
 #red.lpush('images_collected:SERCAT_ID', '/data/ID_GSK_20171101.raw/11_01_2017_APS22id/screen/GSK8P9_AR.0002'),
-#red.lpush('images_collected:SERCAT_ID', '/data/ID_MDAnderson_mdanderson.raw/TJ/ATG_70164_07_13/IACS-07_Pn13.0001'),
+red.lpush('images_collected:SERCAT_ID', '/data//raw/BM_17_11_21_GSK_20171121/11_21_2017_APS22bm/screen/P300_GSK3925257A_2_r1_s.0001'),
 #red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/fandm/piro_E_3242/images/christine/runs/149pN3F_x04/149pN3F_x04_1_000001/149pN3F_x04_1_000001.cbf')
 
 print red.llen('RAPD_QSUB_JOBS_0')
 #red.delete('RAPD_QSUB_JOBS_0')
 print red.llen('RAPD_JOBS')
-#print red.llen("images_collected:SERCAT_ID")
+print red.llen("images_collected:SERCAT_ID")
 #red.delete("images_collected:SERCAT_ID")
 #print red.llen('run_data:SERCAT_ID')
 #red.delete("run_data:SERCAT_ID")
-print red.llen("images_collected:NECAT_T")
+#print red.llen("images_collected:NECAT_T")
 #red.delete("images_collected:NECAT_T")
-print red.llen('run_data:NECAT_T')
+#print red.llen('run_data:NECAT_T')
 #red.delete("run_data:NECAT_T")
 #print red.llen('RAPD_RESULTS')
 #red.delete('RAPD_RESULTS')
