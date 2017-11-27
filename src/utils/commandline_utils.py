@@ -196,6 +196,11 @@ dp_parser.add_argument("--cluster",
                        dest="cluster_use",
                        help="Use cluster")
 
+# Directory for exchanging files (used by some server installs)
+dp_parser.add_argument("--exchange_dir",
+                       action="store",
+                       dest="exchange_dir",
+                       help="Root directory for file excahnge between RAPD server entities")
 
 
 # The rapd file generating parser - to be used by commandline RAPD processes

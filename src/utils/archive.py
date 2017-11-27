@@ -50,10 +50,10 @@ import tarfile
 # import detectors.detector_utils as detector_utils
 # import utils
 
-def compress_target(target):
+def compress_dir(target):
     """Compress a target and return the result file name"""
 
-    print "compress_target target:", target
+    print "compress_dir target:", target
 
     # Save where we were
     start_dir = os.getcwd()
@@ -74,6 +74,37 @@ def compress_target(target):
 
     return os.path.abspath(archive_name)
 
+def compress_file(target):
+    """
+    Compresses an individual file with an accompanying hash value
+    """
+    # print "compress_file", target
+
+    # Save where we were
+    start_dir = os.getcwd()
+    # print "start_dir", start_dir
+
+    # Move to target directory
+    os.chdir(os.path.dirname(target))
+    # print os.getcwd()
+
+    # Shorten the target from abspath
+    my_target = os.path.basename(target)
+    # print my_target
+
+    # Get hash of target file
+    my_hash = get_hash(my_target)
+
+    archive_name = os.path.abspath("%s.tar.bz2" % my_target)
+    # print archive_name
+
+    with tarfile.open(archive_name, "w:bz2") as tar:
+        tar.add(my_target)
+
+    # Move bach to starting work directory
+    os.chdir(start_dir)
+
+    return (archive_name, my_hash)
 
 def create_archive(directory, archive_name=False):
     """
@@ -96,7 +127,7 @@ def create_archive(directory, archive_name=False):
     records = create_manifest(directory, True)
 
     # Compress the archive
-    archive_name = compress_target(directory)
+    archive_name = compress_dir(directory)
 
     # Get a hash value for the archive
     archive_hash = get_hash(archive_name)
