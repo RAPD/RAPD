@@ -2372,6 +2372,8 @@ class RapdPlugin(Process):
     def write_json(self, results):
         """Write a file with the JSON version of the results"""
 
+        print "write_json"
+
         # pprint(results);
 
         json_string = json.dumps(results)
@@ -2381,7 +2383,7 @@ class RapdPlugin(Process):
             print json_string
 
         # Write a file
-        with open("result.json", "w") as outfile:
+        with open(os.path.join(self.dirs["work"],"result.json"), "w") as outfile:
             outfile.writelines(json_string)
 
 

@@ -110,9 +110,9 @@ def create_archive(directory, archive_name=False):
     """
     Creates an archive file for the input directory
     """
-    print "create_archive"
-    print "  directory: %s" % directory
-    print "  archive_name: %s" % archive_name
+    # print "create_archive"
+    # print "  directory: %s" % directory
+    # print "  archive_name: %s" % archive_name
     cwd = os.getcwd()
 
     if not os.path.isdir(directory):
