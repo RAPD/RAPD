@@ -2345,7 +2345,25 @@ class RapdPlugin(Process):
         """
 
         if self.preferences.get("exchange_dir", False):
-            print "transfer_files", self.preferences.exchange_dir
+            print "transfer_files", self.preferences["exchange_dir"]
+
+            # Determine and validate the place to put the data
+            target_dir = os.path.join(self.preferences["exchange_dir"], os.path.split(self.dirs["work"])[1])
+            if not os.path.exists(target_dir):
+                os.makedirs(target_dir)
+
+            new_data_produced = []
+            for file_to_move in self.results["results"]["data_produced"]:
+                # Move data
+                target = os.path.join(target_dir, os.path.basename(file_to_move["path"]))
+                print "Moving %s to %s" % (file_to_move["path"], target)
+                os.rename(file_to_move["path"], target)
+                # Change entry
+                file_to_move["path"] = target
+                new_data_produced.append(file_to_move)
+
+            # Replace the original with new results location
+            self.results["results"]["data_produced"] = new_data_produced
 
 
     def clean_up(self):
