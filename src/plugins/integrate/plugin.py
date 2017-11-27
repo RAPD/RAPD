@@ -2356,14 +2356,25 @@ class RapdPlugin(Process):
             for file_to_move in self.results["results"]["data_produced"]:
                 # Move data
                 target = os.path.join(target_dir, os.path.basename(file_to_move["path"]))
-                print "Moving %s to %s" % (file_to_move["path"], target)
+                # print "Moving %s to %s" % (file_to_move["path"], target)
                 os.rename(file_to_move["path"], target)
                 # Change entry
                 file_to_move["path"] = target
                 new_data_produced.append(file_to_move)
-
             # Replace the original with new results location
             self.results["results"]["data_produced"] = new_data_produced
+
+            new_archive_files = []
+            for file_to_move in self.results["results"]["archive_files"]:
+                # Move data
+                target = os.path.join(target_dir, os.path.basename(file_to_move["path"]))
+                # print "Moving %s to %s" % (file_to_move["path"], target)
+                os.rename(file_to_move["path"], target)
+                # Change entry
+                file_to_move["path"] = target
+                new_archive_files.append(file_to_move)
+            # Replace the original with new results location
+            self.results["results"]["archive_files"] = new_archive_files
 
 
     def clean_up(self):

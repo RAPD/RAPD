@@ -133,7 +133,7 @@ def create_archive(directory, archive_name=False):
     archive_hash = get_hash(archive_name)
 
     return_dict = {
-        "file": archive_name,
+        "path": archive_name,
         "hash": archive_hash
     }
 
