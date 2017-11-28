@@ -32,19 +32,19 @@ sudo docker run --name mongodb -p 27017:27017 -d mongo:3.4
 """
 
 # Standard imports
+import bson.errors
+from bson.objectid import ObjectId
 import copy
 import datetime
 import logging
 import os
+from pprint import pprint
 import threading
 
-from bson.objectid import ObjectId
-import bson.errors
-from utils.text import json
-# import numpy
-from pprint import pprint
 import pymongo
+import gridfs
 
+from utils.text import json
 
 CONNECTION_ATTEMPTS = 30
 
@@ -433,6 +433,7 @@ class Database(object):
 
         # Connect to the database
         db = self.get_db_connection()
+        fs = gridfs.GridFSBucket(db)
 
         # Clear _id from plugin_result
         del plugin_result["_id"]
@@ -441,19 +442,33 @@ class Database(object):
         now = datetime.datetime.utcnow()
         plugin_result["timestamp"] = now
 
-        # Make sure we are all ObjectIds - this is until I can get the
-        # object traversal working
-        # print "Incoming plugin_result._id: %s" % plugin_result.get("_id", False)
-        # if plugin_result.get("_id", False):
-        #     plugin_result["_id"] = get_object_id(plugin_result["_id"])
-
-        # _ids in process dict
+        # Make sure we are all ObjectIds - _ids in process dict
         for key, val in plugin_result["process"].iteritems():
             if "_id" in key:
                 plugin_result["process"][key] = get_object_id(val)
 
         # The coordinating result_id (_id of results collection & process.result_id)
         _result_id = plugin_result["process"].get("result_id")
+
+        #
+        # Handle any file storage
+        #
+        def add_file_to_db(path, metadata=None):
+            """Add files to MongoDB"""
+            # Open the path
+            with open(path, "r") as input_object:
+                file_id = fs.upload_from_stream(path, input_object, metadata)
+            return file_id
+
+        for key in ("archive_files", "data_produced"):
+            if plugin_result["results"].get(key, False):
+                for index in range(len(plugin_result["results"].get(key, []))):
+                    data = plugin_result["results"].get(key, [])[index]
+                    grid_id = add_file_to_db(path=data["path"],
+                                             metadata={"hash":data["hash"],
+                                                       "result_id":_result_id,
+                                                       "type":key})
+                    plugin_result["results"].get(key, [])[index]["_id"] = grid_id
 
         #
         # Add to plugin-specific results
