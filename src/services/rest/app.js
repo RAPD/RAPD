@@ -537,43 +537,44 @@ apiRoutes.get('/', function(req, res) {
     res.json({ message: 'Welcome to the RAPD api!' });
 });
 
+if (! process.env.NODE_ENV === 'development') {
+  // route middleware to verify a token
+  apiRoutes.use(function(req, res, next) {
 
-// route middleware to verify a token
-apiRoutes.use(function(req, res, next) {
+    // console.log(req.body);
+    // console.log(req.query);
+    // console.log(req.headers);
 
-  // console.log(req.body);
-  // console.log(req.query);
-  // console.log(req.headers);
+    // check header or url parameters or post parameters for token
+    var token = req.headers.authorization.replace('Bearer ', '');
 
-  // check header or url parameters or post parameters for token
-  var token = req.headers.authorization.replace('Bearer ', '');
+    // decode token
+    if (token) {
 
-  // decode token
-  if (token) {
-
-    // Verifies secret and checks exp
-    jwt.verify(token, app.get('superSecret'), function(err, decoded) {
-      if (err) {
-        return res.json({success: false,
-                         message: 'Failed to authenticate token.'});
-      } else {
-        let now = Date.now()/1000;
-        // if everything is good, save to request for use in other routes
-        if (decoded.iat <= now && decoded.exp >= now) {
-          req.decoded = decoded;
-          next();
+      // Verifies secret and checks exp
+      jwt.verify(token, app.get('superSecret'), function(err, decoded) {
+        if (err) {
+          return res.json({success: false,
+                           message: 'Failed to authenticate token.'});
+        } else {
+          let now = Date.now()/1000;
+          // if everything is good, save to request for use in other routes
+          if (decoded.iat <= now && decoded.exp >= now) {
+            req.decoded = decoded;
+            next();
+          }
         }
-      }
-    });
+      });
 
-  // If there is no token return an error
-  } else {
-    return res.status(403).send({
-        success: false,
-        message: 'No token provided.'
-    });
-  }
-});
+    // If there is no token return an error
+    } else {
+      return res.status(403).send({
+          success: false,
+          message: 'No token provided.'
+      });
+    }
+  });
+}
 
 // REGISTER OUR ROUTES -------------------------------
 
