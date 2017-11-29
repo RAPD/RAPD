@@ -38,65 +38,69 @@ router.route('/overwatches')
             console.log('Ignoring', ow_key)
             key_counter += 1;
           } else {
-            redis_client.hgetall(ow_key, function(err, ow_hash) {
-              key_counter += 1;
-              if (err) {
-                console.error(err);
-                res.status(500).json({
-                  success: false,
-                  message: err
-                });
-              } else {
-
-                // Manipulate dates
-                ow_hash.timestamp  = ow_hash.timestamp * 1000;
-                ow_hash.start_time = ow_hash.start_time * 1000;
-
-                // An overwatcher
-                if (ow_hash.ow_type === 'overwatcher') {
-                  console.log('New overwatcher', ow_hash.id);
-                  // Create a place to put children
-                  ow_hash.children = [];
-                  // Look for child processes`
-                  Object.entries(child_hash).forEach(([key, maybe_child]) => {
-                    if (ow_hash.id === maybe_child.ow_id) {
-                      console.log('  found child', maybe_child.id);
-                      ow_hash.children.push(maybe_child);
-                      delete return_hash[key];
-                    }
-                  });
-                  // Save the hash
-                  return_hash[ow_key] = ow_hash;
-
-                // A managed process
+            try {
+              redis_client.hgetall(ow_key, function(err, ow_hash) {
+                key_counter += 1;
+                if (err) {
+                  console.error(err);
+                  // res.status(500).json({
+                  //   success: false,
+                  //   message: err
+                  // });
                 } else {
-                  console.log('New child', ow_hash.id);
-                  let found = false;
-                  // Look for a parental process
-                  Object.entries(return_hash).forEach(([key, maybe_parent]) => {
-                    if (ow_hash.ow_id === maybe_parent.id) {
-                      console.log('  found parent', maybe_parent.id);
-                      found = true;
-                      maybe_parent.children.push(ow_hash);
+
+                  // Manipulate dates
+                  ow_hash.timestamp  = ow_hash.timestamp * 1000;
+                  ow_hash.start_time = ow_hash.start_time * 1000;
+
+                  // An overwatcher
+                  if (ow_hash.ow_type === 'overwatcher') {
+                    console.log('New overwatcher', ow_hash.id);
+                    // Create a place to put children
+                    ow_hash.children = [];
+                    // Look for child processes`
+                    Object.entries(child_hash).forEach(([key, maybe_child]) => {
+                      if (ow_hash.id === maybe_child.ow_id) {
+                        console.log('  found child', maybe_child.id);
+                        ow_hash.children.push(maybe_child);
+                        delete return_hash[key];
+                      }
+                    });
+                    // Save the hash
+                    return_hash[ow_key] = ow_hash;
+
+                  // A managed process
+                  } else {
+                    console.log('New child', ow_hash.id);
+                    let found = false;
+                    // Look for a parental process
+                    Object.entries(return_hash).forEach(([key, maybe_parent]) => {
+                      if (ow_hash.ow_id === maybe_parent.id) {
+                        console.log('  found parent', maybe_parent.id);
+                        found = true;
+                        maybe_parent.children.push(ow_hash);
+                      }
+                    });
+                    // No parent found yet
+                    if (! found) {
+                      console.log('  parent not found', ow_hash.id)
+                      child_hash[ow_key] = ow_hash;
                     }
-                  });
-                  // No parent found yet
-                  if (! found) {
-                    console.log('  parent not found', ow_hash.id)
-                    child_hash[ow_key] = ow_hash;
+                  }
+                  // If we are done, send back the data
+                  if (key_counter === num_keys) {
+                    // Return the components
+                    console.log('Returning found components', return_hash);
+                    res.status(200).json({
+                      success:true,
+                      overwatches:Object.values(return_hash)
+                    });
                   }
                 }
-                // If we are done, send back the data
-                if (key_counter === num_keys) {
-                  // Return the components
-                  console.log('Returning found components', return_hash);
-                  res.status(200).json({
-                    success:true,
-                    overwatches:Object.values(return_hash)
-                  });
-                }
-              }
-            }); // END redis_client.hgetall(ow_key, function(err, ow_hash) {
+              }); // END redis_client.hgetall(ow_key, function(err, ow_hash) {
+            } catch (e) {
+              console.error(e);
+            }
           }
         }); // END ow_keys.forEach(function(ow_key) {
       }

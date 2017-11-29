@@ -315,113 +315,9 @@ class Database(object):
         return_dict["_id"] = str(return_dict["_id"])
         return db.images.find_one({"_id":_image_id})
 
-    #
-    # Functions for processes                                                                      #
-    #
-    # def add_plugin_process(self,
-    #                        plugin_type=None,
-    #                        request_type=None,
-    #                        representation=None,
-    #                        status=0,
-    #                        display="show",
-    #                        session_id=None,
-    #                        data_root_dir=None):
-    #     """
-    #     Add an entry to the plugin_processes table - for keeping track of
-    #     launched processes and their state
-    #
-    #     Keyword arguments
-    #     plugin_type -- type of plugin
-    #     request_type -- request type, such as original
-    #     representation -- how the request is represented to users
-    #     status -- progress from 0 to 100 (default = 0) 1 = started,
-    #               100 = finished, -1 = error
-    #     display -- display state of this process (default = show)
-    #     session_id -- unique _id for session in sessions create_data_collections (default = None)
-    #     data_root_dir -- unique root of the data for data collected at a site (default = None)
-    #     """
-    #
-    #     self.logger.debug("%s %s %s %s %s %s %s",
-    #                       plugin_type,
-    #                       request_type,
-    #                       representation,
-    #                       status,
-    #                       display,
-    #                       session_id,
-    #                       data_root_dir)
-    #
-    #     # Connect to the database
-    #     db = self.get_db_connection()
-    #
-    #     # Insert into db
-    #     result = db.plugin_processes.insert_one({"plugin_type":plugin_type,
-    #                                              "display":display,
-    #                                              "status":status,
-    #                                              "representation":representation,
-    #                                              "request_type":request_type,
-    #                                              "session_id":get_object_id(session_id),
-    #                                              "data_root_dir":data_root_dir,
-    #                                              "timestamp":datetime.datetime.utcnow()})
-    #
-    #     return str(result.inserted_id)
-    #
-    # def update_plugin_process(self,
-    #                           process_id,
-    #                           status=False,
-    #                           display=False):
-    #     """
-    #     Add an entry to the plugin_processes table - for keeping track of
-    #     launched processes and their state
-    #
-    #     Keyword arguments
-    #     process_id -- unique identifier for process
-    #     status -- progress from 0 to 100 (default = 0) 1 = started,
-    #               100 = finished, -1 = error
-    #     display -- display state of this process (default = show)
-    #     """
-    #
-    #     self.logger.debug("update_plugin_process %s %s %s", process_id, status, display)
-    #
-    #     # Connect to the database
-    #     db = self.get_db_connection()
-    #
-    #     # Construct the values to be updated
-    #     set_dict = {"timestamp":datetime.datetime.utcnow()}
-    #     if status:
-    #         set_dict["status"] = status
-    #
-    #     if display:
-    #         set_dict["display"] = display
-    #
-    #     # Make sure we are using an ObjectId
-    #     _process_id = get_object_id(process_id)
-    #
-    #     db.plugin_processes.update({"_id":_process_id},
-    #                                {"$set":set_dict})
-    #
-    #     return True
-
-
     ############################################################################
     # Functions for results                                                    #
-    ##########################################################################$#
-    def parse_agent_type(self, agent_type):
-        """
-        Parse the agent_type string into something workable with the database
-
-
-        agent_type                  result
-        index+strategy:single       indexstrategy
-        index+strategy:pair         indexstrategy
-
-
-        Keyword argument
-        agent_type -- corresponds to an agent_type as entered in the agent_processes
-                      table, ex. index+strategy:single
-        """
-
-        return agent_type.split(":")[0].replace("+", "")
-
+    ############################################################################
     def save_plugin_result(self, plugin_result):
         """
         Add a result from a plugin
@@ -482,11 +378,14 @@ class Database(object):
             if plugin_result["results"].get(key, False):
                 for index in range(len(plugin_result["results"].get(key, []))):
                     data = plugin_result["results"].get(key, [])[index]
-                    grid_id = add_funcs[key](path=data["path"],
-                                             metadata={"hash":data["hash"],
-                                                       "result_id":_result_id,
-                                                       "type":key})
-                    plugin_result["results"][key][index]["_id"] = grid_id
+                    if os.path.exists(data["path"]):
+                        grid_id = add_funcs[key](path=data["path"],
+                                                 metadata={"hash":data["hash"],
+                                                           "result_id":_result_id,
+                                                           "type":key})
+                        plugin_result["results"][key][index]["_id"] = grid_id
+                    else:
+                        plugin_result["results"][key][index]["_id"] = None
 
         #
         # Add to plugin-specific results

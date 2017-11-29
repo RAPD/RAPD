@@ -47,7 +47,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
   incomingData$: ReplaySubject<string>;
 
-  full_result: any;
+  full_result: any = {process:{status:0}, results:{}};
 
   view_mode: string = 'summary';
 
@@ -101,12 +101,13 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
       },
       tooltips: {
         callbacks: {}
-      },
-    },
+      }
+    }
   };
 
   // @ViewChild(BaseChartDirective) private _chart;
   @ViewChild('analysistarget', { read: ViewContainerRef }) analysistarget;
+
   analysis_component: any;
 
   objectKeys = Object.keys;
@@ -123,7 +124,8 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
     this.incomingData$ = this.websocket_service.subscribeResultDetails(
       this.current_result.data_type,
       this.current_result.plugin_type,
-      this.current_result.result_id);
+      this.current_result.result_id,
+      this.current_result._id);
     this.incomingData$.subscribe(x => this.handleIncomingData(x));
   }
 
@@ -136,9 +138,13 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
     this.full_result = data;
 
     // Select the default plot to show
-    if ('Rmerge vs Frame' in data.results.plots) {
-      this.selected_plot = 'Rmerge vs Frame';
-      this.setPlot('Rmerge vs Frame');
+    if (data.results) {
+      if (data.results.plots) {
+        if ('Rmerge vs Frame' in data.results.plots) {
+          this.selected_plot = 'Rmerge vs Frame';
+          this.setPlot('Rmerge vs Frame');
+        }
+      }
     }
   }
 

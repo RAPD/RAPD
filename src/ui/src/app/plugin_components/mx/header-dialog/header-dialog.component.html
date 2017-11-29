@@ -28,7 +28,7 @@
         <td class="manual-table-rj">Transmission</td><td>{{image_data.transmission.toFixed(2)}}%</td>
       </tr>
       <tr *ngIf="image_data.wavelength">
-        <td class="manual-table-rj">Wavelength</td><td>{{image_data.wavelength}} &Aring;</td>
+        <td class="manual-table-rj">Wavelength</td><td>{{image_data.wavelength | number:'1.1-5'}} &Aring;</td>
       </tr>
       <tr *ngIf="image_data.distance">
         <td class="manual-table-rj">Distance</td><td>{{image_data.distance}} mm</td>
