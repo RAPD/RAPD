@@ -63,12 +63,6 @@ var conn = mongoose.connect(config.database, {
 }, function(error) {
   console.error(error);
 });
-// var gridfs;
-// conn.once('open', function () {
-//   gridfs = Grid(conn.db);
-//   // app.set('gridfs', gridfs);
-//   // all set!
-// });
 
 // LDAP
 if (config.authenticate_mode === 'ldap') {
