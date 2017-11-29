@@ -354,7 +354,7 @@ export class RestService {
                           if (res.status === 200) {
                             // console.log('length', res._body.length);
                             // convert base64 string to byte array
-                            var byteCharacters = atob(res._body);
+                            var byteCharacters = atob((<any>res)._body);
                             var byteNumbers = new Array(byteCharacters.length);
                             for (var i = 0; i < byteCharacters.length; i++){
                                 byteNumbers[i] = byteCharacters.charCodeAt(i);
