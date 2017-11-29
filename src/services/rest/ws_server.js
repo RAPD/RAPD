@@ -414,66 +414,68 @@ function Wss (opt, callback) {
                   // No error
                   } else {
                     console.log(detailed_result);
-                    console.log(Object.keys(detailed_result));
-                    console.log(detailed_result._doc);
-                    console.log(detailed_result._doc.process);
+                    if (detailed_result) {
+                      console.log(Object.keys(detailed_result));
+                      console.log(detailed_result._doc);
+                      console.log(detailed_result._doc.process);
 
-                      // Make sure there is a process
-                      if ('process' in detailed_result._doc) {
-                        // If there is an image1_id
-                        if ('image1_id' in detailed_result._doc.process) {
+                        // Make sure there is a process
+                        if ('process' in detailed_result._doc) {
+                          // If there is an image1_id
+                          if ('image1_id' in detailed_result._doc.process) {
 
-                          // Manually populate
-                          Image.
-                            findOne({_id:detailed_result._doc.process.image1_id}).
-                            exec(function(err, image1) {
-                              if (err) {
-                                console.error(err);
-                                return false;
-                              } else {
-                                detailed_result._doc.image1 = image1;
-                                console.log('POPULATED image1');
-                                // console.log(detailed_result);
-                                // Now look for image2
-                                if ('image2_id' in detailed_result._doc.process) {
-
-                                  // Manually populate
-                                  Image.
-                                    findOne({_id:detailed_result._doc.process.image1_id}).
-                                    exec(function(err, image2) {
-                                      if (err) {
-                                        console.error(err);
-                                        return false;
-                                      } else {
-                                        detailed_result._doc.image1 = image2;
-                                        console.log('POPULATED image2');
-                                        console.log(detailed_result);
-                                        // Send back over the websocket
-                                        ws.send(JSON.stringify({msg_type:'result_details',
-                                                                success:true,
-                                                                results:detailed_result}));
-                                      }
-                                    });
+                            // Manually populate
+                            Image.
+                              findOne({_id:detailed_result._doc.process.image1_id}).
+                              exec(function(err, image1) {
+                                if (err) {
+                                  console.error(err);
+                                  return false;
                                 } else {
-                                  // Send back over the websocket
-                                  ws.send(JSON.stringify({msg_type:'result_details',
-                                                          success:true,
-                                                          results:detailed_result}));
+                                  detailed_result._doc.image1 = image1;
+                                  console.log('POPULATED image1');
+                                  // console.log(detailed_result);
+                                  // Now look for image2
+                                  if ('image2_id' in detailed_result._doc.process) {
+
+                                    // Manually populate
+                                    Image.
+                                      findOne({_id:detailed_result._doc.process.image1_id}).
+                                      exec(function(err, image2) {
+                                        if (err) {
+                                          console.error(err);
+                                          return false;
+                                        } else {
+                                          detailed_result._doc.image1 = image2;
+                                          console.log('POPULATED image2');
+                                          console.log(detailed_result);
+                                          // Send back over the websocket
+                                          ws.send(JSON.stringify({msg_type:'result_details',
+                                                                  success:true,
+                                                                  results:detailed_result}));
+                                        }
+                                      });
+                                  } else {
+                                    // Send back over the websocket
+                                    ws.send(JSON.stringify({msg_type:'result_details',
+                                                            success:true,
+                                                            results:detailed_result}));
+                                  }
                                 }
-                              }
-                            });
+                              });
+                          } else {
+                            // Send back over the websocket
+                            ws.send(JSON.stringify({msg_type:'result_details',
+                                                    success:true,
+                                                    results:detailed_result}));
+                          }
                         } else {
                           // Send back over the websocket
                           ws.send(JSON.stringify({msg_type:'result_details',
                                                   success:true,
                                                   results:detailed_result}));
                         }
-                      } else {
-                        // Send back over the websocket
-                        ws.send(JSON.stringify({msg_type:'result_details',
-                                                success:true,
-                                                results:detailed_result}));
-                      }
+                    }
 
                     // Register activity
                     let new_activity = new Activity({
