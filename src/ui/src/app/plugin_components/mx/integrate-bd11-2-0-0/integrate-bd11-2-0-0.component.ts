@@ -47,7 +47,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
 
   incomingData$: ReplaySubject<string>;
 
-  full_result: any;
+  full_result: any = {process:{status:0}, results:{}};
 
   view_mode: string = 'summary';
 
