@@ -20,10 +20,6 @@ router.route('/runs/:run_id')
             message: err
           });
         } else {
-          // Do not return the password
-          for (let user of users) {
-            user.password = undefined;
-          }
           console.log('Returning run', run);
           res.status(200).json({
             success: true,
