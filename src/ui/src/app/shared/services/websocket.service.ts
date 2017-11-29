@@ -230,9 +230,10 @@ export class WebsocketService {
   // Get details for a result
   subscribeResultDetails(data_type: string,
                          plugin_type: string,
-                         result_id: string): ReplaySubject<string> {
+                         result_id: string,
+                         _id: string): ReplaySubject<string> {
 
-    console.log('subscribeResultDetails  data_type =', data_type, 'plugin_type = ', plugin_type, 'result_id =', result_id);
+    console.log('subscribeResultDetails  data_type =', data_type, 'plugin_type = ', plugin_type, 'result_id =', result_id, '_id =', _id);
 
     let self = this;
 
@@ -245,7 +246,8 @@ export class WebsocketService {
       result_type:data_type+':'+plugin_type,
       data_type:data_type,
       plugin_type:plugin_type,
-      result_id:result_id
+      result_id:result_id,
+      _id:_id
     });
 
     // Ask for result details, but protected for connection
@@ -256,7 +258,8 @@ export class WebsocketService {
         result_type: data_type+':'+plugin_type,
         data_type:data_type,
         plugin_type:plugin_type,
-        result_id: result_id
+        result_id: result_id,
+        _id:_id
       }));
     });
 

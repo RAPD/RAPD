@@ -124,7 +124,8 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
     this.incomingData$ = this.websocket_service.subscribeResultDetails(
       this.current_result.data_type,
       this.current_result.plugin_type,
-      this.current_result.result_id);
+      this.current_result.result_id,
+      this.current_result._id);
     this.incomingData$.subscribe(x => this.handleIncomingData(x));
   }
 
