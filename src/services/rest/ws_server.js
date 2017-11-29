@@ -413,10 +413,10 @@ function Wss (opt, callback) {
                     return false;
                   // No error
                   } else {
-                    // console.log(detailed_result);
-                    // console.log(Object.keys(detailed_result));
-                    // console.log(detailed_result._doc);
-                    // console.log(detailed_result._doc.process);
+                    console.log(detailed_result);
+                    console.log(Object.keys(detailed_result));
+                    console.log(detailed_result._doc);
+                    console.log(detailed_result._doc.process);
 
                       // Make sure there is a process
                       if ('process' in detailed_result._doc) {
