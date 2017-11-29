@@ -266,8 +266,13 @@ router.route('/dashboard/logins')
 
         // Put the results into the staging object
         results.forEach(function(result) {
-          // console.log('result', result);
-          staging_obj[result._id.source][`${result._id.month}-${result._id.day}`] = result.count;
+          console.log('result', result);
+          try {
+            staging_obj[result._id.source][`${result._id.month}-${result._id.day}`] = result.count;
+          } catch (e) {
+            console.error(e);
+          }
+
         });
 
         // Now put it all together

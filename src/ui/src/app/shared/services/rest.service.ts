@@ -343,6 +343,48 @@ export class RestService {
                         .catch(error => this.handleError(error));
   }
 
+  // Request a download
+  public getDownloadById(id): Observable<any> {
+
+    console.log('getDownload', id)
+
+    return this.authHttp.get(this.globals_service.site.restApiUrl + 'download_by_id/' + id)
+                        .map(res => {
+                          // console.log(res);
+                          if (res.status === 200) {
+                            // console.log('length', res._body.length);
+                            // convert base64 string to byte array
+                            var byteCharacters = atob(res._body);
+                            var byteNumbers = new Array(byteCharacters.length);
+                            for (var i = 0; i < byteCharacters.length; i++){
+                                byteNumbers[i] = byteCharacters.charCodeAt(i);
+                            }
+                            var byteArray = new Uint8Array(byteNumbers);
+                            // console.log(byteArray);
+                            var blob = new Blob([byteArray], {type:'application/octet-stream'});
+                            // console.log(blob);
+                            var url= window.URL.createObjectURL(blob);
+                            // console.log(url);
+                            // window.open(url);
+                            // window.open("data:text/plain;charset=ISO-8859-1;"+res._body,);
+                            var pom = document.createElement('a');
+                            pom.setAttribute('href', url);
+                            pom.setAttribute('download', "foobar.tar.bz2");
+
+                            if (document.createEvent) {
+                                var event = document.createEvent('MouseEvents');
+                                event.initEvent('click', true, true);
+                                pom.dispatchEvent(event);
+                            }
+                            else {
+                                pom.click();
+                            }
+                          }
+                          return res.json();
+                        })
+                        .catch(error => this.handleError(error));
+  }
+
 
   // Generic error handler for connection problems
   private handleError(error) {

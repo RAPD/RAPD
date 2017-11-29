@@ -20,8 +20,13 @@ const Wss =           require('./ws_server');
 // Configuration
 const config = require('./config'); // get our config file
 
+// Create the express app instance
+let app = express();
+let server = http.createServer(app);
+
 // Routing
 const dashboard_routes = require('./routes/dashboard');
+const downloads_routes = require('./routes/downloads');
 const groups_routes =    require('./routes/groups');
 const images_routes =    require('./routes/images');
 const jobs_routes =      require('./routes/jobs');
@@ -49,16 +54,25 @@ const Session =  require('./models/session');
 var mongoose = require('mongoose');
 // Fix the promise issue in Mongoose
 mongoose.Promise = require('q').Promise;
+// GridFS
+// var Grid = require('gridfs-stream');
+// Grid.mongo = mongoose.mongo;
 // Connect to MongoDB
-mongoose.connect(config.database, {
+var conn = mongoose.connect(config.database, {
   useMongoClient: true,
 }, function(error) {
   console.error(error);
 });
+// var gridfs;
+// conn.once('open', function () {
+//   gridfs = Grid(conn.db);
+//   // app.set('gridfs', gridfs);
+//   // all set!
+// });
 
 // LDAP
 if (config.authenticate_mode === 'ldap') {
-  const ldap =          require('ldapjs');
+  const ldap = require('ldapjs');
   var ldap_client = ldap.createClient({
     url: 'ldap://'+config.ldap_server
   });
@@ -68,10 +82,6 @@ if (config.authenticate_mode === 'ldap') {
 var smtp_transport = nodemailer.createTransport(smtpTransport({
   host: config.mailhost
 }));
-
-// Create the express app instance
-let app = express();
-let server = http.createServer(app);
 
 // Add session handling
 let app_session = session({
@@ -578,6 +588,7 @@ app.use('/api', apiRoutes);
 
 // Imported routes
 app.use('/api', dashboard_routes);
+app.use('/api', downloads_routes);
 app.use('/api', groups_routes);
 app.use('/api', images_routes);
 app.use('/api', jobs_routes);
