@@ -43,10 +43,10 @@ router.route('/overwatches')
                 key_counter += 1;
                 if (err) {
                   console.error(err);
-                  res.status(500).json({
-                    success: false,
-                    message: err
-                  });
+                  // res.status(500).json({
+                  //   success: false,
+                  //   message: err
+                  // });
                 } else {
 
                   // Manipulate dates
