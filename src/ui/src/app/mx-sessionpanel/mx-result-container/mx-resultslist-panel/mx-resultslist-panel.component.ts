@@ -103,22 +103,24 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
           if (parent_result) {
             console.log('parent_result:', parent_result);
             // Look for index of result
-            var my_index = parent_result.children.findIndex(function(elem) {
-              if (elem._id === result._id) {
-                return true;
+            if (parent_result.children) {
+              var my_index = parent_result.children.findIndex(function(elem) {
+                if (elem._id === result._id) {
+                  return true;
+                } else {
+                  return false;
+                }
+              });
+              // Update
+              console.log('  my_index:', my_index);
+              if (my_index !== -1) {
+                console.log('  Updated data');
+                parent_result.children[my_index] = result;
+              // Insert
               } else {
-                return false;
+                console.log('  New data');
+                parent_result.children.unshift(result);
               }
-            });
-            // Update
-            console.log('  my_index:', my_index);
-            if (my_index !== -1) {
-              console.log('  Updated data');
-              parent_result.children[my_index] = result;
-            // Insert
-            } else {
-              console.log('  New data');
-              parent_result.children.unshift(result);
             }
           }
         }
