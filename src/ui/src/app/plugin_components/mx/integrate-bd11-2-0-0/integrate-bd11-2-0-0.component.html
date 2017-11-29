@@ -311,10 +311,10 @@
         </div>
       </div>
     </mat-card-content>
-    <mat-card-content *ngIf="view_mode === 'analysis'" class="rapd-result">
+    <!-- <mat-card-content *ngIf="view_mode === 'analysis'" class="rapd-result">
       <div #analysistarget></div>
-    </mat-card-content>
-    <mat-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
+    </mat-card-content> -->
+    <!-- <mat-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
       <app-log-card
         *ngIf="(full_result.results)?.logs.xds_idxref"
         [log]="full_result.results.logs.xds_idxref"
@@ -340,7 +340,7 @@
         [log]="full_result.results.logs.pointless"
         header="Pointless">
       </app-log-card>
-    </mat-card-content>
+    </mat-card-content> -->
     <mat-toolbar *ngIf="full_result" class="result-panel-action-bar">
       <button
         *ngIf="(full_result.results.archive_files)?.length > 0"
