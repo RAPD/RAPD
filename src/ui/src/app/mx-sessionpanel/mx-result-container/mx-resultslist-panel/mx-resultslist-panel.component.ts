@@ -127,7 +127,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
 
         // Update children
         console.log('result.children');
-        if (result.children != false) {
+        if (result.children) {
           console.log('Have children', result.children);
           result.children.forEach(function(elem, index) {
             console.log('  child:', elem);
