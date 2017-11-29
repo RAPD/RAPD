@@ -215,6 +215,7 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
         "clean_up": commandline_args.clean_up,
         "cluster_use": commandline_args.cluster_use,
         "dir_up": commandline_args.dir_up,
+        "exchange_dir": commandline_args.exchange_dir,
         "start_frame": commandline_args.start_image,
         "end_frame": commandline_args.end_image,
         "flip_beam": detector_module.XDS_FLIP_BEAM,

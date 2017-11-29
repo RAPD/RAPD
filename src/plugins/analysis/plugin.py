@@ -140,7 +140,7 @@ class RapdPlugin(Process):
 
         # Some logging
         self.logger.info(command)
-        # pprint(command)
+        pprint(command)
 
         # Store passed-in variables
         self.command = command
@@ -383,7 +383,7 @@ self.command["input_data"]["datafile"]
 
             convert_executables = ("convert", "/usr/local/bin/convert")
             for convert_executable in convert_executables:
-                # print "Trying %s" % convert_executable
+                print "Trying %s" % convert_executable
                 if find_executable(convert_executable):
                     for label, size in crop_sizes.iteritems():
                         convert_proc = subprocess.Popen([convert_executable,
@@ -397,8 +397,8 @@ self.command["input_data"]["datafile"]
                                                         stderr=subprocess.PIPE,
                                                         shell=False)
                         _, stderr = convert_proc.communicate()
-                        # print _
-                        # print stderr
+                        print _
+                        print stderr
                         if stderr:
                             self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be installed",
                                         level=30,

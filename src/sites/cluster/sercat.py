@@ -68,7 +68,7 @@ def check_queue(inp):
   
 def get_nproc_njobs():
     """Return the nproc and njobs for an XDS integrate job"""
-    return (2, 5)
+    return (5, 2)
   
 def determine_nproc(command):
     """Determine how many processors to reserve on the cluster for a specific job type."""
@@ -321,11 +321,13 @@ def process_cluster(command,
 
     os.chmod(fname, stat.S_IRWXU)
     qs = ['qsub', fname]
+    #qs = 'qsub %s'%fname
     #Launch the job on the cluster
     path = os.environ.copy()
     proc = subprocess.Popen(qs, env=path,
                            stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE)
+			   
 
     stdout, stderr = proc.communicate()
 

@@ -145,10 +145,7 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
   // Display the header information
   displayRunInfo() {
 
-    // this.rest_service.getImageData(this.full_result.process.image_id)
-    //                  .subscribe(
-    //                    image_data => console.log(image_data),
-    //                    error => console.error(error));
+
 
     let config = {
       data: {
@@ -339,9 +336,22 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
   }
 
   // Start the download of data
-  initDownload() {
+  initDownload(id) {
+
+    // Signal that the request has been made
     let snackBarRef = this.snackBar.open('Download request submitted', 'Ok', {
       duration: 2000,
     });
+
+    this.rest_service.getDownloadById(id)
+                     .subscribe(
+                       result => {},
+                       error => {}
+                     );
   }
 }
+
+// this.rest_service.getImageData(this.full_result.process.image_id)
+//                  .subscribe(
+//                    image_data => console.log(image_data),
+//                    error => console.error(error));

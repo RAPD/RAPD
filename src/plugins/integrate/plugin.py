@@ -175,7 +175,7 @@ class RapdPlugin(Process):
         # Some logging
         self.logger.info(site)
         self.logger.info(command)
-        pprint(command)
+        # pprint(command)
 
         # Store passed-in variables
         self.site = site
@@ -358,20 +358,6 @@ class RapdPlugin(Process):
         self.process()
         self.postprocess()
 
-    def connect_to_redis(self):
-        """Connect to the redis instance"""
-        # Create a pool connection
-        redis_database = importlib.import_module('database.redis_adapter')
-        redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-        self.redis = redis_database.connect_to_redis()
-
-    def send_results(self):
-        """Let everyone know we are working on this"""
-        self.logger.debug("Sending back on redis")
-        json_results = json.dumps(self.results)
-        self.redis.lpush("RAPD_RESULTS", json_results)
-        self.redis.publish("RAPD_RESULTS", json_results)
-
     def preprocess(self):
         """
         Things to do before main proces runs.
@@ -387,13 +373,7 @@ class RapdPlugin(Process):
         self.construct_results()
 
         # Let everyone know we are working on this
-        if self.preferences.get("run_mode") == "server":
-            if not self.redis:
-                self.connect_to_redis()
-            self.logger.debug("Sending back on redis")
-            json_results = json.dumps(self.results)
-            self.redis.lpush("RAPD_RESULTS", json_results)
-            self.redis.publish("RAPD_RESULTS", json_results)
+        self.send_results(self.results)
 
         # Create directories
         if os.path.isdir(self.dirs['work']) == False:
@@ -469,7 +449,6 @@ class RapdPlugin(Process):
         Things to do in main process:
         1. Run integration and scaling.
         2. Report integration results.
-        3. Run analysis of data set.
         """
         self.logger.debug('FastIntegration::process')
 
@@ -507,7 +486,32 @@ class RapdPlugin(Process):
         self.results["process"]["status"] = 100
         self.results["results"].update(final_results)
 
-        self.write_json(self.results)
+        self.send_results(self.results)
+
+    def connect_to_redis(self):
+        """Connect to the redis instance"""
+        # Create a pool connection
+        redis_database = importlib.import_module('database.redis_adapter')
+        redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        self.redis = redis_database.connect_to_redis()
+
+    def send_results(self, results):
+        """Let everyone know we are working on this"""
+        # print "!! send_results !!"
+        if self.preferences.get("run_mode") == "server":
+
+            self.logger.debug("Sending back on redis")
+
+            # Transcribe results
+            json_results = json.dumps(results)
+
+            # Get redis instance
+            if not self.redis:
+                self.connect_to_redis()
+
+            # Send results back
+            self.redis.lpush("RAPD_RESULTS", json_results)
+            self.redis.publish("RAPD_RESULTS", json_results)
 
     def postprocess(self):
         """After it's all done"""
@@ -526,6 +530,12 @@ class RapdPlugin(Process):
 
         # Run analysis
         self.run_analysis_plugin()
+
+        # Send back results - the final time
+        self.send_results(self.results)
+
+        # Save output
+        self.write_json(self.results)
 
         # Housekeeping
         self.clean_up()
@@ -553,14 +563,25 @@ class RapdPlugin(Process):
             self.logger.debug("Setting up analysis plugin")
             self.tprint("\nLaunching ANALYSIS plugin", level=30, color="blue")
 
+            # Make sure we are in the work directory
+            start_dir = os.getcwd()
+            os.chdir(self.dirs["work"])
+
             # Queue to exchange information
             plugin_queue = Queue()
+
+            # Get the data file
+            # file_to_analyze = None
+            # for info in self.results["results"]["data_produced"]:
+            #     if info["description"] == "unmerged":
+            #         file_to_analyze = info["path"]
+            #         break
 
             # Construct the pdbquery plugin command
             # pprint(self.results["results"].keys())
             class AnalysisArgs(object):
                 """Object containing settings for plugin command construction"""
-                clean = True
+                clean = self.preferences.get("clean_up", False)
                 datafile = self.results["results"]["mtzfile"]
                 dir_up = self.preferences["dir_up"]
                 json = self.preferences["json"]
@@ -597,6 +618,9 @@ class RapdPlugin(Process):
             # pprint(analysis_result);
 
             self.results["results"]["analysis"] = analysis_result
+
+            # Back to where we were, in case it matters
+            os.chdir(start_dir)
 
         # Do not run analysis
         else:
@@ -792,6 +816,11 @@ class RapdPlugin(Process):
 
         # Prepare the display of results.
         prelim_results = self.run_results(xdsdir)
+
+        # Send back results
+        self.results["results"].update(prelim_results)
+        self.send_results(self.results)
+
         self.tprint("\nPreliminary results summary", 99, "blue")
         self.print_results(prelim_results)
         self.tprint(33, "progress")
@@ -803,7 +832,6 @@ class RapdPlugin(Process):
         # XDS-determined spacegroup
         sg_num_xds = prelim_results["xparm"]["sg_num"]
         sg_let_xds = spacegroup.number_to_ccp4[sg_num_xds]
-
 
         # Do Pointless and XDS agree on spacegroup?
         spacegoup_agree = True
@@ -1942,15 +1970,18 @@ class RapdPlugin(Process):
         tgt_file = "%s_free.mtz" % archive_files_prefix
         # print "Copy %s to %s" % (src_file, tgt_file)
         shutil.copyfile(src_file, tgt_file)
+        results["mtzfile"] = tgt_file
         # Include in produced_data
         prod_file = os.path.join(self.dirs["work"], os.path.basename(tgt_file))
+        # print "Copy %s to %s" % (src_file, prod_file)
         shutil.copyfile(src_file, prod_file)
+        arch_prod_file, arch_prod_hash = archive.compress_file(prod_file)
         self.results["results"]["data_produced"].append({
-            "filepath":prod_file,
-            "hash":archive.get_hash(prod_file),
+            "path":arch_prod_file,
+            "hash":arch_prod_hash,
             "description":"rfree"
         })
-        pprint(self.results["results"]["data_produced"])
+        # pprint(self.results["results"]["data_produced"])
 
         # Rename the so-called unmerged file
         src_file = os.path.abspath(results["mtzfile"].replace("_aimless", "_pointless"))
@@ -1960,12 +1991,13 @@ class RapdPlugin(Process):
         # Include in produced_data
         prod_file = os.path.join(self.dirs["work"], os.path.basename(tgt_file))
         shutil.copyfile(src_file, prod_file)
+        arch_prod_file, arch_prod_hash = archive.compress_file(prod_file)
         self.results["results"]["data_produced"].append({
-            "filepath":prod_file,
-            "hash":archive.get_hash(prod_file),
+            "path":arch_prod_file,
+            "hash":arch_prod_hash,
             "description":"unmerged"
         })
-        pprint(self.results["results"]["data_produced"])
+        # pprint(self.results["results"]["data_produced"])
 
         if scalepack:
             # Create the merged scalepack format file.
@@ -2312,7 +2344,38 @@ class RapdPlugin(Process):
         Transfer files to a directory that the control can access
         """
 
-        pass
+        if self.preferences.get("exchange_dir", False):
+            print "transfer_files", self.preferences["exchange_dir"]
+
+            # Determine and validate the place to put the data
+            target_dir = os.path.join(self.preferences["exchange_dir"], os.path.split(self.dirs["work"])[1])
+            if not os.path.exists(target_dir):
+                os.makedirs(target_dir)
+
+            new_data_produced = []
+            for file_to_move in self.results["results"]["data_produced"]:
+                # Move data
+                target = os.path.join(target_dir, os.path.basename(file_to_move["path"]))
+                # print "Moving %s to %s" % (file_to_move["path"], target)
+                os.rename(file_to_move["path"], target)
+                # Change entry
+                file_to_move["path"] = target
+                new_data_produced.append(file_to_move)
+            # Replace the original with new results location
+            self.results["results"]["data_produced"] = new_data_produced
+
+            new_archive_files = []
+            for file_to_move in self.results["results"]["archive_files"]:
+                # Move data
+                target = os.path.join(target_dir, os.path.basename(file_to_move["path"]))
+                # print "Moving %s to %s" % (file_to_move["path"], target)
+                os.rename(file_to_move["path"], target)
+                # Change entry
+                file_to_move["path"] = target
+                new_archive_files.append(file_to_move)
+            # Replace the original with new results location
+            self.results["results"]["archive_files"] = new_archive_files
+
 
     def clean_up(self):
         """Clean up after self"""
@@ -2331,11 +2394,14 @@ class RapdPlugin(Process):
             for wedge_dir in glob.glob("wedge_*"):
                 shutil.rmtree(wedge_dir)
 
-            # Remove extra files in working directory.
-            # os.system('rm -f *.mtz *.sca *.sh *.log junk_*')
+            # Erase .mtz files
+            for mtz_file in glob.glob("*.mtz"):
+                os.remove(mtz_file)
 
     def write_json(self, results):
         """Write a file with the JSON version of the results"""
+
+        print "write_json"
 
         # pprint(results);
 
@@ -2346,7 +2412,7 @@ class RapdPlugin(Process):
             print json_string
 
         # Write a file
-        with open("result.json", "w") as outfile:
+        with open(os.path.join(self.dirs["work"],"result.json"), "w") as outfile:
             outfile.writelines(json_string)
 
 

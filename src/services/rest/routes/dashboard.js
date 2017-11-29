@@ -100,7 +100,11 @@ router.route('/dashboard/results')
         // Put the results into an object
         results.forEach(function(result) {
           // console.log('>>>', result);
-          staging_obj[result._id.plugin_type][`${result._id.month}-${result._id.day}`] = result.count;
+          try {
+            staging_obj[result._id.plugin_type][`${result._id.month}-${result._id.day}`] = result.count;
+          } catch (e) {
+            console.error(e);
+          }
         });
 
         // Now put it all together
@@ -267,7 +271,12 @@ router.route('/dashboard/logins')
         // Put the results into the staging object
         results.forEach(function(result) {
           // console.log('result', result);
-          staging_obj[result._id.source][`${result._id.month}-${result._id.day}`] = result.count;
+          try {
+            staging_obj[result._id.source][`${result._id.month}-${result._id.day}`] = result.count;
+          } catch (e) {
+            console.error(e);
+          }
+
         });
 
         // Now put it all together
