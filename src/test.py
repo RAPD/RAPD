@@ -260,9 +260,9 @@ while True:
     time.sleep(0.2)
     timer += 0.2
 """
-d = {'fullname': '/gpfs1/users/duke/pei_C_3263/images/pei/runs/A6/0_0/A6_1_0001.cbf !Change to accurate path to data frames'}
+#d = {'fullname': '/gpfs1/users/duke/pei_C_3263/images/pei/runs/A6/0_0/A6_1_0001.cbf !Change to accurate path to data frames'}
 #d = {'fullname': '/gpfs1/users/duke/pei_C_3263/images/pei/runs/A6/0_0/A6_1_0001.cbf'}
-print d['fullname'].replace(' !Change to accurate path to data frames', '')
+#print d['fullname'].replace(' !Change to accurate path to data frames', '')
 
 red = connect_redis_manager_HA()
 #red = connect_redis()
@@ -273,7 +273,7 @@ red = connect_redis_manager_HA()
 #red.lpush('images_collected:NECAT_T', '/gpfs2/users/columbia/hendrickson_E_3093/images/wwang/runs/Hend03_04/Hend03_04_1_001075.cbf')
 #red.lpush('images_collected:NECAT_T', '/gpfs2/users/columbia/hendrickson_E_3093/images/wwang/runs/CPS3509_03/CPS3509_03_1_000001.cbf')
 #red.lpush('images_collected:NECAT_T', '/gpfs2/users/mskcc/patel_E_3080/images/hui/runs/hy_640_9/hy_640_9_1_000002.cbf')
-#red.lpush('images_collected:NECAT_T', '/gpfs2/users/mskcc/patel_E_2891/images/juncheng/snaps/chengwI5_PAIR_0_000005.cbf'),
+red.lpush('images_collected:NECAT_T', '/gpfs2/users/mskcc/patel_E_2891/images/juncheng/snaps/chengwI5_PAIR_0_000005.cbf'),
 #red.lpush('images_collected:NECAT_T', '/gpfs2/users/mskcc/patel_E_2891/images/juncheng/snaps/chengwI5_PAIR_0_000006.cbf'),
 #red.lpush('images_collected:NECAT_T', '/gpfs2/users/columbia/Mancia_E_3109/images/meagan/snaps/man2_3_0_000001.cbf'), # no index
 #red.lpush('images_collected:NECAT_T', '/epu2/rdma/gpfs2/users/slri/sicheri_E_3136/images/Igor/runs/VP03_MKTYc/VP03_MKTYc_1_000001/VP03_MKTYc_1_000001.cbf'),

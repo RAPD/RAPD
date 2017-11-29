@@ -135,7 +135,7 @@ class RapdPlugin(Process):
 
     # Removes junk files and directories at end. (Will still clean on cluster!! Can be set at end of
     #  __init__.)
-    clean = False
+    clean = True
 
     # Runs in RAM (slightly faster), but difficult to debug.
     ram = False
@@ -269,7 +269,7 @@ class RapdPlugin(Process):
         if self.site_parameters != False:
             self.gui = True
             self.test = False
-            self.clean = False
+            #self.clean = False
         else:
             # If running from command line, site_parameters is not in there. Needed for BEST.
             if self.site:
@@ -2027,8 +2027,8 @@ Distance | % Transmission", level=98, color="white")
                 if self.test == False:
                     if self.verbose and self.logger:
                         self.logger.debug("Cleaning up files and folders")
-                    os.system("rm -rf labelit_iteration* dataset_preferences.py")
-                    for i in range(0, self.nrun):
+                    os.system("rm -rf labelit_iteration* dataset_preferences.py distl*.log")
+                    for i in range(self.iterations):
                         os.system("rm -rf %s" % i)
         except:
             self.logger.exception("**Could not cleanup**")
@@ -2399,7 +2399,7 @@ rerunning.\n" % spot_count)
 
         self.logger.debug('Utilities::errorLabelit')
 
-        # If iteration is string, return the total number of iterations in the funnction.
+        # If iteration is string, return the total number of iterations in the function.
         if isinstance(iteration, str):
             return 6
 
@@ -2407,7 +2407,6 @@ rerunning.\n" % spot_count)
         if self.multiproc == False:
             iteration += 1
         # Change to the correct folder (create it if necessary).
-        #foldersLabelit(self, iteration)
         xutils.create_folders_labelit(self.working_dir, iteration)
 
         with open('dataset_preferences.py','a') as preferences:
