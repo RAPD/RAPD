@@ -118,7 +118,7 @@ export class WebsocketService {
         console.log(data.results);
         if (data.results) {
           self.details_subscribers.forEach(function(subscriber) {
-            if (subscriber.result_id == data.results._id) {
+            if (subscriber._id == data.results.process.result_id) {
               subscriber.subject.next(data.results);
             }
           });
