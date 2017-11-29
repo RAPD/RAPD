@@ -315,7 +315,7 @@ def process_cluster(command,
               else:
                   print >>f, '#PBS -o %s'%os.path.join(work_dir,logfile)
           print >>f, '#PBS -l nodes=1:ppn=%s'%nproc
-          print >>f, 'env\n'
+          print >>f, '/bin/bash\n'
           print >>f, command+'\n\n'
           f.close()
 
