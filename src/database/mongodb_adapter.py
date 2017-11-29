@@ -32,6 +32,7 @@ sudo docker run --name mongodb -p 27017:27017 -d mongo:3.4
 """
 
 # Standard imports
+import base64
 import bson.errors
 from bson.objectid import ObjectId
 import copy
@@ -453,22 +454,39 @@ class Database(object):
         #
         # Handle any file storage
         #
-        def add_file_to_db(path, metadata=None):
+        def add_raw_file_to_db(path, metadata=None):
             """Add files to MongoDB"""
             # Open the path
             with open(path, "r") as input_object:
-                file_id = fs.upload_from_stream(path, input_object, metadata)
+                file_id = fs.upload_from_stream(filename=os.path.basename(path),
+                                                source=input_object,
+                                                metadata=metadata)
             return file_id
+
+        def add_archive_file_to_db(path, metadata=None):
+            """Add archive files to MongoDB - for use with client download"""
+            # Encode file in base64
+            b64_encoded = base64.b64encode(open(path, "r").read())
+            # Save to MongoDB
+            file_id = fs.upload_from_stream(filename=os.path.basename(path),
+                                            source=b64_encoded,
+                                            metadata=metadata)
+            return file_id
+
+        add_funcs = {
+            "archive_files":add_archive_file_to_db,
+            "data_produced":add_raw_file_to_db
+        }
 
         for key in ("archive_files", "data_produced"):
             if plugin_result["results"].get(key, False):
                 for index in range(len(plugin_result["results"].get(key, []))):
                     data = plugin_result["results"].get(key, [])[index]
-                    grid_id = add_file_to_db(path=data["path"],
+                    grid_id = add_funcs[key](path=data["path"],
                                              metadata={"hash":data["hash"],
                                                        "result_id":_result_id,
                                                        "type":key})
-                    plugin_result["results"].get(key, [])[index]["_id"] = grid_id
+                    plugin_result["results"][key][index]["_id"] = grid_id
 
         #
         # Add to plugin-specific results
