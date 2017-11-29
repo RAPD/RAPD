@@ -101,12 +101,13 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
       },
       tooltips: {
         callbacks: {}
-      },
-    },
+      }
+    }
   };
 
   // @ViewChild(BaseChartDirective) private _chart;
   @ViewChild('analysistarget', { read: ViewContainerRef }) analysistarget;
+
   analysis_component: any;
 
   objectKeys = Object.keys;
@@ -136,9 +137,13 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
     this.full_result = data;
 
     // Select the default plot to show
-    if ('Rmerge vs Frame' in data.results.plots) {
-      this.selected_plot = 'Rmerge vs Frame';
-      this.setPlot('Rmerge vs Frame');
+    if (data.results) {
+      if (data.results.plots) {
+        if ('Rmerge vs Frame' in data.results.plots) {
+          this.selected_plot = 'Rmerge vs Frame';
+          this.setPlot('Rmerge vs Frame');
+        }
+      }
     }
   }
 
