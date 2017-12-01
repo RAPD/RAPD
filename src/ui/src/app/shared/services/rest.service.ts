@@ -172,7 +172,7 @@ export class RestService {
 
     console.log('getImageJpeg', request);
 
-    const req = JSON.stringify({_id:request._id});
+    const req = JSON.stringify(request);
     // console.log(req);
 
     return this.authHttp.get(this.globals_service.site.restApiUrl + 'image_jpeg/' + req)

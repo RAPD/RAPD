@@ -54,15 +54,13 @@ router.route('/image_jpeg/:image')
           if (fs.existsSync(fullname)) {
             console.log('Have image '+fullname+'!');
 
-            let jpeg_file = config.image_directory+uuidv1()+'.jpeg',
-                command = '/programs/i386-mac/system/sbgrid_bin/adxv -sa -jpeg_scale 0.6 '+fullname+' '+jpeg_file;
-            exec(command, (error, stdout, stderr) => {
-              if (error) {
-                console.error(`exec error: ${error}`);
-                return;
-              }
-              console.log(`stdout: ${stdout}`);
-              console.log(`stderr: ${stderr}`);
+            let // jpeg_file = params_image._id+'.jpeg',
+                jpeg_file = config.image_directory+params_image._id+params_image.view_color+'.jpeg',
+                command = '/programs/i386-mac/system/sbgrid_bin/adxv -sa -colors '+params_image.view_color+' -jpeg_scale 0.6 '+fullname+' '+jpeg_file;
+
+            console.log(command);
+
+            if (fs.existsSync(jpeg_file)) {
               fs.readFile(jpeg_file, function(err, data) {
                  var base64data = new Buffer(data).toString('base64');
                  res.status(200).json({
@@ -70,7 +68,23 @@ router.route('/image_jpeg/:image')
                    image_data:base64data
                  })
               });
-            });
+            } else {
+              exec(command, (error, stdout, stderr) => {
+                if (error) {
+                  console.error(`exec error: ${error}`);
+                  return;
+                }
+                console.log(`stdout: ${stdout}`);
+                console.log(`stderr: ${stderr}`);
+                fs.readFile(jpeg_file, function(err, data) {
+                   var base64data = new Buffer(data).toString('base64');
+                   res.status(200).json({
+                     success:true,
+                     image_data:base64data
+                   })
+                });
+              });
+            }
           } else {
             // Return error
             let err = fullname+' does not exist'
