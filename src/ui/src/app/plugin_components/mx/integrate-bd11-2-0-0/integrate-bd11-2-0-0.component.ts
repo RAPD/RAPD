@@ -342,14 +342,16 @@ export class IntegrateBd11200Component implements OnInit, OnDestroy {
   }
 
   // Start the download of data
-  initDownload(id) {
+  initDownload(record:any) {
+
+    console.log(record);
 
     // Signal that the request has been made
     let snackBarRef = this.snackBar.open('Download request submitted', 'Ok', {
       duration: 2000,
     });
 
-    this.rest_service.getDownloadById(id)
+    this.rest_service.getDownloadById(record._id, record.path)
                      .subscribe(
                        result => {},
                        error => {}
