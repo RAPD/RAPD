@@ -17,7 +17,6 @@ export class MxImageComponent implements OnInit {
 
   @ViewChild('layer1') image_canvas: ElementRef;
   @ViewChild('layer2') drawing_canvas: ElementRef;
-
   @Input() result: any = {};
 
   error_string: string;
@@ -28,14 +27,20 @@ export class MxImageComponent implements OnInit {
   constructor(private rest_service: RestService) { }
 
   ngOnInit() {
-    this.view_color = localStorage.getItem('mx-image-view_color', 'Gray');
+    this.view_color = localStorage.getItem('mx-image-view_color');
+    // console.log('this.view_color', this.view_color);
+    if (! this.view_color) {
+      this.view_color = 'Gray';
+    }
+    // console.log('this.view_color', this.view_color);
     this.readImage();
   }
 
   // Testing
   doSomething(event:any) {
-    console.log('doSomething');
-    console.log(event);
+    // console.log('doSomething');
+    // console.log(event);
+    // console.log('this.view_color', this.view_color);
     localStorage.setItem('mx-image-view_color', this.view_color);
     this.readImage();
   }
