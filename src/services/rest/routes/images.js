@@ -57,7 +57,7 @@ router.route('/image_jpeg/:image')
           // Make sure the image exists
           if (fs.existsSync(fullname)) {
 
-            let jpeg_file = config.image_directory+params_image._id+params_image.view_color+'.jpeg';
+            let jpeg_file = config.image_directory+params_image._id+params_image.view_color+'.jpg';
 
             // JPEG already exists
             if (fs.existsSync(jpeg_file)) {
@@ -78,7 +78,7 @@ router.route('/image_jpeg/:image')
               // Make sure the directory exists
               mkdirp.sync(config.image_directory)
 
-              let command = '/programs/i386-mac/system/sbgrid_bin/adxv -sa -colors '+params_image.view_color+' -jpeg_scale 0.6 '+fullname+' '+jpeg_file;
+              let command = 'adxv -sa -colors '+params_image.view_color+' -jpeg_scale 0.6 '+fullname+' '+jpeg_file;
               // console.log(command);
 
               exec(command, (error, stdout, stderr) => {
@@ -90,8 +90,9 @@ router.route('/image_jpeg/:image')
                   });
                   return false;
                 }
-                // console.log(`stdout: ${stdout}`);
-                // console.log(`stderr: ${stderr}`);
+                
+                console.log(`stdout: ${stdout}`);
+                console.log(`stderr: ${stderr}`);
 
                 // Read the file and send it
                 if (fs.existsSync(jpeg_file)) {
