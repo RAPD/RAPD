@@ -1,9 +1,10 @@
-const { exec } = require('child_process');
-const config =   require('../config');
-var express =    require('express');
-const fs =       require('fs');
-const mkdirp =   require('mkdirp');
-const uuidv1 =   require('uuid/v1');
+const { exec } =     require('child_process');
+const config =       require('../config');
+var express =        require('express');
+var findRemoveSync = require('find-remove')
+const fs =           require('fs');
+const mkdirp =       require('mkdirp');
+const uuidv1 =       require('uuid/v1');
 
 const Image = require('../models/image');
 
@@ -66,6 +67,8 @@ router.route('/image_jpeg/:image')
                    success:true,
                    image_data:base64data
                  });
+                 // Get rid of older files
+                 var result = findRemoveSync(config.image_directory, {age: {seconds: 3600}, extensions: '.jpg'});
                  return true;
               });
 
@@ -98,6 +101,8 @@ router.route('/image_jpeg/:image')
                        success:true,
                        image_data:base64data
                      });
+                     // Get rid of older files
+                     var result = findRemoveSync(config.image_directory, {age: {seconds: 3600}, extensions: '.jpg'});
                      return true;
                   });
                 } else {
