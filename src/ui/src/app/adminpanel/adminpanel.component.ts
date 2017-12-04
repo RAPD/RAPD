@@ -203,6 +203,20 @@ export class AdminpanelComponent implements OnInit {
     this.groups = temp;
   }
 
+  // Read in groups from LDAP login system
+  populateGroups() {
+
+    console.log('populateGroups:');
+
+    this.rest_service.populateGroups().subscribe(
+     result => {
+       console.log(result);
+     },
+     error => {
+       console.error(error);
+     });
+  }
+
   // Create a new group
   createGroup() {
     let pseudo_event = {

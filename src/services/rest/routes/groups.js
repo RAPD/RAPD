@@ -97,7 +97,7 @@ router.route('/groups/:group_id')
   });
 
   router.route('/groups/populate')
-   // populate all groups from LDAP server (PUT api/groups/populate)
+   // populate all groups from LDAP server (GET api/groups/populate)
    .get(function(req, res) {
      ldap_client.search(config.ldap_dn,{
          scope:'sub',

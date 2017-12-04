@@ -114,7 +114,14 @@ export class RestService {
 
     console.log('deleteGroup', _id);
 
-    return this.authHttp.delete(this.globals_service.site.restApiUrl + 'groups/' + _id); //.map(res => res.json());
+    return this.authHttp.delete(this.globals_service.site.restApiUrl + '/groups/' + _id); //.map(res => res.json());
+  }
+
+  // Call to populate groups from LDAP server
+  public populateGroups(): Observable<any> {
+  return this.authHttp.get(this.globals_service.site.restApiUrl + '/groups/populate')
+    .map(return res.json();)
+    .catch(error => this.handleError(error));
   }
 
   //

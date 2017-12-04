@@ -49,51 +49,52 @@
     </mat-tab>
 
     <mat-tab *ngIf="user.role === 'site_admin'" label="Groups">
-        <article class="c-content" style="margin-top:2em;">
-          <ngx-datatable
-            #groups_table
-            class="material"
-            [rows]="groups"
-            [loadingIndicator]="loadingIndicator"
-            [columnMode]="'force'"
-            [headerHeight]="50"
-            [footerHeight]="50"
-            [limit]="10"
-            [rowHeight]="'auto'"
-            [reorderable]="reorderable"
-            [sorts]="[{prop: 'groupname', dir: 'asc'}]"
-            (activate)='editGroup($event)'>
-            <ngx-datatable-column name="Group Name" prop="groupname">
-              <ng-template let-value="value" ngx-datatable-cell-template>
-                {{value}}
-              </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="Institution" prop="institution">
-              <ng-template let-value="value" ngx-datatable-cell-template>
-                {{value}}
-              </ng-template>
-            </ngx-datatable-column>
-            <ngx-datatable-column name="Status" prop="status">
-              <ng-template let-value="value" ngx-datatable-cell-template>
-                {{value}}
-              </ng-template>
-            </ngx-datatable-column>
-          </ngx-datatable>
-        </article>
-        <article class="c-content">
-        </article>
-        <mat-toolbar class="rapd-main-panel-action-bar">
-          <form class="group-filter-form">
-            <mat-form-field
-              floatPlaceholder="never"
-              (keyup)='updateGroupFilter($event)'>
-              <input
-                matInput
-                placeholder="Filter">
-            </mat-form-field>
-          </form>
-          <button *ngIf="user.role === 'site_admin'" mat-button color="primary" (click)="createGroup()">New Group</button>
-        </mat-toolbar>
+      <article class="c-content" style="margin-top:2em;">
+        <ngx-datatable
+          #groups_table
+          class="material"
+          [rows]="groups"
+          [loadingIndicator]="loadingIndicator"
+          [columnMode]="'force'"
+          [headerHeight]="50"
+          [footerHeight]="50"
+          [limit]="10"
+          [rowHeight]="'auto'"
+          [reorderable]="reorderable"
+          [sorts]="[{prop: 'groupname', dir: 'asc'}]"
+          (activate)='editGroup($event)'>
+          <ngx-datatable-column name="Group Name" prop="groupname">
+            <ng-template let-value="value" ngx-datatable-cell-template>
+              {{value}}
+            </ng-template>
+          </ngx-datatable-column>
+          <ngx-datatable-column name="Institution" prop="institution">
+            <ng-template let-value="value" ngx-datatable-cell-template>
+              {{value}}
+            </ng-template>
+          </ngx-datatable-column>
+          <ngx-datatable-column name="Status" prop="status">
+            <ng-template let-value="value" ngx-datatable-cell-template>
+              {{value}}
+            </ng-template>
+          </ngx-datatable-column>
+        </ngx-datatable>
+      </article>
+      <article class="c-content">
+      </article>
+      <mat-toolbar class="rapd-main-panel-action-bar">
+        <form class="group-filter-form">
+          <mat-form-field
+            floatPlaceholder="never"
+            (keyup)='updateGroupFilter($event)'>
+            <input
+              matInput
+              placeholder="Filter">
+          </mat-form-field>
+        </form>
+        <button *ngIf="! globals_service.site.have_users" mat-button color="primary" (click)="populateGroups()">Populate Groups</button>
+        <button *ngIf="user.role === 'site_admin'" mat-button color="primary" (click)="createGroup()">New Group</button>
+      </mat-toolbar>
     </mat-tab>
 
     <mat-tab *ngIf="user.role === 'site_admin'" label="Sessions">
