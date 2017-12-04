@@ -2,6 +2,7 @@ const { exec } = require('child_process');
 const config =   require('../config');
 var express =    require('express');
 const fs =       require('fs');
+const mkdirp =   require('mkdirp');
 const uuidv1 =   require('uuid/v1');
 
 const Image = require('../models/image');
@@ -42,6 +43,7 @@ router.route('/image_jpeg/:image')
     Image.
       findOne({_id:params_image._id}).
       exec(function(err, image_result) {
+
         if (err) {
           console.error(err);
           res.status(500).json({
@@ -49,40 +51,64 @@ router.route('/image_jpeg/:image')
             error: err
           });
         } else {
+
           let fullname = image_result._doc.fullname;
           // Make sure the image exists
           if (fs.existsSync(fullname)) {
-            console.log('Have image '+fullname+'!');
 
-            let // jpeg_file = params_image._id+'.jpeg',
-                jpeg_file = config.image_directory+params_image._id+params_image.view_color+'.jpeg',
-                command = '/programs/i386-mac/system/sbgrid_bin/adxv -sa -colors '+params_image.view_color+' -jpeg_scale 0.6 '+fullname+' '+jpeg_file;
+            let jpeg_file = config.image_directory+params_image._id+params_image.view_color+'.jpeg';
 
-            console.log(command);
-
+            // JPEG already exists
             if (fs.existsSync(jpeg_file)) {
               fs.readFile(jpeg_file, function(err, data) {
                  var base64data = new Buffer(data).toString('base64');
                  res.status(200).json({
                    success:true,
                    image_data:base64data
-                 })
+                 });
+                 return true;
               });
+
+            // Make the JPEG
             } else {
+
+              // Make sure the directory exists
+              mkdirp.sync(config.image_directory)
+
+              let command = '/programs/i386-mac/system/sbgrid_bin/adxv -sa -colors '+params_image.view_color+' -jpeg_scale 0.6 '+fullname+' '+jpeg_file;
+              // console.log(command);
+
               exec(command, (error, stdout, stderr) => {
                 if (error) {
                   console.error(`exec error: ${error}`);
-                  return;
+                  res.status(500).json({
+                    success: false,
+                    error: err
+                  });
+                  return false;
                 }
-                console.log(`stdout: ${stdout}`);
-                console.log(`stderr: ${stderr}`);
-                fs.readFile(jpeg_file, function(err, data) {
-                   var base64data = new Buffer(data).toString('base64');
-                   res.status(200).json({
-                     success:true,
-                     image_data:base64data
-                   })
-                });
+                // console.log(`stdout: ${stdout}`);
+                // console.log(`stderr: ${stderr}`);
+
+                // Read the file and send it
+                if (fs.existsSync(jpeg_file)) {
+                  fs.readFile(jpeg_file, function(err, data) {
+                     var base64data = new Buffer(data).toString('base64');
+                     res.status(200).json({
+                       success:true,
+                       image_data:base64data
+                     });
+                     return true;
+                  });
+                } else {
+                  let err = 'JPEG file does not exist after creating it.'
+                  console.error(err);
+                  res.status(500).json({
+                    success: false,
+                    error: err
+                  });
+                  return false;
+                }
               });
             }
           } else {
@@ -93,6 +119,7 @@ router.route('/image_jpeg/:image')
               success: false,
               error: err
             });
+            return false;
           }
         }
       });
