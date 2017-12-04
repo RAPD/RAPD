@@ -95,7 +95,7 @@ class Launcher_Manager(threading.Thread):
         # Set up overwatcher
         if self.overwatch_id:
             self.ow_registrar = Registrar(site=self.site,
-                                          ow_type="control",
+                                          ow_type="launch_manager",
                                           ow_id=self.overwatch_id)
             self.ow_registrar.register()
 
