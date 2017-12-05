@@ -271,7 +271,7 @@ function Wss (opt, callback) {
                     exec(function(err, results) {
                         if (err)
                             return false;
-                        console.log(results);
+                        console.log('Found', results.length, 'results');
                         // Send back over the websocket
                         ws.send(JSON.stringify({msg_type:'results',
                                                 results:results}));
