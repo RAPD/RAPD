@@ -454,6 +454,12 @@ class Model(object):
                     header["run"] = self.recent_runs[str(run_id)].copy()
                     header["place_in_run"] = 1
                     header["site_tag"] = site_tag
+
+                    # Add to the database
+                    image_id = self.database.add_image(data=header, return_type="id")
+
+                    # Add extra stuff to the header
+                    header["_id"] = image_id
                     header["xdsinp"] = detector.XDSINP
 
                     # Add the image template to the run information
@@ -461,11 +467,6 @@ class Model(object):
                         image_prefix=header["image_prefix"],
                         run_number=header["run_number"]
                         )
-
-                    # Add to the database
-                    image_id = self.database.add_image(data=header, return_type="id")
-
-                    header["_id"] = image_id
 
                     # Send to be processed
                     self.new_data_image(image1=header)
@@ -821,7 +822,7 @@ class Model(object):
 
                     # Make a copy of the second pair to be LESS confusing
                     image2 = image1.copy()
-                    
+
                     # Get the data for the first image
                     image1 = self.database.get_image_by_image_id(image_id=self.pairs[site_tag][0][1])
 
