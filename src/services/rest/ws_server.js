@@ -77,7 +77,7 @@ sub.on("message", function (channel, message) {
       if (ws_connections[socket_id].session.session_id === session_id) {
         console.log('Have a live one!');
         messages_to_send.forEach(function(message) {
-          console.log(message)
+          console.log(message);
           ws_connections[socket_id].send(JSON.stringify({msg_type:message[0],
                                                          results:message[1]}));
         });
@@ -125,10 +125,12 @@ parse_message = function(channel, message) {
       // Create a detailed result
       // Get image header information
       if ('image1_id' in message.process) {
+        console.log('  Looking for image1');
         Image.
           findOne({_id:message.process.image1_id})
           .exec(function(im1_error, im1_result){
             if (im1_result) {
+              console.log('  Have image1');
               message.image1 = im1_result;
               if ('image2_id' in message.process) {
                 Image.
@@ -142,14 +144,20 @@ parse_message = function(channel, message) {
                     }
                   });
               } else {
+                console.log('  Pushing onto return_array');
                 return_array.push(['result_details', message]);
+                return return_array;
               }
             } else {
+              console.log('  Pushing onto return_array');
               return_array.push(['result_details', message]);
+              return return_array;
             }
           });
       } else {
+        console.log('  Pushing onto return_array');
         return_array.push(['result_details', message]);
+        return return_array;
       }
 
       // Return

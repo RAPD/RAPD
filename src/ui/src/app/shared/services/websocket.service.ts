@@ -115,7 +115,7 @@ export class WebsocketService {
 
       case 'result_details':
         //self.result_details_subject.next(data.results);
-        console.log(data.results);
+        console.log(data.results.process);
         if (data.results) {
           self.details_subscribers.forEach(function(subscriber) {
             if (subscriber._id == data.results.process.result_id) {
