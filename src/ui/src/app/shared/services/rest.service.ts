@@ -105,8 +105,9 @@ export class RestService {
       this.globals_service.site.restApiUrl + 'groups/' + group._id,
       JSON.stringify({group: group}),
       {headers: header}
-    );
-    // .map(res => res.json());
+    )
+      .map(res => res.json())
+      .catch(error => this.handleError(error));
   }
 
   // Delete a group from the database
@@ -152,8 +153,8 @@ export class RestService {
       this.globals_service.site.restApiUrl + 'sessions/' + session._id,
       JSON.stringify({session: session}),
       {headers: header}
-    );
-    // .map(res => res.json());
+    ).map(res => res.json())
+     .catch(error => this.handleError(error));
   }
 
   // Delete a user from the database
