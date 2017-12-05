@@ -283,13 +283,13 @@ function Wss (opt, callback) {
                     where('result_type').in(result_type_trans[data_type][data_class]).
                     // populate('children').
                     sort('-timestamp').
-                    exec(function(err, sessions) {
+                    exec(function(err, results) {
                         if (err)
                             return false;
-                        console.log(sessions);
+                        console.log('Found', results.length, 'results');
                         // Send back over the websocket
                         ws.send(JSON.stringify({msg_type:'results',
-                                                results:sessions}));
+                                                results:results}));
                     });
                 } else if (data_class === 'sweep') {
 
@@ -301,7 +301,7 @@ function Wss (opt, callback) {
                     exec(function(err, sessions) {
                         if (err)
                             return false;
-                        console.log(sessions);
+                        console.log('Found', results.length, 'results');
                         // Send back over the websocket
                         ws.send(JSON.stringify({msg_type:'results',
                                                 results:sessions}));
@@ -317,7 +317,7 @@ function Wss (opt, callback) {
                     exec(function(err, sessions) {
                         if (err)
                             return false;
-                        console.log(sessions);
+                        console.log('Found', results.length, 'results');
                         // Send back over the websocket
                         ws.send(JSON.stringify({msg_type:'results',
                                                 results:sessions}));
