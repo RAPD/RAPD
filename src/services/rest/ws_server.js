@@ -125,10 +125,11 @@ parse_message = function(channel, message) {
       // Create a detailed result
       // Get image header information
       if ('image1_id' in message.process) {
-        console.log('  Looking for image1');
+        console.log('  Looking for image1', message.process.image1_id);
         Image.
           findOne({_id:message.process.image1_id})
           .exec(function(im1_error, im1_result){
+            if (im1_error) { console.error(im1_error);}
             if (im1_result) {
               console.log('  Have image1');
               message.image1 = im1_result;
