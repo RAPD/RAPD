@@ -149,10 +149,6 @@ parse_message = function(channel, message) {
                 return_array.push(['result_details', message]);
                 return return_array;
               }
-            } else {
-              console.log('  Pushing onto return_array');
-              return_array.push(['result_details', message]);
-              return return_array;
             }
           });
       } else {
