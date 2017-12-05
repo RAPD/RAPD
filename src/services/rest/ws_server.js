@@ -48,7 +48,7 @@ try {
 
 sub.on("message", function (channel, message) {
 
-  // console.log("sub channel " + channel + ": " + message);
+  console.log("sub channel " + channel + ": " + message);
 
   // Decode into oject
   let parsed_message = JSON.parse(message);
@@ -73,7 +73,7 @@ sub.on("message", function (channel, message) {
   // Look for websockets that are watching the same session
   if (session_id) {
     Object.keys(ws_connections).forEach(function(socket_id) {
-      // console.log(ws_connections[socket_id].session);
+      console.log(ws_connections[socket_id].session);
       if (ws_connections[socket_id].session.session_id === session_id) {
         console.log('Have a live one!');
         messages_to_send.forEach(function(message) {

@@ -788,7 +788,8 @@ class Model(object):
                        "image1":image1,
                        "site_parameters":self.site.BEAM_INFO[image1["site_tag"]],
                        "preferences":{
-                           "cleanup":False
+                           "cleanup":False,
+                           "json":False,
                        }
                       }
 
