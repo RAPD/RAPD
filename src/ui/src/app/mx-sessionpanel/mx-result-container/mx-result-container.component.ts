@@ -42,7 +42,7 @@ export class MxResultContainerComponent implements OnInit {
   // A result has been selected - implement the agent interface
   selectResult(event) {
 
-    console.log('selectResult', event);
+    // console.log('selectResult', event);
 
     // Destroy the current component in the target view
     this.target.clear();
