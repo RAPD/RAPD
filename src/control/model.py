@@ -900,8 +900,10 @@ class Model(object):
                 },
                 "site_parameters":self.site.BEAM_INFO[image1["site_tag"]],
                 "preferences":{
-                    "xdsinp":xdsinp,
-                    "exchange_dir":self.site.EXCHANGE_DIR
+                    "cleanup":False,
+                    "json":False,
+                    "exchange_dir":self.site.EXCHANGE_DIR,
+                    "xdsinp":xdsinp
                 },
             }
             self.send_command(command, "RAPD_JOBS")
