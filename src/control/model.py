@@ -879,6 +879,7 @@ class Model(object):
 
             # Pop out the run data
             run_data = image1.pop("run")
+            xdsinp = image1.pop("xdsinp")
 
             # Construct and send command
             command = {
@@ -890,7 +891,7 @@ class Model(object):
                     "run_id":run_data.get("_id"),
                     "session_id":session_id,
                     "status":0,
-                    "type":"plugin",
+                    "type":"plugin"
                     },
                 "directories":directories,
                 "data": {
@@ -899,7 +900,8 @@ class Model(object):
                 },
                 "site_parameters":self.site.BEAM_INFO[image1["site_tag"]],
                 "preferences":{
-                    "xdsinp":image1.pop("xdsinp")
+                    "xdsinp":xdsinp,
+                    "exchange_dir":self.site.EXCHANGE_DIR
                 },
             }
             self.send_command(command, "RAPD_JOBS")

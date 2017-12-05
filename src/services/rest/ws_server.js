@@ -34,20 +34,6 @@ var result_type_trans = {
     }
   };
 
-var schemas = {
-  'Mx_index_result':new Schema({
-    _id: {
-      type: Schema.ObjectId,
-      auto: true
-    },
-    // image1: {
-    //   type: Schema.Types.ObjectId,
-    //   ref: 'Image',
-    //   required: false,
-    // },
-  }),
-}
-
 // All the ws_connections
 var ws_connections = {};
 
@@ -382,7 +368,6 @@ function Wss (opt, callback) {
                 }
               } catch(e) {
                 if (e.name === 'MissingSchemaError') {
-                  // let schema = schemas[collection_name];
                   let schema = new mongoose.Schema({
                     _id: {
                       type: Schema.ObjectId,

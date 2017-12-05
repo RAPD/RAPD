@@ -150,8 +150,8 @@ GROUP_ID = ("stat", "uid", "uidNumber")
 #   uidNumber
 GROUP_ID_FIELD = "uidNumber"
 
-# Where files from UI are uploaded - should be visible by launch instance
-UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"
+# Where files are exchanged between plugins and control
+EXCHANGE_DIR = "/pnfs/panfs0.localdomain/home/schuerjp/exchange_dir/"
 
 # Control settings
 # Database to use for control operations. Options: "mysql"
