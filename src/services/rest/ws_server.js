@@ -314,13 +314,13 @@ function Wss (opt, callback) {
                     find({'session_id':mongoose.Types.ObjectId(data.session_id)}).
                     // populate('children').
                     sort('-timestamp').
-                    exec(function(err, sessions) {
+                    exec(function(err, results) {
                         if (err)
                             return false;
                         console.log('Found', results.length, 'results');
                         // Send back over the websocket
                         ws.send(JSON.stringify({msg_type:'results',
-                                                results:sessions}));
+                                                results:results}));
                     });
                 }
 
