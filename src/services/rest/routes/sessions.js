@@ -12,6 +12,8 @@ router.route('/sessions')
 
   // get all the sessions (accessed at GET api/sessions)
   .get(function(req, res) {
+    console.log('In /sessions');
+    console.log(req.decoded);
     // Sessions for the user's groups
     let query_params = { group: { $in: req.decoded._doc.groups}};
     // Site admins get all sessions

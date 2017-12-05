@@ -537,7 +537,7 @@ apiRoutes.get('/', function(req, res) {
     res.json({ message: 'Welcome to the RAPD api!' });
 });
 
-if (! process.env.NODE_ENV === 'development') {
+// if (! process.env.NODE_ENV === 'development') {
   // route middleware to verify a token
   apiRoutes.use(function(req, res, next) {
 
@@ -574,7 +574,7 @@ if (! process.env.NODE_ENV === 'development') {
       });
     }
   });
-}
+// }
 
 // REGISTER OUR ROUTES -------------------------------
 

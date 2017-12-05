@@ -39,6 +39,7 @@
             name="view_mode"
             value="summary">
             <mat-option value="summary">Summary</mat-option>
+            <mat-option value="image">Image</mat-option>
             <mat-option value="details">Details</mat-option>
             <mat-option value="logs">Logs</mat-option>
           </mat-select>
@@ -287,6 +288,13 @@
             </div>
           </div>
         </div>
+      </mat-card-content>
+      <mat-card-content *ngIf="view_mode === 'image'" class="rapd-result">
+        <!-- <div fxLayout="row" fxLayoutGap="10px">
+          <div fxFlex="none"> -->
+            <app-mx-image [result]="full_result"></app-mx-image>
+          <!-- </div>
+        </div> -->
       </mat-card-content>
       <mat-card-content *ngIf="view_mode === 'details'" class="rapd-result">
         <div>

@@ -10,6 +10,7 @@ import { MatDialog,
 import { ReplaySubject }   from 'rxjs/Rx';
 
 import { WebsocketService } from '../../../shared/services/websocket.service';
+import { RestService } from '../../../shared/services/rest.service';
 import { GlobalsService } from '../../../shared/services/globals.service';
 
 import { HeaderDialogComponent } from '../header-dialog/header-dialog.component';
@@ -93,6 +94,7 @@ export class Index3b34200Component implements OnInit, OnDestroy {
   }
 
   constructor(private websocket_service: WebsocketService,
+              private rest_service: RestService,
               private globals_service: GlobalsService,
               public dialog: MatDialog) { }
 
@@ -107,7 +109,11 @@ export class Index3b34200Component implements OnInit, OnDestroy {
 
   public handleIncomingData(data:any) {
     console.log('handleIncomingData', data);
+
+    // Set full_result to incoming data
     this.full_result = data;
+
+    // Load default plot
     if ('results' in this.full_result) {
       if ('plots' in this.full_result.results) {
         if ('osc_range' in this.full_result.results.plots) {
@@ -116,6 +122,7 @@ export class Index3b34200Component implements OnInit, OnDestroy {
         }
       }
     }
+
   }
 
   // Display the header information

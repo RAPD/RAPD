@@ -105,8 +105,9 @@ export class RestService {
       this.globals_service.site.restApiUrl + 'groups/' + group._id,
       JSON.stringify({group: group}),
       {headers: header}
-    );
-    // .map(res => res.json());
+    )
+      .map(res => res.json())
+      .catch(error => this.handleError(error));
   }
 
   // Delete a group from the database
@@ -114,7 +115,14 @@ export class RestService {
 
     console.log('deleteGroup', _id);
 
-    return this.authHttp.delete(this.globals_service.site.restApiUrl + 'groups/' + _id); //.map(res => res.json());
+    return this.authHttp.delete(this.globals_service.site.restApiUrl + '/groups/' + _id); //.map(res => res.json());
+  }
+
+  // Call to populate groups from LDAP server
+  public populateGroups(): Observable<any> {
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/groups/populate')
+      .map(res => res.json())
+      .catch(error => this.handleError(error));
   }
 
   //
@@ -145,8 +153,8 @@ export class RestService {
       this.globals_service.site.restApiUrl + 'sessions/' + session._id,
       JSON.stringify({session: session}),
       {headers: header}
-    );
-    // .map(res => res.json());
+    ).map(res => res.json())
+     .catch(error => this.handleError(error));
   }
 
   // Delete a user from the database
@@ -166,6 +174,21 @@ export class RestService {
 
     return this.authHttp.get(this.globals_service.site.restApiUrl + 'images/' + _id);
                         // .map(res => res.json());
+  }
+
+  public getImageJpeg(request:any): Observable<any>{
+
+    console.log('getImageJpeg', request);
+
+    const req = JSON.stringify(request);
+    // console.log(req);
+
+    return this.authHttp.get(this.globals_service.site.restApiUrl + 'image_jpeg/' + req)
+      .map(res => {
+        // console.log(res);
+        return res.json();
+      })
+      .catch(error => this.handleError(error));
   }
 
   // RUN methods
@@ -344,33 +367,32 @@ export class RestService {
   }
 
   // Request a download
-  public getDownloadById(id): Observable<any> {
-
-    console.log('getDownload', id)
+  public getDownloadById(id:string, filename:string): Observable<any> {
 
     return this.authHttp.get(this.globals_service.site.restApiUrl + 'download_by_id/' + id)
                         .map(res => {
-                          // console.log(res);
                           if (res.status === 200) {
-                            // console.log('length', res._body.length);
-                            // convert base64 string to byte array
+
+                            // Convert base64 string to byte array
                             var byteCharacters = atob((<any>res)._body);
                             var byteNumbers = new Array(byteCharacters.length);
                             for (var i = 0; i < byteCharacters.length; i++){
                                 byteNumbers[i] = byteCharacters.charCodeAt(i);
                             }
                             var byteArray = new Uint8Array(byteNumbers);
-                            // console.log(byteArray);
+
+                            // Convert byte array to Blob
                             var blob = new Blob([byteArray], {type:'application/octet-stream'});
-                            // console.log(blob);
+
+                            // Create ObjectURL
                             var url= window.URL.createObjectURL(blob);
-                            // console.log(url);
-                            // window.open(url);
-                            // window.open("data:text/plain;charset=ISO-8859-1;"+res._body,);
+
+                            // Create DOM element with download attribute
                             var pom = document.createElement('a');
                             pom.setAttribute('href', url);
-                            pom.setAttribute('download', "foobar.tar.bz2");
+                            pom.setAttribute('download', filename);
 
+                            // Now trigger download
                             if (document.createEvent) {
                                 var event = document.createEvent('MouseEvents');
                                 event.initEvent('click', true, true);
@@ -379,9 +401,17 @@ export class RestService {
                             else {
                                 pom.click();
                             }
+
+                            // Tell the subscribed caller we are all good
+                            return Observable.of({
+                              success:true,
+                            });
+                          // There was an error in the REST server
+                          } else {
+                            return res.json();
                           }
-                          return res.json();
                         })
+                        // There was an error
                         .catch(error => this.handleError(error));
   }
 

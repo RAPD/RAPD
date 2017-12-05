@@ -172,7 +172,8 @@ def process_cluster_drmaa(self, inp, output=False):
 /home/schuerjp/Programs/RAPD/bin:\
 /home/schuerjp/Programs/RAPD/share/phenix-1.10.1-2155/build/bin:\
 /home/schuerjp/Programs/raddose-20-05-09-distribute-noexec/bin:\
-/usr/local/bin:/bin:/usr/bin"
+/usr/local/XDS-INTEL64_Linux_x86_64:\
+/usr/local/bin:/bin:/usr/bin, CCP4=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0"
     #smp,queue,name = inp2
     #'-clear' can be added to the options to eliminate the general.q
     #options = '-clear -shell y -p -100 -q %s -pe smp %s'%(queue,smp)
@@ -281,7 +282,9 @@ def process_cluster(command,
 /home/schuerjp/Programs/best:\
 /home/schuerjp/Programs/RAPD/bin:\
 /home/schuerjp/Programs/RAPD/share/phenix-1.10.1-2155/build/bin:\
-/home/schuerjp/Programs/raddose-20-05-09-distribute-noexec/bin"
+/home/schuerjp/Programs/raddose-20-05-09-distribute-noexec/bin:\
+/usr/local/XDS-INTEL64_Linux_x86_64:\
+/usr/local/bin:/bin:/usr/bin, CCP4=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0"
 
     if work_dir == False:
         work_dir = os.getcwd()
@@ -303,8 +306,8 @@ def process_cluster(command,
           print >>f, '#PBS -S /bin/bash'
           print >>f, '#PBS -j oe'
           print >>f, '#PBS -d %s'%work_dir
-          #print >>f, '#PBS -v %s'%v
-          print >>f, '#PBS -V'
+          print >>f, '#PBS -v %s'%v
+          #print >>f, '#PBS -V'
           print >>f, '#PBS -v PBS_O_SHELL=/bin/bash'
           print >>f, '#PBS -q %s'%batch_queue
           if name:

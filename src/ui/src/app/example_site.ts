@@ -14,7 +14,7 @@ export class Site implements OnInit {
   // Authentication info
   //
   // The type of user id expected - email or username
-  public authUserType: string = 'email';
+  public auth_user_type: string = 'email';
   public have_users:boolean = false;
 
   //

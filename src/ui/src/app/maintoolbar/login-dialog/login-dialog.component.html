@@ -10,7 +10,7 @@
     </h2>
     <form [formGroup]="login_form" (ngSubmit)="onSubmitLogin()">
       <table>
-        <tr><td *ngIf="globals_service.site.authUserType === 'email'">
+        <tr><td *ngIf="globals_service.site.auth_user_type === 'email'">
           <mat-form-field>
             <input matInput
               formControlName='email'
@@ -26,7 +26,7 @@
               Email is invalid
             </div>
           </div>
-        </td><td *ngIf="globals_service.site.authUserType === 'uid'">
+        </td><td *ngIf="globals_service.site.auth_user_type === 'uid'">
           <mat-form-field>
             <input
               matInput

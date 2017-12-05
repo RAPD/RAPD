@@ -11,7 +11,7 @@ export class LogCardComponent implements OnInit {
 
   @Input()
   log: any = [];
-  
+
   @Input()
   header: string = "";
 

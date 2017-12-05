@@ -16,7 +16,7 @@
       </mat-card-content>
     </div>
   </mat-card>
-  <!-- <mat-card *ngIf="(full_result.process)?.status > 1" class="rapd-result">
+  <mat-card *ngIf="(full_result.process)?.status > 1" class="rapd-result">
     <mat-card-header class="rapd-result">
       <div style="width:100%">
         <div style="float:left;">
@@ -310,11 +310,11 @@
           </div>
         </div>
       </div>
-    </mat-card-content> -->
-    <!-- <mat-card-content *ngIf="view_mode === 'analysis'" class="rapd-result">
+    </mat-card-content>
+    <mat-card-content *ngIf="view_mode === 'analysis'" class="rapd-result">
       <div #analysistarget></div>
-    </mat-card-content> -->
-    <!-- <mat-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
+    </mat-card-content>
+    <mat-card-content *ngIf="view_mode === 'logs'" class="rapd-result">
       <app-log-card
         *ngIf="(full_result.results)?.logs.xds_idxref"
         [log]="full_result.results.logs.xds_idxref"
@@ -340,13 +340,13 @@
         [log]="full_result.results.logs.pointless"
         header="Pointless">
       </app-log-card>
-    </mat-card-content> -->
-    <!-- <mat-toolbar *ngIf="full_result" class="result-panel-action-bar">
+    </mat-card-content>
+    <mat-toolbar *ngIf="full_result" class="result-panel-action-bar">
       <button
         *ngIf="(full_result.results.archive_files)?.length > 0"
         mat-button
         color="primary"
-        (click)="initDownload(full_result.results.archive_files[0]._id)">
+        (click)="initDownload(full_result.results.archive_files[0])">
         <mat-icon>file_download</mat-icon>Download
       </button>
       <button mat-button color="primary" (click)="openReintegrateDialog()"><mat-icon>refresh</mat-icon>Reintegrate</button>
@@ -360,5 +360,5 @@
       <button mat-button *ngIf="current_result.display !== 'junked'" color="primary" (click)="junkResult(current_result)"><mat-icon>delete</mat-icon>Junk</button>
       <button mat-button *ngIf="current_result.display == 'junked'" color="primary" (click)="undefResult(current_result)"><mat-icon>undo</mat-icon>UnJunk</button>
     </mat-toolbar>
-  </mat-card>-->
+  </mat-card>
 </div>
