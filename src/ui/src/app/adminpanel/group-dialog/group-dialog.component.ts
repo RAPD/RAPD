@@ -4,6 +4,7 @@ import { FormGroup,
 
 import { MatDialogRef } from '@angular/material';
 
+import { GlobalsService } from '../../../shared/services/globals.service';
 import { RestService } from '../../shared/services/rest.service';
 import { Group } from '../../shared/classes/group';
 
@@ -21,6 +22,7 @@ export class GroupDialogComponent implements OnInit {
   group_form: FormGroup;
 
   constructor(private admin_service: RestService,
+              private globals_service: GlobalsService,
               public dialogRef: MatDialogRef<GroupDialogComponent>) { }
 
   ngOnInit() {
@@ -32,6 +34,7 @@ export class GroupDialogComponent implements OnInit {
     this.group_form = new FormGroup({
       groupname: new FormControl(),
       institution: new FormControl(),
+      role: new FormControl(),
       uid: new FormControl(),
       uidNumber: new FormControl(),
       gidNumber: new FormControl(),

@@ -21,6 +21,16 @@
           autofocus>
       </mat-form-field>
     </p>
+    <p *ngIf="! globals_service.site.have_users">
+      <mat-form-field>
+        <mat-select formControlName="role"
+          placeholder="Role"
+          [(ngModel)]="model.status">
+          <mat-option value="user">user</mat-option>
+          <mat-option value="site_admin">site_admin</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </p>
     <p>
       <mat-form-field>
         <input matInput
