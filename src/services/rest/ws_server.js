@@ -134,16 +134,22 @@ parse_message = function(channel, message) {
               console.log('  Have image1');
               message.image1 = im1_result;
               if ('image2_id' in message.process) {
-                Image.
-                  findOne({_id:message.process.image2_id})
-                  .exec(function(im2_error, im2_result){
-                    if (im2_result) {
-                      message.image2 = im1_result;
-                      return_array.push(['result_details', message]);
-                    } else {
-                      return_array.push(['result_details', message]);
-                    }
-                  });
+                if (message.process.image2_id) {
+                  Image.
+                    findOne({_id:message.process.image2_id})
+                    .exec(function(im2_error, im2_result){
+                      if (im2_result) {
+                        message.image2 = im1_result;
+                        return_array.push(['result_details', message]);
+                      } else {
+                        return_array.push(['result_details', message]);
+                      }
+                    });
+                } else {
+                  console.log('  Pushing onto return_array');
+                  return_array.push(['result_details', message]);
+                  return return_array;
+                }
               } else {
                 console.log('  Pushing onto return_array');
                 return_array.push(['result_details', message]);
