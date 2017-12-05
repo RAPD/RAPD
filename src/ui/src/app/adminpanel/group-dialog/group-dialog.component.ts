@@ -4,7 +4,7 @@ import { FormGroup,
 
 import { MatDialogRef } from '@angular/material';
 
-import { GlobalsService } from '../../../shared/services/globals.service';
+import { GlobalsService } from '../../shared/services/globals.service';
 import { RestService } from '../../shared/services/rest.service';
 import { Group } from '../../shared/classes/group';
 
