@@ -2663,6 +2663,8 @@ rerunning.\n" % spot_count)
                 "error": "Autoindexing failed to find a solution"},
             "eiger_cbf_error": {
                 "error": "IOTBX needs patched for Eiger CBF files"},
+            "mosflm_version_error": {
+                "error": "Mosflm version is too old"},
         }
 
         # If Labelit results are OK, then...

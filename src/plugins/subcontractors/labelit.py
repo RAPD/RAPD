@@ -173,6 +173,8 @@ def parse_output(labelit_output, iteration=0):
                 return "mosflm_error"
             if line.count("TypeError: unsupported operand type(s) for %: 'NoneType' and 'int'"):
                 return "eiger_cbf_error"
+            if line.startswith("MosflmVersionError:"):
+                return "mosflm_version_error"
             
             # Save the beam center
             if line.startswith("Beam center"):
