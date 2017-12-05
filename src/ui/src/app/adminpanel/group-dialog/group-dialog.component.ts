@@ -22,7 +22,7 @@ export class GroupDialogComponent implements OnInit {
   group_form: FormGroup;
 
   constructor(private admin_service: RestService,
-              private globals_service: GlobalsService,
+              public globals_service: GlobalsService,
               public dialogRef: MatDialogRef<GroupDialogComponent>) { }
 
   ngOnInit() {
