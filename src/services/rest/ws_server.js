@@ -382,17 +382,9 @@ function Wss (opt, callback) {
             // Get result details
             case 'get_result_details':
 
-              console.log('get_result_details');
-              console.log(data);
-
-              // Create a model
-              // if (data.result_type.indexOf(':') !== -1) {
-              //   data.result_type = data.result_type.replace(/:/, '_');
-              //   // data.result_type = data.result_type.slice(data.result_type.indexOf(':')+1);
-              // }
+              console.log('get_result_details', data.data_type, data.plugin_type);
 
               // Create a mongoose model for the result
-              console.log('Looking in:', data.data_type+'_'+ data.plugin_type +'_results');
               let name = data.data_type+'_'+ data.plugin_type +'_result';
               let collection_name = name.charAt(0).toUpperCase() + name.slice(1);
               var ResultModel;
@@ -435,9 +427,9 @@ function Wss (opt, callback) {
                   } else {
                     console.log(detailed_result);
                     if (detailed_result) {
-                      console.log(Object.keys(detailed_result));
-                      console.log(detailed_result._doc);
-                      console.log(detailed_result._doc.process);
+                      // console.log(Object.keys(detailed_result));
+                      // console.log(detailed_result._doc);
+                      // console.log(detailed_result._doc.process);
 
                         // Make sure there is a process
                         if ('process' in detailed_result._doc) {
@@ -453,7 +445,7 @@ function Wss (opt, callback) {
                                   return false;
                                 } else {
                                   detailed_result._doc.image1 = image1;
-                                  console.log('POPULATED image1');
+                                  // console.log('POPULATED image1');
                                   // console.log(detailed_result);
                                   // Now look for image2
                                   if ('image2_id' in detailed_result._doc.process) {
@@ -467,8 +459,8 @@ function Wss (opt, callback) {
                                           return false;
                                         } else {
                                           detailed_result._doc.image1 = image2;
-                                          console.log('POPULATED image2');
-                                          console.log(detailed_result);
+                                          // console.log('POPULATED image2');
+                                          // console.log(detailed_result);
                                           // Send back over the websocket
                                           ws.send(JSON.stringify({msg_type:'result_details',
                                                                   success:true,
