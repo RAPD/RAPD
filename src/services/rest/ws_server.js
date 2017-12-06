@@ -375,12 +375,7 @@ function Wss (opt, callback) {
                 }
               }
 
-              // Search for a result
-              // let query1 = ResultModel.findOne({'_id':mongoose.Types.ObjectId(data.result_id)});
-              // query1.then(function(doc) {
-              //   console.log(doc);
-              // });
-
+              // Now get the result
               ResultModel.
                 // findOne({'_id':mongoose.Types.ObjectId(data.result_id)}).
                 findOne({'process.result_id':mongoose.Types.ObjectId(data._id)}).
@@ -396,7 +391,7 @@ function Wss (opt, callback) {
                     return false;
                   // No error
                   } else {
-                    console.log(detailed_result);
+                    // console.log(detailed_result);
                     if (detailed_result) {
                       // console.log(Object.keys(detailed_result));
                       // console.log(detailed_result._doc);
