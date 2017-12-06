@@ -7,8 +7,9 @@ var url = require('url');
 var WebSocketServer = require('ws').Server;
 // var SocketIo = require('socket.io');
 var mongoose = require('mongoose');
+Q = require('q');
 // Fix the promise issue in Mongoose
-mongoose.Promise = require('q').Promise;
+mongoose.Promise = Q.Promise;
 var Schema = mongoose.Schema;
 
 var jwt = require('jsonwebtoken');
@@ -68,26 +69,27 @@ sub.on("message", function (channel, message) {
   }
 
   // Turn message into messages to send to clients
-  let messages_to_send = parse_message(channel, parsed_message);
-
-  // console.log('messages_to_send', messages_to_send);
-  //
-  // console.log('Will send', messages_to_send.length, 'messages');
-  //
-  // Look for websockets that are watching the same session
-  if (session_id) {
-    Object.keys(ws_connections).forEach(function(socket_id) {
-      console.log(ws_connections[socket_id].session);
-      if (ws_connections[socket_id].session.session_id === session_id) {
-        console.log('Have a live one!');
-        messages_to_send.forEach(function(message) {
-          console.log(message);
-          ws_connections[socket_id].send(JSON.stringify({msg_type:message[0],
-                                                         results:message[1]}));
-        });
-      }
-    });
-  }
+  parse_message(channel, parsed_message)
+  .then(function(messages_to_send){
+    console.log('messages_to_send', messages_to_send);
+    //
+    // console.log('Will send', messages_to_send.length, 'messages');
+    //
+    // Look for websockets that are watching the same session
+    if (session_id) {
+      Object.keys(ws_connections).forEach(function(socket_id) {
+        console.log(ws_connections[socket_id].session);
+        if (ws_connections[socket_id].session.session_id === session_id) {
+          console.log('Have a live one!');
+          messages_to_send.forEach(function(message) {
+            console.log(message);
+            ws_connections[socket_id].send(JSON.stringify({msg_type:message[0],
+                                                           results:message[1]}));
+          });
+        }
+      });
+    }
+  })
 });
 
 // Subscribe to updates
@@ -95,6 +97,8 @@ sub.subscribe("RAPD_RESULTS");
 
 parse_message = function(channel, message) {
   console.log('parse_message');
+
+  var deferred = Q.defer();
 
   // Array to return
   var return_array = [];
@@ -108,7 +112,7 @@ parse_message = function(channel, message) {
       // Do nothing for ECHO
       if (message.command === 'ECHO') {
         console.log('Echo...');
-        return return_array;
+        deferred.resolve(return_array);
       }
 
       // Create a result
@@ -176,15 +180,17 @@ parse_message = function(channel, message) {
       });
 
       console.log('Returning return_array with length', return_array.length);
-      return return_array;
+      deferred.resolve(return_array);
       break;
 
     default:
       console.log('Don\'t know about this channel.');
-      return return_array;
+      deferred.resolve(return_array);
       break;
 
   }
+
+  return deferred.promise;
 };
 
 // The websocket code
