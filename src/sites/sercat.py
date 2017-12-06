@@ -208,7 +208,7 @@ IMAGE_MONITOR = "monitors.image_monitors.redis_image_monitor"
 # Images collected into following directories will be ignored
 IMAGE_IGNORE_DIRECTORIES = ("/var/sergui",)
 # Images collected containing the following string will be ignored
-IMAGE_IGNORE_STRINGS = ("ignore", "blankmar300hs")
+IMAGE_IGNORE_STRINGS = ("ignore", "blankmar300hs", "_r1_UR", "_r1_UL", "_r1_AR", "_r1_AL")
 # So if image is not present, look in long term storage location.
 ALT_IMAGE_LOCATIONS = False
 
