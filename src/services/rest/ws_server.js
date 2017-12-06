@@ -147,7 +147,7 @@ parse_message = function(channel, message) {
           Image
             .findOne({_id:message.process[image_key]})
             .exec(function(error, result) {
-              console.log(image_key, error, result);
+              // console.log(image_key, error, result);
               if (error) {
                 console.error(error);
               } else if (result) {
