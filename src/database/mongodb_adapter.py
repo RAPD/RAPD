@@ -375,9 +375,9 @@ class Database(object):
         }
 
         for key in ("archive_files", "data_produced"):
-            self.logger.debug('Looking for', key)
+            self.logger.debug('Looking for %s', key)
             if plugin_result["results"].get(key, False):
-                self.logger.debug('Have', key)
+                self.logger.debug('Have %s', key)
                 for index in range(len(plugin_result["results"].get(key, []))):
                     data = plugin_result["results"].get(key, [])[index]
                     self.logger.debug(key, data)
