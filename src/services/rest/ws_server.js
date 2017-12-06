@@ -102,7 +102,7 @@ parse_message = function(channel, message) {
       // Do nothing for ECHO
       if (message.command === 'ECHO') {
         console.log('Echo...');
-        return true;
+        return [];
       }
 
       // Array to return
@@ -164,7 +164,7 @@ parse_message = function(channel, message) {
 
     default:
       console.log('Don\'t know about this channel.');
-      return false;
+      return [];
       break;
 
   }
