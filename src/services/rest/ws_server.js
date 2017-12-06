@@ -100,7 +100,7 @@ parse_message = function(channel, message) {
       console.log('RAPD_RESULTS');
 
       // Array to return
-      let return_array = [];
+      var return_array = [];
 
       // Do nothing for ECHO
       if (message.command === 'ECHO') {
