@@ -220,7 +220,7 @@ function Wss (opt, callback) {
       ws.on('message', function(message) {
 
         var data = JSON.parse(message);
-        console.log(data);
+        // console.log(data);
 
         // Initializing the websocket
         if (data.request_type === 'initialize' ) {
@@ -238,7 +238,6 @@ function Wss (opt, callback) {
                 // Add token to websocket session
                 ws.session.token = decoded;
                 console.log(ws.session);
-
               }
             }
           });
