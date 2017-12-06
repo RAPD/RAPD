@@ -153,11 +153,13 @@ parse_message = function(channel, message) {
               } else if (result) {
                 console.log('Found image data for', image);
                 message[image] = result._doc;
+                console.log(message[image]);
               }
               // Done?
               if (index == 3) {
                 return_array.push(['result_details', message]);
                 console.log('return_array now has length', return_array.length);
+                console.log('return_array', return_array);
                 // return return_array;
               }
             });
@@ -166,6 +168,7 @@ parse_message = function(channel, message) {
           if (index == 3) {
             return_array.push(['result_details', message]);
             console.log('return_array now has length', return_array.length);
+            console.log('return_array', return_array);
             // return return_array;
           }
         }
