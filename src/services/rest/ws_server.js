@@ -74,20 +74,20 @@ sub.on("message", function (channel, message) {
 
   // console.log('Will send', messages_to_send.length, 'messages');
   //
-  // // Look for websockets that are watching the same session
-  // if (session_id) {
-  //   Object.keys(ws_connections).forEach(function(socket_id) {
-  //     console.log(ws_connections[socket_id].session);
-  //     if (ws_connections[socket_id].session.session_id === session_id) {
-  //       console.log('Have a live one!');
-  //       messages_to_send.forEach(function(message) {
-  //         console.log(message);
-  //         ws_connections[socket_id].send(JSON.stringify({msg_type:message[0],
-  //                                                        results:message[1]}));
-  //       });
-  //     }
-  //   });
-  // }
+  // Look for websockets that are watching the same session
+  if (session_id) {
+    Object.keys(ws_connections).forEach(function(socket_id) {
+      console.log(ws_connections[socket_id].session);
+      if (ws_connections[socket_id].session.session_id === session_id) {
+        console.log('Have a live one!');
+        messages_to_send.forEach(function(message) {
+          console.log(message);
+          ws_connections[socket_id].send(JSON.stringify({msg_type:message[0],
+                                                         results:message[1]}));
+        });
+      }
+    });
+  }
 });
 
 // Subscribe to updates
