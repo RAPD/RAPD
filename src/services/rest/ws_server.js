@@ -241,7 +241,7 @@ function Wss (opt, callback) {
               if (decoded.iat <= now && decoded.exp >= now) {
                 // Add token to websocket session
                 ws.session.token = decoded;
-                console.log(ws.session);
+                // console.log(ws.session);
               }
             }
           });
