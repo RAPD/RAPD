@@ -48,7 +48,7 @@ try {
 
 sub.on("message", function (channel, message) {
 
-  console.log("sub channel " + channel + ": " + message);
+  console.log("sub channel " + channel);
 
   // Decode into oject
   let parsed_message = JSON.parse(message);
@@ -95,6 +95,7 @@ parse_message = function(channel, message) {
   switch (channel) {
 
     case 'RAPD_RESULTS':
+
       console.log('RAPD_RESULTS');
 
       // Do nothing for ECHO
@@ -121,9 +122,11 @@ parse_message = function(channel, message) {
           timestamp: new Date().toISOString()
           };
       return_array.push(['results', [result]]);
+      console.log('  Pushed results object onto return array');
 
       // Create a detailed result
-      // Get image header information
+
+      // Index result - get data on image(s)
       if ('image1_id' in message.process) {
         console.log('  Looking for image1', message.process.image1_id);
         Image.
@@ -140,8 +143,10 @@ parse_message = function(channel, message) {
                     .exec(function(im2_error, im2_result){
                       if (im2_result) {
                         message.image2 = im1_result;
+                        console.log('  Pushing onto return_array with image2 info');
                         return_array.push(['result_details', message]);
                       } else {
+                        console.log('  Pushing onto return_array without image2 info');
                         return_array.push(['result_details', message]);
                       }
                     });
@@ -157,8 +162,26 @@ parse_message = function(channel, message) {
               }
             }
           });
+
+      // Integrate result - get image data
+      } else if (('image_id' in message.process)) {
+        console.log('  Looking for image', message.process.image_id);
+        Image.
+          findOne({_id:message.process.image_id})
+          .exec(function(im_error, im_result){
+            if (im_error) {
+              console.error(im_error);
+            }
+            if (im_result) {
+              message.image1 = im_result;
+              console.log('  Pushing integrate result onto return_array');
+              return_array.push(['result_details', message]);
+            }
+          });
+
+      // No images to get data on
       } else {
-        console.log('  Pushing onto return_array');
+        console.log('  No images in message.process - pushing onto return_array');
         return_array.push(['result_details', message]);
         return return_array;
       }
