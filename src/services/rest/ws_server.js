@@ -99,14 +99,14 @@ parse_message = function(channel, message) {
 
       console.log('RAPD_RESULTS');
 
+      // Array to return
+      let return_array = [];
+
       // Do nothing for ECHO
       if (message.command === 'ECHO') {
         console.log('Echo...');
-        return [];
+        return return_array;
       }
-
-      // Array to return
-      let return_array = [];
 
       // Create a result
       let result = { _id: message.process.result_id,
@@ -146,14 +146,13 @@ parse_message = function(channel, message) {
             .exec(function(error, result) {
               if (error) {
                 console.error(error);
-              } else {
-                if (result) {
+              } else if (result) {
                   message[image] = result;
-                }
               }
               // Done?
               if (index == 3) {
                 return_array.push(['result_details', message]);
+                console.log('Returning return_array with length', return_array.length);
                 return return_array;
               }
             });
