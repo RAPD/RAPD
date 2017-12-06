@@ -156,6 +156,13 @@ parse_message = function(channel, message) {
                 return return_array;
               }
             });
+        } else {
+          // Done?
+          if (index == 3) {
+            return_array.push(['result_details', message]);
+            console.log('Returning return_array with length', return_array.length);
+            return return_array;
+          }
         }
       });
 
