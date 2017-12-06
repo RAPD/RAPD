@@ -152,7 +152,7 @@ parse_message = function(channel, message) {
                 console.error(error);
               } else if (result) {
                 console.log('Found image data for', image);
-                message[image] = result;
+                message[image] = result._doc;
               }
               // Done?
               if (index == 3) {
