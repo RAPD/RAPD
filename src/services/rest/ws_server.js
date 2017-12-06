@@ -94,7 +94,7 @@ sub.on("message", function (channel, message) {
 sub.subscribe("RAPD_RESULTS");
 
 parse_message = function(channel, message) {
-  console.log('parse_message', channel);
+  console.log('parse_message');
 
   // Array to return
   var return_array = [];
@@ -103,7 +103,7 @@ parse_message = function(channel, message) {
 
     case 'RAPD_RESULTS':
 
-      console.log('RAPD_RESULTS');
+      console.log('  RAPD_RESULTS');
 
       // Do nothing for ECHO
       if (message.command === 'ECHO') {
@@ -136,7 +136,7 @@ parse_message = function(channel, message) {
       possible_images.forEach(function(image) {
 
         // Keep track of where we are
-        index += 1;
+
 
         // The image key we are looking for
         let image_key = image+'_id';
@@ -146,15 +146,16 @@ parse_message = function(channel, message) {
         if (message.process[image_key]) {
           Image
             .findOne({_id:message.process[image_key]})
-            .exec(function(error, result) {
+            .exec(function(error, image_result) {
               // console.log(image_key, error, result);
               if (error) {
                 console.error(error);
-              } else if (result) {
+              } else if (image_result) {
                 console.log('Found image data for', image);
-                message[image] = result._doc;
+                message[image] = image_result._doc;
               }
               // Done?
+              index += 1;
               if (index == 3) {
                 return_array.push(['result_details', message]);
                 console.log('return_array now has length', return_array.length);
@@ -164,6 +165,7 @@ parse_message = function(channel, message) {
             });
         } else {
           // Done?
+          index += 1;
           if (index == 3) {
             return_array.push(['result_details', message]);
             console.log('return_array now has length', return_array.length);
