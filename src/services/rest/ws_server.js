@@ -164,6 +164,7 @@ parse_message = function(channel, message) {
                 return_array.push(['result_details', message]);
                 console.log('return_array now has length', return_array.length);
                 console.log('return_array', return_array);
+                deferred.resolve(return_array);
                 // return return_array;
               }
             });
@@ -174,13 +175,13 @@ parse_message = function(channel, message) {
             return_array.push(['result_details', message]);
             console.log('return_array now has length', return_array.length);
             console.log('return_array', return_array);
+            deferred.resolve(return_array);
             // return return_array;
           }
         }
       });
 
       console.log('Returning return_array with length', return_array.length);
-      deferred.resolve(return_array);
       break;
 
     default:
