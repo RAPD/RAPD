@@ -70,31 +70,31 @@ sub.on("message", function (channel, message) {
   // Turn message into messages to send to clients
   let messages_to_send = parse_message(channel, parsed_message);
 
-  console.log('messages_to_send', messages_to_send);
-
-  // console.log('Will send', messages_to_send.length, 'messages');
+  // console.log('messages_to_send', messages_to_send);
   //
-  // Look for websockets that are watching the same session
-  if (session_id) {
-    Object.keys(ws_connections).forEach(function(socket_id) {
-      console.log(ws_connections[socket_id].session);
-      if (ws_connections[socket_id].session.session_id === session_id) {
-        console.log('Have a live one!');
-        messages_to_send.forEach(function(message) {
-          console.log(message);
-          ws_connections[socket_id].send(JSON.stringify({msg_type:message[0],
-                                                         results:message[1]}));
-        });
-      }
-    });
-  }
+  // // console.log('Will send', messages_to_send.length, 'messages');
+  // //
+  // // Look for websockets that are watching the same session
+  // if (session_id) {
+  //   Object.keys(ws_connections).forEach(function(socket_id) {
+  //     console.log(ws_connections[socket_id].session);
+  //     if (ws_connections[socket_id].session.session_id === session_id) {
+  //       console.log('Have a live one!');
+  //       messages_to_send.forEach(function(message) {
+  //         console.log(message);
+  //         ws_connections[socket_id].send(JSON.stringify({msg_type:message[0],
+  //                                                        results:message[1]}));
+  //       });
+  //     }
+  //   });
+  // }
 });
 
 // Subscribe to updates
 sub.subscribe("RAPD_RESULTS");
 
 parse_message = function(channel, message) {
-  console.log('parse_message', channel, message);
+  console.log('parse_message', channel);
 
   // Array to return
   var return_array = [];
