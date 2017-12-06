@@ -79,40 +79,73 @@ export class ReintegrateDialogComponent implements OnInit {
 
   submitReintegrate() {
 
+    /*
+    command = {
+                "command":"INTEGRATE",
+                "process":{
+                    "image_id":image1.get("_id"),
+                    "parent_id":False,
+                    "result_id":str(ObjectId()),
+                    "run_id":run_data.get("_id"),
+                    "session_id":session_id,
+                    "status":0,
+                    "type":"plugin"
+                    },
+                "directories":directories,
+                "data": {
+                    "image_data":image1,
+                    "run_data":run_data
+                },
+                "site_parameters":self.site.BEAM_INFO[image1["site_tag"]],
+                "preferences":{
+                    "cleanup":False,
+                    "json":False,
+                    "exchange_dir":self.site.EXCHANGE_DIR,
+                    "xdsinp":xdsinp
+                },
+            }
+    */
+
     // Start to make the request object
-    let request: any = {command:'INTEGRATE'};
-    request.parent_result_id = this.data._id;
-    // request.image1_id = this.data.image1._id;
-    //
-    // // 2nd image?
-    // if (this.data.image2) {
-    //   request.image2_id = this.data.image2._id;
-    // } else {
-    //   request.image2_id = false;
-    // }
+    let request: any = {
+      command:'INTEGRATE',
+      process:{
+        image_id:this.data.process.image_id,
+        parent_id:this.data._id,
+        run_id:this.data.process.run_id,
+        session_id:this.data.process.session_id,
+        status:0,
+        type:'plugin'
+      },
+      directories:false,
+      data:false,
+      site_parameters:false,
+      preferences:Object.assign(this.data.preferences, this.reintegrate_form.value)
+    };
+
+    // request.parent_result_id = this.data._id;
 
     // Update the preferences with the form values
-    request.preferences = Object.assign(this.data.preferences, this.reintegrate_form.value);
+    // request.preferences = Object.assign(this.data.preferences, this.reintegrate_form.value);
 
     // Debugging
     console.log(request);
 
     this.submitted = true;
-    this.rest_service.submitJob(request)
-                     .subscribe(
-                       parameters => {
-                         console.log(parameters);
-                         // A problem connecting to REST server
-                         // Submitted is over
-                         this.submitted = false;
-                         this.submit_error = parameters.error;
-                         if (parameters.success) {
-                           let snackBarRef = this.snackBar.open('Reintegrate request submitted', 'Ok', {
-                             duration: 2000,
-                           });
-                           this.dialogRef.close();
-                         }
-                       });
+    this.rest_service
+        .submitJob(request)
+        .subscribe(
+          parameters => {
+            // console.log(parameters);
+            if (parameters.success === true) {
+              let snackBarRef = this.snackBar.open('Reintegrate request submitted', 'Ok', {
+                duration: 2000,
+              });
+              this.dialogRef.close(parameters);
+            } else {
+              this.submit_error = parameters.error;
+            }
+          });
 
   }
 }
