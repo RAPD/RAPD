@@ -187,7 +187,7 @@ parse_message = function(channel, message) {
       }
 
       // Return
-      return return_array;
+      // return return_array;
       break;
 
     default:
