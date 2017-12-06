@@ -155,22 +155,22 @@ parse_message = function(channel, message) {
               // Done?
               if (index == 3) {
                 return_array.push(['result_details', message]);
-                console.log('Returning return_array with length', return_array.length);
-                return return_array;
-                break;
+                console.log('return_array now has length', return_array.length);
+                // return return_array;
               }
             });
         } else {
           // Done?
           if (index == 3) {
             return_array.push(['result_details', message]);
-            console.log('Returning return_array with length', return_array.length);
-            return return_array;
-            break;
+            console.log('return_array now has length', return_array.length);
+            // return return_array;
           }
         }
       });
 
+      console.log('Returning return_array with length', return_array.length);
+      return return_array;
       break;
 
     default:
