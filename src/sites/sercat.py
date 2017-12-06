@@ -151,7 +151,7 @@ GROUP_ID = ("stat", "uid", "uidNumber")
 GROUP_ID_FIELD = "uidNumber"
 
 # Where files are exchanged between plugins and control
-EXCHANGE_DIR = "/pnfs/panfs0.localdomain/home/schuerjp/exchange_dir/"
+EXCHANGE_DIR = "/panfs/panfs0.localdomain/home/schuerjp/exchange_dir/"
 
 # Control settings
 # Database to use for control operations. Options: "mysql"
