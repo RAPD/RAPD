@@ -69,6 +69,7 @@ sub.on("message", function (channel, message) {
 
   // Turn message into messages to send to clients
   let messages_to_send = parse_message(channel, parsed_message);
+  console.log('Will send', messages_to_send.length, 'messages');
 
   // Look for websockets that are watching the same session
   if (session_id) {
@@ -158,75 +159,7 @@ parse_message = function(channel, message) {
             });
         }
       });
-      // if ('image1_id' in message.process) {
-      //   console.log('  Looking for image1', message.process.image1_id);
-      //   Image.
-      //     findOne({_id:message.process.image1_id})
-      //     .exec(function(im1_error, im1_result){
-      //       if (im1_error) {
-      //         console.error(im1_error);
-      //       }
-      //       if (im1_result) {
-      //         console.log('  Have image1');
-      //         message.image1 = im1_result;
-      //         if ('image2_id' in message.process) {
-      //           if (message.process.image2_id) {
-      //             console.log('  Looking for image2', message.process.image2_id);
-      //             Image.
-      //               findOne({_id:message.process.image2_id})
-      //               .exec(function(im2_error, im2_result){
-      //                 if (im2_error) {
-      //                   console.error(im2_error);
-      //                   console.log('  Pushing onto return_array without image2 info');
-      //                   return_array.push(['result_details', message]);
-      //                 }
-      //                 if (im2_result) {
-      //                   message.image2 = im1_result;
-      //                   console.log('  Pushing onto return_array with image2 info');
-      //                   return_array.push(['result_details', message]);
-      //                 } else {
-      //                   console.log('  Pushing onto return_array without image2 info');
-      //                   return_array.push(['result_details', message]);
-      //                 }
-      //               });
-      //           } else {
-      //             console.log('  Pushing onto return_array');
-      //             return_array.push(['result_details', message]);
-      //             return return_array;
-      //           }
-      //         } else {
-      //           console.log('  Pushing onto return_array');
-      //           return_array.push(['result_details', message]);
-      //           return return_array;
-      //         }
-      //       }
-      //     });
-      //
-      // // Integrate result - get image data
-      // } else if (('image_id' in message.process)) {
-      //   console.log('  Looking for image', message.process.image_id);
-      //   Image.
-      //     findOne({_id:message.process.image_id})
-      //     .exec(function(im_error, im_result){
-      //       if (im_error) {
-      //         console.error(im_error);
-      //       }
-      //       if (im_result) {
-      //         message.image1 = im_result;
-      //         console.log('  Pushing integrate result onto return_array');
-      //         return_array.push(['result_details', message]);
-      //       }
-      //     });
-      //
-      // // No images to get data on
-      // } else {
-      //   console.log('  No images in message.process - pushing onto return_array');
-      //   return_array.push(['result_details', message]);
-      //   return return_array;
-      // }
 
-      // Return
-      // return return_array;
       break;
 
     default:
