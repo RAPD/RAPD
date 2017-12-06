@@ -126,65 +126,104 @@ parse_message = function(channel, message) {
 
       // Create a detailed result
 
-      // Index result - get data on image(s)
-      if ('image1_id' in message.process) {
-        console.log('  Looking for image1', message.process.image1_id);
-        Image.
-          findOne({_id:message.process.image1_id})
-          .exec(function(im1_error, im1_result){
-            if (im1_error) { console.error(im1_error);}
-            if (im1_result) {
-              console.log('  Have image1');
-              message.image1 = im1_result;
-              if ('image2_id' in message.process) {
-                if (message.process.image2_id) {
-                  Image.
-                    findOne({_id:message.process.image2_id})
-                    .exec(function(im2_error, im2_result){
-                      if (im2_result) {
-                        message.image2 = im1_result;
-                        console.log('  Pushing onto return_array with image2 info');
-                        return_array.push(['result_details', message]);
-                      } else {
-                        console.log('  Pushing onto return_array without image2 info');
-                        return_array.push(['result_details', message]);
-                      }
-                    });
-                } else {
-                  console.log('  Pushing onto return_array');
-                  return_array.push(['result_details', message]);
-                  return return_array;
-                }
+      // Go through possible images and add their details to the result
+      let possible_images = ['image', 'image1', 'image2'];
+      let index = 0;
+      possible_images.forEach(function(image) {
+
+        // Keep track of where we are
+        index += 1;
+
+        // The image key we are looking for
+        let image_key = image+'_id';
+        console.log('  Looking for', image_key);
+
+        // Look for image_ids in process
+        if (message.process[image_key]) {
+          Image
+            .findOne({_id:message.process[image_key]})
+            .exec(function(error, result) {
+              if (error) {
+                console.error(error);
               } else {
-                console.log('  Pushing onto return_array');
+                if (result) {
+                  message[image] = result;
+                }
+              }
+              // Done?
+              if (index == 3) {
                 return_array.push(['result_details', message]);
                 return return_array;
               }
-            }
-          });
-
-      // Integrate result - get image data
-      } else if (('image_id' in message.process)) {
-        console.log('  Looking for image', message.process.image_id);
-        Image.
-          findOne({_id:message.process.image_id})
-          .exec(function(im_error, im_result){
-            if (im_error) {
-              console.error(im_error);
-            }
-            if (im_result) {
-              message.image1 = im_result;
-              console.log('  Pushing integrate result onto return_array');
-              return_array.push(['result_details', message]);
-            }
-          });
-
-      // No images to get data on
-      } else {
-        console.log('  No images in message.process - pushing onto return_array');
-        return_array.push(['result_details', message]);
-        return return_array;
-      }
+            });
+        }
+      });
+      // if ('image1_id' in message.process) {
+      //   console.log('  Looking for image1', message.process.image1_id);
+      //   Image.
+      //     findOne({_id:message.process.image1_id})
+      //     .exec(function(im1_error, im1_result){
+      //       if (im1_error) {
+      //         console.error(im1_error);
+      //       }
+      //       if (im1_result) {
+      //         console.log('  Have image1');
+      //         message.image1 = im1_result;
+      //         if ('image2_id' in message.process) {
+      //           if (message.process.image2_id) {
+      //             console.log('  Looking for image2', message.process.image2_id);
+      //             Image.
+      //               findOne({_id:message.process.image2_id})
+      //               .exec(function(im2_error, im2_result){
+      //                 if (im2_error) {
+      //                   console.error(im2_error);
+      //                   console.log('  Pushing onto return_array without image2 info');
+      //                   return_array.push(['result_details', message]);
+      //                 }
+      //                 if (im2_result) {
+      //                   message.image2 = im1_result;
+      //                   console.log('  Pushing onto return_array with image2 info');
+      //                   return_array.push(['result_details', message]);
+      //                 } else {
+      //                   console.log('  Pushing onto return_array without image2 info');
+      //                   return_array.push(['result_details', message]);
+      //                 }
+      //               });
+      //           } else {
+      //             console.log('  Pushing onto return_array');
+      //             return_array.push(['result_details', message]);
+      //             return return_array;
+      //           }
+      //         } else {
+      //           console.log('  Pushing onto return_array');
+      //           return_array.push(['result_details', message]);
+      //           return return_array;
+      //         }
+      //       }
+      //     });
+      //
+      // // Integrate result - get image data
+      // } else if (('image_id' in message.process)) {
+      //   console.log('  Looking for image', message.process.image_id);
+      //   Image.
+      //     findOne({_id:message.process.image_id})
+      //     .exec(function(im_error, im_result){
+      //       if (im_error) {
+      //         console.error(im_error);
+      //       }
+      //       if (im_result) {
+      //         message.image1 = im_result;
+      //         console.log('  Pushing integrate result onto return_array');
+      //         return_array.push(['result_details', message]);
+      //       }
+      //     });
+      //
+      // // No images to get data on
+      // } else {
+      //   console.log('  No images in message.process - pushing onto return_array');
+      //   return_array.push(['result_details', message]);
+      //   return return_array;
+      // }
 
       // Return
       // return return_array;
