@@ -327,7 +327,7 @@ calculation",
 SIGI(+),I(-),SIGI(-)\"  scaling.input.parameters.reporting.loggraphs=True" % \
 self.command["input_data"]["datafile"]
 
-        print command
+        # print command
 
         xtriage_proc = subprocess.Popen([command,],
                                         stdout=subprocess.PIPE,
@@ -342,7 +342,8 @@ self.command["input_data"]["datafile"]
         shutil.move("logfile.log", "xtriage.log")
 
         self.results["parsed"]["xtriage"] = \
-            xtriage.parse_raw_output(self.results["raw"]["xtriage"])
+            xtriage.parse_raw_output(raw_output=self.results["raw"]["xtriage"],
+                                     logger=self.logger)
 
         return True
 

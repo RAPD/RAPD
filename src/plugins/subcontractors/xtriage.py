@@ -50,10 +50,12 @@ import sys
 # import utils
 from utils.r_numbers import try_int, try_float
 
-def parse_raw_output(raw_output):
+def parse_raw_output(raw_output, logger=False):
     """
     Parse phenix.xtriage output.
     """
+    if logger:
+        logger.debug("parse_raw_output")
 
     output_lines = []
     anom_lines = []
@@ -700,5 +702,8 @@ def parse_raw_output(raw_output):
         "verdict_text": verdict_text,
         "z-score": z_score,
     }
+
+    if logger:
+        logger.debug("parse_raw_output Done")
 
     return results
