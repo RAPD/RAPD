@@ -496,7 +496,9 @@ class RapdPlugin(Process):
 
     def send_results(self, results):
         """Let everyone know we are working on this"""
-        # print "!! send_results !!"
+
+        self.logger.debug("send_results")
+
         if self.preferences.get("run_mode") == "server":
 
             self.logger.debug("Sending back on redis")
@@ -514,6 +516,8 @@ class RapdPlugin(Process):
 
     def postprocess(self):
         """After it's all done"""
+
+        self.logger.debug("postprocess")
 
         # "Finish" the data
         # self.finish_data()
@@ -547,6 +551,8 @@ class RapdPlugin(Process):
     def print_credits(self):
         """Print credits for programs utilized by this plugin"""
 
+        self.logger.debug("print_credits")
+
         self.tprint(rcredits.HEADER,
                     level=99,
                     color="blue")
@@ -558,6 +564,8 @@ class RapdPlugin(Process):
 
     def run_analysis_plugin(self):
         """Set up and run the analysis plugin"""
+
+        self.logger.debug("run_analysis_plugin")
 
         # Run analysis
         if self.preferences.get("analysis", False):
@@ -2346,8 +2354,10 @@ class RapdPlugin(Process):
         Transfer files to a directory that the control can access
         """
 
+        self.logger.debug("transfer_files")
+
         if self.preferences.get("exchange_dir", False):
-            print "transfer_files", self.preferences["exchange_dir"]
+            # print "transfer_files", self.preferences["exchange_dir"]
 
             # Determine and validate the place to put the data
             target_dir = os.path.join(self.preferences["exchange_dir"], os.path.split(self.dirs["work"])[1])
@@ -2403,9 +2413,7 @@ class RapdPlugin(Process):
     def write_json(self, results):
         """Write a file with the JSON version of the results"""
 
-        print "write_json"
-
-        # pprint(results);
+        self.logger.debug("write_json")
 
         json_string = json.dumps(results)
 
