@@ -151,6 +151,13 @@ export class AdminpanelComponent implements OnInit {
     } else {
       this.users.unshift(new_user);
     }
+
+    index = this.filtered_users.findIndex(user => user._id === new_user._id);
+    if (index !== -1) {
+      this.filtered_users.splice(index, 1, new_user);
+    } else {
+      this.filtered_users.unshift(new_user);
+    }
   }
 
   deleteUser(_id: string) {
@@ -159,6 +166,11 @@ export class AdminpanelComponent implements OnInit {
     let index = this.users.findIndex(user => user._id === _id);
     if (index !== -1) {
       this.users.splice(index, 1);
+    }
+
+    index = this.filtered_users.findIndex(user => user._id === _id);
+    if (index !== -1) {
+      this.filtered_users.splice(index, 1);
     }
   }
 
@@ -391,6 +403,13 @@ export class AdminpanelComponent implements OnInit {
     } else {
       this.sessions.unshift(new_session);
     }
+
+    index = this.filtered_sessions.findIndex(session => session._id === new_session._id);
+    if (index !== -1) {
+      this.filtered_sessions.splice(index, 1, new_session);
+    } else {
+      this.filtered_sessions.unshift(new_session);
+    }
   }
 
   deleteSession(_id: string) {
@@ -399,6 +418,11 @@ export class AdminpanelComponent implements OnInit {
     let index = this.sessions.findIndex(session => session._id === _id);
     if (index !== -1) {
       this.sessions.splice(index, 1);
+    }
+
+    index = this.filtered_sessions.findIndex(session => session._id === _id);
+    if (index !== -1) {
+      this.filtered_sessions.splice(index, 1);
     }
   }
 }
