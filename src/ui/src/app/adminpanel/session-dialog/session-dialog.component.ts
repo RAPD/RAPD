@@ -36,7 +36,7 @@ export class SessionDialogComponent implements OnInit {
     this.session_form = new FormGroup({
       group: new FormControl(),
       site: new FormControl(),
-      data_root_directory: new FormControl(),
+      data_root_dir: new FormControl(),
       // session_type: new FormControl()
     });
   }
