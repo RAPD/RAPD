@@ -113,69 +113,69 @@ parse_message = function(channel, message) {
       if (message.command === 'ECHO') {
         console.log('Echo...');
         deferred.resolve(return_array);
-        console.log('past the resolve');
-      }
+      // Do something for not ECHO
+      } else {
+        // Create a result
+        let result = { _id: message.process.result_id,
+            data_type: message.plugin.data_type.toLowerCase(),
+            parent_id: message.process.parent_id,
+            plugin_id: message.plugin.id,
+            plugin_type: message.plugin.type.toLowerCase(),
+            plugin_version: message.plugin.version,
+            projects: [],
+            repr: message.process.repr,
+            result_id: message._id,
+            session_id: message.process.session_id,
+            status: message.process.status,
+            timestamp: new Date().toISOString()
+            };
+        return_array.push(['results', [result]]);
+        console.log('  Pushed results object onto return array');
 
-      // Create a result
-      let result = { _id: message.process.result_id,
-          data_type: message.plugin.data_type.toLowerCase(),
-          parent_id: message.process.parent_id,
-          plugin_id: message.plugin.id,
-          plugin_type: message.plugin.type.toLowerCase(),
-          plugin_version: message.plugin.version,
-          projects: [],
-          repr: message.process.repr,
-          result_id: message._id,
-          session_id: message.process.session_id,
-          status: message.process.status,
-          timestamp: new Date().toISOString()
-          };
-      return_array.push(['results', [result]]);
-      console.log('  Pushed results object onto return array');
+        // Create a detailed result
 
-      // Create a detailed result
+        // Go through possible images and add their details to the result
+        let possible_images = ['image', 'image1', 'image2'];
+        let index = 0;
+        possible_images.forEach(function(image) {
 
-      // Go through possible images and add their details to the result
-      let possible_images = ['image', 'image1', 'image2'];
-      let index = 0;
-      possible_images.forEach(function(image) {
+          // The image key we are looking for
+          let image_key = image+'_id';
+          console.log('  Looking for', image_key);
 
-        // The image key we are looking for
-        let image_key = image+'_id';
-        console.log('  Looking for', image_key);
-
-        // Look for image_ids in process
-        if (message.process[image_key]) {
-          Image
-            .findOne({_id:message.process[image_key]})
-            .exec(function(error, image_result) {
-              // console.log(image_key, error, result);
-              if (error) {
-                console.error(error);
-              } else if (image_result) {
-                console.log('Found image data for', image);
-                message[image] = image_result._doc;
-              }
-              // Done?
-              index += 1;
-              if (index == 3) {
-                return_array.push(['result_details', message]);
-                console.log('return_array now has length', return_array.length);
-                console.log('return_array', return_array);
-                deferred.resolve(return_array);
-              }
-            });
-        } else {
-          // Done?
-          index += 1;
-          if (index == 3) {
-            return_array.push(['result_details', message]);
-            console.log('return_array now has length', return_array.length);
-            console.log('return_array', return_array);
-            deferred.resolve(return_array);
+          // Look for image_ids in process
+          if (message.process[image_key]) {
+            Image
+              .findOne({_id:message.process[image_key]})
+              .exec(function(error, image_result) {
+                // console.log(image_key, error, result);
+                if (error) {
+                  console.error(error);
+                } else if (image_result) {
+                  console.log('Found image data for', image);
+                  message[image] = image_result._doc;
+                }
+                // Done?
+                index += 1;
+                if (index == 3) {
+                  return_array.push(['result_details', message]);
+                  console.log('return_array now has length', return_array.length);
+                  console.log('return_array', return_array);
+                  deferred.resolve(return_array);
+                }
+              });
+          } else {
+            // Done?
+            index += 1;
+            if (index == 3) {
+              return_array.push(['result_details', message]);
+              console.log('return_array now has length', return_array.length);
+              console.log('return_array', return_array);
+              deferred.resolve(return_array);
+            }
           }
-        }
-      });
+        });
+      }
 
       break;
 
