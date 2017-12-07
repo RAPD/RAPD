@@ -98,7 +98,7 @@ class RapdPlugin(Process):
     sample_type = "protein"
     solvent_content = 0.55
     stats_timer = 180
-    test = True
+    # test = True
     volume = None
 
     do_molrep = True
@@ -112,7 +112,7 @@ class RapdPlugin(Process):
         "command": None,
         "parsed": {},
         "raw": {},
-        "process": None
+        "process": {}
     }
 
     def __init__(self, command, tprint=False, logger=False):
@@ -206,8 +206,8 @@ class RapdPlugin(Process):
         # Construct the results object
         self.construct_results()
 
-        if self.test:
-            self.logger.debug("TEST IS SET \"ON\"")
+        # if self.test:
+        #     self.logger.debug("TEST IS SET \"ON\"")
 
         # Check for dependency problems
         self.check_dependencies()
@@ -296,6 +296,7 @@ calculation",
     def postprocess(self):
         """Clean up after plugin action"""
 
+        self.logger.debug("postprocess")
         self.tprint("postprocess", level=10, color="white")
 
         # Cleanup my mess.
@@ -319,6 +320,7 @@ calculation",
         reported to STDOUT
         """
 
+        self.logger.debug("run_xtriage")
         self.tprint("  Running xtriage", level=30, color="white")
 
         command = "phenix.xtriage %s scaling.input.xray_data.obs_labels=\"I(+),\
@@ -346,6 +348,8 @@ self.command["input_data"]["datafile"]
 
     def run_molrep(self):
         """Run Molrep to calculate self rotation function"""
+
+        self.logger.debug("run_molrep")
 
         if self.do_molrep:
 
@@ -429,6 +433,8 @@ self.command["input_data"]["datafile"]
 
     def run_phaser_ncs(self):
         """Run Phaser tNCS and anisotropy correction"""
+
+        self.logger.debug("run_phaser_ncs")
 
         if self.do_phaser:
 
@@ -519,6 +525,7 @@ self.command["input_data"]["datafile"]
     def clean_up(self):
         """Clean up the working directory"""
 
+        self.logger.debug("clean_up")
         self.tprint("  Cleaning up", level=30, color="white")
 
         if self.preferences.get("clean", False):
@@ -536,6 +543,8 @@ self.command["input_data"]["datafile"]
 
     def handle_return(self):
         """Output data to consumer"""
+
+        self.logger.debug("handle_return")
 
         run_mode = self.preferences["run_mode"]
 
