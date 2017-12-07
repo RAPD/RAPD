@@ -274,15 +274,27 @@ export class AdminpanelComponent implements OnInit {
     } else {
       this.groups.unshift(new_group);
     }
+
+    let index = this.filtered_groups.findIndex(group => group._id === new_group._id);
+    if (index !== -1) {
+      this.filtered_groups.splice(index, 1, new_group);
+    } else {
+      this.filtered_groups.unshift(new_group);
+    }
   }
 
   deleteGroup(_id: string) {
     // console.log('deleteGroup', _id);
-    // If the user already exists, replace it
+    // If the user exists, delete it
     let index = this.groups.findIndex(group => group._id === _id);
     if (index !== -1) {
       this.groups.splice(index, 1);
     }
+    let index = this.filtered_groups.findIndex(group => group._id === _id);
+    if (index !== -1) {
+      this.filtered_groups.splice(index, 1);
+    }
+
   }
 
   //
