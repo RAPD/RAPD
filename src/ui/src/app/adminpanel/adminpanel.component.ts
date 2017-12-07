@@ -275,7 +275,7 @@ export class AdminpanelComponent implements OnInit {
       this.groups.unshift(new_group);
     }
 
-    let index = this.filtered_groups.findIndex(group => group._id === new_group._id);
+    index = this.filtered_groups.findIndex(group => group._id === new_group._id);
     if (index !== -1) {
       this.filtered_groups.splice(index, 1, new_group);
     } else {
@@ -290,7 +290,7 @@ export class AdminpanelComponent implements OnInit {
     if (index !== -1) {
       this.groups.splice(index, 1);
     }
-    let index = this.filtered_groups.findIndex(group => group._id === _id);
+    index = this.filtered_groups.findIndex(group => group._id === _id);
     if (index !== -1) {
       this.filtered_groups.splice(index, 1);
     }
