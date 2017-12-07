@@ -1,0 +1,30 @@
+<mat-card *ngIf="log" class="rapd-raw-output-card">
+  <mat-card-header>
+    <div style="width:100%">
+      <div style="float:left;">
+        <h3>{{header}}</h3>
+      </div>
+      <div style="float:right">
+        <button mat-mini-fab class="raw-output-toggle" color="primary">
+          <mat-icon
+            *ngIf="log_collapsed"
+            class="mat-24"
+            (click)="log_collapsed=false">
+            expand_more
+          </mat-icon>
+          <mat-icon
+            *ngIf="! log_collapsed"
+            class="mat-24"
+            (click)="log_collapsed=true">
+            expand_less
+          </mat-icon>
+        </button>
+      </div>
+    </div>
+  </mat-card-header>
+  <mat-card-content class="rapd-raw-output">
+    <div [ngClass]="{'raw-collapsed':log_collapsed}">
+      <p *ngFor="let line of log">{{line}}</p>
+    </div>
+  </mat-card-content>
+</mat-card>

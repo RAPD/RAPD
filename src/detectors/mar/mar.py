@@ -5,6 +5,7 @@ import os
 import re
 import struct
 import sys
+import unicodedata
 
 from iotbx.detectors.detectorbase import DetectorImageBase
 
@@ -13,7 +14,13 @@ class MARImage(DetectorImageBase):
     def __init__(self, filename):
         """Initialize the instance"""
 
-        DetectorImageBase.__init__(self, filename)
+        # Make sure the image name is a string for iotbx
+        try:
+            image_str = unicodedata.normalize("NFKD", filename).encode("ascii", "ignore")
+        except TypeError:
+            image_str = filename
+
+        DetectorImageBase.__init__(self, image_str)
         # self.vendortype = "MARCCD"
 
         byte_order = str(open(self.filename, "rb").read(2))
@@ -236,88 +243,70 @@ def read_header(image,
                 #   place_in_run=None,
                   logger=False):
 
-  """
-  Given a full file name for a Piltus image (as a string), read the header and
-  return a dict with all the header info
-  """
-  # print "determine_flux %s" % image
-  if logger:
-    logger.debug("read_header %s", image)
+    """
+    Given a full file name for a Piltus image (as a string), read the header and
+    return a dict with all the header info
+    """
+    # print "determine_flux %s" % image
+    if logger:
+        logger.debug("read_header %s", image)
 
-  m = MARImage(image)
-  m.read()
-  header = m.parameters
+    # Make sure the image name is a string for iotbx
+    try:
+        image_str = unicodedata.normalize("NFKD", image).encode("ascii", "ignore")
+    except TypeError:
+        image_str = image
 
-  header_items = { 'detector_sn'  : str(m.serial_number),
-                   'date'         : str(header['DATE']),
-                   'pixel_size'   : float(m.pixel_size),
-                   'time'         : float(header['TIME']),
-                   #'period'       : ("^# Exposure_period\s*([\d\.]+) s", lambda x: float(x)),
-                   'count_cutoff' : int(m.saturation),
-                   'wavelength'   : float(m.wavelength),
-                   'distance'     : float(m.distance),
-                   #'transmission' : ("^# Filter_transmission\s*([\d\.]+)", lambda x: float(x)),
-                   'osc_start'    : float(m.osc_start),
-                   'osc_range'    : float(header['OSC_RANGE']),
-                   'twotheta'     : float(header['TWOTHETA']),
-                   'size1'        : int(header['SIZE1']),
-                   'size2'        : int(header['SIZE2']),
-                   'omega_end'    : float(header['OMEGA_END']),
-                   'omega_start'  : float(header['OMEGA_START']),
-                   #Flipped!!
-                   'beam_center_x': float(header['BEAM_CENTER_Y']),
-                   'beam_center_y': float(header['BEAM_CENTER_X']),
-                   #'vendortype'   : m.vendortype,
+    m = MARImage(image_str)
+    m.read()
+    header = m.parameters
+
+    header_items = {'detector_sn'  : str(m.serial_number),
+                    'date'         : str(header['DATE']),
+                    'pixel_size'   : float(m.pixel_size),
+                    'time'         : float(header['TIME']),
+                    #'period'       : ("^# Exposure_period\s*([\d\.]+) s", lambda x: float(x)),
+                    'count_cutoff' : int(m.saturation),
+                    'wavelength'   : float(m.wavelength),
+                    'distance'     : float(m.distance),
+                    #'transmission' : ("^# Filter_transmission\s*([\d\.]+)", lambda x: float(x)),
+                    'osc_start'    : float(m.osc_start),
+                    'osc_range'    : float(header['OSC_RANGE']),
+                    'twotheta'     : float(header['TWOTHETA']),
+                    'size1'        : int(header['SIZE1']),
+                    'size2'        : int(header['SIZE2']),
+                    'omega_end'    : float(header['OMEGA_END']),
+                    'omega_start'  : float(header['OMEGA_START']),
+                    #Flipped!!
+                    'beam_center_x': float(header['BEAM_CENTER_Y']),
+                    'beam_center_y': float(header['BEAM_CENTER_X']),
+                    #'vendortype'   : m.vendortype,
                    }
 
-  #Figure out which MAR detector was used
-  if header_items['size1'] == 3840:
-    det = 'ray300'
-  else:
-    det = 'mar300'
-
-  #try:
-  #tease out the info from the file name
-  base = os.path.basename(image)
-  # ubc = base.count('_')
-  # if ubc == 0:
-  #   ip =  base.split(".")[0]
-  #   rn = None
-  # elif ubc == 1:
-  #   ip = base.split("_")[0]
-  #   rn = base[base.rfind("_")+1:base.rfind('.')]
-  # else:
-  #   ip = "_".join(base.split("_")[0:-1])
-  #   rn = base[base.rfind("_")+1:base.rfind('.')]
-
-  parameters = {'fullname'     : image,
-                'detector'     : det,
-                'directory'    : os.path.dirname(image),
-                'image_prefix' : str(".".join(base.split(".")[:-1])),
-                # 'run_number'   : str(rn),
-		        'image_number' : int(base.split(".")[-1]),
-                'axis'         : 'omega',
-                # 'collect_mode' : mode,
-                # 'run_id'       : run_id,
-                # 'place_in_run' : place_in_run,
-                }
-  """
-  for label,pat in header_items.iteritems():
-    # print label
-    pattern = re.compile(pat[0], re.MULTILINE)
-    matches = pattern.findall(header)
-    if len(matches) > 0:
-      parameters[label] = pat[1](matches[-1])
+    #Figure out which MAR detector was used
+    if header_items['size1'] == 3840:
+        det = 'ray300'
     else:
-      parameters[label] = None
-  """
-  parameters.update(header_items)
-  return(parameters)
-  """
-  except:
-    if logger:
-      logger.exception('Error reading the header for image %s' % image)
-  """
+        det = 'mar300'
+
+    # Tease out the info from the file name
+    base = os.path.basename(image)
+
+    parameters = {'fullname'     : image,
+                  'detector'     : det,
+                  'directory'    : os.path.dirname(image),
+                  'image_prefix' : str(".".join(base.split(".")[:-1])),
+                  # 'run_number'   : str(rn),
+  		          'image_number' : int(base.split(".")[-1]),
+                  'axis'         : 'omega',
+                  # 'collect_mode' : mode,
+                  # 'run_id'       : run_id,
+                  # 'place_in_run' : place_in_run,
+                 }
+
+    parameters.update(header_items)
+    return parameters
+
 if __name__ == "__main__":
 
     # Test the header reading

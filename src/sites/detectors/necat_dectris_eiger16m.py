@@ -29,10 +29,11 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
-from collections import OrderedDict
 import os
 from pprint import pprint
 import re
+import time
+import numpy
 
 # RAPD imports
 # commandline_utils
@@ -40,6 +41,7 @@ import re
 # utils
 
 # Dectris Pilatus 6M
+import detectors
 import detectors.dectris.dectris_eiger16m as detector
 import detectors.detector_utils as utils
 
@@ -63,57 +65,33 @@ HEADER_VERSION = 1
 # XDS information for constructing the XDS.INP file
 # Import from more generic detector
 XDS_FLIP_BEAM = detector.XDS_FLIP_BEAM
-# XDSINP = detector.XDSINP
+
+# Get the reference input
+XDSINP0 = detector.XDSINP
 # Update the XDS information from the imported detector
-XDSINP = OrderedDict([
-    ("REFINE(CORRECT)", "POSITION DISTANCE BEAM ORIENTATION CELL AXIS"),
-    ("REFINE(IDXREF)", "BEAM AXIS ORIENTATION CELL"),
-    ("REFINE(INTEGRATE)", "POSITION DISTANCE BEAM ORIENTATION CELL"),
-    ("STRICT_ABSORPTION_CORRECTION", "TRUE"),
-    ("TRUSTED_REGION", "0.00 1.2"),
-    ("VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS", "8000. 30000."),
-    ("MINIMUM_ZETA", "0.05"),
-    ("CORRECTIONS", "DECAY MODULATION ABSORP"),
-    ("STRONG_PIXEL", "6"),
-    ("MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT", "4"),
-    ("MINIMUM_FRACTION_OF_INDEXED_SPOTS", "0.25"),
-    ("SEPMIN", "4"),
-    ("CLUSTER_RADIUS", "2"),
-    ("NUMBER_OF_PROFILE_GRID_POINTS_ALONG_ALPHA/BETA", "13"),
-    ("NUMBER_OF_PROFILE_GRID_POINTS_ALONG_GAMMA", "9"),
-    ("DETECTOR", "EIGER"),
-    ("MINIMUM_VALID_PIXEL_VALUE", "0"),
-    ("OVERLOAD", "3000000"),
-    ("SENSOR_THICKNESS", "0.32"),
-    ("QX", "0.075 "),
-    ("QY", "0.075"),
-    ("NX", "4150"),
-    ("NY", "4371"),
-    ("DIRECTION_OF_DETECTOR_X-AXIS", "1 0 0"),
-    ("DIRECTION_OF_DETECTOR_Y-AXIS", "0 1 0"),
-    ("INCIDENT_BEAM_DIRECTION", "0 0 1"),
-    ("ROTATION_AXIS", "1 0 0"),
-    ("FRACTION_OF_POLARIZATION", "0.99"),
-    ("POLARIZATION_PLANE_NORMAL", "0 1 0"),
-    ("UNTRUSTED_RECTANGLE1", "    0 4151    514  552"),
-    ("UNTRUSTED_RECTANGLE2", "    0 4151   1065 1103"),
-    ("UNTRUSTED_RECTANGLE3", "    0 4151   1616 1654"),
-    ("UNTRUSTED_RECTANGLE4", "    0 4151   2167 2205"),
-    ("UNTRUSTED_RECTANGLE5", "    0 4151   2718 2756"),
-    ("UNTRUSTED_RECTANGLE6", "    0 4151   3269 3307"),
-    ("UNTRUSTED_RECTANGLE7", "    0 4151   3820 3858"),
-    ("UNTRUSTED_RECTANGLE8", "    0 4151    225  260"),
-    ("UNTRUSTED_RECTANGLE9", "    0 4151    806  811"),
-    ("UNTRUSTED_RECTANGLE10", "    0 4151   1357 1362"),
-    ("UNTRUSTED_RECTANGLE11", "    0 4151   1908 1913"),
-    ("UNTRUSTED_RECTANGLE12", "    0 4151   2459 2464"),
-    ("UNTRUSTED_RECTANGLE13", "    0 4151   3010 3015"),
-    ("UNTRUSTED_RECTANGLE14", "    0 4151   3561 3566"),
-    ("UNTRUSTED_RECTANGLE15", "    0 4151   4112 4117"),
-    ("UNTRUSTED_RECTANGLE16", " 1030 1041      0 4372"),
-    ("UNTRUSTED_RECTANGLE17", " 2070 2081      0 4372"),
-    ("UNTRUSTED_RECTANGLE18", " 3110 3121      0 4372"),
-    ])
+# only if there are differnces or new keywords.
+# The tuple should contain two items (key and value)
+# ie. XDSINP1 = [("SEPMIN", "4"),]
+XDSINP1 = [('MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT', '4') ,
+    ('NUMBER_OF_PROFILE_GRID_POINTS_ALONG_ALPHA/BETA', '13') ,
+    ('NUMBER_OF_PROFILE_GRID_POINTS_ALONG_GAMMA', '9') ,
+    ('OVERLOAD', '3000000') ,
+    ('REFINE(CORRECT)', 'POSITION DISTANCE BEAM ORIENTATION CELL AXIS') ,
+    ('REFINE(INTEGRATE)', 'POSITION DISTANCE BEAM ORIENTATION CELL') ,
+    ('TRUSTED_REGION', '0.00 1.2') ,
+    ('VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS', '8000. 30000.') ,
+    ('UNTRUSTED_RECTANGLE11', '    0 4151    225  260'),
+    ('UNTRUSTED_RECTANGLE12', '    0 4151    806  811'),
+    ('UNTRUSTED_RECTANGLE13', '    0 4151   1357 1362'),
+    ('UNTRUSTED_RECTANGLE14', '    0 4151   1908 1913'),
+    ('UNTRUSTED_RECTANGLE15', '    0 4151   2459 2464'),
+    ('UNTRUSTED_RECTANGLE16', '    0 4151   3010 3015'),
+    ('UNTRUSTED_RECTANGLE17', '    0 4151   3561 3566'),
+    ('UNTRUSTED_RECTANGLE18', '    0 4151   4112 4117'),
+    ]
+
+XDSINP = utils.merge_xds_input(XDSINP0, XDSINP1)
+
 
 def parse_file_name(fullname):
     """
@@ -168,6 +146,42 @@ def create_image_template(image_prefix, run_number):
 
     return image_template
 
+def calculate_flux(header, site_params):
+    """
+    Calculate the flux as a function of transmission and aperture size.
+    """
+    beam_size_x = site_params.get('BEAM_SIZE_X')
+    beam_size_y = site_params.get('BEAM_SIZE_Y')
+    aperture = header.get('md2_aperture')
+    new_x = beam_size_x
+    new_y = beam_size_y
+    
+    if aperture < beam_size_x:
+        new_x = aperture
+    if aperture < beam_size_y:
+        new_y = aperture
+
+    # Calculate area of full beam used to calculate the beamline flux
+    # Assume ellipse, but same equation works for circle.
+    # Assume beam is uniform
+    full_beam_area = numpy.pi*(beam_size_x/2)*(beam_size_y/2)
+
+    # Calculate the new beam area (with aperture) divided by the full_beam_area.
+    # Since aperture is round, it will be cutting off edges of x length until it matches beam height,
+    # then it would switch to circle
+    if beam_size_y <= aperture:
+        # ellipse
+        ratio = (numpy.pi*(aperture/2)*(beam_size_y/2)) / full_beam_area
+    else:
+        # circle
+        ratio = (numpy.pi*(aperture/2)**2) / full_beam_area
+
+    # Calculate the new_beam_area ratio to full_beam_area
+    flux = int(round(site_params.get('BEAM_FLUX') * (header.get('transmission')/100) * ratio))
+
+    # Return the flux and beam size
+    return (flux, new_x, new_y)
+
 def get_data_root_dir(fullname):
     """
     Derive the data root directory from the user directory
@@ -176,13 +190,55 @@ def get_data_root_dir(fullname):
     Keyword arguments
     fullname -- the full path name of the image file
     """
+    path_split    = fullname.split(os.path.sep)
+    data_root_dir = False
 
-    # Isolate distinct properties of the images path
-    path_split = fullname.split(os.path.sep)
-    data_root_dir = os.path.join("/", *path_split[1:3])
+    gpfs   = False
+    users  = False
+    inst   = False
+    group  = False
+    images = False
+    
+    for p in path_split:
+        if p.startswith('gpfs'):
+            st = path_split.index(p)
+    if path_split[st].startswith("gpfs"):
+        gpfs = path_split[st]
+        if path_split[st+1] == "users":
+            users = path_split[st+1]
+            if path_split[st+2]:
+                inst = path_split[st+2]
+                if path_split[st+3]:
+                    group = path_split[st+3]
 
-    # Return the determined directory
+    if group:
+        data_root_dir = os.path.join("/",*path_split[1:st+4])
+    elif inst:
+        data_root_dir = os.path.join("/",*path_split[1:st+3])
+    else:
+        data_root_dir = False
+
+    #return the determined directory
     return data_root_dir
+
+def get_alt_path(image):
+    """Pass back the alternate path of image located in long term storage."""
+    prefix = ['/epu2/rdma', '/epu/rdma']
+    dirname, imagename = os.path.split(image)
+    for i in range(len(prefix)):
+        if image.startswith(prefix[i]):
+            newdir = dirname.replace(prefix[i],'')[:dirname.rfind('/')]
+            break
+    newpath = os.path.join(newdir[:newdir.rfind('/')], imagename)
+    return newpath
+
+def get_alt_path_WORKING(image):
+    """Pass back the alternate path of image located in long term storage."""
+    prefix = ['/epu2/rdma', '/epu/rdma']
+    dirname, imagename = os.path.split(image)
+    newdir = dirname.replace('/epu/rdma','')[:dirname.rfind('/')]
+    newpath = os.path.join(newdir[:newdir.rfind('/')], imagename)
+    return newpath
 
 def base_read_header(image,
                      logger=False):
@@ -196,6 +252,8 @@ def base_read_header(image,
 
     # Make sure the image is a full path image
     image = os.path.abspath(image)
+    #tease out the info from the file name
+    base = os.path.basename(image).rstrip(".cbf")
 
     def mmorm(x):
         d = float(x)
@@ -206,6 +264,7 @@ def base_read_header(image,
 
     #item:(pattern,transform)
     header_items = {
+        "md2_aperture": ("^# MD2_aperture_size\s*(\d+) microns", lambda x: int(x)/1000),
         "beam_x": ("^# Beam_xy\s*\(([\d\.]+)\,\s[\d\.]+\) pixels", lambda x: float(x)),
         "beam_y": ("^# Beam_xy\s*\([\d\.]+\,\s([\d\.]+)\) pixels", lambda x: float(x)),
         "count_cutoff": ("^# Count_cutoff\s*(\d+) counts", lambda x: int(x)),
@@ -228,6 +287,8 @@ def base_read_header(image,
         "trim_file": ("^#\sTrim_file\:\s*([\w\.]+)", lambda x:str(x).rstrip()),
         "twotheta": ("^# Detector_2theta\s*([\d\.]*)\s*deg", lambda x: float(x)),
         "wavelength": ("^# Wavelength\s*([\d\.]+) A", lambda x: float(x)),
+        "ring_current": ("^# Ring_current\s*([\d\.]*)\s*mA", lambda x: float(x)),
+        "sample_mounter_position": ("^#\sSample_mounter_position\s*([\w\.]+)", lambda x:str(x).rstrip()),
         "size1": ("X-Binary-Size-Fastest-Dimension:\s*([\d\.]+)", lambda x: int(x)),
         "size2": ("X-Binary-Size-Second-Dimension:\s*([\d\.]+)", lambda x: int(x)),
         }
@@ -248,10 +309,6 @@ def base_read_header(image,
             if logger:
                 logger.exception('Error opening %s' % image)
             time.sleep(0.1)
-
-    # try:
-    #tease out the info from the file name
-    base = os.path.basename(image).rstrip(".cbf")
 
     parameters = {
         "fullname": image,
@@ -277,7 +334,7 @@ def base_read_header(image,
         else:
             parameters[label] = None
 
-    # pprint(parameters)
+    pprint(parameters)
 
     # Put beam center into RAPD format mm
     parameters["x_beam"] = parameters["beam_y"] * parameters["pixel_size"]
@@ -307,6 +364,13 @@ def read_header(input_file=False, beam_settings=False):
         header = base_read_header(input_file)
         # header = detector.read_header(input_file)
 
+    # Calculate flux, new beam size and add them to header
+    if beam_settings:
+        flux, x_size, y_size = calculate_flux(header, beam_settings)
+        header['flux'] = flux
+        header['x_beam_size'] = x_size
+        header['y_beam_size'] = y_size
+
     basename = os.path.basename(input_file)
     header["image_prefix"] = "_".join(basename.replace(".cbf", "").split("_")[:-2])
     header["run_number"] = int(basename.replace(".cbf", "").split("_")[-2])
@@ -317,6 +381,7 @@ def read_header(input_file=False, beam_settings=False):
     # The image template for processing
     header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])
     header["run_number_in_template"] = RUN_NUMBER_IN_TEMPLATE
+    header['data_root_dir'] = get_data_root_dir(input_file)
 
     # Return the header
     return header
@@ -367,7 +432,30 @@ def main(args):
 if __name__ == "__main__":
 
     # Get the commandline args
-    commandline_args = get_commandline()
+    #commandline_args = get_commandline()
 
     # Execute code
-    main(args=commandline_args)
+    #main(args=commandline_args)
+    #get_alt_path('/epu/rdma/gpfs2/users/wvu/robart_E_2985/images/robart/runs/F_2/F_2_1_000001/F_2_1_000287.cbf')
+    header = base_read_header('/gpfs2/users/mskcc/patel_E_2891/images/juncheng/snaps/chengwI5_PAIR_0_000005.cbf')
+    site_params = {'BEAM_APERTURE_SHAPE': 'circle',
+                     'BEAM_CENTER_DATE': '2017-3-02',
+                     'BEAM_CENTER_X': (163.2757684023,
+                                       0.0003178917,
+                                       -5.0236657815e-06,
+                                       5.8164218288e-09),
+                     'BEAM_CENTER_Y': (155.1904879862,
+                                       -0.0014631216,
+                                       8.60559283424e-07,
+                                       -2.5709929645e-10),
+                     'BEAM_FLUX': 1500000000000.0,
+                     'BEAM_GAUSS_X': 0.03,
+                     'BEAM_GAUSS_Y': 0.01,
+                     'BEAM_SHAPE': 'ellipse',
+                     'BEAM_SIZE_X': 0.05,
+                     'BEAM_SIZE_Y': 0.02,
+                     'DELTA_OMEGA_MIN': 0.05,
+                     'DETECTOR_DIST_MAX': 1000.0,
+                     'DETECTOR_DIST_MIN': 150.0,
+                     'EXPOSURE_TIME_MIN': 0.05}
+    calculate_flux(header, site_params)

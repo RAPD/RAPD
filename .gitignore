@@ -24,6 +24,7 @@ Python-*
 # Test data
 test_data
 *.log
+ramdisk 
 
 # Just there for local reference
 
@@ -42,6 +43,7 @@ tmp
 src/ui/dist
 src/ui/tmp
 node_modules
+
 
 # UI configuration
 src/ui/src/app/site.ts
@@ -77,3 +79,4 @@ testem.log
 
 #System Files
 Thumbs.db
+

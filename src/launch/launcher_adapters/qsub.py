@@ -1,4 +1,8 @@
 """
+Provides a simple launcher adapter that will launch processes via qsub
+"""
+
+__license__ = """
 This file is part of RAPD
 
 Copyright (C) 2016-2017 Cornell University
@@ -22,37 +26,47 @@ __maintainer__ = "Frank Murphy"
 __email__ = "fmurphy@anl.gov"
 __status__ = "Development"
 
-"""
-Provides a simple launcher adapter that will launch processes via qsub
-
-This is the stock version used at NE-CAT
-"""
-
+# Standard imports
 import logging
-import json
 import os
 from subprocess import Popen
+import drmaa
+import time
+#from multiprocessing import Queue, Process
+from multiprocessing import Process
+from multiprocessing import Queue as mp_Queue
+from Queue import Queue as t_Queue
+from threading import Thread
 
 # RAPD imports
 import utils.launch_tools as launch_tools
+from utils.modules import load_module
+from utils.text import json
+from bson.objectid import ObjectId
 
-class LauncherAdapter(object):
+class LauncherAdapter(Thread):
     """
     An adapter for launcher process.
 
-    Will launch requested job via qsub on current machine
+    Will launch requested job via qsub on current machine.
     """
 
-    def __init__(self, site_id, message, settings):
+    def __init__(self, site, message, settings):
         """
         Initialize the adapter
+
+        Keyword arguments
+        site -- imported site definition module
+        message -- command from the control process
+        settings --
         """
+        Thread.__init__(self)
 
         # Get the logger Instance
         self.logger = logging.getLogger("RAPDLogger")
         self.logger.debug("__init__")
 
-        self.site_id = site_id
+        self.site = site
         self.message = message
         self.settings = settings
 
@@ -62,44 +76,85 @@ class LauncherAdapter(object):
         """
         Orchestrate the adapter's actions
         """
+        if self.message['command'] == 'ECHO':
+            echo = load_module(seek_module='launch.launcher_adapters.echo_simple')
+            # send message to simple_echo
+            echo.LauncherAdapter(self.site, self.message, self.settings)
+        else:
+            # Load the cluster adapter for the site.
+            cluster = load_module(seek_module=self.site.CLUSTER_ADAPTER)
+    
+            # Adjust the message to this site
+            # Get the new working directory. Message only has second part of the path.
+            self.message = cluster.fix_command(self.message)
+    
+            # Get the new working directory
+            work_dir = self.message["directories"]["work"]
+    
+            # Get the launcher directory - Add command_files to keep files isolated
+            qsub_dir = self.message["directories"]["launch_dir"]+"/command_files"
+    
+            # Put the message into a rapd-readable file
+            command_file = launch_tools.write_command_file(qsub_dir, self.message["command"], self.message)
+    
+            # Set the site tag from input
+            site_tag = launch_tools.get_site_tag(self.message).split('_')[0]
+    
+            # The command to launch the job
+            command_line = "rapd.launch -vs %s %s" % (site_tag, command_file)
+    
+            # Parse a label for qsub job from the command_file name
+            qsub_label = os.path.basename(command_file).replace(".rapd", "")
+    
+            # Determine the number of precessors to request for job
+            nproc = cluster.determine_nproc(self.message['command'])
+    
+            # Determine which cluster queue to run
+            queue = cluster.check_queue(self.message['command'])
+    
+            # Setup a Queue to retreive the jobID.
+            q = mp_Queue()
+            #q = t_Queue()
+    
+            # Setup the job and launch it.
+            job = Process(target=cluster.process_cluster,
+                          kwargs={'command':command_line,
+                                  'work_dir':work_dir,
+                                  'logfile':False,
+                                  'batch_queue':queue,
+                                  'nproc':nproc,
+                                  'logger':self.logger,
+                                  'name':qsub_label,
+                                  'mp_event':False,
+                                  'timeout':False,
+                                  'pid_queue':q,
+                                  })
+            job.start()
+            # This will be passed back to a monitor that will watch the jobs and kill ones that run too long.
+            jobID = q.get()
+            print jobID
+    
+            # This joins the jobs so no defunct pythons left.
+            job.join()
+    
+            #while job.is_alive():
+            #    time.sleep(1)
 
-        # Decode message
-        message_decoded = json.loads(self.message)
-
-        # Unpack message
-        try:
-            command, dirs, data, send_address, reply_address = message_decoded
-        except ValueError:
-            self.logger.error("Unable to unpack message")
-            return False
-
-        # Put the command into a file
-        command_file = launch_tools.write_command_file(self.settings["launch_dir"], command, self.message)
-        command_file_path = os.path.abspath(command_file)
-
-        # Generate a label for qsub job
-        qsub_label = os.path.basename(command_file).replace(".rapd", "")
-
-        # Determine the qsub queue
-        def determine_qsub_queue(command):
-            """Determine the queue to use"""
-            if command == "AUTO":
-                cl_queue = "-q index.q -pe smp 4"
-            elif command == "INTE":
-                cl_queue = "-q phase2.q"
-            else:
-                cl_queue = "-q phase1.q"
-            return cl_queue
-        qsub_queue = determine_qsub_queue(command)
-
-        # Call the launch process on the command file
-        # qsub_command = "qsub -cwd -V -b y -N %s %s rapd.python %s %s" %
-        #       (qsub_label, qsub_queue, command_file_path, command_file)
-        qsub_command = "qsub -cwd -V -b y -N %s %s rapd.launch %s" % (
-            qsub_label, qsub_queue, command_file)
-
-        # Launch it
-        self.logger.debug(qsub_command)
-        p = Popen(qsub_command, shell=True)
-        sts = os.waitpid(p.pid, 0)[1]
-        # qsub -d (working_dir) -V -N (job name) (for indexing add '-l nodes=1:ppn=4') command_script
+if __name__ == "__main__":
+    #import multiprocessing
+    #import threading
+    event = multiprocessing.Event()
+    event.set()
+    #threading.Thread(target=run_job).start()
+    processCluster(command='touch junk',
+                   #work_dir='/gpfs6/users/necat/Jon/RAPD_test/Output',
+                   work_dir='/gpfs5/users/necat/rapd/rapd2_t/single/2017-08-09/B_14:612',
+                   logfile='/gpfs6/users/necat/Jon/RAPD_test/Output/temp.log',
+                   queue='index.q',
+                   nproc=2,
+                   name='TEST',
+                   mp_event=event,
+                   timeout=False,)
+    time.sleep(2)
+    print 'event cleared'
+    event.clear()

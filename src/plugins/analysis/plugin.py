@@ -26,32 +26,38 @@ __status__ = "Development"
 
 # This is an active RAPD plugin
 RAPD_PLUGIN = True
-
 # This plugin's type
+DATA_TYPE = "MX"
 PLUGIN_TYPE = "ANALYSIS"
-PLUGIN_SUBTYPE = "EXPERIMENTAL"
-
-# A unique UUID for this handler (uuid.uuid1().hex)
-ID = "f06818cf1b0f11e79232ac87a3333966"
-VERSION = "1.0.0"
+PLUGIN_SUBTYPE = "CORE"
+# A unique UUID for this handler (uuid.uuid1().hex[:4])
+ID = "f068"
+# Version of this plugin
+VERSION = "2.0.0"
 
 # Standard imports
+import base64
 from distutils.spawn import find_executable
-import json
 import logging
 from multiprocessing import Process, Queue
 import os
-# from pprint import pprint
+from pprint import pprint
 import shutil
 import subprocess
-# import sys
+import sys
 import time
 import numpy
 
 # RAPD imports
+import plugins.subcontractors.molrep as molrep
 import plugins.subcontractors.parse as parse
+# import plugins.subcontractors.precession as precession
+import plugins.subcontractors.xtriage as xtriage
+
 import utils.credits as rcredits
 import utils.exceptions as exceptions
+from utils.text import json
+from bson.objectid import ObjectId
 import utils.xutils as xutils
 # import info
 import plugins.pdbquery.commandline
@@ -134,22 +140,18 @@ class RapdPlugin(Process):
 
         # Some logging
         self.logger.info(command)
-        # pprint(command)
+        pprint(command)
 
         # Store passed-in variables
         self.command = command
         self.preferences = command.get("preferences", {})
-        self.results["command"] = command
 
-        # Store into results
-        self.results["command"] = command
         self.results["process"] = {
             "process_id": self.command.get("process_id"),
             "status": 1}
 
         # Start up processing
         Process.__init__(self, name="analysis")
-        self.start()
 
     def run(self):
         """Execution path of the plugin"""
@@ -201,6 +203,9 @@ class RapdPlugin(Process):
         self.command["preferences"]["sample_type"] = self.sample_type
         self.command["preferences"]["solvent_content"] = self.solvent_content
 
+        # Construct the results object
+        self.construct_results()
+
         if self.test:
             self.logger.debug("TEST IS SET \"ON\"")
 
@@ -243,6 +248,29 @@ calculation",
                         color="red")
             self.do_phaser = False
 
+    def construct_results(self):
+        """Create the self.results dict"""
+
+        # Copy over details of this run
+        self.results["command"] = self.command.get("command")
+        self.results["preferences"] = self.command.get("preferences", {})
+
+        # Describe the process
+        self.results["process"] = self.command.get("process", {})
+        # Status is now 1 (starting)
+        self.results["process"]["status"] = 1
+        # Process type is plugin
+        self.results["process"]["type"] = "plugin"
+
+        # Describe plugin
+        self.results["plugin"] = {
+            "data_type":DATA_TYPE,
+            "type":PLUGIN_TYPE,
+            "subtype":PLUGIN_SUBTYPE,
+            "id":ID,
+            "version":VERSION
+        }
+
     def process(self):
         """Run plugin action"""
 
@@ -254,6 +282,8 @@ calculation",
         self.tprint(arg=20, level="progress")
         self.run_phaser_ncs()
         self.tprint(arg=30, level="progress")
+        # self.run_labelit_precession()
+        # self.tprint(arg=40, level="progress")
 
         # Output to terminal
         self.print_xtriage_results()
@@ -282,7 +312,12 @@ calculation",
         self.handle_return()
 
     def run_xtriage(self):
-        """Run Xtriage and the parse the output"""
+        """
+        Run Xtriage and the parse the output
+
+        Xtriage has to be run and the log file read in as the log file has more information than
+        reported to STDOUT
+        """
 
         self.tprint("  Running xtriage", level=30, color="white")
 
@@ -290,12 +325,12 @@ calculation",
 SIGI(+),I(-),SIGI(-)\"  scaling.input.parameters.reporting.loggraphs=True" % \
 self.command["input_data"]["datafile"]
 
+        print command
+
         xtriage_proc = subprocess.Popen([command,],
                                         stdout=subprocess.PIPE,
                                         stderr=subprocess.PIPE,
                                         shell=True)
-        # stdout, _ = xtriage_proc.communicate()
-        # xtriage_output_raw = stdout
         xtriage_proc.wait()
 
         # Store raw output
@@ -305,7 +340,7 @@ self.command["input_data"]["datafile"]
         shutil.move("logfile.log", "xtriage.log")
 
         self.results["parsed"]["xtriage"] = \
-            parse.parse_xtriage_output(self.results["raw"]["xtriage"])
+            xtriage.parse_raw_output(self.results["raw"]["xtriage"])
 
         return True
 
@@ -329,38 +364,64 @@ self.command["input_data"]["datafile"]
             molrep_output_raw = stdout
 
             # Store raw output
-            self.results["raw"]["molrep"] = molrep_output_raw
+            self.results["raw"]["molrep"] = molrep_output_raw.split("\n")
 
             # Save the output in log form
             with open("molrep_selfrf.log", "w") as out_file:
                 out_file.write(stdout)
 
             # Parse the Molrep log
-            parsed_molrep_results = parse.parse_molrep_output(molrep_output_raw)
+            parsed_molrep_results = molrep.parse_raw_output(self.results["raw"]["molrep"])
 
             # Convert the Molrep postscript file to JPEG, if convert is available
-            if find_executable("convert"):
-                convert_proc = subprocess.Popen(["convert",
-                                                 "molrep_rf.ps",
-                                                 "molrep_rf.jpg"],
-                                                stdout=subprocess.PIPE,
-                                                stderr=subprocess.PIPE,
-                                                shell=False)
-                _, stderr = convert_proc.communicate()
-                if stderr:
+            crop_sizes = {
+                "60": "254x305+265+410",
+                "90": "254x305+265+110",
+                "120": "256x305+10+410",
+                "180": "256x305+10+110",
+            }
+
+            convert_executables = ("convert", "/usr/local/bin/convert")
+            for convert_executable in convert_executables:
+                print "Trying %s" % convert_executable
+                if find_executable(convert_executable):
+                    for label, size in crop_sizes.iteritems():
+                        convert_proc = subprocess.Popen([convert_executable,
+                                                         "molrep_rf.ps",
+                                                         "-crop",
+                                                         size,
+                                                         "-quality",
+                                                         "50",
+                                                         "molrep_rf_%s.jpg" % label],
+                                                        stdout=subprocess.PIPE,
+                                                        stderr=subprocess.PIPE,
+                                                        shell=False)
+                        _, stderr = convert_proc.communicate()
+                        print _
+                        print stderr
+                        if stderr:
+                            self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be installed",
+                                        level=30,
+                                        color="red")
+                            parsed_molrep_results["self_rotation_images"] = False
+                            break
+                        else:
+                            parsed_molrep_results["self_rotation_images"] = True
+                            parsed_molrep_results["self_rotation_imagefile_%s" % label] = os.path.abspath("molrep_rf_%s.jpg" % label)
+                            # read in the image and encode
+                            with open("molrep_rf_%s.jpg" % label, "rb") as image_file:
+                                encoded_string = base64.b64encode(image_file.read())
+                                parsed_molrep_results["self_rotation_image_%s" % label] = "data:image/jpeg;base64,"+encoded_string
+
+                    # Break out of the loop trying multiple convert executables
+                    if parsed_molrep_results["self_rotation_images"]:
+                        break;
+                else:
                     self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be \
-installed",
+    installed",
                                 level=30,
                                 color="red")
                     parsed_molrep_results["self_rotation_image"] = False
-                else:
-                    parsed_molrep_results["self_rotation_image"] = os.path.abspath("molrep_rf.jpg")
-            else:
-                self.tprint("  Unable to convert postscript to jpeg. Imagemagick needs to be \
-installed",
-                            level=30,
-                            color="red")
-                parsed_molrep_results["self_rotation_image"] = False
 
             self.results["parsed"]["molrep"] = parsed_molrep_results
 
@@ -386,7 +447,7 @@ installed",
             phaser_output_raw = stdout
 
             # Store raw output
-            self.results["raw"]["phaser"] = phaser_output_raw
+            self.results["raw"]["phaser"] = phaser_output_raw.split("\n")
 
             # Save the output in log form
             with open("phaser_ncs.log", "w") as out_file:
@@ -395,6 +456,14 @@ installed",
             self.results["parsed"]["phaser"] = parse.parse_phaser_ncs_output(phaser_output_raw)
 
         return True
+
+    # def run_labelit_precession(self):
+    #     """Run labelit to make precession photos"""
+    #
+    #     precession.LabelitPP(input=[
+    #         {
+    #             "run":
+    #         }], output=None, logger=self.logger)
 
     def process_pdb_query(self):
         """Prepare and run PDBQuery"""
@@ -481,9 +550,12 @@ installed",
         elif run_mode == "subprocess":
             return self.results
         elif run_mode == "subprocess-interactive":
+            print "handle_return >> subprocess-interactive"
             # self.print_results()
             # self.print_credits()
-            return self.results
+            # return self.results
+            if self.command["queue"]:
+                self.command["queue"].put(self.results)
 
     def print_results(self):
         """Print the results to the commandline"""

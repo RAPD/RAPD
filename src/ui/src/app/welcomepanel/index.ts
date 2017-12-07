@@ -1,0 +1,1 @@
+export * from './welcomepanel.component';

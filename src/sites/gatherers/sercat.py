@@ -38,7 +38,6 @@ __status__ = "Production"
 import argparse
 import datetime
 import importlib
-import json
 import logging
 import logging.handlers
 import os
@@ -58,6 +57,8 @@ import utils.log
 from utils.overwatch import Registrar
 import utils.site
 import utils.text as text
+from utils.text import json
+from bson.objectid import ObjectId
 
 class Gatherer(object):
     """
@@ -75,9 +76,13 @@ class Gatherer(object):
         """
         Setup and start the SercatGatherer
         """
-
+        print "__init__"
         # Get the logger Instance
-        self.logger = logging.getLogger("RAPDLogger")
+        # self.logger = logging.getLogger("RAPDLogger")
+        self.logger = utils.log.get_logger(logfile_dir=site.LOGFILE_DIR,
+                                           logfile_id="rapd_gather",
+                                           #level=log_level
+                                           )
 
         # Passed-in variables
         self.site = site
@@ -101,6 +106,7 @@ class Gatherer(object):
         """
         The while loop for watching the files
         """
+        print "run"
         self.logger.info("SercatGatherer.run")
 
         # Set up overwatcher
@@ -112,10 +118,16 @@ class Gatherer(object):
         # Get redis connection
         red = redis.Redis(connection_pool=self.redis_pool)
 
+        print "  Will publish new images on filecreate:%s" % self.tag
+        print "  Will push new images onto images_collected:%s" % self.tag
+
+
         self.logger.debug("  Will publish new images on filecreate:%s" % self.tag)
         self.logger.debug("  Will push new images onto images_collected:%s" % self.tag)
 
         while self.go:
+
+            print "go"
 
             # 5 rounds of checking
             for ___ in range(5):
@@ -130,7 +142,7 @@ class Gatherer(object):
                         # Publish to Redis
                         red.publish("run_data:%s" % self.tag, run_data_json)
                         # Push onto redis list in case no one is currently listening
-                        red.rpush("run_data:%s" % self.tag, run_data_json)
+                        red.lpush("run_data:%s" % self.tag, run_data_json)
 
                 # 20 image checks
                 for __ in range(20):
@@ -144,7 +156,7 @@ class Gatherer(object):
                             # Publish to Redis
                             red.publish("image_collected:%s" % self.tag, image_name)
                             # Push onto redis list in case no one is currently listening
-                            red.rpush("images_collected:%s" % self.tag, image_name)
+                            red.lpush("images_collected:%s" % self.tag, image_name)
                         break
                     else:
                         time.sleep(0.05)
@@ -261,7 +273,8 @@ class Gatherer(object):
                         image_name = False
                         break
                     else:
-                        image_name = os.path.realpath(sline[1])
+                        # image_name = os.path.realpath(sline[1])
+                        image_name = sline[1]
                         break
 
             self.logger.debug("SercatGatherer.parse_image_line - %s", image_name)

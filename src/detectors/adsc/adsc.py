@@ -35,12 +35,13 @@ import threading
 import time
 import os
 import re
-import pysent
-import json
 import xmlrpclib
 import atexit
 from rapd_site import secret_settings as secrets
 from rapd_utils import date_adsc_to_sql
+
+from utils.text import json
+from bson.objectid import ObjectId
 
 def print_dict(in_dict):
     keys = in_dict.keys()

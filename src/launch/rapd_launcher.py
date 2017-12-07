@@ -30,9 +30,8 @@ __status__ = "Production"
 # Standard imports
 import argparse
 import importlib
-# import logging
-# import logging.handlers
-import socket
+from pprint import pprint
+import redis.exceptions
 import sys
 import time
 
@@ -44,24 +43,27 @@ from utils.modules import load_module
 from utils.overwatch import Registrar
 import utils.site
 import utils.text as text
+from utils.text import json
+from bson.objectid import ObjectId
+from threading import Thread
 
 BUFFER_SIZE = 8192
 
 class Launcher(object):
     """
-    Runs a socket server and spawns new threads using defined launcher_adapter
-    when connections are received
+    Connects to Redis instance, listens for jobs, and spawns new threads using defined
+    launcher_adapter
     """
 
-    database = None
     adapter = None
+    #adapter_file = None
+    #database = None
     # address = None
     ip_address = None
-    tag = None
-    port = None
-    job_types = None
-    adapter_file = None
+    #job_types = None
     launcher = None
+    #port = None
+    tag = None
 
     def __init__(self, site, tag="", logger=None, overwatch_id=False):
         """
@@ -73,7 +75,6 @@ class Launcher(object):
         logger -- logger instance (default = None)
         overwatch_id -- id for optional overwatcher instance
         """
-
         # Get the logger Instance
         self.logger = logger
 
@@ -88,7 +89,12 @@ class Launcher(object):
         # Load the adapter
         self.load_adapter()
 
-        # Start listening for commands
+        # Connect to Redis for communications
+        self.connect_to_redis()
+
+        # For loop in self.run
+        self.running = True
+
         self.run()
 
     def run(self):
@@ -99,62 +105,72 @@ class Launcher(object):
             self.ow_registrar = Registrar(site=self.site,
                                           ow_type="launcher",
                                           ow_id=self.overwatch_id)
-            self.ow_registrar.register({"site_id":self.site.ID})
+            self.ow_registrar.register({"site_id":self.site.ID,
+                                        "job_list":self.job_list})
 
-        # Create socket to listen for commands
-        _socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        _socket.settimeout(5)
-        _socket.bind(("", self.specifications["port"]))
-
-        # This is the server portion of the code
-        while 1:
-            try:
+        try:
+            # This is the server portion of the code
+            while self.running:
                 # Have Registrar update status
                 if self.overwatch_id:
-                    self.ow_registrar.update({"site_id":self.site.ID})
+                    self.ow_registrar.update({"site_id":self.site.ID,
+                                              "job_list":self.job_list})
 
-                # Listen for connections
-                _socket.listen(5)
-                conn, address = _socket.accept()
+                # Look for a new command
+                # This will throw a redis.exceptions.ConnectionError if redis is unreachable
+                #command = self.redis.brpop(["RAPD_JOBS",], 5)
+                try:
+                    while self.redis.llen(self.job_list) != 0:
+                        command = self.redis.rpop(self.job_list)
+                        # Handle the message
+                        if command:
+                            self.handle_command(json.loads(command))
 
-                # Read the message from the socket
-                message = ""
-                while not message.endswith("<rapd_end>"):
-                    try:
-                        data = conn.recv(BUFFER_SIZE)
-                        message += data
-                    except:
-                        pass
-                    time.sleep(0.01)
+                            # Only run 1 command
+                            # self.running = False
+                            # break
+                    # sleep a little when jobs aren't coming in.
+                    time.sleep(0.2)
+                except redis.exceptions.ConnectionError:
+                    if self.logger:
+                        self.logger.exception("Remote Redis is not up. Waiting for Sentinal to switch to new host")
+                    time.sleep(1)
 
-                # Close the connection
-                conn.close()
+        except KeyboardInterrupt:
+            self.stop()
 
-                # Handle the message
-                self.handle_message(message)
+    def stop(self):
+        """Stop everything smoothly."""
+        self.running = False
+        if self.overwatch_id:
+            self.ow_registrar.stop()
+        self.redis_database.stop()
 
-            except socket.timeout:
-                pass
-                # print "5 seconds up"
+    def connect_to_redis(self):
+        """Connect to the redis instance"""
+        redis_database = importlib.import_module('database.redis_adapter')
 
-        # If we exit...
-        _socket.close()
+        self.redis_database = redis_database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
+        self.redis = self.redis_database.connect_to_redis()
 
-    def handle_message(self, message):
+    def handle_command(self, command):
         """
-        Handle an incoming message
+        Handle an incoming command
 
         Keyword arguments:
-        message -- raw message from socket
+        command -- command from redis
         """
+        print "handle_command"
+        pprint(command)
 
-        self.logger.debug("Message received: %s", message)
-
-        # Strip the message of its delivery tags
-        message = message.rstrip().replace("<rapd_start>", "").replace("<rapd_end>", "")
+        # Split up the command
+        message = command
+        if self.logger:
+            self.logger.debug("Command received channel:%s  message: %s", self.job_list, message)
 
         # Use the adapter to launch
-        self.adapter(self.site, message, self.specifications)
+        #self.adapter(self.site, message, self.launcher)
+        Thread(target=self.adapter, args=(self.site, message, self.launcher)).start()
 
     def get_settings(self):
         """
@@ -162,12 +178,14 @@ class Launcher(object):
         """
 
         # Save typing
-        launchers = self.site.LAUNCHER_SETTINGS["LAUNCHER_REGISTER"]
+        #launchers = self.site.LAUNCHER_SETTINGS["LAUNCHER_REGISTER"]
 
         # Get IP Address
         self.ip_address = utils.site.get_ip_address()
-        self.logger.debug("Found ip address to be %s", self.ip_address)
-
+        print self.ip_address
+        if self.logger:
+            self.logger.debug("Found ip address to be %s", self.ip_address)
+        """
         # Look for the launcher matching this ip_address and the input tag
         possible_tags = []
         for launcher in launchers:
@@ -176,6 +194,20 @@ class Launcher(object):
                 break
             elif launcher[0] == self.ip_address:
                 possible_tags.append(launcher[1])
+        """
+
+        # Save typing
+        launchers = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"]
+
+        # Look for the launcher matching this ip_address and the input tag
+        possible_tags = []
+        for launcher in launchers:
+            #print launcher
+            if launcher.get('ip_address') == self.ip_address and launcher.get('tag') == self.tag:
+                self.launcher = launcher
+                break
+            elif launcher.get('ip_address') == self.ip_address:
+                possible_tags.append(launcher.get('tag'))
 
         # No launcher adapter
         if self.launcher is None:
@@ -188,40 +220,25 @@ class Launcher(object):
                 print text.error + "There is a launcher adapter registered for thi\
 s IP address (%s), but not for the input tag (%s)" % (self.ip_address, self.tag)
                 print "  Available tags for this IP address:"
-                for t in possible_tags:
-                    print "    %s" % t
+                for tag in possible_tags:
+                    print "    %s" % tag
                 print text.stop
 
             # Exit in error state
             sys.exit(9)
         else:
-            # Unpack address
-            self.ip_address, self.tag, self.launcher_id = self.launcher
-            self.specifications = self.site.LAUNCHER_SETTINGS["LAUNCHER_SPECIFICATIONS"][self.launcher_id]
-            # Tag launcher in self.site
-            self.site.LAUNCHER_ID = self.launcher_id
+            # Get the job_list to watch for this launcher
+            self.job_list = self.launcher.get('job_list')
 
     def load_adapter(self):
         """Find and load the adapter"""
 
         # Import the database adapter as database module
         self.adapter = load_module(
-            seek_module=self.specifications["adapter"],
+            seek_module=self.launcher["adapter"],
             directories=self.site.LAUNCHER_SETTINGS["RAPD_LAUNCHER_ADAPTER_DIRECTORIES"]).LauncherAdapter
-
-        self.logger.debug(self.adapter)
-
-    # def connect_to_database(self):
-    #     """Set up database connection"""
-    #
-    #     # Import the database adapter as database module
-    #     database = importlib.import_module('database.rapd_%s_adapter' % self.site.CONTROL_DATABASE)
-    #
-    #     # Instantiate the database connection
-    #     self.database = database.Database(settings=self.site.CONTROL_DATABASE_SETTINGS)
-
-
-
+        if self.logger:
+            self.logger.debug(self.adapter)
 
 def get_commandline():
     """Get the commandline variables and handle them"""
@@ -230,16 +247,17 @@ def get_commandline():
     commandline_description = """The Launch process for handling calls for
     computation"""
     parser = argparse.ArgumentParser(parents=[base_parser],
-                                     description=commandline_description)
+                                     description=commandline_description,
+                                     conflict_handler='resolve')
 
     # Add the possibility to tag the Launcher
     # This will make it possible to run multiple Launcher configurations
     # on one machine
-    parser.add_argument("--tag", "-t",
+    parser.add_argument("-t", "--tag",
                         action="store",
                         dest="tag",
                         default="",
-                        help="Specify a tag for the Launcher")
+                        help="Specify a tag for the Launcher. Found in sites.LAUNCHER_SPECIFICATIONS")
 
     return parser.parse_args()
 
@@ -283,8 +301,7 @@ def main():
 
     # Instantiate the logger
     logger = utils.log.get_logger(logfile_dir=SITE.LOGFILE_DIR,
-                                  logfile_id="rapd_launcher",
-                                  level=log_level)
+                                  logfile_id="rapd_launcher")
 
     logger.debug("Commandline arguments:")
     for pair in commandline_args._get_kwargs():

@@ -18,7 +18,7 @@ if [ "$RAPD_HOME" != "" ]; then
 
   # Launcher
   echo "#! /bin/bash" > $RAPD_HOME/bin/rapd.launcher
-  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/launch\/rapd_launcher.py \"\$@\"" >>$RAPD_HOME/bin/rapd.launcher
+  echo "$SAFE_PREFIX\/bin\/rapd.python $SAFE_PREFIX\/src\/utils\/overwatch.py --managed_file $SAFE_PREFIX\/src\/launch\/rapd_launcher.py \"\$@\"" >>$RAPD_HOME/bin/rapd.launcher
   chmod +x $RAPD_HOME/bin/rapd.launcher
 
   # Launch process

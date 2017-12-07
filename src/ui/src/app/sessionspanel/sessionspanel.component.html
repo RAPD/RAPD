@@ -1,0 +1,52 @@
+<div class="rapd-main-panel">
+  <article class="c-content">
+    <ngx-datatable
+      class="material"
+      [rows]="sessions"
+      [columnMode]="'force'"
+      [headerHeight]="50"
+      [footerHeight]="50"
+      [limit]="10"
+      [rowHeight]="'auto'"
+      [reorderable]="true"
+      [selectionType]="'single'"
+      [sorts]="[{prop: 'last_process', dir: 'desc'}]"
+      (select)='selectSession($event)'>
+      <ngx-datatable-column name="Site" prop="site">
+        <ng-template let-value="value" ngx-datatable-cell-template>
+          {{value}}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Group" prop="group.groupname">
+        <ng-template let-value="value" ngx-datatable-cell-template>
+          {{value}}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Created" prop="timestamp">
+        <ng-template let-value="value" ngx-datatable-cell-template>
+          {{ value | date:'y-MM-dd HH:mm' }}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Last Process" prop="last_process">
+        <ng-template let-value="value" ngx-datatable-cell-template>
+          {{ value | date:'y-MM-dd HH:mm' }}
+        </ng-template>
+      </ngx-datatable-column>
+      <ngx-datatable-column name="Directory" prop="data_root_dir">
+        <ng-template let-value="value" ngx-datatable-cell-template>
+          {{value}}
+        </ng-template>
+      </ngx-datatable-column>
+    </ngx-datatable>
+  </article>
+  <mat-toolbar class="rapd-main-panel-action-bar">
+    <form class="session-filter-form">
+      <mat-form-field
+        (keyup)='updateSessionFilter($event)'>
+        <input
+          matInput
+          placeholder="Filter">
+      </mat-form-field>
+    </form>
+  </mat-toolbar>
+</div>

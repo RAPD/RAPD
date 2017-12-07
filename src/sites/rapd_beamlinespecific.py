@@ -28,7 +28,6 @@ each specific beamline
 """
 
 import datetime
-import json
 import os
 import pymongo
 import pysent
@@ -37,6 +36,9 @@ import redis.exceptions as redis_exceptions
 import threading
 import time
 import uuid
+
+from utils.text import json
+from bson.objectid import ObjectId
 
 #
 # The default settings for each beamline; Your modifications of rapd_site.py should
@@ -739,7 +741,7 @@ def checkCluster():
 
 def checkClusterConn(self):
   """
-  Check if execution node can talk to head node through port 536. Used for testing to see if 
+  Check if execution node can talk to head node through port 536. Used for testing to see if
   subjobs can submit jobs on compute cluster. All nodes should have ability to execute jobs.
   """
   if self.verbose:
@@ -749,7 +751,7 @@ def checkClusterConn(self):
     job = subprocess.Popen(command,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
     for line in job.stdout:
       self.logger.debug(line)
-  
+
   except:
     self.logger.exception('**ERROR in Utils.checkClusterConn**')
 
@@ -757,7 +759,7 @@ def connectCluster(inp,job=True):
   """
   Used by rapd_agent_beamcenter.py or when a user wants to launch jobs from beamline computer,
   which is not a compute node on cluster, this will login to head node and launch job without
-  having them have the login info. Can setup with password or ssh host keys. 
+  having them have the login info. Can setup with password or ssh host keys.
   """
   import paramiko
   bc = False
@@ -769,7 +771,7 @@ def connectCluster(inp,job=True):
     print 'Job ID:'
   else:
     command = inp
-  #Use this to say job is beam center calculation. 
+  #Use this to say job is beam center calculation.
   if inp.startswith('-pe'):
     bc = True
     #Remove previous beam center results from directory before launching new one.
@@ -793,10 +795,10 @@ def processCluster(self,inp,output=False):
   To eliminate this issue, setup self.running = multiprocessing.Event(), self.running.set() in main script,
   then set it to False (self.running.clear()) during postprocess to kill running jobs smoothly.
   """
-  
+
   #if self.verbose:
     #self.logger.debug('Utilities::processCluster')
-  
+
   import drmaa,time
   try:
     s = False
@@ -812,7 +814,7 @@ def processCluster(self,inp,output=False):
       temp = self.running
     except AttributeError:
       running = False
-    
+
     if len(inp) == 1:
       command = inp
     elif len(inp) == 2:
@@ -849,7 +851,7 @@ def processCluster(self,inp,output=False):
     #cleanup the input script from the RAM.
     s.deleteJobTemplate(jt)
 
-    #If multiprocessing.event is set, then run loop to watch until job or script has finished. 
+    #If multiprocessing.event is set, then run loop to watch until job or script has finished.
     if running:
       #Returns True if job is still running or False if it is dead. Uses CPU to run loop!!!
       decodestatus = {drmaa.JobState.UNDETERMINED: True,
@@ -876,7 +878,7 @@ def processCluster(self,inp,output=False):
       s.wait(job, drmaa.Session.TIMEOUT_WAIT_FOREVER)
     #Exit cleanly, otherwise master node gets event client timeout errors after 600s.
     s.exit()
-      
+
   except:
     self.logger.exception('**ERROR in Utils.processCluster**')
     #Cleanup if error.
@@ -895,10 +897,10 @@ def processClusterSercat(self,inp,output=False):
   To eliminate this issue, setup self.running = multiprocessing.Event(), self.running.set() in main script,
   then set it to False (self.running.clear()) during postprocess to kill running jobs smoothly.
   """
-  
+
   #if self.verbose:
     #self.logger.debug('Utilities::processCluster')
-  
+
   import drmaa,time
   #try:
   s = False
@@ -914,7 +916,7 @@ def processClusterSercat(self,inp,output=False):
     temp = self.running
   except AttributeError:
     running = False
-  
+
   print inp
   if len(inp) == 1:
     command = inp
@@ -929,7 +931,7 @@ def processClusterSercat(self,inp,output=False):
   if queue == False:
     queue = 'all.q'
   #queues aren't used right now.
-  
+
   #Setup path
   v = '-v PATH=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
 /home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/bin:\
@@ -962,7 +964,7 @@ def processClusterSercat(self,inp,output=False):
   #cleanup the input script from the RAM.
   s.deleteJobTemplate(jt)
 
-  #If multiprocessing.event is set, then run loop to watch until job or script has finished. 
+  #If multiprocessing.event is set, then run loop to watch until job or script has finished.
   if running:
     #Returns True if job is still running or False if it is dead. Uses CPU to run loop!!!
     decodestatus = {drmaa.JobState.UNDETERMINED: True,
@@ -987,7 +989,7 @@ def processClusterSercat(self,inp,output=False):
   #Otherwise just wait for it to complete.
   else:
     s.wait(job, drmaa.Session.TIMEOUT_WAIT_FOREVER)
-  
+
   #Exit cleanly, otherwise master node gets event client timeout errors after 600s.
   s.exit()
   """
@@ -1005,7 +1007,7 @@ def processClusterSercat(self,inp,output=False):
 def killChildrenCluster(self,inp):
   """
   Kill jobs on cluster. The JobID is sent in and job is killed. Must be launched from
-  a compute node on the cluster. Used in pipelines to kill jobs when timed out or if 
+  a compute node on the cluster. Used in pipelines to kill jobs when timed out or if
   a solution in Phaser is found in the first round and the second round jobs are not needed.
   """
   import os

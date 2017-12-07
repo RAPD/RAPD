@@ -1,0 +1,80 @@
+<div MatDialogTitle>
+  <button mat-icon-button mat-dialog-close class="button-dialog-top-right">
+    <mat-icon>close</mat-icon>
+  </button>
+  <h2>
+    <div *ngIf="model._id;then edit_content else create_content"></div>
+    <ng-template #edit_content>Edit </ng-template>
+    <ng-template #create_content>Create </ng-template>
+    Group
+  </h2>
+</div>
+<form [formGroup]="group_form">
+  <div class="form-group">
+    <p>
+      <mat-form-field>
+        <input matInput
+          formControlName="groupname"
+          required
+          placeholder='groupname'
+          [(ngModel)]="model.groupname"
+          autofocus>
+      </mat-form-field>
+    </p>
+    <p *ngIf="! globals_service.site.have_users">
+      <mat-form-field>
+        <mat-select formControlName="role"
+          placeholder="Role"
+          [(ngModel)]="model.role">
+          <mat-option value="user">user</mat-option>
+          <mat-option value="site_admin">site_admin</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </p>
+    <p>
+      <mat-form-field>
+        <input matInput
+          placeholder="institution"
+          formControlName="institution"
+          required
+          [(ngModel)]="model.institution">
+      </mat-form-field>
+    </p>
+    <p>
+      <mat-form-field>
+      <input matInput
+        placeholder="UID"
+        formControlName="uidNumber"
+        [(ngModel)]="model.uidNumber">
+      </mat-form-field>
+    </p>
+    <p>
+      <mat-form-field>
+        <input matInput
+          placeholder="GID"
+          formControlName="gidNumber"
+          [(ngModel)]="model.gidNumber  ">
+      </mat-form-field>
+    </p>
+    <p>
+      <mat-form-field>
+        <mat-select formControlName="status"
+          placeholder="Status"
+          [(ngModel)]="model.status">
+          <mat-option value="active">active</mat-option>
+          <mat-option value="inactive">inactive</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </p>
+  </div>
+  <p>
+    <mat-progress-spinner *ngIf="submitted" mode="indeterminate" style="height:30px;width:30px;" color="primary"></mat-progress-spinner>
+  </p>
+  <p>
+    {{error_message}}
+  </p>
+  <p>
+    <button *ngIf="model._id" type="button" mat-button color="warn" (click)="deleteGroup()">Delete</button>
+    <button type="button" [disabled]="!group_form.valid" mat-button (click)="submitGroup()">Save</button>
+  </p>
+</form>

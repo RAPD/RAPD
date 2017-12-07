@@ -363,3 +363,6 @@ int-import-graph=
 # Exceptions that will emit a warning when being caught. Defaults to
 # "Exception"
 overgeneral-exceptions=Exception
+
+# Try to make max line length 100
+max-line-length=100

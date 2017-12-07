@@ -133,7 +133,7 @@ class FileGenerator(CommandlineFileGenerator):
                                                  "sys",
                                                  "uuid"),
                                      added_rapd_imports=(
-                                         "utils.credits as credits",
+                                         "utils.credits as rcredits",
                                          "utils.global_vars as rglobals",
                                          "utils.log",
                                          "utils.modules as modules",
@@ -240,9 +240,11 @@ class FileGenerator(CommandlineFileGenerator):
             "    command = {",
             "        \"command\": \"%s\"," % self.args.plugin_name.upper(),
             "        \"process_id\": uuid.uuid1().get_hex(),",
+            "        \"parent_id\": None,",
+            "        \"source\": \"commandline\",",
             "        \"status\": 0,",
             "        }\n",
-            "    # Work directory",
+            "    # Working directory",
             "    work_dir = commandline_utils.check_work_dir(",
             "        os.path.join(os.path.abspath(os.path.curdir), run_repr),",
             "        active=True,",
@@ -263,6 +265,7 @@ class FileGenerator(CommandlineFileGenerator):
             "        \"no_color\": commandline_args.no_color,",
             "        \"nproc\": commandline_args.nproc,",
             "        \"progress\": commandline_args.progress,",
+            "        \"run_mode\": commandline_args.run_mode,",
             "        \"test\": commandline_args.test,",
             "        \"verbose\": commandline_args.verbose,",
             "    }\n",
@@ -446,7 +449,7 @@ class FileGenerator(CommandlineFileGenerator):
             "    tprint(arg=\"  Plugin version: %s\" % plugin.VERSION, level=10, color=\"white\")",
             "    tprint(arg=\"  Plugin id:      %s\" % plugin.ID, level=10, color=\"white\")\n",
             "    # Run the plugin",
-            "    plugin.RapdPlugin(command, tprint, logger)\n",
+            "    plugin.RapdPlugin(site, command, tprint, logger)\n",
         ]
         file_generator.output_function(main_func_lines)
 
@@ -456,11 +459,12 @@ class FileGenerator(CommandlineFileGenerator):
         tags_lines = [
             "# This is an active RAPD plugin",
             "RAPD_PLUGIN = True\n",
-            "# This plugin's type",
+            "# This plugin's types",
+            "DATA_TYPE = \"MX\"  # MX, ?"
             "PLUGIN_TYPE = \"%s\"" % self.args.plugin_name.upper(),
             "PLUGIN_SUBTYPE = \"EXPERIMENTAL\"\n",
-            "# A unique UUID for this handler (uuid.uuid1().hex)",
-            "ID = \"%s\"" % uuid.uuid1().hex,
+            "# A unique ID for this handler (uuid.uuid1().hex[:4])",
+            "ID = \"%s\"" % uuid.uuid1().hex[:4],
             "VERSION = \"1.0.0\"\n"
         ]
         file_generator.output_function(tags_lines)
@@ -501,7 +505,7 @@ class FileGenerator(CommandlineFileGenerator):
             "    # Holders for passed-in info",
             "    command = None",
             "    preferences = None\n",
-            "    # Holders for results"
+            "    # Holders for results",
             "    results = {}\n",
             "    def __init__(self, command, tprint=False, logger=False):",
             "        \"\"\"Initialize the plugin\"\"\"\n",
@@ -513,13 +517,13 @@ class FileGenerator(CommandlineFileGenerator):
             "            self.logger = logging.getLogger(\"RAPDLogger\")",
             "            self.logger.debug(\"__init__\")\n",
             "        # Keep track of start time",
-            "        self.start_time = time.time()",
+            "        self.start_time = time.time()\n",
             "        # Store tprint for use throughout",
             "        if tprint:",
             "            self.tprint = tprint",
             "        # Dead end if no tprint passed",
             "        else:",
-            "            def func(arg=False, level=False, verbosity=False, color=False):",
+            "            def func(*args, *kwargs):",
             "                pass",
             "            self.tprint = func\n",
             "        # Some logging",
@@ -603,7 +607,7 @@ lotting\",",
             "        \"\"\"Output data to consumer - still under construction\"\"\"\n",
             "        self.tprint(\"handle_return\")\n",
             "        run_mode = self.command[\"preferences\"][\"run_mode\"]\n",
-            "        # Handle JSON At least write to file"
+            "        # Handle JSON At least write to file",
             "        self.write_json()\n",
             "        # Print results to the terminal",
             "        if run_mode == \"interactive\":",
@@ -631,9 +635,9 @@ lotting\",",
             "    def print_credits(self):",
             "        \"\"\"Print credits for programs utilized by this plugin\"\"\"\n",
             "        self.tprint(\"print_credits\")\n",
-            "        self.tprint(credits.HEADER, level=99, color=\"blue\")\n",
+            "        self.tprint(rcredits.HEADER, level=99, color=\"blue\")\n",
             "        programs = [\"CCTBX\"]",
-            "        info_string = credits.get_credits_text(programs, \"    \")",
+            "        info_string = rcredits.get_credits_text(programs, \"    \")",
             "        self.tprint(info_string, level=99, color=\"white\")\n",
         ]
         file_generator.output_function(plugin_lines)

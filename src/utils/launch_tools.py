@@ -31,6 +31,9 @@ import os
 import stat
 import tempfile
 
+from utils.text import json
+from bson.objectid import ObjectId
+
 def write_command_file(target_directory, command, message):
     """
     Write the message to a command file in the target directory
@@ -38,7 +41,7 @@ def write_command_file(target_directory, command, message):
     Keyword arguments
     target_directory -- directory to write the command file in
     command -- command type
-    message -- contents of the commad file
+    message -- contents of the command file
 
     message will be the content of the file:
     target_directory/command_{random chars}.rapd
@@ -53,7 +56,7 @@ def write_command_file(target_directory, command, message):
                                            prefix=command+"_",
                                            suffix=".rapd",
                                            delete=False)
-    out_file.write(message)
+    out_file.write(json.dumps(message))
     out_file.close()
 
     return out_file.name
@@ -84,3 +87,14 @@ def write_command_script(target_file, command_line, shell="/bin/tcsh"):
     os.chmod(target_file, st.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
     return target_file
+
+def get_site_tag(message):
+    """Find and return the site_tag from the image header"""
+    # Find site_tag from SNAP
+    site_tag = False
+    if message.get('image1', False):
+        site_tag = message['image1'].get('site_tag')
+    # Find site_tag from INTEGRATE
+    elif message.get('data', False):
+        site_tag = message['data']['image_data'].get('site_tag')
+    return site_tag

@@ -34,10 +34,12 @@ import math
 import os
 import pprint
 import pwd
-import sys
+import re
+# import sys
 
 # RAPD imports
 import detectors.rayonix.rayonix_mx300hs as detector
+import detectors.detector_utils as utils
 
 DETECTOR = "rayonix_mx300hs"
 VENDORTYPE = "MARCCD"
@@ -45,38 +47,24 @@ DETECTOR_SN = 101
 DETECTOR_SUFFIX = ""
 IMAGE_TEMPLATE = "%s.????"
 RUN_NUMBER_IN_TEMPLATE = False
+SNAP_IN_TEMPLATE = True
 HEADER_VERSION = 1
 
 # XDS information
 XDS_FLIP_BEAM = True
-XDSINP = {
-    "DETECTOR": "MARCCD",
-    "DIRECTION_OF_DETECTOR_X-AXIS": "1.0 0.0 0.0",
-    "DIRECTION_OF_DETECTOR_Y-AXIS": "0.0 1.0 0.0",
-    "FRACTION_OF_POLARIZATION": "0.99",
-    "INCIDENT_BEAM_DIRECTION": "0.0 0.0 1.0",
-    "INCLUDE_RESOLUTION_RANGE": "100.00 0.00",
-    "INDEX_ORIGIN": "0 0 0",
-    "MAX_CELL_ANGLE_ERROR": "2.0",
-    "MAX_CELL_AXIS_ERROR": "0.030",
-    "MAX_FAC_Rmeas": "2.00",
-    "MINIMUM_VALID_PIXEL_VALUE": "0",
-    "MIN_RFL_Rmeas": "50.0",
-    "NX": "3840",
-    "NY": "3840",
-    "OVERLOAD": "65535",
-    "POLARIZATION_PLANE_NORMAL": "0.0 1.0 0.0",
-    "QX": "0.078200",
-    "QY": "0.078200",
-    "ROTATION_AXIS": "1.0 0.0 0.0",
-    "SPACE_GROUP_NUMBER": "0",
-    "TEST_RESOLUTION_RANGE": "50.00 2.00",
-    "TRUSTED_REGION": "0.0 0.99",
-    "UNTRUSTED_RECTANGLE1": "1288 1475 3346 3835",
-    "UNTRUSTED_RECTANGLE2": "724 872 462 974",
-    "VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS": "6000 30000",
-    "WFAC1": "1.0"
-    }
+# Import from more generic detector
+XDSINP0 = detector.XDSINP
+# Update the XDS information from the imported detector
+# only if there are differnces or new keywords.
+# The tuple should contain two items (key and value)
+# ie. XDSINP1 = [("SEPMIN", "4"),]
+XDSINP1 = [
+    ('UNTRUSTED_RECTANGLE1', '1288 1475 3346 3835') ,
+    ('UNTRUSTED_RECTANGLE2', '724 872 462 974') ,
+  ]
+
+XDSINP = utils.merge_xds_input(XDSINP0, XDSINP1)
+
 
 def parse_file_name(fullname):
     """Parse the fullname of an image and return
@@ -85,20 +73,28 @@ def parse_file_name(fullname):
     Keyword arguments
     fullname -- the full path name of the image file
     """
-    print fullname
+    # print fullname
     directory = os.path.dirname(fullname)
-    print directory
+    # print directory
     basename = os.path.basename(fullname).rstrip(DETECTOR_SUFFIX)
-    print basename
+    # print basename
     sbase = basename.split(".")
-    print sbase
+    # print sbase
     prefix = ".".join(sbase[0:-1])
-    print prefix
+    # print prefix
     image_number = int(sbase[-1])
-    print image_number
+    # print image_number
     run_number = None
 
     return directory, basename, prefix, run_number, image_number
+
+def is_snap(fullname):
+    """Returns if image is a snap based on the filename"""
+    result = re.search("_s\.\d{4}$", fullname)
+    if result:
+        return True
+    else:
+        return False
 
 def create_image_template(image_prefix, run_number):
     """
@@ -175,7 +171,7 @@ def create_image_fullname(directory,
                                    image_number)
     else:
         filename = "%s.%04d" % (image_prefix,
-                                   image_number)
+                                image_number)
 
     fullname = os.path.join(directory, filename)
 

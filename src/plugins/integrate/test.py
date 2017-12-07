@@ -300,7 +300,7 @@ def compare_results(result1, result2, tprint):
             strategy anom phi start [0]
             strategy anom rot range
         Best results
-            strategy phi start
+            omega_start
             strategy rot range
     """
 

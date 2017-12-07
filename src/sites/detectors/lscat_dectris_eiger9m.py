@@ -64,51 +64,15 @@ HEADER_VERSION = 1
 # XDS information for constructing the XDS.INP file
 # Import from more generic detector
 XDS_FLIP_BEAM = detector.XDS_FLIP_BEAM
-XDSINP = detector.XDSINP
+# Import from more generic detector
+XDSINP0 = detector.XDSINP
 # Update the XDS information from the imported detector
-# This is from LS-CAT supplied XDS.INP
-XDSINP.update({
-    "MAX_CELL_ANGLE_ERROR": " 2.0",
-    "MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT": "3",
-    "VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS": " 6000 30000",
-    "STRONG_PIXEL": "4.0",
-    "MIN_RFL_Rmeas": " 50",
-    "NUMBER_OF_PROFILE_GRID_POINTS_ALONG_ALPHA/BETA": "21",
-    "REFINE(INTEGRATE)": " DISTANCE POSITION ORIENTATION BEAM CELL AXIS",
-    "REFINE(CORRECT)": " DISTANCE POSITION BEAM ORIENTATION CELL AXIS",
-    "INCLUDE_RESOLUTION_RANGE": "50.0 0",
-    "REFINE(IDXREF)": " DISTANCE BEAM ORIENTATION CELL AXIS",
-    "SPACE_GROUP_NUMBER": "0",
-    "NX": " 3110 ",
-    "NY": " 3269",
-    "MINIMUM_ZETA": "0.05",
-    "OVERLOAD": " 1074913",
-    "UNTRUSTED_RECTANGLE4": "    0 3111   1065 1103",
-    "UNTRUSTED_RECTANGLE5": "    0 3111   1616 1654",
-    "UNTRUSTED_RECTANGLE6": "    0 3111   2167 2205",
-    "UNTRUSTED_RECTANGLE7": "    0 3111   2718 2756",
-    "UNTRUSTED_RECTANGLE1": " 1030 1041      0 3270",
-    "UNTRUSTED_RECTANGLE2": " 2070 2081      0 3270",
-    "UNTRUSTED_RECTANGLE3": "    0 3111    514  552",
-    "NUMBER_OF_PROFILE_GRID_POINTS_ALONG_GAMMA": "21",
-    "FRACTION_OF_POLARIZATION": "0.99",
-    "TEST_RESOLUTION_RANGE": " 8.0 3",
-    "MAX_CELL_AXIS_ERROR": " 0.03",
-    "DIRECTION_OF_DETECTOR_X-AXIS": " 1.0 0.0 0.0",
-    "SENSOR_THICKNESS": "0.45",
-    "POLARIZATION_PLANE_NORMAL": " 0.0 1.0 0.0",
-    "MAX_FAC_Rmeas": " 2.0",
-    "TRUSTED_REGION": "0.0 1.41",
-    "ROTATION_AXIS": " 1.0 0.0 0.0",
-    "MINIMUM_VALID_PIXEL_VALUE": "0",
-    "QY": "0.075",
-    "QX": "0.075 ",
-    "INCIDENT_BEAM_DIRECTION": "0.0 0.0 1.0",
-    "DIRECTION_OF_DETECTOR_Y-AXIS": " 0.0 1.0 0.0",
-    "SEPMIN": "4.0",
-    "CLUSTER_RADIUS": "2",
-    "DETECTOR": "EIGER",
-    })
+# only if there are differnces or new keywords.
+# The tuple should contain two items (key and value)
+# ie. XDSINP1 = [("SEPMIN", "4"),]
+XDSINP1 = [(),
+          ]
+XDSINP = utils.merge_xds_input(XDSINP0, XDSINP1)
 
 def parse_file_name(fullname):
     """

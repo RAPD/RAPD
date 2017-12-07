@@ -79,7 +79,21 @@ def get_commandline():
                         dest="spacegroup_decider",
                         default="auto",
                         choices=["auto", "pointless", "xds"],
-                        help="Rounds of polishing to perform")
+                        help="Set the spacegroup decider")
+
+    # Don't clean up
+    parser.add_argument("--dirty",
+                        action="store_false",
+                        dest="clean_up",
+                        default=True,
+                        help="Do not clean up")
+
+    # Don't run analysis
+    parser.add_argument("--noanalysis",
+                        action="store_false",
+                        dest="analysis",
+                        default=True,
+                        help="Do not run analysis")
 
     # Directory or files
     parser.add_argument(action="store",
@@ -101,7 +115,7 @@ def get_commandline():
 
     return args
 
-def get_image_data(data_file, detector_module, site_module):
+def get_image_data(data_file, detector_module, site_module, site):
     """
     Get the image data and return given a filename
     """
@@ -109,7 +123,7 @@ def get_image_data(data_file, detector_module, site_module):
     # print "get_image_data", data_file
 
     if site_module:
-        header = detector_module.read_header(data_file, site_module.BEAM_SETTINGS)
+        header = detector_module.read_header(data_file, site_module.BEAM_INFO.get(site, {}))
     else:
         header = detector_module.read_header(data_file)
 
@@ -148,6 +162,8 @@ def get_run_data(detector_module, image_0_data, image_n_data, commandline_args):
         run_data["start"] = commandline_args.start_image
     else:
         run_data["start"] = image_0_data.get("image_number")
+    # Working toward unity
+    run_data["start_image_number"] = run_data["start"]
 
     # Set end image and total number of images
     if commandline_args.end_image:
@@ -157,6 +173,8 @@ def get_run_data(detector_module, image_0_data, image_n_data, commandline_args):
     else:
         run_data["end"] = image_n_data.get("image_number")
         run_data["total"] = image_n_data.get("image_number") - run_data["start"] + 1
+    # Working toward unity
+    run_data["number_images"] = run_data["total"]
 
     # The repr for the run
     run_data["repr"] = detector_module.create_image_template(image_0_data.get("image_prefix"), image_0_data.get("run_number")).rstrip(detector_module.DETECTOR_SUFFIX).replace("?", "") + ("%d-%d" % (run_data.get("start"), run_data.get("end")))
@@ -171,7 +189,7 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
     # The task to be carried out
     command = {
         "command": "XDS", #"INTEGRATE",
-        "process_id": uuid.uuid1().get_hex()
+        "process": {"process_id": uuid.uuid1().get_hex()}
         }
 
     work_dir = commandline_utils.check_work_dir(
@@ -193,7 +211,11 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
         }
 
     command["preferences"] = {
+        "analysis": commandline_args.analysis,
+        "clean_up": commandline_args.clean_up,
+        "cluster_use": commandline_args.cluster_use,
         "dir_up": commandline_args.dir_up,
+        "exchange_dir": commandline_args.exchange_dir,
         "start_frame": commandline_args.start_image,
         "end_frame": commandline_args.end_image,
         "flip_beam": detector_module.XDS_FLIP_BEAM,
@@ -234,6 +256,7 @@ def main():
 
     # Get the commandline args
     commandline_args = get_commandline()
+    print commandline_args
 
     # Output log file is always verbose
     log_level = 10
@@ -331,7 +354,7 @@ def main():
     if commandline_args.detector:
         detector = commandline_args.detector
         detector_module = detector_utils.load_detector(detector)
-
+    """
     # If no site or detector, try to figure out the detector
     if not (site or detector):
         detector = detector_utils.get_detector_file(data_files["data_files"][0])
@@ -347,7 +370,25 @@ def main():
                 site_module = False
                 detector_target = detector.get("detector")
                 detector_module = detector_utils.load_detector(detector_target)
+    """
+    if not detector:
+        detector = detector_utils.get_detector_file(data_files["data_files"][0])
+        if isinstance(detector, dict):
+            if detector.has_key("site"):
+                site_target = detector.get("site")
+                site_file = utils.site.determine_site(site_arg=site_target)
+                site_module = importlib.import_module(site_file)
+                detector_target = site_module.DETECTOR.lower()
+                detector_module = detector_utils.load_detector(detector_target)
+            elif detector.has_key("detector"):
+                site_module = False
+                detector_target = detector.get("detector")
+                detector_module = detector_utils.load_detector(detector_target)
 
+    # If someone specifies the site or found in env.
+    if site and not site_module:
+        site_file = utils.site.determine_site(site_arg=site)
+        site_module = importlib.import_module(site_file)
     # Have a detector - read in file data
     if not detector_module:
         raise Exception("No detector identified")
@@ -355,10 +396,12 @@ def main():
     # Get header information
     image_0_data = get_image_data(data_file=data_files["data_files"][0],
                                   detector_module=detector_module,
-                                  site_module=site_module)
+                                  site_module=site_module,
+                                  site=site)
     image_n_data = get_image_data(data_file=data_files["data_files"][-1],
                                   detector_module=detector_module,
-                                  site_module=site_module)
+                                  site_module=site_module,
+                                  site=site)
 
     logger.debug("Image header: %s, %s", image_0_data, image_n_data)
     tprint(arg="\nImage headers", level=10, color="blue")
@@ -401,7 +444,7 @@ def main():
     tprint(arg="  Plugin id:      %s" % plugin.ID, level=10, color="white")
 
     # Instantiate the plugin
-    plugin_instance = plugin.RapdPlugin(site=None,
+    plugin_instance = plugin.RapdPlugin(site_module,
                                         command=command,
                                         tprint=tprint,
                                         logger=logger)

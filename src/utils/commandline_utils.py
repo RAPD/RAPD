@@ -147,7 +147,7 @@ dp_parser.add_argument("--sample_type",
                        action="store",
                        dest="sample_type",
                        default="protein",
-                       choices=["protein", "dna", "rna", "peptide"],
+                       choices=["protein", "dna", "rna", "peptide", "ribosome"],
                        help="The type of sample")
 
 # Solvent fraction
@@ -189,6 +189,19 @@ dp_parser.add_argument("--nproc",
                        default=multiprocessing.cpu_count(),
                        help="Number of processors to use. Defaults to the number of \
                              processors available")
+
+# Use the cluster
+dp_parser.add_argument("--cluster",
+                       action="store_true",
+                       dest="cluster_use",
+                       help="Use cluster")
+
+# Directory for exchanging files (used by some server installs)
+dp_parser.add_argument("--exchange_dir",
+                       action="store",
+                       dest="exchange_dir",
+                       help="Root directory for file excahnge between RAPD server entities")
+
 
 # The rapd file generating parser - to be used by commandline RAPD processes
 gf_parser = argparse.ArgumentParser(add_help=False)
@@ -389,7 +402,7 @@ def analyze_data_sources(sources,
                     #counter += 1
             else:
                 raise Exception("%s does not exist" % source_abspath)
-        
+
         return return_data
 
     elif mode == "integrate":
@@ -483,7 +496,7 @@ if __name__ == "__main__":
     print "commandline_utils.py"
     s = ['/gpfs6/users/necat/Jon/RAPD_test/Output/IDP07311-5.002_master.h5']
     analyze_data_sources(s, 'integrate', )
-    
+
     """
     parser = argparse.ArgumentParser(parents=[dp_parser],
                                      description="Testing")

@@ -71,7 +71,7 @@ from utils.r_numbers import try_int, try_float
 #from utils.communicate import rapd_send
 import utils.exceptions as exceptions
 import utils.global_vars as global_vars
-from utils.processes import local_subprocess # , mp_pool
+from utils.processes import local_subprocess, LocalSubprocess
 from utils.text import json
 from bson.objectid import ObjectId
 import utils.xutils as xutils
@@ -135,7 +135,7 @@ class RapdPlugin(Process):
 
     # Removes junk files and directories at end. (Will still clean on cluster!! Can be set at end of
     #  __init__.)
-    clean = False
+    clean = True
 
     # Runs in RAM (slightly faster), but difficult to debug.
     ram = False
@@ -269,7 +269,7 @@ class RapdPlugin(Process):
         if self.site_parameters != False:
             self.gui = True
             self.test = False
-            self.clean = False
+            #self.clean = False
         else:
             # If running from command line, site_parameters is not in there. Needed for BEST.
             if self.site:
@@ -956,6 +956,7 @@ class RapdPlugin(Process):
                                       kwargs=inp_kwargs)
                 jobs[str(i)].start()
 
+
         # Check if Best should rerun since original Best strategy is too long for Pilatus using
         # correct start and end from plots. (Way around bug in BEST.)
         if best_version > "3.4" and self.test == False:
@@ -1109,7 +1110,7 @@ class RapdPlugin(Process):
         iteration -- (default False)
         """
 
-        self.logger.debug("process_strategy", iteration)
+        self.logger.debug("process_strategy iteration:%s", str(iteration))
 
         if iteration:
             st = iteration
@@ -1284,10 +1285,7 @@ class RapdPlugin(Process):
         runbefore -- (default False)
         """
 
-        if self.verbose and self.logger:
-            self.logger.debug("AutoindexingStrategy::postprocess_best")
-
-        # print inp
+        self.logger.debug("AutoindexingStrategy::postprocess_best %s" % inp)
 
         # Read in log files
         xml = "None"
@@ -1306,7 +1304,6 @@ class RapdPlugin(Process):
 
         # Parse the best results
         data = Parse.ParseOutputBest(self, (log, xml), anom)
-        #pprint(data)
 
         # Set directory for future use
         #data["directory"] = os.path.dirname(inp)
@@ -1463,7 +1460,8 @@ Distance | % Transmission", level=98, color="white")
                     timer = 0
                     job = self.jobs[str(i)]
                     while 1:
-                        # print "<<< x=%d, i=%d" % (x, i)
+                        # print i, ">>>", job.is_alive()
+
                         if job.is_alive() == False:
                             if i == 4:
                                 log = os.path.join(self.labelit_dir, "mosflm_strat%s.out" % l[x])
@@ -1502,14 +1500,20 @@ Distance | % Transmission", level=98, color="white")
                         if i == 4:
                             self.postprocess_mosflm(log)
                         else:
+                            self.jobs[str(i)].join()
+                            print "Looking at %s" % log
                             job1 = self.postprocess_best(log)
+                            print "  job=%s" % job1
                             if job1 == "OK":
+                                print "  OK"
                                 break
                             # If Best failed...
                             else:
+                                print "  failed"
                                 if self.multiproc == False:
                                     self.process_strategy(i+1)
                                 set_best_results(i, x)
+
         except KeyboardInterrupt:
             pass
 
@@ -1982,6 +1986,10 @@ Distance | % Transmission", level=98, color="white")
         # if self.gui:
         self.results["results"] = results
 
+        # Set process.status to error (-1)
+        if self.labelit_results.get("status") == "FAILED":
+            self.results["process"]["status"] = -1
+
         self.logger.debug(self.results)
 
         # Print results to screen in JSON format
@@ -2010,8 +2018,8 @@ Distance | % Transmission", level=98, color="white")
                 if self.test == False:
                     if self.verbose and self.logger:
                         self.logger.debug("Cleaning up files and folders")
-                    os.system("rm -rf labelit_iteration* dataset_preferences.py")
-                    for i in range(0, self.nrun):
+                    os.system("rm -rf labelit_iteration* dataset_preferences.py distl*.log")
+                    for i in range(self.iterations):
                         os.system("rm -rf %s" % i)
         except:
             self.logger.exception("**Could not cleanup**")
@@ -2095,10 +2103,6 @@ Distance | % Transmission", level=98, color="white")
         # Best success
         else:
             self.plots = new_plot
-
-        # except:
-        #     self.logger.exception("**ERROR in html_best_plots**")
-
 
 class RunLabelit(Thread):
 
@@ -2382,7 +2386,7 @@ rerunning.\n" % spot_count)
 
         self.logger.debug('Utilities::errorLabelit')
 
-        # If iteration is string, return the total number of iterations in the funnction.
+        # If iteration is string, return the total number of iterations in the function.
         if isinstance(iteration, str):
             return 6
 
@@ -2390,7 +2394,6 @@ rerunning.\n" % spot_count)
         if self.multiproc == False:
             iteration += 1
         # Change to the correct folder (create it if necessary).
-        #foldersLabelit(self, iteration)
         xutils.create_folders_labelit(self.working_dir, iteration)
 
         with open('dataset_preferences.py','a') as preferences:
@@ -2647,6 +2650,8 @@ rerunning.\n" % spot_count)
                 "error": "Autoindexing failed to find a solution"},
             "eiger_cbf_error": {
                 "error": "IOTBX needs patched for Eiger CBF files"},
+            "mosflm_version_error": {
+                "error": "Mosflm version is too old"},
         }
 
         # If Labelit results are OK, then...

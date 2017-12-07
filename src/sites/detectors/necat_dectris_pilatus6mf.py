@@ -48,6 +48,7 @@ import pprint
 
 # Dectris Pilatus 6M
 import detectors.dectris.dectris_pilatus6m as detector
+import detectors.detector_utils as utils
 
 # Detector information
 # The RAPD detector type
@@ -69,56 +70,15 @@ HEADER_VERSION = 1
 # XDS information for constructing the XDS.INP file
 XDS_FLIP_BEAM = detector.XDS_FLIP_BEAM
 # Import from more generic detector
-XDSINP = detector.XDSINP
+XDSINP0 = detector.XDSINP
 # Update the XDS information from the imported detector
-XDSINP.update({
-    "UNTRUSTED_RECTANGLE14": "   0 2463  2103 2121",
-    "UNTRUSTED_RECTANGLE15": "   0 2463  2315 2333",
-    "UNTRUSTED_RECTANGLE12": "   0 2463  1679 1697",
-    "UNTRUSTED_RECTANGLE13": "   0 2463  1891 1909",
-    "UNTRUSTED_RECTANGLE10": "   0 2463  1255 1273",
-    "UNTRUSTED_RECTANGLE11": "   0 2463  1467 1485",
-    "STRONG_PIXEL": "6",
-    "MAX_CELL_ANGLE_ERROR": "2.0",
-    "NUMBER_OF_PROFILE_GRID_POINTS_ALONG_ALPHA/BETA": "13",
-    "MINIMUM_NUMBER_OF_PIXELS_IN_A_SPOT": "4",
-    "REFINE(INTEGRATE)": "POSITION BEAM ORIENTATION CELL",
-    "REFINE(CORRECT)": "BEAM ORIENTATION CELL AXIS POSITION",
-    "INCLUDE_RESOLUTION_RANGE": "200.0 0.0",
-    "REFINE(IDXREF)": "BEAM AXIS ORIENTATION CELL",
-    "NX": "2463",
-    "NY": "2527",
-    "STRICT_ABSORPTION_CORRECTION": "TRUE",
-    "MINIMUM_ZETA": "0.05",
-    "OVERLOAD": "1048500",
-    "UNTRUSTED_RECTANGLE4": "1969 1977     0 2527",
-    "UNTRUSTED_RECTANGLE5": "   0 2463   195  213",
-    "UNTRUSTED_RECTANGLE6": "   0 2463   407  425",
-    "UNTRUSTED_RECTANGLE7": "   0 2463   619  637",
-    "UNTRUSTED_RECTANGLE1": " 487  495     0 2527",
-    "UNTRUSTED_RECTANGLE2": " 981  989     0 2527",
-    "UNTRUSTED_RECTANGLE3": "1475 1483     0 2527",
-    "NUMBER_OF_PROFILE_GRID_POINTS_ALONG_GAMMA": "9",
-    "UNTRUSTED_RECTANGLE8": "   0 2463   831  849",
-    "UNTRUSTED_RECTANGLE9": "   0 2463  1043 1061",
-    "FRACTION_OF_POLARIZATION": "0.99",
-    "MAX_CELL_AXIS_ERROR": "0.03",
-    "VALUE_RANGE_FOR_TRUSTED_DETECTOR_PIXELS": " 7000 30000",
-    "MIN_RFL_Rmeas": " 50",
-    "DIRECTION_OF_DETECTOR_X-AXIS": " 1.0 0.0 0.0",
-    "SENSOR_THICKNESS": "0.32",
-    "POLARIZATION_PLANE_NORMAL": " 0.0 1.0 0.0",
-    "MAX_FAC_Rmeas": "2.0",
-    "TRUSTED_REGION": "0.0 1.05",
-    "ROTATION_AXIS": " 1.0 0.0 0.0",
-    "MINIMUM_VALID_PIXEL_VALUE": "0 ",
-    "QY": "0.172",
-    "QX": "0.172 ",
-    "INCIDENT_BEAM_DIRECTION": "0.0 0.0 1.0",
-    "SEPMIN": "4",
-    "CLUSTER_RADIUS": "2",
-    "DETECTOR": "PILATUS"
-    })
+# only if there are differnces or new keywords.
+# The tuple should contain two items (key and value)
+# ie. XDSINP1 = [("SEPMIN", "4"),]
+XDSINP1 = [(),
+          ]
+
+XDSINP = utils.merge_xds_input(XDSINP0, XDSINP1)
 
 # Testing information
 TEST_DATA_DIR = "APS/NECAT/24-ID-C"

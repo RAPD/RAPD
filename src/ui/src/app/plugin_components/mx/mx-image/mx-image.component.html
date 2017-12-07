@@ -1,0 +1,29 @@
+<mat-card *ngIf="(result.image1)">
+  <mat-card-content>
+    <table>
+      <tr>
+        <td>
+          <!-- <canvas width="800" height="800"></canvas> -->
+          <div style="position: relative; height:800px; width:800px;">
+            <canvas #layer1 width="800" height="800" style="position: absolute; left: 0; top: 0; z-index: 0;"></canvas>
+            <canvas #layer2 width="800" height="800" style="position: absolute; left: 0; top: 0; z-index: 1;"></canvas>
+          </div>
+        </td>
+        <td style="vertical-align:top;">
+          <div>
+            {{(result.image1)?.fullname.split('/').reverse()[0]}}
+          </div>
+          <div>
+            <mat-form-field placeholder="Color Scheme">
+              <mat-select [(ngModel)]="view_color" (change)="doSomething($event)">
+                <mat-option value="Gray">Gray</mat-option>
+                <mat-option value="Heat">Heat</mat-option>
+                <mat-option value="Rainbow">Rainbow</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </mat-card-content>
+</mat-card>
