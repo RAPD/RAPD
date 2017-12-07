@@ -593,9 +593,9 @@ class RapdPlugin(Process):
                 """Object containing settings for plugin command construction"""
                 clean = self.preferences.get("clean_up", False)
                 datafile = self.results["results"]["mtzfile"]
-                dir_up = self.preferences["dir_up"]
-                json = self.preferences["json"]
-                nproc = self.preferences["nproc"]
+                dir_up = self.preferences.get("dir_up", False)
+                json = self.preferences.get("json", True)
+                nproc = self.preferences.get("nproc", 1)
                 pdbquery = False  #TODO
                 progress = self.preferences.get("progress", False)
                 queue = plugin_queue
