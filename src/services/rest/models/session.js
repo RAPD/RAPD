@@ -2,7 +2,7 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var SessionSchema = new Schema({
-  data_root_directory: {
+  data_root_dir: {
     type: String,
     default: ''
   },
