@@ -101,7 +101,7 @@ router.route('/dashboard/results')
         results.forEach(function(result) {
           console.log('>>>', result);
           try {
-            staging_obj[result._id.plugin_type][`${result._id.month}-${result._id.day}`] = result.count;
+            staging_obj[result._id.plugin_type.toLowerCase()][`${result._id.month}-${result._id.day}`] = result.count;
           } catch (e) {
             console.error(e);
           }
