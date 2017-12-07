@@ -9,13 +9,13 @@
           <mat-icon
             *ngIf="log_collapsed"
             class="mat-24"
-            (click)="log_collapsed=false">
+            (click)="toggleCollapse()">
             expand_more
           </mat-icon>
           <mat-icon
             *ngIf="! log_collapsed"
             class="mat-24"
-            (click)="log_collapsed=true">
+            (click)="toggleCollapse()">
             expand_less
           </mat-icon>
         </button>

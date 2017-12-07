@@ -482,7 +482,7 @@ class RapdPlugin(Process):
             final_results = self.finish_data(integration_results)
 
         # Set up the results for return
-        self.results["process"]["status"] = 100
+        self.results["process"]["status"] = 99
         self.results["results"].update(final_results)
 
         self.send_results(self.results)

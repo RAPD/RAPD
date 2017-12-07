@@ -23,4 +23,15 @@ export class LogCardComponent implements OnInit {
 
   }
 
+  toggleCollapse() {
+
+    console.log('toggleCollapse', this.log_collapsed);
+
+    if (this.log_collapsed) {
+      this.log_collapsed = false;
+    } else {
+      this.log_collapsed = true;
+    }
+  }
+
 }
