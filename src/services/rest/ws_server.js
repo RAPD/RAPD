@@ -113,6 +113,7 @@ parse_message = function(channel, message) {
       if (message.command === 'ECHO') {
         console.log('Echo...');
         deferred.resolve(return_array);
+        console.log('past the resolve');
       }
 
       // Create a result
