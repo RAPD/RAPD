@@ -27,6 +27,9 @@ export class SessionDialogComponent implements OnInit {
               public dialogRef: MatDialogRef<SessionDialogComponent>) { }
 
   ngOnInit() {
+
+    console.log(this.session);
+
     this.model = Object.assign({}, this.session);
     this.session_form = new FormGroup({
       group: new FormControl(),
