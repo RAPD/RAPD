@@ -516,8 +516,8 @@ class RapdPlugin(Process):
     def postprocess(self):
         """After it's all done"""
 
-        # Write the output JSON again
-        self.write_json(self.results)
+        # "Finish" the data
+        # self.finish_data()
 
         # Create an archive
         self.create_archive()
@@ -527,6 +527,9 @@ class RapdPlugin(Process):
 
         # Print out the credits
         self.print_credits()
+
+        # Send back results - the penultimate time
+        self.send_results(self.results)
 
         # Run analysis
         self.run_analysis_plugin()
