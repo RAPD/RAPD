@@ -2369,7 +2369,7 @@ class RapdPlugin(Process):
                 # Move data
                 target = os.path.join(target_dir, os.path.basename(file_to_move["path"]))
                 # print "Moving %s to %s" % (file_to_move["path"], target)
-                os.rename(file_to_move["path"], target)
+                shutil.move(file_to_move["path"], target)
                 # Change entry
                 file_to_move["path"] = target
                 new_data_produced.append(file_to_move)
@@ -2381,7 +2381,7 @@ class RapdPlugin(Process):
                 # Move data
                 target = os.path.join(target_dir, os.path.basename(file_to_move["path"]))
                 # print "Moving %s to %s" % (file_to_move["path"], target)
-                os.rename(file_to_move["path"], target)
+                shutil.move(file_to_move["path"], target)
                 # Change entry
                 file_to_move["path"] = target
                 new_archive_files.append(file_to_move)
