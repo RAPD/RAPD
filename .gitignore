@@ -42,7 +42,8 @@ tmp
 # From UI
 src/ui/dist
 src/ui/tmp
-src/ui/node_modules
+node_modules
+
 
 # UI configuration
 src/ui/src/app/site.ts
