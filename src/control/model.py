@@ -901,7 +901,7 @@ class Model(object):
                 },
                 "site_parameters":self.site.BEAM_INFO[image1["site_tag"]],
                 "preferences":{
-                    "analysis":False,
+                    "analysis":True,
                     "cleanup":False,
                     "json":False,
                     "exchange_dir":self.site.EXCHANGE_DIR,
