@@ -656,6 +656,10 @@ self.command["input_data"]["datafile"]
                                    "NZ test",
                                    "L test, acentric data",):
 
+                    # Skip the plot if it's not available
+                    if not plot_label in xtriage_plots:
+                        continue
+
                     # The plot data
                     plot_parameters = xtriage_plots[plot_label]["parameters"]
                     plot_data = xtriage_plots[plot_label]["data"]
