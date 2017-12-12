@@ -31,13 +31,13 @@ export class AdminpanelComponent implements OnInit {
   sessionDialogRef: MatDialogRef<SessionDialogComponent>;
 
   user: User;
-  users: User[];
-  filtered_users: User[];
-  groups: Group[];
-  filtered_groups: Group[];
+  users: User[] = [];
+  filtered_users: User[] = [];
+  groups: Group[] = [];
+  filtered_groups: Group[] = [];
   user_groups: Group[] = [];
-  sessions: Session[];
-  filtered_sessions: Session[];
+  sessions: Session[] = [];
+  filtered_sessions: Session[] = [];
   errorMessage: string;
 
   constructor(private globals_service: GlobalsService,
