@@ -627,52 +627,53 @@ def parse_raw_output(raw_output, logger=False):
         if table_label in labels_to_plot:
             # print "  Grabbing plot %s" % table_label
 
-            table_data = tables[table_label]
-            x_column = x_columns[table_label]
-            my_columns_to_plot = columns_to_plot[table_label]
+            if table_label in tables:
 
-            plots[table_label] = {
-                "x_data": [],
-                "y_data": [],
-                "data": [],
-                "parameters": {
-                    "toplabel": top_labels[table_label],
-                    "x_label": x_labels[table_label],
-                    "xlabel": x_labels[table_label],
-                    "ylabel": y_labels[table_label]
+                table_data = tables[table_label]
+                x_column = x_columns[table_label]
+                my_columns_to_plot = columns_to_plot[table_label]
+
+                plots[table_label] = {
+                    "x_data": [],
+                    "y_data": [],
+                    "data": [],
+                    "parameters": {
+                        "toplabel": top_labels[table_label],
+                        "x_label": x_labels[table_label],
+                        "xlabel": x_labels[table_label],
+                        "ylabel": y_labels[table_label]
+                    }
                 }
-            }
 
-            for column_label in table_data:
-                # print "    %s" % column_label
-                if column_label in my_columns_to_plot:
-                    plots[table_label]["data"].append({
-                        "parameters": {
-                            "linelabel": column_label
-                        },
-                        "series": [{
-                            "xs": table_data[x_column],
-                            "ys": table_data[column_label]
-                        }]
-                    })
-                    # if column_label in override_labels:
-                    #     column_label = override_labels[column_label]
+                for column_label in table_data:
+                    # print "    %s" % column_label
+                    if column_label in my_columns_to_plot:
+                        plots[table_label]["data"].append({
+                            "parameters": {
+                                "linelabel": column_label
+                            },
+                            "series": [{
+                                "xs": table_data[x_column],
+                                "ys": table_data[column_label]
+                            }]
+                        })
+                        # if column_label in override_labels:
+                        #     column_label = override_labels[column_label]
 
-                    plots[table_label]["y_data"].append({
-                        "data": table_data[column_label],
-                        "label": column_label,
-                        "pointRadius": 0
-                    })
-                elif column_label == x_column:
-                    plots[table_label]["x_data"] = table_data[x_column]
-                else:
-                    pass
+                        plots[table_label]["y_data"].append({
+                            "data": table_data[column_label],
+                            "label": column_label,
+                            "pointRadius": 0
+                        })
+                    elif column_label == x_column:
+                        plots[table_label]["x_data"] = table_data[x_column]
+                    else:
+                        pass
                     # print "    %s NOT GATHERED" % column_label
 
-            # pprint(plots[table_label])
-
-    # for line in output_lines[index_patterson+5:-3]:
-    #     summary.append(line)
+            # No plot for this label
+            else:
+                pass
 
     # Assemble for return
     results = {
