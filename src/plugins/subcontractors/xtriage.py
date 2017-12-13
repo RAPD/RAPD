@@ -118,6 +118,7 @@ def parse_raw_output(raw_output, logger=False):
         "# absent",
         "+++",
         "---",
+        "Expected rel. I",
     )
 
     for index, line in enumerate(raw_output):
@@ -446,6 +447,8 @@ def parse_raw_output(raw_output, logger=False):
                                         column_data["Other reflections <I/sigI>"] = []
                                         column_data["Other reflections #"] = []
                                         column_data["Other reflections %"] = []
+                                elif column_label == "Expected rel. I":
+                                    column_data[column_label.replace(".", "")] = []
                                 else:
                                     column_data[column_label] = []
                             else:
@@ -495,6 +498,8 @@ def parse_raw_output(raw_output, logger=False):
                                     column_data["Other reflections #"].append(int(number))
                                     column_data["Other reflections %"].append(float(percentage.\
                                         replace("%", ""))/100.0)
+                            elif column_label == "Expected rel. I":
+                                column_data[column_label.replace(".", "")].append(try_float(value.strip()))
 
                             # Integer
                             elif column_label in ("# absent",
