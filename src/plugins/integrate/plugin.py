@@ -503,6 +503,7 @@ class RapdPlugin(Process):
         """
         Watch for an image to be recorded. Return True if is does, False if timed out
         """
+        self.logger.debug("wait_for_image  image_number:%d", image_number)
 
         # Determine image to look for
         target_image = re.sub(r"\?+", "%s0%dd", os.path.join(self.run_data["directory"], self.run_data["image_template"])) % ("%", self.run_data["image_template"].count("?")) % image_number
@@ -510,7 +511,7 @@ class RapdPlugin(Process):
         # Get a bead on where we are now
         first, last = self.get_current_images()
 
-        if image_number >= last:
+        if image_number <= last:
             return True
 
         # Estimate max time to get to target_image
