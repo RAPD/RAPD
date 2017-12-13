@@ -380,10 +380,10 @@ self.command["input_data"]["datafile"]
 
             # Convert the Molrep postscript file to JPEG, if convert is available
             crop_sizes = {
-                "60": "254x305+265+410",
-                "90": "254x305+265+110",
-                "120": "256x305+10+410",
-                "180": "256x305+10+110",
+                "60": "254X305+265+410",
+                "90": "254X305+265+110",
+                "120": "256X305+10+410",
+                "180": "256X305+10+110",
             }
 
             convert_executables = ("convert", "/usr/local/bin/convert")
