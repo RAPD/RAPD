@@ -514,7 +514,7 @@ class RapdPlugin(Process):
             return True
 
         # Estimate max time to get to target_image
-        max_time = (image_number - last) * (self.image_data["time"]) * 2
+        max_time = (image_number - last) * (self.image_data["time"]) * 4
 
         # Look for images in cycle
         start_time = time.time()
