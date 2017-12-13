@@ -395,7 +395,8 @@ class RapdPlugin(Process):
         xds_input = self.xds_default
 
         # If all images are present, then process all
-        if last == self.run_data["end"]:
+        final_image = self.run_data["number_images"] - self.run_data["start_image_number"] + 1
+        if last == final_image:
             self.tprint("  All images present", level=10, color="white")
             full_integration_results = self.xds_total(xds_input)
 
@@ -412,7 +413,7 @@ class RapdPlugin(Process):
                                                                end=last)
 
             # Have less than threshold degrees, but expect more than threshold
-            elif self.run_data["end"] * self.image_data["osc_range"] > 10:
+            elif final_image * self.image_data["osc_range"] > 10:
                 self.tprint("  Less than threshold degrees of data, waiting...")
                 last = int(10.0/self.image_data["osc_range"])
                 result = self.wait_for_image(last)
@@ -430,7 +431,7 @@ class RapdPlugin(Process):
             # Have less than threshold, but expecting less than threshold
             else:
                 self.tprint("  Waiting for data collection to complete", level=10, color="white")
-                result = self.wait_for_image(self.run_data["end"])
+                result = self.wait_for_image(final_image)
                 # Image now exists
                 if result:
                     partial_integration_results = self.xds_total(xds_input)
@@ -455,7 +456,7 @@ class RapdPlugin(Process):
 
             # Run XDS for the whole wedge of data
             self.tprint("Preparing for full dataset integration", 10, "blue")
-            result = self.wait_for_image(self.run_data["end"])
+            result = self.wait_for_image(final_image)
             # Image now exists
             if result:
                 full_integration_results = self.xds_total(xds_input)
@@ -505,7 +506,7 @@ class RapdPlugin(Process):
 
         # Determine image to look for
         target_image = re.sub(r"\?+", "%s0%dd", os.path.join(self.run_data["directory"], self.run_data["image_template"])) % ("%", self.run_data["image_template"].count("?")) % image_number
-        
+
         # Get a bead on where we are now
         first, last = self.get_current_images()
 
