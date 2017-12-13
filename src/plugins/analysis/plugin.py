@@ -388,9 +388,16 @@ self.command["input_data"]["datafile"]
 
             convert_executables = ("convert", "/usr/local/bin/convert")
             for convert_executable in convert_executables:
-                print "Trying %s" % convert_executable
+                # print "Trying %s" % convert_executable
                 if find_executable(convert_executable):
                     for label, size in crop_sizes.iteritems():
+                        # print [convert_executable,
+                        #        "molrep_rf.ps",
+                        #        "-crop",
+                        #        size,
+                        #        "-quality",
+                        #        "50",
+                        #        "molrep_rf_%s.jpg" % label]
                         convert_proc = subprocess.Popen([convert_executable,
                                                          "molrep_rf.ps",
                                                          "-crop",
