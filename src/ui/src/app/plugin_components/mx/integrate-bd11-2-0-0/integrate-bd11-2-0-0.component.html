@@ -58,15 +58,15 @@
                 <tr>
                   <td>{{full_result.results.summary.scaling_spacegroup}}</td>
                   <td>
-                    {{full_result.results.summary.scaling_unit_cell[0]}} &Aring;
-                    {{full_result.results.summary.scaling_unit_cell[1]}} &Aring;
-                    {{full_result.results.summary.scaling_unit_cell[2]}} &Aring;
-                    {{full_result.results.summary.scaling_unit_cell[3]}}&deg;
-                    {{full_result.results.summary.scaling_unit_cell[4]}}&deg;
-                    {{full_result.results.summary.scaling_unit_cell[5]}}&deg;
+                    {{full_result.results.summary.scaling_unit_cell[0] | number:'1.1-2'}} &Aring;
+                    {{full_result.results.summary.scaling_unit_cell[1] | number:'1.1-2'}} &Aring;
+                    {{full_result.results.summary.scaling_unit_cell[2] | number:'1.1-2'}} &Aring;
+                    {{full_result.results.summary.scaling_unit_cell[3] | number:'1.1-2'}}&deg;
+                    {{full_result.results.summary.scaling_unit_cell[4] | number:'1.1-2'}}&deg;
+                    {{full_result.results.summary.scaling_unit_cell[5] | number:'1.1-2'}}&deg;
                   </td>
-                  <td>{{full_result.results.summary.mosaicity}}&deg;</td>
-                  <td>{{full_result.results.summary.ISa}}</td>
+                  <td>{{full_result.results.summary.mosaicity | number:'1.1-2'}}&deg;</td>
+                  <td>{{full_result.results.summary.ISa | number:'1.1-2'}}</td>
                 </tr>
               </tbody>
             </table>

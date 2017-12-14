@@ -512,6 +512,7 @@ class RapdPlugin(Process):
         first, last = self.get_current_images()
 
         if image_number <= last:
+            self.logger.debug("Image %d already present", image_number)
             return True
 
         # Estimate max time to get to target_image
