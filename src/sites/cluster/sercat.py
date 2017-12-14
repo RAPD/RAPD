@@ -65,11 +65,11 @@ def check_queue(inp):
     return(d[inp])
     """
     return 'rapd'
-  
+
 def get_nproc_njobs():
     """Return the nproc and njobs for an XDS integrate job"""
     return (5, 2)
-  
+
 def determine_nproc(command):
     """Determine how many processors to reserve on the cluster for a specific job type."""
     nproc = 1
@@ -99,7 +99,7 @@ def fix_command(message):
     # Now make the directory
     if os.path.isdir(work_dir_candidate) == False:
         os.makedirs(work_dir_candidate)
-     
+
     # Modify command
     message["directories"]["work"] = work_dir_candidate
 
@@ -166,7 +166,9 @@ def process_cluster_drmaa(self, inp, output=False):
 
 
     # Setup path
-    v = "-v PATH=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
+    v = "-v PATH=/home/schuerjp/Programs/ghostscript/bin:\
+/home/schuerjp/Programs/magick/bin:\
+/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
 /home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/bin:\
 /home/schuerjp/Programs/best:\
 /home/schuerjp/Programs/RAPD/bin:\
@@ -253,17 +255,17 @@ def process_cluster(command,
     Main script should not end with os._exit() otherwise running jobs could be orphanned.
     To eliminate this issue, setup self.running = multiprocessing.Event(), self.running.set() in main script,
     then set it to False (self.running.clear()) during postprocess to kill running jobs smoothly.
-    
+
     command - command to run
     work_dir - working directory
     logfile - print results of command to this file
-    batch_queue - specify a batch queue on the cluster (options are all.q, phase1.q, phase2.q, phase3.q, 
+    batch_queue - specify a batch queue on the cluster (options are all.q, phase1.q, phase2.q, phase3.q,
             index.q, general.q, high_mem.q, rosetta.q). If no queue is specified, it will run on any node.
-    nproc - number of processor to reserve for the job on a single node. If # of slots 
-            are not available, it will wait to launch until resources are free. 
+    nproc - number of processor to reserve for the job on a single node. If # of slots
+            are not available, it will wait to launch until resources are free.
     logger - logger event to pass status reports.
     name - Name of job as seen when running 'qstat' command.
-    mp_event - Pass in the Multiprocessing.Event() that the plugin in uses to signal termination. 
+    mp_event - Pass in the Multiprocessing.Event() that the plugin in uses to signal termination.
                This way the job will be killed if the event() is cleared within the plugin.
     timeout - max time (in seconds) to wait for job to complete before it is killed. (default=False waits forever)
     pid_queue - pass back the jobIB through a multiprocessing.Queue()
@@ -277,7 +279,9 @@ def process_cluster(command,
     fd = False
     counter = 0
     # Setup path NOT USED
-    v = "PATH=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
+    v = "PATH=/home/schuerjp/Programs/ghostscript/bin:\
+/home/schuerjp/Programs/magick/bin:\
+/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/etc:\
 /home/schuerjp/Programs/ccp4-7.0/ccp4-7.0/bin:\
 /home/schuerjp/Programs/best:\
 /home/schuerjp/Programs/RAPD/bin:\
@@ -297,7 +301,7 @@ def process_cluster(command,
     # Make an input script if not input
     if command[-3] == '.sh':
       fname = command
-    else:  
+    else:
       #fname = 'qsub%s.sh'%random.randint(0,5000)
       fname = os.path.join(os.getcwd(),'qsub%s.sh'%random.randint(0,5000))
       #print fname
@@ -330,13 +334,13 @@ def process_cluster(command,
     proc = subprocess.Popen(qs, env=path,
                            stdout=subprocess.PIPE,
                            stderr=subprocess.PIPE)
-			   
+
 
     stdout, stderr = proc.communicate()
 
     # Get the JobID
     job = stdout[:stdout.rfind('.')]
-    
+
     # Send back PID if have pid_queue
     if pid_queue:
         pid_queue.put(job)
@@ -364,7 +368,7 @@ def process_cluster(command,
             with open(logfile, 'rb') as raw:
                 for line in raw:
                     stdout += line
-        
+
         result = {
             "pid": job,
             "returncode": False,
@@ -376,7 +380,7 @@ def process_cluster(command,
 
     # Delete the .sh file if generated
     #os.unlink(fname)
-    
+
     # Delete logile if it was not asked to be saved
     if fd:
         os.unlink(logfile)
@@ -410,7 +414,7 @@ def process_cluster_beorun(inp):
         qs += ' > %s '%log
       else:
         qs += ' > %s '%os.path.join(d,log)
-    
+
     #Launch the job on the cluster
     job = subprocess.Popen(qs,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
     # Return job_id.
@@ -419,7 +423,7 @@ def process_cluster_beorun(inp):
       pid.put(job.pid)
     job.wait()
     print "Job finished"
-    
+
 def check_qsub_job(job):
   """
   Check to see if process and/or its children and/or children's children are still running.
