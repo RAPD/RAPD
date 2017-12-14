@@ -200,6 +200,9 @@ IMAGE_IGNORE_STRINGS = ("ignore", )
 # So if image is not present, look in long term storage location.
 ALT_IMAGE_LOCATIONS = True
 
+# Location where processed data resides
+EXCHANGE_DIR = '/gpfs6/users/necat/rapd2/exchange_dir'
+
 # Monitor for collected run information
 RUN_MONITOR = "sites.monitors.run_monitors.necat_e"
 # Running in a cluster configuration - True || False
