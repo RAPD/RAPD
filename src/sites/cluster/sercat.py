@@ -68,7 +68,7 @@ def check_queue(inp):
 
 def get_nproc_njobs():
     """Return the nproc and njobs for an XDS integrate job"""
-    return (5, 2)
+    return (5, 4)
 
 def determine_nproc(command):
     """Determine how many processors to reserve on the cluster for a specific job type."""
@@ -288,7 +288,7 @@ def process_cluster(command,
 /home/schuerjp/Programs/RAPD/share/phenix-1.10.1-2155/build/bin:\
 /home/schuerjp/Programs/raddose-20-05-09-distribute-noexec/bin:\
 /usr/local/XDS-INTEL64_Linux_x86_64:\
-/usr/local/bin:/bin:/usr/bin, CCP4=/home/schuerjp/Programs/ccp4-7.0/ccp4-7.0"
+/usr/local/bin:/bin:/usr/bin"
 
     if work_dir == False:
         work_dir = os.getcwd()
