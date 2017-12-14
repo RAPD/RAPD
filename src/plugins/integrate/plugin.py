@@ -492,9 +492,15 @@ class RapdPlugin(Process):
 
         # Find first & last frame numbers
         fm = re.match(pattern, files[0])
-        first_frame = int(fm.group(1))
+        if fm:
+            first_frame = int(fm.group(1))
+        else:
+            first_frame = 0
         fm = re.match(pattern, files[-1])
-        last_frame = int(fm.group(1))
+        if fm:
+            last_frame = int(fm.group(1))
+        else:
+            last_frame = 0
         # self.tprint((first_frame, last_frame))
 
         return first_frame, last_frame
