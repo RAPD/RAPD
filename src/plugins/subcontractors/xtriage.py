@@ -143,7 +143,7 @@ def parse_raw_output(raw_output, logger=False):
 
         # Spacegroup information
         if line.startswith("Space group:"):
-            sg_full = line.strip().split(":")[1].strip()
+            sg_full = line.replace("Space group:", "").strip()   # strip().split(":")[1].strip()
             sg_text = sg_full.split("(")[0].strip()
             sg_num = int(sg_full.split("(")[1].split()[1].replace(")", ""))
             continue
