@@ -18,12 +18,12 @@
               <tr>
                 <td>{{result.parsed.xtriage.spacegroup.text}} ({{result.parsed.xtriage.spacegroup.number}})</td>
                 <td>
-                  {{result.parsed.xtriage.unit_cell.a}} &Aring;
-                  {{result.parsed.xtriage.unit_cell.b}} &Aring;
-                  {{result.parsed.xtriage.unit_cell.c}} &Aring;
-                  {{result.parsed.xtriage.unit_cell.alpha}}&deg;
-                  {{result.parsed.xtriage.unit_cell.beta}}&deg;
-                  {{result.parsed.xtriage.unit_cell.gamma}}&deg;
+                  {{result.parsed.xtriage.unit_cell.a | number:'1.1-2'}} &Aring;
+                  {{result.parsed.xtriage.unit_cell.b | number:'1.1-2'}} &Aring;
+                  {{result.parsed.xtriage.unit_cell.c | number:'1.1-2'}} &Aring;
+                  {{result.parsed.xtriage.unit_cell.alpha | number:'1.1-2'}}&deg;
+                  {{result.parsed.xtriage.unit_cell.beta | number:'1.1-2'}}&deg;
+                  {{result.parsed.xtriage.unit_cell.gamma | number:'1.1-2'}}&deg;
                 </td>
               </tr>
             </tbody>
@@ -35,7 +35,7 @@
             <thead>
               <tr>
                 <th>% Origin</th>
-                <th>p Value</th>
+                <th>p-value</th>
                 <th>X</th>
                 <th>Y</th>
                 <th>Z</th>
@@ -43,11 +43,11 @@
             </thead>
             <tbody>
               <tr *ngFor="let key of objectKeys(this.result.parsed.xtriage['Patterson peaks'])">
-                <td>{{result.parsed.xtriage["Patterson peaks"][key].peak}}</td>
-                <td>{{result.parsed.xtriage["Patterson peaks"][key]["p-val"]}}</td>
-                <td>{{result.parsed.xtriage["Patterson peaks"][key]["frac x"]}}</td>
-                <td>{{result.parsed.xtriage["Patterson peaks"][key]["frac y"]}}</td>
-                <td>{{result.parsed.xtriage["Patterson peaks"][key]["frac z"]}}</td>
+                <td>{{(result.parsed.xtriage["Patterson peaks"][key].peak * 100.) | number:'1.1-2'}}</td>
+                <td>{{result.parsed.xtriage["Patterson peaks"][key]["p-val"] | number:'1.1-4'}}</td>
+                <td>{{result.parsed.xtriage["Patterson peaks"][key]["frac x"] | number:'1.1-2'}}</td>
+                <td>{{result.parsed.xtriage["Patterson peaks"][key]["frac y"] | number:'1.1-2'}}</td>
+                <td>{{result.parsed.xtriage["Patterson peaks"][key]["frac z"] | number:'1.1-2'}}</td>
               </tr>
             </tbody>
           </table>

@@ -43,7 +43,7 @@
               {{data_result.repr}}
             </td>
           </tr>
-          <tr *ngIf="data_result.status > 0 && data_result.status < 100">
+          <tr *ngIf="data_result.status > 0 && data_result.status < 99">
             <td style="padding:0 0 0 0;">
               <mat-progress-bar
                 mode="indeterminate"
@@ -69,7 +69,7 @@
                 Reprocess {{i+1}} {{child.display}}
               </td>
             </tr>
-            <tr *ngIf="child.status > 0 && child.status < 100">
+            <tr *ngIf="child.status > 0 && child.status < 99">
               <td style="padding:0 0 0 0;">
                 <mat-progress-bar
                   mode="indeterminate"

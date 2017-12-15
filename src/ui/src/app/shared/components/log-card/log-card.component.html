@@ -5,17 +5,15 @@
         <h3>{{header}}</h3>
       </div>
       <div style="float:right">
-        <button mat-mini-fab class="raw-output-toggle" color="primary">
+        <button mat-mini-fab class="raw-output-toggle" color="primary" (click)="toggleCollapse()">
           <mat-icon
             *ngIf="log_collapsed"
-            class="mat-24"
-            (click)="log_collapsed=false">
+            class="mat-24">
             expand_more
           </mat-icon>
           <mat-icon
             *ngIf="! log_collapsed"
-            class="mat-24"
-            (click)="log_collapsed=true">
+            class="mat-24">
             expand_less
           </mat-icon>
         </button>

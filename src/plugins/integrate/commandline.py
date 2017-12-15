@@ -109,6 +109,12 @@ def get_commandline():
     # Custom check input here
     args = parser.parse_args()
 
+    # Running in interactive mode if this code is being called
+    if args.json:
+        args.run_mode = "json"
+    else:
+        args.run_mode = "interactive"
+
     # Regularize spacegroup
     if args.spacegroup:
         args.spacegroup = commandline_utils.regularize_spacegroup(args.spacegroup)
@@ -227,6 +233,7 @@ def construct_command(image_0_data, run_data, commandline_args, detector_module)
         "json": commandline_args.json,
         "nproc": commandline_args.nproc,
         "progress": commandline_args.progress,
+        "run_mode": commandline_args.run_mode,
         "show_plots": commandline_args.show_plots,
         "xdsinp": detector_module.XDSINP,
         "spacegroup_decider": commandline_args.spacegroup_decider,
@@ -256,7 +263,6 @@ def main():
 
     # Get the commandline args
     commandline_args = get_commandline()
-    print commandline_args
 
     # Output log file is always verbose
     log_level = 10

@@ -94,14 +94,11 @@ router.route('/dashboard/results')
           });
           twoWeekStart.setDate(date+1);
         }
-        // console.log(staging_obj);
-        // console.log(return_obj);
 
         // Put the results into an object
         results.forEach(function(result) {
-          // console.log('>>>', result);
           try {
-            staging_obj[result._id.plugin_type][`${result._id.month}-${result._id.day}`] = result.count;
+            staging_obj[result._id.plugin_type.toLowerCase()][`${result._id.month}-${result._id.day}`] = result.count;
           } catch (e) {
             console.error(e);
           }

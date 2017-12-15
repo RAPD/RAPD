@@ -69,7 +69,7 @@ export class MxResultslistPanelComponent implements OnInit /*, OnDestroy*/ {
 
         // Filter for age & status
         if (! result.display) {
-          if (result.status > 0 && result.status < 100) {
+          if (result.status > 0 && result.status < 99) {
             let result_time:any = Date.parse(result.timestamp);
             if (Date.now() - result_time > 3600000) {
               return false;

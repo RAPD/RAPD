@@ -14,8 +14,8 @@ import { Session } from '../shared/classes/session';
 })
 export class SessionspanelComponent implements OnInit {
 
-  sessions: Session[];
-  filtered_sessions: Session[];
+  sessions: Session[] = [];
+  filtered_sessions: Session[] = [];
   errorMessage: string;
 
   constructor(private rest_service: RestService,

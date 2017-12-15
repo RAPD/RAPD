@@ -17,7 +17,7 @@ import { DialogNewProjectComponent } from '../shared/components/dialog-new-proje
 })
 export class ProjectspanelComponent implements OnInit {
 
-  projects: Project[];
+  projects: Project[] = [];
   dialogRef: MatDialogRef<DialogNewProjectComponent>;
 
   constructor(private rest_service: RestService,

@@ -31,13 +31,13 @@ export class AdminpanelComponent implements OnInit {
   sessionDialogRef: MatDialogRef<SessionDialogComponent>;
 
   user: User;
-  users: User[];
-  filtered_users: User[];
-  groups: Group[];
-  filtered_groups: Group[];
+  users: User[] = [];
+  filtered_users: User[] = [];
+  groups: Group[] = [];
+  filtered_groups: Group[] = [];
   user_groups: Group[] = [];
-  sessions: Session[];
-  filtered_sessions: Session[];
+  sessions: Session[] = [];
+  filtered_sessions: Session[] = [];
   errorMessage: string;
 
   constructor(private globals_service: GlobalsService,
@@ -151,6 +151,13 @@ export class AdminpanelComponent implements OnInit {
     } else {
       this.users.unshift(new_user);
     }
+
+    index = this.filtered_users.findIndex(user => user._id === new_user._id);
+    if (index !== -1) {
+      this.filtered_users.splice(index, 1, new_user);
+    } else {
+      this.filtered_users.unshift(new_user);
+    }
   }
 
   deleteUser(_id: string) {
@@ -159,6 +166,11 @@ export class AdminpanelComponent implements OnInit {
     let index = this.users.findIndex(user => user._id === _id);
     if (index !== -1) {
       this.users.splice(index, 1);
+    }
+
+    index = this.filtered_users.findIndex(user => user._id === _id);
+    if (index !== -1) {
+      this.filtered_users.splice(index, 1);
     }
   }
 
@@ -274,15 +286,27 @@ export class AdminpanelComponent implements OnInit {
     } else {
       this.groups.unshift(new_group);
     }
+
+    index = this.filtered_groups.findIndex(group => group._id === new_group._id);
+    if (index !== -1) {
+      this.filtered_groups.splice(index, 1, new_group);
+    } else {
+      this.filtered_groups.unshift(new_group);
+    }
   }
 
   deleteGroup(_id: string) {
     // console.log('deleteGroup', _id);
-    // If the user already exists, replace it
+    // If the user exists, delete it
     let index = this.groups.findIndex(group => group._id === _id);
     if (index !== -1) {
       this.groups.splice(index, 1);
     }
+    index = this.filtered_groups.findIndex(group => group._id === _id);
+    if (index !== -1) {
+      this.filtered_groups.splice(index, 1);
+    }
+
   }
 
   //
@@ -379,6 +403,13 @@ export class AdminpanelComponent implements OnInit {
     } else {
       this.sessions.unshift(new_session);
     }
+
+    index = this.filtered_sessions.findIndex(session => session._id === new_session._id);
+    if (index !== -1) {
+      this.filtered_sessions.splice(index, 1, new_session);
+    } else {
+      this.filtered_sessions.unshift(new_session);
+    }
   }
 
   deleteSession(_id: string) {
@@ -387,6 +418,11 @@ export class AdminpanelComponent implements OnInit {
     let index = this.sessions.findIndex(session => session._id === _id);
     if (index !== -1) {
       this.sessions.splice(index, 1);
+    }
+
+    index = this.filtered_sessions.findIndex(session => session._id === _id);
+    if (index !== -1) {
+      this.filtered_sessions.splice(index, 1);
     }
   }
 }
