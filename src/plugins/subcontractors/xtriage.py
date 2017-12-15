@@ -713,3 +713,7 @@ def parse_raw_output(raw_output, logger=False):
         logger.debug("parse_raw_output Done")
 
     return results
+
+if __name__ == "__main__":
+    raw_output = open("xtriage.log").read()
+    print parse_raw_output(raw_output)
