@@ -348,7 +348,6 @@ self.command["input_data"]["datafile"]
             self.results["parsed"]["xtriage"] = \
                 xtriage.parse_raw_output(raw_output=self.results["raw"]["xtriage"],
                                         logger=self.logger)
-
             return True
 
         # No log file
@@ -683,14 +682,14 @@ self.command["input_data"]["datafile"]
                         if not plot_label in xtriage_plots:
                             continue
 
-                        print plot_label
+                        # print plot_label
 
                         # The plot data
                         plot_parameters = xtriage_plots[plot_label]["parameters"]
                         plot_data = xtriage_plots[plot_label]["data"]
 
-                        pprint(plot_parameters)
-                        pprint(plot_data)
+                        # pprint(plot_parameters)
+                        # pprint(plot_data)
 
                         # Settings for each plot
                         if plot_label == "Intensity plots":

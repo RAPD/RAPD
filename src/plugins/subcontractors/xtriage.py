@@ -555,7 +555,9 @@ def parse_raw_output(raw_output, logger=False):
             continue
 
         # Already have the table?
-        if table_label in tables:
+        if (table_label in tables) and (len(tables[table_label])) > 0:
+            print table_label
+            pprint(tables[table_label].keys())
             continue
 
         column_labels = []
