@@ -905,6 +905,7 @@ class Model(object):
                     "cleanup":False,
                     "json":False,
                     "exchange_dir":self.site.EXCHANGE_DIR,
+                    "run_mode":"server",
                     "xdsinp":xdsinp
                 },
             }

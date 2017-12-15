@@ -175,7 +175,7 @@ class RapdPlugin(Process):
         # Some logging
         self.logger.info(site)
         self.logger.info(command)
-        # pprint(command)
+        pprint(command)
 
         # Store passed-in variables
         self.site = site
@@ -390,15 +390,20 @@ class RapdPlugin(Process):
 
         # First and last present frame numbers
         first, last = self.get_current_images()
+        # print first, last
         partial_integration_results = False
         full_integration_results = False
         xds_input = self.xds_default
 
         # If all images are present, then process all
-        final_image = self.run_data["number_images"] - self.run_data["start_image_number"] + 1
-        if last == final_image:
-            self.tprint("  All images present", level=10, color="white")
-            full_integration_results = self.xds_total(xds_input)
+        if self.preferences.get("end_frame", False):
+            final_image = self.preferences["end_frame"]
+        else:
+            final_image = self.run_data["number_images"] - self.run_data["start_image_number"] + 1
+
+        if last >= final_image:
+            self.tprint("  Images to %d present" % final_image, level=10, color="white")
+            full_integration_results = self.xds_total(xds_input, last=final_image)
 
         # Not all images are present
         else:
@@ -630,15 +635,16 @@ class RapdPlugin(Process):
             # Queue to exchange information
             plugin_queue = Queue()
 
-            # Get the data file
-            # file_to_analyze = None
-            # for info in self.results["results"]["data_produced"]:
-            #     if info["description"] == "unmerged":
-            #         file_to_analyze = info["path"]
-            #         break
+            # Run mode
+            sub_run_mode = "interactive"
+            if self.preferences["run_mode"] == "interactive":
+                sub_run_mode = "subprocess-interactive"
+            elif self.preferences["run_mode"] == "server":
+                sub_run_mode = "subprocess"
+
+            print ">>>", sub_run_mode
 
             # Construct the pdbquery plugin command
-            # pprint(self.results["results"].keys())
             class AnalysisArgs(object):
                 """Object containing settings for plugin command construction"""
                 clean = self.preferences.get("clean_up", False)
@@ -649,7 +655,7 @@ class RapdPlugin(Process):
                 pdbquery = False  #TODO
                 progress = self.preferences.get("progress", False)
                 queue = plugin_queue
-                run_mode = "subprocess-interactive"
+                run_mode = sub_run_mode
                 sample_type = "default"
                 show_plots = self.preferences.get("show_plots", False)
                 test = False
@@ -674,8 +680,6 @@ class RapdPlugin(Process):
             plugin_instance.start()
 
             analysis_result = plugin_queue.get()
-
-            # pprint(analysis_result);
 
             self.results["results"]["analysis"] = analysis_result
 
@@ -2348,6 +2352,8 @@ class RapdPlugin(Process):
 
             plots = results["plots"]
 
+            # pprint(results["plots"].keys())
+
             # Determine the open terminal size
             term_size = os.popen('stty size', 'r').read().split()
 
@@ -2356,6 +2362,7 @@ class RapdPlugin(Process):
 
                 plot_data = plots[plot_type]["data"]
                 # plot_params = plots[plot_type]["parameters"]
+                # pprint(plot_data)
 
                 # Get each subplot
                 raw = False
