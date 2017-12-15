@@ -140,7 +140,7 @@ class RapdPlugin(Process):
 
         # Some logging
         self.logger.info(command)
-        pprint(command)
+        # pprint(command)
 
         # Store passed-in variables
         self.command = command
@@ -297,7 +297,7 @@ calculation",
         """Clean up after plugin action"""
 
         self.logger.debug("postprocess")
-        self.tprint("postprocess", level=10, color="white")
+        # self.tprint("postprocess", level=10, color="white")
 
         # Cleanup my mess.
         self.clean_up()
@@ -311,6 +311,9 @@ calculation",
 
         # Notify inerested party
         self.handle_return()
+
+        # Write credits to screen
+        self.print_credits()
 
     def run_xtriage(self):
         """
@@ -327,7 +330,7 @@ calculation",
 SIGI(+),I(-),SIGI(-)\"  scaling.input.parameters.reporting.loggraphs=True" % \
 self.command["input_data"]["datafile"]
 
-        print command
+        # print command
 
         xtriage_proc = subprocess.Popen([command,],
                                         stdout=subprocess.PIPE,
@@ -541,7 +544,7 @@ self.command["input_data"]["datafile"]
         """Clean up the working directory"""
 
         self.logger.debug("clean_up")
-        self.tprint("  Cleaning up", level=30, color="white")
+        # self.tprint("  Cleaning up", level=30, color="white")
 
         if self.preferences.get("clean", False):
 
@@ -564,8 +567,7 @@ self.command["input_data"]["datafile"]
         run_mode = self.preferences["run_mode"]
 
         if run_mode == "interactive":
-            self.print_results()
-            self.print_credits()
+            pass
         elif run_mode == "json":
             pass
         elif run_mode == "server":
@@ -578,7 +580,6 @@ self.command["input_data"]["datafile"]
                 self.command["queue"].put(self.results)
         elif run_mode == "subprocess-interactive":
             print "handle_return >> subprocess-interactive"
-            self.print_results()
             if self.command["queue"]:
                 self.command["queue"].put(self.results)
 
@@ -665,7 +666,7 @@ self.command["input_data"]["datafile"]
                 if self.results["parsed"]["xtriage"]:
 
                     xtriage_plots = self.results["parsed"]["xtriage"]["plots"]
-                    pprint(xtriage_plots.keys())
+                    # pprint(xtriage_plots.keys())
 
                     self.tprint("\nPlots", level=99, color="blue")
 

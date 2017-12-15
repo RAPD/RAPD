@@ -547,7 +547,7 @@ def parse_raw_output(raw_output, logger=False):
     # Loggraph tables
     for table_label in loggraph_table_labels:
         # print "Grabbing tables"
-        print "table_label", table_label
+        # print "table_label", table_label
 
         try:
             table_start = loggraph_tables[table_label]
@@ -564,7 +564,7 @@ def parse_raw_output(raw_output, logger=False):
         have_header = False
         have_body = False
         for line in output_lines[table_start:]:
-            print line
+            # print line
             # Ignore some lines
             if line.startswith("$") or line.startswith(":"):
                 if have_body:
@@ -593,7 +593,7 @@ def parse_raw_output(raw_output, logger=False):
                     # Store resolution for convenience sake
                     if column_label == "1/resol**2":
                         column_data["resol"].append(math.sqrt(1.0/float(value)))
-        pprint(column_data)
+        # pprint(column_data)
 
         tables[table_label] = column_data
 
@@ -607,9 +607,9 @@ def parse_raw_output(raw_output, logger=False):
         "NZ test",
         "L test, acentric data",
     )
-    for table_label in table_labels \
-                       + unlabeled_table_labels \
-                       + loggraph_table_labels:
+    for table_label in labels_to_plot: # table_labels \
+                                       # + unlabeled_table_labels \
+                                       # + loggraph_table_labels:
 
         # print table_label
 
