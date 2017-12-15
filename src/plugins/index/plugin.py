@@ -511,10 +511,17 @@ class RapdPlugin(Process):
     def check_dependencies(self):
         """Make sure dependencies are all available"""
 
+        header_displayed = False
+
         # If no best, switch to mosflm for strategy
         if self.strategy == "best":
             if not find_executable("best"):
-                self.tprint("Executable for best is not present, using Mosflm for strategy",
+                if not header_displayed:
+                    header_displayed = True
+                    self.tprint("\nExecutable checks",
+                                level=30,
+                                color="red")
+                self.tprint("  Executable for best is not present, using Mosflm for strategy",
                             level=30,
                             color="red")
                 self.strategy = "mosflm"
@@ -522,14 +529,24 @@ class RapdPlugin(Process):
         # If no gnuplot turn off printing
         if self.preferences.get("show_plots", True) and (not self.preferences.get("json", False)):
             if not find_executable("gnuplot"):
-                self.tprint("\nExecutable for gnuplot is not present, turning off plotting",
+                if not header_displayed:
+                    header_displayed = True
+                    self.tprint("\nExecutable checks",
+                                level=30,
+                                color="red")
+                    self.tprint("  Executable for gnuplot is not present, turning off plotting",
                             level=30,
                             color="red")
                 self.preferences["show_plots"] = False
 
         # If no labelit.index, dead in the water
         if not find_executable("labelit.index"):
-            self.tprint("Executable for labelit.index is not present, exiting",
+            if not header_displayed:
+                header_displayed = True
+                self.tprint("\nExecutable checks",
+                            level=30,
+                            color="red")
+            self.tprint("  Executable for labelit.index is not present, exiting",
                         level=30,
                         color="red")
             self.results["process"]["status"] = -1
@@ -539,7 +556,12 @@ class RapdPlugin(Process):
 
         # If no mosflm, dead in the water
         if not find_executable("ipmosflm"):
-            self.tprint("Executable for mosflm is not present, exiting",
+            if not header_displayed:
+                header_displayed = True
+                self.tprint("\nExecutable checks",
+                            level=30,
+                            color="red")
+            self.tprint("  Executable for mosflm is not present, exiting",
                         level=30,
                         color="red")
             self.results["process"]["status"] = -1
@@ -549,7 +571,12 @@ class RapdPlugin(Process):
 
         # If no raddose, should be OK
         if not find_executable("raddose"):
-            self.tprint("\nExecutable for raddose is not present - will continue",
+            if not header_displayed:
+                header_displayed = True
+                self.tprint("\nExecutable checks",
+                            level=30,
+                            color="red")
+                self.tprint("  Executable for raddose is not present - will continue",
                         level=30,
                         color="red")
 
@@ -1386,7 +1413,7 @@ Distance | % Transmission", level=98, color="white")
         #if "run_number" in data:
         if anom == False:
             flag = "strategy "
-            self.tprint(arg="\nMosflm strategy standard", level=98, color="blue")
+            self.tprint(arg="\n\nMosflm strategy standard", level=98, color="blue")
         else:
             flag = "strategy anom "
             self.tprint(arg="\nMosflm strategy ANOMALOUS", level=98, color="blue")
@@ -1696,7 +1723,7 @@ Distance | % Transmission", level=98, color="white")
                         #    self.ignore_user_SG = True
 
                 # Print Labelit results to commandline
-                self.tprint(arg="\nHighest symmetry Labelit result",
+                self.tprint(arg="\n\nHighest symmetry Labelit result",
                             level=98,
                             color="blue",
                             newline=False)
