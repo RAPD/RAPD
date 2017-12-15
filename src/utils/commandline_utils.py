@@ -341,14 +341,14 @@ def analyze_data_sources(sources,
     """
     Return information on files or directory from input
     """
-    print "analyze_data_sources", sources
+    # print "analyze_data_sources", sources
 
     return_data = {}
 
     if mode == "index":
         for source in sources:
             source_abspath = os.path.abspath(source)
-            print "  source_abspath:", source_abspath
+            # print "  source_abspath:", source_abspath
 
             # Does file/dir exist?
             if os.path.exists(source_abspath):

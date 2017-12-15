@@ -1095,39 +1095,39 @@ class RapdPlugin(Process):
                 Process(target=self.launcher,
                         kwargs=inp_kwargs).start()
 
-    def check_best_detector(self, detector):
-        """Check that the detector we need is in the BEST configuration file"""
-
-        best_executable = subprocess.check_output(["which", "best"])
-        detector_info = os.path.join(os.path.dirname(best_executable),
-                                     "detector-inf.dat")
-
-        # Read the detector info file to see if the detector is in it
-        lines = open(detector_info, "r").readlines()
-        found = False
-        for line in lines:
-            if line.startswith(detector+" "):
-                found = True
-                break
-            elif line.startswith("end"):
-                break
-
-        if not found:
-            self.tprint(arg="!!!",
-                        level=30,
-                        color="red")
-            self.tprint(arg="!!! Detector %s missing from the BEST detector information file !!!" %
-                        detector,
-                        level=30,
-                        color="red")
-            self.tprint(arg="Add \"%s\" \n to file %s to get BEST running" %
-                        (info.BEST_INFO[detector], detector_info),
-                        level=30,
-                        color="red")
-            self.tprint(arg="!!!",
-                        level=30,
-                        color="red")
-        return found
+    # def check_best_detector(self, detector):
+    #     """Check that the detector we need is in the BEST configuration file"""
+    #
+    #     best_executable = subprocess.check_output(["which", "best"])
+    #     detector_info = os.path.join(os.path.dirname(best_executable),
+    #                                  "detector-inf.dat")
+    #
+    #     # Read the detector info file to see if the detector is in it
+    #     lines = open(detector_info, "r").readlines()
+    #     found = False
+    #     for line in lines:
+    #         if line.startswith(detector+" "):
+    #             found = True
+    #             break
+    #         elif line.startswith("end"):
+    #             break
+    #
+    #     if not found:
+    #         self.tprint(arg="!!!",
+    #                     level=30,
+    #                     color="red")
+    #         self.tprint(arg="!!! Detector %s missing from the BEST detector information file !!!" %
+    #                     detector,
+    #                     level=30,
+    #                     color="red")
+    #         self.tprint(arg="Add \"%s\" \n to file %s to get BEST running" %
+    #                     (info.BEST_INFO[detector], detector_info),
+    #                     level=30,
+    #                     color="red")
+    #         self.tprint(arg="!!!",
+    #                     level=30,
+    #                     color="red")
+    #     return found
 
     def process_strategy(self, iteration=False):
         """
@@ -1152,7 +1152,7 @@ class RapdPlugin(Process):
                 # Get the Best version for this machine
                 best_version = xutils.get_best_version()
                 # Make sure that the BEST install has the detector
-                detector_found = self.check_best_detector(DETECTOR_TO_BEST.get(self.image1.get("detector"), None))
+                detector_found = best.check_best_detector(DETECTOR_TO_BEST.get(self.image1.get("detector"), None), self.tprint)
                 # No detector in best param file - bail on best
                 if not detector_found:
                     self.logger.debug("Detector not support by best. Failing over to mosflm strategy")
@@ -2427,7 +2427,7 @@ rerunning.\n" % spot_count)
             preferences.write('\n#iteration %s\n' % iteration)
             if iteration == 0:
                 self.log[iteration] = ['\nUsing default parameters.\n']
-                self.tprint("\n  Using default parameters", level=30, color="white", newline=False)
+                self.tprint("    Using default parameters", level=30, color="white", newline=False)
                 self.logger.debug('Using default parameters.')
 
             if iteration == 1:
@@ -2442,14 +2442,14 @@ rerunning.\n" % spot_count)
                     preferences.write('distl.minimum_spot_area=6\n')
                     preferences.write('distl.minimum_signal_height=4.3\n')
                 self.log[iteration] = ['\nLooking for long unit cell.\n']
-                self.tprint("\n  Looking for long unit cell", level=30, color="white", newline=False)
+                self.tprint("\n    Looking for long unit cell", level=30, color="white", newline=False)
                 self.logger.debug('Looking for long unit cell.')
 
             elif iteration == 2:
                 # Change it up and go for larger peaks like small molecule.
                 preferences.write('distl.minimum_spot_height=6\n')
                 self.log[iteration] = ['\nChanging settings to look for stronger peaks (ie. small molecule).\n']
-                self.tprint("\n  Looking for stronger peaks (ie. small molecule)", level=30, color="white", newline=False)
+                self.tprint("\n    Looking for stronger peaks (ie. small molecule)", level=30, color="white", newline=False)
                 self.logger.debug("Changing settings to look for stronger peaks (ie. small molecule).")
 
             elif iteration == 3:
@@ -2463,7 +2463,7 @@ rerunning.\n" % spot_count)
                     preferences.write('distl.minimum_spot_area=7\n')
                     preferences.write('distl.minimum_signal_height=1.2\n')
                 self.log[iteration] = ['\nLooking for weak diffraction.\n']
-                self.tprint("\n  Looking for weak diffraction", level=30, color="white", newline=False)
+                self.tprint("\n    Looking for weak diffraction", level=30, color="white", newline=False)
                 self.logger.debug('Looking for weak diffraction.')
 
             elif iteration == 4:
@@ -2479,7 +2479,7 @@ rerunning.\n" % spot_count)
                     preferences.write('distl.minimum_spot_area=8\n')
                     self.log[iteration] = ['\nSetting spot picking level to 8.\n']
                     area = 8
-                self.tprint("\n  Setting spot picking level to %d" % area, level=30, color="white", newline=False)
+                self.tprint("\n    Setting spot picking level to %d" % area, level=30, color="white", newline=False)
                 self.logger.debug('Setting spot picking level to 3 or 8.')
 
             elif iteration == 5:
@@ -2498,7 +2498,7 @@ rerunning.\n" % spot_count)
                     preferences.write('distl_highres_limit=5\n')
                     self.log[iteration] = ['\nSetting spot picking level to 6 and resolution to 5.\n']
                     setting = (6, 5)
-                self.tprint("\n  Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white", newline=False)
+                self.tprint("\n    Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white", newline=False)
                 self.logger.debug('Setting spot picking level to 2 or 6.')
             preferences.close()
 
