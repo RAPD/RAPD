@@ -689,6 +689,9 @@ self.command["input_data"]["datafile"]
                         plot_parameters = xtriage_plots[plot_label]["parameters"]
                         plot_data = xtriage_plots[plot_label]["data"]
 
+                        pprint(plot_parameters)
+                        pprint(plot_data)
+
                         # Settings for each plot
                         if plot_label == "Intensity plots":
                             plot_title = "Intensity vs. Resolution"
