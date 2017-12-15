@@ -57,6 +57,17 @@ def parse_raw_output(raw_output, logger=False):
     if logger:
         logger.debug("parse_raw_output")
 
+    # Handle raw output types
+    if isinstance(raw_output, str):
+        if len(raw_output) > 250:
+            raw_output = raw_output.split("\n")
+        else:
+            if os.path.exists(raw_output):
+                raw_output = open(raw_output, "r").readlines()
+            else:
+                print "Sorry, I think you are inputing a file name, but I cannot find the file"
+                raise ValueError("Sorry, I think you are inputing a file name, but I cannot find the file")
+
     output_lines = []
     anom_lines = []
     anom = {}
@@ -66,6 +77,7 @@ def parse_raw_output(raw_output, logger=False):
     patterson_positive = False
     patterson_p_value = 0
     twin = False
+    final_verdict_line = False
     # Index for list of Patterson peaks
     pat_st = 0
     pat_dist = 0.0
@@ -242,11 +254,14 @@ def parse_raw_output(raw_output, logger=False):
         skip = False
 
     # Handle the final verdict lines
-    for line in output_lines[final_verdict_line+1:]:
-        if "------" in line:
-            break
-        elif line.strip():
-            verdict_text.append(line.strip())
+    if final_verdict_line:
+        for line in output_lines[final_verdict_line+1:]:
+            if "------" in line:
+                break
+            elif line.strip():
+                verdict_text.append(line.strip())
+    else:
+        verdict_text.append("No verdict")
 
     # Handle list of Patterson peaks
     if pat_st:
@@ -399,171 +414,183 @@ def parse_raw_output(raw_output, logger=False):
         # print "Grabbing tables"
         # print "table_label", table_label
 
-        table_start = unlabeled_tables[table_label]
-        # print "table_start", table_start
+        if table_label in unlabeled_tables:
 
-        column_labels = []
-        column_data = {}
-        column_labels = []
-        started_table = False
-        have_header = False
-        have_body = False
-        for line in output_lines[table_start+1:]:
-            # print line
-            # Skip dividers
-            if "----" in line:
-                if not started_table:
-                    started_table = True
-                    continue
-                if have_body:
-                    break
-                else:
-                    continue
-            elif started_table:
-                if not have_header:
-                    sline = line.split(" | ")
-                    # print sline
-                    if len(sline) > 3:
-                        for item in sline:
-                            label = item.strip()
-                            if label:
-                                column_labels.append(label)
-                        column_labels[-1] = column_labels[-1].rstrip(" |")
-                        for column_index, column_label in enumerate(column_labels):
-                            if column_label in table_special_columns:
-                                if column_label in ("Res. range", "Resolution range", "Resolution"):
-                                    column_data["Low Res"] = []
-                                    column_data["High Res"] = []
-                                elif column_label == "<I/sigI> (violations)":
-                                    if column_index == 2:
-                                        column_data["Expected absences <I/sigI>"] = []
-                                        column_data["Expected absences #"] = []
-                                        column_data["Expected absences %"] = []
-                                    elif column_index == 4:
-                                        column_data["Expected non absences <I/sigI>"] = []
-                                        column_data["Expected non absences #"] = []
-                                        column_data["Expected non absences %"] = []
-                                    elif column_index == 6:
-                                        column_data["Other reflections <I/sigI>"] = []
-                                        column_data["Other reflections #"] = []
-                                        column_data["Other reflections %"] = []
-                                elif column_label == "Expected rel. I":
-                                    column_data[column_label.replace(".", "")] = []
+            table_start = unlabeled_tables[table_label]
+            # print "table_start", table_start
+
+            column_labels = []
+            column_data = {}
+            column_labels = []
+            started_table = False
+            have_header = False
+            have_body = False
+            for line in output_lines[table_start+1:]:
+                # print line
+                # Skip dividers
+                if "----" in line:
+                    if not started_table:
+                        started_table = True
+                        continue
+                    if have_body:
+                        break
+                    else:
+                        continue
+                elif started_table:
+                    if not have_header:
+                        sline = line.split(" | ")
+                        # print sline
+                        if len(sline) > 3:
+                            for item in sline:
+                                label = item.strip()
+                                if label:
+                                    column_labels.append(label)
+                            column_labels[-1] = column_labels[-1].rstrip(" |")
+                            for column_index, column_label in enumerate(column_labels):
+                                if column_label in table_special_columns:
+                                    if column_label in ("Res. range", "Resolution range", "Resolution"):
+                                        column_data["Low Res"] = []
+                                        column_data["High Res"] = []
+                                    elif column_label == "<I/sigI> (violations)":
+                                        if column_index == 2:
+                                            column_data["Expected absences <I/sigI>"] = []
+                                            column_data["Expected absences #"] = []
+                                            column_data["Expected absences %"] = []
+                                        elif column_index == 4:
+                                            column_data["Expected non absences <I/sigI>"] = []
+                                            column_data["Expected non absences #"] = []
+                                            column_data["Expected non absences %"] = []
+                                        elif column_index == 6:
+                                            column_data["Other reflections <I/sigI>"] = []
+                                            column_data["Other reflections #"] = []
+                                            column_data["Other reflections %"] = []
+                                    elif column_label == "Expected rel. I":
+                                        column_data[column_label.replace(".", "")] = []
+                                    else:
+                                        column_data[column_label] = []
                                 else:
                                     column_data[column_label] = []
+                                have_header = True
+                    else:
+                        have_body = True
+                        # print line
+                        sline = line[4:-2].split("|")
+                        # print sline
+                        for column_index, value in enumerate(sline):
+                            column_label = column_labels[column_index]
+                            # print ">>>%s<<<" % column_label
+                            if column_label in table_special_columns:
+                                if column_label in ("Res. range", "Resolution range", "Resolution"):
+                                    column_data["Low Res"].append(float(value.split("-")[0].strip()))
+                                    column_data["High Res"].append(float(value.split("-")[1].strip()))
+                                elif column_label == "N(obs)/N(possible)":
+                                    column_data[column_label].append(value.strip().replace("[", "").\
+                                        replace("]", ""))
+                                elif column_label in ("Reflections",
+                                                      "space group"):
+                                    column_data[column_label].append(value.strip())
+                                elif column_label in ("Completeness",):
+                                    if "%" in value:
+                                        column_data[column_label].append(float(value.replace("%",
+                                                                                             ""))/100.0)
+                                    else:
+                                        column_data[column_label].append(float(value.strip()))
+
+                                elif column_label == "<I/sigI> (violations)":
+                                    isigi, number, percentage = value.replace("(", "").\
+                                        replace(")", "").replace(",", "").split()
+                                    if column_index == 2:
+                                        column_data["Expected absences <I/sigI>"].append(float(isigi))
+                                        column_data["Expected absences #"].append(int(number))
+                                        column_data["Expected absences %"].append(float(percentage.\
+                                            replace("%", ""))/100.0)
+                                    if column_index == 4:
+                                        column_data["Expected non absences <I/sigI>"].\
+                                            append(float(isigi))
+                                        column_data["Expected non absences #"].append(int(number))
+                                        column_data["Expected non absences %"].append(float(percentage.\
+                                            replace("%", ""))/100.0)
+                                    if column_index == 6:
+                                        column_data["Other reflections <I/sigI>"].append(float(isigi))
+                                        column_data["Other reflections #"].append(int(number))
+                                        column_data["Other reflections %"].append(float(percentage.\
+                                            replace("%", ""))/100.0)
+                                elif column_label == "Expected rel. I":
+                                    column_data[column_label.replace(".", "")].append(try_float(value.strip()))
+
+                                # Integer
+                                elif column_label in ("# absent",
+                                                      "+++",
+                                                      "---",
+                                                      "# other reflections",
+                                                      "# expected systematic absences",
+                                                      "# expected non absences"):
+                                    column_data[column_label].append(int(value.strip()))
+
+                                # String
+                                elif column_label in ("Operator", ):
+                                    column_data[column_label].append(value.strip())
                             else:
-                                column_data[column_label] = []
-                            have_header = True
-                else:
-                    have_body = True
-                    # print line
-                    sline = line[4:-2].split("|")
-                    # print sline
-                    for column_index, value in enumerate(sline):
-                        column_label = column_labels[column_index]
-                        # print ">>>%s<<<" % column_label
-                        if column_label in table_special_columns:
-                            if column_label in ("Res. range", "Resolution range", "Resolution"):
-                                column_data["Low Res"].append(float(value.split("-")[0].strip()))
-                                column_data["High Res"].append(float(value.split("-")[1].strip()))
-                            elif column_label == "N(obs)/N(possible)":
-                                column_data[column_label].append(value.strip().replace("[", "").\
-                                    replace("]", ""))
-                            elif column_label in ("Reflections",
-                                                  "space group"):
-                                column_data[column_label].append(value.strip())
-                            elif column_label in ("Completeness",):
-                                if "%" in value:
-                                    column_data[column_label].append(float(value.replace("%",
-                                                                                         ""))/100.0)
-                                else:
-                                    column_data[column_label].append(float(value.strip()))
+                                column_data[column_label].append(try_float(value.strip()))
 
-                            elif column_label == "<I/sigI> (violations)":
-                                isigi, number, percentage = value.replace("(", "").\
-                                    replace(")", "").replace(",", "").split()
-                                if column_index == 2:
-                                    column_data["Expected absences <I/sigI>"].append(float(isigi))
-                                    column_data["Expected absences #"].append(int(number))
-                                    column_data["Expected absences %"].append(float(percentage.\
-                                        replace("%", ""))/100.0)
-                                if column_index == 4:
-                                    column_data["Expected non absences <I/sigI>"].\
-                                        append(float(isigi))
-                                    column_data["Expected non absences #"].append(int(number))
-                                    column_data["Expected non absences %"].append(float(percentage.\
-                                        replace("%", ""))/100.0)
-                                if column_index == 6:
-                                    column_data["Other reflections <I/sigI>"].append(float(isigi))
-                                    column_data["Other reflections #"].append(int(number))
-                                    column_data["Other reflections %"].append(float(percentage.\
-                                        replace("%", ""))/100.0)
-                            elif column_label == "Expected rel. I":
-                                column_data[column_label.replace(".", "")].append(try_float(value.strip()))
 
-                            # Integer
-                            elif column_label in ("# absent",
-                                                  "+++",
-                                                  "---",
-                                                  "# other reflections",
-                                                  "# expected systematic absences",
-                                                  "# expected non absences"):
-                                column_data[column_label].append(int(value.strip()))
 
-                            # String
-                            elif column_label in ("Operator", ):
-                                column_data[column_label].append(value.strip())
-                        else:
-                            column_data[column_label].append(try_float(value.strip()))
+            tables[table_label] = column_data
 
-        tables[table_label] = column_data
+        else:
+            tables[table_label] = False
 
     # Loggraph tables
     for table_label in loggraph_table_labels:
         # print "Grabbing tables"
         # print "table_label", table_label
 
-        table_start = loggraph_tables[table_label]
-        # print "table_start", table_start
+        if table_label in loggraph_tables:
 
-        column_labels = []
-        column_data = {}
-        column_labels = []
-        have_header = False
-        have_body = False
-        for line in output_lines[table_start:]:
-            # print line
-            # Ignore some lines
-            if line.startswith("$") or line.startswith(":"):
-                if have_body:
-                    break
-                else:
-                    continue
+            table_start = loggraph_tables[table_label]
+            # print "table_start", table_start
 
-            elif not have_header:
-                sline = line.split()
-                # print sline
-                if len(sline) > 3:
-                    for label in sline[:-1]:
-                        column_labels.append(label)
-                    for column_label in column_labels:
-                        column_data[column_label] = []
+            column_labels = []
+            column_data = {}
+            column_labels = []
+            have_header = False
+            have_body = False
+            for line in output_lines[table_start:]:
+                # print line
+                # Ignore some lines
+                if line.startswith("$") or line.startswith(":"):
+                    if have_body:
+                        break
+                    else:
+                        continue
+
+                elif not have_header:
+                    sline = line.split()
+                    # print sline
+                    if len(sline) > 3:
+                        for label in sline[:-1]:
+                            column_labels.append(label)
+                        for column_label in column_labels:
+                            column_data[column_label] = []
+                            if column_label == "1/resol**2":
+                                column_data["resol"] = []
+                        have_header = True
+                elif have_header:
+                    have_body = True
+                    sline = line.split()
+                    # print sline
+                    for position, value in enumerate(sline):
+                        column_label = column_labels[position]
+                        column_data[column_label].append(float(value))
+                        # Store resolution for convenience sake
                         if column_label == "1/resol**2":
-                            column_data["resol"] = []
-                    have_header = True
-            elif have_header:
-                have_body = True
-                sline = line.split()
-                # print sline
-                for position, value in enumerate(sline):
-                    column_label = column_labels[position]
-                    column_data[column_label].append(float(value))
-                    # Store resolution for convenience sake
-                    if column_label == "1/resol**2":
-                        column_data["resol"].append(math.sqrt(1.0/float(value)))
-        # pprint(column_data)
+                            column_data["resol"].append(math.sqrt(1.0/float(value)))
+            # pprint(column_data)
 
-        tables[table_label] = column_data
+            tables[table_label] = column_data
+
+        else:
+            tables[table_label] = False
 
     # Turn tables into plots
     plots = {}
@@ -634,47 +661,53 @@ def parse_raw_output(raw_output, logger=False):
 
             if table_label in tables:
 
-                table_data = tables[table_label]
-                x_column = x_columns[table_label]
-                my_columns_to_plot = columns_to_plot[table_label]
+                if tables[table_label]:
 
-                plots[table_label] = {
-                    "x_data": [],
-                    "y_data": [],
-                    "data": [],
-                    "parameters": {
-                        "toplabel": top_labels[table_label],
-                        "x_label": x_labels[table_label],
-                        "xlabel": x_labels[table_label],
-                        "ylabel": y_labels[table_label]
+                    table_data = tables[table_label]
+                    x_column = x_columns[table_label]
+                    my_columns_to_plot = columns_to_plot[table_label]
+
+                    plots[table_label] = {
+                        "x_data": [],
+                        "y_data": [],
+                        "data": [],
+                        "parameters": {
+                            "toplabel": top_labels[table_label],
+                            "x_label": x_labels[table_label],
+                            "xlabel": x_labels[table_label],
+                            "ylabel": y_labels[table_label]
+                        }
                     }
-                }
 
-                for column_label in table_data:
-                    # print "    %s" % column_label
-                    if column_label in my_columns_to_plot:
-                        plots[table_label]["data"].append({
-                            "parameters": {
-                                "linelabel": column_label
-                            },
-                            "series": [{
-                                "xs": table_data[x_column],
-                                "ys": table_data[column_label]
-                            }]
-                        })
-                        # if column_label in override_labels:
-                        #     column_label = override_labels[column_label]
+                    for column_label in table_data:
+                        # print "    %s" % column_label
+                        if column_label in my_columns_to_plot:
+                            plots[table_label]["data"].append({
+                                "parameters": {
+                                    "linelabel": column_label
+                                },
+                                "series": [{
+                                    "xs": table_data[x_column],
+                                    "ys": table_data[column_label]
+                                }]
+                            })
+                            # if column_label in override_labels:
+                            #     column_label = override_labels[column_label]
 
-                        plots[table_label]["y_data"].append({
-                            "data": table_data[column_label],
-                            "label": column_label,
-                            "pointRadius": 0
-                        })
-                    elif column_label == x_column:
-                        plots[table_label]["x_data"] = table_data[x_column]
-                    else:
-                        pass
-                    # print "    %s NOT GATHERED" % column_label
+                            plots[table_label]["y_data"].append({
+                                "data": table_data[column_label],
+                                "label": column_label,
+                                "pointRadius": 0
+                            })
+                        elif column_label == x_column:
+                            plots[table_label]["x_data"] = table_data[x_column]
+                        else:
+                            pass
+                        # print "    %s NOT GATHERED" % column_label
+
+                # No plot for this label
+                else:
+                    pass
 
             # No plot for this label
             else:
