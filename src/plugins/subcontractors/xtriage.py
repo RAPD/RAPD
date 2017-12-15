@@ -91,7 +91,7 @@ def parse_raw_output(raw_output, logger=False):
     table_labels = (
         "Completeness and data strength",
         "Mean intensity by shell (outliers)",
-        "NZ test",
+        # "NZ test",
         "L test, acentric data",
     )
 
@@ -408,7 +408,7 @@ def parse_raw_output(raw_output, logger=False):
                                 column_data[column_labels[position]].append(float(value.strip()))
                     else:
                         column_data[column_labels[position]].append(float(value.strip()))
-
+        # pprint(column_data)
         tables[table_label] = column_data
 
     # Grab tables missing embedded labels
@@ -538,16 +538,21 @@ def parse_raw_output(raw_output, logger=False):
                                 column_data[column_label].append(value.strip())
                         else:
                             column_data[column_label].append(try_float(value.strip()))
-
-
-
+        # pprint(column_data)
         tables[table_label] = column_data
 
 
     # Loggraph tables
+    loggraph_label_mods = {
+        "Acentric_observed": "Acentric observed",
+        "Acentric_untwinned":"Acentric untwinned",
+        "Centric_observed":  "Centric observed",
+        "Centric_untwinned": "Centric untwinned",
+    }
+
     for table_label in loggraph_table_labels:
-        # print "Grabbing tables"
-        # print "table_label", table_label
+        print "\n\nGrabbing tables"
+        print "table_label", table_label
 
         try:
             table_start = loggraph_tables[table_label]
@@ -555,9 +560,8 @@ def parse_raw_output(raw_output, logger=False):
             continue
 
         # Already have the table?
-        if (table_label in tables) and (len(tables[table_label])) > 0:
-            print table_label
-            pprint(tables[table_label].keys())
+        if table_label in tables:
+            print tables[table_label]
             continue
 
         column_labels = []
@@ -579,6 +583,9 @@ def parse_raw_output(raw_output, logger=False):
                 # print sline
                 if len(sline) > 3:
                     for label in sline[:-1]:
+                        # Modify a label
+                        if label in loggraph_label_mods:
+                            label = loggraph_label_mods[label]
                         column_labels.append(label)
                     for column_label in column_labels:
                         column_data[column_label] = []
@@ -595,8 +602,9 @@ def parse_raw_output(raw_output, logger=False):
                     # Store resolution for convenience sake
                     if column_label == "1/resol**2":
                         column_data["resol"].append(math.sqrt(1.0/float(value)))
-        # pprint(column_data)
 
+        # if table_label == "NZ test":
+        #     pprint(column_data)
         tables[table_label] = column_data
 
     # Turn tables into plots
@@ -664,7 +672,7 @@ def parse_raw_output(raw_output, logger=False):
         }
 
         if table_label in labels_to_plot:
-            # print "  Grabbing plot %s" % table_label
+            print "  Modding plot %s" % table_label
 
             if table_label in tables:
 
@@ -720,6 +728,8 @@ def parse_raw_output(raw_output, logger=False):
             else:
                 pass
 
+    # pprint(plots["NZ test"])
+
     # Assemble for return
     results = {
         "anom": anom,
@@ -756,4 +766,4 @@ def parse_raw_output(raw_output, logger=False):
 
 if __name__ == "__main__":
     raw_output = open("xtriage.log").read()
-    print parse_raw_output(raw_output)
+    parse_raw_output(raw_output)
