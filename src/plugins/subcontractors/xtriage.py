@@ -551,8 +551,8 @@ def parse_raw_output(raw_output, logger=False):
     }
 
     for table_label in loggraph_table_labels:
-        print "\n\nGrabbing tables"
-        print "table_label", table_label
+        # print "\n\nGrabbing tables"
+        # print "table_label", table_label
 
         try:
             table_start = loggraph_tables[table_label]
@@ -561,7 +561,7 @@ def parse_raw_output(raw_output, logger=False):
 
         # Already have the table?
         if table_label in tables:
-            print tables[table_label]
+            # print tables[table_label]
             continue
 
         column_labels = []
@@ -672,7 +672,7 @@ def parse_raw_output(raw_output, logger=False):
         }
 
         if table_label in labels_to_plot:
-            print "  Modding plot %s" % table_label
+            # print "  Modding plot %s" % table_label
 
             if table_label in tables:
 
