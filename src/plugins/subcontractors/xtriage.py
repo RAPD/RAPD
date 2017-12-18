@@ -57,6 +57,17 @@ def parse_raw_output(raw_output, logger=False):
     if logger:
         logger.debug("parse_raw_output")
 
+    # Handle raw output types
+    if isinstance(raw_output, str):
+        if len(raw_output) > 250:
+            raw_output = raw_output.split("\n")
+        else:
+            if os.path.exists(raw_output):
+                raw_output = open(raw_output, "r").readlines()
+            else:
+                print "Sorry, I think you are inputing a file name, but I cannot find the file"
+                raise ValueError("Sorry, I think you are inputing a file name, but I cannot find the file")
+
     output_lines = []
     anom_lines = []
     anom = {}
@@ -66,6 +77,7 @@ def parse_raw_output(raw_output, logger=False):
     patterson_positive = False
     patterson_p_value = 0
     twin = False
+    final_verdict_line = False
     # Index for list of Patterson peaks
     pat_st = 0
     pat_dist = 0.0
@@ -79,7 +91,7 @@ def parse_raw_output(raw_output, logger=False):
     table_labels = (
         "Completeness and data strength",
         "Mean intensity by shell (outliers)",
-        "NZ test",
+        # "NZ test",
         "L test, acentric data",
     )
 
@@ -98,7 +110,9 @@ def parse_raw_output(raw_output, logger=False):
     loggraph_tables = {}
     loggraph_table_labels = (
         "Intensity plots",
-        "Measurability of Anomalous signal"
+        "Measurability of Anomalous signal",
+        "NZ test",
+        "L test, acentric data"
     )
 
     # Table coilumns that need special handling
@@ -129,7 +143,7 @@ def parse_raw_output(raw_output, logger=False):
 
         # Spacegroup information
         if line.startswith("Space group:"):
-            sg_full = line.strip().split(":")[1].strip()
+            sg_full = line.replace("Space group:", "").strip()   # strip().split(":")[1].strip()
             sg_text = sg_full.split("(")[0].strip()
             sg_num = int(sg_full.split("(")[1].split()[1].replace(")", ""))
             continue
@@ -242,11 +256,14 @@ def parse_raw_output(raw_output, logger=False):
         skip = False
 
     # Handle the final verdict lines
-    for line in output_lines[final_verdict_line+1:]:
-        if "------" in line:
-            break
-        elif line.strip():
-            verdict_text.append(line.strip())
+    if final_verdict_line:
+        for line in output_lines[final_verdict_line+1:]:
+            if "------" in line:
+                break
+            elif line.strip():
+                verdict_text.append(line.strip())
+    else:
+        verdict_text.append("No verdict")
 
     # Handle list of Patterson peaks
     if pat_st:
@@ -391,7 +408,7 @@ def parse_raw_output(raw_output, logger=False):
                                 column_data[column_labels[position]].append(float(value.strip()))
                     else:
                         column_data[column_labels[position]].append(float(value.strip()))
-
+        # pprint(column_data)
         tables[table_label] = column_data
 
     # Grab tables missing embedded labels
@@ -399,8 +416,14 @@ def parse_raw_output(raw_output, logger=False):
         # print "Grabbing tables"
         # print "table_label", table_label
 
-        table_start = unlabeled_tables[table_label]
-        # print "table_start", table_start
+        try:
+            table_start = unlabeled_tables[table_label]
+        except KeyError:
+            continue
+
+        # Already have the table?
+        if table_label in tables:
+            continue
 
         column_labels = []
         column_data = {}
@@ -515,16 +538,31 @@ def parse_raw_output(raw_output, logger=False):
                                 column_data[column_label].append(value.strip())
                         else:
                             column_data[column_label].append(try_float(value.strip()))
-
+        # pprint(column_data)
         tables[table_label] = column_data
 
+
     # Loggraph tables
+    loggraph_label_mods = {
+        "Acentric_observed": "Acentric observed",
+        "Acentric_untwinned":"Acentric untwinned",
+        "Centric_observed":  "Centric observed",
+        "Centric_untwinned": "Centric untwinned",
+    }
+
     for table_label in loggraph_table_labels:
-        # print "Grabbing tables"
+        # print "\n\nGrabbing tables"
         # print "table_label", table_label
 
-        table_start = loggraph_tables[table_label]
-        # print "table_start", table_start
+        try:
+            table_start = loggraph_tables[table_label]
+        except KeyError:
+            continue
+
+        # Already have the table?
+        if table_label in tables:
+            # print tables[table_label]
+            continue
 
         column_labels = []
         column_data = {}
@@ -545,6 +583,9 @@ def parse_raw_output(raw_output, logger=False):
                 # print sline
                 if len(sline) > 3:
                     for label in sline[:-1]:
+                        # Modify a label
+                        if label in loggraph_label_mods:
+                            label = loggraph_label_mods[label]
                         column_labels.append(label)
                     for column_label in column_labels:
                         column_data[column_label] = []
@@ -561,8 +602,9 @@ def parse_raw_output(raw_output, logger=False):
                     # Store resolution for convenience sake
                     if column_label == "1/resol**2":
                         column_data["resol"].append(math.sqrt(1.0/float(value)))
-        # pprint(column_data)
 
+        # if table_label == "NZ test":
+        #     pprint(column_data)
         tables[table_label] = column_data
 
     # Turn tables into plots
@@ -575,9 +617,9 @@ def parse_raw_output(raw_output, logger=False):
         "NZ test",
         "L test, acentric data",
     )
-    for table_label in table_labels \
-                       + unlabeled_table_labels \
-                       + loggraph_table_labels:
+    for table_label in labels_to_plot: # table_labels \
+                                       # + unlabeled_table_labels \
+                                       # + loggraph_table_labels:
 
         # print table_label
 
@@ -630,55 +672,63 @@ def parse_raw_output(raw_output, logger=False):
         }
 
         if table_label in labels_to_plot:
-            # print "  Grabbing plot %s" % table_label
+            # print "  Modding plot %s" % table_label
 
             if table_label in tables:
 
-                table_data = tables[table_label]
-                x_column = x_columns[table_label]
-                my_columns_to_plot = columns_to_plot[table_label]
+                if tables[table_label]:
 
-                plots[table_label] = {
-                    "x_data": [],
-                    "y_data": [],
-                    "data": [],
-                    "parameters": {
-                        "toplabel": top_labels[table_label],
-                        "x_label": x_labels[table_label],
-                        "xlabel": x_labels[table_label],
-                        "ylabel": y_labels[table_label]
+                    table_data = tables[table_label]
+                    x_column = x_columns[table_label]
+                    my_columns_to_plot = columns_to_plot[table_label]
+
+                    plots[table_label] = {
+                        "x_data": [],
+                        "y_data": [],
+                        "data": [],
+                        "parameters": {
+                            "toplabel": top_labels[table_label],
+                            "x_label": x_labels[table_label],
+                            "xlabel": x_labels[table_label],
+                            "ylabel": y_labels[table_label]
+                        }
                     }
-                }
 
-                for column_label in table_data:
-                    # print "    %s" % column_label
-                    if column_label in my_columns_to_plot:
-                        plots[table_label]["data"].append({
-                            "parameters": {
-                                "linelabel": column_label
-                            },
-                            "series": [{
-                                "xs": table_data[x_column],
-                                "ys": table_data[column_label]
-                            }]
-                        })
-                        # if column_label in override_labels:
-                        #     column_label = override_labels[column_label]
+                    for column_label in table_data:
+                        # print "    %s" % column_label
+                        if column_label in my_columns_to_plot:
+                            plots[table_label]["data"].append({
+                                "parameters": {
+                                    "linelabel": column_label
+                                },
+                                "series": [{
+                                    "xs": table_data[x_column],
+                                    "ys": table_data[column_label]
+                                }]
+                            })
+                            # if column_label in override_labels:
+                            #     column_label = override_labels[column_label]
 
-                        plots[table_label]["y_data"].append({
-                            "data": table_data[column_label],
-                            "label": column_label,
-                            "pointRadius": 0
-                        })
-                    elif column_label == x_column:
-                        plots[table_label]["x_data"] = table_data[x_column]
-                    else:
-                        pass
-                    # print "    %s NOT GATHERED" % column_label
+                            plots[table_label]["y_data"].append({
+                                "data": table_data[column_label],
+                                "label": column_label,
+                                "pointRadius": 0
+                            })
+                        elif column_label == x_column:
+                            plots[table_label]["x_data"] = table_data[x_column]
+                        else:
+                            pass
+                        # print "    %s NOT GATHERED" % column_label
+
+                # No plot for this label
+                else:
+                    pass
 
             # No plot for this label
             else:
                 pass
+
+    # pprint(plots["NZ test"])
 
     # Assemble for return
     results = {
@@ -713,3 +763,7 @@ def parse_raw_output(raw_output, logger=False):
         logger.debug("parse_raw_output Done")
 
     return results
+
+if __name__ == "__main__":
+    raw_output = open("xtriage.log").read()
+    parse_raw_output(raw_output)

@@ -140,7 +140,7 @@ class RapdPlugin(Process):
 
         # Some logging
         self.logger.info(command)
-        pprint(command)
+        # pprint(command)
 
         # Store passed-in variables
         self.command = command
@@ -297,7 +297,7 @@ calculation",
         """Clean up after plugin action"""
 
         self.logger.debug("postprocess")
-        self.tprint("postprocess", level=10, color="white")
+        # self.tprint("postprocess", level=10, color="white")
 
         # Cleanup my mess.
         self.clean_up()
@@ -311,6 +311,9 @@ calculation",
 
         # Notify inerested party
         self.handle_return()
+
+        # Write credits to screen
+        self.print_credits()
 
     def run_xtriage(self):
         """
@@ -335,17 +338,23 @@ self.command["input_data"]["datafile"]
                                         shell=True)
         xtriage_proc.wait()
 
-        # Store raw output
-        self.results["raw"]["xtriage"] = open("logfile.log", "r").readlines()
+        # Read raw output
+        if os.path.exists("logfile.log"):
+            self.results["raw"]["xtriage"] = open("logfile.log", "r").readlines()
 
-        # Move logfile.log
-        shutil.move("logfile.log", "xtriage.log")
+            # Move logfile.log
+            shutil.move("logfile.log", "xtriage.log")
 
-        self.results["parsed"]["xtriage"] = \
-            xtriage.parse_raw_output(raw_output=self.results["raw"]["xtriage"],
-                                     logger=self.logger)
+            self.results["parsed"]["xtriage"] = \
+                xtriage.parse_raw_output(raw_output=self.results["raw"]["xtriage"],
+                                        logger=self.logger)
+            return True
 
-        return True
+        # No log file
+        else:
+            self.results["raw"]["xtriage"] = False
+            self.results["parsed"]["xtriage"] = False
+            return False
 
     def run_molrep(self):
         """Run Molrep to calculate self rotation function"""
@@ -534,7 +543,7 @@ self.command["input_data"]["datafile"]
         """Clean up the working directory"""
 
         self.logger.debug("clean_up")
-        self.tprint("  Cleaning up", level=30, color="white")
+        # self.tprint("  Cleaning up", level=30, color="white")
 
         if self.preferences.get("clean", False):
 
@@ -558,19 +567,18 @@ self.command["input_data"]["datafile"]
 
         if run_mode == "interactive":
             pass
-            # self.print_results()
-            # self.print_credits()
         elif run_mode == "json":
             pass
         elif run_mode == "server":
-            pass
+            print "handle_return >> server"
+            if self.command["queue"]:
+                self.command["queue"].put(self.results)
         elif run_mode == "subprocess":
-            return self.results
+            print "handle_return >> subprocess"
+            if self.command["queue"]:
+                self.command["queue"].put(self.results)
         elif run_mode == "subprocess-interactive":
             print "handle_return >> subprocess-interactive"
-            # self.print_results()
-            # self.print_credits()
-            # return self.results
             if self.command["queue"]:
                 self.command["queue"].put(self.results)
 
@@ -598,49 +606,54 @@ self.command["input_data"]["datafile"]
 
         xtriage_results = self.results["parsed"]["xtriage"]
 
-        self.tprint("\nXtriage results", level=99, color="blue")
+        if xtriage_results:
 
-        self.tprint("  Input spacegroup: %s (%d)" % (
-            xtriage_results["spacegroup"]["text"],
-            xtriage_results["spacegroup"]["number"]),
-                    level=99,
-                    color="white")
+            self.tprint("\nXtriage results", level=99, color="blue")
 
-        self.tprint("\n  Input unit cell: a= %.2f      b= %.2f     c= %.2f" % (
-            xtriage_results["unit_cell"]["a"],
-            xtriage_results["unit_cell"]["b"],
-            xtriage_results["unit_cell"]["c"]),
-                    level=99,
-                    color="white")
-        self.tprint("                   alpha= %.2f  beta= %.2f  gamma= %.2f" % (
-            xtriage_results["unit_cell"]["alpha"],
-            xtriage_results["unit_cell"]["beta"],
-            xtriage_results["unit_cell"]["gamma"]),
-                    level=99,
-                    color="white")
-
-        self.tprint("\n  Patterson analysis (off-origin peaks)", level=99, color="white")
-        self.tprint("                height % of   dist from    fractional coords",
-                    level=99,
-                    color="white")
-        self.tprint("  #   p-value   origin peak     origin      x      y      z",
-                    level=99,
-                    color="white")
-        for peak_id, peak_data in xtriage_results["Patterson peaks"].iteritems():
-            self.tprint("  {}   {:6.4f}     {:5.2f}%         {:5.2f}    {:5.3f}  {:5.3f}  {:5.3f}"\
-                .format(peak_id,
-                        peak_data["p-val"],
-                        peak_data["peak"]*100.0,
-                        peak_data["dist"],
-                        peak_data["frac x"],
-                        peak_data["frac y"],
-                        peak_data["frac z"]),
+            self.tprint("  Input spacegroup: %s (%d)" % (
+                xtriage_results["spacegroup"]["text"],
+                xtriage_results["spacegroup"]["number"]),
                         level=99,
                         color="white")
 
-        self.tprint("\n  Xtriage verdict\n", level=99, color="white")
-        for line in xtriage_results["verdict_text"]:
-            self.tprint("    %s" % line, level=99, color="white")
+            self.tprint("\n  Input unit cell: a= %.2f      b= %.2f     c= %.2f" % (
+                xtriage_results["unit_cell"]["a"],
+                xtriage_results["unit_cell"]["b"],
+                xtriage_results["unit_cell"]["c"]),
+                        level=99,
+                        color="white")
+            self.tprint("                   alpha= %.2f  beta= %.2f  gamma= %.2f" % (
+                xtriage_results["unit_cell"]["alpha"],
+                xtriage_results["unit_cell"]["beta"],
+                xtriage_results["unit_cell"]["gamma"]),
+                        level=99,
+                        color="white")
+
+            self.tprint("\n  Patterson analysis (off-origin peaks)", level=99, color="white")
+            self.tprint("                height % of   dist from    fractional coords",
+                        level=99,
+                        color="white")
+            self.tprint("  #   p-value   origin peak     origin      x      y      z",
+                        level=99,
+                        color="white")
+            for peak_id, peak_data in xtriage_results["Patterson peaks"].iteritems():
+                self.tprint("  {}   {:6.4f}     {:5.2f}%         {:5.2f}    {:5.3f}  {:5.3f}  {:5.3f}"\
+                    .format(peak_id,
+                            peak_data["p-val"],
+                            peak_data["peak"]*100.0,
+                            peak_data["dist"],
+                            peak_data["frac x"],
+                            peak_data["frac y"],
+                            peak_data["frac z"]),
+                            level=99,
+                            color="white")
+
+            self.tprint("\n  Xtriage verdict\n", level=99, color="white")
+            for line in xtriage_results["verdict_text"]:
+                self.tprint("    %s" % line, level=99, color="white")
+
+        else:
+            self.tprint("\nNo Xtriage results", level=99, color="red")
 
     def print_plots(self):
         """Print plots to the terminal"""
@@ -649,134 +662,144 @@ self.command["input_data"]["datafile"]
 
             if self.preferences.get("show_plots", False):
 
-                self.tprint("\nPlots", level=99, color="blue")
+                if self.results["parsed"]["xtriage"]:
 
-                # Determine the open terminal size
-                term_size = os.popen('stty size', 'r').read().split()
+                    xtriage_plots = self.results["parsed"]["xtriage"]["plots"]
+                    # pprint(xtriage_plots.keys())
 
-                xtriage_plots = self.results["parsed"]["xtriage"]["plots"]
-                # pprint(xtriage_plots)
+                    self.tprint("\nPlots", level=99, color="blue")
 
-                # The intensity plot
-                for plot_label in ("Intensity plots",
-                                   "Measurability of Anomalous signal",
-                                   "NZ test",
-                                   "L test, acentric data",):
+                    # Determine the open terminal size
+                    term_size = os.popen('stty size', 'r').read().split()
 
-                    # Skip the plot if it's not available
-                    if not plot_label in xtriage_plots:
-                        continue
+                    # The intensity plot
+                    for plot_label in ("Intensity plots",
+                                       "Measurability of Anomalous signal",
+                                       "NZ test",
+                                       "L test, acentric data",):
 
-                    # The plot data
-                    plot_parameters = xtriage_plots[plot_label]["parameters"]
-                    plot_data = xtriage_plots[plot_label]["data"]
+                        # Skip the plot if it's not available
+                        if not plot_label in xtriage_plots:
+                            continue
 
-                    # Settings for each plot
-                    if plot_label == "Intensity plots":
-                        plot_title = "Intensity vs. Resolution"
-                        x_axis_label = "Resolution (A)"
-                        y_axis_label = "Intensity"
-                        line_label = y_axis_label
-                        reverse = True
-                        plot_data = (plot_data[0],)
-                    elif plot_label == "Measurability of Anomalous signal":
-                        plot_title = "Anomalous Measurability"
-                        x_axis_label = "Resolution (A)"
-                        y_axis_label = "Measurability"
-                        line_label = "Measured"
-                        # Line for what is meaningful signal
-                        y2s = [0.05,] * len(plot_data[0]["series"][0]["ys"])
-                        line_label_2 = "Meaningful"
-                        reverse = True
-                        plot_data = (plot_data[0],)
-                    elif plot_label in ("NZ test", "L test, acentric data"):
+                        # print plot_label
+                        # pprint(xtriage_plots[plot_label])
+
+                        # The plot data
+                        plot_parameters = xtriage_plots[plot_label]["parameters"]
+                        plot_data = xtriage_plots[plot_label]["data"]
+
                         # pprint(plot_parameters)
                         # pprint(plot_data)
-                        plot_title = plot_parameters["toplabel"]
-                        x_axis_label = plot_parameters["x_label"]
-                        y_axis_label = ""
 
-                    # Determine plot extent
-                    y_array = numpy.array(plot_data[0]["series"][0]["ys"])
-                    y_max = y_array.max() * 1.1
-                    y_min = 0
-                    x_array = numpy.array(plot_data[0]["series"][0]["xs"])
-                    x_max = x_array.max()
-                    x_min = x_array.min()
+                        # Settings for each plot
+                        if plot_label == "Intensity plots":
+                            plot_title = "Intensity vs. Resolution"
+                            x_axis_label = "Resolution (A)"
+                            y_axis_label = "Intensity"
+                            line_label = y_axis_label
+                            reverse = True
+                            plot_data = (plot_data[0],)
+                        elif plot_label == "Measurability of Anomalous signal":
+                            plot_title = "Anomalous Measurability"
+                            x_axis_label = "Resolution (A)"
+                            y_axis_label = "Measurability"
+                            line_label = "Measured"
+                            # Line for what is meaningful signal
+                            y2s = [0.05,] * len(plot_data[0]["series"][0]["ys"])
+                            line_label_2 = "Meaningful"
+                            reverse = True
+                            plot_data = (plot_data[0],)
+                        elif plot_label in ("NZ test", "L test, acentric data"):
+                            # pprint(plot_parameters)
+                            # pprint(plot_data)
+                            plot_title = plot_parameters["toplabel"]
+                            x_axis_label = plot_parameters["x_label"]
+                            y_axis_label = ""
 
-                    # Special y_max & second y set
-                    if plot_label == "Measurability of Anomalous signal":
-                        y_max = max(0.055, y_max)
+                        # Determine plot extent
+                        y_array = numpy.array(plot_data[0]["series"][0]["ys"])
+                        y_max = y_array.max() * 1.1
+                        y_min = 0
+                        x_array = numpy.array(plot_data[0]["series"][0]["xs"])
+                        x_max = x_array.max()
+                        x_min = x_array.min()
 
-                    gnuplot = subprocess.Popen(["gnuplot"],
-                                               stdin=subprocess.PIPE,
-                                               stderr=subprocess.PIPE)
+                        # Special y_max & second y set
+                        if plot_label == "Measurability of Anomalous signal":
+                            y_max = max(0.055, y_max)
 
-                    gnuplot.stdin.write("""set term dumb %d,%d
-                                           set title '%s'
-                                           set xlabel '%s'
-                                           set ylabel '%s' rotate by 90 \n""" %
-                                        (int(term_size[1])-20,
-                                         30,
-                                         plot_title,
-                                         x_axis_label,
-                                         y_axis_label))
+                        gnuplot = subprocess.Popen(["gnuplot"],
+                                                   stdin=subprocess.PIPE,
+                                                   stderr=subprocess.PIPE)
 
-                    # Create the plot string
-                    if reverse:
-                        plot_string = "plot [%f:%f] [%f:%f] " \
-                                          % (x_max, x_min, y_min, y_max)
-                    else:
-                        plot_string = "plot [%f:%f] [%f:%f] " \
-                                          % (x_min, x_max, y_min, y_max)
-                    # Mark the minimum measurability
-                    if plot_label == "Measurability of Anomalous signal":
-                        plot_string += "'-' using 1:2 with lines title '%s', " % line_label_2
-                        plot_string += "'-' using 1:2 with lines title '%s'\n" % line_label
+                        gnuplot.stdin.write("""set term dumb %d,%d
+                                               set title '%s'
+                                               set xlabel '%s'
+                                               set ylabel '%s' rotate by 90 \n""" %
+                                            (int(term_size[1])-20,
+                                             30,
+                                             plot_title,
+                                             x_axis_label,
+                                             y_axis_label))
 
-                    elif plot_label in ("NZ test", "L test, acentric data"):
-                        for index, data in enumerate(plot_data):
-                            line_label = data["parameters"]["linelabel"]
-                            plot_string += "'-' using 1:2 with lines title '%s' " % line_label
-                            if index == len(plot_data) - 1:
-                                plot_string += "\n"
-                            else:
-                                plot_string += ", "
+                        # Create the plot string
+                        if reverse:
+                            plot_string = "plot [%f:%f] [%f:%f] " \
+                                              % (x_max, x_min, y_min, y_max)
+                        else:
+                            plot_string = "plot [%f:%f] [%f:%f] " \
+                                              % (x_min, x_max, y_min, y_max)
+                        # Mark the minimum measurability
+                        if plot_label == "Measurability of Anomalous signal":
+                            plot_string += "'-' using 1:2 with lines title '%s', " % line_label_2
+                            plot_string += "'-' using 1:2 with lines title '%s'\n" % line_label
 
-                    else:
-                        plot_string += "'-' using 1:2 title '%s' with lines\n" % line_label
+                        elif plot_label in ("NZ test", "L test, acentric data"):
+                            for index, data in enumerate(plot_data):
+                                line_label = data["parameters"]["linelabel"]
+                                plot_string += "'-' using 1:2 with lines title '%s' " % line_label
+                                if index == len(plot_data) - 1:
+                                    plot_string += "\n"
+                                else:
+                                    plot_string += ", "
 
-                    gnuplot.stdin.write(plot_string)
+                        else:
+                            plot_string += "'-' using 1:2 title '%s' with lines\n" % line_label
+
+                        gnuplot.stdin.write(plot_string)
 
 
-                    # Mark the minimum measurability
-                    if plot_label == "Measurability of Anomalous signal":
-                        # Run through the data and add to gnuplot
-                        for plot in plot_data:
-                            xs = plot["series"][0]["xs"]
-                            ys = plot["series"][0]["ys"]
-                            # Minimal impact line
-                            for x_val, y_val in zip(xs, y2s):
-                                gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
-                            gnuplot.stdin.write("e\n")
-                            # Experimental line
-                            for x_val, y_val in zip(xs, ys):
-                                # print x_val, y_val, y2_val
-                                gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
-                            gnuplot.stdin.write("e\n")
-                    else:
-                        # Run through the data and add to gnuplot
-                        for plot in plot_data:
-                            xs = plot["series"][0]["xs"]
-                            ys = plot["series"][0]["ys"]
-                            for x_val, y_val in zip(xs, ys):
-                                gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
-                            gnuplot.stdin.write("e\n")
+                        # Mark the minimum measurability
+                        if plot_label == "Measurability of Anomalous signal":
+                            # Run through the data and add to gnuplot
+                            for plot in plot_data:
+                                xs = plot["series"][0]["xs"]
+                                ys = plot["series"][0]["ys"]
+                                # Minimal impact line
+                                for x_val, y_val in zip(xs, y2s):
+                                    gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
+                                gnuplot.stdin.write("e\n")
+                                # Experimental line
+                                for x_val, y_val in zip(xs, ys):
+                                    # print x_val, y_val, y2_val
+                                    gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
+                                gnuplot.stdin.write("e\n")
+                        else:
+                            # Run through the data and add to gnuplot
+                            for plot in plot_data:
+                                xs = plot["series"][0]["xs"]
+                                ys = plot["series"][0]["ys"]
+                                for x_val, y_val in zip(xs, ys):
+                                    gnuplot.stdin.write("%f %f\n" % (x_val, y_val))
+                                gnuplot.stdin.write("e\n")
 
-                    # Now plot!
-                    gnuplot.stdin.flush()
-                    time.sleep(2)
-                    gnuplot.terminate()
+                        # Now plot!
+                        gnuplot.stdin.flush()
+                        time.sleep(2)
+                        gnuplot.terminate()
+                else:
+                    self.tprint("\nSorry, no plots", level=99, color="red")
 
     def print_credits(self):
         """Print information on programs used to the terminal"""
