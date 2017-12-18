@@ -2384,7 +2384,7 @@ rerunning.\n" % spot_count)
         Commented out things were tried before.
         """
 
-        self.logger.debug('Utilities::errorLabelit')
+        self.logger.debug('RunLabelit::get_labelit_settings')
 
         # If iteration is string, return the total number of iterations in the function.
         if isinstance(iteration, str):

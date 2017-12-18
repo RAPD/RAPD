@@ -459,7 +459,7 @@ class Gatherer(object):
                     # Have to remove trailing slash
                     #if dir[-1] == '/':
                     #    run_data['directory'] = dir[:-1]
-                    dir = "/epu2/rdma%s%s_%d_%06d" % (
+                    dir = "/epu/rdma%s%s_%d_%06d" % (
                                       run_data['directory'],
                                       run_data['image_prefix'],
                                       int(run_data['run_number']),
@@ -467,6 +467,7 @@ class Gatherer(object):
                     if self.ignored(dir):
                         self.logger.debug("Directory %s is marked to be ignored - skipping", dir)
                     else:
+                        """
                         run_data['directory'] = dir
                         self.logger.debug("run_data:%s %s", self.tag, run_data)
                         # Put into exchangable format
@@ -475,6 +476,19 @@ class Gatherer(object):
                         self.redis.publish("run_data:%s" % self.tag, run_data_json)
                         # Push onto redis list in case no one is currently listening
                         self.redis.lpush("run_data:%s" % self.tag, run_data_json)
+                        """
+                        ## This loop is for testing##
+                        for i in range(2):
+                            if i == 1:
+                                dir = dir.replace('/epu/', '/epu2/')
+                            run_data['directory'] = dir
+                            self.logger.debug("run_data:%s %s", self.tag, run_data)
+                            # Put into exchangable format
+                            run_data_json = json.dumps(run_data)
+                            # Publish to Redis
+                            self.redis.publish("run_data:%s" % self.tag, run_data_json)
+                            # Push onto redis list in case no one is currently listening
+                            self.redis.lpush("run_data:%s" % self.tag, run_data_json)
                 time.sleep(0.2)
                 # Have Registrar update status
                 self.ow_registrar.update({"site_id":self.site.ID})
