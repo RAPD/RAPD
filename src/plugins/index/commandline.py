@@ -103,6 +103,7 @@ def construct_command(image_headers, commandline_args, detector_module):
     # JSON output?
     command["preferences"]["json"] = commandline_args.json
     command["preferences"]["progress"] = commandline_args.progress
+    command["preferences"]["no_color"] = commandline_args.no_color
 
     # Show plots
     command["preferences"]["show_plots"] = commandline_args.show_plots

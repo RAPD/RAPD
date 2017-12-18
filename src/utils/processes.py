@@ -31,7 +31,7 @@ import os
 import signal
 import shlex
 #import time
-import subprocess
+import subprocess32 as subprocess
 from subprocess import Popen, PIPE, STDOUT
 from multiprocessing import Pool
 
@@ -116,8 +116,8 @@ def local_subprocess(command,
     """
 
     proc = subprocess.Popen(shlex.split(command),
-                            stdout=PIPE,
-                            stderr=PIPE,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
                             #stderr=STDOUT,
                             )
     # print "  running...", command
@@ -146,9 +146,13 @@ def local_subprocess(command,
 
     # Write out a log file, if name passed in
     if logfile:
-        with open(logfile, "w") as out_file:
-            out_file.write(stdout)
-            out_file.write(stderr)
+        try:
+            with open(logfile, "w") as out_file:
+                out_file.write(stdout)
+                out_file.write(stderr)
+        # Found that jobs not getting effectively killed by multiprocess Pool at times
+        except IOError:
+            pass
 
     # print "  finished...", command
 

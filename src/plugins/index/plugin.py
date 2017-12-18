@@ -43,7 +43,7 @@ from distutils.spawn import find_executable
 import functools
 # import glob
 import logging
-from multiprocessing import Process, Event
+from multiprocessing import Process, Event, Pool
 from multiprocessing import Queue as mp_Queue
 from Queue import Queue
 from threading import Thread
@@ -250,7 +250,8 @@ class RapdPlugin(Process):
         # Some logging
         self.logger.info(site)
         self.logger.info(command)
-        #pprint(command)
+        # pprint(command)
+        # sys.exit()
 
         # Store passed-in variables
         self.site = site
@@ -295,7 +296,7 @@ class RapdPlugin(Process):
 
         # Setup a multiprocessing.Pool for running jobs (8 will be full speed)
         # If set to 1, then everything is run sequentially
-        #self.pool = mp_pool(self.preferences.get('nproc', 8))
+        self.Pool = Pool(self.preferences.get('nproc', 8))
 
         # Set timer for distl. "False" will disable.
         if self.image2:
@@ -979,10 +980,12 @@ class RapdPlugin(Process):
                 inp_kwargs.update(self.batch_queue)
 
                 # Launch the job
-                jobs[str(i)] = Thread(target=self.launcher,
-                                      kwargs=inp_kwargs)
-                jobs[str(i)].start()
-
+                # jobs[str(i)] = Thread(target=self.launcher,
+                #                       kwargs=inp_kwargs)
+                # jobs[str(i)].start()
+                jobs[str(i)] = Process(target=self.launcher,
+                                       kwargs=inp_kwargs).start()
+                jobs[str(i)] = self.Pool.apply_async(self.launcher, (inp_kwargs,))
 
         # Check if Best should rerun since original Best strategy is too long for Pilatus using
         # correct start and end from plots. (Way around bug in BEST.)
@@ -1091,43 +1094,9 @@ class RapdPlugin(Process):
                 # Update batch queue info if using a compute cluster
                 inp_kwargs.update(self.batch_queue)
 
-                #Launch the job
+                # Launch the job
                 Process(target=self.launcher,
                         kwargs=inp_kwargs).start()
-
-    # def check_best_detector(self, detector):
-    #     """Check that the detector we need is in the BEST configuration file"""
-    #
-    #     best_executable = subprocess.check_output(["which", "best"])
-    #     detector_info = os.path.join(os.path.dirname(best_executable),
-    #                                  "detector-inf.dat")
-    #
-    #     # Read the detector info file to see if the detector is in it
-    #     lines = open(detector_info, "r").readlines()
-    #     found = False
-    #     for line in lines:
-    #         if line.startswith(detector+" "):
-    #             found = True
-    #             break
-    #         elif line.startswith("end"):
-    #             break
-    #
-    #     if not found:
-    #         self.tprint(arg="!!!",
-    #                     level=30,
-    #                     color="red")
-    #         self.tprint(arg="!!! Detector %s missing from the BEST detector information file !!!" %
-    #                     detector,
-    #                     level=30,
-    #                     color="red")
-    #         self.tprint(arg="Add \"%s\" \n to file %s to get BEST running" %
-    #                     (info.BEST_INFO[detector], detector_info),
-    #                     level=30,
-    #                     color="red")
-    #         self.tprint(arg="!!!",
-    #                     level=30,
-    #                     color="red")
-    #     return found
 
     def process_strategy(self, iteration=False):
         """
@@ -1487,7 +1456,7 @@ Distance | % Transmission", level=98, color="white")
                     timer = 0
                     job = self.jobs[str(i)]
                     while 1:
-                        # print i, ">>>", job.is_alive()
+                        # print i, ">>>", job
 
                         if job.is_alive() == False:
                             if i == 4:
@@ -1532,7 +1501,7 @@ Distance | % Transmission", level=98, color="white")
                             job1 = self.postprocess_best(log)
                             print "  job=%s" % job1
                             if job1 == "OK":
-                                print "  OK"
+                                # print "  OK"
                                 break
                             # If Best failed...
                             else:
@@ -1551,12 +1520,16 @@ Distance | % Transmission", level=98, color="white")
                     # turn off multiprocessing.event so any jobs still running on cluster are terminated.
                     self.running.clear()
                 else:
+                    pass
                     # kill all the remaining running jobs
+                    # self.Pool.terminate()
                     for i in range(st, 5):
                         if self.jobs[str(i)].is_alive():
                             if self.verbose and self.logger:
                                 self.logger.debug("terminating job: %s" % self.jobs[str(i)])
-                            xutils.kill_children(self.jobs[str(i)].pid, self.logger)
+                            # print "Terminating %d" % i
+                            self.jobs[str(i)].terminate()
+                            # xutils.kill_children(self.jobs[str(i)].pid, self.logger)
 
     def labelit_cell_sym(self):
       """
@@ -1873,6 +1846,12 @@ Distance | % Transmission", level=98, color="white")
                                     color="blue")
                         titled = True
 
+                        if not self.preferences.get("no_color", True):
+                            self.tprint(arg="",
+                                        level=98,
+                                        color="white",
+                                        close=False)
+
                     tag = {"osc_range":"standard",
                            "osc_range_anom":"ANOMALOUS"}[plot_type]
 
@@ -1915,6 +1894,11 @@ Distance | % Transmission", level=98, color="white")
                     gnuplot.stdin.flush()
                     time.sleep(3)
                     gnuplot.terminate()
+
+            if not self.preferences.get("no_color", True):
+                self.tprint(arg="",
+                            level=98,
+                            color="white")
 
     def postprocess(self):
         """
@@ -2076,7 +2060,7 @@ Distance | % Transmission", level=98, color="white")
         self.logger.debug("Total elapsed time: %s seconds", t)
         self.logger.debug("-------------------------------------")
         self.tprint(arg="\nRAPD autoindexing & strategy complete", level=98, color="green")
-        self.tprint(arg="Total elapsed time: %s seconds" % t, level=10, color="white")
+        self.tprint(arg="  Total elapsed time: %s seconds" % t, level=10, color="white")
 
     def html_best_plots(self):
         """
