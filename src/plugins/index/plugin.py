@@ -296,7 +296,7 @@ class RapdPlugin(Process):
 
         # Setup a multiprocessing.Pool for running jobs (8 will be full speed)
         # If set to 1, then everything is run sequentially
-        self.Pool = Pool(self.preferences.get("nproc", 8))
+        #self.Pool = Pool(self.preferences.get("nproc", 8))
 
         # Set timer for distl. "False" will disable.
         if self.image2:
@@ -983,7 +983,8 @@ class RapdPlugin(Process):
                 #                       kwargs=inp_kwargs)
                 # jobs[str(i)].start()
                 jobs[str(i)] = Process(target=self.launcher,
-                                       kwargs=inp_kwargs).start()
+                                       kwargs=inp_kwargs)
+                jobs[str(i)].start()
                 # jobs[str(i)] = self.Pool.apply_async(self.launcher, (inp_kwargs,))
 
         # Check if Best should rerun since original Best strategy is too long for Pilatus using
@@ -995,10 +996,9 @@ class RapdPlugin(Process):
                     for job in jobs.keys():
                         if jobs[job].is_alive() == False:
                             del jobs[job]
-                            start, _ = self.find_best_strat(d['log'+l[int(job)][1]].replace('log', 'plt'))
+                            start, ran = self.find_best_strat(d['log'+l[int(job)][1]].replace('log', 'plt'))
                             if start != False:
-                                pass
-                                # self.process_best(iteration, (start, ran, int(job), int(job)+1))
+                                self.process_best(iteration=iteration, runbefore=(start, ran, int(job), int(job)+1))
                             counter -= 1
                     time.sleep(0.1)
 
@@ -1519,7 +1519,7 @@ Distance | % Transmission", level=98, color="white")
                     # turn off multiprocessing.event so any jobs still running on cluster are terminated.
                     self.running.clear()
                 else:
-                    pass
+                    #pass
                     # kill all the remaining running jobs
                     # self.Pool.terminate()
                     for i in range(st, 5):
@@ -1528,7 +1528,7 @@ Distance | % Transmission", level=98, color="white")
                                 self.logger.debug("terminating job: %s" % self.jobs[str(i)])
                             # print "Terminating %d" % i
                             self.jobs[str(i)].terminate()
-                            # xutils.kill_children(self.jobs[str(i)].pid, self.logger)
+                            #xutils.kill_children(self.jobs[str(i)].pid, self.logger)
 
     def labelit_cell_sym(self):
       """
