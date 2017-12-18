@@ -296,7 +296,7 @@ class RapdPlugin(Process):
 
         # Setup a multiprocessing.Pool for running jobs (8 will be full speed)
         # If set to 1, then everything is run sequentially
-        self.Pool = Pool(self.preferences.get('nproc', 8))
+        self.Pool = Pool(self.preferences.get("nproc", 8))
 
         # Set timer for distl. "False" will disable.
         if self.image2:
@@ -694,12 +694,11 @@ class RapdPlugin(Process):
 
         # Launch labelit
         Thread(target=RunLabelit,
-              args=(command,
-                    self.labelitQueue,
-                    params,
-                    self.tprint,
-                    self.logger)).start()
-        #self.labelit_proc.start()
+               args=(command,
+                     self.labelitQueue,
+                     params,
+                     self.tprint,
+                     self.logger)).start()
 
     def process_xds_bg(self):
         """
@@ -985,7 +984,7 @@ class RapdPlugin(Process):
                 # jobs[str(i)].start()
                 jobs[str(i)] = Process(target=self.launcher,
                                        kwargs=inp_kwargs).start()
-                jobs[str(i)] = self.Pool.apply_async(self.launcher, (inp_kwargs,))
+                # jobs[str(i)] = self.Pool.apply_async(self.launcher, (inp_kwargs,))
 
         # Check if Best should rerun since original Best strategy is too long for Pilatus using
         # correct start and end from plots. (Way around bug in BEST.)
@@ -1497,9 +1496,9 @@ Distance | % Transmission", level=98, color="white")
                             self.postprocess_mosflm(log)
                         else:
                             self.jobs[str(i)].join()
-                            print "Looking at %s" % log
+                            # print "Looking at %s" % log
                             job1 = self.postprocess_best(log)
-                            print "  job=%s" % job1
+                            # print "  job=%s" % job1
                             if job1 == "OK":
                                 # print "  OK"
                                 break
