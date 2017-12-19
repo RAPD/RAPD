@@ -43,7 +43,7 @@ from distutils.spawn import find_executable
 import functools
 # import glob
 import logging
-from multiprocessing import Process, Event
+from multiprocessing import Process, Event, Pool
 from multiprocessing import Queue as mp_Queue
 from Queue import Queue
 from threading import Thread
@@ -250,7 +250,8 @@ class RapdPlugin(Process):
         # Some logging
         self.logger.info(site)
         self.logger.info(command)
-        #pprint(command)
+        # pprint(command)
+        # sys.exit()
 
         # Store passed-in variables
         self.site = site
@@ -295,7 +296,7 @@ class RapdPlugin(Process):
 
         # Setup a multiprocessing.Pool for running jobs (8 will be full speed)
         # If set to 1, then everything is run sequentially
-        #self.pool = mp_pool(self.preferences.get('nproc', 8))
+        #self.Pool = Pool(self.preferences.get("nproc", 8))
 
         # Set timer for distl. "False" will disable.
         if self.image2:
@@ -511,10 +512,17 @@ class RapdPlugin(Process):
     def check_dependencies(self):
         """Make sure dependencies are all available"""
 
+        header_displayed = False
+
         # If no best, switch to mosflm for strategy
         if self.strategy == "best":
             if not find_executable("best"):
-                self.tprint("Executable for best is not present, using Mosflm for strategy",
+                if not header_displayed:
+                    header_displayed = True
+                    self.tprint("\nExecutable checks",
+                                level=30,
+                                color="red")
+                self.tprint("  Executable for best is not present, using Mosflm for strategy",
                             level=30,
                             color="red")
                 self.strategy = "mosflm"
@@ -522,14 +530,24 @@ class RapdPlugin(Process):
         # If no gnuplot turn off printing
         if self.preferences.get("show_plots", True) and (not self.preferences.get("json", False)):
             if not find_executable("gnuplot"):
-                self.tprint("\nExecutable for gnuplot is not present, turning off plotting",
+                if not header_displayed:
+                    header_displayed = True
+                    self.tprint("\nExecutable checks",
+                                level=30,
+                                color="red")
+                    self.tprint("  Executable for gnuplot is not present, turning off plotting",
                             level=30,
                             color="red")
                 self.preferences["show_plots"] = False
 
         # If no labelit.index, dead in the water
         if not find_executable("labelit.index"):
-            self.tprint("Executable for labelit.index is not present, exiting",
+            if not header_displayed:
+                header_displayed = True
+                self.tprint("\nExecutable checks",
+                            level=30,
+                            color="red")
+            self.tprint("  Executable for labelit.index is not present, exiting",
                         level=30,
                         color="red")
             self.results["process"]["status"] = -1
@@ -539,7 +557,12 @@ class RapdPlugin(Process):
 
         # If no mosflm, dead in the water
         if not find_executable("ipmosflm"):
-            self.tprint("Executable for mosflm is not present, exiting",
+            if not header_displayed:
+                header_displayed = True
+                self.tprint("\nExecutable checks",
+                            level=30,
+                            color="red")
+            self.tprint("  Executable for mosflm is not present, exiting",
                         level=30,
                         color="red")
             self.results["process"]["status"] = -1
@@ -549,7 +572,12 @@ class RapdPlugin(Process):
 
         # If no raddose, should be OK
         if not find_executable("raddose"):
-            self.tprint("\nExecutable for raddose is not present - will continue",
+            if not header_displayed:
+                header_displayed = True
+                self.tprint("\nExecutable checks",
+                            level=30,
+                            color="red")
+                self.tprint("  Executable for raddose is not present - will continue",
                         level=30,
                         color="red")
 
@@ -666,12 +694,11 @@ class RapdPlugin(Process):
 
         # Launch labelit
         Thread(target=RunLabelit,
-              args=(command,
-                    self.labelitQueue,
-                    params,
-                    self.tprint,
-                    self.logger)).start()
-        #self.labelit_proc.start()
+               args=(command,
+                     self.labelitQueue,
+                     params,
+                     self.tprint,
+                     self.logger)).start()
 
     def process_xds_bg(self):
         """
@@ -952,10 +979,13 @@ class RapdPlugin(Process):
                 inp_kwargs.update(self.batch_queue)
 
                 # Launch the job
-                jobs[str(i)] = Thread(target=self.launcher,
-                                      kwargs=inp_kwargs)
+                # jobs[str(i)] = Thread(target=self.launcher,
+                #                       kwargs=inp_kwargs)
+                # jobs[str(i)].start()
+                jobs[str(i)] = Process(target=self.launcher,
+                                       kwargs=inp_kwargs)
                 jobs[str(i)].start()
-
+                # jobs[str(i)] = self.Pool.apply_async(self.launcher, (inp_kwargs,))
 
         # Check if Best should rerun since original Best strategy is too long for Pilatus using
         # correct start and end from plots. (Way around bug in BEST.)
@@ -966,10 +996,9 @@ class RapdPlugin(Process):
                     for job in jobs.keys():
                         if jobs[job].is_alive() == False:
                             del jobs[job]
-                            start, _ = self.find_best_strat(d['log'+l[int(job)][1]].replace('log', 'plt'))
+                            start, ran = self.find_best_strat(d['log'+l[int(job)][1]].replace('log', 'plt'))
                             if start != False:
-                                pass
-                                # self.process_best(iteration, (start, ran, int(job), int(job)+1))
+                                self.process_best(iteration=iteration, runbefore=(start, ran, int(job), int(job)+1))
                             counter -= 1
                     time.sleep(0.1)
 
@@ -1064,43 +1093,9 @@ class RapdPlugin(Process):
                 # Update batch queue info if using a compute cluster
                 inp_kwargs.update(self.batch_queue)
 
-                #Launch the job
+                # Launch the job
                 Process(target=self.launcher,
                         kwargs=inp_kwargs).start()
-
-    def check_best_detector(self, detector):
-        """Check that the detector we need is in the BEST configuration file"""
-
-        best_executable = subprocess.check_output(["which", "best"])
-        detector_info = os.path.join(os.path.dirname(best_executable),
-                                     "detector-inf.dat")
-
-        # Read the detector info file to see if the detector is in it
-        lines = open(detector_info, "r").readlines()
-        found = False
-        for line in lines:
-            if line.startswith(detector+" "):
-                found = True
-                break
-            elif line.startswith("end"):
-                break
-
-        if not found:
-            self.tprint(arg="!!!",
-                        level=30,
-                        color="red")
-            self.tprint(arg="!!! Detector %s missing from the BEST detector information file !!!" %
-                        detector,
-                        level=30,
-                        color="red")
-            self.tprint(arg="Add \"%s\" \n to file %s to get BEST running" %
-                        (info.BEST_INFO[detector], detector_info),
-                        level=30,
-                        color="red")
-            self.tprint(arg="!!!",
-                        level=30,
-                        color="red")
-        return found
 
     def process_strategy(self, iteration=False):
         """
@@ -1125,7 +1120,7 @@ class RapdPlugin(Process):
                 # Get the Best version for this machine
                 best_version = xutils.get_best_version()
                 # Make sure that the BEST install has the detector
-                detector_found = self.check_best_detector(DETECTOR_TO_BEST.get(self.image1.get("detector"), None))
+                detector_found = best.check_best_detector(DETECTOR_TO_BEST.get(self.image1.get("detector"), None), self.tprint)
                 # No detector in best param file - bail on best
                 if not detector_found:
                     self.logger.debug("Detector not support by best. Failing over to mosflm strategy")
@@ -1386,7 +1381,7 @@ Distance | % Transmission", level=98, color="white")
         #if "run_number" in data:
         if anom == False:
             flag = "strategy "
-            self.tprint(arg="\nMosflm strategy standard", level=98, color="blue")
+            self.tprint(arg="\n\nMosflm strategy standard", level=98, color="blue")
         else:
             flag = "strategy anom "
             self.tprint(arg="\nMosflm strategy ANOMALOUS", level=98, color="blue")
@@ -1460,7 +1455,7 @@ Distance | % Transmission", level=98, color="white")
                     timer = 0
                     job = self.jobs[str(i)]
                     while 1:
-                        # print i, ">>>", job.is_alive()
+                        # print i, ">>>", job
 
                         if job.is_alive() == False:
                             if i == 4:
@@ -1501,11 +1496,11 @@ Distance | % Transmission", level=98, color="white")
                             self.postprocess_mosflm(log)
                         else:
                             self.jobs[str(i)].join()
-                            print "Looking at %s" % log
+                            # print "Looking at %s" % log
                             job1 = self.postprocess_best(log)
-                            print "  job=%s" % job1
+                            # print "  job=%s" % job1
                             if job1 == "OK":
-                                print "  OK"
+                                # print "  OK"
                                 break
                             # If Best failed...
                             else:
@@ -1524,12 +1519,16 @@ Distance | % Transmission", level=98, color="white")
                     # turn off multiprocessing.event so any jobs still running on cluster are terminated.
                     self.running.clear()
                 else:
+                    #pass
                     # kill all the remaining running jobs
+                    # self.Pool.terminate()
                     for i in range(st, 5):
                         if self.jobs[str(i)].is_alive():
                             if self.verbose and self.logger:
                                 self.logger.debug("terminating job: %s" % self.jobs[str(i)])
-                            xutils.kill_children(self.jobs[str(i)].pid, self.logger)
+                            # print "Terminating %d" % i
+                            self.jobs[str(i)].terminate()
+                            #xutils.kill_children(self.jobs[str(i)].pid, self.logger)
 
     def labelit_cell_sym(self):
       """
@@ -1696,7 +1695,7 @@ Distance | % Transmission", level=98, color="white")
                         #    self.ignore_user_SG = True
 
                 # Print Labelit results to commandline
-                self.tprint(arg="\nHighest symmetry Labelit result",
+                self.tprint(arg="\n\nHighest symmetry Labelit result",
                             level=98,
                             color="blue",
                             newline=False)
@@ -1846,6 +1845,12 @@ Distance | % Transmission", level=98, color="white")
                                     color="blue")
                         titled = True
 
+                        if not self.preferences.get("no_color", True):
+                            self.tprint(arg="",
+                                        level=98,
+                                        color="white",
+                                        close=False)
+
                     tag = {"osc_range":"standard",
                            "osc_range_anom":"ANOMALOUS"}[plot_type]
 
@@ -1888,6 +1893,11 @@ Distance | % Transmission", level=98, color="white")
                     gnuplot.stdin.flush()
                     time.sleep(3)
                     gnuplot.terminate()
+
+            if not self.preferences.get("no_color", True):
+                self.tprint(arg="",
+                            level=98,
+                            color="white")
 
     def postprocess(self):
         """
@@ -2049,7 +2059,7 @@ Distance | % Transmission", level=98, color="white")
         self.logger.debug("Total elapsed time: %s seconds", t)
         self.logger.debug("-------------------------------------")
         self.tprint(arg="\nRAPD autoindexing & strategy complete", level=98, color="green")
-        self.tprint(arg="Total elapsed time: %s seconds" % t, level=10, color="white")
+        self.tprint(arg="  Total elapsed time: %s seconds" % t, level=10, color="white")
 
     def html_best_plots(self):
         """
@@ -2400,7 +2410,7 @@ rerunning.\n" % spot_count)
             preferences.write('\n#iteration %s\n' % iteration)
             if iteration == 0:
                 self.log[iteration] = ['\nUsing default parameters.\n']
-                self.tprint("\n  Using default parameters", level=30, color="white", newline=False)
+                self.tprint("    Using default parameters", level=30, color="white", newline=False)
                 self.logger.debug('Using default parameters.')
 
             if iteration == 1:
@@ -2415,14 +2425,14 @@ rerunning.\n" % spot_count)
                     preferences.write('distl.minimum_spot_area=6\n')
                     preferences.write('distl.minimum_signal_height=4.3\n')
                 self.log[iteration] = ['\nLooking for long unit cell.\n']
-                self.tprint("\n  Looking for long unit cell", level=30, color="white", newline=False)
+                self.tprint("\n    Looking for long unit cell", level=30, color="white", newline=False)
                 self.logger.debug('Looking for long unit cell.')
 
             elif iteration == 2:
                 # Change it up and go for larger peaks like small molecule.
                 preferences.write('distl.minimum_spot_height=6\n')
                 self.log[iteration] = ['\nChanging settings to look for stronger peaks (ie. small molecule).\n']
-                self.tprint("\n  Looking for stronger peaks (ie. small molecule)", level=30, color="white", newline=False)
+                self.tprint("\n    Looking for stronger peaks (ie. small molecule)", level=30, color="white", newline=False)
                 self.logger.debug("Changing settings to look for stronger peaks (ie. small molecule).")
 
             elif iteration == 3:
@@ -2436,7 +2446,7 @@ rerunning.\n" % spot_count)
                     preferences.write('distl.minimum_spot_area=7\n')
                     preferences.write('distl.minimum_signal_height=1.2\n')
                 self.log[iteration] = ['\nLooking for weak diffraction.\n']
-                self.tprint("\n  Looking for weak diffraction", level=30, color="white", newline=False)
+                self.tprint("\n    Looking for weak diffraction", level=30, color="white", newline=False)
                 self.logger.debug('Looking for weak diffraction.')
 
             elif iteration == 4:
@@ -2452,7 +2462,7 @@ rerunning.\n" % spot_count)
                     preferences.write('distl.minimum_spot_area=8\n')
                     self.log[iteration] = ['\nSetting spot picking level to 8.\n']
                     area = 8
-                self.tprint("\n  Setting spot picking level to %d" % area, level=30, color="white", newline=False)
+                self.tprint("\n    Setting spot picking level to %d" % area, level=30, color="white", newline=False)
                 self.logger.debug('Setting spot picking level to 3 or 8.')
 
             elif iteration == 5:
@@ -2471,7 +2481,7 @@ rerunning.\n" % spot_count)
                     preferences.write('distl_highres_limit=5\n')
                     self.log[iteration] = ['\nSetting spot picking level to 6 and resolution to 5.\n']
                     setting = (6, 5)
-                self.tprint("\n  Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white", newline=False)
+                self.tprint("\n    Setting spot picking level to %d and hires limit to %d" % setting, level=30, color="white", newline=False)
                 self.logger.debug('Setting spot picking level to 2 or 6.')
             preferences.close()
 

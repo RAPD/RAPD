@@ -37,7 +37,8 @@ def verbose_print(arg,
                   verbosity=20,
                   no_color=False,
                   progress=False,
-                  newline=True):
+                  newline=True,
+                  close=True):
     """Print to terminal window screened by verbosity setting
 
     Keyword arguments:
@@ -75,12 +76,18 @@ def verbose_print(arg,
             color = False
         if newline:
             if color:
-                print text.color(color) + arg + text.stop
+                if close:
+                    print text.color(color) + arg + text.stop
+                else:
+                    print text.color(color) + arg
             else:
                 print arg
         else:
             if color:
-                sys.stdout.write(text.color(color) + arg + text.stop)
+                if close:
+                    sys.stdout.write(text.color(color) + arg + text.stop)
+                else:
+                    sys.stdout.write(text.color(color) + arg)
             else:
                 sys.stdout.write(arg)
             sys.stdout.flush()
