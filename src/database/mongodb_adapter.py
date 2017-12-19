@@ -40,6 +40,7 @@ import datetime
 import logging
 import os
 from pprint import pprint
+# import shutil
 import threading
 
 import pymongo
@@ -399,13 +400,28 @@ class Database(object):
                 # Save the new
                 for index in range(len(plugin_result["results"].get(file_type, []))):
                     data = plugin_result["results"].get(file_type, [])[index]
-                    self.logger.debug(file_type, data)
+
+                    # File exists - save it
                     if os.path.exists(data["path"]):
-                        grid_id = add_funcs[file_type](path=data["path"],
+
+                        _file = data["path"]
+
+                        # Upload the file to MongoDB
+                        grid_id = add_funcs[file_type](path=_file,
                                                        metadata={"hash":data["hash"],
                                                                  "result_id":_result_id,
                                                                  "file_type":file_type})
+
+                        # This _id is important
                         plugin_result["results"][file_type][index]["_id"] = grid_id
+
+                        # Remove the file from the system
+                        os.remove(_file)
+
+                        # Create a nicer path now that the original file is gone
+                        plugin_result["results"][file_type][index]["path"] = os.path.basename(_file)
+
+                    # File doesn't exist
                     else:
                         plugin_result["results"][file_type][index]["_id"] = None
 
