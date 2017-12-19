@@ -350,6 +350,19 @@ class Database(object):
         #
         # Handle any file storage
         #
+        def remove_files_from_db(result_id, file_type):
+            """Remove old files from the db"""
+
+            self.logger.debug("Trying to remove files that match results_id:%s file_type:%s", result_id, file_type)
+
+            # Find files to remove
+            files_to_remove = fs.find({"metadata.result_id":result_id,
+                                       "metadata.type":file_type})
+            # Remove them
+            for file_to_remove in files_to_remove:
+                self.logger.debug("Removing file with _id:%s", file_to_remove["_id"])
+                fs.delete(file_to_remove["_id"])
+
         def add_raw_file_to_db(path, metadata=None):
             """Add files to MongoDB"""
             # Open the path
@@ -374,21 +387,27 @@ class Database(object):
             "data_produced":add_raw_file_to_db
         }
 
-        for key in ("archive_files", "data_produced"):
-            self.logger.debug('Looking for %s', key)
-            if plugin_result["results"].get(key, False):
-                self.logger.debug('Have %s', key)
-                for index in range(len(plugin_result["results"].get(key, []))):
-                    data = plugin_result["results"].get(key, [])[index]
-                    self.logger.debug(key, data)
+        for file_type in ("archive_files", "data_produced"):
+            self.logger.debug('Looking for %s', file_type)
+            if plugin_result["results"].get(file_type, False):
+
+                self.logger.debug('Have %s', file_type)
+
+                # Erase old files
+                remove_files_from_db(result_id=_result_id, file_type=file_type)
+
+                # Save the new
+                for index in range(len(plugin_result["results"].get(file_type, []))):
+                    data = plugin_result["results"].get(file_type, [])[index]
+                    self.logger.debug(file_type, data)
                     if os.path.exists(data["path"]):
-                        grid_id = add_funcs[key](path=data["path"],
-                                                 metadata={"hash":data["hash"],
-                                                           "result_id":_result_id,
-                                                           "type":key})
-                        plugin_result["results"][key][index]["_id"] = grid_id
+                        grid_id = add_funcs[file_type](path=data["path"],
+                                                       metadata={"hash":data["hash"],
+                                                                 "result_id":_result_id,
+                                                                 "file_type":file_type})
+                        plugin_result["results"][file_type][index]["_id"] = grid_id
                     else:
-                        plugin_result["results"][key][index]["_id"] = None
+                        plugin_result["results"][file_type][index]["_id"] = None
 
         #
         # Add to plugin-specific results
