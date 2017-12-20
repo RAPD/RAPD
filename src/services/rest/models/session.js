@@ -31,4 +31,6 @@ var SessionSchema = new Schema({
   }
 }, {strict:false});
 
-module.exports = mongoose.model('Session', SessionSchema);
+// module.exports = mongoose.model('Session', SessionSchema);
+exports.Session = mongoose.model('Session', SessionSchema);
+exports.SessionSchema = SessionSchema;

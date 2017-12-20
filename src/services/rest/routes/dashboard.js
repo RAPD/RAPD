@@ -3,9 +3,9 @@ var router     = express.Router();
 const config   = require('../config');
 const mongoose = require('mongoose');
 
-const Activity = require('../models/activity');
-const Login = require('../models/login');
-const Result = require('../models/result');
+const Activity = require('../models/activity').Activity;
+const Login = require('../models/login').Login;
+const Result = require('../models/result').Result;
 
 // Redis
 // const redis = require('redis');

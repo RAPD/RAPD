@@ -5,7 +5,7 @@ var router = express.Router();
 var mongoose = require('mongoose');
 
 const config = require('../config');
-const User =    require('../models/user');
+const User = require('../models/user').User;
 
 // Email Configuration
 var smtp_transport = nodemailer.createTransport(smtpTransport({

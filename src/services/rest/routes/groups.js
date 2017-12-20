@@ -4,7 +4,7 @@ var router = express.Router();
 const config = require('../config');
 
 // MongoDB model
-var Group = require('../models/group');
+var Group = require('../models/group').Group;
 
 // Create connection to LDAP
 if (config.authenticate_mode === 'ldap') {

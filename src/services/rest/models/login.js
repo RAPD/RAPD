@@ -36,4 +36,6 @@ var LoginSchema = new Schema({
   }
 }, {strict:false})
 
-module.exports = mongoose.model('Login', LoginSchema);
+// module.exports = mongoose.model('Login', LoginSchema);
+exports.Login = mongoose.model('Login', LoginSchema);
+exports.LoginSchema = LoginSchema;

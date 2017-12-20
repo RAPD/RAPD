@@ -3,7 +3,7 @@ var router = express.Router();
 var mongoose = require('mongoose');
 
 // const Group = require('../models/group');
-const Session = require('../models/session');
+const Session = require('../models/session').Session;
 // const Result = require('../models/result');
 
 // on routes that end in /sessions
