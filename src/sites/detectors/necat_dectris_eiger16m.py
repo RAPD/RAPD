@@ -234,7 +234,6 @@ def get_alt_path(image):
 
 def get_alt_path_WORKING(image):
     """Pass back the alternate path of image located in long term storage."""
-    prefix = ['/epu2/rdma', '/epu/rdma']
     dirname, imagename = os.path.split(image)
     newdir = dirname.replace('/epu/rdma','')[:dirname.rfind('/')]
     newpath = os.path.join(newdir[:newdir.rfind('/')], imagename)

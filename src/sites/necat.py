@@ -33,7 +33,8 @@ from utils.site import read_secrets
 SITE = 'NECAT'
 
 #ID = "NECAT_T"
-ID = ("NECAT_T", 'NECAT_E')
+#ID = ("NECAT_T", 'NECAT_E')
+ID = ("NECAT_C", 'NECAT_E')
 
 #ID = ("T")
 #BEAMLINE="T"
@@ -47,6 +48,49 @@ read_secrets(SECRETS, sys.modules[__name__])
 # X-ray source characteristics
 # Keyed to ID
 BEAM_INFO = {
+    "NECAT_C": {# Detector distance limits
+                "DETECTOR_DISTANCE_MIN": 150.0,
+                "DETECTOR_DISTANCE_MAX": 1000.0,
+                # goniometer limit
+                #"DELTA_OMEGA_MIN": 0.05,
+                "DIFFRACTOMETER_OSC_MIN": 0.05,
+                # shortest exposure time
+                #"EXPOSURE_TIME_MIN": 0.05,
+                "DETECTOR_TIME_MIN": 0.05,
+                # Flux of the beam
+                #"BEAM_FLUX":1.5E12,
+                "BEAM_FLUX":5E12,
+                # Max size of the beam in mm
+                "BEAM_SIZE_X":0.07,
+                "BEAM_SIZE_Y":0.03,
+                # Shape of the beam - ellipse, rectangle
+                "BEAM_SHAPE":"ellipse",
+                # Shape of the attenuated beam - circle or rectangle
+                "BEAM_APERTURE_SHAPE":"circle",
+                # Gaussian description of the beam for raddose
+                #"BEAM_GAUSS_X":0.03,
+                #"BEAM_GAUSS_Y":0.01,
+                # Beam center calibration
+                'BEAM_CENTER_DATE' : "2017-3-02",
+                # Beamcenter equation coefficients (b, m1, m2, m3, m4, m5, m6)
+                # Beamcenter equation coefficients (b, m1, m2, m3)
+                #'BEAM_CENTER_X' : (163.2757684023,
+                #                 0.0003178917,
+                #                 -5.0236657815e-06,
+                #                5.8164218288e-09),
+                #'BEAM_CENTER_Y' : (155.1904879862,
+                #                 -0.0014631216,
+                #                 8.60559283424e-07,
+                #                 -2.5709929645e-10)
+                'BEAM_CENTER_X' : (217.89545788464195,
+                                 -0.0095051886470180359,
+                                 4.5313419256785272e-05,
+                                 -1.3544716298203249e-07),
+                'BEAM_CENTER_Y' : (222.69061623307075,
+                                 0.008371144274918689,
+                                 -6.6628778965267953e-05,
+                                 2.4131282311413717e-07)
+                },
     "NECAT_E": {# Detector distance limits
                 "DETECTOR_DISTANCE_MIN": 150.0,
                 "DETECTOR_DISTANCE_MAX": 1000.0,
@@ -82,56 +126,61 @@ BEAM_INFO = {
                                  8.60559283424e-07,
                                  -2.5709929645e-10)
                 },
-    #"NECAT_T": BEAM_INFO["NECAT_E"],
              }
+# Copy E to T for testing
 BEAM_INFO.update({"NECAT_T": BEAM_INFO["NECAT_E"]})
+
+################ Logging #################
+# Linux should be /var/log/
+LOGFILE_DIR = "/share/apps/necat/tmp3"
+LOG_LEVEL = 50
+
+################ Directories ################
+# Where files are exchanged between plugins and control
+EXCHANGE_DIR = "/gpfs6/users/necat/rapd2/exchange_dir"
+# Where files from UI are uploaded - should be visible by launch instance
+#UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"
+
+################# Lock file locations so only one instance can run. False if no locking.################
+# Launcher Manager to sort out where to send jobs
+LAUNCHER_MANAGER_LOCK_FILE = "/tmp/rapd2/lock/launcher_manager.lock"
+# Launcher settings
+LAUNCHER_LOCK_FILE = "/tmp/rapd2/lock/launcher.lock"
+# dataset gatherer lock
+GATHERER_LOCK_FILE = "/tmp/rapd2/lock/gatherer.lock"
+# Control process settings
+CONTROL_LOCK_FILE = "/tmp/rapd2/lock/rapd_core.lock"
+
+
+################# Adapters################
+# RAPD cluster adapter location
+CLUSTER_ADAPTER = "sites.cluster.necat"
+
+#Directories to look for launcher adapters
+# Queried in order, so a shell_simple.py in src/sites/launcher_adapters will override
+# the same file in launch/launcher_adapters
+RAPD_LAUNCHER_ADAPTER_DIRECTORIES = ("launch.launcher_adapters",
+                                     "sites.launcher_adapters")
+# Directories to look for rapd plugins
+# Queried in order, so a rapd_agent_echo.py in src/sites/agents will override
+# the same file in src/agents
+RAPD_PLUGIN_DIRECTORIES = ("sites.plugins",
+                           "plugins")
+
+
 # Method RAPD uses to track groups
 #   uid -- the uid of data root directory corresponds to session.group_id
 #GROUP_ID = "uid"
 GROUP_ID = None
 
-# Logging
-# Linux should be /var/log/
-#LOGFILE_DIR = "/tmp/rapd2/logs"
-LOGFILE_DIR = "/share/apps/necat/tmp3"
-LOG_LEVEL = 50
-
-# Where files from UI are uploaded - should be visible by launch instance
-UPLOAD_DIR = "/gpfs5/users/necat/rapd/uranium/trunk/uploads"
-
-# RAPD cluster adapter location
-CLUSTER_ADAPTER = "sites.cluster.necat"
-
-# Launcher Manager to sort out where to send jobs
-LAUNCHER_MANAGER_LOCK_FILE = "/tmp/rapd2/lock/launcher_manager.lock"
-
-# Launcher settings
-LAUNCHER_LOCK_FILE = "/tmp/rapd2/lock/launcher.lock"
-# Launcher to send jobs to
-# The value should be the key of the launcher to select in LAUNCHER_SPECIFICATIONS
-#LAUNCHER_TARGET = 1
-# Directories to look for launcher adapters
-RAPD_LAUNCHER_ADAPTER_DIRECTORIES = ("launch.launcher_adapters",
-                                     "sites.launcher_adapters")
-# Queried in order, so a shell_simple.py in src/sites/launcher_adapters will override
-# the same file in launch/launcher_adapters
+# The field name in groups collection that matches the property described in GROUP_ID
+#   uidNumber
+#GROUP_ID_FIELD = "uidNumber"
 
 # Data gatherer settings
 # The data gatherer for this site, in the src/sites/gatherers directory
-#GATHERER = "necat.py"
-GATHERER = "necat_t.py"
-GATHERER_LOCK_FILE = "/tmp/rapd2/lock/gatherer.lock"
-
-# Directories to look for rapd plugins
-RAPD_PLUGIN_DIRECTORIES = ("sites.plugins",
-                           "plugins")
-
-# Queried in order, so a rapd_agent_echo.py in src/sites/agents will override
-# the same file in src/agents
-
-# Control process settings
-# Process is a singleton? The file to lock to. False if no locking.
-CONTROL_LOCK_FILE = "/tmp/rapd2/lock/rapd_core.lock"
+GATHERER = "necat.py"
+#GATHERER = "necat_t.py"
 
 # Control settings
 # Port for core process to listen on
@@ -156,10 +205,14 @@ REDIS_CLUSTER = True
 
 # Detector settings
 # Must have a file in sites.detectors that is all lowercase of this string
-#DETECTOR = "NECAT_ADSC_Q315_TEST"
-DETECTOR = "NECAT_DECTRIS_EIGER16M"
+#DETECTOR = "NECAT_DECTRIS_EIGER16M"
+DETECTOR = False
 #DETECTOR_SUFFIX = ".img"
 DETECTOR_SUFFIX = ".cbf"
+# Keyed to ID
+DETECTORS = {"NECAT_C":("NECAT_DECTRIS_PILATUS6MF", ""),
+             "NECAT_E":("NECAT_DECTRIS_EIGER16M", ""),
+             "NECAT_T":("NECAT_DECTRIS_EIGER16M", "")}
 
 # Monitor for collected images
 #IMAGE_MONITOR = "sites.image_monitors.necat_e"
@@ -197,11 +250,10 @@ IMAGE_IGNORE_DIRECTORIES = (
 # Images collected containing the following string will be ignored
 IMAGE_IGNORE_STRINGS = ("ignore", )
 
-# So if image is not present, look in long term storage location.
-ALT_IMAGE_LOCATIONS = True
-
-# Location where processed data resides
-EXCHANGE_DIR = '/gpfs6/users/necat/rapd2/exchange_dir'
+# If image is not present, look in long term storage location.
+# Runs function detector.get_alt_path() to get new path
+# Set to False if not using.
+ALT_IMAGE_LOCATION = True
 
 # Monitor for collected run information
 RUN_MONITOR = "sites.monitors.run_monitors.necat_e"
@@ -309,7 +361,7 @@ CLOUD_MONITOR_SETTINGS = {
         "UI_PORT":UI_PORT,
         "UI_USER":UI_USER,
         "UI_PASSWORD":UI_PASSWORD,
-        "UPLOAD_DIR":UPLOAD_DIR
+        #"UPLOAD_DIR":UPLOAD_DIR
         }
 
 SITE_ADAPTER_SETTINGS = {"ID":ID,

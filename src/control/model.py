@@ -392,7 +392,7 @@ class Model(object):
 
         # Check if it exists. May have been deleted from RAMDISK
         if os.path.isfile(fullname) in (False, None):
-            if self.site.ALT_IMAGE_LOCATIONS:
+            if self.site.ALT_IMAGE_LOCATION:
                 fullname = detector.get_alt_path(fullname)
 
         # Save some typing
