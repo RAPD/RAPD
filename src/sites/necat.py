@@ -216,7 +216,8 @@ DETECTORS = {"NECAT_C":("NECAT_DECTRIS_PILATUS6MF", ""),
 
 # Monitor for collected images
 #IMAGE_MONITOR = "sites.image_monitors.necat_e"
-IMAGE_MONITOR = "sites.monitors.image_monitors.necat_e"
+#IMAGE_MONITOR = "sites.monitors.image_monitors.necat_e"
+IMAGE_MONITOR = "monitors.image_monitors.redis_image_monitor"
 
 # Redis databse
 # Running in a cluster configuration - True || False
@@ -248,7 +249,9 @@ IMAGE_IGNORE_DIRECTORIES = (
     "/epu2/rdma/gpfs5/users/necat/rapd/uranium/trunk/test_data",
     )
 # Images collected containing the following string will be ignored
-IMAGE_IGNORE_STRINGS = ("ignore", )
+IMAGE_IGNORE_STRINGS = ("ignore", 
+                        "priming_shot",
+                        )
 
 # If image is not present, look in long term storage location.
 # Runs function detector.get_alt_path() to get new path
@@ -256,7 +259,9 @@ IMAGE_IGNORE_STRINGS = ("ignore", )
 ALT_IMAGE_LOCATION = True
 
 # Monitor for collected run information
-RUN_MONITOR = "sites.monitors.run_monitors.necat_e"
+#RUN_MONITOR = "sites.monitors.run_monitors.necat_e"
+RUN_MONITOR = "monitors.run_monitors.redis_run_monitor"
+
 # Running in a cluster configuration - True || False
 RUN_MONITOR_REDIS_CLUSTER = REDIS_CLUSTER
 # Expected time limit for a run to be collected in minutes (0 = forever)
@@ -281,7 +286,8 @@ CLOUD_REINDEX_HANDLER = "reindex"
 CLOUD_REINTEGRATE_HANDLER = "reintegrate"
 
 # For connecting to the site
-SITE_ADAPTER = "sites.site_adapters.necat"
+#SITE_ADAPTER = "sites.site_adapters.necat"
+SITE_ADAPTER = False
 # Running in a cluster configuration - True || False
 #SITE_ADAPTER_REDIS_CLUSTER = False
 SITE_ADAPTER_REDIS_CLUSTER = REDIS_CLUSTER
@@ -364,10 +370,19 @@ CLOUD_MONITOR_SETTINGS = {
         #"UPLOAD_DIR":UPLOAD_DIR
         }
 
-SITE_ADAPTER_SETTINGS = {"ID":ID,
-                         "REDIS_HOST":SITE_REDIS_IP,
-                         "REDIS_PORT":SITE_REDIS_PORT,
-                         "REDIS_DB":SITE_REDIS_DB}
+#SITE_ADAPTER_SETTINGS = {"ID":ID,
+#                         "REDIS_HOST":SITE_REDIS_IP,
+#                         "REDIS_PORT":SITE_REDIS_PORT,
+#                         "REDIS_DB":SITE_REDIS_DB}
+SITE_ADAPTER_SETTINGS = {"NECAT_E": {"ID":ID,
+                                     "REDIS_HOST":E_REDIS_IP,
+                                     "REDIS_PORT":E_REDIS_PORT,
+                                     "REDIS_DB":E_REDIS_DB},
+                         "NECAT_C": {"ID":ID,
+                                     "REDIS_HOST":C_REDIS_IP,
+                                     "REDIS_PORT":C_REDIS_PORT,
+                                     "REDIS_DB":C_REDIS_DB},
+                           }
 
 REMOTE_ADAPTER_SETTINGS = {"ID":ID,
                            "MONGO_CONNECTION_STRING":MONGO_CONNECTION_STRING,
