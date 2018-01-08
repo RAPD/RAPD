@@ -345,7 +345,7 @@ def base_read_header(image,
     #     if logger:
     #         logger.exception('Error reading the header for image %s' % image)
 
-def read_header(input_file=False, beam_settings=False):
+def read_header(input_file=False, beam_settings=False, extra_header=False):
     """
     Read header from image file and return dict
 

@@ -26,26 +26,10 @@ __status__ = "Development"
 
 # Standard imports
 import argparse
-# datetime
-# glob
-# import json
-# logging
-# multiprocessing
 import os
 import pprint
 import numpy
-# pymongo
 import re
-# redis
-# shutil
-# subprocess
-# sys
-# import time
-
-# RAPD imports
-# commandline_utils
-# detectors.detector_utils as detector_utils
-# utils
 
 # Dectris Pilatus 6M
 import detectors.dectris.dectris_pilatus6m as detector
@@ -176,7 +160,7 @@ def calculate_flux(header, site_params):
     # Return the flux and beam size
     return (flux, new_x, new_y)
 
-def get_data_root_dir(fullname):
+def get_data_root_dir_OLD(fullname):
     """
     Derive the data root directory from the user directory
     The logic will most likely be unique for each site
@@ -192,7 +176,46 @@ def get_data_root_dir(fullname):
     # Return the determined directory
     return data_root_dir
 
-def base_read_header(image,
+def get_data_root_dir(fullname):
+    """
+    Derive the data root directory from the user directory
+    The logic will most likely be unique for each site
+
+    Keyword arguments
+    fullname -- the full path name of the image file
+    """
+    path_split    = fullname.split(os.path.sep)
+    data_root_dir = False
+
+    gpfs   = False
+    users  = False
+    inst   = False
+    group  = False
+    images = False
+    
+    for p in path_split:
+        if p.startswith('gpfs'):
+            st = path_split.index(p)
+    if path_split[st].startswith("gpfs"):
+        gpfs = path_split[st]
+        if path_split[st+1] == "users":
+            users = path_split[st+1]
+            if path_split[st+2]:
+                inst = path_split[st+2]
+                if path_split[st+3]:
+                    group = path_split[st+3]
+
+    if group:
+        data_root_dir = os.path.join("/",*path_split[1:st+4])
+    elif inst:
+        data_root_dir = os.path.join("/",*path_split[1:st+3])
+    else:
+        data_root_dir = False
+
+    #return the determined directory
+    return data_root_dir
+
+def base_read_header_OLD(image,
                      logger=False):
     """
     Given a full file name for a Piltus image (as a string), read the header and
@@ -216,7 +239,7 @@ def base_read_header(image,
 
     #item:(pattern,transform)
     header_items = {
-        "md2_aperture": ("^# MD2_aperture_size\s*(\d+) microns", lambda x: int(x)/1000),
+        #"md2_aperture": ("^# MD2_aperture_size\s*(\d+) microns", lambda x: int(x)/1000),
         "beam_x": ("^# Beam_xy\s*\(([\d\.]+)\,\s[\d\.]+\) pixels", lambda x: float(x)),
         "beam_y": ("^# Beam_xy\s*\([\d\.]+\,\s([\d\.]+)\) pixels", lambda x: float(x)),
         "count_cutoff": ("^# Count_cutoff\s*(\d+) counts", lambda x: int(x)),
@@ -239,8 +262,8 @@ def base_read_header(image,
         "trim_file": ("^#\sTrim_file\:\s*([\w\.]+)", lambda x:str(x).rstrip()),
         "twotheta": ("^# Detector_2theta\s*([\d\.]*)\s*deg", lambda x: float(x)),
         "wavelength": ("^# Wavelength\s*([\d\.]+) A", lambda x: float(x)),
-        "ring_current": ("^# Ring_current\s*([\d\.]*)\s*mA", lambda x: float(x)),
-        "sample_mounter_position": ("^#\sSample_mounter_position\s*([\w\.]+)", lambda x:str(x).rstrip()),
+        #"ring_current": ("^# Ring_current\s*([\d\.]*)\s*mA", lambda x: float(x)),
+        #"sample_mounter_position": ("^#\sSample_mounter_position\s*([\w\.]+)", lambda x:str(x).rstrip()),
         "size1": ("X-Binary-Size-Fastest-Dimension:\s*([\d\.]+)", lambda x: int(x)),
         "size2": ("X-Binary-Size-Second-Dimension:\s*([\d\.]+)", lambda x: int(x)),
         }
@@ -294,7 +317,7 @@ def base_read_header(image,
 
     return parameters
 
-def read_header(fullname, beam_settings=False):
+def read_header(fullname, beam_settings=False, extra_header=False):
     """
     Read header from image file and return dict
 
@@ -305,21 +328,23 @@ def read_header(fullname, beam_settings=False):
 
     # Perform the header read from the file
     # If you are importing another detector, this should work
-    #header = detector.read_header(fullname)
-    header = base_read_header(fullname)
-    """
+    header = detector.read_header(fullname)
+    #header = base_read_header(fullname)
+    
+    # Get additional beamline info not in header
+    if extra_header:
+        header.update(extra_header)
+    
     # Calculate flux, new beam size and add them to header
     if beam_settings:
         flux, x_size, y_size = calculate_flux(header, beam_settings)
         header['flux'] = flux
         header['x_beam_size'] = x_size
         header['y_beam_size'] = y_size
-    """
+    
     basename = os.path.basename(fullname)
     header["image_prefix"] = "_".join(basename.replace(".cbf", "").split("_")[:-2])
     header["run_number"] = int(basename.replace(".cbf", "").split("_")[-2])
-    
-    #("MD2_AP_DIAM_SV").split()[0]
 
     # Add tag for module to header
     header["rapd_detector_id"] = "necat_dectris_pilatus6mf"

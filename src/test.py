@@ -32,6 +32,14 @@ def connect_redis():
     				db=0)
     # Save the pool for a clean exit.
     return redis.Redis(connection_pool=pool)
+  
+def connect_beamline():
+    # C is 56, E is 125
+    pool = redis.ConnectionPool(host="164.54.212.56",
+            port=6379,
+            db=0)
+    # Save the pool for a clean exit.
+    return redis.Redis(connection_pool=pool)
 
 
 """
@@ -267,8 +275,10 @@ while True:
 
 red = connect_redis_manager_HA()
 #red = connect_redis()
+#connection = connect_beamline()
 
 #red.delete('images_collected:NECAT_E')
+red.lpush('images_collected:NECAT_C', '/gpfs1/users/necat/Jon2/images/junk/0_0/tst_0_0001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000002.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/columbia/hendrickson_E_3093/images/wwang/runs/Hend03_04/Hend03_04_1_001075.cbf')
@@ -290,22 +300,22 @@ red = connect_redis_manager_HA()
 #red.lpush('images_collected:SERCAT_ID', '/data//raw/BM_17_11_21_GSK_20171121/11_21_2017_APS22bm/screen/P300_GSK3925257A_2_r1_s.0001'),
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/fandm/piro_E_3242/images/christine/runs/149pN3F_x04/149pN3F_x04_1_000001/149pN3F_x04_1_000001.cbf')
 
-print red.llen('RAPD_QSUB_JOBS_0')
+#print red.llen('RAPD_QSUB_JOBS_0')
 #red.delete('RAPD_QSUB_JOBS_0')
-print red.llen('run_info_C')
-print red.llen('RAPD_JOBS')
+#print red.llen('run_info_C')
+#print red.llen('RAPD_JOBS')
 #print red.llen("images_collected:SERCAT_ID")
 #red.delete("images_collected:SERCAT_ID")
 #print red.llen('run_data:SERCAT_ID')
 #red.delete("run_data:SERCAT_ID")
-print red.llen("images_collected:NECAT_E")
+#print red.llen("images_collected:NECAT_E")
 #red.delete("images_collected:NECAT_T")
 #print red.llen('run_data:NECAT_T')
 #red.delete("run_data:NECAT_T")
 #print red.llen('RAPD_RESULTS')
 #red.delete('RAPD_RESULTS')
 #print red.llen('run_info_T')
-print red.llen('RAPD_JOBS_WAITING')
+#print red.llen('RAPD_JOBS_WAITING')
 #red.delete('RAPD_JOBS_WAITING')
 #print red.llen('RAPD_JOBS_WAITING')
 #print red.lrange('run_info_T', 0, 5)

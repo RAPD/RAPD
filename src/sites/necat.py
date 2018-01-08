@@ -286,8 +286,8 @@ CLOUD_REINDEX_HANDLER = "reindex"
 CLOUD_REINTEGRATE_HANDLER = "reintegrate"
 
 # For connecting to the site
-#SITE_ADAPTER = "sites.site_adapters.necat"
-SITE_ADAPTER = False
+SITE_ADAPTER = "sites.site_adapters.necat"
+#SITE_ADAPTER = False
 # Running in a cluster configuration - True || False
 #SITE_ADAPTER_REDIS_CLUSTER = False
 SITE_ADAPTER_REDIS_CLUSTER = REDIS_CLUSTER

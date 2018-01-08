@@ -137,21 +137,21 @@ def read_header(image,
         "transmission": ("^# Filter_transmission\s*([\d\.]+)", lambda x: float(x)),
         "trim_file": ("^#\sTrim_file\:\s*([\w\.]+)", lambda x:str(x).rstrip()),
         "twotheta": ("^# Detector_2theta\s*([\d\.]*)\s*deg", lambda x: float(x)),
-        "wavelength": ("^# Wavelength\s*([\d\.]+) A", lambda x: float(x))
+        "wavelength": ("^# Wavelength\s*([\d\.]+) A", lambda x: float(x)),
+        "size1": ("X-Binary-Size-Fastest-Dimension:\s*([\d\.]+)", lambda x: int(x)),
+        "size2": ("X-Binary-Size-Second-Dimension:\s*([\d\.]+)", lambda x: int(x)),
         }
-
-    rawdata = open(image,"rb").read(2048)
-    headeropen = 0
-    headerclose= rawdata.index("--CIF-BINARY-FORMAT-SECTION--")
-    header = rawdata[headeropen:headerclose]
 
     count = 0
     while (count < 10):
-    	try:
-            rawdata = open(image,"rb").read(1024)
-            headeropen = 0
-            headerclose= rawdata.index("--CIF-BINARY-FORMAT-SECTION--")
-            header = rawdata[headeropen:headerclose]
+        try:
+             # Use 'with' to make sure file closes properly. Only read header.
+            header = ""
+            with open(image, "rb") as raw:
+                for line in raw:
+                    header += line
+                    if line.count("X-Binary-Size-Padding"):
+                        break
             break
         except:
             count +=1
@@ -171,11 +171,12 @@ def read_header(image,
         "run_number": int(base.split("_")[-2]),
         "image_number": int(base.split("_")[-1]),
         "axis": "omega",
-        "collect_mode": mode,
-        "run_id": run_id,
-        "place_in_run": place_in_run,
-        "size1": 2463,
-        "size2": 2527}
+        #"collect_mode": mode,
+        #"run_id": run_id,
+        #"place_in_run": place_in_run,
+        #"size1": 2463,
+        #"size2": 2527
+        }
 
     for label, pat in header_items.iteritems():
         # print label

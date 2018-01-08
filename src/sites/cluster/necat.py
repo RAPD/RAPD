@@ -109,7 +109,7 @@ def fix_command(message):
             else:
                 i += 1
     # Now make the directory
-    if os.path.isdir(work_dir_candidate) == False:
+    if os.path.exists(work_dir_candidate) == False:
         os.makedirs(work_dir_candidate)
 
     # Modify command
