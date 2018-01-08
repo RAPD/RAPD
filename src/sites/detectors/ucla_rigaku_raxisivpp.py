@@ -149,7 +149,7 @@ def get_data_root_dir(fullname):
     # Return the determined directory
     return data_root_dir
 
-def read_header(fullname, beam_settings=False):
+def read_header(fullname, beam_settings=False, extra_header=False):
     """
     Read header from image file and return dict
 

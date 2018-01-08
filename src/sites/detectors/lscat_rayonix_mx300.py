@@ -256,7 +256,7 @@ def calculate_beam_center(distance, beam_settings, v_offset=0):
     return x_beam, y_beam
 
 # Standard header reading
-def read_header(fullname, beam_settings={}):
+def read_header(fullname, beam_settings={}, extra_header=False):
     """
     Read the header and add some site-specific data
 
