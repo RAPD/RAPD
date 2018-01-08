@@ -83,6 +83,8 @@ if (! config.auth_conn) {
     }
   });
 }
+
+// User and Group uses auth_conn
 const User =  auth_conn.model('User', require('./models/user').UserSchema);
 const Group = auth_conn.model('Group', require('./models/group').GroupSchema);
 
