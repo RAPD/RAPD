@@ -24,6 +24,11 @@ This is an install for sites that are integrating RAPD into their systems and wa
 1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git`
 2. Navigate to the install directory and `./install_min`
 
+## UI Server Install
+The server for the UI has requirements different from the processing parts of RAPD.
+1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git`
+2. Navigate to the install directory and `./install_ui`
+
 ## Environmental Variables
 RAPD uses environmental variables for setting some defaults:
 * RAPD_AUTHOR_NAME - (development) if set, rapd.generate will put your name in generated files as author

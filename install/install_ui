@@ -1,0 +1,286 @@
+#!/bin/bash
+
+# Performs minimal install of rapd. Will download a python installer and go from
+# there. Good for rapd on computers that will not do processing such as for
+# gathering data.
+
+# This file is part of RAPD
+#
+# Copyright (C) 2016-2017, Cornell University
+# All rights reserved.
+#
+# RAPD is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as published by
+# the Free Software Foundation, version 3.
+#
+# RAPD is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU Affero General Public License for more details.
+#
+# You should have received a copy of the GNU Affero General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+__created__="2016-01-10"
+__maintainer__="Jon Schuermann"
+__email__="schuerjp@anl.gov"
+__status__="Development"
+
+THIS_DIR=$(cd $(dirname $0); pwd)
+THIS_FILE=$(basename $0)
+SRC_DIR=$THIS_DIR"/sources"
+PREFIX=`echo $THIS_DIR | sed -e "s%/install%%"`
+RAPD_VERSION=$(grep RAPD_VERSION $THIS_DIR/../src/version.py | cut -d'"' -f2)
+BATCH=0
+FORCE=0
+PLATFORM=$(uname -s)
+
+# Handle command line
+while getopts "bfhcvp:" x; do
+    case "$x" in
+        h)
+            echo "usage: $0 [options]
+
+Installs minimal RAPD v$RAPD_VERSION
+
+    -f           no error if install prefix already exists
+    -b           batch mode
+    -h           print this help message and exit
+    -p PREFIX    install prefix, defaults to $PREFIX
+    -c           cleanup
+"
+            exit 2
+            ;;
+        b)
+            BATCH=1
+            ;;
+        f)
+            FORCE=1
+            ;;
+        p)
+            PREFIX="$OPTARG"
+            ;;
+        # Clean up the source directories
+        c)
+            printf "Cleaning up!\n"
+            cd sources
+            rm -rf phenix/phenix*
+            printf "Finished.\n"
+            exit 0
+            ;;
+        ?)
+            printf "\033[91mError: did not recognize option, please try -h\033[0m\n"
+            exit 1
+            ;;
+    esac
+done
+
+if [[ $BATCH == 0 ]] # interactive mode
+then
+  printf "
+Welcome to RAPD2
+
+A minimal python to support RAPD2 gatherers will be installed into this location:
+$PREFIX
+  - Press ENTER to confirm the location
+  - Press CTRL-C to abort the installation
+  - Or specify a different location below
+
+[$PREFIX] >>> "
+  read user_prefix
+  if [[ $user_prefix != "" ]]; then
+      case "$user_prefix" in
+          *\ * )
+              echo "ERROR: Cannot install into directories with spaces" >&2
+              exit 1
+              ;;
+          *)
+              eval PREFIX="$user_prefix"
+              ;;
+      esac
+  fi
+  CONDATAG="-c"
+else
+  CONDATAG="-yc"
+fi # ! BATCH
+
+# Check for directory already existing
+if [[ ($FORCE == 0) && (-e $PREFIX/share ) ]]; then
+    printf "\033[91mERROR: It appears installation has already been performed in the directory: $PREFIX\n" >&2
+    printf "Use -f option to override\033[0m\n" >&2
+    exit 1
+fi
+
+# Make the new directory
+mkdir -p $PREFIX
+if (( $? )); then
+    echo "ERROR: Could not create directory: $PREFIX" >&2
+    exit 1
+fi
+# PREFIX=$(cd $PREFIX; pwd)
+
+
+# If installing in non-source directory, copy over src directory
+if [ $THIS_DIR != $PREFIX/install ]; then
+  printf "\n\033[94mCopying src files\033[0m\n"
+  rsync -a --exclude "*.tar*" ../src $PREFIX/.
+fi
+
+printf "\n\033[94mInstalling Python 2.7.11\033[0m\n"
+
+cd sources/python
+# No unzipped source
+if [ ! -d Python-2.7.11 ]; then
+
+  # No zipped source
+  if [ ! -d Python-2.7.11.tgz ]; then
+    printf "\n\033[94Downloading Python 2.7.11\033[0m\n"
+    wget https://www.python.org/ftp/python/2.7.11/Python-2.7.11.tgz
+    tar xzf Python-2.7.11.tgz
+  fi
+
+  # Unzip source
+  printf "\n\033[94Unpacking Python 2.7.11\033[0m\n"
+  tar xzf Python-2.7.11.tgz
+fi
+
+cd Python-2.7.11
+printf "\n\033[94Building Python 2.7.11\033[0m\n"
+./configure --prefix=$PREFIX/share/python
+make
+make install
+
+# Set up RAPD
+# Create the bin directory
+BINDIR=$PREFIX"/bin"
+if [ ! -d $BINDIR ]
+then
+  mkdir $BINDIR
+fi
+
+printf "\n\033[94mInstalling RAPD executables\033[0m\n"
+#
+# Create a script for calling rapd.python
+SAFE_PREFIX=$(echo "$PREFIX" | sed -e 's/\//\\\//g')
+cd $BINDIR
+printf "rapd.python\n"
+echo "#! /bin/bash" > rapd.python
+echo "if [ -n "\$PYTHONPATH" ]; then" >> rapd.python
+echo "  PYTHONPATH=\"$PREFIX/src:\$PYTHONPATH\"" >> rapd.python
+echo "  export PYTHONPATH" >> rapd.python
+echo "else" >> rapd.python
+echo "  PYTHONPATH=\"$PREFIX/src:\"" >> rapd.python
+echo "  export PYTHONPATH" >> rapd.python
+echo "fi" >> rapd.python
+echo "if [ \$# -eq 0 ]; then" >> rapd.python
+echo "  $PREFIX/share/python/bin/python2.7 -Qnew" >> rapd.python
+echo "else" >> rapd.python
+echo "  $PREFIX/share/python/bin/python2.7 -Qnew \"\$@\"" >> rapd.python
+echo "fi" >> rapd.python
+chmod +x ./rapd.python
+
+# Create scripts
+RAPD_HOME=$PREFIX
+export RAPD_HOME
+cd $THIS_DIR
+./create_min_scripts.sh
+
+# Create the rapd.shrc script
+printf "Writing rapd.shrc\n"
+cd $PREFIX
+echo "# $PREFIX/rapd.shrc -- bash initialization script for RAPD2" > rapd.shrc
+echo "#" >> rapd.shrc
+echo "# (c) Copyright 2009-2017, Cornell University" >> rapd.shrc
+echo "" >> rapd.shrc
+echo "# THIS IS AN AUTOMATICALLY GENERATED FILE." > rapd.shrc
+echo "# DO NOT EDIT UNLESS YOU REALLY KNOW WHAT YOU ARE DOING." >> rapd.shrc
+echo "" >> rapd.shrc
+echo "# Add rapd bin to the path" >> rapd.shrc
+echo "PATH=$BINDIR:\$PATH" >> rapd.shrc
+echo "export PATH" >> rapd.shrc
+echo "# Set environmental variable"
+echo "RAPD_HOME=$PREFIX" >> rapd.shrc
+echo "export RAPD_HOME" >> rapd.shrc
+echo "" >> rapd.shrc
+echo "echo '==================================================='" >> rapd.shrc
+echo "echo '                    RAPD v$RAPD_VERSION            '" >> rapd.shrc
+echo "echo '==================================================='" >> rapd.shrc
+echo "echo ' Thanks for using RAPD. Please visit RAPD on github'" >> rapd.shrc
+echo "echo ' at https://github.com/RAPD/rapd  Enjoy.'           " >> rapd.shrc
+echo "echo '==================================================='" >> rapd.shrc
+echo "echo''" >> rapd.shrc
+
+# Create the rapd.shrc script
+printf "Wrting rapd.cshrc\n"
+cd $PREFIX
+echo "# $PREFIX/rapd.cshrc -- bash initialization script for RAPD2" > rapd.cshrc
+echo "#" >> rapd.cshrc
+echo "# (c) Copyright 2009-2017, Cornell University" >> rapd.cshrc
+echo "" >> rapd.cshrc
+echo "# THIS IS AN AUTOMATICALLY GENERATED FILE." > rapd.cshrc
+echo "# DO NOT EDIT UNLESS YOU REALLY KNOW WHAT YOU ARE DOING." >> rapd.cshrc
+echo "" >> rapd.cshrc
+echo "# Add rapd bin to the path" >> rapd.cshrc
+echo "setenv PATH $BINDIR:\$PATH" >> rapd.cshrc
+echo "# Set environmental variable"
+echo "setenv RAPD_HOME $PREFIX" >> rapd.cshrc
+echo "" >> rapd.cshrc
+echo "echo '==================================================='" >> rapd.cshrc
+echo "echo '                    RAPD v$RAPD_VERSION            '" >> rapd.cshrc
+echo "echo '==================================================='" >> rapd.cshrc
+echo "echo ' Thanks for using RAPD. Please visit RAPD on github'" >> rapd.cshrc
+echo "echo ' at https://github.com/RAPD/rapd  Enjoy.'           " >> rapd.cshrc
+echo "echo '==================================================='" >> rapd.cshrc
+echo "echo''" >> rapd.cshrc
+
+printf "\n\033[94mInstalling Python modules\033[0m\n"
+echo $PYTHONPATH
+export PYTHONPATH=""
+source $PREFIX/rapd.shrc
+cd $SRC_DIR/python
+
+# Install pip
+rapd.python get-pip.py
+if [[ $PLATFORM == "Darwin" ]]; then
+
+  ln -s  $PREFIX/share/python/bin/pip $PREFIX/bin/rapd.pip
+
+elif [[ $PLATFORM == "Linux" ]]; then
+
+  ln -s  $PREFIX/share/python/bin/pip $PREFIX/bin/rapd.pip
+
+fi
+
+# Modules
+echo $PYTHONPATH
+
+rapd.pip install redis
+rapd.pip install pymongo
+
+# # Install redis
+# printf "\n\033[94mInstalling redis module\033[0m\n"
+# source $PREFIX/rapd.shrc
+# cd $SRC_DIR/python
+# tar xvzf redis-2.10.5.tar.gz
+# cd redis-2.10.5
+# rapd.python setup.py install
+# cd ../
+# rm -rf redis-2.10.5
+# printf "\033[92mPython redis module install complete.\033[0m\n\n"
+
+
+printf "\033[92mRAPD installation is complete\033[0m\n\n"
+
+printf "=====================================================================\n"
+printf "=  INITIALIZING RAPD \n"
+printf "= \n"
+printf "=  sh and bash users: \n"
+printf "=    source $PREFIX/rapd.shrc \n"
+printf "=  You may want to add this line to your .profile or .bashrc file \n"
+printf "= \n"
+printf "=  csh and tcsh users: \n"
+printf "=    source $PREFIX/rapd.cshrc \n"
+printf "=  You may want to add this line to your .cshrc file. \n"
+printf "=====================================================================\n"
+
+exit 0

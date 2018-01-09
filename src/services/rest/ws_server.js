@@ -21,8 +21,8 @@ var redis = require('redis');
 // Import models
 var mongoose   = require('./models/mongoose');
 const Activity = mongoose.ctrl_conn.model('Activity', require('./models/activity').ActivitySchema);
-const Image    =   mongoose.ctrl_conn.model('Image', require('./models/image').ImageSchema);
-const Result   =   mongoose.ctrl_conn.model('Result', require('./models/result').ResultSchema);
+const Image    = mongoose.ctrl_conn.model('Image', require('./models/image').ImageSchema);
+const Result   = mongoose.ctrl_conn.model('Result', require('./models/result').ResultSchema);
 
 // Definitions of result types
 var result_type_trans = {
