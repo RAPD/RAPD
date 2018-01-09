@@ -111,7 +111,11 @@ if [[ ! (-e $PREFIX/src/services ) ]]; then
     exit 1
 fi
 
-printf "\n\033[94mInstalling node.js \033[0m\n"
+printf "\n\033[94mInstalling NVM \033[0m\n"
+sh sources/nvm/install.sh
+
+printf "\n\033[94mInstalling Node.js \033[0m\n"
+
 
 # Make the new directory
 # mkdir -p $PREFIX
