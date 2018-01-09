@@ -1,10 +1,10 @@
 var express = require('express');
 var router = express.Router();
-var mongoose = require('mongoose');
+var mongoose = require('../models/mongoose');
 
-// const Group = require('../models/group');
-const Session = require('../models/session').Session;
-// const Result = require('../models/result');
+// Models connect to specific database instances
+const Group = mongoose.auth_conn.model('Group', require('../models/group').GroupSchema);
+const Session =  mongoose.ctrl_conn.model('Session', require('../models/session').SessionSchema);
 
 // on routes that end in /sessions
 // ----------------------------------------------------
@@ -12,8 +12,10 @@ router.route('/sessions')
 
   // get all the sessions (accessed at GET api/sessions)
   .get(function(req, res) {
+
     console.log('In /sessions');
-    console.log(req.decoded);
+    // console.log(req.decoded);
+
     // Sessions for the user's groups
     let query_params = { group: { $in: req.decoded._doc.groups}};
     // Site admins get all sessions
@@ -23,7 +25,7 @@ router.route('/sessions')
 
     Session.
       find(query_params).
-      populate('group', 'groupname').
+      // populate('group', 'groupname').
       sort({last_process: -1}).
       exec(function(err, sessions) {
         if (err) {
@@ -33,10 +35,42 @@ router.route('/sessions')
             message: err
           });
         } else {
-          console.log('Returning', sessions.length, 'sessions');
-          res.status(200).json({
-            success: true,
-            sessions: sessions
+          const session_count = sessions.length;
+          let return_sessions = [],
+              counter = 0;
+          sessions.forEach(function(session) {
+            session._doc.group = {
+              _id: session._doc.group,
+            };
+            if (session._doc.group._id) {
+              console.log(counter, session._doc.group._id);
+              Group.findOne({_id:session._doc.group._id}, {groupname:1})
+              .exec(function(error, group) {
+                counter += 1;
+                console.log(group);
+                session._doc.group.groupname = group.groupname;
+                return_sessions.push(session);
+                if (counter === session_count) {
+                  console.log(return_sessions);
+                  console.log('Returning', return_sessions.length, 'sessions');
+                  res.status(200).json({
+                    success: true,
+                    sessions: return_sessions
+                  });
+                }
+              });
+            } else {
+              counter += 1;
+              return_sessions.push(session);
+              if (counter === session_count) {
+                console.log(return_sessions);
+                console.log('Returning', return_sessions.length, 'sessions');
+                res.status(200).json({
+                  success: true,
+                  sessions: return_sessions
+                });
+              }
+            }
           });
         }
       });

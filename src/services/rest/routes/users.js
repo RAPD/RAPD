@@ -2,10 +2,12 @@ var express = require('express');
 const nodemailer =    require('nodemailer');
 const smtpTransport = require('nodemailer-smtp-transport');
 var router = express.Router();
-var mongoose = require('mongoose');
+var mongoose = require('../models/mongoose');
 
 const config = require('../config');
-const User = require('../models/user').User;
+const User = mongoose.auth_conn.model('User', require('../models/user').UserSchema);
+
+// const User = require('../models/user').User;
 
 // Email Configuration
 var smtp_transport = nodemailer.createTransport(smtpTransport({

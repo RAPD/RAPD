@@ -19,9 +19,10 @@ var uuid = require('node-uuid');
 var redis = require('redis');
 
 // Import models
-var Activity = require('./models/activity');
-var Image    = require('./models/image');
-var Result   = require('./models/result');
+var mongoose   = require('./models/mongoose');
+const Activity = mongoose.ctrl_conn.model('Activity', require('./models/activity').ActivitySchema);
+const Image    =   mongoose.ctrl_conn.model('Image', require('./models/image').ImageSchema);
+const Result   =   mongoose.ctrl_conn.model('Result', require('./models/result').ResultSchema);
 
 // Definitions of result types
 var result_type_trans = {

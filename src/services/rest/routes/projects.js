@@ -1,10 +1,10 @@
 var express = require('express');
 var router = express.Router();
-var mongoose = require('mongoose');
+var mongoose = require('../models/mongoose');
 
 // MongoDB Models
-var Project = require('../models/project');
-var Result = require('../models/result');
+const Project = mongoose.ctrl_conn.model('Project', require('../models/project').ProjectSchema);
+const Result  = mongoose.ctrl_conn.model('Result', require('../models/result').ResultSchema);
 
 // Routes that end with projects
 // ----------------------------------------------------
