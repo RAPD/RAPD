@@ -6,10 +6,10 @@ var http = require('http');
 var url = require('url');
 var WebSocketServer = require('ws').Server;
 // var SocketIo = require('socket.io');
-var mongoose = require('mongoose');
+var mongoose = require('./models/mongoose');
 Q = require('q');
 // Fix the promise issue in Mongoose
-mongoose.Promise = Q.Promise;
+// mongoose.Promise = Q.Promise;
 var Schema = mongoose.Schema;
 
 var jwt = require('jsonwebtoken');
@@ -19,9 +19,10 @@ var uuid = require('node-uuid');
 var redis = require('redis');
 
 // Import models
-var Activity = require('./models/activity');
-var Image    = require('./models/image');
-var Result   = require('./models/result');
+var mongoose   = require('./models/mongoose');
+const Activity = mongoose.ctrl_conn.model('Activity', require('./models/activity').ActivitySchema);
+const Image    = mongoose.ctrl_conn.model('Image', require('./models/image').ImageSchema);
+const Result   = mongoose.ctrl_conn.model('Result', require('./models/result').ResultSchema);
 
 // Definitions of result types
 var result_type_trans = {
@@ -372,15 +373,15 @@ function Wss (opt, callback) {
             // Get result details
             case 'get_result_details':
 
-              console.log('get_result_details', data.data_type, data.plugin_type);
+              console.log('get_result_details', data);
 
               // Create a mongoose model for the result
               let name = data.data_type+'_'+ data.plugin_type +'_result';
               let collection_name = name.charAt(0).toUpperCase() + name.slice(1);
               var ResultModel;
               try {
-                if (mongoose.model(collection_name)) {
-                  ResultModel = mongoose.model(collection_name);
+                if (mongoose.ctrl_conn.model(collection_name)) {
+                  ResultModel = mongoose.ctrl_conn.model(collection_name);
                 }
               } catch(e) {
                 if (e.name === 'MissingSchemaError') {
@@ -390,7 +391,8 @@ function Wss (opt, callback) {
                       auto: true
                       },
                     }, {strict:false});
-                  ResultModel = mongoose.model(collection_name, schema);
+                  // ResultModel = mongoose.model(collection_name, schema);
+                  ResultModel = mongoose.ctrl_conn.model(collection_name, schema);
                 }
               }
 

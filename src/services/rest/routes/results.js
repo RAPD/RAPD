@@ -1,10 +1,10 @@
 var express = require('express');
 var router = express.Router();
+var mongoose = require('../models/mongoose');
 
-// const Group = require('../models/group');
-const Activity = require('../models/activity');
-const Session  = require('../models/session');
-const Result   = require('../models/result');
+const Activity = mongoose.ctrl_conn.model('Activity', require('../models/activity').ActivitySchema);
+const Session  = mongoose.ctrl_conn.model('Session', require('../models/session').SessionSchema);
+const Result   = mongoose.ctrl_conn.model('Result', require('../models/result').ResultSchema);
 
 // on routes that end in /results
 // ----------------------------------------------------

@@ -37,56 +37,23 @@ const runs_routes =      require('./routes/runs');
 const sessions_routes =  require('./routes/sessions');
 const users_routes =     require('./routes/users');
 
+
 // Redis
 const redis =      require('redis');
 var redis_client = redis.createClient(config.redis_port, config.redis_host);
 
-// MongoDB Models
-// const Activity = require('./models/activity');
-// const _User =     require('./models/user');
-// const Group =    require('./models/group');
-// const Login =    require('./models/login');
-// const Result =   require('./models/result');
-// const Run =      require('./models/run');
-// const Session =  require('./models/session');
 
 // MongoDB connection
-var mongoose = require('mongoose');
-// Fix the promise issue in Mongoose
-mongoose.Promise = require('q').Promise;
+var mongoose = require('./models/mongoose');
 
 // Connect to ctrl_conn
-var ctrl_conn = mongoose.connect(config.control_conn, {
-  useMongoClient: true,
-}, function(error) {
-  if (error) {
-    console.error(error);
-  }
-});
-const Activity = ctrl_conn.model('Activity', require('./models/activity').ActivitySchema);
-const Login =    ctrl_conn.model('Login', require('./models/login').LoginSchema);
-const Result =   ctrl_conn.model('Result', require('./models/result').ResultSchema);
-const Run =      ctrl_conn.model('Run', require('./models/run').RunSchema);
-const Session =  ctrl_conn.model('Session', require('./models/session').SessionSchema);
-
-// Connect to auth_conn
-var auth_conn;
-if (! config.auth_conn) {
-  auth_conn = ctrl_conn;
-} else {
-  console.log('Connecting to', config.auth_conn);
-  auth_conn = mongoose.connect(config.auth_conn, {
-    useMongoClient: true,
-  }, function(error) {
-    if (error) {
-      console.error(error);
-    }
-  });
-}
+const Activity = mongoose.ctrl_conn.model('Activity', require('./models/activity').ActivitySchema);
+const Login =    mongoose.ctrl_conn.model('Login', require('./models/login').LoginSchema);
 
 // User and Group uses auth_conn
-const User =  auth_conn.model('User', require('./models/user').UserSchema);
-const Group = auth_conn.model('Group', require('./models/group').GroupSchema);
+const User =  mongoose.auth_conn.model('User', require('./models/user').UserSchema);
+const Group = mongoose.auth_conn.model('Group', require('./models/group').GroupSchema);
+
 
 // LDAP
 if (config.authenticate_mode === 'ldap') {

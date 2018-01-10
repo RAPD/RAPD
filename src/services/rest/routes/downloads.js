@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-var mongoose = require('mongoose');
+var mongoose = require('../models/mongoose');
 var Grid = require('gridfs-stream');
 
 Grid.mongo = mongoose.mongo;
@@ -19,7 +19,7 @@ router.route('/download_by_id/:id')
         console.log('download_by_id', req.params.id);
 
         // console.log(mongoose.connection);
-        var gridfs = Grid(mongoose.connection.db);
+        var gridfs = Grid(mongoose.ctrl_conn.connection.db);
 
         var readstream = gridfs.createReadStream({
           _id: req.params.id
