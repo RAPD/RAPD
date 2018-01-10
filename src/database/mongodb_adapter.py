@@ -102,7 +102,8 @@ class Database(object):
                  port=27017,
                  user=None,
                  password=None,
-                 settings=None):
+                 settings=None,
+                 string=None):
 
         """
         Initialize the adapter
@@ -125,6 +126,7 @@ class Database(object):
             self.db_port = settings["DATABASE_PORT"]
             self.db_user = settings["DATABASE_USER"]
             self.db_password = settings["DATABASE_PASSWORD"]
+            self.db_string = settings["DATABASE_STRING"]
             # self.db_data_name = settings["DATABASE_NAME_DATA"]
             # self.db_users_name = settings["DATABASE_NAME_USERS"]
             # self.db_cloud_name = settings["DATABASE_NAME_CLOUD"]
@@ -134,6 +136,7 @@ class Database(object):
             self.db_port = port
             self.db_user = user
             self.db_password = password
+            self.db_string = string
             # self.db_data_name = data_name
             # self.db_users_name = users_name
             # self.db_cloud_name = cloud_name
@@ -153,10 +156,14 @@ class Database(object):
         if not self.client:
             self.logger.debug("Connecting to MongDB at %s:%d", self.db_host, self.db_port)
             # Connect
-            self.client = pymongo.MongoClient(host=self.db_host,
-                                              port=self.db_port)
-
-            # Not using user/password for now
+            if self.db_string:
+                # When using login and pass.
+                self.client = pymongo.MongoClient(self.db_string)
+            else:
+                # Not using user/password for now
+                self.client = pymongo.MongoClient(host=self.db_host,
+                                                  port=self.db_port,
+                                                  )
 
         # Get the db
         db = self.client.rapd
