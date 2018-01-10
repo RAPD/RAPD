@@ -41,6 +41,22 @@ def connect_beamline():
     # Save the pool for a clean exit.
     return redis.Redis(connection_pool=pool)
 
+f = open('/gpfs2/users/necat/Jon2/process/Minor/K11/P4/Phenix/helix.txt', 'r').readlines()
+counter = 0
+temp = []
+for line in f:
+    if line.count('serial_number'):
+        counter += 1
+        line = line[:line.find('=')+2] + str(counter) + '\n'
+    if line.count('helix_identifier'):
+        line = '%s"%s"\n'%(line[:line.find('=')+2], str(counter))
+        #line = line[:line.find('=')+2] + \"str(counter)\"
+    print line
+    temp.append(line)
+f1 = open('/gpfs2/users/necat/Jon2/process/Minor/K11/P4/Phenix/helix2.txt', 'w')
+for line in temp:
+    f1.write(line)
+f1.close()
 
 """
 import sites.cluster.sercat as cluster
@@ -273,12 +289,12 @@ while True:
 #d = {'fullname': '/gpfs1/users/duke/pei_C_3263/images/pei/runs/A6/0_0/A6_1_0001.cbf'}
 #print d['fullname'].replace(' !Change to accurate path to data frames', '')
 
-red = connect_redis_manager_HA()
+#red = connect_redis_manager_HA()
 #red = connect_redis()
 #connection = connect_beamline()
 
 #red.delete('images_collected:NECAT_E')
-red.lpush('images_collected:NECAT_C', '/gpfs1/users/necat/Jon2/images/junk/0_0/tst_0_0001.cbf')
+#red.lpush('images_collected:NECAT_C', '/gpfs1/users/necat/Jon2/images/junk/0_0/tst_0_0001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000002.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/columbia/hendrickson_E_3093/images/wwang/runs/Hend03_04/Hend03_04_1_001075.cbf')
