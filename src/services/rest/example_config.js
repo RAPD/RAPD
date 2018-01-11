@@ -10,8 +10,8 @@ module.exports = {
   // Used for authentication key, etc
   secret: 'mysecret',
   // Connection string for MongoDB
-  database: 'mongodb://mongo:27017/rapd',
-  auth_database: 'mongodb://mongo:27017/rapd',
+  control_conn: 'mongodb://mongo:27017/rapd',
+  auth_conn: 'mongodb://mongo:27017/rapd',
   // Redis connection info
   redis_host: 'redis',
   redis_port: 6379,
