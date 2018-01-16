@@ -14,7 +14,7 @@ router.route('/sessions')
   .get(function(req, res) {
 
     console.log('In /sessions');
-    // console.log(req.decoded);
+    console.log(req.decoded);
 
     // Sessions for the user's groups
     let query_params = { group: { $in: req.decoded._doc.groups}};
