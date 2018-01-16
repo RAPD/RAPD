@@ -13,8 +13,20 @@ module.exports = {
   control_conn: 'mongodb://mongo:27017/rapd',
   auth_conn: 'mongodb://mongo:27017/rapd',
   // Redis connection info
-  redis_host: 'redis',
-  redis_port: 6379,
+  // high availability
+  redis_connection: {
+      sentinels:[{host: '164.54.212.100', port:26379},
+                 {host: '164.54.212.101', port:26379},
+                 {host: '164.54.212.102', port:26379},
+                 {host: '164.54.212.103', port:26379},
+                 {host: '164.54.212.104', port:26379}],
+      name: 'remote_master'
+    },
+  // regular
+  redis_connection: {
+      host: '164.54.212.100',
+      port: 6379
+    }
   // Where is my LDAP server?
   ldap_server: '127.0.0.1',
   // String for LDAP to find your users

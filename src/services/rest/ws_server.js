@@ -16,7 +16,7 @@ var jwt = require('jsonwebtoken');
 var uuid = require('node-uuid');
 
 // Redis
-var redis = require('redis');
+var redis = require('ioredis');
 
 // Import models
 var mongoose   = require('./models/mongoose');
