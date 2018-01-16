@@ -4,8 +4,8 @@ var router   = express.Router();
 const config = require('../config');
 
 // Redis
-const redis  = require('redis');
-var redis_client = redis.createClient(config.redis_port, config.redis_host);
+const Redis  = require('ioredis');
+var redis_client = new Redis(config.redis_connection);
 
 // routes that end with jobs
 // ----------------------------------------------------

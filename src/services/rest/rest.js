@@ -39,9 +39,8 @@ const users_routes =     require('./routes/users');
 
 
 // Redis
-const redis =      require('redis');
-var redis_client = redis.createClient(config.redis_port, config.redis_host);
-
+var Redis = require('ioredis');
+var redis_client = new Redis(config.redis_connection);
 
 // MongoDB connection
 var mongoose = require('./models/mongoose');

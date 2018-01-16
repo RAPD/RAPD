@@ -16,7 +16,7 @@ var jwt = require('jsonwebtoken');
 var uuid = require('node-uuid');
 
 // Redis
-var redis = require('ioredis');
+var Redis = require('ioredis');
 
 // Import models
 var mongoose   = require('./models/mongoose');
@@ -41,9 +41,9 @@ var ws_connections = {};
 
 // Subscribe to redis updates
 try {
-  var sub = redis.createClient(config.redis_port, config.redis_host);
+  var sub = new Redis(config.redis_connection);
 } catch (e) {
-  console.error("Cannot connect to redis", config.redis_port, config.redis_host);
+  console.error("Cannot connect to redis", config.redis_connection);
   throw e;
 }
 
