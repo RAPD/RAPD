@@ -25,6 +25,8 @@ router.route('/sessions')
       query_params = { group: { $in: req.decoded._doc.groups}};
     }
 
+    console.log(query_params);
+
     Session.
       find(query_params).
       // populate('group', 'groupname').
