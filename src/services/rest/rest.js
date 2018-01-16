@@ -69,7 +69,7 @@ var smtp_transport = nodemailer.createTransport(smtpTransport({
 
 // Add session handling
 let app_session = session({
-  store: new RedisStore({}),
+  store: new RedisStore({client:redis_client}),
   secret: 'keyboard cat',
   resave: false,
   saveUninitialized: true
