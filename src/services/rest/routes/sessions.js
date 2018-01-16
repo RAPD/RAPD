@@ -35,6 +35,7 @@ router.route('/sessions')
             message: err
           });
         } else {
+          console.log(sessions);
           const session_count = sessions.length;
           let return_sessions = [],
               counter = 0;
