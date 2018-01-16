@@ -4,7 +4,7 @@ var mongoose = require('../models/mongoose');
 
 // Models connect to specific database instances
 const Group = mongoose.auth_conn.model('Group', require('../models/group').GroupSchema);
-const Session =  mongoose.ctrl_conn.model('Session', require('../models/session').SessionSchema);
+const Session = mongoose.ctrl_conn.model('Session', require('../models/session').SessionSchema);
 
 // on routes that end in /sessions
 // ----------------------------------------------------
@@ -17,10 +17,12 @@ router.route('/sessions')
     console.log(req.decoded);
 
     // Sessions for the user's groups
-    let query_params = { group: { $in: req.decoded._doc.groups}};
+    var query_params;
     // Site admins get all sessions
     if (req.decoded._doc.role === 'site_admin') {
       query_params = {}
+    } else {
+      query_params = { group: { $in: req.decoded._doc.groups}};
     }
 
     Session.
