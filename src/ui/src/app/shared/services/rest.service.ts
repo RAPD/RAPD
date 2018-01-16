@@ -46,7 +46,7 @@ export class RestService {
   public submitUser(user: User): Observable<any> {
 
     console.log('submitUser', user);
-    console.log(this.globals_service.site.restApiUrl + 'users/' + user._id);
+    console.log(this.globals_service.site.restApiUrl + '/users/' + user._id);
 
     let header = new Headers();
     header.append('Content-Type', 'application/json');
@@ -65,14 +65,14 @@ export class RestService {
 
     console.log('deleteUser', _id);
 
-    return this.authHttp.delete(this.globals_service.site.restApiUrl + 'users/' + _id).map(res => res.json());
+    return this.authHttp.delete(this.globals_service.site.restApiUrl + '/users/' + _id).map(res => res.json());
   }
 
   public getGroups(): Observable<Group[]> {
 
     console.log('getGroups');
 
-    return this.authHttp.get(this.globals_service.site.restApiUrl + 'groups')
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/groups')
       .map(this.extractGroups)
       .catch(error => this.handleError(error));
   }
@@ -102,7 +102,7 @@ export class RestService {
     header.append('Content-Type', 'application/json'); // 'application/x-www-form-urlencoded'
 
     return this.authHttp.put(
-      this.globals_service.site.restApiUrl + 'groups/' + group._id,
+      this.globals_service.site.restApiUrl + '/groups/' + group._id,
       JSON.stringify({group: group}),
       {headers: header}
     )
@@ -129,8 +129,8 @@ export class RestService {
   // SESSIONS
   //
   public getSessions(): Observable<Session[]> {
-    // console.log('getSessions');
-    return this.authHttp.get(this.globals_service.site.restApiUrl + 'sessions')
+    console.log('getSessions');
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/sessions')
       .map(this.extractSessions)
       .catch(error => this.handleError(error));
   }
@@ -150,7 +150,7 @@ export class RestService {
     header.append('Content-Type', 'application/json'); // 'application/x-www-form-urlencoded'
 
     return this.authHttp.put(
-      this.globals_service.site.restApiUrl + 'sessions/' + session._id,
+      this.globals_service.site.restApiUrl + '/sessions/' + session._id,
       JSON.stringify({session: session}),
       {headers: header}
     ).map(res => res.json())
@@ -162,7 +162,7 @@ export class RestService {
 
     console.log('deleteSession', _id);
 
-    return this.authHttp.delete(this.globals_service.site.restApiUrl + 'sessions/' + _id); //.map(res => res.json());
+    return this.authHttp.delete(this.globals_service.site.restApiUrl + '/sessions/' + _id); //.map(res => res.json());
   }
 
   //
@@ -172,7 +172,7 @@ export class RestService {
 
     console.log('getImageData _id:', _id);
 
-    return this.authHttp.get(this.globals_service.site.restApiUrl + 'images/' + _id);
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/images/' + _id);
                         // .map(res => res.json());
   }
 
@@ -183,7 +183,7 @@ export class RestService {
     const req = JSON.stringify(request);
     // console.log(req);
 
-    return this.authHttp.get(this.globals_service.site.restApiUrl + 'image_jpeg/' + req)
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/image_jpeg/' + req)
       .map(res => {
         // console.log(res);
         return res.json();
@@ -196,7 +196,7 @@ export class RestService {
 
     console.log('getRunData _id:', _id);
 
-    return this.authHttp.get(this.globals_service.site.restApiUrl + 'runs/' + _id)
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/runs/' + _id)
                         .map(res => res.json().run)
                         .catch(error => this.handleError(error));
   }
@@ -208,7 +208,7 @@ export class RestService {
 
     console.log('getProjects');
 
-    return this.authHttp.get(this.globals_service.site.restApiUrl + 'projects')
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/projects')
       .map(res => res.json().projects)
       .catch(error => this.handleError(error));
   }
@@ -216,13 +216,13 @@ export class RestService {
   public submitProject(project: Project): Observable<any> {
 
     console.log('submitProject', project);
-    console.log(this.globals_service.site.restApiUrl + 'projects/' + project._id);
+    console.log(this.globals_service.site.restApiUrl + '/projects/' + project._id);
 
     let header: Headers = new Headers();
     header.append('Content-Type', 'application/json');
 
     return this.authHttp.put(
-      this.globals_service.site.restApiUrl + 'projects/' + project._id,
+      this.globals_service.site.restApiUrl + '/projects/' + project._id,
       JSON.stringify({project:project}),
       {headers:header}
     )
@@ -236,7 +236,7 @@ export class RestService {
     console.log('deleteProject', _id);
 
     return this.authHttp.delete(
-      this.globals_service.site.restApiUrl + 'projects/' + _id
+      this.globals_service.site.restApiUrl + '/projects/' + _id
     )
     // .map(res => res.json())
     .catch(error => this.handleError(error));
@@ -250,7 +250,7 @@ export class RestService {
     header.append('Content-Type', 'application/json');
 
     return this.authHttp.put(
-      this.globals_service.site.restApiUrl + 'projects/add_result',
+      this.globals_service.site.restApiUrl + '/projects/add_result',
       JSON.stringify({
         project_id:data._id,
         result:data.result
@@ -272,7 +272,7 @@ export class RestService {
     header.append('Content-Type', 'application/json'); // 'application/x-www-form-urlencoded'
 
     return this.authHttp.put(
-      this.globals_service.site.restApiUrl + 'jobs/submit',
+      this.globals_service.site.restApiUrl + '/jobs/submit',
       JSON.stringify({request:request}),
       {headers:header}
     )
@@ -298,7 +298,7 @@ export class RestService {
     header.append('Content-Type', 'application/json');
 
     return this.authHttp.put(
-      this.globals_service.site.restApiUrl + 'overwatches/stop/' + id,
+      this.globals_service.site.restApiUrl + '/overwatches/stop/' + id,
       JSON.stringify({id:id}),
       {headers:header}
     )
@@ -314,7 +314,7 @@ export class RestService {
     header.append('Content-Type', 'application/json');
 
     return this.authHttp.put(
-      this.globals_service.site.restApiUrl + 'overwatches/stopall',
+      this.globals_service.site.restApiUrl + '/overwatches/stopall',
       JSON.stringify({id:'foo'}),
       {headers:header}
     )
@@ -328,7 +328,7 @@ export class RestService {
     header.append('Content-Type', 'application/json');
 
     return this.authHttp.put(
-      this.globals_service.site.restApiUrl + 'overwatches/start/' + id,
+      this.globals_service.site.restApiUrl + '/overwatches/start/' + id,
       JSON.stringify({id:id}),
       {headers:header}
     )
@@ -343,7 +343,7 @@ export class RestService {
 
     // console.log('getDashboardResults');
 
-    return this.authHttp.get(this.globals_service.site.restApiUrl + 'dashboard/results')
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/dashboard/results')
                         .map(res => res.json())
                         .catch(error => this.handleError(error));
   }
@@ -352,7 +352,7 @@ export class RestService {
 
     // console.log('getDashboardLogins');
 
-    return this.authHttp.get(this.globals_service.site.restApiUrl + 'dashboard/logins')
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/dashboard/logins')
                         .map(res => res.json())
                         .catch(error => this.handleError(error));
   }
@@ -361,7 +361,7 @@ export class RestService {
 
     // console.log('getServerActivities');
 
-    return this.authHttp.get(this.globals_service.site.restApiUrl + 'dashboard/server_activities')
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/dashboard/server_activities')
                         .map(res => res.json())
                         .catch(error => this.handleError(error));
   }
@@ -369,7 +369,7 @@ export class RestService {
   // Request a download
   public getDownloadById(id:string, filename:string): Observable<any> {
 
-    return this.authHttp.get(this.globals_service.site.restApiUrl + 'download_by_id/' + id)
+    return this.authHttp.get(this.globals_service.site.restApiUrl + '/download_by_id/' + id)
                         .map(res => {
                           if (res.status === 200) {
 
