@@ -65,4 +65,6 @@ var ResultSchema = new Schema({
   }
 }, {strict:false});
 
-module.exports = mongoose.model('Results', ResultSchema);
+// module.exports = mongoose.model('Results', ResultSchema);
+exports.Results = mongoose.model('Results', ResultSchema);
+exports.ResultSchema = ResultSchema;

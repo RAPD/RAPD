@@ -185,10 +185,11 @@ class Model(object):
         site = self.site
 
         # Instantiate the database connection
-        self.database = database.Database(host=site.CONTROL_DATABASE_SETTINGS['DATABASE_HOST'],
-                                          #port=site.DATABASE_SETTINGS['DB_PORT'],
-                                          user=site.CONTROL_DATABASE_SETTINGS['DATABASE_USER'],
-                                          password=site.CONTROL_DATABASE_SETTINGS['DATABASE_PASSWORD'])
+        #self.database = database.Database(host=site.CONTROL_DATABASE_SETTINGS['DATABASE_HOST'],
+        #                                  #port=site.DATABASE_SETTINGS['DB_PORT'],
+        #                                  user=site.CONTROL_DATABASE_SETTINGS['DATABASE_USER'],
+        #                                  password=site.CONTROL_DATABASE_SETTINGS['DATABASE_PASSWORD'])
+        self.database = database.Database(string=site.CONTROL_DATABASE_SETTINGS['DATABASE_STRING'])
 
     def start_server(self):
         """Start up the listening process for core"""
@@ -380,7 +381,9 @@ class Model(object):
         Keyword argument
         image_data -- information gathered about the image, primarily from the header
         """
-
+        # Placeholder for site info not in image header
+        site_header = {}
+        
         # Unpack image_data
         fullname = image_data.get("fullname", None)
         site_tag = image_data.get("site_tag", None)
@@ -392,7 +395,7 @@ class Model(object):
 
         # Check if it exists. May have been deleted from RAMDISK
         if os.path.isfile(fullname) in (False, None):
-            if self.site.ALT_IMAGE_LOCATIONS:
+            if self.site.ALT_IMAGE_LOCATION:
                 fullname = detector.get_alt_path(fullname)
 
         # Save some typing
@@ -430,6 +433,14 @@ class Model(object):
                 #print 'run_status: %s'%current_run.get("rapd_status", None)
                 # Right on time
                 if place_in_run == 1:
+                     # Grab extra data for the image and add to the header
+                    if self.site_adapter:
+                        if self.site_adapter.settings.has_key(site_tag.upper()):
+                            site_data = self.site_adapter.get_image_data(site_tag.upper())
+                        else:
+                            site_data = self.site_adapter.get_image_data()
+                        site_header = site_data
+                    
                     # Get all the image information
                     attempt_counter = 0
                     while attempt_counter < 5:
@@ -438,7 +449,8 @@ class Model(object):
                             if os.path.exists(fullname):
                                 header = detector.read_header(
                                     fullname,
-                                    beam_settings=self.site.BEAM_INFO[site_tag.upper()])
+                                    beam_settings=self.site.BEAM_INFO[site_tag.upper()],
+                                    extra_header=site_header)
                                 break
                             else:
                                 time.sleep(0.2)
@@ -489,6 +501,14 @@ class Model(object):
 
             self.logger.debug("%s is a snap", fullname)
 
+            # Grab extra data for the image and add to the header
+            if self.site_adapter:
+                if self.site_adapter.settings.has_key(site_tag.upper()):
+                    site_data = self.site_adapter.get_image_data(site_tag.upper())
+                else:
+                    site_data = self.site_adapter.get_image_data()
+                site_header = site_data
+
             # Get all the image information
             attempt_counter = 0
             while attempt_counter < 5:
@@ -497,7 +517,8 @@ class Model(object):
                     if os.path.exists(fullname):
                         header = detector.read_header(
                             fullname,
-                            beam_settings=self.site.BEAM_INFO[site_tag.upper()])
+                            beam_settings=self.site.BEAM_INFO[site_tag.upper()],
+                            extra_header=site_header)
                         # Break out of loop
                         break
                     else:
@@ -512,11 +533,6 @@ class Model(object):
             header["collect_mode"] = "SNAP"
             header["run_id"] = None
             header["site_tag"] = site_tag
-
-            # Grab extra data for the image and add to the header
-            if self.site_adapter:
-                site_data = self.site_adapter.get_image_data()
-                header.update(site_data)
 
             # Add to database
             image_id = self.database.add_image(data=header, return_type="id")

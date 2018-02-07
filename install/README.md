@@ -24,6 +24,35 @@ This is an install for sites that are integrating RAPD into their systems and wa
 1. Clone the RAPD repository where you like `git clone https://github.com/RAPD/RAPD.git`
 2. Navigate to the install directory and `./install_min`
 
+
+
+## UI Server Install
+The server for the UI has requirements different from the processing parts of RAPD.
+
+1. Install NVM. RAPD needs NodeJS, and the simplest way to install NodeJS is NVM (https://github.com/creationix/nvm). Easy installation by curl  
+```
+curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | bash
+```  
+or wget  
+```
+wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.33.8/install.sh | bash
+```
+2. Install NodeJS. RAPD uses the Long Term Support branch of NodeJS, currently v8.9.4  
+```
+nvm install v8.9.4
+nvm alias default v8.9.4
+```
+3. Clone the RAPD repository where you like
+```
+git clone https://github.com/RAPD/RAPD.git
+```
+4. Install Angular CLI. Currently you need to install Angular CLI to build your UI, this should be deprecated in the future. Change directory to src/ui within your cloned repository. Install Angular CLI and other UI dependencies:
+```
+./ng_update.sh
+```
+
+
+
 ## Environmental Variables
 RAPD uses environmental variables for setting some defaults:
 * RAPD_AUTHOR_NAME - (development) if set, rapd.generate will put your name in generated files as author

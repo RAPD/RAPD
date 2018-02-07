@@ -1,11 +1,11 @@
 var express    = require('express');
 var router     = express.Router();
 const config   = require('../config');
-const mongoose = require('mongoose');
+const mongoose = require('../models/mongoose');
 
-const Activity = require('../models/activity');
-const Login = require('../models/login');
-const Result = require('../models/result');
+const Activity = mongoose.ctrl_conn.model('Activity', require('../models/activity').ActivitySchema);
+const Login    = mongoose.ctrl_conn.model('Login', require('../models/login').LoginSchema);
+const Result   = mongoose.ctrl_conn.model('Result', require('../models/result').ResultSchema);
 
 // Redis
 // const redis = require('redis');

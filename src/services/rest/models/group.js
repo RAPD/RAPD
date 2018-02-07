@@ -40,7 +40,7 @@ var GroupSchema = new Schema({
   },
   status: {
     type: String,
-    required: true,
+    required: false,
     default: 'active'
   },
   timestamp: {
@@ -49,14 +49,16 @@ var GroupSchema = new Schema({
   },
   uid: {
     type: String,
-    required: true,
+    required: false,
     unique: true
   },
   uidNumber: {
     type: Number,
-    required: true,
+    required: false,
     unique: true
   },
 }, {strict:false});
 
-module.exports = mongoose.model('Group', GroupSchema);
+// module.exports = mongoose.model('Group', GroupSchema);
+exports.Group = mongoose.model('Group', GroupSchema);
+exports.GroupSchema = GroupSchema;
