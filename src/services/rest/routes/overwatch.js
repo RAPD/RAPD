@@ -4,11 +4,11 @@ var router     = express.Router();
 const config   = require('../config');
 
 // Redis
-const redis = require('redis');
+const Redis = require('ioredis');
 // Add promise layer to redis calls
 // bluebird.promisifyAll(redis.RedisClient.prototype);
 // bluebird.promisifyAll(redis.Multi.prototype);
-var redis_client = redis.createClient(config.redis_port, config.redis_host);
+var redis_client = new Redis(config.redis_connection);
 
 // routes that end with jobs
 // ----------------------------------------------------
