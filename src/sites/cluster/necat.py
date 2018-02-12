@@ -167,7 +167,6 @@ def process_cluster_fix(func):
         job = False
         for s in l:
             if kwargs['command'].count(s):
-                print 'GH'
                 job = Process(target=func, kwargs=kwargs)
                 job.start()
                 break
@@ -306,111 +305,6 @@ def process_cluster(command,
     #Exit cleanly, otherwise master node gets event client timeout errors after 600s.
     if s:
         s.exit()
-
-def processCluster_OLD(self, inp, output=False):
-    """
-    Submit job to cluster using DRMAA (when you are already on the cluster).
-    Main script should not end with os._exit() otherwise running jobs could be orphanned.
-    To eliminate this issue, setup self.running = multiprocessing.Event(), self.running.set() in main script,
-    then set it to False (self.running.clear()) during postprocess to kill running jobs smoothly.
-    """
-
-    try:
-        s = False
-        jt = False
-        running = True
-        log = False
-        queue = False
-        smp = 1
-        name = False
-
-        # Check if self.running is setup... used for Best and Mosflm strategies
-        try:
-            temp = self.running
-        except AttributeError:
-            running = False
-
-        #Parse the input
-        if len(inp) == 1:
-            command = inp
-        elif len(inp) == 2:
-            command, log = inp
-        #queue is name of cluster queue.
-        elif len(inp) == 3:
-            command, log, queue = inp
-        #smp is parallel environment set to reserve a specific number of cores on a node.
-        elif len(inp) == 4:
-            command, log, smp, queue = inp
-        # name is a redis database name
-        else:
-            command, log, smp, queue, name = inp
-
-        #set default cluster queue. Some batch queues use general.q.
-        if queue == False:
-            queue = 'all.q'
-
-        #'-clear' can be added to the options to eliminate the general.q
-        options = '-clear -shell y -p -100 -q %s -pe smp %s' % (queue, smp)
-        s = drmaa.Session()
-        s.initialize()
-        jt = s.createJobTemplate()
-        jt.workingDirectory=os.getcwd()
-        jt.joinFiles=True
-        jt.nativeSpecification=options
-        jt.remoteCommand=command.split()[0]
-        if len(command.split()) > 1:
-            jt.args=command.split()[1:]
-        if log:
-            #the ':' is required!
-            jt.outputPath=':%s'%log
-        #submit the job to the cluster and get the job_id returned
-        job = s.runJob(jt)
-        #return job_id.
-        if output:
-            output.put(job)
-
-        #cleanup the input script from the RAM.
-        s.deleteJobTemplate(jt)
-
-        #If multiprocessing.event is set, then run loop to watch until job or script has finished.
-        if running:
-            #Returns True if job is still running or False if it is dead. Uses CPU to run loop!!!
-            decodestatus = {drmaa.JobState.UNDETERMINED: True,
-                            drmaa.JobState.QUEUED_ACTIVE: True,
-                            drmaa.JobState.SYSTEM_ON_HOLD: True,
-                            drmaa.JobState.USER_ON_HOLD: True,
-                            drmaa.JobState.USER_SYSTEM_ON_HOLD: True,
-                            drmaa.JobState.RUNNING: True,
-                            drmaa.JobState.SYSTEM_SUSPENDED: False,
-                            drmaa.JobState.USER_SUSPENDED: False,
-                            drmaa.JobState.DONE: False,
-                            drmaa.JobState.FAILED: False,
-                           }
-            #Loop to keep hold process while job is running or ends when self.running event ends.
-            while decodestatus[s.jobStatus(job)]:
-                if self.running.is_set() == False:
-                    s.control(job,drmaa.JobControlAction.TERMINATE)
-                    self.logger.debug('job:%s terminated since script is done'%job)
-                    break
-            #time.sleep(0.2)
-            time.sleep(1)
-        #Otherwise just wait for it to complete.
-        else:
-            s.wait(job, drmaa.Session.TIMEOUT_WAIT_FOREVER)
-
-        #Exit cleanly, otherwise master node gets event client timeout errors after 600s.
-        s.exit()
-
-    except:
-        self.logger.exception('**ERROR in Utils.processCluster**')
-        #Cleanup if error.
-        if s:
-            if jt:
-                s.deleteJobTemplate(jt)
-            s.exit()
-    finally:
-        if name!= False:
-            self.red.lpush(name,1)
 
 def kill_job(inp, logger=False):
   """

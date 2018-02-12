@@ -8,6 +8,7 @@ import time
 from threading import Thread
 from multiprocessing import Process, Queue, Event
 import shlex
+import subprocess
 #import streamUtils as Utils
 #from cctbx.regression.tst_adp_aniso_restraints import fd
 
@@ -40,6 +41,81 @@ def connect_beamline():
             db=0)
     # Save the pool for a clean exit.
     return redis.Redis(connection_pool=pool)
+
+def processLocal(inp, logger=False, output=False):
+    """
+    Run job as subprocess on local machine.
+    """
+
+    # Logfile might be passed in
+    if type(inp) == tuple:
+        command, logfile = inp
+    else:
+        command = inp
+        logfile = False
+
+    # Run the process
+    proc = subprocess.Popen(command,
+                            shell=True,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+
+    # Send back PID if have outlet
+    if output:
+        output.put(proc.pid)
+
+    # Get the stdout and stderr from process
+    stdout, stderr = proc.communicate()
+    # print stdout
+    # print stderr
+
+    # Write out a log file, if name passed in
+    if logfile:
+        with open(logfile, "w") as out_file:
+            out_file.write(stdout)
+            out_file.write(stderr)
+
+"""
+proc = subprocess.Popen('qstat',
+                            shell=True,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+"""
+l = []
+inp = 'qstat'
+myoutput = subprocess.Popen(inp,shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+for line in myoutput.stdout:
+    split = line.split()
+    if len(split) == 8:
+        #print split
+        if split[2].count('INDEX'):
+            l.append(split[0])
+for pid in l:
+    os.system('qdel %s'%pid)
+
+"""
+pool = redis.ConnectionPool(host="164.54.212.169",
+            port=6379,
+            db=0)
+
+red = redis.StrictRedis(connection_pool=pool)
+#red = redis.Redis(connection_pool=pool)
+print pool._created_connections, pool._in_use_connections, pool.max_connections
+red.set('junk', 'junk')
+print pool._created_connections, pool._in_use_connections, pool.max_connections
+red.set('junk', '')
+pool.disconnect()
+print pool._created_connections, pool._in_use_connections, pool.max_connections, pool.pid
+#print dir(red.connection_pool)
+#print red.connection_pool._created_connections, red.connection_pool.pid
+#l = red.client_list()
+#for x in range(len(l)):
+#    print l[x]['addr'], l[x]['cmd']
+#pool.release()
+#print pool._created_connections, pool._in_use_connections, pool.max_connections
+#print 
+"""
+
 """
 f = open('/gpfs2/users/necat/Jon2/process/Minor/K11/P4/Phenix/helix.txt', 'r').readlines()
 counter = 0
@@ -285,11 +361,12 @@ while True:
     timer += 0.2
 """
 
+
 #d = {'fullname': '/gpfs1/users/duke/pei_C_3263/images/pei/runs/A6/0_0/A6_1_0001.cbf !Change to accurate path to data frames'}
 #d = {'fullname': '/gpfs1/users/duke/pei_C_3263/images/pei/runs/A6/0_0/A6_1_0001.cbf'}
 #print d['fullname'].replace(' !Change to accurate path to data frames', '')
 
-red = connect_redis_manager_HA()
+#red = connect_redis_manager_HA()
 #red = connect_redis()
 #connection = connect_beamline()
 
@@ -300,7 +377,7 @@ red = connect_redis_manager_HA()
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/columbia/hendrickson_E_3093/images/wwang/runs/Hend03_04/Hend03_04_1_001075.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/columbia/hendrickson_E_3093/images/wwang/runs/CPS3509_03/CPS3509_03_1_000001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/mskcc/patel_E_3080/images/hui/runs/hy_640_9/hy_640_9_1_000002.cbf')
-red.lpush('images_collected:NECAT_E', '/gpfs2/users/mskcc/patel_E_2891/images/juncheng/snaps/chengwI5_PAIR_0_000005.cbf'),
+#red.lpush('images_collected:NECAT_E', '/gpfs2/users/mskcc/patel_E_2891/images/juncheng/snaps/chengwI5_PAIR_0_000005.cbf'),
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/mskcc/patel_E_2891/images/juncheng/snaps/chengwI5_PAIR_0_000006.cbf'),
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/columbia/Mancia_E_3109/images/meagan/snaps/man2_3_0_000001.cbf'), # no index
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/slri/sicheri_E_3136/images/Igor/runs/VP03_MKTYc/VP03_MKTYc_1_000001/VP03_MKTYc_1_000001.cbf'),
@@ -315,30 +392,32 @@ red.lpush('images_collected:NECAT_E', '/gpfs2/users/mskcc/patel_E_2891/images/ju
 #red.lpush('images_collected:SERCAT_ID', '/data/ID_GSK_20171101.raw/11_01_2017_APS22id/screen/GSK8P9_AR.0002'),
 #red.lpush('images_collected:SERCAT_ID', '/data//raw/BM_17_11_21_GSK_20171121/11_21_2017_APS22bm/screen/P300_GSK3925257A_2_r1_s.0001'),
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/fandm/piro_E_3242/images/christine/runs/149pN3F_x04/149pN3F_x04_1_000001/149pN3F_x04_1_000001.cbf')
-
-#print red.llen('RAPD_QSUB_JOBS_0')
+"""
+print red.llen('RAPD_QSUB_JOBS_0')
 #red.delete('RAPD_QSUB_JOBS_0')
-#print red.llen('run_info_C')
-#print red.llen('RAPD_JOBS')
+print red.llen('run_info_C')
+print red.llen('RAPD_JOBS')
 #print red.llen("images_collected:SERCAT_ID")
 #red.delete("images_collected:SERCAT_ID")
 #print red.llen('run_data:SERCAT_ID')
 #red.delete("run_data:SERCAT_ID")
-#print red.llen("images_collected:NECAT_E")
-#red.delete("images_collected:NECAT_T")
-#print red.llen('run_data:NECAT_T')
-#red.delete("run_data:NECAT_T")
+print red.llen("images_collected:NECAT_E")
+red.delete("images_collected:NECAT_E")
+print red.llen("images_collected:NECAT_C")
+red.delete("images_collected:NECAT_C")
+print red.llen('run_data:NECAT_C')
+#red.delete("run_data:NECAT_C")
 #print red.llen('RAPD_RESULTS')
 #red.delete('RAPD_RESULTS')
 #print red.llen('run_info_T')
-#print red.llen('RAPD_JOBS_WAITING')
-#red.delete('RAPD_JOBS_WAITING')
+print red.llen('RAPD_JOBS_WAITING')
+red.delete('RAPD_JOBS_WAITING')
 #print red.llen('RAPD_JOBS_WAITING')
 #print red.lrange('run_info_T', 0, 5)
 #red.delete('images_collected_T')
 #print red.llen('images_collected_T')
 #red.close()
-"""
+
 n = float('1.300000011921')
 print 'this number: %3.7f'%n
 print 'percent: %3.1f %%'%n
