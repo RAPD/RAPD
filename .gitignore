@@ -42,6 +42,7 @@ tmp
 
 # From UI
 src/ui/dist
+src/ui/rapd2
 src/ui/tmp
 node_modules
 
