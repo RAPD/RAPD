@@ -211,10 +211,18 @@ function Wss (opt, callback) {
       ws.id = uuid.v1();
       ws_connections[ws.id] = ws;
 
+      // Create a ping interval to keep websocket connection alive
+      let ping_timer = setInterval(function() {
+        ws.send('ping');
+      }, 45000);
+
       // Websocket has closed
       ws.on('close', function() {
 
         console.log('websocket closed');
+
+        // Cancel the ping interval
+        clearInterval(ping_timer);
 
         // Remove the websocket from the storage objects
         delete ws_connections[ws.id];
