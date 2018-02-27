@@ -94,7 +94,7 @@ export class WebsocketService {
 
   handleWebsocketMessage(message: string) {
 
-    console.log(message);
+    // console.log(message);
 
     if (message === 'ping') {
       return true;
@@ -103,7 +103,7 @@ export class WebsocketService {
     let data = JSON.parse(message);
     let self = this;
 
-    console.log(data);
+    // console.log(data);
 
     switch (data.msg_type) {
 
