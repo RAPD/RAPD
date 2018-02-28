@@ -94,10 +94,16 @@ export class WebsocketService {
 
   handleWebsocketMessage(message: string) {
 
+    // console.log(message);
+
+    if (message === 'ping') {
+      return true;
+    }
+
     let data = JSON.parse(message);
     let self = this;
 
-    console.log(data);
+    // console.log(data);
 
     switch (data.msg_type) {
 
@@ -134,6 +140,7 @@ export class WebsocketService {
         break;
     }
 
+    return true;
   }
 
   // Guard against addressing the socket before it's ready

@@ -28,7 +28,7 @@ export class ReintegrateDialogComponent implements OnInit {
     {val:'rna', label:'RNA'},
     {val:'peptide', label:'Peptide'}];
 
-  spacegroup_deciders:[any] = [
+  spacegroup_deciders = [
     {val:'auto', label:'Automatic'},
     {val:'xds', label:'XDS'},
     {val:'pointless', label:'Pointless'}
