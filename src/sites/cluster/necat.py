@@ -70,18 +70,19 @@ def check_queue(inp):
     Returns which cluster batch queue should be used with the plugin.
     """
     d = {"ECHO"           : 'general.q',
-         #"INDEX"          : 'phase3.q',
-         "INDEX"          : 'phase1.q',
+         "INDEX"          : 'phase3.q',
+         #"INDEX"          : 'phase1.q',
          "BEAMCENTER"     : 'all.q',
          "XDS"            : 'all.q',
-         "INTEGRATE"      : 'phase2.q'
+         #"INTEGRATE"      : 'phase2.q',
+         "INTEGRATE"      : 'phase3.q',
          }
     
     return(d[inp])
   
 def get_nproc_njobs():
     """Return the nproc and njobs for an XDS integrate job"""
-    return (4, 20)
+    return (4, 10)
   
 def determine_nproc(command):
     """Determine how many processors to reserve on the cluster for a specific job type."""
@@ -90,7 +91,7 @@ def determine_nproc(command):
         nproc = 4
     return nproc
   
-def fix_command(message):
+def fix_command_OLD(message):
     """
     Adjust the command passed in in install-specific ways
     """
@@ -154,8 +155,40 @@ def connectCluster(inp, job=True):
 #class Cluster_Event():
 #    def __init__(self):
 #        pass
+def mp_job(func):
+    """
+    wrapper to run processCluster in a multiprocessing.Process to avoid
+    threading problems in DRMAA with multiple jobs sent to same session.
+    """
+    
+    @wraps(func)
+    def wrapper(**kwargs):
+        #job = False
+        job = Process(target=func, kwargs=kwargs)
+        job.start()
+        job.join()
+    return wrapper
 
-def process_cluster_fix(func):
+def mp_job_NEW(func):
+    """
+    wrapper to run processCluster in a multiprocessing.Process to avoid
+    threading problems in DRMAA with multiple jobs sent to same session.
+    """
+    # If command starts with rapd.launch then mp.Process it.
+    @wraps(func)
+    def wrapper(**kwargs):
+        job = False
+        if kwargs['command'].count('rapd.launch '):
+            job = Process(target=func, kwargs=kwargs)
+            job.start()
+        # wait for the job to finish and join
+        if job:
+            job.join()
+        else:
+            return func(**kwargs)
+    return wrapper
+
+def process_cluster_fix_OLD(func):
     """
     wrapper to run processCluster in a multiprocessing.Process to avoid
     threading problems in DRMAA with multiple jobs sent to same session.
@@ -177,7 +210,7 @@ def process_cluster_fix(func):
             return func(**kwargs)
     return wrapper
 
-@process_cluster_fix
+@mp_job_NEW
 def process_cluster(command,
                    work_dir=False,
                    logfile=False,

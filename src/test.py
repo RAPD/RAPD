@@ -9,6 +9,8 @@ from threading import Thread
 from multiprocessing import Process, Queue, Event
 import shlex
 import subprocess
+import re
+from pprint import pprint
 #import streamUtils as Utils
 #from cctbx.regression.tst_adp_aniso_restraints import fd
 
@@ -74,12 +76,117 @@ def processLocal(inp, logger=False, output=False):
         with open(logfile, "w") as out_file:
             out_file.write(stdout)
             out_file.write(stderr)
+"""
+jobs = {}
+l = ['cbf-worker', 'cbf-main', 'data-handler']
+output = subprocess.Popen('ps -eaf | grep python',shell=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+for line in output.stdout:
+    split = line.split()
+    for r in l:
+        if split[-1].count(r):
+            jobs[split[-1]] = {'time': int(self.timer + Config.HB_INT), 'score': 3}
+    
+
+
+#print "STAC file%s"%str(x+1)
+def read_header(image,
+                mode=None,
+                run_id=None,
+                place_in_run=None,
+                logger=False):
+    
+    #Given a full file name for a Piltus image (as a string), read the header and
+    #return a dict with all the header info
+    
+    # print "determine_flux %s" % image
+    if logger:
+        logger.debug("read_header %s" % image)
+
+    # Make sure the image is a full path image
+    image = os.path.abspath(image)
+    
+    count = 0
+    while (count < 10):
+        try:
+            # Use 'with' to make sure file closes properly. Only read header.
+            header = ""
+            with open(image, "rb") as raw:
+                for line in raw:
+                    if line.count('Beam_xy'):
+                        line = line.replace('27586.67, 29160.00', '2063.20, 2177.33')
+                    header += line
+                    #if line.count("Ring_current"):
+                    #    break
+            break
+        except:
+            count +=1
+            if logger:
+                logger.exception('Error opening %s' % image)
+            time.sleep(0.1)
+    
+    new_image = image.replace('ALLER-003_Pn4', 'ALLER-003_Pn4_test')
+    with open(new_image, "w") as new:
+        new.write(header)
+        new.close()
+    
+    
+f = '/gpfs6/users/necat/Jon/RAPD_test/Images/SERCAT/ID/eiger/ALLER-003_Pn4_000100.cbf'
+print read_header(f)
+"""
 
 """
 proc = subprocess.Popen('qstat',
                             shell=True,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
+
+"""
+"""
+import numpy
+header = {}
+#site_params = {'BEAM_FLUX': 8.2E11}
+site_params = {'BEAM_FLUX': 5E12}
+#site_params = {'BEAM_FLUX': 8E11}
+header['transmission'] = 100.0
+beam_size_x = 0.07
+beam_size_y = 0.03
+aperture = 0.01
+new_x = beam_size_x
+new_y = beam_size_y
+
+if aperture < beam_size_x:
+    new_x = aperture
+if aperture < beam_size_y:
+    new_y = aperture
+
+# Calculate area of full beam used to calculate the beamline flux
+# Assume ellipse, but same equation works for circle.
+# Assume beam is uniform
+full_beam_area = numpy.pi*(beam_size_x/2)*(beam_size_y/2)
+#print 'full: %s'%full_beam_area
+
+# Calculate the new beam area (with aperture) divided by the full_beam_area.
+# Since aperture is round, it will be cutting off edges of x length until it matches beam height,
+# then it would switch to circle
+if beam_size_y <= aperture:
+    # ellipse
+    ratio = (numpy.pi*(aperture/2)*(beam_size_y/2)) / full_beam_area
+    print 'ration0: %s'%ratio
+else:
+    # circle
+    ratio = (numpy.pi*(aperture/2)**2) / full_beam_area
+    print 'ration1: %s'%ratio
+# Calculate the new_beam_area ratio to full_beam_area
+flux = int(round(site_params.get('BEAM_FLUX') * (header.get('transmission')/100) * ratio))
+
+# Return the flux and beam size
+print flux
+#return (flux, new_x, new_y)
+calc = (8.8E12)/(2*numpy.pi*0.05*0.012)
+print calc
+calc = (8.8E12)/(numpy.pi*0.035*0.015)
+print calc
+"""
 """
 l = []
 inp = 'qstat'
@@ -93,7 +200,7 @@ for line in myoutput.stdout:
 for pid in l:
     os.system('qdel %s'%pid)
 
-"""
+
 pool = redis.ConnectionPool(host="164.54.212.169",
             port=6379,
             db=0)
@@ -366,13 +473,14 @@ while True:
 #d = {'fullname': '/gpfs1/users/duke/pei_C_3263/images/pei/runs/A6/0_0/A6_1_0001.cbf'}
 #print d['fullname'].replace(' !Change to accurate path to data frames', '')
 
-#red = connect_redis_manager_HA()
+red = connect_redis_manager_HA()
 #red = connect_redis()
 #connection = connect_beamline()
 
 #red.delete('images_collected:NECAT_E')
 #red.lpush('images_collected:NECAT_C', '/gpfs1/users/necat/Jon2/images/junk/0_0/tst_0_0001.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000001.cbf')
+#time.sleep(1)
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/harvard/Wagner_E_3064/images/evangelos/snaps/GW02XF07_PAIR_0_000002.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/columbia/hendrickson_E_3093/images/wwang/runs/Hend03_04/Hend03_04_1_001075.cbf')
 #red.lpush('images_collected:NECAT_E', '/gpfs2/users/columbia/hendrickson_E_3093/images/wwang/runs/CPS3509_03/CPS3509_03_1_000001.cbf')
@@ -392,10 +500,10 @@ while True:
 #red.lpush('images_collected:SERCAT_ID', '/data/ID_GSK_20171101.raw/11_01_2017_APS22id/screen/GSK8P9_AR.0002'),
 #red.lpush('images_collected:SERCAT_ID', '/data//raw/BM_17_11_21_GSK_20171121/11_21_2017_APS22bm/screen/P300_GSK3925257A_2_r1_s.0001'),
 #red.lpush('images_collected:NECAT_E', '/epu2/rdma/gpfs2/users/fandm/piro_E_3242/images/christine/runs/149pN3F_x04/149pN3F_x04_1_000001/149pN3F_x04_1_000001.cbf')
-"""
+
 print red.llen('RAPD_QSUB_JOBS_0')
 #red.delete('RAPD_QSUB_JOBS_0')
-print red.llen('run_info_C')
+#print red.llen('run_info_C')
 print red.llen('RAPD_JOBS')
 #print red.llen("images_collected:SERCAT_ID")
 #red.delete("images_collected:SERCAT_ID")
@@ -406,18 +514,20 @@ red.delete("images_collected:NECAT_E")
 print red.llen("images_collected:NECAT_C")
 red.delete("images_collected:NECAT_C")
 print red.llen('run_data:NECAT_C')
-#red.delete("run_data:NECAT_C")
+red.delete("run_data:NECAT_C")
+print red.llen('run_data:NECAT_E')
+red.delete("run_data:NECAT_E")
 #print red.llen('RAPD_RESULTS')
 #red.delete('RAPD_RESULTS')
 #print red.llen('run_info_T')
 print red.llen('RAPD_JOBS_WAITING')
-red.delete('RAPD_JOBS_WAITING')
-#print red.llen('RAPD_JOBS_WAITING')
+#red.delete('RAPD_JOBS_WAITING')
 #print red.lrange('run_info_T', 0, 5)
 #red.delete('images_collected_T')
-#print red.llen('images_collected_T')
+print red.llen('images_collected_E')
 #red.close()
 
+"""
 n = float('1.300000011921')
 print 'this number: %3.7f'%n
 print 'percent: %3.1f %%'%n

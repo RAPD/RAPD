@@ -238,6 +238,19 @@ def process_cluster_drmaa(self, inp, output=False):
 
     print "Job finished"
 
+def mp_job(func):
+    """
+    wrapper to run process_cluster in a multiprocessing.Process.
+    """
+    @wraps(func)
+    def wrapper(**kwargs):
+        #job = False
+        job = Process(target=func, kwargs=kwargs)
+        job.start()
+        job.join()
+    return wrapper
+
+#@mp_job
 def process_cluster(command,
                    work_dir=False,
                    logfile=False,

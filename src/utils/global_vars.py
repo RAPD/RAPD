@@ -57,5 +57,10 @@ TEST_CACHE = "/tmp/rapd_cache/test_data"
 PDBQ_SERVER = "rapd.nec.aps.anl.gov/pdbq"
 
 # Timeout for phaser MR process
-LABELIT_TIMEOUT = 120
 PHASER_TIMEOUT = 5000
+
+# Time outs for Autointdex+strategies.
+LABELIT_TIMEOUT = 120
+XOALIGN_TIMEOUT = 30
+DISTL_TIMEOUT = 30
+STRATEGY_TIMEOUT = 60
