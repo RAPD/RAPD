@@ -155,7 +155,7 @@ def calculate_flux(header, site_params):
     aperture = header.get('md2_aperture')
     new_x = beam_size_x
     new_y = beam_size_y
-    
+
     if aperture < beam_size_x:
         new_x = aperture
     if aperture < beam_size_y:
@@ -198,10 +198,11 @@ def get_data_root_dir(fullname):
     inst   = False
     group  = False
     images = False
-    
+
     for p in path_split:
         if p.startswith('gpfs'):
             st = path_split.index(p)
+
     if path_split[st].startswith("gpfs"):
         gpfs = path_split[st]
         if path_split[st+1] == "users":
@@ -212,9 +213,9 @@ def get_data_root_dir(fullname):
                     group = path_split[st+3]
 
     if group:
-        data_root_dir = os.path.join("/",*path_split[1:st+4])
+        data_root_dir = os.path.join("/", *path_split[st:st+4])
     elif inst:
-        data_root_dir = os.path.join("/",*path_split[1:st+3])
+        data_root_dir = os.path.join("/", *path_split[st:st+3])
     else:
         data_root_dir = False
 
@@ -436,25 +437,30 @@ if __name__ == "__main__":
     # Execute code
     #main(args=commandline_args)
     #get_alt_path('/epu/rdma/gpfs2/users/wvu/robart_E_2985/images/robart/runs/F_2/F_2_1_000001/F_2_1_000287.cbf')
-    header = base_read_header('/gpfs2/users/mskcc/patel_E_2891/images/juncheng/snaps/chengwI5_PAIR_0_000005.cbf')
-    site_params = {'BEAM_APERTURE_SHAPE': 'circle',
-                     'BEAM_CENTER_DATE': '2017-3-02',
-                     'BEAM_CENTER_X': (163.2757684023,
-                                       0.0003178917,
-                                       -5.0236657815e-06,
-                                       5.8164218288e-09),
-                     'BEAM_CENTER_Y': (155.1904879862,
-                                       -0.0014631216,
-                                       8.60559283424e-07,
-                                       -2.5709929645e-10),
-                     'BEAM_FLUX': 1500000000000.0,
-                     'BEAM_GAUSS_X': 0.03,
-                     'BEAM_GAUSS_Y': 0.01,
-                     'BEAM_SHAPE': 'ellipse',
-                     'BEAM_SIZE_X': 0.05,
-                     'BEAM_SIZE_Y': 0.02,
-                     'DELTA_OMEGA_MIN': 0.05,
-                     'DETECTOR_DIST_MAX': 1000.0,
-                     'DETECTOR_DIST_MIN': 150.0,
-                     'EXPOSURE_TIME_MIN': 0.05}
-    calculate_flux(header, site_params)
+
+    # header = base_read_header('/gpfs2/users/mskcc/patel_E_2891/images/juncheng/snaps/chengwI5_PAIR_0_000005.cbf')
+    # site_params = {'BEAM_APERTURE_SHAPE': 'circle',
+    #                  'BEAM_CENTER_DATE': '2017-3-02',
+    #                  'BEAM_CENTER_X': (163.2757684023,
+    #                                    0.0003178917,
+    #                                    -5.0236657815e-06,
+    #                                    5.8164218288e-09),
+    #                  'BEAM_CENTER_Y': (155.1904879862,
+    #                                    -0.0014631216,
+    #                                    8.60559283424e-07,
+    #                                    -2.5709929645e-10),
+    #                  'BEAM_FLUX': 1500000000000.0,
+    #                  'BEAM_GAUSS_X': 0.03,
+    #                  'BEAM_GAUSS_Y': 0.01,
+    #                  'BEAM_SHAPE': 'ellipse',
+    #                  'BEAM_SIZE_X': 0.05,
+    #                  'BEAM_SIZE_Y': 0.02,
+    #                  'DELTA_OMEGA_MIN': 0.05,
+    #                  'DETECTOR_DIST_MAX': 1000.0,
+    #                  'DETECTOR_DIST_MIN': 150.0,
+    #                  'EXPOSURE_TIME_MIN': 0.05}
+    # calculate_flux(header, site_params)
+
+    # Test get_data_root_dir with new epu filenames
+    print get_data_root_dir("/epu2/rdma/gpfs2/users/stanford/feng_E_3426/images/minrui/snaps/ZH_PAIR_0_000144/ZH_PAIR_0_000144.cbf")
+    print get_data_root_dir("/gpfs1/users/ucsd/corbett_C_3425/images/Kevin/runs/2_9/0_0/2_9_1_0854.cbf")
