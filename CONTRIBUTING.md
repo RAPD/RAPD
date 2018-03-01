@@ -98,43 +98,44 @@ This is an aggregation of how to do a full install of RAPD, its web application,
 * Start RAPD REST service - This serves up the data for the user interface. _For more see src/services/README.md_
   * Navigate to src/services/rest within your cloned repository
   * Copy the `example_config.js` to `config.js` and edit it. The example config has settings for MongoDB and Redis to work out of the box with the Docker environment described here.  
-  ```javascript
-  module.exports = {
 
-    // mongo or ldap
-    authenticate_mode: 'mongo',
+    ```javascript
+    module.exports = {
 
-    // This will be the address cc'ed on admin emails
-    admin_email:'fmurphy@anl.gov',
+      // mongo or ldap
+      authenticate_mode: 'mongo',
 
-    // can be overidden by process.ENV
-    port: 3000,
+      // This will be the address cc'ed on admin emails
+      admin_email:'fmurphy@anl.gov',
 
-    // Name for the site
-    site: 'NE-CAT',
+      // can be overidden by process.ENV
+      port: 3000,
 
-    // Used for authentication key, etc
-    secret: 'mysecret',
+      // Name for the site
+      site: 'NE-CAT',
 
-    // Connection strings for MongoDB
-    control_conn: 'mongodb://mongo:27017/rapd',
-    auth_conn: 'mongodb://mongo:27017/rapd',
+      // Used for authentication key, etc
+      secret: 'mysecret',
 
-    // Redis connection info
-    redis_connection: {
-        host: 'redis',
-        port: 6379
-      },
+      // Connection strings for MongoDB
+      control_conn: 'mongodb://mongo:27017/rapd',
+      auth_conn: 'mongodb://mongo:27017/rapd',
 
-    // Where is my LDAP server? Used if authenticate_mode == 'ldap'
-    ldap_server: '127.0.0.1',
-    // String for LDAP to find your users
-    ldap_dn: 'ou=People,dc=ser,dc=aps,dc=anl,dc=gov',
+      // Redis connection info
+      redis_connection: {
+          host: 'redis',
+          port: 6379
+        },
 
-    // Plugin types that show up in the MongoDB
-    plugin_types: ['index', 'integrate']
-  };
-  ```
+      // Where is my LDAP server? Used if authenticate_mode == 'ldap'
+      ldap_server: '127.0.0.1',
+      // String for LDAP to find your users
+      ldap_dn: 'ou=People,dc=ser,dc=aps,dc=anl,dc=gov',
+
+      // Plugin types that show up in the MongoDB
+      plugin_types: ['index', 'integrate']
+    };
+    ```
   * Build and run the RAPD REST service on Docker.
   ```shell
   docker build -t rapd_rest .
@@ -177,12 +178,10 @@ This is an aggregation of how to do a full install of RAPD, its web application,
   * Navigate to src/ui within your cloned repository
   * Run the DevServer `ng serve`
 
-* Add yourself to the system - 
-
-
-
-
-
+* Add yourself to the system - you will need to create a group and a user for yourself
+  * If you haven't sourced the RAPD initialization script, you will need to now. You can check by typing `rapd.version`. An error means you probably haven't sourced the initialization script.
+  * Add a group and user to the database `rapd.mongotool -ug`
+  * Follow the prompts
 
 ### CLA
 Please sign our Contributor License Agreement (CLA) before sending pull requests. For any code changes to be accepted, the CLA must be signed. It's a quick process, we promise!
