@@ -247,6 +247,8 @@ class Database(object):
         session_name -- name for a session (ex. ID_16_05_25_uga_jjc) (default = None)
         """
 
+        self.logger.debug("data_root_dir: %s" % data_root_dir)
+
         # Connect
         db = self.get_db_connection()
 
