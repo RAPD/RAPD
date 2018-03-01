@@ -294,7 +294,7 @@ def main():
     username = None
     password = None
 
-    hostname = "164.54.208.142"
+    hostname = "localhost"
     port = 27017
     #
     # hostname = "192.168.99.100"
@@ -310,13 +310,14 @@ def main():
 
     # Perform install
     if database_version in (0, None):
-        perform_naive_install(hostname, port, username, password)
+        pass
+        # perform_naive_install(hostname, port, username, password)
 
     # Version is current
     elif database_version == VERSION:
         print text.green+"RAPD database version %s is current." % database_version + text.stop
         # For Development
-        perform_naive_install(hostname, port, username, password)
+        # perform_naive_install(hostname, port, username, password)
 
     # Upgrades go here
 
