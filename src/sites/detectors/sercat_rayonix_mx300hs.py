@@ -79,11 +79,8 @@ def parse_file_name(fullname):
     basename = os.path.basename(fullname).rstrip(DETECTOR_SUFFIX)
     # print basename
     sbase = basename.split(".")
-    # print sbase
     prefix = ".".join(sbase[0:-1])
-    # print prefix
     image_number = int(sbase[-1])
-    # print image_number
     run_number = None
 
     return directory, basename, prefix, run_number, image_number

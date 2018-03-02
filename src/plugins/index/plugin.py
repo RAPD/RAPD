@@ -669,6 +669,113 @@ class RapdPlugin(Process):
             raddose.close()
         os.chmod(self.raddose_file, stat.S_IRWXU)
 
+    def preprocess_raddose3d(self):
+        """
+        Create the raddose.com file which will run in process_raddose. Several beamline specific
+        entries for flux and aperture size passed in from site file.
+        """
+        if self.verbose and self.logger:
+            self.logger.debug("AutoindexingStrategy::preprocess_raddose")
+
+        beam_size_x = self.image1.get('x_beam_size', self.site_parameters.get('BEAM_SIZE_X', False))
+        beam_size_y = self.image1.get('y_beam_size', self.site_parameters.get('BEAM_SIZE_Y', False))
+        gauss_x = self.site_parameters.get('BEAM_GAUSS_X', False)
+        gauss_y = self.site_parameters.get('BEAM_GAUSS_Y', False)
+        flux = self.image1.get('flux', self.site_parameters.get('BEAM_FLUX', 1E10 ))
+
+        # Get number of residues in the unit cell
+        nres = xutils.calc_tot_res_number(self.volume, self.sample_type, self.solvent_content)
+
+        # Adding these typically does not change the Best strategy much, if it at all.
+        patm = False
+        satm = False
+        if self.sample_type == "ribosome":
+            crystal_size_x = 1000
+            crystal_size_y = 500
+            crystal_size_z = 500
+        else:
+            # crystal dimensions (default 0.1 x 0.1 x 0.1 from rapd_site.py)
+            crystal_size_x = self.preferences.get("crystal_size_x", 100)
+            crystal_size_y = self.preferences.get("crystal_size_y", 100)
+            crystal_size_z = self.preferences.get("crystal_size_z", 100)
+        
+        setup = 'Crystal\n'
+        setup += 'Type Cuboid\n'
+        setup += 'Dimensions %d %d %d\n'%(crystal_size_x, crystal_size_y, crystal_size_z)
+        setup += 'PixelsPerMicron 0.5\n'
+        setup += 'AbsCoefCalc  RD3D\n'
+        setup += 'UnitCell %s %s %s %s %s %s\n'%(self.labelit_cell[0],
+                                                 self.labelit_cell[1],
+                                                 self.labelit_cell[2],
+                                                 self.labelit_cell[3],
+                                                 self.labelit_cell[4],
+                                                 self.labelit_cell[5])
+        setup += 'NumMonomers  1\n'
+        setup += 'NumResidues %d\n'%nres
+        setup += 'SolventFraction %.2f\n'%self.solvent_content
+        setup += 'Beam\n'
+        setup += 'Type   TopHat\n'
+        setup += 'Flux %d\n'%flux
+        if gauss_x and gauss_y:
+            setup += 'FWHM %s %s\n'% (gauss_x, gauss_y) #in microns
+        #setup += 'Energy \n'
+        setup += "Wavelength %.4f\n" % self.wavelength
+        #setup += 'Collimation Rectangular %s %s\n'
+        setup += 'Wedge 0 1\n'
+        setup += 'ExposureTime 1\n'
+        """
+        setup = '#!/bin/bash\n'
+        setup += "raddose << EOF\n"
+        if beam_size_x and beam_size_y:
+            setup += "BEAM %s %s\n" % (beam_size_x, beam_size_y)
+        # Full-width-half-max of the beam (for non-uniform beams)
+        if gauss_x and gauss_y:
+            setup += "GAUSS %.2f %.2f\n" % (gauss_x, gauss_y)
+        setup += "IMAGES 1\n"
+        setup += "PHOSEC %d\n" % flux
+        #setup += "EXPOSURE %.2f\n" % self.time
+        setup += "EXPOSURE 1.0\n" # set to 1s so dose result is Gy per S.
+        if self.labelit_cell:
+            setup += "CELL %s %s %s %s %s %s\n" % (self.labelit_cell[0],
+                                                   self.labelit_cell[1],
+                                                   self.labelit_cell[2],
+                                                   self.labelit_cell[3],
+                                                   self.labelit_cell[4],
+                                                   self.labelit_cell[5])
+        else:
+            self.logger.debug("Could not get unit cell from bestfile.par")
+
+        # Set default solvent content based on sample type. User can override.
+        if self.solvent_content == 0.55:
+            if self.sample_type == "protein":
+                setup += "SOLVENT 0.55\n"
+            else:
+                setup += "SOLVENT 0.64\n"
+        else:
+            setup += "SOLVENT %.2f\n"%self.solvent_content
+        # Sets crystal dimensions. Input from dict (0.1 x 0.1 x 0.1 mm), but user can override.
+        if crystal_size_x and crystal_size_y and crystal_size_z:
+            setup += "CRYSTAL %.1f %.1f %.1f\n" % (crystal_size_x, crystal_size_y, crystal_size_z)
+        if self.wavelength:
+            setup += "WAVELENGTH %.4f\n" % self.wavelength
+        setup += "NMON 1\n"
+        if self.sample_type == "protein":
+            setup += "NRES %d\n" % nres
+        elif self.sample_type == "dna":
+            setup += "NDNA %d\n" % nres
+        else:
+            setup += "NRNA %d\n" % nres
+        if patm:
+            setup += "PATM %d\n" % patm
+        if satm:
+            setup += "SATM %d\n" % satm
+        setup += "END\nEOF\n"
+        self.raddose_file = os.path.join(self.labelit_dir, "raddose.com")
+        with open(self.raddose_file, "w+") as raddose:
+            raddose.writelines(setup)
+            raddose.close()
+        os.chmod(self.raddose_file, stat.S_IRWXU)
+        """
     def start_labelit(self):
         """
         Initiate Labelit runs.

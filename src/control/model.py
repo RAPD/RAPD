@@ -934,10 +934,14 @@ class Model(object):
     def get_session_id(self, header):
         """Get a session_id"""
 
+        self.logger.debug("get_session_id")
+
         # Is the session information figured out by the image file name
         session_id = self.database.get_session_id(data_root_dir=header.get("data_root_dir", None))
 
         if not session_id:
+
+            self.logger.debug("No session_id from self.database.get_session_id")
 
             # Determine group_id
             if self.site.GROUP_ID:
@@ -956,6 +960,8 @@ class Model(object):
                 group=group_id,
                 site=header.get("site_tag", None)
             )
+
+        self.logger.debug("session_id %s" % session_id)
 
         return session_id
 
