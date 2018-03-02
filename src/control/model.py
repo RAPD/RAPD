@@ -939,7 +939,7 @@ class Model(object):
         # Is the session information figured out by the image file name
         session_id = self.database.get_session_id(data_root_dir=header.get("data_root_dir", None))
 
-        if not session_id:
+        if (not session_id) or (session_id == "None"):
 
             self.logger.debug("No session_id from self.database.get_session_id")
 
