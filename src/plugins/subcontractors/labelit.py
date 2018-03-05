@@ -121,6 +121,8 @@ def parse_output(labelit_output, iteration=0):
                 return "failed"
             if line.startswith("ValueError:"):
                 return "failed"
+            if line.startswith("Exception:"):
+                return "failed"
             if line.startswith("Labelit finds no reasonable solution"):
                 # if self.multiproc:
                 return "failed"
