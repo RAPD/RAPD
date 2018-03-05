@@ -31,5 +31,8 @@ module.exports = {
   ldap_dn: 'ou=People,dc=ser,dc=aps,dc=anl,dc=gov',
 
   // Plugin types that show up in the MongoDB
-  plugin_types: ['index', 'integrate']
+  plugin_types: ['index', 'integrate'],
+
+  // ADXV executable
+  adxv: '/usr/local/bin/adxv'
 };
