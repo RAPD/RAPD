@@ -34,5 +34,7 @@ module.exports = {
   plugin_types: ['index', 'integrate'],
 
   // ADXV executable
-  adxv: '/usr/local/bin/adxv'
+  adxv: '/usr/local/bin/adxv',
+  // Directory for temporary image storage
+  image_directory: '/dev/shm/images'
 };
