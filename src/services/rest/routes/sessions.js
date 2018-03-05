@@ -53,15 +53,30 @@ router.route('/sessions')
               .exec(function(error, group) {
                 counter += 1;
                 console.log(group);
-                session._doc.group.groupname = group.groupname;
-                return_sessions.push(session);
-                if (counter === session_count) {
-                  console.log(return_sessions);
-                  console.log('Returning', return_sessions.length, 'sessions');
-                  res.status(200).json({
-                    success: true,
-                    sessions: return_sessions
-                  });
+                // Have a group
+                if (group) {
+                  session._doc.group.groupname = group.groupname;
+                  return_sessions.push(session);
+                  if (counter === session_count) {
+                    console.log(return_sessions);
+                    console.log('Returning', return_sessions.length, 'sessions');
+                    res.status(200).json({
+                      success: true,
+                      sessions: return_sessions
+                    });
+                  }
+                // No group
+                } else {
+                  session._doc.group.groupname = 'Unknown';
+                  return_sessions.push(session);
+                  if (counter === session_count) {
+                    console.log(return_sessions);
+                    console.log('Returning', return_sessions.length, 'sessions');
+                    res.status(200).json({
+                      success: true,
+                      sessions: return_sessions
+                    });
+                  }
                 }
               });
             } else {
