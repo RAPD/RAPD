@@ -71,7 +71,8 @@ from utils.r_numbers import try_int, try_float
 #from utils.communicate import rapd_send
 import utils.exceptions as exceptions
 import utils.global_vars as global_vars
-from utils.processes import local_subprocess, LocalSubprocess
+#from utils.processes import local_subprocess, LocalSubprocess
+from utils.processes import local_subprocess
 from utils.text import json
 from bson.objectid import ObjectId
 import utils.xutils as xutils
@@ -296,19 +297,19 @@ class RapdPlugin(Process):
 
         # Setup a multiprocessing.Pool for running jobs (8 will be full speed)
         # If set to 1, then everything is run sequentially
-        #self.Pool = Pool(self.preferences.get("nproc", 8))
+        self.Pool = Pool(self.preferences.get("nproc", 8))
 
         # Set timer for distl. "False" will disable.
-        if self.image2:
-            self.distl_timer = 60
-        else:
-            self.distl_timer = 30
+        #if self.image2:
+        #    self.distl_timer = 60
+        #else:
+        #    self.distl_timer = 30
 
         # Set strategy timer. "False" disables.
-        self.strategy_timer = 60
+        #self.strategy_timer = 60
 
         # Set timer for XOAlign. "False" will disable.
-        self.xoalign_timer = 30
+        #self.xoalign_timer = 30
 
         # Turns on multiprocessing for everything
         # Turns on all iterations of Labelit running at once, sorts out highest symmetry solution,
@@ -421,7 +422,7 @@ class RapdPlugin(Process):
                 self.postprocess()
 
         self.preprocess()
-
+        
         self.tprint(arg="\nStarting indexing procedures", level=98, color="blue")
 
         if self.minikappa:
@@ -449,7 +450,7 @@ class RapdPlugin(Process):
 
             # Pass back results, and cleanup.
             self.postprocess()
-
+        
     def connect_to_redis(self):
         """Connect to the redis instance"""
         # Create a pool connection
@@ -481,13 +482,19 @@ class RapdPlugin(Process):
 
         # Determine detector vendortype
         self.vendortype = xutils.get_vendortype(self.image1)
-        self.dest_dir = self.setup.get("work")
+        #self.dest_dir = self.setup.get("work")
+        self.working_dir = self.setup.get("work")
+        if self.ram:
+            self.working_dir = "/dev/shm%s"%self.working_dir
+        """
         if self.test or self.cluster_use:
             self.working_dir = self.dest_dir
         elif self.ram:
             self.working_dir = "/dev/shm/%s" % self.dest_dir[1:]
         else:
             self.working_dir = self.dest_dir
+        """
+        
         if os.path.exists(self.working_dir) == False:
             os.makedirs(self.working_dir)
         os.chdir(self.working_dir)
@@ -500,8 +507,7 @@ class RapdPlugin(Process):
             os.symlink(self.image2['fullname'], os.path.basename(self.image2['fullname']))
             self.image2['fullname'] = os.path.join(os.getcwd(), os.path.basename(self.image2['fullname']))
 
-        # Setup event for job control on cluster (Only works at NE-CAT using DRMAA for
-        # job submission)
+        # Setup event for job control on cluster
         if self.cluster_use:
             self.running = Event()
             self.running.set()
@@ -584,7 +590,7 @@ class RapdPlugin(Process):
     def preprocess_raddose(self):
         """
         Create the raddose.com file which will run in process_raddose. Several beamline specific
-        entries for flux and aperture size passed in from rapd_site.py
+        entries for flux and aperture size passed in from site file.
         """
         if self.verbose and self.logger:
             self.logger.debug("AutoindexingStrategy::preprocess_raddose")
@@ -663,6 +669,113 @@ class RapdPlugin(Process):
             raddose.close()
         os.chmod(self.raddose_file, stat.S_IRWXU)
 
+    def preprocess_raddose3d(self):
+        """
+        Create the raddose.com file which will run in process_raddose. Several beamline specific
+        entries for flux and aperture size passed in from site file.
+        """
+        if self.verbose and self.logger:
+            self.logger.debug("AutoindexingStrategy::preprocess_raddose")
+
+        beam_size_x = self.image1.get('x_beam_size', self.site_parameters.get('BEAM_SIZE_X', False))
+        beam_size_y = self.image1.get('y_beam_size', self.site_parameters.get('BEAM_SIZE_Y', False))
+        gauss_x = self.site_parameters.get('BEAM_GAUSS_X', False)
+        gauss_y = self.site_parameters.get('BEAM_GAUSS_Y', False)
+        flux = self.image1.get('flux', self.site_parameters.get('BEAM_FLUX', 1E10 ))
+
+        # Get number of residues in the unit cell
+        nres = xutils.calc_tot_res_number(self.volume, self.sample_type, self.solvent_content)
+
+        # Adding these typically does not change the Best strategy much, if it at all.
+        patm = False
+        satm = False
+        if self.sample_type == "ribosome":
+            crystal_size_x = 1000
+            crystal_size_y = 500
+            crystal_size_z = 500
+        else:
+            # crystal dimensions (default 0.1 x 0.1 x 0.1 from rapd_site.py)
+            crystal_size_x = self.preferences.get("crystal_size_x", 100)
+            crystal_size_y = self.preferences.get("crystal_size_y", 100)
+            crystal_size_z = self.preferences.get("crystal_size_z", 100)
+        
+        setup = 'Crystal\n'
+        setup += 'Type Cuboid\n'
+        setup += 'Dimensions %d %d %d\n'%(crystal_size_x, crystal_size_y, crystal_size_z)
+        setup += 'PixelsPerMicron 0.5\n'
+        setup += 'AbsCoefCalc  RD3D\n'
+        setup += 'UnitCell %s %s %s %s %s %s\n'%(self.labelit_cell[0],
+                                                 self.labelit_cell[1],
+                                                 self.labelit_cell[2],
+                                                 self.labelit_cell[3],
+                                                 self.labelit_cell[4],
+                                                 self.labelit_cell[5])
+        setup += 'NumMonomers  1\n'
+        setup += 'NumResidues %d\n'%nres
+        setup += 'SolventFraction %.2f\n'%self.solvent_content
+        setup += 'Beam\n'
+        setup += 'Type   TopHat\n'
+        setup += 'Flux %d\n'%flux
+        if gauss_x and gauss_y:
+            setup += 'FWHM %s %s\n'% (gauss_x, gauss_y) #in microns
+        #setup += 'Energy \n'
+        setup += "Wavelength %.4f\n" % self.wavelength
+        #setup += 'Collimation Rectangular %s %s\n'
+        setup += 'Wedge 0 1\n'
+        setup += 'ExposureTime 1\n'
+        """
+        setup = '#!/bin/bash\n'
+        setup += "raddose << EOF\n"
+        if beam_size_x and beam_size_y:
+            setup += "BEAM %s %s\n" % (beam_size_x, beam_size_y)
+        # Full-width-half-max of the beam (for non-uniform beams)
+        if gauss_x and gauss_y:
+            setup += "GAUSS %.2f %.2f\n" % (gauss_x, gauss_y)
+        setup += "IMAGES 1\n"
+        setup += "PHOSEC %d\n" % flux
+        #setup += "EXPOSURE %.2f\n" % self.time
+        setup += "EXPOSURE 1.0\n" # set to 1s so dose result is Gy per S.
+        if self.labelit_cell:
+            setup += "CELL %s %s %s %s %s %s\n" % (self.labelit_cell[0],
+                                                   self.labelit_cell[1],
+                                                   self.labelit_cell[2],
+                                                   self.labelit_cell[3],
+                                                   self.labelit_cell[4],
+                                                   self.labelit_cell[5])
+        else:
+            self.logger.debug("Could not get unit cell from bestfile.par")
+
+        # Set default solvent content based on sample type. User can override.
+        if self.solvent_content == 0.55:
+            if self.sample_type == "protein":
+                setup += "SOLVENT 0.55\n"
+            else:
+                setup += "SOLVENT 0.64\n"
+        else:
+            setup += "SOLVENT %.2f\n"%self.solvent_content
+        # Sets crystal dimensions. Input from dict (0.1 x 0.1 x 0.1 mm), but user can override.
+        if crystal_size_x and crystal_size_y and crystal_size_z:
+            setup += "CRYSTAL %.1f %.1f %.1f\n" % (crystal_size_x, crystal_size_y, crystal_size_z)
+        if self.wavelength:
+            setup += "WAVELENGTH %.4f\n" % self.wavelength
+        setup += "NMON 1\n"
+        if self.sample_type == "protein":
+            setup += "NRES %d\n" % nres
+        elif self.sample_type == "dna":
+            setup += "NDNA %d\n" % nres
+        else:
+            setup += "NRNA %d\n" % nres
+        if patm:
+            setup += "PATM %d\n" % patm
+        if satm:
+            setup += "SATM %d\n" % satm
+        setup += "END\nEOF\n"
+        self.raddose_file = os.path.join(self.labelit_dir, "raddose.com")
+        with open(self.raddose_file, "w+") as raddose:
+            raddose.writelines(setup)
+            raddose.close()
+        os.chmod(self.raddose_file, stat.S_IRWXU)
+        """
     def start_labelit(self):
         """
         Initiate Labelit runs.
@@ -685,11 +798,18 @@ class RapdPlugin(Process):
         params["batch_queue"] = self.batch_queue
         params["vendortype"] = self.vendortype
         params['kill_job'] = self.kill_job
+        if self.ram:
+            command = self.command.copy()
+            command["directories"]["work"] = self.working_dir
+        else:
+            command = self.command
+        """
         if self.working_dir == self.dest_dir:
             command = self.command
         else:
             command = self.command.copy()
             command["directories"]["work"] = self.working_dir
+        """
         command['preferences'] = self.preferences
 
         # Launch labelit
@@ -1154,10 +1274,10 @@ class RapdPlugin(Process):
 
         try:
             params = {}
-            params["xoalign_timer"] = self.xoalign_timer
+            params["xoalign_timer"] = global_vars.XOALIGN_TIMEOUT
             params["test"] = self.test
             params["gui"] = self.gui
-            params["dir"] = self.dest_dir
+            params["dir"] = self.working_dir
             params["clean"] = self.clean
             params["verbose"] = self.verbose
             Process(target=RunXOalign, args=(self.input, params, self.logger)).start()
@@ -1185,8 +1305,8 @@ class RapdPlugin(Process):
                 if number in (0.0, 1.0):
                     pass
                     # print "Waiting for Distl to finish %s seconds" % timer
-            if self.distl_timer:
-                if timer >= self.distl_timer:
+            if global_vars.DISTL_TIMEOUT:
+                if timer >= global_vars.DISTL_TIMEOUT:
                     job.terminate()
                     self.distl_output.remove(job)
                     self.distl_log.append("Distl timed out\n")
@@ -1479,8 +1599,8 @@ Distance | % Transmission", level=98, color="white")
                                                 level=10,
                                                 color="white",
                                                 newline=False)
-                        if self.strategy_timer:
-                            if timer >= self.strategy_timer:
+                        if global_vars.STRATEGY_TIMEOUT:
+                            if timer >= global_vars.STRATEGY_TIMEOUT:
                                 timed_out = True
                                 # print "Timed out"
                                 job.terminate()
@@ -1933,9 +2053,17 @@ Distance | % Transmission", level=98, color="white")
         # try:
         if self.labelit_failed == False:
             os.chdir(self.labelit_dir)
-            # files = ["DNA_mosflm.inp", "bestfile.par"]
-            # files = ["mosflm.inp", "%s.mat"%self.index_number]
+            working_dir = self.working_dir
+            if self.ram:
+                working_dir = self.working_dir.replace('/dev/shm', '')
             files = ["%s.mat" % self.index_number, "bestfile.par"]
+            for x in range(len(files)):
+                if os.path.exists(files[x]):
+                    shutil.copy(files[x], working_dir)
+                    output["STAC file%s"%str(x+1)] = os.path.join(working_dir, files[x])
+                else:
+                    output["STAC file%s"%str(x+1)] = None
+            """
             for index, file_to_copy in enumerate(files):
                 shutil.copy(file_to_copy, self.working_dir)
                 if os.path.exists(os.path.join(self.working_dir, file_to_copy)):
@@ -1943,9 +2071,12 @@ Distance | % Transmission", level=98, color="white")
                                                                         file_to_copy)
                 else:
                     output["STAC file%s" % str(index+1)] = "None"
+            """
         else:
-            output["STAC file1"] = "None"
-            output["STAC file2"] = "None"
+            #output["STAC file1"] = "None"
+            #output["STAC file2"] = "None"
+            output["STAC file1"] = None
+            output["STAC file2"] = None
         # except:
         #     self.logger.exception("**Could not update path of STAC files**")
         #     output["STAC file1"] = "FAILED"
@@ -2036,15 +2167,14 @@ Distance | % Transmission", level=98, color="white")
 
         # Move files from RAM to destination folder
         try:
-            if self.working_dir == self.dest_dir:
-                pass
-            else:
+            if self.ram:
+                dest_dir = self.working_dir.replace('/dev/shm', '')
                 if self.gui:
-                    if os.path.exists(self.dest_dir):
-                        shutil.rmtree(self.dest_dir)
-                    shutil.move(self.working_dir, self.dest_dir)
+                    if os.path.exists(dest_dir):
+                        shutil.rmtree(dest_dir)
+                    shutil.move(self.working_dir, dest_dir)
                 else:
-                    os.system("cp -R * %s" % self.dest_dir)
+                    os.system("cp -R * %s" % dest_dir)
                     os.system("rm -rf %s" % self.working_dir)
         except:
             self.logger.exception("**Could not move files from RAM to destination dir.**")
@@ -2181,7 +2311,9 @@ class RunLabelit(Thread):
         # Run in debug mode
         self.test = params.get("test", False)
 
-        # Pass int the multiprocessing.Pool for job submission
+        # Pass in the multiprocessing.Pool for job submission
+        
+        # Pass in function to kill local or cluster job properly
         self.kill_job = params.get("kill_job")
 
         # Get the correct laucher, (already loaded)
@@ -2218,10 +2350,10 @@ class RunLabelit(Thread):
         self.gui = True
 
         # Set times for processes. "False" to disable.
-        if self.image2:
-            self.labelit_timer = 180
-        else:
-            self.labelit_timer = 120
+        #if self.image2:
+        #    self.labelit_timer = 180
+        #else:
+        #    self.labelit_timer = 120
         # Turns on multiprocessing for everything
         # Turns on all iterations of Labelit running at once, sorts out highest symmetry solution,
         # then continues...(much better and faster!!)
@@ -2255,7 +2387,7 @@ class RunLabelit(Thread):
 
         if self.tot_runs == 1:
             # This is used for beam center plugin
-            self.labelit_timer = 300
+            #self.labelit_timer = 300
             # Sets the dataset_preferences.py and launches Labelit
             self.get_labelit_settings(self.nrun)
         else:

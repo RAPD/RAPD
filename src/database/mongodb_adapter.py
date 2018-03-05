@@ -221,6 +221,8 @@ class Database(object):
         session_name -- name for a session (ex. ID_16_05_25_uga_jjc) (default = None)
         """
 
+        self.logger.debug("get_session_id data_root_dir: %s" % data_root_dir)
+
         # Connect
         db = self.get_db_connection()
 
@@ -246,6 +248,11 @@ class Database(object):
         group_id -- id for a group (default = None)
         session_name -- name for a session (ex. ID_16_05_25_uga_jjc) (default = None)
         """
+
+        self.logger.debug("create_session")
+
+        # Logging
+        self.logger.debug("data_root_dir: %s", data_root_dir)
 
         # Connect
         db = self.get_db_connection()

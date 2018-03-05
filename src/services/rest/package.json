@@ -5,7 +5,7 @@
   "main": "app_ldap.js",
   "private": true,
   "scripts": {
-    "start": "node app.js"
+    "start": "node rest.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

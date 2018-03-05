@@ -98,3 +98,30 @@ def get_site_tag(message):
     elif message.get('data', False):
         site_tag = message['data']['image_data'].get('site_tag')
     return site_tag
+
+def fix_command(message):
+    """
+    Adjust the command passed in in install-specific ways
+    """
+    # Adjust the working directory for the launch computer
+    work_dir_candidate = os.path.join(
+        message["directories"]["launch_dir"],
+        message["directories"]["work"])
+
+    # Make sure this is an original directory
+    if os.path.exists(work_dir_candidate):
+        # Already exists
+        for i in range(1, 1000):
+            if not os.path.exists("_".join((work_dir_candidate, str(i)))):
+                work_dir_candidate = "_".join((work_dir_candidate, str(i)))
+                break
+            else:
+                i += 1
+    # Now make the directory
+    if os.path.exists(work_dir_candidate) == False:
+        os.makedirs(work_dir_candidate)
+
+    # Modify command
+    message["directories"]["work"] = work_dir_candidate
+
+    return message

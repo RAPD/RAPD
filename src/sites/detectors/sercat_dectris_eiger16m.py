@@ -51,13 +51,14 @@ DETECTOR = "dectris_eiger16m"
 # The detector vendor as it appears in the header
 VENDORTYPE = "Eiger-16M"
 # The detector serial number as it appears in the header
-DETECTOR_SN = "Dectris Eiger 16M S/N E-32-0108"
+DETECTOR_SN = "Dectris Eiger 16M S/N E-32-0115"
 # The detector suffix "" if there is no suffix
 DETECTOR_SUFFIX = ".cbf"
 # Template for image name generation ? for frame number places
-IMAGE_TEMPLATE = "%s_%d_??????.cbf" # prefix & run number
+IMAGE_TEMPLATE = "%s_??????.cbf" # prefix
 # Is there a run number in the template?
-RUN_NUMBER_IN_TEMPLATE = True
+RUN_NUMBER_IN_TEMPLATE = False
+SNAP_IN_TEMPLATE = True
 # This is a version number for internal RAPD use
 # If the header changes, increment this number
 HEADER_VERSION = 1
@@ -108,10 +109,65 @@ def parse_file_name(fullname):
 
     # The prefix, image number, and run number
     sbase = basename.split("_")
-    prefix = "_".join(sbase[0:-2])
+    prefix = "_".join(sbase[0:-1])
     image_number = int(sbase[-1])
-    run_number = int(sbase[-2])
+    run_number = None
+
     return directory, basename, prefix, run_number, image_number
+
+def is_snap(fullname):
+    """Returns if image is a snap based on the filename"""
+    result = re.search("_s\_\d{6}$", fullname)
+    if result:
+        return True
+    else:
+        return False
+
+# Derive data root dir from image name
+def get_data_root_dir(fullname):
+    """
+    Derive the data root directory from the user directory
+
+    The logic will most likely be unique for each site
+
+    Keyword arguments
+    fullname -- the full path name of the image file
+    """
+
+    # Isolate distinct properties of the images path
+    path_split = fullname.split(os.path.sep)
+    data_root_dir = os.path.join("/", *path_split[1:3])
+
+    # Return the determined directory
+    return data_root_dir
+
+def get_group_and_session(data_root_dir):
+    """
+    Return the group and session for the directory input. This should be the RAPD system user and
+    group
+
+    Keyword arguments
+    data_root_dir -- root directory of the images being collected
+    """
+
+    # Get the session name
+    # /raw/ID_16_04_22_NIH_dxia_2 >> ID_16_04_22_NIH_dxia_2
+    try:
+        rapd_session_name = data_root_dir.split(os.path.sep)[2]
+    except IndexError:
+        rapd_session_name = None
+
+    # Get the RAPD group
+    # /raw/ID_16_04_22_NIH_dxia_2 >>
+    stat_info = os.stat(data_root_dir)
+    user = pwd.getpwuid(stat_info.st_uid)[0]
+    group = grp.getgrgid(stat_info.st_gid)[0]
+    # Filter group for "wheel"
+    if group == "wheel":
+        group = "staff"
+    rapd_group = "_".join((group, user))
+
+    return rapd_group, rapd_session_name
 
 def create_image_fullname(directory,
                           image_prefix,
@@ -126,8 +182,13 @@ def create_image_fullname(directory,
     run_number -- number for the run
     image_number -- number for the image
     """
-
-    filename = IMAGE_TEMPLATE.replace("??????", "%06d") % (image_prefix, run_number, image_number)
+    if run_number !=None:
+        filename = "%s_%s_%06d.cbf" % (image_prefix,
+                                       run_number,
+                                       image_number)
+    else:
+        filename = "%s_%06d.cbf" % (image_prefix,
+                                    image_number)
 
     fullname = os.path.join(directory, filename)
 
@@ -138,89 +199,97 @@ def create_image_template(image_prefix, run_number):
     Create an image template for XDS
     """
 
-    # print "create_image_template %s %d" % (image_prefix, run_number)
-
-    image_template = IMAGE_TEMPLATE % (image_prefix, run_number)
-
-    # print "image_template: %s" % image_template
+    image_template = IMAGE_TEMPLATE % (image_prefix)
 
     return image_template
 
-def calculate_flux(header, site_params):
+# Calculate the flux of the beam
+def calculate_flux(header, beam_settings={}):
     """
-    Calculate the flux as a function of transmission and aperture size.
-    """
-    beam_size_x = site_params.get('BEAM_SIZE_X')
-    beam_size_y = site_params.get('BEAM_SIZE_Y')
-    aperture = header.get('md2_aperture')
-    new_x = beam_size_x
-    new_y = beam_size_y
-
-    if aperture < beam_size_x:
-        new_x = aperture
-    if aperture < beam_size_y:
-        new_y = aperture
-
-    # Calculate area of full beam used to calculate the beamline flux
-    # Assume ellipse, but same equation works for circle.
-    # Assume beam is uniform
-    full_beam_area = numpy.pi*(beam_size_x/2)*(beam_size_y/2)
-
-    # Calculate the new beam area (with aperture) divided by the full_beam_area.
-    # Since aperture is round, it will be cutting off edges of x length until it matches beam height,
-    # then it would switch to circle
-    if beam_size_y <= aperture:
-        # ellipse
-        ratio = (numpy.pi*(aperture/2)*(beam_size_y/2)) / full_beam_area
-    else:
-        # circle
-        ratio = (numpy.pi*(aperture/2)**2) / full_beam_area
-
-    # Calculate the new_beam_area ratio to full_beam_area
-    flux = int(round(site_params.get('BEAM_FLUX') * (header.get('transmission')/100) * ratio))
-
-    # Return the flux and beam size
-    return (flux, new_x, new_y)
-
-def get_data_root_dir(fullname):
-    """
-    Derive the data root directory from the user directory
-    The logic will most likely be unique for each site
+    Return the flux and size of the beam given parameters
 
     Keyword arguments
-    fullname -- the full path name of the image file
+    header -- data from the header of the image file
+    beam_settings -- incident beam information from the site definitions module
     """
-    path_split    = fullname.split(os.path.sep)
-    data_root_dir = False
 
-    gpfs   = False
-    users  = False
-    inst   = False
-    group  = False
-    images = False
+    # Save some typing
+    beam_size_raw_x = beam_settings.get("BEAM_SIZE_X", 100)
+    beam_size_raw_y = beam_settings.get("BEAM_SIZE_Y", 100)
+    aperture_x = header["aperture_x"]
+    aperture_y = header["aperture_y"]
+    raw_flux = beam_settings.get("BEAM_FLUX", 1000000) * header["transmission"] / 100.0
 
-    for p in path_split:
-        if p.startswith('gpfs'):
-            st = path_split.index(p)
+    # Calculate the size of the beam incident on the sample in mm
+    beam_size_x = min(beam_size_raw_x, aperture_x)
+    beam_size_y = min(beam_size_raw_y, aperture_y)
 
-    if path_split[st].startswith("gpfs"):
-        gpfs = path_split[st]
-        if path_split[st+1] == "users":
-            users = path_split[st+1]
-            if path_split[st+2]:
-                inst = path_split[st+2]
-                if path_split[st+3]:
-                    group = path_split[st+3]
+    # Calculate the raw beam area
+    if beam_settings.get("BEAM_SHAPE", "ellipse") == "ellipse":
+        raw_beam_area = math.pi * beam_size_raw_x * beam_size_raw_y / 4
+    elif beam_settings.get("BEAM_SHAPE", "ellipse") == "rectangle":
+        raw_beam_area = beam_size_raw_x * beam_size_raw_y
 
-    if group:
-        data_root_dir = os.path.join("/", *path_split[st:st+4])
-    elif inst:
-        data_root_dir = os.path.join("/", *path_split[st:st+3])
+    # Calculate the incident beam area
+    # Aperture is smaller than the beam in x & y
+    if beam_size_x <= beam_size_raw_x and beam_size_y <= beam_size_raw_y:
+        if beam_settings.get("BEAM_APERTURE_SHAPE", "circle") == "circle":
+            beam_area = math.pi * (beam_size_x / 2)**2
+        elif beam_settings.get("BEAM_APERTURE_SHAPE", "circle") == "rectangle":
+            beam_area = beam_size_x * beam_size_y
+
+    # Getting the raw beam coming through
+    elif beam_size_x > beam_size_raw_x and beam_size_y > beam_size_raw_y:
+        if beam_settings.get("BEAM_SHAPE", "ellipse") == "ellipse":
+            beam_area = math.pi * (beam_size_x / 2) * (beam_size_y / 2)
+        elif beam_settings.get("BEAM_SHAPE", "ellipse") == "rectangle":
+            beam_area = beam_size_x * beam_size_y
+
+    # Aperture is not smaller than beam in both directions
     else:
-        data_root_dir = False
+        if beam_settings.get("BEAM_APERTURE_SHAPE", "circle") == "circle":
+            # Use an ellipse as an imperfect description of this case
+            beam_area = math.pi * (beam_size_x / 2) * (beam_size_y / 2)
+        if beam_settings.get("BEAM_APERTURE_SHAPE", "circle") == "rectangle":
+            # Use a rectangle description of this case
+            beam_area = beam_size_x * beam_size_y
 
-    #return the determined directory
-    return data_root_dir
+    # Calculate the flux
+    flux = raw_flux * (beam_area / raw_beam_area)
+
+    return flux, beam_size_x/1000.0, beam_size_y/1000.0
+
+def calculate_beam_center(distance, beam_settings, v_offset=0):
+    """
+    Return a beam center, given a distance and vertical offset
+
+    Keyword arguments
+    distance -- sample to detector distance in mm
+    beam_settings -- incident beam information from the site definitions module
+    v_offset -- the vertical offset of the detector
+    """
+
+    x_coeff = beam_settings["BEAM_CENTER_X"]
+    y_coeff = beam_settings["BEAM_CENTER_Y"]
+
+    x_beam = distance**6 * x_coeff[6] + \
+             distance**5 * x_coeff[5] + \
+             distance**4 * x_coeff[4] + \
+             distance**3 * x_coeff[3] + \
+             distance**2 * x_coeff[2] + \
+             distance * x_coeff[1] + \
+             x_coeff[0] + \
+             v_offset
+
+    y_beam = distance**6 * y_coeff[6] + \
+             distance**5 * y_coeff[5] + \
+             distance**4 * y_coeff[4] + \
+             distance**3 * y_coeff[3] + \
+             distance**2 * y_coeff[2] + \
+             distance * y_coeff[1] + \
+             y_coeff[0]
+
+    return x_beam, y_beam
 
 def get_alt_path(image):
     """Pass back the alternate path of image located in long term storage."""
@@ -370,18 +439,29 @@ def read_header(input_file=False, beam_settings=False, extra_header=False):
         header['flux'] = flux
         header['x_beam_size'] = x_size
         header['y_beam_size'] = y_size
-
+    
+    # Add some values HACK
+    header["aperture_x"] = 0.05
+    header["aperture_y"] = 0.05
+    
     basename = os.path.basename(input_file)
     header["image_prefix"] = "_".join(basename.replace(".cbf", "").split("_")[:-2])
     header["run_number"] = int(basename.replace(".cbf", "").split("_")[-2])
 
     # Add tag for module to header
-    header["rapd_detector_id"] = "necat_dectris_eiger16m"
+    header["rapd_detector_id"] = "sercat_dectris_eiger16m"
 
     # The image template for processing
-    header["image_template"] = IMAGE_TEMPLATE % (header["image_prefix"], header["run_number"])
+    header["image_template"] = IMAGE_TEMPLATE % header["image_prefix"]
     header["run_number_in_template"] = RUN_NUMBER_IN_TEMPLATE
     header['data_root_dir'] = get_data_root_dir(input_file)
+
+    # Add source parameters
+    header["gauss_x"] = beam_settings.get("BEAM_GAUSS_X", 0.05)
+    header["gauss_y"] = beam_settings.get("BEAM_GAUSS_Y", 0.05)
+
+    # Get the data_root_dir
+    header["data_root_dir"] = get_data_root_dir(fullname)
 
     # Return the header
     return header
