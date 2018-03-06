@@ -79,7 +79,7 @@ export class MxImageComponent implements OnInit {
               y_dim = 800;
               x_dim = x_dim * (self.result.image1.size1 / self.result.image1.size2);
             }
-
+            console.log(x_dim, y_dim);
             // Clear and draw image
             // ctx.clearRect(0, 0, 800, 800);
             ctx.drawImage(this, 0, 0, x_dim, y_dim);
