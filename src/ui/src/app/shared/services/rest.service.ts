@@ -185,7 +185,7 @@ export class RestService {
 
     return this.authHttp.get(this.globals_service.site.restApiUrl + '/image_jpeg/' + req)
       .map(res => {
-        // console.log(res);
+        console.log(res);
         return res.json();
       })
       .catch(error => this.handleError(error));
