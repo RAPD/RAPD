@@ -85,6 +85,7 @@ export class MxImageComponent implements OnInit {
 
           }, false);
           img.src = 'data:image/jpeg;base64,'+result.image_data;
+          console.log('data:image/jpeg;base64,'+result.image_data);
         } else {
           self.error_string = result.message;
         }
