@@ -60,6 +60,9 @@ export class MxImageComponent implements OnInit {
           // Load Image object with image
           var img = new Image();   // Create new img element
           img.addEventListener('load', function() {
+
+            console.log('img load event');
+
             // execute drawImage statements here
             let ctx: CanvasRenderingContext2D = self.image_canvas.nativeElement.getContext('2d');
             // Determine image size
@@ -78,7 +81,7 @@ export class MxImageComponent implements OnInit {
             ctx.drawImage(this, 0, 0, x_dim, y_dim);
 
             // Call for beam center
-            self.drawBeamCenter();
+            // self.drawBeamCenter();
 
           }, false);
           img.src = 'data:image/jpeg;base64,'+result.image_data;
