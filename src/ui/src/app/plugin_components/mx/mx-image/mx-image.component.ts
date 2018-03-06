@@ -55,7 +55,7 @@ export class MxImageComponent implements OnInit {
     })
     .subscribe(
       result => {
-        // console.log(result);
+        console.log(result);
         if (result.success == true) {
           // Load Image object with image
           var img = new Image();   // Create new img element
