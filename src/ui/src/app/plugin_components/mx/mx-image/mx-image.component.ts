@@ -74,10 +74,10 @@ export class MxImageComponent implements OnInit {
                 y_dim;
             if (self.result.image1.size1 >= self.result.image1.size2) {
               x_dim = 800;
-              y_dim = x_dim * (self.result.image1.size2 / self.result.image1.size1);
+              y_dim = 800 * (self.result.image1.size2 / self.result.image1.size1);
             } else {
               y_dim = 800;
-              x_dim = x_dim * (self.result.image1.size1 / self.result.image1.size2);
+              x_dim = 800 * (self.result.image1.size1 / self.result.image1.size2);
             }
             console.log(x_dim, y_dim);
             // Clear and draw image
