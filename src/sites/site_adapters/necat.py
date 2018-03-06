@@ -1,7 +1,7 @@
 """
 This file is part of RAPD
 
-Copyright (C) 2016-2017 Cornell University
+Copyright (C) 2016-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -55,7 +55,7 @@ class Adapter(object):
         else:
             bl_database = redis_database.Database(settings=self.settings)
         return bl_database.connect_redis_pool()
-        
+
     #
     # Put methods
     #
@@ -283,7 +283,7 @@ class Adapter(object):
         else:
             connection = self.get_redis_connection()
         self.logger.debug("get_image_data - Have redis connection")
-        
+
         # Both beamlines
         # Scrub out problems with offest
         #vertical_offset = float(connection.get("SEGMENT_OFFSET_SV"))
@@ -340,7 +340,7 @@ class Adapter(object):
             connection = self.get_redis_connection()
         self.logger.debug("get_image_data - Have redis connection")
         #pipe = connection.pipeline()
-        
+
         # Both beamlines
         # Scrub out problems with offest
         try:
@@ -382,7 +382,7 @@ class Adapter(object):
             except:
                 puck = "A"
                 self.logger.debug("Puck exception")
-    
+
             try:
                 sample = connection.get("SAMP_SV")
             except:
@@ -391,28 +391,28 @@ class Adapter(object):
 
             try:
                 md2_angles = connection.get("MD2_ALL_AXES_SV").split()
-                # Convert to floats 
+                # Convert to floats
                 md2_angles = [float(a) for a in md2_angles]
             except:
                 md2_angles = [0.0, 0.0, 0.0]
                 self.logger.debug("Axes exception")
-    
+
             try:
                 phi = md2_angles[2]
             except:
                 phi = 0.0
                 self.logger.debug("Phi exception")
-    
+
             try:
                 kappa = md2_angles[1]
             except:
                 kappa = 0.0
                 self.logger.debug("Kappa exception")
 
-          
+
 
             self.logger.debug("get_image_data - making dict")
-    
+
             return_dict = {"energy"          : energy,
                            "ring_current"    : ring_current,
                            "energy"          : energy,
@@ -424,7 +424,7 @@ class Adapter(object):
                            "vertical_offset" : vertical_offset}
 
             self.logger.debug("%s", return_dict)
-        
+
         # Return the data
         return return_dict
 

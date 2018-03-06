@@ -7,7 +7,7 @@ logging of all metadata
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2009-2017 Cornell University
+Copyright (C) 2009-2018 Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify
@@ -383,7 +383,7 @@ class Model(object):
         """
         # Placeholder for site info not in image header
         site_header = {}
-        
+
         # Unpack image_data
         fullname = image_data.get("fullname", None)
         site_tag = image_data.get("site_tag", None)
@@ -440,7 +440,7 @@ class Model(object):
                         else:
                             site_data = self.site_adapter.get_image_data()
                         site_header = site_data
-                    
+
                     # Get all the image information
                     attempt_counter = 0
                     while attempt_counter < 5:

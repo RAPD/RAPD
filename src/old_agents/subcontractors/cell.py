@@ -5,7 +5,7 @@ Query the PDB for similar unit cell parameters
 __license__ = """
 This file is part of RAPD
 
-Copyright (C) 2010-2017, Cornell University
+Copyright (C) 2010-2018, Cornell University
 All rights reserved.
 
 RAPD is free software: you can redistribute it and/or modify

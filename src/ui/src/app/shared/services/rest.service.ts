@@ -178,14 +178,14 @@ export class RestService {
 
   public getImageJpeg(request:any): Observable<any>{
 
-    console.log('getImageJpeg', request);
+    // console.log('getImageJpeg', request);
 
     const req = JSON.stringify(request);
     // console.log(req);
 
     return this.authHttp.get(this.globals_service.site.restApiUrl + '/image_jpeg/' + req)
       .map(res => {
-        console.log(res);
+        // console.log(res);
         return res.json();
       })
       .catch(error => this.handleError(error));
@@ -194,7 +194,7 @@ export class RestService {
   // RUN methods
   public getRunData(_id:string): Observable<Run> {
 
-    console.log('getRunData _id:', _id);
+    // console.log('getRunData _id:', _id);
 
     return this.authHttp.get(this.globals_service.site.restApiUrl + '/runs/' + _id)
                         .map(res => res.json().run)
