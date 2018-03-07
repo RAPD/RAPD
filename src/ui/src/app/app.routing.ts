@@ -54,7 +54,9 @@ export const appRoutingProviders: any[] = [
   imports: [
     RouterModule.forRoot(
       appRoutes,
-      { enableTracing: true }
+      {
+        enableTracing: true,
+      }
     )
   ],
   exports: [
